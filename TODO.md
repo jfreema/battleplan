@@ -6,7 +6,7 @@ Things only you can do (accounts, payments, decisions), organized in phases. **N
 |---|---|---|
 | **0 — Get ready to build** | Now | $0 |
 | **1 — During development** | When we reach a feature that needs it | $0. A card goes on file for Firebase, but usage is ≈ $0. |
-| **2 — Team beta** | When the app is ready for our team on real phones | ~$110–130: Apple Developer ($99/year) and a domain ($10–30/year) |
+| **2 — Team beta** | When the app is ready for our team on real phones | $99: Apple Developer ($99/year). The domain, `getbattleplan.app`, is already registered. |
 | **3 — Public launch** | Before opening sign-up to other teams | $25: Google Play (one time) |
 
 Some approvals take days or weeks, so each phase says how far ahead to start.
@@ -61,7 +61,7 @@ You won't write any Java. Android's build tools and Firebase's local database em
 - [ ] **Make a Battleplan vault in the family 1Password** for every login and 2FA recovery code. Don't share it with the family.
 - [ ] **Create the `battleplan-dev` Firebase project** on the free Spark plan: console.firebase.google.com → *Add project*. Skip Google Analytics, and don't add a card. Project IDs are global and permanent; if the name is taken, try `battleplan-app-dev`.
 - [ ] **Log in from the terminal** so I can run setup commands as you: `firebase login`, then `gcloud auth login` and `gcloud auth application-default login`.
-- [ ] **Pick the app ID** (iOS bundle ID / Android package name). Name it for the app rather than for you, for example `team.battleplan.app` if the domain is battleplan.team, since it stays with the app if an LLC takes it over later. Dev builds add `.dev`. It can change until the first TestFlight upload, but setting it now saves a rename later.
+- [x] **App ID** (iOS bundle ID / Android package name): `app.getbattleplan`, the domain reversed, so it stays with the app if an LLC takes it over later. Dev builds use `app.getbattleplan.dev`. It can change until the first TestFlight upload.
 
 **What this unlocks.** M0 through M3 run entirely on the local emulators, for free:
 
@@ -96,20 +96,19 @@ I'll tell you when each of these comes up.
 - **You publish the app under your own name** (SPEC Q13, decided). The LLC is no longer registered, so both stores list you as an individual, with your legal name as the seller. No D-U-N-S number or company website is needed.
   - Without an LLC, you're personally liable for the apps.
   - If you form or reinstate an LLC later, both stores upgrade the account in place and keep the apps: Apple through a membership update request, and Google Play under *Developer account → About you → Change account type*. Both need the LLC's D-U-N-S number (free, 1–2 weeks).
-- [ ] **Domain** (SPEC Q8). Buy it any time before the beta; good names are going fast.
+- [x] **Domain** (SPEC Q8): **`getbattleplan.app`**, registered at Cloudflare under your Gmail, with DNS at Cloudflare.
   - The beta needs it for invite links and email, and the store listings link to its privacy and support pages.
-  - Taken as of 2026-10-09: `battleplan.com`, `.app`, `.io`, `.co`, `.net`, `.org`, `.us`, `battleplanapp.com`, and `getbattleplan.com`.
-  - Until then we use the free `battleplan-dev.web.app` address.
-  - Cloudflare Registrar is a good choice: at-cost pricing, free DNS, and free email forwarding.
+  - `.app` domains only work over HTTPS (the whole TLD is on browsers' HSTS preload list). Firebase Hosting issues the certificate for free, so nothing extra is needed.
+  - Until it's connected to Hosting, we use the free `battleplan-dev.web.app` address.
 - [ ] **Apple Developer Program** ($99/year): developer.apple.com/programs/enroll.
   - Enroll as an individual with your own Apple Account. Enter your legal name exactly as on your ID, and pay with a card in your name; otherwise Apple asks for a photo ID, which slows approval.
   - One membership covers every app on every Apple platform, including Mac apps signed for download outside the App Store.
   - Needed for TestFlight, iOS push notifications, Sign in with Apple, and invite links that open the iPhone app.
   - [ ] Create the **APNs key** (push) and the **Sign in with Apple key** and Services ID. I'll walk you through it. Each key file downloads only once, so save it to the password manager right away.
 - [ ] **Email**, all on free tiers:
-  - [ ] **Support address.** Forward `support@yourdomain` to your inbox with Cloudflare Email Routing.
+  - [ ] **Support address.** Forward `support@getbattleplan.app` to your inbox with Cloudflare Email Routing.
   - [ ] **Email-sending service** for team invites, setup emails, and security notices (Firebase can't send these). Use **Resend**'s free tier. Verify your domain with the DNS records it gives you (SPF, DKIM), plus a DMARC record.
-  - [ ] **Firebase's built-in emails from your domain.** Go to *Authentication → Templates → Customize domain* and add the DNS records, so password-reset and verification emails come from `noreply@yourdomain`. Set the sender name to "Battleplan".
+  - [ ] **Firebase's built-in emails from your domain.** Go to *Authentication → Templates → Customize domain* and add the DNS records, so password-reset and verification emails come from `noreply@getbattleplan.app`. Set the sender name to "Battleplan".
   - [ ] **Apple's private email relay.** Register both sending addresses so email reaches people who use "Hide My Email".
 - [ ] **Production Firebase project `battleplan-prod`.**
   - **Choose its region first.** Use `us-central1` unless most teams will be outside the US. This is permanent (SPEC Q11).
@@ -124,7 +123,7 @@ I'll tell you when each of these comes up.
 
 - [ ] **Google Play Console** ($25, one time): play.google.com/console/signup.
   - Create a **personal** account with your Gmail. Google verifies your legal name and address, which takes a few days, and you confirm you have a real Android phone (Android 10 or later) with the Play Console app. Borrow one if you need to.
-  - Google Play shows your legal name, your country, and a developer email on the app's page. Use `support@` at your domain for that email, not your Gmail.
+  - Google Play shows your legal name, your country, and a developer email on the app's page. Use `support@getbattleplan.app` for that email, not your Gmail.
   - Personal accounts then need a **closed test with 12+ testers who stay opted in for 14 days in a row**, and Google takes up to a week to review the request for production access. Start **3–4 weeks before** you want to be on Google Play.
 - [ ] **EU trader status**, in both stores. Apple asks even if you skip the EU.
   - A trader's address and phone number appear on EU store pages. Apple lets an individual show a P.O. box instead of a home address.
