@@ -630,13 +630,26 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - **RSVP:** on or off (default on), with an optional deadline.
   - **Reminders:** defaults from team settings. Choose any of 15 min, 1 h, 2 h, 1 day, 2 days, or 1 week before.
   - **Notify team** (default on) and **Post to chat** (default on).
-  - **Repeat:** doesn't repeat, or weekly on selected days, every N weeks, until a date no more than 12 months out.
+  - **Repeat:** doesn't repeat (default), or:
+    - **Daily**, every N days, for tournaments and camps.
+    - **Weekly** on selected days, every N weeks, for practices.
+    - **Ends** on a date or after a number of events, no more than 12 months out.
+    - **Skip dates** for holidays and breaks: the form lists the dates it will create ("24 practices · Tue and Thu · Oct 13 – Dec 17"), and tapping one removes it.
+    - Times stay the same in the event's time zone across daylight-saving changes.
+    - Creating a series posts **one** event card to chat and sends **one** notification for the whole series ("New: Practice, Tue and Thu at 6:00 PM, Oct 13 – Dec 17").
+  - **Duplicate:** from an event's details, anyone who can create events can tap **Duplicate**. It opens this form filled in from that event.
+    - Everything is copied except the date: type, title, times, time zone, location, notes, game fields, RSVP settings, reminders, Notify team, and Post to chat.
+    - The date is empty and gets focus, so it can't be saved as an accidental copy on the same day.
+    - Nothing else carries over: no RSVPs, no Canceled state, and no link to the original's series. The copy is a new one-off event, unless Repeat is set on it.
+    - Works on past and canceled events too, which covers "same game as last season".
 - **SCHED-4 · MVP · Event details.**
   - Every field from creation.
   - Large **Going / Maybe / Not going** buttons, with an optional note ("Leaving at halftime"). On youth teams, guardians get one set per player (PLAYER-6).
   - Attendee lists grouped by Going, Maybe, Not going, and No response, with notes. On youth teams the lists show players and who answered for them.
   - Actions for everyone: Add to calendar, Share, Directions.
-  - Admin actions: Edit, Duplicate, Cancel event, Delete, Set RSVP for a member or player.
+  - Admin actions: Edit, Cancel event, Delete, Set RSVP for a member or player.
+  - **Duplicate**, for anyone who can create events (SCHED-3).
+  - Events in a series show "Repeats weekly on Tue and Thu until Dec 17".
 - **SCHED-5 · MVP · RSVPs.**
   - One tap, instant, and it works offline.
   - Change your answer any time before the deadline; after it, only admins can change answers.
@@ -646,9 +659,15 @@ On youth teams, the kids are the players, but they never use the app. Their pare
 - **SCHED-6 · MVP · Editing.**
   - Changing the date, time, or location notifies everyone except people who said Not going ("Practice moved to 6:30 PM").
   - For repeating events, admins choose "This event" or "This and following events".
+    - **This event** changes only that event. It stays in the series, and later series edits leave its changed fields alone.
+    - **This and following** applies the change to that event and every later one, including the repeat days and end date. Extending the end date is how a season that runs long gets more practices.
+    - Events that still fall on a repeat day keep their RSVPs. Changing the days or shortening the series removes events, and their RSVPs go with them. The confirmation says so: "Removes 4 practices; 9 people had answered."
+    - Past events are never changed by a series edit.
+    - A series edit notifies the team once, not once per event.
 - **SCHED-7 · MVP · Cancel vs. delete.**
   - **Cancel** keeps the event on the schedule, struck through with a "Canceled" badge, closes RSVPs, and notifies the team.
   - **Delete** removes the event without notifying anyone. Its confirmation suggests canceling instead if the event is within 7 days.
+  - For repeating events, both ask "This event" or "This and following events". Canceling or deleting the rest of a series notifies the team once.
 - **SCHED-8 · MVP · Reminders.** A push at each reminder time to people who said Going or Maybe or haven't answered, but not Not going: "Reminder: Practice today at 6:00 PM · Riverside Park". On youth teams, reminders go to those players' guardians (PLAYER-7).
 - **SCHED-9 · MVP · Time zones.**
   - Times show in the viewer's local time.
@@ -671,7 +690,9 @@ On youth teams, the kids are the players, but they never use the app. Their pare
 
 **Acceptance (MVP)**
 
-- A coach can create a weekly practice through the end of the season in under a minute.
+- A coach can create a weekly practice through the end of the season in under a minute, skipping holiday dates, and the team gets one chat card and one notification for it.
+- A coach can duplicate last week's game, change the date and opponent, and save it in under 30 seconds.
+- Canceling one practice in a series leaves the others unchanged; moving the rest of a series from Tue/Thu to Mon/Wed removes the remaining Tue/Thu practices with their RSVPs and leaves past practices untouched.
 - An RSVP made on a phone shows on the web within a few seconds.
 - A canceled event is clearly marked everywhere and notifies everyone who hadn't said Not going.
 
@@ -1107,7 +1128,8 @@ From here on, each feature ships with its own notifications.
 - [ ] Events with types and game fields.
 - [ ] RSVPs, including Maybe and admins answering for members; per-player RSVPs and guardian notifications on youth teams (PLAYER-6, PLAYER-7, PLAYER-9).
 - [ ] Upcoming, Past, and Calendar views; All my teams.
-- [ ] Repeating events, reminders, event cards in chat.
+- [ ] Repeating events (daily and weekly, skip dates, this-and-following edits, cancel, and delete) and Duplicate.
+- [ ] Reminders; event cards in chat.
 - [ ] Add to calendar; time zones.
 
 **Done when:** the SCHED and PLAYER acceptance criteria pass.
@@ -1158,7 +1180,7 @@ When to buy or set up each item is in [TODO.md](../TODO.md). Purchases happen ju
 
 **Accounts and fees**
 
-- [ ] Apple Developer Program, $99/year. An organization account shows the organization as the seller and needs a D-U-N-S number (Q13).
+- [ ] Apple Developer Program, $99/year. An organization account shows the organization (Battle LLC, Q13) as the seller and needs a D-U-N-S number and a working website on the organization's own domain.
 - [ ] Google Play Console, $25 once.
 - [ ] A domain name (Q8), a Meta developer app, and an email provider account.
 
@@ -1232,11 +1254,11 @@ Each question has a default. The build follows the default until someone decides
 | Q5 | Are direct messages needed at launch? GroupMe has them. | Later |
 | Q6 | Reactions: one per person per message, or several? | One |
 | Q7 | On wide screens, bottom tabs or a side rail? | Side rail at 840 px and wider |
-| Q8 | What domain name for invite links and email (e.g. battleplan.app)? | Needed before M2 |
+| Q8 | What domain name for invite links and email (e.g. battleplan.team; battleplan.com, .app, and .io are taken)? | Needed before M2 |
 | Q9 | Logo and primary color? | Placeholder mark; blue `#2F5BEA` |
 | Q10 | Which email provider? | One with a free tier (e.g. Postmark or Resend) |
 | Q11 | Where are most teams located? | US, so `us-central1` |
 | Q12 | Can members create events by default? TeamReach limits this to admins. | Admins only; each team can change it |
-| Q13 | Apple developer account as an individual or an organization? | Organization |
+| Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** organization. Battle LLC publishes the app and is the seller in both stores. | — |
 | Q14 | On youth teams, should coaches and staff also RSVP for themselves? | No, players only |
 | Q15 | When a parent picks an existing player, must an admin approve the link? | Yes (PLAYER-3) |

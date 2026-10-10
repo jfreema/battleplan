@@ -443,6 +443,7 @@ App Store and Google Play both require in-app account deletion. The callable `de
    - poll options (≤ 10)
    - a vote's chosen options (≤ 10)
    - event reminder times (≤ 6)
+   - a series' skipped dates (≤ 100)
    - fixed-shape maps (settings, location, counts)
 6. **Naming.**
    - Fields are camelCase.
@@ -555,11 +556,14 @@ pollVotes/{pollId}_{uid}
   pollId, groupId, uid, optionIds: [optionId], updatedAt
 
 eventSeries/{seriesId}
-  groupId, recurrence: { freq: 'weekly', interval, byWeekday: [1..7], until }
-  template: { …event fields… }, createdBy, createdAt
+  groupId
+  recurrence: { freq: 'daily' | 'weekly', interval, byWeekday?: [1..7],   # byWeekday for weekly only
+                startDate, untilDate, count?, skipDates: [YYYY-MM-DD] }   # untilDate ≤ 12 months out; skipDates ≤ 100
+  template: { …event fields… }, timeZone                # occurrences keep wall-clock time across DST
+  createdBy, createdAt, updatedAt
 
 events/{eventId}
-  groupId, seriesId?
+  groupId, seriesId?, seriesOverrides?: [fieldName]    # fields edited with "This event"; series edits skip them
   type: 'game' | 'practice' | 'meeting' | 'social' | 'other'
   title, description, location: { name, address, lat?, lng? }
   allDay, startAt, endAt, startDate?, endDate?, timeZone
@@ -666,7 +670,7 @@ function isGuardian(p)   { return exists(/databases/$(database)/documents/player
 | `messages/{id}` | members | **Create:** see below. **Update:** a member may change only `reactions.<own uid>`, to an allowed value or removed. Deletion goes through `deleteMessage`. |
 | `polls/{id}` | members | Created in the same batch as its `poll` message, if `membersCanCreatePolls` or admin. Tallies and closing go through Functions. |
 | `pollVotes/{id}` | the voter; members, if the poll isn't anonymous | The voter, while the poll is open. The ID must be `{pollId}_{auth.uid}`, and choices must be valid (one unless `allowMultiple`). |
-| `events/{id}` | members | Admins, or the creator when `membersCanCreateEvents`. Cache and computed fields are rejected. |
+| `events/{id}` | members | Admins, or the creator when `membersCanCreateEvents`. Cache and computed fields are rejected. Clients can't set `seriesId` or `seriesOverrides`, and can't update or delete an event that has a `seriesId`; those go through `saveEventSeries`. |
 | `rsvps/{id}` | members | See below |
 | `groupDocuments/{id}` | members | Create if `membersCanUploadDocs` or admin. The uploader or an admin may update or delete. |
 | `notifications/{id}` | the recipient | The recipient may set `read` to `true`, nothing else |
@@ -766,7 +770,7 @@ All callables:
 | invites | `getInvitePreview` (works signed out; rate-limited), `createInvite`, `resetGroupInvite`, `revokeInvite`, `sendEmailInvites`, `redeemInvite` |
 | chat | `deleteMessage`: the author, a team admin, or a super admin. Soft-deletes, erases text and attachments, removes Storage files, marks replies' previews as deleted, writes the audit log. |
 | polls | `closePoll` |
-| schedule | `saveEventSeries`: create or edit a repeating series. Expands into individual events and handles "this and following" edits. |
+| schedule | `saveEventSeries`: create, edit, cancel, or delete a repeating series, or one event in it (`scope: 'this' \| 'following'`). Expands the rule into individual events in the series' time zone, minus `skipDates`. "This and following" splits the series: the old one ends the day before, and a new one starts from the chosen event. Events that keep their date keep their RSVPs; removed events' RSVPs are deleted; past events are never touched. Posts one event card and sends one `notify` per call, not per event, and sets `nextReminderAt` itself. |
 | safety | `reportContent` |
 | admin | `adminCreateUser`, `adminSetUserDisabled`, `adminSetSuperAdmin`, `adminRevokeSessions`, `adminSendPasswordReset`, `adminSetGroupSuspended`, `adminSetGroupQuota`, `adminOpenGroup` (records a super admin viewing a team), `adminArchiveGroup`, `adminDeleteGroup`, `adminResolveReport`, `adminUpdateConfig`. Each checks the `superAdmin` claim. |
 | ops | `logClientError` (sampled web error reports, §9) |
@@ -780,7 +784,7 @@ These are the only triggers, and they react only to writes clients make directly
 | `messages` created | `groups.lastMessageAt`/`lastMessagePreview`; `replyPreview` on the new message; `notify` for text, image, and poll messages (event cards and system messages notify through their own domain) | — |
 | `pollVotes` written | `polls.voteCounts`, `voterCount` | — |
 | `rsvps` written | `events.rsvpCounts` (which fires the `events` trigger, which exits early) | — |
-| `events` written | Create: event card in chat. Create, time or place change, cancel: `notify`. Any change: `nextReminderAt`. Delete: the event's `rsvps`. | only `rsvpCounts` or `nextReminderAt` changed |
+| `events` written | Create: event card in chat. Create, time or place change, cancel: `notify`. Any change: `nextReminderAt`. Delete: the event's `rsvps`. | only `rsvpCounts` or `nextReminderAt` changed; the event has a `seriesId` (`saveEventSeries` did the follow-up) |
 | `players` updated | `groupMembers.playerSummary` for the player's guardians; `participantName` on upcoming `rsvps` | name and number unchanged |
 | `groupDocuments` created / deleted | Create: `notify`. Delete: the file in Storage (which fires the Storage trigger). | — |
 | `users` updated | `displayName` and `photoPath` on the person's `groupMembers` | name and photo unchanged |
@@ -1200,7 +1204,7 @@ It fits our stack without running our own API server. The alternative, a Cloud R
 | `messages` | `messages`, `message_attachments`, `message_reactions` | Reactions PK `(message_id, user_id)`. Messages likely **stay in Firestore** (Phase C) and are mirrored for search. |
 | `polls` | `polls`, `poll_options` | |
 | `pollVotes` | `poll_votes` | PK `(poll_id, user_id, option_id)` |
-| `eventSeries`, `events` | `event_series`, `events` | `reminder_offsets int[]` |
+| `eventSeries`, `events` | `event_series`, `events` | `reminder_offsets int[]`, `skip_dates date[]` |
 | `rsvps` | `event_rsvps` | PK `(event_id, participant_type, participant_id)` |
 | `groupDocuments` | `documents` | Files stay in Cloud Storage |
 | `notifications` | `notifications` | Could also stay in Firestore |
@@ -1275,3 +1279,5 @@ Each phase is incremental and reversible.
 | D24 | Message rate limit enforced by rules through `lastPostedAt` | Stops scripted floods without a server round trip | — |
 | D25 | Reply previews written by the server | A client can't forge a quote | — |
 | D26 | Bounded, owned lists embedded (attachments, reactions, poll options) | Cheaper reads; each still maps to a child table | — |
+| D27 | Events in a series are written only by `saveEventSeries`, which posts one card and one notification per change | A 24-practice series would otherwise post 24 chat cards and send 24 pushes | — |
+| D28 | Duplicate is client-only: it prefills the create form from an event, then saves like any new event (or through `saveEventSeries` if Repeat is set) | No new callable, field, or rule; the copy is an ordinary event | — |

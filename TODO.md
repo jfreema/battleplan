@@ -6,7 +6,7 @@ Things only you can do (accounts, payments, decisions), organized in phases. **N
 |---|---|---|
 | **0 — Get ready to build** | Now | $0 |
 | **1 — During development** | When we reach a feature that needs it | $0. A card goes on file for Firebase, but usage is ≈ $0. |
-| **2 — Team beta** | When the app is ready for our team on real phones | ~$115: Apple Developer ($99/year) and a domain (~$15/year) |
+| **2 — Team beta** | When the app is ready for our team on real phones | ~$110–130: Apple Developer ($99/year) and a domain ($10–30/year) |
 | **3 — Public launch** | Before opening sign-up to other teams | $25: Google Play (one time) |
 
 Some approvals take days or weeks, so each phase says how far ahead to start.
@@ -52,14 +52,15 @@ You won't write any Java. Android's build tools and Firebase's local database em
 
 ### Accounts and decisions
 
-- [ ] **Create a free Gmail account just for Battleplan**, for example `battleplan.<something>@gmail.com`, and turn on 2-Step Verification.
+- [ ] **Use the Battle LLC Gmail account**, since the LLC publishes the app.
   - It owns the Firebase projects, and later the billing account and Google Play.
   - Google shows its address to users as the support email on the Google sign-in screen, so your personal address stays private.
-  - After creating the dev project, add your personal Google account as a second owner (*Project settings → Users and permissions*). Losing access to one account then never locks you out, and ownership can move later (for example, to a company account).
-- [ ] **Set up a password manager** with a **Battleplan** vault for every login and 2FA recovery code. Bitwarden's free plan is enough; 1Password also works.
+  - First, turn on 2-Step Verification, make sure the recovery phone and email are yours, and change the password if anyone else knows it. Whoever can sign in controls the app's servers, billing, and Play listing.
+  - After creating the dev project, add your personal Google account as a second owner (*Project settings → Users and permissions*). Losing access to one account then never locks you out.
+- [ ] **Make a Battleplan vault in the family 1Password** for every login and 2FA recovery code. Don't share it with the family.
 - [ ] **Create the `battleplan-dev` Firebase project** on the free Spark plan: console.firebase.google.com → *Add project*. Skip Google Analytics, and don't add a card. Project IDs are global and permanent; if the name is taken, try `battleplan-app-dev`.
 - [ ] **Log in from the terminal** so I can run setup commands as you: `firebase login`, then `gcloud auth login` and `gcloud auth application-default login`.
-- [ ] **Pick the app ID** (iOS bundle ID / Android package name), for example `com.<yourname>.battleplan`. Dev builds add `.dev`. It can change until the first TestFlight upload, but setting it now saves a rename later.
+- [ ] **Pick the app ID** (iOS bundle ID / Android package name), for example `com.<company>.battleplan`, using Battle LLC's name rather than yours. Dev builds add `.dev`. It can change until the first TestFlight upload, but setting it now saves a rename later.
 
 **What this unlocks.** M0 through M3 run entirely on the local emulators, for free:
 
@@ -91,18 +92,20 @@ I'll tell you when each of these comes up.
 
 **Start about two weeks before the beta**, because Apple's approval can take that long.
 
-- [ ] **Decide who publishes the app: you or a company** (SPEC Q13).
-  - The stores show this name as the seller.
-  - If a company, form it first and request a free **D-U-N-S number** (1–2 weeks).
-  - On Google Play, personal accounts need a 14-day, 12-tester closed test before launch (Phase 3); organization accounts don't.
+- **Battle LLC publishes the app** (SPEC Q13, decided). The stores show its legal name as the seller.
+  - [ ] **D-U-N-S number.** Apple and Google Play both require one for an organization. It's free, so do it any time: check whether Battle LLC already has one with Apple's D-U-N-S lookup, and request one there if not (1–2 weeks). The name and address must match the LLC's state filing.
+  - Publishing as an organization also skips Google Play's 14-day, 12-tester closed test (Phase 3).
+- [ ] **Domain** (SPEC Q8). **Buy it before enrolling with Apple**, or any time sooner; good names are going fast.
+  - Apple requires a working website on a domain tied to the LLC, and rejects parked pages and social-media links. I'll build a one-page site on Firebase Hosting that names Battle LLC.
+  - Taken as of 2026-10-09: `battleplan.com`, `.app`, `.io`, `.co`, `.net`, `.org`, `.us`, `battleplanapp.com`, and `getbattleplan.com`.
+  - Until then we use the free `battleplan-dev.web.app` address.
+  - Cloudflare Registrar is a good choice: at-cost pricing, free DNS, and free email forwarding.
 - [ ] **Apple Developer Program** ($99/year): developer.apple.com/programs/enroll.
+  - Enroll as Battle LLC with an Apple Account at your domain, which Apple recommends. A domain has no email until you add it, so first turn on Cloudflare **Email Routing** (free) and forward an address like `jared@` to the Gmail. It only receives mail, which is all Apple needs.
+  - One membership covers every app on every Apple platform, including Mac apps signed for download outside the App Store.
   - Needed for TestFlight, iOS push notifications, Sign in with Apple, and invite links that open the iPhone app.
   - Approval takes from a day to two weeks.
   - [ ] Create the **APNs key** (push) and the **Sign in with Apple key** and Services ID. I'll walk you through it. Each key file downloads only once, so save it to the password manager right away.
-- [ ] **Domain** (~$15/year; SPEC Q8).
-  - Until now we use the free `battleplan-dev.web.app` address.
-  - Cloudflare Registrar is a good choice: at-cost pricing, free DNS, and free email forwarding.
-  - `.app` domains are HTTPS-only, which Firebase Hosting handles.
 - [ ] **Email**, all on free tiers:
   - [ ] **Support address.** Forward `support@yourdomain` to your inbox with Cloudflare Email Routing.
   - [ ] **Email-sending service** for team invites, setup emails, and security notices (Firebase can't send these). Use **Resend**'s free tier. Verify your domain with the DNS records it gives you (SPF, DKIM), plus a DMARC record.
