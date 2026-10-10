@@ -52,15 +52,16 @@ You won't write any Java. Android's build tools and Firebase's local database em
 
 ### Accounts and decisions
 
-- [ ] **Use the Battle LLC Gmail account**, since the LLC publishes the app.
+- [ ] **Use your personal Gmail** for Battleplan's services. Without the LLC, a separate account isn't needed.
   - It owns the Firebase projects, and later the billing account and Google Play.
-  - Google shows its address to users as the support email on the Google sign-in screen, so your personal address stays private.
-  - First, turn on 2-Step Verification, make sure the recovery phone and email are yours, and change the password if anyone else knows it. Whoever can sign in controls the app's servers, billing, and Play listing.
-  - After creating the dev project, add your personal Google account as a second owner (*Project settings → Users and permissions*). Losing access to one account then never locks you out.
+  - Whoever can sign in controls the app's servers, billing, and Play listing, so check that 2-Step Verification is on and your recovery phone and email are current.
+  - Google's sign-in screen shows the project's support email. When you turn on Google sign-in, pick `battleplan-help@googlegroups.com` there, not your Gmail.
+  - Optional: after creating the dev project, add a second Google account you control as an owner (*Project settings → Users and permissions*). Losing access to one account then never locks you out.
+- [x] **Create a Google Group for that support email**: `battleplan-help@googlegroups.com`, created and tested 2026-10-09.
 - [ ] **Make a Battleplan vault in the family 1Password** for every login and 2FA recovery code. Don't share it with the family.
 - [ ] **Create the `battleplan-dev` Firebase project** on the free Spark plan: console.firebase.google.com → *Add project*. Skip Google Analytics, and don't add a card. Project IDs are global and permanent; if the name is taken, try `battleplan-app-dev`.
 - [ ] **Log in from the terminal** so I can run setup commands as you: `firebase login`, then `gcloud auth login` and `gcloud auth application-default login`.
-- [ ] **Pick the app ID** (iOS bundle ID / Android package name), for example `com.<company>.battleplan`, using Battle LLC's name rather than yours. Dev builds add `.dev`. It can change until the first TestFlight upload, but setting it now saves a rename later.
+- [ ] **Pick the app ID** (iOS bundle ID / Android package name). Name it for the app rather than for you, for example `team.battleplan.app` if the domain is battleplan.team, since it stays with the app if an LLC takes it over later. Dev builds add `.dev`. It can change until the first TestFlight upload, but setting it now saves a rename later.
 
 **What this unlocks.** M0 through M3 run entirely on the local emulators, for free:
 
@@ -90,21 +91,20 @@ I'll tell you when each of these comes up.
 
 ## Phase 2 — Team beta (buy just before our team starts testing)
 
-**Start about two weeks before the beta**, because Apple's approval can take that long.
+**Start about a week before the beta.** Apple usually approves an individual in a day or two, but it can take longer if Apple asks for ID.
 
-- **Battle LLC publishes the app** (SPEC Q13, decided). The stores show its legal name as the seller.
-  - [ ] **D-U-N-S number.** Apple and Google Play both require one for an organization. It's free, so do it any time: check whether Battle LLC already has one with Apple's D-U-N-S lookup, and request one there if not (1–2 weeks). The name and address must match the LLC's state filing.
-  - Publishing as an organization also skips Google Play's 14-day, 12-tester closed test (Phase 3).
-- [ ] **Domain** (SPEC Q8). **Buy it before enrolling with Apple**, or any time sooner; good names are going fast.
-  - Apple requires a working website on a domain tied to the LLC, and rejects parked pages and social-media links. I'll build a one-page site on Firebase Hosting that names Battle LLC.
+- **You publish the app under your own name** (SPEC Q13, decided). The LLC is no longer registered, so both stores list you as an individual, with your legal name as the seller. No D-U-N-S number or company website is needed.
+  - Without an LLC, you're personally liable for the apps.
+  - If you form or reinstate an LLC later, both stores upgrade the account in place and keep the apps: Apple through a membership update request, and Google Play under *Developer account → About you → Change account type*. Both need the LLC's D-U-N-S number (free, 1–2 weeks).
+- [ ] **Domain** (SPEC Q8). Buy it any time before the beta; good names are going fast.
+  - The beta needs it for invite links and email, and the store listings link to its privacy and support pages.
   - Taken as of 2026-10-09: `battleplan.com`, `.app`, `.io`, `.co`, `.net`, `.org`, `.us`, `battleplanapp.com`, and `getbattleplan.com`.
   - Until then we use the free `battleplan-dev.web.app` address.
   - Cloudflare Registrar is a good choice: at-cost pricing, free DNS, and free email forwarding.
 - [ ] **Apple Developer Program** ($99/year): developer.apple.com/programs/enroll.
-  - Enroll as Battle LLC with an Apple Account at your domain, which Apple recommends. A domain has no email until you add it, so first turn on Cloudflare **Email Routing** (free) and forward an address like `jared@` to the Gmail. It only receives mail, which is all Apple needs.
+  - Enroll as an individual with your own Apple Account. Enter your legal name exactly as on your ID, and pay with a card in your name; otherwise Apple asks for a photo ID, which slows approval.
   - One membership covers every app on every Apple platform, including Mac apps signed for download outside the App Store.
   - Needed for TestFlight, iOS push notifications, Sign in with Apple, and invite links that open the iPhone app.
-  - Approval takes from a day to two weeks.
   - [ ] Create the **APNs key** (push) and the **Sign in with Apple key** and Services ID. I'll walk you through it. Each key file downloads only once, so save it to the password manager right away.
 - [ ] **Email**, all on free tiers:
   - [ ] **Support address.** Forward `support@yourdomain` to your inbox with Cloudflare Email Routing.
@@ -116,14 +116,19 @@ I'll tell you when each of these comes up.
   - Upgrade it to Blaze and set budget alerts.
   - The beta runs on prod, so our team's data carries straight into launch.
 - **Android beta testers** install through Firebase App Distribution, which is free. No Google Play account is needed yet.
+  - Or, if 12 or more of the team use Android, run the Android beta as a Google Play closed test instead. That moves buying the Play account (Phase 3) up to now, but the beta then counts toward the 14-day test a personal account must pass before it can publish.
 
 ---
 
 ## Phase 3 — Public launch (before opening sign-up to other teams)
 
 - [ ] **Google Play Console** ($25, one time): play.google.com/console/signup.
-  - Identity verification takes a few days.
-  - Personal accounts then need a **14-day closed test with 12+ testers**, so start **3–4 weeks before** you want to be on Google Play.
+  - Create a **personal** account with your Gmail. Google verifies your legal name and address, which takes a few days, and you confirm you have a real Android phone (Android 10 or later) with the Play Console app. Borrow one if you need to.
+  - Google Play shows your legal name, your country, and a developer email on the app's page. Use `support@` at your domain for that email, not your Gmail.
+  - Personal accounts then need a **closed test with 12+ testers who stay opted in for 14 days in a row**, and Google takes up to a week to review the request for production access. Start **3–4 weeks before** you want to be on Google Play.
+- [ ] **EU trader status**, in both stores. Apple asks even if you skip the EU.
+  - A trader's address and phone number appear on EU store pages. Apple lets an individual show a P.O. box instead of a home address.
+  - A free app with no business behind it may count as non-trader, which shows nothing. Revisit if Battleplan starts charging (SPEC Q4).
 - [ ] **Android upload key.** I'll generate it at the first Play upload. Store the keystore file and its passwords in the password manager, plus an offline backup.
 - [ ] **Facebook App Review.** It needs the privacy-policy and data-deletion URLs.
 - [ ] **Legal pages**: Privacy Policy, Terms of Use, and a delete-account page.

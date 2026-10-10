@@ -1149,7 +1149,7 @@ From here on, each feature ships with its own notifications.
 - [ ] Legal pages, store listings, privacy forms.
 - [ ] Facebook App Review, and an App Review demo account with a seeded team.
 - [ ] Beta with our team: TestFlight (iOS), Firebase App Distribution (Android), and the web; a bug bash; the production deploy.
-- [ ] Google Play: open the Play Console account and, for a personal account, run the 14-day closed test with 12+ testers before the public Android release.
+- [ ] Google Play: open the Play Console account (a personal one, Q13) and run the 14-day closed test with 12+ testers before the public Android release.
 - [ ] Move our team over (below), then open sign-up to other teams.
 
 ### Moving our team over
@@ -1180,8 +1180,8 @@ When to buy or set up each item is in [TODO.md](../TODO.md). Purchases happen ju
 
 **Accounts and fees**
 
-- [ ] Apple Developer Program, $99/year. An organization account shows the organization (Battle LLC, Q13) as the seller and needs a D-U-N-S number and a working website on the organization's own domain.
-- [ ] Google Play Console, $25 once.
+- [ ] Apple Developer Program, $99/year, as an individual (Q13). The App Store shows your legal name as the seller; no D-U-N-S number or company website is needed.
+- [ ] Google Play Console, $25 once, as a personal account (Q13). Google Play shows your legal name, and production access needs a 14-day closed test with 12+ testers.
 - [ ] A domain name (Q8), a Meta developer app, and an email provider account.
 
 **Platform setup**
@@ -1208,6 +1208,7 @@ When to buy or set up each item is in [TODO.md](../TODO.md). Purchases happen ju
 - [ ] Age-rating questionnaires (chat and user-generated content).
 - [ ] App Review notes: a demo account with a seeded team, and an explanation that teams are invite-only.
 - [ ] Privacy labels (Apple) and Data safety form (Google).
+- [ ] EU trader status declared in both stores.
 
 **Legal**
 
@@ -1259,6 +1260,6 @@ Each question has a default. The build follows the default until someone decides
 | Q10 | Which email provider? | One with a free tier (e.g. Postmark or Resend) |
 | Q11 | Where are most teams located? | US, so `us-central1` |
 | Q12 | Can members create events by default? TeamReach limits this to admins. | Admins only; each team can change it |
-| Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** organization. Battle LLC publishes the app and is the seller in both stores. | — |
+| Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
 | Q14 | On youth teams, should coaches and staff also RSVP for themselves? | No, players only |
 | Q15 | When a parent picks an existing player, must an admin approve the link? | Yes (PLAYER-3) |
