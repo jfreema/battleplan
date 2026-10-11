@@ -2,6 +2,8 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
+import 'package:battleplan/features/groups/domain/invite.dart';
+import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -80,3 +82,13 @@ Membership? myMembership(Ref ref, GroupId groupId) => ref
 @riverpod
 Future<String?> teamPhotoUrl(Ref ref, String path) =>
     ref.watch(groupRepositoryProvider).photoUrl(path);
+
+/// Overridden in app/providers.dart.
+@Riverpod(keepAlive: true)
+InviteRepository inviteRepository(Ref ref) =>
+    throw UnimplementedError('Wired in app/providers.dart');
+
+/// The team's invite link (INV-1).
+@riverpod
+Future<TeamInvite> teamInvite(Ref ref, GroupId groupId) =>
+    ref.watch(inviteRepositoryProvider).teamInvite(groupId);

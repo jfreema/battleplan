@@ -74,7 +74,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 44. 👤 **Jared:** Pick the email provider (Q10; default Resend), sign up for its free tier, and add its SPF, DKIM, and DMARC records in Cloudflare.
 45. Email sending from Functions (ARCH §6.7), with the API key in Secret Manager.
 46. Add members by email, with account creation and setup emails (TEAM-7, AUTH-6).
-47. Invite screen, invite link, QR code, and code (INV-1 to INV-3).
+47. ✅ Invite screen, invite link, QR code, and code (INV-1 to INV-3); creating a team lands on it. *The in-app QR scanner is part of joining (task 49).*
 48. Email invites (INV-4).
 49. Joining: `getInvitePreview`, `redeemInvite`, join by code or QR scan, the `/join` web page, error states (INV-5 to INV-8).
 50. Universal Links and App Links for invites on our domain (INV-9, ENG-6). iOS is verified in task 110.

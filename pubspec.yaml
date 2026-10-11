@@ -32,7 +32,9 @@ dependencies:
   material_symbols_icons: ^4.2960.0
   material_ui: ^1.6.0
   package_info_plus: ^10.2.2
+  qr_flutter: ^4.1.0
   riverpod_annotation: ^4.0.7
+  share_plus: ^13.3.1
   shared_preferences: ^2.5.6
   url_launcher: ^6.3.3
 

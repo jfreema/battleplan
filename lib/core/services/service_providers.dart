@@ -1,5 +1,6 @@
 import 'package:battleplan/core/services/link_opener.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
+import 'package:battleplan/core/services/sharer.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -20,3 +21,7 @@ LinkOpener linkOpener(Ref ref) => const NoopLinkOpener();
 /// The device's time zone and the list to pick from.
 @Riverpod(keepAlive: true)
 TimeZones timeZones(Ref ref) => const FixedTimeZones();
+
+/// Shares links through the system share sheet.
+@Riverpod(keepAlive: true)
+Sharer sharer(Ref ref) => const NoopSharer();

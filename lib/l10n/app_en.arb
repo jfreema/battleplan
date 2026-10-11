@@ -322,5 +322,59 @@
   "archiveTeamBody": "The team becomes read-only and moves to Archived in your team switcher. You can restore it later.",
   "deleteTeam": "Delete team",
   "deleteTeamBody": "This permanently deletes all messages, events, documents, and files. Type the team name to confirm.",
-  "teamArchived": "This team is archived and read-only."
+  "teamArchived": "This team is archived and read-only.",
+  "invitesAdminsOnly": "Only team admins can invite people to this team.",
+  "linkCopied": "Link copied.",
+  "copyLink": "Copy link",
+  "share": "Share",
+  "showQr": "Show QR code",
+  "qrCodeLabel": "QR code for the team's invite link",
+  "inviteShareSubject": "Join {team} on Battleplan",
+  "@inviteShareSubject": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "emailInvites": "Email invites",
+  "addByEmail": "Add people by email",
+  "linkSettings": "Invite link",
+  "linkNeverExpires": "Never expires",
+  "linkExpires": "Expires {date}",
+  "@linkExpires": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "linkUses": "{count, plural, =1{Used once} other{Used {count} times}}",
+  "@linkUses": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "linkUsesOf": "Used {count} of {max} times",
+  "@linkUsesOf": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "resetLink": "Reset link",
+  "resetLinkBody": "The current link and QR code stop working right away. People who already joined stay on the team.",
+  "linkExpiryLabel": "Expires",
+  "linkMaxUsesLabel": "Most uses (optional)",
+  "expiryNever": "Never",
+  "expiry1d": "After 1 day",
+  "expiry7d": "After 7 days",
+  "expiry30d": "After 30 days",
+  "linkReset": "New link ready. The old one no longer works."
 }

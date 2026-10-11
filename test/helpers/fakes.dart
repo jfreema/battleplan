@@ -10,6 +10,8 @@ import 'package:battleplan/features/auth/domain/user_profile.dart';
 import 'package:battleplan/features/auth/domain/user_repository.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
+import 'package:battleplan/features/groups/domain/invite.dart';
+import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
@@ -406,4 +408,30 @@ class FakePushRepository implements PushRepository {
 
   @override
   Stream<PushMessage> foregroundMessages() => const Stream.empty();
+}
+
+class FakeInviteRepository implements InviteRepository {
+  int resets = 0;
+  String code = 'K7XPM2QR';
+
+  TeamInvite _invite() => TeamInvite(
+    code: code,
+    display: '${code.substring(0, 4)}-${code.substring(4)}',
+    url: Uri.parse('https://battleplan-dev-ecce4.web.app/join/$code'),
+    useCount: 0,
+  );
+
+  @override
+  Future<TeamInvite> teamInvite(GroupId groupId) async => _invite();
+
+  @override
+  Future<TeamInvite> resetTeamInvite(
+    GroupId groupId, {
+    InviteExpiry expiry = InviteExpiry.never,
+    int? maxUses,
+  }) async {
+    resets++;
+    code = 'NEWC0DE2'.replaceAll('0', 'Q');
+    return _invite();
+  }
 }

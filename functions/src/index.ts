@@ -19,4 +19,5 @@ export {
   transferOwnership,
   updateGroupMember,
 } from './teams/handlers.js';
+export { getTeamInvite, resetGroupInvite } from './invites/handlers.js';
 export { logClientError } from './ops/handlers.js';

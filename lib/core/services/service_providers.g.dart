@@ -151,3 +151,48 @@ final class TimeZonesProvider
 }
 
 String _$timeZonesHash() => r'6ae7fc2d09a741ec5333e9f7e27613f9283b691b';
+
+/// Shares links through the system share sheet.
+
+@ProviderFor(sharer)
+final sharerProvider = SharerProvider._();
+
+/// Shares links through the system share sheet.
+
+final class SharerProvider extends $FunctionalProvider<Sharer, Sharer, Sharer>
+    with $Provider<Sharer> {
+  /// Shares links through the system share sheet.
+  SharerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sharerProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sharerHash();
+
+  @$internal
+  @override
+  $ProviderElement<Sharer> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Sharer create(Ref ref) {
+    return sharer(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Sharer value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Sharer>(value),
+    );
+  }
+}
+
+String _$sharerHash() => r'5a159f8e549a4b36db142cdc12aa46b6fdf89916';

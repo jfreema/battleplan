@@ -515,3 +515,137 @@ final class TeamPhotoUrlFamily extends $Family
   @override
   String toString() => r'teamPhotoUrlProvider';
 }
+
+/// Overridden in app/providers.dart.
+
+@ProviderFor(inviteRepository)
+final inviteRepositoryProvider = InviteRepositoryProvider._();
+
+/// Overridden in app/providers.dart.
+
+final class InviteRepositoryProvider
+    extends
+        $FunctionalProvider<
+          InviteRepository,
+          InviteRepository,
+          InviteRepository
+        >
+    with $Provider<InviteRepository> {
+  /// Overridden in app/providers.dart.
+  InviteRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'inviteRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$inviteRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<InviteRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  InviteRepository create(Ref ref) {
+    return inviteRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(InviteRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<InviteRepository>(value),
+    );
+  }
+}
+
+String _$inviteRepositoryHash() => r'406850cc6cb375431bcbb131385c5700c2300c50';
+
+/// The team's invite link (INV-1).
+
+@ProviderFor(teamInvite)
+final teamInviteProvider = TeamInviteFamily._();
+
+/// The team's invite link (INV-1).
+
+final class TeamInviteProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<TeamInvite>,
+          TeamInvite,
+          FutureOr<TeamInvite>
+        >
+    with $FutureModifier<TeamInvite>, $FutureProvider<TeamInvite> {
+  /// The team's invite link (INV-1).
+  TeamInviteProvider._({
+    required TeamInviteFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamInviteProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamInviteHash();
+
+  @override
+  String toString() {
+    return r'teamInviteProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<TeamInvite> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<TeamInvite> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return teamInvite(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamInviteProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamInviteHash() => r'c377d0242450f2f2e352314eb0b2a3d2f45e5976';
+
+/// The team's invite link (INV-1).
+
+final class TeamInviteFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<TeamInvite>, GroupId> {
+  TeamInviteFamily._()
+    : super(
+        retry: null,
+        name: r'teamInviteProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The team's invite link (INV-1).
+
+  TeamInviteProvider call(GroupId groupId) =>
+      TeamInviteProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'teamInviteProvider';
+}

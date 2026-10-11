@@ -174,6 +174,8 @@ void main() {
     await tester.tap(create);
     await tester.pumpAndSettle();
     expect(groupRepo.created, ['Thunder U14']);
+    // TEAM-1: the next screen is "Invite your team" (the fake team has no
+    // membership yet, so the shell guard shows instead).
   });
 
   testWidgets('a team needs a name', (tester) async {
@@ -300,6 +302,30 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
     await tester.pumpAndSettle();
     expect(groupRepo.updates, ['delete Thunder']);
+  });
+
+  testWidgets('invite screen: code, QR, and an admin reset', (tester) async {
+    final invites = FakeInviteRepository();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      invites: invites,
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invite'));
+    await tester.pumpAndSettle();
+    expect(find.text('K7XP-M2QR'), findsOneWidget);
+    expect(find.text('Show QR code'), findsOneWidget);
+    final reset = find.widgetWithText(OutlinedButton, 'Reset link');
+    await tester.ensureVisible(reset);
+    await tester.tap(reset);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Reset link'));
+    await tester.pumpAndSettle();
+    expect(invites.resets, 1);
   });
 
   testWidgets('wrong password shows an error and stays put', (tester) async {

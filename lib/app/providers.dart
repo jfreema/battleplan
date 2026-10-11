@@ -1,6 +1,7 @@
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/services/flutter_time_zones.dart';
 import 'package:battleplan/app/services/image_picker_photo_picker.dart';
+import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/app/services/url_launcher_link_opener.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/services/analytics.dart';
@@ -12,6 +13,7 @@ import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:battleplan/features/auth/data/firestore_user_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/data/firestore_group_repository.dart';
+import 'package:battleplan/features/groups/data/functions_invite_repository.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/data/fcm_push_repository.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
@@ -46,6 +48,10 @@ List<Override> buildOverrides({
   photoPickerProvider.overrideWithValue(const ImagePickerPhotoPicker()),
   linkOpenerProvider.overrideWithValue(const UrlLauncherLinkOpener()),
   timeZonesProvider.overrideWithValue(const FlutterTimeZones()),
+  sharerProvider.overrideWithValue(const SharePlusSharer()),
+  inviteRepositoryProvider.overrideWithValue(
+    FunctionsInviteRepository(functions),
+  ),
   authRepositoryProvider.overrideWithValue(
     FirebaseAuthRepository(
       auth,

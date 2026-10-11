@@ -22,6 +22,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakePushRepository? push,
   FakeGroupRepository? groupRepo,
   FakeMemberRepository? memberRepo,
+  FakeInviteRepository? invites,
 }) async {
   // A tall phone-sized screen, so long settings lists fit without scrolling.
   tester.view
@@ -45,6 +46,9 @@ Future<FakeLocalPrefs> pumpApp(
           memberRepo ?? FakeMemberRepository(memberships.cast()),
         ),
         localPrefsRepositoryProvider.overrideWithValue(localPrefs),
+        inviteRepositoryProvider.overrideWithValue(
+          invites ?? FakeInviteRepository(),
+        ),
         pushRepositoryProvider.overrideWithValue(push ?? FakePushRepository()),
       ],
       child: const BattleplanApp(),

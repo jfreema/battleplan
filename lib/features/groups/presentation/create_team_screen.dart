@@ -78,7 +78,8 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
             color: _hex(_color),
             description: _description.text.trim(),
           );
-      if (mounted) context.go('/g/${id.value}/chat');
+      // TEAM-1: the next screen is "Invite your team".
+      if (mounted) context.go('/g/${id.value}/invite');
     } on AppFailure catch (e) {
       if (!mounted) return;
       setState(
