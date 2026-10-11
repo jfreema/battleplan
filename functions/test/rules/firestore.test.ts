@@ -55,7 +55,7 @@ async function seed() {
     await db.doc('groupMembers/teamB_dan').set(memberDoc('teamB', 'dan', 'member', 'Dan'));
     await db.doc('groupMembers/teamB_erin').set(memberDoc('teamB', 'erin', 'member', 'Erin'));
     await db.doc('groupMembers/teamB_frank').set(memberDoc('teamB', 'frank', 'member', 'Frank'));
-    await db.doc('players/emma').set({ groupId: 'teamB', displayName: 'Emma', jerseyNumber: '7' });
+    await db.doc('players/emma').set({ groupId: 'teamB', displayName: 'Emma', displayNameLower: 'emma', jerseyNumber: '7' });
     await db.doc('playerGuardians/emma_dan').set({ playerId: 'emma', groupId: 'teamB', uid: 'dan' });
     await db.doc('playerGuardians/emma_erin').set({ playerId: 'emma', groupId: 'teamB', uid: 'erin' });
     await db.doc('messages/m1').set({ groupId: 'teamA', authorId: 'alice', type: 'text', text: 'Hi', reactions: {} });
@@ -329,5 +329,31 @@ describe('cache and server-only fields', () => {
   it('keeps invites and rate limits server-only', async () => {
     await assertFails(as('alice').doc('invites/K7XPM2QR').get());
     await assertFails(as('alice').doc('rateLimits/alice_send_1').set({ count: 0 }));
+  });
+});
+
+describe("kids' privacy (PLAYER-10)", () => {
+  const edit = { displayName: 'Emma R', displayNameLower: 'emma r', jerseyNumber: '8', position: 'Keeper' };
+
+  it('lets a guardian or an admin edit name, number, and position', async () => {
+    await assertSucceeds(as('dan').doc('players/emma').update(edit));
+    await assertSucceeds(as('carol').doc('players/emma').update({ jerseyNumber: null }));
+  });
+
+  it('blocks other parents and other teams', async () => {
+    await assertFails(as('frank').doc('players/emma').update(edit));
+    await assertFails(as('alice').doc('players/emma').update(edit));
+  });
+
+  it('never lets a player record hold more than a name, number, and position', async () => {
+    await assertFails(as('dan').doc('players/emma').update({ birthdate: '2016-04-01' }));
+    await assertFails(as('dan').doc('players/emma').update({ photoPath: 'x.jpg' }));
+    await assertFails(as('dan').doc('players/emma').update({ jerseyNumber: '12345' }));
+    await assertFails(as('dan').doc('players/emma').update({ displayName: '', displayNameLower: '' }));
+    await assertFails(as('dan').doc('players/emma').update({ displayName: 'Emma', displayNameLower: 'someone else' }));
+  });
+
+  it('leaves creating players to Functions', async () => {
+    await assertFails(as('carol').doc('players/new').set({ groupId: 'teamB', displayName: 'Liam', displayNameLower: 'liam' }));
   });
 });

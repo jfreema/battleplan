@@ -80,7 +80,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 50. ✅ Universal Links and App Links for invites on our domain (INV-9, ENG-6). iOS is verified in task 110. *Android App Links verified on dev for `/join/`, `/activate`, and `/g/` (spike 2); prod uses `getbattleplan.app` once it is on prod Hosting (task 116). The `apple-app-site-association` file needs the Apple team ID (tasks 109 and 110).*
 51. ✅ Youth teams: add players and pasted rosters (PLAYER-1), player card (PLAYER-2). *Setup emails for newly added guardians go out with task 46; adding or removing a guardian from the card is task 52.*
 52. ✅ Youth teams: "Who are you here for?", guardian requests, adding a co-parent (PLAYER-3 to PLAYER-5). *Admins see requests at the top of the roster; the push notification to admins arrives with notifications (M4). Tested on dev: request, decline, ask again, approve, add an unlisted player, add and remove a co-parent.*
-53. Parent labels in the roster, "Maria R. · Emma #7" (PLAYER-8); kids' privacy limits on player records (PLAYER-10).
+53. ✅ Parent labels in the roster, "Maria R. · Emma #7" (PLAYER-8); kids' privacy limits on player records (PLAYER-10). *The roster shows "Parent of Emma #7"; `Membership.nameWithPlayers` gives the short "Maria R. · Emma #7" form that chat uses in M3. Rules hold player records to a name, number, and position.*
 54. Storage quota accounting.
 55. Rate limits for team creation, invites, and adds (SAFE-5).
 56. Rules and tests for teams, members, players, and invites, including **cross-team isolation**.

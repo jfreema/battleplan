@@ -126,12 +126,22 @@ service cloud.firestore {
 
     // ---- Youth teams -------------------------------------------------------
 
+    // Kids' privacy (PLAYER-10): a player is only a name, number, and
+    // position. Functions create players; edits can't add anything else.
+    function validPlayer(p) {
+      return p.displayName is string && p.displayName.size() >= 1 && p.displayName.size() <= 60
+        && p.displayNameLower == p.displayName.lower()
+        && (p.get('jerseyNumber', null) == null || (p.jerseyNumber is string && p.jerseyNumber.size() <= 4))
+        && (p.get('position', null) == null || (p.position is string && p.position.size() <= 30));
+    }
+
     match /players/{playerId} {
       allow get: if isMember(resource.data.groupId);
       allow list: if boundedQuery() && isMember(resource.data.groupId);
       allow update: if (isGuardian(playerId) && isMember(resource.data.groupId)
                         || isAdmin(resource.data.groupId))
-        && onlyChanges(['displayName', 'displayNameLower', 'jerseyNumber', 'position', 'updatedAt']);
+        && onlyChanges(['displayName', 'displayNameLower', 'jerseyNumber', 'position', 'updatedAt'])
+        && validPlayer(incoming());
     }
 
     match /playerGuardians/{linkId} {
