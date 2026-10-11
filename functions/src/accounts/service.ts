@@ -3,7 +3,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { randomUUID } from 'node:crypto';
 import { auth, db, storage } from '../shared/admin.js';
-import { Collections } from '../shared/constants.js';
+import { Collections, notificationPrefValues, type NotificationPref } from '../shared/constants.js';
 import { anonymizeAuthor } from '../chat/service.js';
 import { removeAccountNotifications } from '../notify/service.js';
 import { removeAccountFromPlayers } from '../players/service.js';
@@ -15,6 +15,11 @@ import { sendEmail } from '../email/service.js';
 import { activateUrl } from '../links/service.js';
 import { projectId } from '../shared/project.js';
 import { initialDisplayName, needsSetup, signInMethodsOf, type AuthIdentity } from './profile.js';
+
+/** Every global notification switch on (NOTIF-4); the server reads a missing key as on. */
+export function defaultNotificationPrefs(): Record<NotificationPref, boolean> {
+  return Object.fromEntries(notificationPrefValues.map((k) => [k, true])) as Record<NotificationPref, boolean>;
+}
 
 export interface SetupInput {
   displayName: string;
@@ -64,15 +69,7 @@ export async function ensureUserProfile(uid: string, setup?: SetupInput): Promis
         status: 'active',
         signInMethods: signInMethodsOf(identity.providerIds),
         themeMode: 'system',
-        notificationPrefs: {
-          messages: true,
-          replies: true,
-          mentions: true,
-          polls: true,
-          events: true,
-          reminders: true,
-          documents: true,
-        },
+        notificationPrefs: defaultNotificationPrefs(),
         acceptedTermsAt: null,
         adultConfirmedAt: null,
         lastActiveAt: now,
@@ -247,9 +244,7 @@ export async function findOrProvisionUser(email: string, name: string | null): P
     status: 'provisioned',
     signInMethods: [],
     themeMode: 'system',
-    notificationPrefs: {
-      messages: true, replies: true, mentions: true, polls: true, events: true, reminders: true, documents: true,
-    },
+    notificationPrefs: defaultNotificationPrefs(),
     acceptedTermsAt: null,
     adultConfirmedAt: null,
     lastActiveAt: null,

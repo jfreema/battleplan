@@ -67,14 +67,40 @@ service cloud.firestore {
         && p.themeMode in ['system', 'light', 'dark']
         && (p.photoPath == null
             || (p.photoPath is string && p.photoPath.matches('users/' + userId + '/avatar/[^/]+')))
-        && p.notificationPrefs is map
+        && validPrefs(p.notificationPrefs)
         && (!('updatedAt' in changed()) || p.updatedAt == request.time);
     }
 
+    // The global notification switches (NOTIF-4): known keys, true or false.
+    // 'events' is the key before New events and Event changes were split.
+    function validPrefs(n) {
+      return n is map
+        && n.keys().hasOnly(['messages', 'replies', 'mentions', 'polls', 'eventsNew',
+                             'eventsChanged', 'reminders', 'documents', 'events'])
+        && n.get('messages', true) is bool && n.get('replies', true) is bool
+        && n.get('mentions', true) is bool && n.get('polls', true) is bool
+        && n.get('eventsNew', true) is bool && n.get('eventsChanged', true) is bool
+        && n.get('reminders', true) is bool && n.get('documents', true) is bool
+        && n.get('events', true) is bool;
+    }
+
+    // Push devices (NOTIF-10): one doc per app install, keyed by a random ID
+    // the install keeps. Update may take over a doc an earlier, failed
+    // sign-out on this install left behind; the IDs can't be guessed.
     match /devices/{installationId} {
       allow get, delete: if signedIn() && resource.data.uid == uid();
-      allow create, update: if signedIn() && incoming().uid == uid()
-        && incoming().platform in ['ios', 'android', 'web'];
+      allow create, update: if signedIn() && validDevice(incoming())
+        && installationId.size() >= 16 && installationId.size() <= 64;
+    }
+
+    function validDevice(d) {
+      return d.keys().hasOnly(['uid', 'token', 'platform', 'appVersion', 'updatedAt'])
+        && d.keys().hasAll(['uid', 'token', 'platform', 'appVersion', 'updatedAt'])
+        && d.uid == uid()
+        && d.token is string && d.token.size() > 0 && d.token.size() <= 4096
+        && d.platform in ['ios', 'android', 'web']
+        && d.appVersion is string && d.appVersion.size() <= 32
+        && d.updatedAt == request.time;
     }
 
     match /userBlocks/{blockId} {
@@ -144,7 +170,11 @@ service cloud.firestore {
                         'lastPostedAt', 'lastPostedMessageId'])
         && (!('lastPostedAt' in changed()) || incoming().lastPostedAt == request.time)
         && (!('notificationLevel' in changed())
-            || incoming().notificationLevel in ['all', 'important', 'none']);
+            || incoming().notificationLevel in ['all', 'important', 'none'])
+        // Mute (NOTIF-3): cleared, or a time still ahead.
+        && (!('mutedUntil' in changed()) || incoming().mutedUntil == null
+            || (incoming().mutedUntil is timestamp && incoming().mutedUntil > request.time))
+        && (!('lastReadAt' in changed()) || incoming().lastReadAt == request.time);
     }
 
     // ---- Youth teams -------------------------------------------------------

@@ -28,6 +28,7 @@ abstract final class Collections {
   static const String rateLimits = 'rateLimits';
   static const String config = 'config';
   static const String licenses = 'licenses';
+  static const String notifyLog = 'notifyLog';
 }
 
 /// Limits shared with the server and security rules.
@@ -80,6 +81,11 @@ abstract final class Limits {
   static const int licenseReminderFirstDays = 30;
   static const int licenseReminderSecondDays = 7;
   static const int pinnedMessagesMax = 3;
+  static const int deviceStaleDays = 60;
+  static const int notificationBodyMax = 140;
+  static const int notifyLogTtlDays = 7;
+  static const int pushTokensPerSend = 500;
+  static const int mutedForeverMs = 253402214400000;
 }
 
 /// The 12 team colors (TEAM-1), as ARGB.
@@ -499,3 +505,190 @@ enum LicenseSource {
     return null;
   }
 }
+
+enum NotifyKind {
+  message('message'),
+  reply('reply'),
+  addedToTeam('addedToTeam'),
+  madeAdmin('madeAdmin'),
+  guardianRequest('guardianRequest'),
+  guardianApproved('guardianApproved'),
+  playerAdded('playerAdded'),
+  contentReported('contentReported'),
+  planReminder('planReminder'),
+  pollCreated('pollCreated'),
+  pollClosed('pollClosed'),
+  eventCreated('eventCreated'),
+  eventChanged('eventChanged'),
+  eventReminder('eventReminder'),
+  documentAdded('documentAdded');
+
+  const NotifyKind(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static NotifyKind? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum NotificationPref {
+  messages('messages'),
+  replies('replies'),
+  mentions('mentions'),
+  polls('polls'),
+  eventsNew('eventsNew'),
+  eventsChanged('eventsChanged'),
+  reminders('reminders'),
+  documents('documents');
+
+  const NotificationPref(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static NotificationPref? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum NotifyChannel {
+  messages('messages'),
+  replies('replies'),
+  team('team'),
+  polls('polls'),
+  events('events'),
+  documents('documents');
+
+  const NotifyChannel(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static NotifyChannel? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+/// How a notification kind behaves (NOTIF-2).
+class NotifyKindInfo {
+  const NotifyKindInfo({
+    required this.important,
+    required this.pref,
+    required this.center,
+    required this.channel,
+  });
+
+  /// Pushes even at a team's "Important only" level.
+  final bool important;
+
+  /// The global switch that turns it off, if any (NOTIF-4).
+  final NotificationPref? pref;
+
+  /// Listed in the notification center (NOTIF-11).
+  final bool center;
+  final NotifyChannel channel;
+}
+
+const Map<NotifyKind, NotifyKindInfo> notifyKindInfo = {
+  NotifyKind.message: NotifyKindInfo(
+    important: false,
+    pref: NotificationPref.messages,
+    center: false,
+    channel: NotifyChannel.messages,
+  ),
+  NotifyKind.reply: NotifyKindInfo(
+    important: true,
+    pref: NotificationPref.replies,
+    center: true,
+    channel: NotifyChannel.replies,
+  ),
+  NotifyKind.addedToTeam: NotifyKindInfo(
+    important: true,
+    pref: null,
+    center: true,
+    channel: NotifyChannel.team,
+  ),
+  NotifyKind.madeAdmin: NotifyKindInfo(
+    important: true,
+    pref: null,
+    center: true,
+    channel: NotifyChannel.team,
+  ),
+  NotifyKind.guardianRequest: NotifyKindInfo(
+    important: true,
+    pref: null,
+    center: true,
+    channel: NotifyChannel.team,
+  ),
+  NotifyKind.guardianApproved: NotifyKindInfo(
+    important: true,
+    pref: null,
+    center: true,
+    channel: NotifyChannel.team,
+  ),
+  NotifyKind.playerAdded: NotifyKindInfo(
+    important: true,
+    pref: null,
+    center: true,
+    channel: NotifyChannel.team,
+  ),
+  NotifyKind.contentReported: NotifyKindInfo(
+    important: true,
+    pref: null,
+    center: true,
+    channel: NotifyChannel.team,
+  ),
+  NotifyKind.planReminder: NotifyKindInfo(
+    important: true,
+    pref: null,
+    center: true,
+    channel: NotifyChannel.team,
+  ),
+  NotifyKind.pollCreated: NotifyKindInfo(
+    important: false,
+    pref: NotificationPref.polls,
+    center: true,
+    channel: NotifyChannel.polls,
+  ),
+  NotifyKind.pollClosed: NotifyKindInfo(
+    important: false,
+    pref: NotificationPref.polls,
+    center: true,
+    channel: NotifyChannel.polls,
+  ),
+  NotifyKind.eventCreated: NotifyKindInfo(
+    important: false,
+    pref: NotificationPref.eventsNew,
+    center: true,
+    channel: NotifyChannel.events,
+  ),
+  NotifyKind.eventChanged: NotifyKindInfo(
+    important: true,
+    pref: NotificationPref.eventsChanged,
+    center: true,
+    channel: NotifyChannel.events,
+  ),
+  NotifyKind.eventReminder: NotifyKindInfo(
+    important: true,
+    pref: NotificationPref.reminders,
+    center: true,
+    channel: NotifyChannel.events,
+  ),
+  NotifyKind.documentAdded: NotifyKindInfo(
+    important: false,
+    pref: NotificationPref.documents,
+    center: true,
+    channel: NotifyChannel.documents,
+  ),
+};

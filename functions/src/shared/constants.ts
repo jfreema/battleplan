@@ -26,6 +26,7 @@ export const Collections = {
   rateLimits: 'rateLimits',
   config: 'config',
   licenses: 'licenses',
+  notifyLog: 'notifyLog',
 } as const;
 
 export const Limits = {
@@ -77,6 +78,11 @@ export const Limits = {
   licenseReminderFirstDays: 30,
   licenseReminderSecondDays: 7,
   pinnedMessagesMax: 3,
+  deviceStaleDays: 60,
+  notificationBodyMax: 140,
+  notifyLogTtlDays: 7,
+  pushTokensPerSend: 500,
+  mutedForeverMs: 253402214400000,
 } as const;
 
 export const TEAM_COLORS = [
@@ -156,3 +162,31 @@ export type PlanFeature = (typeof planFeatureValues)[number];
 
 export const licenseSourceValues = ['grant', 'stripe', 'appStore', 'play'] as const;
 export type LicenseSource = (typeof licenseSourceValues)[number];
+
+export const notifyKindValues = ['message', 'reply', 'addedToTeam', 'madeAdmin', 'guardianRequest', 'guardianApproved', 'playerAdded', 'contentReported', 'planReminder', 'pollCreated', 'pollClosed', 'eventCreated', 'eventChanged', 'eventReminder', 'documentAdded'] as const;
+export type NotifyKind = (typeof notifyKindValues)[number];
+
+export const notificationPrefValues = ['messages', 'replies', 'mentions', 'polls', 'eventsNew', 'eventsChanged', 'reminders', 'documents'] as const;
+export type NotificationPref = (typeof notificationPrefValues)[number];
+
+export const notifyChannelValues = ['messages', 'replies', 'team', 'polls', 'events', 'documents'] as const;
+export type NotifyChannel = (typeof notifyChannelValues)[number];
+
+/** How each notification kind behaves (NOTIF-2): pushes at "Important only", its global switch, center, channel. */
+export const NOTIFY_KINDS = {
+  message: { important: false, pref: 'messages' as NotificationPref | null, center: false, channel: 'messages' as NotifyChannel },
+  reply: { important: true, pref: 'replies' as NotificationPref | null, center: true, channel: 'replies' as NotifyChannel },
+  addedToTeam: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
+  madeAdmin: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
+  guardianRequest: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
+  guardianApproved: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
+  playerAdded: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
+  contentReported: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
+  planReminder: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
+  pollCreated: { important: false, pref: 'polls' as NotificationPref | null, center: true, channel: 'polls' as NotifyChannel },
+  pollClosed: { important: false, pref: 'polls' as NotificationPref | null, center: true, channel: 'polls' as NotifyChannel },
+  eventCreated: { important: false, pref: 'eventsNew' as NotificationPref | null, center: true, channel: 'events' as NotifyChannel },
+  eventChanged: { important: true, pref: 'eventsChanged' as NotificationPref | null, center: true, channel: 'events' as NotifyChannel },
+  eventReminder: { important: true, pref: 'reminders' as NotificationPref | null, center: true, channel: 'events' as NotifyChannel },
+  documentAdded: { important: false, pref: 'documents' as NotificationPref | null, center: true, channel: 'documents' as NotifyChannel },
+} as const;

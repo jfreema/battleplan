@@ -476,7 +476,8 @@ App Store and Google Play both require in-app account deletion. The callable `de
 | `events` | auto | event | `events` | admins and allowed members, Functions |
 | `rsvps` | `{eventId}_{participantId}` | event + participant | `event_rsvps` | the member, the player's guardians, admins |
 | `groupDocuments` | auto | file or link | `documents` | members if allowed, Functions |
-| `notifications` | auto | notification-center item | `notifications` | Functions; the recipient marks read |
+| `notifications` | `{dedupeKey}_{uid}` | notification-center item | `notifications` | Functions; the recipient marks read |
+| `notifyLog` | dedupe key | one notification send | — | Functions only (TTL 7 days) |
 | `reports` | auto | report | `reports` | Functions |
 | `auditLogs` | auto | admin action | `audit_logs` | Functions |
 | `rateLimits` | `{uid}_{action}_{window}` | counter window | — (operational) | Functions |
@@ -491,11 +492,11 @@ users/{uid}
   status: 'provisioned' | 'active' | 'disabled'
   signInMethods: ['password' | 'google.com' | 'apple.com' | 'facebook.com']   # cache ← Firebase Auth
   themeMode: 'system' | 'light' | 'dark'
-  notificationPrefs: { messages, replies, mentions, polls, events, reminders, documents }   # bools
+  notificationPrefs: { messages, replies, mentions, polls, eventsNew, eventsChanged, reminders, documents }   # bools; a missing key is on (NOTIF-4)
   acceptedTermsAt, adultConfirmedAt, lastActiveAt, createdAt, updatedAt, schemaVersion
 
-devices/{installationId}
-  uid, token, platform: 'ios' | 'android' | 'web', appVersion, updatedAt
+devices/{installationId}                                # a random 20+ character ID each install keeps
+  uid, token, platform: 'ios' | 'android' | 'web', appVersion, updatedAt   # pruned after 60 days without an update
 
 userBlocks/{uid}_{blockedUid}
   uid, blockedUid, createdAt
@@ -517,7 +518,7 @@ groupMembers/{groupId}_{uid}
   jerseyNumber?, position?                              # adult teams (v1.1)
   displayName, photoPath                                # cache ← users
   playerSummary?                                        # youth teams, e.g. "Emma #7"; cache ← players
-  notificationLevel: 'all' | 'important' | 'none', mutedUntil?
+  notificationLevel: 'all' | 'important' | 'none', mutedUntil?   # "until unmuted" = 9999-12-31 (Limits.mutedForeverMs)
   lastReadAt                                            # unread counts
   lastPostedAt, lastPostedMessageId                     # message rate limit (§6.3, §6.9)
   pending?                                              # added by email, hasn't signed in yet (AUTH-6); cleared by ensureUserProfile
@@ -596,9 +597,12 @@ groupDocuments/{docId}
   url?                                                  # kind = link
   uploadedBy, createdAt, updatedAt
 
-notifications/{notificationId}                          # notification-center items
-  uid, groupId?, type, params: { … }, title, body, route
+notifications/{dedupeKey}_{uid}                         # notification-center items
+  uid, groupId, type: notifyKind, params: { … }, title, body, route
   actorId?, targetType, targetId, read, createdAt, expiresAt   # TTL: 90 days
+
+notifyLog/{dedupeKey}                                   # one per send, so a retried trigger can't push twice
+  kind, groupId, createdAt, expiresAt                   # TTL: 7 days
 
 reports/{reportId}
   reporterId, groupId, targetType: 'message' | 'user' | 'document', targetId
@@ -821,17 +825,23 @@ Unit tests cover every early-exit condition.
 
 ### 6.5 Notifications: push and notification center
 
-**One pipeline.** `functions/src/notify/` is the only code that writes `notifications` or calls FCM. Every domain calls `notify.send({ kind, groupId, recipients, actor, target, route, params })`.
+**One pipeline.** `functions/src/notify/` is the only code that writes `notifications` or calls FCM. Every domain calls `notify.send({ kind, groupId, recipients, exclude?, actor, target, route, params, body, dedupeKey })`.
+
+**The kind table** lives in `shared/constants.json` (`notifyKinds`, generated as `NOTIFY_KINDS` for Functions and `notifyKindInfo` for the app): for each kind, whether it pushes at "Important only", which global switch (`notificationPref`) turns it off, whether it lands in the notification center, and its Android channel. The server filters with it and the Settings screens are built from it, so they always agree.
 
 **Steps in `notify.send()`**
 
-1. **Recipients.** Resolve them as team members, or, on youth teams, the guardians of the affected players. Drop the actor, people who blocked the actor, and disabled accounts.
-2. **Notification center.** For kinds that have center items (SPEC NOTIF-2), write one `notifications` doc per recipient, in batches, with a 90-day `expiresAt`. These are written **even when push is muted or off for that team**, so nothing important is missed.
-3. **Push.** Keep only recipients whose team level, mute, and global switches allow this kind. On youth teams, send one push per guardian naming their players ("Emma, Liam: Practice today at 6:00 PM").
+0. **Dedupe.** Create `notifyLog/{dedupeKey}`; if it already exists the send already happened (triggers can run twice), so stop.
+1. **Recipients.** Resolve them as all team members, the team's admins, or listed people (on youth teams, the guardians of the affected players, M6). Drop the actor, anyone in `exclude`, people who blocked the actor, and disabled accounts.
+2. **Notification center.** For kinds that have center items (SPEC NOTIF-2), write one `notifications/{dedupeKey}_{uid}` doc per recipient, in batches, with a 90-day `expiresAt`. These are written **even when push is muted or off for that team**, so nothing important is missed.
+3. **Push.** Keep only recipients whose team level (Off drops everything; Important only keeps important kinds), mute (`mutedUntil` ahead), and global switch for this kind allow it. Profiles are read only for recipients who pass level and mute, and only for kinds that have a switch. On youth teams, send one push per guardian naming their players ("Emma, Liam: Practice today at 6:00 PM").
 4. **Deliver.**
    - Load device tokens with `devices.where('uid','in', chunk of 30)`.
    - Send with `sendEachForMulticast`, 500 per batch.
-   - Delete tokens that come back as `registration-token-not-registered` or `invalid-argument`.
+   - Delete devices whose token comes back `registration-token-not-registered` or `invalid-registration-token`. `invalid-argument` deletes a token only if others in the same batch succeeded, since a bad payload fails every token.
+   - On the emulators, log instead of sending.
+
+**Devices.** `signOutEverywhere` and `deleteAccount` remove all of the person's devices; `dailyCleanup` removes devices not updated in 60 days (the app rewrites its device at least daily). Removing someone from a team, or leaving, deletes their notification-center items for that team.
 
 Plain chat messages don't create center items; unread counts cover them. Replies to you, and mentions in v1.1, do.
 
@@ -849,8 +859,9 @@ Plain chat messages don't create center items; unread counts cover them. Replies
 
 - `title` = team name. Users on several teams always know which team a notification is from.
 - `body` = "Alex: See you at 6", truncated to ~140 chars.
-- `data` = `{ route, groupId, notificationId? }`.
-- Grouping key = `groupId`: iOS `thread-id`, Android `tag`, web `tag`.
+- `data` = `{ route, groupId, kind, nkey }` (all strings). The app's center item for this push is `notifications/{nkey}_{myUid}`, so one multicast serves everyone.
+- Grouping (NOTIF-8): iOS stacks by team with `thread-id = groupId`. Android and web don't get a `tag`, because a tag *replaces* the previous notification instead of stacking; the OS bundles Battleplan's notifications instead.
+- Android channel by kind (`team` covers added to a team, made admin, guardian requests, reports, and Plus reminders). Web gets `fcmOptions.link = https://<host><route>`, which the service worker opens on click.
 
 **In the app**
 

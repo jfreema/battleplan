@@ -123,7 +123,50 @@ String _dart(Map<String, dynamic> json) {
       ..writeln('  }')
       ..writeln('}');
   });
+  _dartNotifyKinds(b, json);
   return b.toString();
+}
+
+/// The notification kind table (NOTIF-2) as a Dart map.
+void _dartNotifyKinds(StringBuffer b, Map<String, dynamic> json) {
+  final kinds = json['notifyKinds'] as Map<String, dynamic>?;
+  if (kinds == null) return;
+  b
+    ..writeln()
+    ..writeln('/// How a notification kind behaves (NOTIF-2).')
+    ..writeln('class NotifyKindInfo {')
+    ..writeln('  const NotifyKindInfo({')
+    ..writeln('    required this.important,')
+    ..writeln('    required this.pref,')
+    ..writeln('    required this.center,')
+    ..writeln('    required this.channel,')
+    ..writeln('  });')
+    ..writeln()
+    ..writeln("  /// Pushes even at a team's \"Important only\" level.")
+    ..writeln('  final bool important;')
+    ..writeln()
+    ..writeln('  /// The global switch that turns it off, if any (NOTIF-4).')
+    ..writeln('  final NotificationPref? pref;')
+    ..writeln()
+    ..writeln('  /// Listed in the notification center (NOTIF-11).')
+    ..writeln('  final bool center;')
+    ..writeln('  final NotifyChannel channel;')
+    ..writeln('}')
+    ..writeln()
+    ..writeln('const Map<NotifyKind, NotifyKindInfo> notifyKindInfo = {');
+  kinds.forEach((name, v) {
+    final info = v as Map<String, dynamic>;
+    final pref = info['pref'] == null
+        ? 'null'
+        : 'NotificationPref.${_camel(info['pref'] as String)}';
+    final kind = 'NotifyKind.${_camel(name)}';
+    final channel = 'NotifyChannel.${_camel(info['channel'] as String)}';
+    b.writeln(
+      '  $kind: NotifyKindInfo(important: ${info['important']}, '
+      'pref: $pref, center: ${info['center']}, channel: $channel),',
+    );
+  });
+  b.writeln('};');
 }
 
 String _ts(Map<String, dynamic> json) {
@@ -165,5 +208,25 @@ String _ts(Map<String, dynamic> json) {
         'export type ${_pascal(name)} = (typeof ${name}Values)[number];',
       );
   });
+  final kinds = json['notifyKinds'] as Map<String, dynamic>?;
+  if (kinds != null) {
+    b
+      ..writeln()
+      ..writeln(
+        '/** How each notification kind behaves (NOTIF-2): pushes at "Important only", its global switch, center, channel. */',
+      )
+      ..writeln('export const NOTIFY_KINDS = {');
+    kinds.forEach((name, v) {
+      final info = v as Map<String, dynamic>;
+      final pref = info['pref'] == null ? 'null' : "'${info['pref']}'";
+      b.writeln(
+        "  $name: { important: ${info['important']}, "
+        'pref: $pref as NotificationPref | null, '
+        "center: ${info['center']}, "
+        "channel: '${info['channel']}' as NotifyChannel },",
+      );
+    });
+    b.writeln('} as const;');
+  }
   return b.toString();
 }

@@ -23,7 +23,8 @@
     "auditLogs": "auditLogs",
     "rateLimits": "rateLimits",
     "config": "config",
-    "licenses": "licenses"
+    "licenses": "licenses",
+    "notifyLog": "notifyLog"
   },
   "enums": {
     "userStatus": [
@@ -154,6 +155,41 @@
       "stripe",
       "appStore",
       "play"
+    ],
+    "notifyKind": [
+      "message",
+      "reply",
+      "addedToTeam",
+      "madeAdmin",
+      "guardianRequest",
+      "guardianApproved",
+      "playerAdded",
+      "contentReported",
+      "planReminder",
+      "pollCreated",
+      "pollClosed",
+      "eventCreated",
+      "eventChanged",
+      "eventReminder",
+      "documentAdded"
+    ],
+    "notificationPref": [
+      "messages",
+      "replies",
+      "mentions",
+      "polls",
+      "eventsNew",
+      "eventsChanged",
+      "reminders",
+      "documents"
+    ],
+    "notifyChannel": [
+      "messages",
+      "replies",
+      "team",
+      "polls",
+      "events",
+      "documents"
     ]
   },
   "limits": {
@@ -204,7 +240,12 @@
     "licenseMoveCooldownDays": 30,
     "licenseReminderFirstDays": 30,
     "licenseReminderSecondDays": 7,
-    "pinnedMessagesMax": 3
+    "pinnedMessagesMax": 3,
+    "deviceStaleDays": 60,
+    "notificationBodyMax": 140,
+    "notifyLogTtlDays": 7,
+    "pushTokensPerSend": 500,
+    "mutedForeverMs": 253402214400000
   },
   "inviteCodeAlphabet": "23456789ABCDEFGHJKMNPQRSTUVWXYZ",
   "teamColors": [
@@ -220,5 +261,98 @@
     "#1D4ED8",
     "#9333EA",
     "#334155"
-  ]
+  ],
+  "$notifyKindsComment": "Each notification kind (NOTIF-2): whether it pushes at 'Important only', which global switch (notificationPref) turns it off, whether it lands in the notification center, and its Android channel.",
+  "notifyKinds": {
+    "message": {
+      "important": false,
+      "pref": "messages",
+      "center": false,
+      "channel": "messages"
+    },
+    "reply": {
+      "important": true,
+      "pref": "replies",
+      "center": true,
+      "channel": "replies"
+    },
+    "addedToTeam": {
+      "important": true,
+      "pref": null,
+      "center": true,
+      "channel": "team"
+    },
+    "madeAdmin": {
+      "important": true,
+      "pref": null,
+      "center": true,
+      "channel": "team"
+    },
+    "guardianRequest": {
+      "important": true,
+      "pref": null,
+      "center": true,
+      "channel": "team"
+    },
+    "guardianApproved": {
+      "important": true,
+      "pref": null,
+      "center": true,
+      "channel": "team"
+    },
+    "playerAdded": {
+      "important": true,
+      "pref": null,
+      "center": true,
+      "channel": "team"
+    },
+    "contentReported": {
+      "important": true,
+      "pref": null,
+      "center": true,
+      "channel": "team"
+    },
+    "planReminder": {
+      "important": true,
+      "pref": null,
+      "center": true,
+      "channel": "team"
+    },
+    "pollCreated": {
+      "important": false,
+      "pref": "polls",
+      "center": true,
+      "channel": "polls"
+    },
+    "pollClosed": {
+      "important": false,
+      "pref": "polls",
+      "center": true,
+      "channel": "polls"
+    },
+    "eventCreated": {
+      "important": false,
+      "pref": "eventsNew",
+      "center": true,
+      "channel": "events"
+    },
+    "eventChanged": {
+      "important": true,
+      "pref": "eventsChanged",
+      "center": true,
+      "channel": "events"
+    },
+    "eventReminder": {
+      "important": true,
+      "pref": "reminders",
+      "center": true,
+      "channel": "events"
+    },
+    "documentAdded": {
+      "important": false,
+      "pref": "documents",
+      "center": true,
+      "channel": "documents"
+    }
+  }
 }

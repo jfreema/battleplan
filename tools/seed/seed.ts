@@ -102,7 +102,7 @@ async function main() {
       status: 'active',
       signInMethods: ['password'],
       themeMode: 'system',
-      notificationPrefs: { messages: true, replies: true, mentions: true, polls: true, events: true, reminders: true, documents: true },
+      notificationPrefs: { messages: true, replies: true, mentions: true, polls: true, eventsNew: true, eventsChanged: true, reminders: true, documents: true },
       acceptedTermsAt: minutesAgo(60 * 24 * 30),
       adultConfirmedAt: minutesAgo(60 * 24 * 30),
       lastActiveAt: minutesAgo(5),

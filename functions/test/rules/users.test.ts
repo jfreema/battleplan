@@ -23,7 +23,7 @@ const profile = (name: string) => ({
   status: 'active',
   signInMethods: ['password'],
   themeMode: 'system',
-  notificationPrefs: { messages: true },
+  notificationPrefs: { messages: true, replies: true, eventsNew: true },
   acceptedTermsAt: firebase.firestore.Timestamp.now(),
   adultConfirmedAt: firebase.firestore.Timestamp.now(),
 });
@@ -77,7 +77,8 @@ describe('users: writing', () => {
     }));
     await assertSucceeds(db.doc('users/alice').update({ themeMode: 'dark' }));
     await assertSucceeds(db.doc('users/alice').update({ photoPath: 'users/alice/avatar/123.jpg' }));
-    await assertSucceeds(db.doc('users/alice').update({ notificationPrefs: { messages: false } }));
+    await assertSucceeds(db.doc('users/alice').update({ 'notificationPrefs.messages': false }));
+    await assertSucceeds(db.doc('users/alice').update({ 'notificationPrefs.eventsChanged': false }));
   });
 
   it('rejects server-only fields', async () => {
