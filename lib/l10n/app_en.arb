@@ -107,5 +107,21 @@
   "passwordRequired": "Enter your password.",
   "passwordRule": "At least 8 characters",
   "passwordTooShort": "Use at least 8 characters for your password.",
-  "signInEmailInUse": "There's already an account with that email. Sign in instead, or reset your password."
+  "signInEmailInUse": "There's already an account with that email. Sign in instead, or reset your password.",
+  "forgotPassword": "Forgot password?",
+  "resetPasswordTitle": "Reset password",
+  "sendResetLink": "Send reset link",
+  "resetPasswordSent": "If an account exists for that email, we've sent a link to reset the password.",
+  "resetPasswordProviderNote": "If you sign in with Google or Apple, you don't have a Battleplan password. Use that button on the sign-in screen instead.",
+  "verifyEmailBanner": "Verify your email: we sent a link to {email}.",
+  "@verifyEmailBanner": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyEmailResend": "Resend",
+  "verifyEmailResent": "Sent. Check your inbox.",
+  "verifyEmailDone": "I've verified"
 }

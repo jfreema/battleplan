@@ -10,6 +10,7 @@ import 'package:battleplan/features/admin/presentation/admin_screen.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/presentation/activate_screen.dart';
 import 'package:battleplan/features/auth/presentation/email_sign_in_screen.dart';
+import 'package:battleplan/features/auth/presentation/reset_password_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
@@ -33,6 +34,7 @@ part 'router.g.dart';
 const _publicPaths = {
   '/sign-in',
   '/sign-in/email',
+  '/reset-password',
   '/update-required',
   '/activate',
   // Firebase's email-link path; App Links deliver it to the app.
@@ -136,6 +138,12 @@ GoRouter router(Ref ref) {
                 EmailSignInScreen(showEmulatorHint: env.useEmulators),
           ),
         ],
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (_, state) => ResetPasswordScreen(
+          initialEmail: state.uri.queryParameters['email'],
+        ),
       ),
       GoRoute(
         path: '/update-required',

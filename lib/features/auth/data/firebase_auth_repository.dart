@@ -75,6 +75,8 @@ class FirebaseAuthRepository implements AuthRepository {
         password: password,
       );
       await credential.user?.updateDisplayName(name);
+      // AUTH-3: email accounts start unverified; send the link right away.
+      await sendEmailVerification();
       // The token refresh carries the new name to watchUser listeners.
       await credential.user?.reload();
     } on FirebaseAuthException catch (e) {
@@ -83,6 +85,50 @@ class FirebaseAuthRepository implements AuthRepository {
         'weak-password' ||
         'password-does-not-meet-requirements' => WeakPassword(e.code),
         'invalid-email' => InvalidInput(e.code),
+        'too-many-requests' => RateLimited(e.code),
+        'network-request-failed' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null || user.emailVerified) return;
+    try {
+      await user.sendEmailVerification(
+        ActionCodeSettings(url: 'https://$linkHost/'),
+      );
+    } on FirebaseAuthException catch (e) {
+      throw switch (e.code) {
+        'too-many-requests' => RateLimited(e.code),
+        'network-request-failed' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  Future<void> reloadUser() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    await user.reload();
+    // reload() doesn't emit on idTokenChanges; a forced token refresh does,
+    // so watchUser picks up the new emailVerified value.
+    await user.getIdToken(true);
+  }
+
+  @override
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      // With enumeration protection, unknown emails don't error. If a project
+      // without it does, still show the generic "if an account exists" note.
+      if (e.code == 'user-not-found') return;
+      throw switch (e.code) {
+        'invalid-email' || 'missing-email' => InvalidInput(e.code),
         'too-many-requests' => RateLimited(e.code),
         'network-request-failed' => Offline(e.code),
         _ => UnknownFailure(e.code),

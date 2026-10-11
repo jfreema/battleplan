@@ -2,6 +2,7 @@ import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/router.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
+import 'package:battleplan/features/auth/presentation/verify_email_banner.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +38,9 @@ class BattleplanApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: ref.watch(routerProvider),
+      // The email verification banner sits above every screen (AUTH-3).
+      builder: (context, child) =>
+          VerifyEmailBanner.wrap(child ?? const SizedBox.shrink()),
     );
     if (banner == null) return app;
     return Directionality(

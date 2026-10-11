@@ -6,6 +6,7 @@ import 'package:battleplan/features/auth/presentation/sign_in_controller.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_error_text.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Minimum password length, matching the project's password policy (AUTH-2).
@@ -174,6 +175,18 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                       ),
                       if (!creating) ...[
                         const SizedBox(height: Space.sm),
+                        TextButton(
+                          onPressed: () => context.push(
+                            Uri(
+                              path: '/reset-password',
+                              queryParameters: {
+                                if (_email.text.trim().isNotEmpty)
+                                  'email': _email.text.trim(),
+                              },
+                            ).toString(),
+                          ),
+                          child: Text(l10n.forgotPassword),
+                        ),
                         TextButton(
                           onPressed: loading
                               ? null

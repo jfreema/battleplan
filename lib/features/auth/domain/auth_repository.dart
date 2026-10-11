@@ -20,6 +20,18 @@ abstract interface class AuthRepository {
     required String password,
   });
 
+  /// Sends (or re-sends) the email verification link (AUTH-3).
+  Future<void> sendEmailVerification();
+
+  /// Re-reads the signed-in user from the server, so a just-verified email
+  /// shows as verified without signing out.
+  Future<void> reloadUser();
+
+  /// Sends a password reset email (AUTH-4). Succeeds whether or not an
+  /// account exists for [email], so the app never reveals which emails have
+  /// accounts (email enumeration protection, ARCH §6.1).
+  Future<void> sendPasswordReset(String email);
+
   /// Sign in with Apple: the native sheet on iOS, a web flow on Android and
   /// web. Returns normally if the person cancels. Needs the Apple Developer
   /// membership before it works (roadmap task 109).

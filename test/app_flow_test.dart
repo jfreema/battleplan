@@ -83,6 +83,25 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Create account'));
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    // AUTH-3: the new email account sees the verification banner.
+    expect(find.textContaining('Verify your email'), findsOneWidget);
+  });
+
+  testWidgets('password reset always shows the same confirmation', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository();
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.text('Continue with email'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(0), 'nobody@example.com');
+    await tester.tap(find.text('Forgot password?'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reset password'), findsOneWidget);
+    await tester.tap(find.text('Send reset link'));
+    await tester.pumpAndSettle();
+    expect(auth.resetEmails, ['nobody@example.com']);
+    expect(find.textContaining('If an account exists'), findsOneWidget);
   });
 
   testWidgets('a short password is caught before sending', (tester) async {
