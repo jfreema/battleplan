@@ -48,11 +48,11 @@
         ]
       },
       {
-        "source": "**/*.@(js|wasm|mjs)",
+        "source": "**/*.@(js|wasm|mjs|json|html)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=3600"
+            "value": "no-cache"
           }
         ]
       }
