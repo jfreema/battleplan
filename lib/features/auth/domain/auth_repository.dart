@@ -75,6 +75,10 @@ abstract interface class AuthRepository {
   /// A fresh sign-in with Google or Apple ([providerId]).
   Future<void> reauthenticateWithProvider(String providerId);
 
+  /// Deletes the account and its data on the server, then signs out here
+  /// (AUTH-10). Throws RequiresRecentLogin without a fresh sign-in.
+  Future<void> deleteAccount();
+
   Future<void> signOut();
 
   /// Ends this account's sessions on every device, then signs out here

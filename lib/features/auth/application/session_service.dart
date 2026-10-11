@@ -21,6 +21,13 @@ class SessionService {
     await _auth.signOut();
   }
 
+  /// Deletes the account (AUTH-10). The caller wraps this in
+  /// withFreshSignIn, since the server needs a recent sign-in.
+  Future<void> deleteAccount() async {
+    await _push.unregister();
+    await _auth.deleteAccount();
+  }
+
   /// Ends every session for this account (other devices within an hour),
   /// then signs out here.
   Future<void> signOutEverywhere() async {

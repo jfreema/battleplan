@@ -101,6 +101,34 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "authorId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "authorName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "rsvps",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "participantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "eventStartAt",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

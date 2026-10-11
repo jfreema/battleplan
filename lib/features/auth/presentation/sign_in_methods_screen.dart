@@ -5,6 +5,7 @@ import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/presentation/email_sign_in_screen.dart';
+import 'package:battleplan/features/auth/presentation/fresh_sign_in.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -23,19 +24,14 @@ class SignInMethodsScreen extends ConsumerStatefulWidget {
 class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
   bool _busy = false;
 
-  /// Runs [action]. If it needs a fresh sign-in, asks for one and retries
-  /// once. Shows [done] on success and a plain message on failure.
+  /// Runs [action], asking for a fresh sign-in first if needed. Shows
+  /// [done] on success and a plain message on failure.
   Future<void> _run(Future<void> Function() action, {String? done}) async {
     final l10n = AppLocalizations.of(context);
     setState(() => _busy = true);
     try {
-      try {
-        await action();
-      } on RequiresRecentLogin {
-        if (!await _reauthenticate()) return;
-        await action();
-      }
-      if (mounted && done != null) showAppSnackBar(context, done);
+      final ran = await withFreshSignIn(context, ref, action);
+      if (ran && mounted && done != null) showAppSnackBar(context, done);
     } on AppFailure catch (e) {
       if (!mounted) return;
       showAppSnackBar(context, switch (e) {
@@ -49,61 +45,6 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  /// A fresh sign-in: the password if the account has one, otherwise Google.
-  Future<bool> _reauthenticate() async {
-    final user = ref.read(authUserProvider).value;
-    if (user == null || !mounted) return false;
-    final auth = ref.read(authRepositoryProvider);
-    if (user.providerIds.contains('password')) {
-      final password = await _askText(
-        title: AppLocalizations.of(context).reauthTitle,
-        label: AppLocalizations.of(context).passwordLabel,
-        obscure: true,
-      );
-      if (password == null) return false;
-      await auth.reauthenticateWithPassword(password);
-    } else {
-      final provider = user.providerIds.contains('google.com')
-          ? 'google.com'
-          : user.providerIds.first;
-      await auth.reauthenticateWithProvider(provider);
-    }
-    return true;
-  }
-
-  Future<String?> _askText({
-    required String title,
-    required String label,
-    bool obscure = false,
-    String? helper,
-  }) {
-    final l10n = AppLocalizations.of(context);
-    final controller = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          obscureText: obscure,
-          decoration: InputDecoration(labelText: label, helperText: helper),
-          onSubmitted: (v) => Navigator.of(context).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text(l10n.activateContinue),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _removeMethod(
@@ -129,7 +70,8 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
 
   Future<void> _setPassword(bool hasPassword) async {
     final l10n = AppLocalizations.of(context);
-    final password = await _askText(
+    final password = await askText(
+      context,
       title: hasPassword ? l10n.changePassword : l10n.setPassword,
       label: l10n.newPasswordLabel,
       helper: l10n.passwordRule,
@@ -148,7 +90,8 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
 
   Future<void> _changeEmail() async {
     final l10n = AppLocalizations.of(context);
-    final email = await _askText(
+    final email = await askText(
+      context,
       title: l10n.changeEmail,
       label: l10n.newEmailLabel,
     );

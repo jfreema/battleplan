@@ -1,9 +1,10 @@
 // Thin entry points for the accounts domain (ARCH §6.4).
-import { onCall } from 'firebase-functions/v2/https';
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { requireAuth } from '../shared/guards.js';
 import { parse } from '../shared/validate.js';
 import {
+  deleteAccount as deleteAll,
   ensureUserProfile as ensure,
   recordSignInMethodChange as recordChange,
   signOutEverywhere as revokeAll,
@@ -37,4 +38,18 @@ export const signOutEverywhere = onCall(async (request) => {
 export const recordSignInMethodChange = onCall(async (request) => {
   const uid = requireAuth(request);
   return recordChange(uid);
+});
+
+/** How recent the sign-in must be to delete an account (AUTH-7). */
+const RECENT_SIGN_IN_SECONDS = 5 * 60;
+
+/** Deletes the caller's account and data (AUTH-10). Needs a fresh sign-in. */
+export const deleteAccount = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const authTime = request.auth?.token.auth_time ?? 0;
+  if (Date.now() / 1000 - authTime > RECENT_SIGN_IN_SECONDS) {
+    throw new HttpsError('failed-precondition', 'requires-recent-login');
+  }
+  await deleteAll(uid);
+  return { ok: true };
 });

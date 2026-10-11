@@ -276,6 +276,26 @@ void main() {
     expect(find.text('Google linked.'), findsOneWidget);
   });
 
+  testWidgets('deleting the account confirms, signs in again, then deletes', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository(
+      user: coach.copyWith(providerIds: ['google.com']),
+    )..needsRecentLogin = true;
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Delete account'), 100);
+    await tester.tap(find.text('Delete account'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete your account?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
+    await tester.pumpAndSettle();
+    expect(auth.reauthedWith, 'google.com');
+    expect(auth.deleted, isTrue);
+    expect(find.text('Continue with Google'), findsOneWidget);
+  });
+
   testWidgets('the theme switch applies at once and is remembered', (
     tester,
   ) async {

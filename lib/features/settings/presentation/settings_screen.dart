@@ -1,8 +1,11 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
+import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,6 +94,38 @@ class SettingsScreen extends ConsumerWidget {
               );
               if (ok) {
                 await ref.read(sessionServiceProvider).signOutEverywhere();
+              }
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              AppIcons.error,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: Text(
+              l10n.deleteAccount,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            onTap: () async {
+              final ok = await showConfirmDialog(
+                context,
+                title: l10n.deleteAccountTitle,
+                message: l10n.deleteAccountBody,
+                confirmLabel: l10n.deleteAccount,
+                cancelLabel: l10n.cancel,
+                destructive: true,
+              );
+              if (!ok || !context.mounted) return;
+              try {
+                await withFreshSignIn(
+                  context,
+                  ref,
+                  ref.read(sessionServiceProvider).deleteAccount,
+                );
+              } on AppFailure {
+                if (context.mounted) {
+                  showAppSnackBar(context, l10n.deleteAccountFailed);
+                }
               }
             },
           ),

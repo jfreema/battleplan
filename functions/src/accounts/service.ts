@@ -4,6 +4,12 @@ import { logger } from 'firebase-functions/v2';
 import { randomUUID } from 'node:crypto';
 import { auth, db, storage } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
+import { anonymizeAuthor } from '../chat/service.js';
+import { removeAccountNotifications } from '../notify/service.js';
+import { removeAccountFromPlayers } from '../players/service.js';
+import { removeAccountBlocks } from '../safety/service.js';
+import { removeUpcomingRsvps } from '../schedule/service.js';
+import { removeAccountFromTeams } from '../teams/service.js';
 import { initialDisplayName, needsSetup, signInMethodsOf, type AuthIdentity } from './profile.js';
 
 export interface SetupInput {
@@ -152,4 +158,29 @@ export async function recordSignInMethodChange(
     logger.info('sign_in_methods_changed', { uid, added, removed });
   }
   return { added, removed };
+}
+
+/**
+ * Deletes an account (AUTH-10, required by both stores). Each domain clears
+ * its own data through its service; then the profile, avatar files, and the
+ * Auth user go. Safe to retry: every step skips what's already gone.
+ */
+export async function deleteAccount(uid: string): Promise<void> {
+  await removeAccountFromTeams(uid);
+  await removeAccountFromPlayers(uid);
+  await removeUpcomingRsvps(uid);
+  await anonymizeAuthor(uid);
+  await removeAccountNotifications(uid);
+  await removeAccountBlocks(uid);
+  await storage()
+    .bucket()
+    .deleteFiles({ prefix: `users/${uid}/` })
+    .catch((e) => logger.warn('Avatar cleanup failed', { uid, error: String(e) }));
+  await db().collection(Collections.users).doc(uid).delete();
+  await auth()
+    .deleteUser(uid)
+    .catch((e: { code?: string }) => {
+      if (e.code !== 'auth/user-not-found') throw e;
+    });
+  logger.info('account_deleted', { uid });
 }

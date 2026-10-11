@@ -385,6 +385,21 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> deleteAccount() async {
+    try {
+      await _functions.httpsCallable('deleteAccount').call<void>();
+    } on FirebaseFunctionsException catch (e) {
+      throw switch (e.code) {
+        'failed-precondition' => RequiresRecentLogin(e.message),
+        'unavailable' || 'deadline-exceeded' => Offline(e.message),
+        _ => UnknownFailure('${e.code}: ${e.message}'),
+      };
+    }
+    // The Auth user is gone; clear the local session too.
+    await _auth.signOut();
+  }
+
+  @override
   Future<void> signOut() => _auth.signOut();
 
   @override

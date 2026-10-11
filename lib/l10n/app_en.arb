@@ -187,5 +187,9 @@
     }
   },
   "reauthTitle": "Confirm it's you",
-  "lastMethodNote": "Your only sign-in method can't be removed. Link another one first."
+  "lastMethodNote": "Your only sign-in method can't be removed. Link another one first.",
+  "deleteAccount": "Delete account",
+  "deleteAccountTitle": "Delete your account?",
+  "deleteAccountBody": "This permanently deletes your profile, your team memberships, and your RSVPs for upcoming events. Your past messages stay, shown from \"Deleted user\". Teams you own pass to their longest-serving admin or member. This can't be undone.",
+  "deleteAccountFailed": "Couldn't delete your account. Check your connection and try again."
 }

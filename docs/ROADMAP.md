@@ -56,7 +56,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 31. ✅ First-run setup: name, photo, 18+ confirmation, Terms acceptance (AUTH-5, SAFE-3, SAFE-6); `ensureUserProfile`; the profile kept separate from sign-in providers (AUTH-12).
 32. ✅ Sessions: stay signed in, sign out, sign out of all devices (AUTH-9).
 33. ✅ Safe account linking and the Sign-in methods screen (AUTH-7, AUTH-8, SET-4). *The emailed security notice for method changes waits for email sending (task 45); changes are recorded and logged until then.*
-34. Disabled accounts (AUTH-11) and account deletion (AUTH-10).
+34. ✅ Disabled accounts (AUTH-11) and account deletion (AUTH-10).
 35. Profile and About screens (SET-1, SET-6); the theme setting syncs to the account (SET-2).
 36. The super-admin bootstrap script.
 37. Rules and tests for `users`.

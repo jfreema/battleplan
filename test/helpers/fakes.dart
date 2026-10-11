@@ -142,6 +142,15 @@ class FakeAuthRepository implements AuthRepository {
     needsRecentLogin = false;
   }
 
+  bool deleted = false;
+
+  @override
+  Future<void> deleteAccount() async {
+    _requireRecent();
+    deleted = true;
+    await signOut();
+  }
+
   /// When true, Google sign-in behaves as if the person closed the sheet.
   bool googleCancels = false;
 

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/update_required_screen.dart';
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/version.dart';
@@ -9,6 +10,7 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/features/admin/presentation/admin_screen.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/presentation/activate_screen.dart';
+import 'package:battleplan/features/auth/presentation/disabled_screen.dart';
 import 'package:battleplan/features/auth/presentation/email_sign_in_screen.dart';
 import 'package:battleplan/features/auth/presentation/reset_password_screen.dart';
 import 'package:battleplan/features/auth/presentation/setup_screen.dart';
@@ -92,6 +94,12 @@ GoRouter router(Ref ref) {
         return state.uri.queryParameters['from'] ?? '/';
       }
       if (path == '/activate' || path == '/__/auth/links') return '/';
+      // Disabled accounts see only the disabled screen (AUTH-11).
+      final disabled =
+          ref.read(myProfileProvider).value?.status == UserStatus.disabled;
+      if (disabled) return path == '/disabled' ? null : '/disabled';
+      if (path == '/disabled') return '/';
+
       // First-run setup (AUTH-5) comes before anything else. Until the
       // profile exists (the callable creates it), nothing is blocked.
       final profile = ref.read(myProfileProvider).value;
@@ -150,6 +158,7 @@ GoRouter router(Ref ref) {
         ],
       ),
       GoRoute(path: '/setup', builder: (_, _) => const SetupScreen()),
+      GoRoute(path: '/disabled', builder: (_, _) => const DisabledScreen()),
       GoRoute(
         path: '/reset-password',
         builder: (_, state) => ResetPasswordScreen(
