@@ -2,6 +2,8 @@ import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/core/services/remote_config.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 
+/// Firebase Remote Config behind [RemoteConfig]. Fetches at most hourly and
+/// never blocks launch: on any failure the defaults stay in place.
 class FirebaseRemoteConfigService implements RemoteConfig {
   new(this._config);
 

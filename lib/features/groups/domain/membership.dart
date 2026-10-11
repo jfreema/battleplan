@@ -20,8 +20,10 @@ abstract class Membership with _$Membership {
 
   const new _();
 
+  /// Owners and admins manage the team (SPEC §3).
   bool get isAdmin => role == MemberRole.owner || role == MemberRole.admin;
 
+  /// True when pushes from this team are off or snoozed (NOTIF-3).
   bool isMutedAt(DateTime now) =>
       notificationLevel == NotificationLevel.none ||
       (mutedUntil != null && mutedUntil!.isAfter(now));

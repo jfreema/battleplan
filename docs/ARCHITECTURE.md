@@ -1292,3 +1292,62 @@ Each phase is incremental and reversible.
 | D30 | Widgets import Flutter's standalone `material_ui` package, not `package:flutter/material.dart` | Material moved out of the Flutter framework (Flutter 3.44+), and go_router 18 already uses it; one Material library avoids mismatched `ThemeData` types | — |
 | D31 | Local development uses the emulators under a `demo-` project ID with placeholder app options, selected by `--dart-define=USE_EMULATORS=true` | Runs with no Firebase login or config, and a `demo-` project can't reach any cloud resource | — |
 | D32 | Each feature's repository providers are declared in its `application/providers.dart` and overridden with Firebase implementations in `app/providers.dart` | Presentation never imports `data/` or `app/`, and tests swap in fakes with the same overrides | — |
+
+---
+
+## 15. Components as built
+
+What exists in the code today, and where. This section is updated with every change; the sections above describe the full design. Last updated: M0 (2026-10-11).
+
+### App startup
+
+| Component | File | What it does |
+|---|---|---|
+| Entry points | `lib/main_dev.dart`, `lib/main_prod.dart` (`lib/main.dart` = dev) | Pick the flavor and call `bootstrap` |
+| Bootstrap | `lib/app/bootstrap.dart` | Initializes Firebase (cloud, or the emulators with `USE_EMULATORS=true`), offline cache, error handlers, platform services; then runs the app inside a `ProviderScope` |
+| Provider wiring | `lib/app/providers.dart` | The one place Firebase-backed repositories and services are constructed and injected (D32) |
+| App services | `lib/app/app_services.dart`, `lib/app/services/` | Flavor, version, Analytics, Crashlytics or web error reporting, Remote Config |
+| Root widget | `lib/app/app.dart` | Theme, localization, router; the EMU/DEV ribbon on dev builds |
+| Router | `lib/app/router.dart` | go_router routes and guards: signed out → `/sign-in`; too old → `/update-required`; `/` → last-used or most recent team, or `/welcome`; `/admin` needs `superAdmin`. Remembers the last team and tab |
+
+### Core (`lib/core/`)
+
+| Component | File | What it does |
+|---|---|---|
+| Failures | `failure.dart` | `AppFailure` subtypes repositories throw instead of Firebase exceptions |
+| IDs | `ids.dart` | `GroupId`, `UserId`, … value types; `CompositeIds` builds `{a}_{b}` keys |
+| Constants | `constants.g.dart` | Generated from `shared/constants.json`: collection names, limits, enums |
+| Design system | `design/tokens.dart`, `app_theme.dart`, `app_colors.dart`, `app_icons.dart` | Spacing, corners, breakpoints, type scale; light and dark themes; RSVP, bubble, and event colors; the icon set |
+| Widgets | `widgets/` | `Avatar`, `TeamBadge`, `EmptyState`, `SkeletonList`, `showConfirmDialog`, `showAdaptiveSheet`, `showAppSnackBar` |
+| Service interfaces | `services/` | `Analytics`, `CrashReporter`, `RemoteConfig`, with no-op defaults |
+| Env, logging, versions | `env.dart`, `logging.dart`, `version.dart` | Build flavor; the one logger; version comparison for forced updates |
+
+### Features (`lib/features/`)
+
+| Feature | Built so far |
+|---|---|
+| `auth` | `AuthUser`, `AuthRepository` (Firebase impl), sign-in screen with email working and the Google/Apple/Facebook buttons disabled until M1 |
+| `groups` | `Group`, `Membership`, `MyTeam`; `GroupRepository` and `MemberRepository` (Firestore impls); the `myTeams` provider (switcher list, most recent first); `TeamShell` (header, bottom bar or rail, team menu, account menu, Ctrl/⌘+K), `TeamSwitcherList`, `WelcomeScreen` |
+| `settings` | `LocalPrefsRepository` (SharedPreferences impl) for theme and last team; settings screen with the theme switch and sign-out |
+| `chat`, `schedule`, `documents`, `notifications`, `admin` | Placeholder screens |
+
+### Backend
+
+| Component | File | What it does |
+|---|---|---|
+| Firestore rules | `firestore.rules` | Deny by default; membership checks, message create and rate limit, reactions, RSVP rule, read rules for every collection |
+| Storage rules | `storage.rules` | Member checks, team quota, size and type limits |
+| Indexes | `firestore.indexes.json` | Composite indexes, index exemptions, TTL policies |
+| Functions | `functions/src/` | `logClientError` (ops). Shared helpers for IDs and input validation |
+| Rules tests | `functions/test/rules/firestore.test.ts` | 28 tests: isolation, rate limit, RSVPs, cache fields |
+| Seed data | `tools/seed/seed.ts` | Sample people, adult and youth teams, players, messages, events, RSVPs for the emulators |
+
+### Tooling
+
+| Component | File |
+|---|---|
+| Constants generator | `tools/gen_constants.dart` |
+| Import-boundary check | `tools/check_imports.sh` |
+| CI | `.github/workflows/ci.yml` |
+| VS Code | `.vscode/launch.json`, `tasks.json` |
+| How to run locally | [DEVELOPMENT.md](DEVELOPMENT.md) |

@@ -4,6 +4,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'sign_in_controller.g.dart';
 
+/// State for the sign-in screen: idle, loading, or the last error.
+/// Navigation after success is the router's job (it watches the auth user).
 @riverpod
 class SignInController extends _$SignInController {
   @override

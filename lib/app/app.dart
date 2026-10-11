@@ -7,9 +7,14 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// The root widget: theme, localization, and the router.
+///
+/// Dev builds are wrapped in a corner ribbon ("EMU" or "DEV") so they're
+/// never mistaken for prod.
 class BattleplanApp extends ConsumerWidget {
   const new({super.key});
 
+  // Built once; rebuilding ThemeData on every frame is wasteful.
   static final ThemeData _light = AppTheme.light();
   static final ThemeData _dark = AppTheme.dark();
 

@@ -9,6 +9,7 @@ part 'providers.g.dart';
 AuthRepository authRepository(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
 
+/// The signed-in user, or null. The router and most screens watch this.
 @Riverpod(keepAlive: true)
 Stream<AuthUser?> authUser(Ref ref) =>
     ref.watch(authRepositoryProvider).watchUser();

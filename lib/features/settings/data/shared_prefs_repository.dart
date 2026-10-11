@@ -2,6 +2,8 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Stores device-local preferences in SharedPreferences (localStorage on
+/// web). Owns no Firestore data.
 class SharedPrefsRepository implements LocalPrefsRepository {
   new(this._prefs);
 
@@ -9,6 +11,9 @@ class SharedPrefsRepository implements LocalPrefsRepository {
 
   static const _themeKey = 'themePreference';
   static const _lastRouteKey = 'lastTeamRoute';
+
+  /// Every key this repository uses. The cache in bootstrap only loads
+  /// these, so stray keys from other code are never read.
   static const Set<String> keys = {_themeKey, _lastRouteKey};
 
   @override
