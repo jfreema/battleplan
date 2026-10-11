@@ -129,5 +129,8 @@
   "setupAdult": "I'm 18 or older",
   "setupAdultHelp": "Battleplan accounts are for adults. Kids on youth teams don't need one; their parents answer for them.",
   "setupTerms": "I agree to the Terms of Use, including zero tolerance for objectionable content and abusive behavior, and the Privacy Policy",
-  "setupFailed": "Couldn't save your profile. Check your connection and try again."
+  "setupFailed": "Couldn't save your profile. Check your connection and try again.",
+  "signOutEverywhere": "Sign out of all devices",
+  "signOutEverywhereHelp": "Ends Battleplan sessions on all your phones, tablets, and browsers. Other devices sign out within an hour.",
+  "signOutEverywhereConfirmTitle": "Sign out of all devices?"
 }

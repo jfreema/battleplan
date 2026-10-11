@@ -8,6 +8,7 @@ import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
@@ -339,7 +340,7 @@ class _AccountButton extends ConsumerWidget {
       onSelected: (value) => switch (value) {
         'settings' => context.push('/settings'),
         'admin' => context.push('/admin'),
-        'signOut' => ref.read(authRepositoryProvider).signOut(),
+        'signOut' => ref.read(sessionServiceProvider).signOut(),
         _ => null,
       },
       itemBuilder: (_) => [

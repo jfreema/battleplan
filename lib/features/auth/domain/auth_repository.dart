@@ -54,4 +54,8 @@ abstract interface class AuthRepository {
   Future<void> signInWithLink({required String email, required Uri link});
 
   Future<void> signOut();
+
+  /// Ends this account's sessions on every device, then signs out here
+  /// (AUTH-9). Other devices sign out within an hour.
+  Future<void> signOutEverywhere();
 }

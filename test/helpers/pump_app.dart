@@ -3,6 +3,7 @@ import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,6 +18,7 @@ Future<FakeLocalPrefs> pumpApp(
   List<dynamic> memberships = const [],
   FakeLocalPrefs? prefs,
   FakeUserRepository? users,
+  FakePushRepository? push,
 }) async {
   final localPrefs = prefs ?? FakeLocalPrefs();
   await tester.pumpWidget(
@@ -35,6 +37,7 @@ Future<FakeLocalPrefs> pumpApp(
           FakeMemberRepository(memberships.cast()),
         ),
         localPrefsRepositoryProvider.overrideWithValue(localPrefs),
+        pushRepositoryProvider.overrideWithValue(push ?? FakePushRepository()),
       ],
       child: const BattleplanApp(),
     ),

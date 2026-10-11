@@ -17,6 +17,10 @@ abstract interface class PushRepository {
   /// null if the person declined or push isn't available here.
   Future<String?> requestPermissionAndGetToken();
 
+  /// Forgets this device's token, so it stops getting pushes (sign-out,
+  /// AUTH-9). Device docs are removed here too once they exist (M4).
+  Future<void> unregister();
+
   /// Messages received while the app is in the foreground.
   Stream<PushMessage> foregroundMessages();
 }

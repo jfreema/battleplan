@@ -40,6 +40,7 @@ List<Override> buildOverrides({
   authRepositoryProvider.overrideWithValue(
     FirebaseAuthRepository(
       auth,
+      functions,
       linkHost: env.isProd
           ? 'getbattleplan.app'
           : 'battleplan-dev-ecce4.web.app',

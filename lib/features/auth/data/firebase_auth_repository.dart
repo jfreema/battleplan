@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 /// Firebase Authentication behind [AuthRepository]. Firebase types and
 /// exceptions stay in this file; callers get [AuthUser] and [AppFailure]s.
 class FirebaseAuthRepository implements AuthRepository {
-  new(this._auth, {required this.linkHost});
+  new(this._auth, this._functions, {required this.linkHost});
+
+  final FirebaseFunctions _functions;
 
   /// The Hosting domain email links point at (never a Dynamic Links domain).
   final String linkHost;
@@ -242,4 +245,17 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() => _auth.signOut();
+
+  @override
+  Future<void> signOutEverywhere() async {
+    try {
+      await _functions.httpsCallable('signOutEverywhere').call<void>();
+    } on FirebaseFunctionsException catch (e) {
+      throw switch (e.code) {
+        'unavailable' || 'deadline-exceeded' => Offline(e.message),
+        _ => UnknownFailure('${e.code}: ${e.message}'),
+      };
+    }
+    await _auth.signOut();
+  }
 }

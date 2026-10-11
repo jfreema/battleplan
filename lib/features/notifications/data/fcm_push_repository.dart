@@ -29,6 +29,15 @@ class FcmPushRepository implements PushRepository {
   }
 
   @override
+  Future<void> unregister() async {
+    try {
+      await _messaging.deleteToken();
+    } on Object catch (e) {
+      Log.warn('Could not delete the push token', e);
+    }
+  }
+
+  @override
   Stream<PushMessage> foregroundMessages() => FirebaseMessaging.onMessage.map(
     (m) => PushMessage(
       title: m.notification?.title,
@@ -44,6 +53,9 @@ class UnavailablePushRepository implements PushRepository {
 
   @override
   Future<String?> requestPermissionAndGetToken() async => null;
+
+  @override
+  Future<void> unregister() async {}
 
   @override
   Stream<PushMessage> foregroundMessages() => const Stream.empty();

@@ -10,6 +10,7 @@ import 'package:battleplan/features/auth/domain/user_repository.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
 
 class FakeAuthRepository implements AuthRepository {
@@ -79,6 +80,14 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> sendPasswordReset(String email) async => resetEmails.add(email);
+
+  bool signedOutEverywhere = false;
+
+  @override
+  Future<void> signOutEverywhere() async {
+    signedOutEverywhere = true;
+    await signOut();
+  }
 
   /// When true, Google sign-in behaves as if the person closed the sheet.
   bool googleCancels = false;
@@ -213,4 +222,17 @@ class FakeUserRepository implements UserRepository {
     needsSetup = false;
     _changes.add(null);
   }
+}
+
+class FakePushRepository implements PushRepository {
+  int unregistered = 0;
+
+  @override
+  Future<String?> requestPermissionAndGetToken() async => null;
+
+  @override
+  Future<void> unregister() async => unregistered++;
+
+  @override
+  Stream<PushMessage> foregroundMessages() => const Stream.empty();
 }

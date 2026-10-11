@@ -3,7 +3,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { requireAuth } from '../shared/guards.js';
 import { parse } from '../shared/validate.js';
-import { ensureUserProfile as ensure } from './service.js';
+import { ensureUserProfile as ensure, signOutEverywhere as revokeAll } from './service.js';
 
 const EnsureInput = z.object({
   setup: z
@@ -20,4 +20,11 @@ export const ensureUserProfile = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(EnsureInput, request.data ?? {});
   return ensure(uid, input.setup);
+});
+
+/** Signs the caller out on every device (AUTH-9). */
+export const signOutEverywhere = onCall(async (request) => {
+  const uid = requireAuth(request);
+  await revokeAll(uid);
+  return { ok: true };
 });

@@ -120,3 +120,12 @@ async function copyProviderPhoto(uid: string, url: string): Promise<void> {
     logger.warn('Could not copy the provider photo', { uid, error: String(e) });
   }
 }
+
+/**
+ * Ends every session for [uid] (AUTH-9): revokes refresh tokens, so other
+ * devices are signed out when their current ID token expires (within an
+ * hour) and can't refresh it.
+ */
+export async function signOutEverywhere(uid: string): Promise<void> {
+  await auth().revokeRefreshTokens(uid);
+}

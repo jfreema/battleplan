@@ -1,7 +1,8 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
-import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,7 +70,24 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(AppIcons.signOut),
             title: Text(l10n.signOut),
-            onTap: () => ref.read(authRepositoryProvider).signOut(),
+            onTap: () => ref.read(sessionServiceProvider).signOut(),
+          ),
+          ListTile(
+            leading: const Icon(AppIcons.signOut),
+            title: Text(l10n.signOutEverywhere),
+            subtitle: Text(l10n.signOutEverywhereHelp),
+            onTap: () async {
+              final ok = await showConfirmDialog(
+                context,
+                title: l10n.signOutEverywhereConfirmTitle,
+                message: l10n.signOutEverywhereHelp,
+                confirmLabel: l10n.signOutEverywhere,
+                cancelLabel: l10n.cancel,
+              );
+              if (ok) {
+                await ref.read(sessionServiceProvider).signOutEverywhere();
+              }
+            },
           ),
         ],
       ),

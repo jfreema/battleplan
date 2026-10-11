@@ -217,6 +217,26 @@ void main() {
     );
   });
 
+  testWidgets('signing out of all devices asks first, then signs out', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository(user: coach);
+    final push = FakePushRepository();
+    await pumpApp(tester, auth: auth, push: push);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign out of all devices'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign out of all devices?'), findsOneWidget);
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Sign out of all devices'),
+    );
+    await tester.pumpAndSettle();
+    expect(auth.signedOutEverywhere, isTrue);
+    expect(push.unregistered, 1);
+    expect(find.text('Continue with Google'), findsOneWidget);
+  });
+
   testWidgets('the theme switch applies at once and is remembered', (
     tester,
   ) async {

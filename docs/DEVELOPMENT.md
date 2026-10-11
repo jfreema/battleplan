@@ -66,6 +66,15 @@ flutter run -d chrome -t lib/main_dev.dart
 
 Sign-in on the dev project works once Authentication is turned on in the Firebase console.
 
+## Deploying to dev
+
+Every push to `main` deploys Firestore rules, indexes, and the web app to `battleplan-dev-ecce4` through GitHub Actions. Functions and Storage rules deploy from your Mac for now, because the GitHub deploy account would need more permissions for them:
+
+```sh
+npm --prefix functions run build
+firebase deploy --only functions,storage --project battleplan-dev-ecce4
+```
+
 ## Everyday commands
 
 | What | Command |
