@@ -497,7 +497,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - Too many attempts: "Try again in a few minutes."
 
 - **INV-9 · MVP · Standard links, no Dynamic Links.**
-  - Invite links, QR codes, and email links are plain HTTPS addresses on Battleplan's own domain, such as `https://<domain>/join/K7XP-M2QR`.
+  - Invite links, QR codes, and email links are plain HTTPS addresses on Battleplan's own domain, such as `https://getbattleplan.app/join/K7XP-M2QR`.
   - With the app installed, iOS Universal Links and Android App Links open it directly. Otherwise the same address opens the website.
   - **Battleplan doesn't use Firebase Dynamic Links**, which Google shut down on August 25, 2025. Firebase Hosting serves the domain and the Apple and Android verification files (ARCH §6.6).
 
@@ -1060,7 +1060,7 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
 
 ### M0 · Foundation
 
-- [ ] Create `battleplan-dev` on Firebase's free plan and build against the Emulator Suite. Paid plans and purchases wait until a phase needs them ([TODO.md](../TODO.md)): dev moves to Blaze when we first deploy Functions or Storage, and `battleplan-prod`, with its permanent region (ARCH §6.10), is created for the team beta.
+- [ ] Create the Firebase projects on the free plan (done 2026-10-10: dev `battleplan-dev-ecce4`, prod `battleplan-prod`) and build against the Emulator Suite. Paid plans and purchases wait until a phase needs them ([TODO.md](../TODO.md)): dev moves to Blaze when we first deploy Functions or Storage, and prod gets Blaze and its database, in its permanent region (ARCH §6.10), for the team beta.
 - [ ] `flutter create` with the org ID; dev and prod flavors; `flutterfire configure` for each.
 - [ ] Repo layout, lints, CI, and VS Code launch configs.
 - [ ] Emulator Suite with seed data: several teams, with some people on more than one.
@@ -1255,7 +1255,7 @@ Each question has a default. The build follows the default until someone decides
 | Q5 | Are direct messages needed at launch? GroupMe has them. | Later |
 | Q6 | Reactions: one per person per message, or several? | One |
 | Q7 | On wide screens, bottom tabs or a side rail? | Side rail at 840 px and wider |
-| Q8 | What domain name for invite links and email (e.g. battleplan.team; battleplan.com, .app, and .io are taken)? | Needed before M2 |
+| Q8 | ~~What domain name for invite links and email?~~ **Decided:** `getbattleplan.app`, registered at Cloudflare ($8.20 the first year, then $14.20/year). battleplan.com, .app, and .io are taken. | — |
 | Q9 | Logo and primary color? | Placeholder mark; blue `#2F5BEA` |
 | Q10 | Which email provider? | One with a free tier (e.g. Postmark or Resend) |
 | Q11 | Where are most teams located? | US, so `us-central1` |

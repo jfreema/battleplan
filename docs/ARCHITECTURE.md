@@ -310,10 +310,10 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 
 | | Dev | Prod |
 |---|---|---|
-| Firebase project | `battleplan-dev` | `battleplan-prod` |
+| Firebase project | `battleplan-dev-ecce4` | `battleplan-prod` |
 | Bundle / application ID | `com.<org>.battleplan.dev` | `com.<org>.battleplan` |
 | Entry point | `lib/main_dev.dart` | `lib/main_prod.dart` |
-| Web | `battleplan-dev.web.app` + PR preview channels | custom domain (or `battleplan-prod.web.app`) |
+| Web | `battleplan-dev-ecce4.web.app` + PR preview channels | `getbattleplan.app` (or `battleplan-prod.web.app`) |
 
 - The two flavors have separate app IDs, so dev and prod builds can be installed side by side.
 - `flutterfire configure` generates `firebase_options_dev.dart` and `firebase_options_prod.dart`.
@@ -860,7 +860,7 @@ Plain chat messages don't create center items; unread counts cover them. Replies
 
 - **iOS: Universal Links.** `/.well-known/apple-app-site-association` lists `/join/*`, `/activate*`, and `/g/*`, plus the Associated Domains entitlement in the app.
 - **Android: App Links.** `/.well-known/assetlinks.json` plus intent filters with `autoVerify`.
-- **Hosting.** Firebase Hosting hosts the domain and serves both files as `application/json`, with no redirects.
+- **Hosting.** Firebase Hosting hosts the domain and serves both files as `application/json`, with no redirects. The domain is registered at Cloudflare, which also runs its DNS and email forwarding; the records pointing at Hosting are DNS-only, not proxied (D29).
 - **Web fallback.** When the app isn't installed, the same URL opens the **web app**, which is fully functional. Someone can join and start using Battleplan in the browser right away.
 - **Email links from Firebase Auth** (setup and sign-in links) use `ActionCodeSettings` with:
   - `url` on our domain and `handleCodeInApp: true`;
@@ -1046,7 +1046,9 @@ Integration flows:
   - Rules tests on the emulator
   - `flutter build web` and a deploy to a **Hosting preview channel**, with the URL posted on the PR
 - **On merge to `main`:** deploy rules, indexes, TTL policies, functions, and hosting to **dev**.
-- **On a release tag**, with manual approval: deploy to **prod**. Fastlane or Codemagic builds and uploads to **TestFlight** and the **Play Console internal track**.
+- **On a release**, started by hand: deploy to **prod**. A private repo on GitHub Free has no approval gates (environments and required reviewers), so starting the workflow is the approval. Google accepts prod deploys only from this workflow, through a condition on its Workload Identity Federation provider. Fastlane or Codemagic builds and uploads to **TestFlight** and the **Play Console internal track**.
+- **Deploy access** is keyless: Workload Identity Federation, with one deploy service account per project and no key files in GitHub.
+- **Minutes.** A private repo on GitHub Free gets 2,000 Actions minutes a month. Linux jobs (checks, web builds, Firebase deploys) take a few minutes each and fit easily. macOS jobs count 10×, so where iOS builds run (GitHub, Fastlane on the Mac, Codemagic, or Xcode Cloud) is decided before the team beta.
 - **Versioning.** One semantic version for all platforms, plus a monotonically increasing build number.
 
 ---
@@ -1091,6 +1093,10 @@ Assumptions for one active team: 25 members; 50 messages and 10 photos a day; ea
 
 - **The largest costs are chat reads and photo downloads.** Cloud SQL wouldn't remove either one: chat still needs realtime delivery, and photos are still downloaded. Adding SQL is a **feature decision** (search, reporting), not a way to cut this bill.
 - **Cloud SQL adds a fixed cost on top.** The smallest instances run **24/7** and cost roughly **$10–30/month**, or **$50+** for a production-grade instance, before storage and backups. That fixed cost is why we wait (§12).
+- **The dev project adds about $0.** It costs nothing while on Spark, and most development runs on the emulators.
+  - On Blaze, Firestore and Hosting have free quotas per project, so testing in dev doesn't use prod's.
+  - The Functions, Cloud Scheduler (3 jobs), and Secret Manager free tiers are shared across the billing account. `tick` and `dailyCleanup` in both projects make 4 jobs, so the fourth costs about $0.10/month.
+  - Set the function-image cleanup policy (`firebase functions:artifacts:setpolicy`) in both projects, so deploy images don't pile up in Artifact Registry.
 
 ### 10.2 Cost-efficiency rules
 
@@ -1245,7 +1251,7 @@ Each phase is incremental and reversible.
 | Costs grow with active teams (~$0.25–0.40 each per month) | Cost rules and read budgets (§10.2), per-team storage quota, budget alerts. Decide a funding model before reaching hundreds of teams (SPEC §12, Q4). |
 | Children's data on youth teams | Kids never get accounts or sign in. Adults enter only a player's name, plus an optional jersey number and position: no photos, birthdates, or contact details. The Privacy Policy says so. |
 | Runaway costs from a bug (read loops) | Budget alerts, query limits in rules, App Check, emulator testing. |
-| Wrong Firestore region (it's permanent) | Decide before creating `battleplan-prod`. |
+| Wrong Firestore region (it's permanent) | Decide before creating `battleplan-prod`'s database. |
 
 ---
 
@@ -1262,7 +1268,7 @@ Each phase is incremental and reversible.
 | D7 | Recurring events are expanded into individual event docs | Firestore can't expand recurrence rules at query time; simple date-range queries | — |
 | D8 | One custom design system on all platforms | The "consistent across all 3 platforms" requirement | — |
 | D9 | Bottom tabs on phones, side rail on wide screens | Material adaptive guidance; a bottom bar stretched across a 1440 px desktop window looks out of place | If you want the bottom bar everywhere, it's a one-line change |
-| D10 | Region `us-central1` | Cheapest, Storage free tier, Data Connect available | Before creating prod, if most teams aren't US-based |
+| D10 | Region `us-central1` | Cheapest, Storage free tier, Data Connect available | Before creating prod's database, if most teams aren't US-based |
 | D11 | Team roles in Firestore; only super admin as a custom claim | Claims are small and slow to refresh; team roles change often | — |
 | D12 | Derived counts recomputed rather than incremented | Triggers are at-least-once; recomputing is idempotent | Very large teams |
 | D13 | UI says "Team"; code and data say "group" | Sports teams are the main use; "group" keeps the model general | If non-sports groups become common |
@@ -1281,3 +1287,4 @@ Each phase is incremental and reversible.
 | D26 | Bounded, owned lists embedded (attachments, reactions, poll options) | Cheaper reads; each still maps to a child table | — |
 | D27 | Events in a series are written only by `saveEventSeries`, which posts one card and one notification per change | A 24-practice series would otherwise post 24 chat cards and send 24 pushes | — |
 | D28 | Duplicate is client-only: it prefills the create form from an event, then saves like any new event (or through `saveEventSeries` if Repeat is set) | No new callable, field, or rule; the copy is an ordinary event | — |
+| D29 | `getbattleplan.app` is registered at Cloudflare, which runs its DNS and email forwarding; the app and site stay on Firebase Hosting | Cloudflare sells domains at cost and forwards email free. Auth's `linkDomain` must be a Firebase Hosting domain, and Hosting's rewrites to Functions, preview channels, and auth handler are built in; Cloudflare has no sign-in, offline-sync, or push equivalent for the backend | Hosting bandwidth costs become significant |
