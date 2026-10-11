@@ -24,10 +24,10 @@ Last updated: 2026-10-11, after M0's code merged.
 7. ✅ 👤 **Jared:** Buy `getbattleplan.app` at Cloudflare (Q8).
 8. ✅ 👤 **Jared:** Create the Firebase projects on the free plan: dev `battleplan-dev-ecce4`, prod `battleplan-prod`.
 9. ✅ 👤 **Jared:** Choose the app ID `app.getbattleplan` (`.dev` for dev builds).
-10. 👤 **Jared:** Verify the domain's contact email if Cloudflare asks. **Deadline 2026-10-25**, or the domain goes on hold.
+10. ✅ 👤 **Jared:** Verify the domain's contact email if Cloudflare asks. **Deadline 2026-10-25**, or the domain goes on hold. (no verification email came; the Cloudflare account signs in with Google, so its email is already verified, checked 2026-10-11)
 11. 👤 **Jared:** Make a Battleplan vault in 1Password for every login, key file, and recovery code.
 12. 👤 **Jared:** Check your legal name and address on your Apple Account and Google payments profile (the stores read them in tasks 104 and 123).
-13. 👤 **Jared:** Log in from the terminal: `firebase login`, then `gcloud auth login` and `gcloud auth application-default login`. **This blocks task 23 and spikes 1 to 3 (tasks 27 to 29).**
+13. ✅ 👤 **Jared:** Log in from the terminal: `firebase login`, then `gcloud auth login` and `gcloud auth application-default login`. **This blocks task 23 and spikes 1 to 3 (tasks 27 to 29).**
 
 ## M0 · Foundation
 
