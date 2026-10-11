@@ -26,7 +26,8 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
   final _name = TextEditingController();
   final _description = TextEditingController();
   TeamType _type = TeamType.adult;
-  Sport _sport = Sport.soccer;
+  // Baseball is the default; any sport can be picked.
+  Sport _sport = Sport.baseball;
   int _color = teamColorValues.first;
   String? _timeZone;
   List<String> _zones = const [];
