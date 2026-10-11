@@ -75,7 +75,7 @@ You won't write any Java. Android's build tools and Firebase's local database em
 
 **What this unlocks.** M0 through M3 run entirely on the local emulators, for free:
 
-- sign-in (email, plus simulated Google and Facebook);
+- sign-in (email, plus simulated Google);
 - chat, polls, schedule, and documents;
 - the server functions and security rules.
 
@@ -87,7 +87,7 @@ iOS runs in the Simulator, and Android runs in an emulator or on your own phone.
 
 I'll tell you when each of these comes up.
 
-- [ ] **Meta for Developers app** (free), when we build Facebook sign-in in M1: developers.facebook.com → *Create app* → *Authenticate and request data from users with Facebook Login*. Development mode is enough. App Review waits for Phase 3.
+- [ ] **Meta for Developers app** (free), only when we add Facebook sign-in, now deferred until after M8 (SPEC Q16): developers.facebook.com → *Create app* → *Authenticate and request data from users with Facebook Login*. Development mode is enough. App Review waits for Phase 3.
 - [ ] **Upgrade the dev project (`battleplan-dev-ecce4`) to the Blaze plan** when we first need server functions or photo storage running in the cloud, to test photos and push notifications on real phones (around M3–M4).
   - It needs a card, but expected cost at testing volume is ≈ $0.
   - **Set budget alerts the same day**: Cloud Billing → *Budgets & alerts*, at $5, $25, $50, and $100.
@@ -136,7 +136,7 @@ I'll tell you when each of these comes up.
   - A trader's address and phone number appear on EU store pages. Apple lets an individual show a P.O. box instead of a home address.
   - A free app with no business behind it may count as non-trader, which shows nothing. Revisit if Battleplan starts charging (SPEC Q4).
 - [ ] **Android upload key.** I'll generate it at the first Play upload. Store the keystore file and its passwords in the password manager, plus an offline backup.
-- [ ] **Facebook App Review.** It needs the privacy-policy and data-deletion URLs.
+- [ ] **Facebook App Review**, only once Facebook sign-in is added (deferred, SPEC Q16). It needs the privacy-policy and data-deletion URLs.
 - [ ] **Legal pages**: Privacy Policy, Terms of Use, and a delete-account page.
 - [ ] **The rest of the launch checklist** in [docs/SPEC.md](docs/SPEC.md) §10: store listings, screenshots, age ratings, and the App Review demo account.
 

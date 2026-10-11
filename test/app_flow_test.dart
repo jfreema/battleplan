@@ -13,13 +13,13 @@ void main() {
     emailVerified: true,
   );
 
-  testWidgets('signed out lands on sign-in with the four options', (
+  testWidgets('signed out lands on sign-in with Google, Apple, and email', (
     tester,
   ) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.text('Continue with Apple'), findsOneWidget);
-    expect(find.text('Continue with Facebook'), findsOneWidget);
+    expect(find.text('Continue with Facebook'), findsNothing);
     expect(find.text('Continue with email'), findsOneWidget);
   });
 

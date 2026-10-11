@@ -70,7 +70,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | 7 | Push notifications | §6.9 (NOTIF); ARCH §6.5 |
 | 8 | Polls in group messaging | §6.6 (POLL) |
 | 9 | Scheduling events with going / not going | §6.7 (SCHED-3 to SCHED-5); PLAYER-6 on youth teams |
-| 10 | Sign in with Google, Apple, or Facebook, on top of local accounts that admins can add | AUTH-1, AUTH-6 to AUTH-8, AUTH-12; ARCH §6.1 |
+| 10 | Sign in with Google, Apple, or Facebook, on top of local accounts that admins can add | AUTH-1, AUTH-6 to AUTH-8, AUTH-12; ARCH §6.1. Facebook is deferred until after M8 (Q16). |
 | 11 | Password reset by email | AUTH-4 |
 | 12 | Email invites | INV-4 |
 | 13 | Shareable invite links and QR codes | INV-1 to INV-3, INV-6, INV-7 |
@@ -293,6 +293,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 ### 6.1 Accounts and sign-in (AUTH)
 
 - **AUTH-1 · MVP · Sign-in screen.**
+  - **Facebook is deferred (Q16).** Until it's added after M8, the screen shows Google, Apple, and email, and everything below that mentions Facebook applies once it's turned on.
   - Buttons in this order: Continue with Google, Continue with Apple, Continue with Facebook, Continue with email.
   - Logo and a one-line tagline above them.
   - Footer: "By continuing you agree to the Terms and Privacy Policy", with links.
@@ -915,7 +916,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - The Facebook SDK's automatic event logging and advertiser-ID collection are off.
 - **LEGAL-3 · MVP · Deletion.** In-app account deletion (AUTH-10), plus a public `/delete-account` page explaining how to request deletion (required by Google Play).
 - **LEGAL-4 · MVP · Store disclosures.** The App Store privacy labels and the Google Play Data safety form match LEGAL-1.
-- **LEGAL-5 · MVP · Facebook.** A data-deletion instructions URL.
+- **LEGAL-5 · After M8, with Facebook sign-in (Q16) · Facebook.** A data-deletion instructions URL.
 - **LEGAL-6 · MVP · Retention.**
   - Content stays until its author, an admin, or the team's deletion removes it.
   - Deleted content is erased from the database immediately and from backups within 7 days.
@@ -1147,7 +1148,7 @@ From here on, each feature ships with its own notifications.
 - [ ] Enforce App Check and review rules-test coverage.
 - [ ] Accessibility, performance (§8), and golden-test passes.
 - [ ] Legal pages, store listings, privacy forms.
-- [ ] Facebook App Review, and an App Review demo account with a seeded team.
+- [ ] An App Review demo account with a seeded team. (Facebook App Review waits for Facebook sign-in, Q16.)
 - [ ] Beta with our team: TestFlight (iOS), Firebase App Distribution (Android), and the web; a bug bash; the production deploy.
 - [ ] Google Play: open the Play Console account (a personal one, Q13) and run the 14-day closed test with 12+ testers before the public Android release.
 - [ ] Move our team over (below), then open sign-up to other teams.
@@ -1190,7 +1191,7 @@ When to buy or set up each item is in [TODO.md](../TODO.md). Purchases happen ju
 - [ ] APNs key uploaded to Firebase.
 - [ ] Android SHA-1 and SHA-256 fingerprints (debug, upload, and Play App Signing) in Firebase, for Google sign-in and App Links.
 - [ ] Sign in with Apple capability, and a Services ID for Android and web.
-- [ ] Facebook app ID and client token for each platform.
+- [ ] Facebook app ID and client token for each platform (only once Facebook sign-in is added, Q16).
 - [ ] reCAPTCHA Enterprise key and web push VAPID key.
 - [ ] `apple-app-site-association` and `assetlinks.json` served from Hosting; the Associated Domains entitlement; Android intent filters with `autoVerify`.
 - [ ] Sending domain with SPF, DKIM, and DMARC, registered with Apple's private email relay. Firebase Auth email templates branded.
@@ -1264,3 +1265,4 @@ Each question has a default. The build follows the default until someone decides
 | Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
 | Q14 | On youth teams, should coaches and staff also RSVP for themselves? | No, players only |
 | Q15 | When a parent picks an existing player, must an admin approve the link? | Yes (PLAYER-3) |
+| Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email; Facebook sign-in, its Meta app, App Review, and LEGAL-5 move to their own roadmap section after M8. | — |

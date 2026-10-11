@@ -332,7 +332,7 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 - Email/Password, including **Email link** (passwordless) sign-in
 - Google (any Google account, Gmail or Workspace)
 - Apple
-- Facebook
+- Facebook, **deferred** until after M8 (SPEC Q16, D33). The notes below apply when it's added.
 
 Leave the default **"One account per email address"** setting on. We don't need Firebase Auth's **Identity Platform upgrade**: email and social sign-in stay free without it, while the upgrade adds per-user pricing above 50k monthly active users.
 
@@ -1246,7 +1246,7 @@ Each phase is incremental and reversible.
 | Layering erodes as the codebase grows | CI import-boundary check, collection ownership, the trigger map, and decision-log entries for new patterns (§5.2, §6.4, §14). |
 | Web push limits on iOS | The native iOS app is the primary iPhone path; the limit is explained in-app. |
 | Flutter web first-load size and chat scroll performance with images | WASM build, deferred loading, thumbnails, a performance budget (SPEC §8). |
-| Facebook App Review delays launch | Start review early. If it's blocked, launch with Google, Apple, and email first. |
+| Facebook App Review delays launch | Resolved by deferring Facebook (D33): launch with Google, Apple, and email. |
 | App Store rejection under the user-generated-content rules (guideline 1.2) | Report, block, terms acceptance, and admin removal are all in the MVP. Provide a demo account with a seeded team for reviewers. |
 | Spam or abusive teams once sign-up is public | Verified email to create teams, rate limits (§6.9), App Check, report queue, team suspension and user disabling by super admins. |
 | Costs grow with active teams (~$0.25–0.40 each per month) | Cost rules and read budgets (§10.2), per-team storage quota, budget alerts. Decide a funding model before reaching hundreds of teams (SPEC §12, Q4). |
@@ -1292,6 +1292,7 @@ Each phase is incremental and reversible.
 | D30 | Widgets import Flutter's standalone `material_ui` package, not `package:flutter/material.dart` | Material moved out of the Flutter framework (Flutter 3.44+), and go_router 18 already uses it; one Material library avoids mismatched `ThemeData` types | — |
 | D31 | Local development uses the emulators under a `demo-` project ID with placeholder app options, selected by `--dart-define=USE_EMULATORS=true` | Runs with no Firebase login or config, and a `demo-` project can't reach any cloud resource | — |
 | D32 | Each feature's repository providers are declared in its `application/providers.dart` and overridden with Firebase implementations in `app/providers.dart` | Presentation never imports `data/` or `app/`, and tests swap in fakes with the same overrides | — |
+| D33 | Facebook sign-in is deferred until after M8 (SPEC Q16) | Not needed for our team; skips the Meta app, App Review, and Limited Login work before launch. Google, Apple, and email cover sign-in, and Apple satisfies App Store guideline 4.8 | When teams ask for it |
 
 ---
 
@@ -1327,7 +1328,7 @@ What exists in the code today, and where. This section is updated with every cha
 
 | Feature | Built so far |
 |---|---|
-| `auth` | `AuthUser`, `AuthRepository` (Firebase impl), sign-in screen with email and Google sign-in (popup on web, system browser sheet on iOS and Android); Apple and Facebook buttons disabled until M1 |
+| `auth` | `AuthUser`, `AuthRepository` (Firebase impl), sign-in screen with email and Google sign-in (popup on web, system browser sheet on iOS and Android); Apple button disabled until M1; Facebook hidden until after M8 (D33) |
 | `groups` | `Group`, `Membership`, `MyTeam`; `GroupRepository` and `MemberRepository` (Firestore impls); the `myTeams` provider (switcher list, most recent first); `TeamShell` (header, bottom bar or rail, team menu, account menu, Ctrl/⌘+K), `TeamSwitcherList`, `WelcomeScreen` |
 | `settings` | `LocalPrefsRepository` (SharedPreferences impl) for theme and last team; settings screen with the theme switch and sign-out |
 | `chat`, `schedule`, `documents`, `notifications`, `admin` | Placeholder screens |

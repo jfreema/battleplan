@@ -5,7 +5,8 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// AUTH-1. Google and email work now; Apple and Facebook arrive in M1.
+/// AUTH-1. Google and email work now; Apple arrives in M1. Facebook is
+/// deferred until after M8 (SPEC Q16), so it isn't shown.
 class SignInScreen extends ConsumerStatefulWidget {
   const new({this.showEmulatorHint = false, super.key});
 
@@ -76,20 +77,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       child: Text(l10n.continueWithGoogle),
                     ),
                     const SizedBox(height: Space.md),
-                    // Apple and Facebook arrive in M1 (roadmap tasks 26-27, 107).
-                    for (final label in [
-                      l10n.continueWithApple,
-                      l10n.continueWithFacebook,
-                    ]) ...[
-                      Tooltip(
-                        message: l10n.comingSoon,
-                        child: OutlinedButton(
-                          onPressed: null,
-                          child: Text(label),
-                        ),
+                    // Apple arrives in M1 (roadmap task 29, verified in 109).
+                    // Facebook is deferred until after M8 (SPEC Q16).
+                    Tooltip(
+                      message: l10n.comingSoon,
+                      child: OutlinedButton(
+                        onPressed: null,
+                        child: Text(l10n.continueWithApple),
                       ),
-                      const SizedBox(height: Space.md),
-                    ],
+                    ),
+                    const SizedBox(height: Space.md),
                     if (!_showEmail)
                       FilledButton.icon(
                         onPressed: () => setState(() => _showEmail = true),
