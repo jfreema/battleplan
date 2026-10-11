@@ -82,7 +82,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 52. ✅ Youth teams: "Who are you here for?", guardian requests, adding a co-parent (PLAYER-3 to PLAYER-5). *Admins see requests at the top of the roster; the push notification to admins arrives with notifications (M4). Tested on dev: request, decline, ask again, approve, add an unlisted player, add and remove a co-parent.*
 53. ✅ Parent labels in the roster, "Maria R. · Emma #7" (PLAYER-8); kids' privacy limits on player records (PLAYER-10). *The roster shows "Parent of Emma #7"; `Membership.nameWithPlayers` gives the short "Maria R. · Emma #7" form that chat uses in M3. Rules hold player records to a name, number, and position.*
 54. ✅ Storage quota accounting. *Storage triggers add and subtract each file under `groups/{g}/` from `groups.storageBytes`; a daily job recomputes every team from the bucket; Team settings shows "1.2 GB of 5 GB used". Tested on dev with real uploads and a delete.*
-55. Rate limits for team creation, invites, and adds (SAFE-5).
+55. ✅ Rate limits for team creation, invites, and adds (SAFE-5). *Every limit in the ARCH §6.9 table is enforced. A bulk request counts all its uses at once and is all or nothing: one over the limit adds nobody and uses none of the allowance.*
 56. Rules and tests for teams, members, players, and invites, including **cross-team isolation**.
 
 **M2 is done when** a new coach can get three people in by link, QR, and email; a person on two teams can switch between them; and a pasted youth roster links each parent to the right player.

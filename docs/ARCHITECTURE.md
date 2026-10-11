@@ -941,7 +941,7 @@ groups/{groupId}/documents/{docId}/{originalFileName}
 | Uploads | Size limits and per-team storage quota | Storage rules |
 | Sign-in attempts | Firebase Auth's built-in throttling | Firebase Auth |
 
-Callable limits use `rateLimits` counters, and a limit hit returns a typed `rateLimited` error the app shows as "Slow down, try again in a minute."
+Callable limits use `rateLimits` counters (`shared/rate_limit.ts`: one document per key, action, and UTC day or hour, removed by a TTL policy), and a limit hit returns a typed `rateLimited` error the app shows as "Slow down, try again in a minute." `consumeRateLimits` checks several limits in one transaction and counts a bulk request's uses together, all or nothing: sending 30 invites with 10 left sends none and uses none of the allowance, and the per-person and per-team email invite limits are checked together.
 
 **Other controls**
 

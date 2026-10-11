@@ -55,9 +55,13 @@ export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) =>
     throw new HttpsError('failed-precondition', 'too-many-players');
   }
   const guardianEmails = input.players.flatMap((p) => p.guardians.filter((g) => g.email)).length;
-  for (let i = 0; i < Math.max(guardianEmails, 1); i++) {
-    await consumeRateLimit(input.groupId, 'addByEmail', Limits.addByEmailPerGroupPerDay);
-  }
+  await consumeRateLimit(
+    input.groupId,
+    'addByEmail',
+    Limits.addByEmailPerGroupPerDay,
+    'day',
+    Math.max(guardianEmails, 1),
+  );
   const result = await add(input.groupId, uid, input.players);
   await audit({
     actorId: uid,

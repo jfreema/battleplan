@@ -265,9 +265,7 @@ export const addMemberByEmail = onCall({ secrets: [resendApiKey] }, async (reque
   if (request.auth?.token.email_verified !== true) {
     throw new HttpsError('failed-precondition', 'email-not-verified');
   }
-  for (let i = 0; i < input.entries.length; i++) {
-    await consumeRateLimit(input.groupId, 'addByEmail', Limits.addByEmailPerGroupPerDay);
-  }
+  await consumeRateLimit(input.groupId, 'addByEmail', Limits.addByEmailPerGroupPerDay, 'day', input.entries.length);
   const profile = (await db().collection(Collections.users).doc(uid).get()).data();
   const result = await addMembersByEmail(
     input.groupId,

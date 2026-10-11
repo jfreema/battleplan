@@ -6,7 +6,7 @@ import { audit } from '../audit/service.js';
 import { db } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
-import { consumeRateLimit } from '../shared/rate_limit.js';
+import { consumeRateLimit, consumeRateLimits } from '../shared/rate_limit.js';
 import { postSystemMessage } from '../chat/service.js';
 import { refreshMemberCount } from '../teams/service.js';
 import { normalizeCode } from './codes.js';
@@ -143,10 +143,10 @@ export const sendEmailInvites = onCall({ secrets: [resendApiKey] }, async (reque
     throw new HttpsError('failed-precondition', 'email-not-verified');
   }
   const emails = [...new Set(input.emails.map((e) => e.toLowerCase()))];
-  for (let i = 0; i < emails.length; i++) {
-    await consumeRateLimit(uid, 'emailInvite', Limits.emailInvitesPerUserPerDay);
-    await consumeRateLimit(input.groupId, 'emailInvite', Limits.emailInvitesPerGroupPerDay);
-  }
+  await consumeRateLimits([
+    { key: uid, action: 'emailInvite', max: Limits.emailInvitesPerUserPerDay, count: emails.length },
+    { key: input.groupId, action: 'emailInvite', max: Limits.emailInvitesPerGroupPerDay, count: emails.length },
+  ]);
   const group = await db().collection(Collections.groups).doc(input.groupId).get();
   const inviter = await db().collection(Collections.users).doc(uid).get();
   const inviterName = (inviter.get('displayName') as string | undefined) ?? 'A teammate';
