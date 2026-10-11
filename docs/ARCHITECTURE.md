@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft v0.4 |
 | **Owner** | Jared Freeman |
-| **Last updated** | 2026-10-10 |
+| **Last updated** | 2026-10-11 |
 | **Companion doc** | [SPEC.md](SPEC.md): what gets built, feature by feature |
 
 ---
@@ -166,7 +166,7 @@ battleplan/
 ├── shared/constants.json        # enums, limits, collection names → generated Dart + TS
 ├── firestore.rules  firestore.indexes.json  storage.rules
 ├── firebase.json  .firebaserc
-├── tools/                       # seed data, super-admin bootstrap, import-boundary check
+├── tools/                       # seed/ (emulator data), gen_constants.dart, check_imports.sh, super-admin bootstrap
 └── docs/
 ```
 
@@ -316,9 +316,10 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 | Web | `battleplan-dev-ecce4.web.app` + PR preview channels | `getbattleplan.app` (or `battleplan-prod.web.app`) |
 
 - The two flavors have separate app IDs, so dev and prod builds can be installed side by side.
-- `flutterfire configure` generates `firebase_options_dev.dart` and `firebase_options_prod.dart`.
+- `flutterfire configure` generates `lib/app/firebase_options_dev.dart` and `firebase_options_prod.dart`.
+- `--dart-define=USE_EMULATORS=true` points a dev build at the Emulator Suite under the project ID `demo-battleplan` (D31). Prod builds refuse it.
 - **Never test against prod.**
-- Local development runs on the **Emulator Suite**. `tools/seed.ts` loads sample adult and youth teams, people on several teams, parents with several players, and messages, polls, events, and documents.
+- Local development runs on the **Emulator Suite** ([DEVELOPMENT.md](DEVELOPMENT.md)). `tools/seed/seed.ts` loads sample adult and youth teams, people on several teams, parents with several players, and messages, polls, events, and documents.
 
 ---
 
@@ -516,7 +517,7 @@ groupMembers/{groupId}_{uid}
   playerSummary?                                        # youth teams, e.g. "Emma #7"; cache ← players
   notificationLevel: 'all' | 'important' | 'none', mutedUntil?
   lastReadAt                                            # unread counts
-  lastPostedAt                                          # message rate limit (§6.9)
+  lastPostedAt, lastPostedMessageId                     # message rate limit (§6.3, §6.9)
   joinedAt, addedBy, inviteCode?
 
 players/{playerId}
@@ -664,7 +665,7 @@ function isGuardian(p)   { return exists(/databases/$(database)/documents/player
 | `devices/{id}` | owner | owner (`uid == auth.uid`) |
 | `userBlocks/{id}` | owner | owner; the ID must be `{auth.uid}_{blockedUid}` |
 | `groups/{g}` | members, super admin | Team admins, on `name`, `description`, `photoPath`, `color`, `sport`, `timeZone`, `settings` only |
-| `groupMembers/{id}` | own memberships; members of that team | Self, on `notificationLevel`, `mutedUntil`, `lastReadAt`, `lastPostedAt` only |
+| `groupMembers/{id}` | own memberships; members of that team | Self, on `notificationLevel`, `mutedUntil`, `lastReadAt`, `lastPostedAt`, `lastPostedMessageId` only |
 | `players/{id}` | members | Guardians and admins, on `displayName`, `jerseyNumber`, `position` only. Creation goes through Functions. |
 | `playerGuardians`, `guardianRequests` | own links and requests; members (links), admins (requests) | Functions only |
 | `messages/{id}` | members | **Create:** see below. **Update:** a member may change only `reactions.<own uid>`, to an allowed value or removed. Deletion goes through `deleteMessage`. |
@@ -685,7 +686,7 @@ function isGuardian(p)   { return exists(/databases/$(database)/documents/player
 - `type` is `text`, `image`, or `poll`. A `poll` message must be written in the same batch as its poll (`getAfter()`). Event cards and system messages come only from Functions.
 - `text` is ≤ 4,000 characters, and `createdAt == request.time`.
 - No `reactions`, `replyPreview`, or deletion fields are set.
-- **Rate limit.** The same batch sets the member's `lastPostedAt` to `request.time`, and the previous value must be at least 1 second earlier (§6.9).
+- **Rate limit.** The same batch sets the member's `lastPostedAt` to `request.time` and `lastPostedMessageId` to the new message's ID, and the previous `lastPostedAt` must be at least 1 second earlier (§6.9). The message ID ties the batch to one message, since a batch can otherwise carry many (M0 spike 5, [docs/spikes/M0.md](spikes/M0.md)).
 
 **RSVP write rule.** All of these must hold:
 
@@ -1288,3 +1289,6 @@ Each phase is incremental and reversible.
 | D27 | Events in a series are written only by `saveEventSeries`, which posts one card and one notification per change | A 24-practice series would otherwise post 24 chat cards and send 24 pushes | — |
 | D28 | Duplicate is client-only: it prefills the create form from an event, then saves like any new event (or through `saveEventSeries` if Repeat is set) | No new callable, field, or rule; the copy is an ordinary event | — |
 | D29 | `getbattleplan.app` is registered at Cloudflare, which runs its DNS and email forwarding; the app and site stay on Firebase Hosting | Cloudflare sells domains at cost and forwards email free. Auth's `linkDomain` must be a Firebase Hosting domain, and Hosting's rewrites to Functions, preview channels, and auth handler are built in; Cloudflare has no sign-in, offline-sync, or push equivalent for the backend | Hosting bandwidth costs become significant |
+| D30 | Widgets import Flutter's standalone `material_ui` package, not `package:flutter/material.dart` | Material moved out of the Flutter framework (Flutter 3.44+), and go_router 18 already uses it; one Material library avoids mismatched `ThemeData` types | — |
+| D31 | Local development uses the emulators under a `demo-` project ID with placeholder app options, selected by `--dart-define=USE_EMULATORS=true` | Runs with no Firebase login or config, and a `demo-` project can't reach any cloud resource | — |
+| D32 | Each feature's repository providers are declared in its `application/providers.dart` and overridden with Firebase implementations in `app/providers.dart` | Presentation never imports `data/` or `app/`, and tests swap in fakes with the same overrides | — |

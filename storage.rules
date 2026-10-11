@@ -1,0 +1,58 @@
+rules_version = '2';
+
+// Storage rules (ARCH §6.3). Membership is checked against Firestore with
+// cross-service rules, and uploads stop once a team's quota is used.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function isMember(g) {
+      return signedIn() && firestore.exists(
+        /databases/(default)/documents/groupMembers/$(g + '_' + request.auth.uid));
+    }
+    function isAdmin(g) {
+      return isMember(g) && firestore.get(
+        /databases/(default)/documents/groupMembers/$(g + '_' + request.auth.uid)).data.role
+        in ['owner', 'admin'];
+    }
+    function underQuota(g) {
+      let group = firestore.get(/databases/(default)/documents/groups/$(g)).data;
+      return group.storageBytes < group.storageQuotaBytes;
+    }
+    function isImage(maxMb) {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size <= maxMb * 1024 * 1024;
+    }
+    function isDocument(maxMb) {
+      return request.resource.size <= maxMb * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+            || request.resource.contentType in [
+              'application/pdf', 'text/plain', 'text/csv',
+              'application/msword',
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              'application/vnd.ms-excel',
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              'application/vnd.ms-powerpoint',
+              'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+            ]);
+    }
+
+    match /users/{uid}/avatar/{file} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid && isImage(10);
+    }
+    match /groups/{g}/avatar/{file} {
+      allow read: if isMember(g);
+      allow write: if isAdmin(g) && isImage(10) && underQuota(g);
+    }
+    match /groups/{g}/messages/{messageId}/{allPaths=**} {
+      allow read: if isMember(g);
+      allow create: if isMember(g) && isImage(10) && underQuota(g);
+    }
+    match /groups/{g}/documents/{docId}/{file} {
+      allow read: if isMember(g);
+      allow create: if isMember(g) && underQuota(g) && isDocument(25)
+        && (isAdmin(g) || firestore.get(
+             /databases/(default)/documents/groups/$(g)).data.settings.membersCanUploadDocs == true);
+    }
+  }
+}

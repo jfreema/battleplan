@@ -1,0 +1,267 @@
+rules_version = '2';
+
+// Deny by default (ARCH §6.3). Every collection is top-level (ARCH §6.2), and
+// every team-owned document carries `groupId`, so one membership check
+// secures each read and write. Functions use the Admin SDK and bypass these
+// rules; they enforce the same matrix themselves (SPEC §3).
+//
+// Rules changes ship with tests in functions/test/rules (SPEC ENG-7).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Helpers -----------------------------------------------------------
+
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function superAdmin() { return signedIn() && request.auth.token.superAdmin == true; }
+
+    function groupPath(g) { return /databases/$(database)/documents/groups/$(g); }
+    function memberPath(g) { return /databases/$(database)/documents/groupMembers/$(g + '_' + uid()); }
+
+    function isMember(g) {
+      return signedIn()
+        && exists(memberPath(g))
+        && get(groupPath(g)).data.get('suspendedAt', null) == null;
+    }
+    function member(g) { return get(memberPath(g)).data; }
+    function isAdmin(g) { return isMember(g) && member(g).role in ['owner', 'admin']; }
+    function isGuardian(playerId) {
+      return exists(/databases/$(database)/documents/playerGuardians/$(playerId + '_' + uid()));
+    }
+    function settings(g) { return get(groupPath(g)).data.settings; }
+
+    // List queries must be bounded (ARCH §10.2 rule 1).
+    function boundedQuery() { return request.query.limit != null && request.query.limit <= 100; }
+
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    function onlyChanges(keys) { return changed().hasOnly(keys); }
+    function incoming() { return request.resource.data; }
+
+    // ---- Accounts ----------------------------------------------------------
+
+    match /users/{userId} {
+      allow get: if (signedIn() && uid() == userId) || superAdmin();
+      allow update: if signedIn() && uid() == userId
+        && onlyChanges(['displayName', 'displayNameLower', 'photoPath', 'themeMode',
+                        'notificationPrefs', 'updatedAt']);
+      // Created by ensureUserProfile (Functions).
+    }
+
+    match /devices/{installationId} {
+      allow get, delete: if signedIn() && resource.data.uid == uid();
+      allow create, update: if signedIn() && incoming().uid == uid()
+        && incoming().platform in ['ios', 'android', 'web'];
+    }
+
+    match /userBlocks/{blockId} {
+      allow read: if signedIn() && resource.data.uid == uid();
+      allow create: if signedIn() && incoming().uid == uid()
+        && blockId == uid() + '_' + incoming().blockedUid
+        && incoming().blockedUid != uid();
+      allow delete: if signedIn() && resource.data.uid == uid();
+    }
+
+    // ---- Teams -------------------------------------------------------------
+
+    match /groups/{g} {
+      allow get: if isMember(g) || superAdmin();
+      allow update: if isAdmin(g)
+        && onlyChanges(['name', 'nameLower', 'description', 'photoPath', 'color',
+                        'sport', 'timeZone', 'settings', 'updatedAt']);
+      // Created and deleted by Functions (createGroup, deleteGroup).
+    }
+
+    match /groupMembers/{memberId} {
+      // Your own memberships (team switcher), or a roster of your team.
+      allow get: if signedIn() && (resource.data.uid == uid() || isMember(resource.data.groupId));
+      allow list: if boundedQuery() && signedIn()
+        && (resource.data.uid == uid() || isMember(resource.data.groupId));
+
+      // Members edit only their own preferences and read markers. When the
+      // send batch sets lastPostedAt it must be the request time, and
+      // lastPostedMessageId names the one message that batch may create
+      // (see the message rate limit below).
+      allow update: if signedIn() && resource.data.uid == uid()
+        && onlyChanges(['notificationLevel', 'mutedUntil', 'lastReadAt',
+                        'lastPostedAt', 'lastPostedMessageId'])
+        && (!('lastPostedAt' in changed()) || incoming().lastPostedAt == request.time)
+        && (!('notificationLevel' in changed())
+            || incoming().notificationLevel in ['all', 'important', 'none']);
+    }
+
+    // ---- Youth teams -------------------------------------------------------
+
+    match /players/{playerId} {
+      allow get: if isMember(resource.data.groupId);
+      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      allow update: if (isGuardian(playerId) && isMember(resource.data.groupId)
+                        || isAdmin(resource.data.groupId))
+        && onlyChanges(['displayName', 'displayNameLower', 'jerseyNumber', 'position', 'updatedAt']);
+    }
+
+    match /playerGuardians/{linkId} {
+      allow get: if signedIn() && (resource.data.uid == uid() || isMember(resource.data.groupId));
+      allow list: if boundedQuery() && signedIn()
+        && (resource.data.uid == uid() || isMember(resource.data.groupId));
+    }
+
+    match /guardianRequests/{requestId} {
+      allow get: if signedIn() && (resource.data.uid == uid() || isAdmin(resource.data.groupId));
+      allow list: if boundedQuery() && signedIn()
+        && (resource.data.uid == uid() || isAdmin(resource.data.groupId));
+    }
+
+    // ---- Chat --------------------------------------------------------------
+
+    match /messages/{messageId} {
+      allow get: if isMember(resource.data.groupId);
+      allow list: if boundedQuery() && isMember(resource.data.groupId);
+
+      // Message create rule (ARCH §6.3).
+      allow create: if isMember(incoming().groupId)
+        && incoming().authorId == uid()
+        && authorSnapshotMatches(incoming())
+        && incoming().type in ['text', 'image', 'poll']
+        && (incoming().type != 'poll'
+            || getAfter(/databases/$(database)/documents/polls/$(incoming().pollId)).data.messageId == messageId)
+        && incoming().get('text', '').size() <= 4000
+        && incoming().get('attachments', []).size() <= 10
+        && incoming().createdAt == request.time
+        && incoming().keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
+            'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',
+            'createdAt'])
+        && rateLimitOk(incoming().groupId, messageId);
+
+      // Reactions: a member may set or clear only their own (CHAT-6, D6).
+      allow update: if isMember(resource.data.groupId)
+        && resource.data.get('deletedAt', null) == null
+        && onlyChanges(['reactions'])
+        && request.resource.data.reactions.diff(resource.data.get('reactions', {}))
+             .affectedKeys().hasOnly([uid()])
+        && (!(uid() in request.resource.data.reactions)
+            || request.resource.data.reactions[uid()] in ['like', 'love', 'dislike', 'laugh']);
+      // Deletion goes through the deleteMessage callable.
+    }
+
+    // The author fields must equal the sender's own membership snapshot.
+    function authorSnapshotMatches(m) {
+      let mem = member(m.groupId);
+      return m.authorName == mem.displayName
+        && m.get('authorPhotoPath', null) == mem.get('photoPath', null)
+        && m.get('authorPlayerSummary', null) == mem.get('playerSummary', null);
+    }
+
+    // 1 message per second per person per team (ARCH §6.9, D24). The same
+    // batch sets the member's lastPostedAt to now, and the previous value
+    // must be at least a second old. lastPostedMessageId ties the batch to
+    // exactly one message, so one batch can't carry many.
+    function rateLimitOk(g, messageId) {
+      let before = get(memberPath(g)).data;
+      let after = getAfter(memberPath(g)).data;
+      return after.lastPostedAt == request.time
+        && after.lastPostedMessageId == messageId
+        && (before.get('lastPostedAt', null) == null
+            || before.lastPostedAt + duration.value(1, 's') <= request.time);
+    }
+
+    // ---- Polls -------------------------------------------------------------
+
+    match /polls/{pollId} {
+      allow get: if isMember(resource.data.groupId);
+      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      // Create rules arrive with polls (M5).
+    }
+
+    match /pollVotes/{voteId} {
+      allow get, list: if false; // M5
+    }
+
+    // ---- Schedule ----------------------------------------------------------
+
+    match /eventSeries/{seriesId} {
+      allow get: if isMember(resource.data.groupId);
+      allow list: if boundedQuery() && isMember(resource.data.groupId);
+    }
+
+    match /events/{eventId} {
+      allow get: if isMember(resource.data.groupId);
+      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      // Create and edit rules arrive with the schedule (M6).
+    }
+
+    // RSVP write rule (ARCH §6.3): exactly one document per event and
+    // participant, so two guardians answering for one player update the same
+    // record (PLAYER-6, D15).
+    match /rsvps/{rsvpId} {
+      allow get: if isMember(resource.data.groupId);
+      allow list: if boundedQuery() && isMember(resource.data.groupId);
+
+      allow create, update: if rsvpWriteOk(rsvpId)
+        && (request.method == 'create' || onlyChanges(['status', 'note', 'guests',
+            'respondedBy', 'updatedAt', 'participantName']));
+    }
+
+    function rsvpWriteOk(rsvpId) {
+      let r = incoming();
+      let g = r.groupId;
+      let event = get(/databases/$(database)/documents/events/$(r.eventId)).data;
+      return isMember(g)
+        && rsvpId == r.eventId + '_' + r.participantId
+        && event.groupId == g
+        && event.rsvpEnabled == true
+        && event.get('canceledAt', null) == null
+        && ((event.rsvpFor == 'members' && r.participantType == 'member')
+            || (event.rsvpFor == 'players' && r.participantType == 'player'))
+        && rsvpWriterOk(g, r)
+        && (isAdmin(g) || event.get('rsvpDeadline', null) == null
+            || request.time < event.rsvpDeadline)
+        && r.status in ['going', 'maybe', 'not_going']
+        && r.respondedBy == uid()
+        && r.updatedAt == request.time
+        && r.eventStartAt == event.startAt
+        && r.keys().hasOnly(['eventId', 'groupId', 'participantType', 'participantId',
+            'participantName', 'eventStartAt', 'status', 'note', 'guests',
+            'respondedBy', 'updatedAt']);
+    }
+
+    // The member themselves, a guardian of the player, or a team admin. A
+    // player must belong to this team.
+    function rsvpWriterOk(g, r) {
+      return (r.participantType == 'member'
+              && (r.participantId == uid() || (isAdmin(g) && exists(/databases/$(database)/documents/groupMembers/$(g + '_' + r.participantId)))))
+        || (r.participantType == 'player'
+              && get(/databases/$(database)/documents/players/$(r.participantId)).data.groupId == g
+              && (isGuardian(r.participantId) || isAdmin(g)));
+    }
+
+    // ---- Documents, notifications, safety, admin --------------------------
+
+    match /groupDocuments/{docId} {
+      allow get: if isMember(resource.data.groupId);
+      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      // Create and edit rules arrive with documents (M7).
+    }
+
+    match /notifications/{notificationId} {
+      allow get: if signedIn() && resource.data.uid == uid();
+      allow list: if boundedQuery() && signedIn() && resource.data.uid == uid();
+      allow update: if signedIn() && resource.data.uid == uid()
+        && onlyChanges(['read']) && incoming().read == true;
+    }
+
+    match /reports/{reportId} {
+      allow get, list: if superAdmin() || isAdmin(resource.data.groupId);
+    }
+
+    match /auditLogs/{logId} {
+      allow get, list: if superAdmin();
+    }
+
+    match /config/{configId} {
+      allow get: if signedIn();
+      allow write: if superAdmin();
+    }
+
+    // invites, rateLimits: Functions only (no client access).
+  }
+}

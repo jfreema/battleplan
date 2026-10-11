@@ -1,0 +1,55 @@
+import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/groups/domain/group_repository.dart';
+import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'providers.g.dart';
+
+/// Overridden in app/providers.dart.
+@Riverpod(keepAlive: true)
+GroupRepository groupRepository(Ref ref) =>
+    throw UnimplementedError('Wired in app/providers.dart');
+
+/// Overridden in app/providers.dart.
+@Riverpod(keepAlive: true)
+MemberRepository memberRepository(Ref ref) =>
+    throw UnimplementedError('Wired in app/providers.dart');
+
+@Riverpod(keepAlive: true)
+Stream<List<Membership>> myMemberships(Ref ref) {
+  final user = ref.watch(authUserProvider).value;
+  if (user == null) return Stream.value(const []);
+  return ref
+      .watch(memberRepositoryProvider)
+      .watchMyMemberships(UserId(user.uid));
+}
+
+@riverpod
+Stream<Group?> group(Ref ref, GroupId id) =>
+    ref.watch(groupRepositoryProvider).watchGroup(id);
+
+/// The switcher's list: one group read per membership (ARCH §6.2 query
+/// table), most recent activity first, archived teams last.
+@Riverpod(keepAlive: true)
+AsyncValue<List<MyTeam>> myTeams(Ref ref) {
+  final memberships = ref.watch(myMembershipsProvider);
+  return memberships.whenData((list) {
+    final teams = <MyTeam>[];
+    for (final m in list) {
+      final group = ref.watch(groupProvider(m.groupId)).value;
+      if (group != null) teams.add(MyTeam(group: group, membership: m));
+    }
+    teams.sort((a, b) {
+      if (a.group.isArchived != b.group.isArchived) {
+        return a.group.isArchived ? 1 : -1;
+      }
+      final x = a.lastActivity ?? DateTime(2000);
+      final y = b.lastActivity ?? DateTime(2000);
+      return y.compareTo(x);
+    });
+    return teams;
+  });
+}

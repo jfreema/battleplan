@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "battleplan-dev-ecce4",
+    "dev": "battleplan-dev-ecce4",
+    "prod": "battleplan-prod",
+    "emulator": "demo-battleplan"
+  }
+}

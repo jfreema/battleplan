@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Messaging and scheduling for sports teams.">
+  <meta name="theme-color" content="#2F5BEA">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Battleplan">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Battleplan</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Branded loading screen until Flutter's first frame (ARCH §5.6). -->
+  <style>
+    :root { color-scheme: light dark; --bg: #ffffff; --fg: #1a1c22; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #121317; --fg: #e6e8ef; } }
+    html, body { margin: 0; height: 100%; background: var(--bg); }
+    #splash {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      font: 600 22px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--fg); transition: opacity 200ms ease;
+    }
+    #splash .mark { width: 72px; height: 72px; border-radius: 20px; background: #2F5BEA; }
+    @media (prefers-reduced-motion: no-preference) {
+      #splash .mark { animation: pulse 1.2s ease-in-out infinite; }
+    }
+    @keyframes pulse { 50% { transform: scale(0.92); } }
+  </style>
+</head>
+<body>
+  <div id="splash" aria-label="Loading Battleplan"><div class="mark"></div>Battleplan</div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var s = document.getElementById('splash');
+      if (!s) return;
+      s.style.opacity = '0';
+      setTimeout(function () { s.remove(); }, 250);
+    });
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

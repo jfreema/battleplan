@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.47.6
+
+jobs:
+  app:
+    name: App (format, analyze, test, web build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Shared constants are up to date
+        run: dart run tools/gen_constants.dart --check
+      - name: Generated code is up to date
+        run: |
+          dart run build_runner build
+          flutter gen-l10n
+          git diff --exit-code -- lib
+      - name: Formatting
+        run: dart format --output=none --set-exit-if-changed $(git ls-files '*.dart' | grep -vE '\.(g|freezed)\.dart$|^lib/l10n/gen/')
+      - run: flutter analyze
+      - name: Import boundaries (ENG-1)
+        run: tools/check_imports.sh
+      - run: flutter test
+      - name: Web build (WASM)
+        run: flutter build web --wasm -t lib/main_dev.dart --dart-define=USE_EMULATORS=true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+          retention-days: 3
+
+  functions:
+    name: Functions and security rules
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+      - name: Rules tests on the emulator
+        run: npx --yes firebase-tools@15 emulators:exec --only firestore,storage --project demo-battleplan 'npm run test:rules'
+
+  # Web preview per PR (ARCH §9). Turns on once deploy access is set up:
+  # set the repository variables FIREBASE_PREVIEWS=true, WIF_PROVIDER, and
+  # WIF_SERVICE_ACCOUNT (keyless Workload Identity Federation).
+  preview:
+    name: Web preview
+    if: github.event_name == 'pull_request' && vars.FIREBASE_PREVIEWS == 'true'
+    needs: [app, functions]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter build web --wasm -t lib/main_dev.dart
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+      - name: Deploy to a preview channel
+        id: deploy
+        run: |
+          url=$(npx --yes firebase-tools@15 hosting:channel:deploy "pr-${{ github.event.number }}" \
+            --project battleplan-dev-ecce4 --expires 7d --json | jq -r '.result[].url' | head -1)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: Post the link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr comment ${{ github.event.number }} --edit-last --create-if-none --body "Web preview: ${{ steps.deploy.outputs.url }}"

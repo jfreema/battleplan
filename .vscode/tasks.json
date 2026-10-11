@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Emulators",
+      "type": "shell",
+      "command": "firebase emulators:start --project demo-battleplan --import=./.emulator-data --export-on-exit",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Seed emulators",
+      "type": "shell",
+      "command": "npm --prefix tools/seed run seed",
+      "problemMatcher": []
+    },
+    {
+      "label": "Code generation (watch)",
+      "type": "shell",
+      "command": "dart run build_runner watch",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

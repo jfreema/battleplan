@@ -1061,14 +1061,14 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
 ### M0 · Foundation
 
 - [ ] Create the Firebase projects on the free plan (done 2026-10-10: dev `battleplan-dev-ecce4`, prod `battleplan-prod`) and build against the Emulator Suite. Paid plans and purchases wait until a phase needs them ([TODO.md](../TODO.md)): dev moves to Blaze when we first deploy Functions or Storage, and prod gets Blaze and its database, in its permanent region (ARCH §6.10), for the team beta.
-- [ ] `flutter create` with the org ID; dev and prod flavors; `flutterfire configure` for each.
-- [ ] Repo layout, lints, CI, and VS Code launch configs.
-- [ ] Emulator Suite with seed data: several teams, with some people on more than one.
-- [ ] Design tokens, light and dark themes, core components.
-- [ ] The three-tab shell with placeholder screens, and go_router with its guards.
-- [ ] Remote Config minimum-version check, Crashlytics, Analytics, web error reporting.
-- [ ] The import-boundary check in CI (ENG-1), Firestore index exemptions, and TTL policies (ARCH §6.2).
-- [ ] **Spikes**, each with a short written result:
+- [x] `flutter create` with the org ID; dev and prod flavors. `flutterfire configure` for each waits on `firebase login`.
+- [x] Repo layout, lints, CI, and VS Code launch configs.
+- [x] Emulator Suite with seed data: several teams, with some people on more than one.
+- [x] Design tokens, light and dark themes, core components.
+- [x] The three-tab shell with placeholder screens, and go_router with its guards.
+- [x] Remote Config minimum-version check, Crashlytics, Analytics, web error reporting (wired; live once the cloud config exists).
+- [x] The import-boundary check in CI (ENG-1), Firestore index exemptions, and TTL policies (ARCH §6.2).
+- [ ] **Spikes**, each with a short written result ([docs/spikes/M0.md](spikes/M0.md); 4 and 5 done):
   1. The sign-in matrix: provider × platform × new / existing / admin-added account.
   2. Universal Links, App Links, and email-link sign-in (`linkDomain`) on our Hosting domain, with no Dynamic Links.
   3. Web push on Chrome, macOS Safari, and an iPhone home-screen web app.

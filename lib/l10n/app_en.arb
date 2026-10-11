@@ -1,0 +1,85 @@
+{
+  "@@locale": "en",
+  "appName": "Battleplan",
+  "tagline": "Chat, schedule, and RSVPs for your team",
+  "tabChat": "Chat",
+  "tabSchedule": "Schedule",
+  "tabDocuments": "Documents",
+  "continueWithGoogle": "Continue with Google",
+  "continueWithApple": "Continue with Apple",
+  "continueWithFacebook": "Continue with Facebook",
+  "continueWithEmail": "Continue with email",
+  "signInTermsFooter": "By continuing you agree to the Terms and Privacy Policy",
+  "comingSoon": "Coming soon",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
+  "signIn": "Sign in",
+  "signInFailed": "That email and password don't match. Check them and try again.",
+  "signInOffline": "You're offline. Check your connection and try again.",
+  "signInRateLimited": "Slow down, try again in a minute.",
+  "signInDisabled": "This account has been disabled. Contact support.",
+  "signInUnknownError": "Something went wrong. Try again.",
+  "emulatorHint": "Emulator accounts use the password \"password\", e.g. coach@example.com.",
+  "welcomeTitle": "Welcome to Battleplan",
+  "welcomeBody": "Join your team with an invite link or code, or create a new team.",
+  "joinTeam": "Join a team",
+  "createTeam": "Create a team",
+  "teamSwitcherTitle": "Your teams",
+  "archivedTeams": "Archived",
+  "switchTeamTooltip": "Switch team",
+  "notificationsTooltip": "Notifications",
+  "teamMenuTooltip": "Team menu",
+  "accountMenuTooltip": "Account",
+  "rosterMenu": "Roster",
+  "inviteMenu": "Invite",
+  "teamNotificationsMenu": "Notifications for this team",
+  "teamSettingsMenu": "Team settings",
+  "leaveTeamMenu": "Leave team",
+  "settings": "Settings",
+  "adminPanel": "Admin panel",
+  "signOut": "Sign out",
+  "chatPlaceholder": "Messages for this team will appear here.",
+  "schedulePlaceholder": "Practices, games, and RSVPs will appear here.",
+  "documentsPlaceholder": "Share schedules, forms, and playbooks with your team.",
+  "notificationsPlaceholder": "Activity from all your teams will appear here.",
+  "adminPlaceholder": "The admin panel arrives in a later milestone.",
+  "notAMember": "You're not a member of this team.",
+  "goToMyTeams": "Go to my teams",
+  "appearance": "Appearance",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "about": "About",
+  "versionLabel": "Version {version}",
+  "@versionLabel": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateRequiredTitle": "Update Battleplan",
+  "updateRequiredBody": "This version is no longer supported. Update to keep using Battleplan.",
+  "notFoundTitle": "Page not found",
+  "unreadCount": "{count, plural, =1{1 unread message} other{{count} unread messages}}",
+  "@unreadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "membersCount": "{count, plural, =1{1 member} other{{count} members}}",
+  "@membersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "loadError": "Couldn't load this. Check your connection and try again.",
+  "retry": "Retry",
+  "cancel": "Cancel"
+}
