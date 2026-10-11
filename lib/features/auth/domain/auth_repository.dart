@@ -12,6 +12,19 @@ abstract interface class AuthRepository {
     required String password,
   });
 
+  /// Creates an email-and-password account (AUTH-2) and sets its display
+  /// name. The person is signed in afterwards.
+  Future<void> createAccount({
+    required String name,
+    required String email,
+    required String password,
+  });
+
+  /// Sign in with Apple: the native sheet on iOS, a web flow on Android and
+  /// web. Returns normally if the person cancels. Needs the Apple Developer
+  /// membership before it works (roadmap task 109).
+  Future<void> signInWithApple();
+
   /// Google sign-in: a popup on web, the system browser sheet on iOS and
   /// Android. Returns normally if the person cancels (no error is shown).
   Future<void> signInWithGoogle();

@@ -99,5 +99,13 @@
   "activateNeedEmail": "Enter the email address the link was sent to, to finish signing in.",
   "activateContinue": "Continue",
   "activateInvalid": "This sign-in link is invalid or has expired. Ask for a new one.",
-  "backToSignIn": "Back to sign-in"
+  "backToSignIn": "Back to sign-in",
+  "createAccount": "Create account",
+  "nameLabel": "Your name",
+  "nameRequired": "Enter your name.",
+  "emailInvalid": "Enter a valid email address.",
+  "passwordRequired": "Enter your password.",
+  "passwordRule": "At least 8 characters",
+  "passwordTooShort": "Use at least 8 characters for your password.",
+  "signInEmailInUse": "There's already an account with that email. Sign in instead, or reset your password."
 }

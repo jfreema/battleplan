@@ -64,13 +64,49 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> signInWithGoogle() async {
-    final provider = GoogleAuthProvider()
-      ..setCustomParameters({'prompt': 'select_account'});
+  Future<void> createAccount({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
     try {
-      // Web uses a popup (redirects break under browser storage
-      // partitioning, ARCH §6.1). Mobile opens the provider's page in the
-      // system browser sheet and returns through the app's URL scheme.
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      await credential.user?.updateDisplayName(name);
+      // The token refresh carries the new name to watchUser listeners.
+      await credential.user?.reload();
+    } on FirebaseAuthException catch (e) {
+      throw switch (e.code) {
+        'email-already-in-use' => EmailAlreadyInUse(e.code),
+        'weak-password' ||
+        'password-does-not-meet-requirements' => WeakPassword(e.code),
+        'invalid-email' => InvalidInput(e.code),
+        'too-many-requests' => RateLimited(e.code),
+        'network-request-failed' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  Future<void> signInWithGoogle() => _signInWithProvider(
+    GoogleAuthProvider()..setCustomParameters({'prompt': 'select_account'}),
+  );
+
+  @override
+  Future<void> signInWithApple() => _signInWithProvider(
+    AppleAuthProvider()
+      ..addScope('email')
+      ..addScope('name'),
+  );
+
+  /// Shared by every OAuth provider. Web uses a popup (redirects break under
+  /// browser storage partitioning, ARCH §6.1). Mobile opens the provider in
+  /// the system sheet and returns through the app's URL scheme.
+  Future<void> _signInWithProvider(AuthProvider provider) async {
+    try {
       if (kIsWeb) {
         await _auth.signInWithPopup(provider);
       } else {

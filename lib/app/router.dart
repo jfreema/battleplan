@@ -9,6 +9,7 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/features/admin/presentation/admin_screen.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/presentation/activate_screen.dart';
+import 'package:battleplan/features/auth/presentation/email_sign_in_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
@@ -31,6 +32,7 @@ part 'router.g.dart';
 /// Paths that don't need a signed-in user.
 const _publicPaths = {
   '/sign-in',
+  '/sign-in/email',
   '/update-required',
   '/activate',
   // Firebase's email-link path; App Links deliver it to the app.
@@ -81,7 +83,7 @@ GoRouter router(Ref ref) {
             : '/sign-in?from=${Uri.encodeComponent(from)}';
       }
 
-      if (path == '/sign-in') {
+      if (path.startsWith('/sign-in')) {
         return state.uri.queryParameters['from'] ?? '/';
       }
       if (path == '/activate' || path == '/__/auth/links') return '/';
@@ -126,7 +128,14 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/sign-in',
-        builder: (_, _) => SignInScreen(showEmulatorHint: env.useEmulators),
+        builder: (_, _) => const SignInScreen(),
+        routes: [
+          GoRoute(
+            path: 'email',
+            builder: (_, _) =>
+                EmailSignInScreen(showEmulatorHint: env.useEmulators),
+          ),
+        ],
       ),
       GoRoute(
         path: '/update-required',

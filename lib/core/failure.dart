@@ -73,6 +73,22 @@ final class AccountExistsWithOtherMethod extends AppFailure {
   String get code => 'accountExistsWithOtherMethod';
 }
 
+/// Creating an account with an email that already has one (AUTH-2).
+final class EmailAlreadyInUse extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'emailAlreadyInUse';
+}
+
+/// A password that doesn't meet the policy (8+ characters, AUTH-2).
+final class WeakPassword extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'weakPassword';
+}
+
 final class UnknownFailure extends AppFailure {
   const new([super.message]);
 

@@ -31,7 +31,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).at(0), 'coach@example.com');
       await tester.enterText(find.byType(TextField).at(1), 'password');
-      await tester.tap(find.text('Sign in'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
       await tester.pumpAndSettle();
       expect(find.text('Welcome to Battleplan'), findsOneWidget);
     },
@@ -48,7 +48,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'coach@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'password');
-    await tester.tap(find.text('Sign in'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
     await tester.pumpAndSettle();
     expect(find.text('Thunder'), findsOneWidget);
     expect(find.text('Welcome to Battleplan'), findsNothing);
@@ -71,13 +71,57 @@ void main() {
     expect(find.textContaining('went wrong'), findsNothing);
   });
 
+  testWidgets('creating an account signs the person in', (tester) async {
+    await pumpApp(tester, auth: FakeAuthRepository());
+    await tester.tap(find.text('Continue with email'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create account').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(0), 'Sam Rivera');
+    await tester.enterText(find.byType(TextField).at(1), 'sam@example.com');
+    await tester.enterText(find.byType(TextField).at(2), 'longenough');
+    await tester.tap(find.widgetWithText(FilledButton, 'Create account'));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+  });
+
+  testWidgets('a short password is caught before sending', (tester) async {
+    final auth = FakeAuthRepository();
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.text('Continue with email'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create account').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(0), 'Sam Rivera');
+    await tester.enterText(find.byType(TextField).at(1), 'sam@example.com');
+    await tester.enterText(find.byType(TextField).at(2), 'short');
+    await tester.tap(find.widgetWithText(FilledButton, 'Create account'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('at least 8 characters'), findsOneWidget);
+    expect(auth.currentUser, isNull);
+  });
+
+  testWidgets('an email that already has an account says so', (tester) async {
+    await pumpApp(tester, auth: FakeAuthRepository());
+    await tester.tap(find.text('Continue with email'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create account').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).at(0), 'Jordan');
+    await tester.enterText(find.byType(TextField).at(1), 'coach@example.com');
+    await tester.enterText(find.byType(TextField).at(2), 'longenough');
+    await tester.tap(find.widgetWithText(FilledButton, 'Create account'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('already an account'), findsOneWidget);
+  });
+
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with email'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'coach@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'nope');
-    await tester.tap(find.text('Sign in'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
     await tester.pumpAndSettle();
     expect(find.textContaining("don't match"), findsOneWidget);
   });

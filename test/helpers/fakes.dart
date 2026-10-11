@@ -46,6 +46,25 @@ class FakeAuthRepository implements AuthRepository {
     _controller.add(_user);
   }
 
+  @override
+  Future<void> createAccount({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    if (email == knownEmail) throw const EmailAlreadyInUse();
+    _user = AuthUser(
+      uid: 'new-user',
+      email: email,
+      displayName: name,
+      emailVerified: false,
+    );
+    _controller.add(_user);
+  }
+
+  @override
+  Future<void> signInWithApple() async {}
+
   /// When true, Google sign-in behaves as if the person closed the sheet.
   bool googleCancels = false;
 

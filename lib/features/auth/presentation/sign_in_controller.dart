@@ -21,6 +21,30 @@ class SignInController extends _$SignInController {
     );
   }
 
+  Future<void> createAccount({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref
+          .read(authRepositoryProvider)
+          .createAccount(
+            name: name.trim(),
+            email: email.trim(),
+            password: password,
+          ),
+    );
+  }
+
+  Future<void> signInWithApple() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(authRepositoryProvider).signInWithApple(),
+    );
+  }
+
   Future<void> signInWithGoogle() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
@@ -63,6 +87,8 @@ enum SignInError {
   disabled,
   popupBlocked,
   otherMethod,
+  emailInUse,
+  weakPassword,
   unknown,
 }
 
@@ -73,5 +99,7 @@ SignInError signInErrorOf(Object error) => switch (error) {
   PermissionDenied() => SignInError.disabled,
   PopupBlocked() => SignInError.popupBlocked,
   AccountExistsWithOtherMethod() => SignInError.otherMethod,
+  EmailAlreadyInUse() => SignInError.emailInUse,
+  WeakPassword() => SignInError.weakPassword,
   _ => SignInError.unknown,
 };

@@ -1,46 +1,30 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_controller.dart';
+import 'package:battleplan/features/auth/presentation/sign_in_error_text.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// AUTH-1. Google and email work now; Apple arrives in M1. Facebook is
-/// deferred until after M8 (SPEC Q16), so it isn't shown.
-class SignInScreen extends ConsumerStatefulWidget {
-  const new({this.showEmulatorHint = false, super.key});
+/// AUTH-1: Continue with Google, Apple, or email, in that order, with the
+/// Terms footer. The same screen on every platform. Facebook is deferred
+/// until after M8 (SPEC Q16), so it isn't shown.
+class SignInScreen extends ConsumerWidget {
+  const new({this.appleEnabled = false, super.key});
 
-  final bool showEmulatorHint;
-
-  @override
-  ConsumerState<SignInScreen> createState() => _SignInScreenState();
-}
-
-class _SignInScreenState extends ConsumerState<SignInScreen> {
-  final _email = TextEditingController();
-  final _password = TextEditingController();
-  bool _showEmail = false;
-  bool _obscure = true;
+  /// Sign in with Apple needs the Apple Developer membership (roadmap task
+  /// 109). Until then the button shows but is disabled.
+  final bool appleEnabled;
 
   @override
-  void dispose() {
-    _email.dispose();
-    _password.dispose();
-    super.dispose();
-  }
-
-  void _submit() => ref
-      .read(signInControllerProvider.notifier)
-      .signInWithEmail(_email.text, _password.text);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final state = ref.watch(signInControllerProvider);
+    final controller = ref.read(signInControllerProvider.notifier);
     final loading = state.isLoading;
     final error = state.hasError ? signInErrorOf(state.error!) : null;
-    final linkSentTo = ref.watch(signInLinkSentProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -49,135 +33,60 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             padding: const EdgeInsets.all(Space.xl),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
-              child: AutofillGroup(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _Logo(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const AppLogo(),
+                  const SizedBox(height: Space.lg),
+                  Text(
+                    l10n.appName,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: Space.sm),
+                  Text(
+                    l10n.tagline,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: Space.xxl),
+                  OutlinedButton(
+                    onPressed: loading ? null : controller.signInWithGoogle,
+                    child: Text(l10n.continueWithGoogle),
+                  ),
+                  const SizedBox(height: Space.md),
+                  Tooltip(
+                    message: appleEnabled ? '' : l10n.comingSoon,
+                    child: OutlinedButton(
+                      onPressed: appleEnabled && !loading
+                          ? controller.signInWithApple
+                          : null,
+                      child: Text(l10n.continueWithApple),
+                    ),
+                  ),
+                  const SizedBox(height: Space.md),
+                  FilledButton.icon(
+                    onPressed: loading
+                        ? null
+                        : () => context.push('/sign-in/email'),
+                    icon: const Icon(AppIcons.email),
+                    label: Text(l10n.continueWithEmail),
+                  ),
+                  if (error != null) ...[
                     const SizedBox(height: Space.lg),
-                    Text(
-                      l10n.appName,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: Space.sm),
-                    Text(
-                      l10n.tagline,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: Space.xxl),
-                    OutlinedButton(
-                      onPressed: loading
-                          ? null
-                          : () => ref
-                                .read(signInControllerProvider.notifier)
-                                .signInWithGoogle(),
-                      child: Text(l10n.continueWithGoogle),
-                    ),
-                    const SizedBox(height: Space.md),
-                    // Apple arrives in M1 (roadmap task 29, verified in 109).
-                    // Facebook is deferred until after M8 (SPEC Q16).
-                    Tooltip(
-                      message: l10n.comingSoon,
-                      child: OutlinedButton(
-                        onPressed: null,
-                        child: Text(l10n.continueWithApple),
-                      ),
-                    ),
-                    const SizedBox(height: Space.md),
-                    if (!_showEmail)
-                      FilledButton.icon(
-                        onPressed: () => setState(() => _showEmail = true),
-                        icon: const Icon(AppIcons.email),
-                        label: Text(l10n.continueWithEmail),
-                      )
-                    else ...[
-                      TextField(
-                        controller: _email,
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
-                        textInputAction: TextInputAction.next,
-                        autofocus: true,
-                        decoration: InputDecoration(labelText: l10n.emailLabel),
-                      ),
-                      const SizedBox(height: Space.md),
-                      TextField(
-                        controller: _password,
-                        obscureText: _obscure,
-                        autofillHints: const [AutofillHints.password],
-                        onSubmitted: (_) => _submit(),
-                        decoration: InputDecoration(
-                          labelText: l10n.passwordLabel,
-                          suffixIcon: IconButton(
-                            tooltip: _obscure
-                                ? l10n.showPassword
-                                : l10n.hidePassword,
-                            icon: Icon(
-                              _obscure
-                                  ? AppIcons.visibility
-                                  : AppIcons.visibilityOff,
-                            ),
-                            onPressed: () =>
-                                setState(() => _obscure = !_obscure),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: Space.lg),
-                      FilledButton(
-                        onPressed: loading ? null : _submit,
-                        child: Text(l10n.signIn),
-                      ),
-                      TextButton(
-                        onPressed: loading
-                            ? null
-                            : () => ref
-                                  .read(signInControllerProvider.notifier)
-                                  .sendSignInLink(_email.text),
-                        child: Text(l10n.emailMeLink),
-                      ),
-                      if (linkSentTo != null)
-                        Text(
-                          l10n.signInLinkSent(linkSentTo),
-                          textAlign: TextAlign.center,
-                        ),
-                      if (widget.showEmulatorHint) ...[
-                        const SizedBox(height: Space.md),
-                        Text(
-                          l10n.emulatorHint,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ],
-                    if (error != null) ...[
-                      const SizedBox(height: Space.lg),
-                      Text(
-                        switch (error) {
-                          SignInError.badCredentials => l10n.signInFailed,
-                          SignInError.offline => l10n.signInOffline,
-                          SignInError.rateLimited => l10n.signInRateLimited,
-                          SignInError.disabled => l10n.signInDisabled,
-                          SignInError.popupBlocked => l10n.signInPopupBlocked,
-                          SignInError.otherMethod => l10n.signInOtherMethod,
-                          SignInError.unknown => l10n.signInUnknownError,
-                        },
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: theme.colorScheme.error),
-                      ),
-                    ],
-                    const SizedBox(height: Space.xxl),
-                    Text(
-                      l10n.signInTermsFooter,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+                    SignInErrorText(error: error),
                   ],
-                ),
+                  const SizedBox(height: Space.xxl),
+                  Text(
+                    l10n.signInTermsFooter,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -188,8 +97,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 }
 
 /// Placeholder mark until the logo is designed (SPEC Q9).
-class _Logo extends StatelessWidget {
-  const new();
+class AppLogo extends StatelessWidget {
+  const new({super.key});
 
   @override
   Widget build(BuildContext context) => Center(
