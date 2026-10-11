@@ -20,6 +20,8 @@ import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/data/fcm_push_repository.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/data/firestore_player_repository.dart';
+import 'package:battleplan/features/safety/application/providers.dart';
+import 'package:battleplan/features/safety/data/firestore_safety_repository.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/data/shared_prefs_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -55,6 +57,9 @@ List<Override> buildOverrides({
   sharerProvider.overrideWithValue(const SharePlusSharer()),
   playerRepositoryProvider.overrideWithValue(
     FirestorePlayerRepository(firestore, functions),
+  ),
+  safetyRepositoryProvider.overrideWithValue(
+    FirestoreSafetyRepository(firestore, functions),
   ),
   messageRepositoryProvider.overrideWithValue(
     FirestoreMessageRepository(firestore, storage, functions),

@@ -74,7 +74,9 @@ service cloud.firestore {
       allow read: if signedIn() && resource.data.uid == uid();
       allow create: if signedIn() && incoming().uid == uid()
         && blockId == uid() + '_' + incoming().blockedUid
-        && incoming().blockedUid != uid();
+        && incoming().blockedUid != uid()
+        && incoming().keys().hasOnly(['uid', 'blockedUid', 'blockedName', 'createdAt'])
+        && incoming().get('blockedName', '').size() <= 60;
       allow delete: if signedIn() && resource.data.uid == uid();
     }
 

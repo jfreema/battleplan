@@ -98,7 +98,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 63. ✅ Replies with server-written quotes (CHAT-13). *Tested on dev: replying from the menu sent only the original's ID, and the server wrote the quote within a second. The notification to the person replied to comes with M4 (NOTIF-11).*
 64. ✅ Deleting messages through a Function, with the audit log (CHAT-8). *Tested on dev: an admin deleted a member's photo message; the text, photo file, and reactions were erased, the reply quoting it showed "Original message was deleted", the audit log recorded it, and a member couldn't delete someone else's message. Deleting a poll's message deletes the poll in M5.*
 65. ✅ Unread counts and the "New messages" divider, synced across devices (CHAT-9). *Tested on dev with two browsers: three messages showed as 3 on the other person's Chat tab; opening the chat showed the divider and set their read marker past the last message, clearing the count. With more than 50 unread, the chat opens at the oldest loaded one.*
-66. Report and block (SAFE-1, SAFE-2, CHAT-12); the team's Reports screen and acting on reports (SAFE-4); the blocked-people list (SET-5).
+66. ✅ Report and block (SAFE-1, SAFE-2, CHAT-12); the team's Reports screen and acting on reports (SAFE-4); the blocked-people list (SET-5). *Tested on dev: a member's report reached the admin's Reports screen with a copy of the message, and Delete message erased it and closed the report. Notifying admins of new reports comes with M4 (task 74); the super-admin queue with M8.*
 
 **M3 is done when** the CHAT acceptance criteria pass (SPEC §6.5).
 

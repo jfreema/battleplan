@@ -55,6 +55,8 @@ beforeEach(async () => {
     await db.doc('guardianRequests/emma_frank').set({ playerId: 'emma', groupId: 'teamB', uid: 'frank', status: 'pending' });
     await db.doc('invites/K7XPM2QR').set({ groupId: 'teamA', type: 'link', useCount: 0 });
     await db.doc('auditLogs/a1').set({ groupId: 'teamA', action: 'createGroup' });
+    await db.doc('reports/rep1').set({ groupId: 'teamB', reporterId: 'dan', status: 'open', reason: 'spam' });
+    await db.doc('userBlocks/dan_frank').set({ uid: 'dan', blockedUid: 'frank', blockedName: 'Frank' });
   });
 });
 
@@ -144,6 +146,35 @@ describe('invites and other server-only data', () => {
     await assertFails(as('alice').doc('auditLogs/a1').get());
     await assertFails(as('alice').doc('auditLogs/a2').set({ groupId: 'teamA' }));
     await assertFails(as('alice').doc('rateLimits/x').get());
+  });
+});
+
+describe('reports and blocks (SAFE-1, SAFE-2, SAFE-4)', () => {
+  it("shows a team's reports to its admins only", async () => {
+    await assertSucceeds(as('carol').doc('reports/rep1').get());
+    await assertSucceeds(
+      as('carol').collection('reports').where('groupId', '==', 'teamB').where('status', '==', 'open').limit(50).get(),
+    );
+    await assertFails(as('dan').doc('reports/rep1').get());
+    await assertFails(as('alice').doc('reports/rep1').get());
+  });
+
+  it('leaves filing and closing reports to Functions', async () => {
+    await assertFails(as('dan').doc('reports/new').set({ groupId: 'teamB', reporterId: 'dan', status: 'open' }));
+    await assertFails(as('carol').doc('reports/rep1').update({ status: 'dismissed' }));
+  });
+
+  it('lets people manage only their own blocks', async () => {
+    await assertSucceeds(as('dan').doc('userBlocks/dan_frank').get());
+    await assertFails(as('frank').doc('userBlocks/dan_frank').get());
+    await assertSucceeds(
+      as('erin').doc('userBlocks/erin_frank').set({ uid: 'erin', blockedUid: 'frank', blockedName: 'Frank' }),
+    );
+    await assertFails(as('erin').doc('userBlocks/dan_carol').set({ uid: 'dan', blockedUid: 'carol' }));
+    await assertFails(as('erin').doc('userBlocks/erin_erin').set({ uid: 'erin', blockedUid: 'erin' }));
+    await assertFails(as('erin').doc('userBlocks/erin_bob').set({ uid: 'erin', blockedUid: 'bob', extra: 1 }));
+    await assertFails(as('frank').doc('userBlocks/dan_frank').delete());
+    await assertSucceeds(as('dan').doc('userBlocks/dan_frank').delete());
   });
 });
 

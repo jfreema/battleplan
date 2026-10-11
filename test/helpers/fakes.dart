@@ -19,6 +19,8 @@ import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
+import 'package:battleplan/features/safety/domain/safety.dart';
+import 'package:battleplan/features/safety/domain/safety_repository.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
 
 class FakeAuthRepository implements AuthRepository {
@@ -829,4 +831,61 @@ class FakePhotoPicker implements PhotoPicker {
 
   @override
   bool get canUseCamera => false;
+}
+
+/// Blocks and reports in memory.
+class FakeSafetyRepository implements SafetyRepository {
+  final List<BlockedPerson> blocks = [];
+  final List<String> reports = [];
+  final List<String> resolved = [];
+  final List<Report> open = [];
+  final _changes = StreamController<void>.broadcast();
+
+  @override
+  Stream<List<BlockedPerson>> watchBlocked(UserId uid) async* {
+    yield [...blocks];
+    await for (final _ in _changes.stream) {
+      yield [...blocks];
+    }
+  }
+
+  @override
+  Future<void> block(UserId uid, UserId blocked, {required String name}) async {
+    blocks.add(BlockedPerson(uid: blocked, name: name));
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> unblock(UserId uid, UserId blocked) async {
+    blocks.removeWhere((b) => b.uid == blocked);
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> report(
+    GroupId groupId, {
+    required ReportTargetType targetType,
+    required String targetId,
+    required ReportReason reason,
+    String? details,
+  }) async => reports.add('${targetType.name} $targetId ${reason.value}');
+
+  @override
+  Stream<List<Report>> watchOpenReports(GroupId groupId) async* {
+    yield open.where((r) => r.groupId == groupId).toList();
+    await for (final _ in _changes.stream) {
+      yield open.where((r) => r.groupId == groupId).toList();
+    }
+  }
+
+  @override
+  Future<void> resolveReport(
+    String reportId, {
+    required bool actioned,
+    ReportResolution resolution = ReportResolution.none,
+  }) async {
+    resolved.add('$reportId ${resolution.name}');
+    open.removeWhere((r) => r.id == reportId);
+    _changes.add(null);
+  }
 }

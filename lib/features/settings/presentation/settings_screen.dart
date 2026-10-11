@@ -98,6 +98,11 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l10n.signInMethods),
             onTap: () => context.push('/settings/sign-in-methods'),
           ),
+          ListTile(
+            leading: const Icon(AppIcons.block),
+            title: Text(l10n.blockedPeople),
+            onTap: () => context.push('/settings/blocked'),
+          ),
           if (showDevTools)
             ListTile(
               leading: const Icon(AppIcons.notifications),

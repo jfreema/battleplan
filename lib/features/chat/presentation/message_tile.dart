@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
@@ -19,6 +20,8 @@ import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/safety/application/providers.dart';
+import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -71,6 +74,9 @@ class MessageTile extends ConsumerStatefulWidget {
 class _MessageTileState extends ConsumerState<MessageTile> {
   bool _showTime = false;
   bool _hovering = false;
+
+  /// A blocked person's message the viewer chose to see.
+  bool _revealed = false;
 
   /// How far the bubble is dragged right toward a reply (phones).
   double _swipe = 0;
@@ -153,6 +159,42 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     showAppSnackBar(context, l10n.textCopied);
                   },
                 ),
+              // Other people's messages: report them or block their author
+              // (SAFE-1, SAFE-2).
+              if (!widget.mine) ...[
+                ListTile(
+                  leading: const Icon(AppIcons.report),
+                  title: Text(l10n.reportMessage),
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    unawaited(
+                      showReportSheet(
+                        context,
+                        ref,
+                        groupId: m.groupId,
+                        targetType: ReportTargetType.message,
+                        targetId: m.id,
+                      ),
+                    );
+                  },
+                ),
+                if (!ref.read(blockedIdsProvider).contains(m.authorId))
+                  ListTile(
+                    leading: const Icon(AppIcons.block),
+                    title: Text(l10n.blockPerson(m.authorName)),
+                    onTap: () {
+                      Navigator.of(sheet).pop();
+                      unawaited(
+                        confirmBlock(
+                          context,
+                          ref,
+                          uid: UserId(m.authorId),
+                          name: m.authorName,
+                        ),
+                      );
+                    },
+                  ),
+              ],
               // Your own messages; admins and super admins can delete any.
               if (widget.mine || canModerate)
                 ListTile(
@@ -197,6 +239,35 @@ class _MessageTileState extends ConsumerState<MessageTile> {
 
     final mine = widget.mine;
     final scheme = theme.colorScheme;
+    // Messages from someone I blocked are collapsed until I tap Show
+    // (CHAT-12).
+    if (!mine &&
+        !_revealed &&
+        ref.watch(blockedIdsProvider).contains(m.authorId)) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Space.lg,
+          vertical: Space.xs,
+        ),
+        child: Row(
+          children: [
+            Flexible(
+              child: Text(
+                l10n.blockedMessage,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => setState(() => _revealed = true),
+              child: Text(l10n.show),
+            ),
+          ],
+        ),
+      );
+    }
     final background = mine ? scheme.primary : scheme.surfaceContainerHighest;
     final foreground = mine ? scheme.onPrimary : scheme.onSurface;
     final time = m.createdAt == null

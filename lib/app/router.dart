@@ -35,6 +35,8 @@ import 'package:battleplan/features/notifications/presentation/push_test_screen.
 import 'package:battleplan/features/players/presentation/add_players_screen.dart';
 import 'package:battleplan/features/players/presentation/player_card_screen.dart';
 import 'package:battleplan/features/players/presentation/who_are_you_screen.dart';
+import 'package:battleplan/features/safety/presentation/blocked_people_screen.dart';
+import 'package:battleplan/features/safety/presentation/reports_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/settings_screen.dart';
@@ -214,6 +216,10 @@ GoRouter router(Ref ref) {
             path: 'sign-in-methods',
             builder: (_, _) => const SignInMethodsScreen(),
           ),
+          GoRoute(
+            path: 'blocked',
+            builder: (_, _) => const BlockedPeopleScreen(),
+          ),
           if (!env.isProd)
             GoRoute(
               path: 'push-test',
@@ -267,6 +273,12 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: 'members/add',
             builder: (_, state) => AddMembersScreen(
+              groupId: GroupId(state.pathParameters['groupId']!),
+            ),
+          ),
+          GoRoute(
+            path: 'reports',
+            builder: (_, state) => ReportsScreen(
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
           ),

@@ -360,9 +360,10 @@ class _TeamMenu extends StatelessWidget {
       ('invite', AppIcons.invite, l10n.inviteMenu),
       ('notifications', AppIcons.notifications, l10n.teamNotificationsMenu),
       if (isAdmin) ('settings', AppIcons.settings, l10n.teamSettingsMenu),
+      if (isAdmin) ('reports', AppIcons.report, l10n.reportsMenu),
       ('leave', AppIcons.leave, l10n.leaveTeamMenu),
     ];
-    const built = {'roster', 'settings', 'invite'};
+    const built = {'roster', 'settings', 'invite', 'reports'};
     return PopupMenuButton<String>(
       tooltip: l10n.teamMenuTooltip,
       icon: const Icon(AppIcons.more),

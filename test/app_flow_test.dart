@@ -7,6 +7,7 @@ import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -901,6 +902,49 @@ void main() {
       expect(members.reads, contains('a'));
     });
 
+    testWidgets(
+      'reporting a message and blocking its author (SAFE-1, SAFE-2)',
+      (tester) async {
+        final safety = FakeSafetyRepository();
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: {'a': testGroup('a', 'Thunder')},
+          memberships: [
+            testMembership('a', 'coach'),
+            testMembership('a', 'sam', name: 'Sam Rivera'),
+          ],
+          messageRepo: FakeMessageRepository([msg(1)]),
+          safety: safety,
+        );
+        await tester.longPress(find.text('Message 1'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Report'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Spam'));
+        await tester.pump();
+        await tester.tap(find.text('Send report'));
+        await tester.pumpAndSettle();
+        expect(safety.reports, ['message m1 spam']);
+        expect(find.textContaining('admins will review'), findsOneWidget);
+        // Let the confirmation go away.
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+        // Block Sam: the message collapses, and Show reveals it.
+        await tester.longPress(find.text('Message 1'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Block Sam Rivera'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, 'Block'));
+        await tester.pumpAndSettle();
+        expect(find.text('Message 1'), findsNothing);
+        expect(find.text('Message from someone you blocked'), findsOneWidget);
+        await tester.tap(find.text('Show'));
+        await tester.pumpAndSettle();
+        expect(find.text('Message 1'), findsOneWidget);
+      },
+    );
+
     testWidgets('scrolling up loads older messages 50 at a time', (
       tester,
     ) async {
@@ -1061,5 +1105,67 @@ void main() {
     await tester.pumpAndSettle();
     expect(prefs.themePreference, ThemePreference.dark);
     expect(users.themeMode, ThemePreference.dark);
+  });
+
+  testWidgets('admins act on reports from the Reports screen (SAFE-4)', (
+    tester,
+  ) async {
+    final safety = FakeSafetyRepository()
+      ..open.add(
+        const Report(
+          id: 'r1',
+          groupId: GroupId('a'),
+          targetType: ReportTargetType.message,
+          targetId: 'm1',
+          reason: ReportReason.harassment,
+          subjectId: 'sam',
+          subjectName: 'Sam Rivera',
+          excerpt: 'Something mean',
+        ),
+      );
+    final messages = FakeMessageRepository();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberships: [
+        testMembership('a', 'coach', role: MemberRole.owner),
+        testMembership('a', 'sam', name: 'Sam Rivera'),
+      ],
+      messageRepo: messages,
+      safety: safety,
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reports'));
+    await tester.pumpAndSettle();
+    expect(find.text('Something mean'), findsOneWidget);
+    expect(find.text('A message from Sam Rivera'), findsOneWidget);
+    await tester.tap(find.text('Delete message'));
+    await tester.pumpAndSettle();
+    expect(messages.deleted, ['m1']);
+    expect(safety.resolved, ['r1 deletedMessage']);
+    expect(find.text('No open reports.'), findsOneWidget);
+  });
+
+  testWidgets('Settings lists blocked people with Unblock (SET-5)', (
+    tester,
+  ) async {
+    final safety = FakeSafetyRepository()
+      ..blocks.add(const BlockedPerson(uid: UserId('sam'), name: 'Sam Rivera'));
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      safety: safety,
+    );
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Blocked people'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sam Rivera'), findsOneWidget);
+    await tester.tap(find.text('Unblock'));
+    await tester.pumpAndSettle();
+    expect(safety.blocks, isEmpty);
+    expect(find.text("You haven't blocked anyone."), findsOneWidget);
   });
 }

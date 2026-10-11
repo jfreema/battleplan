@@ -16,6 +16,8 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/safety/application/providers.dart';
+import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -385,6 +387,41 @@ class MemberCard extends ConsumerWidget {
                   );
                 },
               ),
+            // Report or block someone else (SAFE-1, SAFE-2).
+            if (me != null && member.uid != me!.uid) ...[
+              ListTile(
+                title: Text(l10n.reportMessage),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  unawaited(
+                    showReportSheet(
+                      context,
+                      ref,
+                      groupId: member.groupId,
+                      targetType: ReportTargetType.user,
+                      targetId: member.uid.value,
+                    ),
+                  );
+                },
+              ),
+              if (ref.watch(blockedIdsProvider).contains(member.uid.value))
+                ListTile(
+                  title: Text(l10n.unblock),
+                  onTap: () => unawaited(unblock(context, ref, member.uid)),
+                )
+              else
+                ListTile(
+                  title: Text(l10n.blockPerson(member.displayName)),
+                  onTap: () => unawaited(
+                    confirmBlock(
+                      context,
+                      ref,
+                      uid: member.uid,
+                      name: member.displayName,
+                    ),
+                  ),
+                ),
+            ],
           ],
         ),
       ),
