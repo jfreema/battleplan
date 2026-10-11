@@ -40,7 +40,7 @@ Last updated: 2026-10-11, after M0's code merged.
 20. ✅ Import-boundary check in CI (ENG-1), Firestore index exemptions, TTL policies.
 21. ✅ Spike 4: WASM web build with our plugins.
 22. ✅ Spike 5: security rules on the flat collections (28 rules tests).
-23. Run `flutterfire configure` for dev and prod, replacing the placeholder Firebase options. *Needs task 13.*
+23. ✅ Register the iOS, Android, and web apps in dev and prod and put their Firebase config in the app (`lib/app/firebase_options_dev.dart`, `_prod.dart`). The dev Firestore database exists (us-central1) with the rules deployed; TTL policies wait for Blaze (task 25 deploys indexes).
 24. Set up keyless GitHub Actions deploys (Workload Identity Federation) to the dev project.
 25. Turn on Hosting for the dev project; post a web preview link on every PR, and deploy rules, indexes, and hosting to dev on merge to `main`.
 26. 👤 **Jared:** Create the Meta for Developers app (free, development mode) for Facebook sign-in.

@@ -67,3 +67,4 @@ service-account*.json
 *-service-account.json
 .env
 .env.*
+lib/l10n/gen/
