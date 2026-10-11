@@ -17,6 +17,7 @@ import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notifications_screen.dart';
+import 'package:battleplan/features/notifications/presentation/push_test_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/settings_screen.dart';
@@ -151,8 +152,17 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/settings',
-        builder: (_, _) =>
-            SettingsScreen(appVersion: ref.read(appVersionProvider)),
+        builder: (_, _) => SettingsScreen(
+          appVersion: ref.read(appVersionProvider),
+          showDevTools: !env.isProd,
+        ),
+        routes: [
+          if (!env.isProd)
+            GoRoute(
+              path: 'push-test',
+              builder: (_, _) => const PushTestScreen(),
+            ),
+        ],
       ),
       GoRoute(path: '/admin', builder: (_, _) => const AdminScreen()),
       GoRoute(

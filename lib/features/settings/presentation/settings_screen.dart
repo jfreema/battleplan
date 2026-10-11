@@ -5,13 +5,17 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// SET-2 appearance and sign-out. The rest of Settings arrives with M1.
 class SettingsScreen extends ConsumerWidget {
-  const new({required this.appVersion, super.key});
+  const new({required this.appVersion, this.showDevTools = false, super.key});
 
   final String appVersion;
+
+  /// Shows developer-only tools (dev builds only).
+  final bool showDevTools;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,6 +59,13 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l10n.about),
             subtitle: Text(l10n.versionLabel(appVersion)),
           ),
+          if (showDevTools)
+            ListTile(
+              leading: const Icon(AppIcons.notifications),
+              // Dev-only, never shipped, so not translated.
+              title: const Text('Push test (dev only)'),
+              onTap: () => context.push('/settings/push-test'),
+            ),
           ListTile(
             leading: const Icon(AppIcons.signOut),
             title: Text(l10n.signOut),

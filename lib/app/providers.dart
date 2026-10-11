@@ -7,10 +7,13 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/data/firestore_group_repository.dart';
+import 'package:battleplan/features/notifications/application/providers.dart';
+import 'package:battleplan/features/notifications/data/fcm_push_repository.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/data/shared_prefs_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,6 +23,7 @@ List<Override> buildOverrides({
   required String version,
   required FirebaseAuth auth,
   required FirebaseFirestore firestore,
+  required FirebaseMessaging? messaging,
   required SharedPreferencesWithCache prefs,
   required Analytics analytics,
   required CrashReporter crashReporter,
@@ -43,6 +47,11 @@ List<Override> buildOverrides({
   ),
   memberRepositoryProvider.overrideWithValue(
     FirestoreMemberRepository(firestore),
+  ),
+  pushRepositoryProvider.overrideWithValue(
+    messaging == null
+        ? const UnavailablePushRepository()
+        : FcmPushRepository(messaging),
   ),
   localPrefsRepositoryProvider.overrideWithValue(SharedPrefsRepository(prefs)),
 ];

@@ -41,7 +41,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 21. ✅ Spike 4: WASM web build with our plugins.
 22. ✅ Spike 5: security rules on the flat collections (28 rules tests).
 23. ✅ Register the iOS, Android, and web apps in dev and prod and put their Firebase config in the app (`lib/app/firebase_options_dev.dart`, `_prod.dart`). The dev Firestore database exists (us-central1) with the rules deployed; TTL policies wait for Blaze (task 25 deploys indexes).
-24. Set up keyless GitHub Actions deploys (Workload Identity Federation) to the dev project.
+24. ✅ Set up keyless GitHub Actions deploys (Workload Identity Federation) to the dev project.
 25. Turn on Hosting for the dev project; post a web preview link on every PR, and deploy rules, indexes, and hosting to dev on merge to `main`.
 26. Run **spike 1**: the sign-in matrix (provider × platform × new / existing / admin-added account) for Google and email. Apple joins in task 109; Facebook in the Facebook section after M8.
 27. ✅ Run **spike 2** on the dev Hosting domain: Android App Links, `assetlinks.json`, and email-link sign-in with `linkDomain` (no Dynamic Links). iOS Universal Links join in task 110. *Done 2026-10-11: App Links and email-link sign-in work on Android and web; `linkDomain` must be a custom domain (docs/spikes/M0.md).*
