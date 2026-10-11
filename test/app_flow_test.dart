@@ -828,6 +828,39 @@ void main() {
       );
     });
 
+    testWidgets('deleting your message leaves a placeholder (CHAT-8)', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([
+        msg(2, author: 'coach', name: 'Coach'),
+        msg(1),
+      ]);
+      await openChat(tester, repo);
+      await tester.longPress(find.text('Message 2'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete this message?'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+      expect(repo.deleted, ['m2']);
+      expect(find.text('This message was deleted.'), findsOneWidget);
+    });
+
+    testWidgets("members can't delete other people's messages", (tester) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [testMembership('a', 'coach')],
+        messageRepo: FakeMessageRepository([msg(1)]),
+      );
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy text'), findsOneWidget);
+      expect(find.text('Delete'), findsNothing);
+    });
+
     testWidgets('scrolling up loads older messages 50 at a time', (
       tester,
     ) async {

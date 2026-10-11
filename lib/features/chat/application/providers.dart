@@ -319,4 +319,8 @@ class ChatMessages extends _$ChatMessages {
     }
     return _known.containsKey(messageId);
   }
+
+  /// Deletes a message for everyone (CHAT-8).
+  Future<void> delete(Message message) =>
+      ref.read(messageRepositoryProvider).deleteMessage(message.id);
 }

@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/linkified_text.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -86,11 +88,36 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     onPressed: () => unawaited(_openMenu()),
   );
 
-  /// React, Copy text (and, with later tasks, Reply, Delete, Report).
+  /// Asks first, then deletes for everyone (CHAT-8).
+  Future<void> _confirmDelete() async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.deleteMessageTitle,
+      message: l10n.deleteMessageBody,
+      confirmLabel: l10n.delete,
+      cancelLabel: l10n.cancel,
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    try {
+      await ref
+          .read(chatMessagesProvider(widget.message.groupId).notifier)
+          .delete(widget.message);
+    } on AppFailure {
+      if (mounted) showAppSnackBar(context, l10n.signInUnknownError);
+    }
+  }
+
+  /// React, Reply, Copy text, Delete (and Report with task 66).
   Future<void> _openMenu() async {
     final m = widget.message;
     final l10n = AppLocalizations.of(context);
-    final me = ref.read(authUserProvider).value?.uid;
+    final user = ref.read(authUserProvider).value;
+    final me = user?.uid;
+    final canModerate =
+        (user?.isSuperAdmin ?? false) ||
+        (ref.read(myMembershipProvider(m.groupId))?.isAdmin ?? false);
     await showAdaptiveSheet<void>(
       context,
       builder: (sheet) => SafeArea(
@@ -124,6 +151,19 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     Navigator.of(sheet).pop();
                     unawaited(Clipboard.setData(ClipboardData(text: m.text)));
                     showAppSnackBar(context, l10n.textCopied);
+                  },
+                ),
+              // Your own messages; admins and super admins can delete any.
+              if (widget.mine || canModerate)
+                ListTile(
+                  leading: Icon(
+                    AppIcons.delete,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  title: Text(l10n.deleteMessage),
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    unawaited(_confirmDelete());
                   },
                 ),
             ],
@@ -200,7 +240,9 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       ),
       child: deleted
           ? Text(
-              l10n.messageDeleted,
+              m.deletedReason == 'admin'
+                  ? l10n.messageRemovedByAdmin
+                  : l10n.messageDeleted,
               style: TextStyle(
                 fontStyle: FontStyle.italic,
                 color: scheme.onSurfaceVariant,

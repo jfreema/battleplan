@@ -31,6 +31,10 @@ abstract class Message with _$Message {
     @Default(<String, Reaction>{}) Map<String, Reaction> reactions,
     DateTime? deletedAt,
 
+    /// Who deleted it: the author ("This message was deleted") or an admin
+    /// ("Removed by a team admin") (CHAT-8).
+    String? deletedReason,
+
     /// When the server stamped it. Null while a sent message is still local.
     DateTime? createdAt,
 

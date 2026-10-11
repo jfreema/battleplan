@@ -7,15 +7,17 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 /// Messages in the flat `messages` collection, queried by groupId and
 /// createdAt (ARCH §6.2).
 class FirestoreMessageRepository implements MessageRepository {
-  new(this._db, this._storage);
+  new(this._db, this._storage, this._functions);
 
   final FirebaseFirestore _db;
   final FirebaseStorage _storage;
+  final FirebaseFunctions _functions;
 
   Query<Map<String, dynamic>> _chat(GroupId groupId) => _db
       .collection(Collections.messages)
@@ -90,6 +92,7 @@ class FirestoreMessageRepository implements MessageRepository {
           e.key as String: ?Reaction.tryParse(e.value as String?),
       },
       deletedAt: deleted is Timestamp ? deleted.toDate() : null,
+      deletedReason: x['deletedReason'] as String?,
       // A local write has no server time yet; estimate it so it sorts last.
       createdAt: created is Timestamp
           ? created.toDate()
@@ -275,6 +278,21 @@ class FirestoreMessageRepository implements MessageRepository {
       return await _storage.ref(path).getData(15 * 1024 * 1024);
     } on FirebaseException {
       return null;
+    }
+  }
+
+  @override
+  Future<void> deleteMessage(String messageId) async {
+    try {
+      await _functions.httpsCallable('deleteMessage').call<Object?>({
+        'messageId': messageId,
+      });
+    } on FirebaseFunctionsException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.message),
+        'unavailable' || 'deadline-exceeded' => Offline(e.message),
+        _ => UnknownFailure('${e.code}: ${e.message}'),
+      };
     }
   }
 

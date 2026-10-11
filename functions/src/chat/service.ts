@@ -1,6 +1,7 @@
 // Chat domain service: owns messages.
 import { FieldValue } from 'firebase-admin/firestore';
-import { db } from '../shared/admin.js';
+import { db, storage } from '../shared/admin.js';
+import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
 
 export const DELETED_USER_NAME = 'Deleted user';
@@ -84,4 +85,40 @@ export async function writeReplyPreview(messageId: string, groupId: string, repl
     .collection(Collections.messages)
     .doc(messageId)
     .update({ replyPreview: replyPreviewOf(data) });
+}
+
+/**
+ * Erases a message (CHAT-8): the text, photos, reactions, and quote are
+ * removed from the server, not hidden, and the message becomes a
+ * placeholder ("This message was deleted" or "Removed by a team admin").
+ * Replies that quoted it now show "Original message was deleted".
+ */
+export async function eraseMessage(
+  messageId: string,
+  deletedBy: string,
+  reason: 'author' | 'admin',
+): Promise<void> {
+  const ref = db().collection(Collections.messages).doc(messageId);
+  const message = await ref.get();
+  if (!message.exists || message.get('deletedAt')) return;
+  const groupId = message.get('groupId') as string;
+  await ref.update({
+    text: '',
+    attachments: [],
+    reactions: {},
+    replyPreview: FieldValue.delete(),
+    deletedAt: FieldValue.serverTimestamp(),
+    deletedBy,
+    deletedReason: reason,
+  });
+  // Photos go too; the Storage trigger takes them off the team's total.
+  await storage()
+    .bucket()
+    .deleteFiles({ prefix: `groups/${groupId}/messages/${messageId}/` })
+    .catch(() => undefined);
+  await forEachPage(
+    db().collection(Collections.messages).where('replyToId', '==', messageId),
+    (batch, reply) =>
+      batch.update(reply.ref, { replyPreview: { authorName: '', text: '', type: 'text', deleted: true } }),
+  );
 }

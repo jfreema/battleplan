@@ -59,6 +59,10 @@ abstract interface class MessageRepository {
   /// A message photo's bytes, for sharing or saving.
   Future<Uint8List?> attachmentBytes(String path);
 
+  /// Deletes a message through the `deleteMessage` callable (CHAT-8): the
+  /// author, a team admin, or a super admin.
+  Future<void> deleteMessage(String messageId);
+
   /// Sets or clears the person's one reaction on a message (CHAT-6).
   Future<void> setReaction(String messageId, UserId uid, Reaction? reaction);
 }

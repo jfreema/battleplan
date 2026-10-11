@@ -705,6 +705,23 @@ class FakeMessageRepository implements MessageRepository {
     _changes.add(null);
   }
 
+  final List<String> deleted = [];
+
+  @override
+  Future<void> deleteMessage(String messageId) async {
+    deleted.add(messageId);
+    final i = messages.indexWhere((m) => m.id == messageId);
+    if (i < 0) return;
+    messages[i] = messages[i].copyWith(
+      text: '',
+      attachments: const [],
+      reactions: const {},
+      deletedAt: DateTime.now(),
+      deletedReason: 'author',
+    );
+    _changes.add(null);
+  }
+
   @override
   Future<void> setReaction(
     String messageId,
