@@ -44,7 +44,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 24. Set up keyless GitHub Actions deploys (Workload Identity Federation) to the dev project.
 25. Turn on Hosting for the dev project; post a web preview link on every PR, and deploy rules, indexes, and hosting to dev on merge to `main`.
 26. Run **spike 1**: the sign-in matrix (provider × platform × new / existing / admin-added account) for Google and email. Apple joins in task 109; Facebook in the Facebook section after M8.
-27. Run **spike 2** on the dev Hosting domain: Android App Links, `assetlinks.json`, and email-link sign-in with `linkDomain` (no Dynamic Links). iOS Universal Links join in task 110.
+27. ✅ Run **spike 2** on the dev Hosting domain: Android App Links, `assetlinks.json`, and email-link sign-in with `linkDomain` (no Dynamic Links). iOS Universal Links join in task 110. *Done 2026-10-11: App Links and email-link sign-in work on Android and web; `linkDomain` must be a custom domain (docs/spikes/M0.md).*
 28. Create the web push (VAPID) key on the dev project and run **spike 3**: web push on Chrome, macOS Safari, and an iPhone home-screen web app.
 
 **M0 is done when** the empty app runs on iOS, Android, and Chrome, and every PR gets a web preview link.
