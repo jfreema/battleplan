@@ -24,6 +24,18 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- App Links (ARCH §6.6): invite, setup, and content links on our
+                 domain open the app. The host is set per flavor in
+                 build.gradle.kts and verified by /.well-known/assetlinks.json. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="${appLinkHost}"/>
+                <data android:pathPrefix="/join/"/>
+                <data android:pathPrefix="/activate"/>
+                <data android:pathPrefix="/g/"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

@@ -12,6 +12,7 @@ import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notifications_screen.dart';
@@ -62,7 +63,10 @@ GoRouter router(Ref ref) {
       final user = auth.value;
 
       if (user == null) {
-        if (_publicPaths.contains(path)) return null;
+        // Invite links work signed out (ARCH §5.4).
+        if (_publicPaths.contains(path) || path.startsWith('/join/')) {
+          return null;
+        }
         final from = state.uri.toString();
         return from == '/'
             ? '/sign-in'
@@ -118,6 +122,10 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/update-required',
         builder: (_, _) => const UpdateRequiredScreen(),
+      ),
+      GoRoute(
+        path: '/join/:code',
+        builder: (_, state) => JoinScreen(code: state.pathParameters['code']!),
       ),
       GoRoute(
         path: '/welcome',

@@ -39,10 +39,12 @@ android {
             dimension = "env"
             applicationIdSuffix = ".dev"
             resValue("string", "app_name", "Battleplan Dev")
+            manifestPlaceholders["appLinkHost"] = "battleplan-dev-ecce4.web.app"
         }
         create("prod") {
             dimension = "env"
             resValue("string", "app_name", "Battleplan")
+            manifestPlaceholders["appLinkHost"] = "getbattleplan.app"
         }
     }
 

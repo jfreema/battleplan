@@ -83,5 +83,7 @@
   },
   "loadError": "Couldn't load this. Check your connection and try again.",
   "retry": "Retry",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "inviteCodeLabel": "Invite code",
+  "joinComingSoon": "Joining a team from an invite arrives soon. Keep this code handy."
 }

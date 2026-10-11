@@ -1329,7 +1329,7 @@ What exists in the code today, and where. This section is updated with every cha
 | Feature | Built so far |
 |---|---|
 | `auth` | `AuthUser`, `AuthRepository` (Firebase impl), sign-in screen with email and Google sign-in (popup on web, system browser sheet on iOS and Android); Apple button disabled until M1; Facebook hidden until after M8 (D33) |
-| `groups` | `Group`, `Membership`, `MyTeam`; `GroupRepository` and `MemberRepository` (Firestore impls); the `myTeams` provider (switcher list, most recent first); `TeamShell` (header, bottom bar or rail, team menu, account menu, Ctrl/⌘+K), `TeamSwitcherList`, `WelcomeScreen` |
+| `groups` | `JoinScreen` at `/join/<CODE>` (shows the code until M2; opened by App Links); `Group`, `Membership`, `MyTeam`; `GroupRepository` and `MemberRepository` (Firestore impls); the `myTeams` provider (switcher list, most recent first); `TeamShell` (header, bottom bar or rail, team menu, account menu, Ctrl/⌘+K), `TeamSwitcherList`, `WelcomeScreen` |
 | `settings` | `LocalPrefsRepository` (SharedPreferences impl) for theme and last team; settings screen with the theme switch and sign-out |
 | `chat`, `schedule`, `documents`, `notifications`, `admin` | Placeholder screens |
 
@@ -1353,5 +1353,6 @@ What exists in the code today, and where. This section is updated with every cha
 | Import-boundary check | `tools/check_imports.sh` |
 | CI and deploys | `.github/workflows/ci.yml` (checks on every push; deploys to dev on push to `main` once WIF is set up) |
 | Dev web app | https://battleplan-dev-ecce4.web.app (Firebase Hosting on the dev project) |
+| App Links | `web/.well-known/assetlinks.json`, the `autoVerify` intent filter in `AndroidManifest.xml`, `appLinkHost` per flavor in `build.gradle.kts` |
 | VS Code | `.vscode/launch.json`, `tasks.json` |
 | How to run locally | [DEVELOPMENT.md](DEVELOPMENT.md) |

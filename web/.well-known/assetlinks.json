@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.getbattleplan.dev",
+      "sha256_cert_fingerprints": [
+        "17:B4:36:9C:62:5A:5F:F7:05:6E:B8:CD:0B:A1:4A:64:9F:D4:58:7A:11:89:48:94:0E:67:6D:6F:5A:C5:37:D1"
+      ]
+    }
+  }
+]
