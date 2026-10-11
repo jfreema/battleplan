@@ -1383,4 +1383,277 @@ as List<String>,
 
 }
 
+/// @nodoc
+mixin _$GuardianRequest {
+
+ PlayerId get playerId; GroupId get groupId; UserId get uid; GuardianRequestStatus get status;
+/// Create a copy of GuardianRequest
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$GuardianRequestCopyWith<GuardianRequest> get copyWith => _$GuardianRequestCopyWithImpl<GuardianRequest>(this as GuardianRequest, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as GuardianRequest;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GuardianRequest&&(identical(other.playerId, _this.playerId) || other.playerId == _this.playerId)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.status, _this.status) || other.status == _this.status));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as GuardianRequest;
+  return Object.hash(runtimeType,_this.playerId,_this.groupId,_this.uid,_this.status);
+}
+
+@override
+String toString() {
+  final _this = this as GuardianRequest;
+  return 'GuardianRequest(playerId: ${_this.playerId}, groupId: ${_this.groupId}, uid: ${_this.uid}, status: ${_this.status})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $GuardianRequestCopyWith<$Res>  {
+  factory $GuardianRequestCopyWith(GuardianRequest value, $Res Function(GuardianRequest) _then) = _$GuardianRequestCopyWithImpl;
+@useResult
+$Res call({
+ PlayerId playerId, GroupId groupId, UserId uid, GuardianRequestStatus status
+});
+
+
+
+
+}
+/// @nodoc
+class _$GuardianRequestCopyWithImpl<$Res>
+    implements $GuardianRequestCopyWith<$Res> {
+  _$GuardianRequestCopyWithImpl(this._self, this._then);
+
+  final GuardianRequest _self;
+  final $Res Function(GuardianRequest) _then;
+
+/// Create a copy of GuardianRequest
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? playerId = null,Object? groupId = null,Object? uid = null,Object? status = null,}) {
+  return _then(GuardianRequest(
+playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
+as PlayerId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
+as GroupId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
+as UserId,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as GuardianRequestStatus,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [GuardianRequest].
+extension GuardianRequestPatterns on GuardianRequest {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _GuardianRequest value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _GuardianRequest() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _GuardianRequest value)  $default,){
+final _that = this;
+switch (_that) {
+case _GuardianRequest():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _GuardianRequest value)?  $default,){
+final _that = this;
+switch (_that) {
+case _GuardianRequest() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  UserId uid,  GuardianRequestStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _GuardianRequest() when $default != null:
+return $default(_that.playerId,_that.groupId,_that.uid,_that.status);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  UserId uid,  GuardianRequestStatus status)  $default,) {final _that = this;
+switch (_that) {
+case _GuardianRequest():
+return $default(_that.playerId,_that.groupId,_that.uid,_that.status);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerId playerId,  GroupId groupId,  UserId uid,  GuardianRequestStatus status)?  $default,) {final _that = this;
+switch (_that) {
+case _GuardianRequest() when $default != null:
+return $default(_that.playerId,_that.groupId,_that.uid,_that.status);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _GuardianRequest implements GuardianRequest {
+  const _GuardianRequest({required this.playerId, required this.groupId, required this.uid, required this.status});
+  
+
+@override final  PlayerId playerId;
+@override final  GroupId groupId;
+@override final  UserId uid;
+@override final  GuardianRequestStatus status;
+
+/// Create a copy of GuardianRequest
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$GuardianRequestCopyWith<_GuardianRequest> get copyWith => __$GuardianRequestCopyWithImpl<_GuardianRequest>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GuardianRequest&&(identical(other.playerId, playerId) || other.playerId == playerId)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.status, status) || other.status == status));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,playerId,groupId,uid,status);
+}
+
+@override
+String toString() {
+    return 'GuardianRequest(playerId: $playerId, groupId: $groupId, uid: $uid, status: $status)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$GuardianRequestCopyWith<$Res> implements $GuardianRequestCopyWith<$Res> {
+  factory _$GuardianRequestCopyWith(_GuardianRequest value, $Res Function(_GuardianRequest) _then) = __$GuardianRequestCopyWithImpl;
+@override @useResult
+$Res call({
+ PlayerId playerId, GroupId groupId, UserId uid, GuardianRequestStatus status
+});
+
+
+
+
+}
+/// @nodoc
+class __$GuardianRequestCopyWithImpl<$Res>
+    implements _$GuardianRequestCopyWith<$Res> {
+  __$GuardianRequestCopyWithImpl(this._self, this._then);
+
+  final _GuardianRequest _self;
+  final $Res Function(_GuardianRequest) _then;
+
+/// Create a copy of GuardianRequest
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? playerId = null,Object? groupId = null,Object? uid = null,Object? status = null,}) {
+  return _then(_GuardianRequest(
+playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
+as PlayerId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
+as GroupId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
+as UserId,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as GuardianRequestStatus,
+  ));
+}
+
+
+}
+
 // dart format on

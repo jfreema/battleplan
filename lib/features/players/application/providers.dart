@@ -1,4 +1,5 @@
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -29,3 +30,20 @@ Stream<List<Player>> players(Ref ref, GroupId groupId) =>
 @riverpod
 Stream<List<GuardianLink>> guardianLinks(Ref ref, GroupId groupId) =>
     ref.watch(playerRepositoryProvider).watchGuardianLinks(groupId);
+
+/// A team's pending guardian requests (PLAYER-4). Only admins can read them.
+@riverpod
+Stream<List<GuardianRequest>> pendingGuardianRequests(
+  Ref ref,
+  GroupId groupId,
+) => ref.watch(playerRepositoryProvider).watchPendingRequests(groupId);
+
+/// The signed-in person's own guardian requests on a team (PLAYER-3).
+@riverpod
+Stream<List<GuardianRequest>> myGuardianRequests(Ref ref, GroupId groupId) {
+  final uid = ref.watch(authUserProvider).value?.uid;
+  if (uid == null) return Stream.value(const []);
+  return ref
+      .watch(playerRepositoryProvider)
+      .watchMyRequests(groupId, UserId(uid));
+}

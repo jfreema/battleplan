@@ -63,3 +63,17 @@ abstract class AddPlayersResult with _$AddPlayersResult {
     @Default(<String>[]) List<String> problems,
   }) = _AddPlayersResult;
 }
+
+/// Where a guardian request stands (PLAYER-4).
+enum GuardianRequestStatus { pending, approved, declined }
+
+/// A parent asking to be linked to a player (`guardianRequests`, PLAYER-3).
+@freezed
+abstract class GuardianRequest with _$GuardianRequest {
+  const factory({
+    required PlayerId playerId,
+    required GroupId groupId,
+    required UserId uid,
+    required GuardianRequestStatus status,
+  }) = _GuardianRequest;
+}

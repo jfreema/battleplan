@@ -32,4 +32,12 @@ export {
   sendEmailInvites,
 } from './invites/handlers.js';
 export { logClientError } from './ops/handlers.js';
-export { addPlayers, removePlayer } from './players/handlers.js';
+export {
+  addMyPlayer,
+  addPlayers,
+  inviteGuardian,
+  removeGuardian,
+  removePlayer,
+  requestGuardianLink,
+  resolveGuardianLink,
+} from './players/handlers.js';

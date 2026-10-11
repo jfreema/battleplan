@@ -331,9 +331,7 @@ void main() {
     expect(invites.resets, 1);
   });
 
-  testWidgets('email invites: send, list, and revoke (INV-4)', (
-    tester,
-  ) async {
+  testWidgets('email invites: send, list, and revoke (INV-4)', (tester) async {
     final invites = FakeInviteRepository();
     await pumpApp(
       tester,
@@ -442,6 +440,127 @@ void main() {
       'Noah Bennett',
     ]);
     expect(find.text('Players added'), findsOneWidget);
+  });
+
+  group('youth guardians (PLAYER-3 to PLAYER-5)', () {
+    final youthTeam = {
+      'y': testGroup('y', 'Lightning U10').copyWith(teamType: TeamType.youth),
+    };
+    FakePlayerRepository emmaTeam() => FakePlayerRepository([
+      const Player(
+        id: PlayerId('emma'),
+        groupId: GroupId('y'),
+        displayName: 'Emma Rodriguez',
+        jerseyNumber: '7',
+      ),
+    ]);
+
+    Future<void> openRoster(WidgetTester tester) async {
+      await tester.tap(find.byTooltip('Team menu'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Roster'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a parent asks to be linked to their player', (tester) async {
+      final playerRepo = emmaTeam();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youthTeam,
+        memberships: [testMembership('y', 'coach')],
+        playerRepo: playerRepo,
+      );
+      await openRoster(tester);
+      await tester.tap(find.text('Who are you here for?'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Emma Rodriguez'));
+      await tester.pump();
+      await tester.tap(find.text('Ask to link 1 player'));
+      await tester.pumpAndSettle();
+      expect(playerRepo.calls, ['request emma']);
+    });
+
+    testWidgets('a parent adds a player who is not listed', (tester) async {
+      final playerRepo = emmaTeam();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youthTeam,
+        memberships: [testMembership('y', 'coach')],
+        playerRepo: playerRepo,
+      );
+      await openRoster(tester);
+      await tester.tap(find.text('Who are you here for?'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text("Add a player who isn't listed"));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Liam Rodriguez');
+      await tester.enterText(find.byType(TextField).last, '23');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+      await tester.pumpAndSettle();
+      expect(playerRepo.calls, ['addMine Liam Rodriguez #23']);
+    });
+
+    testWidgets('admins approve guardian requests from the roster', (
+      tester,
+    ) async {
+      final playerRepo = emmaTeam()
+        ..requests.add(
+          const GuardianRequest(
+            playerId: PlayerId('emma'),
+            groupId: GroupId('y'),
+            uid: UserId('pat'),
+            status: GuardianRequestStatus.pending,
+          ),
+        );
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youthTeam,
+        memberships: [
+          testMembership('y', 'coach', role: MemberRole.owner),
+          testMembership('y', 'pat', name: 'Pat Lee'),
+        ],
+        playerRepo: playerRepo,
+      );
+      await openRoster(tester);
+      expect(find.text('Guardian requests'), findsOneWidget);
+      expect(find.text('Pat Lee for Emma #7'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Approve'));
+      await tester.pumpAndSettle();
+      expect(playerRepo.calls, ['approve emma pat']);
+    });
+
+    testWidgets('a guardian adds a co-parent from the player card', (
+      tester,
+    ) async {
+      final playerRepo = emmaTeam()
+        ..links.add(
+          const GuardianLink(
+            playerId: PlayerId('emma'),
+            groupId: GroupId('y'),
+            uid: UserId('coach'),
+          ),
+        );
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youthTeam,
+        memberships: [testMembership('y', 'coach', name: 'Maria')],
+        playerRepo: playerRepo,
+      );
+      await openRoster(tester);
+      expect(find.text('Who are you here for?'), findsNothing);
+      await tester.tap(find.text('Emma Rodriguez'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add a guardian'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'leo@example.com');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+      await tester.pumpAndSettle();
+      expect(playerRepo.calls, ['inviteGuardian emma leo@example.com']);
+    });
   });
 
   testWidgets('adding people by email, and resending a setup email', (

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -17,8 +18,9 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// PLAYER-2 at `/g/:groupId/roster/players/:playerId`: name, number,
-/// position, and guardians. Guardians and admins can edit the details;
-/// admins can remove the player. Upcoming RSVPs join with the schedule.
+/// position, and guardians. Guardians and admins can edit the details and
+/// add a guardian (PLAYER-5); admins remove guardians and the player, and a
+/// guardian can remove themself. Upcoming RSVPs join with the schedule.
 class PlayerCardScreen extends ConsumerWidget {
   const new({required this.groupId, required this.playerId, super.key});
 
@@ -88,6 +90,28 @@ class PlayerCardScreen extends ConsumerWidget {
               contentPadding: EdgeInsets.zero,
               leading: Avatar(name: g.displayName, colorKey: g.uid.value),
               title: Text(g.displayName),
+              subtitle: g.pending ? Text(l10n.notJoinedYet) : null,
+              // Admins remove any guardian; a guardian can remove themself.
+              trailing: isAdmin || g.uid.value == me
+                  ? IconButton(
+                      tooltip: l10n.removeGuardian,
+                      icon: const Icon(AppIcons.close),
+                      onPressed: () => unawaited(
+                        _removeGuardian(context, ref, g.uid, g.displayName),
+                      ),
+                    )
+                  : null,
+            ),
+          // A guardian vouches for a co-parent; admins can add anyone
+          // (PLAYER-5, PLAYER-2).
+          if (canEdit && guardians.length < Limits.guardiansPerPlayerMax)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => unawaited(_addGuardian(context, ref)),
+                icon: const Icon(AppIcons.invite),
+                label: Text(l10n.addGuardian),
+              ),
             ),
           if (isAdmin) ...[
             const SizedBox(height: Space.xl),
@@ -121,6 +145,95 @@ class PlayerCardScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _addGuardian(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final email = TextEditingController();
+    final name = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.addGuardian),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.addGuardianHelp),
+            TextField(
+              controller: email,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(labelText: l10n.guardianEmailLabel),
+            ),
+            TextField(
+              controller: name,
+              maxLength: 60,
+              decoration: InputDecoration(labelText: l10n.guardianNameLabel),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.add),
+          ),
+        ],
+      ),
+    );
+    final address = email.text.trim();
+    if (ok != true || !address.contains('@') || !context.mounted) return;
+    try {
+      final invited = await ref
+          .read(playerRepositoryProvider)
+          .inviteGuardian(
+            groupId,
+            playerId,
+            email: address,
+            name: name.text.trim().isEmpty ? null : name.text.trim(),
+          );
+      if (context.mounted) {
+        showAppSnackBar(
+          context,
+          invited ? l10n.guardianInvited : l10n.guardianAdded,
+        );
+      }
+    } on AppFailure catch (e) {
+      if (context.mounted) {
+        showAppSnackBar(context, switch (e) {
+          InvalidInput() => l10n.tooManyGuardians,
+          RateLimited() => l10n.signInRateLimited,
+          _ => l10n.signInUnknownError,
+        });
+      }
+    }
+  }
+
+  Future<void> _removeGuardian(
+    BuildContext context,
+    WidgetRef ref,
+    UserId uid,
+    String name,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.removeGuardianTitle(name),
+      confirmLabel: l10n.removeGuardian,
+      cancelLabel: l10n.cancel,
+      destructive: true,
+    );
+    if (!ok || !context.mounted) return;
+    try {
+      await ref
+          .read(playerRepositoryProvider)
+          .removeGuardian(groupId, playerId, uid);
+    } on AppFailure {
+      if (context.mounted) showAppSnackBar(context, l10n.signInUnknownError);
+    }
   }
 
   Future<void> _edit(BuildContext context, WidgetRef ref, Player player) async {

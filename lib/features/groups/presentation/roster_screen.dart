@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -9,6 +10,7 @@ import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
@@ -21,7 +23,8 @@ import 'package:material_ui/material_ui.dart';
 
 /// TEAM-3 at `/g/:groupId/roster`: Admins, then Members, searchable by name.
 /// Tapping a person opens their card with only the actions you're allowed.
-/// Youth teams add a Players section with M2's player tasks.
+/// Youth teams add a Players section; admins see guardian requests at the
+/// top (PLAYER-4), and parents not linked yet get "Who are you here for?".
 class RosterScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -44,6 +47,17 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
     final players = youth
         ? ref.watch(playersProvider(widget.groupId)).value ?? const <Player>[]
         : const <Player>[];
+    final isAdmin = me?.isAdmin ?? false;
+    // Guardian requests sit at the top for admins (PLAYER-4).
+    final requests = youth && isAdmin
+        ? ref.watch(pendingGuardianRequestsProvider(widget.groupId)).value ??
+              const <GuardianRequest>[]
+        : const <GuardianRequest>[];
+    final myUid = ref.watch(authUserProvider).value?.uid;
+    final linked =
+        youth &&
+        (ref.watch(guardianLinksProvider(widget.groupId)).value ?? const [])
+            .any((l) => l.uid.value == myUid);
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.rosterMenu),
@@ -86,6 +100,28 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
+              if (requests.isNotEmpty) ...[
+                _Section(title: l10n.guardianRequestsTitle),
+                for (final r in requests)
+                  _RequestRow(
+                    request: r,
+                    who: members
+                        .where((m) => m.uid == r.uid)
+                        .firstOrNull
+                        ?.displayName,
+                    player: players
+                        .where((p) => p.id == r.playerId)
+                        .firstOrNull
+                        ?.label,
+                  ),
+              ],
+              if (youth && !isAdmin && !linked && players.isNotEmpty)
+                ListTile(
+                  leading: const Icon(AppIcons.invite),
+                  title: Text(l10n.whoAreYouHereFor),
+                  subtitle: Text(l10n.whoAreYouHereForRosterHint),
+                  onTap: () => context.push('/g/${widget.groupId.value}/who'),
+                ),
               if (youth) ...[
                 _Section(title: l10n.rosterPlayers),
                 for (final p in shownPlayers)
@@ -109,6 +145,50 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// "Maria Rodriguez for Emma #7" with Approve and Decline (PLAYER-4).
+class _RequestRow extends ConsumerWidget {
+  const new({required this.request, this.who, this.player});
+
+  final GuardianRequest request;
+  final String? who;
+  final String? player;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    Future<void> decide({required bool approve}) async {
+      try {
+        await ref
+            .read(playerRepositoryProvider)
+            .resolveGuardianRequest(
+              request.groupId,
+              request.playerId,
+              request.uid,
+              approve: approve,
+            );
+      } on AppFailure {
+        if (context.mounted) showAppSnackBar(context, l10n.signInUnknownError);
+      }
+    }
+
+    return ListTile(
+      title: Text(l10n.guardianRequestFor(who ?? '…', player ?? '…')),
+      trailing: Wrap(
+        children: [
+          TextButton(
+            onPressed: () => unawaited(decide(approve: false)),
+            child: Text(l10n.decline),
+          ),
+          FilledButton(
+            onPressed: () => unawaited(decide(approve: true)),
+            child: Text(l10n.approve),
+          ),
+        ],
       ),
     );
   }

@@ -527,7 +527,9 @@ class FakePlayerRepository implements PlayerRepository {
 
   @override
   Stream<List<GuardianLink>> watchGuardianLinks(GroupId groupId) =>
-      Stream.value(const []);
+      Stream.value(links.where((l) => l.groupId == groupId).toList());
+
+  final List<GuardianLink> links = [];
 
   @override
   Future<AddPlayersResult> addPlayers(
@@ -552,4 +554,66 @@ class FakePlayerRepository implements PlayerRepository {
 
   @override
   Future<void> removePlayer(GroupId groupId, PlayerId id) async {}
+
+  final List<GuardianRequest> requests = [];
+  final List<String> calls = [];
+
+  @override
+  Stream<List<GuardianRequest>> watchPendingRequests(GroupId groupId) =>
+      Stream.value(
+        requests
+            .where(
+              (r) =>
+                  r.groupId == groupId &&
+                  r.status == GuardianRequestStatus.pending,
+            )
+            .toList(),
+      );
+
+  @override
+  Stream<List<GuardianRequest>> watchMyRequests(GroupId groupId, UserId uid) =>
+      Stream.value(
+        requests.where((r) => r.groupId == groupId && r.uid == uid).toList(),
+      );
+
+  @override
+  Future<void> requestGuardianLink(
+    GroupId groupId,
+    List<PlayerId> players,
+  ) async => calls.add('request ${players.map((p) => p.value).join(',')}');
+
+  @override
+  Future<void> resolveGuardianRequest(
+    GroupId groupId,
+    PlayerId playerId,
+    UserId uid, {
+    required bool approve,
+  }) async => calls.add(
+    '${approve ? 'approve' : 'decline'} ${playerId.value} ${uid.value}',
+  );
+
+  @override
+  Future<void> addMyPlayer(
+    GroupId groupId, {
+    required String name,
+    String? jerseyNumber,
+  }) async => calls.add('addMine $name #$jerseyNumber');
+
+  @override
+  Future<bool> inviteGuardian(
+    GroupId groupId,
+    PlayerId playerId, {
+    required String email,
+    String? name,
+  }) async {
+    calls.add('inviteGuardian ${playerId.value} $email');
+    return true;
+  }
+
+  @override
+  Future<void> removeGuardian(
+    GroupId groupId,
+    PlayerId playerId,
+    UserId uid,
+  ) async => calls.add('removeGuardian ${playerId.value} ${uid.value}');
 }

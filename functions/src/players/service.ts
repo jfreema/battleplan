@@ -147,3 +147,128 @@ export async function removePlayer(groupId: string, playerId: string): Promise<v
   for (const uid of guardians) await refreshPlayerSummary(groupId, uid);
   await refreshPlayerCount(groupId);
 }
+
+/** Whether [uid] is already a guardian of [playerId]. */
+export async function isGuardian(playerId: string, uid: string): Promise<boolean> {
+  const link = await db().collection(Collections.playerGuardians).doc(compositeId(playerId, uid)).get();
+  return link.exists;
+}
+
+/**
+ * Asks the team's admins to link [uid] to each player (PLAYER-3, Q15).
+ * Players they already guard are skipped; a declined request can be sent
+ * again. Returns how many requests are now pending.
+ */
+export async function requestGuardianLinks(groupId: string, uid: string, playerIds: string[]): Promise<number> {
+  let requested = 0;
+  for (const playerId of new Set(playerIds)) {
+    const player = await db().collection(Collections.players).doc(playerId).get();
+    if (!player.exists || player.get('groupId') !== groupId) continue;
+    if (await isGuardian(playerId, uid)) continue;
+    await db()
+      .collection(Collections.guardianRequests)
+      .doc(compositeId(playerId, uid))
+      .set({
+        playerId,
+        groupId,
+        uid,
+        status: 'pending',
+        decidedBy: null,
+        decidedAt: null,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    requested++;
+  }
+  return requested;
+}
+
+/**
+ * An admin approves or declines a guardian request (PLAYER-4). Approving
+ * links the guardian; either way the request records who decided.
+ */
+export async function resolveGuardianRequest(
+  groupId: string,
+  playerId: string,
+  uid: string,
+  approve: boolean,
+  actorUid: string,
+): Promise<boolean> {
+  const ref = db().collection(Collections.guardianRequests).doc(compositeId(playerId, uid));
+  const request = await ref.get();
+  if (!request.exists || request.get('groupId') !== groupId || request.get('status') !== 'pending') return false;
+  if (approve) {
+    const profile = await db().collection(Collections.users).doc(uid).get();
+    await linkGuardian(
+      groupId,
+      playerId,
+      {
+        uid,
+        displayName: (profile.get('displayName') as string | undefined) ?? 'Guardian',
+        photoPath: (profile.get('photoPath') as string | null | undefined) ?? null,
+      },
+      actorUid,
+      'request',
+    );
+    await refreshPlayerSummary(groupId, uid);
+  }
+  await ref.update({
+    status: approve ? 'approved' : 'declined',
+    decidedBy: actorUid,
+    decidedAt: FieldValue.serverTimestamp(),
+  });
+  return true;
+}
+
+/**
+ * A parent adds their own player who isn't on the roster (PLAYER-3). The
+ * parent becomes the guardian; admins can edit or remove it.
+ */
+export async function addMyPlayer(
+  groupId: string,
+  uid: string,
+  input: { name: string; jerseyNumber?: string | null },
+): Promise<string> {
+  const profile = await db().collection(Collections.users).doc(uid).get();
+  const ref = db().collection(Collections.players).doc();
+  const name = input.name.trim().slice(0, 60);
+  await ref.set({
+    groupId,
+    displayName: name,
+    displayNameLower: name.toLowerCase(),
+    jerseyNumber: input.jerseyNumber?.trim() || null,
+    position: null,
+    createdBy: uid,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  await linkGuardian(
+    groupId,
+    ref.id,
+    {
+      uid,
+      displayName: (profile.get('displayName') as string | undefined) ?? 'Guardian',
+      photoPath: (profile.get('photoPath') as string | null | undefined) ?? null,
+    },
+    uid,
+    'self',
+  );
+  await refreshPlayerSummary(groupId, uid);
+  await refreshPlayerCount(groupId);
+  return ref.id;
+}
+
+/** How many guardians a player has. */
+export async function guardianCount(playerId: string): Promise<number> {
+  const count = await db().collection(Collections.playerGuardians).where('playerId', '==', playerId).count().get();
+  return count.data().count;
+}
+
+/**
+ * Removes one guardian from a player (PLAYER-2). They stay on the team; only
+ * the link and its label go.
+ */
+export async function removeGuardianLink(groupId: string, playerId: string, uid: string): Promise<void> {
+  await db().collection(Collections.playerGuardians).doc(compositeId(playerId, uid)).delete();
+  await db().collection(Collections.guardianRequests).doc(compositeId(playerId, uid)).delete();
+  await refreshPlayerSummary(groupId, uid);
+}

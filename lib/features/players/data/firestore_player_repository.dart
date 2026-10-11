@@ -108,6 +108,98 @@ class FirestorePlayerRepository implements PlayerRepository {
   Future<void> removePlayer(GroupId groupId, PlayerId id) =>
       _call('removePlayer', {'groupId': groupId.value, 'playerId': id.value});
 
+  @override
+  Stream<List<GuardianRequest>> watchPendingRequests(GroupId groupId) =>
+      _requests(
+        _db
+            .collection(Collections.guardianRequests)
+            .where('groupId', isEqualTo: groupId.value)
+            .where('status', isEqualTo: 'pending'),
+      );
+
+  @override
+  Stream<List<GuardianRequest>> watchMyRequests(GroupId groupId, UserId uid) =>
+      _requests(
+        _db
+            .collection(Collections.guardianRequests)
+            .where('groupId', isEqualTo: groupId.value)
+            .where('uid', isEqualTo: uid.value),
+      );
+
+  Stream<List<GuardianRequest>> _requests(Query<Map<String, dynamic>> query) =>
+      query
+          .limit(Limits.queryLimitMax)
+          .snapshots()
+          .map(
+            (q) => [
+              for (final d in q.docs)
+                GuardianRequest(
+                  playerId: PlayerId(d.data()['playerId'] as String),
+                  groupId: GroupId(d.data()['groupId'] as String),
+                  uid: UserId(d.data()['uid'] as String),
+                  status:
+                      GuardianRequestStatus.values.asNameMap()[d
+                          .data()['status']] ??
+                      GuardianRequestStatus.pending,
+                ),
+            ],
+          );
+
+  @override
+  Future<void> requestGuardianLink(GroupId groupId, List<PlayerId> players) =>
+      _call('requestGuardianLink', {
+        'groupId': groupId.value,
+        'playerIds': [for (final p in players) p.value],
+      });
+
+  @override
+  Future<void> resolveGuardianRequest(
+    GroupId groupId,
+    PlayerId playerId,
+    UserId uid, {
+    required bool approve,
+  }) => _call('resolveGuardianLink', {
+    'groupId': groupId.value,
+    'playerId': playerId.value,
+    'uid': uid.value,
+    'approve': approve,
+  });
+
+  @override
+  Future<void> addMyPlayer(
+    GroupId groupId, {
+    required String name,
+    String? jerseyNumber,
+  }) => _call('addMyPlayer', {
+    'groupId': groupId.value,
+    'name': name,
+    'jerseyNumber': jerseyNumber,
+  });
+
+  @override
+  Future<bool> inviteGuardian(
+    GroupId groupId,
+    PlayerId playerId, {
+    required String email,
+    String? name,
+  }) async {
+    final d = await _call('inviteGuardian', {
+      'groupId': groupId.value,
+      'playerId': playerId.value,
+      'email': email,
+      'name': name,
+    });
+    return d['invited'] as bool? ?? false;
+  }
+
+  @override
+  Future<void> removeGuardian(GroupId groupId, PlayerId playerId, UserId uid) =>
+      _call('removeGuardian', {
+        'groupId': groupId.value,
+        'playerId': playerId.value,
+        'uid': uid.value,
+      });
+
   Future<Map<String, dynamic>> _call(
     String name,
     Map<String, Object?> data,
@@ -119,7 +211,8 @@ class FirestorePlayerRepository implements PlayerRepository {
       return result.data;
     } on FirebaseFunctionsException catch (e) {
       throw switch ((e.code, e.message)) {
-        ('failed-precondition', 'too-many-players') => InvalidInput(e.message),
+        ('failed-precondition', 'too-many-players' || 'too-many-guardians') =>
+          InvalidInput(e.message),
         ('resource-exhausted', _) => RateLimited(e.message),
         ('permission-denied', _) => PermissionDenied(e.message),
         ('invalid-argument', _) => InvalidInput(e.message),

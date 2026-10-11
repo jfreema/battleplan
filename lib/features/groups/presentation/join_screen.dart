@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -100,8 +101,14 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
       final result = await ref
           .read(inviteRepositoryProvider)
           .redeem(widget.code);
-      // Youth teams ask "Who are you here for?" next (PLAYER-3, task 52).
-      if (mounted) context.go('/g/${result.groupId}/chat');
+      // Youth teams ask "Who are you here for?" next (PLAYER-3).
+      if (mounted) {
+        context.go(
+          result.teamType == TeamType.youth && !result.alreadyMember
+              ? '/g/${result.groupId}/who'
+              : '/g/${result.groupId}/chat',
+        );
+      }
     } on AppFailure catch (e) {
       if (mounted) setState(() => _error = e);
     } finally {
