@@ -1166,8 +1166,8 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
 
 ### Plus plan · after M3
 
-- [ ] Plans, licenses, and super-admin grants (PLAN-1 to PLAN-5).
-- [ ] Edit messages, more reactions, chat look, more room (PLAN-6, PLAN-7, PLAN-8, PLAN-11).
+- [x] Plans, licenses, and super-admin grants (PLAN-1 to PLAN-5).
+- [x] Edit messages, more reactions, chat look, more room (PLAN-6, PLAN-7, PLAN-8, PLAN-11).
 
 **Done when:** the PLAN acceptance criteria pass.
 

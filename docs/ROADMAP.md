@@ -114,10 +114,10 @@ The paid team plan (SPEC §6.14, [PLANS.md](PLANS.md)). These tasks are numbered
 162. ✅ Edit messages, with "edited" and updated reply quotes (PLAN-6). *Tested on dev: an edit was refused on Free and allowed on Plus, another person couldn't edit it, and the reply's quote followed the new text.*
 163. ✅ 12 more reactions for Plus teams (PLAN-7). *Tested on dev: ⚾ was refused on Free and allowed on Plus; an unknown reaction was refused everywhere.*
 164. ✅ Chat look: bubble color and background (PLAN-8). *Tested on dev: refused on Free and for members, allowed for a Plus team's admin, and the chat showed the green bubbles and dot pattern.*
-165. 25 GB storage and 100 MB documents on Plus (PLAN-11).
-166. Rules and tests for every Plus feature, including a Free team trying each one directly.
+165. ✅ 25 GB storage and 100 MB documents on Plus (PLAN-11). *`applyPlan` sets the quota (tested on dev with grants, moves, and expiry); Storage rules allow 100 MB documents only on Plus, ready for M7.*
+166. ✅ Rules and tests for every Plus feature, including a Free team trying each one directly. *`functions/test/rules/plans.test.ts`: 9 more rules tests (73 in all), covering Free teams, lapsed licenses, the wrong person, and bad values.*
 
-167. In-app purchase in the iPhone and Android apps, with receipt checks and store notifications that create, renew, and end licenses (PLAN-14). **Must ship before the iPhone app is in the App Store with Plus** (App Store guideline 3.1.3(b)); until then, Plus is granted by super admins during the beta.
+167. In-app purchase in the iPhone and Android apps, with receipt checks and store notifications that create, renew, and end licenses (PLAN-14). **Must ship before the iPhone app is in the App Store with Plus** (App Store guideline 3.1.3(b)); until then, Plus is granted by super admins during the beta. *Waits on the Apple membership (task 109) and the store products set up in App Store Connect and the Play Console.*
 
 Later, with v1.1: pinned messages (PLAN-9), attendance history and exports (PLAN-10), the branded invite page (PLAN-12), and self-serve checkout on the web (PLAN-13).
 
