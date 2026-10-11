@@ -47,6 +47,7 @@ abstract class OutgoingText with _$OutgoingText {
     /// The message ID it will have on the server.
     required String id,
     required String text,
+    String? replyToId,
     @Default(false) bool failed,
   }) = _OutgoingText;
 }
@@ -223,12 +224,13 @@ class ChatMessages extends _$ChatMessages {
   /// Sends a text message, spaced from the previous one (CHAT-2, CHAT-4).
   /// It shows as "sending" at once; offline, it waits in the queue and goes
   /// out when the connection returns.
-  Future<void> send(String text) {
+  Future<void> send(String text, {String? replyToId}) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return Future.value();
     final item = OutgoingText(
       id: ref.read(messageRepositoryProvider).newMessageId(),
       text: trimmed,
+      replyToId: replyToId,
     );
     state = state.copyWith(queued: [...state.queued, item]);
     return _sendText(item);
@@ -260,7 +262,13 @@ class ChatMessages extends _$ChatMessages {
     final repo = ref.read(messageRepositoryProvider);
     try {
       await _enqueue(
-        () => repo.sendText(groupId, UserId(uid), item.text, id: item.id),
+        () => repo.sendText(
+          groupId,
+          UserId(uid),
+          item.text,
+          id: item.id,
+          replyToId: item.replyToId,
+        ),
       );
       discardText(item.id);
     } on Object {
@@ -298,5 +306,17 @@ class ChatMessages extends _$ChatMessages {
           UserId(uid),
           current == reaction ? null : reaction,
         );
+  }
+
+  /// Loads older pages until [messageId] is loaded or the chat's start is
+  /// reached, for jumping to a quoted message (CHAT-13). Gives up after
+  /// [maxPages] pages (2,000 messages).
+  Future<bool> loadUntil(String messageId, {int maxPages = 40}) async {
+    for (var i = 0; i < maxPages; i++) {
+      if (_known.containsKey(messageId)) return true;
+      if (state.reachedStart) return false;
+      await loadOlder();
+    }
+    return _known.containsKey(messageId);
   }
 }

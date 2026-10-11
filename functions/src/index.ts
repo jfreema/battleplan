@@ -22,6 +22,7 @@ export {
   updateGroupMember,
 } from './teams/handlers.js';
 export { dailyCleanup, onGroupFileAdded, onGroupFileRemoved } from './teams/triggers.js';
+export { onMessageCreated } from './chat/triggers.js';
 export {
   getInvitePreview,
   getTeamInvite,

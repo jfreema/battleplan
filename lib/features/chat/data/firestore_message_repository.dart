@@ -65,6 +65,15 @@ class FirestoreMessageRepository implements MessageRepository {
       type: MessageType.tryParse(x['type'] as String?) ?? MessageType.text,
       text: x['text'] as String? ?? '',
       replyToId: x['replyToId'] as String?,
+      replyPreview: switch (x['replyPreview']) {
+        final Map<String, dynamic> p => ReplyPreview(
+          authorName: p['authorName'] as String? ?? '',
+          text: p['text'] as String? ?? '',
+          type: MessageType.tryParse(p['type'] as String?) ?? MessageType.text,
+          deleted: p['deleted'] == true,
+        ),
+        _ => null,
+      },
       attachments: [
         for (final a in (x['attachments'] as List?) ?? const [])
           if (a is Map && a['path'] is String)
@@ -98,12 +107,14 @@ class FirestoreMessageRepository implements MessageRepository {
     UserId uid,
     String text, {
     String? id,
+    String? replyToId,
   }) => _post(
     groupId,
     uid,
     _db.collection(Collections.messages).doc(id),
     type: MessageType.text,
     text: text,
+    replyToId: replyToId,
   );
 
   @override
@@ -164,12 +175,14 @@ class FirestoreMessageRepository implements MessageRepository {
     UserId uid,
     UploadedPhotos photos, {
     String caption = '',
+    String? replyToId,
   }) => _post(
     groupId,
     uid,
     _db.collection(Collections.messages).doc(photos.messageId),
     type: MessageType.image,
     text: caption,
+    replyToId: replyToId,
     attachments: [
       for (final a in photos.attachments)
         {
@@ -204,6 +217,7 @@ class FirestoreMessageRepository implements MessageRepository {
     required MessageType type,
     required String text,
     List<Map<String, Object?>> attachments = const [],
+    String? replyToId,
   }) async {
     final memberRef = _db
         .collection(Collections.groupMembers)
@@ -223,6 +237,7 @@ class FirestoreMessageRepository implements MessageRepository {
           'type': type.value,
           'text': text,
           'attachments': attachments,
+          'replyToId': ?replyToId,
           'createdAt': FieldValue.serverTimestamp(),
         })
         // The message rate limit (ARCH §6.3): the same batch stamps the

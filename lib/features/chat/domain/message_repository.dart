@@ -27,7 +27,13 @@ abstract interface class MessageRepository {
   /// [watchNewest] at once as pending; the future completes when the server
   /// has it (offline, when the connection returns) and throws if the server
   /// refuses it.
-  Future<void> sendText(GroupId groupId, UserId uid, String text, {String? id});
+  Future<void> sendText(
+    GroupId groupId,
+    UserId uid,
+    String text, {
+    String? id,
+    String? replyToId,
+  });
 
   /// Uploads up to 10 photos for a new message (CHAT-3). [onProgress] gets
   /// 0 to 1 as bytes upload. Needs a connection; photos don't queue offline
@@ -44,6 +50,7 @@ abstract interface class MessageRepository {
     UserId uid,
     UploadedPhotos photos, {
     String caption = '',
+    String? replyToId,
   });
 
   /// A URL to show a message photo.

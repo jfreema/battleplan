@@ -42,7 +42,9 @@ A Plus license belongs to the person who bought it (or who a super admin granted
 ## Getting Plus
 
 - **At launch:** a super admin grants a one-year license from the admin panel, to a person and a team. This is how the first paid teams are handled: they pay outside the app, and we apply the license.
-- **Later:** self-serve checkout on the web, for the yearly or monthly price (SPEC Q19).
+- **Later:** self-serve checkout on the web, for the yearly or monthly price, and in-app purchase in the iPhone and Android apps (SPEC Q19).
+
+**Store rules.** Apple requires anything that unlocks features in the iPhone app to be sold through in-app purchase too: features bought on the web may be unlocked only if they're "also available as in-app purchases within the app" (App Store Review Guideline 3.1.3(b)), and apps may not unlock features with their own license keys (3.1.1). So before the iPhone app is in the App Store with Plus, Plus must also be an in-app purchase. Apple keeps 15% under its Small Business Program (30% above $1M a year), so a $70 year nets about $59.50. In the US storefront the app may also show a button to the web checkout (3.1.1(a)). Google Play's rules are looser in the US for now (other payment methods and links are allowed while a court order is in effect) and stricter elsewhere, so the Android app sells Plus through Google Play Billing too (15% on subscriptions). Licenses a super admin grants stay fine alongside in-app purchase, as purchases made outside the app (3.1.3(b)).
 
 ## When Plus ends
 
@@ -65,6 +67,6 @@ These have defaults so work can continue; see SPEC §12 (Q17 to Q21).
 
 - **Q17** What's the paid plan called? Default: **Plus**.
 - **Q18** Monthly vs yearly when a super admin grants a license. Default: grants are whole months, one year by default; the $7 monthly price applies once self-serve checkout exists.
-- **Q19** How people pay in the apps. Default: checkout on the web only (Stripe). The iPhone and Android apps show the plan and what it includes but sell nothing, and say "Ask your team admin" instead of linking out, so neither store's payment rules apply. Revisit if in-app purchase is worth the store fee.
+- **Q19** How people pay. Default: super-admin grants while we're in beta; before Plus ships in the App Store, add in-app purchase in the iPhone and Android apps (required by Apple's guideline 3.1.3(b), about 15% fee) and Stripe checkout on the web (about 3%), at the same $70 / $7 price. US iPhone users also get a button to the web checkout. Decide whether to charge more in the apps to cover the store fee.
 - **Q20** Grace period after a license ends. Default: none beyond the reminders; the team returns to Free on the end date.
 - **Q21** Should Plus be offered per person as well (for example, extra emojis everywhere)? Default: no, per team only.

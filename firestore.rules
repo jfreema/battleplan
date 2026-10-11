@@ -171,6 +171,8 @@ service cloud.firestore {
             || getAfter(/databases/$(database)/documents/polls/$(incoming().pollId)).data.messageId == messageId)
         && incoming().get('text', '').size() <= 4000
         && attachmentsOk(incoming(), messageId)
+        && (incoming().get('replyToId', null) == null
+            || (incoming().replyToId is string && incoming().replyToId.size() <= 64))
         && incoming().createdAt == request.time
         && incoming().keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
             'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { snapshotChanged } from '../../src/accounts/triggers.js';
+import { replyPreviewOf } from '../../src/chat/service.js';
 
 describe('users trigger early exit', () => {
   it('runs only when the name or photo changed', () => {
@@ -8,5 +9,27 @@ describe('users trigger early exit', () => {
     expect(snapshotChanged(base, { ...base, displayName: 'Sam R' })).toBe(true);
     expect(snapshotChanged(base, { ...base, photoPath: 'users/u/avatar/1.jpg' })).toBe(true);
     expect(snapshotChanged(undefined, base)).toBe(false);
+  });
+});
+
+describe('replyPreviewOf', () => {
+  it('quotes the author and first line', () => {
+    expect(replyPreviewOf({ authorName: 'Sam', text: 'Bring cleats\nand water', type: 'text' })).toEqual({
+      authorName: 'Sam',
+      text: 'Bring cleats',
+      type: 'text',
+      deleted: false,
+    });
+  });
+
+  it('shortens long lines and keeps the type for photos', () => {
+    const p = replyPreviewOf({ authorName: 'Sam', text: 'x'.repeat(200), type: 'image' });
+    expect(p.text.length).toBe(120);
+    expect(p.type).toBe('image');
+  });
+
+  it('reads a missing or deleted original as deleted', () => {
+    expect(replyPreviewOf(undefined).deleted).toBe(true);
+    expect(replyPreviewOf({ authorName: 'Sam', text: 'hi', deletedAt: new Date() }).deleted).toBe(true);
   });
 });

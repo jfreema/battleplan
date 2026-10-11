@@ -23,6 +23,9 @@ abstract class Message with _$Message {
     String? authorPlayerSummary,
     String? replyToId,
 
+    /// The quote a reply shows, written by the server (CHAT-13, D25).
+    ReplyPreview? replyPreview,
+
     /// Photos, up to 10 (CHAT-3).
     @Default(<Attachment>[]) List<Attachment> attachments,
     @Default(<String, Reaction>{}) Map<String, Reaction> reactions,
@@ -82,3 +85,14 @@ typedef NewPhoto = ({Uint8List bytes, String contentType});
 
 /// Photos already in Storage for a message that isn't posted yet.
 typedef UploadedPhotos = ({String messageId, List<Attachment> attachments});
+
+/// What a reply shows of the message it answers.
+@freezed
+abstract class ReplyPreview with _$ReplyPreview {
+  const factory({
+    required String authorName,
+    required String text,
+    @Default(MessageType.text) MessageType type,
+    @Default(false) bool deleted,
+  }) = _ReplyPreview;
+}

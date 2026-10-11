@@ -540,7 +540,7 @@ invites/{code}
 
 licenses/{licenseId}                                    # Plus licenses (§6.11); Functions only
   holderId, groupId?, tier: 'plus', startsAt, endsAt
-  source: 'grant' | 'stripe', grantedBy?, stripeSubscriptionId?
+  source: 'grant' | 'stripe' | 'appStore' | 'play', grantedBy?, externalId?   # store transaction or subscription ID
   lastMovedAt?, revokedAt?, remindedAt: { d30?, d7? }, createdAt
 
 messages/{messageId}
@@ -1000,7 +1000,7 @@ Teams are on **Free** or **Plus** (SPEC §6.14; the feature list is [PLANS.md](P
 
 **Moving a license.** `moveLicense` runs in a transaction: the caller must hold the license, be an owner or admin of the target team, the target must have no active license, and `lastMovedAt` must be at least 30 days ago (super admins skip this). It sets the license's `groupId`, then calls `applyPlan` for both teams.
 
-**Payments.** At launch there's no checkout: people pay outside the app and a super admin grants the license (SPEC Q19). Self-serve checkout (PLAN-13) will use Stripe Checkout on the web, with a `stripeWebhook` HTTP function that creates or extends the license on `checkout.session.completed` and `invoice.paid`, keyed by the subscription ID so retried webhooks don't double up. The iPhone and Android apps never sell or link to purchase, so App Store and Google Play payment rules don't apply.
+**Payments.** During the beta there's no checkout: people pay outside the app and a super admin grants the license (SPEC Q19). Apple won't let the iPhone app unlock features bought elsewhere unless they're also sold by in-app purchase (guideline 3.1.3(b)), so before Plus ships in the App Store the apps add in-app purchase (PLAN-14): StoreKit and Google Play Billing through the `in_app_purchase` plugin, with a `verifyPurchase` callable that validates the receipt with Apple or Google, creates or extends the license (`source: 'appStore' | 'play'`), and server notifications (App Store Server Notifications, Google real-time developer notifications) that renew or end it. Self-serve web checkout (PLAN-13) uses Stripe Checkout with a `stripeWebhook` HTTP function on `checkout.session.completed` and `invoice.paid`. Every source is keyed by its store transaction or subscription ID, so retried notifications don't double up, and every source ends in `applyPlan`.
 
 **In the app.** `Group.plan` is mapped from the group document. `PlanFeature` (generated) and `group.has(PlanFeature.editMessages)` decide whether a control is live or shows the **Plus** badge with an explanation sheet. Team settings has a **Plan** section (PLAN-4), and the admin panel's team detail has grant, extend, move, and revoke (ADMIN-3).
 
@@ -1342,7 +1342,7 @@ Each phase is incremental and reversible.
 | D35 | Plus is per team, through licenses held by a person and movable between teams they admin; `groups.plan` caches the active license (SPEC §6.14, PLANS.md) | Matches how coaches pay (one person buys for a team) and lets a license follow a coach to next season's team; one cached field keeps every check cheap | Per-person plans or team bundles |
 | D36 | Plus features are enforced by rules and Functions from `groups.plan`, with `endsAt` checked at request time | A Free team can't use Plus by calling the database directly, and Plus ends on time without waiting for a job | — |
 | D37 | Ending Plus never deletes or hides data written under it | Teams don't lose content over a lapsed payment; resubscribing restores everything | — |
-| D38 | No purchases inside the iPhone and Android apps; super-admin grants first, Stripe Checkout on the web later (SPEC Q19) | Avoids store fees and review rules for digital goods | If in-app purchase would sell enough more to cover the fee |
+| D38 | Super-admin grants during the beta; in-app purchase in both apps before Plus ships in the stores, plus Stripe Checkout on the web (SPEC Q19) | App Store guideline 3.1.3(b) lets the iPhone app unlock web-bought features only if they're also sold by in-app purchase, and 3.1.1 forbids license-key unlocks | If Apple's or Google's rules change |
 
 ---
 

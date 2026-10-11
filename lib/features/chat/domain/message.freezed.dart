@@ -16,7 +16,8 @@ T _$identity<T>(T value) => value;
 mixin _$Message {
 
  String get id; GroupId get groupId; String get authorId; String get authorName; MessageType get type; String get text; String? get authorPhotoPath;/// "Emma #7, Liam #23" for a guardian on a youth team (PLAYER-8).
- String? get authorPlayerSummary; String? get replyToId;/// Photos, up to 10 (CHAT-3).
+ String? get authorPlayerSummary; String? get replyToId;/// The quote a reply shows, written by the server (CHAT-13, D25).
+ ReplyPreview? get replyPreview;/// Photos, up to 10 (CHAT-3).
  List<Attachment> get attachments; Map<String, Reaction> get reactions; DateTime? get deletedAt;/// When the server stamped it. Null while a sent message is still local.
  DateTime? get createdAt;/// True until the server has the message (CHAT-4 "sending").
  bool get pending;
@@ -31,20 +32,20 @@ $MessageCopyWith<Message> get copyWith => _$MessageCopyWithImpl<Message>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as Message;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Message&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.authorId, _this.authorId) || other.authorId == _this.authorId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.authorPhotoPath, _this.authorPhotoPath) || other.authorPhotoPath == _this.authorPhotoPath)&&(identical(other.authorPlayerSummary, _this.authorPlayerSummary) || other.authorPlayerSummary == _this.authorPlayerSummary)&&(identical(other.replyToId, _this.replyToId) || other.replyToId == _this.replyToId)&&const DeepCollectionEquality().equals(other.attachments, _this.attachments)&&const DeepCollectionEquality().equals(other.reactions, _this.reactions)&&(identical(other.deletedAt, _this.deletedAt) || other.deletedAt == _this.deletedAt)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.pending, _this.pending) || other.pending == _this.pending));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Message&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.authorId, _this.authorId) || other.authorId == _this.authorId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.authorPhotoPath, _this.authorPhotoPath) || other.authorPhotoPath == _this.authorPhotoPath)&&(identical(other.authorPlayerSummary, _this.authorPlayerSummary) || other.authorPlayerSummary == _this.authorPlayerSummary)&&(identical(other.replyToId, _this.replyToId) || other.replyToId == _this.replyToId)&&(identical(other.replyPreview, _this.replyPreview) || other.replyPreview == _this.replyPreview)&&const DeepCollectionEquality().equals(other.attachments, _this.attachments)&&const DeepCollectionEquality().equals(other.reactions, _this.reactions)&&(identical(other.deletedAt, _this.deletedAt) || other.deletedAt == _this.deletedAt)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.pending, _this.pending) || other.pending == _this.pending));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Message;
-  return Object.hash(runtimeType,_this.id,_this.groupId,_this.authorId,_this.authorName,_this.type,_this.text,_this.authorPhotoPath,_this.authorPlayerSummary,_this.replyToId,const DeepCollectionEquality().hash(_this.attachments),const DeepCollectionEquality().hash(_this.reactions),_this.deletedAt,_this.createdAt,_this.pending);
+  return Object.hash(runtimeType,_this.id,_this.groupId,_this.authorId,_this.authorName,_this.type,_this.text,_this.authorPhotoPath,_this.authorPlayerSummary,_this.replyToId,_this.replyPreview,const DeepCollectionEquality().hash(_this.attachments),const DeepCollectionEquality().hash(_this.reactions),_this.deletedAt,_this.createdAt,_this.pending);
 }
 
 @override
 String toString() {
   final _this = this as Message;
-  return 'Message(id: ${_this.id}, groupId: ${_this.groupId}, authorId: ${_this.authorId}, authorName: ${_this.authorName}, type: ${_this.type}, text: ${_this.text}, authorPhotoPath: ${_this.authorPhotoPath}, authorPlayerSummary: ${_this.authorPlayerSummary}, replyToId: ${_this.replyToId}, attachments: ${_this.attachments}, reactions: ${_this.reactions}, deletedAt: ${_this.deletedAt}, createdAt: ${_this.createdAt}, pending: ${_this.pending})';
+  return 'Message(id: ${_this.id}, groupId: ${_this.groupId}, authorId: ${_this.authorId}, authorName: ${_this.authorName}, type: ${_this.type}, text: ${_this.text}, authorPhotoPath: ${_this.authorPhotoPath}, authorPlayerSummary: ${_this.authorPlayerSummary}, replyToId: ${_this.replyToId}, replyPreview: ${_this.replyPreview}, attachments: ${_this.attachments}, reactions: ${_this.reactions}, deletedAt: ${_this.deletedAt}, createdAt: ${_this.createdAt}, pending: ${_this.pending})';
 }
 
 
@@ -55,11 +56,11 @@ abstract mixin class $MessageCopyWith<$Res>  {
   factory $MessageCopyWith(Message value, $Res Function(Message) _then) = _$MessageCopyWithImpl;
 @useResult
 $Res call({
- String id, GroupId groupId, String authorId, String authorName, MessageType type, String text, String? authorPhotoPath, String? authorPlayerSummary, String? replyToId, List<Attachment> attachments, Map<String, Reaction> reactions, DateTime? deletedAt, DateTime? createdAt, bool pending
+ String id, GroupId groupId, String authorId, String authorName, MessageType type, String text, String? authorPhotoPath, String? authorPlayerSummary, String? replyToId, ReplyPreview? replyPreview, List<Attachment> attachments, Map<String, Reaction> reactions, DateTime? deletedAt, DateTime? createdAt, bool pending
 });
 
 
-
+$ReplyPreviewCopyWith<$Res>? get replyPreview;
 
 }
 /// @nodoc
@@ -72,7 +73,7 @@ class _$MessageCopyWithImpl<$Res>
 
 /// Create a copy of Message
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? authorId = null,Object? authorName = null,Object? type = null,Object? text = null,Object? authorPhotoPath = freezed,Object? authorPlayerSummary = freezed,Object? replyToId = freezed,Object? attachments = null,Object? reactions = null,Object? deletedAt = freezed,Object? createdAt = freezed,Object? pending = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? authorId = null,Object? authorName = null,Object? type = null,Object? text = null,Object? authorPhotoPath = freezed,Object? authorPlayerSummary = freezed,Object? replyToId = freezed,Object? replyPreview = freezed,Object? attachments = null,Object? reactions = null,Object? deletedAt = freezed,Object? createdAt = freezed,Object? pending = null,}) {
   return _then(Message(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -83,7 +84,8 @@ as MessageType,text: null == text ? _self.text : text // ignore: cast_nullable_t
 as String,authorPhotoPath: freezed == authorPhotoPath ? _self.authorPhotoPath : authorPhotoPath // ignore: cast_nullable_to_non_nullable
 as String?,authorPlayerSummary: freezed == authorPlayerSummary ? _self.authorPlayerSummary : authorPlayerSummary // ignore: cast_nullable_to_non_nullable
 as String?,replyToId: freezed == replyToId ? _self.replyToId : replyToId // ignore: cast_nullable_to_non_nullable
-as String?,attachments: null == attachments ? _self.attachments : attachments // ignore: cast_nullable_to_non_nullable
+as String?,replyPreview: freezed == replyPreview ? _self.replyPreview : replyPreview // ignore: cast_nullable_to_non_nullable
+as ReplyPreview?,attachments: null == attachments ? _self.attachments : attachments // ignore: cast_nullable_to_non_nullable
 as List<Attachment>,reactions: null == reactions ? _self.reactions : reactions // ignore: cast_nullable_to_non_nullable
 as Map<String, Reaction>,deletedAt: freezed == deletedAt ? _self.deletedAt : deletedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
@@ -91,7 +93,19 @@ as DateTime?,pending: null == pending ? _self.pending : pending // ignore: cast_
 as bool,
   ));
 }
+/// Create a copy of Message
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ReplyPreviewCopyWith<$Res>? get replyPreview {
+    if (_self.replyPreview == null) {
+    return null;
+  }
 
+  return $ReplyPreviewCopyWith<$Res>(_self.replyPreview!, (value) {
+    return _then(_self.copyWith(replyPreview: value));
+  });
+}
 }
 
 
@@ -173,10 +187,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  List<Attachment> attachments,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? createdAt,  bool pending)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  ReplyPreview? replyPreview,  List<Attachment> attachments,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? createdAt,  bool pending)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Message() when $default != null:
-return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.attachments,_that.reactions,_that.deletedAt,_that.createdAt,_that.pending);case _:
+return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.replyPreview,_that.attachments,_that.reactions,_that.deletedAt,_that.createdAt,_that.pending);case _:
   return orElse();
 
 }
@@ -194,10 +208,10 @@ return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.typ
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  List<Attachment> attachments,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? createdAt,  bool pending)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  ReplyPreview? replyPreview,  List<Attachment> attachments,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? createdAt,  bool pending)  $default,) {final _that = this;
 switch (_that) {
 case _Message():
-return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.attachments,_that.reactions,_that.deletedAt,_that.createdAt,_that.pending);case _:
+return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.replyPreview,_that.attachments,_that.reactions,_that.deletedAt,_that.createdAt,_that.pending);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -214,10 +228,10 @@ return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.typ
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  List<Attachment> attachments,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? createdAt,  bool pending)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  ReplyPreview? replyPreview,  List<Attachment> attachments,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? createdAt,  bool pending)?  $default,) {final _that = this;
 switch (_that) {
 case _Message() when $default != null:
-return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.attachments,_that.reactions,_that.deletedAt,_that.createdAt,_that.pending);case _:
+return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.replyPreview,_that.attachments,_that.reactions,_that.deletedAt,_that.createdAt,_that.pending);case _:
   return null;
 
 }
@@ -229,7 +243,7 @@ return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.typ
 
 
 class _Message extends Message {
-  const _Message({required this.id, required this.groupId, required this.authorId, required this.authorName, required this.type, this.text = '', this.authorPhotoPath, this.authorPlayerSummary, this.replyToId,  List<Attachment> attachments = const <Attachment>[],  Map<String, Reaction> reactions = const <String, Reaction>{}, this.deletedAt, this.createdAt, this.pending = false}): _attachments = attachments,_reactions = reactions,super._();
+  const _Message({required this.id, required this.groupId, required this.authorId, required this.authorName, required this.type, this.text = '', this.authorPhotoPath, this.authorPlayerSummary, this.replyToId, this.replyPreview,  List<Attachment> attachments = const <Attachment>[],  Map<String, Reaction> reactions = const <String, Reaction>{}, this.deletedAt, this.createdAt, this.pending = false}): _attachments = attachments,_reactions = reactions,super._();
   
 
 @override final  String id;
@@ -242,6 +256,8 @@ class _Message extends Message {
 /// "Emma #7, Liam #23" for a guardian on a youth team (PLAYER-8).
 @override final  String? authorPlayerSummary;
 @override final  String? replyToId;
+/// The quote a reply shows, written by the server (CHAT-13, D25).
+@override final  ReplyPreview? replyPreview;
 /// Photos, up to 10 (CHAT-3).
  final  List<Attachment> _attachments;
 /// Photos, up to 10 (CHAT-3).
@@ -274,18 +290,18 @@ _$MessageCopyWith<_Message> get copyWith => __$MessageCopyWithImpl<_Message>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Message&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.authorPhotoPath, authorPhotoPath) || other.authorPhotoPath == authorPhotoPath)&&(identical(other.authorPlayerSummary, authorPlayerSummary) || other.authorPlayerSummary == authorPlayerSummary)&&(identical(other.replyToId, replyToId) || other.replyToId == replyToId)&&const DeepCollectionEquality().equals(other.attachments, _attachments)&&const DeepCollectionEquality().equals(other.reactions, _reactions)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.pending, pending) || other.pending == pending));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Message&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.authorPhotoPath, authorPhotoPath) || other.authorPhotoPath == authorPhotoPath)&&(identical(other.authorPlayerSummary, authorPlayerSummary) || other.authorPlayerSummary == authorPlayerSummary)&&(identical(other.replyToId, replyToId) || other.replyToId == replyToId)&&(identical(other.replyPreview, replyPreview) || other.replyPreview == replyPreview)&&const DeepCollectionEquality().equals(other.attachments, _attachments)&&const DeepCollectionEquality().equals(other.reactions, _reactions)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.pending, pending) || other.pending == pending));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,groupId,authorId,authorName,type,text,authorPhotoPath,authorPlayerSummary,replyToId,const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_reactions),deletedAt,createdAt,pending);
+    return Object.hash(runtimeType,id,groupId,authorId,authorName,type,text,authorPhotoPath,authorPlayerSummary,replyToId,replyPreview,const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_reactions),deletedAt,createdAt,pending);
 }
 
 @override
 String toString() {
-    return 'Message(id: $id, groupId: $groupId, authorId: $authorId, authorName: $authorName, type: $type, text: $text, authorPhotoPath: $authorPhotoPath, authorPlayerSummary: $authorPlayerSummary, replyToId: $replyToId, attachments: $attachments, reactions: $reactions, deletedAt: $deletedAt, createdAt: $createdAt, pending: $pending)';
+    return 'Message(id: $id, groupId: $groupId, authorId: $authorId, authorName: $authorName, type: $type, text: $text, authorPhotoPath: $authorPhotoPath, authorPlayerSummary: $authorPlayerSummary, replyToId: $replyToId, replyPreview: $replyPreview, attachments: $attachments, reactions: $reactions, deletedAt: $deletedAt, createdAt: $createdAt, pending: $pending)';
 }
 
 
@@ -296,11 +312,11 @@ abstract mixin class _$MessageCopyWith<$Res> implements $MessageCopyWith<$Res> {
   factory _$MessageCopyWith(_Message value, $Res Function(_Message) _then) = __$MessageCopyWithImpl;
 @override @useResult
 $Res call({
- String id, GroupId groupId, String authorId, String authorName, MessageType type, String text, String? authorPhotoPath, String? authorPlayerSummary, String? replyToId, List<Attachment> attachments, Map<String, Reaction> reactions, DateTime? deletedAt, DateTime? createdAt, bool pending
+ String id, GroupId groupId, String authorId, String authorName, MessageType type, String text, String? authorPhotoPath, String? authorPlayerSummary, String? replyToId, ReplyPreview? replyPreview, List<Attachment> attachments, Map<String, Reaction> reactions, DateTime? deletedAt, DateTime? createdAt, bool pending
 });
 
 
-
+@override $ReplyPreviewCopyWith<$Res>? get replyPreview;
 
 }
 /// @nodoc
@@ -313,7 +329,7 @@ class __$MessageCopyWithImpl<$Res>
 
 /// Create a copy of Message
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? authorId = null,Object? authorName = null,Object? type = null,Object? text = null,Object? authorPhotoPath = freezed,Object? authorPlayerSummary = freezed,Object? replyToId = freezed,Object? attachments = null,Object? reactions = null,Object? deletedAt = freezed,Object? createdAt = freezed,Object? pending = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? authorId = null,Object? authorName = null,Object? type = null,Object? text = null,Object? authorPhotoPath = freezed,Object? authorPlayerSummary = freezed,Object? replyToId = freezed,Object? replyPreview = freezed,Object? attachments = null,Object? reactions = null,Object? deletedAt = freezed,Object? createdAt = freezed,Object? pending = null,}) {
   return _then(_Message(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -324,7 +340,8 @@ as MessageType,text: null == text ? _self.text : text // ignore: cast_nullable_t
 as String,authorPhotoPath: freezed == authorPhotoPath ? _self.authorPhotoPath : authorPhotoPath // ignore: cast_nullable_to_non_nullable
 as String?,authorPlayerSummary: freezed == authorPlayerSummary ? _self.authorPlayerSummary : authorPlayerSummary // ignore: cast_nullable_to_non_nullable
 as String?,replyToId: freezed == replyToId ? _self.replyToId : replyToId // ignore: cast_nullable_to_non_nullable
-as String?,attachments: null == attachments ? _self._attachments : attachments // ignore: cast_nullable_to_non_nullable
+as String?,replyPreview: freezed == replyPreview ? _self.replyPreview : replyPreview // ignore: cast_nullable_to_non_nullable
+as ReplyPreview?,attachments: null == attachments ? _self._attachments : attachments // ignore: cast_nullable_to_non_nullable
 as List<Attachment>,reactions: null == reactions ? _self._reactions : reactions // ignore: cast_nullable_to_non_nullable
 as Map<String, Reaction>,deletedAt: freezed == deletedAt ? _self.deletedAt : deletedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
@@ -333,7 +350,19 @@ as bool,
   ));
 }
 
+/// Create a copy of Message
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ReplyPreviewCopyWith<$Res>? get replyPreview {
+    if (_self.replyPreview == null) {
+    return null;
+  }
 
+  return $ReplyPreviewCopyWith<$Res>(_self.replyPreview!, (value) {
+    return _then(_self.copyWith(replyPreview: value));
+  });
+}
 }
 
 /// @nodoc
@@ -879,6 +908,279 @@ as String,width: null == width ? _self.width : width // ignore: cast_nullable_to
 as int,height: null == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
 as int,size: null == size ? _self.size : size // ignore: cast_nullable_to_non_nullable
 as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$ReplyPreview {
+
+ String get authorName; String get text; MessageType get type; bool get deleted;
+/// Create a copy of ReplyPreview
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ReplyPreviewCopyWith<ReplyPreview> get copyWith => _$ReplyPreviewCopyWithImpl<ReplyPreview>(this as ReplyPreview, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as ReplyPreview;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReplyPreview&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.deleted, _this.deleted) || other.deleted == _this.deleted));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as ReplyPreview;
+  return Object.hash(runtimeType,_this.authorName,_this.text,_this.type,_this.deleted);
+}
+
+@override
+String toString() {
+  final _this = this as ReplyPreview;
+  return 'ReplyPreview(authorName: ${_this.authorName}, text: ${_this.text}, type: ${_this.type}, deleted: ${_this.deleted})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ReplyPreviewCopyWith<$Res>  {
+  factory $ReplyPreviewCopyWith(ReplyPreview value, $Res Function(ReplyPreview) _then) = _$ReplyPreviewCopyWithImpl;
+@useResult
+$Res call({
+ String authorName, String text, MessageType type, bool deleted
+});
+
+
+
+
+}
+/// @nodoc
+class _$ReplyPreviewCopyWithImpl<$Res>
+    implements $ReplyPreviewCopyWith<$Res> {
+  _$ReplyPreviewCopyWithImpl(this._self, this._then);
+
+  final ReplyPreview _self;
+  final $Res Function(ReplyPreview) _then;
+
+/// Create a copy of ReplyPreview
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? authorName = null,Object? text = null,Object? type = null,Object? deleted = null,}) {
+  return _then(ReplyPreview(
+authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
+as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as MessageType,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ReplyPreview].
+extension ReplyPreviewPatterns on ReplyPreview {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ReplyPreview value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ReplyPreview() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ReplyPreview value)  $default,){
+final _that = this;
+switch (_that) {
+case _ReplyPreview():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ReplyPreview value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ReplyPreview() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String authorName,  String text,  MessageType type,  bool deleted)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ReplyPreview() when $default != null:
+return $default(_that.authorName,_that.text,_that.type,_that.deleted);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String authorName,  String text,  MessageType type,  bool deleted)  $default,) {final _that = this;
+switch (_that) {
+case _ReplyPreview():
+return $default(_that.authorName,_that.text,_that.type,_that.deleted);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String authorName,  String text,  MessageType type,  bool deleted)?  $default,) {final _that = this;
+switch (_that) {
+case _ReplyPreview() when $default != null:
+return $default(_that.authorName,_that.text,_that.type,_that.deleted);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _ReplyPreview implements ReplyPreview {
+  const _ReplyPreview({required this.authorName, required this.text, this.type = MessageType.text, this.deleted = false});
+  
+
+@override final  String authorName;
+@override final  String text;
+@override@JsonKey() final  MessageType type;
+@override@JsonKey() final  bool deleted;
+
+/// Create a copy of ReplyPreview
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ReplyPreviewCopyWith<_ReplyPreview> get copyWith => __$ReplyPreviewCopyWithImpl<_ReplyPreview>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReplyPreview&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.text, text) || other.text == text)&&(identical(other.type, type) || other.type == type)&&(identical(other.deleted, deleted) || other.deleted == deleted));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,authorName,text,type,deleted);
+}
+
+@override
+String toString() {
+    return 'ReplyPreview(authorName: $authorName, text: $text, type: $type, deleted: $deleted)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ReplyPreviewCopyWith<$Res> implements $ReplyPreviewCopyWith<$Res> {
+  factory _$ReplyPreviewCopyWith(_ReplyPreview value, $Res Function(_ReplyPreview) _then) = __$ReplyPreviewCopyWithImpl;
+@override @useResult
+$Res call({
+ String authorName, String text, MessageType type, bool deleted
+});
+
+
+
+
+}
+/// @nodoc
+class __$ReplyPreviewCopyWithImpl<$Res>
+    implements _$ReplyPreviewCopyWith<$Res> {
+  __$ReplyPreviewCopyWithImpl(this._self, this._then);
+
+  final _ReplyPreview _self;
+  final $Res Function(_ReplyPreview) _then;
+
+/// Create a copy of ReplyPreview
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? authorName = null,Object? text = null,Object? type = null,Object? deleted = null,}) {
+  return _then(_ReplyPreview(
+authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
+as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as MessageType,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

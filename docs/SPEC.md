@@ -942,7 +942,7 @@ Battleplan has two team plans. **[PLANS.md](PLANS.md) is the feature-by-feature 
 - **PLAN-2 · MVP · Super admins grant licenses.**
   - From the admin panel (ADMIN-3), a super admin creates a license for a person and a team: one year by default, or a number of months.
   - They can extend it, move it, or revoke it. Each action is in the audit log.
-  - This is how paid teams are handled at launch: they pay outside the app (Q19), and we apply the license.
+  - This is how paid teams are handled during the beta: they pay outside the app, and we apply the license. In-app purchase must exist before Plus is in the App Store (PLAN-14, Q19).
 - **PLAN-3 · MVP · Licenses are transferable.**
   - A license belongs to its holder, not the team.
   - The holder can move it to any team they're an owner or admin of. The old team goes back to Free, and the new team gets the remaining time.
@@ -966,6 +966,7 @@ Battleplan has two team plans. **[PLANS.md](PLANS.md) is the feature-by-feature 
 - **PLAN-11 · MVP · More room (Plus).** 25 GB of team storage instead of 5 GB, and documents up to 100 MB instead of 25 MB.
 - **PLAN-12 · v1.1 · Branded invite page (Plus).** The `/join` page shows the team's logo and color.
 - **PLAN-13 · v1.1 · Self-serve checkout.** Admins buy Plus on the web, yearly or monthly, and the license is created automatically (Q19).
+- **PLAN-14 · Before Plus is in the stores · In-app purchase.** The iPhone and Android apps sell Plus through Apple's and Google's in-app purchase, yearly or monthly, creating the same kind of license. Required by App Store guideline 3.1.3(b) for the iPhone app to unlock Plus at all (Q19). Restore Purchases and the store's subscription management are included.
 
 **Acceptance (MVP)**
 
@@ -1328,6 +1329,6 @@ Each question has a default. The build follows the default until someone decides
 | Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email; Facebook sign-in, its Meta app, App Review, and LEGAL-5 move to their own roadmap section after M8. | — |
 | Q17 | What is the paid plan called? | **Plus** |
 | Q18 | When a super admin grants a license, is it yearly or monthly? | Whole months, one year by default; the $7 monthly price applies once self-serve checkout exists (PLAN-13) |
-| Q19 | How do people pay, especially in the iPhone and Android apps? | On the web only, through Stripe, once PLAN-13 is built; until then, outside the app with a super admin applying the license. The apps show the plan and what it adds but sell nothing and don't link out ("Ask your team admin"), so neither store's in-app purchase rules apply. Revisit if in-app purchase is worth the store fee. |
+| Q19 | How do people pay, especially in the iPhone and Android apps? | Super-admin grants during the beta. Before Plus ships in the App Store, Plus is also sold through in-app purchase in both apps (PLAN-14), because Apple lets an app unlock features bought on the web only if they're "also available as in-app purchases" (guideline 3.1.3(b)) and forbids unlocking with license keys (3.1.1). Apple's fee is 15% under the Small Business Program; Google's is 15% on subscriptions. The web checkout (PLAN-13) stays, and US iPhone users may get a button to it (3.1.1(a)). Same price everywhere unless decided otherwise. |
 | Q20 | Is there a grace period after a license ends? | No; reminders go out 30 and 7 days before, and the team returns to Free on the end date with nothing deleted |
 | Q21 | Should Plus also be sold per person (for example, extra reactions everywhere)? | No, per team only |

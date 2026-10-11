@@ -687,6 +687,7 @@ class FakeMessageRepository implements MessageRepository {
     UserId uid,
     UploadedPhotos photos, {
     String caption = '',
+    String? replyToId,
   }) async {
     photoBatches.add(photos.attachments.length);
     messages.insert(
@@ -738,6 +739,7 @@ class FakeMessageRepository implements MessageRepository {
     UserId uid,
     String text, {
     String? id,
+    String? replyToId,
   }) async {
     if (failSends case final error?) throw error;
     sent.add(text);
@@ -750,10 +752,24 @@ class FakeMessageRepository implements MessageRepository {
         authorName: uid.value,
         type: MessageType.text,
         text: text,
+        replyToId: replyToId,
+        replyPreview: replyToId == null ? null : _previewOf(replyToId),
         createdAt: DateTime.now(),
       ),
     );
     _changes.add(null);
+  }
+
+  /// What the server's trigger would write.
+  ReplyPreview _previewOf(String id) {
+    final o = messages.where((m) => m.id == id).firstOrNull;
+    return o == null || o.deletedAt != null
+        ? const ReplyPreview(authorName: '', text: '', deleted: true)
+        : ReplyPreview(
+            authorName: o.authorName,
+            text: o.text.split('\n').first,
+            type: o.type,
+          );
   }
 }
 

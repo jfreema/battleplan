@@ -52,3 +52,36 @@ export async function postSystemMessage(
     createdAt: FieldValue.serverTimestamp(),
   });
 }
+
+/** What a reply shows of the message it quotes (ARCH §6.2 replyPreview). */
+export interface ReplyPreview {
+  authorName: string;
+  text: string;
+  type: string;
+  deleted: boolean;
+}
+
+/** The quote for [original]: the author and first line, up to 120 characters. */
+export function replyPreviewOf(original: Record<string, unknown> | undefined): ReplyPreview {
+  if (!original || original.deletedAt) return { authorName: '', text: '', type: 'text', deleted: true };
+  const firstLine = String(original.text ?? '').split('\n')[0].trim();
+  return {
+    authorName: String(original.authorName ?? ''),
+    text: firstLine.length > 120 ? `${firstLine.slice(0, 119)}…` : firstLine,
+    type: String(original.type ?? 'text'),
+    deleted: false,
+  };
+}
+
+/**
+ * Writes the quote on a reply. The original must be in the same team; a
+ * missing or foreign original reads as deleted.
+ */
+export async function writeReplyPreview(messageId: string, groupId: string, replyToId: string): Promise<void> {
+  const original = await db().collection(Collections.messages).doc(replyToId).get();
+  const data = original.exists && original.get('groupId') === groupId ? original.data() : undefined;
+  await db()
+    .collection(Collections.messages)
+    .doc(messageId)
+    .update({ replyPreview: replyPreviewOf(data) });
+}
