@@ -1,6 +1,8 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -13,8 +15,14 @@ class Composer extends StatefulWidget {
     required this.onSend,
     this.onPickPhotos,
     this.onTakePhoto,
+    this.replyingTo,
+    this.onCancelReply,
     super.key,
   });
+
+  /// The message being replied to, shown above the box with ✕ (CHAT-13).
+  final Message? replyingTo;
+  final VoidCallback? onCancelReply;
 
   final void Function(String text) onSend;
 
@@ -65,7 +73,8 @@ class _ComposerState extends State<Composer> {
     final length = _text.text.length;
     final canSend =
         _text.text.trim().isNotEmpty && length <= Limits.messageTextMax;
-    return SafeArea(
+    final replying = widget.replyingTo;
+    final box = SafeArea(
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -130,6 +139,31 @@ class _ComposerState extends State<Composer> {
           ],
         ),
       ),
+    );
+    if (replying == null) return box;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(Space.lg, Space.xs, Space.xs, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: QuoteBlock(
+                  authorName: replying.authorName,
+                  text: quoteText(l10n, replying.type, replying.text),
+                ),
+              ),
+              IconButton(
+                tooltip: l10n.cancelReply,
+                icon: const Icon(AppIcons.close),
+                onPressed: widget.onCancelReply,
+              ),
+            ],
+          ),
+        ),
+        box,
+      ],
     );
   }
 }

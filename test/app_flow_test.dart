@@ -781,6 +781,53 @@ void main() {
       expect(find.text('❤️ 1'), findsOneWidget);
     });
 
+    testWidgets('replying quotes the original, and the quote jumps back', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([
+        for (var i = 120; i > 0; i--) msg(i),
+      ]);
+      // A reply near the bottom to message 2, 118 messages back.
+      repo.messages.insert(
+        0,
+        msg(121).copyWith(
+          text: 'Answering the old one',
+          replyToId: 'm2',
+          replyPreview: const ReplyPreview(
+            authorName: 'Sam Rivera',
+            text: 'Message 2',
+          ),
+        ),
+      );
+      await openChat(tester, repo);
+      // Reply to the newest plain message from the menu.
+      await tester.longPress(find.text('Message 120'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reply'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Cancel reply'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'Got it');
+      await tester.pump();
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
+      expect(repo.messages.first.replyToId, 'm120');
+      expect(find.byTooltip('Cancel reply'), findsNothing);
+      // Tapping the old quote loads older pages and scrolls to message 2.
+      // Only the quote shows "Message 2" until the original is on screen.
+      expect(find.text('Message 2'), findsOneWidget);
+      await tester.tap(find.text('Message 2'));
+      // Past the double-tap window, then let the jump run.
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(find.text('Message 2'), findsWidgets);
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is Text && w.textSpan?.toPlainText() == 'Message 2',
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('scrolling up loads older messages 50 at a time', (
       tester,
     ) async {

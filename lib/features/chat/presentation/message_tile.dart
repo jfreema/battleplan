@@ -13,6 +13,7 @@ import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
 import 'package:battleplan/features/chat/presentation/photo_viewer.dart';
+import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
@@ -32,6 +33,10 @@ class MessageTile extends ConsumerStatefulWidget {
     required this.startsGroup,
     required this.endsGroup,
     this.showSent = false,
+    this.highlighted = false,
+    this.quoted,
+    this.onReply,
+    this.onOpenQuote,
     super.key,
   });
 
@@ -43,6 +48,20 @@ class MessageTile extends ConsumerStatefulWidget {
   /// Shows "Sent" under it: my newest message, once the server has it.
   final bool showSent;
 
+  /// Briefly tinted after jumping to it from a quote.
+  final bool highlighted;
+
+  /// The original of a reply, when loaded, for the quote until the server
+  /// has written `replyPreview`.
+  final Message? quoted;
+
+  /// Starts a reply (menu, or swipe right on phones). Null where replying
+  /// isn't allowed.
+  final VoidCallback? onReply;
+
+  /// Jumps to the quoted original (CHAT-13).
+  final VoidCallback? onOpenQuote;
+
   @override
   ConsumerState<MessageTile> createState() => _MessageTileState();
 }
@@ -50,6 +69,10 @@ class MessageTile extends ConsumerStatefulWidget {
 class _MessageTileState extends ConsumerState<MessageTile> {
   bool _showTime = false;
   bool _hovering = false;
+
+  /// How far the bubble is dragged right toward a reply (phones).
+  double _swipe = 0;
+  static const _swipeToReply = 64.0;
 
   Future<void> _react(Reaction r) => ref
       .read(chatMessagesProvider(widget.message.groupId).notifier)
@@ -84,6 +107,15 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                 },
               ),
               const Divider(height: Space.xl),
+              if (widget.onReply case final reply?)
+                ListTile(
+                  leading: const Icon(AppIcons.reply),
+                  title: Text(l10n.reply),
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    reply();
+                  },
+                ),
               if (m.text.trim().isNotEmpty)
                 ListTile(
                   leading: const Icon(AppIcons.copy),
@@ -134,6 +166,27 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final deleted = m.deletedAt != null;
 
     final hasText = m.text.trim().isNotEmpty;
+    // A reply's quote (CHAT-13): the server's copy, or the loaded original
+    // until the server has written it.
+    final preview = m.replyPreview;
+    final original = widget.quoted;
+    final quote = m.replyToId == null || deleted
+        ? null
+        : Padding(
+            padding: const EdgeInsets.only(bottom: Space.xs),
+            child: QuoteBlock(
+              authorName: preview?.authorName ?? original?.authorName ?? '',
+              text: preview != null
+                  ? quoteText(l10n, preview.type, preview.text)
+                  : original == null
+                  ? ''
+                  : quoteText(l10n, original.type, original.text),
+              deleted:
+                  (preview?.deleted ?? false) || original?.deletedAt != null,
+              foreground: foreground.withValues(alpha: 0.85),
+              onTap: widget.onOpenQuote,
+            ),
+          );
     final textBubble = Container(
       constraints: const BoxConstraints(maxWidth: 520),
       padding: const EdgeInsets.symmetric(
@@ -153,13 +206,23 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                 color: scheme.onSurfaceVariant,
               ),
             )
-          : LinkifiedText(
-              m.text,
-              phones: !kIsWeb,
-              style: theme.textTheme.bodyLarge?.copyWith(color: foreground),
-              linkColor: foreground,
-              onOpen: (uri) =>
-                  unawaited(ref.read(linkOpenerProvider).open(uri)),
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ?quote,
+                if (hasText)
+                  LinkifiedText(
+                    m.text,
+                    phones: !kIsWeb,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: foreground,
+                    ),
+                    linkColor: foreground,
+                    onOpen: (uri) =>
+                        unawaited(ref.read(linkOpenerProvider).open(uri)),
+                  ),
+              ],
             ),
     );
     // Photos sit above the caption (CHAT-3).
@@ -182,7 +245,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       children: [
         ?photos,
         if (photos != null && hasText) const SizedBox(height: 2),
-        if (photos == null || hasText) textBubble,
+        if (photos == null || hasText || quote != null) textBubble,
       ],
     );
 
@@ -232,6 +295,21 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           onExit: (_) => setState(() => _hovering = false),
           child: GestureDetector(
             onTap: () => setState(() => _showTime = !_showTime),
+            // Swipe right to reply (CHAT-13, phones).
+            onHorizontalDragUpdate: widget.onReply == null || kIsWeb
+                ? null
+                : (d) => setState(
+                    () => _swipe = (_swipe + d.delta.dx).clamp(0, 96),
+                  ),
+            onHorizontalDragEnd: widget.onReply == null || kIsWeb
+                ? null
+                : (_) {
+                    if (_swipe >= _swipeToReply) {
+                      unawaited(HapticFeedback.selectionClick());
+                      widget.onReply!();
+                    }
+                    setState(() => _swipe = 0);
+                  },
             // The message menu (CHAT-7): long-press on phones, right-click
             // on the web. Double-tap loves it (CHAT-6).
             onLongPress: deleted ? null : () => unawaited(_openMenu()),
@@ -239,13 +317,16 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             onDoubleTap: deleted || kIsWeb
                 ? null
                 : () => fireAndForget(_react(Reaction.love)),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (mine && _hovering && !deleted) _hoverButton(),
-                Flexible(child: bubble),
-                if (!mine && _hovering && !deleted) _hoverButton(),
-              ],
+            child: Transform.translate(
+              offset: Offset(_swipe, 0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (mine && _hovering && !deleted) _hoverButton(),
+                  Flexible(child: bubble),
+                  if (!mine && _hovering && !deleted) _hoverButton(),
+                ],
+              ),
             ),
           ),
         ),
@@ -293,7 +374,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           : null,
     );
 
-    return Padding(
+    final row = Padding(
       padding: EdgeInsets.fromLTRB(
         Space.md,
         widget.startsGroup ? Space.sm : 2,
@@ -310,6 +391,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           Flexible(child: column),
         ],
       ),
+    );
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      color: widget.highlighted
+          ? scheme.primaryContainer.withValues(alpha: 0.5)
+          : Colors.transparent,
+      child: row,
     );
   }
 }

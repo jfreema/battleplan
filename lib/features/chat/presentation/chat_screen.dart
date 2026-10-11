@@ -36,6 +36,49 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _scroll = ScrollController();
 
+  /// The message the next send replies to (CHAT-13).
+  Message? _replyTo;
+
+  /// Keys for message rows, so a tapped quote can scroll to its original.
+  final Map<String, GlobalKey> _rowKeys = {};
+
+  /// The message just jumped to, briefly highlighted.
+  String? _highlighted;
+  Timer? _unhighlight;
+
+  GlobalKey _keyFor(String id) => _rowKeys.putIfAbsent(id, GlobalKey.new);
+
+  /// Scrolls to [messageId], loading older pages first if needed (CHAT-13).
+  Future<void> _jumpTo(String messageId) async {
+    final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
+    final found = await controller.loadUntil(messageId);
+    if (!found || !mounted) return;
+    // Rows are built lazily, so step toward older messages until the
+    // original's row exists, then bring it to the middle of the screen.
+    for (var i = 0; i < 200 && mounted; i++) {
+      await WidgetsBinding.instance.endOfFrame;
+      final row = _rowKeys[messageId]?.currentContext;
+      if (row != null && row.mounted) {
+        await Scrollable.ensureVisible(
+          row,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 250),
+        );
+        setState(() => _highlighted = messageId);
+        _unhighlight?.cancel();
+        _unhighlight = Timer(const Duration(milliseconds: 1500), () {
+          if (mounted) setState(() => _highlighted = null);
+        });
+        return;
+      }
+      final p = _scroll.position;
+      if (p.pixels >= p.maxScrollExtent) return;
+      _scroll.jumpTo(
+        (p.pixels + p.viewportDimension * 0.8).clamp(0, p.maxScrollExtent),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +87,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
+    _unhighlight?.cancel();
     _scroll.dispose();
     super.dispose();
   }
@@ -71,7 +115,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final messages = chat.messages;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final picker = ref.watch(photoPickerProvider);
-    final shownIds = {for (final m in messages) m.id};
+    final byId = {for (final m in messages) m.id: m};
+    final shownIds = byId.keys.toSet();
     // Things still on their way, shown below everything (the list is
     // reversed): uploading photos, then queued or refused texts. A queued
     // text whose local write is already in the chat shows there instead.
@@ -134,11 +179,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               if (newDay && m.createdAt != null)
                 _DateSeparator(day: m.createdAt!),
               MessageTile(
+                key: _keyFor(m.id),
                 message: m,
                 mine: m.authorId == me,
                 startsGroup: newDay || !_continues(older, m),
                 endsGroup: newer == null || !_continues(m, newer),
                 showSent: m.id == sentId,
+                highlighted: m.id == _highlighted,
+                // Until the server writes the quote, show it from the
+                // original if it's loaded.
+                quoted: m.replyToId == null ? null : byId[m.replyToId],
+                onReply: archived ? null : () => setState(() => _replyTo = m),
+                onOpenQuote: m.replyToId == null
+                    ? null
+                    : () => unawaited(_jumpTo(m.replyToId!)),
               ),
             ],
           );
@@ -156,7 +210,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           )
         else
           Composer(
-            onSend: (text) => unawaited(controller.send(text)),
+            replyingTo: _replyTo,
+            onCancelReply: () => setState(() => _replyTo = null),
+            onSend: (text) {
+              unawaited(controller.send(text, replyToId: _replyTo?.id));
+              setState(() => _replyTo = null);
+            },
             onPickPhotos: () => unawaited(_pickPhotos(picker, controller)),
             onTakePhoto: picker.canUseCamera
                 ? () => unawaited(_takePhoto(picker, controller))

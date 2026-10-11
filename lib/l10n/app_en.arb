@@ -591,5 +591,13 @@
   "copyText": "Copy text",
   "textCopied": "Copied.",
   "messageMenu": "Message options",
-  "react": "React"
+  "react": "React",
+  "reply": "Reply",
+  "cancelReply": "Cancel reply",
+  "quotePhoto": "Photo",
+  "quotePoll": "Poll",
+  "quoteEvent": "Event",
+  "quoteDeleted": "Original message was deleted",
+  "quoteSemantics": "Reply to {author}: {text}",
+  "@quoteSemantics": {"placeholders": {"author": {"type": "String"}, "text": {"type": "String"}}}
 }

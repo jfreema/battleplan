@@ -95,7 +95,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 60. ✅ Photos and the full-screen viewer (CHAT-3). *Tested on dev in Chrome: two photos uploaded as one message with their sizes, the other member saw them, and the team storage total counted them. Pasting and dragging images in on web come later.*
 61. ✅ Delivery states and the offline send queue (CHAT-4). *Tested on dev in Chrome: three messages typed offline showed as "Sending…" and all reached the server in order once back online. The queue lives in memory, so messages still queued when the app is closed are lost (Firestore keeps the first one).*
 62. ✅ Reactions 👍 ❤️ 👎 😂 (CHAT-6) and the message menu (CHAT-7). *Tested on dev: right-clicking a message and picking 👍 saved the reaction. Reply, Delete, and Report join the menu with tasks 63, 64, and 66.*
-63. Replies with server-written quotes (CHAT-13).
+63. ✅ Replies with server-written quotes (CHAT-13). *Tested on dev: replying from the menu sent only the original's ID, and the server wrote the quote within a second. The notification to the person replied to comes with M4 (NOTIF-11).*
 64. Deleting messages through a Function, with the audit log (CHAT-8).
 65. Unread counts and the "New messages" divider, synced across devices (CHAT-9).
 66. Report and block (SAFE-1, SAFE-2, CHAT-12); the team's Reports screen and acting on reports (SAFE-4); the blocked-people list (SET-5).
