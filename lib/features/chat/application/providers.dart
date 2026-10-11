@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
@@ -282,5 +283,20 @@ class ChatMessages extends _$ChatMessages {
     // One failed send doesn't stop the ones queued after it.
     _sendQueue = next.catchError((Object _) {});
     return next;
+  }
+
+  /// Picks a reaction for me (CHAT-6): the same one again removes it, a
+  /// different one replaces mine.
+  Future<void> react(Message message, Reaction reaction) async {
+    final uid = ref.read(authUserProvider).value?.uid;
+    if (uid == null) return;
+    final current = message.reactions[uid];
+    await ref
+        .read(messageRepositoryProvider)
+        .setReaction(
+          message.id,
+          UserId(uid),
+          current == reaction ? null : reaction,
+        );
   }
 }

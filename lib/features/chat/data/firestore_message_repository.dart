@@ -262,4 +262,23 @@ class FirestoreMessageRepository implements MessageRepository {
       return null;
     }
   }
+
+  @override
+  Future<void> setReaction(
+    String messageId,
+    UserId uid,
+    Reaction? reaction,
+  ) async {
+    try {
+      // Rules let a member change only their own key (CHAT-6, D6).
+      await _db.collection(Collections.messages).doc(messageId).update({
+        'reactions.${uid.value}': reaction?.value ?? FieldValue.delete(),
+      });
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
 }

@@ -1,18 +1,24 @@
 import 'dart:async';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/linkified_text.dart';
+import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
 import 'package:battleplan/features/chat/presentation/photo_viewer.dart';
+import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -43,6 +49,57 @@ class MessageTile extends ConsumerStatefulWidget {
 
 class _MessageTileState extends ConsumerState<MessageTile> {
   bool _showTime = false;
+  bool _hovering = false;
+
+  Future<void> _react(Reaction r) => ref
+      .read(chatMessagesProvider(widget.message.groupId).notifier)
+      .react(widget.message, r);
+
+  /// On the web, a small button beside a hovered bubble opens the menu.
+  Widget _hoverButton() => IconButton(
+    tooltip: AppLocalizations.of(context).messageMenu,
+    visualDensity: VisualDensity.compact,
+    icon: const Icon(AppIcons.addReaction, size: 20),
+    onPressed: () => unawaited(_openMenu()),
+  );
+
+  /// React, Copy text (and, with later tasks, Reply, Delete, Report).
+  Future<void> _openMenu() async {
+    final m = widget.message;
+    final l10n = AppLocalizations.of(context);
+    final me = ref.read(authUserProvider).value?.uid;
+    await showAdaptiveSheet<void>(
+      context,
+      builder: (sheet) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: Space.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ReactionPicker(
+                mine: me == null ? null : m.reactions[me],
+                onPick: (r) {
+                  Navigator.of(sheet).pop();
+                  fireAndForget(_react(r));
+                },
+              ),
+              const Divider(height: Space.xl),
+              if (m.text.trim().isNotEmpty)
+                ListTile(
+                  leading: const Icon(AppIcons.copy),
+                  title: Text(l10n.copyText),
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    unawaited(Clipboard.setData(ClipboardData(text: m.text)));
+                    showAppSnackBar(context, l10n.textCopied);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -171,13 +228,38 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       children: [
         ?header,
         MouseRegion(
-          onEnter: (_) => setState(() => _showTime = true),
-          onExit: (_) => setState(() => _showTime = false),
+          onEnter: (_) => setState(() => _hovering = true),
+          onExit: (_) => setState(() => _hovering = false),
           child: GestureDetector(
             onTap: () => setState(() => _showTime = !_showTime),
-            child: bubble,
+            // The message menu (CHAT-7): long-press on phones, right-click
+            // on the web. Double-tap loves it (CHAT-6).
+            onLongPress: deleted ? null : () => unawaited(_openMenu()),
+            onSecondaryTap: deleted ? null : () => unawaited(_openMenu()),
+            onDoubleTap: deleted || kIsWeb
+                ? null
+                : () => fireAndForget(_react(Reaction.love)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (mine && _hovering && !deleted) _hoverButton(),
+                Flexible(child: bubble),
+                if (!mine && _hovering && !deleted) _hoverButton(),
+              ],
+            ),
           ),
         ),
+        if (m.reactions.isNotEmpty && !deleted)
+          ReactionChips(
+            message: m,
+            me: ref.watch(authUserProvider).value?.uid,
+            onShowWho: () => unawaited(
+              showAdaptiveSheet<void>(
+                context,
+                builder: (_) => ReactionsSheet(message: m),
+              ),
+            ),
+          ),
         // Delivery state (CHAT-4): sending until the server has it, then
         // "Sent" under my newest message.
         if (m.pending || widget.showSent)
@@ -190,7 +272,9 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               ),
             ),
           )
-        else if (_showTime && time != null && !widget.startsGroup)
+        else if ((_showTime || _hovering) &&
+            time != null &&
+            !widget.startsGroup)
           Padding(
             padding: const EdgeInsets.only(top: 2, left: Space.md),
             child: Text(time, style: theme.textTheme.labelSmall),

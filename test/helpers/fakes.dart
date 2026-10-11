@@ -705,6 +705,20 @@ class FakeMessageRepository implements MessageRepository {
   }
 
   @override
+  Future<void> setReaction(
+    String messageId,
+    UserId uid,
+    Reaction? reaction,
+  ) async {
+    final i = messages.indexWhere((m) => m.id == messageId);
+    if (i < 0) return;
+    final reactions = {...messages[i].reactions}..remove(uid.value);
+    if (reaction != null) reactions[uid.value] = reaction;
+    messages[i] = messages[i].copyWith(reactions: reactions);
+    _changes.add(null);
+  }
+
+  @override
   Future<String?> attachmentUrl(String path) async => null;
 
   @override

@@ -629,7 +629,10 @@ void main() {
           tester,
           auth: FakeAuthRepository(user: coach),
           groups: {'a': testGroup('a', 'Thunder')},
-          memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+          memberships: [
+            testMembership('a', 'coach', role: MemberRole.owner),
+            testMembership('a', 'sam', name: 'Sam Rivera'),
+          ],
           messageRepo: repo,
         );
 
@@ -734,6 +737,48 @@ void main() {
       expect(repo.sent, ['Rain check?']);
       expect(find.text('Rain check?'), findsOneWidget);
       expect(find.text('Sent'), findsOneWidget);
+    });
+
+    testWidgets('reactions from the message menu, one per person (CHAT-6)', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([
+        msg(1).copyWith(reactions: {'sam': Reaction.like}),
+      ]);
+      await openChat(tester, repo);
+      expect(find.text('👍 1'), findsOneWidget);
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('👍'));
+      await tester.pumpAndSettle();
+      expect(find.text('👍 2'), findsOneWidget);
+      // Picking another replaces mine.
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('😂'));
+      await tester.pumpAndSettle();
+      expect(find.text('👍 1'), findsOneWidget);
+      expect(find.text('😂 1'), findsOneWidget);
+      // Picking the same one removes it.
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('😂').last);
+      await tester.pumpAndSettle();
+      expect(find.text('😂 1'), findsNothing);
+      // Tapping a chip shows who reacted.
+      await tester.tap(find.text('👍 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sam Rivera'), findsWidgets);
+    });
+
+    testWidgets('double-tap loves a message', (tester) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(tester, repo);
+      await tester.tap(find.text('Message 1'));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('❤️ 1'), findsOneWidget);
     });
 
     testWidgets('scrolling up loads older messages 50 at a time', (

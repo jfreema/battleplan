@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 
@@ -50,4 +51,7 @@ abstract interface class MessageRepository {
 
   /// A message photo's bytes, for sharing or saving.
   Future<Uint8List?> attachmentBytes(String path);
+
+  /// Sets or clears the person's one reaction on a message (CHAT-6).
+  Future<void> setReaction(String messageId, UserId uid, Reaction? reaction);
 }

@@ -582,5 +582,14 @@
   "addToMessage": "Add photos",
   "tooManyPhotos": "Up to 10 photos per message. The first 10 will be sent.",
   "messageSent": "Sent",
-  "messageNotSent": "Not sent"
+  "messageNotSent": "Not sent",
+  "reactionLike": "Like",
+  "reactionLove": "Love",
+  "reactionDislike": "Dislike",
+  "reactionLaugh": "LOL",
+  "formerMember": "Former member",
+  "copyText": "Copy text",
+  "textCopied": "Copied.",
+  "messageMenu": "Message options",
+  "react": "React"
 }

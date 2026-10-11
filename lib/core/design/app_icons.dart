@@ -38,6 +38,8 @@ abstract final class AppIcons {
   static const IconData photo = Symbols.photo_library_rounded;
   static const IconData camera = Symbols.photo_camera_rounded;
   static const IconData retry = Symbols.refresh_rounded;
+  static const IconData addReaction = Symbols.add_reaction_rounded;
+  static const IconData copy = Symbols.content_copy_rounded;
 
   /// The icon for a sport (shown in the team switcher).
   static IconData sport(Sport sport) => switch (sport) {
