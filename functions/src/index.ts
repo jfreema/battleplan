@@ -10,4 +10,5 @@ export {
   signOutEverywhere,
 } from './accounts/handlers.js';
 export { onUserUpdated } from './accounts/triggers.js';
+export { createGroup } from './teams/handlers.js';
 export { logClientError } from './ops/handlers.js';

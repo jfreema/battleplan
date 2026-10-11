@@ -84,3 +84,80 @@ export async function updateMemberSnapshots(
   memberships.docs.forEach((d) => batch.update(d.ref, { displayName, photoPath }));
   await batch.commit();
 }
+
+export interface NewGroup {
+  name: string;
+  sport: string;
+  teamType: 'adult' | 'youth';
+  color?: string;
+  timeZone: string;
+  description?: string;
+}
+
+/** Defaults for a new team's settings (TEAM-5). */
+export const DEFAULT_SETTINGS = {
+  membersCanCreateEvents: false,
+  membersCanCreatePolls: true,
+  membersCanUploadDocs: true,
+  membersCanInvite: true,
+  allowMaybe: true,
+  defaultReminderOffsets: [1440],
+};
+
+/**
+ * Creates a team with its creator as owner (TEAM-1). Callers check who may
+ * create teams; this only writes the group and the owner's membership.
+ */
+export async function createGroup(
+  uid: string,
+  owner: { displayName: string; photoPath: string | null },
+  input: NewGroup,
+  quotaGb: number,
+): Promise<string> {
+  const ref = db().collection(Collections.groups).doc();
+  const now = FieldValue.serverTimestamp();
+  const name = input.name.trim();
+  await db()
+    .batch()
+    .set(ref, {
+      name,
+      nameLower: name.toLowerCase(),
+      description: input.description?.trim() ?? '',
+      photoPath: null,
+      color: input.color ?? null,
+      sport: input.sport,
+      teamType: input.teamType,
+      ownerId: uid,
+      createdBy: uid,
+      timeZone: input.timeZone,
+      settings: DEFAULT_SETTINGS,
+      memberCount: 1,
+      playerCount: 0,
+      lastMessageAt: null,
+      lastMessagePreview: null,
+      storageBytes: 0,
+      storageQuotaBytes: quotaGb * 1024 ** 3,
+      archivedAt: null,
+      suspendedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      schemaVersion: 1,
+    })
+    .set(db().collection(Collections.groupMembers).doc(groupMemberId(ref.id, uid)), {
+      groupId: ref.id,
+      uid,
+      role: 'owner',
+      title: null,
+      displayName: owner.displayName,
+      photoPath: owner.photoPath,
+      playerSummary: null,
+      notificationLevel: 'all',
+      mutedUntil: null,
+      lastReadAt: now,
+      lastPostedAt: null,
+      joinedAt: now,
+      addedBy: uid,
+    })
+    .commit();
+  return ref.id;
+}

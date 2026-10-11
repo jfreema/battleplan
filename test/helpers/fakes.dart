@@ -197,6 +197,23 @@ class FakeGroupRepository implements GroupRepository {
 
   @override
   Stream<Group?> watchGroup(GroupId id) => Stream.value(groups[id.value]);
+
+  final List<String> created = [];
+
+  @override
+  Future<GroupId> createGroup({
+    required String name,
+    required Sport sport,
+    required TeamType teamType,
+    required String timeZone,
+    String? color,
+    String? description,
+  }) async {
+    created.add(name);
+    final id = 'new${created.length}';
+    groups[id] = testGroup(id, name);
+    return GroupId(id);
+  }
 }
 
 class FakeMemberRepository implements MemberRepository {

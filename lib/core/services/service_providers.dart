@@ -1,5 +1,6 @@
 import 'package:battleplan/core/services/link_opener.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'service_providers.g.dart';
@@ -15,3 +16,7 @@ PhotoPicker photoPicker(Ref ref) =>
 /// Opens web and mailto links.
 @Riverpod(keepAlive: true)
 LinkOpener linkOpener(Ref ref) => const NoopLinkOpener();
+
+/// The device's time zone and the list to pick from.
+@Riverpod(keepAlive: true)
+TimeZones timeZones(Ref ref) => const FixedTimeZones();

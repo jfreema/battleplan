@@ -107,6 +107,15 @@ final class CredentialInUse extends AppFailure {
   String get code => 'credentialInUse';
 }
 
+/// The action needs a verified email first (AUTH-3): creating teams,
+/// sending email invites, adding people by email.
+final class EmailNotVerified extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'emailNotVerified';
+}
+
 final class UnknownFailure extends AppFailure {
   const new([super.message]);
 

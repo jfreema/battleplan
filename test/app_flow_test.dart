@@ -156,6 +156,43 @@ void main() {
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
   });
 
+  testWidgets('creating a team from the welcome screen', (tester) async {
+    final groupRepo = FakeGroupRepository({});
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groupRepo: groupRepo,
+    );
+    await tester.tap(find.text('Create a team'));
+    await tester.pumpAndSettle();
+    expect(find.text('Team type'), findsOneWidget);
+    await tester.tap(find.text('Youth team'));
+    await tester.enterText(find.byType(TextFormField).first, 'Thunder U14');
+    await tester.pumpAndSettle();
+    final create = find.widgetWithText(FilledButton, 'Create a team');
+    await tester.ensureVisible(create);
+    await tester.tap(create);
+    await tester.pumpAndSettle();
+    expect(groupRepo.created, ['Thunder U14']);
+  });
+
+  testWidgets('a team needs a name', (tester) async {
+    final groupRepo = FakeGroupRepository({});
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groupRepo: groupRepo,
+    );
+    await tester.tap(find.text('Create a team'));
+    await tester.pumpAndSettle();
+    final create = find.widgetWithText(FilledButton, 'Create a team');
+    await tester.ensureVisible(create);
+    await tester.tap(create);
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a team name.'), findsOneWidget);
+    expect(groupRepo.created, isEmpty);
+  });
+
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with email'));

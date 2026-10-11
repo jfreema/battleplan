@@ -1,4 +1,5 @@
 import 'package:battleplan/app/app_services.dart';
+import 'package:battleplan/app/services/flutter_time_zones.dart';
 import 'package:battleplan/app/services/image_picker_photo_picker.dart';
 import 'package:battleplan/app/services/url_launcher_link_opener.dart';
 import 'package:battleplan/core/env.dart';
@@ -44,6 +45,7 @@ List<Override> buildOverrides({
   remoteConfigProvider.overrideWithValue(remoteConfig),
   photoPickerProvider.overrideWithValue(const ImagePickerPhotoPicker()),
   linkOpenerProvider.overrideWithValue(const UrlLauncherLinkOpener()),
+  timeZonesProvider.overrideWithValue(const FlutterTimeZones()),
   authRepositoryProvider.overrideWithValue(
     FirebaseAuthRepository(
       auth,
@@ -57,7 +59,7 @@ List<Override> buildOverrides({
     FirestoreUserRepository(firestore, functions, storage),
   ),
   groupRepositoryProvider.overrideWithValue(
-    FirestoreGroupRepository(firestore),
+    FirestoreGroupRepository(firestore, functions),
   ),
   memberRepositoryProvider.overrideWithValue(
     FirestoreMemberRepository(firestore),

@@ -1,17 +1,56 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 /// Owns `groups` (ARCH §5.2 collection ownership).
 class FirestoreGroupRepository implements GroupRepository {
-  new(this._db);
+  new(this._db, this._functions);
 
   final FirebaseFirestore _db;
+  final FirebaseFunctions _functions;
+
+  @override
+  Future<GroupId> createGroup({
+    required String name,
+    required Sport sport,
+    required TeamType teamType,
+    required String timeZone,
+    String? color,
+    String? description,
+  }) async {
+    try {
+      final result = await _functions
+          .httpsCallable('createGroup')
+          .call<Map<String, dynamic>>({
+            'name': name,
+            'sport': sport.value,
+            'teamType': teamType.value,
+            'timeZone': timeZone,
+            'color': ?color,
+            if (description != null && description.isNotEmpty)
+              'description': description,
+          });
+      return GroupId(result.data['groupId'] as String);
+    } on FirebaseFunctionsException catch (e) {
+      throw switch ((e.code, e.message)) {
+        ('failed-precondition', 'email-not-verified') => EmailNotVerified(
+          e.message,
+        ),
+        ('resource-exhausted', _) => RateLimited(e.message),
+        ('permission-denied', _) => PermissionDenied(e.message),
+        ('invalid-argument', _) => InvalidInput(e.message),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
+        _ => UnknownFailure('${e.code}: ${e.message}'),
+      };
+    }
+  }
 
   @override
   Stream<Group?> watchGroup(GroupId id) => _db

@@ -20,6 +20,7 @@ import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
@@ -208,6 +209,7 @@ GoRouter router(Ref ref) {
         ],
       ),
       GoRoute(path: '/admin', builder: (_, _) => const AdminScreen()),
+      GoRoute(path: '/g/new', builder: (_, _) => const CreateTeamScreen()),
       GoRoute(
         path: '/g/:groupId',
         redirect: (_, state) => state.uri.pathSegments.length == 2

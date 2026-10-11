@@ -11,10 +11,18 @@ import 'package:material_ui/material_ui.dart';
 
 /// The list inside the team switcher sheet or dropdown (SPEC §5.2).
 class TeamSwitcherList extends ConsumerWidget {
-  const new({required this.currentGroupId, required this.onSelect, super.key});
+  const new({
+    required this.currentGroupId,
+    required this.onSelect,
+    required this.onCreateTeam,
+    super.key,
+  });
 
   final GroupId? currentGroupId;
   final ValueChanged<GroupId> onSelect;
+
+  /// Opens Create a team (the caller closes the sheet first).
+  final VoidCallback onCreateTeam;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -88,7 +96,7 @@ class TeamSwitcherList extends ConsumerWidget {
         ListTile(
           leading: const Icon(AppIcons.add),
           title: Text(l10n.createTeam),
-          onTap: () => showAppSnackBar(context, l10n.comingSoon),
+          onTap: onCreateTeam,
         ),
         const SizedBox(height: Space.lg),
       ],

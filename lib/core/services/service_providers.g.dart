@@ -105,3 +105,49 @@ final class LinkOpenerProvider
 }
 
 String _$linkOpenerHash() => r'd1c40125c94c381ce2a5ef98e9f84a1350effc35';
+
+/// The device's time zone and the list to pick from.
+
+@ProviderFor(timeZones)
+final timeZonesProvider = TimeZonesProvider._();
+
+/// The device's time zone and the list to pick from.
+
+final class TimeZonesProvider
+    extends $FunctionalProvider<TimeZones, TimeZones, TimeZones>
+    with $Provider<TimeZones> {
+  /// The device's time zone and the list to pick from.
+  TimeZonesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'timeZonesProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$timeZonesHash();
+
+  @$internal
+  @override
+  $ProviderElement<TimeZones> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  TimeZones create(Ref ref) {
+    return timeZones(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(TimeZones value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TimeZones>(value),
+    );
+  }
+}
+
+String _$timeZonesHash() => r'6ae7fc2d09a741ec5333e9f7e27613f9283b691b';

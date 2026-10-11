@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -40,6 +42,10 @@ class TeamShell extends ConsumerWidget {
       builder: (sheetContext) => TeamSwitcherList(
         currentGroupId: groupId,
         onSelect: (id) => Navigator.of(sheetContext).pop(id),
+        onCreateTeam: () {
+          Navigator.of(sheetContext).pop();
+          unawaited(context.push('/g/new'));
+        },
       ),
     );
     if (selected != null && context.mounted) _switchTo(context, selected);
