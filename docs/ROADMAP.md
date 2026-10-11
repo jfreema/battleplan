@@ -102,6 +102,25 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 
 **M3 is done when** the CHAT acceptance criteria pass (SPEC §6.5).
 
+## Plus plan · after M3
+
+The paid team plan (SPEC §6.14, [PLANS.md](PLANS.md)). These tasks are numbered after the original 156 so earlier numbers stay put.
+
+157. Plans in shared constants (`planFeatures`, per-plan storage and upload limits), `Group.plan` in the app, and the `isPlus` rules helper (PLAN-1).
+158. Licenses: `licenses` collection, `plans.applyPlan()`, and the super-admin callables to grant, extend, move, and revoke, with audit entries (PLAN-2). A script grants licenses until the admin panel's Plan section (M8) exists.
+159. Moving a license to another team you admin, once every 30 days (PLAN-3).
+160. The plan in Team settings, the **Plus** badge, and the "What Plus adds" sheet (PLAN-4).
+161. Reminders 30 and 7 days before a license ends, and ending Plus in `dailyCleanup` (PLAN-5).
+162. Edit messages, with "edited" and updated reply quotes (PLAN-6).
+163. 12 more reactions for Plus teams (PLAN-7).
+164. Chat look: bubble color and background (PLAN-8).
+165. 25 GB storage and 100 MB documents on Plus (PLAN-11).
+166. Rules and tests for every Plus feature, including a Free team trying each one directly.
+
+Later, with v1.1: pinned messages (PLAN-9), attendance history and exports (PLAN-10), the branded invite page (PLAN-12), and self-serve checkout on the web (PLAN-13).
+
+**Plus is done when** the PLAN acceptance criteria pass (SPEC §6.14).
+
 ## M4 · Notifications
 
 67. Device registration and the `notify` fan-out Function (one pipeline for push and the notification center).

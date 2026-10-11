@@ -507,7 +507,9 @@ groups/{groupId}
               membersCanInvite, allowMaybe, defaultReminderOffsets: [minutes] }
   memberCount, playerCount                              # cache ← groupMembers, players
   lastMessageAt, lastMessagePreview: { authorName, text, type }   # cache ← messages
-  storageBytes, storageQuotaBytes                       # cache ← Storage triggers; quota
+  storageBytes, storageQuotaBytes                       # cache ← Storage triggers; quota (set by plan)
+  plan: { tier: 'free' | 'plus', endsAt?, licenseId?, holderId? }   # cache ← licenses; Functions only (§6.11)
+  chatTheme?: { bubbleColor, background: 'plain' | 'pattern' | 'photo', backgroundPath? }   # Plus (PLAN-8)
   archivedAt?, suspendedAt?, createdAt, updatedAt, schemaVersion
 
 groupMembers/{groupId}_{uid}
@@ -536,6 +538,11 @@ invites/{code}
   groupId, type: 'link' | 'email', email?, role: 'member'
   createdBy, expiresAt?, maxUses?, useCount, revokedAt?, createdAt
 
+licenses/{licenseId}                                    # Plus licenses (§6.11); Functions only
+  holderId, groupId?, tier: 'plus', startsAt, endsAt
+  source: 'grant' | 'stripe', grantedBy?, stripeSubscriptionId?
+  lastMovedAt?, revokedAt?, remindedAt: { d30?, d7? }, createdAt
+
 messages/{messageId}
   groupId, authorId, authorName, authorPhotoPath, authorPlayerSummary?   # snapshot; rules check it
   type: 'text' | 'image' | 'poll' | 'event' | 'system'
@@ -543,7 +550,7 @@ messages/{messageId}
   attachments: [{ path, thumbPath, contentType, width, height, size }]   # ≤ 10
   replyToId?, replyPreview?: { authorName, text, type, deleted }        # cache ← messages
   pollId?, eventId?, systemEvent?: { kind, actorId, targetId }
-  reactions: { <uid>: 'like' | 'love' | 'dislike' | 'laugh' }          # one per person
+  reactions: { <uid>: 'like' | 'love' | 'dislike' | 'laugh' | <Plus reactions> }   # one per person (PLAN-7)
   editedAt?, deletedAt?, deletedBy?, deletedReason?: 'author' | 'admin'
   createdAt
 
@@ -658,6 +665,8 @@ function isMember(g)     { return signedIn() && exists(memberPath(g))
                                   && get(/databases/$(database)/documents/groups/$(g)).data.suspendedAt == null; }
 function isAdmin(g)      { return isMember(g) && get(memberPath(g)).data.role in ['owner', 'admin']; }
 function isGuardian(p)   { return exists(/databases/$(database)/documents/playerGuardians/$(p + '_' + request.auth.uid)); }
+function isPlus(g)       { let plan = get(/databases/$(database)/documents/groups/$(g)).data.get('plan', {});
+                           return plan.get('tier', 'free') == 'plus' && plan.endsAt > request.time; }   // §6.11
 ```
 
 | Collection | Read | Client write |
@@ -742,7 +751,7 @@ functions/src/
 ├── notify/             # the only code that writes notifications or calls FCM (§6.5)
 ├── links/              # the only code that builds URLs (§6.6)
 └── accounts/  teams/  players/  invites/  chat/  polls/  schedule/
-    documents/  safety/  admin/  ops/
+    documents/  safety/  plans/  admin/  ops/
     ├── handlers.ts     # thin entry points: validate → authorize → call the service
     └── service.ts      # business logic; the only code that writes this domain's collections
 ```
@@ -775,6 +784,7 @@ All callables:
 | polls | `closePoll` |
 | schedule | `saveEventSeries`: create, edit, cancel, or delete a repeating series, or one event in it (`scope: 'this' \| 'following'`). Expands the rule into individual events in the series' time zone, minus `skipDates`. "This and following" splits the series: the old one ends the day before, and a new one starts from the chosen event. Events that keep their date keep their RSVPs; removed events' RSVPs are deleted; past events are never touched. Posts one event card and sends one `notify` per call, not per event, and sets `nextReminderAt` itself. |
 | safety | `reportContent` |
+| plans | `moveLicense` (the holder moves their license to another team they own or admin; once every 30 days). Super admins: `adminGrantLicense` (a person and a team, 12 months by default), `adminExtendLicense`, `adminMoveLicense`, `adminRevokeLicense`. Later, `stripeWebhook` (HTTP) creates and renews licenses from checkout (PLAN-13). Every change rewrites `groups.plan` and the storage quota through `plans.applyPlan()` and writes the audit log. |
 | admin | `adminCreateUser`, `adminSetUserDisabled`, `adminSetSuperAdmin`, `adminRevokeSessions`, `adminSendPasswordReset`, `adminSetGroupSuspended`, `adminSetGroupQuota`, `adminOpenGroup` (records a super admin viewing a team), `adminArchiveGroup`, `adminDeleteGroup`, `adminResolveReport`, `adminUpdateConfig`. Each checks the `superAdmin` claim. |
 | ops | `logClientError` (sampled web error reports, §9) |
 
@@ -785,6 +795,7 @@ These are the only triggers, and they react only to writes clients make directly
 | Trigger | Writes | Exits early when |
 |---|---|---|
 | `messages` created | `groups.lastMessageAt`/`lastMessagePreview`; `replyPreview` on the new message; `notify` for text, image, and poll messages (event cards and system messages notify through their own domain) | — |
+| `messages` updated | `replyPreview` on replies to an edited message (PLAN-6) | `text` unchanged |
 | `pollVotes` written | `polls.voteCounts`, `voterCount` | — |
 | `rsvps` written | `events.rsvpCounts` (which fires the `events` trigger, which exits early) | — |
 | `events` written | Create: event card in chat. Create, time or place change, cancel: `notify`. Any change: `nextReminderAt`. Delete: the event's `rsvps`. | only `rsvpCounts` or `nextReminderAt` changed; the event has a `seriesId` (`saveEventSeries` did the follow-up) |
@@ -800,7 +811,7 @@ Unit tests cover every early-exit condition.
 | Job | Every | Does |
 |---|---|---|
 | `tick` | 5 min | Send due event reminders (`nextReminderAt <= now`); auto-close polls past `closesAt` and notify voters |
-| `dailyCleanup` | 24 h | Expire invites; prune device tokens not updated in 60 days; reconcile `storageBytes`; compare recently active accounts' sign-in methods with `users.signInMethods` (§6.1) |
+| `dailyCleanup` | 24 h | Expire invites; prune device tokens not updated in 60 days; reconcile `storageBytes`; compare recently active accounts' sign-in methods with `users.signInMethods` (§6.1); end Plus on teams whose license ended and send the 30- and 7-day reminders (§6.11) |
 
 **Operations**
 
@@ -960,6 +971,38 @@ Default to **`us-central1`** for Firestore, Functions, and Storage, assuming mos
 - Cloud SQL and Data Connect are available there for later.
 
 If most teams will be outside the US, pick the nearest single region instead.
+
+### 6.11 Plans and entitlements
+
+Teams are on **Free** or **Plus** (SPEC §6.14; the feature list is [PLANS.md](PLANS.md)). The design keeps one question cheap everywhere: *is this team on Plus right now?*
+
+**Licenses are the source of truth; `groups.plan` is the cache.**
+
+- A `licenses` document is a span of Plus time held by a person (`holderId`) and applied to at most one team (`groupId`). Only Functions write it.
+- `plans.applyPlan(groupId)` is the one function that turns licenses into a team's plan. It finds the team's active license and writes `groups.plan` (`tier`, `endsAt`, `licenseId`, `holderId`) and `storageQuotaBytes` (5 GB on Free, 25 GB on Plus, from shared constants). Every grant, extension, move, revoke, renewal, and expiry calls it, so the cache can't drift.
+- Rules and the app read only `groups.plan`, which they already have: the app watches the group, and rules already `get()` the group for `active(g)`, so `isPlus(g)` costs no extra read in most rules.
+- `isPlus(g)` checks `endsAt > request.time` as well as the tier, so a team stops being Plus the moment its license ends even if `dailyCleanup` hasn't run yet.
+
+**One feature list.** `shared/constants.json` gains `planFeatures` (for example `editMessages`, `extraReactions`, `chatTheme`, `pinMessages`, `attendanceExport`, `brandedInvite`) and per-plan limits (`storageQuotaGb`, `maxDocumentMb`). The generator emits them for Dart and TypeScript, so the app's badges, the rules, and Functions use the same names and numbers.
+
+**Enforcement, by feature.**
+
+| Feature | Enforced by |
+|---|---|
+| Edit messages (PLAN-6) | Rules: the author may update `text` and `editedAt` (set to `request.time`) only when `isPlus(g)`, the message isn't deleted, and the text is ≤ 4,000 characters. The `messages` updated trigger rewrites `replyPreview` on replies (exits early unless `text` changed). |
+| More reactions (PLAN-7) | Rules: reaction values outside the free four are allowed only when `isPlus(g)`. |
+| Chat look (PLAN-8) | Rules: admins may write `groups.chatTheme` only when `isPlus(g)`; the background photo lives at `groups/{g}/theme/` in Storage. On Free, the app ignores `chatTheme` but keeps it. |
+| Pins (PLAN-9) | Rules on `groups.pinnedMessageIds` (≤ 3), admins and `isPlus(g)`. |
+| Storage and upload size (PLAN-11) | `applyPlan` sets `storageQuotaBytes`; Storage rules read the plan for the 100 MB document limit. |
+| Attendance export, branded invite (PLAN-10, PLAN-12) | The callables that produce them check the plan. |
+
+**When Plus ends** nothing is deleted. `applyPlan` writes `tier: 'free'` and the Free quota, and the rules above simply stop allowing Plus writes. Data written under Plus (edited text, extra reactions, the theme, pins) stays readable.
+
+**Moving a license.** `moveLicense` runs in a transaction: the caller must hold the license, be an owner or admin of the target team, the target must have no active license, and `lastMovedAt` must be at least 30 days ago (super admins skip this). It sets the license's `groupId`, then calls `applyPlan` for both teams.
+
+**Payments.** At launch there's no checkout: people pay outside the app and a super admin grants the license (SPEC Q19). Self-serve checkout (PLAN-13) will use Stripe Checkout on the web, with a `stripeWebhook` HTTP function that creates or extends the license on `checkout.session.completed` and `invoice.paid`, keyed by the subscription ID so retried webhooks don't double up. The iPhone and Android apps never sell or link to purchase, so App Store and Google Play payment rules don't apply.
+
+**In the app.** `Group.plan` is mapped from the group document. `PlanFeature` (generated) and `group.has(PlanFeature.editMessages)` decide whether a control is live or shows the **Plus** badge with an explanation sheet. Team settings has a **Plan** section (PLAN-4), and the admin panel's team detail has grant, extend, move, and revoke (ADMIN-3).
 
 ---
 
@@ -1296,6 +1339,10 @@ Each phase is incremental and reversible.
 | D32 | Each feature's repository providers are declared in its `application/providers.dart` and overridden with Firebase implementations in `app/providers.dart` | Presentation never imports `data/` or `app/`, and tests swap in fakes with the same overrides | — |
 | D33 | Facebook sign-in is deferred until after M8 (SPEC Q16) | Not needed for our team; skips the Meta app, App Review, and Limited Login work before launch. Google, Apple, and email cover sign-in, and Apple satisfies App Store guideline 4.8 | When teams ask for it |
 | D34 | On youth teams, team admins (coaches, staff) RSVP for themselves as `participantType: 'member'` on `rsvpFor: 'players'` events; counts keep players and adults apart (SPEC Q14) | Coaches need to know which coaches are coming too, and parents answer only for their kids, so their own RSVPs would be noise | If parents ask to RSVP for themselves |
+| D35 | Plus is per team, through licenses held by a person and movable between teams they admin; `groups.plan` caches the active license (SPEC §6.14, PLANS.md) | Matches how coaches pay (one person buys for a team) and lets a license follow a coach to next season's team; one cached field keeps every check cheap | Per-person plans or team bundles |
+| D36 | Plus features are enforced by rules and Functions from `groups.plan`, with `endsAt` checked at request time | A Free team can't use Plus by calling the database directly, and Plus ends on time without waiting for a job | — |
+| D37 | Ending Plus never deletes or hides data written under it | Teams don't lose content over a lapsed payment; resubscribing restores everything | — |
+| D38 | No purchases inside the iPhone and Android apps; super-admin grants first, Stripe Checkout on the web later (SPEC Q19) | Avoids store fees and review rules for digital goods | If in-app purchase would sell enough more to cover the fee |
 
 ---
 
