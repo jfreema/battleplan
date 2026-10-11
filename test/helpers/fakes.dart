@@ -60,6 +60,23 @@ class FakeAuthRepository implements AuthRepository {
     _controller.add(_user);
   }
 
+  final List<String> sentLinks = [];
+
+  @override
+  Future<void> sendSignInLink(String email) async => sentLinks.add(email);
+
+  @override
+  bool isSignInLink(Uri link) => link.queryParameters['mode'] == 'signIn';
+
+  @override
+  Future<void> signInWithLink({
+    required String email,
+    required Uri link,
+  }) async {
+    _user = AuthUser(uid: 'coach', email: email, emailVerified: true);
+    _controller.add(_user);
+  }
+
   @override
   Future<void> signOut() async {
     _user = null;
@@ -92,6 +109,13 @@ class FakeLocalPrefs implements LocalPrefsRepository {
 
   @override
   String? lastTeamRoute;
+
+  @override
+  String? pendingSignInEmail;
+
+  @override
+  Future<void> setPendingSignInEmail(String? email) async =>
+      pendingSignInEmail = email;
 
   @override
   Future<void> setLastTeamRoute(String route) async => lastTeamRoute = route;

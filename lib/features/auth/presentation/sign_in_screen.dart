@@ -40,6 +40,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     final state = ref.watch(signInControllerProvider);
     final loading = state.isLoading;
     final error = state.hasError ? signInErrorOf(state.error!) : null;
+    final linkSentTo = ref.watch(signInLinkSentProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -129,6 +130,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         onPressed: loading ? null : _submit,
                         child: Text(l10n.signIn),
                       ),
+                      TextButton(
+                        onPressed: loading
+                            ? null
+                            : () => ref
+                                  .read(signInControllerProvider.notifier)
+                                  .sendSignInLink(_email.text),
+                        child: Text(l10n.emailMeLink),
+                      ),
+                      if (linkSentTo != null)
+                        Text(
+                          l10n.signInLinkSent(linkSentTo),
+                          textAlign: TextAlign.center,
+                        ),
                       if (widget.showEmulatorHint) ...[
                         const SizedBox(height: Space.md),
                         Text(

@@ -9,7 +9,10 @@ import 'package:flutter/foundation.dart';
 /// Firebase Authentication behind [AuthRepository]. Firebase types and
 /// exceptions stay in this file; callers get [AuthUser] and [AppFailure]s.
 class FirebaseAuthRepository implements AuthRepository {
-  new(this._auth);
+  new(this._auth, {required this.linkHost});
+
+  /// The Hosting domain email links point at (never a Dynamic Links domain).
+  final String linkHost;
 
   final FirebaseAuth _auth;
   AuthUser? _current;
@@ -95,6 +98,61 @@ class FirebaseAuthRepository implements AuthRepository {
     'canceled',
     'user-cancelled',
   };
+
+  @override
+  Future<void> sendSignInLink(String email) async {
+    try {
+      await _auth.sendSignInLinkToEmail(
+        email: email,
+        actionCodeSettings: ActionCodeSettings(
+          url: 'https://$linkHost/activate',
+          handleCodeInApp: true,
+          // Opens the link through App Links on our Hosting domain.
+          linkDomain: linkHost,
+          androidPackageName: _androidPackage,
+          iOSBundleId: _iosBundleId,
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      throw switch (e.code) {
+        'invalid-email' || 'missing-email' => InvalidInput(e.code),
+        'too-many-requests' => RateLimited(e.code),
+        'network-request-failed' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  bool isSignInLink(Uri link) => _auth.isSignInWithEmailLink(_absolute(link));
+
+  @override
+  Future<void> signInWithLink({
+    required String email,
+    required Uri link,
+  }) async {
+    try {
+      await _auth.signInWithEmailLink(email: email, emailLink: _absolute(link));
+    } on FirebaseAuthException catch (e) {
+      throw switch (e.code) {
+        'invalid-action-code' || 'expired-action-code' => NotFound(e.code),
+        'invalid-email' => InvalidInput(e.code),
+        'user-disabled' => PermissionDenied(e.code),
+        'network-request-failed' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  /// Deep links arrive as a path and query; Firebase wants a full URL.
+  String _absolute(Uri link) =>
+      link.hasScheme ? link.toString() : 'https://$linkHost$link';
+
+  /// The app that should open the link: prod for the prod domain, else dev.
+  String get _androidPackage => linkHost == 'getbattleplan.app'
+      ? 'app.getbattleplan'
+      : 'app.getbattleplan.dev';
+  String get _iosBundleId => _androidPackage;
 
   @override
   Future<void> signOut() => _auth.signOut();

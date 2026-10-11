@@ -11,10 +11,11 @@ class SharedPrefsRepository implements LocalPrefsRepository {
 
   static const _themeKey = 'themePreference';
   static const _lastRouteKey = 'lastTeamRoute';
+  static const _pendingEmailKey = 'pendingSignInEmail';
 
   /// Every key this repository uses. The cache in bootstrap only loads
   /// these, so stray keys from other code are never read.
-  static const Set<String> keys = {_themeKey, _lastRouteKey};
+  static const Set<String> keys = {_themeKey, _lastRouteKey, _pendingEmailKey};
 
   @override
   ThemePreference get themePreference =>
@@ -31,4 +32,12 @@ class SharedPrefsRepository implements LocalPrefsRepository {
   @override
   Future<void> setLastTeamRoute(String route) =>
       _prefs.setString(_lastRouteKey, route);
+
+  @override
+  String? get pendingSignInEmail => _prefs.getString(_pendingEmailKey);
+
+  @override
+  Future<void> setPendingSignInEmail(String? email) => email == null
+      ? _prefs.remove(_pendingEmailKey)
+      : _prefs.setString(_pendingEmailKey, email);
 }

@@ -1,5 +1,6 @@
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'sign_in_controller.g.dart';
@@ -27,7 +28,30 @@ class SignInController extends _$SignInController {
     );
   }
 
+  /// Emails a sign-in link and remembers the address on this device, so
+  /// opening the link here finishes without asking for it again.
+  Future<void> sendSignInLink(String email) async {
+    final address = email.trim();
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(authRepositoryProvider).sendSignInLink(address);
+      await ref
+          .read(localPrefsRepositoryProvider)
+          .setPendingSignInEmail(address);
+    });
+    if (!state.hasError) ref.read(signInLinkSentProvider.notifier).set(address);
+  }
+
   Future<void> signOut() => ref.read(authRepositoryProvider).signOut();
+}
+
+/// The address a sign-in link was just sent to, shown as a confirmation.
+@riverpod
+class SignInLinkSent extends _$SignInLinkSent {
+  @override
+  String? build() => null;
+
+  void set(String? email) => state = email;
 }
 
 /// Which message to show for a sign-in failure.

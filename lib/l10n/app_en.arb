@@ -85,5 +85,19 @@
   "retry": "Retry",
   "cancel": "Cancel",
   "inviteCodeLabel": "Invite code",
-  "joinComingSoon": "Joining a team from an invite arrives soon. Keep this code handy."
+  "joinComingSoon": "Joining a team from an invite arrives soon. Keep this code handy.",
+  "emailMeLink": "Email me a sign-in link instead",
+  "signInLinkSent": "We sent a sign-in link to {email}. Open it on this device to finish.",
+  "@signInLinkSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "activateSigningIn": "Signing you in…",
+  "activateNeedEmail": "Enter the email address the link was sent to, to finish signing in.",
+  "activateContinue": "Continue",
+  "activateInvalid": "This sign-in link is invalid or has expired. Ask for a new one.",
+  "backToSignIn": "Back to sign-in"
 }

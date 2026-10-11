@@ -7,6 +7,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/features/admin/presentation/admin_screen.dart';
+import 'package:battleplan/features/auth/presentation/activate_screen.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
@@ -27,7 +28,13 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'router.g.dart';
 
 /// Paths that don't need a signed-in user.
-const _publicPaths = {'/sign-in', '/update-required'};
+const _publicPaths = {
+  '/sign-in',
+  '/update-required',
+  '/activate',
+  // Firebase's email-link path; App Links deliver it to the app.
+  '/__/auth/links',
+};
 
 /// go_router with its guards (ARCH §5.4). The same paths serve web URLs,
 /// Universal/App Links, and notification taps.
@@ -76,6 +83,7 @@ GoRouter router(Ref ref) {
       if (path == '/sign-in') {
         return state.uri.queryParameters['from'] ?? '/';
       }
+      if (path == '/activate' || path == '/__/auth/links') return '/';
       if (path.startsWith('/admin') && !user.isSuperAdmin) return '/';
 
       if (path == '/' || path == '/welcome') {
@@ -123,6 +131,11 @@ GoRouter router(Ref ref) {
         path: '/update-required',
         builder: (_, _) => const UpdateRequiredScreen(),
       ),
+      for (final path in ['/activate', '/__/auth/links'])
+        GoRoute(
+          path: path,
+          builder: (_, state) => ActivateScreen(link: state.uri),
+        ),
       GoRoute(
         path: '/join/:code',
         builder: (_, state) => JoinScreen(code: state.pathParameters['code']!),

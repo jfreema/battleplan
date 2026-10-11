@@ -16,5 +16,17 @@ abstract interface class AuthRepository {
   /// Android. Returns normally if the person cancels (no error is shown).
   Future<void> signInWithGoogle();
 
+  /// Emails a one-tap sign-in link (ARCH §6.6). The link opens the app
+  /// through App Links, or the web app, on `/activate`.
+  Future<void> sendSignInLink(String email);
+
+  /// Whether [link] (a full URL, or the path and query the app was opened
+  /// with) is a sign-in link this project sent.
+  bool isSignInLink(Uri link);
+
+  /// Finishes sign-in from an emailed link. [email] must be the address the
+  /// link was sent to.
+  Future<void> signInWithLink({required String email, required Uri link});
+
   Future<void> signOut();
 }

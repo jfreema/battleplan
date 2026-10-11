@@ -12,4 +12,10 @@ abstract interface class LocalPrefsRepository {
   String? get lastTeamRoute;
 
   Future<void> setLastTeamRoute(String route);
+
+  /// The email a sign-in link was just sent to, so opening the link on this
+  /// device can finish without asking again. Cleared after use.
+  String? get pendingSignInEmail;
+
+  Future<void> setPendingSignInEmail(String? email);
 }

@@ -30,7 +30,14 @@ List<Override> buildOverrides({
   analyticsProvider.overrideWithValue(analytics),
   crashReporterProvider.overrideWithValue(crashReporter),
   remoteConfigProvider.overrideWithValue(remoteConfig),
-  authRepositoryProvider.overrideWithValue(FirebaseAuthRepository(auth)),
+  authRepositoryProvider.overrideWithValue(
+    FirebaseAuthRepository(
+      auth,
+      linkHost: env.isProd
+          ? 'getbattleplan.app'
+          : 'battleplan-dev-ecce4.web.app',
+    ),
+  ),
   groupRepositoryProvider.overrideWithValue(
     FirestoreGroupRepository(firestore),
   ),
