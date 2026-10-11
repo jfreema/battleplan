@@ -16,6 +16,7 @@ Future<FakeLocalPrefs> pumpApp(
   Map<String, dynamic> groups = const {},
   List<dynamic> memberships = const [],
   FakeLocalPrefs? prefs,
+  FakeUserRepository? users,
 }) async {
   final localPrefs = prefs ?? FakeLocalPrefs();
   await tester.pumpWidget(
@@ -26,6 +27,7 @@ Future<FakeLocalPrefs> pumpApp(
         ),
         appVersionProvider.overrideWithValue('1.0.0'),
         authRepositoryProvider.overrideWithValue(auth),
+        userRepositoryProvider.overrideWithValue(users ?? FakeUserRepository()),
         groupRepositoryProvider.overrideWithValue(
           FakeGroupRepository(groups.cast()),
         ),

@@ -92,3 +92,96 @@ final class AuthUserProvider
 }
 
 String _$authUserHash() => r'eb5861fccca8a24b7df59fc0415964608897267f';
+
+/// Overridden in app/providers.dart.
+
+@ProviderFor(userRepository)
+final userRepositoryProvider = UserRepositoryProvider._();
+
+/// Overridden in app/providers.dart.
+
+final class UserRepositoryProvider
+    extends $FunctionalProvider<UserRepository, UserRepository, UserRepository>
+    with $Provider<UserRepository> {
+  /// Overridden in app/providers.dart.
+  UserRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'userRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$userRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<UserRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  UserRepository create(Ref ref) {
+    return userRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(UserRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<UserRepository>(value),
+    );
+  }
+}
+
+String _$userRepositoryHash() => r'2514308090efaa25862553395f53a6e0804f4ac7';
+
+/// The signed-in person's Battleplan profile. Creating it at first sign-in
+/// is idempotent, so it's requested whenever the signed-in user changes.
+
+@ProviderFor(myProfile)
+final myProfileProvider = MyProfileProvider._();
+
+/// The signed-in person's Battleplan profile. Creating it at first sign-in
+/// is idempotent, so it's requested whenever the signed-in user changes.
+
+final class MyProfileProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<UserProfile?>,
+          UserProfile?,
+          Stream<UserProfile?>
+        >
+    with $FutureModifier<UserProfile?>, $StreamProvider<UserProfile?> {
+  /// The signed-in person's Battleplan profile. Creating it at first sign-in
+  /// is idempotent, so it's requested whenever the signed-in user changes.
+  MyProfileProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myProfileProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myProfileHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<UserProfile?> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<UserProfile?> create(Ref ref) {
+    return myProfile(ref);
+  }
+}
+
+String _$myProfileHash() => r'928a546b913ec5c33498da8f335b8224c3debe88';

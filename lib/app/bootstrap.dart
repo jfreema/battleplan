@@ -110,6 +110,7 @@ Future<void> bootstrap({
         version: version,
         auth: auth,
         firestore: firestore,
+        functions: functions,
         // The emulators have no push service.
         messaging: env.useEmulators ? null : FirebaseMessaging.instance,
         prefs: prefs,

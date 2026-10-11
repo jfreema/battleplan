@@ -5,6 +5,8 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/auth/domain/user_profile.dart';
+import 'package:battleplan/features/auth/domain/user_repository.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
@@ -176,3 +178,39 @@ Membership testMembership(
   role: role,
   displayName: uid,
 );
+
+/// Profiles start set up unless [needsSetup] is true, like a returning user.
+class FakeUserRepository implements UserRepository {
+  new({this.needsSetup = false});
+
+  bool needsSetup;
+  final _changes = StreamController<void>.broadcast();
+  String? savedName;
+
+  UserProfile _profile(String uid) => UserProfile(
+    uid: uid,
+    displayName: savedName ?? 'Jordan Coach',
+    status: UserStatus.active,
+    adultConfirmedAt: needsSetup ? null : DateTime(2026),
+    acceptedTermsAt: needsSetup ? null : DateTime(2026),
+  );
+
+  @override
+  Stream<UserProfile?> watchProfile(String uid) async* {
+    yield _profile(uid);
+    await for (final _ in _changes.stream) {
+      yield _profile(uid);
+    }
+  }
+
+  @override
+  Future<void> ensureProfile({
+    String? displayName,
+    bool finishSetup = false,
+  }) async {
+    if (!finishSetup) return;
+    savedName = displayName;
+    needsSetup = false;
+    _changes.add(null);
+  }
+}

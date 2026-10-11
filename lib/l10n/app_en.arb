@@ -123,5 +123,11 @@
   },
   "verifyEmailResend": "Resend",
   "verifyEmailResent": "Sent. Check your inbox.",
-  "verifyEmailDone": "I've verified"
+  "verifyEmailDone": "I've verified",
+  "setupTitle": "Welcome! Let's set up your profile",
+  "setupNameHelp": "Your teams see this name.",
+  "setupAdult": "I'm 18 or older",
+  "setupAdultHelp": "Battleplan accounts are for adults. Kids on youth teams don't need one; their parents answer for them.",
+  "setupTerms": "I agree to the Terms of Use, including zero tolerance for objectionable content and abusive behavior, and the Privacy Policy",
+  "setupFailed": "Couldn't save your profile. Check your connection and try again."
 }

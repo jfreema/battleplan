@@ -11,6 +11,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/presentation/activate_screen.dart';
 import 'package:battleplan/features/auth/presentation/email_sign_in_screen.dart';
 import 'package:battleplan/features/auth/presentation/reset_password_screen.dart';
+import 'package:battleplan/features/auth/presentation/setup_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
@@ -50,6 +51,7 @@ GoRouter router(Ref ref) {
   ref
     ..listen(authUserProvider, (_, _) => refresh.value++)
     ..listen(myMembershipsProvider, (_, _) => refresh.value++)
+    ..listen(myProfileProvider, (_, _) => refresh.value++)
     ..listen(myTeamsProvider, (_, _) => refresh.value++)
     ..onDispose(refresh.dispose);
 
@@ -89,6 +91,13 @@ GoRouter router(Ref ref) {
         return state.uri.queryParameters['from'] ?? '/';
       }
       if (path == '/activate' || path == '/__/auth/links') return '/';
+      // First-run setup (AUTH-5) comes before anything else. Until the
+      // profile exists (the callable creates it), nothing is blocked.
+      final profile = ref.read(myProfileProvider).value;
+      final needsSetup = profile?.needsSetup ?? false;
+      if (needsSetup && path != '/setup') return '/setup';
+      if (!needsSetup && path == '/setup') return '/';
+
       if (path.startsWith('/admin') && !user.isSuperAdmin) return '/';
 
       if (path == '/' || path == '/welcome') {
@@ -139,6 +148,7 @@ GoRouter router(Ref ref) {
           ),
         ],
       ),
+      GoRoute(path: '/setup', builder: (_, _) => const SetupScreen()),
       GoRoute(
         path: '/reset-password',
         builder: (_, state) => ResetPasswordScreen(

@@ -134,6 +134,28 @@ void main() {
     expect(find.textContaining('already an account'), findsOneWidget);
   });
 
+  testWidgets('first-run setup comes first and needs both confirmations', (
+    tester,
+  ) async {
+    final users = FakeUserRepository(needsSetup: true);
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      users: users,
+    );
+    expect(find.textContaining('set up your profile'), findsOneWidget);
+    final next = find.widgetWithText(FilledButton, 'Continue');
+    expect(tester.widget<FilledButton>(next).onPressed, isNull);
+    await tester.tap(find.text("I'm 18 or older"));
+    await tester.tap(find.textContaining('I agree to the Terms'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(next);
+    await tester.tap(next);
+    await tester.pumpAndSettle();
+    expect(users.savedName, 'Jordan Coach');
+    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+  });
+
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with email'));

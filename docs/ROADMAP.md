@@ -53,7 +53,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 
 29. ✅ Sign-in screen (AUTH-1) with Google, Apple, and email; email and password (AUTH-2). Apple's code goes in now and is verified in task 109. Facebook is hidden until the Facebook section after M8.
 30. ✅ Email verification banner (AUTH-3) and password reset by email (AUTH-4).
-31. First-run setup: name, photo, 18+ confirmation, Terms acceptance (AUTH-5, SAFE-3, SAFE-6); `ensureUserProfile`; the profile kept separate from sign-in providers (AUTH-12).
+31. ✅ First-run setup: name, photo, 18+ confirmation, Terms acceptance (AUTH-5, SAFE-3, SAFE-6); `ensureUserProfile`; the profile kept separate from sign-in providers (AUTH-12).
 32. Sessions: stay signed in, sign out, sign out of all devices (AUTH-9).
 33. Safe account linking and the Sign-in methods screen (AUTH-7, AUTH-8, SET-4).
 34. Disabled accounts (AUTH-11) and account deletion (AUTH-10).
