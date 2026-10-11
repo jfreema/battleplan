@@ -110,7 +110,7 @@ The paid team plan (SPEC §6.14, [PLANS.md](PLANS.md)). These tasks are numbered
 158. ✅ Licenses: `licenses` collection, `plans.applyPlan()`, and the super-admin callables to grant, extend, move, and revoke, with audit entries (PLAN-2). *Instead of a script, super admins grant, extend, and end Plus from Team settings until the admin panel's Plan section (M8) exists.*
 159. ✅ Moving a license to another team you admin, once every 30 days (PLAN-3).
 160. ✅ The plan in Team settings, the **Plus** badge, and the "What Plus adds" sheet (PLAN-4).
-161. Reminders 30 and 7 days before a license ends, and ending Plus in `dailyCleanup` (PLAN-5).
+161. ✅ Reminders 30 and 7 days before a license ends, and ending Plus in `dailyCleanup` (PLAN-5). *Tested on dev by running the job: a license 6 days out got its 7-day email, and a lapsed team went back to Free with the 5 GB quota. In-app notifications for reminders come with M4.*
 162. Edit messages, with "edited" and updated reply quotes (PLAN-6).
 163. 12 more reactions for Plus teams (PLAN-7).
 164. Chat look: bubble color and background (PLAN-8).

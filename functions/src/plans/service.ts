@@ -164,3 +164,70 @@ export async function moveLicense(
   if (from) await applyPlan(from);
   await applyPlan(toGroupId);
 }
+
+/** Ends Plus on teams whose license ended (PLAN-5). Returns how many. */
+export async function endExpiredPlans(now = new Date()): Promise<number> {
+  const snap = await db()
+    .collection(Collections.groups)
+    .where('plan.endsAt', '<=', Timestamp.fromDate(now))
+    .limit(500)
+    .get();
+  let ended = 0;
+  for (const g of snap.docs) {
+    if ((await applyPlan(g.id)) === 'free') ended++;
+  }
+  return ended;
+}
+
+/** Which reminder a license is due for, if any (PLAN-5): 30 or 7 days out. */
+export function dueReminder(
+  endsAtMs: number,
+  reminded: { d30?: unknown; d7?: unknown } | undefined,
+  nowMs: number,
+): 'd30' | 'd7' | null {
+  const days = (endsAtMs - nowMs) / 86_400_000;
+  if (days <= 0) return null;
+  if (days <= Limits.licenseReminderSecondDays && !reminded?.d7) return 'd7';
+  if (days <= Limits.licenseReminderFirstDays && days > Limits.licenseReminderSecondDays && !reminded?.d30) {
+    return 'd30';
+  }
+  return null;
+}
+
+/**
+ * Licenses due a reminder, 30 and 7 days before they end (PLAN-5): each
+ * with who to tell (the holder and the team's admins). Marks them reminded.
+ */
+export async function takeDueReminders(
+  now = new Date(),
+): Promise<{ groupId: string; endsAt: Date; days: number; uids: string[] }[]> {
+  const horizon = Timestamp.fromMillis(now.getTime() + Limits.licenseReminderFirstDays * 86_400_000);
+  const snap = await db()
+    .collection(Collections.licenses)
+    .where('endsAt', '<=', horizon)
+    .where('endsAt', '>', Timestamp.fromDate(now))
+    .limit(500)
+    .get();
+  const due: { groupId: string; endsAt: Date; days: number; uids: string[] }[] = [];
+  for (const d of snap.docs) {
+    const l = d.data() as LicenseDoc & { remindedAt?: { d30?: unknown; d7?: unknown } };
+    if (l.revokedAt || !l.groupId) continue;
+    const which = dueReminder(l.endsAt.toMillis(), l.remindedAt, now.getTime());
+    if (!which) continue;
+    const admins = await db()
+      .collection(Collections.groupMembers)
+      .where('groupId', '==', l.groupId)
+      .where('role', 'in', ['owner', 'admin'])
+      .limit(50)
+      .get();
+    const uids = [...new Set([l.holderId, ...admins.docs.map((a) => a.get('uid') as string)])];
+    await d.ref.update({ [`remindedAt.${which}`]: FieldValue.serverTimestamp() });
+    due.push({
+      groupId: l.groupId,
+      endsAt: l.endsAt.toDate(),
+      days: which === 'd7' ? Limits.licenseReminderSecondDays : Limits.licenseReminderFirstDays,
+      uids,
+    });
+  }
+  return due;
+}

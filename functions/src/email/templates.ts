@@ -54,3 +54,19 @@ export function securityNoticeEmail(to: string, change: string): Email {
 export function methodName(id: string): string {
   return ({ 'google.com': 'Google', 'apple.com': 'Apple', 'facebook.com': 'Facebook', password: 'Password' } as Record<string, string>)[id] ?? id;
 }
+
+/** PLAN-5: a team's Plus license ends in [days] days. */
+export function planReminderEmail(to: string, teamName: string, endsOn: string, days: number, url: string): Email {
+  return {
+    to,
+    subject: `Plus for ${teamName} ends in ${days} days`,
+    ...layout(
+      [
+        `${teamName}'s Plus plan ends on ${endsOn}.`,
+        'After that the team goes back to Free. Nothing is deleted: edited messages, reactions, and your chat look stay, but Plus features stop until Plus is renewed.',
+        'To renew, reply to this email or contact support@getbattleplan.app.',
+      ],
+      { label: `Open ${teamName}`, url },
+    ),
+  };
+}
