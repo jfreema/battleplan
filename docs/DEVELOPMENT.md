@@ -75,6 +75,15 @@ npm --prefix functions run build
 firebase deploy --only functions,storage --project battleplan-dev-ecce4
 ```
 
+## Super admins
+
+Grant the `superAdmin` claim to someone who has signed in at least once:
+
+```sh
+npm --prefix tools/seed run super-admin -- battleplan-dev-ecce4 someone@example.com
+npm --prefix tools/seed run super-admin -- battleplan-dev-ecce4 someone@example.com --revoke
+```
+
 ## Everyday commands
 
 | What | Command |

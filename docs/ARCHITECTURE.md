@@ -392,7 +392,7 @@ Leave the default **"One account per email address"** setting on. We don't need 
 #### God admin (super admin)
 
 - Super admins carry a custom claim, `superAdmin: true`. They're platform operators: they can see and manage every team.
-- The first one is set with `tools/set-super-admin.ts`, which runs locally with a service-account key. After that, super admins grant and revoke the claim from the admin panel through a callable.
+- The first one is set with `tools/seed/set-super-admin.ts` (`npm --prefix tools/seed run super-admin -- <project> <email>`), which runs locally with your own `gcloud` sign-in, so no service-account key exists. After that, super admins grant and revoke the claim from the admin panel through a callable.
 - Rules and Functions both check the claim. The client force-refreshes its ID token after a change.
 - **Team roles are *not* claims.** They're per-team, change often, and claims are capped at 1,000 bytes. Team roles live in `groupMembers` and are checked by rules.
 
@@ -1348,6 +1348,7 @@ What exists in the code today, and where. This section is updated with every cha
 | Indexes | `firestore.indexes.json` | Composite indexes, index exemptions, TTL policies |
 | Functions | `functions/src/` | `ensureUserProfile` (accounts: creates `users/{uid}` once from the Auth user, copies the provider photo into Storage, records setup), `signOutEverywhere` (accounts: revokes refresh tokens), `recordSignInMethodChange` (accounts: re-reads sign-in methods from Auth), `deleteAccount` (accounts: needs a sign-in within 5 minutes; each domain clears its own data: teams hand ownership to the longest-serving admin or member or archive the team, players drop guardian links, schedule drops upcoming RSVPs, chat renames past messages to "Deleted user", notify drops devices and notifications, safety drops blocks; then the profile, avatar files, and Auth user go), `logClientError` (ops). Trigger `onUserUpdated` copies a changed name or photo onto the person's `groupMembers`. Shared helpers: Admin SDK init, auth guard, zod validation, composite IDs. Deployed to dev (on Blaze) from a developer's machine |
 | Rules tests | `functions/test/rules/firestore.test.ts` | 28 tests: isolation, rate limit, RSVPs, cache fields |
+| Super-admin bootstrap | `tools/seed/set-super-admin.ts` | Grants or revokes the `superAdmin` claim with your gcloud sign-in |
 | Seed data | `tools/seed/seed.ts` | Sample people, adult and youth teams, players, messages, events, RSVPs for the emulators |
 
 ### Tooling
