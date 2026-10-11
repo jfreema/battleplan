@@ -1,6 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -603,6 +604,85 @@ void main() {
     expect(find.textContaining("don't match"), findsOneWidget);
   });
 
+  group('chat (CHAT-1, CHAT-2, CHAT-10)', () {
+    Message msg(
+      int i, {
+      String author = 'sam',
+      String name = 'Sam Rivera',
+      DateTime? at,
+      MessageType type = MessageType.text,
+    }) => Message(
+      id: 'm$i',
+      groupId: const GroupId('a'),
+      authorId: author,
+      authorName: name,
+      type: type,
+      text: 'Message $i',
+      createdAt: at ?? DateTime.now().subtract(Duration(minutes: 200 - i)),
+    );
+
+    Future<void> openChat(WidgetTester tester, FakeMessageRepository repo) =>
+        pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: {'a': testGroup('a', 'Thunder')},
+          memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+          messageRepo: repo,
+        );
+
+    testWidgets('shows messages grouped by sender with a date separator', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final repo = FakeMessageRepository([
+        msg(3, at: now.subtract(const Duration(minutes: 1))),
+        msg(2, at: now.subtract(const Duration(minutes: 2))),
+        msg(
+          1,
+          type: MessageType.system,
+          author: 'system',
+          name: '',
+          at: now.subtract(const Duration(minutes: 3)),
+        ).copyWith(text: 'Sam joined'),
+      ]);
+      await openChat(tester, repo);
+      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('Sam joined'), findsOneWidget);
+      expect(find.text('Message 2'), findsOneWidget);
+      expect(find.text('Message 3'), findsOneWidget);
+      // One header for Sam's two messages in a row.
+      expect(find.textContaining('Sam Rivera'), findsOneWidget);
+    });
+
+    testWidgets('sending puts the message in the chat', (tester) async {
+      final repo = FakeMessageRepository();
+      await openChat(tester, repo);
+      await tester.enterText(find.byType(TextField), '  Practice moved to 6  ');
+      await tester.pump();
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
+      expect(repo.sent, ['Practice moved to 6']);
+      expect(find.text('Practice moved to 6'), findsOneWidget);
+    });
+
+    testWidgets('scrolling up loads older messages 50 at a time', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([
+        for (var i = 120; i > 0; i--) msg(i),
+      ]);
+      await openChat(tester, repo);
+      expect(find.text('Message 120'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Message 2'),
+        2000,
+        scrollable: find.byType(Scrollable).first,
+        maxScrolls: 200,
+      );
+      expect(find.text('Message 2'), findsOneWidget);
+    });
+  });
+
   testWidgets('a member opens their most recent team on the Chat tab', (
     tester,
   ) async {
@@ -622,10 +702,7 @@ void main() {
     expect(find.text('Chat'), findsOneWidget);
     expect(find.text('Schedule'), findsOneWidget);
     expect(find.text('Documents'), findsOneWidget);
-    expect(
-      find.text('Messages for this team will appear here.'),
-      findsOneWidget,
-    );
+    expect(find.text('No messages yet. Say hi to the team!'), findsOneWidget);
   });
 
   testWidgets('switching teams keeps the current tab', (tester) async {

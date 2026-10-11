@@ -8,6 +8,8 @@ import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/domain/user_profile.dart';
 import 'package:battleplan/features/auth/domain/user_repository.dart';
+import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
@@ -616,4 +618,64 @@ class FakePlayerRepository implements PlayerRepository {
     PlayerId playerId,
     UserId uid,
   ) async => calls.add('removeGuardian ${playerId.value} ${uid.value}');
+}
+
+/// Chat on an in-memory list. [sent] records what was sent; each send also
+/// appears in the chat, as Firestore's local write would.
+class FakeMessageRepository implements MessageRepository {
+  new([List<Message>? messages]) : messages = messages ?? [];
+
+  /// Newest first.
+  final List<Message> messages;
+  final List<String> sent = [];
+  final _changes = StreamController<void>.broadcast();
+
+  @override
+  Stream<MessagePage> watchNewest(GroupId groupId, {int limit = 50}) async* {
+    MessagePage page() {
+      final all = messages.where((m) => m.groupId == groupId).toList();
+      return MessagePage(
+        messages: all.take(limit).toList(),
+        next: all.length > limit ? PageCursor(limit) : null,
+      );
+    }
+
+    yield page();
+    await for (final _ in _changes.stream) {
+      yield page();
+    }
+  }
+
+  @override
+  Future<MessagePage> loadOlder(
+    GroupId groupId,
+    PageCursor before, {
+    int limit = 50,
+  }) async {
+    final all = messages.where((m) => m.groupId == groupId).toList();
+    final start = before.handle as int;
+    final end = (start + limit).clamp(0, all.length);
+    return MessagePage(
+      messages: all.sublist(start, end),
+      next: end < all.length ? PageCursor(end) : null,
+    );
+  }
+
+  @override
+  Future<void> sendText(GroupId groupId, UserId uid, String text) async {
+    sent.add(text);
+    messages.insert(
+      0,
+      Message(
+        id: 'sent${sent.length}',
+        groupId: groupId,
+        authorId: uid.value,
+        authorName: uid.value,
+        type: MessageType.text,
+        text: text,
+        createdAt: DateTime.now(),
+      ),
+    );
+    _changes.add(null);
+  }
 }

@@ -89,9 +89,9 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 
 ## M3 · Chat
 
-57. 👤 **Jared:** Upgrade the dev project to the Blaze plan and set budget alerts at $5, $25, $50, and $100 the same day. Needed once Functions and photo storage run in the cloud for testing on real phones.
-58. Message list with paging and date separators (CHAT-1).
-59. Composer, links, and system messages (CHAT-2, CHAT-5, CHAT-10).
+57. ✅ 👤 **Jared:** Upgrade the dev project to the Blaze plan and set budget alerts at $5, $25, $50, and $100 the same day. Needed once Functions and photo storage run in the cloud for testing on real phones. *Done in M1; the budget alert is at $5.*
+58. ✅ Message list with paging and date separators (CHAT-1). *Tested on dev in Chrome with 120 seeded messages: the newest 50 load, scrolling up pages back to the first. Opening at the first unread message comes with unread counts (task 65).*
+59. ✅ Composer, links, and system messages (CHAT-2, CHAT-5, CHAT-10). *A message reached another signed-in browser in under a second, and three quick sends in a row all landed. The + menu arrives with photos (task 60) and polls (M5).*
 60. Photos and the full-screen viewer (CHAT-3).
 61. Delivery states and the offline send queue (CHAT-4).
 62. Reactions 👍 ❤️ 👎 😂 (CHAT-6) and the message menu (CHAT-7).

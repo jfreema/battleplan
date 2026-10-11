@@ -27,18 +27,12 @@ abstract class Membership with _$Membership {
   const new _();
 
   /// "Maria R." from "Maria Rodriguez": first name and last initial.
-  String get shortName {
-    final parts = displayName.trim().split(RegExp(r'\s+'));
-    if (parts.length < 2 || parts.last.isEmpty) return displayName.trim();
-    return '${parts.first} ${String.fromCharCode(parts.last.runes.first).toUpperCase()}.';
-  }
+  String get shortName => shortNameOf(displayName);
 
   /// Who's who on youth teams (PLAYER-8): "Maria R. · Emma #7", or just the
-  /// name when they guard no players. Used in chat and anywhere space is
-  /// tight; the roster shows the full name with "Parent of …".
-  String get nameWithPlayers => (playerSummary?.isNotEmpty ?? false)
-      ? '$shortName · $playerSummary'
-      : displayName;
+  /// name when they guard no players. The roster shows the full name with
+  /// "Parent of …" instead.
+  String get nameWithPlayers => nameWithPlayersOf(displayName, playerSummary);
 
   /// Owners and admins manage the team (SPEC §3).
   bool get isAdmin => role == MemberRole.owner || role == MemberRole.admin;
@@ -48,3 +42,17 @@ abstract class Membership with _$Membership {
       notificationLevel == NotificationLevel.none ||
       (mutedUntil != null && mutedUntil!.isAfter(now));
 }
+
+/// "Maria R." from "Maria Rodriguez": first name and last initial.
+String shortNameOf(String displayName) {
+  final parts = displayName.trim().split(RegExp(r'\s+'));
+  if (parts.length < 2 || parts.last.isEmpty) return displayName.trim();
+  return '${parts.first} ${String.fromCharCode(parts.last.runes.first).toUpperCase()}.';
+}
+
+/// "Maria R. · Emma #7" for a guardian (PLAYER-8); otherwise the name. Chat
+/// uses it with the author snapshot on each message.
+String nameWithPlayersOf(String displayName, String? playerSummary) =>
+    (playerSummary?.isNotEmpty ?? false)
+    ? '${shortNameOf(displayName)} · $playerSummary'
+    : displayName;

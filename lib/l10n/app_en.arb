@@ -42,7 +42,6 @@
   "settings": "Settings",
   "adminPanel": "Admin panel",
   "signOut": "Sign out",
-  "chatPlaceholder": "Messages for this team will appear here.",
   "schedulePlaceholder": "Practices, games, and RSVPs will appear here.",
   "documentsPlaceholder": "Share schedules, forms, and playbooks with your team.",
   "notificationsPlaceholder": "Activity from all your teams will appear here.",
@@ -563,5 +562,13 @@
   "removeGuardianTitle": "Remove {name} as a guardian?",
   "@removeGuardianTitle": {"placeholders": {"name": {"type": "String"}}},
   "tooManyGuardians": "A player can have up to 4 guardians.",
-  "storageSection": "Storage"
+  "storageSection": "Storage",
+  "chatEmpty": "No messages yet. Say hi to the team!",
+  "chatArchived": "This team is archived. Its chat is read-only.",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "messageDeleted": "This message was deleted.",
+  "messageSending": "Sending…",
+  "messageHint": "Message",
+  "send": "Send"
 }

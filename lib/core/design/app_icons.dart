@@ -32,6 +32,7 @@ abstract final class AppIcons {
   static const IconData check = Symbols.check_rounded;
   static const IconData edit = Symbols.edit_rounded;
   static const IconData close = Symbols.close_rounded;
+  static const IconData send = Symbols.send_rounded;
 
   /// The icon for a sport (shown in the team switcher).
   static IconData sport(Sport sport) => switch (sport) {

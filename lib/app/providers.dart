@@ -11,6 +11,8 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:battleplan/features/auth/data/firestore_user_repository.dart';
+import 'package:battleplan/features/chat/application/providers.dart';
+import 'package:battleplan/features/chat/data/firestore_message_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/data/firestore_group_repository.dart';
 import 'package:battleplan/features/groups/data/functions_invite_repository.dart';
@@ -53,6 +55,9 @@ List<Override> buildOverrides({
   sharerProvider.overrideWithValue(const SharePlusSharer()),
   playerRepositoryProvider.overrideWithValue(
     FirestorePlayerRepository(firestore, functions),
+  ),
+  messageRepositoryProvider.overrideWithValue(
+    FirestoreMessageRepository(firestore),
   ),
   inviteRepositoryProvider.overrideWithValue(
     FunctionsInviteRepository(functions),
