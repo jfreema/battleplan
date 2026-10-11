@@ -25,7 +25,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 8. ✅ 👤 **Jared:** Create the Firebase projects on the free plan: dev `battleplan-dev-ecce4`, prod `battleplan-prod`.
 9. ✅ 👤 **Jared:** Choose the app ID `app.getbattleplan` (`.dev` for dev builds).
 10. ✅ 👤 **Jared:** Verify the domain's contact email if Cloudflare asks. **Deadline 2026-10-25**, or the domain goes on hold. (no verification email came; the Cloudflare account signs in with Google, so its email is already verified, checked 2026-10-11)
-11. 👤 **Jared:** Make a Battleplan vault in 1Password for every login, key file, and recovery code.
+11. ✅ 👤 **Jared:** Make a Battleplan vault in 1Password for every login, key file, and recovery code. *Done 2026-10-11: the "Battle" vault (it holds the Resend API key).*
 12. 👤 **Jared:** Check your legal name and address on your Apple Account and Google payments profile (the stores read them in tasks 106 and 125).
 13. ✅ 👤 **Jared:** Log in from the terminal: `firebase login`, then `gcloud auth login` and `gcloud auth application-default login`. **This blocks task 23 and spikes 1 to 3 (tasks 26 to 28).**
 
@@ -71,7 +71,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 41. ✅ Roster screen, roles, and team admins (TEAM-3, TEAM-4). *"Not joined yet" and Resend setup email arrive with add-by-email (task 46), the Players section with task 51, and Report/Block with task 66.*
 42. ✅ Team settings and member permissions (TEAM-5). *Managing the invite link joins with the invite screen (task 47).*
 43. ✅ Transfer ownership, leave, archive, and delete (TEAM-6, TEAM-8, TEAM-9).
-44. 👤 **Jared:** Pick the email provider (Q10; default Resend), sign up for its free tier, and add its SPF, DKIM, and DMARC records in Cloudflare.
+44. ✅ 👤 **Jared:** Pick the email provider (Q10; default Resend), sign up for its free tier, and add its SPF, DKIM, and DMARC records in Cloudflare. *Done 2026-10-11: Resend, with `getbattleplan.app` verified (DNS added through Resend's Cloudflare sign-in); the API key is in Secret Manager as `RESEND_API_KEY` and in the Battle vault. A DMARC record isn't added yet.*
 45. Email sending from Functions (ARCH §6.7), with the API key in Secret Manager.
 46. Add members by email, with account creation and setup emails (TEAM-7, AUTH-6).
 47. ✅ Invite screen, invite link, QR code, and code (INV-1 to INV-3); creating a team lands on it. *The in-app QR scanner is part of joining (task 49).*

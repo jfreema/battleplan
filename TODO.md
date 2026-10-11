@@ -58,7 +58,7 @@ You won't write any Java. Android's build tools and Firebase's local database em
   - Google's sign-in screen shows the project's support email. When you turn on Google sign-in, pick `battleplan-help@googlegroups.com` there, not your Gmail.
   - Optional: after creating the dev project, add a second Google account you control as an owner (*Project settings → Users and permissions*). Losing access to one account then never locks you out.
 - [x] **Create a Google Group for that support email**: `battleplan-help@googlegroups.com`, created and tested 2026-10-09.
-- [ ] **Make a Battleplan vault in the family 1Password** for every login and 2FA recovery code. Don't share it with the family.
+- [x] **Make a Battleplan vault in the family 1Password** for every login and 2FA recovery code. Don't share it with the family. *Done 2026-10-11: the "Battle" vault.*
 - [ ] **Check your legal name and address** where the stores will read them later, and fix any nickname or old address now:
   - your Apple Account at account.apple.com → *Personal Information*. Apple's enrollment uses this name as the App Store seller (Phase 2).
   - your Google payments profile at pay.google.com → *Settings*. Google Play's personal account takes your name and address from it and checks them against your ID (Phase 3).
@@ -153,7 +153,7 @@ I'll tell you when each of these comes up.
 | Service-account JSON key files | — | Avoid creating them | Local admin scripts use your `gcloud auth application-default login` instead |
 | Facebook App Secret | 1 | Yes | Entered in Firebase's Facebook sign-in settings; also in the password manager |
 | Web push key, reCAPTCHA site key | 1–2 | No (public) | App config in the repo |
-| Email service API key | 2 | Yes | Google Secret Manager, via `firebase functions:secrets:set`, plus the password manager |
+| Email service API key | 2 | Yes | Google Secret Manager as `RESEND_API_KEY` (dev, set 2026-10-11), plus the Battle vault in 1Password |
 | APNs key (`.p8`) | 2 | Yes. **Downloads only once.** | Uploaded to Firebase (*Project settings → Cloud Messaging*); the original file in the password manager |
 | Sign in with Apple key (`.p8`) | 2 | Yes. Downloads only once. | Entered in Firebase's Apple sign-in settings; the original in the password manager |
 | Android upload keystore and passwords | 3 | Yes | Password manager, plus an offline backup |
