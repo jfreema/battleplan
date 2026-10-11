@@ -51,6 +51,7 @@ class SignInLinkSent extends _$SignInLinkSent {
   @override
   String? build() => null;
 
+  // ignore: use_setters_to_change_properties, Riverpod notifiers expose methods.
   void set(String? email) => state = email;
 }
 

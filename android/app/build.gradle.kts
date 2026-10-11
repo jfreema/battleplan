@@ -40,11 +40,13 @@ android {
             applicationIdSuffix = ".dev"
             resValue("string", "app_name", "Battleplan Dev")
             manifestPlaceholders["appLinkHost"] = "battleplan-dev-ecce4.web.app"
+            manifestPlaceholders["authLinkHost"] = "battleplan-dev-ecce4.firebaseapp.com"
         }
         create("prod") {
             dimension = "env"
             resValue("string", "app_name", "Battleplan")
             manifestPlaceholders["appLinkHost"] = "getbattleplan.app"
+            manifestPlaceholders["authLinkHost"] = "getbattleplan.app"
         }
     }
 

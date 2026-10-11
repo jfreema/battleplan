@@ -866,7 +866,7 @@ Plain chat messages don't create center items; unread counts cover them. Replies
 - **Email links from Firebase Auth** (setup and sign-in links) use `ActionCodeSettings` with:
   - `url` on our domain and `handleCodeInApp: true`;
   - the iOS bundle ID and Android package name;
-  - **`linkDomain`** set to our Hosting domain, **never** `dynamicLinkDomain`.
+  - **`linkDomain`** set to our Hosting domain, **never** `dynamicLinkDomain`. It must be a custom domain (`getbattleplan.app`); Firebase rejects `web.app` and `firebaseapp.com`, so dev builds leave it unset and links use the project's `firebaseapp.com` domain (M0 spike 2).
 - **One builder.** One `LinkService` in the app (`core/`) and one `links` module in Functions build every URL, so link formats live in one place.
 
 **Invite details**
@@ -1328,7 +1328,7 @@ What exists in the code today, and where. This section is updated with every cha
 
 | Feature | Built so far |
 |---|---|
-| `auth` | `AuthUser`, `AuthRepository` (Firebase impl), sign-in screen with email and Google sign-in (popup on web, system browser sheet on iOS and Android); Apple button disabled until M1; Facebook hidden until after M8 (D33) |
+| `auth` | `AuthUser`, `AuthRepository` (Firebase impl), `ActivateScreen` (finishes email-link sign-in at `/activate` and `/__/auth/links`), sign-in screen with email, emailed sign-in links, and Google sign-in (popup on web, system browser sheet on iOS and Android); Apple button disabled until M1; Facebook hidden until after M8 (D33) |
 | `groups` | `JoinScreen` at `/join/<CODE>` (shows the code until M2; opened by App Links); `Group`, `Membership`, `MyTeam`; `GroupRepository` and `MemberRepository` (Firestore impls); the `myTeams` provider (switcher list, most recent first); `TeamShell` (header, bottom bar or rail, team menu, account menu, Ctrl/⌘+K), `TeamSwitcherList`, `WelcomeScreen` |
 | `settings` | `LocalPrefsRepository` (SharedPreferences impl) for theme and last team; settings screen with the theme switch and sign-out |
 | `chat`, `schedule`, `documents`, `notifications`, `admin` | Placeholder screens |

@@ -107,8 +107,9 @@ class FirebaseAuthRepository implements AuthRepository {
         actionCodeSettings: ActionCodeSettings(
           url: 'https://$linkHost/activate',
           handleCodeInApp: true,
-          // Opens the link through App Links on our Hosting domain.
-          linkDomain: linkHost,
+          // Firebase accepts only a custom Hosting domain here (M0 spike 2).
+          // Without one, links use the project's firebaseapp.com domain.
+          linkDomain: _customDomain ? linkHost : null,
           androidPackageName: _androidPackage,
           iOSBundleId: _iosBundleId,
         ),
@@ -147,6 +148,9 @@ class FirebaseAuthRepository implements AuthRepository {
   /// Deep links arrive as a path and query; Firebase wants a full URL.
   String _absolute(Uri link) =>
       link.hasScheme ? link.toString() : 'https://$linkHost$link';
+
+  bool get _customDomain =>
+      !linkHost.endsWith('.web.app') && !linkHost.endsWith('.firebaseapp.com');
 
   /// The app that should open the link: prod for the prod domain, else dev.
   String get _androidPackage => linkHost == 'getbattleplan.app'
