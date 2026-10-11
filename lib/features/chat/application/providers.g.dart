@@ -60,6 +60,94 @@ final class MessageRepositoryProvider
 
 String _$messageRepositoryHash() => r'e8ec38e76707df4993060a741746e031e4e6be42';
 
+/// A team's unread message count for the switcher and the Chat tab, up to
+/// 100 (CHAT-9). It only queries when the team's last message is newer
+/// than the person's read marker, so a read team costs nothing.
+
+@ProviderFor(unreadCount)
+final unreadCountProvider = UnreadCountFamily._();
+
+/// A team's unread message count for the switcher and the Chat tab, up to
+/// 100 (CHAT-9). It only queries when the team's last message is newer
+/// than the person's read marker, so a read team costs nothing.
+
+final class UnreadCountProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  /// A team's unread message count for the switcher and the Chat tab, up to
+  /// 100 (CHAT-9). It only queries when the team's last message is newer
+  /// than the person's read marker, so a read team costs nothing.
+  UnreadCountProvider._({
+    required UnreadCountFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'unreadCountProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$unreadCountHash();
+
+  @override
+  String toString() {
+    return r'unreadCountProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return unreadCount(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is UnreadCountProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$unreadCountHash() => r'474f962f21d1c941b931831089a896fc3c0dc240';
+
+/// A team's unread message count for the switcher and the Chat tab, up to
+/// 100 (CHAT-9). It only queries when the team's last message is newer
+/// than the person's read marker, so a read team costs nothing.
+
+final class UnreadCountFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<int>, GroupId> {
+  UnreadCountFamily._()
+    : super(
+        retry: null,
+        name: r'unreadCountProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A team's unread message count for the switcher and the Chat tab, up to
+  /// 100 (CHAT-9). It only queries when the team's last message is newer
+  /// than the person's read marker, so a read team costs nothing.
+
+  UnreadCountProvider call(GroupId groupId) =>
+      UnreadCountProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'unreadCountProvider';
+}
+
 /// A URL to show a message photo.
 
 @ProviderFor(attachmentUrl)
@@ -200,7 +288,7 @@ final class ChatMessagesProvider
   }
 }
 
-String _$chatMessagesHash() => r'b1d661ec3ef532753f9d8a4257e7fb5774b5c44e';
+String _$chatMessagesHash() => r'a7df4f9ba1b6745f3547ea71d1bb062fc1982f29';
 
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out

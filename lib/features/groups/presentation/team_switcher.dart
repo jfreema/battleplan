@@ -2,6 +2,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
+import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -75,15 +76,24 @@ class TeamSwitcherList extends ConsumerWidget {
           children: [
             if (t.membership.isMutedAt(now))
               const Icon(AppIcons.muted, size: 18, semanticLabel: 'Muted'),
+            // The unread count, 1 to 99+, gray for muted teams (CHAT-9).
             if (t.hasUnread)
               Padding(
                 padding: const EdgeInsets.only(left: Space.sm),
-                child: Badge(
-                  smallSize: 10,
-                  backgroundColor: t.membership.isMutedAt(now)
-                      ? Theme.of(context).colorScheme.outline
-                      : null,
-                ),
+                child: switch (ref.watch(unreadCountProvider(t.group.id))) {
+                  AsyncData(:final value) when value > 0 => Badge(
+                    label: Text(unreadLabel(value)),
+                    backgroundColor: t.membership.isMutedAt(now)
+                        ? Theme.of(context).colorScheme.outline
+                        : null,
+                  ),
+                  _ => Badge(
+                    smallSize: 10,
+                    backgroundColor: t.membership.isMutedAt(now)
+                        ? Theme.of(context).colorScheme.outline
+                        : null,
+                  ),
+                },
               ),
           ],
         ),

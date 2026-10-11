@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { snapshotChanged } from '../../src/accounts/triggers.js';
-import { replyPreviewOf } from '../../src/chat/service.js';
+import { lastMessagePreviewOf, replyPreviewOf } from '../../src/chat/service.js';
 
 describe('users trigger early exit', () => {
   it('runs only when the name or photo changed', () => {
@@ -31,5 +31,12 @@ describe('replyPreviewOf', () => {
   it('reads a missing or deleted original as deleted', () => {
     expect(replyPreviewOf(undefined).deleted).toBe(true);
     expect(replyPreviewOf({ authorName: 'Sam', text: 'hi', deletedAt: new Date() }).deleted).toBe(true);
+  });
+});
+
+describe('lastMessagePreviewOf', () => {
+  it('uses the first line, or Photo for a photo without text', () => {
+    expect(lastMessagePreviewOf({ authorName: 'Sam', text: 'Game moved\nto 6', type: 'text' }).text).toBe('Game moved');
+    expect(lastMessagePreviewOf({ authorName: 'Sam', text: '', type: 'image' }).text).toBe('Photo');
   });
 });

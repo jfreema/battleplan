@@ -196,6 +196,18 @@ class FirestoreMemberRepository implements MemberRepository {
   });
 
   @override
+  Future<void> markRead(GroupId groupId, UserId uid) async {
+    try {
+      await _db
+          .collection(Collections.groupMembers)
+          .doc(CompositeIds.groupMember(groupId, uid))
+          .update({'lastReadAt': FieldValue.serverTimestamp()});
+    } on FirebaseException {
+      // A missed read marker only leaves a count up; the next one fixes it.
+    }
+  }
+
+  @override
   Future<void> removeMember(GroupId groupId, UserId uid) =>
       _call('removeMember', {'groupId': groupId.value, 'uid': uid.value});
 

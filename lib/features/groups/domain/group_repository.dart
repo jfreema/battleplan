@@ -79,6 +79,10 @@ abstract interface class MemberRepository {
 
   /// Sends a fresh setup email to someone not joined yet (AUTH-6).
   Future<void> resendSetupEmail(GroupId groupId, UserId uid);
+
+  /// Marks the team's chat read up to now (CHAT-9). Syncs to every device
+  /// through the membership's `lastReadAt`.
+  Future<void> markRead(GroupId groupId, UserId uid);
 }
 
 /// What happened when adding people by email (TEAM-7 results screen).

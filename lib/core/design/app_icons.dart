@@ -42,6 +42,7 @@ abstract final class AppIcons {
   static const IconData copy = Symbols.content_copy_rounded;
   static const IconData reply = Symbols.reply_rounded;
   static const IconData delete = Symbols.delete_rounded;
+  static const IconData arrowDown = Symbols.arrow_downward_rounded;
 
   /// The icon for a sport (shown in the team switcher).
   static IconData sport(Sport sport) => switch (sport) {

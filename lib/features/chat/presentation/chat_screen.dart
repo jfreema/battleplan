@@ -48,22 +48,45 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   GlobalKey _keyFor(String id) => _rowKeys.putIfAbsent(id, GlobalKey.new);
 
+  /// The read marker when the chat opened: messages after it get the
+  /// "New messages" divider for as long as the screen is open (CHAT-9).
+  DateTime? _openedReadAt;
+  bool _openedMarkerTaken = false;
+
+  /// True once the chat has opened at the first unread message.
+  bool _positioned = false;
+
+  /// Whether the newest messages are on screen (the list is reversed).
+  bool _atBottom = true;
+
   /// Scrolls to [messageId], loading older pages first if needed (CHAT-13).
   Future<void> _jumpTo(String messageId) async {
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final found = await controller.loadUntil(messageId);
     if (!found || !mounted) return;
-    // Rows are built lazily, so step toward older messages until the
-    // original's row exists, then bring it to the middle of the screen.
+    await _scrollToRow(messageId, alignment: 0.5, highlight: true);
+  }
+
+  /// Rows are built lazily, so step toward older messages until the row
+  /// exists, then bring it to [alignment] of the screen.
+  Future<void> _scrollToRow(
+    String messageId, {
+    required double alignment,
+    bool highlight = false,
+  }) async {
     for (var i = 0; i < 200 && mounted; i++) {
       await WidgetsBinding.instance.endOfFrame;
+      if (!_scroll.hasClients) continue;
       final row = _rowKeys[messageId]?.currentContext;
       if (row != null && row.mounted) {
         await Scrollable.ensureVisible(
           row,
-          alignment: 0.5,
-          duration: const Duration(milliseconds: 250),
+          alignment: alignment,
+          duration: highlight
+              ? const Duration(milliseconds: 250)
+              : Duration.zero,
         );
+        if (!highlight || !mounted) return;
         setState(() => _highlighted = messageId);
         _unhighlight?.cancel();
         _unhighlight = Timer(const Duration(milliseconds: 1500), () {
@@ -82,7 +105,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_maybeLoadOlder);
+    _scroll
+      ..addListener(_maybeLoadOlder)
+      ..addListener(_trackBottom);
+  }
+
+  void _trackBottom() {
+    final atBottom = _scroll.position.pixels < 150;
+    if (atBottom != _atBottom) setState(() => _atBottom = atBottom);
+    if (atBottom) _markRead();
+  }
+
+  /// Messages count as read once the newest are on screen, while this tab
+  /// is the one showing and the app is in front (CHAT-9).
+  void _markRead() {
+    if (!mounted || !_atBottom || !TickerMode.valuesOf(context).enabled) return;
+    final life = WidgetsBinding.instance.lifecycleState;
+    if (life != null && life != AppLifecycleState.resumed) return;
+    unawaited(
+      ref
+          .read(chatMessagesProvider(widget.groupId).notifier)
+          .markRead()
+          .catchError((Object _) {}),
+    );
   }
 
   @override
@@ -116,6 +161,43 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final picker = ref.watch(photoPickerProvider);
     final byId = {for (final m in messages) m.id: m};
+    final membership = ref.watch(myMembershipProvider(widget.groupId));
+    if (!_openedMarkerTaken && !chat.loading && membership != null) {
+      _openedMarkerTaken = true;
+      _openedReadAt = membership.lastReadAt;
+    }
+    // The oldest loaded message from someone else after the marker gets
+    // the "New messages" divider.
+    final firstUnreadId = _openedReadAt == null
+        ? null
+        : messages
+              .where(
+                (m) =>
+                    m.authorId != me &&
+                    !m.pending &&
+                    (m.createdAt?.isAfter(_openedReadAt!) ?? false),
+              )
+              .lastOrNull
+              ?.id;
+    // Open at the first unread message (CHAT-9), then keep the marker.
+    if (!_positioned && !chat.loading) {
+      _positioned = true;
+      if (firstUnreadId != null) {
+        unawaited(_scrollToRow(firstUnreadId, alignment: 0.9));
+      }
+    }
+    // "↓ 12 new" while scrolled up with messages after the read marker.
+    final readAt = membership?.lastReadAt;
+    final newBelow = _atBottom
+        ? 0
+        : messages
+              .where(
+                (m) =>
+                    m.authorId != me &&
+                    (readAt == null || (m.createdAt?.isAfter(readAt) ?? false)),
+              )
+              .length;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _markRead());
     final shownIds = byId.keys.toSet();
     // Things still on their way, shown below everything (the list is
     // reversed): uploading photos, then queued or refused texts. A queued
@@ -178,6 +260,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             children: [
               if (newDay && m.createdAt != null)
                 _DateSeparator(day: m.createdAt!),
+              if (m.id == firstUnreadId) const _NewMessagesDivider(),
               MessageTile(
                 key: _keyFor(m.id),
                 message: m,
@@ -202,7 +285,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Column(
       children: [
-        Expanded(child: list),
+        Expanded(
+          child: Stack(
+            children: [
+              list,
+              if (newBelow > 0)
+                Positioned(
+                  right: Space.lg,
+                  bottom: Space.sm,
+                  child: FloatingActionButton.extended(
+                    heroTag: null,
+                    onPressed: () => _scroll.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                    ),
+                    icon: const Icon(AppIcons.arrowDown),
+                    label: Text(l10n.newMessagesBelow(newBelow)),
+                  ),
+                ),
+            ],
+          ),
+        ),
         if (archived)
           Padding(
             padding: const EdgeInsets.all(Space.lg),
@@ -272,6 +376,36 @@ String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
   return d.year == today.year
       ? DateFormat.MMMEd(l10n.localeName).format(d)
       : DateFormat.yMMMEd(l10n.localeName).format(d);
+}
+
+/// The line above the first unread message (CHAT-9).
+class _NewMessagesDivider extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Space.lg,
+        vertical: Space.sm,
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Divider(color: color)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Space.sm),
+            child: Text(
+              AppLocalizations.of(context).newMessages,
+              style: Theme.of(context).textTheme.labelMedium
+                  ?.copyWith(color: color),
+            ),
+          ),
+          Expanded(child: Divider(color: color)),
+        ],
+      ),
+    );
+  }
 }
 
 class _DateSeparator extends StatelessWidget {

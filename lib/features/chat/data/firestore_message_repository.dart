@@ -282,6 +282,22 @@ class FirestoreMessageRepository implements MessageRepository {
   }
 
   @override
+  Future<int> countUnread(
+    GroupId groupId,
+    DateTime since, {
+    int cap = 100,
+  }) async {
+    final q = await _db
+        .collection(Collections.messages)
+        .where('groupId', isEqualTo: groupId.value)
+        .where('createdAt', isGreaterThan: Timestamp.fromDate(since))
+        .limit(cap)
+        .count()
+        .get();
+    return q.count ?? 0;
+  }
+
+  @override
   Future<void> deleteMessage(String messageId) async {
     try {
       await _functions.httpsCallable('deleteMessage').call<Object?>({

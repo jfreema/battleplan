@@ -861,6 +861,46 @@ void main() {
       expect(find.text('Delete'), findsNothing);
     });
 
+    testWidgets('unread: divider, Chat tab count, and marking read (CHAT-9)', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      final members = FakeMemberRepository([
+        testMembership(
+          'a',
+          'coach',
+          role: MemberRole.owner,
+        ).copyWith(lastReadAt: now.subtract(const Duration(minutes: 3))),
+        testMembership('a', 'sam', name: 'Sam Rivera'),
+      ]);
+      final repo = FakeMessageRepository([
+        msg(3, at: now.subtract(const Duration(minutes: 1))),
+        msg(2, at: now.subtract(const Duration(minutes: 2))),
+        msg(1, at: now.subtract(const Duration(minutes: 5))),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup(
+            'a',
+            'Thunder',
+          ).copyWith(lastMessageAt: now.subtract(const Duration(minutes: 1))),
+        },
+        memberRepo: members,
+        messageRepo: repo,
+      );
+      expect(find.text('New messages'), findsOneWidget);
+      // Messages 2 and 3 are unread: the Chat tab shows 2.
+      expect(
+        find.descendant(of: find.byType(Badge), matching: find.text('2')),
+        findsOneWidget,
+      );
+      // The newest messages are on screen, so the chat is marked read.
+      await tester.pump(const Duration(seconds: 3));
+      expect(members.reads, contains('a'));
+    });
+
     testWidgets('scrolling up loads older messages 50 at a time', (
       tester,
     ) async {

@@ -1,5 +1,5 @@
 // Chat domain service: owns messages.
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
@@ -121,4 +121,34 @@ export async function eraseMessage(
     (batch, reply) =>
       batch.update(reply.ref, { replyPreview: { authorName: '', text: '', type: 'text', deleted: true } }),
   );
+}
+
+/** The switcher's one-line preview of a message: "Photo" for photos. */
+export function lastMessagePreviewOf(m: Record<string, unknown>): { authorName: string; text: string; type: string } {
+  const type = String(m.type ?? 'text');
+  const firstLine = String(m.text ?? '').split('\n')[0].trim();
+  const text = firstLine || (type === 'image' ? 'Photo' : type === 'poll' ? 'Poll' : '');
+  return {
+    authorName: String(m.authorName ?? ''),
+    text: text.length > 80 ? `${text.slice(0, 79)}…` : text,
+    type,
+  };
+}
+
+/**
+ * Moves the team's `lastMessageAt` and preview forward to [message]. Runs
+ * in a transaction and never moves backward, since triggers can arrive out
+ * of order or twice.
+ */
+export async function touchLastMessage(groupId: string, message: Record<string, unknown>): Promise<void> {
+  const at = message.createdAt as Timestamp | undefined;
+  if (!at) return;
+  const ref = db().collection(Collections.groups).doc(groupId);
+  await db().runTransaction(async (tx) => {
+    const group = await tx.get(ref);
+    if (!group.exists) return;
+    const current = group.get('lastMessageAt') as Timestamp | undefined;
+    if (current && current.toMillis() >= at.toMillis()) return;
+    tx.update(ref, { lastMessageAt: at, lastMessagePreview: lastMessagePreviewOf(message) });
+  });
 }

@@ -59,6 +59,10 @@ abstract interface class MessageRepository {
   /// A message photo's bytes, for sharing or saving.
   Future<Uint8List?> attachmentBytes(String path);
 
+  /// How many messages arrived after [since], up to [cap] (CHAT-9). One
+  /// aggregate read, not one read per message.
+  Future<int> countUnread(GroupId groupId, DateTime since, {int cap = 100});
+
   /// Deletes a message through the `deleteMessage` callable (CHAT-8): the
   /// author, a team admin, or a super admin.
   Future<void> deleteMessage(String messageId);

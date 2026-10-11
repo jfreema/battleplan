@@ -603,5 +603,8 @@
   "messageRemovedByAdmin": "Removed by a team admin.",
   "deleteMessage": "Delete",
   "deleteMessageTitle": "Delete this message?",
-  "deleteMessageBody": "It's removed for everyone, including any photos."
+  "deleteMessageBody": "It's removed for everyone, including any photos.",
+  "newMessages": "New messages",
+  "newMessagesBelow": "{count, plural, =1{1 new} other{{count} new}}",
+  "@newMessagesBelow": {"placeholders": {"count": {"type": "int"}}}
 }

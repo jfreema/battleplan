@@ -13,6 +13,7 @@ import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
+import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
@@ -88,6 +89,11 @@ class TeamShell extends ConsumerWidget {
       (AppIcons.schedule, l10n.tabSchedule),
       (AppIcons.documents, l10n.tabDocuments),
     ];
+    // The Chat tab shows this team's unread count (CHAT-9).
+    final unread = ref.watch(unreadCountProvider(groupId)).value ?? 0;
+    Widget tabIcon(int index, Widget icon) => index == 0 && unread > 0
+        ? Badge(label: Text(unreadLabel(unread)), child: icon)
+        : icon;
 
     Future<void> leave() async {
       final current = team;
@@ -158,10 +164,10 @@ class TeamShell extends ConsumerWidget {
                   ),
                 ),
                 destinations: [
-                  for (final (icon, label) in destinations)
+                  for (final (i, (icon, label)) in destinations.indexed)
                     NavigationRailDestination(
-                      icon: Icon(icon),
-                      selectedIcon: Icon(icon, fill: 1),
+                      icon: tabIcon(i, Icon(icon)),
+                      selectedIcon: tabIcon(i, Icon(icon, fill: 1)),
                       label: Text(label),
                     ),
                 ],
@@ -208,10 +214,10 @@ class TeamShell extends ConsumerWidget {
             initialLocation: i == navigationShell.currentIndex,
           ),
           destinations: [
-            for (final (icon, label) in destinations)
+            for (final (i, (icon, label)) in destinations.indexed)
               NavigationDestination(
-                icon: Icon(icon),
-                selectedIcon: Icon(icon, fill: 1),
+                icon: tabIcon(i, Icon(icon)),
+                selectedIcon: tabIcon(i, Icon(icon, fill: 1)),
                 label: label,
               ),
           ],

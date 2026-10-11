@@ -5,6 +5,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
+import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -64,6 +65,24 @@ abstract class OutgoingPhotos with _$OutgoingPhotos {
   }) = _OutgoingPhotos;
 }
 
+/// A team's unread message count for the switcher and the Chat tab, up to
+/// 100 (CHAT-9). It only queries when the team's last message is newer
+/// than the person's read marker, so a read team costs nothing.
+@riverpod
+Future<int> unreadCount(Ref ref, GroupId groupId) async {
+  final last = ref.watch(groupProvider(groupId)).value?.lastMessageAt;
+  final membership = ref.watch(myMembershipProvider(groupId));
+  if (last == null || membership == null) return 0;
+  final read = membership.lastReadAt;
+  if (read != null && !last.isAfter(read)) return 0;
+  return await ref
+      .read(messageRepositoryProvider)
+      .countUnread(groupId, read ?? DateTime.fromMillisecondsSinceEpoch(0));
+}
+
+/// "1" to "99", then "99+" (CHAT-9).
+String unreadLabel(int count) => count > 99 ? '99+' : '$count';
+
 /// A URL to show a message photo.
 @riverpod
 Future<String?> attachmentUrl(Ref ref, String path) =>
@@ -112,7 +131,10 @@ class ChatMessages extends _$ChatMessages {
                 (!_loadedOlder && page.next == null) || state.reachedStart,
           );
         });
-    ref.onDispose(sub.cancel);
+    ref.onDispose(() {
+      unawaited(sub.cancel());
+      _markAgain?.cancel();
+    });
     return const ChatState();
   }
 
@@ -323,4 +345,28 @@ class ChatMessages extends _$ChatMessages {
   /// Deletes a message for everyone (CHAT-8).
   Future<void> delete(Message message) =>
       ref.read(messageRepositoryProvider).deleteMessage(message.id);
+
+  DateTime _lastMarked = DateTime.fromMillisecondsSinceEpoch(0);
+  Timer? _markAgain;
+
+  /// Marks the chat read when its newest message is on screen (CHAT-9), at
+  /// most every 2 seconds and only when something is newer than the marker.
+  Future<void> markRead() async {
+    final uid = ref.read(authUserProvider).value?.uid;
+    final newest = state.messages.where((m) => !m.pending).firstOrNull;
+    if (uid == null || newest?.createdAt == null) return;
+    final read = ref.read(myMembershipProvider(groupId))?.lastReadAt;
+    if (read != null && !newest!.createdAt!.isAfter(read)) return;
+    final since = DateTime.now().difference(_lastMarked);
+    if (since < const Duration(seconds: 2)) {
+      // Try again once the 2 seconds are up, so the last message counts.
+      _markAgain ??= Timer(const Duration(seconds: 2) - since, () {
+        _markAgain = null;
+        unawaited(markRead().catchError((Object _) {}));
+      });
+      return;
+    }
+    _lastMarked = DateTime.now();
+    await ref.read(memberRepositoryProvider).markRead(groupId, UserId(uid));
+  }
 }

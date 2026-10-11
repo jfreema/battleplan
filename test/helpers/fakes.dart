@@ -316,6 +316,12 @@ class FakeMemberRepository implements MemberRepository {
   @override
   Stream<List<Membership>> watchMyMemberships(UserId uid) =>
       Stream.value(memberships.where((m) => m.uid == uid).toList());
+
+  final List<String> reads = [];
+
+  @override
+  Future<void> markRead(GroupId groupId, UserId uid) async =>
+      reads.add(groupId.value);
 }
 
 class FakeLocalPrefs implements LocalPrefsRepository {
@@ -704,6 +710,21 @@ class FakeMessageRepository implements MessageRepository {
     );
     _changes.add(null);
   }
+
+  @override
+  Future<int> countUnread(
+    GroupId groupId,
+    DateTime since, {
+    int cap = 100,
+  }) async => messages
+      .where(
+        (m) =>
+            m.groupId == groupId &&
+            (m.createdAt?.isAfter(since) ?? false) &&
+            !m.isSystem,
+      )
+      .take(cap)
+      .length;
 
   final List<String> deleted = [];
 
