@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
@@ -8,13 +9,15 @@ import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 /// Owns `groups` (ARCH §5.2 collection ownership).
 class FirestoreGroupRepository implements GroupRepository {
-  new(this._db, this._functions);
+  new(this._db, this._functions, this._storage);
 
   final FirebaseFirestore _db;
   final FirebaseFunctions _functions;
+  final FirebaseStorage _storage;
 
   @override
   Future<GroupId> createGroup({
@@ -50,6 +53,68 @@ class FirestoreGroupRepository implements GroupRepository {
         ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
         _ => UnknownFailure('${e.code}: ${e.message}'),
       };
+    }
+  }
+
+  @override
+  Future<void> updateGroup(
+    GroupId id, {
+    String? name,
+    Sport? sport,
+    String? color,
+    String? description,
+    String? timeZone,
+    GroupSettings? settings,
+  }) async {
+    final trimmed = name?.trim();
+    try {
+      await _db.collection(Collections.groups).doc(id.value).update({
+        if (trimmed != null) ...{
+          'name': trimmed,
+          'nameLower': trimmed.toLowerCase(),
+        },
+        'sport': ?sport?.value,
+        'color': ?color,
+        'description': ?description?.trim(),
+        'timeZone': ?timeZone,
+        if (settings != null) 'settings': settingsToFirestore(settings),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        'unavailable' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  Future<void> uploadLogo(GroupId id, Uint8List jpegBytes) async {
+    final path =
+        'groups/${id.value}/avatar/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    try {
+      await _storage
+          .ref(path)
+          .putData(jpegBytes, SettableMetadata(contentType: 'image/jpeg'));
+      await _db.collection(Collections.groups).doc(id.value).update({
+        'photoPath': path,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'unauthorized' || 'permission-denied' => PermissionDenied(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  Future<String?> photoUrl(String path) async {
+    try {
+      return await _storage.ref(path).getDownloadURL();
+    } on FirebaseException {
+      return null;
     }
   }
 
@@ -146,6 +211,12 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
         : '${preview['authorName']}: ${preview['text'] ?? ''}',
     archivedAt: _date(d['archivedAt']),
     suspendedAt: _date(d['suspendedAt']),
+    ownerId: d['ownerId'] as String?,
+    photoPath: d['photoPath'] as String?,
+    timeZone: d['timeZone'] as String? ?? 'America/Chicago',
+    settings: settingsFromFirestore(d['settings'] as Map<String, dynamic>?),
+    storageBytes: (d['storageBytes'] as num?)?.toInt() ?? 0,
+    storageQuotaBytes: (d['storageQuotaBytes'] as num?)?.toInt() ?? 0,
   );
 }
 
@@ -167,3 +238,29 @@ int? _parseColor(String? hex) {
   final rgb = int.tryParse(hex.substring(1), radix: 16);
   return rgb == null ? null : 0xFF000000 | rgb;
 }
+
+GroupSettings settingsFromFirestore(Map<String, dynamic>? d) {
+  if (d == null) return const GroupSettings();
+  bool flag(String key, {required bool fallback}) =>
+      d[key] as bool? ?? fallback;
+  return GroupSettings(
+    membersCanCreateEvents: flag('membersCanCreateEvents', fallback: false),
+    membersCanCreatePolls: flag('membersCanCreatePolls', fallback: true),
+    membersCanUploadDocs: flag('membersCanUploadDocs', fallback: true),
+    membersCanInvite: flag('membersCanInvite', fallback: true),
+    allowMaybe: flag('allowMaybe', fallback: true),
+    defaultReminderOffsets: [
+      for (final m in (d['defaultReminderOffsets'] as List?) ?? const [1440])
+        (m as num).toInt(),
+    ],
+  );
+}
+
+Map<String, Object> settingsToFirestore(GroupSettings s) => {
+  'membersCanCreateEvents': s.membersCanCreateEvents,
+  'membersCanCreatePolls': s.membersCanCreatePolls,
+  'membersCanUploadDocs': s.membersCanUploadDocs,
+  'membersCanInvite': s.membersCanInvite,
+  'allowMaybe': s.allowMaybe,
+  'defaultReminderOffsets': s.defaultReminderOffsets,
+};

@@ -44,7 +44,10 @@ async function seed() {
       allowMaybe: true,
       defaultReminderOffsets: [1440],
     };
-    await db.doc('groups/teamA').set({ name: 'Thunder', teamType: 'adult', settings, memberCount: 2 });
+    await db.doc('groups/teamA').set({
+      name: 'Thunder', nameLower: 'thunder', sport: 'softball', color: '#2F5BEA',
+      photoPath: null, teamType: 'adult', settings, memberCount: 2,
+    });
     await db.doc('groups/teamB').set({ name: 'Lightning U10', teamType: 'youth', settings, memberCount: 4 });
     await db.doc('groupMembers/teamA_alice').set(memberDoc('teamA', 'alice', 'owner', 'Alice'));
     await db.doc('groupMembers/teamA_bob').set(memberDoc('teamA', 'bob', 'member', 'Bob'));
@@ -291,11 +294,23 @@ describe('one RSVP per event and participant', () => {
 describe('cache and server-only fields', () => {
   it('rejects members editing team cache fields or other people’s memberships', async () => {
     await assertFails(as('alice').doc('groups/teamA').update({ memberCount: 99 }));
-    await assertSucceeds(as('alice').doc('groups/teamA').update({ name: 'Thunder FC' }));
+    await assertSucceeds(as('alice').doc('groups/teamA').update({ name: 'Thunder FC', nameLower: 'thunder fc' }));
     await assertFails(as('bob').doc('groups/teamA').update({ name: 'Bob’s team' }));
     await assertFails(as('bob').doc('groupMembers/teamA_bob').update({ role: 'admin' }));
     await assertFails(as('bob').doc('groupMembers/teamA_alice').update({ lastReadAt: now() }));
     await assertSucceeds(as('bob').doc('groupMembers/teamA_bob').update({ lastReadAt: now() }));
+  });
+
+  it('validates team settings edits (TEAM-5)', async () => {
+    const db = as('alice');
+    await assertSucceeds(db.doc('groups/teamA').update({ name: 'Thunder FC', nameLower: 'thunder fc' }));
+    await assertSucceeds(db.doc('groups/teamA').update({ 'settings.membersCanCreateEvents': true }));
+    await assertSucceeds(db.doc('groups/teamA').update({ photoPath: 'groups/teamA/avatar/1.jpg' }));
+    await assertFails(db.doc('groups/teamA').update({ name: 'Thunder FC', nameLower: 'other' }));
+    await assertFails(db.doc('groups/teamA').update({ color: '#123456' }));
+    await assertFails(db.doc('groups/teamA').update({ sport: 'chess' }));
+    await assertFails(db.doc('groups/teamA').update({ 'settings.canDelete': true }));
+    await assertFails(db.doc('groups/teamA').update({ photoPath: 'groups/teamB/avatar/1.jpg' }));
   });
 
   it('keeps lastPostedAt at the request time', async () => {

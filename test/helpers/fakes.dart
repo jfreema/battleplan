@@ -198,6 +198,34 @@ class FakeGroupRepository implements GroupRepository {
   @override
   Stream<Group?> watchGroup(GroupId id) => Stream.value(groups[id.value]);
 
+  final List<String> updates = [];
+
+  @override
+  Future<void> updateGroup(
+    GroupId id, {
+    String? name,
+    Sport? sport,
+    String? color,
+    String? description,
+    String? timeZone,
+    GroupSettings? settings,
+  }) async {
+    final g = groups[id.value]!;
+    groups[id.value] = g.copyWith(
+      name: name ?? g.name,
+      settings: settings ?? g.settings,
+    );
+    updates.add(
+      settings != null ? 'settings' : (name != null ? 'name $name' : 'other'),
+    );
+  }
+
+  @override
+  Future<void> uploadLogo(GroupId id, Uint8List jpegBytes) async {}
+
+  @override
+  Future<String?> photoUrl(String path) async => null;
+
   final List<String> created = [];
 
   @override

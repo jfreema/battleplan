@@ -269,5 +269,31 @@
         "type": "String"
       }
     }
+  },
+  "changeLogo": "Change logo",
+  "memberPermissions": "Member permissions",
+  "permCreateEvents": "Members can create events",
+  "permCreatePolls": "Members can create polls",
+  "permUploadDocs": "Members can upload documents",
+  "permInvite": "Members can invite others",
+  "permAllowMaybe": "Allow \"Maybe\" RSVPs",
+  "defaultReminders": "Default event reminders",
+  "reminder15m": "15 min before",
+  "reminder1h": "1 hour before",
+  "reminder2h": "2 hours before",
+  "reminder1d": "1 day before",
+  "reminder2d": "2 days before",
+  "reminder1w": "1 week before",
+  "storage": "Storage",
+  "storageUsed": "{used} of {total} used",
+  "@storageUsed": {
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
   }
 }

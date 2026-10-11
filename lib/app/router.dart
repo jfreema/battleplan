@@ -23,6 +23,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
+import 'package:battleplan/features/groups/presentation/team_settings_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notifications_screen.dart';
@@ -217,6 +218,12 @@ GoRouter router(Ref ref) {
             ? '/g/${state.pathParameters['groupId']}/chat'
             : null,
         routes: [
+          GoRoute(
+            path: 'settings',
+            builder: (_, state) => TeamSettingsScreen(
+              groupId: GroupId(state.pathParameters['groupId']!),
+            ),
+          ),
           GoRoute(
             path: 'roster',
             builder: (_, state) => RosterScreen(

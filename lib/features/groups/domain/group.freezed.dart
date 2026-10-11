@@ -13,10 +13,298 @@ part of 'group.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
+mixin _$GroupSettings {
+
+ bool get membersCanCreateEvents; bool get membersCanCreatePolls; bool get membersCanUploadDocs; bool get membersCanInvite; bool get allowMaybe;/// Minutes before an event (1440 = 1 day).
+ List<int> get defaultReminderOffsets;
+/// Create a copy of GroupSettings
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$GroupSettingsCopyWith<GroupSettings> get copyWith => _$GroupSettingsCopyWithImpl<GroupSettings>(this as GroupSettings, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as GroupSettings;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GroupSettings&&(identical(other.membersCanCreateEvents, _this.membersCanCreateEvents) || other.membersCanCreateEvents == _this.membersCanCreateEvents)&&(identical(other.membersCanCreatePolls, _this.membersCanCreatePolls) || other.membersCanCreatePolls == _this.membersCanCreatePolls)&&(identical(other.membersCanUploadDocs, _this.membersCanUploadDocs) || other.membersCanUploadDocs == _this.membersCanUploadDocs)&&(identical(other.membersCanInvite, _this.membersCanInvite) || other.membersCanInvite == _this.membersCanInvite)&&(identical(other.allowMaybe, _this.allowMaybe) || other.allowMaybe == _this.allowMaybe)&&const DeepCollectionEquality().equals(other.defaultReminderOffsets, _this.defaultReminderOffsets));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as GroupSettings;
+  return Object.hash(runtimeType,_this.membersCanCreateEvents,_this.membersCanCreatePolls,_this.membersCanUploadDocs,_this.membersCanInvite,_this.allowMaybe,const DeepCollectionEquality().hash(_this.defaultReminderOffsets));
+}
+
+@override
+String toString() {
+  final _this = this as GroupSettings;
+  return 'GroupSettings(membersCanCreateEvents: ${_this.membersCanCreateEvents}, membersCanCreatePolls: ${_this.membersCanCreatePolls}, membersCanUploadDocs: ${_this.membersCanUploadDocs}, membersCanInvite: ${_this.membersCanInvite}, allowMaybe: ${_this.allowMaybe}, defaultReminderOffsets: ${_this.defaultReminderOffsets})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $GroupSettingsCopyWith<$Res>  {
+  factory $GroupSettingsCopyWith(GroupSettings value, $Res Function(GroupSettings) _then) = _$GroupSettingsCopyWithImpl;
+@useResult
+$Res call({
+ bool membersCanCreateEvents, bool membersCanCreatePolls, bool membersCanUploadDocs, bool membersCanInvite, bool allowMaybe, List<int> defaultReminderOffsets
+});
+
+
+
+
+}
+/// @nodoc
+class _$GroupSettingsCopyWithImpl<$Res>
+    implements $GroupSettingsCopyWith<$Res> {
+  _$GroupSettingsCopyWithImpl(this._self, this._then);
+
+  final GroupSettings _self;
+  final $Res Function(GroupSettings) _then;
+
+/// Create a copy of GroupSettings
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? membersCanCreateEvents = null,Object? membersCanCreatePolls = null,Object? membersCanUploadDocs = null,Object? membersCanInvite = null,Object? allowMaybe = null,Object? defaultReminderOffsets = null,}) {
+  return _then(GroupSettings(
+membersCanCreateEvents: null == membersCanCreateEvents ? _self.membersCanCreateEvents : membersCanCreateEvents // ignore: cast_nullable_to_non_nullable
+as bool,membersCanCreatePolls: null == membersCanCreatePolls ? _self.membersCanCreatePolls : membersCanCreatePolls // ignore: cast_nullable_to_non_nullable
+as bool,membersCanUploadDocs: null == membersCanUploadDocs ? _self.membersCanUploadDocs : membersCanUploadDocs // ignore: cast_nullable_to_non_nullable
+as bool,membersCanInvite: null == membersCanInvite ? _self.membersCanInvite : membersCanInvite // ignore: cast_nullable_to_non_nullable
+as bool,allowMaybe: null == allowMaybe ? _self.allowMaybe : allowMaybe // ignore: cast_nullable_to_non_nullable
+as bool,defaultReminderOffsets: null == defaultReminderOffsets ? _self.defaultReminderOffsets : defaultReminderOffsets // ignore: cast_nullable_to_non_nullable
+as List<int>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [GroupSettings].
+extension GroupSettingsPatterns on GroupSettings {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _GroupSettings value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _GroupSettings() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _GroupSettings value)  $default,){
+final _that = this;
+switch (_that) {
+case _GroupSettings():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _GroupSettings value)?  $default,){
+final _that = this;
+switch (_that) {
+case _GroupSettings() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool membersCanCreateEvents,  bool membersCanCreatePolls,  bool membersCanUploadDocs,  bool membersCanInvite,  bool allowMaybe,  List<int> defaultReminderOffsets)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _GroupSettings() when $default != null:
+return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.membersCanUploadDocs,_that.membersCanInvite,_that.allowMaybe,_that.defaultReminderOffsets);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool membersCanCreateEvents,  bool membersCanCreatePolls,  bool membersCanUploadDocs,  bool membersCanInvite,  bool allowMaybe,  List<int> defaultReminderOffsets)  $default,) {final _that = this;
+switch (_that) {
+case _GroupSettings():
+return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.membersCanUploadDocs,_that.membersCanInvite,_that.allowMaybe,_that.defaultReminderOffsets);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool membersCanCreateEvents,  bool membersCanCreatePolls,  bool membersCanUploadDocs,  bool membersCanInvite,  bool allowMaybe,  List<int> defaultReminderOffsets)?  $default,) {final _that = this;
+switch (_that) {
+case _GroupSettings() when $default != null:
+return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.membersCanUploadDocs,_that.membersCanInvite,_that.allowMaybe,_that.defaultReminderOffsets);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _GroupSettings implements GroupSettings {
+  const _GroupSettings({this.membersCanCreateEvents = false, this.membersCanCreatePolls = true, this.membersCanUploadDocs = true, this.membersCanInvite = true, this.allowMaybe = true,  List<int> defaultReminderOffsets = const <int>[1440]}): _defaultReminderOffsets = defaultReminderOffsets;
+  
+
+@override@JsonKey() final  bool membersCanCreateEvents;
+@override@JsonKey() final  bool membersCanCreatePolls;
+@override@JsonKey() final  bool membersCanUploadDocs;
+@override@JsonKey() final  bool membersCanInvite;
+@override@JsonKey() final  bool allowMaybe;
+/// Minutes before an event (1440 = 1 day).
+ final  List<int> _defaultReminderOffsets;
+/// Minutes before an event (1440 = 1 day).
+@override@JsonKey() List<int> get defaultReminderOffsets {
+  if (_defaultReminderOffsets is EqualUnmodifiableListView) return _defaultReminderOffsets;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_defaultReminderOffsets);
+}
+
+
+/// Create a copy of GroupSettings
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$GroupSettingsCopyWith<_GroupSettings> get copyWith => __$GroupSettingsCopyWithImpl<_GroupSettings>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GroupSettings&&(identical(other.membersCanCreateEvents, membersCanCreateEvents) || other.membersCanCreateEvents == membersCanCreateEvents)&&(identical(other.membersCanCreatePolls, membersCanCreatePolls) || other.membersCanCreatePolls == membersCanCreatePolls)&&(identical(other.membersCanUploadDocs, membersCanUploadDocs) || other.membersCanUploadDocs == membersCanUploadDocs)&&(identical(other.membersCanInvite, membersCanInvite) || other.membersCanInvite == membersCanInvite)&&(identical(other.allowMaybe, allowMaybe) || other.allowMaybe == allowMaybe)&&const DeepCollectionEquality().equals(other.defaultReminderOffsets, _defaultReminderOffsets));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,membersCanCreateEvents,membersCanCreatePolls,membersCanUploadDocs,membersCanInvite,allowMaybe,const DeepCollectionEquality().hash(_defaultReminderOffsets));
+}
+
+@override
+String toString() {
+    return 'GroupSettings(membersCanCreateEvents: $membersCanCreateEvents, membersCanCreatePolls: $membersCanCreatePolls, membersCanUploadDocs: $membersCanUploadDocs, membersCanInvite: $membersCanInvite, allowMaybe: $allowMaybe, defaultReminderOffsets: $defaultReminderOffsets)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$GroupSettingsCopyWith<$Res> implements $GroupSettingsCopyWith<$Res> {
+  factory _$GroupSettingsCopyWith(_GroupSettings value, $Res Function(_GroupSettings) _then) = __$GroupSettingsCopyWithImpl;
+@override @useResult
+$Res call({
+ bool membersCanCreateEvents, bool membersCanCreatePolls, bool membersCanUploadDocs, bool membersCanInvite, bool allowMaybe, List<int> defaultReminderOffsets
+});
+
+
+
+
+}
+/// @nodoc
+class __$GroupSettingsCopyWithImpl<$Res>
+    implements _$GroupSettingsCopyWith<$Res> {
+  __$GroupSettingsCopyWithImpl(this._self, this._then);
+
+  final _GroupSettings _self;
+  final $Res Function(_GroupSettings) _then;
+
+/// Create a copy of GroupSettings
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? membersCanCreateEvents = null,Object? membersCanCreatePolls = null,Object? membersCanUploadDocs = null,Object? membersCanInvite = null,Object? allowMaybe = null,Object? defaultReminderOffsets = null,}) {
+  return _then(_GroupSettings(
+membersCanCreateEvents: null == membersCanCreateEvents ? _self.membersCanCreateEvents : membersCanCreateEvents // ignore: cast_nullable_to_non_nullable
+as bool,membersCanCreatePolls: null == membersCanCreatePolls ? _self.membersCanCreatePolls : membersCanCreatePolls // ignore: cast_nullable_to_non_nullable
+as bool,membersCanUploadDocs: null == membersCanUploadDocs ? _self.membersCanUploadDocs : membersCanUploadDocs // ignore: cast_nullable_to_non_nullable
+as bool,membersCanInvite: null == membersCanInvite ? _self.membersCanInvite : membersCanInvite // ignore: cast_nullable_to_non_nullable
+as bool,allowMaybe: null == allowMaybe ? _self.allowMaybe : allowMaybe // ignore: cast_nullable_to_non_nullable
+as bool,defaultReminderOffsets: null == defaultReminderOffsets ? _self._defaultReminderOffsets : defaultReminderOffsets // ignore: cast_nullable_to_non_nullable
+as List<int>,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$Group {
 
  GroupId get id; String get name; Sport get sport; TeamType get teamType; int get memberCount; String? get description;/// ARGB team color (one of `teamColorValues`).
- int? get color; DateTime? get lastMessageAt; String? get lastMessagePreview; DateTime? get archivedAt; DateTime? get suspendedAt;
+ int? get color; DateTime? get lastMessageAt; String? get lastMessagePreview; DateTime? get archivedAt; DateTime? get suspendedAt; String? get ownerId; String? get photoPath; String get timeZone; GroupSettings get settings; int get storageBytes; int get storageQuotaBytes;
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,20 +316,20 @@ $GroupCopyWith<Group> get copyWith => _$GroupCopyWithImpl<Group>(this as Group, 
 @override
 bool operator ==(Object other) {
   final _this = this as Group;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Group&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.teamType, _this.teamType) || other.teamType == _this.teamType)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.lastMessagePreview, _this.lastMessagePreview) || other.lastMessagePreview == _this.lastMessagePreview)&&(identical(other.archivedAt, _this.archivedAt) || other.archivedAt == _this.archivedAt)&&(identical(other.suspendedAt, _this.suspendedAt) || other.suspendedAt == _this.suspendedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Group&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.teamType, _this.teamType) || other.teamType == _this.teamType)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.lastMessagePreview, _this.lastMessagePreview) || other.lastMessagePreview == _this.lastMessagePreview)&&(identical(other.archivedAt, _this.archivedAt) || other.archivedAt == _this.archivedAt)&&(identical(other.suspendedAt, _this.suspendedAt) || other.suspendedAt == _this.suspendedAt)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.timeZone, _this.timeZone) || other.timeZone == _this.timeZone)&&(identical(other.settings, _this.settings) || other.settings == _this.settings)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Group;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.sport,_this.teamType,_this.memberCount,_this.description,_this.color,_this.lastMessageAt,_this.lastMessagePreview,_this.archivedAt,_this.suspendedAt);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.sport,_this.teamType,_this.memberCount,_this.description,_this.color,_this.lastMessageAt,_this.lastMessagePreview,_this.archivedAt,_this.suspendedAt,_this.ownerId,_this.photoPath,_this.timeZone,_this.settings,_this.storageBytes,_this.storageQuotaBytes);
 }
 
 @override
 String toString() {
   final _this = this as Group;
-  return 'Group(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, teamType: ${_this.teamType}, memberCount: ${_this.memberCount}, description: ${_this.description}, color: ${_this.color}, lastMessageAt: ${_this.lastMessageAt}, lastMessagePreview: ${_this.lastMessagePreview}, archivedAt: ${_this.archivedAt}, suspendedAt: ${_this.suspendedAt})';
+  return 'Group(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, teamType: ${_this.teamType}, memberCount: ${_this.memberCount}, description: ${_this.description}, color: ${_this.color}, lastMessageAt: ${_this.lastMessageAt}, lastMessagePreview: ${_this.lastMessagePreview}, archivedAt: ${_this.archivedAt}, suspendedAt: ${_this.suspendedAt}, ownerId: ${_this.ownerId}, photoPath: ${_this.photoPath}, timeZone: ${_this.timeZone}, settings: ${_this.settings}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes})';
 }
 
 
@@ -52,11 +340,11 @@ abstract mixin class $GroupCopyWith<$Res>  {
   factory $GroupCopyWith(Group value, $Res Function(Group) _then) = _$GroupCopyWithImpl;
 @useResult
 $Res call({
- GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt
+ GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes
 });
 
 
-
+$GroupSettingsCopyWith<$Res> get settings;
 
 }
 /// @nodoc
@@ -69,7 +357,7 @@ class _$GroupCopyWithImpl<$Res>
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,}) {
   return _then(Group(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -82,10 +370,25 @@ as int?,lastMessageAt: freezed == lastMessageAt ? _self.lastMessageAt : lastMess
 as DateTime?,lastMessagePreview: freezed == lastMessagePreview ? _self.lastMessagePreview : lastMessagePreview // ignore: cast_nullable_to_non_nullable
 as String?,archivedAt: freezed == archivedAt ? _self.archivedAt : archivedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,suspendedAt: freezed == suspendedAt ? _self.suspendedAt : suspendedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,ownerId: freezed == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
+as String?,photoPath: freezed == photoPath ? _self.photoPath : photoPath // ignore: cast_nullable_to_non_nullable
+as String?,timeZone: null == timeZone ? _self.timeZone : timeZone // ignore: cast_nullable_to_non_nullable
+as String,settings: null == settings ? _self.settings : settings // ignore: cast_nullable_to_non_nullable
+as GroupSettings,storageBytes: null == storageBytes ? _self.storageBytes : storageBytes // ignore: cast_nullable_to_non_nullable
+as int,storageQuotaBytes: null == storageQuotaBytes ? _self.storageQuotaBytes : storageQuotaBytes // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
-
+/// Create a copy of Group
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$GroupSettingsCopyWith<$Res> get settings {
+  
+  return $GroupSettingsCopyWith<$Res>(_self.settings, (value) {
+    return _then(_self.copyWith(settings: value));
+  });
+}
 }
 
 
@@ -167,10 +470,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt);case _:
+return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes);case _:
   return orElse();
 
 }
@@ -188,10 +491,10 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes)  $default,) {final _that = this;
 switch (_that) {
 case _Group():
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt);case _:
+return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +511,10 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes)?  $default,) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt);case _:
+return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes);case _:
   return null;
 
 }
@@ -223,7 +526,7 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount
 
 
 class _Group extends Group {
-  const _Group({required this.id, required this.name, required this.sport, required this.teamType, required this.memberCount, this.description, this.color, this.lastMessageAt, this.lastMessagePreview, this.archivedAt, this.suspendedAt}): super._();
+  const _Group({required this.id, required this.name, required this.sport, required this.teamType, required this.memberCount, this.description, this.color, this.lastMessageAt, this.lastMessagePreview, this.archivedAt, this.suspendedAt, this.ownerId, this.photoPath, this.timeZone = 'America/Chicago', this.settings = const GroupSettings(), this.storageBytes = 0, this.storageQuotaBytes = 0}): super._();
   
 
 @override final  GroupId id;
@@ -238,6 +541,12 @@ class _Group extends Group {
 @override final  String? lastMessagePreview;
 @override final  DateTime? archivedAt;
 @override final  DateTime? suspendedAt;
+@override final  String? ownerId;
+@override final  String? photoPath;
+@override@JsonKey() final  String timeZone;
+@override@JsonKey() final  GroupSettings settings;
+@override@JsonKey() final  int storageBytes;
+@override@JsonKey() final  int storageQuotaBytes;
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
@@ -249,18 +558,18 @@ _$GroupCopyWith<_Group> get copyWith => __$GroupCopyWithImpl<_Group>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Group&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.teamType, teamType) || other.teamType == teamType)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.description, description) || other.description == description)&&(identical(other.color, color) || other.color == color)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastMessagePreview, lastMessagePreview) || other.lastMessagePreview == lastMessagePreview)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.suspendedAt, suspendedAt) || other.suspendedAt == suspendedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Group&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.teamType, teamType) || other.teamType == teamType)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.description, description) || other.description == description)&&(identical(other.color, color) || other.color == color)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastMessagePreview, lastMessagePreview) || other.lastMessagePreview == lastMessagePreview)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.suspendedAt, suspendedAt) || other.suspendedAt == suspendedAt)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.timeZone, timeZone) || other.timeZone == timeZone)&&(identical(other.settings, settings) || other.settings == settings)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,sport,teamType,memberCount,description,color,lastMessageAt,lastMessagePreview,archivedAt,suspendedAt);
+    return Object.hash(runtimeType,id,name,sport,teamType,memberCount,description,color,lastMessageAt,lastMessagePreview,archivedAt,suspendedAt,ownerId,photoPath,timeZone,settings,storageBytes,storageQuotaBytes);
 }
 
 @override
 String toString() {
-    return 'Group(id: $id, name: $name, sport: $sport, teamType: $teamType, memberCount: $memberCount, description: $description, color: $color, lastMessageAt: $lastMessageAt, lastMessagePreview: $lastMessagePreview, archivedAt: $archivedAt, suspendedAt: $suspendedAt)';
+    return 'Group(id: $id, name: $name, sport: $sport, teamType: $teamType, memberCount: $memberCount, description: $description, color: $color, lastMessageAt: $lastMessageAt, lastMessagePreview: $lastMessagePreview, archivedAt: $archivedAt, suspendedAt: $suspendedAt, ownerId: $ownerId, photoPath: $photoPath, timeZone: $timeZone, settings: $settings, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes)';
 }
 
 
@@ -271,11 +580,11 @@ abstract mixin class _$GroupCopyWith<$Res> implements $GroupCopyWith<$Res> {
   factory _$GroupCopyWith(_Group value, $Res Function(_Group) _then) = __$GroupCopyWithImpl;
 @override @useResult
 $Res call({
- GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt
+ GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes
 });
 
 
-
+@override $GroupSettingsCopyWith<$Res> get settings;
 
 }
 /// @nodoc
@@ -288,7 +597,7 @@ class __$GroupCopyWithImpl<$Res>
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,}) {
   return _then(_Group(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -301,11 +610,26 @@ as int?,lastMessageAt: freezed == lastMessageAt ? _self.lastMessageAt : lastMess
 as DateTime?,lastMessagePreview: freezed == lastMessagePreview ? _self.lastMessagePreview : lastMessagePreview // ignore: cast_nullable_to_non_nullable
 as String?,archivedAt: freezed == archivedAt ? _self.archivedAt : archivedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,suspendedAt: freezed == suspendedAt ? _self.suspendedAt : suspendedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,ownerId: freezed == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
+as String?,photoPath: freezed == photoPath ? _self.photoPath : photoPath // ignore: cast_nullable_to_non_nullable
+as String?,timeZone: null == timeZone ? _self.timeZone : timeZone // ignore: cast_nullable_to_non_nullable
+as String,settings: null == settings ? _self.settings : settings // ignore: cast_nullable_to_non_nullable
+as GroupSettings,storageBytes: null == storageBytes ? _self.storageBytes : storageBytes // ignore: cast_nullable_to_non_nullable
+as int,storageQuotaBytes: null == storageQuotaBytes ? _self.storageQuotaBytes : storageQuotaBytes // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
-
+/// Create a copy of Group
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$GroupSettingsCopyWith<$Res> get settings {
+  
+  return $GroupSettingsCopyWith<$Res>(_self.settings, (value) {
+    return _then(_self.copyWith(settings: value));
+  });
+}
 }
 
 // dart format on

@@ -75,3 +75,8 @@ Membership? myMembership(Ref ref, GroupId groupId) => ref
     .value
     ?.where((m) => m.groupId == groupId)
     .firstOrNull;
+
+/// A URL for a team logo path, or null.
+@riverpod
+Future<String?> teamPhotoUrl(Ref ref, String path) =>
+    ref.watch(groupRepositoryProvider).photoUrl(path);

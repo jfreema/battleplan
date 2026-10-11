@@ -59,7 +59,7 @@ List<Override> buildOverrides({
     FirestoreUserRepository(firestore, functions, storage),
   ),
   groupRepositoryProvider.overrideWithValue(
-    FirestoreGroupRepository(firestore, functions),
+    FirestoreGroupRepository(firestore, functions, storage),
   ),
   memberRepositoryProvider.overrideWithValue(
     FirestoreMemberRepository(firestore, functions),

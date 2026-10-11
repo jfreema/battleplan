@@ -437,3 +437,81 @@ final class MyMembershipFamily extends $Family
   @override
   String toString() => r'myMembershipProvider';
 }
+
+/// A URL for a team logo path, or null.
+
+@ProviderFor(teamPhotoUrl)
+final teamPhotoUrlProvider = TeamPhotoUrlFamily._();
+
+/// A URL for a team logo path, or null.
+
+final class TeamPhotoUrlProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// A URL for a team logo path, or null.
+  TeamPhotoUrlProvider._({
+    required TeamPhotoUrlFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamPhotoUrlProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamPhotoUrlHash();
+
+  @override
+  String toString() {
+    return r'teamPhotoUrlProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as String;
+    return teamPhotoUrl(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamPhotoUrlProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamPhotoUrlHash() => r'6d8e54677d8b41b22c87a6bf8c79309c213a2659';
+
+/// A URL for a team logo path, or null.
+
+final class TeamPhotoUrlFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String?>, String> {
+  TeamPhotoUrlFamily._()
+    : super(
+        retry: null,
+        name: r'teamPhotoUrlProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A URL for a team logo path, or null.
+
+  TeamPhotoUrlProvider call(String path) =>
+      TeamPhotoUrlProvider._(argument: path, from: this);
+
+  @override
+  String toString() => r'teamPhotoUrlProvider';
+}

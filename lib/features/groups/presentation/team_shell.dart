@@ -319,7 +319,7 @@ class _TeamMenu extends StatelessWidget {
       if (isAdmin) ('settings', AppIcons.settings, l10n.teamSettingsMenu),
       ('leave', AppIcons.leave, l10n.leaveTeamMenu),
     ];
-    const built = {'roster'};
+    const built = {'roster', 'settings'};
     return PopupMenuButton<String>(
       tooltip: l10n.teamMenuTooltip,
       icon: const Icon(AppIcons.more),

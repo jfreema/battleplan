@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
@@ -6,6 +8,23 @@ import 'package:battleplan/features/groups/domain/membership.dart';
 abstract interface class GroupRepository {
   /// A single team. Emits null if it's gone or the caller can't read it.
   Stream<Group?> watchGroup(GroupId id);
+
+  /// Edits the team profile and settings (TEAM-5). Admins only.
+  Future<void> updateGroup(
+    GroupId id, {
+    String? name,
+    Sport? sport,
+    String? color,
+    String? description,
+    String? timeZone,
+    GroupSettings? settings,
+  });
+
+  /// Uploads a new team logo (TEAM-1, TEAM-5). Admins only.
+  Future<void> uploadLogo(GroupId id, Uint8List jpegBytes);
+
+  /// A URL to show a stored team photo, or null.
+  Future<String?> photoUrl(String path);
 
   /// Creates a team with the caller as owner (TEAM-1) and returns its ID.
   /// [color] is one of the 12 team colors as `#RRGGBB`.

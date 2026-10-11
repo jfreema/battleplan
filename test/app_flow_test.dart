@@ -240,6 +240,28 @@ void main() {
     expect(find.text('Edit title'), findsOneWidget);
   });
 
+  testWidgets('team settings: an admin turns a member permission on', (
+    tester,
+  ) async {
+    final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')});
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groupRepo: groupRepo,
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Team settings'));
+    await tester.pumpAndSettle();
+    final perm = find.text('Members can create events');
+    await tester.ensureVisible(perm);
+    await tester.tap(perm);
+    await tester.pumpAndSettle();
+    expect(groupRepo.updates, ['settings']);
+    expect(groupRepo.groups['a']!.settings.membersCanCreateEvents, isTrue);
+  });
+
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with email'));

@@ -82,8 +82,26 @@ service cloud.firestore {
       allow get: if isMember(g) || superAdmin();
       allow update: if isAdmin(g)
         && onlyChanges(['name', 'nameLower', 'description', 'photoPath', 'color',
-                        'sport', 'timeZone', 'settings', 'updatedAt']);
+                        'sport', 'timeZone', 'settings', 'updatedAt'])
+        && validGroup(incoming(), g);
       // Created and deleted by Functions (createGroup, deleteGroup).
+    }
+
+    // Team profile and settings as admins may write them (TEAM-5).
+    function validGroup(t, g) {
+      return t.name is string && t.name.size() >= 1 && t.name.size() <= 50
+        && t.nameLower == t.name.lower()
+        && t.sport in ['baseball', 'basketball', 'football', 'hockey', 'lacrosse',
+                       'soccer', 'softball', 'volleyball', 'other']
+        && (t.color == null || t.color in ['#2F5BEA', '#0F8A5F', '#C2410C', '#B91C1C',
+            '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F', '#1D4ED8',
+            '#9333EA', '#334155'])
+        && t.get('description', '').size() <= 500
+        && (t.photoPath == null || t.photoPath.matches('groups/' + g + '/avatar/[^/]+'))
+        && t.settings.keys().hasOnly(['membersCanCreateEvents', 'membersCanCreatePolls',
+            'membersCanUploadDocs', 'membersCanInvite', 'allowMaybe',
+            'defaultReminderOffsets'])
+        && t.settings.defaultReminderOffsets.size() <= 6;
     }
 
     match /groupMembers/{memberId} {
