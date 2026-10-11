@@ -85,7 +85,6 @@
   "retry": "Retry",
   "cancel": "Cancel",
   "inviteCodeLabel": "Invite code",
-  "joinComingSoon": "Joining a team from an invite arrives soon. Keep this code handy.",
   "emailMeLink": "Email me a sign-in link instead",
   "signInLinkSent": "We sent a sign-in link to {email}. Open it on this device to finish.",
   "@signInLinkSent": {
@@ -376,5 +375,25 @@
   "expiry1d": "After 1 day",
   "expiry7d": "After 7 days",
   "expiry30d": "After 30 days",
-  "linkReset": "New link ready. The old one no longer works."
+  "linkReset": "New link ready. The old one no longer works.",
+  "inviteExpired": "This invite has expired. Ask a team admin for a new link.",
+  "inviteRevoked": "This invite was turned off. Ask a team admin for a new link.",
+  "inviteUsedUp": "This invite has been used as many times as allowed. Ask a team admin for a new link.",
+  "inviteWrongEmail": "This invite was sent to a different email address. Sign in with that address, or ask a team admin for a new link.",
+  "inviteUnknown": "We couldn't find that invite. Check the code, or ask a team admin for a new link.",
+  "inviteTooManyTries": "Too many attempts. Try again in a few minutes.",
+  "invitedBy": "Invited by {name}",
+  "@invitedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "joinTeamButton": "Join team",
+  "signInToJoin": "Sign in to join",
+  "inviteCodeHelp": "Installing the app first? Enter this code after you sign in.",
+  "inviteCodeInvalid": "Codes are 8 letters and numbers, like K7XP-M2QR.",
+  "scanQrCode": "Scan QR code",
+  "cameraUnavailable": "The camera isn't available. Allow camera access, or type the code instead."
 }

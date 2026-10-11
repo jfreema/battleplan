@@ -1,3 +1,4 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'invite.freezed.dart';
@@ -28,4 +29,28 @@ enum InviteExpiry {
   new(this.days);
 
   final int? days;
+}
+
+/// The team behind an invite, shown before joining (INV-5, INV-7).
+@freezed
+abstract class InvitePreview with _$InvitePreview {
+  const factory({
+    required String groupId,
+    required String name,
+    required Sport sport,
+    required TeamType teamType,
+    required int memberCount,
+    int? color,
+    String? invitedBy,
+  }) = _InvitePreview;
+}
+
+/// The result of joining (INV-5).
+@freezed
+abstract class JoinResult with _$JoinResult {
+  const factory({
+    required String groupId,
+    required TeamType teamType,
+    required bool alreadyMember,
+  }) = _JoinResult;
 }

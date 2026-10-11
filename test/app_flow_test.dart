@@ -328,6 +328,35 @@ void main() {
     expect(invites.resets, 1);
   });
 
+  testWidgets('joining a team by typing its code', (tester) async {
+    final invites = FakeInviteRepository();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      invites: invites,
+    );
+    await tester.tap(find.text('Join a team'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'k7xp-m2qr');
+    await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
+    await tester.pumpAndSettle();
+    expect(find.text('Thunder'), findsOneWidget);
+    expect(find.text('Invited by Alex Kim'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
+    await tester.pumpAndSettle();
+    expect(invites.redeemed, ['K7XPM2QR']);
+  });
+
+  testWidgets('a wrong code explains what to do', (tester) async {
+    await pumpApp(tester, auth: FakeAuthRepository(user: coach));
+    await tester.tap(find.text('Join a team'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'ZZZZ-ZZZZ');
+    await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining("couldn't find that invite"), findsOneWidget);
+  });
+
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with email'));

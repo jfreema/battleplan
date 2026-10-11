@@ -1,7 +1,6 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
-import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
@@ -15,6 +14,7 @@ class TeamSwitcherList extends ConsumerWidget {
     required this.currentGroupId,
     required this.onSelect,
     required this.onCreateTeam,
+    required this.onJoinTeam,
     super.key,
   });
 
@@ -23,6 +23,9 @@ class TeamSwitcherList extends ConsumerWidget {
 
   /// Opens Create a team (the caller closes the sheet first).
   final VoidCallback onCreateTeam;
+
+  /// Opens Join a team (the caller closes the sheet first).
+  final VoidCallback onJoinTeam;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -108,7 +111,7 @@ class TeamSwitcherList extends ConsumerWidget {
         ListTile(
           leading: const Icon(AppIcons.qr),
           title: Text(l10n.joinTeam),
-          onTap: () => showAppSnackBar(context, l10n.comingSoon),
+          onTap: onJoinTeam,
         ),
         ListTile(
           leading: const Icon(AppIcons.add),

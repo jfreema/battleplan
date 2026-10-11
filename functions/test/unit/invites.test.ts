@@ -27,3 +27,17 @@ describe('isUsable', () => {
     expect(isUsable({ maxUses: 3, useCount: 2 }, now)).toBe(true);
   });
 });
+
+import { problemWith } from '../../src/invites/service.js';
+
+describe('problemWith (INV-8)', () => {
+  it('explains why an invite cannot be used', () => {
+    expect(problemWith(undefined, null)).toBe('unknown');
+    expect(problemWith({ revokedAt: Timestamp.now() }, null)).toBe('revoked');
+    expect(problemWith({ expiresAt: Timestamp.fromMillis(1) }, null)).toBe('expired');
+    expect(problemWith({ maxUses: 1, useCount: 1 }, null)).toBe('used-up');
+    expect(problemWith({ type: 'email', email: 'a@x.com' }, 'b@x.com')).toBe('wrong-email');
+    expect(problemWith({ type: 'email', email: 'A@x.com' }, 'a@x.com')).toBeNull();
+    expect(problemWith({ type: 'link', useCount: 4 }, null)).toBeNull();
+  });
+});

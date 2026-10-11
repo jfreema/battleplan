@@ -424,6 +424,31 @@ class FakeInviteRepository implements InviteRepository {
   @override
   Future<TeamInvite> teamInvite(GroupId groupId) async => _invite();
 
+  final List<String> redeemed = [];
+
+  @override
+  Future<InvitePreview> preview(String code) async {
+    if (code != 'K7XPM2QR') throw const InviteUnusable('unknown');
+    return const InvitePreview(
+      groupId: 'a',
+      name: 'Thunder',
+      sport: Sport.softball,
+      teamType: TeamType.adult,
+      memberCount: 12,
+      invitedBy: 'Alex Kim',
+    );
+  }
+
+  @override
+  Future<JoinResult> redeem(String code) async {
+    redeemed.add(code);
+    return const JoinResult(
+      groupId: 'a',
+      teamType: TeamType.adult,
+      alreadyMember: false,
+    );
+  }
+
   @override
   Future<TeamInvite> resetTeamInvite(
     GroupId groupId, {

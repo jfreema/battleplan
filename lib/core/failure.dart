@@ -132,6 +132,17 @@ final class OwnerMustTransfer extends AppFailure {
   String get code => 'ownerMustTransfer';
 }
 
+/// An invite code that can't be used; [reason] is one of the INV-8 cases
+/// (unknown, expired, revoked, used-up, wrong-email).
+final class InviteUnusable extends AppFailure {
+  const new(this.reason, [super.message]);
+
+  final String reason;
+
+  @override
+  String get code => 'inviteUnusable';
+}
+
 final class UnknownFailure extends AppFailure {
   const new([super.message]);
 

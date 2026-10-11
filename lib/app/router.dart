@@ -21,6 +21,7 @@ import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
+import 'package:battleplan/features/groups/presentation/enter_code_screen.dart';
 import 'package:battleplan/features/groups/presentation/invite_screen.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
@@ -86,7 +87,7 @@ GoRouter router(Ref ref) {
 
       if (user == null) {
         // Invite links work signed out (ARCH §5.4).
-        if (_publicPaths.contains(path) || path.startsWith('/join/')) {
+        if (_publicPaths.contains(path) || path.startsWith('/join')) {
           return null;
         }
         final from = state.uri.toString();
@@ -179,9 +180,13 @@ GoRouter router(Ref ref) {
           path: path,
           builder: (_, state) => ActivateScreen(link: state.uri),
         ),
+      GoRoute(path: '/join', builder: (_, _) => const EnterCodeScreen()),
       GoRoute(
         path: '/join/:code',
-        builder: (_, state) => JoinScreen(code: state.pathParameters['code']!),
+        builder: (_, state) => JoinScreen(
+          code: state.pathParameters['code']!,
+          autoJoin: state.uri.queryParameters['join'] == '1',
+        ),
       ),
       GoRoute(
         path: '/welcome',

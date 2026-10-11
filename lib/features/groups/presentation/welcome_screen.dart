@@ -1,6 +1,5 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
-import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -53,7 +52,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: Space.xxl),
                 FilledButton(
-                  onPressed: () => showAppSnackBar(context, l10n.comingSoon),
+                  onPressed: () => context.push('/join'),
                   child: Text(l10n.joinTeam),
                 ),
                 const SizedBox(height: Space.md),

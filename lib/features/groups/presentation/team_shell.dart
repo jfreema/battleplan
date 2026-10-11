@@ -48,6 +48,10 @@ class TeamShell extends ConsumerWidget {
           Navigator.of(sheetContext).pop();
           unawaited(context.push('/g/new'));
         },
+        onJoinTeam: () {
+          Navigator.of(sheetContext).pop();
+          unawaited(context.push('/join'));
+        },
       ),
     );
     if (selected != null && context.mounted) _switchTo(context, selected);

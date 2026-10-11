@@ -31,6 +31,7 @@ dependencies:
   json_annotation: ^4.12.0
   material_symbols_icons: ^4.2960.0
   material_ui: ^1.6.0
+  mobile_scanner: ^7.4.2
   package_info_plus: ^10.2.2
   qr_flutter: ^4.1.0
   riverpod_annotation: ^4.0.7
