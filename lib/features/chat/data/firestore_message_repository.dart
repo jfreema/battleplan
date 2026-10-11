@@ -93,6 +93,7 @@ class FirestoreMessageRepository implements MessageRepository {
       },
       deletedAt: deleted is Timestamp ? deleted.toDate() : null,
       deletedReason: x['deletedReason'] as String?,
+      editedAt: (x['editedAt'] as Timestamp?)?.toDate(),
       // A local write has no server time yet; estimate it so it sorts last.
       createdAt: created is Timestamp
           ? created.toDate()
@@ -308,6 +309,22 @@ class FirestoreMessageRepository implements MessageRepository {
         'permission-denied' => PermissionDenied(e.message),
         'unavailable' || 'deadline-exceeded' => Offline(e.message),
         _ => UnknownFailure('${e.code}: ${e.message}'),
+      };
+    }
+  }
+
+  @override
+  Future<void> editText(String messageId, String text) async {
+    try {
+      // Rules allow it for the author on a Plus team (PLAN-6).
+      await _db.collection(Collections.messages).doc(messageId).update({
+        'text': text,
+        'editedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        _ => UnknownFailure(e.code),
       };
     }
   }

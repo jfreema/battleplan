@@ -152,3 +152,11 @@ export async function touchLastMessage(groupId: string, message: Record<string, 
     tx.update(ref, { lastMessageAt: at, lastMessagePreview: lastMessagePreviewOf(message) });
   });
 }
+
+/** Rewrites the quote on every reply to [messageId] from its new text. */
+export async function refreshReplyPreviews(messageId: string, original: Record<string, unknown>): Promise<void> {
+  const preview = replyPreviewOf(original);
+  await forEachPage(db().collection(Collections.messages).where('replyToId', '==', messageId), (batch, reply) =>
+    batch.update(reply.ref, { replyPreview: preview }),
+  );
+}

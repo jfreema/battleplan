@@ -41,13 +41,14 @@ Future<void> showWhatPlusAdds(BuildContext context, {required bool isAdmin}) {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
+            Wrap(
+              spacing: Space.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
                   l10n.whatPlusAdds,
                   style: Theme.of(sheet).textTheme.titleLarge,
                 ),
-                const SizedBox(width: Space.sm),
                 const PlusBadge(),
               ],
             ),

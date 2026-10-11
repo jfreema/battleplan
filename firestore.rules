@@ -196,6 +196,17 @@ service cloud.firestore {
              .affectedKeys().hasOnly([uid()])
         && (!(uid() in request.resource.data.reactions)
             || request.resource.data.reactions[uid()] in ['like', 'love', 'dislike', 'laugh']);
+      // Editing (PLAN-6, Plus): the author may change only the text, on a
+      // Plus team, of a text or photo message that isn't deleted.
+      allow update: if isMember(resource.data.groupId) && active(resource.data.groupId)
+        && resource.data.authorId == uid()
+        && resource.data.get('deletedAt', null) == null
+        && resource.data.type in ['text', 'image']
+        && isPlus(resource.data.groupId)
+        && onlyChanges(['text', 'editedAt'])
+        && incoming().text is string && incoming().text.size() <= 4000
+        && (incoming().text.size() > 0 || resource.data.type == 'image')
+        && incoming().editedAt == request.time;
       // Deletion goes through the deleteMessage callable.
     }
 

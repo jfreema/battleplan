@@ -1,6 +1,6 @@
 // Chat triggers (ARCH §6.4 trigger map): react to messages clients write.
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { touchLastMessage, writeReplyPreview } from './service.js';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { refreshReplyPreviews, touchLastMessage, writeReplyPreview } from './service.js';
 
 /**
  * messages created → the team's last-message time and preview (switcher
@@ -15,4 +15,16 @@ export const onMessageCreated = onDocumentCreated('messages/{messageId}', async 
   if (typeof data.replyToId === 'string') {
     await writeReplyPreview(event.params.messageId, data.groupId as string, data.replyToId);
   }
+});
+
+/**
+ * messages updated → replies' quotes follow an edit (PLAN-6). Exits early
+ * unless the text changed on a message that isn't deleted (reactions and
+ * deletions don't count; deleteMessage updates quotes itself).
+ */
+export const onMessageUpdated = onDocumentUpdated('messages/{messageId}', async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!before || !after || after.deletedAt || before.text === after.text) return;
+  await refreshReplyPreviews(event.params.messageId, after);
 });

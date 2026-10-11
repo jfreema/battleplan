@@ -67,6 +67,9 @@ abstract interface class MessageRepository {
   /// author, a team admin, or a super admin.
   Future<void> deleteMessage(String messageId);
 
+  /// Replaces the text of the person's own message (PLAN-6, Plus teams).
+  Future<void> editText(String messageId, String text);
+
   /// Sets or clears the person's one reaction on a message (CHAT-6).
   Future<void> setReaction(String messageId, UserId uid, Reaction? reaction);
 }

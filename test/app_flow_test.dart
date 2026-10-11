@@ -946,6 +946,60 @@ void main() {
       },
     );
 
+    testWidgets('editing needs Plus (PLAN-6)', (tester) async {
+      final repo = FakeMessageRepository([
+        msg(1, author: 'coach', name: 'Coach'),
+      ]);
+      Future<void> open(Group team) async {
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: {'a': team},
+          memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+          messageRepo: repo,
+        );
+        await tester.longPress(find.text('Message 1'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Edit'));
+        await tester.pumpAndSettle();
+      }
+
+      // Free: Edit explains Plus.
+      await open(testGroup('a', 'Thunder'));
+      expect(find.text('What Plus adds'), findsOneWidget);
+      expect(repo.edits, isEmpty);
+    });
+
+    testWidgets('on Plus, editing saves and shows "edited"', (tester) async {
+      final repo = FakeMessageRepository([
+        msg(1, author: 'coach', name: 'Coach'),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder').copyWith(
+            plan: GroupPlan(
+              tier: PlanTier.plus,
+              endsAt: DateTime.now().add(const Duration(days: 30)),
+            ),
+          ),
+        },
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        messageRepo: repo,
+      );
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'Message one, fixed');
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(repo.edits, ['m1 Message one, fixed']);
+      expect(find.text('Message one, fixed'), findsOneWidget);
+      expect(find.textContaining('edited'), findsOneWidget);
+    });
+
     testWidgets('scrolling up loads older messages 50 at a time', (
       tester,
     ) async {

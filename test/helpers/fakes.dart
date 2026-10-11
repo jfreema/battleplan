@@ -746,6 +746,17 @@ class FakeMessageRepository implements MessageRepository {
     _changes.add(null);
   }
 
+  final List<String> edits = [];
+
+  @override
+  Future<void> editText(String messageId, String text) async {
+    edits.add('$messageId $text');
+    final i = messages.indexWhere((m) => m.id == messageId);
+    if (i < 0) return;
+    messages[i] = messages[i].copyWith(text: text, editedAt: DateTime.now());
+    _changes.add(null);
+  }
+
   @override
   Future<void> setReaction(
     String messageId,

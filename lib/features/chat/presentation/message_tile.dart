@@ -20,6 +20,7 @@ import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -94,6 +95,44 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     onPressed: () => unawaited(_openMenu()),
   );
 
+  /// Edits my message's text in a dialog (PLAN-6).
+  Future<void> _edit() async {
+    final l10n = AppLocalizations.of(context);
+    final m = widget.message;
+    final text = TextEditingController(text: m.text);
+    final save = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: Text(l10n.editMessage),
+        content: TextField(
+          controller: text,
+          autofocus: true,
+          minLines: 1,
+          maxLines: 8,
+          maxLength: Limits.messageTextMax,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialog).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialog).pop(true),
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+    final updated = text.text.trim();
+    if (save != true || !mounted || updated == m.text.trim()) return;
+    if (updated.isEmpty && m.attachments.isEmpty) return;
+    try {
+      await ref.read(chatMessagesProvider(m.groupId).notifier).edit(m, updated);
+    } on AppFailure {
+      if (mounted) showAppSnackBar(context, l10n.editFailed);
+    }
+  }
+
   /// Asks first, then deletes for everyone (CHAT-8).
   Future<void> _confirmDelete() async {
     final l10n = AppLocalizations.of(context);
@@ -124,6 +163,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final canModerate =
         (user?.isSuperAdmin ?? false) ||
         (ref.read(myMembershipProvider(m.groupId))?.isAdmin ?? false);
+    final canEdit =
+        ref
+            .read(groupProvider(m.groupId))
+            .value
+            ?.has(PlanFeature.editMessages) ??
+        false;
     await showAdaptiveSheet<void>(
       context,
       builder: (sheet) => SafeArea(
@@ -147,6 +192,30 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                   onTap: () {
                     Navigator.of(sheet).pop();
                     reply();
+                  },
+                ),
+              // Edit (PLAN-6): live on Plus teams; on Free it explains Plus.
+              if (widget.mine &&
+                  !m.pending &&
+                  (m.type == MessageType.text || m.type == MessageType.image))
+                ListTile(
+                  leading: const Icon(AppIcons.edit),
+                  title: Row(
+                    children: [
+                      Text(l10n.editMessage),
+                      if (!canEdit) ...[
+                        const SizedBox(width: Space.sm),
+                        const PlusBadge(),
+                      ],
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    unawaited(
+                      canEdit
+                          ? _edit()
+                          : showWhatPlusAdds(context, isAdmin: canModerate),
+                    );
                   },
                 ),
               if (m.text.trim().isNotEmpty)
@@ -378,6 +447,8 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     ),
                   ),
                   if (time != null) TextSpan(text: '  $time'),
+                  if (m.editedAt != null && !deleted)
+                    TextSpan(text: ' · ${l10n.edited}'),
                 ],
               ),
               style: theme.textTheme.labelSmall?.copyWith(
@@ -389,7 +460,21 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ? Padding(
             padding: const EdgeInsets.only(right: Space.md, bottom: Space.xs),
             child: Text(
-              time,
+              m.editedAt != null && !deleted ? '$time · ${l10n.edited}' : time,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          )
+        : m.editedAt != null && !deleted
+        ? Padding(
+            padding: EdgeInsets.only(
+              left: mine ? 0 : Space.md,
+              right: mine ? Space.md : 0,
+              bottom: 2,
+            ),
+            child: Text(
+              l10n.edited,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),

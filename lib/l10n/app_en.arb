@@ -692,5 +692,8 @@
   "revokePlus": "End Plus now (super admin)",
   "revokePlusTitle": "End Plus for this team now?",
   "revokePlusBody": "The team goes back to Free today. Nothing is deleted.",
-  "plusRevoked": "Plus ended."
+  "plusRevoked": "Plus ended.",
+  "editMessage": "Edit",
+  "edited": "edited",
+  "editFailed": "Couldn't save the edit. Editing needs Plus on this team."
 }
