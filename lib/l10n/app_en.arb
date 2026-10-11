@@ -295,5 +295,32 @@
         "type": "String"
       }
     }
-  }
+  },
+  "leaveTeamTitle": "Leave {name}?",
+  "@leaveTeamTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "leaveTeamBody": "You'll stop getting its messages and notifications. You can rejoin with an invite.",
+  "ownerMustTransfer": "You own this team. Transfer ownership in Team settings first, or archive or delete the team.",
+  "ownerActions": "Owner actions",
+  "transferOwnership": "Transfer ownership",
+  "transferTo": "Transfer to…",
+  "transferDone": "{name} now owns the team.",
+  "@transferDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "archiveTeam": "Archive team",
+  "restoreTeam": "Restore team",
+  "archiveTeamBody": "The team becomes read-only and moves to Archived in your team switcher. You can restore it later.",
+  "deleteTeam": "Delete team",
+  "deleteTeamBody": "This permanently deletes all messages, events, documents, and files. Type the team name to confirm.",
+  "teamArchived": "This team is archived and read-only."
 }

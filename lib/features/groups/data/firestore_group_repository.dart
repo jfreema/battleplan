@@ -110,6 +110,38 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> transferOwnership(GroupId id, UserId newOwner) =>
+      _call('transferOwnership', {'groupId': id.value, 'uid': newOwner.value});
+
+  @override
+  Future<void> leave(GroupId id) => _call('leaveGroup', {'groupId': id.value});
+
+  @override
+  Future<void> setArchived(GroupId id, {required bool archived}) =>
+      _call('archiveGroup', {'groupId': id.value, 'archived': archived});
+
+  @override
+  Future<void> deleteGroup(GroupId id, String confirmName) =>
+      _call('deleteGroup', {'groupId': id.value, 'confirmName': confirmName});
+
+  Future<void> _call(String name, Map<String, Object?> data) async {
+    try {
+      await _functions.httpsCallable(name).call<void>(data);
+    } on FirebaseFunctionsException catch (e) {
+      throw switch ((e.code, e.message)) {
+        ('failed-precondition', 'owner-must-transfer') => OwnerMustTransfer(
+          e.message,
+        ),
+        ('invalid-argument', 'name-mismatch') => InvalidInput(e.message),
+        ('permission-denied', _) => PermissionDenied(e.message),
+        ('not-found', _) => NotFound(e.message),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
+        _ => UnknownFailure('${e.code}: ${e.message}'),
+      };
+    }
+  }
+
+  @override
   Future<String?> photoUrl(String path) async {
     try {
       return await _storage.ref(path).getDownloadURL();

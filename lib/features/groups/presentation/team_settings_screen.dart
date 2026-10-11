@@ -6,13 +6,17 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
+import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Reminder choices for events, in minutes (SCHED-3).
@@ -60,6 +64,79 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     }
   }
 
+  Future<void> _transfer(Group group) async {
+    final l10n = AppLocalizations.of(context);
+    final members = await ref.read(rosterProvider(group.id).future);
+    final others = members.where((m) => m.role != MemberRole.owner).toList();
+    if (!mounted) return;
+    final picked = await showDialog<Membership>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(l10n.transferTo),
+        children: [
+          for (final m in others)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(m),
+              child: Text(m.displayName),
+            ),
+        ],
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final ok = await showConfirmDialog(
+      context,
+      title: '${l10n.transferOwnership}: ${picked.displayName}?',
+      confirmLabel: l10n.transferOwnership,
+      cancelLabel: l10n.cancel,
+    );
+    if (!ok) return;
+    await _save(
+      () => ref
+          .read(groupRepositoryProvider)
+          .transferOwnership(group.id, picked.uid),
+    );
+  }
+
+  Future<void> _archive(Group group) async {
+    final l10n = AppLocalizations.of(context);
+    if (!group.isArchived) {
+      final ok = await showConfirmDialog(
+        context,
+        title: l10n.archiveTeam,
+        message: l10n.archiveTeamBody,
+        confirmLabel: l10n.archiveTeam,
+        cancelLabel: l10n.cancel,
+      );
+      if (!ok) return;
+    }
+    await _save(
+      () => ref
+          .read(groupRepositoryProvider)
+          .setArchived(group.id, archived: !group.isArchived),
+    );
+  }
+
+  Future<void> _delete(Group group) async {
+    final l10n = AppLocalizations.of(context);
+    final typed = await askText(
+      context,
+      title: l10n.deleteTeam,
+      label: group.name,
+      helper: l10n.deleteTeamBody,
+    );
+    if (typed == null || !mounted) return;
+    if (typed.trim() != group.name.trim()) {
+      showAppSnackBar(context, l10n.methodInvalid);
+      return;
+    }
+    try {
+      await ref.read(groupRepositoryProvider).deleteGroup(group.id, typed);
+      if (mounted) context.go('/');
+    } on AppFailure {
+      if (mounted) showAppSnackBar(context, l10n.signInUnknownError);
+    }
+  }
+
   static String _hex(int argb) =>
       '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
@@ -94,6 +171,8 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
       _loaded = true;
     }
     final s = group.settings;
+    final isOwner =
+        ref.watch(myMembershipProvider(group.id))?.role == MemberRole.owner;
     void setSettings(GroupSettings next) => unawaited(
       _save(() => repo.updateGroup(group.id, settings: next), announce: false),
     );
@@ -265,6 +344,29 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                     ),
                 ],
               ),
+              if (isOwner) ...[
+                section(l10n.ownerActions),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.transferOwnership),
+                  onTap: () => _transfer(group),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    group.isArchived ? l10n.restoreTeam : l10n.archiveTeam,
+                  ),
+                  onTap: () => _archive(group),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    l10n.deleteTeam,
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                  onTap: () => _delete(group),
+                ),
+              ],
               section(l10n.storage),
               Text(
                 l10n.storageUsed(

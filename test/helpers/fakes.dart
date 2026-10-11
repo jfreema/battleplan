@@ -226,6 +226,27 @@ class FakeGroupRepository implements GroupRepository {
   @override
   Future<String?> photoUrl(String path) async => null;
 
+  @override
+  Future<void> transferOwnership(GroupId id, UserId newOwner) async =>
+      updates.add('transfer ${newOwner.value}');
+
+  /// Set to make leave() behave as if the caller owns the team.
+  bool callerIsOwner = false;
+
+  @override
+  Future<void> leave(GroupId id) async {
+    if (callerIsOwner) throw const OwnerMustTransfer();
+    updates.add('leave ${id.value}');
+  }
+
+  @override
+  Future<void> setArchived(GroupId id, {required bool archived}) async =>
+      updates.add(archived ? 'archive' : 'restore');
+
+  @override
+  Future<void> deleteGroup(GroupId id, String confirmName) async =>
+      updates.add('delete $confirmName');
+
   final List<String> created = [];
 
   @override

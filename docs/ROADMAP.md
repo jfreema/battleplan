@@ -70,7 +70,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 40. ✅ Team switcher and many teams per person (TEAM-2, §5.2): most recent first, sport icons, muted icon, unread dot, archived section, Join and Create, same tab on switch, last team remembered, Ctrl/⌘+K, and the 100-team limit. *Unread counts in the switcher arrive with CHAT-9 (task 65).*
 41. ✅ Roster screen, roles, and team admins (TEAM-3, TEAM-4). *"Not joined yet" and Resend setup email arrive with add-by-email (task 46), the Players section with task 51, and Report/Block with task 66.*
 42. ✅ Team settings and member permissions (TEAM-5). *Managing the invite link joins with the invite screen (task 47).*
-43. Transfer ownership, leave, archive, and delete (TEAM-6, TEAM-8, TEAM-9).
+43. ✅ Transfer ownership, leave, archive, and delete (TEAM-6, TEAM-8, TEAM-9).
 44. 👤 **Jared:** Pick the email provider (Q10; default Resend), sign up for its free tier, and add its SPF, DKIM, and DMARC records in Cloudflare.
 45. Email sending from Functions (ARCH §6.7), with the API key in Secret Manager.
 46. Add members by email, with account creation and setup emails (TEAM-7, AUTH-6).

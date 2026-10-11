@@ -124,6 +124,14 @@ final class TooManyTeams extends AppFailure {
   String get code => 'tooManyTeams';
 }
 
+/// The owner must hand the team to someone else before leaving (TEAM-8).
+final class OwnerMustTransfer extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'ownerMustTransfer';
+}
+
 final class UnknownFailure extends AppFailure {
   const new([super.message]);
 

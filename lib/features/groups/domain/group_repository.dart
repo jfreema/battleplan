@@ -23,6 +23,18 @@ abstract interface class GroupRepository {
   /// Uploads a new team logo (TEAM-1, TEAM-5). Admins only.
   Future<void> uploadLogo(GroupId id, Uint8List jpegBytes);
 
+  /// Hands the team to another member (TEAM-6). Owner only.
+  Future<void> transferOwnership(GroupId id, UserId newOwner);
+
+  /// Leaves the team (TEAM-8). Throws OwnerMustTransfer for the owner.
+  Future<void> leave(GroupId id);
+
+  /// Archives (read-only) or restores the team (TEAM-9). Owner only.
+  Future<void> setArchived(GroupId id, {required bool archived});
+
+  /// Permanently deletes the team; [confirmName] must match (TEAM-9).
+  Future<void> deleteGroup(GroupId id, String confirmName);
+
   /// A URL to show a stored team photo, or null.
   Future<String?> photoUrl(String path);
 

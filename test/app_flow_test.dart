@@ -262,6 +262,46 @@ void main() {
     expect(groupRepo.groups['a']!.settings.membersCanCreateEvents, isTrue);
   });
 
+  testWidgets('the owner is told to transfer before leaving', (tester) async {
+    final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')})
+      ..callerIsOwner = true;
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groupRepo: groupRepo,
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Leave team'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Leave team'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Transfer ownership'), findsOneWidget);
+  });
+
+  testWidgets('deleting a team needs its exact name', (tester) async {
+    final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')});
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groupRepo: groupRepo,
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Team settings'));
+    await tester.pumpAndSettle();
+    final delete = find.text('Delete team');
+    await tester.ensureVisible(delete);
+    await tester.tap(delete);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Thunder');
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    expect(groupRepo.updates, ['delete Thunder']);
+  });
+
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with email'));

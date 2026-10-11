@@ -122,6 +122,15 @@ describe('team isolation', () => {
     await assertFails(anon.collection('messages').where('groupId', '==', 'teamA').limit(50).get());
   });
 
+  it('makes archived teams read-only', async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('groups/teamA').update({ archivedAt: ts('2026-05-01T00:00:00Z') }),
+    );
+    await assertSucceeds(as('bob').doc('messages/m1').get());
+    await assertFails(as('bob').doc('messages/m1').update({ 'reactions.bob': 'like' }));
+    await assertFails(as('alice').doc('groups/teamA').update({ name: 'Renamed', nameLower: 'renamed' }));
+  });
+
   it('blocks members of a suspended team', async () => {
     await env.withSecurityRulesDisabled((ctx) =>
       ctx.firestore().doc('groups/teamA').update({ suspendedAt: ts('2026-05-01T00:00:00Z') }),

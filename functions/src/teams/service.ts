@@ -1,6 +1,7 @@
 // Teams domain service: owns groups and groupMembers (ARCH §6.4).
 import { FieldValue } from 'firebase-admin/firestore';
-import { db } from '../shared/admin.js';
+import { db, storage } from '../shared/admin.js';
+import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
 
 import { groupMemberId } from '../shared/ids.js';
@@ -187,4 +188,34 @@ export function canRemove(
 export async function refreshMemberCount(groupId: string): Promise<void> {
   const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();
   await db().collection(Collections.groups).doc(groupId).update({ memberCount: count.data().count });
+}
+
+/** Every team-owned collection, for deleting a team (TEAM-9). */
+const TEAM_COLLECTIONS = [
+  Collections.messages,
+  Collections.polls,
+  Collections.pollVotes,
+  Collections.rsvps,
+  Collections.events,
+  Collections.eventSeries,
+  Collections.groupDocuments,
+  Collections.playerGuardians,
+  Collections.guardianRequests,
+  Collections.players,
+  Collections.invites,
+  Collections.notifications,
+  Collections.reports,
+  Collections.groupMembers,
+];
+
+/**
+ * Permanently deletes a team: every document that carries its groupId, its
+ * files in Storage, and the team itself (TEAM-9). Safe to retry.
+ */
+export async function deleteGroupData(groupId: string): Promise<void> {
+  for (const collection of TEAM_COLLECTIONS) {
+    await forEachPage(db().collection(collection).where('groupId', '==', groupId), (b, d) => b.delete(d.ref));
+  }
+  await storage().bucket().deleteFiles({ prefix: `groups/${groupId}/` }).catch(() => undefined);
+  await db().collection(Collections.groups).doc(groupId).delete();
 }

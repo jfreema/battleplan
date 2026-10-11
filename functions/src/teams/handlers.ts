@@ -1,4 +1,5 @@
 // Thin entry points for the teams domain (ARCH §6.4).
+import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { auth, db } from '../shared/admin.js';
@@ -9,8 +10,8 @@ import { parse } from '../shared/validate.js';
 import { audit } from '../audit/service.js';
 import { postSystemMessage } from '../chat/service.js';
 import { groupMemberId } from '../shared/ids.js';
-import { requireTeamAdmin } from '../shared/roles.js';
-import { canChangeRole, canRemove, createGroup as create, refreshMemberCount } from './service.js';
+import { requireTeamAdmin, roleOf } from '../shared/roles.js';
+import { canChangeRole, canRemove, createGroup as create, deleteGroupData, refreshMemberCount } from './service.js';
 
 const CreateGroupInput = z.object({
   name: z.string().trim().min(1).max(Limits.groupNameMax),
@@ -137,5 +138,104 @@ export const removeMember = onCall(async (request) => {
   });
   const name = (target.get('displayName') as string) || 'Someone';
   await postSystemMessage(input.groupId, 'removed', `${name} was removed`, actorUid, input.uid);
+  return { ok: true };
+});
+
+const GroupOnly = z.object({ groupId: z.string().min(1) });
+
+/** Throws unless the caller owns the team or is a super admin. */
+async function requireOwner(groupId: string, uid: string, superAdmin: boolean): Promise<void> {
+  if (superAdmin) return;
+  if ((await roleOf(groupId, uid)) !== 'owner') {
+    throw new HttpsError('permission-denied', 'Only the team owner can do that.');
+  }
+}
+
+/** Hands the team to another member; the old owner becomes an admin (TEAM-6). */
+export const transferOwnership = onCall(async (request) => {
+  const actorUid = requireAuth(request);
+  const input = parse(GroupOnly.extend({ uid: z.string().min(1) }), request.data);
+  await requireOwner(input.groupId, actorUid, request.auth?.token.superAdmin === true);
+  const groupRef = db().collection(Collections.groups).doc(input.groupId);
+  const ownerId = (await groupRef.get()).get('ownerId') as string;
+  if (input.uid === ownerId) return { ok: true };
+  const newRef = db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, input.uid));
+  if (!(await newRef.get()).exists) throw new HttpsError('not-found', 'Not a member.');
+  await db()
+    .batch()
+    .update(newRef, { role: 'owner' })
+    .update(db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, ownerId)), { role: 'admin' })
+    .update(groupRef, { ownerId: input.uid, updatedAt: FieldValue.serverTimestamp() })
+    .commit();
+  await audit({
+    actorId: actorUid,
+    action: 'transferOwnership',
+    groupId: input.groupId,
+    targetType: 'group',
+    targetId: input.groupId,
+    before: { ownerId },
+    after: { ownerId: input.uid },
+  });
+  return { ok: true };
+});
+
+/** Leaves a team (TEAM-8). The owner transfers ownership first. */
+export const leaveGroup = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(GroupOnly, request.data);
+  const ref = db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, uid));
+  const me = await ref.get();
+  if (!me.exists) return { ok: true };
+  if (me.get('role') === 'owner') {
+    throw new HttpsError('failed-precondition', 'owner-must-transfer');
+  }
+  await ref.delete();
+  await refreshMemberCount(input.groupId);
+  const name = (me.get('displayName') as string) || 'Someone';
+  await postSystemMessage(input.groupId, 'left', `${name} left`, uid);
+  return { ok: true };
+});
+
+/** Archives (read-only) or restores a team (TEAM-9). */
+export const archiveGroup = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(GroupOnly.extend({ archived: z.boolean() }), request.data);
+  await requireOwner(input.groupId, uid, request.auth?.token.superAdmin === true);
+  await db()
+    .collection(Collections.groups)
+    .doc(input.groupId)
+    .update({
+      archivedAt: input.archived ? FieldValue.serverTimestamp() : null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  await audit({
+    actorId: uid,
+    action: input.archived ? 'archiveGroup' : 'restoreGroup',
+    groupId: input.groupId,
+    targetType: 'group',
+    targetId: input.groupId,
+  });
+  return { ok: true };
+});
+
+/** Permanently deletes a team after the owner types its name (TEAM-9). */
+export const deleteGroup = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(GroupOnly.extend({ confirmName: z.string() }), request.data);
+  await requireOwner(input.groupId, uid, request.auth?.token.superAdmin === true);
+  const group = await db().collection(Collections.groups).doc(input.groupId).get();
+  if (!group.exists) return { ok: true };
+  if (input.confirmName.trim() !== (group.get('name') as string).trim()) {
+    throw new HttpsError('invalid-argument', 'name-mismatch');
+  }
+  await audit({
+    actorId: uid,
+    action: 'deleteGroup',
+    groupId: input.groupId,
+    targetType: 'group',
+    targetId: input.groupId,
+    before: { name: group.get('name'), memberCount: group.get('memberCount') },
+  });
+  await deleteGroupData(input.groupId);
   return { ok: true };
 });
