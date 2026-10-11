@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -13,6 +14,7 @@ import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/chat/presentation/message_tile.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -157,6 +159,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final me = ref.watch(authUserProvider).value?.uid;
     final group = ref.watch(groupProvider(widget.groupId)).value;
     final archived = group?.isArchived ?? false;
+    // A Plus team's chat look (PLAN-8): my bubble color and the background.
+    final themed = group?.has(PlanFeature.chatTheme) ?? false;
+    final look = themed ? (group!.chatTheme ?? const ChatTheme()) : null;
+    final bubbleArgb = look?.bubbleColor ?? (themed ? group!.color : null);
+    final bubbleColor = bubbleArgb == null ? null : Color(bubbleArgb);
     final messages = chat.messages;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final picker = ref.watch(photoPickerProvider);
@@ -268,6 +275,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 startsGroup: newDay || !_continues(older, m),
                 endsGroup: newer == null || !_continues(m, newer),
                 showSent: m.id == sentId,
+                bubbleColor: bubbleColor,
                 highlighted: m.id == _highlighted,
                 // Until the server writes the quote, show it from the
                 // original if it's loaded.
@@ -288,6 +296,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         Expanded(
           child: Stack(
             children: [
+              if (look != null) Positioned.fill(child: _Backdrop(look: look)),
               list,
               if (newBelow > 0)
                 Positioned(
@@ -376,6 +385,65 @@ String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
   return d.year == today.year
       ? DateFormat.MMMEd(l10n.localeName).format(d)
       : DateFormat.yMMMEd(l10n.localeName).format(d);
+}
+
+/// A Plus team's chat background (PLAN-8): a subtle pattern, or a photo
+/// under a scrim so messages stay readable.
+class _Backdrop extends ConsumerWidget {
+  const new({required this.look});
+
+  final ChatTheme look;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    switch (look.background) {
+      case ChatBackground.plain:
+        return const SizedBox.shrink();
+      case ChatBackground.pattern:
+        return CustomPaint(
+          painter: _DotsPainter(scheme.onSurface.withValues(alpha: 0.06)),
+        );
+      case ChatBackground.photo:
+        final path = look.backgroundPath;
+        final url = path == null
+            ? null
+            : ref.watch(teamPhotoUrlProvider(path)).value;
+        if (url == null) return const SizedBox.shrink();
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              url,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+            ColoredBox(color: scheme.surface.withValues(alpha: 0.78)),
+          ],
+        );
+    }
+  }
+}
+
+class _DotsPainter extends CustomPainter {
+  new(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    const step = 22.0;
+    for (var y = step / 2; y < size.height; y += step) {
+      final offset = (y ~/ step).isEven ? 0.0 : step / 2;
+      for (var x = step / 2 + offset; x < size.width; x += step) {
+        canvas.drawCircle(Offset(x, y), 1.6, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DotsPainter old) => old.color != color;
 }
 
 /// The line above the first unread message (CHAT-9).

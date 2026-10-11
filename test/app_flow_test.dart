@@ -309,6 +309,8 @@ void main() {
       300,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(delete);
+    await tester.pumpAndSettle();
     await tester.tap(delete);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, 'Thunder');
@@ -1322,6 +1324,38 @@ void main() {
       await tester.tap(find.text('Lightning').last);
       await tester.pumpAndSettle();
       expect(plans.calls, ['move lic1 b']);
+    });
+
+    testWidgets('Plus admins set the chat look (PLAN-8)', (tester) async {
+      final groupRepo = FakeGroupRepository({
+        'a': testGroup('a', 'Thunder').copyWith(
+          plan: GroupPlan(
+            tier: PlanTier.plus,
+            endsAt: DateTime.now().add(const Duration(days: 30)),
+          ),
+        ),
+      });
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groupRepo: groupRepo,
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      );
+      await tester.tap(find.byTooltip('Team menu'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Team settings'));
+      await tester.pumpAndSettle();
+      final pattern = find.text('Pattern');
+      await tester.scrollUntilVisible(
+        pattern,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(pattern);
+      await tester.pumpAndSettle();
+      await tester.tap(pattern);
+      await tester.pumpAndSettle();
+      expect(groupRepo.savedTheme?.background, ChatBackground.pattern);
     });
   });
 }

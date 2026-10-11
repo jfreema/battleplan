@@ -19,6 +19,21 @@ abstract class GroupSettings with _$GroupSettings {
   }) = _GroupSettings;
 }
 
+/// The chat background choices (PLAN-8).
+enum ChatBackground { plain, pattern, photo }
+
+/// A Plus team's chat look (PLAN-8). Kept when Plus ends, but only used
+/// while the team is on Plus.
+@freezed
+abstract class ChatTheme with _$ChatTheme {
+  const factory({
+    /// ARGB from the team palette; null uses the team's own color.
+    int? bubbleColor,
+    @Default(ChatBackground.plain) ChatBackground background,
+    String? backgroundPath,
+  }) = _ChatTheme;
+}
+
 /// A team's plan, cached from its license by the server (ARCH §6.11).
 @freezed
 abstract class GroupPlan with _$GroupPlan {
@@ -63,6 +78,7 @@ abstract class Group with _$Group {
     @Default(0) int storageBytes,
     @Default(0) int storageQuotaBytes,
     @Default(GroupPlan()) GroupPlan plan,
+    ChatTheme? chatTheme,
   }) = _Group;
 
   const new _();

@@ -113,7 +113,7 @@ The paid team plan (SPEC §6.14, [PLANS.md](PLANS.md)). These tasks are numbered
 161. ✅ Reminders 30 and 7 days before a license ends, and ending Plus in `dailyCleanup` (PLAN-5). *Tested on dev by running the job: a license 6 days out got its 7-day email, and a lapsed team went back to Free with the 5 GB quota. In-app notifications for reminders come with M4.*
 162. ✅ Edit messages, with "edited" and updated reply quotes (PLAN-6). *Tested on dev: an edit was refused on Free and allowed on Plus, another person couldn't edit it, and the reply's quote followed the new text.*
 163. ✅ 12 more reactions for Plus teams (PLAN-7). *Tested on dev: ⚾ was refused on Free and allowed on Plus; an unknown reaction was refused everywhere.*
-164. Chat look: bubble color and background (PLAN-8).
+164. ✅ Chat look: bubble color and background (PLAN-8). *Tested on dev: refused on Free and for members, allowed for a Plus team's admin, and the chat showed the green bubbles and dot pattern.*
 165. 25 GB storage and 100 MB documents on Plus (PLAN-11).
 166. Rules and tests for every Plus feature, including a Free team trying each one directly.
 

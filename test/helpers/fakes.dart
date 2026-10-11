@@ -205,6 +205,18 @@ class FakeGroupRepository implements GroupRepository {
 
   final Map<String, Group> groups;
 
+  ChatTheme? savedTheme;
+
+  @override
+  Future<void> updateChatTheme(GroupId id, ChatTheme theme) async {
+    savedTheme = theme;
+    updates.add('chatTheme');
+  }
+
+  @override
+  Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes) async =>
+      'groups/${id.value}/theme/bg.jpg';
+
   @override
   Stream<Group?> watchGroup(GroupId id) => Stream.value(groups[id.value]);
 

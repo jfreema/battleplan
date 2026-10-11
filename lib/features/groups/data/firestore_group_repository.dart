@@ -110,6 +110,45 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> updateChatTheme(GroupId id, ChatTheme theme) async {
+    String? hex(int? argb) => argb == null
+        ? null
+        : '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+    try {
+      await _db.collection(Collections.groups).doc(id.value).update({
+        'chatTheme': {
+          'bubbleColor': hex(theme.bubbleColor),
+          'background': theme.background.name,
+          'backgroundPath': theme.backgroundPath,
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes) async {
+    final path =
+        'groups/${id.value}/theme/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    try {
+      await _storage
+          .ref(path)
+          .putData(jpegBytes, SettableMetadata(contentType: 'image/jpeg'));
+      return path;
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'unauthorized' || 'permission-denied' => PermissionDenied(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
   Future<void> transferOwnership(GroupId id, UserId newOwner) =>
       _call('transferOwnership', {'groupId': id.value, 'uid': newOwner.value});
 
@@ -298,6 +337,16 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
     settings: settingsFromFirestore(d['settings'] as Map<String, dynamic>?),
     storageBytes: (d['storageBytes'] as num?)?.toInt() ?? 0,
     storageQuotaBytes: (d['storageQuotaBytes'] as num?)?.toInt() ?? 0,
+    chatTheme: switch (d['chatTheme']) {
+      final Map<String, dynamic> t => ChatTheme(
+        bubbleColor: _parseColor(t['bubbleColor'] as String?),
+        background:
+            ChatBackground.values.asNameMap()[t['background']] ??
+            ChatBackground.plain,
+        backgroundPath: t['backgroundPath'] as String?,
+      ),
+      _ => null,
+    },
     plan: switch (d['plan']) {
       final Map<String, dynamic> p => GroupPlan(
         tier: PlanTier.tryParse(p['tier'] as String?) ?? PlanTier.free,

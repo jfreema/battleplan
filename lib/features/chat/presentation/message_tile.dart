@@ -40,6 +40,7 @@ class MessageTile extends ConsumerStatefulWidget {
     required this.endsGroup,
     this.showSent = false,
     this.highlighted = false,
+    this.bubbleColor,
     this.quoted,
     this.onReply,
     this.onOpenQuote,
@@ -56,6 +57,10 @@ class MessageTile extends ConsumerStatefulWidget {
 
   /// Briefly tinted after jumping to it from a quote.
   final bool highlighted;
+
+  /// My bubbles' color on a Plus team with a chat look (PLAN-8); null uses
+  /// the brand color.
+  final Color? bubbleColor;
 
   /// The original of a reply, when loaded, for the quote until the server
   /// has written `replyPreview`.
@@ -347,8 +352,15 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ),
       );
     }
-    final background = mine ? scheme.primary : scheme.surfaceContainerHighest;
-    final foreground = mine ? scheme.onPrimary : scheme.onSurface;
+    final custom = mine ? widget.bubbleColor : null;
+    final background =
+        custom ?? (mine ? scheme.primary : scheme.surfaceContainerHighest);
+    // Text on a custom color is white or black, whichever reads better.
+    final foreground = custom != null
+        ? (ThemeData.estimateBrightnessForColor(custom) == Brightness.dark
+              ? Colors.white
+              : Colors.black)
+        : (mine ? scheme.onPrimary : scheme.onSurface);
     final time = m.createdAt == null
         ? null
         : MaterialLocalizations.of(context)

@@ -23,6 +23,12 @@ abstract interface class GroupRepository {
   /// Uploads a new team logo (TEAM-1, TEAM-5). Admins only.
   Future<void> uploadLogo(GroupId id, Uint8List jpegBytes);
 
+  /// Saves the chat look (PLAN-8). Admins of Plus teams.
+  Future<void> updateChatTheme(GroupId id, ChatTheme theme);
+
+  /// Uploads a chat background photo and returns its path (PLAN-8).
+  Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes);
+
   /// Hands the team to another member (TEAM-6). Owner only.
   Future<void> transferOwnership(GroupId id, UserId newOwner);
 

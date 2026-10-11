@@ -696,5 +696,14 @@
   "editMessage": "Edit",
   "edited": "edited",
   "editFailed": "Couldn't save the edit. Editing needs Plus on this team.",
-  "moreReactions": "More reactions"
+  "moreReactions": "More reactions",
+  "chatLook": "Chat look",
+  "chatLookHelp": "Your team's own chat colors and background",
+  "chatBubbleColor": "Message color",
+  "teamColorOption": "Team color",
+  "chatBackground": "Background",
+  "backgroundPlain": "Plain",
+  "backgroundPattern": "Pattern",
+  "backgroundPhoto": "Photo",
+  "changeBackgroundPhoto": "Change photo"
 }

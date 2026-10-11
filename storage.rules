@@ -44,6 +44,16 @@ service firebase.storage {
       allow read: if isMember(g);
       allow write: if isAdmin(g) && isImage(10) && underQuota(g);
     }
+    function isPlus(g) {
+      let plan = firestore.get(/databases/(default)/documents/groups/$(g)).data.get('plan', {});
+      return plan.get('tier', 'free') == 'plus' && plan.get('endsAt', null) != null
+        && plan.endsAt > request.time;
+    }
+    // A Plus team's chat background photo (PLAN-8).
+    match /groups/{g}/theme/{file} {
+      allow read: if isMember(g);
+      allow write: if isAdmin(g) && isImage(10) && underQuota(g) && isPlus(g);
+    }
     match /groups/{g}/messages/{messageId}/{allPaths=**} {
       allow read: if isMember(g);
       allow create: if isMember(g) && isImage(10) && underQuota(g);

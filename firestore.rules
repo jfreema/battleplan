@@ -93,9 +93,23 @@ service cloud.firestore {
       allow get: if isMember(g) || superAdmin();
       allow update: if isAdmin(g) && active(g)
         && onlyChanges(['name', 'nameLower', 'description', 'photoPath', 'color',
-                        'sport', 'timeZone', 'settings', 'updatedAt'])
-        && validGroup(incoming(), g);
+                        'sport', 'timeZone', 'settings', 'chatTheme', 'updatedAt'])
+        && validGroup(incoming(), g)
+        // The chat look is a Plus feature (PLAN-8).
+        && (!('chatTheme' in changed()) || (isPlus(g) && validChatTheme(incoming().chatTheme, g)));
       // Created and deleted by Functions (createGroup, deleteGroup).
+    }
+
+    // A team's chat look (PLAN-8): a bubble color from the team palette (or
+    // null for the team's own color) and a background.
+    function validChatTheme(t, g) {
+      return t is map && t.keys().hasOnly(['bubbleColor', 'background', 'backgroundPath'])
+        && (t.get('bubbleColor', null) == null || t.bubbleColor in ['#2F5BEA', '#0F8A5F',
+            '#C2410C', '#B91C1C', '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F',
+            '#1D4ED8', '#9333EA', '#334155'])
+        && t.get('background', 'plain') in ['plain', 'pattern', 'photo']
+        && (t.get('backgroundPath', null) == null
+            || t.backgroundPath.matches('groups/' + g + '/theme/[^/]+'));
     }
 
     // Team profile and settings as admins may write them (TEAM-5).
