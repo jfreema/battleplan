@@ -1,0 +1,8 @@
+{
+  "$comment": "Project rule: commits and PRs never credit Claude, and branch names never mention it.",
+  "includeCoAuthoredBy": false,
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
+}
