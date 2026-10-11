@@ -149,7 +149,7 @@ final class BlockedIdsProvider
   }
 }
 
-String _$blockedIdsHash() => r'6732ad31d3253982ca0ab4cf4e9dd8ccaf353065';
+String _$blockedIdsHash() => r'c8cd8169e2f44c2cb3543e5521e4312f494f7cdc';
 
 /// A team's open reports (SAFE-4). Only admins can read them.
 
