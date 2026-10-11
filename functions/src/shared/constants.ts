@@ -25,6 +25,7 @@ export const Collections = {
   auditLogs: 'auditLogs',
   rateLimits: 'rateLimits',
   config: 'config',
+  licenses: 'licenses',
 } as const;
 
 export const Limits = {
@@ -68,6 +69,14 @@ export const Limits = {
   maxUploadMb: 25,
   maxImageMb: 10,
   lastReadThrottleSeconds: 10,
+  plusStorageQuotaGb: 25,
+  plusMaxUploadMb: 100,
+  licenseDefaultMonths: 12,
+  licenseMaxMonths: 36,
+  licenseMoveCooldownDays: 30,
+  licenseReminderFirstDays: 30,
+  licenseReminderSecondDays: 7,
+  pinnedMessagesMax: 3,
 } as const;
 
 export const TEAM_COLORS = [
@@ -106,8 +115,11 @@ export type NotificationLevel = (typeof notificationLevelValues)[number];
 export const messageTypeValues = ['text', 'image', 'poll', 'event', 'system'] as const;
 export type MessageType = (typeof messageTypeValues)[number];
 
-export const reactionValues = ['like', 'love', 'dislike', 'laugh'] as const;
+export const reactionValues = ['like', 'love', 'dislike', 'laugh', 'fire', 'clap', 'party', 'hundred', 'pray', 'wow', 'sad', 'angry', 'baseball', 'basketball', 'soccer', 'trophy'] as const;
 export type Reaction = (typeof reactionValues)[number];
+
+export const freeReactionValues = ['like', 'love', 'dislike', 'laugh'] as const;
+export type FreeReaction = (typeof freeReactionValues)[number];
 
 export const eventTypeValues = ['game', 'practice', 'meeting', 'social', 'other'] as const;
 export type EventType = (typeof eventTypeValues)[number];
@@ -135,3 +147,12 @@ export type ReportStatus = (typeof reportStatusValues)[number];
 
 export const devicePlatformValues = ['ios', 'android', 'web'] as const;
 export type DevicePlatform = (typeof devicePlatformValues)[number];
+
+export const planTierValues = ['free', 'plus'] as const;
+export type PlanTier = (typeof planTierValues)[number];
+
+export const planFeatureValues = ['editMessages', 'extraReactions', 'chatTheme', 'pinMessages', 'attendanceExport', 'brandedInvite', 'moreStorage'] as const;
+export type PlanFeature = (typeof planFeatureValues)[number];
+
+export const licenseSourceValues = ['grant', 'stripe', 'appStore', 'play'] as const;
+export type LicenseSource = (typeof licenseSourceValues)[number];

@@ -298,6 +298,15 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
     settings: settingsFromFirestore(d['settings'] as Map<String, dynamic>?),
     storageBytes: (d['storageBytes'] as num?)?.toInt() ?? 0,
     storageQuotaBytes: (d['storageQuotaBytes'] as num?)?.toInt() ?? 0,
+    plan: switch (d['plan']) {
+      final Map<String, dynamic> p => GroupPlan(
+        tier: PlanTier.tryParse(p['tier'] as String?) ?? PlanTier.free,
+        endsAt: _date(p['endsAt']),
+        licenseId: p['licenseId'] as String?,
+        holderId: p['holderId'] as String?,
+      ),
+      _ => const GroupPlan(),
+    },
   );
 }
 

@@ -16,6 +16,7 @@ import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/domain/plan_repository.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
@@ -888,4 +889,33 @@ class FakeSafetyRepository implements SafetyRepository {
     open.removeWhere((r) => r.id == reportId);
     _changes.add(null);
   }
+}
+
+/// Licenses in memory; [calls] records what was asked.
+class FakePlanRepository implements PlanRepository {
+  final List<HeldLicense> licenses = [];
+  final List<String> calls = [];
+
+  @override
+  Stream<List<HeldLicense>> watchMyLicenses(UserId uid) =>
+      Stream.value([...licenses]);
+
+  @override
+  Future<void> moveLicense(String licenseId, GroupId toGroupId) async =>
+      calls.add('move $licenseId ${toGroupId.value}');
+
+  @override
+  Future<void> grantLicense(
+    GroupId groupId,
+    UserId holder, {
+    int months = 12,
+  }) async => calls.add('grant ${groupId.value} ${holder.value} $months');
+
+  @override
+  Future<void> extendLicense(String licenseId, {int months = 12}) async =>
+      calls.add('extend $licenseId $months');
+
+  @override
+  Future<void> revokeLicense(String licenseId) async =>
+      calls.add('revoke $licenseId');
 }

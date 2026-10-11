@@ -27,6 +27,7 @@ abstract final class Collections {
   static const String auditLogs = 'auditLogs';
   static const String rateLimits = 'rateLimits';
   static const String config = 'config';
+  static const String licenses = 'licenses';
 }
 
 /// Limits shared with the server and security rules.
@@ -71,6 +72,14 @@ abstract final class Limits {
   static const int maxUploadMb = 25;
   static const int maxImageMb = 10;
   static const int lastReadThrottleSeconds = 10;
+  static const int plusStorageQuotaGb = 25;
+  static const int plusMaxUploadMb = 100;
+  static const int licenseDefaultMonths = 12;
+  static const int licenseMaxMonths = 36;
+  static const int licenseMoveCooldownDays = 30;
+  static const int licenseReminderFirstDays = 30;
+  static const int licenseReminderSecondDays = 7;
+  static const int pinnedMessagesMax = 3;
 }
 
 /// The 12 team colors (TEAM-1), as ARGB.
@@ -226,7 +235,19 @@ enum Reaction {
   like('like'),
   love('love'),
   dislike('dislike'),
-  laugh('laugh');
+  laugh('laugh'),
+  fire('fire'),
+  clap('clap'),
+  party('party'),
+  hundred('hundred'),
+  pray('pray'),
+  wow('wow'),
+  sad('sad'),
+  angry('angry'),
+  baseball('baseball'),
+  basketball('basketball'),
+  soccer('soccer'),
+  trophy('trophy');
 
   const Reaction(this.value);
 
@@ -234,6 +255,25 @@ enum Reaction {
   final String value;
 
   static Reaction? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum FreeReaction {
+  like('like'),
+  love('love'),
+  dislike('dislike'),
+  laugh('laugh');
+
+  const FreeReaction(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static FreeReaction? tryParse(String? value) {
     for (final e in values) {
       if (e.value == value) return e;
     }
@@ -395,6 +435,64 @@ enum DevicePlatform {
   final String value;
 
   static DevicePlatform? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum PlanTier {
+  free('free'),
+  plus('plus');
+
+  const PlanTier(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static PlanTier? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum PlanFeature {
+  editMessages('editMessages'),
+  extraReactions('extraReactions'),
+  chatTheme('chatTheme'),
+  pinMessages('pinMessages'),
+  attendanceExport('attendanceExport'),
+  brandedInvite('brandedInvite'),
+  moreStorage('moreStorage');
+
+  const PlanFeature(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static PlanFeature? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum LicenseSource {
+  grant('grant'),
+  stripe('stripe'),
+  appStore('appStore'),
+  play('play');
+
+  const LicenseSource(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static LicenseSource? tryParse(String? value) {
     for (final e in values) {
       if (e.value == value) return e;
     }

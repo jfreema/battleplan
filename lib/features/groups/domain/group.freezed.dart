@@ -301,10 +301,285 @@ as List<int>,
 }
 
 /// @nodoc
+mixin _$GroupPlan {
+
+ PlanTier get tier; DateTime? get endsAt; String? get licenseId;/// Who holds the license and can move it (PLAN-3).
+ String? get holderId;
+/// Create a copy of GroupPlan
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$GroupPlanCopyWith<GroupPlan> get copyWith => _$GroupPlanCopyWithImpl<GroupPlan>(this as GroupPlan, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as GroupPlan;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GroupPlan&&(identical(other.tier, _this.tier) || other.tier == _this.tier)&&(identical(other.endsAt, _this.endsAt) || other.endsAt == _this.endsAt)&&(identical(other.licenseId, _this.licenseId) || other.licenseId == _this.licenseId)&&(identical(other.holderId, _this.holderId) || other.holderId == _this.holderId));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as GroupPlan;
+  return Object.hash(runtimeType,_this.tier,_this.endsAt,_this.licenseId,_this.holderId);
+}
+
+@override
+String toString() {
+  final _this = this as GroupPlan;
+  return 'GroupPlan(tier: ${_this.tier}, endsAt: ${_this.endsAt}, licenseId: ${_this.licenseId}, holderId: ${_this.holderId})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $GroupPlanCopyWith<$Res>  {
+  factory $GroupPlanCopyWith(GroupPlan value, $Res Function(GroupPlan) _then) = _$GroupPlanCopyWithImpl;
+@useResult
+$Res call({
+ PlanTier tier, DateTime? endsAt, String? licenseId, String? holderId
+});
+
+
+
+
+}
+/// @nodoc
+class _$GroupPlanCopyWithImpl<$Res>
+    implements $GroupPlanCopyWith<$Res> {
+  _$GroupPlanCopyWithImpl(this._self, this._then);
+
+  final GroupPlan _self;
+  final $Res Function(GroupPlan) _then;
+
+/// Create a copy of GroupPlan
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? tier = null,Object? endsAt = freezed,Object? licenseId = freezed,Object? holderId = freezed,}) {
+  return _then(GroupPlan(
+tier: null == tier ? _self.tier : tier // ignore: cast_nullable_to_non_nullable
+as PlanTier,endsAt: freezed == endsAt ? _self.endsAt : endsAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,licenseId: freezed == licenseId ? _self.licenseId : licenseId // ignore: cast_nullable_to_non_nullable
+as String?,holderId: freezed == holderId ? _self.holderId : holderId // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [GroupPlan].
+extension GroupPlanPatterns on GroupPlan {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _GroupPlan value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _GroupPlan() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _GroupPlan value)  $default,){
+final _that = this;
+switch (_that) {
+case _GroupPlan():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _GroupPlan value)?  $default,){
+final _that = this;
+switch (_that) {
+case _GroupPlan() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlanTier tier,  DateTime? endsAt,  String? licenseId,  String? holderId)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _GroupPlan() when $default != null:
+return $default(_that.tier,_that.endsAt,_that.licenseId,_that.holderId);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlanTier tier,  DateTime? endsAt,  String? licenseId,  String? holderId)  $default,) {final _that = this;
+switch (_that) {
+case _GroupPlan():
+return $default(_that.tier,_that.endsAt,_that.licenseId,_that.holderId);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlanTier tier,  DateTime? endsAt,  String? licenseId,  String? holderId)?  $default,) {final _that = this;
+switch (_that) {
+case _GroupPlan() when $default != null:
+return $default(_that.tier,_that.endsAt,_that.licenseId,_that.holderId);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _GroupPlan extends GroupPlan {
+  const _GroupPlan({this.tier = PlanTier.free, this.endsAt, this.licenseId, this.holderId}): super._();
+  
+
+@override@JsonKey() final  PlanTier tier;
+@override final  DateTime? endsAt;
+@override final  String? licenseId;
+/// Who holds the license and can move it (PLAN-3).
+@override final  String? holderId;
+
+/// Create a copy of GroupPlan
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$GroupPlanCopyWith<_GroupPlan> get copyWith => __$GroupPlanCopyWithImpl<_GroupPlan>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GroupPlan&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.endsAt, endsAt) || other.endsAt == endsAt)&&(identical(other.licenseId, licenseId) || other.licenseId == licenseId)&&(identical(other.holderId, holderId) || other.holderId == holderId));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,tier,endsAt,licenseId,holderId);
+}
+
+@override
+String toString() {
+    return 'GroupPlan(tier: $tier, endsAt: $endsAt, licenseId: $licenseId, holderId: $holderId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$GroupPlanCopyWith<$Res> implements $GroupPlanCopyWith<$Res> {
+  factory _$GroupPlanCopyWith(_GroupPlan value, $Res Function(_GroupPlan) _then) = __$GroupPlanCopyWithImpl;
+@override @useResult
+$Res call({
+ PlanTier tier, DateTime? endsAt, String? licenseId, String? holderId
+});
+
+
+
+
+}
+/// @nodoc
+class __$GroupPlanCopyWithImpl<$Res>
+    implements _$GroupPlanCopyWith<$Res> {
+  __$GroupPlanCopyWithImpl(this._self, this._then);
+
+  final _GroupPlan _self;
+  final $Res Function(_GroupPlan) _then;
+
+/// Create a copy of GroupPlan
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? tier = null,Object? endsAt = freezed,Object? licenseId = freezed,Object? holderId = freezed,}) {
+  return _then(_GroupPlan(
+tier: null == tier ? _self.tier : tier // ignore: cast_nullable_to_non_nullable
+as PlanTier,endsAt: freezed == endsAt ? _self.endsAt : endsAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,licenseId: freezed == licenseId ? _self.licenseId : licenseId // ignore: cast_nullable_to_non_nullable
+as String?,holderId: freezed == holderId ? _self.holderId : holderId // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$Group {
 
  GroupId get id; String get name; Sport get sport; TeamType get teamType; int get memberCount; String? get description;/// ARGB team color (one of `teamColorValues`).
- int? get color; DateTime? get lastMessageAt; String? get lastMessagePreview; DateTime? get archivedAt; DateTime? get suspendedAt; String? get ownerId; String? get photoPath; String get timeZone; GroupSettings get settings; int get storageBytes; int get storageQuotaBytes;
+ int? get color; DateTime? get lastMessageAt; String? get lastMessagePreview; DateTime? get archivedAt; DateTime? get suspendedAt; String? get ownerId; String? get photoPath; String get timeZone; GroupSettings get settings; int get storageBytes; int get storageQuotaBytes; GroupPlan get plan;
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -316,20 +591,20 @@ $GroupCopyWith<Group> get copyWith => _$GroupCopyWithImpl<Group>(this as Group, 
 @override
 bool operator ==(Object other) {
   final _this = this as Group;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Group&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.teamType, _this.teamType) || other.teamType == _this.teamType)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.lastMessagePreview, _this.lastMessagePreview) || other.lastMessagePreview == _this.lastMessagePreview)&&(identical(other.archivedAt, _this.archivedAt) || other.archivedAt == _this.archivedAt)&&(identical(other.suspendedAt, _this.suspendedAt) || other.suspendedAt == _this.suspendedAt)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.timeZone, _this.timeZone) || other.timeZone == _this.timeZone)&&(identical(other.settings, _this.settings) || other.settings == _this.settings)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Group&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.teamType, _this.teamType) || other.teamType == _this.teamType)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.lastMessagePreview, _this.lastMessagePreview) || other.lastMessagePreview == _this.lastMessagePreview)&&(identical(other.archivedAt, _this.archivedAt) || other.archivedAt == _this.archivedAt)&&(identical(other.suspendedAt, _this.suspendedAt) || other.suspendedAt == _this.suspendedAt)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.timeZone, _this.timeZone) || other.timeZone == _this.timeZone)&&(identical(other.settings, _this.settings) || other.settings == _this.settings)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes)&&(identical(other.plan, _this.plan) || other.plan == _this.plan));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Group;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.sport,_this.teamType,_this.memberCount,_this.description,_this.color,_this.lastMessageAt,_this.lastMessagePreview,_this.archivedAt,_this.suspendedAt,_this.ownerId,_this.photoPath,_this.timeZone,_this.settings,_this.storageBytes,_this.storageQuotaBytes);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.sport,_this.teamType,_this.memberCount,_this.description,_this.color,_this.lastMessageAt,_this.lastMessagePreview,_this.archivedAt,_this.suspendedAt,_this.ownerId,_this.photoPath,_this.timeZone,_this.settings,_this.storageBytes,_this.storageQuotaBytes,_this.plan);
 }
 
 @override
 String toString() {
   final _this = this as Group;
-  return 'Group(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, teamType: ${_this.teamType}, memberCount: ${_this.memberCount}, description: ${_this.description}, color: ${_this.color}, lastMessageAt: ${_this.lastMessageAt}, lastMessagePreview: ${_this.lastMessagePreview}, archivedAt: ${_this.archivedAt}, suspendedAt: ${_this.suspendedAt}, ownerId: ${_this.ownerId}, photoPath: ${_this.photoPath}, timeZone: ${_this.timeZone}, settings: ${_this.settings}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes})';
+  return 'Group(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, teamType: ${_this.teamType}, memberCount: ${_this.memberCount}, description: ${_this.description}, color: ${_this.color}, lastMessageAt: ${_this.lastMessageAt}, lastMessagePreview: ${_this.lastMessagePreview}, archivedAt: ${_this.archivedAt}, suspendedAt: ${_this.suspendedAt}, ownerId: ${_this.ownerId}, photoPath: ${_this.photoPath}, timeZone: ${_this.timeZone}, settings: ${_this.settings}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes}, plan: ${_this.plan})';
 }
 
 
@@ -340,11 +615,11 @@ abstract mixin class $GroupCopyWith<$Res>  {
   factory $GroupCopyWith(Group value, $Res Function(Group) _then) = _$GroupCopyWithImpl;
 @useResult
 $Res call({
- GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes
+ GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, GroupPlan plan
 });
 
 
-$GroupSettingsCopyWith<$Res> get settings;
+$GroupSettingsCopyWith<$Res> get settings;$GroupPlanCopyWith<$Res> get plan;
 
 }
 /// @nodoc
@@ -357,7 +632,7 @@ class _$GroupCopyWithImpl<$Res>
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? plan = null,}) {
   return _then(Group(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -376,7 +651,8 @@ as String?,timeZone: null == timeZone ? _self.timeZone : timeZone // ignore: cas
 as String,settings: null == settings ? _self.settings : settings // ignore: cast_nullable_to_non_nullable
 as GroupSettings,storageBytes: null == storageBytes ? _self.storageBytes : storageBytes // ignore: cast_nullable_to_non_nullable
 as int,storageQuotaBytes: null == storageQuotaBytes ? _self.storageQuotaBytes : storageQuotaBytes // ignore: cast_nullable_to_non_nullable
-as int,
+as int,plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
+as GroupPlan,
   ));
 }
 /// Create a copy of Group
@@ -387,6 +663,15 @@ $GroupSettingsCopyWith<$Res> get settings {
   
   return $GroupSettingsCopyWith<$Res>(_self.settings, (value) {
     return _then(_self.copyWith(settings: value));
+  });
+}/// Create a copy of Group
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$GroupPlanCopyWith<$Res> get plan {
+  
+  return $GroupPlanCopyWith<$Res>(_self.plan, (value) {
+    return _then(_self.copyWith(plan: value));
   });
 }
 }
@@ -470,10 +755,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  GroupPlan plan)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes);case _:
+return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.plan);case _:
   return orElse();
 
 }
@@ -491,10 +776,10 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  GroupPlan plan)  $default,) {final _that = this;
 switch (_that) {
 case _Group():
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes);case _:
+return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.plan);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -511,10 +796,10 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  GroupPlan plan)?  $default,) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes);case _:
+return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.plan);case _:
   return null;
 
 }
@@ -526,7 +811,7 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount
 
 
 class _Group extends Group {
-  const _Group({required this.id, required this.name, required this.sport, required this.teamType, required this.memberCount, this.description, this.color, this.lastMessageAt, this.lastMessagePreview, this.archivedAt, this.suspendedAt, this.ownerId, this.photoPath, this.timeZone = 'America/Chicago', this.settings = const GroupSettings(), this.storageBytes = 0, this.storageQuotaBytes = 0}): super._();
+  const _Group({required this.id, required this.name, required this.sport, required this.teamType, required this.memberCount, this.description, this.color, this.lastMessageAt, this.lastMessagePreview, this.archivedAt, this.suspendedAt, this.ownerId, this.photoPath, this.timeZone = 'America/Chicago', this.settings = const GroupSettings(), this.storageBytes = 0, this.storageQuotaBytes = 0, this.plan = const GroupPlan()}): super._();
   
 
 @override final  GroupId id;
@@ -547,6 +832,7 @@ class _Group extends Group {
 @override@JsonKey() final  GroupSettings settings;
 @override@JsonKey() final  int storageBytes;
 @override@JsonKey() final  int storageQuotaBytes;
+@override@JsonKey() final  GroupPlan plan;
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
@@ -558,18 +844,18 @@ _$GroupCopyWith<_Group> get copyWith => __$GroupCopyWithImpl<_Group>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Group&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.teamType, teamType) || other.teamType == teamType)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.description, description) || other.description == description)&&(identical(other.color, color) || other.color == color)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastMessagePreview, lastMessagePreview) || other.lastMessagePreview == lastMessagePreview)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.suspendedAt, suspendedAt) || other.suspendedAt == suspendedAt)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.timeZone, timeZone) || other.timeZone == timeZone)&&(identical(other.settings, settings) || other.settings == settings)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Group&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.teamType, teamType) || other.teamType == teamType)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.description, description) || other.description == description)&&(identical(other.color, color) || other.color == color)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastMessagePreview, lastMessagePreview) || other.lastMessagePreview == lastMessagePreview)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.suspendedAt, suspendedAt) || other.suspendedAt == suspendedAt)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.timeZone, timeZone) || other.timeZone == timeZone)&&(identical(other.settings, settings) || other.settings == settings)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes)&&(identical(other.plan, plan) || other.plan == plan));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,sport,teamType,memberCount,description,color,lastMessageAt,lastMessagePreview,archivedAt,suspendedAt,ownerId,photoPath,timeZone,settings,storageBytes,storageQuotaBytes);
+    return Object.hash(runtimeType,id,name,sport,teamType,memberCount,description,color,lastMessageAt,lastMessagePreview,archivedAt,suspendedAt,ownerId,photoPath,timeZone,settings,storageBytes,storageQuotaBytes,plan);
 }
 
 @override
 String toString() {
-    return 'Group(id: $id, name: $name, sport: $sport, teamType: $teamType, memberCount: $memberCount, description: $description, color: $color, lastMessageAt: $lastMessageAt, lastMessagePreview: $lastMessagePreview, archivedAt: $archivedAt, suspendedAt: $suspendedAt, ownerId: $ownerId, photoPath: $photoPath, timeZone: $timeZone, settings: $settings, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes)';
+    return 'Group(id: $id, name: $name, sport: $sport, teamType: $teamType, memberCount: $memberCount, description: $description, color: $color, lastMessageAt: $lastMessageAt, lastMessagePreview: $lastMessagePreview, archivedAt: $archivedAt, suspendedAt: $suspendedAt, ownerId: $ownerId, photoPath: $photoPath, timeZone: $timeZone, settings: $settings, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes, plan: $plan)';
 }
 
 
@@ -580,11 +866,11 @@ abstract mixin class _$GroupCopyWith<$Res> implements $GroupCopyWith<$Res> {
   factory _$GroupCopyWith(_Group value, $Res Function(_Group) _then) = __$GroupCopyWithImpl;
 @override @useResult
 $Res call({
- GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes
+ GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, GroupPlan plan
 });
 
 
-@override $GroupSettingsCopyWith<$Res> get settings;
+@override $GroupSettingsCopyWith<$Res> get settings;@override $GroupPlanCopyWith<$Res> get plan;
 
 }
 /// @nodoc
@@ -597,7 +883,7 @@ class __$GroupCopyWithImpl<$Res>
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? plan = null,}) {
   return _then(_Group(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -616,7 +902,8 @@ as String?,timeZone: null == timeZone ? _self.timeZone : timeZone // ignore: cas
 as String,settings: null == settings ? _self.settings : settings // ignore: cast_nullable_to_non_nullable
 as GroupSettings,storageBytes: null == storageBytes ? _self.storageBytes : storageBytes // ignore: cast_nullable_to_non_nullable
 as int,storageQuotaBytes: null == storageQuotaBytes ? _self.storageQuotaBytes : storageQuotaBytes // ignore: cast_nullable_to_non_nullable
-as int,
+as int,plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
+as GroupPlan,
   ));
 }
 
@@ -628,6 +915,15 @@ $GroupSettingsCopyWith<$Res> get settings {
   
   return $GroupSettingsCopyWith<$Res>(_self.settings, (value) {
     return _then(_self.copyWith(settings: value));
+  });
+}/// Create a copy of Group
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$GroupPlanCopyWith<$Res> get plan {
+  
+  return $GroupPlanCopyWith<$Res>(_self.plan, (value) {
+    return _then(_self.copyWith(plan: value));
   });
 }
 }

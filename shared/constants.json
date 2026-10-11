@@ -22,26 +22,139 @@
     "reports": "reports",
     "auditLogs": "auditLogs",
     "rateLimits": "rateLimits",
-    "config": "config"
+    "config": "config",
+    "licenses": "licenses"
   },
   "enums": {
-    "userStatus": ["provisioned", "active", "disabled"],
-    "themePreference": ["system", "light", "dark"],
-    "teamType": ["adult", "youth"],
-    "sport": ["baseball", "basketball", "football", "hockey", "lacrosse", "soccer", "softball", "volleyball", "other"],
-    "memberRole": ["owner", "admin", "member"],
-    "notificationLevel": ["all", "important", "none"],
-    "messageType": ["text", "image", "poll", "event", "system"],
-    "reaction": ["like", "love", "dislike", "laugh"],
-    "eventType": ["game", "practice", "meeting", "social", "other"],
-    "homeAway": ["home", "away"],
-    "rsvpFor": ["members", "players"],
-    "participantType": ["member", "player"],
-    "rsvpStatus": ["going", "maybe", "not_going"],
-    "documentKind": ["file", "link"],
-    "reportReason": ["spam", "harassment", "inappropriate", "other"],
-    "reportStatus": ["open", "actioned", "dismissed"],
-    "devicePlatform": ["ios", "android", "web"]
+    "userStatus": [
+      "provisioned",
+      "active",
+      "disabled"
+    ],
+    "themePreference": [
+      "system",
+      "light",
+      "dark"
+    ],
+    "teamType": [
+      "adult",
+      "youth"
+    ],
+    "sport": [
+      "baseball",
+      "basketball",
+      "football",
+      "hockey",
+      "lacrosse",
+      "soccer",
+      "softball",
+      "volleyball",
+      "other"
+    ],
+    "memberRole": [
+      "owner",
+      "admin",
+      "member"
+    ],
+    "notificationLevel": [
+      "all",
+      "important",
+      "none"
+    ],
+    "messageType": [
+      "text",
+      "image",
+      "poll",
+      "event",
+      "system"
+    ],
+    "reaction": [
+      "like",
+      "love",
+      "dislike",
+      "laugh",
+      "fire",
+      "clap",
+      "party",
+      "hundred",
+      "pray",
+      "wow",
+      "sad",
+      "angry",
+      "baseball",
+      "basketball",
+      "soccer",
+      "trophy"
+    ],
+    "freeReaction": [
+      "like",
+      "love",
+      "dislike",
+      "laugh"
+    ],
+    "eventType": [
+      "game",
+      "practice",
+      "meeting",
+      "social",
+      "other"
+    ],
+    "homeAway": [
+      "home",
+      "away"
+    ],
+    "rsvpFor": [
+      "members",
+      "players"
+    ],
+    "participantType": [
+      "member",
+      "player"
+    ],
+    "rsvpStatus": [
+      "going",
+      "maybe",
+      "not_going"
+    ],
+    "documentKind": [
+      "file",
+      "link"
+    ],
+    "reportReason": [
+      "spam",
+      "harassment",
+      "inappropriate",
+      "other"
+    ],
+    "reportStatus": [
+      "open",
+      "actioned",
+      "dismissed"
+    ],
+    "devicePlatform": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "planTier": [
+      "free",
+      "plus"
+    ],
+    "planFeature": [
+      "editMessages",
+      "extraReactions",
+      "chatTheme",
+      "pinMessages",
+      "attendanceExport",
+      "brandedInvite",
+      "moreStorage"
+    ],
+    "licenseSource": [
+      "grant",
+      "stripe",
+      "appStore",
+      "play"
+    ]
   },
   "limits": {
     "messageTextMax": 4000,
@@ -83,8 +196,29 @@
     "defaultStorageQuotaGb": 5,
     "maxUploadMb": 25,
     "maxImageMb": 10,
-    "lastReadThrottleSeconds": 10
+    "lastReadThrottleSeconds": 10,
+    "plusStorageQuotaGb": 25,
+    "plusMaxUploadMb": 100,
+    "licenseDefaultMonths": 12,
+    "licenseMaxMonths": 36,
+    "licenseMoveCooldownDays": 30,
+    "licenseReminderFirstDays": 30,
+    "licenseReminderSecondDays": 7,
+    "pinnedMessagesMax": 3
   },
   "inviteCodeAlphabet": "23456789ABCDEFGHJKMNPQRSTUVWXYZ",
-  "teamColors": ["#2F5BEA", "#0F8A5F", "#C2410C", "#B91C1C", "#7C3AED", "#0E7490", "#A16207", "#BE185D", "#4D7C0F", "#1D4ED8", "#9333EA", "#334155"]
+  "teamColors": [
+    "#2F5BEA",
+    "#0F8A5F",
+    "#C2410C",
+    "#B91C1C",
+    "#7C3AED",
+    "#0E7490",
+    "#A16207",
+    "#BE185D",
+    "#4D7C0F",
+    "#1D4ED8",
+    "#9333EA",
+    "#334155"
+  ]
 }

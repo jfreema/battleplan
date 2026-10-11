@@ -6,6 +6,7 @@ import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:battleplan/features/groups/domain/plan_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
@@ -82,6 +83,19 @@ Membership? myMembership(Ref ref, GroupId groupId) => ref
 @riverpod
 Future<String?> teamPhotoUrl(Ref ref, String path) =>
     ref.watch(groupRepositoryProvider).photoUrl(path);
+
+/// Overridden in app/providers.dart.
+@Riverpod(keepAlive: true)
+PlanRepository planRepository(Ref ref) =>
+    throw UnimplementedError('Wired in app/providers.dart');
+
+/// Plus licenses I hold that haven't ended (PLAN-3).
+@riverpod
+Stream<List<HeldLicense>> myLicenses(Ref ref) {
+  final uid = ref.watch(authUserProvider).value?.uid;
+  if (uid == null) return Stream.value(const []);
+  return ref.watch(planRepositoryProvider).watchMyLicenses(UserId(uid));
+}
 
 /// Overridden in app/providers.dart.
 @Riverpod(keepAlive: true)

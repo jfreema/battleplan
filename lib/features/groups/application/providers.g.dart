@@ -518,6 +518,98 @@ final class TeamPhotoUrlFamily extends $Family
 
 /// Overridden in app/providers.dart.
 
+@ProviderFor(planRepository)
+final planRepositoryProvider = PlanRepositoryProvider._();
+
+/// Overridden in app/providers.dart.
+
+final class PlanRepositoryProvider
+    extends $FunctionalProvider<PlanRepository, PlanRepository, PlanRepository>
+    with $Provider<PlanRepository> {
+  /// Overridden in app/providers.dart.
+  PlanRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'planRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$planRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<PlanRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PlanRepository create(Ref ref) {
+    return planRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PlanRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PlanRepository>(value),
+    );
+  }
+}
+
+String _$planRepositoryHash() => r'e1e20541b7caf208822cda6d0766c2adb0f5b2b6';
+
+/// Plus licenses I hold that haven't ended (PLAN-3).
+
+@ProviderFor(myLicenses)
+final myLicensesProvider = MyLicensesProvider._();
+
+/// Plus licenses I hold that haven't ended (PLAN-3).
+
+final class MyLicensesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<HeldLicense>>,
+          List<HeldLicense>,
+          Stream<List<HeldLicense>>
+        >
+    with
+        $FutureModifier<List<HeldLicense>>,
+        $StreamProvider<List<HeldLicense>> {
+  /// Plus licenses I hold that haven't ended (PLAN-3).
+  MyLicensesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myLicensesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myLicensesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<HeldLicense>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<HeldLicense>> create(Ref ref) {
+    return myLicenses(ref);
+  }
+}
+
+String _$myLicensesHash() => r'ef2052826e571db230c69b939bb088e59ba28c4f';
+
+/// Overridden in app/providers.dart.
+
 @ProviderFor(inviteRepository)
 final inviteRepositoryProvider = InviteRepositoryProvider._();
 

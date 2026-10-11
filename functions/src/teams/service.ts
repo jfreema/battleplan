@@ -142,6 +142,8 @@ export async function createGroup(
       lastMessagePreview: null,
       storageBytes: 0,
       storageQuotaBytes: quotaGb * 1024 ** 3,
+      // Every team starts on Free (PLAN-1); licenses move it to Plus.
+      plan: { tier: 'free', endsAt: null, licenseId: null, holderId: null },
       archivedAt: null,
       suspendedAt: null,
       createdAt: now,

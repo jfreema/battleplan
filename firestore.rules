@@ -29,6 +29,13 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/playerGuardians/$(playerId + '_' + uid()));
     }
     function settings(g) { return get(groupPath(g)).data.settings; }
+    // Plus (§6.11): the team's cached plan, and its end date checked now, so
+    // Plus stops on time even before the daily job runs.
+    function isPlus(g) {
+      let plan = get(groupPath(g)).data.get('plan', {});
+      return plan.get('tier', 'free') == 'plus' && plan.get('endsAt', null) != null
+        && plan.endsAt > request.time;
+    }
     // Archived teams are read-only (TEAM-9).
     function active(g) { return get(groupPath(g)).data.get('archivedAt', null) == null; }
 
@@ -323,6 +330,14 @@ service cloud.firestore {
 
     match /reports/{reportId} {
       allow get, list: if superAdmin() || isAdmin(resource.data.groupId);
+    }
+
+    // Plus licenses (§6.11): the holder and super admins can read them;
+    // only Functions write them.
+    match /licenses/{licenseId} {
+      allow get: if signedIn() && (resource.data.holderId == uid() || superAdmin());
+      allow list: if boundedQuery() && signedIn()
+        && (resource.data.holderId == uid() || superAdmin());
     }
 
     match /auditLogs/{logId} {

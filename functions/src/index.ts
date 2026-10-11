@@ -24,6 +24,7 @@ export {
 export { dailyCleanup, onGroupFileAdded, onGroupFileRemoved } from './teams/triggers.js';
 export { deleteMessage } from './chat/handlers.js';
 export { reportContent, resolveReport } from './safety/handlers.js';
+export { adminExtendLicense, adminGrantLicense, adminRevokeLicense, moveLicense } from './plans/handlers.js';
 export { onMessageCreated } from './chat/triggers.js';
 export {
   getInvitePreview,

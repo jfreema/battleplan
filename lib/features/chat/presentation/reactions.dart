@@ -18,11 +18,39 @@ const List<Reaction> reactionOrder = [
   Reaction.laugh,
 ];
 
+/// The 12 more Plus teams get (PLAN-7), in picker order.
+const List<Reaction> plusReactionOrder = [
+  Reaction.fire,
+  Reaction.clap,
+  Reaction.party,
+  Reaction.hundred,
+  Reaction.pray,
+  Reaction.wow,
+  Reaction.sad,
+  Reaction.angry,
+  Reaction.baseball,
+  Reaction.basketball,
+  Reaction.soccer,
+  Reaction.trophy,
+];
+
 String reactionEmoji(Reaction r) => switch (r) {
   Reaction.like => '👍',
   Reaction.love => '❤️',
   Reaction.dislike => '👎',
   Reaction.laugh => '😂',
+  Reaction.fire => '🔥',
+  Reaction.clap => '👏',
+  Reaction.party => '🎉',
+  Reaction.hundred => '💯',
+  Reaction.pray => '🙏',
+  Reaction.wow => '😮',
+  Reaction.sad => '😢',
+  Reaction.angry => '😡',
+  Reaction.baseball => '⚾',
+  Reaction.basketball => '🏀',
+  Reaction.soccer => '⚽',
+  Reaction.trophy => '🏆',
 };
 
 String reactionName(AppLocalizations l10n, Reaction r) => switch (r) {
@@ -30,6 +58,18 @@ String reactionName(AppLocalizations l10n, Reaction r) => switch (r) {
   Reaction.love => l10n.reactionLove,
   Reaction.dislike => l10n.reactionDislike,
   Reaction.laugh => l10n.reactionLaugh,
+  Reaction.fire => l10n.reactionFire,
+  Reaction.clap => l10n.reactionClap,
+  Reaction.party => l10n.reactionParty,
+  Reaction.hundred => l10n.reactionHundred,
+  Reaction.pray => l10n.reactionPray,
+  Reaction.wow => l10n.reactionWow,
+  Reaction.sad => l10n.reactionSad,
+  Reaction.angry => l10n.reactionAngry,
+  Reaction.baseball => l10n.reactionBaseball,
+  Reaction.basketball => l10n.reactionBasketball,
+  Reaction.soccer => l10n.reactionSoccer,
+  Reaction.trophy => l10n.reactionTrophy,
 };
 
 /// The row of four reactions at the top of the message menu.

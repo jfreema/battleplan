@@ -14,6 +14,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
+import 'package:battleplan/features/groups/presentation/plan_section.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -344,6 +345,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                     ),
                 ],
               ),
+              // Free or Plus, and the license (PLAN-4).
+              section(l10n.planSection),
+              PlanSection(group: group),
               // Storage used against the team's quota (D16).
               section(l10n.storageSection),
               if (group.storageQuotaBytes > 0) ...[

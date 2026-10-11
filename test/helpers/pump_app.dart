@@ -31,6 +31,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeMessageRepository? messageRepo,
   FakePhotoPicker? photoPicker,
   FakeSafetyRepository? safety,
+  FakePlanRepository? plans,
 }) async {
   // A tall phone-sized screen, so long settings lists fit without scrolling.
   tester.view
@@ -57,6 +58,7 @@ Future<FakeLocalPrefs> pumpApp(
         playerRepositoryProvider.overrideWithValue(
           playerRepo ?? FakePlayerRepository(),
         ),
+        planRepositoryProvider.overrideWithValue(plans ?? FakePlanRepository()),
         safetyRepositoryProvider.overrideWithValue(
           safety ?? FakeSafetyRepository(),
         ),

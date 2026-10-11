@@ -5,6 +5,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
@@ -1167,5 +1168,70 @@ void main() {
     await tester.pumpAndSettle();
     expect(safety.blocks, isEmpty);
     expect(find.text("You haven't blocked anyone."), findsOneWidget);
+  });
+  group('Plus plan (PLAN-2 to PLAN-4)', () {
+    Future<void> openSettings(WidgetTester tester) async {
+      await tester.tap(find.byTooltip('Team menu'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Team settings'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('What Plus adds'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+    }
+
+    testWidgets('a super admin grants Plus to a team admin', (tester) async {
+      final plans = FakePlanRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach.copyWith(isSuperAdmin: true)),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        plans: plans,
+      );
+      await openSettings(tester);
+      expect(find.text('Free'), findsOneWidget);
+      await tester.tap(find.text('Grant Plus (super admin)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('coach').last);
+      await tester.pumpAndSettle();
+      expect(plans.calls, ['grant a coach 12']);
+    });
+
+    testWidgets('the holder moves Plus to another team they admin', (
+      tester,
+    ) async {
+      final plans = FakePlanRepository();
+      final until = DateTime.now().add(const Duration(days: 200));
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder').copyWith(
+            plan: GroupPlan(
+              tier: PlanTier.plus,
+              endsAt: until,
+              licenseId: 'lic1',
+              holderId: 'coach',
+            ),
+          ),
+          'b': testGroup('b', 'Lightning'),
+        },
+        memberships: [
+          testMembership('a', 'coach', role: MemberRole.owner),
+          testMembership('b', 'coach', role: MemberRole.admin),
+        ],
+        plans: plans,
+      );
+      await openSettings(tester);
+      expect(find.textContaining('Plus until'), findsOneWidget);
+      await tester.tap(find.text('Move to another team'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Lightning').last);
+      await tester.pumpAndSettle();
+      expect(plans.calls, ['move lic1 b']);
+    });
   });
 }
