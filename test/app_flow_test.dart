@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
@@ -713,6 +714,26 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.photoBatches, [2]);
       expect(find.byType(GridView), findsOneWidget);
+    });
+
+    testWidgets('delivery states: sent, and not sent with retry (CHAT-4)', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository()
+        ..failSends = const PermissionDenied('test');
+      await openChat(tester, repo);
+      await tester.enterText(find.byType(TextField), 'Rain check?');
+      await tester.pump();
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
+      expect(find.text('Not sent'), findsOneWidget);
+      repo.failSends = null;
+      await tester.tap(find.widgetWithText(TextButton, 'Retry'));
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+      expect(find.text('Not sent'), findsNothing);
+      expect(repo.sent, ['Rain check?']);
+      expect(find.text('Rain check?'), findsOneWidget);
+      expect(find.text('Sent'), findsOneWidget);
     });
 
     testWidgets('scrolling up loads older messages 50 at a time', (

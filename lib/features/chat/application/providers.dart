@@ -31,7 +31,23 @@ abstract class ChatState with _$ChatState {
 
     /// Photo messages still uploading, oldest first (CHAT-3).
     @Default(<OutgoingPhotos>[]) List<OutgoingPhotos> outgoing,
+
+    /// Text messages waiting their turn or refused, oldest first (CHAT-4).
+    /// Each disappears once the server has it.
+    @Default(<OutgoingText>[]) List<OutgoingText> queued,
   }) = _ChatState;
+}
+
+/// A text message not yet on the server: waiting in the send queue (for
+/// example while offline), or refused and waiting for Retry or Delete.
+@freezed
+abstract class OutgoingText with _$OutgoingText {
+  const factory({
+    /// The message ID it will have on the server.
+    required String id,
+    required String text,
+    @Default(false) bool failed,
+  }) = _OutgoingText;
 }
 
 /// A photo message on its way up, shown in the chat with its progress.
@@ -58,6 +74,7 @@ Future<String?> attachmentUrl(Ref ref, String path) =>
 @riverpod
 class ChatMessages extends _$ChatMessages {
   final Map<String, Message> _known = {};
+  Set<String> _liveIds = {};
   PageCursor? _liveCursor;
   PageCursor? _olderCursor;
   bool _loadedOlder = false;
@@ -76,6 +93,14 @@ class ChatMessages extends _$ChatMessages {
         .watch(messageRepositoryProvider)
         .watchNewest(groupId)
         .listen((page) {
+          final ids = {for (final m in page.messages) m.id};
+          // A message that leaves the live page has either slid out as newer
+          // ones arrived (keep it) or was a local write the server refused
+          // (drop it; the send queue shows it as failed).
+          for (final gone in _liveIds.difference(ids)) {
+            if (_known[gone]?.pending ?? false) _known.remove(gone);
+          }
+          _liveIds = ids;
           for (final m in page.messages) {
             _known[m.id] = m;
           }
@@ -189,18 +214,58 @@ class ChatMessages extends _$ChatMessages {
       );
       discardPhotos(item.id);
     } on Object {
+      // Shown in the chat with Retry and Delete; nothing else to report.
       _updateOutgoing(item.id, (o) => o.copyWith(failed: true));
-      rethrow;
     }
   }
 
   /// Sends a text message, spaced from the previous one (CHAT-2, CHAT-4).
+  /// It shows as "sending" at once; offline, it waits in the queue and goes
+  /// out when the connection returns.
   Future<void> send(String text) {
     final trimmed = text.trim();
+    if (trimmed.isEmpty) return Future.value();
+    final item = OutgoingText(
+      id: ref.read(messageRepositoryProvider).newMessageId(),
+      text: trimmed,
+    );
+    state = state.copyWith(queued: [...state.queued, item]);
+    return _sendText(item);
+  }
+
+  /// Tries a refused message again.
+  Future<void> retryText(String id) {
+    final item = state.queued.where((q) => q.id == id).firstOrNull;
+    if (item == null) return Future.value();
+    _setQueued(id, failed: false);
+    return _sendText(item);
+  }
+
+  /// Drops a refused message.
+  void discardText(String id) => state = state.copyWith(
+    queued: state.queued.where((q) => q.id != id).toList(),
+  );
+
+  void _setQueued(String id, {required bool failed}) => state = state.copyWith(
+    queued: [
+      for (final q in state.queued)
+        if (q.id == id) q.copyWith(failed: failed) else q,
+    ],
+  );
+
+  Future<void> _sendText(OutgoingText item) async {
     final uid = ref.read(authUserProvider).value?.uid;
-    if (trimmed.isEmpty || uid == null) return Future.value();
+    if (uid == null) return;
     final repo = ref.read(messageRepositoryProvider);
-    return _enqueue(() => repo.sendText(groupId, UserId(uid), trimmed));
+    try {
+      await _enqueue(
+        () => repo.sendText(groupId, UserId(uid), item.text, id: item.id),
+      );
+      discardText(item.id);
+    } on Object {
+      // Shown in the chat as "Not sent" with Retry and Delete.
+      _setQueued(item.id, failed: true);
+    }
   }
 
   /// Runs [send] after the previous send, spaced by [sendSpacing].

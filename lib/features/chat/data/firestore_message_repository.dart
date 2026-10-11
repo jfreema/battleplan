@@ -90,10 +90,18 @@ class FirestoreMessageRepository implements MessageRepository {
   }
 
   @override
-  Future<void> sendText(GroupId groupId, UserId uid, String text) => _post(
+  String newMessageId() => _db.collection(Collections.messages).doc().id;
+
+  @override
+  Future<void> sendText(
+    GroupId groupId,
+    UserId uid,
+    String text, {
+    String? id,
+  }) => _post(
     groupId,
     uid,
-    _db.collection(Collections.messages).doc(),
+    _db.collection(Collections.messages).doc(id),
     type: MessageType.text,
     text: text,
   );

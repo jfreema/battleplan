@@ -580,5 +580,7 @@
   "photoLibrary": "Photo library",
   "camera": "Camera",
   "addToMessage": "Add photos",
-  "tooManyPhotos": "Up to 10 photos per message. The first 10 will be sent."
+  "tooManyPhotos": "Up to 10 photos per message. The first 10 will be sent.",
+  "messageSent": "Sent",
+  "messageNotSent": "Not sent"
 }

@@ -710,13 +710,27 @@ class FakeMessageRepository implements MessageRepository {
   @override
   Future<Uint8List?> attachmentBytes(String path) async => null;
 
+  int _ids = 0;
+
   @override
-  Future<void> sendText(GroupId groupId, UserId uid, String text) async {
+  String newMessageId() => 'new${_ids++}';
+
+  /// When set, sends fail with this, as a server refusal would.
+  AppFailure? failSends;
+
+  @override
+  Future<void> sendText(
+    GroupId groupId,
+    UserId uid,
+    String text, {
+    String? id,
+  }) async {
+    if (failSends case final error?) throw error;
     sent.add(text);
     messages.insert(
       0,
       Message(
-        id: 'sent${sent.length}',
+        id: id ?? 'sent${sent.length}',
         groupId: groupId,
         authorId: uid.value,
         authorName: uid.value,

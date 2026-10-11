@@ -25,6 +25,7 @@ class MessageTile extends ConsumerStatefulWidget {
     required this.mine,
     required this.startsGroup,
     required this.endsGroup,
+    this.showSent = false,
     super.key,
   });
 
@@ -32,6 +33,9 @@ class MessageTile extends ConsumerStatefulWidget {
   final bool mine;
   final bool startsGroup;
   final bool endsGroup;
+
+  /// Shows "Sent" under it: my newest message, once the server has it.
+  final bool showSent;
 
   @override
   ConsumerState<MessageTile> createState() => _MessageTileState();
@@ -174,11 +178,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             child: bubble,
           ),
         ),
-        if (m.pending)
+        // Delivery state (CHAT-4): sending until the server has it, then
+        // "Sent" under my newest message.
+        if (m.pending || widget.showSent)
           Padding(
             padding: const EdgeInsets.only(top: 2, right: Space.xs),
             child: Text(
-              l10n.messageSending,
+              m.pending ? l10n.messageSending : l10n.messageSent,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -302,6 +308,82 @@ class OutgoingPhotosTile extends StatelessWidget {
               width: 280,
               child: LinearProgressIndicator(
                 value: item.progress == 0 ? null : item.progress,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A text message not on the server yet (CHAT-4): "Sending…" while it waits
+/// its turn (offline, until the connection returns), or "Not sent" with
+/// Retry and Delete if the server refused it.
+class OutgoingTextTile extends StatelessWidget {
+  const new({
+    required this.item,
+    required this.onRetry,
+    required this.onDiscard,
+    super.key,
+  });
+
+  final OutgoingText item;
+  final VoidCallback onRetry;
+  final VoidCallback onDiscard;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Space.md, 2, Space.md, Space.xs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Opacity(
+            opacity: item.failed ? 0.6 : 0.8,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 520),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Space.md,
+                vertical: Space.sm,
+              ),
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                borderRadius: BorderRadius.circular(Corners.bubble),
+              ),
+              child: Text(
+                item.text,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: scheme.onPrimary,
+                ),
+              ),
+            ),
+          ),
+          if (item.failed)
+            Wrap(
+              spacing: Space.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  l10n.messageNotSent,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.error,
+                  ),
+                ),
+                TextButton(onPressed: onRetry, child: Text(l10n.retry)),
+                TextButton(onPressed: onDiscard, child: Text(l10n.delete)),
+              ],
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(top: 2, right: Space.xs),
+              child: Text(
+                l10n.messageSending,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ),
         ],

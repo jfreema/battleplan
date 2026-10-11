@@ -18,10 +18,15 @@ abstract interface class MessageRepository {
     int limit = 50,
   });
 
+  /// A fresh message ID, so a queued message keeps one identity from the
+  /// moment it's typed until the server has it.
+  String newMessageId();
+
   /// Sends a text message as the signed-in person (CHAT-2). It appears in
   /// [watchNewest] at once as pending; the future completes when the server
-  /// has it (offline, when the connection returns).
-  Future<void> sendText(GroupId groupId, UserId uid, String text);
+  /// has it (offline, when the connection returns) and throws if the server
+  /// refuses it.
+  Future<void> sendText(GroupId groupId, UserId uid, String text, {String? id});
 
   /// Uploads up to 10 photos for a new message (CHAT-3). [onProgress] gets
   /// 0 to 1 as bytes upload. Needs a connection; photos don't queue offline

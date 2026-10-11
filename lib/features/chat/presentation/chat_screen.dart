@@ -69,33 +69,50 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final group = ref.watch(groupProvider(widget.groupId)).value;
     final archived = group?.isArchived ?? false;
     final messages = chat.messages;
-    final outgoing = chat.outgoing;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final picker = ref.watch(photoPickerProvider);
+    final shownIds = {for (final m in messages) m.id};
+    // Things still on their way, shown below everything (the list is
+    // reversed): uploading photos, then queued or refused texts. A queued
+    // text whose local write is already in the chat shows there instead.
+    final pending = <Widget>[
+      for (final item in chat.outgoing)
+        OutgoingPhotosTile(
+          item: item,
+          onRetry: () =>
+              unawaited(controller.retryPhotos(item.id).catchError((_) {})),
+          onDiscard: () => controller.discardPhotos(item.id),
+        ),
+      for (final q in chat.queued)
+        if (!shownIds.contains(q.id))
+          OutgoingTextTile(
+            item: q,
+            onRetry: () =>
+                unawaited(controller.retryText(q.id).catchError((_) {})),
+            onDiscard: () => controller.discardText(q.id),
+          ),
+    ].reversed.toList();
+    // "Sent" goes under my newest message once the server has it, unless
+    // something of mine is still on its way.
+    final newestMine = messages.where((m) => m.authorId == me).firstOrNull;
+    final sentId = pending.isEmpty && newestMine != null && !newestMine.pending
+        ? newestMine.id
+        : null;
 
     Widget list;
     if (chat.loading) {
       list = const SkeletonList();
-    } else if (messages.isEmpty && outgoing.isEmpty) {
+    } else if (messages.isEmpty && pending.isEmpty) {
       list = EmptyState(icon: AppIcons.chat, message: l10n.chatEmpty);
     } else {
       list = ListView.builder(
         controller: _scroll,
         reverse: true,
         padding: const EdgeInsets.symmetric(vertical: Space.sm),
-        itemCount: outgoing.length + messages.length + 1,
+        itemCount: pending.length + messages.length + 1,
         itemBuilder: (context, index) {
-          // Uploading photos sit below everything (the list is reversed).
-          if (index < outgoing.length) {
-            final item = outgoing[outgoing.length - 1 - index];
-            return OutgoingPhotosTile(
-              item: item,
-              onRetry: () =>
-                  unawaited(controller.retryPhotos(item.id).catchError((_) {})),
-              onDiscard: () => controller.discardPhotos(item.id),
-            );
-          }
-          final i = index - outgoing.length;
+          if (index < pending.length) return pending[index];
+          final i = index - pending.length;
           // The last item (top of the screen) is the paging footer.
           if (i == messages.length) {
             return chat.reachedStart
@@ -121,6 +138,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 mine: m.authorId == me,
                 startsGroup: newDay || !_continues(older, m),
                 endsGroup: newer == null || !_continues(m, newer),
+                showSent: m.id == sentId,
               ),
             ],
           );
