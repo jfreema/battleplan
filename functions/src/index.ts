@@ -21,3 +21,4 @@ export {
 } from './teams/handlers.js';
 export { getInvitePreview, getTeamInvite, redeemInvite, resetGroupInvite } from './invites/handlers.js';
 export { logClientError } from './ops/handlers.js';
+export { addPlayers, removePlayer } from './players/handlers.js';

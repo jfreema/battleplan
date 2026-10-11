@@ -12,8 +12,11 @@ import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/players/application/providers.dart';
+import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// TEAM-3 at `/g/:groupId/roster`: Admins, then Members, searchable by name.
@@ -36,8 +39,23 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
     final l10n = AppLocalizations.of(context);
     final roster = ref.watch(rosterProvider(widget.groupId));
     final me = ref.watch(myMembershipProvider(widget.groupId));
+    final group = ref.watch(groupProvider(widget.groupId)).value;
+    final youth = group?.teamType == TeamType.youth;
+    final players = youth
+        ? ref.watch(playersProvider(widget.groupId)).value ?? const <Player>[]
+        : const <Player>[];
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.rosterMenu)),
+      appBar: AppBar(
+        title: Text(l10n.rosterMenu),
+        actions: [
+          if (youth && (me?.isAdmin ?? false))
+            TextButton(
+              onPressed: () =>
+                  context.push('/g/${widget.groupId.value}/players/add'),
+              child: Text(l10n.addPlayers),
+            ),
+        ],
+      ),
       body: roster.when(
         loading: () => const SkeletonList(),
         error: (_, _) => Center(child: Text(l10n.loadError)),
@@ -51,6 +69,11 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
           final admins = shown.where((m) => m.isAdmin).toList()
             ..sort((a, b) => a.role == MemberRole.owner ? -1 : 0);
           final others = shown.where((m) => !m.isAdmin).toList();
+          final shownPlayers = q.isEmpty
+              ? players
+              : players
+                    .where((p) => p.displayName.toLowerCase().contains(q))
+                    .toList();
           return ListView(
             children: [
               Padding(
@@ -63,10 +86,26 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
-              if (admins.isNotEmpty) _Section(title: l10n.rosterAdmins),
-              for (final m in admins) _MemberRow(member: m, me: me),
-              if (others.isNotEmpty) _Section(title: l10n.rosterMembers),
-              for (final m in others) _MemberRow(member: m, me: me),
+              if (youth) ...[
+                _Section(title: l10n.rosterPlayers),
+                for (final p in shownPlayers)
+                  ListTile(
+                    leading: CircleAvatar(child: Text(p.jerseyNumber ?? '')),
+                    title: Text(p.displayName),
+                    subtitle: p.position == null ? null : Text(p.position!),
+                    onTap: () => context.push(
+                      '/g/${widget.groupId.value}/roster/players/${p.id.value}',
+                    ),
+                  ),
+                _Section(title: l10n.rosterParentsStaff),
+                for (final m in [...admins, ...others])
+                  _MemberRow(member: m, me: me),
+              ] else ...[
+                if (admins.isNotEmpty) _Section(title: l10n.rosterAdmins),
+                for (final m in admins) _MemberRow(member: m, me: me),
+                if (others.isNotEmpty) _Section(title: l10n.rosterMembers),
+                for (final m in others) _MemberRow(member: m, me: me),
+              ],
             ],
           );
         },

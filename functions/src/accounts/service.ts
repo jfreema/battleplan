@@ -184,3 +184,56 @@ export async function deleteAccount(uid: string): Promise<void> {
     });
   logger.info('account_deleted', { uid });
 }
+
+export interface FoundUser {
+  uid: string;
+  displayName: string;
+  photoPath: string | null;
+  /** True if the account was just created and the person hasn't signed in. */
+  provisioned: boolean;
+}
+
+/**
+ * The account for [email], creating an added ("local") account if there is
+ * none (AUTH-6): a Firebase Auth user with no password and a users doc with
+ * status "provisioned". Nobody ever sets or sees its password; the person
+ * gets in through a setup email.
+ */
+export async function findOrProvisionUser(email: string, name: string | null): Promise<FoundUser> {
+  const address = email.trim().toLowerCase();
+  try {
+    const existing = await auth().getUserByEmail(address);
+    const profile = await db().collection(Collections.users).doc(existing.uid).get();
+    return {
+      uid: existing.uid,
+      displayName: (profile.get('displayName') as string | undefined) ?? existing.displayName ?? address,
+      photoPath: (profile.get('photoPath') as string | null | undefined) ?? null,
+      provisioned: profile.get('status') === 'provisioned',
+    };
+  } catch (e) {
+    if ((e as { code?: string }).code !== 'auth/user-not-found') throw e;
+  }
+  const displayName = (name?.trim() || address.split('@')[0]).slice(0, 50);
+  const user = await auth().createUser({ email: address, displayName, emailVerified: false });
+  const now = FieldValue.serverTimestamp();
+  await db().collection(Collections.users).doc(user.uid).set({
+    displayName,
+    displayNameLower: displayName.toLowerCase(),
+    email: address,
+    emailLower: address,
+    photoPath: null,
+    status: 'provisioned',
+    signInMethods: [],
+    themeMode: 'system',
+    notificationPrefs: {
+      messages: true, replies: true, mentions: true, polls: true, events: true, reminders: true, documents: true,
+    },
+    acceptedTermsAt: null,
+    adultConfirmedAt: null,
+    lastActiveAt: null,
+    createdAt: now,
+    updatedAt: now,
+    schemaVersion: 1,
+  });
+  return { uid: user.uid, displayName, photoPath: null, provisioned: true };
+}

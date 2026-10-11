@@ -4,6 +4,7 @@ import 'package:battleplan/core/env.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
+import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,6 +24,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeGroupRepository? groupRepo,
   FakeMemberRepository? memberRepo,
   FakeInviteRepository? invites,
+  FakePlayerRepository? playerRepo,
 }) async {
   // A tall phone-sized screen, so long settings lists fit without scrolling.
   tester.view
@@ -46,6 +48,9 @@ Future<FakeLocalPrefs> pumpApp(
           memberRepo ?? FakeMemberRepository(memberships.cast()),
         ),
         localPrefsRepositoryProvider.overrideWithValue(localPrefs),
+        playerRepositoryProvider.overrideWithValue(
+          playerRepo ?? FakePlayerRepository(),
+        ),
         inviteRepositoryProvider.overrideWithValue(
           invites ?? FakeInviteRepository(),
         ),

@@ -1,5 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/players/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -355,6 +357,52 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
     await tester.pumpAndSettle();
     expect(find.textContaining("couldn't find that invite"), findsOneWidget);
+  });
+
+  testWidgets('youth roster: players section and a pasted roster', (
+    tester,
+  ) async {
+    final playerRepo = FakePlayerRepository([
+      const Player(
+        id: PlayerId('emma'),
+        groupId: GroupId('y'),
+        displayName: 'Emma Rodriguez',
+        jerseyNumber: '7',
+      ),
+    ]);
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {
+        'y': testGroup('y', 'Lightning U10').copyWith(teamType: TeamType.youth),
+      },
+      memberships: [testMembership('y', 'coach', role: MemberRole.owner)],
+      playerRepo: playerRepo,
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Roster'));
+    await tester.pumpAndSettle();
+    expect(find.text('Players'), findsOneWidget);
+    expect(find.text('Emma Rodriguez'), findsOneWidget);
+    await tester.tap(find.text('Add players'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Paste a list'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextField),
+      'Arjun Shah, Priya Shah, priya@example.com\n'
+      'Noah Bennett, Ann Bennett, ann@example.com\n'
+      'Noah Bennett, Bo Bennett, bo@example.com',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add 2 players'));
+    await tester.pumpAndSettle();
+    expect(playerRepo.added.single.map((p) => p.name), [
+      'Arjun Shah',
+      'Noah Bennett',
+    ]);
+    expect(find.text('Players added'), findsOneWidget);
   });
 
   testWidgets('wrong password shows an error and stays put', (tester) async {

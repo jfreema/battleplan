@@ -16,6 +16,8 @@ import 'package:battleplan/features/groups/data/firestore_group_repository.dart'
 import 'package:battleplan/features/groups/data/functions_invite_repository.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/data/fcm_push_repository.dart';
+import 'package:battleplan/features/players/application/providers.dart';
+import 'package:battleplan/features/players/data/firestore_player_repository.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/data/shared_prefs_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -49,6 +51,9 @@ List<Override> buildOverrides({
   linkOpenerProvider.overrideWithValue(const UrlLauncherLinkOpener()),
   timeZonesProvider.overrideWithValue(const FlutterTimeZones()),
   sharerProvider.overrideWithValue(const SharePlusSharer()),
+  playerRepositoryProvider.overrideWithValue(
+    FirestorePlayerRepository(firestore, functions),
+  ),
   inviteRepositoryProvider.overrideWithValue(
     FunctionsInviteRepository(functions),
   ),

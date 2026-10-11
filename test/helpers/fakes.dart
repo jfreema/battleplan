@@ -14,6 +14,8 @@ import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
+import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
 
 class FakeAuthRepository implements AuthRepository {
@@ -459,4 +461,43 @@ class FakeInviteRepository implements InviteRepository {
     code = 'NEWC0DE2'.replaceAll('0', 'Q');
     return _invite();
   }
+}
+
+class FakePlayerRepository implements PlayerRepository {
+  new([List<Player>? players]) : players = players ?? [];
+
+  final List<Player> players;
+  final List<List<NewPlayer>> added = [];
+
+  @override
+  Stream<List<Player>> watchPlayers(GroupId groupId) =>
+      Stream.value(players.where((p) => p.groupId == groupId).toList());
+
+  @override
+  Stream<List<GuardianLink>> watchGuardianLinks(GroupId groupId) =>
+      Stream.value(const []);
+
+  @override
+  Future<AddPlayersResult> addPlayers(
+    GroupId groupId,
+    List<NewPlayer> players,
+  ) async {
+    added.add(players);
+    return AddPlayersResult(
+      playersAdded: players.length,
+      guardiansLinked: 0,
+      guardiansInvited: players.fold(0, (n, p) => n + p.guardians.length),
+    );
+  }
+
+  @override
+  Future<void> updatePlayer(
+    PlayerId id, {
+    required String name,
+    String? jerseyNumber,
+    String? position,
+  }) async {}
+
+  @override
+  Future<void> removePlayer(GroupId groupId, PlayerId id) async {}
 }

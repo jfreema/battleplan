@@ -30,6 +30,8 @@ import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notifications_screen.dart';
 import 'package:battleplan/features/notifications/presentation/push_test_screen.dart';
+import 'package:battleplan/features/players/presentation/add_players_screen.dart';
+import 'package:battleplan/features/players/presentation/player_card_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/settings_screen.dart';
@@ -239,6 +241,21 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: 'roster',
             builder: (_, state) => RosterScreen(
+              groupId: GroupId(state.pathParameters['groupId']!),
+            ),
+            routes: [
+              GoRoute(
+                path: 'players/:playerId',
+                builder: (_, state) => PlayerCardScreen(
+                  groupId: GroupId(state.pathParameters['groupId']!),
+                  playerId: PlayerId(state.pathParameters['playerId']!),
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'players/add',
+            builder: (_, state) => AddPlayersScreen(
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
           ),

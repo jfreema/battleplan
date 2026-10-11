@@ -78,7 +78,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 48. Email invites (INV-4).
 49. ✅ Joining: `getInvitePreview`, `redeemInvite`, join by code or QR scan, the `/join` web page, error states (INV-5 to INV-8). *App Store and Google Play badges on the web page join when the apps are listed (task 130); youth teams' "Who are you here for?" step is task 52.*
 50. Universal Links and App Links for invites on our domain (INV-9, ENG-6). iOS is verified in task 110.
-51. Youth teams: add players and pasted rosters (PLAYER-1), player card (PLAYER-2).
+51. ✅ Youth teams: add players and pasted rosters (PLAYER-1), player card (PLAYER-2). *Setup emails for newly added guardians go out with task 46; adding or removing a guardian from the card is task 52.*
 52. Youth teams: "Who are you here for?", guardian requests, adding a co-parent (PLAYER-3 to PLAYER-5).
 53. Parent labels in the roster, "Maria R. · Emma #7" (PLAYER-8); kids' privacy limits on player records (PLAYER-10).
 54. Storage quota accounting.

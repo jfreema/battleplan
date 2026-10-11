@@ -395,5 +395,81 @@
   "inviteCodeHelp": "Installing the app first? Enter this code after you sign in.",
   "inviteCodeInvalid": "Codes are 8 letters and numbers, like K7XP-M2QR.",
   "scanQrCode": "Scan QR code",
-  "cameraUnavailable": "The camera isn't available. Allow camera access, or type the code instead."
+  "cameraUnavailable": "The camera isn't available. Allow camera access, or type the code instead.",
+  "addPlayers": "Add players",
+  "addOnePlayer": "One player",
+  "pasteAList": "Paste a list",
+  "playerNameLabel": "Player name",
+  "jerseyNumberLabel": "Number",
+  "positionLabel": "Position",
+  "guardiansLabel": "Parents and guardians",
+  "guardianNameLabel": "Guardian name",
+  "guardianEmailLabel": "Guardian email",
+  "addAnotherGuardian": "Add another guardian",
+  "addPlayer": "Add player",
+  "playerNameRequired": "Enter the player's name.",
+  "pasteRosterHelp": "One line per parent or guardian: player name, guardian name, guardian email. Lines with the same player name become one player.",
+  "pastePreview": "{count, plural, =0{No players yet} =1{1 player to add} other{{count} players to add}}",
+  "@pastePreview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addPlayersCount": "{count, plural, =1{Add 1 player} other{Add {count} players}}",
+  "@addPlayersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playersAddedTitle": "Players added",
+  "playersAddedCount": "{count, plural, =1{1 player added} other{{count} players added}}",
+  "@playersAddedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "guardiansLinkedCount": "{count, plural, =1{1 guardian linked} other{{count} guardians linked}}",
+  "@guardiansLinkedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "guardiansInvitedCount": "{count, plural, =1{1 guardian invited} other{{count} guardians invited}}",
+  "@guardiansInvitedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addProblems": "Couldn't add:\n{lines}",
+  "@addProblems": {
+    "placeholders": {
+      "lines": {
+        "type": "String"
+      }
+    }
+  },
+  "done": "Done",
+  "editPlayer": "Edit player",
+  "noGuardians": "No guardians yet.",
+  "removePlayer": "Remove player",
+  "removePlayerTitle": "Remove {name} from the roster?",
+  "@removePlayerTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rosterPlayers": "Players",
+  "rosterParentsStaff": "Parents & staff"
 }
