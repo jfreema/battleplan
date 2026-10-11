@@ -1158,9 +1158,9 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
 
 ### M3 · Chat
 
-- [ ] Message list with paging, composer, photos and viewer, reactions.
-- [ ] Replies, delete (through a Function), unread counts, system messages, links.
-- [ ] Report, block, offline states.
+- [x] Message list with paging, composer, photos and viewer, reactions.
+- [x] Replies, delete (through a Function), unread counts, system messages, links.
+- [x] Report, block, offline states.
 
 **Done when:** the CHAT acceptance criteria pass.
 
