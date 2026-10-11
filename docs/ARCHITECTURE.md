@@ -1327,7 +1327,7 @@ What exists in the code today, and where. This section is updated with every cha
 
 | Feature | Built so far |
 |---|---|
-| `auth` | `AuthUser`, `AuthRepository` (Firebase impl), sign-in screen with email working and the Google/Apple/Facebook buttons disabled until M1 |
+| `auth` | `AuthUser`, `AuthRepository` (Firebase impl), sign-in screen with email and Google sign-in (popup on web, system browser sheet on iOS and Android); Apple and Facebook buttons disabled until M1 |
 | `groups` | `Group`, `Membership`, `MyTeam`; `GroupRepository` and `MemberRepository` (Firestore impls); the `myTeams` provider (switcher list, most recent first); `TeamShell` (header, bottom bar or rail, team menu, account menu, Ctrl/⌘+K), `TeamSwitcherList`, `WelcomeScreen` |
 | `settings` | `LocalPrefsRepository` (SharedPreferences impl) for theme and last team; settings screen with the theme switch and sign-out |
 | `chat`, `schedule`, `documents`, `notifications`, `admin` | Placeholder screens |
@@ -1336,6 +1336,7 @@ What exists in the code today, and where. This section is updated with every cha
 
 | Component | File | What it does |
 |---|---|---|
+| Auth providers | `firebase.json` → `auth` | Email/Password and Google, deployed with `firebase deploy --only auth` |
 | Firestore rules | `firestore.rules` | Deny by default; membership checks, message create and rate limit, reactions, RSVP rule, read rules for every collection |
 | Storage rules | `storage.rules` | Member checks, team quota, size and type limits |
 | Indexes | `firestore.indexes.json` | Composite indexes, index exemptions, TTL policies |

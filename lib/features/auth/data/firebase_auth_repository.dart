@@ -4,6 +4,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 /// Firebase Authentication behind [AuthRepository]. Firebase types and
 /// exceptions stay in this file; callers get [AuthUser] and [AppFailure]s.
@@ -58,6 +59,42 @@ class FirebaseAuthRepository implements AuthRepository {
       };
     }
   }
+
+  @override
+  Future<void> signInWithGoogle() async {
+    final provider = GoogleAuthProvider()
+      ..setCustomParameters({'prompt': 'select_account'});
+    try {
+      // Web uses a popup (redirects break under browser storage
+      // partitioning, ARCH §6.1). Mobile opens the provider's page in the
+      // system browser sheet and returns through the app's URL scheme.
+      if (kIsWeb) {
+        await _auth.signInWithPopup(provider);
+      } else {
+        await _auth.signInWithProvider(provider);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (_cancelCodes.contains(e.code)) return;
+      throw switch (e.code) {
+        'popup-blocked' => PopupBlocked(e.code),
+        'account-exists-with-different-credential' =>
+          AccountExistsWithOtherMethod(e.code),
+        'user-disabled' => PermissionDenied(e.code),
+        'network-request-failed' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  /// Codes Firebase uses when the person closes the sign-in sheet or popup.
+  static const _cancelCodes = {
+    'popup-closed-by-user',
+    'cancelled-popup-request',
+    'web-context-canceled',
+    'web-context-cancelled',
+    'canceled',
+    'user-cancelled',
+  };
 
   @override
   Future<void> signOut() => _auth.signOut();

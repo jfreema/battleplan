@@ -46,6 +46,20 @@ class FakeAuthRepository implements AuthRepository {
     _controller.add(_user);
   }
 
+  /// When true, Google sign-in behaves as if the person closed the sheet.
+  bool googleCancels = false;
+
+  @override
+  Future<void> signInWithGoogle() async {
+    if (googleCancels) return;
+    _user = const AuthUser(
+      uid: 'coach',
+      email: knownEmail,
+      emailVerified: true,
+    );
+    _controller.add(_user);
+  }
+
   @override
   Future<void> signOut() async {
     _user = null;

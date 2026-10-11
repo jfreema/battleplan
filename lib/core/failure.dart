@@ -56,6 +56,23 @@ final class Unauthenticated extends AppFailure {
   String get code => 'unauthenticated';
 }
 
+/// The browser blocked a sign-in popup (AUTH-1 edge cases).
+final class PopupBlocked extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'popupBlocked';
+}
+
+/// The email already has an account that signs in another way. Linking it
+/// safely arrives with AUTH-7 (M1).
+final class AccountExistsWithOtherMethod extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'accountExistsWithOtherMethod';
+}
+
 final class UnknownFailure extends AppFailure {
   const new([super.message]);
 

@@ -54,6 +54,23 @@ void main() {
     expect(find.text('Welcome to Battleplan'), findsNothing);
   });
 
+  testWidgets('Google sign-in reaches the app', (tester) async {
+    await pumpApp(tester, auth: FakeAuthRepository());
+    await tester.tap(find.text('Continue with Google'));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+  });
+
+  testWidgets('cancelling Google sign-in stays on sign-in with no error', (
+    tester,
+  ) async {
+    await pumpApp(tester, auth: FakeAuthRepository()..googleCancels = true);
+    await tester.tap(find.text('Continue with Google'));
+    await tester.pumpAndSettle();
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.textContaining('went wrong'), findsNothing);
+  });
+
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with email'));

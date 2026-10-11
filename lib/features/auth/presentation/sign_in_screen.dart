@@ -5,8 +5,7 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// AUTH-1. Google, Apple, and Facebook arrive in M1; email works against the
-/// emulator now.
+/// AUTH-1. Google and email work now; Apple and Facebook arrive in M1.
 class SignInScreen extends ConsumerStatefulWidget {
   const new({this.showEmulatorHint = false, super.key});
 
@@ -68,8 +67,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       ),
                     ),
                     const SizedBox(height: Space.xxl),
+                    OutlinedButton(
+                      onPressed: loading
+                          ? null
+                          : () => ref
+                                .read(signInControllerProvider.notifier)
+                                .signInWithGoogle(),
+                      child: Text(l10n.continueWithGoogle),
+                    ),
+                    const SizedBox(height: Space.md),
+                    // Apple and Facebook arrive in M1 (roadmap tasks 26-27, 107).
                     for (final label in [
-                      l10n.continueWithGoogle,
                       l10n.continueWithApple,
                       l10n.continueWithFacebook,
                     ]) ...[
@@ -119,16 +127,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           ),
                         ),
                       ),
-                      if (error != null) ...[
-                        const SizedBox(height: Space.md),
-                        Text(switch (error) {
-                          SignInError.badCredentials => l10n.signInFailed,
-                          SignInError.offline => l10n.signInOffline,
-                          SignInError.rateLimited => l10n.signInRateLimited,
-                          SignInError.disabled => l10n.signInDisabled,
-                          SignInError.unknown => l10n.signInUnknownError,
-                        }, style: TextStyle(color: theme.colorScheme.error)),
-                      ],
                       const SizedBox(height: Space.lg),
                       FilledButton(
                         onPressed: loading ? null : _submit,
@@ -142,6 +140,22 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
+                    ],
+                    if (error != null) ...[
+                      const SizedBox(height: Space.lg),
+                      Text(
+                        switch (error) {
+                          SignInError.badCredentials => l10n.signInFailed,
+                          SignInError.offline => l10n.signInOffline,
+                          SignInError.rateLimited => l10n.signInRateLimited,
+                          SignInError.disabled => l10n.signInDisabled,
+                          SignInError.popupBlocked => l10n.signInPopupBlocked,
+                          SignInError.otherMethod => l10n.signInOtherMethod,
+                          SignInError.unknown => l10n.signInUnknownError,
+                        },
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
                     ],
                     const SizedBox(height: Space.xxl),
                     Text(

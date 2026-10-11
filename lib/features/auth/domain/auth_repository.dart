@@ -12,5 +12,9 @@ abstract interface class AuthRepository {
     required String password,
   });
 
+  /// Google sign-in: a popup on web, the system browser sheet on iOS and
+  /// Android. Returns normally if the person cancels (no error is shown).
+  Future<void> signInWithGoogle();
+
   Future<void> signOut();
 }

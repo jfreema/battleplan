@@ -20,16 +20,33 @@ class SignInController extends _$SignInController {
     );
   }
 
+  Future<void> signInWithGoogle() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(authRepositoryProvider).signInWithGoogle(),
+    );
+  }
+
   Future<void> signOut() => ref.read(authRepositoryProvider).signOut();
 }
 
 /// Which message to show for a sign-in failure.
-enum SignInError { badCredentials, offline, rateLimited, disabled, unknown }
+enum SignInError {
+  badCredentials,
+  offline,
+  rateLimited,
+  disabled,
+  popupBlocked,
+  otherMethod,
+  unknown,
+}
 
 SignInError signInErrorOf(Object error) => switch (error) {
   InvalidInput() => SignInError.badCredentials,
   Offline() => SignInError.offline,
   RateLimited() => SignInError.rateLimited,
   PermissionDenied() => SignInError.disabled,
+  PopupBlocked() => SignInError.popupBlocked,
+  AccountExistsWithOtherMethod() => SignInError.otherMethod,
   _ => SignInError.unknown,
 };
