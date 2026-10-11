@@ -41,6 +41,16 @@ export const createGroup = onCall(async (request) => {
     );
   }
 
+  // A person can be on up to 100 teams (TEAM-2).
+  const teams = await db()
+    .collection(Collections.groupMembers)
+    .where('uid', '==', uid)
+    .count()
+    .get();
+  if (teams.data().count >= Limits.groupsPerUserMax) {
+    throw new HttpsError('failed-precondition', 'too-many-teams');
+  }
+
   const profile = (await db().collection(Collections.users).doc(uid).get()).data();
   const groupId = await create(
     uid,

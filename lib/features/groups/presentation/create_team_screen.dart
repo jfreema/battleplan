@@ -85,6 +85,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
         () => _error = switch (e) {
           EmailNotVerified() => l10n.createTeamNeedsVerifiedEmail,
           RateLimited() => l10n.createTeamRateLimited,
+          TooManyTeams() => l10n.tooManyTeams,
           PermissionDenied() => l10n.createTeamTurnedOff,
           Offline() => l10n.signInOffline,
           _ => l10n.signInUnknownError,

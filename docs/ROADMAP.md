@@ -67,7 +67,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 
 38. ✅ 👤 **Jared:** Decided 2026-10-11: Q1 "Team", Q3 anyone with a verified email, Q14 coaches and staff RSVP for themselves on youth teams, Q15 admins approve guardian links.
 39. ✅ Create a team, with adult or youth type (TEAM-1); the welcome screen. *The logo upload is part of team settings (task 42), and the "Invite your team" step after creating joins with the invite screen (task 47).*
-40. Team switcher and many teams per person (TEAM-2, §5.2).
+40. ✅ Team switcher and many teams per person (TEAM-2, §5.2): most recent first, sport icons, muted icon, unread dot, archived section, Join and Create, same tab on switch, last team remembered, Ctrl/⌘+K, and the 100-team limit. *Unread counts in the switcher arrive with CHAT-9 (task 65).*
 41. Roster screen, roles, and team admins (TEAM-3, TEAM-4).
 42. Team settings and member permissions (TEAM-5).
 43. Transfer ownership, leave, archive, and delete (TEAM-6, TEAM-8, TEAM-9).

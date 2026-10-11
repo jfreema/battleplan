@@ -116,6 +116,14 @@ final class EmailNotVerified extends AppFailure {
   String get code => 'emailNotVerified';
 }
 
+/// A person can be on up to 100 teams (TEAM-2).
+final class TooManyTeams extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'tooManyTeams';
+}
+
 final class UnknownFailure extends AppFailure {
   const new([super.message]);
 

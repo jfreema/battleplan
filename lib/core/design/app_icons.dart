@@ -1,3 +1,4 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -29,4 +30,16 @@ abstract final class AppIcons {
   static const IconData muted = Symbols.notifications_off_rounded;
   static const IconData qr = Symbols.qr_code_scanner_rounded;
   static const IconData check = Symbols.check_rounded;
+
+  /// The icon for a sport (shown in the team switcher).
+  static IconData sport(Sport sport) => switch (sport) {
+    Sport.baseball || Sport.softball => Symbols.sports_baseball_rounded,
+    Sport.basketball => Symbols.sports_basketball_rounded,
+    Sport.football => Symbols.sports_football_rounded,
+    Sport.hockey => Symbols.sports_hockey_rounded,
+    Sport.lacrosse => Symbols.sports_rounded,
+    Sport.soccer => Symbols.sports_soccer_rounded,
+    Sport.volleyball => Symbols.sports_volleyball_rounded,
+    Sport.other => Symbols.sports_rounded,
+  };
 }

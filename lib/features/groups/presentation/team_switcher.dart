@@ -42,7 +42,24 @@ class TeamSwitcherList extends ConsumerWidget {
           color: color == null ? null : Color(color),
           size: 40,
         ),
-        title: Text(t.group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                t.group.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: Space.xs),
+            Icon(
+              AppIcons.sport(t.group.sport),
+              size: 16,
+              semanticLabel: t.group.sport.value,
+            ),
+          ],
+        ),
+
         subtitle: t.group.lastMessagePreview == null
             ? null
             : Text(

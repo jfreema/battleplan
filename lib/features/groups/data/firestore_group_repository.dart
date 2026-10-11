@@ -43,6 +43,7 @@ class FirestoreGroupRepository implements GroupRepository {
         ('failed-precondition', 'email-not-verified') => EmailNotVerified(
           e.message,
         ),
+        ('failed-precondition', 'too-many-teams') => TooManyTeams(e.message),
         ('resource-exhausted', _) => RateLimited(e.message),
         ('permission-denied', _) => PermissionDenied(e.message),
         ('invalid-argument', _) => InvalidInput(e.message),

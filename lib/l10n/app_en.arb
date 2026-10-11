@@ -224,5 +224,6 @@
   "sportSoccer": "Soccer",
   "sportSoftball": "Softball",
   "sportVolleyball": "Volleyball",
-  "sportOther": "Other"
+  "sportOther": "Other",
+  "tooManyTeams": "You're on 100 teams, the most allowed. Leave a team to create a new one."
 }
