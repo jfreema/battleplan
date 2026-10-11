@@ -60,6 +60,11 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l10n.about),
             subtitle: Text(l10n.versionLabel(appVersion)),
           ),
+          ListTile(
+            leading: const Icon(AppIcons.settings),
+            title: Text(l10n.signInMethods),
+            onTap: () => context.push('/settings/sign-in-methods'),
+          ),
           if (showDevTools)
             ListTile(
               leading: const Icon(AppIcons.notifications),

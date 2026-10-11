@@ -1332,6 +1332,7 @@ What exists in the code today, and where. This section is updated with every cha
 | `auth` (profiles) | `UserProfile`, `UserRepository` (Firestore reads; writes through the `ensureUserProfile` callable), the `myProfile` provider (creates the profile at first sign-in), and `SetupScreen` at `/setup` (name, 18+, Terms; AUTH-5). The router sends signed-in people to `/setup` until it's done |
 | `groups` | `JoinScreen` at `/join/<CODE>` (shows the code until M2; opened by App Links); `Group`, `Membership`, `MyTeam`; `GroupRepository` and `MemberRepository` (Firestore impls); the `myTeams` provider (switcher list, most recent first); `TeamShell` (header, bottom bar or rail, team menu, account menu, Ctrl/⌘+K), `TeamSwitcherList`, `WelcomeScreen` |
 | `notifications` | `PushRepository` (FCM impl; unavailable with the emulators), a dev-only Push test screen at `/settings/push-test` (M0 spike 3), and the placeholder notification center. Web push uses `web/firebase-messaging-sw.js` |
+| `auth` (sign-in methods) | `SignInMethodsScreen` at `/settings/sign-in-methods`: link or remove Google (never the last method), set or change a password, change the email through a confirmation link; actions needing a fresh sign-in ask for one and retry. A provider sign-in that hits an existing account emails a sign-in link instead of merging (AUTH-7). `recordSignInMethodChange` keeps `users.signInMethods` true |
 | `auth` (sessions) | `SessionService` (application): sign out and sign out of all devices, each unregistering this device's push token first (AUTH-9) |
 | `settings` | `LocalPrefsRepository` (SharedPreferences impl) for theme and last team; settings screen with the theme switch and sign-out |
 | `chat`, `schedule`, `documents`, `admin` | Placeholder screens |
@@ -1344,7 +1345,7 @@ What exists in the code today, and where. This section is updated with every cha
 | Firestore rules | `firestore.rules` | Deny by default; membership checks, message create and rate limit, reactions, RSVP rule, read rules for every collection |
 | Storage rules | `storage.rules` | Member checks, team quota, size and type limits |
 | Indexes | `firestore.indexes.json` | Composite indexes, index exemptions, TTL policies |
-| Functions | `functions/src/` | `ensureUserProfile` (accounts: creates `users/{uid}` once from the Auth user, copies the provider photo into Storage, records setup), `signOutEverywhere` (accounts: revokes refresh tokens), `logClientError` (ops). Shared helpers: Admin SDK init, auth guard, zod validation, composite IDs. Deployed to dev (on Blaze) from a developer's machine |
+| Functions | `functions/src/` | `ensureUserProfile` (accounts: creates `users/{uid}` once from the Auth user, copies the provider photo into Storage, records setup), `signOutEverywhere` (accounts: revokes refresh tokens), `recordSignInMethodChange` (accounts: re-reads sign-in methods from Auth), `logClientError` (ops). Shared helpers: Admin SDK init, auth guard, zod validation, composite IDs. Deployed to dev (on Blaze) from a developer's machine |
 | Rules tests | `functions/test/rules/firestore.test.ts` | 28 tests: isolation, rate limit, RSVPs, cache fields |
 | Seed data | `tools/seed/seed.ts` | Sample people, adult and youth teams, players, messages, events, RSVPs for the emulators |
 

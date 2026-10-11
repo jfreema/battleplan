@@ -53,6 +53,28 @@ abstract interface class AuthRepository {
   /// link was sent to.
   Future<void> signInWithLink({required String email, required Uri link});
 
+  // Sign-in methods (AUTH-7, AUTH-8). Each throws RequiresRecentLogin when
+  // the last sign-in is too old; reauthenticate, then retry.
+
+  /// Links Google to the signed-in account by completing Google's sign-in.
+  Future<void> linkGoogle();
+
+  /// Removes a sign-in method. The last one can't be removed.
+  Future<void> unlink(String providerId);
+
+  /// Sets a password (adding the password method) or changes it.
+  Future<void> setPassword(String newPassword);
+
+  /// Changes the account email once the new address confirms a link; the
+  /// old address gets a notice from Firebase (AUTH-8).
+  Future<void> changeEmail(String newEmail);
+
+  /// A fresh sign-in with the account's password.
+  Future<void> reauthenticateWithPassword(String password);
+
+  /// A fresh sign-in with Google or Apple ([providerId]).
+  Future<void> reauthenticateWithProvider(String providerId);
+
   Future<void> signOut();
 
   /// Ends this account's sessions on every device, then signs out here

@@ -3,7 +3,11 @@ import { onCall } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { requireAuth } from '../shared/guards.js';
 import { parse } from '../shared/validate.js';
-import { ensureUserProfile as ensure, signOutEverywhere as revokeAll } from './service.js';
+import {
+  ensureUserProfile as ensure,
+  recordSignInMethodChange as recordChange,
+  signOutEverywhere as revokeAll,
+} from './service.js';
 
 const EnsureInput = z.object({
   setup: z
@@ -27,4 +31,10 @@ export const signOutEverywhere = onCall(async (request) => {
   const uid = requireAuth(request);
   await revokeAll(uid);
   return { ok: true };
+});
+
+/** Syncs users.signInMethods after the app links or unlinks a method (AUTH-7). */
+export const recordSignInMethodChange = onCall(async (request) => {
+  const uid = requireAuth(request);
+  return recordChange(uid);
 });

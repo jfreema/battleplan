@@ -129,3 +129,27 @@ async function copyProviderPhoto(uid: string, url: string): Promise<void> {
 export async function signOutEverywhere(uid: string): Promise<void> {
   await auth().revokeRefreshTokens(uid);
 }
+
+/**
+ * Re-reads the caller's sign-in methods from Firebase Auth into
+ * users.signInMethods after the app adds or removes one (AUTH-7). Returns
+ * what changed. The emailed security notice joins once email sending exists
+ * (roadmap task 46); until then the change is logged.
+ */
+export async function recordSignInMethodChange(
+  uid: string,
+): Promise<{ added: string[]; removed: string[] }> {
+  const user = await auth().getUser(uid);
+  const now = signInMethodsOf(user.providerData.map((p) => p.providerId));
+  const ref = db().collection(Collections.users).doc(uid);
+  const snap = await ref.get();
+  if (!snap.exists) return { added: [], removed: [] };
+  const before: string[] = snap.get('signInMethods') ?? [];
+  const added = now.filter((m) => !before.includes(m));
+  const removed = before.filter((m) => !now.includes(m));
+  if (added.length || removed.length) {
+    await ref.update({ signInMethods: now, updatedAt: FieldValue.serverTimestamp() });
+    logger.info('sign_in_methods_changed', { uid, added, removed });
+  }
+  return { added, removed };
+}

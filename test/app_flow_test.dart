@@ -237,6 +237,45 @@ void main() {
     expect(find.text('Continue with Google'), findsOneWidget);
   });
 
+  testWidgets('sign-in methods: the only method cannot be removed', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository(
+      user: coach.copyWith(providerIds: ['google.com']),
+    );
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign-in methods'));
+    await tester.pumpAndSettle();
+    final remove = find.widgetWithText(TextButton, 'Remove');
+    expect(tester.widget<TextButton>(remove).onPressed, isNull);
+    expect(find.textContaining("can't be removed"), findsOneWidget);
+  });
+
+  testWidgets('linking Google asks for a fresh sign-in, then links', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository(
+      user: coach.copyWith(providerIds: ['password']),
+    )..needsRecentLogin = true;
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign-in methods'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Link'));
+    await tester.pumpAndSettle();
+    // Linking Google needed a fresh sign-in: the password prompt appears.
+    expect(find.text("Confirm it's you"), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'password');
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    expect(auth.reauthedWith, 'password');
+    expect(auth.currentUser!.providerIds, contains('google.com'));
+    expect(find.text('Google linked.'), findsOneWidget);
+  });
+
   testWidgets('the theme switch applies at once and is remembered', (
     tester,
   ) async {

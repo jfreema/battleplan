@@ -89,6 +89,59 @@ class FakeAuthRepository implements AuthRepository {
     await signOut();
   }
 
+  /// When true, method changes need a fresh sign-in first.
+  bool needsRecentLogin = false;
+  String? reauthedWith;
+  String? emailChangeTo;
+
+  void _requireRecent() {
+    if (needsRecentLogin) throw const RequiresRecentLogin();
+  }
+
+  void _setProviders(List<String> ids) {
+    _user = _user!.copyWith(providerIds: ids);
+    _controller.add(_user);
+  }
+
+  @override
+  Future<void> linkGoogle() async {
+    _requireRecent();
+    _setProviders([..._user!.providerIds, 'google.com']);
+  }
+
+  @override
+  Future<void> unlink(String providerId) async {
+    _requireRecent();
+    _setProviders([..._user!.providerIds]..remove(providerId));
+  }
+
+  @override
+  Future<void> setPassword(String newPassword) async {
+    _requireRecent();
+    if (!_user!.providerIds.contains('password')) {
+      _setProviders([..._user!.providerIds, 'password']);
+    }
+  }
+
+  @override
+  Future<void> changeEmail(String newEmail) async {
+    _requireRecent();
+    emailChangeTo = newEmail;
+  }
+
+  @override
+  Future<void> reauthenticateWithPassword(String password) async {
+    if (password != FakeAuthRepository.password) throw const InvalidInput();
+    reauthedWith = 'password';
+    needsRecentLogin = false;
+  }
+
+  @override
+  Future<void> reauthenticateWithProvider(String providerId) async {
+    reauthedWith = providerId;
+    needsRecentLogin = false;
+  }
+
   /// When true, Google sign-in behaves as if the person closed the sheet.
   bool googleCancels = false;
 

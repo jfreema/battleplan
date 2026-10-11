@@ -12,6 +12,7 @@ import 'package:battleplan/features/auth/presentation/activate_screen.dart';
 import 'package:battleplan/features/auth/presentation/email_sign_in_screen.dart';
 import 'package:battleplan/features/auth/presentation/reset_password_screen.dart';
 import 'package:battleplan/features/auth/presentation/setup_screen.dart';
+import 'package:battleplan/features/auth/presentation/sign_in_methods_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
@@ -184,6 +185,10 @@ GoRouter router(Ref ref) {
           showDevTools: !env.isProd,
         ),
         routes: [
+          GoRoute(
+            path: 'sign-in-methods',
+            builder: (_, _) => const SignInMethodsScreen(),
+          ),
           if (!env.isProd)
             GoRoute(
               path: 'push-test',

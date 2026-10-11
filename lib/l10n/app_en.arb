@@ -21,7 +21,7 @@
   "signInRateLimited": "Slow down, try again in a minute.",
   "signInDisabled": "This account has been disabled. Contact support.",
   "signInPopupBlocked": "Your browser blocked the sign-in window. Allow pop-ups for this site, then try again.",
-  "signInOtherMethod": "You've signed in to Battleplan a different way before. Use that method for now.",
+  "signInOtherMethod": "You've signed in to Battleplan a different way before. We emailed you a link to confirm it's you. After opening it, you can add this sign-in method in Settings → Sign-in methods.",
   "signInUnknownError": "Something went wrong. Try again.",
   "emulatorHint": "Emulator accounts use the password \"password\", e.g. coach@example.com.",
   "welcomeTitle": "Welcome to Battleplan",
@@ -132,5 +132,60 @@
   "setupFailed": "Couldn't save your profile. Check your connection and try again.",
   "signOutEverywhere": "Sign out of all devices",
   "signOutEverywhereHelp": "Ends Battleplan sessions on all your phones, tablets, and browsers. Other devices sign out within an hour.",
-  "signOutEverywhereConfirmTitle": "Sign out of all devices?"
+  "signOutEverywhereConfirmTitle": "Sign out of all devices?",
+  "signInMethods": "Sign-in methods",
+  "methodLinked": "Linked",
+  "methodNotLinked": "Not linked",
+  "linkMethod": "Link",
+  "removeMethod": "Remove",
+  "removeMethodTitle": "Remove {method}?",
+  "@removeMethodTitle": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "removeMethodBody": "You won't be able to sign in with {method} anymore. Your teams and messages stay with your account.",
+  "@removeMethodBody": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "methodRemoved": "{method} removed.",
+  "@methodRemoved": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "methodLinkedDone": "{method} linked.",
+  "@methodLinkedDone": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "methodInUse": "That sign-in is already used by a different Battleplan account. Sign in with it to use that account, or contact support to move your teams.",
+  "methodInvalid": "That didn't work. Check what you entered and try again.",
+  "setPassword": "Set password",
+  "changePassword": "Change password",
+  "newPasswordLabel": "New password",
+  "passwordSaved": "Password saved.",
+  "changeEmail": "Change email",
+  "newEmailLabel": "New email",
+  "changeEmailSent": "We sent a link to {email}. Your email changes once you open it.",
+  "@changeEmailSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "reauthTitle": "Confirm it's you",
+  "lastMethodNote": "Your only sign-in method can't be removed. Link another one first."
 }

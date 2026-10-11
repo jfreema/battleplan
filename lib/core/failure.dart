@@ -89,6 +89,24 @@ final class WeakPassword extends AppFailure {
   String get code => 'weakPassword';
 }
 
+/// The action needs a fresh sign-in first (AUTH-7): linking, unlinking,
+/// changing the email or password, and deleting the account.
+final class RequiresRecentLogin extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'requiresRecentLogin';
+}
+
+/// The sign-in method is already linked to another Battleplan account.
+/// Two accounts are never merged automatically (AUTH-7).
+final class CredentialInUse extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'credentialInUse';
+}
+
 final class UnknownFailure extends AppFailure {
   const new([super.message]);
 
