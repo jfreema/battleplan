@@ -344,6 +344,23 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                     ),
                 ],
               ),
+              // Storage used against the team's quota (D16).
+              section(l10n.storageSection),
+              if (group.storageQuotaBytes > 0) ...[
+                LinearProgressIndicator(
+                  value: (group.storageBytes / group.storageQuotaBytes).clamp(
+                    0,
+                    1,
+                  ),
+                ),
+                const SizedBox(height: Space.xs),
+              ],
+              Text(
+                l10n.storageUsed(
+                  formatBytes(group.storageBytes),
+                  formatBytes(group.storageQuotaBytes),
+                ),
+              ),
               if (isOwner) ...[
                 section(l10n.ownerActions),
                 ListTile(
@@ -380,4 +397,19 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
       ),
     );
   }
+}
+
+/// "0 B", "512 KB", "1.2 GB": sizes for the storage meter.
+String formatBytes(int bytes) {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  var value = bytes.toDouble();
+  var unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  final text = unit == 0 || value >= 10
+      ? value.round().toString()
+      : value.toStringAsFixed(1);
+  return '$text ${units[unit]}';
 }

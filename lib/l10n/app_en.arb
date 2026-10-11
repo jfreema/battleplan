@@ -562,5 +562,6 @@
   "removeGuardian": "Remove guardian",
   "removeGuardianTitle": "Remove {name} as a guardian?",
   "@removeGuardianTitle": {"placeholders": {"name": {"type": "String"}}},
-  "tooManyGuardians": "A player can have up to 4 guardians."
+  "tooManyGuardians": "A player can have up to 4 guardians.",
+  "storageSection": "Storage"
 }

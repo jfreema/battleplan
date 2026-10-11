@@ -298,7 +298,11 @@ void main() {
     await tester.tap(find.text('Team settings'));
     await tester.pumpAndSettle();
     final delete = find.text('Delete team');
-    await tester.ensureVisible(delete);
+    await tester.scrollUntilVisible(
+      delete,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(delete);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, 'Thunder');

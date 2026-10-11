@@ -21,6 +21,7 @@ export {
   transferOwnership,
   updateGroupMember,
 } from './teams/handlers.js';
+export { dailyCleanup, onGroupFileAdded, onGroupFileRemoved } from './teams/triggers.js';
 export {
   getInvitePreview,
   getTeamInvite,
