@@ -695,5 +695,6 @@
   "plusRevoked": "Plus ended.",
   "editMessage": "Edit",
   "edited": "edited",
-  "editFailed": "Couldn't save the edit. Editing needs Plus on this team."
+  "editFailed": "Couldn't save the edit. Editing needs Plus on this team.",
+  "moreReactions": "More reactions"
 }

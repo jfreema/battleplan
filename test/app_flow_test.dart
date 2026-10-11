@@ -1000,6 +1000,42 @@ void main() {
       expect(find.textContaining('edited'), findsOneWidget);
     });
 
+    testWidgets('Plus teams get 12 more reactions (PLAN-7)', (tester) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder').copyWith(
+            plan: GroupPlan(
+              tier: PlanTier.plus,
+              endsAt: DateTime.now().add(const Duration(days: 30)),
+            ),
+          ),
+        },
+        memberships: [testMembership('a', 'coach')],
+        messageRepo: repo,
+      );
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('More reactions'), findsNothing);
+      await tester.tap(find.text('⚾'));
+      await tester.pumpAndSettle();
+      expect(find.text('⚾ 1'), findsOneWidget);
+    });
+
+    testWidgets('Free teams see More reactions with the Plus badge', (
+      tester,
+    ) async {
+      await openChat(tester, FakeMessageRepository([msg(1)]));
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('⚾'), findsNothing);
+      await tester.tap(find.text('More reactions'));
+      await tester.pumpAndSettle();
+      expect(find.text('What Plus adds'), findsOneWidget);
+    });
+
     testWidgets('scrolling up loads older messages 50 at a time', (
       tester,
     ) async {

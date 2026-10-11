@@ -178,6 +178,16 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ReactionPicker(
+                plus:
+                    ref
+                        .read(groupProvider(m.groupId))
+                        .value
+                        ?.has(PlanFeature.extraReactions) ??
+                    false,
+                onMore: () {
+                  Navigator.of(sheet).pop();
+                  unawaited(showWhatPlusAdds(context, isAdmin: canModerate));
+                },
                 mine: me == null ? null : m.reactions[me],
                 onPick: (r) {
                   Navigator.of(sheet).pop();

@@ -195,7 +195,11 @@ service cloud.firestore {
         && request.resource.data.reactions.diff(resource.data.get('reactions', {}))
              .affectedKeys().hasOnly([uid()])
         && (!(uid() in request.resource.data.reactions)
-            || request.resource.data.reactions[uid()] in ['like', 'love', 'dislike', 'laugh']);
+            || request.resource.data.reactions[uid()] in ['like', 'love', 'dislike', 'laugh']
+            // 12 more on Plus teams (PLAN-7).
+            || (request.resource.data.reactions[uid()] in ['fire', 'clap', 'party', 'hundred',
+                  'pray', 'wow', 'sad', 'angry', 'baseball', 'basketball', 'soccer', 'trophy']
+                && isPlus(resource.data.groupId)));
       // Editing (PLAN-6, Plus): the author may change only the text, on a
       // Plus team, of a text or photo message that isn't deleted.
       allow update: if isMember(resource.data.groupId) && active(resource.data.groupId)

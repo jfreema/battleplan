@@ -6,6 +6,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -72,40 +73,74 @@ String reactionName(AppLocalizations l10n, Reaction r) => switch (r) {
   Reaction.trophy => l10n.reactionTrophy,
 };
 
-/// The row of four reactions at the top of the message menu.
+/// The reactions at the top of the message menu: the free four, then the
+/// 12 Plus ones on Plus teams, or a "More reactions" row with the Plus badge
+/// on Free teams (PLAN-7).
 class ReactionPicker extends StatelessWidget {
-  const new({required this.mine, required this.onPick, super.key});
+  const new({
+    required this.mine,
+    required this.onPick,
+    this.plus = false,
+    this.onMore,
+    super.key,
+  });
 
   final Reaction? mine;
   final void Function(Reaction) onPick;
+
+  /// The team is on Plus: show all 16.
+  final bool plus;
+
+  /// On Free, explains Plus.
+  final VoidCallback? onMore;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    Widget button(Reaction r) => Tooltip(
+      message: reactionName(l10n, r),
+      // The emoji's own label already names it for screen readers.
+      excludeFromSemantics: true,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () => onPick(r),
+        child: Container(
+          padding: const EdgeInsets.all(Space.sm),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: r == mine ? scheme.primaryContainer : null,
+          ),
+          child: Text(
+            reactionEmoji(r),
+            style: const TextStyle(fontSize: 28),
+            semanticsLabel: reactionName(l10n, r),
+          ),
+        ),
+      ),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        for (final r in reactionOrder)
-          Tooltip(
-            message: reactionName(l10n, r),
-            // The emoji's own label already names it for screen readers.
-            excludeFromSemantics: true,
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: () => onPick(r),
-              child: Container(
-                padding: const EdgeInsets.all(Space.sm),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: r == mine ? scheme.primaryContainer : null,
-                ),
-                child: Text(
-                  reactionEmoji(r),
-                  style: const TextStyle(fontSize: 28),
-                  semanticsLabel: reactionName(l10n, r),
-                ),
-              ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [for (final r in reactionOrder) button(r)],
+        ),
+        if (plus)
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: [for (final r in plusReactionOrder) button(r)],
+          )
+        else if (onMore != null)
+          TextButton(
+            onPressed: onMore,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.moreReactions),
+                const SizedBox(width: Space.sm),
+                const PlusBadge(),
+              ],
             ),
           ),
       ],
@@ -140,7 +175,7 @@ class ReactionChips extends StatelessWidget {
       child: Wrap(
         spacing: Space.xs,
         children: [
-          for (final r in reactionOrder)
+          for (final r in [...reactionOrder, ...plusReactionOrder])
             if (counts[r] case final n?)
               Material(
                 color: r == mine
@@ -186,7 +221,7 @@ class ReactionsSheet extends ConsumerWidget {
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(vertical: Space.lg),
       children: [
-        for (final r in reactionOrder)
+        for (final r in [...reactionOrder, ...plusReactionOrder])
           for (final e in message.reactions.entries)
             if (e.value == r)
               ListTile(
