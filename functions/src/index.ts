@@ -21,6 +21,15 @@ export {
   transferOwnership,
   updateGroupMember,
 } from './teams/handlers.js';
-export { getInvitePreview, getTeamInvite, redeemInvite, resetGroupInvite } from './invites/handlers.js';
+export {
+  getInvitePreview,
+  getTeamInvite,
+  listEmailInvites,
+  redeemInvite,
+  resendEmailInvite,
+  resetGroupInvite,
+  revokeInvite,
+  sendEmailInvites,
+} from './invites/handlers.js';
 export { logClientError } from './ops/handlers.js';
 export { addPlayers, removePlayer } from './players/handlers.js';

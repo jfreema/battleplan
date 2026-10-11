@@ -847,4 +847,277 @@ as bool,
 
 }
 
+/// @nodoc
+mixin _$EmailInvite {
+
+ String get code; String get email; EmailInviteStatus get status; DateTime? get createdAt;
+/// Create a copy of EmailInvite
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$EmailInviteCopyWith<EmailInvite> get copyWith => _$EmailInviteCopyWithImpl<EmailInvite>(this as EmailInvite, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as EmailInvite;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EmailInvite&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as EmailInvite;
+  return Object.hash(runtimeType,_this.code,_this.email,_this.status,_this.createdAt);
+}
+
+@override
+String toString() {
+  final _this = this as EmailInvite;
+  return 'EmailInvite(code: ${_this.code}, email: ${_this.email}, status: ${_this.status}, createdAt: ${_this.createdAt})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $EmailInviteCopyWith<$Res>  {
+  factory $EmailInviteCopyWith(EmailInvite value, $Res Function(EmailInvite) _then) = _$EmailInviteCopyWithImpl;
+@useResult
+$Res call({
+ String code, String email, EmailInviteStatus status, DateTime? createdAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$EmailInviteCopyWithImpl<$Res>
+    implements $EmailInviteCopyWith<$Res> {
+  _$EmailInviteCopyWithImpl(this._self, this._then);
+
+  final EmailInvite _self;
+  final $Res Function(EmailInvite) _then;
+
+/// Create a copy of EmailInvite
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? code = null,Object? email = null,Object? status = null,Object? createdAt = freezed,}) {
+  return _then(EmailInvite(
+code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
+as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as EmailInviteStatus,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [EmailInvite].
+extension EmailInvitePatterns on EmailInvite {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _EmailInvite value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _EmailInvite() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _EmailInvite value)  $default,){
+final _that = this;
+switch (_that) {
+case _EmailInvite():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _EmailInvite value)?  $default,){
+final _that = this;
+switch (_that) {
+case _EmailInvite() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String code,  String email,  EmailInviteStatus status,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _EmailInvite() when $default != null:
+return $default(_that.code,_that.email,_that.status,_that.createdAt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String code,  String email,  EmailInviteStatus status,  DateTime? createdAt)  $default,) {final _that = this;
+switch (_that) {
+case _EmailInvite():
+return $default(_that.code,_that.email,_that.status,_that.createdAt);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String code,  String email,  EmailInviteStatus status,  DateTime? createdAt)?  $default,) {final _that = this;
+switch (_that) {
+case _EmailInvite() when $default != null:
+return $default(_that.code,_that.email,_that.status,_that.createdAt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _EmailInvite implements EmailInvite {
+  const _EmailInvite({required this.code, required this.email, required this.status, this.createdAt});
+  
+
+@override final  String code;
+@override final  String email;
+@override final  EmailInviteStatus status;
+@override final  DateTime? createdAt;
+
+/// Create a copy of EmailInvite
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$EmailInviteCopyWith<_EmailInvite> get copyWith => __$EmailInviteCopyWithImpl<_EmailInvite>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _EmailInvite&&(identical(other.code, code) || other.code == code)&&(identical(other.email, email) || other.email == email)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,code,email,status,createdAt);
+}
+
+@override
+String toString() {
+    return 'EmailInvite(code: $code, email: $email, status: $status, createdAt: $createdAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$EmailInviteCopyWith<$Res> implements $EmailInviteCopyWith<$Res> {
+  factory _$EmailInviteCopyWith(_EmailInvite value, $Res Function(_EmailInvite) _then) = __$EmailInviteCopyWithImpl;
+@override @useResult
+$Res call({
+ String code, String email, EmailInviteStatus status, DateTime? createdAt
+});
+
+
+
+
+}
+/// @nodoc
+class __$EmailInviteCopyWithImpl<$Res>
+    implements _$EmailInviteCopyWith<$Res> {
+  __$EmailInviteCopyWithImpl(this._self, this._then);
+
+  final _EmailInvite _self;
+  final $Res Function(_EmailInvite) _then;
+
+/// Create a copy of EmailInvite
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? code = null,Object? email = null,Object? status = null,Object? createdAt = freezed,}) {
+  return _then(_EmailInvite(
+code: null == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
+as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as EmailInviteStatus,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+
+}
+
 // dart format on

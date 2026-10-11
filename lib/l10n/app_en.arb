@@ -517,5 +517,26 @@
       }
     }
   },
-  "addByEmailNeedsVerified": "Verify your email first, then you can add people by email."
+  "addByEmailNeedsVerified": "Verify your email first, then you can add people by email.",
+  "emailInvitesHelp": "Each address gets its own link that works once and expires in 14 days. Up to 50 at a time.",
+  "emailAddresses": "Email addresses",
+  "emailInvitesTooMany": "Up to {max} at a time.",
+  "@emailInvitesTooMany": {"placeholders": {"max": {"type": "int"}}},
+  "inviteNote": "Note (optional)",
+  "sendInvitesCount": "{count, plural, =0{Send invites} =1{Send 1 invite} other{Send {count} invites}}",
+  "@sendInvitesCount": {"placeholders": {"count": {"type": "int"}}},
+  "emailInvitesSent": "{count, plural, =1{Invite sent} other{{count} invites sent}}",
+  "@emailInvitesSent": {"placeholders": {"count": {"type": "int"}}},
+  "sentInvites": "Sent invites",
+  "noEmailInvites": "No email invites yet.",
+  "invitePending": "Pending",
+  "inviteJoined": "Joined",
+  "emailInviteExpired": "Expired",
+  "emailInviteRevoked": "Revoked",
+  "resend": "Resend",
+  "revoke": "Revoke",
+  "inviteResent": "Invite sent again",
+  "emailInvitesNeedVerified": "Verify your email first, then you can send invites.",
+  "emailInvitesRateLimited": "That's the most invites for today. Try again tomorrow.",
+  "emailInvitesSubtitle": "Send single-use links to up to 50 people"
 }

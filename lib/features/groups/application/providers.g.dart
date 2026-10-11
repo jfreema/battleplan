@@ -649,3 +649,89 @@ final class TeamInviteFamily extends $Family
   @override
   String toString() => r'teamInviteProvider';
 }
+
+/// The team's email invites with their state (INV-4).
+
+@ProviderFor(emailInvites)
+final emailInvitesProvider = EmailInvitesFamily._();
+
+/// The team's email invites with their state (INV-4).
+
+final class EmailInvitesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<EmailInvite>>,
+          List<EmailInvite>,
+          FutureOr<List<EmailInvite>>
+        >
+    with
+        $FutureModifier<List<EmailInvite>>,
+        $FutureProvider<List<EmailInvite>> {
+  /// The team's email invites with their state (INV-4).
+  EmailInvitesProvider._({
+    required EmailInvitesFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'emailInvitesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$emailInvitesHash();
+
+  @override
+  String toString() {
+    return r'emailInvitesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<EmailInvite>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<EmailInvite>> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return emailInvites(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EmailInvitesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$emailInvitesHash() => r'd67d0ed6b55d83c8e6d2a96284fd00caef8212bd';
+
+/// The team's email invites with their state (INV-4).
+
+final class EmailInvitesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<EmailInvite>>, GroupId> {
+  EmailInvitesFamily._()
+    : super(
+        retry: null,
+        name: r'emailInvitesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The team's email invites with their state (INV-4).
+
+  EmailInvitesProvider call(GroupId groupId) =>
+      EmailInvitesProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'emailInvitesProvider';
+}

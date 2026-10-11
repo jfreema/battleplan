@@ -22,6 +22,7 @@ import 'package:battleplan/features/documents/presentation/documents_screen.dart
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/add_members_screen.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
+import 'package:battleplan/features/groups/presentation/email_invites_screen.dart';
 import 'package:battleplan/features/groups/presentation/enter_code_screen.dart';
 import 'package:battleplan/features/groups/presentation/invite_screen.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
@@ -232,6 +233,14 @@ GoRouter router(Ref ref) {
             builder: (_, state) => InviteScreen(
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
+            routes: [
+              GoRoute(
+                path: 'email',
+                builder: (_, state) => EmailInvitesScreen(
+                  groupId: GroupId(state.pathParameters['groupId']!),
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: 'settings',

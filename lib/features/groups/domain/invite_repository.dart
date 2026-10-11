@@ -20,4 +20,21 @@ abstract interface class InviteRepository {
     InviteExpiry expiry = InviteExpiry.never,
     int? maxUses,
   });
+
+  /// Emails single-use invites that expire in 14 days (INV-4). Returns how
+  /// many were invited. Throws EmailNotVerified or RateLimited.
+  Future<int> sendEmailInvites(
+    GroupId groupId,
+    List<String> emails, {
+    String? note,
+  });
+
+  /// The team's email invites, newest first (INV-4).
+  Future<List<EmailInvite>> emailInvites(GroupId groupId);
+
+  /// Sends an email invite again with a fresh 14 days.
+  Future<void> resendEmailInvite(String code);
+
+  /// Turns an invite off at once.
+  Future<void> revokeInvite(String code);
 }

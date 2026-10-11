@@ -75,7 +75,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 45. ✅ Email sending from Functions (ARCH §6.7), with the API key in Secret Manager. *Resend, from noreply@getbattleplan.app; security notices for sign-in method changes now go out too (task 33).*
 46. ✅ Add members by email, with account creation and setup emails (TEAM-7, AUTH-6). *Tested on dev end to end: the setup email arrived and its link signed the new person in to first-run setup. The "How do you want to sign in next time?" prompt is covered by Settings → Sign-in methods for now.*
 47. ✅ Invite screen, invite link, QR code, and code (INV-1 to INV-3); creating a team lands on it. *The in-app QR scanner is part of joining (task 49).*
-48. Email invites (INV-4).
+48. ✅ Email invites (INV-4). *Tested on dev: invites to Resend test addresses, a wrong-account redeem refused, the right account joined, used-up and revoked links refused, Resend gives a revoked invite a fresh 14 days.*
 49. ✅ Joining: `getInvitePreview`, `redeemInvite`, join by code or QR scan, the `/join` web page, error states (INV-5 to INV-8). *App Store and Google Play badges on the web page join when the apps are listed (task 130); youth teams' "Who are you here for?" step is task 52.*
 50. Universal Links and App Links for invites on our domain (INV-9, ENG-6). iOS is verified in task 110.
 51. ✅ Youth teams: add players and pasted rosters (PLAYER-1), player card (PLAYER-2). *Setup emails for newly added guardians go out with task 46; adding or removing a guardian from the card is task 52.*

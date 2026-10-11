@@ -18,8 +18,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 /// INV-1 at `/g/:groupId/invite`: the team's link, QR code, and code, with
 /// Copy, Share, and a full-screen QR to hold up at practice. Admins can set
-/// an expiry and use limit and reset the link (INV-2). Email invites and
-/// add-by-email arrive with email sending.
+/// an expiry and use limit and reset the link (INV-2). Links lead to email
+/// invites (INV-4) and, for admins, adding people by email (TEAM-7).
 class InviteScreen extends ConsumerWidget {
   const new({required this.groupId, super.key});
 
@@ -144,8 +144,8 @@ class _InviteBody extends ConsumerWidget {
         ListTile(
           leading: const Icon(AppIcons.email),
           title: Text(l10n.emailInvites),
-          subtitle: Text(l10n.comingSoon),
-          enabled: false,
+          subtitle: Text(l10n.emailInvitesSubtitle),
+          onTap: () => context.push('/g/${groupId.value}/invite/email'),
         ),
         if (isAdmin) ...[
           ListTile(

@@ -1,6 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -328,6 +329,44 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Reset link'));
     await tester.pumpAndSettle();
     expect(invites.resets, 1);
+  });
+
+  testWidgets('email invites: send, list, and revoke (INV-4)', (
+    tester,
+  ) async {
+    final invites = FakeInviteRepository();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      invites: invites,
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invite'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Email invites'));
+    await tester.pumpAndSettle();
+    expect(find.text('No email invites yet.'), findsOneWidget);
+    await tester.enterText(
+      find.byType(TextField).first,
+      'Sam@Example.com, alex@example.com sam@example.com',
+    );
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Send 2 invites'));
+    await tester.pumpAndSettle();
+    expect(invites.sent.map((i) => i.email), [
+      'alex@example.com',
+      'sam@example.com',
+    ]);
+    expect(find.text('Pending'), findsNWidgets(2));
+    final revoke = find.widgetWithText(TextButton, 'Revoke').first;
+    await tester.ensureVisible(revoke);
+    await tester.tap(revoke);
+    await tester.pumpAndSettle();
+    expect(invites.sent.first.status, EmailInviteStatus.revoked);
+    expect(find.text('Revoked'), findsOneWidget);
   });
 
   testWidgets('joining a team by typing its code', (tester) async {

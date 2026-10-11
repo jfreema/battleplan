@@ -54,3 +54,17 @@ abstract class JoinResult with _$JoinResult {
     required bool alreadyMember,
   }) = _JoinResult;
 }
+
+/// Where an email invite stands (INV-4).
+enum EmailInviteStatus { pending, joined, expired, revoked }
+
+/// One single-use invite sent to an address (INV-4).
+@freezed
+abstract class EmailInvite with _$EmailInvite {
+  const factory({
+    required String code,
+    required String email,
+    required EmailInviteStatus status,
+    DateTime? createdAt,
+  }) = _EmailInvite;
+}

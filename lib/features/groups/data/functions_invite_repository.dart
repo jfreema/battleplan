@@ -5,7 +5,8 @@ import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
-/// Invites through the `getTeamInvite` and `resetGroupInvite` callables.
+/// Invites through the invite callables (`getTeamInvite`, `redeemInvite`,
+/// `sendEmailInvites`, and the rest).
 class FunctionsInviteRepository implements InviteRepository {
   new(this._functions);
 
@@ -50,6 +51,44 @@ class FunctionsInviteRepository implements InviteRepository {
     'maxUses': maxUses,
   });
 
+  @override
+  Future<int> sendEmailInvites(
+    GroupId groupId,
+    List<String> emails, {
+    String? note,
+  }) async {
+    final d = await _raw('sendEmailInvites', {
+      'groupId': groupId.value,
+      'emails': emails,
+      if (note != null && note.isNotEmpty) 'note': note,
+    });
+    return (d['invited'] as num?)?.toInt() ?? 0;
+  }
+
+  @override
+  Future<List<EmailInvite>> emailInvites(GroupId groupId) async {
+    final d = await _raw('listEmailInvites', {'groupId': groupId.value});
+    return [
+      for (final x in (d['invites'] as List).cast<Map<Object?, Object?>>())
+        EmailInvite(
+          code: x['code']! as String,
+          email: x['email']! as String,
+          status: EmailInviteStatus.values.byName(x['status']! as String),
+          createdAt: x['createdAt'] == null
+              ? null
+              : DateTime.parse(x['createdAt']! as String),
+        ),
+    ];
+  }
+
+  @override
+  Future<void> resendEmailInvite(String code) =>
+      _raw('resendEmailInvite', {'code': code});
+
+  @override
+  Future<void> revokeInvite(String code) =>
+      _raw('revokeInvite', {'code': code});
+
   Future<TeamInvite> _call(String name, Map<String, Object?> data) async =>
       _invite(await _raw(name, data));
 
@@ -66,6 +105,9 @@ class FunctionsInviteRepository implements InviteRepository {
       throw switch ((e.code, e.message)) {
         ('not-found', final reason?) => InviteUnusable(reason),
         ('failed-precondition', 'too-many-teams') => TooManyTeams(e.message),
+        ('failed-precondition', 'email-not-verified') => EmailNotVerified(
+          e.message,
+        ),
         ('resource-exhausted', _) => RateLimited(e.message),
         ('permission-denied', _) => PermissionDenied(e.message),
         ('invalid-argument', _) => const InviteUnusable('unknown'),

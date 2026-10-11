@@ -478,6 +478,41 @@ class FakeInviteRepository implements InviteRepository {
     code = 'NEWC0DE2'.replaceAll('0', 'Q');
     return _invite();
   }
+
+  final List<EmailInvite> sent = [];
+
+  @override
+  Future<int> sendEmailInvites(
+    GroupId groupId,
+    List<String> emails, {
+    String? note,
+  }) async {
+    for (final (i, e) in emails.indexed) {
+      sent.insert(
+        0,
+        EmailInvite(
+          code: 'EMAIL00$i',
+          email: e,
+          status: EmailInviteStatus.pending,
+        ),
+      );
+    }
+    return emails.length;
+  }
+
+  @override
+  Future<List<EmailInvite>> emailInvites(GroupId groupId) async => [...sent];
+
+  final List<String> resent = [];
+
+  @override
+  Future<void> resendEmailInvite(String code) async => resent.add(code);
+
+  @override
+  Future<void> revokeInvite(String code) async {
+    final i = sent.indexWhere((x) => x.code == code);
+    if (i >= 0) sent[i] = sent[i].copyWith(status: EmailInviteStatus.revoked);
+  }
 }
 
 class FakePlayerRepository implements PlayerRepository {

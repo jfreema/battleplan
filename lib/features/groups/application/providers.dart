@@ -92,3 +92,8 @@ InviteRepository inviteRepository(Ref ref) =>
 @riverpod
 Future<TeamInvite> teamInvite(Ref ref, GroupId groupId) =>
     ref.watch(inviteRepositoryProvider).teamInvite(groupId);
+
+/// The team's email invites with their state (INV-4).
+@riverpod
+Future<List<EmailInvite>> emailInvites(Ref ref, GroupId groupId) =>
+    ref.watch(inviteRepositoryProvider).emailInvites(groupId);

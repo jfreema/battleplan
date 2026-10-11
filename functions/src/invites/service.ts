@@ -1,7 +1,7 @@
 // Invites domain service: owns invites (ARCH §6.4, §6.6).
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { db } from '../shared/admin.js';
-import { Collections } from '../shared/constants.js';
+import { Collections, Limits } from '../shared/constants.js';
 import { joinUrl } from '../links/service.js';
 import { groupMemberId } from '../shared/ids.js';
 import { formatCode, newInviteCode } from './codes.js';
@@ -191,5 +191,66 @@ export async function redeem(
     });
     tx.update(inviteRef, { useCount: FieldValue.increment(1) });
     return { groupId, teamType: group.get('teamType') as string, alreadyMember: false };
+  });
+}
+
+export interface EmailInviteRow {
+  code: string;
+  email: string;
+  status: 'pending' | 'joined' | 'expired' | 'revoked';
+  createdAt: string | null;
+}
+
+/** Creates a single-use email invite that expires in 14 days (INV-4). */
+export async function createEmailInvite(groupId: string, email: string, createdBy: string): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = newInviteCode();
+    try {
+      await db().collection(Collections.invites).doc(code).create({
+        groupId,
+        type: 'email',
+        email: email.toLowerCase(),
+        role: 'member',
+        createdBy,
+        expiresAt: Timestamp.fromMillis(Date.now() + Limits.emailInviteExpiryDays * 86_400_000),
+        maxUses: 1,
+        useCount: 0,
+        revokedAt: null,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      return code;
+    } catch (e) {
+      if ((e as { code?: number }).code !== 6) throw e;
+    }
+  }
+  throw new Error('Could not find a free invite code.');
+}
+
+/** The team's email invites, newest first, with their state (INV-4). */
+export async function listEmailInvites(groupId: string): Promise<EmailInviteRow[]> {
+  const snap = await db()
+    .collection(Collections.invites)
+    .where('groupId', '==', groupId)
+    .where('type', '==', 'email')
+    .orderBy('createdAt', 'desc')
+    .limit(100)
+    .get();
+  const now = Date.now();
+  return snap.docs.map((d) => {
+    const x = d.data();
+    const status: EmailInviteRow['status'] =
+      (x.useCount ?? 0) >= 1
+        ? 'joined'
+        : x.revokedAt
+          ? 'revoked'
+          : ((x.expiresAt as Timestamp | null)?.toMillis() ?? Infinity) <= now
+            ? 'expired'
+            : 'pending';
+    return {
+      code: d.id,
+      email: x.email as string,
+      status,
+      createdAt: (x.createdAt as Timestamp | null)?.toDate().toISOString() ?? null,
+    };
   });
 }
