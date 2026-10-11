@@ -229,7 +229,10 @@ class _TeamHeader extends StatelessWidget {
             icon: const Icon(AppIcons.notifications),
             onPressed: () => context.push('/notifications'),
           ),
-          _TeamMenu(isAdmin: team?.membership.isAdmin ?? false),
+          _TeamMenu(
+            groupId: team?.group.id,
+            isAdmin: team?.membership.isAdmin ?? false,
+          ),
           if (!wide) const _AccountButton(),
         ],
       ),
@@ -299,29 +302,40 @@ class _SwitcherButton extends StatelessWidget {
 }
 
 class _TeamMenu extends StatelessWidget {
-  const new({required this.isAdmin});
+  const new({required this.groupId, required this.isAdmin});
 
+  final GroupId? groupId;
   final bool isAdmin;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // (route under /g/<id>/, icon, label). Items without a screen yet say
+    // "Coming soon".
     final items = [
-      (AppIcons.roster, l10n.rosterMenu),
-      (AppIcons.invite, l10n.inviteMenu),
-      (AppIcons.notifications, l10n.teamNotificationsMenu),
-      if (isAdmin) (AppIcons.settings, l10n.teamSettingsMenu),
-      (AppIcons.leave, l10n.leaveTeamMenu),
+      ('roster', AppIcons.roster, l10n.rosterMenu),
+      ('invite', AppIcons.invite, l10n.inviteMenu),
+      ('notifications', AppIcons.notifications, l10n.teamNotificationsMenu),
+      if (isAdmin) ('settings', AppIcons.settings, l10n.teamSettingsMenu),
+      ('leave', AppIcons.leave, l10n.leaveTeamMenu),
     ];
-    return PopupMenuButton<int>(
+    const built = {'roster'};
+    return PopupMenuButton<String>(
       tooltip: l10n.teamMenuTooltip,
       icon: const Icon(AppIcons.more),
-      // Team menu screens arrive in M2.
-      onSelected: (_) => showAppSnackBar(context, l10n.comingSoon),
+      onSelected: (route) {
+        final id = groupId;
+        if (id == null) return;
+        if (built.contains(route)) {
+          unawaited(context.push('/g/${id.value}/$route'));
+        } else {
+          showAppSnackBar(context, l10n.comingSoon);
+        }
+      },
       itemBuilder: (_) => [
-        for (final (i, (icon, label)) in items.indexed)
+        for (final (route, icon, label) in items)
           PopupMenuItem(
-            value: i,
+            value: route,
             child: ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(icon),

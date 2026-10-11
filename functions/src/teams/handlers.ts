@@ -6,7 +6,11 @@ import { Collections, Limits, sportValues, TEAM_COLORS, teamTypeValues } from '.
 import { requireAuth } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { parse } from '../shared/validate.js';
-import { createGroup as create } from './service.js';
+import { audit } from '../audit/service.js';
+import { postSystemMessage } from '../chat/service.js';
+import { groupMemberId } from '../shared/ids.js';
+import { requireTeamAdmin } from '../shared/roles.js';
+import { canChangeRole, canRemove, createGroup as create, refreshMemberCount } from './service.js';
 
 const CreateGroupInput = z.object({
   name: z.string().trim().min(1).max(Limits.groupNameMax),
@@ -62,4 +66,76 @@ export const createGroup = onCall(async (request) => {
     (config.defaultStorageQuotaGb as number | undefined) ?? Limits.defaultStorageQuotaGb,
   );
   return { groupId };
+});
+
+const UpdateMemberInput = z.object({
+  groupId: z.string().min(1),
+  uid: z.string().min(1),
+  role: z.enum(['admin', 'member']).optional(),
+  title: z.string().trim().max(40).nullable().optional(),
+});
+
+/** Changes a member's role or title (TEAM-3, TEAM-4). */
+export const updateGroupMember = onCall(async (request) => {
+  const actorUid = requireAuth(request);
+  const input = parse(UpdateMemberInput, request.data);
+  const actor = await requireTeamAdmin(input.groupId, actorUid, request.auth?.token.superAdmin === true);
+  const ref = db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, input.uid));
+  const target = await ref.get();
+  if (!target.exists) throw new HttpsError('not-found', 'Not a member.');
+  const targetRole = target.get('role') as 'owner' | 'admin' | 'member';
+  const update: Record<string, unknown> = {};
+  if (input.role && input.role !== targetRole) {
+    if (!canChangeRole(actor, targetRole, input.role)) {
+      throw new HttpsError('permission-denied', 'Only the owner can remove an admin.');
+    }
+    update.role = input.role;
+  }
+  if (input.title !== undefined) update.title = input.title || null;
+  if (Object.keys(update).length === 0) return { ok: true };
+  await ref.update(update);
+  await audit({
+    actorId: actorUid,
+    action: 'updateGroupMember',
+    groupId: input.groupId,
+    targetType: 'user',
+    targetId: input.uid,
+    before: { role: targetRole, title: target.get('title') ?? null },
+    after: update,
+  });
+  if (update.role === 'admin') {
+    const name = (target.get('displayName') as string) || 'Someone';
+    await postSystemMessage(input.groupId, 'madeAdmin', `${name} is now an admin`, actorUid, input.uid);
+  }
+  return { ok: true };
+});
+
+const RemoveMemberInput = z.object({ groupId: z.string().min(1), uid: z.string().min(1) });
+
+/** Removes someone from a team (TEAM-3). Leaving yourself is leaveGroup. */
+export const removeMember = onCall(async (request) => {
+  const actorUid = requireAuth(request);
+  const input = parse(RemoveMemberInput, request.data);
+  if (input.uid === actorUid) throw new HttpsError('invalid-argument', 'Use leave team instead.');
+  const actor = await requireTeamAdmin(input.groupId, actorUid, request.auth?.token.superAdmin === true);
+  const ref = db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, input.uid));
+  const target = await ref.get();
+  if (!target.exists) return { ok: true };
+  const targetRole = target.get('role') as 'owner' | 'admin' | 'member';
+  if (!canRemove(actor, targetRole)) {
+    throw new HttpsError('permission-denied', 'Only the owner can remove an admin.');
+  }
+  await ref.delete();
+  await refreshMemberCount(input.groupId);
+  await audit({
+    actorId: actorUid,
+    action: 'removeMember',
+    groupId: input.groupId,
+    targetType: 'user',
+    targetId: input.uid,
+    before: { role: targetRole },
+  });
+  const name = (target.get('displayName') as string) || 'Someone';
+  await postSystemMessage(input.groupId, 'removed', `${name} was removed`, actorUid, input.uid);
+  return { ok: true };
 });

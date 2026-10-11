@@ -221,6 +221,25 @@ class FakeMemberRepository implements MemberRepository {
 
   final List<Membership> memberships;
 
+  final List<String> calls = [];
+
+  @override
+  Stream<List<Membership>> watchRoster(GroupId groupId) =>
+      Stream.value(memberships.where((m) => m.groupId == groupId).toList());
+
+  @override
+  Future<void> updateMember(
+    GroupId groupId,
+    UserId uid, {
+    MemberRole? role,
+    String? title,
+    bool clearTitle = false,
+  }) async => calls.add('update ${uid.value} ${role?.value ?? ''}'.trim());
+
+  @override
+  Future<void> removeMember(GroupId groupId, UserId uid) async =>
+      calls.add('remove ${uid.value}');
+
   @override
   Stream<List<Membership>> watchMyMemberships(UserId uid) =>
       Stream.value(memberships.where((m) => m.uid == uid).toList());
@@ -261,11 +280,12 @@ Membership testMembership(
   String groupId,
   String uid, {
   MemberRole role = MemberRole.member,
+  String? name,
 }) => Membership(
   groupId: GroupId(groupId),
   uid: UserId(uid),
   role: role,
-  displayName: uid,
+  displayName: name ?? uid,
 );
 
 /// Profiles start set up unless [needsSetup] is true, like a returning user.

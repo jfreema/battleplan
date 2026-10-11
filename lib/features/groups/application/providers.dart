@@ -53,3 +53,25 @@ AsyncValue<List<MyTeam>> myTeams(Ref ref) {
     return teams;
   });
 }
+
+/// A team's roster, sorted by name (TEAM-3).
+@riverpod
+Stream<List<Membership>> roster(Ref ref, GroupId groupId) => ref
+    .watch(memberRepositoryProvider)
+    .watchRoster(groupId)
+    .map(
+      (list) => [...list]
+        ..sort(
+          (a, b) => a.displayName.toLowerCase().compareTo(
+            b.displayName.toLowerCase(),
+          ),
+        ),
+    );
+
+/// The signed-in person's membership on [groupId], if any.
+@riverpod
+Membership? myMembership(Ref ref, GroupId groupId) => ref
+    .watch(myMembershipsProvider)
+    .value
+    ?.where((m) => m.groupId == groupId)
+    .firstOrNull;

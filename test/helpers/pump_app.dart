@@ -21,6 +21,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeUserRepository? users,
   FakePushRepository? push,
   FakeGroupRepository? groupRepo,
+  FakeMemberRepository? memberRepo,
 }) async {
   // A tall phone-sized screen, so long settings lists fit without scrolling.
   tester.view
@@ -41,7 +42,7 @@ Future<FakeLocalPrefs> pumpApp(
           groupRepo ?? FakeGroupRepository(groups.cast()),
         ),
         memberRepositoryProvider.overrideWithValue(
-          FakeMemberRepository(memberships.cast()),
+          memberRepo ?? FakeMemberRepository(memberships.cast()),
         ),
         localPrefsRepositoryProvider.overrideWithValue(localPrefs),
         pushRepositoryProvider.overrideWithValue(push ?? FakePushRepository()),

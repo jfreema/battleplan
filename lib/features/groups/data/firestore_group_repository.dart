@@ -69,11 +69,52 @@ class FirestoreGroupRepository implements GroupRepository {
       );
 }
 
-/// Owns `groupMembers`.
+/// Owns `groupMembers`. Role and removal changes go through callables.
 class FirestoreMemberRepository implements MemberRepository {
-  new(this._db);
+  new(this._db, this._functions);
 
   final FirebaseFirestore _db;
+  final FirebaseFunctions _functions;
+
+  @override
+  Stream<List<Membership>> watchRoster(GroupId groupId) => _db
+      .collection(Collections.groupMembers)
+      .where('groupId', isEqualTo: groupId.value)
+      .limit(Limits.queryLimitMax)
+      .snapshots()
+      .map((q) => [for (final d in q.docs) membershipFromFirestore(d.data())]);
+
+  @override
+  Future<void> updateMember(
+    GroupId groupId,
+    UserId uid, {
+    MemberRole? role,
+    String? title,
+    bool clearTitle = false,
+  }) => _call('updateGroupMember', {
+    'groupId': groupId.value,
+    'uid': uid.value,
+    if (role != null) 'role': role.value,
+    if (clearTitle) 'title': null else 'title': ?title,
+  });
+
+  @override
+  Future<void> removeMember(GroupId groupId, UserId uid) =>
+      _call('removeMember', {'groupId': groupId.value, 'uid': uid.value});
+
+  Future<void> _call(String name, Map<String, Object?> data) async {
+    try {
+      await _functions.httpsCallable(name).call<void>(data);
+    } on FirebaseFunctionsException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.message),
+        'not-found' => NotFound(e.message),
+        'invalid-argument' => InvalidInput(e.message),
+        'unavailable' || 'deadline-exceeded' => Offline(e.message),
+        _ => UnknownFailure('${e.code}: ${e.message}'),
+      };
+    }
+  }
 
   @override
   Stream<List<Membership>> watchMyMemberships(UserId uid) => _db

@@ -225,5 +225,49 @@
   "sportSoftball": "Softball",
   "sportVolleyball": "Volleyball",
   "sportOther": "Other",
-  "tooManyTeams": "You're on 100 teams, the most allowed. Leave a team to create a new one."
+  "tooManyTeams": "You're on 100 teams, the most allowed. Leave a team to create a new one.",
+  "searchByName": "Search by name",
+  "rosterAdmins": "Admins",
+  "rosterMembers": "Members",
+  "roleOwner": "Owner",
+  "roleAdmin": "Admin",
+  "makeAdmin": "Make admin",
+  "removeAdmin": "Remove admin",
+  "editTitle": "Edit title",
+  "titleLabel": "Title",
+  "titleHelp": "For example: Coach, Manager, Team parent",
+  "removeFromTeam": "Remove from team",
+  "notAllowed": "You can't do that on this team.",
+  "madeAdminDone": "{name} is now an admin.",
+  "@madeAdminDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removedAdminDone": "{name} is no longer an admin.",
+  "@removedAdminDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removedDone": "{name} was removed from the team.",
+  "@removedDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "removeFromTeamTitle": "Remove {name} from the team?",
+  "@removeFromTeamTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

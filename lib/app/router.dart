@@ -22,6 +22,7 @@ import 'package:battleplan/features/documents/presentation/documents_screen.dart
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
+import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notifications_screen.dart';
@@ -216,6 +217,12 @@ GoRouter router(Ref ref) {
             ? '/g/${state.pathParameters['groupId']}/chat'
             : null,
         routes: [
+          GoRoute(
+            path: 'roster',
+            builder: (_, state) => RosterScreen(
+              groupId: GroupId(state.pathParameters['groupId']!),
+            ),
+          ),
           StatefulShellRoute.indexedStack(
             builder: (context, state, shell) => TeamShell(
               groupId: GroupId(state.pathParameters['groupId']!),

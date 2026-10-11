@@ -1,4 +1,5 @@
 // Chat domain service: owns messages.
+import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
 
@@ -22,4 +23,32 @@ export async function anonymizeAuthor(uid: string): Promise<void> {
     await batch.commit();
     if (snap.size < 400) break;
   }
+}
+
+export type SystemEventKind = 'joined' | 'left' | 'removed' | 'madeAdmin' | 'renamed';
+
+/**
+ * Posts a small centered line in a team's chat (CHAT-10): "Sam joined",
+ * "Alex is now an admin". Only Functions write system messages.
+ */
+export async function postSystemMessage(
+  groupId: string,
+  kind: SystemEventKind,
+  text: string,
+  actorId: string,
+  targetId?: string,
+): Promise<void> {
+  await db().collection(Collections.messages).add({
+    groupId,
+    authorId: 'system',
+    authorName: '',
+    authorPhotoPath: null,
+    authorPlayerSummary: null,
+    type: 'system',
+    text,
+    attachments: [],
+    reactions: {},
+    systemEvent: { kind, actorId, targetId: targetId ?? null },
+    createdAt: FieldValue.serverTimestamp(),
+  });
 }

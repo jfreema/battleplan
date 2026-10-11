@@ -23,3 +23,22 @@ describe('nextOwner', () => {
     expect(nextOwner([{ uid: 'owner', role: 'owner' }], 'owner')).toBeNull();
   });
 });
+
+import { canChangeRole, canRemove } from '../../src/teams/service.js';
+
+describe('role rules (SPEC §3)', () => {
+  it('lets admins promote, but only owners and super admins demote', () => {
+    expect(canChangeRole('admin', 'member', 'admin')).toBe(true);
+    expect(canChangeRole('admin', 'admin', 'member')).toBe(false);
+    expect(canChangeRole('owner', 'admin', 'member')).toBe(true);
+    expect(canChangeRole('superAdmin', 'admin', 'member')).toBe(true);
+    expect(canChangeRole('owner', 'owner', 'member')).toBe(false);
+  });
+
+  it('lets admins remove members, and owners remove admins, never the owner', () => {
+    expect(canRemove('admin', 'member')).toBe(true);
+    expect(canRemove('admin', 'admin')).toBe(false);
+    expect(canRemove('owner', 'admin')).toBe(true);
+    expect(canRemove('superAdmin', 'owner')).toBe(false);
+  });
+});

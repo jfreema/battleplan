@@ -161,3 +161,30 @@ export async function createGroup(
     .commit();
   return ref.id;
 }
+
+/** Who may change whom (SPEC §3): admins promote; only the owner or a super admin demotes. */
+export function canChangeRole(
+  actor: 'owner' | 'admin' | 'superAdmin',
+  targetRole: 'owner' | 'admin' | 'member',
+  newRole: 'admin' | 'member',
+): boolean {
+  if (targetRole === 'owner') return false; // ownership moves only by transfer
+  if (newRole === 'admin') return true;
+  return actor === 'owner' || actor === 'superAdmin';
+}
+
+/** Who may remove whom (SPEC §3): admins remove non-admins; the owner and super admins remove anyone but the owner. */
+export function canRemove(
+  actor: 'owner' | 'admin' | 'superAdmin',
+  targetRole: 'owner' | 'admin' | 'member',
+): boolean {
+  if (targetRole === 'owner') return false;
+  if (targetRole === 'admin') return actor === 'owner' || actor === 'superAdmin';
+  return true;
+}
+
+/** Recomputes a team's member count (D12: recompute, never increment). */
+export async function refreshMemberCount(groupId: string): Promise<void> {
+  const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();
+  await db().collection(Collections.groups).doc(groupId).update({ memberCount: count.data().count });
+}

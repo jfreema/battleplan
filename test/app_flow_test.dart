@@ -193,6 +193,53 @@ void main() {
     expect(groupRepo.created, isEmpty);
   });
 
+  testWidgets('roster: the owner can make a member an admin', (tester) async {
+    final members = FakeMemberRepository([
+      testMembership('a', 'coach', role: MemberRole.owner, name: 'Jordan'),
+      testMembership('a', 'sam', name: 'Sam Rivera'),
+    ]);
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberRepo: members,
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Roster'));
+    await tester.pumpAndSettle();
+    expect(find.text('Admins'), findsOneWidget);
+    expect(find.text('Members'), findsOneWidget);
+    await tester.tap(find.text('Sam Rivera'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Make admin'));
+    await tester.pumpAndSettle();
+    expect(members.calls, ['update sam admin']);
+  });
+
+  testWidgets('roster: an admin cannot remove another admin', (tester) async {
+    final members = FakeMemberRepository([
+      testMembership('a', 'owner', role: MemberRole.owner, name: 'Olive'),
+      testMembership('a', 'coach', role: MemberRole.admin, name: 'Jordan'),
+      testMembership('a', 'alex', role: MemberRole.admin, name: 'Alex Kim'),
+    ]);
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberRepo: members,
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Roster'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Alex Kim'));
+    await tester.pumpAndSettle();
+    expect(find.text('Remove admin'), findsNothing);
+    expect(find.text('Remove from team'), findsNothing);
+    expect(find.text('Edit title'), findsOneWidget);
+  });
+
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with email'));

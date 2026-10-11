@@ -267,3 +267,173 @@ final class MyTeamsProvider
 }
 
 String _$myTeamsHash() => r'cc5acf94ad9d18a01c61592c8c94979afd05bdc4';
+
+/// A team's roster, sorted by name (TEAM-3).
+
+@ProviderFor(roster)
+final rosterProvider = RosterFamily._();
+
+/// A team's roster, sorted by name (TEAM-3).
+
+final class RosterProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Membership>>,
+          List<Membership>,
+          Stream<List<Membership>>
+        >
+    with $FutureModifier<List<Membership>>, $StreamProvider<List<Membership>> {
+  /// A team's roster, sorted by name (TEAM-3).
+  RosterProvider._({
+    required RosterFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'rosterProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$rosterHash();
+
+  @override
+  String toString() {
+    return r'rosterProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Membership>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Membership>> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return roster(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RosterProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$rosterHash() => r'71eba9f25085ba9d46d57910e3fe7c79023c573e';
+
+/// A team's roster, sorted by name (TEAM-3).
+
+final class RosterFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<Membership>>, GroupId> {
+  RosterFamily._()
+    : super(
+        retry: null,
+        name: r'rosterProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A team's roster, sorted by name (TEAM-3).
+
+  RosterProvider call(GroupId groupId) =>
+      RosterProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'rosterProvider';
+}
+
+/// The signed-in person's membership on [groupId], if any.
+
+@ProviderFor(myMembership)
+final myMembershipProvider = MyMembershipFamily._();
+
+/// The signed-in person's membership on [groupId], if any.
+
+final class MyMembershipProvider
+    extends $FunctionalProvider<Membership?, Membership?, Membership?>
+    with $Provider<Membership?> {
+  /// The signed-in person's membership on [groupId], if any.
+  MyMembershipProvider._({
+    required MyMembershipFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'myMembershipProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myMembershipHash();
+
+  @override
+  String toString() {
+    return r'myMembershipProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<Membership?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Membership? create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return myMembership(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Membership? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Membership?>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyMembershipProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myMembershipHash() => r'5eca66810f071d3c929e0ad39d9f8c4e8f18f865';
+
+/// The signed-in person's membership on [groupId], if any.
+
+final class MyMembershipFamily extends $Family
+    with $FunctionalFamilyOverride<Membership?, GroupId> {
+  MyMembershipFamily._()
+    : super(
+        retry: null,
+        name: r'myMembershipProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The signed-in person's membership on [groupId], if any.
+
+  MyMembershipProvider call(GroupId groupId) =>
+      MyMembershipProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'myMembershipProvider';
+}

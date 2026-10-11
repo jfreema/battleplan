@@ -62,7 +62,7 @@ List<Override> buildOverrides({
     FirestoreGroupRepository(firestore, functions),
   ),
   memberRepositoryProvider.overrideWithValue(
-    FirestoreMemberRepository(firestore),
+    FirestoreMemberRepository(firestore, functions),
   ),
   pushRepositoryProvider.overrideWithValue(
     messaging == null
