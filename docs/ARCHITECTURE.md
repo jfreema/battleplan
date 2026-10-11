@@ -1350,6 +1350,7 @@ What exists in the code today, and where. This section is updated with every cha
 |---|---|
 | Constants generator | `tools/gen_constants.dart` |
 | Import-boundary check | `tools/check_imports.sh` |
-| CI | `.github/workflows/ci.yml` |
+| CI and deploys | `.github/workflows/ci.yml` (checks on every push; deploys to dev on push to `main` once WIF is set up) |
+| Dev web app | https://battleplan-dev-ecce4.web.app (Firebase Hosting on the dev project) |
 | VS Code | `.vscode/launch.json`, `tasks.json` |
 | How to run locally | [DEVELOPMENT.md](DEVELOPMENT.md) |

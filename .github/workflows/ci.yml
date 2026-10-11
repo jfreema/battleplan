@@ -70,12 +70,14 @@ jobs:
       - name: Rules tests on the emulator
         run: npx --yes firebase-tools@15 emulators:exec --only firestore,storage --project demo-battleplan 'npm run test:rules'
 
-  # Web preview per PR (ARCH §9). Turns on once deploy access is set up:
-  # set the repository variables FIREBASE_PREVIEWS=true, WIF_PROVIDER, and
-  # WIF_SERVICE_ACCOUNT (keyless Workload Identity Federation).
+  # Deploys use keyless Workload Identity Federation (ARCH §9). They turn on
+  # once the repository variables FIREBASE_DEPLOYS=true, WIF_PROVIDER, and
+  # WIF_SERVICE_ACCOUNT are set.
+
+  # Web preview per PR.
   preview:
     name: Web preview
-    if: github.event_name == 'pull_request' && vars.FIREBASE_PREVIEWS == 'true'
+    if: github.event_name == 'pull_request' && vars.FIREBASE_DEPLOYS == 'true'
     needs: [app, functions]
     runs-on: ubuntu-latest
     permissions:
@@ -106,3 +108,32 @@ jobs:
         run: |
           gh pr comment ${{ github.event.number }} --edit-last --create-if-none \
             --body "Web preview: ${{ steps.deploy.outputs.url }}"
+
+  # Every push to main deploys Firestore rules and the web app to the dev project.
+  # Indexes and Storage rules join once dev is on Blaze: TTL policies and
+  # Cloud Storage need billing (roadmap task 58).
+  deploy-dev:
+    name: Deploy to dev
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.FIREBASE_DEPLOYS == 'true'
+    needs: [app, functions]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: deploy-dev
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter build web --wasm -t lib/main_dev.dart
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+      - name: Deploy rules and hosting
+        run: npx --yes firebase-tools@15 deploy --only firestore:rules,hosting --project battleplan-dev-ecce4 --non-interactive
