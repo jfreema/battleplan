@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft v0.4 |
 | **Owner** | Jared Freeman |
-| **Last updated** | 2026-10-07 |
+| **Last updated** | 2026-10-10 |
 | **Companion doc** | [SPEC.md](SPEC.md): what gets built, feature by feature |
 
 ---
@@ -311,7 +311,7 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 | | Dev | Prod |
 |---|---|---|
 | Firebase project | `battleplan-dev-ecce4` | `battleplan-prod` |
-| Bundle / application ID | `com.<org>.battleplan.dev` | `com.<org>.battleplan` |
+| Bundle / application ID | `app.getbattleplan.dev` | `app.getbattleplan` |
 | Entry point | `lib/main_dev.dart` | `lib/main_prod.dart` |
 | Web | `battleplan-dev-ecce4.web.app` + PR preview channels | `getbattleplan.app` (or `battleplan-prod.web.app`) |
 

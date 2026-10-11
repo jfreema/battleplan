@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft v0.3 |
 | **Owner** | Jared Freeman |
-| **Last updated** | 2026-10-07 |
+| **Last updated** | 2026-10-10 |
 | **Companion doc** | [ARCHITECTURE.md](ARCHITECTURE.md): how it's built ("ARCH §n" below) |
 
 ---
@@ -1182,7 +1182,8 @@ When to buy or set up each item is in [TODO.md](../TODO.md). Purchases happen ju
 
 - [ ] Apple Developer Program, $99/year, as an individual (Q13). The App Store shows your legal name as the seller; no D-U-N-S number or company website is needed.
 - [ ] Google Play Console, $25 once, as a personal account (Q13). Google Play shows your legal name, and production access needs a 14-day closed test with 12+ testers.
-- [ ] A domain name (Q8), a Meta developer app, and an email provider account.
+- [x] A domain name: `getbattleplan.app` (Q8).
+- [ ] A Meta developer app and an email provider account.
 
 **Platform setup**
 
@@ -1255,7 +1256,7 @@ Each question has a default. The build follows the default until someone decides
 | Q5 | Are direct messages needed at launch? GroupMe has them. | Later |
 | Q6 | Reactions: one per person per message, or several? | One |
 | Q7 | On wide screens, bottom tabs or a side rail? | Side rail at 840 px and wider |
-| Q8 | ~~What domain name for invite links and email?~~ **Decided:** `getbattleplan.app`, registered at Cloudflare ($8.20 the first year, then $14.20/year). battleplan.com, .app, and .io are taken. | — |
+| Q8 | ~~What domain name for invite links and email?~~ **Decided:** `getbattleplan.app`, registered at Cloudflare ($8.20 the first year, then $14.20/year). battleplan.com, .app, and .io are taken. App ID `app.getbattleplan` (`.dev` for dev builds). | — |
 | Q9 | Logo and primary color? | Placeholder mark; blue `#2F5BEA` |
 | Q10 | Which email provider? | One with a free tier (e.g. Postmark or Resend) |
 | Q11 | Where are most teams located? | US, so `us-central1` |

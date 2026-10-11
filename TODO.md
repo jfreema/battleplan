@@ -71,7 +71,7 @@ You won't write any Java. Android's build tools and Firebase's local database em
   - dev: **`battleplan-dev-ecce4`** ("the dev project" in these docs)
   - prod: **`battleplan-prod`**. It stays on Spark until Phase 2.
 - [ ] **Log in from the terminal** so I can run setup commands as you: `firebase login`, then `gcloud auth login` and `gcloud auth application-default login`.
-- [ ] **Pick the app ID** (iOS bundle ID / Android package name). Name it for the app rather than for you, since it stays with the app if an LLC takes it over later. The domain reversed works: `app.getbattleplan`, with dev builds as `app.getbattleplan.dev`. It can change until the first TestFlight upload, but setting it now saves a rename later.
+- [x] **App ID** (iOS bundle ID / Android package name): `app.getbattleplan`, the domain reversed, so it stays with the app if an LLC takes it over later. Dev builds use `app.getbattleplan.dev`. It can change until the first TestFlight upload.
 
 **What this unlocks.** M0 through M3 run entirely on the local emulators, for free:
 
