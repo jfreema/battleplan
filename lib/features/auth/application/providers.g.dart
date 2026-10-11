@@ -54,13 +54,18 @@ final class AuthRepositoryProvider
 
 String _$authRepositoryHash() => r'916c16ea1b05261e6453c56554da2d5a2f00ae47';
 
+/// The signed-in user, or null. The router and most screens watch this.
+
 @ProviderFor(authUser)
 final authUserProvider = AuthUserProvider._();
+
+/// The signed-in user, or null. The router and most screens watch this.
 
 final class AuthUserProvider
     extends
         $FunctionalProvider<AsyncValue<AuthUser?>, AuthUser?, Stream<AuthUser?>>
     with $FutureModifier<AuthUser?>, $StreamProvider<AuthUser?> {
+  /// The signed-in user, or null. The router and most screens watch this.
   AuthUserProvider._()
     : super(
         from: null,

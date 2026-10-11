@@ -9,15 +9,18 @@ part of 'app_services.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Platform services and build info, overridden in app/providers.dart.
+/// Which flavor this build is and whether it talks to the emulators.
 
 @ProviderFor(appEnv)
 final appEnvProvider = AppEnvProvider._();
 
 /// Platform services and build info, overridden in app/providers.dart.
+/// Which flavor this build is and whether it talks to the emulators.
 
 final class AppEnvProvider extends $FunctionalProvider<AppEnv, AppEnv, AppEnv>
     with $Provider<AppEnv> {
   /// Platform services and build info, overridden in app/providers.dart.
+  /// Which flavor this build is and whether it talks to the emulators.
   AppEnvProvider._()
     : super(
         from: null,
@@ -53,12 +56,20 @@ final class AppEnvProvider extends $FunctionalProvider<AppEnv, AppEnv, AppEnv>
 
 String _$appEnvHash() => r'8cabd7ff805917d2eb9ee00272a3a8d482d125be';
 
+/// The app's version from the platform (pubspec `version`), for the
+/// forced-update check and the About screen.
+
 @ProviderFor(appVersion)
 final appVersionProvider = AppVersionProvider._();
+
+/// The app's version from the platform (pubspec `version`), for the
+/// forced-update check and the About screen.
 
 final class AppVersionProvider
     extends $FunctionalProvider<String, String, String>
     with $Provider<String> {
+  /// The app's version from the platform (pubspec `version`), for the
+  /// forced-update check and the About screen.
   AppVersionProvider._()
     : super(
         from: null,
@@ -94,12 +105,17 @@ final class AppVersionProvider
 
 String _$appVersionHash() => r'6751976461937ee18ad2436ed8daa4541b9c7442';
 
+/// No-op until bootstrap supplies Firebase Analytics (never in emulator runs).
+
 @ProviderFor(analytics)
 final analyticsProvider = AnalyticsProvider._();
+
+/// No-op until bootstrap supplies Firebase Analytics (never in emulator runs).
 
 final class AnalyticsProvider
     extends $FunctionalProvider<Analytics, Analytics, Analytics>
     with $Provider<Analytics> {
+  /// No-op until bootstrap supplies Firebase Analytics (never in emulator runs).
   AnalyticsProvider._()
     : super(
         from: null,
@@ -135,12 +151,17 @@ final class AnalyticsProvider
 
 String _$analyticsHash() => r'5ab907505858d1021f29a8ae144c09c24d46ed6e';
 
+/// Crashlytics on mobile, the logClientError callable on web.
+
 @ProviderFor(crashReporter)
 final crashReporterProvider = CrashReporterProvider._();
+
+/// Crashlytics on mobile, the logClientError callable on web.
 
 final class CrashReporterProvider
     extends $FunctionalProvider<CrashReporter, CrashReporter, CrashReporter>
     with $Provider<CrashReporter> {
+  /// Crashlytics on mobile, the logClientError callable on web.
   CrashReporterProvider._()
     : super(
         from: null,
@@ -176,12 +197,17 @@ final class CrashReporterProvider
 
 String _$crashReporterHash() => r'a9056a74ef5e5d525646f2c563a6dd9a68748301';
 
+/// Feature flags and `min_supported_version`; defaults until fetched.
+
 @ProviderFor(remoteConfig)
 final remoteConfigProvider = RemoteConfigProvider._();
+
+/// Feature flags and `min_supported_version`; defaults until fetched.
 
 final class RemoteConfigProvider
     extends $FunctionalProvider<RemoteConfig, RemoteConfig, RemoteConfig>
     with $Provider<RemoteConfig> {
+  /// Feature flags and `min_supported_version`; defaults until fetched.
   RemoteConfigProvider._()
     : super(
         from: null,

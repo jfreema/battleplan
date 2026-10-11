@@ -8,12 +8,18 @@ part of 'sign_in_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// State for the sign-in screen: idle, loading, or the last error.
+/// Navigation after success is the router's job (it watches the auth user).
 
 @ProviderFor(SignInController)
 final signInControllerProvider = SignInControllerProvider._();
 
+/// State for the sign-in screen: idle, loading, or the last error.
+/// Navigation after success is the router's job (it watches the auth user).
 final class SignInControllerProvider
     extends $NotifierProvider<SignInController, AsyncValue<void>> {
+  /// State for the sign-in screen: idle, loading, or the last error.
+  /// Navigation after success is the router's job (it watches the auth user).
   SignInControllerProvider._()
     : super(
         from: null,
@@ -42,6 +48,9 @@ final class SignInControllerProvider
 }
 
 String _$signInControllerHash() => r'859e3816ee07e44433075749474610ce0a04ee26';
+
+/// State for the sign-in screen: idle, loading, or the last error.
+/// Navigation after success is the router's job (it watches the auth user).
 
 abstract class _$SignInController extends $Notifier<AsyncValue<void>> {
   AsyncValue<void> build();
