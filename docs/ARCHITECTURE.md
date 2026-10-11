@@ -1343,11 +1343,11 @@ What exists in the code today, and where. This section is updated with every cha
 | Component | File | What it does |
 |---|---|---|
 | Auth providers | `firebase.json` → `auth` | Email/Password and Google, deployed with `firebase deploy --only auth` |
-| Firestore rules | `firestore.rules` | Deny by default; membership checks, message create and rate limit, reactions, RSVP rule, read rules for every collection |
+| Firestore rules | `firestore.rules` | Deny by default; membership checks, message create and rate limit, reactions, RSVP rule, read rules for every collection; profiles editable only in their own name, photo, theme, and notification fields, with value checks |
 | Storage rules | `storage.rules` | Member checks, team quota, size and type limits |
 | Indexes | `firestore.indexes.json` | Composite indexes, index exemptions, TTL policies |
 | Functions | `functions/src/` | `ensureUserProfile` (accounts: creates `users/{uid}` once from the Auth user, copies the provider photo into Storage, records setup), `signOutEverywhere` (accounts: revokes refresh tokens), `recordSignInMethodChange` (accounts: re-reads sign-in methods from Auth), `deleteAccount` (accounts: needs a sign-in within 5 minutes; each domain clears its own data: teams hand ownership to the longest-serving admin or member or archive the team, players drop guardian links, schedule drops upcoming RSVPs, chat renames past messages to "Deleted user", notify drops devices and notifications, safety drops blocks; then the profile, avatar files, and Auth user go), `logClientError` (ops). Trigger `onUserUpdated` copies a changed name or photo onto the person's `groupMembers`. Shared helpers: Admin SDK init, auth guard, zod validation, composite IDs. Deployed to dev (on Blaze) from a developer's machine |
-| Rules tests | `functions/test/rules/firestore.test.ts` | 28 tests: isolation, rate limit, RSVPs, cache fields |
+| Rules tests | `functions/test/rules/` | 37 tests: team isolation, rate limit, RSVPs, cache fields (`firestore.test.ts`); profiles and avatar uploads (`users.test.ts`) |
 | Super-admin bootstrap | `tools/seed/set-super-admin.ts` | Grants or revokes the `superAdmin` claim with your gcloud sign-in |
 | Seed data | `tools/seed/seed.ts` | Sample people, adult and youth teams, players, messages, events, RSVPs for the emulators |
 

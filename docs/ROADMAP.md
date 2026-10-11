@@ -59,7 +59,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 34. ✅ Disabled accounts (AUTH-11) and account deletion (AUTH-10).
 35. ✅ Profile and About screens (SET-1, SET-6); the theme setting syncs to the account (SET-2).
 36. ✅ The super-admin bootstrap script (`npm --prefix tools/seed run super-admin -- <project> <email>`). Jared is a super admin on dev.
-37. Rules and tests for `users`.
+37. ✅ Rules and tests for `users` (and profile photos in Storage).
 
 **M1 is done when** the sign-in matrix passes on all three platforms (Apple waits for task 109).
 

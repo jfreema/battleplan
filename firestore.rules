@@ -41,10 +41,25 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if (signedIn() && uid() == userId) || superAdmin();
+      // People edit only their own profile fields (AUTH-12, SET-1, SET-2).
+      // status, email, sign-in methods, and the setup confirmations are
+      // written by Functions only.
       allow update: if signedIn() && uid() == userId
         && onlyChanges(['displayName', 'displayNameLower', 'photoPath', 'themeMode',
-                        'notificationPrefs', 'updatedAt']);
-      // Created by ensureUserProfile (Functions).
+                        'notificationPrefs', 'updatedAt'])
+        && validProfile(incoming(), userId);
+      // Created by ensureUserProfile and deleted by deleteAccount (Functions).
+    }
+
+    function validProfile(p, userId) {
+      return p.displayName is string
+        && p.displayName.size() >= 1 && p.displayName.size() <= 50
+        && p.displayNameLower == p.displayName.lower()
+        && p.themeMode in ['system', 'light', 'dark']
+        && (p.photoPath == null
+            || (p.photoPath is string && p.photoPath.matches('users/' + userId + '/avatar/[^/]+')))
+        && p.notificationPrefs is map
+        && (!('updatedAt' in changed()) || p.updatedAt == request.time);
     }
 
     match /devices/{installationId} {
