@@ -268,8 +268,13 @@ describe('one RSVP per event and participant', () => {
     }));
   });
 
-  it('rejects member RSVPs on youth events and answers for someone else’s name', async () => {
+  it('lets youth-team admins RSVP for themselves, but not parents (Q14)', async () => {
+    await assertSucceeds(rsvp(as('carol'), 'eB', 'member', 'carol', 'carol', 'going'));
     await assertFails(rsvp(as('dan'), 'eB', 'member', 'dan', 'dan', 'going'));
+    await assertFails(rsvp(as('carol'), 'eB', 'member', 'dan', 'carol', 'going'));
+  });
+
+  it('rejects answers given in someone else’s name', async () => {
     await assertFails(rsvp(as('dan'), 'eB', 'player', 'emma', 'erin', 'going'));
   });
 

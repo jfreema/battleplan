@@ -442,7 +442,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - **Exactly one RSVP per event and player.** When both parents answer, they update the same record instead of creating two. The latest answer counts and shows who gave it ("Answered by Maria"), so attendance never conflicts or double-counts.
   - Counts are about players: "12 of 15 players going".
   - Admins can answer for any player.
-  - Parents, coaches, and other adults don't RSVP for themselves on youth teams (Q14).
+  - Coaches and staff (the team's admins) also RSVP for themselves on youth teams, and their answers are counted separately: "12 of 15 players going · 2 coaches". Parents answer only for their players (Q14).
 - **PLAYER-7 · MVP · Notifications for guardians.** Event reminders and event changes go to the guardians of the affected players, as one notification per guardian naming their players: "Emma, Liam: Practice today at 6:00 PM".
 - **PLAYER-8 · MVP · Who's who.** In chat and on the roster, each parent's name shows their players ("Maria R. · Emma #7"), so coaches and other parents know who's who.
 - **PLAYER-9 · MVP · Kids on several teams.** A child on two teams is a separate player on each team. In "All my teams" (SCHED-2), each event shows which of a parent's players it's for.
@@ -451,7 +451,6 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - A player's record holds only a name, jersey number, and position: no photos, birthdates, or contact details.
   - Photos shared in team chat may still show kids. They're visible only to the team's members, and anyone can report one.
 - **PLAYER-11 · v1.1.** "Same answer for all my players" in one tap, and each player's season RSVP history for guardians and admins.
-- **PLAYER-12 · Later.** Coach and staff RSVPs on youth teams (Q14).
 
 **Acceptance (MVP)**
 
@@ -1250,9 +1249,9 @@ Each question has a default. The build follows the default until someone decides
 
 | # | Question | Default until decided |
 |---|---|---|
-| Q1 | Should the app say "Team" or "Group"? | "Team" |
+| Q1 | ~~Should the app say "Team" or "Group"?~~ **Decided 2026-10-11:** "Team". | — |
 | Q2 | ~~Will youth players use Battleplan?~~ **Decided:** no. Accounts are for adults (18+), and parents and guardians answer for youth players (§6.3). | — |
-| Q3 | Who can create teams? | Anyone with a verified email; super admins can turn it off |
+| Q3 | ~~Who can create teams?~~ **Decided 2026-10-11:** anyone with a verified email; super admins can turn it off. | — |
 | Q4 | How will the platform be paid for once there are hundreds of teams (~$0.25–0.40 per active team per month)? Free, donations, a paid team tier, sponsors? | Free, with a 5 GB storage quota per team |
 | Q5 | Are direct messages needed at launch? GroupMe has them. | Later |
 | Q6 | Reactions: one per person per message, or several? | One |
@@ -1263,6 +1262,6 @@ Each question has a default. The build follows the default until someone decides
 | Q11 | Where are most teams located? | US, so `us-central1` |
 | Q12 | Can members create events by default? TeamReach limits this to admins. | Admins only; each team can change it |
 | Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
-| Q14 | On youth teams, should coaches and staff also RSVP for themselves? | No, players only |
-| Q15 | When a parent picks an existing player, must an admin approve the link? | Yes (PLAYER-3) |
+| Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). | — |
+| Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). | — |
 | Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email; Facebook sign-in, its Meta app, App Review, and LEGAL-5 move to their own roadmap section after M8. | — |

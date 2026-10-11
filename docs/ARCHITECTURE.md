@@ -569,7 +569,7 @@ events/{eventId}
   title, description, location: { name, address, lat?, lng? }
   allDay, startAt, endAt, startDate?, endDate?, timeZone
   arriveMinutesBefore?, opponent?, homeAway?: 'home' | 'away'
-  rsvpEnabled, rsvpFor: 'members' | 'players'          # copied from teamType at creation
+  rsvpEnabled, rsvpFor: 'members' | 'players'          # copied from teamType at creation; 'players' events also take team admins' own RSVPs (Q14)
   rsvpDeadline?, reminderOffsets: [minutes]            # ≤ 6
   nextReminderAt?                                       # computed; drives the reminder job
   rsvpCounts: { going, maybe, notGoing }                # cache ← rsvps
@@ -1293,6 +1293,7 @@ Each phase is incremental and reversible.
 | D31 | Local development uses the emulators under a `demo-` project ID with placeholder app options, selected by `--dart-define=USE_EMULATORS=true` | Runs with no Firebase login or config, and a `demo-` project can't reach any cloud resource | — |
 | D32 | Each feature's repository providers are declared in its `application/providers.dart` and overridden with Firebase implementations in `app/providers.dart` | Presentation never imports `data/` or `app/`, and tests swap in fakes with the same overrides | — |
 | D33 | Facebook sign-in is deferred until after M8 (SPEC Q16) | Not needed for our team; skips the Meta app, App Review, and Limited Login work before launch. Google, Apple, and email cover sign-in, and Apple satisfies App Store guideline 4.8 | When teams ask for it |
+| D34 | On youth teams, team admins (coaches, staff) RSVP for themselves as `participantType: 'member'` on `rsvpFor: 'players'` events; counts keep players and adults apart (SPEC Q14) | Coaches need to know which coaches are coming too, and parents answer only for their kids, so their own RSVPs would be noise | If parents ask to RSVP for themselves |
 
 ---
 

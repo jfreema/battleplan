@@ -226,7 +226,11 @@ service cloud.firestore {
         && event.rsvpEnabled == true
         && event.get('canceledAt', null) == null
         && ((event.rsvpFor == 'members' && r.participantType == 'member')
-            || (event.rsvpFor == 'players' && r.participantType == 'player'))
+            || (event.rsvpFor == 'players' && r.participantType == 'player')
+            // Coaches and staff (team admins) answer for themselves on youth
+            // events too (SPEC Q14, D34).
+            || (event.rsvpFor == 'players' && r.participantType == 'member'
+                && isAdmin(g) && r.participantId == uid()))
         && rsvpWriterOk(g, r)
         && (isAdmin(g) || event.get('rsvpDeadline', null) == null
             || request.time < event.rsvpDeadline)

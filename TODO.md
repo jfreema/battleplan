@@ -165,7 +165,6 @@ I'll tell you when each of these comes up.
 
 SPEC §12 has a working default for each of these, so answer them when convenient:
 
-- Q1: "Team" or "Group"
 - Q4: funding
 - Q5: direct messages
 - Q6: reactions
@@ -173,8 +172,6 @@ SPEC §12 has a working default for each of these, so answer them when convenien
 - Q9: logo and colors
 - Q10: email service
 - Q12: who creates events
-- Q14: staff RSVPs
-- Q15: guardian approval
 
 ---
 

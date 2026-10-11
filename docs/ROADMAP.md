@@ -65,7 +65,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 
 ## M2 · Teams and invites
 
-38. 👤 **Jared:** Confirm or change the defaults for Q1 ("Team" or "Group"), Q3 (who creates teams), Q14 (staff RSVPs on youth teams), and Q15 (admin approval for guardian links). The build follows the SPEC §12 defaults until you do.
+38. ✅ 👤 **Jared:** Decided 2026-10-11: Q1 "Team", Q3 anyone with a verified email, Q14 coaches and staff RSVP for themselves on youth teams, Q15 admins approve guardian links.
 39. Create a team, with adult or youth type (TEAM-1); the welcome screen.
 40. Team switcher and many teams per person (TEAM-2, §5.2).
 41. Roster screen, roles, and team admins (TEAM-3, TEAM-4).
@@ -128,7 +128,7 @@ From here on, each feature ships with its own notifications.
 80. 👤 **Jared:** Confirm Q12 (can members create events by default; default admins only).
 81. Create an event with types and game fields (SCHED-3); event details (SCHED-4).
 82. RSVPs, including Maybe and admins answering for members (SCHED-5).
-83. Per-player RSVPs and guardian notifications on youth teams (PLAYER-6, PLAYER-7).
+83. Per-player RSVPs and guardian notifications on youth teams, plus coaches' and staff's own RSVPs counted apart from players (PLAYER-6, PLAYER-7, Q14).
 84. Upcoming, Past, and Calendar views (SCHED-1); All my teams, with each parent's player named (SCHED-2, PLAYER-9).
 85. Editing, cancel, and delete, with change notifications (SCHED-6, SCHED-7).
 86. Repeating events through `saveEventSeries`: daily and weekly, skip dates, this-and-following edits, cancel, and delete.
@@ -223,7 +223,7 @@ In SPEC §9's priority order.
 
 147. Join requests that need admin approval; copying a team for a new season (TEAM-13).
 148. Organizations and leagues; sub-chats within a team (TEAM-13).
-149. Coach and staff RSVPs on youth teams (PLAYER-12).
+149. ~~Coach and staff RSVPs on youth teams~~ (moved into task 83, Q14).
 150. Direct messages (Q5); message search; link previews, GIFs, video, voice notes; typing indicators and read receipts (CHAT-17).
 151. Attendance tracking, reports with CSV export, game scores (SCHED-13).
 152. Volunteer and snack sign-ups, carpools, season availability surveys (SCHED-13).
