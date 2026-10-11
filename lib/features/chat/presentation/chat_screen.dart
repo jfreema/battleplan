@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/photo_picker.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -67,19 +69,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final group = ref.watch(groupProvider(widget.groupId)).value;
     final archived = group?.isArchived ?? false;
     final messages = chat.messages;
+    final outgoing = chat.outgoing;
+    final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
+    final picker = ref.watch(photoPickerProvider);
 
     Widget list;
     if (chat.loading) {
       list = const SkeletonList();
-    } else if (messages.isEmpty) {
+    } else if (messages.isEmpty && outgoing.isEmpty) {
       list = EmptyState(icon: AppIcons.chat, message: l10n.chatEmpty);
     } else {
       list = ListView.builder(
         controller: _scroll,
         reverse: true,
         padding: const EdgeInsets.symmetric(vertical: Space.sm),
-        itemCount: messages.length + 1,
-        itemBuilder: (context, i) {
+        itemCount: outgoing.length + messages.length + 1,
+        itemBuilder: (context, index) {
+          // Uploading photos sit below everything (the list is reversed).
+          if (index < outgoing.length) {
+            final item = outgoing[outgoing.length - 1 - index];
+            return OutgoingPhotosTile(
+              item: item,
+              onRetry: () =>
+                  unawaited(controller.retryPhotos(item.id).catchError((_) {})),
+              onDiscard: () => controller.discardPhotos(item.id),
+            );
+          }
+          final i = index - outgoing.length;
           // The last item (top of the screen) is the paging footer.
           if (i == messages.length) {
             return chat.reachedStart
@@ -122,14 +138,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           )
         else
           Composer(
-            onSend: (text) => unawaited(
-              ref
-                  .read(chatMessagesProvider(widget.groupId).notifier)
-                  .send(text),
-            ),
+            onSend: (text) => unawaited(controller.send(text)),
+            onPickPhotos: () => unawaited(_pickPhotos(picker, controller)),
+            onTakePhoto: picker.canUseCamera
+                ? () => unawaited(_takePhoto(picker, controller))
+                : null,
           ),
       ],
     );
+  }
+}
+
+extension on _ChatScreenState {
+  Future<void> _pickPhotos(PhotoPicker picker, ChatMessages controller) async {
+    final photos = await picker.pickChatPhotos();
+    if (photos.isEmpty) return;
+    await controller
+        .sendPhotos([
+          for (final p in photos) (bytes: p.bytes, contentType: p.contentType),
+        ])
+        .catchError((Object _) {});
+  }
+
+  Future<void> _takePhoto(PhotoPicker picker, ChatMessages controller) async {
+    final p = await picker.takeChatPhoto();
+    if (p == null) return;
+    await controller
+        .sendPhotos([(bytes: p.bytes, contentType: p.contentType)])
+        .catchError((Object _) {});
   }
 }
 

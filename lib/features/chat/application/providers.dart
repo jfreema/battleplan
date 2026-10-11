@@ -28,8 +28,28 @@ abstract class ChatState with _$ChatState {
 
     /// True once the first message of the chat is loaded.
     @Default(false) bool reachedStart,
+
+    /// Photo messages still uploading, oldest first (CHAT-3).
+    @Default(<OutgoingPhotos>[]) List<OutgoingPhotos> outgoing,
   }) = _ChatState;
 }
+
+/// A photo message on its way up, shown in the chat with its progress.
+@freezed
+abstract class OutgoingPhotos with _$OutgoingPhotos {
+  const factory({
+    required int id,
+    required List<NewPhoto> photos,
+    @Default('') String caption,
+    @Default(0) double progress,
+    @Default(false) bool failed,
+  }) = _OutgoingPhotos;
+}
+
+/// A URL to show a message photo.
+@riverpod
+Future<String?> attachmentUrl(Ref ref, String path) =>
+    ref.watch(messageRepositoryProvider).attachmentUrl(path);
 
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out
@@ -110,17 +130,86 @@ class ChatMessages extends _$ChatMessages {
     }
   }
 
+  int _nextOutgoing = 0;
+
+  /// Uploads photos, then posts them as one message (CHAT-3). The chat shows
+  /// them with progress meanwhile; a failed upload stays with Retry.
+  Future<void> sendPhotos(List<NewPhoto> photos, {String caption = ''}) {
+    if (photos.isEmpty) return Future.value();
+    final item = OutgoingPhotos(
+      id: _nextOutgoing++,
+      photos: photos.take(10).toList(),
+      caption: caption.trim(),
+    );
+    state = state.copyWith(outgoing: [...state.outgoing, item]);
+    return _upload(item);
+  }
+
+  /// Tries a failed photo message again.
+  Future<void> retryPhotos(int id) {
+    final item = state.outgoing.where((o) => o.id == id).firstOrNull;
+    if (item == null) return Future.value();
+    _updateOutgoing(id, (o) => o.copyWith(failed: false, progress: 0));
+    return _upload(item);
+  }
+
+  /// Drops a failed photo message.
+  void discardPhotos(int id) => state = state.copyWith(
+    outgoing: state.outgoing.where((o) => o.id != id).toList(),
+  );
+
+  void _updateOutgoing(int id, OutgoingPhotos Function(OutgoingPhotos) f) =>
+      state = state.copyWith(
+        outgoing: [
+          for (final o in state.outgoing)
+            if (o.id == id) f(o) else o,
+        ],
+      );
+
+  /// Uploads right away, then joins the send queue only to post, so a slow
+  /// upload never holds up text messages sent after it.
+  Future<void> _upload(OutgoingPhotos item) async {
+    final uid = ref.read(authUserProvider).value?.uid;
+    if (uid == null) return;
+    final repo = ref.read(messageRepositoryProvider);
+    try {
+      final uploaded = await repo.uploadPhotos(
+        groupId,
+        item.photos,
+        onProgress: (p) =>
+            _updateOutgoing(item.id, (o) => o.copyWith(progress: p)),
+      );
+      await _enqueue(
+        () => repo.sendPhotos(
+          groupId,
+          UserId(uid),
+          uploaded,
+          caption: item.caption,
+        ),
+      );
+      discardPhotos(item.id);
+    } on Object {
+      _updateOutgoing(item.id, (o) => o.copyWith(failed: true));
+      rethrow;
+    }
+  }
+
   /// Sends a text message, spaced from the previous one (CHAT-2, CHAT-4).
   Future<void> send(String text) {
     final trimmed = text.trim();
     final uid = ref.read(authUserProvider).value?.uid;
     if (trimmed.isEmpty || uid == null) return Future.value();
     final repo = ref.read(messageRepositoryProvider);
+    return _enqueue(() => repo.sendText(groupId, UserId(uid), trimmed));
+  }
+
+  /// Runs [send] after the previous send, spaced by [sendSpacing].
+  Future<void> _enqueue(Future<void> Function() send) {
     final next = _sendQueue.then((_) async {
       final wait = sendSpacing - DateTime.now().difference(_lastSend);
       if (wait > Duration.zero) await Future<void>.delayed(wait);
       try {
-        await repo.sendText(groupId, UserId(uid), trimmed);
+        await send();
       } finally {
         _lastSend = DateTime.now();
       }

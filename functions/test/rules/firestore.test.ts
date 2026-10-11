@@ -215,6 +215,24 @@ describe('message rate limit and create rule', () => {
   it('rejects posting into another team', async () => {
     await assertFails(send(as('bob'), 'bob', 'teamB', 'cross', 'Bob'));
   });
+
+  it('accepts photos stored under the message, up to 10 (CHAT-3)', async () => {
+    const photo = (id: string, n: number) => ({ path: `groups/teamA/messages/${id}/${n}.jpg`, width: 10, height: 10 });
+    await assertSucceeds(
+      send(as('bob'), 'bob', 'teamA', 'p1', 'Bob', { type: 'image', text: '', attachments: [photo('p1', 0), photo('p1', 1)] }),
+    );
+  });
+
+  it("rejects photos from another message or team, empty photo messages, and more than 10", async () => {
+    const photo = (path: string) => ({ path, width: 10, height: 10 });
+    const db = as('bob');
+    await assertFails(send(db, 'bob', 'teamA', 'p2', 'Bob', { type: 'image', attachments: [photo('groups/teamB/messages/p2/0.jpg')] }));
+    await assertFails(send(db, 'bob', 'teamA', 'p3', 'Bob', { type: 'image', attachments: [photo('groups/teamA/messages/other/0.jpg')] }));
+    await assertFails(send(db, 'bob', 'teamA', 'p4', 'Bob', { type: 'image', attachments: [] }));
+    await assertFails(send(db, 'bob', 'teamA', 'p5', 'Bob', { type: 'text', attachments: [photo('groups/teamA/messages/p5/0.jpg')] }));
+    const eleven = Array.from({ length: 11 }, (_, i) => photo(`groups/teamA/messages/p6/${i}.jpg`));
+    await assertFails(send(db, 'bob', 'teamA', 'p6', 'Bob', { type: 'image', attachments: eleven }));
+  });
 });
 
 describe('reactions', () => {

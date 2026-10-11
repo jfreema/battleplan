@@ -570,5 +570,15 @@
   "messageDeleted": "This message was deleted.",
   "messageSending": "Sending…",
   "messageHint": "Message",
-  "send": "Send"
+  "send": "Send",
+  "photoShareFailed": "Couldn't share this photo here.",
+  "photoCount": "{index} of {count}",
+  "@photoCount": {"placeholders": {"index": {"type": "int"}, "count": {"type": "int"}}},
+  "download": "Download",
+  "photosFailed": "Photos didn't send.",
+  "delete": "Delete",
+  "photoLibrary": "Photo library",
+  "camera": "Camera",
+  "addToMessage": "Add photos",
+  "tooManyPhotos": "Up to 10 photos per message. The first 10 will be sent."
 }

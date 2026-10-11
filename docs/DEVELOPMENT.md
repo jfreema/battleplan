@@ -66,6 +66,14 @@ flutter run -d chrome -t lib/main_dev.dart
 
 Sign-in on the dev project works once Authentication is turned on in the Firebase console.
 
+Photos load in the browser only from origins the Storage bucket allows (CORS). `tools/storage-cors.json` lists them, including `http://localhost:5055`, so run the web app on that port (`--web-port 5055`) against the dev project. After changing the list:
+
+```sh
+gcloud storage buckets update gs://battleplan-dev-ecce4.firebasestorage.app --cors-file=tools/storage-cors.json
+```
+
+**One-time permission per project:** Storage rules check team membership in Firestore, which needs the Storage service agent to hold `roles/firebaserules.firestoreServiceAgent` (the Firebase console offers this on the Storage rules page). Without it, team logos and chat photos fail with "permission denied".
+
 ## Deploying to dev
 
 Every push to `main` deploys Firestore rules, indexes, and the web app to `battleplan-dev-ecce4` through GitHub Actions. Functions and Storage rules deploy from your Mac for now, because the GitHub deploy account would need more permissions for them:

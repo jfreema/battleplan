@@ -9,9 +9,19 @@ import 'package:material_ui/material_ui.dart';
 /// near the limit, and Send. On a keyboard, Enter sends and Shift+Enter adds
 /// a line.
 class Composer extends StatefulWidget {
-  const new({required this.onSend, super.key});
+  const new({
+    required this.onSend,
+    this.onPickPhotos,
+    this.onTakePhoto,
+    super.key,
+  });
 
   final void Function(String text) onSend;
+
+  /// The + menu (CHAT-2): Photo library, and Camera on phones. Polls join
+  /// it in M5.
+  final VoidCallback? onPickPhotos;
+  final VoidCallback? onTakePhoto;
 
   @override
   State<Composer> createState() => _ComposerState();
@@ -67,6 +77,29 @@ class _ComposerState extends State<Composer> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            if (widget.onPickPhotos != null)
+              PopupMenuButton<VoidCallback>(
+                tooltip: l10n.addToMessage,
+                icon: const Icon(AppIcons.add),
+                onSelected: (action) => action(),
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: widget.onPickPhotos,
+                    child: ListTile(
+                      leading: const Icon(AppIcons.photo),
+                      title: Text(l10n.photoLibrary),
+                    ),
+                  ),
+                  if (widget.onTakePhoto case final take?)
+                    PopupMenuItem(
+                      value: take,
+                      child: ListTile(
+                        leading: const Icon(AppIcons.camera),
+                        title: Text(l10n.camera),
+                      ),
+                    ),
+                ],
+              ),
             Expanded(
               child: TextField(
                 controller: _text,

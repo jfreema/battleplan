@@ -57,7 +57,7 @@ List<Override> buildOverrides({
     FirestorePlayerRepository(firestore, functions),
   ),
   messageRepositoryProvider.overrideWithValue(
-    FirestoreMessageRepository(firestore),
+    FirestoreMessageRepository(firestore, storage),
   ),
   inviteRepositoryProvider.overrideWithValue(
     FunctionsInviteRepository(functions),

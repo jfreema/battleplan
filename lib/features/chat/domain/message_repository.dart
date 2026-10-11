@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 
@@ -20,4 +22,27 @@ abstract interface class MessageRepository {
   /// [watchNewest] at once as pending; the future completes when the server
   /// has it (offline, when the connection returns).
   Future<void> sendText(GroupId groupId, UserId uid, String text);
+
+  /// Uploads up to 10 photos for a new message (CHAT-3). [onProgress] gets
+  /// 0 to 1 as bytes upload. Needs a connection; photos don't queue offline
+  /// (CHAT-4).
+  Future<UploadedPhotos> uploadPhotos(
+    GroupId groupId,
+    List<NewPhoto> photos, {
+    void Function(double progress)? onProgress,
+  });
+
+  /// Posts uploaded photos as one message, with an optional caption.
+  Future<void> sendPhotos(
+    GroupId groupId,
+    UserId uid,
+    UploadedPhotos photos, {
+    String caption = '',
+  });
+
+  /// A URL to show a message photo.
+  Future<String?> attachmentUrl(String path);
+
+  /// A message photo's bytes, for sharing or saving.
+  Future<Uint8List?> attachmentBytes(String path);
 }

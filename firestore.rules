@@ -170,7 +170,7 @@ service cloud.firestore {
         && (incoming().type != 'poll'
             || getAfter(/databases/$(database)/documents/polls/$(incoming().pollId)).data.messageId == messageId)
         && incoming().get('text', '').size() <= 4000
-        && incoming().get('attachments', []).size() <= 10
+        && attachmentsOk(incoming(), messageId)
         && incoming().createdAt == request.time
         && incoming().keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
             'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',
@@ -186,6 +186,25 @@ service cloud.firestore {
         && (!(uid() in request.resource.data.reactions)
             || request.resource.data.reactions[uid()] in ['like', 'love', 'dislike', 'laugh']);
       // Deletion goes through the deleteMessage callable.
+    }
+
+    // Photos (CHAT-3): at most 10, each stored under this message's own
+    // folder, so a message can't point at another team's files.
+    function attachmentsOk(m, messageId) {
+      let a = m.get('attachments', []);
+      let folder = 'groups/' + m.groupId + '/messages/' + messageId + '/[^/]+';
+      return a.size() <= 10
+        && (m.type == 'image' ? a.size() >= 1 : a.size() == 0)
+        && (a.size() < 1 || a[0].path.matches(folder))
+        && (a.size() < 2 || a[1].path.matches(folder))
+        && (a.size() < 3 || a[2].path.matches(folder))
+        && (a.size() < 4 || a[3].path.matches(folder))
+        && (a.size() < 5 || a[4].path.matches(folder))
+        && (a.size() < 6 || a[5].path.matches(folder))
+        && (a.size() < 7 || a[6].path.matches(folder))
+        && (a.size() < 8 || a[7].path.matches(folder))
+        && (a.size() < 9 || a[8].path.matches(folder))
+        && (a.size() < 10 || a[9].path.matches(folder));
     }
 
     // The author fields must equal the sender's own membership snapshot.

@@ -1,16 +1,21 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 /// Messages in the flat `messages` collection, queried by groupId and
 /// createdAt (ARCH §6.2).
 class FirestoreMessageRepository implements MessageRepository {
-  new(this._db);
+  new(this._db, this._storage);
 
   final FirebaseFirestore _db;
+  final FirebaseStorage _storage;
 
   Query<Map<String, dynamic>> _chat(GroupId groupId) => _db
       .collection(Collections.messages)
@@ -60,6 +65,17 @@ class FirestoreMessageRepository implements MessageRepository {
       type: MessageType.tryParse(x['type'] as String?) ?? MessageType.text,
       text: x['text'] as String? ?? '',
       replyToId: x['replyToId'] as String?,
+      attachments: [
+        for (final a in (x['attachments'] as List?) ?? const [])
+          if (a is Map && a['path'] is String)
+            Attachment(
+              path: a['path'] as String,
+              contentType: a['contentType'] as String? ?? 'image/jpeg',
+              width: (a['width'] as num?)?.toInt() ?? 0,
+              height: (a['height'] as num?)?.toInt() ?? 0,
+              size: (a['size'] as num?)?.toInt() ?? 0,
+            ),
+      ],
       reactions: {
         for (final e in ((x['reactions'] as Map?) ?? const {}).entries)
           e.key as String: ?Reaction.tryParse(e.value as String?),
@@ -74,11 +90,116 @@ class FirestoreMessageRepository implements MessageRepository {
   }
 
   @override
-  Future<void> sendText(GroupId groupId, UserId uid, String text) async {
+  Future<void> sendText(GroupId groupId, UserId uid, String text) => _post(
+    groupId,
+    uid,
+    _db.collection(Collections.messages).doc(),
+    type: MessageType.text,
+    text: text,
+  );
+
+  @override
+  Future<UploadedPhotos> uploadPhotos(
+    GroupId groupId,
+    List<NewPhoto> photos, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final id = _db.collection(Collections.messages).doc().id;
+    final total = photos.fold<int>(0, (n, p) => n + p.bytes.length);
+    final sent = List<int>.filled(photos.length, 0);
+    void report() => onProgress?.call(
+      total == 0 ? 1 : sent.fold<int>(0, (a, b) => a + b) / total,
+    );
+    try {
+      // Storage rules check membership, image type, size, and the quota.
+      final attachments = await Future.wait([
+        for (final (i, photo) in photos.indexed)
+          () async {
+            final path = 'groups/${groupId.value}/messages/$id/$i.jpg';
+            final task = _storage
+                .ref(path)
+                .putData(
+                  photo.bytes,
+                  SettableMetadata(contentType: photo.contentType),
+                );
+            final progress = task.snapshotEvents.listen((e) {
+              sent[i] = e.bytesTransferred;
+              report();
+            });
+            await task;
+            await progress.cancel();
+            sent[i] = photo.bytes.length;
+            report();
+            final size = await _dimensions(photo.bytes);
+            return Attachment(
+              path: path,
+              contentType: photo.contentType,
+              width: size.width,
+              height: size.height,
+              size: photo.bytes.length,
+            );
+          }(),
+      ]);
+      return (messageId: id, attachments: attachments);
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'unauthorized' || 'permission-denied' => PermissionDenied(e.code),
+        'retry-limit-exceeded' || 'unavailable' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  Future<void> sendPhotos(
+    GroupId groupId,
+    UserId uid,
+    UploadedPhotos photos, {
+    String caption = '',
+  }) => _post(
+    groupId,
+    uid,
+    _db.collection(Collections.messages).doc(photos.messageId),
+    type: MessageType.image,
+    text: caption,
+    attachments: [
+      for (final a in photos.attachments)
+        {
+          'path': a.path,
+          'contentType': a.contentType,
+          'width': a.width,
+          'height': a.height,
+          'size': a.size,
+        },
+    ],
+  );
+
+  /// A photo's pixel size, read from its bytes.
+  static Future<({int width, int height})> _dimensions(Uint8List bytes) async {
+    try {
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final size = (width: frame.image.width, height: frame.image.height);
+      frame.image.dispose();
+      codec.dispose();
+      return size;
+    } on Object {
+      return (width: 0, height: 0);
+    }
+  }
+
+  /// Writes a message and the sender's membership update in one batch.
+  Future<void> _post(
+    GroupId groupId,
+    UserId uid,
+    DocumentReference<Map<String, dynamic>> ref, {
+    required MessageType type,
+    required String text,
+    List<Map<String, Object?>> attachments = const [],
+  }) async {
     final memberRef = _db
         .collection(Collections.groupMembers)
         .doc(CompositeIds.groupMember(groupId, uid));
-    final ref = _db.collection(Collections.messages).doc();
     try {
       // The author snapshot must equal the membership doc (rules check it).
       // The roster listener keeps it cached, so this works offline too.
@@ -91,9 +212,9 @@ class FirestoreMessageRepository implements MessageRepository {
           'authorName': m['displayName'],
           'authorPhotoPath': m['photoPath'],
           'authorPlayerSummary': m['playerSummary'],
-          'type': MessageType.text.value,
+          'type': type.value,
           'text': text,
-          'attachments': const <Object>[],
+          'attachments': attachments,
           'createdAt': FieldValue.serverTimestamp(),
         })
         // The message rate limit (ARCH §6.3): the same batch stamps the
@@ -113,6 +234,24 @@ class FirestoreMessageRepository implements MessageRepository {
         'unavailable' => Offline(e.code),
         _ => UnknownFailure(e.code),
       };
+    }
+  }
+
+  @override
+  Future<String?> attachmentUrl(String path) async {
+    try {
+      return await _storage.ref(path).getDownloadURL();
+    } on FirebaseException {
+      return null;
+    }
+  }
+
+  @override
+  Future<Uint8List?> attachmentBytes(String path) async {
+    try {
+      return await _storage.ref(path).getData(15 * 1024 * 1024);
+    } on FirebaseException {
+      return null;
     }
   }
 }

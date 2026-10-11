@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -663,6 +665,54 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.sent, ['Practice moved to 6']);
       expect(find.text('Practice moved to 6'), findsOneWidget);
+    });
+
+    testWidgets('photos from the + menu post as one message (CHAT-3)', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository();
+      // A 1x1 PNG.
+      final png = Uint8List.fromList(const [
+        137,
+        80,
+        78,
+        71,
+        13,
+        10,
+        26,
+        10,
+        0,
+        0,
+        0,
+        13,
+        73,
+        72,
+        68,
+        82,
+        0,
+        0,
+        0, //
+        1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65,
+        84, 120, 156, 99, 248, 15, 4, 0, 9, 251, 3, 253, 227, 85, 242, 156, 0,
+        0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        messageRepo: repo,
+        photoPicker: FakePhotoPicker([
+          (bytes: png, contentType: 'image/png'),
+          (bytes: png, contentType: 'image/png'),
+        ]),
+      );
+      await tester.tap(find.byTooltip('Add photos'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Photo library'));
+      await tester.pumpAndSettle();
+      expect(repo.photoBatches, [2]);
+      expect(find.byType(GridView), findsOneWidget);
     });
 
     testWidgets('scrolling up loads older messages 50 at a time', (

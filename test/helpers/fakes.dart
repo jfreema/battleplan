@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/domain/user_profile.dart';
@@ -661,6 +662,54 @@ class FakeMessageRepository implements MessageRepository {
     );
   }
 
+  final List<int> photoBatches = [];
+
+  @override
+  Future<UploadedPhotos> uploadPhotos(
+    GroupId groupId,
+    List<NewPhoto> photos, {
+    void Function(double progress)? onProgress,
+  }) async {
+    onProgress?.call(1);
+    final id = 'photos${photoBatches.length}';
+    return (
+      messageId: id,
+      attachments: [
+        for (var i = 0; i < photos.length; i++)
+          Attachment(path: 'groups/${groupId.value}/messages/$id/$i.jpg'),
+      ],
+    );
+  }
+
+  @override
+  Future<void> sendPhotos(
+    GroupId groupId,
+    UserId uid,
+    UploadedPhotos photos, {
+    String caption = '',
+  }) async {
+    photoBatches.add(photos.attachments.length);
+    messages.insert(
+      0,
+      Message(
+        id: photos.messageId,
+        groupId: groupId,
+        authorId: uid.value,
+        authorName: uid.value,
+        type: MessageType.image,
+        attachments: photos.attachments,
+        createdAt: DateTime.now(),
+      ),
+    );
+    _changes.add(null);
+  }
+
+  @override
+  Future<String?> attachmentUrl(String path) async => null;
+
+  @override
+  Future<Uint8List?> attachmentBytes(String path) async => null;
+
   @override
   Future<void> sendText(GroupId groupId, UserId uid, String text) async {
     sent.add(text);
@@ -678,4 +727,24 @@ class FakeMessageRepository implements MessageRepository {
     );
     _changes.add(null);
   }
+}
+
+/// Returns [photos] when asked for chat photos.
+class FakePhotoPicker implements PhotoPicker {
+  new([this.photos = const []]);
+
+  final List<PickedPhoto> photos;
+
+  @override
+  Future<Uint8List?> pickProfilePhoto() async => null;
+
+  @override
+  Future<List<PickedPhoto>> pickChatPhotos({int limit = 10}) async =>
+      photos.take(limit).toList();
+
+  @override
+  Future<PickedPhoto?> takeChatPhoto() async => null;
+
+  @override
+  bool get canUseCamera => false;
 }

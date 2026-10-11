@@ -60,6 +60,84 @@ final class MessageRepositoryProvider
 
 String _$messageRepositoryHash() => r'e8ec38e76707df4993060a741746e031e4e6be42';
 
+/// A URL to show a message photo.
+
+@ProviderFor(attachmentUrl)
+final attachmentUrlProvider = AttachmentUrlFamily._();
+
+/// A URL to show a message photo.
+
+final class AttachmentUrlProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// A URL to show a message photo.
+  AttachmentUrlProvider._({
+    required AttachmentUrlFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'attachmentUrlProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$attachmentUrlHash();
+
+  @override
+  String toString() {
+    return r'attachmentUrlProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    final argument = this.argument as String;
+    return attachmentUrl(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AttachmentUrlProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$attachmentUrlHash() => r'4ae834260c1b0b8fa8f959ee8c02a8dbefe24bd7';
+
+/// A URL to show a message photo.
+
+final class AttachmentUrlFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<String?>, String> {
+  AttachmentUrlFamily._()
+    : super(
+        retry: null,
+        name: r'attachmentUrlProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A URL to show a message photo.
+
+  AttachmentUrlProvider call(String path) =>
+      AttachmentUrlProvider._(argument: path, from: this);
+
+  @override
+  String toString() => r'attachmentUrlProvider';
+}
+
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out
 /// of the live page as new ones arrive are kept, so no gap opens between
@@ -122,7 +200,7 @@ final class ChatMessagesProvider
   }
 }
 
-String _$chatMessagesHash() => r'5be030606a5699e3649192eb2762c604f75c2812';
+String _$chatMessagesHash() => r'76dd220b5bd1383879c914fc4cd369bac2dc3fc3';
 
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out

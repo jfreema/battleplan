@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -20,6 +22,9 @@ abstract class Message with _$Message {
     /// "Emma #7, Liam #23" for a guardian on a youth team (PLAYER-8).
     String? authorPlayerSummary,
     String? replyToId,
+
+    /// Photos, up to 10 (CHAT-3).
+    @Default(<Attachment>[]) List<Attachment> attachments,
     @Default(<String, Reaction>{}) Map<String, Reaction> reactions,
     DateTime? deletedAt,
 
@@ -54,3 +59,26 @@ abstract class MessagePage with _$MessagePage {
   /// False once the start of the chat is reached.
   bool get hasMore => next != null;
 }
+
+/// A photo in a message, stored at `groups/{g}/messages/{id}/{n}.jpg`.
+@freezed
+abstract class Attachment with _$Attachment {
+  const factory({
+    required String path,
+    @Default('image/jpeg') String contentType,
+    @Default(0) int width,
+    @Default(0) int height,
+    @Default(0) int size,
+  }) = _Attachment;
+
+  const new _();
+
+  /// Width over height, or 1 when unknown.
+  double get aspectRatio => width > 0 && height > 0 ? width / height : 1;
+}
+
+/// A photo about to be sent, already resized.
+typedef NewPhoto = ({Uint8List bytes, String contentType});
+
+/// Photos already in Storage for a message that isn't posted yet.
+typedef UploadedPhotos = ({String messageId, List<Attachment> attachments});
