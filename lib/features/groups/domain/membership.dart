@@ -16,6 +16,12 @@ abstract class Membership with _$Membership {
     DateTime? mutedUntil,
     DateTime? lastReadAt,
     String? title,
+
+    /// Youth teams: "Emma #7, Liam #23" for a guardian (PLAYER-8).
+    String? playerSummary,
+
+    /// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
+    @Default(false) bool pending,
   }) = _Membership;
 
   const new _();

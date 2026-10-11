@@ -10,3 +10,13 @@ export function linkHost(): string {
 export function joinUrl(code: string): string {
   return `https://${linkHost()}/join/${code}`;
 }
+
+/** https://<host>/g/<groupId>/chat, for emails and notifications. */
+export function teamUrl(groupId: string): string {
+  return `https://${linkHost()}/g/${groupId}/chat`;
+}
+
+/** Where an emailed sign-in or setup link lands (ARCH §6.6). */
+export function activateUrl(): string {
+  return `https://${linkHost()}/activate`;
+}

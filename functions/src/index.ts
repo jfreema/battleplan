@@ -11,11 +11,13 @@ export {
 } from './accounts/handlers.js';
 export { onUserUpdated } from './accounts/triggers.js';
 export {
+  addMemberByEmail,
   archiveGroup,
   createGroup,
   deleteGroup,
   leaveGroup,
   removeMember,
+  resendSetupEmail,
   transferOwnership,
   updateGroupMember,
 } from './teams/handlers.js';

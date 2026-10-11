@@ -1,5 +1,9 @@
 // Teams domain service: owns groups and groupMembers (ARCH §6.4).
 import { FieldValue } from 'firebase-admin/firestore';
+import { findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
+import { sendEmail } from '../email/service.js';
+import { addedToTeamEmail } from '../email/templates.js';
+import { teamUrl } from '../links/service.js';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
@@ -218,4 +222,63 @@ export async function deleteGroupData(groupId: string): Promise<void> {
   }
   await storage().bucket().deleteFiles({ prefix: `groups/${groupId}/` }).catch(() => undefined);
   await db().collection(Collections.groups).doc(groupId).delete();
+}
+
+export interface AddMembersResult {
+  added: number;
+  invited: number;
+  alreadyMembers: number;
+  problems: string[];
+}
+
+/**
+ * Adds people to a team by email (TEAM-7): people with accounts are added
+ * and told; new emails get an added account and a setup email (AUTH-6).
+ */
+export async function addMembersByEmail(
+  groupId: string,
+  actor: { uid: string; name: string },
+  entries: { name?: string | null; email: string }[],
+): Promise<AddMembersResult> {
+  const result: AddMembersResult = { added: 0, invited: 0, alreadyMembers: 0, problems: [] };
+  const group = await db().collection(Collections.groups).doc(groupId).get();
+  const teamName = group.get('name') as string;
+  for (const entry of entries) {
+    try {
+      const user = await findOrProvisionUser(entry.email, entry.name ?? null);
+      const ref = db().collection(Collections.groupMembers).doc(groupMemberId(groupId, user.uid));
+      if ((await ref.get()).exists) {
+        result.alreadyMembers++;
+        continue;
+      }
+      const now = FieldValue.serverTimestamp();
+      await ref.set({
+        groupId,
+        uid: user.uid,
+        role: 'member',
+        title: null,
+        displayName: user.displayName,
+        photoPath: user.photoPath,
+        playerSummary: null,
+        notificationLevel: 'all',
+        mutedUntil: null,
+        lastReadAt: now,
+        lastPostedAt: null,
+        joinedAt: now,
+        addedBy: actor.uid,
+        pending: user.provisioned,
+      });
+      if (user.provisioned) {
+        await sendSetupEmail(entry.email, teamName, actor.name);
+        result.invited++;
+      } else {
+        await sendEmail(addedToTeamEmail(entry.email, teamName, actor.name, teamUrl(groupId)));
+        result.added++;
+      }
+    } catch {
+      result.problems.push(entry.email);
+    }
+  }
+  await refreshMemberCount(groupId);
+  return result;
 }

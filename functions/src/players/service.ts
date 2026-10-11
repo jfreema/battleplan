@@ -71,7 +71,7 @@ export async function addPlayers(groupId: string, actorUid: string, players: Pla
 export async function linkGuardian(
   groupId: string,
   playerId: string,
-  user: { uid: string; displayName: string; photoPath: string | null },
+  user: { uid: string; displayName: string; photoPath: string | null; provisioned?: boolean },
   addedBy: string,
   via: 'admin' | 'request' | 'guardian' | 'self',
 ): Promise<void> {
@@ -102,6 +102,7 @@ export async function linkGuardian(
         lastPostedAt: null,
         joinedAt: now,
         addedBy,
+        pending: user.provisioned === true,
       });
     }
   });

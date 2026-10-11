@@ -10,6 +10,10 @@ import { removeAccountFromPlayers } from '../players/service.js';
 import { removeAccountBlocks } from '../safety/service.js';
 import { removeUpcomingRsvps } from '../schedule/service.js';
 import { removeAccountFromTeams } from '../teams/service.js';
+import { setupEmail, securityNoticeEmail, methodName } from '../email/templates.js';
+import { sendEmail } from '../email/service.js';
+import { activateUrl } from '../links/service.js';
+import { projectId } from '../shared/project.js';
 import { initialDisplayName, needsSetup, signInMethodsOf, type AuthIdentity } from './profile.js';
 
 export interface SetupInput {
@@ -20,6 +24,7 @@ export interface SetupInput {
 
 export interface ProfileResult {
   created: boolean;
+  activated?: boolean;
   needsSetup: boolean;
 }
 
@@ -43,6 +48,7 @@ export async function ensureUserProfile(uid: string, setup?: SetupInput): Promis
     const snap = await tx.get(ref);
     const now = FieldValue.serverTimestamp();
     let created = false;
+    let activated = false;
     let data = snap.data();
 
     if (!snap.exists) {
@@ -77,7 +83,12 @@ export async function ensureUserProfile(uid: string, setup?: SetupInput): Promis
       tx.set(ref, data);
     } else if (data?.status === 'provisioned') {
       // An admin-added account signing in for the first time (AUTH-6).
-      tx.update(ref, { status: 'active', updatedAt: now });
+      tx.update(ref, {
+        status: 'active',
+        signInMethods: signInMethodsOf(identity.providerIds),
+        updatedAt: now,
+      });
+      activated = true;
     }
 
     if (setup) {
@@ -94,10 +105,12 @@ export async function ensureUserProfile(uid: string, setup?: SetupInput): Promis
       } else {
         tx.update(ref, update);
       }
-      return { created, needsSetup: false };
+      return { created, activated, needsSetup: false };
     }
-    return { created, needsSetup: needsSetup(data ?? {}) };
+    return { created, activated, needsSetup: needsSetup(data ?? {}) };
   });
+
+  if (result.activated) await clearPendingMemberships(uid);
 
   if (result.created && user.photoURL) {
     await copyProviderPhoto(uid, user.photoURL);
@@ -156,6 +169,15 @@ export async function recordSignInMethodChange(
   if (added.length || removed.length) {
     await ref.update({ signInMethods: now, updatedAt: FieldValue.serverTimestamp() });
     logger.info('sign_in_methods_changed', { uid, added, removed });
+    // AUTH-7: tell the account's email about every change.
+    const email = (snap.get('email') as string | undefined) ?? user.email;
+    if (email) {
+      const change = [
+        ...added.map((m) => `${methodName(m)} sign-in was added to your Battleplan account.`),
+        ...removed.map((m) => `${methodName(m)} sign-in was removed from your Battleplan account.`),
+      ].join(' ');
+      await sendEmail(securityNoticeEmail(email, change));
+    }
   }
   return { added, removed };
 }
@@ -236,4 +258,37 @@ export async function findOrProvisionUser(email: string, name: string | null): P
     schemaVersion: 1,
   });
   return { uid: user.uid, displayName, photoPath: null, provisioned: true };
+}
+
+/**
+ * A one-time setup link for an added account (AUTH-6): an email-link
+ * sign-in that lands on /activate, opening the app through App Links.
+ */
+export async function setupLink(email: string): Promise<string> {
+  const prod = projectId() === 'battleplan-prod';
+  const bundle = prod ? 'app.getbattleplan' : 'app.getbattleplan.dev';
+  return auth().generateSignInWithEmailLink(email, {
+    url: activateUrl(),
+    handleCodeInApp: true,
+    iOS: { bundleId: bundle },
+    android: { packageName: bundle, installApp: false },
+    // linkDomain must be a custom domain (M0 spike 2): only prod has one.
+    ...(prod ? { linkDomain: 'getbattleplan.app' } : {}),
+  });
+}
+
+/** Sends the setup email for an added account. Returns false if not sent. */
+export async function sendSetupEmail(email: string, teamName: string, addedBy: string): Promise<boolean> {
+  const link = await setupLink(email);
+  return sendEmail(setupEmail(email, teamName, addedBy, link));
+}
+
+/** When an added account signs in, its memberships stop showing "Not joined yet". */
+export async function clearPendingMemberships(uid: string): Promise<void> {
+  const memberships = await db().collection(Collections.groupMembers).where('uid', '==', uid).limit(100).get();
+  const pending = memberships.docs.filter((d) => d.get('pending') === true);
+  if (!pending.length) return;
+  const batch = db().batch();
+  pending.forEach((d) => batch.update(d.ref, { pending: false }));
+  await batch.commit();
 }

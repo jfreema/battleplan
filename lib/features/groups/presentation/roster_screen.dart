@@ -143,11 +143,17 @@ class _MemberRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final badge = roleBadge(l10n, member.role);
-    final title = member.title;
+    final details = [
+      if (member.title?.isNotEmpty ?? false) member.title!,
+      // PLAYER-8: "Parent of Emma #7".
+      if (member.playerSummary?.isNotEmpty ?? false)
+        l10n.parentOf(member.playerSummary!),
+      if (member.pending) l10n.notJoinedYet,
+    ];
     return ListTile(
       leading: Avatar(name: member.displayName, colorKey: member.uid.value),
       title: Text(member.displayName),
-      subtitle: title == null || title.isEmpty ? null : Text(title),
+      subtitle: details.isEmpty ? null : Text(details.join(' · ')),
       trailing: badge == null ? null : Chip(label: Text(badge)),
       onTap: () => showAdaptiveSheet<void>(
         context,
@@ -267,6 +273,14 @@ class MemberCard extends ConsumerWidget {
                     l10n.profileSaved,
                   );
                 },
+              ),
+            if (viewerIsAdmin && member.pending)
+              ListTile(
+                title: Text(l10n.resendSetupEmail),
+                onTap: () => run(
+                  () => repo.resendSetupEmail(member.groupId, member.uid),
+                  l10n.setupEmailSent,
+                ),
               ),
             if (canRemove)
               ListTile(

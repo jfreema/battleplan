@@ -471,5 +471,51 @@
     }
   },
   "rosterPlayers": "Players",
-  "rosterParentsStaff": "Parents & staff"
+  "rosterParentsStaff": "Parents & staff",
+  "parentOf": "Parent of {players}",
+  "@parentOf": {
+    "placeholders": {
+      "players": {
+        "type": "String"
+      }
+    }
+  },
+  "notJoinedYet": "Not joined yet",
+  "resendSetupEmail": "Resend setup email",
+  "setupEmailSent": "Setup email sent.",
+  "addPeopleHelp": "One line per person: name, email. People who already use Battleplan are added right away; everyone else gets an email to set up their account.",
+  "addPeopleCount": "{count, plural, =0{Add people} =1{Add 1 person} other{Add {count} people}}",
+  "@addPeopleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "peopleAddedTitle": "People added",
+  "membersAddedCount": "{count, plural, =1{1 person added} other{{count} people added}}",
+  "@membersAddedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "membersInvitedCount": "{count, plural, =1{1 setup email sent} other{{count} setup emails sent}}",
+  "@membersInvitedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "alreadyMembersCount": "{count, plural, =1{1 was already on the team} other{{count} were already on the team}}",
+  "@alreadyMembersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addByEmailNeedsVerified": "Verify your email first, then you can add people by email."
 }

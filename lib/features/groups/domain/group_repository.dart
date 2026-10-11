@@ -69,4 +69,29 @@ abstract interface class MemberRepository {
 
   /// Removes someone from the team (TEAM-3).
   Future<void> removeMember(GroupId groupId, UserId uid);
+
+  /// Adds people by email (TEAM-7): accounts are added and told; new emails
+  /// get an account and a setup email. Admins with a verified email.
+  Future<AddMembersResult> addByEmail(
+    GroupId groupId,
+    List<({String? name, String email})> entries,
+  );
+
+  /// Sends a fresh setup email to someone not joined yet (AUTH-6).
+  Future<void> resendSetupEmail(GroupId groupId, UserId uid);
+}
+
+/// What happened when adding people by email (TEAM-7 results screen).
+class AddMembersResult {
+  const new({
+    required this.added,
+    required this.invited,
+    required this.alreadyMembers,
+    this.problems = const [],
+  });
+
+  final int added;
+  final int invited;
+  final int alreadyMembers;
+  final List<String> problems;
 }

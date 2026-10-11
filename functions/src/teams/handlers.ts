@@ -11,7 +11,16 @@ import { audit } from '../audit/service.js';
 import { postSystemMessage } from '../chat/service.js';
 import { groupMemberId } from '../shared/ids.js';
 import { requireTeamAdmin, roleOf } from '../shared/roles.js';
-import { canChangeRole, canRemove, createGroup as create, deleteGroupData, refreshMemberCount } from './service.js';
+import { sendSetupEmail } from '../accounts/service.js';
+import { resendApiKey } from '../email/service.js';
+import {
+  addMembersByEmail,
+  canChangeRole,
+  canRemove,
+  createGroup as create,
+  deleteGroupData,
+  refreshMemberCount,
+} from './service.js';
 
 const CreateGroupInput = z.object({
   name: z.string().trim().min(1).max(Limits.groupNameMax),
@@ -237,5 +246,62 @@ export const deleteGroup = onCall(async (request) => {
     before: { name: group.get('name'), memberCount: group.get('memberCount') },
   });
   await deleteGroupData(input.groupId);
+  return { ok: true };
+});
+
+const AddByEmailInput = z.object({
+  groupId: z.string().min(1),
+  entries: z
+    .array(z.object({ name: z.string().trim().max(60).nullable().optional(), email: z.string().trim().email().max(200) }))
+    .min(1)
+    .max(Limits.pastedMembersMax),
+});
+
+/** Adds people by email, one or a pasted list (TEAM-7). Admins with a verified email. */
+export const addMemberByEmail = onCall({ secrets: [resendApiKey] }, async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(AddByEmailInput, request.data);
+  await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
+  if (request.auth?.token.email_verified !== true) {
+    throw new HttpsError('failed-precondition', 'email-not-verified');
+  }
+  for (let i = 0; i < input.entries.length; i++) {
+    await consumeRateLimit(input.groupId, 'addByEmail', Limits.addByEmailPerGroupPerDay);
+  }
+  const profile = (await db().collection(Collections.users).doc(uid).get()).data();
+  const result = await addMembersByEmail(
+    input.groupId,
+    { uid, name: (profile?.displayName as string | undefined) ?? 'A team admin' },
+    input.entries,
+  );
+  await audit({
+    actorId: uid,
+    action: 'addMemberByEmail',
+    groupId: input.groupId,
+    targetType: 'group',
+    targetId: input.groupId,
+    after: { added: result.added, invited: result.invited },
+  });
+  return result;
+});
+
+/** Sends a fresh setup email to someone who hasn't joined yet (AUTH-6). Admins only. */
+export const resendSetupEmail = onCall({ secrets: [resendApiKey] }, async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(z.object({ groupId: z.string().min(1), uid: z.string().min(1) }), request.data);
+  await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
+  const member = await db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, input.uid)).get();
+  const target = await db().collection(Collections.users).doc(input.uid).get();
+  if (!member.exists || target.get('status') !== 'provisioned') {
+    throw new HttpsError('failed-precondition', 'already-joined');
+  }
+  await consumeRateLimit(input.groupId, 'addByEmail', Limits.addByEmailPerGroupPerDay);
+  const group = await db().collection(Collections.groups).doc(input.groupId).get();
+  const actor = await db().collection(Collections.users).doc(uid).get();
+  await sendSetupEmail(
+    target.get('email') as string,
+    group.get('name') as string,
+    (actor.get('displayName') as string | undefined) ?? 'A team admin',
+  );
   return { ok: true };
 });

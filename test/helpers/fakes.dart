@@ -294,6 +294,23 @@ class FakeMemberRepository implements MemberRepository {
       calls.add('remove ${uid.value}');
 
   @override
+  Future<AddMembersResult> addByEmail(
+    GroupId groupId,
+    List<({String? name, String email})> entries,
+  ) async {
+    calls.add('add ${entries.map((e) => e.email).join(',')}');
+    return AddMembersResult(
+      added: 0,
+      invited: entries.length,
+      alreadyMembers: 0,
+    );
+  }
+
+  @override
+  Future<void> resendSetupEmail(GroupId groupId, UserId uid) async =>
+      calls.add('resend ${uid.value}');
+
+  @override
   Stream<List<Membership>> watchMyMemberships(UserId uid) =>
       Stream.value(memberships.where((m) => m.uid == uid).toList());
 }

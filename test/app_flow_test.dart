@@ -405,6 +405,31 @@ void main() {
     expect(find.text('Players added'), findsOneWidget);
   });
 
+  testWidgets('adding people by email, and resending a setup email', (
+    tester,
+  ) async {
+    final members = FakeMemberRepository([
+      testMembership('a', 'coach', role: MemberRole.owner, name: 'Jordan'),
+      testMembership('a', 'ann', name: 'Ann Lee').copyWith(pending: true),
+    ]);
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberRepo: members,
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Roster'));
+    await tester.pumpAndSettle();
+    expect(find.text('Not joined yet'), findsOneWidget);
+    await tester.tap(find.text('Ann Lee'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Resend setup email'));
+    await tester.pumpAndSettle();
+    expect(members.calls, ['resend ann']);
+  });
+
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     await tester.tap(find.text('Continue with email'));

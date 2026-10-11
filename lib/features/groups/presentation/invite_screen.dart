@@ -12,6 +12,7 @@ import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -150,8 +151,7 @@ class _InviteBody extends ConsumerWidget {
           ListTile(
             leading: const Icon(AppIcons.invite),
             title: Text(l10n.addByEmail),
-            subtitle: Text(l10n.comingSoon),
-            enabled: false,
+            onTap: () => context.push('/g/${groupId.value}/members/add'),
           ),
           const Divider(height: Space.xxl),
           Text(l10n.linkSettings, style: theme.textTheme.titleSmall),

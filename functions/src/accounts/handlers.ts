@@ -1,6 +1,7 @@
 // Thin entry points for the accounts domain (ARCH §6.4).
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { z } from 'zod';
+import { resendApiKey } from '../email/service.js';
 import { requireAuth } from '../shared/guards.js';
 import { parse } from '../shared/validate.js';
 import {
@@ -24,7 +25,8 @@ const EnsureInput = z.object({
 export const ensureUserProfile = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(EnsureInput, request.data ?? {});
-  return ensure(uid, input.setup);
+  const result = await ensure(uid, input.setup);
+  return { created: result.created, needsSetup: result.needsSetup };
 });
 
 /** Signs the caller out on every device (AUTH-9). */
@@ -35,7 +37,7 @@ export const signOutEverywhere = onCall(async (request) => {
 });
 
 /** Syncs users.signInMethods after the app links or unlinks a method (AUTH-7). */
-export const recordSignInMethodChange = onCall(async (request) => {
+export const recordSignInMethodChange = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   return recordChange(uid);
 });

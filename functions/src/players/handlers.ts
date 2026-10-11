@@ -8,6 +8,8 @@ import { requireAuth } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireTeamAdmin } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
+import { sendSetupEmail } from '../accounts/service.js';
+import { resendApiKey } from '../email/service.js';
 import { addPlayers as add, removePlayer as remove } from './service.js';
 
 const Guardian = z.object({
@@ -28,7 +30,7 @@ const AddPlayersInput = z.object({
 });
 
 /** Adds players with their guardians to a youth team (PLAYER-1). Admins only. */
-export const addPlayers = onCall(async (request) => {
+export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(AddPlayersInput, request.data);
   await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
@@ -51,7 +53,12 @@ export const addPlayers = onCall(async (request) => {
     targetId: input.groupId,
     after: { playersAdded: result.playersAdded, guardiansInvited: result.guardiansInvited },
   });
-  // Setup emails for invitedEmails go out once email sending exists (task 46).
+  // AUTH-6: new guardians get a setup email.
+  const actor = await db().collection(Collections.users).doc(uid).get();
+  const actorName = (actor.get('displayName') as string | undefined) ?? 'A team admin';
+  for (const email of result.invitedEmails) {
+    await sendSetupEmail(email, group.get('name') as string, actorName);
+  }
   return result;
 });
 

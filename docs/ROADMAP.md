@@ -55,7 +55,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 30. ✅ Email verification banner (AUTH-3) and password reset by email (AUTH-4).
 31. ✅ First-run setup: name, photo, 18+ confirmation, Terms acceptance (AUTH-5, SAFE-3, SAFE-6); `ensureUserProfile`; the profile kept separate from sign-in providers (AUTH-12).
 32. ✅ Sessions: stay signed in, sign out, sign out of all devices (AUTH-9).
-33. ✅ Safe account linking and the Sign-in methods screen (AUTH-7, AUTH-8, SET-4). *The emailed security notice for method changes waits for email sending (task 45); changes are recorded and logged until then.*
+33. ✅ Safe account linking and the Sign-in methods screen (AUTH-7, AUTH-8, SET-4).
 34. ✅ Disabled accounts (AUTH-11) and account deletion (AUTH-10).
 35. ✅ Profile and About screens (SET-1, SET-6); the theme setting syncs to the account (SET-2).
 36. ✅ The super-admin bootstrap script (`npm --prefix tools/seed run super-admin -- <project> <email>`). Jared is a super admin on dev.
@@ -72,8 +72,8 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 42. ✅ Team settings and member permissions (TEAM-5). *Managing the invite link joins with the invite screen (task 47).*
 43. ✅ Transfer ownership, leave, archive, and delete (TEAM-6, TEAM-8, TEAM-9).
 44. ✅ 👤 **Jared:** Pick the email provider (Q10; default Resend), sign up for its free tier, and add its SPF, DKIM, and DMARC records in Cloudflare. *Done 2026-10-11: Resend, with `getbattleplan.app` verified (DNS added through Resend's Cloudflare sign-in); the API key is in Secret Manager as `RESEND_API_KEY` and in the Battle vault. A DMARC record isn't added yet.*
-45. Email sending from Functions (ARCH §6.7), with the API key in Secret Manager.
-46. Add members by email, with account creation and setup emails (TEAM-7, AUTH-6).
+45. ✅ Email sending from Functions (ARCH §6.7), with the API key in Secret Manager. *Resend, from noreply@getbattleplan.app; security notices for sign-in method changes now go out too (task 33).*
+46. ✅ Add members by email, with account creation and setup emails (TEAM-7, AUTH-6). *Tested on dev end to end: the setup email arrived and its link signed the new person in to first-run setup. The "How do you want to sign in next time?" prompt is covered by Settings → Sign-in methods for now.*
 47. ✅ Invite screen, invite link, QR code, and code (INV-1 to INV-3); creating a team lands on it. *The in-app QR scanner is part of joining (task 49).*
 48. Email invites (INV-4).
 49. ✅ Joining: `getInvitePreview`, `redeemInvite`, join by code or QR scan, the `/join` web page, error states (INV-5 to INV-8). *App Store and Google Play badges on the web page join when the apps are listed (task 130); youth teams' "Who are you here for?" step is task 52.*

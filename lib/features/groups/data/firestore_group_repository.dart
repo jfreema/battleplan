@@ -199,6 +199,43 @@ class FirestoreMemberRepository implements MemberRepository {
   Future<void> removeMember(GroupId groupId, UserId uid) =>
       _call('removeMember', {'groupId': groupId.value, 'uid': uid.value});
 
+  @override
+  Future<AddMembersResult> addByEmail(
+    GroupId groupId,
+    List<({String? name, String email})> entries,
+  ) async {
+    try {
+      final r = await _functions
+          .httpsCallable('addMemberByEmail')
+          .call<Map<String, dynamic>>({
+            'groupId': groupId.value,
+            'entries': [
+              for (final e in entries) {'name': e.name, 'email': e.email},
+            ],
+          });
+      final d = r.data;
+      return AddMembersResult(
+        added: (d['added'] as num).toInt(),
+        invited: (d['invited'] as num).toInt(),
+        alreadyMembers: (d['alreadyMembers'] as num).toInt(),
+        problems: [for (final p in (d['problems'] as List?) ?? const []) '$p'],
+      );
+    } on FirebaseFunctionsException catch (e) {
+      throw switch ((e.code, e.message)) {
+        ('failed-precondition', 'email-not-verified') => EmailNotVerified(
+          e.message,
+        ),
+        ('resource-exhausted', _) => RateLimited(e.message),
+        ('permission-denied', _) => PermissionDenied(e.message),
+        _ => UnknownFailure('${e.code}: ${e.message}'),
+      };
+    }
+  }
+
+  @override
+  Future<void> resendSetupEmail(GroupId groupId, UserId uid) =>
+      _call('resendSetupEmail', {'groupId': groupId.value, 'uid': uid.value});
+
   Future<void> _call(String name, Map<String, Object?> data) async {
     try {
       await _functions.httpsCallable(name).call<void>(data);
@@ -263,6 +300,8 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   mutedUntil: _date(d['mutedUntil']),
   lastReadAt: _date(d['lastReadAt']),
   title: d['title'] as String?,
+  playerSummary: d['playerSummary'] as String?,
+  pending: d['pending'] as bool? ?? false,
 );
 
 int? _parseColor(String? hex) {
