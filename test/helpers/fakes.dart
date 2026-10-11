@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
@@ -257,6 +258,8 @@ class FakeUserRepository implements UserRepository {
   bool needsSetup;
   final _changes = StreamController<void>.broadcast();
   String? savedName;
+  ThemePreference themeMode = ThemePreference.system;
+  int photosUploaded = 0;
 
   UserProfile _profile(String uid) => UserProfile(
     uid: uid,
@@ -264,6 +267,7 @@ class FakeUserRepository implements UserRepository {
     status: UserStatus.active,
     adultConfirmedAt: needsSetup ? null : DateTime(2026),
     acceptedTermsAt: needsSetup ? null : DateTime(2026),
+    themeMode: themeMode,
   );
 
   @override
@@ -273,6 +277,25 @@ class FakeUserRepository implements UserRepository {
       yield _profile(uid);
     }
   }
+
+  @override
+  Future<void> updateDisplayName(String uid, String name) async {
+    savedName = name;
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> setThemeMode(String uid, ThemePreference mode) async {
+    themeMode = mode;
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> uploadPhoto(String uid, Uint8List jpegBytes) async =>
+      photosUploaded++;
+
+  @override
+  Future<String?> photoUrl(String path) async => null;
 
   @override
   Future<void> ensureProfile({

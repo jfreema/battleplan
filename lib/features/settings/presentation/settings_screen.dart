@@ -2,8 +2,11 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
@@ -12,7 +15,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// SET-2 appearance and sign-out. The rest of Settings arrives with M1.
+/// Settings (SPEC §6.10): profile, appearance, sign-in methods, about, and
+/// the account actions. Notification settings join in M4.
 class SettingsScreen extends ConsumerWidget {
   const new({required this.appVersion, this.showDevTools = false, super.key});
 
@@ -21,16 +25,47 @@ class SettingsScreen extends ConsumerWidget {
   /// Shows developer-only tools (dev builds only).
   final bool showDevTools;
 
+  static final Uri _terms = Uri.parse('https://getbattleplan.app/terms');
+  static final Uri _privacy = Uri.parse('https://getbattleplan.app/privacy');
+  static final Uri _support = Uri.parse('mailto:support@getbattleplan.app');
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = ref.watch(themePreferenceControllerProvider);
+    final profile = ref.watch(myProfileProvider).value;
+    final photoUrl = ref.watch(myPhotoUrlProvider).value;
+    final links = ref.read(linkOpenerProvider);
+    final error = Theme.of(context).colorScheme.error;
+
+    Widget section(String title) => Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Space.lg,
+        Space.lg,
+        Space.lg,
+        Space.sm,
+      ),
+      child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+    );
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
       body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: Space.sm),
+        padding: const EdgeInsets.only(bottom: Space.xl),
         children: [
-          ListTile(title: Text(l10n.appearance)),
+          if (profile != null)
+            ListTile(
+              leading: Avatar(
+                name: profile.displayName,
+                colorKey: profile.uid,
+                imageUrl: photoUrl,
+              ),
+              title: Text(profile.displayName),
+              subtitle: Text(profile.email ?? ''),
+              trailing: const Icon(AppIcons.expand),
+              onTap: () => context.push('/settings/profile'),
+            ),
+          section(l10n.appearance),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Space.lg),
             child: SegmentedButton<ThemePreference>(
@@ -57,12 +92,7 @@ class SettingsScreen extends ConsumerWidget {
                   .set(s.first),
             ),
           ),
-          const SizedBox(height: Space.lg),
-          const Divider(),
-          ListTile(
-            title: Text(l10n.about),
-            subtitle: Text(l10n.versionLabel(appVersion)),
-          ),
+          section(l10n.account),
           ListTile(
             leading: const Icon(AppIcons.settings),
             title: Text(l10n.signInMethods),
@@ -75,6 +105,30 @@ class SettingsScreen extends ConsumerWidget {
               title: const Text('Push test (dev only)'),
               onTap: () => context.push('/settings/push-test'),
             ),
+          section(l10n.about),
+          ListTile(title: Text(l10n.versionLabel(appVersion))),
+          ListTile(
+            title: Text(l10n.termsOfUse),
+            onTap: () => links.open(_terms),
+          ),
+          ListTile(
+            title: Text(l10n.privacyPolicy),
+            onTap: () => links.open(_privacy),
+          ),
+          ListTile(
+            title: Text(l10n.openSourceLicenses),
+            onTap: () => showLicensePage(
+              context: context,
+              applicationName: l10n.appName,
+              applicationVersion: appVersion,
+            ),
+          ),
+          ListTile(
+            title: Text(l10n.contactSupport),
+            subtitle: const Text('support@getbattleplan.app'),
+            onTap: () => links.open(_support),
+          ),
+          const Divider(),
           ListTile(
             leading: const Icon(AppIcons.signOut),
             title: Text(l10n.signOut),
@@ -98,14 +152,8 @@ class SettingsScreen extends ConsumerWidget {
             },
           ),
           ListTile(
-            leading: Icon(
-              AppIcons.error,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            title: Text(
-              l10n.deleteAccount,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
+            leading: Icon(AppIcons.error, color: error),
+            title: Text(l10n.deleteAccount, style: TextStyle(color: error)),
             onTap: () async {
               final ok = await showConfirmDialog(
                 context,

@@ -5,6 +5,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -20,6 +21,11 @@ Future<FakeLocalPrefs> pumpApp(
   FakeUserRepository? users,
   FakePushRepository? push,
 }) async {
+  // A tall phone-sized screen, so long settings lists fit without scrolling.
+  tester.view
+    ..physicalSize = const Size(400, 1600)
+    ..devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
   final localPrefs = prefs ?? FakeLocalPrefs();
   await tester.pumpWidget(
     ProviderScope(

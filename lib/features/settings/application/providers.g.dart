@@ -98,7 +98,7 @@ final class ThemePreferenceControllerProvider
 }
 
 String _$themePreferenceControllerHash() =>
-    r'cf344abfdb50e65648d1de154dec5e06000102d6';
+    r'657da661a62bf6f1b4e59a47e74d48d912d5d9c1';
 
 /// System, light, or dark (SPEC SET-2). Applies instantly and is remembered.
 

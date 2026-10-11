@@ -1,8 +1,11 @@
 import 'package:battleplan/app/app_services.dart';
+import 'package:battleplan/app/services/image_picker_photo_picker.dart';
+import 'package:battleplan/app/services/url_launcher_link_opener.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/services/analytics.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
 import 'package:battleplan/core/services/remote_config.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:battleplan/features/auth/data/firestore_user_repository.dart';
@@ -16,6 +19,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,6 +30,7 @@ List<Override> buildOverrides({
   required FirebaseAuth auth,
   required FirebaseFirestore firestore,
   required FirebaseFunctions functions,
+  required FirebaseStorage storage,
   required FirebaseMessaging? messaging,
   required SharedPreferencesWithCache prefs,
   required Analytics analytics,
@@ -37,6 +42,8 @@ List<Override> buildOverrides({
   analyticsProvider.overrideWithValue(analytics),
   crashReporterProvider.overrideWithValue(crashReporter),
   remoteConfigProvider.overrideWithValue(remoteConfig),
+  photoPickerProvider.overrideWithValue(const ImagePickerPhotoPicker()),
+  linkOpenerProvider.overrideWithValue(const UrlLauncherLinkOpener()),
   authRepositoryProvider.overrideWithValue(
     FirebaseAuthRepository(
       auth,
@@ -47,7 +54,7 @@ List<Override> buildOverrides({
     ),
   ),
   userRepositoryProvider.overrideWithValue(
-    FirestoreUserRepository(firestore, functions),
+    FirestoreUserRepository(firestore, functions, storage),
   ),
   groupRepositoryProvider.overrideWithValue(
     FirestoreGroupRepository(firestore),

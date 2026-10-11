@@ -21,6 +21,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,6 +53,7 @@ Future<void> bootstrap({
   final auth = FirebaseAuth.instance;
   final firestore = FirebaseFirestore.instance;
   final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
+  final storage = FirebaseStorage.instance;
 
   if (env.useEmulators) {
     final host = _emulatorHostOverride.isNotEmpty
@@ -62,6 +64,7 @@ Future<void> bootstrap({
     await auth.useAuthEmulator(host, 9099);
     firestore.useFirestoreEmulator(host, 8080);
     functions.useFunctionsEmulator(host, 5001);
+    await storage.useStorageEmulator(host, 9199);
   }
   // Offline cache: default on mobile, explicit on web (ARCH §5.6).
   firestore.settings = const Settings(persistenceEnabled: true);
@@ -111,6 +114,7 @@ Future<void> bootstrap({
         auth: auth,
         firestore: firestore,
         functions: functions,
+        storage: storage,
         // The emulators have no push service.
         messaging: env.useEmulators ? null : FirebaseMessaging.instance,
         prefs: prefs,

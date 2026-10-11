@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/features/auth/domain/user_profile.dart';
 
 /// Owns `users` (ARCH §5.2). Profiles are created and their protected
@@ -9,4 +12,16 @@ abstract interface class UserRepository {
   /// Creates the profile at first sign-in if needed. With [displayName] and
   /// the two confirmations, it also finishes first-run setup (AUTH-5).
   Future<void> ensureProfile({String? displayName, bool finishSetup = false});
+
+  /// Changes the display name shown on every team (SET-1).
+  Future<void> updateDisplayName(String uid, String name);
+
+  /// Saves the theme to the account so it follows the person (SET-2).
+  Future<void> setThemeMode(String uid, ThemePreference mode);
+
+  /// Uploads a new profile photo and points the profile at it (SET-1).
+  Future<void> uploadPhoto(String uid, Uint8List jpegBytes);
+
+  /// A URL to show a stored photo, or null if it can't be loaded.
+  Future<String?> photoUrl(String path);
 }

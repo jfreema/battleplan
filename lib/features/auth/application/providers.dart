@@ -32,3 +32,11 @@ Stream<UserProfile?> myProfile(Ref ref) {
   repo.ensureProfile().ignore();
   return repo.watchProfile(user.uid);
 }
+
+/// A URL for the signed-in person's profile photo, or null.
+@riverpod
+Future<String?> myPhotoUrl(Ref ref) async {
+  final path = ref.watch(myProfileProvider).value?.photoPath;
+  if (path == null) return null;
+  return await ref.watch(userRepositoryProvider).photoUrl(path);
+}

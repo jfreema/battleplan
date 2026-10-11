@@ -185,3 +185,41 @@ final class MyProfileProvider
 }
 
 String _$myProfileHash() => r'928a546b913ec5c33498da8f335b8224c3debe88';
+
+/// A URL for the signed-in person's profile photo, or null.
+
+@ProviderFor(myPhotoUrl)
+final myPhotoUrlProvider = MyPhotoUrlProvider._();
+
+/// A URL for the signed-in person's profile photo, or null.
+
+final class MyPhotoUrlProvider
+    extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
+    with $FutureModifier<String?>, $FutureProvider<String?> {
+  /// A URL for the signed-in person's profile photo, or null.
+  MyPhotoUrlProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myPhotoUrlProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myPhotoUrlHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<String?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String?> create(Ref ref) {
+    return myPhotoUrl(ref);
+  }
+}
+
+String _$myPhotoUrlHash() => r'ff0f15cb1087c8e2df4954abac92127ba392cc54';

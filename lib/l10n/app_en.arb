@@ -191,5 +191,15 @@
   "deleteAccount": "Delete account",
   "deleteAccountTitle": "Delete your account?",
   "deleteAccountBody": "This permanently deletes your profile, your team memberships, and your RSVPs for upcoming events. Your past messages stay, shown from \"Deleted user\". Teams you own pass to their longest-serving admin or member. This can't be undone.",
-  "deleteAccountFailed": "Couldn't delete your account. Check your connection and try again."
+  "deleteAccountFailed": "Couldn't delete your account. Check your connection and try again.",
+  "profile": "Profile",
+  "changePhoto": "Change photo",
+  "save": "Save",
+  "profileSaved": "Profile saved.",
+  "profileSaveFailed": "Couldn't save. Check your connection and try again.",
+  "account": "Account",
+  "termsOfUse": "Terms of Use",
+  "privacyPolicy": "Privacy Policy",
+  "openSourceLicenses": "Open-source licenses",
+  "contactSupport": "Contact support"
 }

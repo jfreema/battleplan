@@ -64,3 +64,23 @@ export async function removeAccountFromTeams(uid: string): Promise<void> {
   }
 }
 
+
+/**
+ * Copies a person's name and photo onto their memberships, the cache the
+ * roster and message author snapshots read (ARCH §6.2 `groupMembers`).
+ */
+export async function updateMemberSnapshots(
+  uid: string,
+  displayName: string,
+  photoPath: string | null,
+): Promise<void> {
+  const memberships = await db()
+    .collection(Collections.groupMembers)
+    .where('uid', '==', uid)
+    .limit(100)
+    .get();
+  if (memberships.empty) return;
+  const batch = db().batch();
+  memberships.docs.forEach((d) => batch.update(d.ref, { displayName, photoPath }));
+  await batch.commit();
+}

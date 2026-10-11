@@ -225,6 +225,7 @@ void main() {
     await pumpApp(tester, auth: auth, push: push);
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Sign out of all devices'), 100);
     await tester.tap(find.text('Sign out of all devices'));
     await tester.pumpAndSettle();
     expect(find.text('Sign out of all devices?'), findsOneWidget);
@@ -299,11 +300,17 @@ void main() {
   testWidgets('the theme switch applies at once and is remembered', (
     tester,
   ) async {
-    final prefs = await pumpApp(tester, auth: FakeAuthRepository(user: coach));
+    final users = FakeUserRepository();
+    final prefs = await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      users: users,
+    );
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
     expect(prefs.themePreference, ThemePreference.dark);
+    expect(users.themeMode, ThemePreference.dark);
   });
 }

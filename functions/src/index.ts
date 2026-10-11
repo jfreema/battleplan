@@ -9,4 +9,5 @@ export {
   recordSignInMethodChange,
   signOutEverywhere,
 } from './accounts/handlers.js';
+export { onUserUpdated } from './accounts/triggers.js';
 export { logClientError } from './ops/handlers.js';
