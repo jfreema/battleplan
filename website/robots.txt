@@ -1,6 +1,7 @@
-# The website is indexed; the web app under /app/ is not (WEB-5).
+# The website is indexed; the web app under /app/ is not (WEB-5). /app/ stays
+# crawlable on purpose: its pages say noindex (header and meta tag), and a
+# crawler blocked here would never see that and could still list the URLs.
 User-agent: *
 Allow: /
-Disallow: /app/
 
 Sitemap: https://getbattleplan.app/sitemap.xml

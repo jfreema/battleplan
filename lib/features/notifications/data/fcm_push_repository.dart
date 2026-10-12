@@ -80,6 +80,13 @@ class FcmPushRepository implements PushRepository {
 
   @override
   Future<bool> deleteToken() async {
+    // On web without permission, the browser has already dropped its push
+    // subscription, so the token is dead and the server prunes it (NOTIF-10).
+    // Deleting through the SDK would also look for a worker at the domain
+    // root, where the website is (D40), and fail on every sign-out.
+    if (kIsWeb && await permissionStatus() != PushPermission.authorized) {
+      return true;
+    }
     try {
       // On web, register our push worker first: without a registration the
       // SDK looks for one at the domain root, where the website is (D40).
