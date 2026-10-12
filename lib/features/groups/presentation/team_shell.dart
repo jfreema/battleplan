@@ -28,7 +28,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The tab names in route order: `/g/:groupId/<tab>` (ARCH §5.4).
-const teamTabs = ['chat', 'schedule', 'docs'];
+const teamTabs = ['chat', 'schedule', 'documents'];
 
 /// The team view: header with the switcher, then Chat · Schedule · Documents
 /// as a bottom bar on phones or a left rail at 840 px and up (SPEC §5).

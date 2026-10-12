@@ -68,5 +68,7 @@ MediaItem mediaItemFromCallable(Map<String, Object?> x) => MediaItem(
   },
   messageId: x['messageId'] as String?,
   authorName: x['authorName'] as String?,
+  documentId: x['documentId'] as String?,
+  documentName: x['documentName'] as String?,
   current: x['current'] as bool?,
 );

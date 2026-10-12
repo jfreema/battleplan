@@ -21,6 +21,11 @@ abstract class MediaItem with _$MediaItem {
     String? messageId,
     String? authorName,
 
+    /// A document's record and its name (M7), while the record exists.
+    /// [authorName] is then who added it.
+    String? documentId,
+    String? documentName,
+
     /// For a logo or background: whether the team still uses it. An older
     /// one left behind reads as false.
     bool? current,

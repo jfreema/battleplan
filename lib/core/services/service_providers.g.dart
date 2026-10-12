@@ -289,6 +289,52 @@ final class CalendarAdderProvider
 
 String _$calendarAdderHash() => r'ec5fb013f69b18db118fb9c13ec30db1c043b78d';
 
+/// Picks files to upload and saves downloads (DOC-2, DOC-4).
+
+@ProviderFor(fileChooser)
+final fileChooserProvider = FileChooserProvider._();
+
+/// Picks files to upload and saves downloads (DOC-2, DOC-4).
+
+final class FileChooserProvider
+    extends $FunctionalProvider<FileChooser, FileChooser, FileChooser>
+    with $Provider<FileChooser> {
+  /// Picks files to upload and saves downloads (DOC-2, DOC-4).
+  FileChooserProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'fileChooserProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$fileChooserHash();
+
+  @$internal
+  @override
+  $ProviderElement<FileChooser> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  FileChooser create(Ref ref) {
+    return fileChooser(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FileChooser value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FileChooser>(value),
+    );
+  }
+}
+
+String _$fileChooserHash() => r'20ccd176452708f87ec03733eb88f0609b64be74';
+
 /// Where the web app lives, for links people share (an event's Share,
 /// SCHED-4). Paths under it are the app's routes (ARCH §5.4).
 

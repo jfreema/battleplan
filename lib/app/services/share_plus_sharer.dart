@@ -18,6 +18,18 @@ class SharePlusSharer implements Sharer {
     ),
   );
 
+  @override
+  Future<bool> shareFile(
+    Uint8List bytes, {
+    required String name,
+    required String mimeType,
+  }) => _share(
+    ShareParams(
+      files: [XFile.fromData(bytes, mimeType: mimeType, name: name)],
+      fileNameOverrides: [name],
+    ),
+  );
+
   Future<bool> _share(ShareParams params) async {
     try {
       final result = await SharePlus.instance.share(params);

@@ -8,6 +8,14 @@ abstract interface class Sharer {
 
   /// Shares an image file. On phones the sheet also offers Save Image.
   Future<bool> shareImage(Uint8List bytes, {required String name});
+
+  /// Shares any file, such as a team document (DOC-4). On phones the sheet
+  /// also offers Save to Files.
+  Future<bool> shareFile(
+    Uint8List bytes, {
+    required String name,
+    required String mimeType,
+  });
 }
 
 class NoopSharer implements Sharer {
@@ -19,4 +27,11 @@ class NoopSharer implements Sharer {
   @override
   Future<bool> shareImage(Uint8List bytes, {required String name}) async =>
       false;
+
+  @override
+  Future<bool> shareFile(
+    Uint8List bytes, {
+    required String name,
+    required String mimeType,
+  }) async => false;
 }

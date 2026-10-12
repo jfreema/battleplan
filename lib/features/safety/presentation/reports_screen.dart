@@ -8,6 +8,7 @@ import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
+import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
@@ -17,7 +18,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Team menu → Reports (SAFE-4), for team admins: each open report with
-/// what was reported, and Delete message, Remove from team, or Dismiss.
+/// what was reported, and Delete message (or document), Remove from team,
+/// or Dismiss.
 class ReportsScreen extends ConsumerWidget {
   const new({required this.groupId, super.key});
 
@@ -71,6 +73,16 @@ class _ReportCard extends ConsumerWidget {
     } on AppFailure {
       if (context.mounted) showAppSnackBar(context, l10n.signInUnknownError);
     }
+  }
+
+  /// Deletes the reported document, if it's still there; Functions
+  /// delete its file (SAFE-4, DOC-5).
+  Future<void> _deleteDocument(WidgetRef ref, String id) async {
+    final doc = await ref
+        .read(documentRepositoryProvider)
+        .watchDocument(DocumentId(id))
+        .first;
+    if (doc != null) await ref.read(documentRepositoryProvider).delete(doc);
   }
 
   @override
@@ -138,6 +150,18 @@ class _ReportCard extends ConsumerWidget {
                   ),
                 ),
                 child: Text(l10n.reportDeleteMessage),
+              ),
+            if (report.targetType == ReportTargetType.document)
+              OutlinedButton(
+                onPressed: () => unawaited(
+                  _act(
+                    context,
+                    ref,
+                    () => _deleteDocument(ref, report.targetId),
+                    resolution: ReportResolution.deletedDocument,
+                  ),
+                ),
+                child: Text(l10n.reportDeleteDocument),
               ),
             if (isMember)
               OutlinedButton(

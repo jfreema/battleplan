@@ -4,6 +4,8 @@ import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
+import 'package:battleplan/features/documents/application/providers.dart';
+import 'package:battleplan/features/documents/presentation/document_screen.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
@@ -41,6 +43,10 @@ Future<FakeLocalPrefs> pumpApp(
   FakeEventRepository? eventRepo,
   FakeRsvpRepository? rsvpRepo,
   FakeCalendarAdder? calendar,
+  FakeDocumentRepository? documentRepo,
+  FakeFileChooser? fileChooser,
+  FakeSharer? sharer,
+  FakeLinkOpener? linkOpener,
   Size size = const Size(400, 1600),
 }) async {
   // A tall phone-sized screen, so long settings lists fit without scrolling.
@@ -103,6 +109,16 @@ Future<FakeLocalPrefs> pumpApp(
         ),
         calendarAdderProvider.overrideWithValue(
           calendar ?? FakeCalendarAdder(),
+        ),
+        documentRepositoryProvider.overrideWithValue(
+          documentRepo ?? FakeDocumentRepository(),
+        ),
+        fileChooserProvider.overrideWithValue(fileChooser ?? FakeFileChooser()),
+        sharerProvider.overrideWithValue(sharer ?? FakeSharer()),
+        linkOpenerProvider.overrideWithValue(linkOpener ?? FakeLinkOpener()),
+        // PDFium doesn't run in tests; a stand-in names the file.
+        pdfViewProvider.overrideWithValue(
+          (bytes, name) => Text('PDF $name (${bytes.length} bytes)'),
         ),
       ],
       child: const BattleplanApp(),

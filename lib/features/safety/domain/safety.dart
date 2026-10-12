@@ -35,4 +35,4 @@ abstract class Report with _$Report {
 }
 
 /// How an admin closed a report.
-enum ReportResolution { deletedMessage, removedMember, none }
+enum ReportResolution { deletedMessage, removedMember, deletedDocument, none }

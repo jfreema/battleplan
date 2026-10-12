@@ -2,4 +2,4 @@
 /// import this file, never groups' presentation/ files.
 library;
 
-export 'presentation/storage_widgets.dart' show showStorageFull;
+export 'presentation/storage_widgets.dart' show formatBytes, showStorageFull;

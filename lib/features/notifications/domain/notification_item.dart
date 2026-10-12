@@ -92,5 +92,5 @@ bool isTeamTabRoute(String route) {
   final s = Uri.tryParse(route)?.pathSegments ?? const [];
   return s.length >= 3 &&
       s[0] == 'g' &&
-      const {'chat', 'schedule', 'docs'}.contains(s[2]);
+      const {'chat', 'schedule', 'documents'}.contains(s[2]);
 }

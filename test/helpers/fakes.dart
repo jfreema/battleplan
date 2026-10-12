@@ -6,13 +6,18 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/calendar.dart';
+import 'package:battleplan/core/services/file_chooser.dart';
+import 'package:battleplan/core/services/link_opener.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
+import 'package:battleplan/core/services/sharer.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/domain/user_profile.dart';
 import 'package:battleplan/features/auth/domain/user_repository.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
+import 'package:battleplan/features/documents/domain/document.dart';
+import 'package:battleplan/features/documents/domain/document_repository.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
@@ -1835,6 +1840,307 @@ class FakeCalendarAdder implements CalendarAdder {
   @override
   Future<bool> add(CalendarEntry entry) async {
     added.add(entry);
+    return true;
+  }
+}
+
+/// Documents and their files in memory (DOC-1 to DOC-5). Pages are slices
+/// of the team's documents in the query's order, as Firestore returns them
+/// (pinned ones aren't first there; the app puts them first).
+class FakeDocumentRepository implements DocumentRepository {
+  new([List<Document> docs = const []]) {
+    docs.forEach(put);
+  }
+
+  final Map<String, Document> docs = {};
+
+  /// Stored files' bytes by path.
+  final Map<String, Uint8List> files = {};
+  final List<String> deleted = [];
+  final _changes = StreamController<void>.broadcast();
+  int _nextId = 0;
+
+  /// The upload under way, for tests to move along, finish, or fail.
+  FakeDocumentUpload? upload;
+
+  /// Makes writes fail as the rules refuse them.
+  bool refuseWrites = false;
+
+  /// Adds or replaces a document, and tells anyone watching.
+  void put(Document doc) {
+    docs[doc.id.value] = doc;
+    _changes.add(null);
+  }
+
+  Stream<T> _live<T>(T Function() read) async* {
+    yield read();
+    await for (final _ in _changes.stream) {
+      yield read();
+    }
+  }
+
+  List<Document> _ordered(GroupId groupId, DocumentSort sort) {
+    final team = [
+      for (final d in docs.values)
+        if (d.groupId == groupId) d.copyWith(pinned: false),
+    ];
+    final order = arrangeDocuments(team, sort: sort);
+    // Back to the stored pinned values, in the query's order.
+    return [for (final d in order) docs[d.id.value]!];
+  }
+
+  DocumentPage _page(List<Document> all, int start, int limit) {
+    final end = (start + limit).clamp(0, all.length);
+    return (
+      documents: all.sublist(start.clamp(0, all.length), end),
+      next: end - start < limit ? null : PageCursor(end),
+    );
+  }
+
+  @override
+  Stream<DocumentPage> watchFirstPage(
+    GroupId groupId,
+    DocumentSort sort, {
+    int limit = Limits.queryLimitMax,
+  }) => _live(() => _page(_ordered(groupId, sort), 0, limit));
+
+  @override
+  Future<DocumentPage> loadMore(
+    GroupId groupId,
+    DocumentSort sort,
+    PageCursor cursor, {
+    int limit = Limits.queryLimitMax,
+  }) async => _page(_ordered(groupId, sort), cursor.handle as int, limit);
+
+  @override
+  Stream<List<Document>> watchPinned(GroupId groupId) => _live(
+    () => [
+      for (final d in docs.values)
+        if (d.groupId == groupId && d.pinned) d,
+    ],
+  );
+
+  @override
+  Stream<Document?> watchDocument(DocumentId id) => _live(() => docs[id.value]);
+
+  @override
+  DocumentId newDocumentId() => DocumentId('new${_nextId++}');
+
+  @override
+  DocumentUpload uploadFile(
+    GroupId groupId,
+    DocumentId id, {
+    required String fileName,
+    required Uint8List bytes,
+    required String contentType,
+  }) {
+    final path = 'groups/${groupId.value}/documents/${id.value}/$fileName';
+    final up = FakeDocumentUpload(path, bytes);
+    upload = up;
+    // The file is stored once the upload finishes.
+    unawaited(
+      up.done.then((_) => files[path] = bytes, onError: (Object _) => null),
+    );
+    return up;
+  }
+
+  @override
+  Future<void> createFile(
+    GroupId groupId,
+    DocumentId id,
+    UserId uid, {
+    required String name,
+    required String description,
+    required String path,
+    required String contentType,
+    required int size,
+    required bool notifyTeam,
+  }) async {
+    if (refuseWrites) throw const PermissionDenied('create');
+    put(
+      Document(
+        id: id,
+        groupId: groupId,
+        kind: DocumentKind.file,
+        name: name,
+        description: description,
+        path: path,
+        contentType: contentType,
+        size: size,
+        uploadedBy: uid.value,
+        uploaderName: uid.value,
+        createdAt: DateTime.now(),
+      ),
+    );
+    notified[id.value] = notifyTeam;
+  }
+
+  /// Each new document's Notify team choice, by ID.
+  final Map<String, bool> notified = {};
+
+  @override
+  Future<DocumentId> createLink(
+    GroupId groupId,
+    UserId uid, {
+    required String name,
+    required Uri url,
+    required String description,
+    required bool notifyTeam,
+  }) async {
+    if (refuseWrites) throw const PermissionDenied('create');
+    final id = newDocumentId();
+    put(
+      Document(
+        id: id,
+        groupId: groupId,
+        kind: DocumentKind.link,
+        name: name,
+        description: description,
+        url: url.toString(),
+        uploadedBy: uid.value,
+        uploaderName: uid.value,
+        createdAt: DateTime.now(),
+      ),
+    );
+    notified[id.value] = notifyTeam;
+    return id;
+  }
+
+  @override
+  Future<void> update(
+    Document doc, {
+    required String name,
+    required String description,
+  }) async {
+    if (refuseWrites) throw const PermissionDenied('update');
+    put(docs[doc.id.value]!.copyWith(name: name, description: description));
+  }
+
+  @override
+  Future<void> setPinned(Document doc, {required bool pinned}) async {
+    if (refuseWrites) throw const PermissionDenied('pin');
+    put(docs[doc.id.value]!.copyWith(pinned: pinned));
+  }
+
+  @override
+  Future<void> delete(Document doc) async {
+    if (refuseWrites) throw const PermissionDenied('delete');
+    deleted.add(doc.id.value);
+    docs.remove(doc.id.value);
+    _changes.add(null);
+  }
+
+  @override
+  Future<String?> fileUrl(String path) async =>
+      files.containsKey(path) ? 'https://files.test/$path' : null;
+
+  @override
+  Future<Uint8List?> fileBytes(String path) async => files[path];
+}
+
+/// An upload the test moves along: [report] progress, then [finish] or
+/// [fail]. Cancel fails it as Storage does.
+class FakeDocumentUpload implements DocumentUpload {
+  new(this.path, this.bytes);
+
+  final String path;
+  final Uint8List bytes;
+  final _progress = StreamController<double>.broadcast();
+  final _done = Completer<String>();
+  bool canceled = false;
+
+  void report(double p) => _progress.add(p);
+
+  void finish() {
+    if (!_done.isCompleted) _done.complete(path);
+  }
+
+  void fail(AppFailure failure) {
+    if (!_done.isCompleted) _done.completeError(failure);
+  }
+
+  @override
+  Stream<double> get progress => _progress.stream;
+
+  @override
+  Future<String> get done => _done.future;
+
+  @override
+  Future<void> cancel() async {
+    canceled = true;
+    fail(const UploadCanceled('canceled'));
+  }
+}
+
+/// Hands out [next] when a file is picked, and records saved files.
+class FakeFileChooser implements FileChooser {
+  new({this.next, this.web = false});
+
+  PickedFile? next;
+  final bool web;
+  final List<String> saved = [];
+
+  /// The extensions the last pick allowed.
+  List<String> extensions = const [];
+
+  @override
+  Future<PickedFile?> pickFile({required List<String> extensions}) async {
+    this.extensions = extensions;
+    return next;
+  }
+
+  @override
+  Future<bool> saveFile(
+    Uint8List bytes, {
+    required String name,
+    required String mimeType,
+  }) async {
+    saved.add(name);
+    return true;
+  }
+
+  @override
+  bool get downloadsInsteadOfOpening => web;
+}
+
+/// A picked file of [size] bytes (its bytes are that many zeros).
+PickedFile pickedFile(String name, int size) =>
+    (name: name, size: size, readBytes: () async => Uint8List(size));
+
+/// Records what was shared.
+class FakeSharer implements Sharer {
+  final List<String> shared = [];
+
+  @override
+  Future<bool> shareLink(Uri uri, {String? subject}) async {
+    shared.add('link $uri');
+    return true;
+  }
+
+  @override
+  Future<bool> shareImage(Uint8List bytes, {required String name}) async {
+    shared.add('image $name');
+    return true;
+  }
+
+  @override
+  Future<bool> shareFile(
+    Uint8List bytes, {
+    required String name,
+    required String mimeType,
+  }) async {
+    shared.add('file $name $mimeType');
+    return true;
+  }
+}
+
+/// Records the links opened outside the app.
+class FakeLinkOpener implements LinkOpener {
+  final List<Uri> opened = [];
+
+  @override
+  Future<bool> open(Uri uri) async {
+    opened.add(uri);
     return true;
   }
 }

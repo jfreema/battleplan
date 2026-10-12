@@ -1,5 +1,6 @@
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/services/device_calendar_adder.dart';
+import 'package:battleplan/app/services/file_picker_chooser.dart';
 import 'package:battleplan/app/services/flutter_time_zones.dart';
 import 'package:battleplan/app/services/image_picker_photo_picker.dart';
 import 'package:battleplan/app/services/share_plus_sharer.dart';
@@ -16,6 +17,8 @@ import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:battleplan/features/auth/data/firestore_user_repository.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/data/firestore_message_repository.dart';
+import 'package:battleplan/features/documents/application/providers.dart';
+import 'package:battleplan/features/documents/data/firestore_document_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/data/firestore_group_repository.dart';
 import 'package:battleplan/features/groups/data/functions_invite_repository.dart';
@@ -68,6 +71,7 @@ List<Override> buildOverrides({
   timeZonesProvider.overrideWithValue(const FlutterTimeZones()),
   sharerProvider.overrideWithValue(const SharePlusSharer()),
   calendarAdderProvider.overrideWithValue(const DeviceCalendarAdder()),
+  fileChooserProvider.overrideWithValue(const FilePickerChooser()),
   appWebBaseProvider.overrideWithValue(
     Uri.parse(
       env.isProd
@@ -89,6 +93,9 @@ List<Override> buildOverrides({
   ),
   pollRepositoryProvider.overrideWithValue(
     FirestorePollRepository(firestore, functions),
+  ),
+  documentRepositoryProvider.overrideWithValue(
+    FirestoreDocumentRepository(firestore, storage),
   ),
   eventRepositoryProvider.overrideWithValue(
     FirestoreEventRepository(firestore, functions),

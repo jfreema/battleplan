@@ -157,3 +157,11 @@ final class StorageFull extends AppFailure {
   @override
   String get code => 'storageFull';
 }
+
+/// The person canceled an upload (DOC-2).
+final class UploadCanceled extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'uploadCanceled';
+}

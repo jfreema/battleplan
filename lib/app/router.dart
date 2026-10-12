@@ -18,6 +18,7 @@ import 'package:battleplan/features/auth/presentation/setup_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_methods_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
+import 'package:battleplan/features/documents/presentation/document_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/add_members_screen.dart';
@@ -250,6 +251,13 @@ GoRouter router(Ref ref) {
             ? '/g/${state.pathParameters['groupId']}/chat'
             : null,
         routes: [
+          // The Documents tab was `docs` before M7; a device may still
+          // remember that as its last tab.
+          GoRoute(
+            path: 'docs',
+            redirect: (_, state) =>
+                '/g/${state.pathParameters['groupId']}/documents',
+          ),
           GoRoute(
             path: 'invite',
             builder: (_, state) => InviteScreen(
@@ -394,6 +402,19 @@ GoRouter router(Ref ref) {
                             ],
                           ),
                         ],
+                        // A document (DOC-4; notification taps land
+                        // here), covering the tabs.
+                        if (tab == 'documents')
+                          GoRoute(
+                            path: 'd/:docId',
+                            parentNavigatorKey: rootKey,
+                            builder: (_, state) => DocumentScreen(
+                              groupId: GroupId(
+                                state.pathParameters['groupId']!,
+                              ),
+                              docId: DocumentId(state.pathParameters['docId']!),
+                            ),
+                          ),
                       ],
                     ),
                     // A message from a notification tap (NOTIF-6): the

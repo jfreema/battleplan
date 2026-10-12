@@ -14,6 +14,8 @@ extension type const EventId(String value);
 
 extension type const PollId(String value);
 
+extension type const DocumentId(String value);
+
 /// Builds the composite document IDs from ARCH §6.2. This is the only place
 /// they're built; Functions use the same separator from shared/constants.json.
 abstract final class CompositeIds {

@@ -17,7 +17,9 @@ mixin _$MediaItem {
 
 /// The Storage path, which `deleteTeamMedia` takes.
  String get path; int get size; MediaKind get kind; String? get contentType; DateTime? get createdAt;/// A chat photo's message and its author.
- String? get messageId; String? get authorName;/// For a logo or background: whether the team still uses it. An older
+ String? get messageId; String? get authorName;/// A document's record and its name (M7), while the record exists.
+/// [authorName] is then who added it.
+ String? get documentId; String? get documentName;/// For a logo or background: whether the team still uses it. An older
 /// one left behind reads as false.
  bool? get current;
 /// Create a copy of MediaItem
@@ -31,20 +33,20 @@ $MediaItemCopyWith<MediaItem> get copyWith => _$MediaItemCopyWithImpl<MediaItem>
 @override
 bool operator ==(Object other) {
   final _this = this as MediaItem;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MediaItem&&(identical(other.path, _this.path) || other.path == _this.path)&&(identical(other.size, _this.size) || other.size == _this.size)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.contentType, _this.contentType) || other.contentType == _this.contentType)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.messageId, _this.messageId) || other.messageId == _this.messageId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.current, _this.current) || other.current == _this.current));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MediaItem&&(identical(other.path, _this.path) || other.path == _this.path)&&(identical(other.size, _this.size) || other.size == _this.size)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.contentType, _this.contentType) || other.contentType == _this.contentType)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.messageId, _this.messageId) || other.messageId == _this.messageId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.documentId, _this.documentId) || other.documentId == _this.documentId)&&(identical(other.documentName, _this.documentName) || other.documentName == _this.documentName)&&(identical(other.current, _this.current) || other.current == _this.current));
 }
 
 
 @override
 int get hashCode {
   final _this = this as MediaItem;
-  return Object.hash(runtimeType,_this.path,_this.size,_this.kind,_this.contentType,_this.createdAt,_this.messageId,_this.authorName,_this.current);
+  return Object.hash(runtimeType,_this.path,_this.size,_this.kind,_this.contentType,_this.createdAt,_this.messageId,_this.authorName,_this.documentId,_this.documentName,_this.current);
 }
 
 @override
 String toString() {
   final _this = this as MediaItem;
-  return 'MediaItem(path: ${_this.path}, size: ${_this.size}, kind: ${_this.kind}, contentType: ${_this.contentType}, createdAt: ${_this.createdAt}, messageId: ${_this.messageId}, authorName: ${_this.authorName}, current: ${_this.current})';
+  return 'MediaItem(path: ${_this.path}, size: ${_this.size}, kind: ${_this.kind}, contentType: ${_this.contentType}, createdAt: ${_this.createdAt}, messageId: ${_this.messageId}, authorName: ${_this.authorName}, documentId: ${_this.documentId}, documentName: ${_this.documentName}, current: ${_this.current})';
 }
 
 
@@ -55,7 +57,7 @@ abstract mixin class $MediaItemCopyWith<$Res>  {
   factory $MediaItemCopyWith(MediaItem value, $Res Function(MediaItem) _then) = _$MediaItemCopyWithImpl;
 @useResult
 $Res call({
- String path, int size, MediaKind kind, String? contentType, DateTime? createdAt, String? messageId, String? authorName, bool? current
+ String path, int size, MediaKind kind, String? contentType, DateTime? createdAt, String? messageId, String? authorName, String? documentId, String? documentName, bool? current
 });
 
 
@@ -72,7 +74,7 @@ class _$MediaItemCopyWithImpl<$Res>
 
 /// Create a copy of MediaItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? path = null,Object? size = null,Object? kind = null,Object? contentType = freezed,Object? createdAt = freezed,Object? messageId = freezed,Object? authorName = freezed,Object? current = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? path = null,Object? size = null,Object? kind = null,Object? contentType = freezed,Object? createdAt = freezed,Object? messageId = freezed,Object? authorName = freezed,Object? documentId = freezed,Object? documentName = freezed,Object? current = freezed,}) {
   return _then(MediaItem(
 path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,size: null == size ? _self.size : size // ignore: cast_nullable_to_non_nullable
@@ -81,6 +83,8 @@ as MediaKind,contentType: freezed == contentType ? _self.contentType : contentTy
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,messageId: freezed == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String?,authorName: freezed == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
+as String?,documentId: freezed == documentId ? _self.documentId : documentId // ignore: cast_nullable_to_non_nullable
+as String?,documentName: freezed == documentName ? _self.documentName : documentName // ignore: cast_nullable_to_non_nullable
 as String?,current: freezed == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
 as bool?,
   ));
@@ -167,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String path,  int size,  MediaKind kind,  String? contentType,  DateTime? createdAt,  String? messageId,  String? authorName,  bool? current)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String path,  int size,  MediaKind kind,  String? contentType,  DateTime? createdAt,  String? messageId,  String? authorName,  String? documentId,  String? documentName,  bool? current)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MediaItem() when $default != null:
-return $default(_that.path,_that.size,_that.kind,_that.contentType,_that.createdAt,_that.messageId,_that.authorName,_that.current);case _:
+return $default(_that.path,_that.size,_that.kind,_that.contentType,_that.createdAt,_that.messageId,_that.authorName,_that.documentId,_that.documentName,_that.current);case _:
   return orElse();
 
 }
@@ -188,10 +192,10 @@ return $default(_that.path,_that.size,_that.kind,_that.contentType,_that.created
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String path,  int size,  MediaKind kind,  String? contentType,  DateTime? createdAt,  String? messageId,  String? authorName,  bool? current)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String path,  int size,  MediaKind kind,  String? contentType,  DateTime? createdAt,  String? messageId,  String? authorName,  String? documentId,  String? documentName,  bool? current)  $default,) {final _that = this;
 switch (_that) {
 case _MediaItem():
-return $default(_that.path,_that.size,_that.kind,_that.contentType,_that.createdAt,_that.messageId,_that.authorName,_that.current);case _:
+return $default(_that.path,_that.size,_that.kind,_that.contentType,_that.createdAt,_that.messageId,_that.authorName,_that.documentId,_that.documentName,_that.current);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +212,10 @@ return $default(_that.path,_that.size,_that.kind,_that.contentType,_that.created
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String path,  int size,  MediaKind kind,  String? contentType,  DateTime? createdAt,  String? messageId,  String? authorName,  bool? current)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String path,  int size,  MediaKind kind,  String? contentType,  DateTime? createdAt,  String? messageId,  String? authorName,  String? documentId,  String? documentName,  bool? current)?  $default,) {final _that = this;
 switch (_that) {
 case _MediaItem() when $default != null:
-return $default(_that.path,_that.size,_that.kind,_that.contentType,_that.createdAt,_that.messageId,_that.authorName,_that.current);case _:
+return $default(_that.path,_that.size,_that.kind,_that.contentType,_that.createdAt,_that.messageId,_that.authorName,_that.documentId,_that.documentName,_that.current);case _:
   return null;
 
 }
@@ -223,7 +227,7 @@ return $default(_that.path,_that.size,_that.kind,_that.contentType,_that.created
 
 
 class _MediaItem extends MediaItem {
-  const _MediaItem({required this.path, required this.size, required this.kind, this.contentType, this.createdAt, this.messageId, this.authorName, this.current}): super._();
+  const _MediaItem({required this.path, required this.size, required this.kind, this.contentType, this.createdAt, this.messageId, this.authorName, this.documentId, this.documentName, this.current}): super._();
   
 
 /// The Storage path, which `deleteTeamMedia` takes.
@@ -235,6 +239,10 @@ class _MediaItem extends MediaItem {
 /// A chat photo's message and its author.
 @override final  String? messageId;
 @override final  String? authorName;
+/// A document's record and its name (M7), while the record exists.
+/// [authorName] is then who added it.
+@override final  String? documentId;
+@override final  String? documentName;
 /// For a logo or background: whether the team still uses it. An older
 /// one left behind reads as false.
 @override final  bool? current;
@@ -249,18 +257,18 @@ _$MediaItemCopyWith<_MediaItem> get copyWith => __$MediaItemCopyWithImpl<_MediaI
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MediaItem&&(identical(other.path, path) || other.path == path)&&(identical(other.size, size) || other.size == size)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.contentType, contentType) || other.contentType == contentType)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.current, current) || other.current == current));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MediaItem&&(identical(other.path, path) || other.path == path)&&(identical(other.size, size) || other.size == size)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.contentType, contentType) || other.contentType == contentType)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.documentId, documentId) || other.documentId == documentId)&&(identical(other.documentName, documentName) || other.documentName == documentName)&&(identical(other.current, current) || other.current == current));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,path,size,kind,contentType,createdAt,messageId,authorName,current);
+    return Object.hash(runtimeType,path,size,kind,contentType,createdAt,messageId,authorName,documentId,documentName,current);
 }
 
 @override
 String toString() {
-    return 'MediaItem(path: $path, size: $size, kind: $kind, contentType: $contentType, createdAt: $createdAt, messageId: $messageId, authorName: $authorName, current: $current)';
+    return 'MediaItem(path: $path, size: $size, kind: $kind, contentType: $contentType, createdAt: $createdAt, messageId: $messageId, authorName: $authorName, documentId: $documentId, documentName: $documentName, current: $current)';
 }
 
 
@@ -271,7 +279,7 @@ abstract mixin class _$MediaItemCopyWith<$Res> implements $MediaItemCopyWith<$Re
   factory _$MediaItemCopyWith(_MediaItem value, $Res Function(_MediaItem) _then) = __$MediaItemCopyWithImpl;
 @override @useResult
 $Res call({
- String path, int size, MediaKind kind, String? contentType, DateTime? createdAt, String? messageId, String? authorName, bool? current
+ String path, int size, MediaKind kind, String? contentType, DateTime? createdAt, String? messageId, String? authorName, String? documentId, String? documentName, bool? current
 });
 
 
@@ -288,7 +296,7 @@ class __$MediaItemCopyWithImpl<$Res>
 
 /// Create a copy of MediaItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? path = null,Object? size = null,Object? kind = null,Object? contentType = freezed,Object? createdAt = freezed,Object? messageId = freezed,Object? authorName = freezed,Object? current = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? path = null,Object? size = null,Object? kind = null,Object? contentType = freezed,Object? createdAt = freezed,Object? messageId = freezed,Object? authorName = freezed,Object? documentId = freezed,Object? documentName = freezed,Object? current = freezed,}) {
   return _then(_MediaItem(
 path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,size: null == size ? _self.size : size // ignore: cast_nullable_to_non_nullable
@@ -297,6 +305,8 @@ as MediaKind,contentType: freezed == contentType ? _self.contentType : contentTy
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,messageId: freezed == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String?,authorName: freezed == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
+as String?,documentId: freezed == documentId ? _self.documentId : documentId // ignore: cast_nullable_to_non_nullable
+as String?,documentName: freezed == documentName ? _self.documentName : documentName // ignore: cast_nullable_to_non_nullable
 as String?,current: freezed == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
 as bool?,
   ));

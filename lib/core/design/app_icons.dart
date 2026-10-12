@@ -56,6 +56,17 @@ abstract final class AppIcons {
   static const IconData event = Symbols.event_rounded;
   static const IconData reminder = Symbols.alarm_rounded;
   static const IconData document = Symbols.description_rounded;
+  static const IconData pdf = Symbols.picture_as_pdf_rounded;
+  static const IconData image = Symbols.image_rounded;
+  static const IconData spreadsheet = Symbols.table_chart_rounded;
+  static const IconData slides = Symbols.slideshow_rounded;
+  static const IconData link = Symbols.link_rounded;
+  static const IconData upload = Symbols.upload_file_rounded;
+  static const IconData pin = Symbols.push_pin_rounded;
+  static const IconData openExternal = Symbols.open_in_new_rounded;
+  static const IconData search = Symbols.search_rounded;
+  static const IconData sort = Symbols.sort_rounded;
+  static const IconData info = Symbols.info_rounded;
   static const IconData homeScreen = Symbols.add_to_home_screen_rounded;
   static const IconData location = Symbols.location_on_rounded;
   static const IconData directions = Symbols.directions_rounded;

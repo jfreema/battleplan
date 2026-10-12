@@ -1,18 +1,193 @@
+import 'dart:async';
+
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
+import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/documents/application/providers.dart';
+import 'package:battleplan/features/documents/domain/document.dart';
+import 'package:battleplan/features/documents/domain/document_rules.dart';
+import 'package:battleplan/features/documents/presentation/add_document.dart';
+import 'package:battleplan/features/documents/presentation/document_actions.dart';
+import 'package:battleplan/features/documents/presentation/document_row.dart';
+import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Placeholder until M7. Uses the DOC-1 empty-state wording.
-class DocumentsScreen extends StatelessWidget {
+/// The Documents tab (DOC-1): pinned first, then everything else by Recent
+/// or Name, filtered by typing; + for people allowed to add (DOC-2, DOC-3,
+/// TEAM-5). Archived teams are read-only (TEAM-9).
+class DocumentsScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
   final GroupId groupId;
 
   @override
-  Widget build(BuildContext context) => EmptyState(
-    icon: AppIcons.documents,
-    message: AppLocalizations.of(context).documentsPlaceholder,
+  ConsumerState<DocumentsScreen> createState() => _DocumentsScreenState();
+}
+
+class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
+  late final _filter = TextEditingController(
+    text: ref.read(documentsViewOptionsProvider).filter,
   );
+
+  @override
+  void dispose() {
+    _filter.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMore(DocumentSort sort) async {
+    try {
+      await ref
+          .read(teamDocumentsProvider(widget.groupId, sort).notifier)
+          .loadMore();
+    } on Object {
+      if (mounted) {
+        showAppSnackBar(context, AppLocalizations.of(context).loadError);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final groupId = widget.groupId;
+    final group = ref.watch(groupProvider(groupId)).value;
+    final me = ref.watch(myMembershipProvider(groupId));
+    final view = ref.watch(documentsViewOptionsProvider);
+    final state = ref.watch(teamDocumentsProvider(groupId, view.sort));
+    final canAdd = group != null && canAddDocuments(group, me);
+    final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
+
+    final Widget body;
+    if (group == null || (state.loading && state.documents.isEmpty)) {
+      body = state.failed
+          ? Center(child: Text(l10n.loadError))
+          : const SkeletonList();
+    } else if (state.failed && state.documents.isEmpty) {
+      body = Center(child: Text(l10n.loadError));
+    } else if (state.documents.isEmpty && state.reachedEnd) {
+      body = EmptyState(
+        icon: AppIcons.documents,
+        message: l10n.documentsPlaceholder,
+      );
+    } else {
+      final shown = arrangeDocuments(
+        state.documents,
+        sort: view.sort,
+        filter: view.filter,
+      );
+      body = ListView(
+        padding: const EdgeInsets.only(bottom: Space.xxxl * 2),
+        children: [
+          if (shown.isEmpty)
+            Padding(
+              padding: EdgeInsets.all(gutter),
+              child: Text(
+                l10n.documentsNoMatches(view.filter.trim()),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          for (final d in shown)
+            DocumentRow(
+              key: ValueKey(d.id.value),
+              doc: d,
+              group: group,
+              me: me,
+              onTap: () => unawaited(openDocument(context, ref, d)),
+            ),
+          if (!state.reachedEnd)
+            Padding(
+              padding: const EdgeInsets.all(Space.md),
+              child: Center(
+                child: state.loadingMore
+                    ? const CircularProgressIndicator()
+                    : TextButton(
+                        onPressed: () => unawaited(_loadMore(view.sort)),
+                        child: Text(l10n.documentsLoadMore),
+                      ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    return Scaffold(
+      floatingActionButton: canAdd
+          ? FloatingActionButton(
+              tooltip: l10n.documentsAddTooltip,
+              onPressed: () => unawaited(showAddDocument(context, ref, group)),
+              child: const Icon(AppIcons.add),
+            )
+          : null,
+      body: Column(
+        children: [
+          if (group?.isArchived ?? false)
+            Padding(
+              padding: EdgeInsets.fromLTRB(gutter, Space.sm, gutter, 0),
+              child: Text(
+                l10n.documentsReadOnly,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(gutter, Space.sm, gutter, Space.xs),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _filter,
+                    decoration: InputDecoration(
+                      hintText: l10n.documentsFilterHint,
+                      prefixIcon: const Icon(AppIcons.search),
+                      isDense: true,
+                      border: const OutlineInputBorder(),
+                      suffixIcon: view.filter.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: l10n.cancel,
+                              icon: const Icon(AppIcons.close),
+                              onPressed: () {
+                                _filter.clear();
+                                ref
+                                    .read(documentsViewOptionsProvider.notifier)
+                                    .setFilter('');
+                              },
+                            ),
+                    ),
+                    onChanged: (v) => ref
+                        .read(documentsViewOptionsProvider.notifier)
+                        .setFilter(v),
+                  ),
+                ),
+                const SizedBox(width: Space.sm),
+                SegmentedButton<DocumentSort>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: DocumentSort.recent,
+                      label: Text(l10n.documentsSortRecent),
+                    ),
+                    ButtonSegment(
+                      value: DocumentSort.name,
+                      label: Text(l10n.documentsSortName),
+                    ),
+                  ],
+                  selected: {view.sort},
+                  onSelectionChanged: (s) => ref
+                      .read(documentsViewOptionsProvider.notifier)
+                      .setSort(s.first),
+                ),
+              ],
+            ),
+          ),
+          Expanded(child: body),
+        ],
+      ),
+    );
+  }
 }

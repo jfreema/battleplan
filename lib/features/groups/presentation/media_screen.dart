@@ -197,7 +197,8 @@ class _MediaRow extends ConsumerWidget {
   }
 }
 
-/// "Chat photo · Sam Rivera", "Team logo", "Chat background", "Document",
+/// "Chat photo · Sam Rivera", "Team logo", "Chat background", a document
+/// ("Fall roster.pdf · Sam Rivera", or "Document" once its record is gone),
 /// or "Unused file" (STORE-5). A photo no message shows (say, from a send
 /// that failed), or a logo or background the team no longer uses, says so.
 String mediaKindLabel(AppLocalizations l10n, MediaItem item) =>
@@ -214,7 +215,12 @@ String mediaKindLabel(AppLocalizations l10n, MediaItem item) =>
         item.current == false
             ? l10n.mediaKindOldBackground
             : l10n.mediaKindBackground,
-      MediaKind.document => l10n.mediaKindDocument,
+      MediaKind.document => switch ((item.documentName, item.authorName)) {
+        (final doc?, final name?) when doc.isNotEmpty && name.isNotEmpty =>
+          l10n.mediaKindDocumentNamed(doc, name),
+        (final doc?, _) when doc.isNotEmpty => doc,
+        _ => l10n.mediaKindDocument,
+      },
       MediaKind.other => l10n.mediaKindOther,
     };
 
