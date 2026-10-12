@@ -30,7 +30,6 @@ void main() {
     await pumpApp(tester, auth: FakeAuthRepository());
     expect(find.text('Continue with Google'), findsOneWidget);
     expect(find.text('Continue with Apple'), findsOneWidget);
-    expect(find.text('Continue with Facebook'), findsNothing);
     expect(find.text('Continue with email'), findsOneWidget);
   });
 

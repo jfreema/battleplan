@@ -9,7 +9,7 @@ export interface AuthIdentity {
   providerIds: string[];
 }
 
-export const SIGN_IN_METHODS = ['password', 'google.com', 'apple.com', 'facebook.com'] as const;
+export const SIGN_IN_METHODS = ['password', 'google.com', 'apple.com'] as const;
 
 /** The sign-in methods we track (users.signInMethods, a cache of Auth). */
 export function signInMethodsOf(providerIds: string[]): string[] {

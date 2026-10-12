@@ -52,6 +52,6 @@ export function securityNoticeEmail(to: string, change: string): Email {
 
 /** Readable names for sign-in methods. */
 export function methodName(id: string): string {
-  return ({ 'google.com': 'Google', 'apple.com': 'Apple', 'facebook.com': 'Facebook', password: 'Password' } as Record<string, string>)[id] ?? id;
+  return ({ 'google.com': 'Google', 'apple.com': 'Apple', password: 'Password' } as Record<string, string>)[id] ?? id;
 }
 

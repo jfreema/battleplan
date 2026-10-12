@@ -71,7 +71,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | 7 | Push notifications | §6.9 (NOTIF); ARCH §6.5 |
 | 8 | Polls in group messaging | §6.6 (POLL) |
 | 9 | Scheduling events with going / not going | §6.7 (SCHED-3 to SCHED-5); PLAYER-6 on youth teams |
-| 10 | Sign in with Google, Apple, or Facebook, on top of local accounts that admins can add | AUTH-1, AUTH-6 to AUTH-8, AUTH-12; ARCH §6.1. Facebook is deferred until after M8 (Q16). |
+| 10 | Sign in with Google, Apple, or email, on top of local accounts that admins can add | AUTH-1, AUTH-6 to AUTH-8, AUTH-12; ARCH §6.1 |
 | 11 | Password reset by email | AUTH-4 |
 | 12 | Email invites | INV-4 |
 | 13 | Shareable invite links and QR codes | INV-1 to INV-3, INV-6, INV-7 |
@@ -88,9 +88,9 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | 24 | One RSVP per event and player, so two parents can't create conflicting records | PLAYER-6; ARCH §6.2 |
 | 25 | Multiple teams per person | TEAM-2 |
 | 26 | Switching between teams | §5.2, TEAM-2 |
-| 27 | Battleplan profiles separate from Google, Apple, and Facebook identities | AUTH-12; ARCH §6.1 |
+| 27 | Battleplan profiles separate from Google and Apple identities | AUTH-12; ARCH §6.1 |
 | 28 | Admin-created accounts set up by email; admins never know passwords | AUTH-6; ARCH §6.1 |
-| 29 | Safe linking between Google, Apple, Facebook, and email sign-ins | AUTH-7, AUTH-8; ARCH §6.1 |
+| 29 | Safe linking between Google, Apple, and email sign-ins | AUTH-7, AUTH-8; ARCH §6.1 |
 | 30 | Unread message counts | CHAT-9 |
 | 31 | Message pagination | CHAT-1; ARCH §5.3 |
 | 32 | Reply to a message | CHAT-13 |
@@ -308,8 +308,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 ### 6.1 Accounts and sign-in (AUTH)
 
 - **AUTH-1 · MVP · Sign-in screen.**
-  - **Facebook is deferred (Q16).** Until it's added after M8, the screen shows Google, Apple, and email, and everything below that mentions Facebook applies once it's turned on.
-  - Buttons in this order: Continue with Google, Continue with Apple, Continue with Facebook, Continue with email.
+  - Buttons in this order: Continue with Google, Continue with Apple, Continue with email.
   - Logo and a one-line tagline above them.
   - Footer: "By continuing you agree to the Terms and Privacy Policy", with links.
   - The screen is identical on every platform. The Apple button follows Apple's design rules.
@@ -318,12 +317,12 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Passwords need 8+ characters, enforced by Firebase's password policy.
   - Show/hide password toggle.
 - **AUTH-3 · MVP · Email verification.**
-  - Google and Apple sign-ins arrive verified. Email and Facebook sign-ins get a verification link, and a banner stays up until it's tapped.
+  - Google and Apple sign-ins arrive verified. Email sign-ins get a verification link, and a banner stays up until it's tapped.
   - A verified email is required to create a team, send email invites, or add people by email.
 - **AUTH-4 · MVP · Password reset by email.**
   - "Forgot password?" → enter email → "If an account exists for that email, we've sent a reset link."
   - The link opens the reset page; then the user signs in with the new password.
-  - The screen notes that people who use Google, Apple, or Facebook don't have a Battleplan password.
+  - The screen notes that people who use Google or Apple don't have a Battleplan password.
 - **AUTH-5 · MVP · First-run setup.**
   - Name and photo, prefilled once from the sign-in provider (AUTH-12), and Terms acceptance.
   - Confirm "I'm 18 or older". Accounts are for adults only: youth players never sign in, and their parents and guardians use the app for them (§6.3).
@@ -331,17 +330,17 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **AUTH-6 · MVP · Accounts added by admins.**
   - Team admins and super admins add people with just a **name and email** (TEAM-7, PLAYER-1, ADMIN-4).
   - **Admins never set, see, or know anyone's password.** No screen or tool lets them. They can only send setup and password-reset emails.
-  - The person gets a **setup email**. Its link signs them in, verifies their email, and asks how they want to sign in from now on: Google, Apple, Facebook, or a password they create.
+  - The person gets a **setup email**. Its link signs them in, verifies their email, and asks how they want to sign in from now on: Google, Apple, or a password they create.
   - Setup links expire, and admins can resend a fresh one.
   - Until setup, the person appears on the roster as "Not joined yet", and admins can RSVP for them.
 - **AUTH-7 · MVP · Safe account linking.**
   - **Prove both sides.** A sign-in method is added only when the person is signed in to their Battleplan account (recently) and completes the provider's own sign-in.
   - **No merging just because emails match.** If someone tries a new method with an email that already has an account, the app explains ("You've signed in with Google before. We sent you a link to confirm it's you.") and links the new method only after that emailed link is opened. The one exception is Google sign-in for a Gmail address, because Google vouches for those itself.
-  - **Security emails.** Adding or removing a sign-in method, or changing the email or password, sends a notice: "Facebook sign-in was added to your Battleplan account. Not you? Contact support."
+  - **Security emails.** Adding or removing a sign-in method, or changing the email or password, sends a notice: "Google sign-in was added to your Battleplan account. Not you? Contact support."
   - **A fresh sign-in is required** for linking, unlinking, changing the email or password, and deleting the account.
   - **Two separate accounts are never merged automatically.** Support can move memberships by hand.
 - **AUTH-8 · MVP · Sign-in methods screen.**
-  - Settings → Sign-in methods lists the linked methods (Google, Apple, Facebook, password).
+  - Settings → Sign-in methods lists the linked methods (Google, Apple, password).
   - Link another, unlink one (never the last), or set or change a password.
   - Change the account email, confirmed through a link sent to the new address. The old address gets a notice.
 - **AUTH-9 · MVP · Sessions.**
@@ -356,16 +355,15 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Required by the App Store and Google Play. A web page also explains how to request deletion (LEGAL-3).
 - **AUTH-11 · MVP · Disabled accounts.** Signing in shows only "This account has been disabled. Contact support@…".
 - **AUTH-12 · MVP · Battleplan profile, separate from sign-in methods.**
-  - The profile (name, photo, contact email, preferences) belongs to the Battleplan account, not to Google, Apple, or Facebook.
+  - The profile (name, photo, contact email, preferences) belongs to the Battleplan account, not to Google or Apple.
   - Provider details are used once, to prefill the profile at first sign-in, and the photo is copied into Battleplan then.
-  - After that, only the person changes their profile. Linking or unlinking a sign-in method, or changes made at Google, Apple, or Facebook, never change it.
+  - After that, only the person changes their profile. Linking or unlinking a sign-in method, or changes made at Google or Apple, never change it.
   - Teams, roles, messages, and RSVPs belong to the Battleplan account, so they survive any change of sign-in method.
 
 **Edge cases**
 
-- Cancelling the Google, Apple, or Facebook sheet returns to sign-in with no error.
+- Cancelling the Google or Apple sheet returns to sign-in with no error.
 - If a browser blocks the sign-in popup, explain how to allow popups.
-- A Facebook account with no email is asked for one, which must be verified before continuing.
 - Apple "Hide My Email" works normally. People added by an admin are told to use the link in their setup email first (ARCH §6.1).
 - Offline: an inline error with Retry.
 
@@ -920,7 +918,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
 
 - **LEGAL-1 · MVP · Policies.**
   - Privacy Policy at `/privacy` and Terms of Use at `/terms`, on the website (WEB-2).
-  - Linked from sign-in, Settings, the store listings, and the Apple and Facebook developer settings.
+  - Linked from sign-in, Settings, the store listings, and the Apple developer settings.
   - The Privacy Policy covers:
     - what we collect: name, email, photo, messages, files, device tokens, usage analytics, crash reports, and, on youth teams, the player details adults enter (name, jersey number, position);
     - that super admins can access content for moderation and support;
@@ -930,10 +928,9 @@ The App Store requires these for apps with user-generated content (guideline 1.2
 - **LEGAL-2 · MVP · No tracking.**
   - No ads, no selling data, no cross-app tracking, so no App Tracking Transparency prompt.
   - Analytics runs without advertising IDs.
-  - The Facebook SDK's automatic event logging and advertiser-ID collection are off.
 - **LEGAL-3 · MVP · Deletion.** In-app account deletion (AUTH-10), plus a public `/delete-account` page explaining how to request deletion (required by Google Play).
 - **LEGAL-4 · MVP · Store disclosures.** The App Store privacy labels and the Google Play Data safety form match LEGAL-1.
-- **LEGAL-5 · After M8, with Facebook sign-in (Q16) · Facebook.** A data-deletion instructions URL.
+- **LEGAL-5 · Removed.** Facebook's data-deletion URL moved to the ROADMAP backlog with Facebook sign-in (Q16).
 - **LEGAL-6 · MVP · Retention.**
   - Content stays until its author, an admin, or the team's deletion removes it.
   - Deleted content is erased from the database immediately and from backups within 7 days.
@@ -1203,7 +1200,7 @@ From here on, each feature ships with its own notifications.
 - [ ] Enforce App Check and review rules-test coverage.
 - [ ] Accessibility, performance (§8), and golden-test passes.
 - [ ] The website at `getbattleplan.app` with the legal and support pages, and the web app moved to `/app` (§4.3); store listings, privacy forms.
-- [ ] An App Review demo account with a seeded team. (Facebook App Review waits for Facebook sign-in, Q16.)
+- [ ] An App Review demo account with a seeded team.
 - [ ] Beta with our team: TestFlight (iOS), Firebase App Distribution (Android), and the web; a bug bash; the production deploy.
 - [ ] Google Play: open the Play Console account (a personal one, Q13) and run the 14-day closed test with 12+ testers before the public Android release.
 - [ ] Move our team over (below), then open sign-up to other teams.
@@ -1248,7 +1245,6 @@ When to buy or set up each item is in [TODO.md](../TODO.md). Purchases happen ju
 - [ ] APNs key uploaded to Firebase.
 - [ ] Android SHA-1 and SHA-256 fingerprints (debug, upload, and Play App Signing) in Firebase, for Google sign-in and App Links.
 - [ ] Sign in with Apple capability, and a Services ID for Android and web.
-- [ ] Facebook app ID and client token for each platform (only once Facebook sign-in is added, Q16).
 - [ ] reCAPTCHA Enterprise key and web push VAPID key.
 - [ ] `apple-app-site-association` and `assetlinks.json` served from Hosting; the Associated Domains entitlement; Android intent filters with `autoVerify`.
 - [ ] Sending domain with SPF, DKIM, and DMARC, registered with Apple's private email relay. Firebase Auth email templates branded.
@@ -1322,4 +1318,4 @@ Each question has a default. The build follows the default until someone decides
 | Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
 | Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). | — |
 | Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). | — |
-| Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email; Facebook sign-in, its Meta app, App Review, and LEGAL-5 move to their own roadmap section after M8. | — |
+| Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email. **2026-10-12:** Facebook sign-in was removed from the plan. It may be added later as a backlog item (ROADMAP, Later · Backlog). | — |

@@ -9,7 +9,7 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
 - Each milestone ends working on iOS, Android, and web, with rules tests updated (SPEC §9).
 
-Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, and tasks renumbered.
+Last updated: 2026-10-12. Facebook sign-in was removed from the plan; it is a backlog item now.
 
 ---
 
@@ -43,7 +43,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 23. ✅ Register the iOS, Android, and web apps in dev and prod and put their Firebase config in the app (`lib/app/firebase_options_dev.dart`, `_prod.dart`). The dev Firestore database exists (us-central1) with the rules deployed; TTL policies wait for Blaze (task 25 deploys indexes).
 24. ✅ Set up keyless GitHub Actions deploys (Workload Identity Federation) to the dev project.
 25. ✅ Turn on Hosting for the dev project (https://battleplan-dev-ecce4.web.app); every push to `main` deploys Firestore rules and hosting there. PR previews are wired but unused, since work goes straight to `main`. Indexes and Storage rules join the deploy once dev is on Blaze (task 57).
-26. Run **spike 1**: the sign-in matrix (provider × platform × new / existing / admin-added account) for Google and email. Apple joins in task 109; Facebook in the Facebook section after M8.
+26. Run **spike 1**: the sign-in matrix (provider × platform × new / existing / admin-added account) for Google and email. Apple joins in task 109.
 27. ✅ Run **spike 2** on the dev Hosting domain: Android App Links, `assetlinks.json`, and email-link sign-in with `linkDomain` (no Dynamic Links). iOS Universal Links join in task 110. *Done 2026-10-11: App Links and email-link sign-in work on Android and web; `linkDomain` must be a custom domain (docs/spikes/M0.md).*
 28. Create the web push (VAPID) key on the dev project and run **spike 3**: web push on Chrome, macOS Safari, and an iPhone home-screen web app.
 
@@ -51,7 +51,7 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 
 ## M1 · Accounts
 
-29. ✅ Sign-in screen (AUTH-1) with Google, Apple, and email; email and password (AUTH-2). Apple's code goes in now and is verified in task 109. Facebook is hidden until the Facebook section after M8.
+29. ✅ Sign-in screen (AUTH-1) with Google, Apple, and email; email and password (AUTH-2). Apple's code goes in now and is verified in task 109.
 30. ✅ Email verification banner (AUTH-3) and password reset by email (AUTH-4).
 31. ✅ First-run setup: name, photo, 18+ confirmation, Terms acceptance (AUTH-5, SAFE-3, SAFE-6); `ensureUserProfile`; the profile kept separate from sign-in providers (AUTH-12).
 32. ✅ Sessions: stay signed in, sign out, sign out of all devices (AUTH-9).
@@ -172,14 +172,6 @@ SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
 99. Report queue (ADMIN-5) and audit log (ADMIN-6).
 100. Platform settings and the announcement banner (ADMIN-7); safeguards (ADMIN-8).
 
-## Facebook sign-in · after M8
-
-Not needed for now (decided 2026-10-11). Battleplan launches with Google, Apple, and email; Facebook can be added here at any time without changing anything else.
-
-101. 👤 **Jared:** Create the Meta for Developers app (free, development mode) for Facebook sign-in.
-102. Turn on Facebook sign-in on the dev and prod projects; show **Continue with Facebook** on iOS, Android, and web (AUTH-1), including Limited Login on iOS and an email prompt for accounts without one; turn off the Facebook SDK's automatic event logging and advertiser-ID collection (LEGAL-2); add Facebook to the sign-in matrix (spike 1).
-103. 👤 **Jared:** Submit Facebook App Review, with the privacy-policy and data-deletion URLs (LEGAL-5). It needs the legal pages from task 121.
-
 ## Website and the web app at /app · before M9
 
 SPEC §4.3 (WEB-1 to WEB-5), ARCH §6.6 and D40. The website is the `website/` folder: static HTML and CSS with no framework or build step. The Flutter web app moves from the root to `/app`.
@@ -259,5 +251,7 @@ In SPEC §9's priority order.
 155. Per-team profanity filter (SAFE-7), sooner if App Review asks.
 156. Cloud SQL, if usage meets the ARCH §12.1 triggers.
 174. **Ads, once adoption justifies them** (SPEC STORE-7, [PLANS.md](PLANS.md)). Youth teams mean parents and guardians use the app for children, so the plan must address children's privacy rules first: COPPA in the US (no behavioral ads to children, verifiable parental consent for any data from under-13s), and Google Play's Families policy (certified ad SDKs only, no personalized ads, if the app targets children or joins the Families program). Likely shape: contextual, non-personalized ads on adult teams only, with the Privacy Policy, store privacy labels, and the Data safety form updated first.
+
+- Facebook sign-in, if needed later (was tasks 101 to 103): Meta app, Continue with Facebook, Limited Login on iOS, App Review, and the data-deletion URL (LEGAL-5).
 
 Things that are out of scope for v1 entirely are listed in SPEC §11.

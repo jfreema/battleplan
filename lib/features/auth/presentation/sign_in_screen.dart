@@ -8,8 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// AUTH-1: Continue with Google, Apple, or email, in that order, with the
-/// Terms footer. The same screen on every platform. Facebook is deferred
-/// until after M8 (SPEC Q16), so it isn't shown.
+/// Terms footer. The same screen on every platform.
 class SignInScreen extends ConsumerWidget {
   const new({this.appleEnabled = false, super.key});
 

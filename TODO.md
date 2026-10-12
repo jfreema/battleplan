@@ -87,7 +87,6 @@ iOS runs in the Simulator, and Android runs in an emulator or on your own phone.
 
 I'll tell you when each of these comes up.
 
-- [ ] **Meta for Developers app** (free), only when we add Facebook sign-in, now deferred until after M8 (SPEC Q16): developers.facebook.com → *Create app* → *Authenticate and request data from users with Facebook Login*. Development mode is enough. App Review waits for Phase 3.
 - [ ] **Upgrade the dev project (`battleplan-dev-ecce4`) to the Blaze plan** when we first need server functions or photo storage running in the cloud, to test photos and push notifications on real phones (around M3–M4).
   - It needs a card, but expected cost at testing volume is ≈ $0.
   - **Set budget alerts the same day**: Cloud Billing → *Budgets & alerts*, at $5, $25, $50, and $100.
@@ -136,7 +135,6 @@ I'll tell you when each of these comes up.
   - A trader's address and phone number appear on EU store pages. Apple lets an individual show a P.O. box instead of a home address.
   - A free app with no business behind it may count as non-trader, which shows nothing. Revisit if Battleplan starts charging (SPEC Q4).
 - [ ] **Android upload key.** I'll generate it at the first Play upload. Store the keystore file and its passwords in the password manager, plus an offline backup.
-- [ ] **Facebook App Review**, only once Facebook sign-in is added (deferred, SPEC Q16). It needs the privacy-policy and data-deletion URLs.
 - [ ] **Legal pages**: Privacy Policy, Terms of Use, and a delete-account page.
 - [ ] **The rest of the launch checklist** in [docs/SPEC.md](docs/SPEC.md) §10: store listings, screenshots, age ratings, and the App Review demo account.
 
@@ -151,7 +149,6 @@ I'll tell you when each of these comes up.
 | Firebase app config (`firebase_options_*.dart`, `google-services.json`, `GoogleService-Info.plist`) | 0 | **No.** It only identifies the project; security comes from rules and App Check. | Committed to the repo |
 | GitHub Actions deploy access | 0 | Yes | Keyless Workload Identity Federation, which I'll set up. No key file. |
 | Service-account JSON key files | — | Avoid creating them | Local admin scripts use your `gcloud auth application-default login` instead |
-| Facebook App Secret | 1 | Yes | Entered in Firebase's Facebook sign-in settings; also in the password manager |
 | Web push key, reCAPTCHA site key | 1–2 | No (public) | App config in the repo |
 | Email service API key | 2 | Yes | Google Secret Manager as `RESEND_API_KEY` (dev, set 2026-10-11), plus the Battle vault in 1Password |
 | APNs key (`.p8`) | 2 | Yes. **Downloads only once.** | Uploaded to Firebase (*Project settings → Cloud Messaging*); the original file in the password manager |

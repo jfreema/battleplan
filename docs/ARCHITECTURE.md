@@ -69,7 +69,7 @@ flowchart LR
     WEB["Web (PWA)"]
   end
 
-  Clients -- sign in --> AUTH["Firebase Authentication<br/>Google · Apple · Facebook · Email"]
+  Clients -- sign in --> AUTH["Firebase Authentication<br/>Google · Apple · Email"]
   Clients -- realtime reads / simple writes --> FS[("Cloud Firestore")]
   Clients -- upload / download --> ST[("Cloud Storage")]
   Clients -- callable functions --> CF["Cloud Functions<br/>(TypeScript)"]
@@ -106,7 +106,7 @@ flowchart LR
 | State management | **Riverpod** (with code generation) | Testable, no `BuildContext` coupling, easy to swap in fake repositories in tests. |
 | Routing | **go_router** | URL-based. The same routes power web URLs, invite links, and notification taps. |
 | Models | **freezed** + **json_serializable** | Immutable domain models with generated serialization. |
-| Auth | **Firebase Authentication** | Email/password, email link, Google, Apple, Facebook. |
+| Auth | **Firebase Authentication** | Email/password, email link, Google, Apple. |
 | Database | **Cloud Firestore** (Native mode) | The only database in v1. |
 | Files | **Cloud Storage for Firebase** | Chat photos, documents, avatars. |
 | Server logic | **Cloud Functions for Firebase**, 2nd gen, **TypeScript / Node 22** | Callables, triggers, scheduled jobs. |
@@ -333,13 +333,12 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 - Email/Password, including **Email link** (passwordless) sign-in
 - Google (any Google account, Gmail or Workspace)
 - Apple
-- Facebook, **deferred** until after M8 (SPEC Q16, D33). The notes below apply when it's added.
 
 Leave the default **"One account per email address"** setting on. We don't need Firebase Auth's **Identity Platform upgrade**: email and social sign-in stay free without it, while the upgrade adds per-user pricing above 50k monthly active users.
 
 #### Battleplan profiles are separate from sign-in identities
 
-- **Firebase Authentication stores identities**: the Google, Apple, Facebook, and email/password credentials linked to one `uid`. **Firestore `users/{uid}` stores the Battleplan profile**: name, photo, contact email, preferences.
+- **Firebase Authentication stores identities**: the Google, Apple, and email/password credentials linked to one `uid`. **Firestore `users/{uid}` stores the Battleplan profile**: name, photo, contact email, preferences.
 - **Provider data is used once**, at first sign-in, to prefill the profile. The provider's photo is copied into our Storage at that point, so the profile never depends on a provider URL.
 - **After that, only the person changes the profile.** None of these touch it:
   - signing in with another provider;
@@ -363,9 +362,9 @@ Leave the default **"One account per email address"** setting on. We don't need 
 
 | They do this | What happens |
 |---|---|
-| Tap the setup link | Signed into their account, and the email is marked verified. The app then asks: *"How do you want to sign in next time?"* They choose Google, Apple, Facebook, or a password they create themselves, and the app links it to the account. |
+| Tap the setup link | Signed into their account, and the email is marked verified. The app then asks: *"How do you want to sign in next time?"* They choose Google, Apple, or a password they create themselves, and the app links it to the account. |
 | Tap **Continue with Google** using the same Gmail address | Firebase signs them into the same account, because Google is a trusted provider for Gmail addresses. |
-| Use **Apple**, **Facebook**, or a non-Gmail Google account with the same email | Handled by linking rule 2 below. |
+| Use **Apple** or a non-Gmail Google account with the same email | Handled by linking rule 2 below. |
 | Use Apple **"Hide My Email"** | The relay address won't match. The welcome screen says *"Added by a coach or admin? Use the link in your setup email."* They can link Apple from Settings afterward. |
 
 #### Safe account linking
@@ -375,7 +374,7 @@ Leave the default **"One account per email address"** setting on. We don't need 
    - Firebase joins a new sign-in to an existing account automatically only when the provider is authoritative for that email (Google for Gmail addresses).
    - Otherwise Firebase returns `account-exists-with-different-credential`. The app holds the pending credential and sends a sign-in link to that email. It links the credential only after that link is opened.
 3. **An unverified email never links anything.**
-4. **Security emails.** These changes send a notice to the account email ("Facebook sign-in was added to your Battleplan account. Not you? Contact support."):
+4. **Security emails.** These changes send a notice to the account email ("Google sign-in was added to your Battleplan account. Not you? Contact support."):
    - adding or removing a sign-in method;
    - changing the password;
    - changing the email.
@@ -388,7 +387,7 @@ Leave the default **"One account per email address"** setting on. We don't need 
 #### Password reset
 
 - The app calls `sendPasswordResetEmail`. The email template is customized in the Firebase console.
-- **Email enumeration protection** (on by default for new projects) means the app can't reveal which provider an email uses. The reset screen always says *"If an account exists for that email, we've sent a link."* It also reminds people who use Google, Apple, or Facebook that they don't need a password.
+- **Email enumeration protection** (on by default for new projects) means the app can't reveal which provider an email uses. The reset screen always says *"If an account exists for that email, we've sent a link."* It also reminds people who use Google or Apple that they don't need a password.
 
 #### God admin (super admin)
 
@@ -410,13 +409,9 @@ App Store and Google Play both require in-app account deletion. The callable `de
 #### Provider setup gotchas (do these in the M0/M1 spike)
 
 - **Apple**
-  - App Store guideline 4.8 requires a privacy-focused login option whenever Google or Facebook login is offered. Sign in with Apple satisfies it.
+  - App Store guideline 4.8 requires a privacy-focused login option whenever Google login is offered. Sign in with Apple satisfies it.
   - On Android and web, Apple sign-in runs as a web flow. It needs a Services ID and return URL.
   - Register our email sending domain with Apple's **private email relay** so emails reach `@privaterelay.appleid.com` addresses.
-- **Facebook**
-  - Needs a Meta developer app, **App Review** for public login, a privacy policy URL, and a data-deletion instructions URL. Start this early, because review takes time.
-  - On iOS the Facebook SDK may use **Limited Login**, which returns an OIDC token instead of an access token. Build the Firebase credential from the ID token plus a nonce.
-  - Turn off Facebook auto app-event logging and advertiser-ID collection.
 - **Google on web.** Use Firebase Auth's `signInWithPopup(GoogleAuthProvider())`. The `google_sign_in` plugin's web support is button-based and doesn't fit our sign-in screen.
 - **All web sign-in.** Prefer popups. If redirects are ever used, set `authDomain` to the app's own custom domain, because browser third-party-storage partitioning (Safari, Chrome) breaks cross-domain redirects.
 
@@ -491,7 +486,7 @@ users/{uid}
   displayName, displayNameLower, email, emailLower      # Battleplan's own profile (§6.1)
   photoPath                                              # copied into our Storage at first sign-in
   status: 'provisioned' | 'active' | 'disabled'
-  signInMethods: ['password' | 'google.com' | 'apple.com' | 'facebook.com']   # cache ← Firebase Auth
+  signInMethods: ['password' | 'google.com' | 'apple.com']   # cache ← Firebase Auth
   themeMode: 'system' | 'light' | 'dark'
   notificationPrefs: { messages, replies, mentions, polls, eventsNew, eventsChanged, reminders, documents }   # bools; a missing key is on (NOTIF-4)
   acceptedTermsAt, adultConfirmedAt, lastActiveAt, createdAt, updatedAt, schemaVersion
@@ -1284,13 +1279,12 @@ Each phase is incremental and reversible.
 
 | Risk | Mitigation |
 |---|---|
-| Social-login edge cases across 3 platforms: account linking, Apple Hide My Email, Facebook Limited Login, Apple on Android and web | **Spike in M0.** Build a test matrix (provider × platform × new/existing/admin-created account). |
+| Social-login edge cases across 3 platforms: account linking, Apple Hide My Email, Apple on Android and web | **Spike in M0.** Build a test matrix (provider × platform × new/existing/admin-created account). |
 | Links without Dynamic Links, including email-link sign-in | Universal Links, App Links, and Auth `linkDomain` on our Hosting domain, with the web app as fallback. **Spike in M0.** |
 | Rules on flat collections depend on queries filtering by `groupId` | **Spike in M0.** Prove the membership checks, the RSVP rule, and the message rate limit in the rules emulator before building features. |
 | Layering erodes as the codebase grows | CI import-boundary check, collection ownership, the trigger map, and decision-log entries for new patterns (§5.2, §6.4, §14). |
 | Web push limits on iOS | The native iOS app is the primary iPhone path; the limit is explained in-app. |
 | Flutter web first-load size and chat scroll performance with images | WASM build, deferred loading, thumbnails, a performance budget (SPEC §8). |
-| Facebook App Review delays launch | Resolved by deferring Facebook (D33): launch with Google, Apple, and email. |
 | App Store rejection under the user-generated-content rules (guideline 1.2) | Report, block, terms acceptance, and admin removal are all in the MVP. Provide a demo account with a seeded team for reviewers. |
 | Spam or abusive teams once sign-up is public | Verified email to create teams, rate limits (§6.9), App Check, report queue, team suspension and user disabling by super admins. |
 | Costs grow with active teams (~$0.25–0.40 each per month) | Cost rules and read budgets (§10.2), per-team storage quota, budget alerts. Decide a funding model before reaching hundreds of teams (SPEC §12, Q4). |
@@ -1336,7 +1330,7 @@ Each phase is incremental and reversible.
 | D30 | Widgets import Flutter's standalone `material_ui` package, not `package:flutter/material.dart` | Material moved out of the Flutter framework (Flutter 3.44+), and go_router 18 already uses it; one Material library avoids mismatched `ThemeData` types | — |
 | D31 | Local development uses the emulators under a `demo-` project ID with placeholder app options, selected by `--dart-define=USE_EMULATORS=true` | Runs with no Firebase login or config, and a `demo-` project can't reach any cloud resource | — |
 | D32 | Each feature's repository providers are declared in its `application/providers.dart` and overridden with Firebase implementations in `app/providers.dart` | Presentation never imports `data/` or `app/`, and tests swap in fakes with the same overrides | — |
-| D33 | Facebook sign-in is deferred until after M8 (SPEC Q16) | Not needed for our team; skips the Meta app, App Review, and Limited Login work before launch. Google, Apple, and email cover sign-in, and Apple satisfies App Store guideline 4.8 | When teams ask for it |
+| D33 | Facebook sign-in is removed from the plan (SPEC Q16, 2026-10-12). It can return as a backlog item | Not needed for our team; skips the Meta app, App Review, and Limited Login work. Google, Apple, and email cover sign-in, and Apple satisfies App Store guideline 4.8 | When teams ask for it |
 | D34 | On youth teams, team admins (coaches, staff) RSVP for themselves as `participantType: 'member'` on `rsvpFor: 'players'` events; counts keep players and adults apart (SPEC Q14) | Coaches need to know which coaches are coming too, and parents answer only for their kids, so their own RSVPs would be noise | If parents ask to RSVP for themselves |
 | D35 | ~~Plus is per team, through licenses held by a person and movable between teams they admin; `groups.plan` caches the active license (SPEC §6.14, PLANS.md)~~ Superseded by D39 (2026-10-12) | Matches how coaches pay (one person buys for a team) and lets a license follow a coach to next season's team; one cached field keeps every check cheap | — |
 | D36 | ~~Plus features are enforced by rules and Functions from `groups.plan`, with `endsAt` checked at request time~~ Superseded by D39 (2026-10-12) | A Free team can't use Plus by calling the database directly, and Plus ends on time without waiting for a job | — |
@@ -1379,7 +1373,7 @@ What exists in the code today, and where. This section is updated with every cha
 
 | Feature | Built so far |
 |---|---|
-| `auth` | `AuthUser`, `AuthRepository` (Firebase impl), `SignInScreen` (Google, Apple, email; AUTH-1), `EmailSignInScreen` at `/sign-in/email` (sign in or create an account with an 8-character minimum; emailed sign-in links; AUTH-2), `ActivateScreen` (finishes email-link sign-in at `/activate` and `/__/auth/links`). `ResetPasswordScreen` at `/reset-password` (AUTH-4) and `VerifyEmailBanner`, placed above every screen from `app.dart` until an email account is verified (AUTH-3). Google uses a popup on web and the system browser sheet on mobile; Apple uses the same path and is enabled once the Apple membership exists (task 109); Facebook is hidden until after M8 (D33) |
+| `auth` | `AuthUser`, `AuthRepository` (Firebase impl), `SignInScreen` (Google, Apple, email; AUTH-1), `EmailSignInScreen` at `/sign-in/email` (sign in or create an account with an 8-character minimum; emailed sign-in links; AUTH-2), `ActivateScreen` (finishes email-link sign-in at `/activate` and `/__/auth/links`). `ResetPasswordScreen` at `/reset-password` (AUTH-4) and `VerifyEmailBanner`, placed above every screen from `app.dart` until an email account is verified (AUTH-3). Google uses a popup on web and the system browser sheet on mobile; Apple uses the same path and is enabled once the Apple membership exists (task 109) |
 | `auth` (profiles) | `UserProfile`, `UserRepository` (Firestore reads; writes through the `ensureUserProfile` callable), the `myProfile` provider (creates the profile at first sign-in), and `SetupScreen` at `/setup` (name, 18+, Terms; AUTH-5). The router sends signed-in people to `/setup` until it's done |
 | `groups` (settings) | `TeamSettingsScreen` at `/g/:groupId/settings` (admins): logo upload to `groups/{g}/avatar/`, name, description, sport, color, member permissions, default reminders, storage used. `Group` now carries `GroupSettings`, time zone, logo, and storage; `GroupRepository.updateGroup` writes directly under the rules' `validGroup` checks |
 | `groups` (storage) | `Group.storageLevel` (ok, nearly full at 90%, full at the limit), `storageNearlyFull`, and `storageFull`, from `storageBytes` and `storageQuotaBytes` (500 MB if unset). `StorageMeter` in Team settings and Media: "212 MB of 500 MB used", amber when nearly full, red when full. A banner in the team shell warns admins at 90% (with Media) and tells everyone when full; when full, the + menu, Change logo, and a background photo show the one STORE-4 message instead, while text still sends. Super admins alone see Change storage limit (`adminSetGroupQuota`). `MediaScreen` at `/g/:groupId/media` (Team menu → Media, admins): every file largest first, with a preview, what it is ("Chat photo · Sam Rivera", "Team logo", "Chat background", "Document", or unused), size, date, and Delete; `MediaRepository` calls `listTeamMedia` and `deleteTeamMedia` |
