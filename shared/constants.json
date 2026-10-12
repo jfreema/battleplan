@@ -177,6 +177,15 @@
     "pollOptionsMax": 10,
     "pollOptionTextMax": 80,
     "eventRemindersMax": 6,
+    "eventTitleMax": 100,
+    "eventNotesMax": 2000,
+    "locationNameMax": 100,
+    "locationAddressMax": 200,
+    "opponentMax": 60,
+    "arriveMinutesMax": 240,
+    "rsvpNoteMax": 200,
+    "seriesIntervalMax": 8,
+    "seriesEventsMax": 400,
     "seriesSkipDatesMax": 100,
     "seriesMaxMonths": 12,
     "groupNameMax": 50,
@@ -216,6 +225,7 @@
     "pushTokensPerSend": 500,
     "mutedForeverMs": 253402214400000
   },
+  "reminderOffsetsMinutes": [15, 60, 120, 1440, 2880, 10080],
   "inviteCodeAlphabet": "23456789ABCDEFGHJKMNPQRSTUVWXYZ",
   "teamColors": [
     "#2F5BEA",

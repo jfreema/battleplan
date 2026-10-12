@@ -92,12 +92,21 @@ String _dart(Map<String, dynamic> json) {
   b
     ..writeln('}')
     ..writeln()
-    ..writeln('/// The 12 team colors (TEAM-1), as ARGB.')
+    ..writeln('/// The team colors (TEAM-1), as ARGB.')
     ..writeln('const List<int> teamColorValues = [');
   for (final hex in (json['teamColors'] as List).cast<String>()) {
     b.writeln('  0xFF${hex.substring(1).toUpperCase()},');
   }
-  b.writeln('];');
+  b
+    ..writeln('];')
+    ..writeln()
+    ..writeln(
+      '/// The reminder times an event can have, in minutes before (SCHED-3).',
+    )
+    ..writeln(
+      'const List<int> reminderOffsetsMinutes = '
+      '[${(json['reminderOffsetsMinutes'] as List).join(', ')}];',
+    );
 
   (json['enums'] as Map<String, dynamic>).forEach((name, values) {
     final type = _pascal(name);
@@ -196,7 +205,13 @@ String _ts(Map<String, dynamic> json) {
   for (final hex in (json['teamColors'] as List).cast<String>()) {
     b.writeln("  '$hex',");
   }
-  b.writeln('] as const;');
+  b
+    ..writeln('] as const;')
+    ..writeln()
+    ..writeln(
+      'export const REMINDER_OFFSETS_MINUTES = '
+      '[${(json['reminderOffsetsMinutes'] as List).join(', ')}] as const;',
+    );
   (json['enums'] as Map<String, dynamic>).forEach((name, values) {
     final list = (values as List).cast<String>();
     b

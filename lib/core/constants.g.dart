@@ -42,6 +42,15 @@ abstract final class Limits {
   static const int pollOptionsMax = 10;
   static const int pollOptionTextMax = 80;
   static const int eventRemindersMax = 6;
+  static const int eventTitleMax = 100;
+  static const int eventNotesMax = 2000;
+  static const int locationNameMax = 100;
+  static const int locationAddressMax = 200;
+  static const int opponentMax = 60;
+  static const int arriveMinutesMax = 240;
+  static const int rsvpNoteMax = 200;
+  static const int seriesIntervalMax = 8;
+  static const int seriesEventsMax = 400;
   static const int seriesSkipDatesMax = 100;
   static const int seriesMaxMonths = 12;
   static const int groupNameMax = 50;
@@ -82,7 +91,7 @@ abstract final class Limits {
   static const int mutedForeverMs = 253402214400000;
 }
 
-/// The 12 team colors (TEAM-1), as ARGB.
+/// The team colors (TEAM-1), as ARGB.
 const List<int> teamColorValues = [
   0xFF2F5BEA,
   0xFF7BAFD4,
@@ -98,6 +107,9 @@ const List<int> teamColorValues = [
   0xFF9333EA,
   0xFF334155,
 ];
+
+/// The reminder times an event can have, in minutes before (SCHED-3).
+const List<int> reminderOffsetsMinutes = [15, 60, 120, 1440, 2880, 10080];
 
 enum UserStatus {
   provisioned('provisioned'),

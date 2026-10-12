@@ -39,6 +39,15 @@ export const Limits = {
   pollOptionsMax: 10,
   pollOptionTextMax: 80,
   eventRemindersMax: 6,
+  eventTitleMax: 100,
+  eventNotesMax: 2000,
+  locationNameMax: 100,
+  locationAddressMax: 200,
+  opponentMax: 60,
+  arriveMinutesMax: 240,
+  rsvpNoteMax: 200,
+  seriesIntervalMax: 8,
+  seriesEventsMax: 400,
   seriesSkipDatesMax: 100,
   seriesMaxMonths: 12,
   groupNameMax: 50,
@@ -94,6 +103,8 @@ export const TEAM_COLORS = [
   '#9333EA',
   '#334155',
 ] as const;
+
+export const REMINDER_OFFSETS_MINUTES = [15, 60, 120, 1440, 2880, 10080] as const;
 
 export const userStatusValues = ['provisioned', 'active', 'disabled'] as const;
 export type UserStatus = (typeof userStatusValues)[number];
