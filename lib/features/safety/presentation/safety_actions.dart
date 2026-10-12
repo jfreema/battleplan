@@ -86,7 +86,7 @@ class _ReportFormState extends State<_ReportForm> {
           _sending = false;
           _error = e is RateLimited
               ? l10n.reportRateLimited
-              : l10n.signInUnknownError;
+              : l10n.errorSendReport;
         });
       }
     }
@@ -180,7 +180,7 @@ Future<bool> confirmBlock(
     if (context.mounted) showAppSnackBar(context, l10n.blocked(name));
     return true;
   } on AppFailure {
-    if (context.mounted) showAppSnackBar(context, l10n.signInUnknownError);
+    if (context.mounted) showAppSnackBar(context, l10n.errorBlock);
     return false;
   }
 }
@@ -193,7 +193,7 @@ Future<void> unblock(BuildContext context, WidgetRef ref, UserId uid) async {
     await ref.read(safetyRepositoryProvider).unblock(UserId(me), uid);
   } on AppFailure {
     if (context.mounted) {
-      showAppSnackBar(context, AppLocalizations.of(context).signInUnknownError);
+      showAppSnackBar(context, AppLocalizations.of(context).errorUnblock);
     }
   }
 }

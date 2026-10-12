@@ -168,9 +168,9 @@ String adminFailureText(AppLocalizations l10n, Object failure) =>
         'name-mismatch' => l10n.adminNameMismatch,
         'owner' => l10n.adminOwnerMustTransfer,
         'nothing-to-delete' => l10n.adminNothingToDelete,
-        _ => l10n.signInUnknownError,
+        _ => l10n.errorAdminAction,
       },
-      _ => l10n.signInUnknownError,
+      _ => l10n.errorAdminAction,
     };
 
 /// Runs an admin action and says how it went: [done] on success, or what

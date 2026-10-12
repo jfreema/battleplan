@@ -1,6 +1,11 @@
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
+import 'package:battleplan/features/schedule/domain/event.dart';
+import 'package:battleplan/features/schedule/domain/rsvp.dart';
+import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
+import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/features/schedule/presentation/event_row.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
@@ -12,7 +17,9 @@ import 'package:material_ui/material_ui.dart';
 /// place, kept live, so a canceled event shows struck through and a
 /// deleted one says so. A series' card whose event is gone shows the
 /// series' next event, or, with none left, the series as posted.
-/// Tapping opens the event (SCHED-4).
+/// Tapping opens the event (SCHED-4). While it takes answers, the card
+/// has the RSVP buttons (for each player on youth teams) and the counts,
+/// as event details does (SPEC §5.4, §7.5).
 class EventCard extends ConsumerWidget {
   const new({
     required this.eventId,
@@ -113,10 +120,74 @@ class EventCard extends ConsumerWidget {
               ),
               Text(timeRange(l10n, event, zone, withDay: true), style: muted),
               if (event.location case final loc?) Text(loc.label, style: muted),
+              if (event.takesRsvps) _CardRsvp(event: event, zone: zone),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The card's RSVP buttons, while I can still answer, and its counts.
+class _CardRsvp extends ConsumerWidget {
+  const new({required this.event, required this.zone});
+
+  final Event event;
+  final String zone;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final g = event.groupId;
+    final group = ref.watch(groupProvider(g)).value;
+    final me = ref.watch(myMembershipProvider(g));
+    final now = DateTime.now();
+    final allowMaybe = group?.settings.allowMaybe ?? true;
+    final open =
+        group != null &&
+        !event.startedBefore(now) &&
+        canAnswerNow(event, group, me, now);
+    final mine = open
+        ? ref.watch(myParticipantsProvider(g))
+        : const <Participant>[];
+    // My answers from today on, one listener for every card in the chat.
+    final answers = mine.isEmpty
+        ? const <String, Rsvp>{}
+        : ref
+                  .watch(myRsvpsProvider(g, from: startOfDay(zone, now)))
+                  .value?[event.id.value] ??
+              const {};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final p in mine)
+          Padding(
+            padding: const EdgeInsets.only(top: Space.sm),
+            child: RsvpButtons(
+              event: event,
+              participant: p,
+              answer: answers[p.id],
+              label: mine.length > 1 || p.isPlayer
+                  ? (p.isPlayer ? p.shownName : l10n.eventYou)
+                  : null,
+              enabled: true,
+              allowMaybe: allowMaybe,
+              showNote: false,
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(top: Space.xs),
+          child: Text(
+            countsText(l10n, event.rsvpCounts, allowMaybe: allowMaybe),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

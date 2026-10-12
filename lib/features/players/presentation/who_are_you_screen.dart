@@ -44,7 +44,7 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
           context,
           e is RateLimited
               ? l10n.guardianRequestsRateLimited
-              : l10n.signInUnknownError,
+              : l10n.errorWhoAreYou,
         );
       }
     } finally {

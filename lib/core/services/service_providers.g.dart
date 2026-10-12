@@ -60,6 +60,52 @@ final class PhotoPickerProvider
 
 String _$photoPickerHash() => r'067730d189463d1d8099f2ef8519fcc7b39c9562';
 
+/// Photos pasted or dropped onto the web page (SPEC §4.2); none on phones.
+
+@ProviderFor(photoDrops)
+final photoDropsProvider = PhotoDropsProvider._();
+
+/// Photos pasted or dropped onto the web page (SPEC §4.2); none on phones.
+
+final class PhotoDropsProvider
+    extends $FunctionalProvider<PhotoDrops, PhotoDrops, PhotoDrops>
+    with $Provider<PhotoDrops> {
+  /// Photos pasted or dropped onto the web page (SPEC §4.2); none on phones.
+  PhotoDropsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'photoDropsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$photoDropsHash();
+
+  @$internal
+  @override
+  $ProviderElement<PhotoDrops> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PhotoDrops create(Ref ref) {
+    return photoDrops(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PhotoDrops value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PhotoDrops>(value),
+    );
+  }
+}
+
+String _$photoDropsHash() => r'48fb963c30e4aed3cdbded44a7d93a5a7b40737f';
+
 /// Opens web and mailto links.
 
 @ProviderFor(linkOpener)

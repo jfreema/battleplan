@@ -176,7 +176,9 @@ class _RequestRow extends ConsumerWidget {
               approve: approve,
             );
       } on AppFailure {
-        if (context.mounted) showAppSnackBar(context, l10n.signInUnknownError);
+        if (context.mounted) {
+          showAppSnackBar(context, l10n.errorGuardianRequest);
+        }
       }
     }
 
@@ -285,7 +287,7 @@ class MemberCard extends ConsumerWidget {
         if (context.mounted) {
           showAppSnackBar(
             context,
-            e is PermissionDenied ? l10n.notAllowed : l10n.signInUnknownError,
+            e is PermissionDenied ? l10n.notAllowed : l10n.errorMemberAction,
           );
         }
       }

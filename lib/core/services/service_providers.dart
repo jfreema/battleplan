@@ -3,6 +3,7 @@ import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/calendar.dart';
 import 'package:battleplan/core/services/file_chooser.dart';
 import 'package:battleplan/core/services/link_opener.dart';
+import 'package:battleplan/core/services/photo_drops.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/sharer.dart';
 import 'package:battleplan/core/services/time_zones.dart';
@@ -17,6 +18,10 @@ part 'service_providers.g.dart';
 @Riverpod(keepAlive: true)
 PhotoPicker photoPicker(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
+
+/// Photos pasted or dropped onto the web page (SPEC §4.2); none on phones.
+@Riverpod(keepAlive: true)
+PhotoDrops photoDrops(Ref ref) => const NoPhotoDrops();
 
 /// Opens web and mailto links.
 @Riverpod(keepAlive: true)

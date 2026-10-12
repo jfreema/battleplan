@@ -8,6 +8,7 @@ import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/calendar.dart';
 import 'package:battleplan/core/services/file_chooser.dart';
 import 'package:battleplan/core/services/link_opener.dart';
+import 'package:battleplan/core/services/photo_drops.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/sharer.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
@@ -2508,4 +2509,22 @@ class FakeAdminRepository implements AdminRepository {
     savedConfigs.add(config);
     this.config = config;
   }
+}
+
+/// Photos pasted or dropped onto the page (SPEC §4.2), sent by the test.
+class FakePhotoDrops implements PhotoDrops {
+  final _photos = StreamController<List<PickedPhoto>>.broadcast();
+  final _dragging = StreamController<bool>.broadcast();
+
+  @override
+  Stream<List<PickedPhoto>> get photos => _photos.stream;
+
+  @override
+  Stream<bool> get dragging => _dragging.stream;
+
+  /// Pastes or drops [list].
+  void drop(List<PickedPhoto> list) => _photos.add(list);
+
+  /// Files start or stop being dragged over the page.
+  void drag({required bool on}) => _dragging.add(on);
 }

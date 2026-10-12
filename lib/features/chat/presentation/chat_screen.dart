@@ -84,6 +84,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     required double alignment,
     bool highlight = false,
   }) async {
+    // Motion tokens, still when the system reduces motion (SPEC §7.3).
+    final duration = highlight
+        ? Motion.of(context, Motion.slow)
+        : Duration.zero;
     for (var i = 0; i < 200 && mounted; i++) {
       await WidgetsBinding.instance.endOfFrame;
       if (!_scroll.hasClients) continue;
@@ -92,9 +96,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         await Scrollable.ensureVisible(
           row,
           alignment: alignment,
-          duration: highlight
-              ? const Duration(milliseconds: 250)
-              : Duration.zero,
+          duration: duration,
+          curve: Motion.curve,
         );
         if (!highlight || !mounted) return;
         setState(() => _highlighted = messageId);
@@ -112,12 +115,41 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  /// Photos pasted or dropped on the web page (SPEC §4.2), and whether
+  /// files are being dragged over it.
+  StreamSubscription<List<PickedPhoto>>? _drops;
+  StreamSubscription<bool>? _drags;
+  bool _dragging = false;
+
   @override
   void initState() {
     super.initState();
     _scroll
       ..addListener(_maybeLoadOlder)
       ..addListener(_trackBottom);
+    final drops = ref.read(photoDropsProvider);
+    _drops = drops.photos.listen(_onDropped);
+    _drags = drops.dragging.listen((on) {
+      if (mounted && on != _dragging) setState(() => _dragging = on);
+    });
+  }
+
+  /// Whether this chat is the one on screen and can take photos: its tab
+  /// showing, nothing covering it, and someone who can post.
+  bool get _takesDrops {
+    if (!mounted || !TickerMode.valuesOf(context).enabled) return false;
+    if (!(ModalRoute.isCurrentOf(context) ?? true)) return false;
+    if (ref.read(viewingAsSuperAdminProvider(widget.groupId))) return false;
+    final group = ref.read(groupProvider(widget.groupId)).value;
+    return group != null && !group.isArchived;
+  }
+
+  /// Pasted or dropped photos send as picked ones do (CHAT-3), within the
+  /// upload limit and not into full storage (STORE-4).
+  void _onDropped(List<PickedPhoto> photos) {
+    if (!_takesDrops) return;
+    final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
+    unawaited(_sendPicked(photos, controller));
   }
 
   @override
@@ -158,6 +190,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
+    unawaited(_drops?.cancel());
+    unawaited(_drags?.cancel());
     _unhighlight?.cancel();
     _scroll.dispose();
     super.dispose();
@@ -360,15 +394,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   bottom: Space.sm,
                   child: FloatingActionButton.extended(
                     heroTag: null,
-                    onPressed: () => _scroll.animateTo(
-                      0,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                    ),
+                    onPressed: () => Motion.reduced(context)
+                        ? _scroll.jumpTo(0)
+                        : _scroll.animateTo(
+                            0,
+                            duration: Motion.slow,
+                            curve: Motion.curve,
+                          ),
                     icon: const Icon(AppIcons.arrowDown),
                     label: Text(l10n.newMessagesBelow(newBelow)),
                   ),
                 ),
+              // Files dragged over the page (web): where they'll go.
+              if (_dragging && !viewing && !archived)
+                Positioned.fill(child: _DropHint(storageFull: storageFull)),
             ],
           ),
         ),
@@ -432,8 +471,15 @@ extension on _ChatScreenState {
     ];
   }
 
-  Future<void> _pickPhotos(PhotoPicker picker, ChatMessages controller) async {
-    final photos = _withinLimit(await picker.pickChatPhotos());
+  Future<void> _pickPhotos(PhotoPicker picker, ChatMessages controller) =>
+      _sendPicked(picker.pickChatPhotos(), controller);
+
+  /// Sends picked, pasted, or dropped photos, up to 10 (CHAT-3).
+  Future<void> _sendPicked(
+    FutureOr<List<PickedPhoto>> picked,
+    ChatMessages controller,
+  ) async {
+    final photos = _withinLimit((await picked).take(10).toList());
     if (photos.isEmpty || _fullAfterPicking()) return;
     await controller
         .sendPhotos([
@@ -592,6 +638,42 @@ class _DateSeparator extends StatelessWidget {
           dayLabel(AppLocalizations.of(context), day.toLocal(), DateTime.now()),
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Drop photos to send" over the chat while files are dragged over the
+/// page (SPEC §4.2), or why they can't be added.
+class _DropHint extends StatelessWidget {
+  const new({required this.storageFull});
+
+  final bool storageFull;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return IgnorePointer(
+      child: ColoredBox(
+        color: scheme.surface.withValues(alpha: 0.85),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(Space.xl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(AppIcons.photo, size: 48, color: scheme.primary),
+                const SizedBox(height: Space.md),
+                Text(
+                  storageFull ? l10n.storageFullMessage : l10n.chatDropPhotos,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
           ),
         ),
       ),

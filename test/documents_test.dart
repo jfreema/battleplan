@@ -561,7 +561,7 @@ void main() {
         scrollable: list,
       );
       await menu(tester, 'Doc 120', 'Delete');
-      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete document'));
       await tester.pumpAndSettle();
       expect(r.docs.deleted, ['d120']);
       expect(find.text('Doc 120'), findsNothing);
@@ -1066,7 +1066,7 @@ void main() {
 
         await menu(tester, 'Fall roster.pdf', 'Delete');
         expect(find.text('Delete "Fall roster.pdf"?'), findsOneWidget);
-        await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+        await tester.tap(find.widgetWithText(FilledButton, 'Delete document'));
         await tester.pumpAndSettle();
         expect(r.docs.deleted, ['roster']);
         expect(find.text('Fall roster.pdf'), findsNothing);
@@ -1197,7 +1197,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Delete').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete document'));
       await tester.pumpAndSettle();
       expect(r.docs.deleted, ['roster']);
       expect(rowOrder(tester), hasLength(3));

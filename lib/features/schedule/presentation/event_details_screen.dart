@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
@@ -427,6 +428,7 @@ class RsvpButtons extends ConsumerWidget {
     required this.enabled,
     this.label,
     this.allowMaybe = true,
+    this.showNote = true,
     super.key,
   });
 
@@ -434,6 +436,10 @@ class RsvpButtons extends ConsumerWidget {
   final Participant participant;
   final Rsvp? answer;
   final bool enabled;
+
+  /// The note and Add note under the buttons; chat cards leave them to
+  /// event details.
+  final bool showNote;
 
   /// "Emma #7" for a player, "You" beside players; null when it's only me.
   final String? label;
@@ -480,6 +486,7 @@ class RsvpButtons extends ConsumerWidget {
             onSelectionChanged: enabled
                 ? (s) {
                     if (s.isEmpty) return;
+                    Haptics.selection();
                     unawaited(
                       _answer(context, ref, s.first, answer?.note ?? ''),
                     );
@@ -487,30 +494,31 @@ class RsvpButtons extends ConsumerWidget {
                 : null,
           ),
         ),
-        Row(
-          children: [
-            if (answer?.note.isNotEmpty ?? false)
-              Expanded(
-                child: Text(
-                  answer!.note,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
+        if (showNote)
+          Row(
+            children: [
+              if (answer?.note.isNotEmpty ?? false)
+                Expanded(
+                  child: Text(
+                    answer!.note,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                )
+              else
+                const Spacer(),
+              if (enabled && current != null)
+                TextButton(
+                  onPressed: () => unawaited(_editNote(context, ref, current)),
+                  child: Text(
+                    answer?.note.isNotEmpty ?? false
+                        ? l10n.eventEditNote
+                        : l10n.eventAddNote,
                   ),
                 ),
-              )
-            else
-              const Spacer(),
-            if (enabled && current != null)
-              TextButton(
-                onPressed: () => unawaited(_editNote(context, ref, current)),
-                child: Text(
-                  answer?.note.isNotEmpty ?? false
-                      ? l10n.eventEditNote
-                      : l10n.eventAddNote,
-                ),
-              ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }

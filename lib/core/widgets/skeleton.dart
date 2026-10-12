@@ -24,6 +24,8 @@ class SkeletonList extends StatelessWidget {
       label: AppLocalizations.of(context).loadingLabel,
       child: ExcludeSemantics(
         child: ListView.separated(
+          // Fits in a column or a sheet as well as filling a screen.
+          shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.all(Space.lg),
           itemCount: rows,

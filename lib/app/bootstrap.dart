@@ -8,6 +8,7 @@ import 'package:battleplan/app/services/crashlytics_reporter.dart';
 import 'package:battleplan/app/services/firebase_analytics_service.dart';
 import 'package:battleplan/app/services/firebase_remote_config_service.dart';
 import 'package:battleplan/app/services/web_error_reporter.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/core/services/analytics.dart';
@@ -45,6 +46,8 @@ Future<void> bootstrap({
   usePathUrlStrategy();
   // Event times convert between zones (SCHED-9); load the zones once.
   ZonedTime.ensureInitialized();
+  // The bundled Inter font's license, under Licenses (SPEC §7.3).
+  registerFontLicenses();
 
   final env = AppEnv(flavor: flavor, useEmulators: _useEmulators);
   if (env.isProd && env.useEmulators) {

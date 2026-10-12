@@ -849,7 +849,7 @@ void main() {
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
       expect(find.text('Delete this message?'), findsOneWidget);
-      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete message'));
       await tester.pumpAndSettle();
       expect(repo.deleted, ['m2']);
       expect(find.text('This message was deleted.'), findsOneWidget);
@@ -1705,7 +1705,7 @@ void main() {
         find.text("It's removed from the chat for everyone."),
         findsOneWidget,
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete photo'));
       await tester.pumpAndSettle();
       expect(media.deleted, ['groups/a/messages/m1/0.jpg']);
       // Read again after the delete.

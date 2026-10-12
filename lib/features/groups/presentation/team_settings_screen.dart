@@ -138,7 +138,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
       await ref.read(groupRepositoryProvider).deleteGroup(group.id, typed);
       if (mounted) context.go('/');
     } on AppFailure {
-      if (mounted) showAppSnackBar(context, l10n.signInUnknownError);
+      if (mounted) showAppSnackBar(context, l10n.errorDeleteTeam);
     }
   }
 

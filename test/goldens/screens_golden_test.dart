@@ -1,4 +1,4 @@
-// Golden tests of the main screens in light and dark at a phone size
+// Golden tests of the key screens in light and dark at a phone size
 // (ARCH §9), drawn with the test font, so text shows as boxes. They catch
 // layout, color, and spacing changes in CI. Even boxes antialias a little
 // differently on each operating system, so these compare only on CI's
@@ -28,7 +28,7 @@ void main() {
       ? null
       : 'CI goldens compare on $ciGoldensOs only';
 
-  for (final MapEntry(key: name, value: pump) in mainScreens.entries) {
+  for (final MapEntry(key: name, value: pump) in goldenScreens.entries) {
     for (final dark in [false, true]) {
       final theme = dark ? 'dark' : 'light';
       testWidgets('$name ($theme)', skip: skip != null, (tester) async {

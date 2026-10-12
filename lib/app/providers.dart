@@ -1,4 +1,5 @@
 import 'package:battleplan/app/app_services.dart';
+import 'package:battleplan/app/services/browser_photo_drops.dart';
 import 'package:battleplan/app/services/device_calendar_adder.dart';
 import 'package:battleplan/app/services/file_picker_chooser.dart';
 import 'package:battleplan/app/services/flutter_time_zones.dart';
@@ -11,6 +12,7 @@ import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/services/analytics.dart';
 import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
+import 'package:battleplan/core/services/photo_drops.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/remote_config.dart';
 import 'package:battleplan/core/services/service_providers.dart';
@@ -72,6 +74,9 @@ List<Override> buildOverrides({
   remoteConfigProvider.overrideWithValue(remoteConfig),
   photoPickerProvider.overrideWithValue(
     const LocationStrippingPhotoPicker(ImagePickerPhotoPicker()),
+  ),
+  photoDropsProvider.overrideWithValue(
+    LocationStrippingPhotoDrops(browserPhotoDrops()),
   ),
   linkOpenerProvider.overrideWithValue(const UrlLauncherLinkOpener()),
   timeZonesProvider.overrideWithValue(const FlutterTimeZones()),

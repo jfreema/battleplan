@@ -8,6 +8,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/panel_page.dart';
 import 'package:battleplan/features/admin/presentation/admin_panel.dart'
     deferred as admin_panel;
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -224,23 +225,41 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/settings',
-        builder: (_, _) => SettingsScreen(
-          appVersion: ref.read(appVersionProvider),
-          showDevTools: !env.isProd,
+        // Settings, event details, and member cards open as dialogs on
+        // wide screens (SPEC §5.5).
+        pageBuilder: (_, state) => PanelPage(
+          key: state.pageKey,
+          child: SettingsScreen(
+            appVersion: ref.read(appVersionProvider),
+            showDevTools: !env.isProd,
+          ),
         ),
         routes: [
-          GoRoute(path: 'profile', builder: (_, _) => const ProfileScreen()),
+          GoRoute(
+            path: 'profile',
+            pageBuilder: (_, state) =>
+                PanelPage(key: state.pageKey, child: const ProfileScreen()),
+          ),
           GoRoute(
             path: 'sign-in-methods',
-            builder: (_, _) => const SignInMethodsScreen(),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: const SignInMethodsScreen(),
+            ),
           ),
           GoRoute(
             path: 'blocked',
-            builder: (_, _) => const BlockedPeopleScreen(),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: const BlockedPeopleScreen(),
+            ),
           ),
           GoRoute(
             path: 'notifications',
-            builder: (_, _) => const NotificationSettingsScreen(),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: const NotificationSettingsScreen(),
+            ),
           ),
           if (!env.isProd)
             GoRoute(
@@ -336,8 +355,11 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: 'settings',
-            builder: (_, state) => TeamSettingsScreen(
-              groupId: GroupId(state.pathParameters['groupId']!),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: TeamSettingsScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
             ),
           ),
           GoRoute(
@@ -353,9 +375,12 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: 'players/:playerId',
-                builder: (_, state) => PlayerCardScreen(
-                  groupId: GroupId(state.pathParameters['groupId']!),
-                  playerId: PlayerId(state.pathParameters['playerId']!),
+                pageBuilder: (_, state) => PanelPage(
+                  key: state.pageKey,
+                  child: PlayerCardScreen(
+                    groupId: GroupId(state.pathParameters['groupId']!),
+                    playerId: PlayerId(state.pathParameters['playerId']!),
+                  ),
                 ),
               ),
             ],
@@ -374,8 +399,11 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: 'notifications',
-            builder: (_, state) => TeamNotificationsScreen(
-              groupId: GroupId(state.pathParameters['groupId']!),
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: TeamNotificationsScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
             ),
           ),
           GoRoute(
@@ -418,47 +446,56 @@ GoRouter router(Ref ref) {
                           GoRoute(
                             path: 'new',
                             parentNavigatorKey: rootKey,
-                            builder: (_, state) {
+                            pageBuilder: (_, state) {
                               final from = state.uri.queryParameters['from'];
-                              return EventFormRoute(
-                                groupId: GroupId(
-                                  state.pathParameters['groupId']!,
+                              return PanelPage(
+                                key: state.pageKey,
+                                child: EventFormRoute(
+                                  groupId: GroupId(
+                                    state.pathParameters['groupId']!,
+                                  ),
+                                  fromEventId: from == null
+                                      ? null
+                                      : EventId(from),
                                 ),
-                                fromEventId: from == null
-                                    ? null
-                                    : EventId(from),
                               );
                             },
                           ),
                           GoRoute(
                             path: 'e/:eventId',
                             parentNavigatorKey: rootKey,
-                            builder: (_, state) => EventDetailsScreen(
-                              groupId: GroupId(
-                                state.pathParameters['groupId']!,
-                              ),
-                              eventId: EventId(
-                                state.pathParameters['eventId']!,
+                            pageBuilder: (_, state) => PanelPage(
+                              key: state.pageKey,
+                              child: EventDetailsScreen(
+                                groupId: GroupId(
+                                  state.pathParameters['groupId']!,
+                                ),
+                                eventId: EventId(
+                                  state.pathParameters['eventId']!,
+                                ),
                               ),
                             ),
                             routes: [
                               GoRoute(
                                 path: 'edit',
                                 parentNavigatorKey: rootKey,
-                                builder: (_, state) => EventFormRoute(
-                                  groupId: GroupId(
-                                    state.pathParameters['groupId']!,
+                                pageBuilder: (_, state) => PanelPage(
+                                  key: state.pageKey,
+                                  child: EventFormRoute(
+                                    groupId: GroupId(
+                                      state.pathParameters['groupId']!,
+                                    ),
+                                    eventId: EventId(
+                                      state.pathParameters['eventId']!,
+                                    ),
+                                    scope: switch (state
+                                        .uri
+                                        .queryParameters['scope']) {
+                                      'following' => SeriesScope.following,
+                                      'this' => SeriesScope.thisEvent,
+                                      _ => null,
+                                    },
                                   ),
-                                  eventId: EventId(
-                                    state.pathParameters['eventId']!,
-                                  ),
-                                  scope: switch (state
-                                      .uri
-                                      .queryParameters['scope']) {
-                                    'following' => SeriesScope.following,
-                                    'this' => SeriesScope.thisEvent,
-                                    _ => null,
-                                  },
                                 ),
                               ),
                             ],

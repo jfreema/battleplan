@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -157,7 +158,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               ],
             ),
             AsyncError() => Center(child: Text(l10n.loadError)),
-            _ => const Center(child: CircularProgressIndicator()),
+            _ => const SkeletonList(),
           },
         ],
       ),
@@ -469,7 +470,7 @@ class _TeamPickerDialogState extends ConsumerState<_TeamPickerDialog> {
                           ],
                         ),
                 AsyncError() => Center(child: Text(l10n.loadError)),
-                _ => const Center(child: CircularProgressIndicator()),
+                _ => const SkeletonList(rows: 4),
               },
             ),
           ],

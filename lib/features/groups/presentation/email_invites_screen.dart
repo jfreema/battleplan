@@ -61,7 +61,7 @@ class _EmailInvitesScreenState extends ConsumerState<EmailInvitesScreen> {
             EmailNotVerified() => l10n.emailInvitesNeedVerified,
             RateLimited() => l10n.emailInvitesRateLimited,
             PermissionDenied() => l10n.invitesAdminsOnly,
-            _ => l10n.signInUnknownError,
+            _ => l10n.errorEmailInvites,
           }),
         ),
       );
@@ -145,7 +145,7 @@ class _EmailInvitesScreenState extends ConsumerState<EmailInvitesScreen> {
                 AsyncData(:final value) => [
                   for (final invite in value) _row(context, invite),
                 ],
-                AsyncError() => [Text(l10n.signInUnknownError)],
+                AsyncError() => [Text(l10n.loadError)],
                 _ => [const LinearProgressIndicator()],
               },
             ],

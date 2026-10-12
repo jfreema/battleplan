@@ -1323,7 +1323,7 @@ void main() {
       expect(find.text('Copy text'), findsOneWidget);
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete message'));
       await tester.pumpAndSettle();
       expect(messages.deleted, ['m1']);
 
@@ -1414,7 +1414,7 @@ void main() {
       expect(find.text('Pin'), findsNothing);
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete document'));
       await tester.pumpAndSettle();
       expect(find.text('Bad link'), findsNothing);
     });

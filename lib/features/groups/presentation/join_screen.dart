@@ -25,7 +25,7 @@ String inviteProblemMessage(AppLocalizations l10n, AppFailure failure) =>
       RateLimited() => l10n.inviteTooManyTries,
       TooManyTeams() => l10n.tooManyTeams,
       Offline() => l10n.signInOffline,
-      _ => l10n.signInUnknownError,
+      _ => l10n.errorUseInvite,
     };
 
 /// Invite landing page, `/join/<CODE>` (INV-5, INV-7). Works signed out:

@@ -4,10 +4,38 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+
+/// [group]'s logo URL once it has loaded, or null to show its initials on
+/// its color (SPEC §5.2).
+String? teamLogoUrl(WidgetRef ref, Group? group) {
+  final path = group?.photoPath;
+  return path == null ? null : ref.watch(teamPhotoUrlProvider(path)).value;
+}
+
+/// [group]'s logo, or its initials on its color (SPEC §5.2, §7.1).
+class GroupBadge extends ConsumerWidget {
+  const new({required this.group, this.size = 32, super.key});
+
+  final Group? group;
+  final double size;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final color = group?.color;
+    return TeamBadge(
+      name: group?.name ?? '',
+      color: color == null ? null : Color(color),
+      imageUrl: teamLogoUrl(ref, group),
+      size: size,
+    );
+  }
+}
 
 /// The list inside the team switcher sheet or dropdown (SPEC §5.2).
 class TeamSwitcherList extends ConsumerWidget {
@@ -38,14 +66,9 @@ class TeamSwitcherList extends ConsumerWidget {
 
     Widget tile(MyTeam t) {
       final selected = t.group.id == currentGroupId;
-      final color = t.group.color;
       return ListTile(
         selected: selected,
-        leading: TeamBadge(
-          name: t.group.name,
-          color: color == null ? null : Color(color),
-          size: 40,
-        ),
+        leading: GroupBadge(group: t.group, size: 40),
         title: Row(
           children: [
             Flexible(
@@ -59,7 +82,7 @@ class TeamSwitcherList extends ConsumerWidget {
             Icon(
               AppIcons.sport(t.group.sport),
               size: 16,
-              semanticLabel: t.group.sport.value,
+              semanticLabel: sportName(l10n, t.group.sport),
             ),
           ],
         ),
@@ -75,7 +98,11 @@ class TeamSwitcherList extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (t.membership.isMutedAt(now))
-              const Icon(AppIcons.muted, size: 18, semanticLabel: 'Muted'),
+              Icon(
+                AppIcons.muted,
+                size: 18,
+                semanticLabel: l10n.teamMutedLabel,
+              ),
             // The unread count, 1 to 99+, gray for muted teams (CHAT-9).
             if (t.hasUnread)
               Padding(

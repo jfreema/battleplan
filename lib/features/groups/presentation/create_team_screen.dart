@@ -90,7 +90,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
           TooManyTeams() => l10n.tooManyTeams,
           PermissionDenied() => l10n.createTeamTurnedOff,
           Offline() => l10n.signInOffline,
-          _ => l10n.signInUnknownError,
+          _ => l10n.errorCreateTeam,
         },
       );
     } finally {

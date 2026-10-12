@@ -1,6 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -74,6 +75,7 @@ class _ComposerState extends State<Composer> {
   void _send() {
     final text = _text.text.trim();
     if (text.isEmpty || text.length > Limits.messageTextMax) return;
+    Haptics.light();
     widget.onSend(text);
     _text.clear();
     setState(() {});

@@ -6,9 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Loads real fonts into the test, so golden images are readable instead of
-/// the test font's boxes: every font the app bundles (Material Symbols and
-/// MaterialIcons, from the asset manifest the test build makes) and Roboto
-/// from the Flutter SDK, standing in for Inter (ARCH §5.5).
+/// the test font's boxes: every font the app bundles (Inter, Material
+/// Symbols and MaterialIcons, from the asset manifest the test build makes)
+/// and Roboto from the Flutter SDK for anything that asks for it (ARCH §5.5).
 ///
 /// Text rasterizes a little differently on each operating system, so
 /// goldens made with real fonts only compare on the system that made them
@@ -38,14 +38,12 @@ Future<void> loadAppFonts() async {
     'Roboto-Light.ttf',
     'Roboto-Black.ttf',
   ];
-  for (final family in ['Inter', 'Roboto']) {
-    final loader = FontLoader(family);
-    for (final f in files) {
-      final bytes = File('${fonts.path}/$f').readAsBytesSync();
-      loader.addFont(Future.value(ByteData.sublistView(bytes)));
-    }
-    await loader.load();
+  final roboto = FontLoader('Roboto');
+  for (final f in files) {
+    final bytes = File('${fonts.path}/$f').readAsBytesSync();
+    roboto.addFont(Future.value(ByteData.sublistView(bytes)));
   }
+  await roboto.load();
 }
 
 /// The SDK's root: `flutter test` sets FLUTTER_ROOT; otherwise it's found

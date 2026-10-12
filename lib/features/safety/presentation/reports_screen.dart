@@ -6,6 +6,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
@@ -43,7 +44,7 @@ class ReportsScreen extends ConsumerWidget {
           itemBuilder: (_, i) => _ReportCard(report: value[i]),
         ),
         AsyncError() => Center(child: Text(l10n.loadError)),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => const SkeletonList(),
       },
     );
   }
@@ -71,7 +72,7 @@ class _ReportCard extends ConsumerWidget {
             resolution: resolution,
           );
     } on AppFailure {
-      if (context.mounted) showAppSnackBar(context, l10n.signInUnknownError);
+      if (context.mounted) showAppSnackBar(context, l10n.errorResolveReport);
     }
   }
 

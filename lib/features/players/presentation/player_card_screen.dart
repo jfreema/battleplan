@@ -145,7 +145,7 @@ class PlayerCardScreen extends ConsumerWidget {
                   if (context.mounted) context.pop();
                 } on AppFailure {
                   if (context.mounted) {
-                    showAppSnackBar(context, l10n.signInUnknownError);
+                    showAppSnackBar(context, l10n.errorRemovePlayer);
                   }
                 }
               },
@@ -216,7 +216,7 @@ class PlayerCardScreen extends ConsumerWidget {
         showAppSnackBar(context, switch (e) {
           InvalidInput() => l10n.tooManyGuardians,
           RateLimited() => l10n.signInRateLimited,
-          _ => l10n.signInUnknownError,
+          _ => l10n.errorAddGuardian,
         });
       }
     }
@@ -242,7 +242,7 @@ class PlayerCardScreen extends ConsumerWidget {
           .read(playerRepositoryProvider)
           .removeGuardian(groupId, playerId, uid);
     } on AppFailure {
-      if (context.mounted) showAppSnackBar(context, l10n.signInUnknownError);
+      if (context.mounted) showAppSnackBar(context, l10n.errorRemoveGuardian);
     }
   }
 
