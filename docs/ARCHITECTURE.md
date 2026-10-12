@@ -79,7 +79,7 @@ flowchart LR
   CF --> FCM["Firebase Cloud Messaging"]
   FCM -- APNs / FCM / Web Push --> Clients
   CF --> MAIL["Email provider<br/>(invites, account setup)"]
-  HOST["Firebase Hosting<br/>web app · HTTPS links · .well-known files"] --> WEB
+  HOST["Firebase Hosting<br/>website · web app at /app · HTTPS links · .well-known files"] --> WEB
   APPCHECK["App Check"] -. protects .- FS & ST & CF
   SQL[("Cloud SQL Postgres<br/>via Data Connect — LATER")] -. future .- CF
 ```
@@ -111,7 +111,7 @@ flowchart LR
 | Files | **Cloud Storage for Firebase** | Chat photos, documents, avatars. |
 | Server logic | **Cloud Functions for Firebase**, 2nd gen, **TypeScript / Node 22** | Callables, triggers, scheduled jobs. |
 | Push | **Firebase Cloud Messaging (FCM)** | APNs for iOS, FCM for Android, Web Push for browsers. |
-| Web hosting | **Firebase Hosting** | Flutter web build, the HTTPS link domain, the Apple/Android link-verification files, legal pages. |
+| Web hosting | **Firebase Hosting** | The website (`website/`, static) at the root and the Flutter web build at `/app/`; the HTTPS link domain, the Apple/Android link-verification files, legal pages. |
 | Abuse protection | **Firebase App Check** | Play Integrity (Android), App Attest (iOS), reCAPTCHA Enterprise (web). |
 | Config and flags | **Firebase Remote Config** | Feature flags and minimum supported app version (forced update). |
 | Crashes and analytics | **Crashlytics** (iOS/Android), **Google Analytics for Firebase** | Crashlytics doesn't support web; web errors are handled in §9. |
@@ -162,6 +162,7 @@ battleplan/
 │
 ├── test/  integration_test/
 ├── ios/  android/  web/
+├── website/                     # the static explainer site and legal pages at getbattleplan.app (§6.6); the app is under /app
 ├── functions/                   # Cloud Functions (TypeScript), same domains (§6.4)
 ├── shared/constants.json        # enums, limits, collection names → generated Dart + TS
 ├── firestore.rules  firestore.indexes.json  storage.rules
@@ -280,7 +281,7 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
   - Signed out → `/sign-in?from=…`.
   - `/admin/**` requires the `superAdmin` claim.
   - `/g/:groupId/**` requires membership; non-members see a "not a member" screen.
-- Web uses the **path URL strategy** (no `#`), and Hosting rewrites every app path to `index.html`.
+- Web uses the **path URL strategy** (no `#`). The web app is built with `--base-href /app/`, so in the browser every route above sits under `/app` (`getbattleplan.app/app/g/…`); Hosting rewrites `/app/**` to `/app/index.html`. Native apps accept links with or without the `/app` prefix and route the rest (§6.6).
 
 ### 5.5 Theming and adaptive layout
 
@@ -313,7 +314,7 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 | Firebase project | `battleplan-dev-ecce4` | `battleplan-prod` |
 | Bundle / application ID | `app.getbattleplan.dev` | `app.getbattleplan` |
 | Entry point | `lib/main_dev.dart` | `lib/main_prod.dart` |
-| Web | `battleplan-dev-ecce4.web.app` + PR preview channels | `getbattleplan.app` (or `battleplan-prod.web.app`) |
+| Web | `battleplan-dev-ecce4.web.app` (website at the root, app at `/app`) + PR preview channels | `getbattleplan.app` (website) and `getbattleplan.app/app` (web app) |
 
 - The two flavors have separate app IDs, so dev and prod builds can be installed side by side.
 - `flutterfire configure` generates `lib/app/firebase_options_dev.dart` and `firebase_options_prod.dart`.
@@ -856,7 +857,7 @@ Plain chat messages don't create center items; unread counts cover them. Replies
 - `body` = "Alex: See you at 6", truncated to ~140 chars.
 - `data` = `{ route, groupId, kind, nkey }` (all strings). The app's center item for this push is `notifications/{nkey}_{myUid}`, so one multicast serves everyone.
 - Grouping (NOTIF-8): iOS stacks by team with `thread-id = groupId`. Android and web don't get a `tag`, because a tag *replaces* the previous notification instead of stacking; the OS bundles Battleplan's notifications instead.
-- Android channel by kind (`team` covers added to a team, made admin, guardian requests, reports, and storage warnings). Web gets `fcmOptions.link = https://<host><route>`, which the service worker opens on click.
+- Android channel by kind (`team` covers added to a team, made admin, guardian requests, reports, and storage warnings). Web gets `fcmOptions.link = https://<host>/app<route>`, which the service worker opens on click.
 
 **In the app**
 
@@ -869,19 +870,25 @@ Plain chat messages don't create center items; unread counts cover them. Replies
 
 **Battleplan does not use Firebase Dynamic Links.** Google shut the service down on **August 25, 2025**. Every link Battleplan creates is a plain HTTPS URL on our own domain, opened by standard platform mechanisms:
 
+**One domain, two parts (D40).** The website (`website/`, static HTML and CSS, no framework or build step) is served at the root of `getbattleplan.app`; the Flutter web app is served under `/app/`. Hosting serves both from one site: CI copies `website/` into `build/hosting/` and builds Flutter into `build/hosting/app/` with `--base-href /app/`. Dev uses the same layout on `battleplan-dev-ecce4.web.app`.
+
 | Path | Used for |
 |---|---|
-| `/join/<CODE>` | Invite links, QR codes, email invites |
-| `/activate` | Account setup and email-link sign-in |
-| `/g/<groupId>/…` | Links into content from emails and notifications |
-| `/privacy`, `/terms`, `/delete-account` | Legal pages |
+| `/`, `/support`, `/privacy`, `/terms`, `/delete-account` | The website and legal pages (SPEC §4.3) |
+| `/app/…` | The web app; every app route lives here in the browser |
+| `/join/<CODE>` | Invite links, QR codes, email invites. Kept short at the root; Hosting redirects it to `/app/join/<CODE>` in the browser |
+| `/app/activate` | Account setup and email-link sign-in (the `url` in Auth's `ActionCodeSettings`) |
+| `/app/g/<groupId>/…` | Links into content from emails and notifications |
+
+- **Redirects.** `/join/:code` → `/app/join/:code`, `/activate` → `/app/activate` (keeping the query string), and `/g/**` → `/app/g/**`, so older links and short QR codes keep working in browsers.
+- **The web app's own files** (service worker, `manifest.json`, icons) live under `/app/`, and FCM's `firebase-messaging-sw.js` is registered with the `/app/` scope.
 
 **How the links open the app**
 
-- **iOS: Universal Links.** `/.well-known/apple-app-site-association` lists `/join/*`, `/activate*`, and `/g/*`, plus the Associated Domains entitlement in the app.
-- **Android: App Links.** `/.well-known/assetlinks.json` plus intent filters with `autoVerify`.
-- **Hosting.** Firebase Hosting hosts the domain and serves both files as `application/json`, with no redirects. The domain is registered at Cloudflare, which also runs its DNS and email forwarding; the records pointing at Hosting are DNS-only, not proxied (D29).
-- **Web fallback.** When the app isn't installed, the same URL opens the **web app**, which is fully functional. Someone can join and start using Battleplan in the browser right away.
+- **iOS: Universal Links.** `/.well-known/apple-app-site-association` lists `/join/*`, `/activate*`, `/g/*`, and `/app/*`, plus the Associated Domains entitlement in the app. The website's own pages aren't listed, so they open in the browser.
+- **Android: App Links.** `/.well-known/assetlinks.json` plus intent filters with `autoVerify` for the same paths. The app strips a leading `/app` before routing.
+- **Hosting.** Firebase Hosting hosts the domain and serves both files from the website as `application/json`, with no redirects. The domain is registered at Cloudflare, which also runs its DNS and email forwarding; the records pointing at Hosting are DNS-only, not proxied (D29).
+- **Web fallback.** When the app isn't installed, the same URL opens the **web app** under `/app`, which is fully functional. Someone can join and start using Battleplan in the browser right away.
 - **Email links from Firebase Auth** (setup and sign-in links) use `ActionCodeSettings` with:
   - `url` on our domain and `handleCodeInApp: true`;
   - the iOS bundle ID and Android package name;
@@ -1081,7 +1088,7 @@ Integration flows:
   - `tools/check_imports.sh` (§5.2)
   - Functions lint and test
   - Rules tests on the emulator
-  - `flutter build web` and a deploy to a **Hosting preview channel**, with the URL posted on the PR
+  - `flutter build web --base-href /app/`, assembled with `website/` into `build/hosting/`, and a deploy to a **Hosting preview channel**, with the URL posted on the PR
 - **On merge to `main`:** deploy rules, indexes, TTL policies, functions, and hosting to **dev**.
 - **On a release**, started by hand: deploy to **prod**. A private repo on GitHub Free has no approval gates (environments and required reviewers), so starting the workflow is the approval. Google accepts prod deploys only from this workflow, through a condition on its Workload Identity Federation provider. Fastlane or Codemagic builds and uploads to **TestFlight** and the **Play Console internal track**.
 - **Deploy access** is keyless: Workload Identity Federation, with one deploy service account per project and no key files in GitHub.
@@ -1335,6 +1342,7 @@ Each phase is incremental and reversible.
 | D37 | ~~Ending Plus never deletes or hides data written under it~~ Superseded by D39 (2026-10-12) | Teams don't lose content over a lapsed payment; resubscribing restores everything | — |
 | D38 | ~~Super-admin grants during the beta; in-app purchase in both apps before Plus ships in the stores, plus Stripe Checkout on the web (SPEC Q19)~~ Superseded by D39 (2026-10-12) | App Store guideline 3.1.3(b) lets the iPhone app unlock web-bought features only if they're also sold by in-app purchase, and 3.1.1 forbids license-key unlocks | — |
 | D39 | Everything is free with no ads; each team has a 500 MB storage limit (10 MB files) that only a super admin can change, unannounced; full storage stops uploads, attachments, and new events but nothing else (SPEC §6.14) | A paid tier meant store fees, Apple's in-app purchase rule (3.1.3(b)), and slower adoption; storage is the cost that grows per team | Ads, once adoption justifies them (with children's privacy rules) |
+| D40 | A static explainer website (`website/`, plain HTML and CSS) at the root of `getbattleplan.app`, and the Flutter web app under `/app/`, served by one Hosting site; short invite links stay at `/join/<CODE>` and redirect into `/app` in browsers | People landing on the domain get an explanation and the legal pages, not a sign-in screen; one site keeps one domain for links, Universal Links, and App Links; no framework means nothing to maintain | A site generator (e.g. Astro) if the site grows beyond a few pages |
 
 ---
 

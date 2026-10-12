@@ -180,6 +180,16 @@ Not needed for now (decided 2026-10-11). Battleplan launches with Google, Apple,
 102. Turn on Facebook sign-in on the dev and prod projects; show **Continue with Facebook** on iOS, Android, and web (AUTH-1), including Limited Login on iOS and an email prompt for accounts without one; turn off the Facebook SDK's automatic event logging and advertiser-ID collection (LEGAL-2); add Facebook to the sign-in matrix (spike 1).
 103. 👤 **Jared:** Submit Facebook App Review, with the privacy-policy and data-deletion URLs (LEGAL-5). It needs the legal pages from task 121.
 
+## Website and the web app at /app · before M9
+
+SPEC §4.3 (WEB-1 to WEB-5), ARCH §6.6 and D40. The website is the `website/` folder: static HTML and CSS with no framework or build step. The Flutter web app moves from the root to `/app`.
+
+175. The website in `website/`: a landing page explaining Battleplan (chat, schedule and RSVPs, polls, documents, youth teams; free, no ads), with screenshots and an **Open Battleplan** button to `/app` on every page; light and dark mode; works well on phones (WEB-1, WEB-5).
+176. The website's support and legal pages: `/support`, `/privacy`, `/terms`, `/delete-account` (WEB-2; their wording is task 121).
+177. One Hosting site for both: CI copies `website/` into `build/hosting/` and builds Flutter with `--base-href /app/` into `build/hosting/app/`; Hosting rewrites `/app/**` to the app, redirects `/join/*`, `/activate`, and `/g/*` into `/app` keeping query strings, and serves `.well-known` from the website. Dev gets the same layout; PR previews build both (WEB-3).
+178. Links follow the move: the app's `LinkService` and the Functions `links` module build `/app/...` links for content and email setup, keep invite links short (`/join/<CODE>`), and push notifications open `https://<host>/app<route>`; the Auth `url` becomes `/app/activate`; Universal Links and App Links also match `/app/*`, and the native apps ignore the `/app` prefix; the web app's service worker, manifest, and push service worker work under `/app/`. Tested on dev: an invite link, a setup email, and a notification click in the browser, and an invite link on the Android emulator (WEB-4).
+179. Website polish: favicon, Open Graph image and tags, `robots.txt` and a sitemap (the site indexed, `/app` not), and App Store and Google Play badges once the apps are listed (task 130).
+
 ## M9 · Hardening and team beta
 
 104. Enforce App Check; review rules-test coverage.
@@ -194,12 +204,12 @@ Not needed for now (decided 2026-10-11). Battleplan launches with Google, Apple,
 113. 👤 **Jared:** Confirm Q11 (where most teams are; default US, `us-central1`). **The prod database's region is permanent.**
 114. 👤 **Jared:** Upgrade `battleplan-prod` to Blaze and set its budget alerts.
 115. Create prod's database in that region; deploy rules, indexes, TTL policies, and functions; turn on daily backups; set the Remote Config minimum version.
-116. 👤 **Jared:** Connect `getbattleplan.app` to prod's Hosting, with the Cloudflare records set to **DNS only** (grey cloud).
+116. 👤 **Jared:** Connect `getbattleplan.app` to prod's Hosting, with the Cloudflare records set to **DNS only** (grey cloud). It serves the website and the web app at `/app` (tasks 175 to 179).
 117. Set up the manual prod release workflow, and decide where iOS builds run (macOS minutes on GitHub are 10×).
 118. Bootstrap the first super admin on prod.
 119. 👤 **Jared:** Confirm Q9 (logo and primary color; default placeholder mark and blue `#2F5BEA`).
 120. App icons and splash screens.
-121. Legal pages: Privacy Policy, Terms of Use, `/delete-account` (LEGAL-1, LEGAL-3); no-tracking setup checked (LEGAL-2).
+121. Legal pages: Privacy Policy, Terms of Use, `/delete-account` (LEGAL-1, LEGAL-3), as pages on the website (task 176); no-tracking setup checked (LEGAL-2).
 122. Beta with our team: TestFlight on iOS, Firebase App Distribution on Android, and the web; a bug bash.
 123. Move our team over: paste the roster, recreate upcoming events as repeating practices, post the invite link in GroupMe and show the QR at practice, and run both apps for about two weeks.
 

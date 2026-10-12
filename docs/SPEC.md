@@ -122,6 +122,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Forced app update (ARCH §9) | Lets us retire old app versions safely, including during a future SQL move |
 | Privacy Policy, Terms, store disclosures (LEGAL) | **Required** to publish |
 | Accessibility and translation-ready text (§7.6, §7.7) | Good practice, and cheap if done from the start |
+| An explainer website at `getbattleplan.app`, with the web app at `/app` (§4.3) | A place to explain Battleplan, host the legal pages, and send people to the stores or the web app |
 | Everything free with no ads, and a 500 MB storage limit per team with a Media section to free space (§6.14, [PLANS.md](PLANS.md)) | Keeps adoption easy while capping what one team can cost (Q4); ads may come once adoption justifies them |
 
 ---
@@ -184,7 +185,17 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 |---|---|---|
 | iPhone and iPad | iOS 15 | App Store |
 | Android phones and tablets | Android 8.0 (API 26) | Google Play |
-| Web, desktop and mobile | Latest two versions of Chrome, Edge, Firefox, Safari | Firebase Hosting. Installable as a home-screen app (PWA). |
+| Web, desktop and mobile | Latest two versions of Chrome, Edge, Firefox, Safari | Firebase Hosting at **`getbattleplan.app/app`**, linked from the website (§4.3). Installable as a home-screen app (PWA). |
+
+### 4.3 The website (WEB)
+
+`getbattleplan.app` is a small explainer website; the web app lives under it at **`getbattleplan.app/app`**. The site's source is the `website/` folder in the repo (ARCH §5.1, §6.6).
+
+- **WEB-1 · MVP · Landing page.** What Battleplan is (team chat, schedule and RSVPs, polls, documents, youth teams with parents and guardians), that it's free with no ads, screenshots, and clear ways in: **Open Battleplan** (the web app at `/app`), and App Store and Google Play badges once the apps are listed.
+- **WEB-2 · MVP · Support and legal pages.** `/privacy`, `/terms`, and `/delete-account` (LEGAL-1, LEGAL-3), and `/support` with the support email. These are the URLs the store listings and Firebase settings use.
+- **WEB-3 · MVP · The web app at `/app`.** The Flutter web app is served under `/app/` and linked from every page of the site. Signed-in people who open `/app` go straight to their teams.
+- **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app.
+- **WEB-5 · MVP · Fast and plain.** Static pages with no ads, no tracking, and no cookie banner needed; light and dark mode; readable on phones; indexed by search engines, while `/app` isn't.
 
 ### 4.2 The parity rule
 
@@ -485,7 +496,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - A list shows Pending, Joined, and Expired invites, with Resend and Revoke.
   - Requires a verified email. Daily limits apply per person and per team.
 - **INV-5 · MVP · Joining.**
-  1. Open a link. It opens the app if installed, otherwise the website.
+  1. Open a link. It opens the app if installed, otherwise the web app (WEB-4).
   2. Sign in or create an account if needed; the app continues automatically afterward.
   3. See the team preview: logo, name, sport, member count, "Invited by Alex".
   4. Tap **Join team**. On youth teams, answer "Who are you here for?" (PLAYER-3).
@@ -494,7 +505,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   People who are already members just go to the team.
 - **INV-6 · MVP · Join without a link.** "Join a team" (on the welcome screen and in the team switcher) offers **Enter code** and **Scan QR code**, using the camera on phones and in the browser.
 - **INV-7 · MVP · Web join page.**
-  - `/join/<code>` shows the team preview, **Open in app**, App Store and Google Play badges, and **Continue in browser**.
+  - `/join/<code>` (served by the web app under `/app`, WEB-4) shows the team preview, **Open in app**, App Store and Google Play badges, and **Continue in browser**.
   - The invite code is shown large, so people can type it in after installing the app.
 - **INV-8 · MVP · Problems.**
   - Expired, revoked, used-up, or unknown codes get a plain explanation and "Ask a team admin for a new link."
@@ -502,13 +513,13 @@ On youth teams, the kids are the players, but they never use the app. Their pare
 
 - **INV-9 · MVP · Standard links, no Dynamic Links.**
   - Invite links, QR codes, and email links are plain HTTPS addresses on Battleplan's own domain, such as `https://getbattleplan.app/join/K7XP-M2QR`.
-  - With the app installed, iOS Universal Links and Android App Links open it directly. Otherwise the same address opens the website.
+  - With the app installed, iOS Universal Links and Android App Links open it directly. Otherwise the same address opens the web app.
   - **Battleplan doesn't use Firebase Dynamic Links**, which Google shut down on August 25, 2025. Firebase Hosting serves the domain and the Apple and Android verification files (ARCH §6.6).
 
 **Acceptance (MVP)**
 
 - On a phone with the app installed, tapping an invite link opens the app on the team preview.
-- On a phone without the app, the same link opens the website, where the person can join and chat right away.
+- On a phone without the app, the same link opens the web app, where the person can join and chat right away.
 - A new coach can create a team and get three people in, by link, QR, and email, in under 10 minutes in total.
 
 ### 6.5 Chat (CHAT)
@@ -908,7 +919,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
 ### 6.13 Privacy and legal (LEGAL)
 
 - **LEGAL-1 · MVP · Policies.**
-  - Privacy Policy at `/privacy` and Terms of Use at `/terms`.
+  - Privacy Policy at `/privacy` and Terms of Use at `/terms`, on the website (WEB-2).
   - Linked from sign-in, Settings, the store listings, and the Apple and Facebook developer settings.
   - The Privacy Policy covers:
     - what we collect: name, email, photo, messages, files, device tokens, usage analytics, crash reports, and, on youth teams, the player details adults enter (name, jersey number, position);
@@ -1191,7 +1202,7 @@ From here on, each feature ships with its own notifications.
 
 - [ ] Enforce App Check and review rules-test coverage.
 - [ ] Accessibility, performance (§8), and golden-test passes.
-- [ ] Legal pages, store listings, privacy forms.
+- [ ] The website at `getbattleplan.app` with the legal and support pages, and the web app moved to `/app` (§4.3); store listings, privacy forms.
 - [ ] An App Review demo account with a seeded team. (Facebook App Review waits for Facebook sign-in, Q16.)
 - [ ] Beta with our team: TestFlight (iOS), Firebase App Distribution (Android), and the web; a bug bash; the production deploy.
 - [ ] Google Play: open the Play Console account (a personal one, Q13) and run the 14-day closed test with 12+ testers before the public Android release.
