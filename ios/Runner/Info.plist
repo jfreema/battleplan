@@ -16,6 +16,12 @@
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Battleplan uses your photo library so you can choose a profile photo and share photos with your teams.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Battleplan adds team events to your calendar when you tap Add to calendar.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Battleplan adds team events to your calendar when you tap Add to calendar.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>The calendar screen can suggest places from your contacts for an event's location.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Battleplan uses the camera so you can take photos to share with your teams and scan team QR codes.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

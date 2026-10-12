@@ -242,3 +242,97 @@ final class BrowserInfoProvider
 }
 
 String _$browserInfoHash() => r'200d0c9eb4e2d5356326c00a10240acb3454b56a';
+
+/// Adds events to the person's calendar (SCHED-10).
+
+@ProviderFor(calendarAdder)
+final calendarAdderProvider = CalendarAdderProvider._();
+
+/// Adds events to the person's calendar (SCHED-10).
+
+final class CalendarAdderProvider
+    extends $FunctionalProvider<CalendarAdder, CalendarAdder, CalendarAdder>
+    with $Provider<CalendarAdder> {
+  /// Adds events to the person's calendar (SCHED-10).
+  CalendarAdderProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'calendarAdderProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$calendarAdderHash();
+
+  @$internal
+  @override
+  $ProviderElement<CalendarAdder> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CalendarAdder create(Ref ref) {
+    return calendarAdder(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CalendarAdder value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CalendarAdder>(value),
+    );
+  }
+}
+
+String _$calendarAdderHash() => r'ec5fb013f69b18db118fb9c13ec30db1c043b78d';
+
+/// Where the web app lives, for links people share (an event's Share,
+/// SCHED-4). Paths under it are the app's routes (ARCH §5.4).
+
+@ProviderFor(appWebBase)
+final appWebBaseProvider = AppWebBaseProvider._();
+
+/// Where the web app lives, for links people share (an event's Share,
+/// SCHED-4). Paths under it are the app's routes (ARCH §5.4).
+
+final class AppWebBaseProvider extends $FunctionalProvider<Uri, Uri, Uri>
+    with $Provider<Uri> {
+  /// Where the web app lives, for links people share (an event's Share,
+  /// SCHED-4). Paths under it are the app's routes (ARCH §5.4).
+  AppWebBaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appWebBaseProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appWebBaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<Uri> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Uri create(Ref ref) {
+    return appWebBase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Uri value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Uri>(value),
+    );
+  }
+}
+
+String _$appWebBaseHash() => r'571bd43f59ebbdc057359d86140beb39aab3b08e';

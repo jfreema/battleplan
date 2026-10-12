@@ -23,6 +23,7 @@ import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/polls/polls.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
+import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -422,14 +423,20 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     // A poll shows as its card (POLL-2, CHAT-11); its text is the question,
     // which the card shows itself.
     final isPoll = m.type == MessageType.poll && !deleted;
-    final bubble = isPoll
+    // An event card (CHAT-11, SCHED-3), posted by the server.
+    final isEvent =
+        m.type == MessageType.event && m.eventId != null && !deleted;
+    final bubble = isPoll || isEvent
         ? Column(
             crossAxisAlignment: mine
                 ? CrossAxisAlignment.end
                 : CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              PollCard(pollId: PollId(m.pollId ?? m.id), groupId: m.groupId),
+              if (isPoll)
+                PollCard(pollId: PollId(m.pollId ?? m.id), groupId: m.groupId)
+              else
+                EventCard(eventId: EventId(m.eventId!), groupId: m.groupId),
             ],
           )
         : Column(
@@ -526,7 +533,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             onLongPress: deleted ? null : () => unawaited(_openMenu()),
             onSecondaryTap: deleted ? null : () => unawaited(_openMenu()),
             // Not on polls: waiting for a second tap would hold up voting.
-            onDoubleTap: deleted || kIsWeb || isPoll
+            onDoubleTap: deleted || kIsWeb || isPoll || isEvent
                 ? null
                 : () => fireAndForget(_react(Reaction.love)),
             child: Transform.translate(

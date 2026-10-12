@@ -5,6 +5,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/browser_info.dart';
+import 'package:battleplan/core/services/calendar.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -29,6 +30,12 @@ import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/polls/domain/poll_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:battleplan/features/safety/domain/safety_repository.dart';
+import 'package:battleplan/features/schedule/domain/event.dart';
+import 'package:battleplan/features/schedule/domain/event_draft.dart';
+import 'package:battleplan/features/schedule/domain/event_repository.dart';
+import 'package:battleplan/features/schedule/domain/recurrence.dart';
+import 'package:battleplan/features/schedule/domain/rsvp.dart';
+import 'package:battleplan/features/schedule/domain/rsvp_repository.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
 
 class FakeAuthRepository implements AuthRepository {
@@ -1400,5 +1407,404 @@ class FakePollRepository implements PollRepository {
     if (failClose) throw const Offline('close');
     closed.add(pollId.value);
     put(polls[pollId.value]!.copyWith(closedAt: DateTime.now()));
+  }
+}
+
+/// Events and series in memory. Series calls are recorded, and do to the
+/// events what the server's `saveEventSeries` does.
+class FakeEventRepository implements EventRepository {
+  new([List<Event>? events]) {
+    for (final e in events ?? const <Event>[]) {
+      this.events[e.id.value] = e;
+    }
+  }
+
+  final Map<String, Event> events = {};
+  final Map<String, EventSeries> series = {};
+
+  /// What was asked of the repository, in order.
+  final List<String> calls = [];
+
+  /// The last template sent to a series call.
+  EventTemplate? lastTemplate;
+
+  /// What dry runs report (the confirmation's counts).
+  SeriesResult dryRunResult = const SeriesResult();
+  final _changes = StreamController<void>.broadcast();
+  int _next = 0;
+
+  /// Adds or replaces an event, and tells anyone watching.
+  void put(Event e) {
+    events[e.id.value] = e;
+    _changes.add(null);
+  }
+
+  Stream<T> _live<T>(T Function() read) async* {
+    yield read();
+    await for (final _ in _changes.stream) {
+      yield read();
+    }
+  }
+
+  List<Event> _team(GroupId g) => [
+    for (final e in events.values)
+      if (e.groupId == g) e,
+  ];
+
+  @override
+  Stream<EventPage> watchUpcoming(
+    GroupId groupId,
+    DateTime from, {
+    int limit = 50,
+  }) => _live(() {
+    final list = [
+      for (final e in _team(groupId))
+        if (!e.startAt.isBefore(from)) e,
+    ]..sort((a, b) => a.startAt.compareTo(b.startAt));
+    return (events: list.take(limit).toList(), next: null);
+  });
+
+  @override
+  Stream<EventPage> watchPast(
+    GroupId groupId,
+    DateTime before, {
+    int limit = 50,
+  }) => _live(() {
+    final list = [
+      for (final e in _team(groupId))
+        if (e.startAt.isBefore(before)) e,
+    ]..sort((a, b) => b.startAt.compareTo(a.startAt));
+    return (events: list.take(limit).toList(), next: null);
+  });
+
+  @override
+  Future<EventPage> loadMore(
+    GroupId groupId,
+    PageCursor cursor, {
+    required bool past,
+    int limit = 50,
+  }) async => (events: const <Event>[], next: null);
+
+  @override
+  Stream<List<Event>> watchRange(
+    GroupId groupId,
+    DateTime from,
+    DateTime until,
+  ) => _live(
+    () => [
+      for (final e in _team(groupId))
+        if (!e.startAt.isBefore(from) && e.startAt.isBefore(until)) e,
+    ]..sort((a, b) => a.startAt.compareTo(b.startAt)),
+  );
+
+  @override
+  Stream<Event?> watchEvent(EventId id) => _live(() => events[id.value]);
+
+  @override
+  Stream<EventSeries?> watchSeries(String seriesId) =>
+      _live(() => series[seriesId]);
+
+  Event _fromDraft(
+    String id,
+    GroupId groupId,
+    EventDraft d, {
+    required String createdBy,
+    required bool youth,
+  }) {
+    final t = d.template;
+    return Event(
+      id: EventId(id),
+      groupId: groupId,
+      type: t.type,
+      title: t.title,
+      description: t.description,
+      location: t.location,
+      allDay: t.allDay,
+      startAt: d.startAt!,
+      endAt: d.endAt!,
+      startDate: d.allDay ? dateKey(d.date!) : null,
+      endDate: d.allDay ? dateKey(d.lastDay!) : null,
+      timeZone: t.timeZone,
+      arriveMinutesBefore: t.arriveMinutesBefore,
+      opponent: t.opponent,
+      homeAway: t.homeAway,
+      rsvpEnabled: t.rsvpEnabled,
+      rsvpFor: youth ? RsvpFor.players : RsvpFor.members,
+      rsvpDeadline: d.rsvpDeadline,
+      reminderOffsets: t.reminderOffsets,
+      notifyTeam: t.notifyTeam,
+      postToChat: t.postToChat,
+      createdBy: createdBy,
+    );
+  }
+
+  @override
+  Future<EventId> createEvent(
+    GroupId groupId,
+    EventDraft draft, {
+    required UserId createdBy,
+    required bool youth,
+  }) async {
+    final id = 'new${_next++}';
+    calls.add('create');
+    put(
+      _fromDraft(id, groupId, draft, createdBy: createdBy.value, youth: youth),
+    );
+    return EventId(id);
+  }
+
+  @override
+  Future<void> updateEvent(Event event, EventDraft draft) async {
+    calls.add('update ${event.id.value}');
+    put(
+      _fromDraft(
+        event.id.value,
+        event.groupId,
+        draft,
+        createdBy: event.createdBy,
+        youth: event.forPlayers,
+      ).copyWith(rsvpCounts: event.rsvpCounts),
+    );
+  }
+
+  @override
+  Future<void> cancelEvent(Event event, UserId by) async {
+    calls.add('cancel ${event.id.value}');
+    put(
+      events[event.id.value]!.copyWith(
+        canceledAt: DateTime.now(),
+        canceledBy: by.value,
+      ),
+    );
+  }
+
+  @override
+  Future<void> deleteEvent(Event event) async {
+    calls.add('delete ${event.id.value}');
+    events.remove(event.id.value);
+    _changes.add(null);
+  }
+
+  /// Set to make series calls fail as full storage does (STORE-4).
+  bool storageFull = false;
+
+  @override
+  Future<SeriesResult> createSeries(
+    GroupId groupId,
+    Recurrence recurrence,
+    EventTemplate template, {
+    bool dryRun = false,
+  }) async {
+    if (storageFull) throw const StorageFull();
+    lastTemplate = template;
+    final dates = expandRecurrence(recurrence).dates;
+    calls.add('createSeries ${dates.length}${dryRun ? ' dry' : ''}');
+    if (dryRun) return SeriesResult(created: dates.length);
+    final seriesId = 's${_next++}';
+    series[seriesId] = EventSeries(
+      id: seriesId,
+      groupId: groupId,
+      timeZone: template.timeZone,
+      recurrence: recurrence,
+      createdBy: 'coach',
+    );
+    for (final key in dates) {
+      int minutes(String? hhmm) => hhmm == null
+          ? 0
+          : int.parse(hhmm.split(':')[0]) * 60 + int.parse(hhmm.split(':')[1]);
+      final draft = EventDraft(
+        timeZone: template.timeZone,
+        type: template.type,
+        title: template.title,
+        allDay: template.allDay,
+        date: parseDateKey(key),
+        startMinutes: minutes(template.startTime),
+        endMinutes: minutes(template.endTime),
+      );
+      events['$seriesId-$key'] = Event(
+        id: EventId('$seriesId-$key'),
+        groupId: groupId,
+        type: template.type,
+        title: template.title,
+        startAt: draft.startAt!,
+        endAt: draft.endAt!,
+        timeZone: template.timeZone,
+        createdBy: 'coach',
+        seriesId: seriesId,
+        seriesDate: key,
+      );
+    }
+    _changes.add(null);
+    return SeriesResult(seriesId: seriesId, created: dates.length);
+  }
+
+  Iterable<Event> _scope(EventId id, SeriesScope scope) {
+    final e = events[id.value]!;
+    if (scope == SeriesScope.thisEvent) return [e];
+    return [
+      for (final x in events.values)
+        if (x.seriesId == e.seriesId && !x.startAt.isBefore(e.startAt)) x,
+    ];
+  }
+
+  @override
+  Future<SeriesResult> updateSeries(
+    EventId eventId,
+    SeriesScope scope,
+    EventTemplate template, {
+    Recurrence? recurrence,
+    String? date,
+    bool dryRun = false,
+  }) async {
+    lastTemplate = template;
+    calls.add('updateSeries ${scope.value}${dryRun ? ' dry' : ''}');
+    if (dryRun) return dryRunResult;
+    for (final e in _scope(eventId, scope).toList()) {
+      put(e.copyWith(title: template.title));
+    }
+    return const SeriesResult(updated: 1);
+  }
+
+  @override
+  Future<SeriesResult> cancelSeries(
+    EventId eventId,
+    SeriesScope scope, {
+    bool dryRun = false,
+  }) async {
+    calls.add('cancelSeries ${scope.value}${dryRun ? ' dry' : ''}');
+    if (dryRun) return dryRunResult;
+    final list = _scope(eventId, scope).toList();
+    for (final e in list) {
+      put(e.copyWith(canceledAt: DateTime.now()));
+    }
+    return SeriesResult(canceled: list.length);
+  }
+
+  @override
+  Future<SeriesResult> deleteSeries(
+    EventId eventId,
+    SeriesScope scope, {
+    bool dryRun = false,
+  }) async {
+    calls.add('deleteSeries ${scope.value}${dryRun ? ' dry' : ''}');
+    if (dryRun) return dryRunResult;
+    final list = _scope(eventId, scope).toList();
+    for (final e in list) {
+      events.remove(e.id.value);
+    }
+    _changes.add(null);
+    return SeriesResult(removed: list.length);
+  }
+}
+
+/// RSVPs in memory. Each answer recounts its event at once, as the
+/// server's trigger does a moment later.
+class FakeRsvpRepository implements RsvpRepository {
+  new(this.events);
+
+  final FakeEventRepository events;
+  final List<Rsvp> rsvps = [];
+  final _changes = StreamController<void>.broadcast();
+
+  /// Makes answers fail as the rules refuse them (after the deadline).
+  bool refuse = false;
+
+  Stream<T> _live<T>(T Function() read) async* {
+    yield read();
+    await for (final _ in _changes.stream) {
+      yield read();
+    }
+  }
+
+  @override
+  Stream<List<Rsvp>> watchMine(
+    GroupId groupId,
+    List<String> participantIds, {
+    DateTime? from,
+    DateTime? until,
+  }) => _live(
+    () => [
+      for (final r in rsvps)
+        if (r.groupId == groupId && participantIds.contains(r.participantId)) r,
+    ],
+  );
+
+  @override
+  Stream<List<Rsvp>> watchForEvent(GroupId groupId, EventId eventId) => _live(
+    () => [
+      for (final r in rsvps)
+        if (r.eventId == eventId) r,
+    ],
+  );
+
+  /// Adds an answer as if someone gave it earlier.
+  void put(Rsvp r) {
+    rsvps
+      ..removeWhere(
+        (x) => x.eventId == r.eventId && x.participantId == r.participantId,
+      )
+      ..add(r);
+    final e = events.events[r.eventId.value];
+    if (e != null) {
+      RsvpCounts count({required bool staff}) {
+        final list = [
+          for (final x in rsvps)
+            if (x.eventId == e.id &&
+                (!e.forPlayers ||
+                    (x.participantType == ParticipantType.member) == staff))
+              x,
+        ];
+        int n(RsvpStatus s) => list.where((x) => x.status == s).length;
+        return RsvpCounts(
+          going: n(RsvpStatus.going),
+          maybe: n(RsvpStatus.maybe),
+          notGoing: n(RsvpStatus.notGoing),
+        );
+      }
+
+      events.put(
+        e.copyWith(
+          rsvpCounts: count(staff: false),
+          staffCounts: e.forPlayers ? count(staff: true) : const RsvpCounts(),
+        ),
+      );
+    }
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> setRsvp(
+    Event event,
+    RsvpAnswer answer, {
+    required UserId by,
+  }) async {
+    final current = events.events[event.id.value];
+    if (refuse || current == null || current.isCanceled) {
+      throw const PermissionDenied('closed');
+    }
+    put(
+      Rsvp(
+        eventId: event.id,
+        groupId: event.groupId,
+        participantType: answer.participant.type,
+        participantId: answer.participant.id,
+        participantName: answer.participant.name,
+        status: answer.status,
+        note: answer.note,
+        respondedBy: by.value,
+        eventStartAt: event.startAt,
+      ),
+    );
+  }
+}
+
+/// Records what was added to the calendar.
+class FakeCalendarAdder implements CalendarAdder {
+  final List<CalendarEntry> added = [];
+
+  @override
+  Future<bool> add(CalendarEntry entry) async {
+    added.add(entry);
+    return true;
   }
 }

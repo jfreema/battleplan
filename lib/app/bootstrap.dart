@@ -12,6 +12,7 @@ import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/core/services/analytics.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
 import 'package:battleplan/core/services/remote_config.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/settings/data/shared_prefs_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -41,6 +42,8 @@ Future<void> bootstrap({
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
+  // Event times convert between zones (SCHED-9); load the zones once.
+  ZonedTime.ensureInitialized();
 
   final env = AppEnv(flavor: flavor, useEmulators: _useEmulators);
   if (env.isProd && env.useEmulators) {

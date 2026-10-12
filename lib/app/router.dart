@@ -40,6 +40,9 @@ import 'package:battleplan/features/players/presentation/player_card_screen.dart
 import 'package:battleplan/features/players/presentation/who_are_you_screen.dart';
 import 'package:battleplan/features/safety/presentation/blocked_people_screen.dart';
 import 'package:battleplan/features/safety/presentation/reports_screen.dart';
+import 'package:battleplan/features/schedule/domain/recurrence.dart';
+import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
+import 'package:battleplan/features/schedule/presentation/event_form_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/settings_screen.dart';
@@ -76,7 +79,12 @@ GoRouter router(Ref ref) {
 
   final env = ref.read(appEnvProvider);
 
+  // The top navigator: event pages cover the tabs. One per router, so a
+  // new router (a new sign-in in tests) never shares it.
+  final rootKey = GlobalKey<NavigatorState>();
+
   final router = GoRouter(
+    navigatorKey: rootKey,
     initialLocation: '/',
     refreshListenable: refresh,
     redirect: (context, state) {
@@ -331,6 +339,62 @@ GoRouter router(Ref ref) {
                           _ => DocumentsScreen(groupId: id),
                         };
                       },
+                      // New event (`?from=<id>` duplicates, SCHED-3), an
+                      // event (SCHED-4; notification taps land here), and
+                      // its edit form (`?scope=this|following`, SCHED-6).
+                      // They cover the tabs.
+                      routes: [
+                        if (tab == 'schedule') ...[
+                          GoRoute(
+                            path: 'new',
+                            parentNavigatorKey: rootKey,
+                            builder: (_, state) {
+                              final from = state.uri.queryParameters['from'];
+                              return EventFormRoute(
+                                groupId: GroupId(
+                                  state.pathParameters['groupId']!,
+                                ),
+                                fromEventId: from == null
+                                    ? null
+                                    : EventId(from),
+                              );
+                            },
+                          ),
+                          GoRoute(
+                            path: 'e/:eventId',
+                            parentNavigatorKey: rootKey,
+                            builder: (_, state) => EventDetailsScreen(
+                              groupId: GroupId(
+                                state.pathParameters['groupId']!,
+                              ),
+                              eventId: EventId(
+                                state.pathParameters['eventId']!,
+                              ),
+                            ),
+                            routes: [
+                              GoRoute(
+                                path: 'edit',
+                                parentNavigatorKey: rootKey,
+                                builder: (_, state) => EventFormRoute(
+                                  groupId: GroupId(
+                                    state.pathParameters['groupId']!,
+                                  ),
+                                  eventId: EventId(
+                                    state.pathParameters['eventId']!,
+                                  ),
+                                  scope: switch (state
+                                      .uri
+                                      .queryParameters['scope']) {
+                                    'following' => SeriesScope.following,
+                                    'this' => SeriesScope.thisEvent,
+                                    _ => null,
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                     // A message from a notification tap (NOTIF-6): the
                     // chat, scrolled to it. A sibling rather than a child,

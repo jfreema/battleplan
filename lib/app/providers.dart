@@ -1,4 +1,5 @@
 import 'package:battleplan/app/app_services.dart';
+import 'package:battleplan/app/services/device_calendar_adder.dart';
 import 'package:battleplan/app/services/flutter_time_zones.dart';
 import 'package:battleplan/app/services/image_picker_photo_picker.dart';
 import 'package:battleplan/app/services/share_plus_sharer.dart';
@@ -29,6 +30,9 @@ import 'package:battleplan/features/polls/application/providers.dart';
 import 'package:battleplan/features/polls/data/firestore_poll_repository.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/data/firestore_safety_repository.dart';
+import 'package:battleplan/features/schedule/application/providers.dart';
+import 'package:battleplan/features/schedule/data/firestore_event_repository.dart';
+import 'package:battleplan/features/schedule/data/firestore_rsvp_repository.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/data/shared_prefs_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -63,6 +67,14 @@ List<Override> buildOverrides({
   linkOpenerProvider.overrideWithValue(const UrlLauncherLinkOpener()),
   timeZonesProvider.overrideWithValue(const FlutterTimeZones()),
   sharerProvider.overrideWithValue(const SharePlusSharer()),
+  calendarAdderProvider.overrideWithValue(const DeviceCalendarAdder()),
+  appWebBaseProvider.overrideWithValue(
+    Uri.parse(
+      env.isProd
+          ? 'https://getbattleplan.app/app'
+          : 'https://battleplan-dev-ecce4.web.app/app',
+    ),
+  ),
   browserInfoProvider.overrideWithValue(
     kIsWeb ? WebBrowserInfo() : const PlainBrowserInfo(),
   ),
@@ -78,6 +90,10 @@ List<Override> buildOverrides({
   pollRepositoryProvider.overrideWithValue(
     FirestorePollRepository(firestore, functions),
   ),
+  eventRepositoryProvider.overrideWithValue(
+    FirestoreEventRepository(firestore, functions),
+  ),
+  rsvpRepositoryProvider.overrideWithValue(FirestoreRsvpRepository(firestore)),
   inviteRepositoryProvider.overrideWithValue(
     FunctionsInviteRepository(functions),
   ),

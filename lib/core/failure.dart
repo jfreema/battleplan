@@ -149,3 +149,11 @@ final class UnknownFailure extends AppFailure {
   @override
   String get code => 'unknown';
 }
+
+/// The team's storage is full (STORE-4): no uploads and no new events.
+final class StorageFull extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'storageFull';
+}

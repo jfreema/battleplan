@@ -57,6 +57,30 @@ abstract final class AppIcons {
   static const IconData reminder = Symbols.alarm_rounded;
   static const IconData document = Symbols.description_rounded;
   static const IconData homeScreen = Symbols.add_to_home_screen_rounded;
+  static const IconData location = Symbols.location_on_rounded;
+  static const IconData directions = Symbols.directions_rounded;
+  static const IconData addToCalendar = Symbols.calendar_add_on_rounded;
+  static const IconData repeat = Symbols.repeat_rounded;
+  static const IconData time = Symbols.schedule_rounded;
+  static const IconData timeZone = Symbols.public_rounded;
+  static const IconData notes = Symbols.notes_rounded;
+  static const IconData duplicate = Symbols.content_copy_rounded;
+  static const IconData cancelEvent = Symbols.event_busy_rounded;
+  static const IconData rsvp = Symbols.how_to_reg_rounded;
+  static const IconData filter = Symbols.filter_list_rounded;
+  static const IconData chevronLeft = Symbols.chevron_left_rounded;
+  static const IconData chevronRight = Symbols.chevron_right_rounded;
+
+  /// Event types (SCHED-1), next to their colors.
+  static const IconData game = Symbols.sports_score_rounded;
+  static const IconData practice = Symbols.directions_run_rounded;
+  static const IconData meeting = Symbols.groups_rounded;
+  static const IconData social = Symbols.celebration_rounded;
+
+  /// RSVP answers (SCHED-4).
+  static const IconData going = Symbols.check_circle_rounded;
+  static const IconData maybe = Symbols.help_rounded;
+  static const IconData notGoing = Symbols.cancel_rounded;
 
   /// The icon for a sport (shown in the team switcher).
   static IconData sport(Sport sport) => switch (sport) {

@@ -26,6 +26,9 @@ abstract class Message with _$Message {
     /// The poll a poll message shows; it has the message's ID (POLL-1).
     String? pollId,
 
+    /// The event an event card shows (CHAT-11, SCHED-3).
+    String? eventId,
+
     /// The quote a reply shows, written by the server (CHAT-13, D25).
     ReplyPreview? replyPreview,
 

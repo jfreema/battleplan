@@ -1250,10 +1250,7 @@ void main() {
     await tester.tap(find.text('Lightning U10'));
     await tester.pumpAndSettle();
     expect(prefs.lastTeamRoute, '/g/b/schedule');
-    expect(
-      find.text('Practices, games, and RSVPs will appear here.'),
-      findsOneWidget,
-    );
+    expect(find.text('No upcoming events.'), findsOneWidget);
   });
 
   testWidgets('signing out of all devices asks first, then signs out', (

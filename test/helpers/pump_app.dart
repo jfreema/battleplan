@@ -9,6 +9,7 @@ import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/polls/application/providers.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
+import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,10 +38,14 @@ Future<FakeLocalPrefs> pumpApp(
   FakeDeviceRepository? devices,
   FakeNotificationRepository? notifications,
   FakeBrowserInfo browser = const FakeBrowserInfo(),
+  FakeEventRepository? eventRepo,
+  FakeRsvpRepository? rsvpRepo,
+  FakeCalendarAdder? calendar,
+  Size size = const Size(400, 1600),
 }) async {
   // A tall phone-sized screen, so long settings lists fit without scrolling.
   tester.view
-    ..physicalSize = const Size(400, 1600)
+    ..physicalSize = size
     ..devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final localPrefs = prefs ?? FakeLocalPrefs();
@@ -48,6 +53,7 @@ Future<FakeLocalPrefs> pumpApp(
   // the poll repository reads it, as one batch does on the server.
   final polls = pollRepo ?? FakePollRepository();
   final messages = (messageRepo ?? FakeMessageRepository())..polls = polls;
+  final events = eventRepo ?? rsvpRepo?.events ?? FakeEventRepository();
   await tester.pumpWidget(
     ProviderScope(
       // A fresh app each call, so a test can pump twice (say, as an admin
@@ -91,6 +97,13 @@ Future<FakeLocalPrefs> pumpApp(
         ),
         deviceAppVersionProvider.overrideWithValue('1.0.0'),
         browserInfoProvider.overrideWithValue(browser),
+        eventRepositoryProvider.overrideWithValue(events),
+        rsvpRepositoryProvider.overrideWithValue(
+          rsvpRepo ?? FakeRsvpRepository(events),
+        ),
+        calendarAdderProvider.overrideWithValue(
+          calendar ?? FakeCalendarAdder(),
+        ),
       ],
       child: const BattleplanApp(),
     ),
