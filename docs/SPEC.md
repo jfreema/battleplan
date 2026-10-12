@@ -1227,6 +1227,8 @@ From here on, each feature ships with its own notifications.
 10. Attendance history and CSV exports of RSVPs and the roster for admins
 11. A branded invite page with the team's logo and color (`/join`)
 
+**After v1.1:** group types beyond Team (TEAM-14). Keep the standard **Team** and add a more basic **Group** for general use (no roster, players, or RSVP counts by default), chosen at creation. Teams store `kind: 'team'` from the one-type change on, so adding Group needs no migration.
+
 ---
 
 ## 10. Launch checklist

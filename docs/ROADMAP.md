@@ -250,6 +250,7 @@ In SPEC §9's priority order.
 154. Quiet hours, email digests, SMS (NOTIF-13).
 155. Per-team profanity filter (SAFE-7), sooner if App Review asks.
 156. Cloud SQL, if usage meets the ARCH §12.1 triggers.
+180. **Group types beyond Team** (TEAM-14): keep the standard **Team** and add a more basic **Group** for general use (for example, no roster, players, or RSVP counts by default), chosen when it's created. The one-type model stores `groups.kind: 'team'` so this needs no migration.
 174. **Ads, once adoption justifies them** (SPEC STORE-7, [PLANS.md](PLANS.md)). Youth teams mean parents and guardians use the app for children, so the plan must address children's privacy rules first: COPPA in the US (no behavioral ads to children, verifiable parental consent for any data from under-13s), and Google Play's Families policy (certified ad SDKs only, no personalized ads, if the app targets children or joins the Families program). Likely shape: contextual, non-personalized ads on adult teams only, with the Privacy Policy, store privacy labels, and the Data safety form updated first.
 
 - Facebook sign-in, if needed later (was tasks 101 to 103): Meta app, Continue with Facebook, Limited Login on iOS, App Review, and the data-deletion URL (LEGAL-5).
