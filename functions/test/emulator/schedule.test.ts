@@ -8,8 +8,10 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eraseMessage, notifyNewMessage } from '../../src/chat/service.js';
 import { tick } from '../../src/ops/jobs.js';
 import { saveEventSeries } from '../../src/schedule/handlers.js';
-import { dateInZone } from '../../src/schedule/recurrence.js';
-import { followUpEventWrite, recountEventRsvps } from '../../src/schedule/service.js';
+import { removePlayer } from '../../src/players/service.js';
+import { dateInZone, wallTimeToMs } from '../../src/schedule/recurrence.js';
+import { SaveSeriesInput, saveSeries } from '../../src/schedule/series.js';
+import { eventView, followUpEventWrite, recountEventRsvps, settleNextReminder } from '../../src/schedule/service.js';
 import { db } from '../../src/shared/admin.js';
 import { Collections } from '../../src/shared/constants.js';
 import { groupMemberId } from '../../src/shared/ids.js';
@@ -342,6 +344,112 @@ describe('"This and following" (SCHED-6)', () => {
   });
 });
 
+describe('"This and following" on a series that ends after N events (SCHED-6)', () => {
+  /** Every day from 3 days out, ending after [count] events, as the app sends it. */
+  const counted = (count: number, startDate = day(3), extra: object = {}) => ({
+    freq: 'daily', interval: 1, byWeekday: [], startDate, untilDate: null, count, skipDates: [], ...extra,
+  });
+  const teamEvents = async () => (await db().collection(Collections.events).where('groupId', '==', G).get()).size;
+
+  it('keeps 10 events when the app sends the total count from the 5th', async () => {
+    const res = await save('alex', { action: 'create', groupId: G, recurrence: counted(10), template: template() });
+    const events = await eventsOf(res.seriesId);
+    expect(events).toHaveLength(10);
+    const fifth = events[4];
+    // The form loads the series' rule (count 10) and sends it from this event's date.
+    const edit = {
+      action: 'update', eventId: fifth.id, scope: 'following', template: template({ title: 'Team practice' }),
+      recurrence: counted(10, fifth.get('seriesDate')),
+    };
+    const dry = await save('alex', { ...edit, dryRun: true });
+    expect(dry).toMatchObject({ created: 0, updated: 6, removed: 0 });
+    const out = await save('alex', edit);
+    expect(out).toMatchObject({ created: 0, updated: 6, removed: 0 });
+    expect(await teamEvents()).toBe(10);
+    const fresh = await db().collection(Collections.eventSeries).doc(out.seriesId).get();
+    expect(fresh.get('recurrence')).toMatchObject({ startDate: day(7), count: 6 });
+    // A title-only change tells no one.
+    expect(await sends('eventChanged')).toEqual([]);
+  });
+
+  it('applies what is left of the count to a new rule', async () => {
+    const res = await save('alex', { action: 'create', groupId: G, recurrence: counted(10), template: template() });
+    const fifth = (await eventsOf(res.seriesId))[4];
+    // Every other day from day 7, 6 left: 7, 9, 11 stay; 8, 10, 12 go; 13, 15, 17 are new.
+    const out = await save('alex', {
+      action: 'update', eventId: fifth.id, scope: 'following', template: template(),
+      recurrence: counted(10, day(7), { interval: 2 }),
+    });
+    expect(out).toMatchObject({ updated: 3, removed: 3, created: 3 });
+    expect((await eventsOf(out.seriesId)).map((e) => e.get('seriesDate'))).toEqual([day(7), day(9), day(11), day(13), day(15), day(17)]);
+    expect(await teamEvents()).toBe(10);
+  });
+
+  it('lowers the count when one event is deleted, so nothing grows back at the end', async () => {
+    const res = await save('alex', { action: 'create', groupId: G, recurrence: counted(5), template: template() });
+    const events = await eventsOf(res.seriesId);
+    await save('alex', { action: 'delete', eventId: events[1].id, scope: 'this' });
+    const series = await db().collection(Collections.eventSeries).doc(res.seriesId).get();
+    expect(series.get('recurrence')).toMatchObject({ count: 4, skipDates: [day(4)] });
+    // The app then sends the stored rule from the first event.
+    const out = await save('alex', {
+      action: 'update', eventId: events[0].id, scope: 'following', template: template({ title: 'Camp' }),
+      recurrence: counted(4, day(3), { skipDates: [day(4)] }),
+    });
+    expect(out).toMatchObject({ created: 0, updated: 4, removed: 0 });
+    expect(await teamEvents()).toBe(4);
+
+    // Deleting the only event of a 1-event series ends it on that date.
+    const one = await save('alex', { action: 'create', groupId: G, recurrence: counted(1), template: template() });
+    await save('alex', { action: 'delete', eventId: (await eventsOf(one.seriesId))[0].id, scope: 'this' });
+    const ended = await db().collection(Collections.eventSeries).doc(one.seriesId).get();
+    expect(ended.get('recurrence')).toMatchObject({ count: null, untilDate: day(3), skipDates: [day(3)] });
+  });
+});
+
+describe('series edits at a fixed time', () => {
+  const at = (date: string, time: string) => wallTimeToMs(date, time, CHI);
+  const run = (data: object, nowMs: number) => saveSeries(SaveSeriesInput.parse(data), { uid: 'alex', superAdmin: false }, nowMs);
+  const june = { freq: 'daily', interval: 1, byWeekday: [], startDate: '2030-06-01', untilDate: '2030-06-07', count: null, skipDates: [] };
+
+  it("doesn't add a second event on a date whose event already started", async () => {
+    const res = await run({ action: 'create', groupId: G, recurrence: june, template: template({ startTime: '09:00', endTime: '10:00' }) }, Date.now());
+    const third = (await eventsOf(res.seriesId))[2];
+    // 10 AM on Jun 3: that day's 9 AM practice is past; move the rest to 6 PM.
+    const out = await run(
+      { action: 'update', eventId: third.id, scope: 'following', template: template(), recurrence: { ...june, startDate: '2030-06-03' } },
+      at('2030-06-03', '10:00'),
+    );
+    expect(out).toMatchObject({ created: 0, updated: 4, removed: 0 });
+    const all = (await db().collection(Collections.events).where('groupId', '==', G).get()).docs;
+    expect(all).toHaveLength(7);
+    expect(all.filter((e) => e.get('seriesDate') === '2030-06-03')).toHaveLength(1);
+    expect(ms((await eventData(third.id))?.startAt)).toBe(at('2030-06-03', '09:00'));
+  });
+
+  it('keeps a reminder that fell due just before the edit', async () => {
+    const res = await run({ action: 'create', groupId: G, recurrence: june, template: template() }, Date.now());
+    const fifth = (await eventsOf(res.seriesId))[4];
+    // The 1-hour reminder is due at 5:00 PM; the edit lands at 5:02, before the tick.
+    await run({ action: 'update', eventId: fifth.id, scope: 'this', template: template({ title: 'Scrimmage' }) }, at('2030-06-05', '17:02'));
+    expect(ms((await eventData(fifth.id))?.nextReminderAt)).toBe(at('2030-06-05', '17:00'));
+    const sixth = (await eventsOf(res.seriesId))[5];
+    await run({ action: 'update', eventId: sixth.id, scope: 'following', template: template({ title: 'Late' }) }, at('2030-06-06', '17:02'));
+    expect(ms((await eventData(sixth.id))?.nextReminderAt)).toBe(at('2030-06-06', '17:00'));
+  });
+});
+
+describe('the series card (CHAT-11)', () => {
+  it('carries seriesId, and follows the new series when its event moves there', async () => {
+    const { seriesId, upcoming } = await runningSeries();
+    const card = await db().collection(Collections.messages).doc(seriesId).get();
+    expect(card.data()).toMatchObject({ type: 'event', seriesId, eventId: upcoming[0] });
+    const out = await save('alex', { action: 'update', eventId: upcoming[0], scope: 'following', template: template({ title: 'Camp' }) });
+    expect(out.seriesId).not.toBe(seriesId);
+    expect((await db().collection(Collections.messages).doc(seriesId).get()).get('seriesId')).toBe(out.seriesId);
+  });
+});
+
 function dateBefore(date: string): string {
   const d = new Date(`${date}T00:00:00Z`);
   return new Date(d.getTime() - DAY).toISOString().slice(0, 10);
@@ -495,6 +603,51 @@ describe('the events trigger (ARCH §6.4)', () => {
     expect((await db().collection(Collections.rsvps).doc('e1_sam').get()).exists).toBe(false);
     // The card stays; the app shows the event as deleted.
     expect((await db().collection(Collections.messages).doc('e1').get()).exists).toBe(true);
+  });
+});
+
+describe('reminder times from fresh data (SCHED-8)', () => {
+  it('works the trigger out from the event as it is now, not a late snapshot', async () => {
+    const data = oneOff(3 * DAY);
+    await writeEvent('e1', data);
+    // A later edit moved it a day on; this trigger run still carries an older title edit.
+    const moved = Timestamp.fromMillis(ms(data.startAt) + DAY);
+    const current = { ...(await eventData('e1')), startAt: moved, endAt: Timestamp.fromMillis(ms(moved) + 5_400_000) };
+    await db().collection(Collections.events).doc('e1').set(current);
+    await followUpEventWrite('e1', data, { ...data, title: 'Scrimmage', updatedAt: Timestamp.now() });
+    expect(ms((await eventData('e1'))?.nextReminderAt)).toBe(ms(moved) - 1440 * 60_000);
+  });
+
+  it("leaves the tick's write to the edit that moved the event meanwhile", async () => {
+    const data = oneOff(30 * 60_000, { reminderOffsets: [60], nextReminderAt: Timestamp.fromMillis(Date.now() - 60_000) });
+    const ref = db().collection(Collections.events).doc('e1');
+    await ref.set(data);
+    const seen = eventView(data);
+    // Moved to tomorrow, with the trigger's new reminder time, before the tick writes.
+    const moved = Date.now() + DAY;
+    await ref.update({ startAt: Timestamp.fromMillis(moved), endAt: Timestamp.fromMillis(moved + 3_600_000), nextReminderAt: Timestamp.fromMillis(moved - 3_600_000) });
+    await settleNextReminder(ref, seen, Date.now(), 0);
+    expect(ms((await eventData('e1'))?.nextReminderAt)).toBe(moved - 3_600_000);
+    // Unchanged since the tick read it: moves on to the next one (none).
+    await ref.set(data);
+    await settleNextReminder(ref, seen, Date.now(), 0);
+    expect((await eventData('e1'))?.nextReminderAt).toBeNull();
+  });
+});
+
+describe('removing a player (PLAYER-2)', () => {
+  it("deletes the player's answers to upcoming events, and keeps past ones", async () => {
+    await db().collection(Collections.events).doc('y1').set(oneOff(DAY, { groupId: Y, rsvpFor: 'players' }));
+    await db().collection(Collections.events).doc('y0').set(oneOff(-DAY, { groupId: Y, rsvpFor: 'players' }));
+    await rsvp('y1', 'emma', 'going', 'player', Y);
+    await rsvp('y1', 'liam', 'going', 'player', Y);
+    await rsvp('y0', 'emma', 'going', 'player', Y);
+    await removePlayer(Y, 'emma');
+    expect((await db().collection(Collections.rsvps).doc('y1_emma').get()).exists).toBe(false);
+    expect((await db().collection(Collections.rsvps).doc('y0_emma').get()).exists).toBe(true);
+    // The RSVP trigger then recounts.
+    await recountEventRsvps('y1');
+    expect((await eventData('y1'))?.rsvpCounts).toEqual({ going: 1, maybe: 0, notGoing: 0 });
   });
 });
 

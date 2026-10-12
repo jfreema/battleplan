@@ -6,7 +6,7 @@ import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
 import { chunk, trySend } from '../notify/service.js';
-import type { Recurrence } from './recurrence.js';
+import { addDays, dateInZone, type Recurrence } from './recurrence.js';
 
 const MINUTE_MS = 60_000;
 
@@ -18,7 +18,7 @@ const ALREADY_EXISTS = 6;
  * An edit just after a reminder fell due doesn't skip it; the dedupe key
  * keeps it from going twice.
  */
-const REMINDER_GRACE_MS = 5 * MINUTE_MS;
+export const REMINDER_GRACE_MS = 5 * MINUTE_MS;
 
 // ---- Counts (SCHED-1, PLAYER-6) -------------------------------------------
 
@@ -245,9 +245,11 @@ export function eventChangedBody(before: EventView, after: EventView): string | 
  * [nowMs], in the event's zone.
  */
 export function relativeDay(e: EventView, nowMs: number): string {
-  const today = format(nowMs, e.timeZone, { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const tomorrow = format(nowMs + 86_400_000, e.timeZone, { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const day = e.allDay && e.startDate ? format(dateMs(e.startDate), 'UTC', { year: 'numeric', month: '2-digit', day: '2-digit' }) : format(e.startMs, e.timeZone, { year: 'numeric', month: '2-digit', day: '2-digit' });
+  // Tomorrow by the calendar, not now + 24 h: days around a clock change
+  // are 23 or 25 hours long.
+  const today = dateInZone(nowMs, e.timeZone);
+  const tomorrow = addDays(today, 1);
+  const day = e.allDay && e.startDate ? e.startDate : dateInZone(e.startMs, e.timeZone);
   if (day === today) return 'today';
   if (day === tomorrow) return 'tomorrow';
   return `on ${eventDay(e)}`;
@@ -651,17 +653,42 @@ export async function followUpEventWrite(
       });
     }
   }
-  const next = nextReminderAtMs(view, nowMs, REMINDER_GRACE_MS);
-  if (msOf(after.nextReminderAt) !== (next ?? 0)) {
-    updates.nextReminderAt = next === null ? null : Timestamp.fromMillis(next);
-  }
+  const ref = db().collection(Collections.events).doc(eventId);
   if (Object.keys(updates).length) {
-    await db()
-      .collection(Collections.events)
-      .doc(eventId)
-      .update(updates)
-      .catch((e) => logger.warn('event_follow_up_update_failed', { eventId, error: String(e) }));
+    await ref.update(updates).catch((e) => logger.warn('event_follow_up_update_failed', { eventId, error: String(e) }));
   }
+  await settleNextReminder(ref, null, nowMs, REMINDER_GRACE_MS).catch((e) =>
+    logger.warn('event_follow_up_update_failed', { eventId, error: String(e) }),
+  );
+}
+
+/**
+ * Writes an event's nextReminderAt from a fresh read, in a transaction, so
+ * a trigger that runs late or a tick racing an edit never stores a time
+ * worked out from old data. [handled] is the version the tick just sent a
+ * reminder for: when the start, reminders, or cancel have changed since,
+ * the edit's own write already set the time, and this leaves it alone.
+ */
+export async function settleNextReminder(
+  ref: FirebaseFirestore.DocumentReference,
+  handled: EventView | null,
+  nowMs: number,
+  graceMs: number,
+): Promise<void> {
+  await db().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return;
+    const data = snap.data()!;
+    const view = eventView(data);
+    if (handled && !sameReminderInputs(handled, view)) return;
+    const next = nextReminderAtMs(view, nowMs, graceMs);
+    if (msOf(data.nextReminderAt) === (next ?? 0)) return;
+    tx.update(ref, { nextReminderAt: next === null ? null : Timestamp.fromMillis(next) });
+  });
+}
+
+function sameReminderInputs(a: EventView, b: EventView): boolean {
+  return a.startMs === b.startMs && a.canceled === b.canceled && JSON.stringify(a.reminderOffsets) === JSON.stringify(b.reminderOffsets);
 }
 
 /**
@@ -698,8 +725,7 @@ export async function sendDueReminders(now = Timestamp.now()): Promise<number> {
           });
           sent++;
         }
-        const next = nextReminderAtMs(view, nowMs);
-        await doc.ref.update({ nextReminderAt: next === null ? null : Timestamp.fromMillis(next) });
+        await settleNextReminder(doc.ref, view, nowMs, 0);
       } catch (e) {
         logger.error('event_reminder_failed', { eventId: doc.id, error: String(e) });
         return sent; // Try the rest on the next tick rather than loop on it.
@@ -709,12 +735,16 @@ export async function sendDueReminders(now = Timestamp.now()): Promise<number> {
   }
 }
 
-/** A deleted account's RSVPs for upcoming events go; past ones stay (AUTH-10). */
-export async function removeUpcomingRsvps(uid: string): Promise<void> {
+/**
+ * A participant's RSVPs for upcoming events go; past ones stay: a deleted
+ * account (AUTH-10) or a removed player (PLAYER-2). The RSVP trigger then
+ * recounts each event.
+ */
+export async function removeUpcomingRsvps(participantId: string): Promise<void> {
   await forEachPage(
     db()
       .collection(Collections.rsvps)
-      .where('participantId', '==', uid)
+      .where('participantId', '==', participantId)
       .where('eventStartAt', '>=', Timestamp.now()),
     (b, d) => b.delete(d.ref),
   );

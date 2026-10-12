@@ -6,6 +6,7 @@ import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
@@ -79,6 +80,7 @@ void main() {
     Map<String, Group> extraGroups = const {},
     FakeCalendarAdder? calendar,
     FakeMessageRepository? messages,
+    List<Membership> extraMembers = const [],
     bool tapSchedule = true,
   }) async {
     final eventRepo = FakeEventRepository(events);
@@ -100,6 +102,7 @@ void main() {
         testMembership('a', 'sam', name: 'Sam Rivera'),
         for (final id in extraGroups.keys)
           testMembership(id, 'coach', name: 'Coach Lee'),
+        ...extraMembers,
       ],
       rsvpRepo: rsvps,
       playerRepo: players,
@@ -703,14 +706,19 @@ void main() {
   });
 
   group('event cards in chat (CHAT-11)', () {
-    Message card(String eventId) => Message(
+    Message card(
+      String eventId, {
+      String? seriesId,
+      String text = 'Practice',
+    }) => Message(
       id: 'm-$eventId',
       groupId: const GroupId('a'),
       authorId: 'coach',
       authorName: 'Coach Lee',
       type: MessageType.event,
-      text: 'Practice',
+      text: text,
       eventId: eventId,
+      seriesId: seriesId,
       createdAt: DateTime.now().subtract(const Duration(minutes: 1)),
     );
 
@@ -735,6 +743,254 @@ void main() {
         messages: FakeMessageRepository([card('gone')]),
       );
       expect(find.text('Event deleted'), findsOneWidget);
+    });
+
+    testWidgets("a series' card shows the next event once its own is gone", (
+      tester,
+    ) async {
+      final messages = FakeMessageRepository([
+        card(
+          'gone',
+          seriesId: 's',
+          text: 'Practice · Tue and Thu, Oct 13 – Dec 17',
+        ),
+      ]);
+      final rsvps = await openSchedule(
+        tester,
+        tapSchedule: false,
+        events: [
+          event('s-old', days: -3, seriesId: 's', title: 'Old practice'),
+          event('s-2', days: 2, seriesId: 's', title: 'Thursday practice'),
+          event('s-3', days: 4, seriesId: 's', title: 'Later practice'),
+        ],
+        messages: messages,
+      );
+      rsvps.events.series['s'] = const EventSeries(
+        id: 's',
+        groupId: GroupId('a'),
+        timeZone: zone,
+        createdBy: 'coach',
+        recurrence: Recurrence(
+          freq: RepeatFreq.daily,
+          startDate: '2026-10-13',
+          count: 10,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Event deleted'), findsNothing);
+      expect(find.text('Thursday practice'), findsOneWidget);
+      await tester.tap(find.text('Thursday practice'));
+      await tester.pumpAndSettle();
+      expect(find.text('Directions'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // With nothing ahead, it shows the series as posted.
+      for (final id in ['s-2', 's-3']) {
+        await rsvps.events.deleteEvent(rsvps.events.events[id]!);
+      }
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Practice · Tue and Thu, Oct 13 – Dec 17'),
+        findsOneWidget,
+      );
+      expect(find.text('Event deleted'), findsNothing);
+    });
+  });
+
+  group('review fixes', () {
+    testWidgets('on youth events admins set answers for players and '
+        'themselves, not other coaches (Q14)', (tester) async {
+      final players = FakePlayerRepository(const [
+        Player(
+          id: PlayerId('p1'),
+          groupId: GroupId('a'),
+          displayName: 'Emma Rivera',
+        ),
+      ]);
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        teamType: TeamType.youth,
+        players: players,
+        extraMembers: [
+          testMembership('a', 'pat', role: MemberRole.admin, name: 'Pat Kim'),
+        ],
+        events: [event('e1', rsvpFor: RsvpFor.players)],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('Coaches'), findsOneWidget);
+      // Another coach's row does nothing.
+      await tester.ensureVisible(find.text('Pat Kim'));
+      await tester.tap(find.text('Pat Kim'));
+      await tester.pumpAndSettle();
+      expect(find.text('RSVP for Pat Kim'), findsNothing);
+      // Nor is Pat in the "Set RSVP for someone" list.
+      await menu(tester, 'Set RSVP for someone');
+      expect(find.textContaining('Emma'), findsWidgets);
+      expect(
+        find.descendant(
+          of: find.byType(ListView).last,
+          matching: find.text('Pat Kim'),
+        ),
+        findsNothing,
+      );
+      await tester.tap(find.text('Coach Lee').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Going').last);
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.participantId, 'coach');
+    });
+
+    Event allDay(
+      String id, {
+      required int firstDay,
+      int lastDay = 0,
+      String timeZone = zone,
+      String title = 'Tournament',
+      String? seriesId,
+    }) {
+      final first = addDays(today(), firstDay);
+      final last = addDays(today(), lastDay < firstDay ? firstDay : lastDay);
+      return event(id, title: title, seriesId: seriesId).copyWith(
+        allDay: true,
+        timeZone: timeZone,
+        startDate: dateKey(first),
+        endDate: dateKey(last),
+        startAt: ZonedTime.instantOf(timeZone, first, 0),
+        endAt: ZonedTime.instantOf(timeZone, addDays(last, 1), 0),
+      );
+    }
+
+    testWidgets('all-day events stay in Upcoming through their last day, '
+        'whatever their zone (SCHED-9)', (tester) async {
+      final rsvps = await openSchedule(
+        tester,
+        events: [
+          // Midnight in New York is before midnight in Chicago.
+          allDay(
+            'ny',
+            firstDay: 0,
+            timeZone: 'America/New_York',
+            title: 'Jamboree',
+          ),
+          allDay('t', firstDay: -2, lastDay: 1),
+          allDay('done', firstDay: -3, lastDay: -1, title: 'Camp'),
+          event('p'),
+        ],
+      );
+      rsvps.put(
+        Rsvp(
+          eventId: const EventId('ny'),
+          groupId: const GroupId('a'),
+          participantType: ParticipantType.member,
+          participantId: 'coach',
+          participantName: 'Coach Lee',
+          status: RsvpStatus.going,
+          eventStartAt: rsvps.events.events['ny']!.startAt,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Jamboree'), findsOneWidget);
+      expect(find.text('Tournament'), findsOneWidget);
+      expect(find.text('Camp'), findsNothing);
+      // Its answer is read too, though it starts before today here.
+      expect(find.text('Going'), findsOneWidget);
+      // By day: the tournament began two days ago, then today, then
+      // tomorrow.
+      final y = [
+        for (final t in ['Tournament', 'Jamboree', 'Practice'])
+          tester.getTopLeft(find.text(t)).dy,
+      ];
+      expect(y[0], lessThan(y[1]));
+      expect(y[1], lessThan(y[2]));
+
+      await tester.tap(find.text('Past'));
+      await tester.pumpAndSettle();
+      expect(find.text('Camp'), findsOneWidget);
+      expect(find.text('Tournament'), findsNothing);
+      expect(find.text('Jamboree'), findsNothing);
+    });
+
+    testWidgets('Past reads the answers on the events it shows, not the '
+        'oldest', (tester) async {
+      final rsvps = await openSchedule(
+        tester,
+        events: [
+          event('p1', days: -10, title: 'Older game'),
+          event('p2', days: -3, title: 'Newer game'),
+        ],
+      );
+      await tester.tap(find.text('Past'));
+      await tester.pumpAndSettle();
+      final oldest = rsvps.events.events['p1']!.startAt;
+      final todayStart = ZonedTime.instantOf(zone, today(), 0);
+      expect(rsvps.windows.last, (from: oldest, until: todayStart));
+    });
+
+    testWidgets('a "This event" edit of an all-day series event has no '
+        'last day', (tester) async {
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [allDay('s-1', firstDay: 10, seriesId: 's')],
+      );
+      await openDetails(tester, 'Tournament');
+      await menu(tester, 'Edit');
+      await tester.tap(find.text('This event'));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit event'), findsOneWidget);
+      expect(find.text('Last day'), findsNothing);
+      expect(rsvps.events.calls, isEmpty);
+    });
+
+    testWidgets('"This and following" on a series that ends after N events '
+        'previews what saving makes, and says what it adds (SCHED-6)', (
+      tester,
+    ) async {
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [event('s-5', days: 7, seriesId: 's')],
+      );
+      // Daily, 10 events; the 5th is a week from today, 4 come before it.
+      rsvps.events
+        ..dryRunResult = const SeriesResult(created: 2, updated: 4)
+        ..series['s'] = EventSeries(
+          id: 's',
+          groupId: const GroupId('a'),
+          timeZone: zone,
+          createdBy: 'coach',
+          recurrence: Recurrence(
+            freq: RepeatFreq.daily,
+            startDate: dateKey(addDays(today(), 3)),
+            count: 10,
+          ),
+        );
+      await openDetails(tester, 'Practice');
+      await menu(tester, 'Edit');
+      await tester.tap(find.text('This and following events'));
+      await tester.pumpAndSettle();
+      // The whole series' count, as it was made...
+      expect(find.text('10 events'), findsOneWidget);
+      // ...and the 6 left from this one on, as the server keeps them.
+      await tester.scrollUntilVisible(
+        find.textContaining('6 practices · '),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(find.textContaining('6 practices · '), findsOneWidget);
+      expect(find.byType(ActionChip), findsNWidgets(6));
+
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('Adds 2 practices.'), findsOneWidget);
+      await tester.tap(find.text('Save').last);
+      await tester.pumpAndSettle();
+      expect(rsvps.events.calls, [
+        'updateSeries following dry',
+        'updateSeries following',
+      ]);
     });
   });
 }

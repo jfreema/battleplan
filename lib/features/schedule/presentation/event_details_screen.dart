@@ -341,6 +341,15 @@ class _RsvpSection extends ConsumerWidget {
     final allowMaybe = group.settings.allowMaybe;
     final everyone = eventParticipants(event, roster, players);
 
+    final myUid = UserId(ref.watch(authUserProvider).value?.uid ?? '');
+    // Admins set answers, but on youth events only their own among the
+    // coaches (Q14).
+    final canSet = isAdmin && event.takesRsvps && !group.isArchived;
+    VoidCallback? setFor(Participant p) =>
+        canSet && canSetRsvpFor(event, p, myUid)
+        ? () => unawaited(_setRsvpFor(context, ref, event, group, p))
+        : null;
+
     String nameOf(String uid) =>
         roster.where((m) => m.uid.value == uid).firstOrNull?.shortName ??
         l10n.formerMember;
@@ -391,9 +400,7 @@ class _RsvpSection extends ConsumerWidget {
           rsvps: rsvps,
           allowMaybe: allowMaybe,
           nameOf: nameOf,
-          onTap: isAdmin && event.takesRsvps && !group.isArchived
-              ? (p) => unawaited(_setRsvpFor(context, ref, event, group, p))
-              : null,
+          onTap: setFor,
         ),
         if (everyone.staff.isNotEmpty) ...[
           padded(Text(l10n.eventCoaches, style: theme.textTheme.titleSmall)),
@@ -402,9 +409,7 @@ class _RsvpSection extends ConsumerWidget {
             rsvps: rsvps,
             allowMaybe: allowMaybe,
             nameOf: nameOf,
-            onTap: isAdmin && event.takesRsvps && !group.isArchived
-                ? (p) => unawaited(_setRsvpFor(context, ref, event, group, p))
-                : null,
+            onTap: setFor,
           ),
         ],
       ],
@@ -575,8 +580,9 @@ class _AttendeeGroups extends StatelessWidget {
   final bool allowMaybe;
   final String Function(String uid) nameOf;
 
-  /// Admins: set this person's answer (SCHED-4).
-  final void Function(Participant)? onTap;
+  /// Admins: what tapping this person does (set their answer, SCHED-4),
+  /// or null when their row isn't tappable.
+  final VoidCallback? Function(Participant)? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -623,7 +629,7 @@ class _AttendeeGroups extends StatelessWidget {
                 ),
                 title: Text(p.shownName),
                 subtitle: _subtitle(l10n, p, r),
-                onTap: onTap == null ? null : () => onTap!(p),
+                onTap: onTap?.call(p),
               ),
           ],
       ],
@@ -656,6 +662,7 @@ Future<void> _setRsvpForSomeone(
       ? ref.read(playersProvider(group.id)).value ?? const []
       : const <Never>[];
   final everyone = eventParticipants(event, roster, players);
+  final me = UserId(ref.read(authUserProvider).value?.uid ?? '');
   final picked = await showAdaptiveSheet<Participant>(
     context,
     builder: (context) => ListView(
@@ -668,10 +675,11 @@ Future<void> _setRsvpForSomeone(
           ),
         ),
         for (final p in [...everyone.main, ...everyone.staff])
-          ListTile(
-            title: Text(p.shownName),
-            onTap: () => Navigator.of(context).pop(p),
-          ),
+          if (canSetRsvpFor(event, p, me))
+            ListTile(
+              title: Text(p.shownName),
+              onTap: () => Navigator.of(context).pop(p),
+            ),
       ],
     ),
   );

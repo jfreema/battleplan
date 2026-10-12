@@ -216,6 +216,89 @@ final class EventFamily extends $Family
   String toString() => r'eventProvider';
 }
 
+/// A series' next event from now on, live, for its chat card once the
+/// card's own event is gone (CHAT-11). Null when none is left.
+
+@ProviderFor(nextSeriesEvent)
+final nextSeriesEventProvider = NextSeriesEventFamily._();
+
+/// A series' next event from now on, live, for its chat card once the
+/// card's own event is gone (CHAT-11). Null when none is left.
+
+final class NextSeriesEventProvider
+    extends $FunctionalProvider<AsyncValue<Event?>, Event?, Stream<Event?>>
+    with $FutureModifier<Event?>, $StreamProvider<Event?> {
+  /// A series' next event from now on, live, for its chat card once the
+  /// card's own event is gone (CHAT-11). Null when none is left.
+  NextSeriesEventProvider._({
+    required NextSeriesEventFamily super.from,
+    required (GroupId, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'nextSeriesEventProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$nextSeriesEventHash();
+
+  @override
+  String toString() {
+    return r'nextSeriesEventProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Event?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Event?> create(Ref ref) {
+    final argument = this.argument as (GroupId, String);
+    return nextSeriesEvent(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NextSeriesEventProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$nextSeriesEventHash() => r'b81042b3431ca17971cbb32e2bc08a03a2a22921';
+
+/// A series' next event from now on, live, for its chat card once the
+/// card's own event is gone (CHAT-11). Null when none is left.
+
+final class NextSeriesEventFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Event?>, (GroupId, String)> {
+  NextSeriesEventFamily._()
+    : super(
+        retry: null,
+        name: r'nextSeriesEventProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A series' next event from now on, live, for its chat card once the
+  /// card's own event is gone (CHAT-11). Null when none is left.
+
+  NextSeriesEventProvider call(GroupId groupId, String seriesId) =>
+      NextSeriesEventProvider._(argument: (groupId, seriesId), from: this);
+
+  @override
+  String toString() => r'nextSeriesEventProvider';
+}
+
 /// A repeating series, live, for "Repeats weekly…" (SCHED-4).
 
 @ProviderFor(eventSeries)
@@ -590,17 +673,20 @@ final class MyRsvpsFamily extends $Family
 }
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
-/// first): the first 50 live, then pages of 50 (ARCH §5.3).
+/// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
+/// go by their dates instead (see [isUpcoming]).
 
 @ProviderFor(TeamEvents)
 final teamEventsProvider = TeamEventsFamily._();
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
-/// first): the first 50 live, then pages of 50 (ARCH §5.3).
+/// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
+/// go by their dates instead (see [isUpcoming]).
 final class TeamEventsProvider
     extends $NotifierProvider<TeamEvents, EventListState> {
   /// One team's Upcoming (from the start of today) or Past (before it, newest
-  /// first): the first 50 live, then pages of 50 (ARCH §5.3).
+  /// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
+  /// go by their dates instead (see [isUpcoming]).
   TeamEventsProvider._({
     required TeamEventsFamily super.from,
     required (GroupId, {bool past}) super.argument,
@@ -645,10 +731,11 @@ final class TeamEventsProvider
   }
 }
 
-String _$teamEventsHash() => r'3fe0da1f5c917c7e9be96d08242f391d75692874';
+String _$teamEventsHash() => r'60c36ad65b4e5908d4c7617db006e9a0ae809027';
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
-/// first): the first 50 live, then pages of 50 (ARCH §5.3).
+/// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
+/// go by their dates instead (see [isUpcoming]).
 
 final class TeamEventsFamily extends $Family
     with
@@ -669,7 +756,8 @@ final class TeamEventsFamily extends $Family
       );
 
   /// One team's Upcoming (from the start of today) or Past (before it, newest
-  /// first): the first 50 live, then pages of 50 (ARCH §5.3).
+  /// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
+  /// go by their dates instead (see [isUpcoming]).
 
   TeamEventsProvider call(GroupId groupId, {required bool past}) =>
       TeamEventsProvider._(argument: (groupId, past: past), from: this);
@@ -679,7 +767,8 @@ final class TeamEventsFamily extends $Family
 }
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
-/// first): the first 50 live, then pages of 50 (ARCH §5.3).
+/// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
+/// go by their dates instead (see [isUpcoming]).
 
 abstract class _$TeamEvents extends $Notifier<EventListState> {
   late final _$args = ref.$arg as (GroupId, {bool past});
@@ -817,7 +906,7 @@ final class AllTeamsEventsProvider
   }
 }
 
-String _$allTeamsEventsHash() => r'2ab1b8b716bfeb6aa3cad20b2997d84397f6f6c3';
+String _$allTeamsEventsHash() => r'0b59f13460a46b361f7c0ed88d1e226c0a58eba1';
 
 /// Every team's Upcoming or Past merged (SCHED-2), one query per team.
 /// The merged list stops where the team with the least loaded runs out,
@@ -845,18 +934,14 @@ final class AllTeamsEventsFamily extends $Family
   String toString() => r'allTeamsEventsProvider';
 }
 
-/// A month of one team's events for the calendar (SCHED-1). [month] is
-/// any day in it (date-only); the month runs midnight to midnight in the
-/// viewer's zone.
+/// A team's events starting in [from, until), live.
 
-@ProviderFor(monthEvents)
-final monthEventsProvider = MonthEventsFamily._();
+@ProviderFor(eventsInRange)
+final eventsInRangeProvider = EventsInRangeFamily._();
 
-/// A month of one team's events for the calendar (SCHED-1). [month] is
-/// any day in it (date-only); the month runs midnight to midnight in the
-/// viewer's zone.
+/// A team's events starting in [from, until), live.
 
-final class MonthEventsProvider
+final class EventsInRangeProvider
     extends
         $FunctionalProvider<
           AsyncValue<List<Event>>,
@@ -864,9 +949,188 @@ final class MonthEventsProvider
           Stream<List<Event>>
         >
     with $FutureModifier<List<Event>>, $StreamProvider<List<Event>> {
-  /// A month of one team's events for the calendar (SCHED-1). [month] is
-  /// any day in it (date-only); the month runs midnight to midnight in the
-  /// viewer's zone.
+  /// A team's events starting in [from, until), live.
+  EventsInRangeProvider._({
+    required EventsInRangeFamily super.from,
+    required (GroupId, DateTime, DateTime) super.argument,
+  }) : super(
+         retry: null,
+         name: r'eventsInRangeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$eventsInRangeHash();
+
+  @override
+  String toString() {
+    return r'eventsInRangeProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Event>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Event>> create(Ref ref) {
+    final argument = this.argument as (GroupId, DateTime, DateTime);
+    return eventsInRange(ref, argument.$1, argument.$2, argument.$3);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EventsInRangeProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$eventsInRangeHash() => r'9eef473679afe800b1e58d0f15c270e989aa624c';
+
+/// A team's events starting in [from, until), live.
+
+final class EventsInRangeFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          Stream<List<Event>>,
+          (GroupId, DateTime, DateTime)
+        > {
+  EventsInRangeFamily._()
+    : super(
+        retry: null,
+        name: r'eventsInRangeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A team's events starting in [from, until), live.
+
+  EventsInRangeProvider call(GroupId groupId, DateTime from, DateTime until) =>
+      EventsInRangeProvider._(argument: (groupId, from, until), from: this);
+
+  @override
+  String toString() => r'eventsInRangeProvider';
+}
+
+/// A team's latest 50 events starting before [before], live.
+
+@ProviderFor(eventsBefore)
+final eventsBeforeProvider = EventsBeforeFamily._();
+
+/// A team's latest 50 events starting before [before], live.
+
+final class EventsBeforeProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Event>>,
+          List<Event>,
+          Stream<List<Event>>
+        >
+    with $FutureModifier<List<Event>>, $StreamProvider<List<Event>> {
+  /// A team's latest 50 events starting before [before], live.
+  EventsBeforeProvider._({
+    required EventsBeforeFamily super.from,
+    required (GroupId, DateTime) super.argument,
+  }) : super(
+         retry: null,
+         name: r'eventsBeforeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$eventsBeforeHash();
+
+  @override
+  String toString() {
+    return r'eventsBeforeProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Event>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Event>> create(Ref ref) {
+    final argument = this.argument as (GroupId, DateTime);
+    return eventsBefore(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EventsBeforeProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$eventsBeforeHash() => r'ded03215e13d8f60444be6e42f030fdb04d0fc66';
+
+/// A team's latest 50 events starting before [before], live.
+
+final class EventsBeforeFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<Event>>, (GroupId, DateTime)> {
+  EventsBeforeFamily._()
+    : super(
+        retry: null,
+        name: r'eventsBeforeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A team's latest 50 events starting before [before], live.
+
+  EventsBeforeProvider call(GroupId groupId, DateTime before) =>
+      EventsBeforeProvider._(argument: (groupId, before), from: this);
+
+  @override
+  String toString() => r'eventsBeforeProvider';
+}
+
+/// A month of one team's events for the calendar (SCHED-1), for every cell
+/// of its grid (see [calendarWindow]), with the all-day events that began
+/// before and run into it, such as a tournament from the last days of the
+/// month before.
+
+@ProviderFor(monthEvents)
+final monthEventsProvider = MonthEventsFamily._();
+
+/// A month of one team's events for the calendar (SCHED-1), for every cell
+/// of its grid (see [calendarWindow]), with the all-day events that began
+/// before and run into it, such as a tournament from the last days of the
+/// month before.
+
+final class MonthEventsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Event>>,
+          AsyncValue<List<Event>>,
+          AsyncValue<List<Event>>
+        >
+    with $Provider<AsyncValue<List<Event>>> {
+  /// A month of one team's events for the calendar (SCHED-1), for every cell
+  /// of its grid (see [calendarWindow]), with the all-day events that began
+  /// before and run into it, such as a tournament from the last days of the
+  /// month before.
   MonthEventsProvider._({
     required MonthEventsFamily super.from,
     required (GroupId, DateTime) super.argument,
@@ -890,14 +1154,22 @@ final class MonthEventsProvider
 
   @$internal
   @override
-  $StreamProviderElement<List<Event>> $createElement(
+  $ProviderElement<AsyncValue<List<Event>>> $createElement(
     $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
+  ) => $ProviderElement(pointer);
 
   @override
-  Stream<List<Event>> create(Ref ref) {
+  AsyncValue<List<Event>> create(Ref ref) {
     final argument = this.argument as (GroupId, DateTime);
     return monthEvents(ref, argument.$1, argument.$2);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AsyncValue<List<Event>> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AsyncValue<List<Event>>>(value),
+    );
   }
 
   @override
@@ -911,14 +1183,19 @@ final class MonthEventsProvider
   }
 }
 
-String _$monthEventsHash() => r'e145233a6c4f24c9595cda2179bb8d1eb258a333';
+String _$monthEventsHash() => r'1a42e448ac6eab58255072d119daa8bc5e53f531';
 
-/// A month of one team's events for the calendar (SCHED-1). [month] is
-/// any day in it (date-only); the month runs midnight to midnight in the
-/// viewer's zone.
+/// A month of one team's events for the calendar (SCHED-1), for every cell
+/// of its grid (see [calendarWindow]), with the all-day events that began
+/// before and run into it, such as a tournament from the last days of the
+/// month before.
 
 final class MonthEventsFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<List<Event>>, (GroupId, DateTime)> {
+    with
+        $FunctionalFamilyOverride<
+          AsyncValue<List<Event>>,
+          (GroupId, DateTime)
+        > {
   MonthEventsFamily._()
     : super(
         retry: null,
@@ -928,9 +1205,10 @@ final class MonthEventsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// A month of one team's events for the calendar (SCHED-1). [month] is
-  /// any day in it (date-only); the month runs midnight to midnight in the
-  /// viewer's zone.
+  /// A month of one team's events for the calendar (SCHED-1), for every cell
+  /// of its grid (see [calendarWindow]), with the all-day events that began
+  /// before and run into it, such as a tournament from the last days of the
+  /// month before.
 
   MonthEventsProvider call(GroupId groupId, DateTime month) =>
       MonthEventsProvider._(argument: (groupId, month), from: this);

@@ -7,7 +7,8 @@ import 'package:battleplan/features/schedule/domain/rsvp.dart';
 /// counts them.
 abstract interface class RsvpRepository {
   /// My answers on a team's events starting in [from, until), for me and
-  /// my players ([participantIds]), live (ARCH §6.2 "My RSVPs").
+  /// my players ([participantIds]), live (ARCH §6.2 "My RSVPs"): all of
+  /// them, so callers keep the window to the events they show.
   Stream<List<Rsvp>> watchMine(
     GroupId groupId,
     List<String> participantIds, {

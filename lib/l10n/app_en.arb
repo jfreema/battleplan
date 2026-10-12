@@ -958,6 +958,7 @@
   "seriesDeleteTitle": "Delete a repeating event",
   "seriesSaveTitle": "Save changes to the series?",
   "seriesRemoves": "Removes {events}; {people}.",
+  "seriesAdds": "Adds {events}.",
   "peopleHadAnswered": "{count, plural, =0{nobody had answered} =1{1 person had answered} other{{count} people had answered}}",
   "seriesCreated": "Added {events}."
 }

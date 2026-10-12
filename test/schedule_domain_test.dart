@@ -14,6 +14,7 @@ import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_draft.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
+import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/l10n/gen/app_localizations_en.dart';
@@ -182,6 +183,55 @@ void main() {
   });
 
   group('the event form (SCHED-3)', () {
+    test('a "This and following" preview starts on the series date and '
+        "keeps a count series' total, as the server saves it (SCHED-6)", () {
+      // Tue and Thu, 10 events, Oct 20 skipped: Oct 13, 15, 22, 27, 29,
+      // Nov 3, 5, 10, 12, 17.
+      const old = Recurrence(
+        freq: RepeatFreq.weekly,
+        startDate: '2026-10-13',
+        byWeekday: [2, 4],
+        count: 10,
+        skipDates: ['2026-10-20'],
+      );
+      expect(datesBefore(old, '2026-10-27'), 3);
+      // The Oct 27 event was moved to Wed Oct 28 with "This event".
+      final draft = EventDraft(
+        timeZone: 'America/Chicago',
+        title: 'Practice',
+        date: DateTime.utc(2026, 10, 28),
+        repeat: RepeatRule.fromRecurrence(old),
+        seriesFrom: '2026-10-27',
+        countBefore: datesBefore(old, '2026-10-27'),
+      );
+      // Sent: the whole series' count, from the series date.
+      expect(draft.recurrence?.startDate, '2026-10-27');
+      expect(draft.recurrence?.count, 10);
+      // Shown: the 7 the server keeps from there on.
+      expect(draft.savedRecurrence?.count, 7);
+      expect(draft.seriesDates?.dates, [
+        '2026-10-27',
+        '2026-10-29',
+        '2026-11-03',
+        '2026-11-05',
+        '2026-11-10',
+        '2026-11-12',
+        '2026-11-17',
+      ]);
+      expect(draft.problemAt(DateTime.utc(2026, 10, 2)), isNull);
+      // At least one, even when the count is lowered below what's past.
+      final fewer = draft.copyWith(repeat: draft.repeat!.copyWith(count: 2));
+      expect(fewer.seriesDates?.dates, ['2026-10-27']);
+      // A rule that ends on a date is left as it is.
+      final until = draft.copyWith(
+        repeat: draft.repeat!.copyWith(
+          endsOnDate: true,
+          untilDate: '2026-11-05',
+        ),
+      );
+      expect(until.seriesDates?.dates.length, 4);
+    });
+
     test('a game left untitled is "vs. Eagles" or "@ Eagles"', () {
       expect(autoGameTitle(' Eagles ', null), 'vs. Eagles');
       expect(autoGameTitle('Eagles', HomeAway.home), 'vs. Eagles');
@@ -328,6 +378,42 @@ void main() {
   });
 
   group('who may do what (Q12, PLAYER-6, Q14)', () {
+    test('admins set answers for players and themselves on youth events, '
+        'and for anyone on adult events (SCHED-4, Q14)', () {
+      final youth = Event(
+        id: const EventId('e'),
+        groupId: const GroupId('g'),
+        type: EventType.practice,
+        title: 'Practice',
+        startAt: DateTime.utc(2026, 10, 13, 23),
+        endAt: DateTime.utc(2026, 10, 14, 0, 30),
+        timeZone: 'America/Chicago',
+        createdBy: 'a',
+        rsvpFor: RsvpFor.players,
+      );
+      const me = UserId('a');
+      const self = Participant(
+        type: ParticipantType.member,
+        id: 'a',
+        name: 'Coach A',
+      );
+      const otherCoach = Participant(
+        type: ParticipantType.member,
+        id: 'b',
+        name: 'Coach B',
+      );
+      const player = Participant(
+        type: ParticipantType.player,
+        id: 'p1',
+        name: 'Emma',
+      );
+      expect(canSetRsvpFor(youth, self, me), isTrue);
+      expect(canSetRsvpFor(youth, player, me), isTrue);
+      expect(canSetRsvpFor(youth, otherCoach, me), isFalse);
+      final adult = youth.copyWith(rsvpFor: RsvpFor.members);
+      expect(canSetRsvpFor(adult, otherCoach, me), isTrue);
+    });
+
     const group = Group(
       id: GroupId('a'),
       name: 'Thunder',

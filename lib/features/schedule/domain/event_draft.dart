@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
@@ -40,6 +42,16 @@ abstract class EventDraft with _$EventDraft {
 
     /// Null: doesn't repeat (the default).
     RepeatRule? repeat,
+
+    /// On a "This and following" edit, the edited event's series date: the
+    /// new rule starts there, as the server starts it, even when the event
+    /// was moved to another day (SCHED-6).
+    String? seriesFrom,
+
+    /// On a "This and following" edit, how many of the old series' events
+    /// fall before [seriesFrom]. A rule that ends after N events counts
+    /// the whole series, so the server leaves these out (SCHED-6).
+    @Default(0) int countBefore,
   }) = _EventDraft;
 
   const new _();
@@ -126,15 +138,16 @@ abstract class EventDraft with _$EventDraft {
     );
   }
 
-  /// The series rule, starting on [date]; null when it doesn't repeat or
-  /// has no date yet.
+  /// The series rule as sent, starting on [date] (on a "This and
+  /// following" edit, on [seriesFrom]); null when it doesn't repeat or has
+  /// no date yet. Its count is the whole series' (see [savedRecurrence]).
   Recurrence? get recurrence {
     final r = repeat;
     final d = date;
     if (r == null || d == null) return null;
     return Recurrence(
       freq: r.freq,
-      startDate: dateKey(d),
+      startDate: seriesFrom ?? dateKey(d),
       interval: r.interval,
       byWeekday: r.freq == RepeatFreq.weekly
           ? ([...r.byWeekday]..sort())
@@ -145,9 +158,19 @@ abstract class EventDraft with _$EventDraft {
     );
   }
 
-  /// The series' dates for the form's preview (SCHED-3).
+  /// The rule as the server saves it: on a "This and following" edit, a
+  /// rule that ends after N events keeps only those left after the
+  /// [countBefore] that came before this one, at least one (SCHED-6).
+  Recurrence? get savedRecurrence {
+    final r = recurrence;
+    if (r == null || seriesFrom == null || r.count == null) return r;
+    return r.copyWith(count: math.max(1, r.count! - countBefore));
+  }
+
+  /// The series' dates for the form's preview (SCHED-3): exactly what
+  /// saving makes.
   SeriesDates? get seriesDates =>
-      recurrence == null ? null : expandRecurrence(recurrence!);
+      savedRecurrence == null ? null : expandRecurrence(savedRecurrence!);
 
   /// The event's fields without dates (`eventSeries.template`).
   EventTemplate get template => EventTemplate(
@@ -198,7 +221,7 @@ abstract class EventDraft with _$EventDraft {
       if (!rsvpDeadline!.isBefore(startAt!)) return DraftProblem.deadline;
     }
     if (repeat != null) {
-      final rule = recurrence!;
+      final rule = savedRecurrence!;
       if (!rule.isValid) return DraftProblem.repeat;
       if (expandRecurrence(rule).dates.isEmpty) return DraftProblem.repeat;
     }

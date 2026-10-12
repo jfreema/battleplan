@@ -39,6 +39,7 @@ import {
   notifyEventAudience,
   postEventCard,
   refreshRsvpStartTimes,
+  REMINDER_GRACE_MS,
   seriesCanceledBody,
   seriesChangedBody,
   seriesCreatedBody,
@@ -213,9 +214,13 @@ function withoutOverrides(fields: Record<string, unknown>, overrides: string[]):
   return out;
 }
 
-/** With reminders computed, as the events trigger would (it skips series events). */
+/**
+ * With reminders computed, as the events trigger would (it skips series
+ * events), with the same one-tick grace: an edit just after a reminder fell
+ * due doesn't skip it.
+ */
 function withReminder(data: Record<string, unknown>, nowMs: number): Record<string, unknown> {
-  const next = nextReminderAtMs(eventView(data), nowMs);
+  const next = nextReminderAtMs(eventView(data), nowMs, REMINDER_GRACE_MS);
   return { ...data, nextReminderAt: next === null ? null : Timestamp.fromMillis(next) };
 }
 
@@ -508,6 +513,21 @@ async function seriesEvents(seriesId: string): Promise<FirebaseFirestore.QueryDo
 }
 
 /**
+ * The rule a "This and following" edit from [from] writes. A series that
+ * ends after N events counts all of them, before and after the edit: the
+ * app sends the total it loaded, so the new part keeps what's left, N
+ * minus the dates the old rule made before [from] (at least 1). The app's
+ * preview works it out the same way. A rule that ends on a date is taken
+ * as sent; with no rule sent, the old one carries on from [from].
+ */
+export function followingRule(old: Recurrence, input: Recurrence | undefined, from: string): Recurrence {
+  const rule = { ...(input ?? old), startDate: from };
+  if (rule.count === null) return rule;
+  const before = expandDates(old).filter((d) => d < from).length;
+  return { ...rule, count: Math.max(1, rule.count - before) };
+}
+
+/**
  * "This and following" (SCHED-6): the old series ends the day before this
  * event, and a new one starts on its date with the new rule and template.
  * Upcoming events on dates the new rule still produces keep their docs and
@@ -529,20 +549,16 @@ async function updateFollowing(
   const old = series.get('recurrence') as Recurrence;
   const all = await seriesEvents(oldId);
   const affected = all.filter((e) => seriesDateOf(e.data()) >= from && startMsOf(e.data()) >= nowMs);
-  const recurrence: Recurrence = input
-    ? { ...input, startDate: from }
-    : {
-        ...old,
-        startDate: from,
-        // A series that ends after N events keeps the rest of them.
-        count: old.count === null ? null : Math.max(1, old.count - expandDates(old).filter((d) => d < from).length),
-      };
+  const recurrence = followingRule(old, input, from);
   const dates = expandDates(recurrence);
   if (!dates.length) throw new HttpsError('invalid-argument', 'no-dates');
   const split = all.some((e) => seriesDateOf(e.data()) < from);
   const newId = split ? db().collection(Collections.eventSeries).doc().id : oldId;
 
   const byDate = new Map(affected.map((e) => [seriesDateOf(e.data()), e]));
+  // A date that already has an event of the series, even a past one (an
+  // edit from today's practice after it started), gets no second one.
+  const taken = new Set(all.map((e) => seriesDateOf(e.data())));
   const keep = new Set(dates);
   const updates: { doc: FirebaseFirestore.QueryDocumentSnapshot; data: Record<string, unknown> }[] = [];
   const creates: Record<string, unknown>[] = [];
@@ -558,7 +574,7 @@ async function updateFollowing(
       const next = withReminder({ ...cur, ...fields, notifyTeam: template.notifyTeam, postToChat: template.postToChat, seriesId: newId, updatedAt: now }, nowMs);
       if (timeOrPlaceChanged(eventView(cur), eventView(next))) changed = true;
       updates.push({ doc: existing, data: next });
-    } else if (occ.startMs >= nowMs) {
+    } else if (!taken.has(date) && occ.startMs >= nowMs) {
       creates.push(
         newSeriesEvent(
           groupId,
@@ -611,6 +627,7 @@ async function updateFollowing(
   removed.forEach((e) => writes.push((b) => b.delete(e.ref)));
   await commitAll(writes);
   await deleteEventRsvps(removed.map((e) => e.id));
+  if (split && messageId) await followSplit(messageId, oldId, newId, new Set(affected.map((e) => e.id)));
   const moved = new Map(
     updates
       .filter((u) => changedFields({ v: u.doc.get('startAt') }, { v: u.data.startAt }).length > 0)
@@ -642,6 +659,18 @@ async function updateFollowing(
     });
   }
   return result;
+}
+
+/**
+ * After a split, the series card (message seriesId) follows the new series
+ * when its event moved there or went, so the app's fallback to the series'
+ * next event finds the events still ahead. A card on a past event stays.
+ */
+async function followSplit(messageId: string, oldId: string, newId: string, affectedIds: Set<string>): Promise<void> {
+  const ref = db().collection(Collections.messages).doc(messageId);
+  const card = await ref.get();
+  if (!card.exists || card.get('seriesId') !== oldId || !affectedIds.has(String(card.get('eventId')))) return;
+  await ref.update({ seriesId: newId });
 }
 
 /**
@@ -699,6 +728,27 @@ async function cancelEvents(run: Run, scope: 'this' | 'following', dryRun: boole
 }
 
 /**
+ * Skips [date] in a series. A series that ends after N events (skip dates
+ * don't count) also drops to N - 1, so it doesn't grow a replacement after
+ * its last date; its last event gone, it ends on that date instead.
+ */
+async function skipDate(ref: FirebaseFirestore.DocumentReference, date: string, now: Timestamp): Promise<void> {
+  await db().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return;
+    const r = snap.get('recurrence') as Recurrence;
+    const skips = r.skipDates ?? [];
+    if (skips.includes(date) || skips.length >= Limits.seriesSkipDatesMax) return;
+    const changes: Record<string, unknown> = { 'recurrence.skipDates': FieldValue.arrayUnion(date), updatedAt: now };
+    if (typeof r.count === 'number') {
+      if (r.count > 1) changes['recurrence.count'] = r.count - 1;
+      else Object.assign(changes, { 'recurrence.count': null, 'recurrence.untilDate': date });
+    }
+    tx.update(ref, changes);
+  });
+}
+
+/**
  * Deletes this event, or this and every later upcoming one, with their
  * RSVPs and no notification (SCHED-7). Deleting one event skips its date
  * in the series, so a later "this and following" edit doesn't bring it
@@ -718,10 +768,7 @@ async function deleteEvents(run: Run, scope: 'this' | 'following', dryRun: boole
   await commitAll(targets.map((e) => (b) => b.delete(e.ref)));
   await deleteEventRsvps(targets.map((e) => e.id));
   if (scope === 'this') {
-    const skips = (series.get('recurrence.skipDates') as string[] | undefined) ?? [];
-    if (skips.length < Limits.seriesSkipDatesMax) {
-      await series.ref.update({ 'recurrence.skipDates': FieldValue.arrayUnion(from), updatedAt: now });
-    }
+    await skipDate(series.ref, from, now);
   } else if (all.length === targets.length) {
     await series.ref.delete();
   } else {

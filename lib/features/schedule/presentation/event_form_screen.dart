@@ -134,9 +134,16 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         source,
         duplicate: widget.duplicateOf != null,
       );
-      if (_following && widget.series != null) {
+      final from = _editing?.seriesDate;
+      if (_following && widget.series != null && from != null) {
+        final old = widget.series!.recurrence;
+        // The rule starts again on this event's series date, where the
+        // server starts it, and keeps the whole series' count, less the
+        // events before (SCHED-6).
         _draft = _draft.copyWith(
-          repeat: RepeatRule.fromRecurrence(widget.series!.recurrence),
+          repeat: RepeatRule.fromRecurrence(old),
+          seriesFrom: from,
+          countBefore: datesBefore(old, from),
         );
       }
     } else {
@@ -322,15 +329,15 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
           dryRun: true,
         );
         if (!mounted) return;
-        final removes = removalLine(l10n, draft.type, dry);
-        if (removes != null) {
+        final changes = seriesChangeLine(l10n, draft.type, dry);
+        if (changes != null) {
           final ok = await showConfirmDialog(
             context,
             title: l10n.seriesSaveTitle,
-            message: removes,
+            message: changes,
             confirmLabel: l10n.save,
             cancelLabel: l10n.cancel,
-            destructive: true,
+            destructive: dry.removed > 0,
           );
           if (!ok || !mounted) return;
         }
@@ -502,7 +509,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                   value: d.allDay,
                   onChanged: (v) => _set((d) => d.copyWith(allDay: v)),
                 ),
-                if (d.allDay && !_repeats(d))
+                // A series event is one day; "This event" can move it but
+                // not stretch it.
+                if (d.allDay && !_repeats(d) && !_seriesEdit)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(AppIcons.event),
@@ -732,7 +741,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final r = d.repeat;
-    final rule = d.recurrence;
+    final rule = d.savedRecurrence;
     final dates = d.seriesDates;
     final firstDay = MaterialLocalizations.of(context).firstDayOfWeekIndex;
     // ISO weekdays in the locale's order (Sunday first in the US).

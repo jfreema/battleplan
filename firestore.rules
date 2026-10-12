@@ -460,11 +460,14 @@ service cloud.firestore {
     function eventCreatorOk(g) {
       return isMember(g) && active(g) && (isAdmin(g) || settings(g).membersCanCreateEvents == true);
     }
+    // Super admins too, as saveEventSeries lets them change series events.
     function eventEditorOk(e) {
       return e.get('seriesId', null) == null
-        && isMember(e.groupId) && active(e.groupId)
-        && (isAdmin(e.groupId)
-            || (e.createdBy == uid() && settings(e.groupId).membersCanCreateEvents == true));
+        && active(e.groupId)
+        && (superAdmin()
+            || isAdmin(e.groupId)
+            || (isMember(e.groupId) && e.createdBy == uid()
+                && settings(e.groupId).membersCanCreateEvents == true));
     }
 
     // An event's own fields (SCHED-3, ARCH §6.2). Game fields only on games;
@@ -522,9 +525,11 @@ service cloud.firestore {
       allow get: if isMember(resource.data.groupId);
       allow list: if boundedQuery() && isMember(resource.data.groupId);
 
+      // eventStartAt may follow a moved event (rsvpWriteOk pins it to the
+      // event's start), so an answer made around a reschedule still saves.
       allow create, update: if rsvpWriteOk(rsvpId)
         && (request.method == 'create' || onlyChanges(['status', 'note', 'guests',
-            'respondedBy', 'updatedAt', 'participantName']));
+            'respondedBy', 'updatedAt', 'participantName', 'eventStartAt']));
     }
 
     function rsvpWriteOk(rsvpId) {
@@ -549,6 +554,8 @@ service cloud.firestore {
         // A note up to 200 characters; guest counts wait for v1.1 (SCHED-12).
         && r.get('note', '') is string && r.get('note', '').size() <= 200
         && r.get('guests', 0) == 0
+        // The member's or player's name, at most a displayName long.
+        && r.get('participantName', '') is string && r.get('participantName', '').size() <= 60
         && r.respondedBy == uid()
         && r.updatedAt == request.time
         && r.eventStartAt == event.startAt

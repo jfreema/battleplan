@@ -53,6 +53,21 @@ String? removalLine(AppLocalizations l10n, EventType type, SeriesResult dry) =>
         l10n.peopleHadAnswered(dry.removedRsvps),
       );
 
+/// What a "This and following" save does to the series, before it does
+/// it (SCHED-6): "Adds 2 practices." and "Removes 4 practices; 9 people
+/// had answered.", or null when it adds and removes nothing.
+String? seriesChangeLine(
+  AppLocalizations l10n,
+  EventType type,
+  SeriesResult dry,
+) {
+  final parts = [
+    if (dry.created > 0) l10n.seriesAdds(eventCount(l10n, type, dry.created)),
+    ?removalLine(l10n, type, dry),
+  ];
+  return parts.isEmpty ? null : parts.join(' ');
+}
+
 /// The message for a failed action.
 String failureText(AppLocalizations l10n, AppFailure e) => switch (e) {
   StorageFull() => l10n.storageFullMessage,

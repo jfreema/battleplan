@@ -436,7 +436,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               if (isPoll)
                 PollCard(pollId: PollId(m.pollId ?? m.id), groupId: m.groupId)
               else
-                EventCard(eventId: EventId(m.eventId!), groupId: m.groupId),
+                EventCard(
+                  eventId: EventId(m.eventId!),
+                  groupId: m.groupId,
+                  seriesId: m.seriesId,
+                  text: m.text,
+                ),
             ],
           )
         : Column(

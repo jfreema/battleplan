@@ -29,6 +29,10 @@ abstract class Message with _$Message {
     /// The event an event card shows (CHAT-11, SCHED-3).
     String? eventId,
 
+    /// A repeating series' card: its series, so the card can show the next
+    /// event once [eventId] is gone (SCHED-3).
+    String? seriesId,
+
     /// The quote a reply shows, written by the server (CHAT-13, D25).
     ReplyPreview? replyPreview,
 

@@ -17,7 +17,7 @@ import {
   type OccurrenceTimes,
   type Recurrence,
 } from '../../src/schedule/recurrence.js';
-import { normalizeTemplate, SaveSeriesInput } from '../../src/schedule/series.js';
+import { followingRule, normalizeTemplate, SaveSeriesInput } from '../../src/schedule/series.js';
 import {
   audienceOf,
   countsOf,
@@ -301,6 +301,16 @@ describe('reminders (SCHED-8)', () => {
     expect(dueReminderOffset(view({ canceled: true }), start - 10 * min)).toBeNull();
   });
 
+  it("says tomorrow by the calendar, the evening before a spring-forward day", () => {
+    // Sun, Mar 8, 2026 is 23 hours long in Chicago: 1:00 AM CST is 07:00Z.
+    const early = view({ startMs: Date.parse('2026-03-08T07:00:00Z'), endMs: Date.parse('2026-03-08T08:00:00Z'), location: null });
+    // Sat, Mar 7, 11:00 PM CST: now + 24 h is already Mar 9.
+    expect(reminderBody(early, Date.parse('2026-03-08T05:00:00Z'))).toBe('Reminder: Practice tomorrow at 1:00 AM');
+    // And the evening before a fall-back day (25 hours long).
+    const fall = view({ startMs: Date.parse('2026-11-01T23:30:00Z'), endMs: Date.parse('2026-11-02T00:30:00Z'), location: null });
+    expect(reminderBody(fall, Date.parse('2026-11-01T04:30:00Z'))).toBe('Reminder: Practice tomorrow at 5:30 PM');
+  });
+
   it('dedupes per offset and start time', () => {
     expect(reminderDedupeKey('e1', 60, 1_700_000_000_500)).toBe('e1_r60_1700000000');
   });
@@ -463,5 +473,31 @@ describe('saveEventSeries input', () => {
     if (parsed.action !== 'create') throw new Error('expected a create');
     const t = normalizeTemplate(parsed.template);
     expect(t).toMatchObject({ startTime: null, endTime: null, opponent: null, homeAway: null, arriveMinutesBefore: null });
+  });
+});
+
+describe('"This and following" on a series that ends after N events (SCHED-6)', () => {
+  // Daily from Oct 1, 10 events: Oct 1 to Oct 10.
+  const old = rec({ freq: 'daily', startDate: '2026-10-01', count: 10 });
+
+  it('keeps the total the app sends: N minus the dates before the edit', () => {
+    const r = followingRule(old, { ...old, startDate: '2026-10-05' }, '2026-10-05');
+    expect(r).toMatchObject({ startDate: '2026-10-05', count: 6 });
+    expect(expandDates(r)).toEqual(['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10']);
+  });
+
+  it('counts the old dates after skip dates, and with no rule sent', () => {
+    // Oct 3 was deleted, so the series runs to Oct 10 with count 9.
+    const skipped = { ...old, count: 9, skipDates: ['2026-10-03'] };
+    expect(followingRule(skipped, { ...skipped, startDate: '2026-10-05' }, '2026-10-05').count).toBe(6);
+    expect(followingRule(skipped, undefined, '2026-10-05')).toMatchObject({ startDate: '2026-10-05', count: 6 });
+  });
+
+  it('applies the rest to a new rule, never below 1, and leaves end dates alone', () => {
+    const weekly = rec({ startDate: '2026-10-05', byWeekday: [1, 3], count: 10 });
+    expect(followingRule(old, weekly, '2026-10-05').count).toBe(6);
+    expect(followingRule(old, { ...old, count: 2 }, '2026-10-08').count).toBe(1);
+    const until = rec({ freq: 'daily', startDate: '2026-10-01', untilDate: '2026-10-20' });
+    expect(followingRule(old, until, '2026-10-05')).toMatchObject({ startDate: '2026-10-05', untilDate: '2026-10-20', count: null });
   });
 });

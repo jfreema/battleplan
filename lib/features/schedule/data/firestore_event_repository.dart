@@ -94,6 +94,24 @@ class FirestoreEventRepository implements EventRepository {
       .map((d) => d.exists ? eventFromFirestore(d.id, d.data()!) : null);
 
   @override
+  Stream<Event?> watchNextInSeries(
+    GroupId groupId,
+    String seriesId,
+    DateTime from,
+  ) =>
+      _team(groupId)
+          .where('seriesId', isEqualTo: seriesId)
+          .where('startAt', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
+          .orderBy('startAt')
+          .limit(1)
+          .snapshots()
+          .map(
+            (q) => q.docs.isEmpty
+                ? null
+                : eventFromFirestore(q.docs.first.id, q.docs.first.data()),
+          );
+
+  @override
   Stream<EventSeries?> watchSeries(String seriesId) => _db
       .collection(Collections.eventSeries)
       .doc(seriesId)

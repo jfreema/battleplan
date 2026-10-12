@@ -99,6 +99,13 @@ Participant playerParticipant(Player p) => Participant(
   );
 }
 
+/// Whether an admin ([me]) may set [p]'s answer on [event] (SCHED-4), as
+/// the rules allow it: anyone on adult events; on youth events any
+/// player, but of the coaches only themselves, since each admin answers
+/// for themselves (Q14).
+bool canSetRsvpFor(Event event, Participant p, UserId me) =>
+    !event.forPlayers || p.type == ParticipantType.player || isSelf(p, me);
+
 /// The answer [participantId] gave, if any.
 Rsvp? answerOf(Iterable<Rsvp> rsvps, String participantId) =>
     rsvps.where((r) => r.participantId == participantId).firstOrNull;

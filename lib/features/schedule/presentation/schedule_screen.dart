@@ -147,6 +147,7 @@ class EventList extends ConsumerWidget {
         message: past ? l10n.scheduleEmptyPast : l10n.scheduleEmptyUpcoming,
       );
     }
+    final range = _range(state.events, zone);
     final rows = <Widget>[];
     DateTime? lastDay;
     for (final e in events) {
@@ -157,7 +158,7 @@ class EventList extends ConsumerWidget {
           viewerZone: zone,
           day: day == lastDay ? null : day,
           showTeam: options.allTeams,
-          rsvpRange: _range(e, zone),
+          rsvpRange: range,
         ),
       );
       lastDay = day;
@@ -182,11 +183,30 @@ class EventList extends ConsumerWidget {
     );
   }
 
-  /// The window "My RSVPs" reads: Upcoming from today on (ARCH §6.2);
-  /// Past, everything before today.
-  ({DateTime? from, DateTime? until}) _range(Event e, String zone) {
+  /// The window "My RSVPs" reads (ARCH §6.2): Upcoming from today on;
+  /// Past, from the oldest event shown up to today, so it reads the
+  /// answers on the events shown rather than the oldest ones. Either
+  /// stretches to take in all-day events, which go by their own dates and
+  /// can start the other side of today (SCHED-9).
+  ({DateTime? from, DateTime? until}) _range(List<Event> shown, String zone) {
     final today = startOfDay(zone, DateTime.now());
-    return past ? (from: null, until: today) : (from: today, until: null);
+    DateTime? first;
+    DateTime? last;
+    for (final e in shown) {
+      if (first == null || e.startAt.isBefore(first)) first = e.startAt;
+      if (last == null || e.startAt.isAfter(last)) last = e.startAt;
+    }
+    if (!past) {
+      return (
+        from: first != null && first.isBefore(today) ? first : today,
+        until: null,
+      );
+    }
+    final end = last?.add(const Duration(milliseconds: 1));
+    return (
+      from: first ?? today,
+      until: end != null && end.isAfter(today) ? end : today,
+    );
   }
 
   Future<void> _loadMore(WidgetRef ref, ScheduleOptions options) async {

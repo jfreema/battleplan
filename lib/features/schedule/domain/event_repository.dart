@@ -37,6 +37,15 @@ abstract interface class EventRepository {
   /// One event, live; null once it's deleted.
   Stream<Event?> watchEvent(EventId id);
 
+  /// The series' first event starting at or after [from], live; null when
+  /// none is left. A series' chat card falls back to it once its own
+  /// event is gone (CHAT-11).
+  Stream<Event?> watchNextInSeries(
+    GroupId groupId,
+    String seriesId,
+    DateTime from,
+  );
+
   /// A series, live, for its "Repeats weekly…" line (SCHED-4).
   Stream<EventSeries?> watchSeries(String seriesId);
 

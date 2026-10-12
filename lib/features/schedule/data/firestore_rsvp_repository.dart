@@ -41,11 +41,31 @@ class FirestoreRsvpRepository implements RsvpRepository {
     if (until != null) {
       q = q.where('eventStartAt', isLessThan: Timestamp.fromDate(until));
     }
-    return q
-        .orderBy('eventStartAt')
+    final ordered = q.orderBy('eventStartAt');
+    // The first 100 are live (queries are capped at 100, ARCH §10.2); the
+    // rest of the window, such as a guardian's answers for three players
+    // on 50 past events, are read a page at a time behind them, so no
+    // event in it is missing its answer.
+    return ordered
         .limit(Limits.queryLimitMax)
         .snapshots(includeMetadataChanges: true)
-        .map((s) => [for (final d in s.docs) _rsvp(d)]);
+        .asyncMap((first) async {
+          final all = [for (final d in first.docs) _rsvp(d)];
+          var last = first.docs.length < Limits.queryLimitMax
+              ? null
+              : first.docs.last;
+          while (last != null) {
+            final page = await ordered
+                .startAfterDocument(last)
+                .limit(Limits.queryLimitMax)
+                .get();
+            all.addAll([for (final d in page.docs) _rsvp(d)]);
+            last = page.docs.length < Limits.queryLimitMax
+                ? null
+                : page.docs.last;
+          }
+          return all;
+        });
   }
 
   @override

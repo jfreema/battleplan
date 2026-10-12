@@ -5,6 +5,7 @@ import { db } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
 import { forEachPage } from '../shared/batch.js';
 import { compositeId, groupMemberId } from '../shared/ids.js';
+import { removeUpcomingRsvps } from '../schedule/service.js';
 import { playerLabel, type PlayerInput } from './roster.js';
 
 /** A deleted account stops being a guardian; its players stay (AUTH-10). */
@@ -148,7 +149,10 @@ export async function refreshPlayerCount(groupId: string): Promise<void> {
   await db().collection(Collections.groups).doc(groupId).update({ playerCount: count.data().count });
 }
 
-/** Removes a player, their guardian links and requests (PLAYER-2). */
+/**
+ * Removes a player, their guardian links and requests, and their answers
+ * to upcoming events, so those events' counts drop (PLAYER-2, PLAYER-6).
+ */
 export async function removePlayer(groupId: string, playerId: string): Promise<void> {
   const links = await db().collection(Collections.playerGuardians).where('playerId', '==', playerId).limit(20).get();
   const guardians = links.docs.map((d) => d.get('uid') as string);
@@ -156,6 +160,7 @@ export async function removePlayer(groupId: string, playerId: string): Promise<v
     await forEachPage(db().collection(collection).where('playerId', '==', playerId), (b, d) => b.delete(d.ref));
   }
   await db().collection(Collections.players).doc(playerId).delete();
+  await removeUpcomingRsvps(playerId);
   for (const uid of guardians) await refreshPlayerSummary(groupId, uid);
   await refreshPlayerCount(groupId);
 }

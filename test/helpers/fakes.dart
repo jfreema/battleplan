@@ -1501,6 +1501,18 @@ class FakeEventRepository implements EventRepository {
   Stream<Event?> watchEvent(EventId id) => _live(() => events[id.value]);
 
   @override
+  Stream<Event?> watchNextInSeries(
+    GroupId groupId,
+    String seriesId,
+    DateTime from,
+  ) => _live(
+    () => ([
+      for (final e in _team(groupId))
+        if (e.seriesId == seriesId && !e.startAt.isBefore(from)) e,
+    ]..sort((a, b) => a.startAt.compareTo(b.startAt))).firstOrNull,
+  );
+
+  @override
   Stream<EventSeries?> watchSeries(String seriesId) =>
       _live(() => series[seriesId]);
 
@@ -1716,18 +1728,36 @@ class FakeRsvpRepository implements RsvpRepository {
     }
   }
 
+  /// The windows "My RSVPs" was asked for, in order.
+  final List<({DateTime? from, DateTime? until})> windows = [];
+
+  /// The event an answer is on starts in [from, until), as the real query
+  /// filters on `eventStartAt`.
+  bool _inWindow(Rsvp r, DateTime? from, DateTime? until) {
+    final start = r.eventStartAt ?? events.events[r.eventId.value]?.startAt;
+    if (start == null) return true;
+    return (from == null || !start.isBefore(from)) &&
+        (until == null || start.isBefore(until));
+  }
+
   @override
   Stream<List<Rsvp>> watchMine(
     GroupId groupId,
     List<String> participantIds, {
     DateTime? from,
     DateTime? until,
-  }) => _live(
-    () => [
-      for (final r in rsvps)
-        if (r.groupId == groupId && participantIds.contains(r.participantId)) r,
-    ],
-  );
+  }) {
+    windows.add((from: from, until: until));
+    return _live(
+      () => [
+        for (final r in rsvps)
+          if (r.groupId == groupId &&
+              participantIds.contains(r.participantId) &&
+              _inWindow(r, from, until))
+            r,
+      ],
+    );
+  }
 
   @override
   Stream<List<Rsvp>> watchForEvent(GroupId groupId, EventId eventId) => _live(

@@ -68,6 +68,15 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
     final nextMonth = DateTime.utc(month.year, month.month + 1);
     final weeks = ((lead + daysBetween(month, nextMonth)) / 7).ceil();
     final dayEvents = byDay[selected] ?? const <Event>[];
+    // "My RSVPs" for what the grid shows, from the earliest event in it.
+    final window = calendarWindow(zone, month);
+    final earliest = events.isEmpty ? null : events.first.startAt;
+    final rsvpRange = (
+      from: earliest != null && earliest.isBefore(window.from)
+          ? earliest
+          : window.from,
+      until: window.until,
+    );
 
     void go(int months) => setState(() {
       _month = DateTime.utc(month.year, month.month + months);
@@ -175,10 +184,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
               event: e,
               viewerZone: zone,
               showTeam: options.allTeams,
-              rsvpRange: (
-                from: ZonedTime.instantOf(zone, month, 0),
-                until: ZonedTime.instantOf(zone, nextMonth, 0),
-              ),
+              rsvpRange: rsvpRange,
             ),
       ],
     );

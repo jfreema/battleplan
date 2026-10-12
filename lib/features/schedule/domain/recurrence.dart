@@ -116,6 +116,13 @@ SeriesDates expandRecurrence(Recurrence rule) {
   return (dates: dates, skipped: skipped);
 }
 
+/// How many of [rule]'s events fall before [date] ('YYYY-MM-DD'): on a
+/// "This and following" edit of a rule that ends after N events, the
+/// server takes these off N, since the edit starts the rule again on
+/// [date] (SCHED-6).
+int datesBefore(Recurrence rule, String date) =>
+    expandRecurrence(rule).dates.where((d) => d.compareTo(date) < 0).length;
+
 /// The last day a series starting on [start] may reach: 12 months on,
 /// with month-end days clamped (2028-02-29 → 2029-02-28), as the server
 /// counts it.

@@ -268,6 +268,16 @@ describe('editing, canceling, and deleting events (SCHED-6, SCHED-7)', () => {
     await assertFails(as('gina').doc('events/eY').delete());
   });
 
+  it('lets super admins edit, cancel, and delete one-off events, as saveEventSeries does', async () => {
+    const sam = env.authenticatedContext('sam', { superAdmin: true }).firestore();
+    await assertSucceeds(sam.doc('events/eA').update({ title: 'Scrimmage', updatedAt: now() }));
+    await assertSucceeds(sam.doc('events/eA').update({ canceledAt: now(), canceledBy: 'sam', updatedAt: now() }));
+    await assertFails(sam.doc('events/eS').update({ title: 'Scrimmage', updatedAt: now() }));
+    await assertSucceeds(sam.doc('events/eY').delete());
+    await archive('teamA');
+    await assertFails(sam.doc('events/eGone').delete());
+  });
+
   it('makes archived teams read-only (TEAM-9)', async () => {
     await archive('teamA');
     await assertFails(edit('alice', 'eA', { title: 'Scrimmage' }));
@@ -356,6 +366,22 @@ describe('RSVPs (SCHED-5, PLAYER-6, Q14)', () => {
     await assertFails(answer('bob', 'eA', 'member', 'bob', { eventStartAt: ts('2030-06-02T23:00:00Z') }));
     await archive('teamA');
     await assertFails(answer('bob', 'eA', 'member', 'bob'));
+  });
+
+  it('takes a participant name up to 60 characters', async () => {
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob', { participantName: 'x'.repeat(60) }));
+    await assertFails(answer('bob', 'eA', 'member', 'bob', { participantName: 'x'.repeat(61) }));
+    await assertFails(answer('bob', 'eA', 'member', 'bob', { participantName: 7 }));
+  });
+
+  it('lets an answer change after the event moved, with the new time only', async () => {
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob'));
+    const moved = ts('2030-06-02T00:00:00Z');
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('events/eA').update({ startAt: moved, endAt: ts('2030-06-02T01:30:00Z') }),
+    );
+    await assertFails(answer('bob', 'eA', 'member', 'bob', { status: 'not_going' }));
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob', { status: 'not_going', eventStartAt: moved }));
   });
 
   it('keeps working when storage is full (STORE-4)', async () => {
