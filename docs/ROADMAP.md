@@ -9,7 +9,7 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
 - Each milestone ends working on iOS, Android, and web, with rules tests updated (SPEC §9).
 
-Last updated: 2026-10-12. M5 (Polls) and M6 (Schedule) are built. Facebook sign-in was removed from the plan; it is a backlog item now.
+Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), and M7 (Documents) are built. Facebook sign-in was removed from the plan; it is a backlog item now.
 
 ---
 
@@ -158,11 +158,11 @@ SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
 
 ## M7 · Documents
 
-91. Documents tab, uploads, and links (DOC-1 to DOC-3), with the storage-full message.
-92. Opening, sharing, and downloading (DOC-4).
-93. Rename, describe, delete, pin (DOC-5).
-94. New-document notifications (DOC-6).
-95. Rules and tests for documents and Storage.
+91. ✅ Documents tab, uploads, and links (DOC-1 to DOC-3), with the storage-full message.
+92. ✅ Opening, sharing, and downloading (DOC-4).
+93. ✅ Rename, describe, delete, pin (DOC-5).
+94. ✅ New-document notifications (DOC-6).
+95. ✅ Rules and tests for documents and Storage.
 
 ## M8 · God admin panel
 
