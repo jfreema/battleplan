@@ -1307,12 +1307,12 @@ Each question has a default. The build follows the default until someone decides
 | Q2 | ~~Will youth players use Battleplan?~~ **Decided:** no. Accounts are for adults (18+), and parents and guardians answer for youth players (§6.3). | — |
 | Q3 | ~~Who can create teams?~~ **Decided 2026-10-11:** anyone with a verified email; super admins can turn it off. | — |
 | Q4 | ~~How will the platform be paid for once there are hundreds of teams?~~ **Decided 2026-10-12:** everything is free with no ads for now; ads may come once adoption justifies them (ROADMAP "Ads, later"). Each team has a 500 MB storage limit that a super admin can raise (§6.14). A paid plan was planned on 2026-10-11 and dropped. | — |
-| Q5 | Are direct messages needed at launch? GroupMe has them. | Later |
-| Q6 | Reactions: one per person per message, or several? | One |
-| Q7 | On wide screens, bottom tabs or a side rail? | Side rail at 840 px and wider |
+| Q5 | ~~Are direct messages needed at launch?~~ **Decided 2026-10-12 (the recommended default):** later, not at launch. | — |
+| Q6 | ~~Reactions: one per person per message, or several?~~ **Decided 2026-10-12 (the recommended default):** one. | — |
+| Q7 | ~~On wide screens, bottom tabs or a side rail?~~ **Decided 2026-10-12 (the recommended default):** a side rail at 840 px and wider. | — |
 | Q8 | ~~What domain name for invite links and email?~~ **Decided:** `getbattleplan.app`, registered at Cloudflare ($8.20 the first year, then $14.20/year). battleplan.com, .app, and .io are taken. App ID `app.getbattleplan` (`.dev` for dev builds). | — |
 | Q9 | ~~Logo and primary color?~~ **Decided 2026-10-12:** the placeholder mark and blue `#2F5BEA` for now. | — |
-| Q10 | Which email provider? | One with a free tier (e.g. Postmark or Resend) |
+| Q10 | ~~Which email provider?~~ **Decided 2026-10-12:** Resend. | — |
 | Q11 | ~~Where are most teams located?~~ **Decided 2026-10-12:** the US, so prod's database is in `us-central1` (permanent). | — |
 | Q12 | ~~Can members create events by default?~~ **Decided 2026-10-12:** only admins create events by default; each team can let members create them in Team settings (TEAM-5). | — |
 | Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
