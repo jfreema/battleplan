@@ -65,6 +65,12 @@ abstract class Document with _$Document {
   /// PDFs and images open in the app's viewer (DOC-4).
   bool get opensInApp => type == DocumentType.pdf || type == DocumentType.image;
 
+  /// Whether it opens in the viewer here. Browsers other than Safari can't
+  /// show HEIC and HEIF photos, so on the [web] those open like other
+  /// files: details with Open, which downloads (DOC-4).
+  bool opensInAppOn({required bool web}) =>
+      opensInApp && !(web && browserMayNotShow(contentType));
+
   /// The name to save or share the file as: the stored file's own name,
   /// which keeps its extension even when the document was renamed.
   String get fileName {
@@ -104,6 +110,10 @@ String? contentTypeForFile(String fileName) {
   if (dot < 0 || dot == fileName.length - 1) return null;
   return documentContentTypes[fileName.substring(dot + 1).toLowerCase()];
 }
+
+/// Image types people can upload that most browsers can't decode (DOC-4).
+bool browserMayNotShow(String? contentType) =>
+    contentType == 'image/heic' || contentType == 'image/heif';
 
 /// [contentType] as a [DocumentType], for the icon and the viewer.
 DocumentType documentTypeOf(String? contentType) {

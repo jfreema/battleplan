@@ -423,7 +423,7 @@ final class TeamDocumentsProvider
   }
 }
 
-String _$teamDocumentsHash() => r'237bd7d79cef480310d9a016fbee04fb6b55f91c';
+String _$teamDocumentsHash() => r'd3e26f18e81f43fc8326a525ebd9f0f990e4e62d';
 
 /// A team's documents in [sort] order: the first 100 live, then pages of
 /// 100 (queries are capped at 100, ARCH §10.2), with the pinned ones live

@@ -13,6 +13,7 @@ import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/domain/document_repository.dart';
 import 'package:battleplan/features/documents/presentation/document_actions.dart';
+import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -201,9 +202,13 @@ class _UploadFormState extends ConsumerState<UploadForm> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = e is PermissionDenied
-              ? l10n.documentUploadRefused
-              : l10n.documentUploadFailed;
+          _error = switch (e) {
+            // Storage filled up after the + menu opened; the rules refuse
+            // it, and STORE-4 has one message for that.
+            PermissionDenied() when _storageFull() => l10n.storageFullMessage,
+            PermissionDenied() => l10n.documentUploadRefused,
+            _ => l10n.documentUploadFailed,
+          };
         });
       }
     } finally {
@@ -211,6 +216,10 @@ class _UploadFormState extends ConsumerState<UploadForm> {
       _progressSub = null;
     }
   }
+
+  /// The team's storage is full now (STORE-4).
+  bool _storageFull() =>
+      ref.read(groupProvider(widget.groupId)).value?.storageFull ?? false;
 
   Future<void> _cancel() async {
     await _upload?.cancel();

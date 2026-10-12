@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
@@ -69,7 +70,9 @@ class DocumentScreen extends ConsumerWidget {
         ),
       );
     }
-    final viewer = d.opensInApp && d.path != null;
+    // HEIC photos show as details on the web, which can't decode them.
+    final web = ref.watch(fileChooserProvider).downloadsInsteadOfOpening;
+    final viewer = d.opensInAppOn(web: web) && d.path != null;
     return Scaffold(
       backgroundColor: viewer && d.type == DocumentType.image
           ? Colors.black
@@ -127,7 +130,10 @@ class _Viewer extends ConsumerWidget {
               value,
               fit: BoxFit.contain,
               semanticLabel: doc.name,
-              errorBuilder: (_, _, _) => _Failed(text: l10n.loadError),
+              // One this platform can't decode can still be downloaded
+              // and opened in another app (DOC-4).
+              errorBuilder: (_, _, _) =>
+                  _Failed(text: l10n.documentImageFailed),
             ),
           ),
         ),

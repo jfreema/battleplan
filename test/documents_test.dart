@@ -1,11 +1,13 @@
 // Documents in the app (SPEC DOC-1 to DOC-6, STORE-4, TEAM-5, TEAM-9,
 // SAFE-1).
+import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/file_chooser.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/data/firestore_document_repository.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/domain/document_rules.dart';
@@ -15,8 +17,11 @@ import 'package:battleplan/features/documents/presentation/document_row.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:share_plus/share_plus.dart' show ShareResultStatus;
 
 import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
@@ -133,6 +138,30 @@ void main() {
       expect(file('p', 'P.docx', contentType: wordType).opensInApp, isFalse);
       expect(link('l', 'L', 'https://x.com').type, DocumentType.link);
       expect(link('l', 'L', 'https://x.com').fileName, 'L');
+    });
+
+    test('HEIC and HEIF photos open in the viewer except on the web '
+        '(DOC-4)', () {
+      final heic = file('h', 'IMG_1.heic', contentType: 'image/heic');
+      final heif = file('f', 'IMG_2.heif', contentType: 'image/heif');
+      final jpeg = file('j', 'Photo.jpg', contentType: 'image/jpeg');
+      expect(heic.opensInAppOn(web: false), isTrue);
+      expect(heic.opensInAppOn(web: true), isFalse);
+      expect(heif.opensInAppOn(web: true), isFalse);
+      expect(jpeg.opensInAppOn(web: true), isTrue);
+      expect(file('p', 'P.pdf').opensInAppOn(web: true), isTrue);
+    });
+
+    test('Web Share counts as shared even when share_plus says '
+        'unavailable (DOC-4)', () {
+      // share_plus says unavailable on the web after Web Share or its
+      // download fallback worked.
+      expect(sharedFrom(ShareResultStatus.unavailable, web: true), isTrue);
+      expect(sharedFrom(ShareResultStatus.success, web: true), isTrue);
+      // On phones it means there's no share sheet.
+      expect(sharedFrom(ShareResultStatus.unavailable, web: false), isFalse);
+      expect(sharedFrom(ShareResultStatus.success, web: false), isTrue);
+      expect(sharedFrom(ShareResultStatus.dismissed, web: false), isTrue);
     });
 
     test('links are http or https with a host (DOC-3)', () {
@@ -297,6 +326,7 @@ void main() {
       FakeFileChooser? chooser,
       Map<String, Uint8List> files = const {},
       FakeNotificationRepository? notifications,
+      FakeGroupRepository? groupRepo,
       bool tapDocuments = true,
     }) async {
       final repo = FakeDocumentRepository(docs ?? teamDocs());
@@ -321,6 +351,7 @@ void main() {
           testMembership('a', 'sam', name: 'Sam Rivera'),
           testMembership('a', 'pat', name: 'Pat Kim'),
         ],
+        groupRepo: groupRepo,
         documentRepo: repo,
         fileChooser: fileChooser,
         sharer: sharer,
@@ -479,6 +510,72 @@ void main() {
       expect(find.text('Load more'), findsNothing);
     });
 
+    testWidgets('documents from Load more follow deletes and edits '
+        '(DOC-5)', (tester) async {
+      final r = await openDocuments(
+        tester,
+        role: MemberRole.admin,
+        docs: [
+          for (var i = 0; i < 150; i++)
+            file(
+              'd$i',
+              'Doc ${i.toString().padLeft(3, '0')}',
+              age: Duration(minutes: i),
+            ),
+        ],
+      );
+      final list = find
+          .ancestor(
+            of: find.byType(DocumentRow).first,
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await tester.scrollUntilVisible(
+        find.text('Load more'),
+        500,
+        scrollable: list,
+      );
+      await tester.tap(find.text('Load more'));
+      await tester.pumpAndSettle();
+      List<String> listed() => [
+        for (final d
+            in ProviderScope.containerOf(
+                  tester.element(find.byType(DocumentRow).first),
+                )
+                .read(
+                  teamDocumentsProvider(
+                    const GroupId('a'),
+                    DocumentSort.recent,
+                  ),
+                )
+                .documents)
+          d.name,
+      ];
+      expect(listed(), hasLength(150));
+
+      // Deleted from its menu, the row goes at once.
+      await tester.scrollUntilVisible(
+        find.text('Doc 120'),
+        500,
+        scrollable: list,
+      );
+      await menu(tester, 'Doc 120', 'Delete');
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+      expect(r.docs.deleted, ['d120']);
+      expect(find.text('Doc 120'), findsNothing);
+      expect(listed(), isNot(contains('Doc 120')));
+
+      // Another member renames one and deletes another.
+      r.docs.put(r.docs.docs['d130']!.copyWith(name: 'Renamed 130'));
+      await r.docs.delete(r.docs.docs['d140']!);
+      await tester.pumpAndSettle();
+      expect(listed(), contains('Renamed 130'));
+      expect(listed(), isNot(contains('Doc 130')));
+      expect(listed(), isNot(contains('Doc 140')));
+      expect(listed(), hasLength(148));
+    });
+
     group('uploading (DOC-2)', () {
       Future<FakeDocumentRepository> startUpload(
         WidgetTester tester,
@@ -587,6 +684,47 @@ void main() {
           findsOneWidget,
         );
         expect(docs.docs, isEmpty);
+      });
+
+      testWidgets('storage filling up while the form is open says so '
+          '(STORE-4)', (tester) async {
+        final groups = FakeGroupRepository({
+          'a': testGroup(
+            'a',
+            'Thunder',
+          ).copyWith(storageQuotaBytes: 500 * bytesPerMb),
+        });
+        final r = await openDocuments(
+          tester,
+          docs: [],
+          groupRepo: groups,
+          chooser: FakeFileChooser(next: pickedFile('Big.pdf', 1000)),
+        );
+        await tester.tap(find.byTooltip('Add a file or link'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Upload file'));
+        await tester.pumpAndSettle();
+        // Another member's upload fills it.
+        groups.setGroup(
+          groups.groups['a']!.copyWith(storageBytes: 500 * bytesPerMb),
+        );
+        await tester.pump();
+        await tester.tap(find.widgetWithText(FilledButton, 'Upload'));
+        await tester.pump();
+        await tester.pump();
+        r.docs.upload!.fail(const PermissionDenied('storage'));
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(
+            of: find.byType(UploadForm),
+            matching: find.textContaining('Storage is full.'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.text("You can't upload documents to this team."),
+          findsNothing,
+        );
       });
 
       testWidgets('over 10 MB is refused before the form', (tester) async {
@@ -735,6 +873,54 @@ void main() {
         await tester.tap(find.text('Team photo.jpg'));
         await tester.pumpAndSettle();
         expect(find.byType(InteractiveViewer), findsOneWidget);
+      });
+
+      testWidgets("an image that can't be decoded says to download it", (
+        tester,
+      ) async {
+        await openDocuments(
+          tester,
+          files: {
+            'groups/a/documents/photo/Team photo.jpg': Uint8List.fromList([0]),
+          },
+        );
+        await tester.tap(find.text('Team photo.jpg'));
+        await tester.pumpAndSettle();
+        // Decoding runs outside the fake clock.
+        for (var i = 0; i < 5; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 50)),
+          );
+          await tester.pump();
+        }
+        expect(
+          find.text(
+            "Couldn't show this image. Download it to open it in another "
+            'app.',
+          ),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('HEIC photos download in the browser', (tester) async {
+        final heic = Uint8List.fromList([0, 0, 0]);
+        final r = await openDocuments(
+          tester,
+          chooser: FakeFileChooser(web: true),
+          docs: [file('heic', 'IMG_0042.heic', contentType: 'image/heic')],
+          files: {'groups/a/documents/heic/IMG_0042.heic': heic},
+        );
+        await tester.tap(find.text('IMG_0042.heic'));
+        await tester.pumpAndSettle();
+        expect(find.byType(InteractiveViewer), findsNothing);
+        expect(r.chooser.saved, ['IMG_0042.heic']);
+
+        // A notification lands on its details, with Open.
+        GoRouter.of(tester.element(find.byType(DocumentRow).first))
+            .go('/g/a/documents/d/heic');
+        await tester.pumpAndSettle();
+        expect(find.byType(InteractiveViewer), findsNothing);
+        expect(find.text('Open'), findsOneWidget);
       });
 
       testWidgets('other files open in the default app on phones', (

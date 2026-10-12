@@ -1023,6 +1023,7 @@
   "documentGone": "This document was deleted.",
   "documentMoreActions": "Document actions",
   "documentPdfFailed": "Couldn't show this PDF. Download it to open it in another app.",
+  "documentImageFailed": "Couldn't show this image. Download it to open it in another app.",
   "documentKindLink": "Link",
   "reportDeleteDocument": "Delete document",
   "mediaKindDocumentNamed": "{document} · {name}",

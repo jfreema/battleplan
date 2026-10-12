@@ -79,6 +79,10 @@ class TeamDocuments extends _$TeamDocuments {
   PageCursor? _moreCursor;
   bool _loadedMore = false;
 
+  /// Documents off the live first page, each followed on its own so a
+  /// delete or edit (anyone's) shows at once (DOC-5).
+  final Map<String, StreamSubscription<Document?>> _followed = {};
+
   /// Until the first page arrives the list is still loading.
   bool _arrived = false;
 
@@ -97,8 +101,8 @@ class TeamDocuments extends _$TeamDocuments {
         _liveCursor = page.next;
         if (_loadedMore) {
           // A deleted document leaves the live page, but so does one pushed
-          // past its end by new ones; ask which.
-          if (gone.isNotEmpty) unawaited(_recheck(gone));
+          // past its end by new ones; follow it to learn which.
+          gone.forEach(_follow);
         } else {
           gone.forEach(_known.remove);
         }
@@ -118,29 +122,32 @@ class TeamDocuments extends _$TeamDocuments {
     ref.onDispose(() {
       unawaited(sub.cancel());
       unawaited(pinnedSub.cancel());
+      for (final s in _followed.values) {
+        unawaited(s.cancel());
+      }
+      _followed.clear();
     });
     return const DocumentListState();
   }
 
-  /// Keeps documents that left the live page only if they still exist.
-  Future<void> _recheck(Set<String> ids) async {
-    final repo = ref.read(documentRepositoryProvider);
-    for (final id in ids) {
-      Document? now;
-      try {
-        now = await repo.watchDocument(DocumentId(id)).first;
-      } on Object {
-        continue;
-      }
-      if (!ref.mounted) return;
-      if (_liveIds.contains(id)) continue;
-      if (now == null) {
-        _known.remove(id);
-      } else {
-        _known[id] = now;
-      }
-    }
-    _publish();
+  /// Keeps a document loaded by Load more, or one that left the live page,
+  /// up to date: renamed or edited in place, and gone once it's deleted.
+  /// The live page has the latest copy of the ones on it.
+  void _follow(String id) {
+    if (_followed.containsKey(id)) return;
+    _followed[id] = ref
+        .read(documentRepositoryProvider)
+        .watchDocument(DocumentId(id))
+        .listen((now) {
+          if (!ref.mounted) return;
+          if (now == null) {
+            _known.remove(id);
+            unawaited(_followed.remove(id)?.cancel());
+          } else if (!_liveIds.contains(id)) {
+            _known[id] = now;
+          }
+          _publish();
+        }, onError: (Object _) {});
   }
 
   void _publish({bool? loadingMore, bool? reachedEnd}) {
@@ -177,6 +184,7 @@ class TeamDocuments extends _$TeamDocuments {
           .loadMore(groupId, sort, cursor);
       for (final d in page.documents) {
         _known.putIfAbsent(d.id.value, () => d);
+        if (!_liveIds.contains(d.id.value)) _follow(d.id.value);
       }
       _loadedMore = true;
       _moreCursor = page.next;

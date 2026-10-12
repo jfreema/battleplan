@@ -62,13 +62,14 @@ Future<void> openDocument(
     }
     return;
   }
-  if (doc.opensInApp) {
+  final web = ref.read(fileChooserProvider).downloadsInsteadOfOpening;
+  if (doc.opensInAppOn(web: web)) {
     unawaited(
       context.push('/g/${doc.groupId.value}/documents/d/${doc.id.value}'),
     );
     return;
   }
-  if (ref.read(fileChooserProvider).downloadsInsteadOfOpening) {
+  if (web) {
     await downloadDocument(context, ref, doc);
     return;
   }
