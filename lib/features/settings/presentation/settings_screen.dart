@@ -26,9 +26,6 @@ class SettingsScreen extends ConsumerWidget {
   /// Shows developer-only tools (dev builds only).
   final bool showDevTools;
 
-  static final Uri _terms = Uri.parse('https://getbattleplan.app/terms');
-  static final Uri _privacy = Uri.parse('https://getbattleplan.app/privacy');
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -36,6 +33,8 @@ class SettingsScreen extends ConsumerWidget {
     final profile = ref.watch(myProfileProvider).value;
     final photoUrl = ref.watch(myPhotoUrlProvider).value;
     final links = ref.read(linkOpenerProvider);
+    // The legal pages are on the website, at the root of the domain (D40).
+    final site = ref.read(linkServiceProvider);
     final error = Theme.of(context).colorScheme.error;
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final support = ref.watch(supportEmailProvider);
@@ -129,11 +128,11 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(title: Text(l10n.versionLabel(appVersion))),
           ListTile(
             title: Text(l10n.termsOfUse),
-            onTap: () => links.open(_terms),
+            onTap: () => links.open(site.site('/terms')),
           ),
           ListTile(
             title: Text(l10n.privacyPolicy),
-            onTap: () => links.open(_privacy),
+            onTap: () => links.open(site.site('/privacy')),
           ),
           ListTile(
             title: Text(l10n.openSourceLicenses),

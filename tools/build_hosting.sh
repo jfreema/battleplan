@@ -39,6 +39,8 @@ if [ -d website ]; then
     exit 1
   fi
   cp -R website/. "$out/"
+  # The editing notes are for the repo, not the public site.
+  rm -f "$out/README.md"
 fi
 if [ ! -f "$out/index.html" ]; then
   echo "No website/index.html yet: writing a placeholder root page." >&2

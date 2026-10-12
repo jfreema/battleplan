@@ -114,7 +114,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh pr comment ${{ github.event.number }} --edit-last --create-if-none \
-            --body "Web preview: ${{ steps.deploy.outputs.url }}"
+            --body "Web preview: website ${{ steps.deploy.outputs.url }}/ · app ${{ steps.deploy.outputs.url }}/app/"
 
   # Every push to main deploys Firestore rules, indexes, and the web app to
   # the dev project. Functions deploy from a developer's machine for now:
