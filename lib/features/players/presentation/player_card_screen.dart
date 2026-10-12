@@ -8,6 +8,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
@@ -40,9 +41,10 @@ class PlayerCardScreen extends ConsumerWidget {
     final me = ref.watch(authUserProvider).value?.uid;
     // Super admins manage players and guardians from the admin panel too
     // (ADMIN-3).
-    final isAdmin =
-        (ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false) ||
-        (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
+    final teamAdmin =
+        ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false;
+    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    final isAdmin = teamAdmin || superAdmin;
     if (player == null) {
       return Scaffold(appBar: AppBar());
     }
@@ -53,6 +55,9 @@ class PlayerCardScreen extends ConsumerWidget {
     final guardians = roster.where((m) => guardianIds.contains(m.uid)).toList();
     final isGuardian = me != null && guardianIds.contains(UserId(me));
     final canEdit = isAdmin || isGuardian;
+    // The rules let only guardians and the team's admins write a player, so
+    // a super admin who is neither saves through the audited admin callable.
+    final viaAdmin = superAdmin && !teamAdmin && !isGuardian;
 
     return Scaffold(
       appBar: AppBar(
@@ -62,7 +67,8 @@ class PlayerCardScreen extends ConsumerWidget {
             IconButton(
               tooltip: l10n.editPlayer,
               icon: const Icon(AppIcons.edit),
-              onPressed: () => unawaited(_edit(context, ref, player)),
+              onPressed: () =>
+                  unawaited(_edit(context, ref, player, viaAdmin: viaAdmin)),
             ),
         ],
       ),
@@ -240,7 +246,12 @@ class PlayerCardScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _edit(BuildContext context, WidgetRef ref, Player player) async {
+  Future<void> _edit(
+    BuildContext context,
+    WidgetRef ref,
+    Player player, {
+    required bool viaAdmin,
+  }) async {
     final l10n = AppLocalizations.of(context);
     final name = TextEditingController(text: player.displayName);
     final number = TextEditingController(text: player.jerseyNumber);
@@ -281,14 +292,25 @@ class PlayerCardScreen extends ConsumerWidget {
     );
     if (save != true || name.text.trim().isEmpty) return;
     try {
-      await ref
-          .read(playerRepositoryProvider)
-          .updatePlayer(
-            player.id,
-            name: name.text,
-            jerseyNumber: number.text,
-            position: position.text,
-          );
+      if (viaAdmin) {
+        await ref
+            .read(adminRepositoryProvider)
+            .updatePlayer(
+              player.id,
+              name: name.text,
+              jerseyNumber: number.text,
+              position: position.text,
+            );
+      } else {
+        await ref
+            .read(playerRepositoryProvider)
+            .updatePlayer(
+              player.id,
+              name: name.text,
+              jerseyNumber: number.text,
+              position: position.text,
+            );
+      }
     } on AppFailure {
       if (context.mounted) showAppSnackBar(context, l10n.profileSaveFailed);
     }

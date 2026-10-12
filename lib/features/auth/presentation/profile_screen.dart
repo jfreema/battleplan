@@ -5,6 +5,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +50,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final l10n = AppLocalizations.of(context);
     final bytes = await ref.read(photoPickerProvider).pickProfilePhoto();
     if (bytes == null || !mounted) return;
+    if (!fitsUploadLimit(context, ref, bytes.length)) return;
     setState(() => _uploading = true);
     try {
       await ref.read(userRepositoryProvider).uploadPhoto(uid, bytes);

@@ -8,6 +8,8 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/admin/admin.dart';
+import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
@@ -418,8 +420,20 @@ extension on _ChatScreenState {
     return full;
   }
 
+  /// The photos within the upload limit (ADMIN-7). A bigger one is left
+  /// out, with a message saying so.
+  List<PickedPhoto> _withinLimit(List<PickedPhoto> photos) {
+    final max = ref.read(maxUploadBytesProvider);
+    final big = photos.where((p) => p.bytes.length > max).firstOrNull;
+    if (big != null && mounted) fitsUploadLimit(context, ref, big.bytes.length);
+    return [
+      for (final p in photos)
+        if (p.bytes.length <= max) p,
+    ];
+  }
+
   Future<void> _pickPhotos(PhotoPicker picker, ChatMessages controller) async {
-    final photos = await picker.pickChatPhotos();
+    final photos = _withinLimit(await picker.pickChatPhotos());
     if (photos.isEmpty || _fullAfterPicking()) return;
     await controller
         .sendPhotos([
@@ -439,7 +453,7 @@ extension on _ChatScreenState {
 
   Future<void> _takePhoto(PhotoPicker picker, ChatMessages controller) async {
     final p = await picker.takeChatPhoto();
-    if (p == null || _fullAfterPicking()) return;
+    if (p == null || _withinLimit([p]).isEmpty || _fullAfterPicking()) return;
     await controller
         .sendPhotos([(bytes: p.bytes, contentType: p.contentType)])
         .catchError((Object _) {});

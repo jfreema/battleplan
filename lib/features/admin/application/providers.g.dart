@@ -97,6 +97,106 @@ final class AppConfigProvider
 
 String _$appConfigHash() => r'd1b65630e089e29f4fb7029e8d1ea7dda8320dc8';
 
+/// The upload limit in bytes for documents and photos (ADMIN-7): the
+/// platform setting, capped at the storage rules' limit, which the server
+/// enforces whatever this says.
+
+@ProviderFor(maxUploadBytes)
+final maxUploadBytesProvider = MaxUploadBytesProvider._();
+
+/// The upload limit in bytes for documents and photos (ADMIN-7): the
+/// platform setting, capped at the storage rules' limit, which the server
+/// enforces whatever this says.
+
+final class MaxUploadBytesProvider extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
+  /// The upload limit in bytes for documents and photos (ADMIN-7): the
+  /// platform setting, capped at the storage rules' limit, which the server
+  /// enforces whatever this says.
+  MaxUploadBytesProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'maxUploadBytesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$maxUploadBytesHash();
+
+  @$internal
+  @override
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  int create(Ref ref) {
+    return maxUploadBytes(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$maxUploadBytesHash() => r'4fab6562d1eb54acfab7cb65424e8e54f00300e7';
+
+/// Where people write for help (ADMIN-7): the platform setting, or the
+/// default address.
+
+@ProviderFor(supportEmail)
+final supportEmailProvider = SupportEmailProvider._();
+
+/// Where people write for help (ADMIN-7): the platform setting, or the
+/// default address.
+
+final class SupportEmailProvider
+    extends $FunctionalProvider<String, String, String>
+    with $Provider<String> {
+  /// Where people write for help (ADMIN-7): the platform setting, or the
+  /// default address.
+  SupportEmailProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'supportEmailProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$supportEmailHash();
+
+  @$internal
+  @override
+  $ProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  String create(Ref ref) {
+    return supportEmail(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String>(value),
+    );
+  }
+}
+
+String _$supportEmailHash() => r'21258ae4318f2f510a942071be0c91a79f9446af';
+
 /// Announcements dismissed (or ended) this session (ADMIN-7). Each one is
 /// its own, so a new or edited banner shows again. A new sign-in starts
 /// over.

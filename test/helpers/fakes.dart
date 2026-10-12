@@ -117,8 +117,16 @@ class FakeAuthRepository implements AuthRepository {
   @override
   Future<void> sendEmailVerification() async => verificationEmailsSent++;
 
+  /// Set to make the next reload fail the way a revoked session does: the
+  /// session ends, then the reload throws.
+  bool reloadEndsSession = false;
+
   @override
-  Future<void> reloadUser() async {}
+  Future<void> reloadUser() async {
+    if (!reloadEndsSession) return;
+    endSessionElsewhere();
+    throw const Unauthenticated('user-token-expired');
+  }
 
   @override
   Future<void> sendPasswordReset(String email) async => resetEmails.add(email);
@@ -292,6 +300,16 @@ class FakeGroupRepository implements GroupRepository {
   @override
   Future<void> uploadLogo(GroupId id, Uint8List jpegBytes) async =>
       logosUploaded++;
+
+  /// Logo files uploaded without being put on the team (a super admin's).
+  final List<String> logoFiles = [];
+
+  @override
+  Future<String> uploadLogoFile(GroupId id, Uint8List jpegBytes) async {
+    final path = 'groups/${id.value}/avatar/logo${logoFiles.length}.jpg';
+    logoFiles.add(path);
+    return path;
+  }
 
   @override
   Future<void> setStorageQuota(GroupId id, int quotaMb) async =>
@@ -494,9 +512,12 @@ Membership testMembership(
 
 /// Profiles start set up unless [needsSetup] is true, like a returning user.
 class FakeUserRepository implements UserRepository {
-  new({this.needsSetup = false});
+  new({this.needsSetup = false, this.status = UserStatus.active});
 
   bool needsSetup;
+
+  /// The account's status; disabled shows only the disabled screen.
+  UserStatus status;
   final _changes = StreamController<void>.broadcast();
   String? savedName;
   ThemePreference themeMode = ThemePreference.system;
@@ -507,7 +528,7 @@ class FakeUserRepository implements UserRepository {
   UserProfile _profile(String uid) => UserProfile(
     uid: uid,
     displayName: savedName ?? 'Jordan Coach',
-    status: UserStatus.active,
+    status: status,
     adultConfirmedAt: needsSetup ? null : DateTime(2026),
     acceptedTermsAt: needsSetup ? null : DateTime(2026),
     themeMode: themeMode,
@@ -879,7 +900,7 @@ class FakePlayerRepository implements PlayerRepository {
     required String name,
     String? jerseyNumber,
     String? position,
-  }) async {}
+  }) async => calls.add('update ${id.value} $name');
 
   @override
   Future<void> removePlayer(GroupId groupId, PlayerId id) async {}
@@ -1235,10 +1256,13 @@ class FakePhotoPicker implements PhotoPicker {
   /// returns.
   void Function()? whilePicking;
 
+  /// What a profile photo or logo pick returns; none by default.
+  Uint8List? profilePhoto;
+
   @override
   Future<Uint8List?> pickProfilePhoto() async {
     opened++;
-    return null;
+    return profilePhoto;
   }
 
   @override
@@ -2161,6 +2185,7 @@ class FakeAdminRepository implements AdminRepository {
     List<AuditEntry>? audit,
     this._config = const AppConfig(),
     this.pageSize = 50,
+    this.teamScan,
   }) : teams = teams ?? [],
        teamDetails = teamDetails ?? {},
        users = users ?? [],
@@ -2176,6 +2201,11 @@ class FakeAdminRepository implements AdminRepository {
   final List<AdminReport> reports;
   final List<AuditEntry> audit;
   final int pageSize;
+
+  /// Set to look through only this many teams per page when filtering by
+  /// status, as the server does (`TEAM_SCAN_MAX`): a page can come back
+  /// short, even empty, with a cursor to keep looking.
+  final int? teamScan;
 
   /// Every action, e.g. `suspend g1 true`, in order.
   final List<String> calls = [];
@@ -2216,10 +2246,11 @@ class FakeAdminRepository implements AdminRepository {
   }) async {
     teamQueries.add(query);
     final q = query.query.trim().toLowerCase();
+    final scan = teamScan;
     final matching = [
       for (final t in teams)
         if (t.name.toLowerCase().startsWith(q) &&
-            (query.status == null || t.status == query.status))
+            (scan != null || query.status == null || t.status == query.status))
           t,
     ];
     int newest(DateTime? a, DateTime? b) =>
@@ -2232,6 +2263,17 @@ class FakeAdminRepository implements AdminRepository {
         AdminTeamSort.storage => b.storageBytes.compareTo(a.storageBytes),
       },
     );
+    if (scan != null && query.status != null) {
+      final start = after == null ? 0 : after.handle as int;
+      final end = (start + scan).clamp(0, matching.length);
+      return (
+        items: [
+          for (final t in matching.sublist(start, end))
+            if (t.status == query.status) t,
+        ],
+        next: end < matching.length ? PageCursor(end) : null,
+      );
+    }
     return _page(matching, after);
   }
 
@@ -2259,6 +2301,44 @@ class FakeAdminRepository implements AdminRepository {
   @override
   Future<void> deleteGroup(GroupId id, String confirmName) =>
       _act('delete ${id.value} $confirmName');
+
+  /// Team edits through `adminUpdateGroup`, as `team t1 name=Storm`.
+  @override
+  Future<void> updateGroup(
+    GroupId id, {
+    String? name,
+    String? description,
+    String? color,
+    Sport? sport,
+    String? timeZone,
+    GroupSettings? settings,
+    ChatTheme? chatTheme,
+    String? photoPath,
+  }) => _act(
+    [
+      'team ${id.value}',
+      if (name != null) 'name=$name',
+      if (description != null) 'description=$description',
+      if (color != null) 'color=$color',
+      if (sport != null) 'sport=${sport.value}',
+      if (timeZone != null) 'timeZone=$timeZone',
+      if (settings != null) 'settings',
+      if (chatTheme != null) 'chatTheme=${_theme(chatTheme)}',
+      if (photoPath != null) 'photoPath=$photoPath',
+    ].join(' '),
+  );
+
+  static String _theme(ChatTheme t) =>
+      [t.background.name, ?t.backgroundPath].join(':');
+
+  @override
+  Future<void> updatePlayer(
+    PlayerId id, {
+    required String name,
+    String? jerseyNumber,
+    String? position,
+  }) =>
+      _act('player ${id.value} $name #${jerseyNumber ?? ''} ${position ?? ''}');
 
   @override
   Future<AdminPage<AdminUserRow>> listUsers(

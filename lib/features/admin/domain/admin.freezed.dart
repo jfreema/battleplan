@@ -3986,8 +3986,8 @@ return $default(_that.allowUserGroupCreation,_that.maxGroupsCreatedPerUserPerDay
 /// @nodoc
 
 
-class _AppConfig implements AppConfig {
-  const _AppConfig({this.allowUserGroupCreation = true, this.maxGroupsCreatedPerUserPerDay = Limits.groupsCreatedPerUserPerDay, this.defaultStorageQuotaMb = Limits.defaultStorageQuotaMb, this.maxUploadMb = Limits.maxUploadMb, this.supportEmail = '', this.announcementBanner});
+class _AppConfig extends AppConfig {
+  const _AppConfig({this.allowUserGroupCreation = true, this.maxGroupsCreatedPerUserPerDay = Limits.groupsCreatedPerUserPerDay, this.defaultStorageQuotaMb = Limits.defaultStorageQuotaMb, this.maxUploadMb = Limits.maxUploadMb, this.supportEmail = '', this.announcementBanner}): super._();
   
 
 @override@JsonKey() final  bool allowUserGroupCreation;

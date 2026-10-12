@@ -145,12 +145,29 @@ final class MyMembershipsProvider
 
 String _$myMembershipsHash() => r'3c7f5221b372f48e0de076a2a0b4941b6e9a3500';
 
+/// A team, live. One you can't read (removed, deleted, or suspended)
+/// reads as null, and its read ends there. A suspension can be lifted with
+/// nothing to tell its members, so while it's null the read starts over:
+/// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
+/// app comes back to the foreground (ADMIN-3).
+
 @ProviderFor(group)
 final groupProvider = GroupFamily._();
+
+/// A team, live. One you can't read (removed, deleted, or suspended)
+/// reads as null, and its read ends there. A suspension can be lifted with
+/// nothing to tell its members, so while it's null the read starts over:
+/// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
+/// app comes back to the foreground (ADMIN-3).
 
 final class GroupProvider
     extends $FunctionalProvider<AsyncValue<Group?>, Group?, Stream<Group?>>
     with $FutureModifier<Group?>, $StreamProvider<Group?> {
+  /// A team, live. One you can't read (removed, deleted, or suspended)
+  /// reads as null, and its read ends there. A suspension can be lifted with
+  /// nothing to tell its members, so while it's null the read starts over:
+  /// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
+  /// app comes back to the foreground (ADMIN-3).
   GroupProvider._({
     required GroupFamily super.from,
     required GroupId super.argument,
@@ -194,7 +211,13 @@ final class GroupProvider
   }
 }
 
-String _$groupHash() => r'8f0d95c22926eb09c879e9739fcdd3cb9822833c';
+String _$groupHash() => r'e6fc99d8c38a4c2f44b26775508166e9339e9d75';
+
+/// A team, live. One you can't read (removed, deleted, or suspended)
+/// reads as null, and its read ends there. A suspension can be lifted with
+/// nothing to tell its members, so while it's null the read starts over:
+/// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
+/// app comes back to the foreground (ADMIN-3).
 
 final class GroupFamily extends $Family
     with $FunctionalFamilyOverride<Stream<Group?>, GroupId> {
@@ -206,6 +229,12 @@ final class GroupFamily extends $Family
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
+
+  /// A team, live. One you can't read (removed, deleted, or suspended)
+  /// reads as null, and its read ends there. A suspension can be lifted with
+  /// nothing to tell its members, so while it's null the read starts over:
+  /// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
+  /// app comes back to the foreground (ADMIN-3).
 
   GroupProvider call(GroupId id) => GroupProvider._(argument: id, from: this);
 
@@ -533,6 +562,102 @@ final class ViewingAsSuperAdminFamily extends $Family
 
   @override
   String toString() => r'viewingAsSuperAdminProvider';
+}
+
+/// Saves edits to [groupId] (TEAM-5, CHAT-18): directly for its admins,
+/// through the audited admin callable for a super admin who isn't one
+/// (ADMIN-3).
+
+@ProviderFor(teamEditor)
+final teamEditorProvider = TeamEditorFamily._();
+
+/// Saves edits to [groupId] (TEAM-5, CHAT-18): directly for its admins,
+/// through the audited admin callable for a super admin who isn't one
+/// (ADMIN-3).
+
+final class TeamEditorProvider
+    extends $FunctionalProvider<TeamEditor, TeamEditor, TeamEditor>
+    with $Provider<TeamEditor> {
+  /// Saves edits to [groupId] (TEAM-5, CHAT-18): directly for its admins,
+  /// through the audited admin callable for a super admin who isn't one
+  /// (ADMIN-3).
+  TeamEditorProvider._({
+    required TeamEditorFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamEditorProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamEditorHash();
+
+  @override
+  String toString() {
+    return r'teamEditorProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<TeamEditor> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  TeamEditor create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return teamEditor(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(TeamEditor value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TeamEditor>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamEditorProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamEditorHash() => r'7ee0f62407a06ba8cb292df9a3d11b23fe5a1ee2';
+
+/// Saves edits to [groupId] (TEAM-5, CHAT-18): directly for its admins,
+/// through the audited admin callable for a super admin who isn't one
+/// (ADMIN-3).
+
+final class TeamEditorFamily extends $Family
+    with $FunctionalFamilyOverride<TeamEditor, GroupId> {
+  TeamEditorFamily._()
+    : super(
+        retry: null,
+        name: r'teamEditorProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Saves edits to [groupId] (TEAM-5, CHAT-18): directly for its admins,
+  /// through the audited admin callable for a super admin who isn't one
+  /// (ADMIN-3).
+
+  TeamEditorProvider call(GroupId groupId) =>
+      TeamEditorProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'teamEditorProvider';
 }
 
 /// A URL for a stored team file (the logo, the chat background, or a Media

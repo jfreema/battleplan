@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
@@ -291,8 +292,15 @@ class _Actions extends ConsumerWidget {
                         superAdmin: !u.superAdmin,
                       );
                       // Your own change applies once your token refreshes.
+                      // Revoking your own also ends this session (the
+                      // server revokes it), so the refresh fails and the
+                      // sign-out takes over; the change itself worked.
                       if (isMe) {
-                        await ref.read(authRepositoryProvider).reloadUser();
+                        try {
+                          await ref.read(authRepositoryProvider).reloadUser();
+                        } on AppFailure {
+                          // Signed out; nothing more to do here.
+                        }
                       }
                     },
                     done: u.superAdmin

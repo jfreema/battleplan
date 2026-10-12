@@ -1,6 +1,8 @@
 // The God admin panel (SPEC ADMIN-1 to ADMIN-8, STORE-6, SAFE-4) and what
 // it changes elsewhere: the announcement banner everyone sees, and a super
 // admin viewing a team's tabs.
+import 'dart:typed_data';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/failure.dart';
@@ -11,6 +13,8 @@ import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -75,7 +79,10 @@ void main() {
     FakeGroupRepository? groupRepo,
     FakeMemberRepository? memberRepo,
     FakeMessageRepository? messageRepo,
+    FakePollRepository? pollRepo,
     FakeDocumentRepository? documentRepo,
+    FakePlayerRepository? playerRepo,
+    FakeInviteRepository? invites,
     Size size = wide,
   }) async {
     await pumpApp(
@@ -94,7 +101,10 @@ void main() {
             testMembership('a', user.uid, role: MemberRole.owner),
           ]),
       messageRepo: messageRepo,
+      pollRepo: pollRepo,
       documentRepo: documentRepo,
+      playerRepo: playerRepo,
+      invites: invites,
       size: size,
     );
     GoRouter.of(tester.element(find.byType(Scaffold).first)).go(path);
@@ -135,6 +145,29 @@ void main() {
       expect(find.text('Dashboard'), findsWidgets);
       expect(find.text('42'), findsOneWidget);
     });
+  });
+
+  testWidgets('a super admin on no team gets in from Settings', (tester) async {
+    Future<void> welcome(AuthUser user) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: user),
+        admin: FakeAdminRepository(totalsValue: const AdminTotals(users: 42)),
+        size: const Size(400, 1000),
+      );
+      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+      await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
+    }
+
+    await welcome(coach);
+    expect(find.text('Admin panel'), findsNothing);
+
+    await welcome(boss);
+    await tester.tap(find.text('Admin panel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Dashboard'), findsWidgets);
+    expect(find.text('42'), findsOneWidget);
   });
 
   testWidgets('the dashboard shows every total and opens reports (ADMIN-1)', (
@@ -227,6 +260,23 @@ void main() {
       await tester.tap(find.text('Load more'));
       await tester.pumpAndSettle();
       expect(find.widgetWithText(ListTile, 'Hail'), findsOneWidget);
+      expect(find.text('Load more'), findsNothing);
+    });
+
+    testWidgets('a status filter keeps looking past an empty page', (
+      tester,
+    ) async {
+      // The server looks through 2 teams per page; Hail, the only
+      // suspended one, is third, so the first page comes back empty.
+      final admin = FakeAdminRepository(teams: teamRows(), teamScan: 2);
+      await open(tester, '/admin/teams', admin: admin);
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Suspended'));
+      await tester.pumpAndSettle();
+      expect(find.text('No teams match.'), findsNothing);
+      expect(shownNames(tester), isEmpty);
+      await tester.tap(find.text('Load more'));
+      await tester.pumpAndSettle();
+      expect(shownNames(tester), ['Hail']);
       expect(find.text('Load more'), findsNothing);
     });
   });
@@ -407,6 +457,160 @@ void main() {
     });
   });
 
+  group("a super admin on a team they aren't on (ADMIN-3)", () {
+    FakeGroupRepository youthTeam() => FakeGroupRepository({
+      'a': testGroup('a', 'Home team'),
+      't1': testGroup('t1', 'Thunder').copyWith(teamType: TeamType.youth),
+    });
+    FakeMemberRepository thunderPeople() => FakeMemberRepository([
+      testMembership('a', 'boss', role: MemberRole.owner),
+      testMembership('t1', 'olive', role: MemberRole.owner, name: 'Olive'),
+      testMembership('t1', 'sam', name: 'Sam Rivera'),
+    ]);
+    FakePlayerRepository emma() => FakePlayerRepository([
+      const Player(
+        id: PlayerId('emma'),
+        groupId: GroupId('t1'),
+        displayName: 'Emma Rodriguez',
+        jerseyNumber: '7',
+      ),
+    ]);
+
+    testWidgets('Roster and Member card: owner powers', (tester) async {
+      final members = thunderPeople();
+      await open(
+        tester,
+        '/g/t1/roster',
+        groupRepo: youthTeam(),
+        memberRepo: members,
+        playerRepo: emma(),
+      );
+      expect(find.text('Add players'), findsOneWidget);
+      await tester.tap(find.text('Sam Rivera'));
+      await tester.pumpAndSettle();
+      expect(find.text('Remove from team'), findsOneWidget);
+      await tester.tap(find.text('Make admin'));
+      await tester.pumpAndSettle();
+      expect(members.calls, ['update sam admin']);
+    });
+
+    testWidgets('Invite: reset the link', (tester) async {
+      final invites = FakeInviteRepository();
+      await open(
+        tester,
+        '/g/t1/invite',
+        memberRepo: thunderPeople(),
+        invites: invites,
+        size: tall,
+      );
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Reset link'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Reset link'));
+      await tester.pumpAndSettle();
+      expect(invites.resets, 1);
+    });
+
+    testWidgets('Player card: edits go through the audited callable', (
+      tester,
+    ) async {
+      final admin = FakeAdminRepository();
+      final players = emma();
+      await open(
+        tester,
+        '/g/t1/roster/players/emma',
+        admin: admin,
+        groupRepo: youthTeam(),
+        memberRepo: thunderPeople(),
+        playerRepo: players,
+      );
+      expect(find.text('Remove player'), findsOneWidget);
+      expect(find.text('Add a guardian'), findsOneWidget);
+      await tester.tap(find.byTooltip('Edit player'));
+      await tester.pumpAndSettle();
+      final fields = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(fields.at(0), 'Emma Rodríguez');
+      await tester.enterText(fields.at(2), 'Keeper');
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(admin.calls, ['player emma Emma Rodríguez #7 Keeper']);
+      expect(players.calls, isEmpty);
+
+      // A team admin still writes the player directly.
+      final own = FakeAdminRepository();
+      await open(
+        tester,
+        '/g/t1/roster/players/emma',
+        admin: own,
+        groupRepo: youthTeam(),
+        memberRepo: FakeMemberRepository([
+          testMembership('a', 'boss', role: MemberRole.owner),
+          testMembership('t1', 'boss', role: MemberRole.admin),
+        ]),
+        playerRepo: players,
+      );
+      await tester.tap(find.byTooltip('Edit player'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(players.calls, ['update emma Emma Rodriguez']);
+      expect(own.calls, isEmpty);
+    });
+
+    testWidgets('Team settings: edits go through the audited callable', (
+      tester,
+    ) async {
+      final admin = FakeAdminRepository();
+      final groups = youthTeam();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: boss),
+        admin: admin,
+        groupRepo: groups,
+        memberRepo: thunderPeople(),
+        photoPicker: FakePhotoPicker([
+          (bytes: tinyPng, contentType: 'image/png'),
+        ])..profilePhoto = tinyPng,
+        size: tall,
+      );
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/t1/settings');
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'Storm');
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(admin.calls.last, 'team t1 name=Storm description=');
+
+      await tester.tap(find.text('Change logo'));
+      await tester.pumpAndSettle();
+      expect(admin.calls.last, 'team t1 photoPath=groups/t1/avatar/logo0.jpg');
+      expect(groups.logosUploaded, 0);
+
+      await tester.tap(find.text('Pattern'));
+      await tester.pumpAndSettle();
+      expect(admin.calls.last, 'team t1 chatTheme=pattern');
+      await tester.tap(find.text('Photo'));
+      await tester.pumpAndSettle();
+      expect(
+        admin.calls.last,
+        'team t1 chatTheme=photo:groups/t1/theme/bg.jpg',
+      );
+
+      final allowMaybe = find.text('Allow "Maybe" RSVPs');
+      await tester.ensureVisible(allowMaybe);
+      await tester.tap(allowMaybe);
+      await tester.pumpAndSettle();
+      expect(admin.calls.last, 'team t1 settings');
+
+      // Nothing was written to the team directly, which the rules refuse.
+      expect(groups.updates, isEmpty);
+      expect(groups.savedTheme, isNull);
+    });
+  });
+
   group('users (ADMIN-4)', () {
     AdminUserRow person(
       String uid,
@@ -559,6 +763,37 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+
+    testWidgets('revoking your own super admin reports it, then signs out', (
+      tester,
+    ) async {
+      final admin = people();
+      admin.users.add(person('ada', 'Ada Admin', superAdmin: true));
+      // The server revokes your session with the claim, so the refresh
+      // that follows fails and the session ends.
+      final auth = FakeAuthRepository(user: boss)..reloadEndsSession = true;
+      await pumpApp(
+        tester,
+        auth: auth,
+        admin: admin,
+        groups: {'a': testGroup('a', 'Home team')},
+        memberships: [testMembership('a', 'boss', role: MemberRole.owner)],
+        size: wide,
+      );
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/admin/users/boss');
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(OutlinedButton, 'Remove super admin'),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Remove super admin'));
+      await tester.pumpAndSettle();
+      expect(admin.calls, ['superAdmin boss false']);
+      expect(find.text('Bea Boss is no longer a super admin.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      expect(find.text('Continue with email'), findsOneWidget);
     });
 
     testWidgets('create a user with a team and role', (tester) async {
@@ -833,6 +1068,99 @@ void main() {
       expect(admin.savedConfigs.single.announcementBanner, isNull);
     });
 
+    testWidgets('the upload limit and support address take effect', (
+      tester,
+    ) async {
+      final admin = FakeAdminRepository(
+        config: const AppConfig(
+          maxUploadMb: 2,
+          supportEmail: 'help@club.example',
+        ),
+      );
+      final big = Uint8List(3 * bytesPerMb);
+      final picker = FakePhotoPicker([
+        (bytes: tinyPng, contentType: 'image/png'),
+        (bytes: big, contentType: 'image/jpeg'),
+      ])..profilePhoto = big;
+      final messages = FakeMessageRepository();
+      final docs = FakeDocumentRepository([]);
+      final groups = FakeGroupRepository({'a': testGroup('a', 'Thunder')});
+      final opener = FakeLinkOpener();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        admin: admin,
+        groupRepo: groups,
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        messageRepo: messages,
+        documentRepo: docs,
+        photoPicker: picker,
+        fileChooser: FakeFileChooser(
+          next: pickedFile('Roster.pdf', 3 * bytesPerMb),
+        ),
+        linkOpener: opener,
+      );
+      const tooBig = 'That file is 3.0 MB. Files can be up to 2 MB.';
+      Future<void> snackBarGone() async {
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+      }
+
+      // Chat: the photo under the limit goes; the big one is left out.
+      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Photo library'));
+      await tester.pumpAndSettle();
+      expect(find.text(tooBig), findsOneWidget);
+      expect(messages.photoBatches, [1]);
+      await snackBarGone();
+
+      // Documents.
+      await tester.tap(find.text('Documents'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Add a file or link'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Upload file'));
+      await tester.pumpAndSettle();
+      expect(find.text(tooBig), findsOneWidget);
+      expect(docs.upload, isNull);
+      await snackBarGone();
+
+      // The team logo.
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/a/settings');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Change logo'));
+      await tester.pumpAndSettle();
+      expect(find.text(tooBig), findsOneWidget);
+      expect(groups.logosUploaded, 0);
+
+      // Settings names the support address and writes to it.
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/settings');
+      await tester.pumpAndSettle();
+      expect(find.text('help@club.example'), findsOneWidget);
+      await tester.tap(find.text('Contact support'));
+      expect(opener.opened.single, Uri.parse('mailto:help@club.example'));
+    });
+
+    testWidgets('a disabled account is told where to write', (tester) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        users: FakeUserRepository(status: UserStatus.disabled),
+        admin: FakeAdminRepository(
+          config: const AppConfig(supportEmail: 'help@club.example'),
+        ),
+      );
+      expect(
+        find.text(
+          'This account has been disabled. For help, write to '
+          'help@club.example.',
+        ),
+        findsOneWidget,
+      );
+    });
+
     test('configProblems matches the server ranges', () {
       final ok = AppConfig(
         supportEmail: 'a@b.co',
@@ -1011,6 +1339,58 @@ void main() {
       expect(find.text('View team'), findsOneWidget);
     });
 
+    testWidgets('polls show results without voting; nothing is marked read', (
+      tester,
+    ) async {
+      final polls = FakePollRepository()
+        ..put(
+          const Poll(
+            id: PollId('p1'),
+            groupId: GroupId('t1'),
+            createdBy: 'sam',
+            question: 'Saturday or Sunday?',
+            options: [
+              PollOption(id: '0', text: 'Saturday'),
+              PollOption(id: '1', text: 'Sunday'),
+            ],
+          ),
+        );
+      final messages = FakeMessageRepository([
+        Message(
+          id: 'p1',
+          groupId: const GroupId('t1'),
+          authorId: 'sam',
+          authorName: 'Sam Rivera',
+          type: MessageType.poll,
+          text: 'Saturday or Sunday?',
+          pollId: 'p1',
+          createdAt: now.subtract(const Duration(minutes: 5)),
+        ),
+      ]);
+      final members = FakeMemberRepository([
+        testMembership('a', 'boss', role: MemberRole.owner),
+      ]);
+      await open(
+        tester,
+        '/g/t1/chat',
+        messageRepo: messages,
+        pollRepo: polls,
+        memberRepo: members,
+        size: const Size(400, 1000),
+      );
+      expect(find.textContaining('Viewing as super admin'), findsOneWidget);
+      // The newest message is on screen, which marks a member's chat read
+      // (CHAT-9); a super admin has no marker on this team.
+      expect(find.text('Saturday or Sunday?'), findsWidgets);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      expect(members.reads, isEmpty);
+
+      await tester.tap(find.text('Sunday'));
+      await tester.pumpAndSettle();
+      expect(polls.votes, isEmpty);
+    });
+
     testWidgets('documents can be deleted, not added', (tester) async {
       final docs = FakeDocumentRepository([
         Document(
@@ -1052,6 +1432,52 @@ void main() {
         ]),
       );
       expect(find.text('This team has been suspended.'), findsOneWidget);
+    });
+
+    testWidgets('members see the team again once it is unsuspended', (
+      tester,
+    ) async {
+      Future<FakeGroupRepository> suspended() async {
+        final groups = FakeGroupRepository({'a': testGroup('a', 'Home team')});
+        await open(
+          tester,
+          '/g/t9/chat',
+          user: coach,
+          groupRepo: groups,
+          memberRepo: FakeMemberRepository([
+            testMembership('a', 'coach'),
+            testMembership('t9', 'coach'),
+          ]),
+        );
+        expect(find.text('This team has been suspended.'), findsOneWidget);
+        // Lifted. Nothing tells members' devices: their read was refused
+        // and ended.
+        groups.groups['t9'] = testGroup('t9', 'Storm');
+        await tester.pump(const Duration(seconds: 5));
+        expect(find.text('This team has been suspended.'), findsOneWidget);
+        return groups;
+      }
+
+      // It's read again after a wait...
+      await suspended();
+      await tester.pump(const Duration(seconds: 30));
+      await tester.pumpAndSettle();
+      expect(find.text('This team has been suspended.'), findsNothing);
+      expect(find.text('Storm'), findsWidgets);
+
+      // ...or when the app comes back to the foreground.
+      await suspended();
+      [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ].forEach(tester.binding.handleAppLifecycleStateChanged);
+      await tester.pumpAndSettle();
+      expect(find.text('This team has been suspended.'), findsNothing);
+      expect(find.text('Storm'), findsWidgets);
     });
 
     testWidgets("members and other users don't get it", (tester) async {

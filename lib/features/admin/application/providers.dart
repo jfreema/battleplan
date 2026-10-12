@@ -28,6 +28,19 @@ Stream<AppConfig> appConfig(Ref ref) {
   return ref.watch(adminRepositoryProvider).watchConfig();
 }
 
+/// The upload limit in bytes for documents and photos (ADMIN-7): the
+/// platform setting, capped at the storage rules' limit, which the server
+/// enforces whatever this says.
+@riverpod
+int maxUploadBytes(Ref ref) =>
+    (ref.watch(appConfigProvider).value ?? const AppConfig()).maxUploadBytes;
+
+/// Where people write for help (ADMIN-7): the platform setting, or the
+/// default address.
+@riverpod
+String supportEmail(Ref ref) =>
+    (ref.watch(appConfigProvider).value ?? const AppConfig()).supportAddress;
+
 /// Announcements dismissed (or ended) this session (ADMIN-7). Each one is
 /// its own, so a new or edited banner shows again. A new sign-in starts
 /// over.

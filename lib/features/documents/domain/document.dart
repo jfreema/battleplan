@@ -4,9 +4,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'document.freezed.dart';
 
-/// The largest file a team can upload (STORE-1), in bytes.
-const int documentMaxBytes = Limits.maxUploadMb * 1024 * 1024;
-
 /// What a document is, for its icon and how it opens (DOC-1, DOC-4).
 enum DocumentType {
   pdf,

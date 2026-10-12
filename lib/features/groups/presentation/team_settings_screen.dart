@@ -9,6 +9,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
+import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -148,13 +149,14 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
   Future<void> _changeLogo(GroupId id) async {
     final bytes = await ref.read(photoPickerProvider).pickProfilePhoto();
     if (bytes == null || !mounted) return;
+    if (!fitsUploadLimit(context, ref, bytes.length)) return;
     // Storage filled while the picker was open: say so rather than upload
     // into a refusal (STORE-4).
     if (ref.read(groupProvider(id)).value?.storageFull ?? false) {
       showStorageFull(context);
       return;
     }
-    await _save(() => ref.read(groupRepositoryProvider).uploadLogo(id, bytes));
+    await _save(() => ref.read(teamEditorProvider(id)).uploadLogo(id, bytes));
   }
 
   /// Super admins set this team's limit in MB (STORE-6).
@@ -177,7 +179,6 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final group = ref.watch(groupProvider(widget.groupId)).value;
-    final repo = ref.read(groupRepositoryProvider);
     if (group == null) {
       return Scaffold(appBar: AppBar(title: Text(l10n.teamSettingsMenu)));
     }
@@ -191,10 +192,13 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     final isOwner = membership?.role == MemberRole.owner;
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final isAdmin = (membership?.isAdmin ?? false) || superAdmin;
+    // A super admin who isn't one of its admins saves through the audited
+    // admin callable (ADMIN-3).
+    final repo = ref.watch(teamEditorProvider(group.id));
     // Full storage turns off a new logo too, with the one message (STORE-4).
     final full = group.storageFull;
     void setSettings(GroupSettings next) => unawaited(
-      _save(() => repo.updateGroup(group.id, settings: next), announce: false),
+      _save(() => repo.update(group.id, settings: next), announce: false),
     );
     final logoUrl = group.photoPath == null
         ? null
@@ -243,7 +247,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                 ),
                 onSubmitted: (v) => v.trim().isEmpty
                     ? null
-                    : _save(() => repo.updateGroup(group.id, name: v)),
+                    : _save(() => repo.update(group.id, name: v)),
               ),
               const SizedBox(height: Space.md),
               TextField(
@@ -259,7 +263,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                 alignment: Alignment.centerRight,
                 child: FilledButton(
                   onPressed: () => _save(
-                    () => repo.updateGroup(
+                    () => repo.update(
                       group.id,
                       name: _name.text.trim().isEmpty ? null : _name.text,
                       description: _description.text,
@@ -281,7 +285,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                 ],
                 onChanged: (sp) => sp == null
                     ? null
-                    : _save(() => repo.updateGroup(group.id, sport: sp)),
+                    : _save(() => repo.update(group.id, sport: sp)),
               ),
               section(l10n.teamColorLabel),
               Wrap(
@@ -292,7 +296,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                     InkWell(
                       customBorder: const CircleBorder(),
                       onTap: () => _save(
-                        () => repo.updateGroup(group.id, color: _hex(c)),
+                        () => repo.update(group.id, color: _hex(c)),
                         announce: false,
                       ),
                       child: CircleAvatar(

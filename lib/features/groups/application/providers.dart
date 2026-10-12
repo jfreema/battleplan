@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/groups/application/team_editor.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
@@ -8,6 +12,7 @@ import 'package:battleplan/features/groups/domain/media.dart';
 import 'package:battleplan/features/groups/domain/media_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderListenableSelect;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -33,9 +38,56 @@ Stream<List<Membership>> myMemberships(Ref ref) {
       .watchMyMemberships(UserId(user.uid));
 }
 
+/// A team, live. One you can't read (removed, deleted, or suspended)
+/// reads as null, and its read ends there. A suspension can be lifted with
+/// nothing to tell its members, so while it's null the read starts over:
+/// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
+/// app comes back to the foreground (ADMIN-3).
 @riverpod
-Stream<Group?> group(Ref ref, GroupId id) =>
-    ref.watch(groupRepositoryProvider).watchGroup(id);
+Stream<Group?> group(Ref ref, GroupId id) {
+  final repo = ref.watch(groupRepositoryProvider);
+  final out = StreamController<Group?>();
+  StreamSubscription<Group?>? sub;
+  Timer? retry;
+  var wait = groupRetryFirst;
+  var gone = false;
+  void open() {
+    retry?.cancel();
+    unawaited(sub?.cancel());
+    sub = repo.watchGroup(id).listen((group) {
+      out.add(group);
+      retry?.cancel();
+      gone = group == null;
+      if (!gone) {
+        wait = groupRetryFirst;
+        return;
+      }
+      retry = Timer(wait, open);
+      wait = wait * 2 > groupRetryMax ? groupRetryMax : wait * 2;
+    }, onError: out.addError);
+  }
+
+  open();
+  final lifecycle = AppLifecycleListener(
+    onResume: () {
+      if (gone) open();
+    },
+  );
+  ref.onDispose(() {
+    retry?.cancel();
+    lifecycle.dispose();
+    unawaited(sub?.cancel());
+    unawaited(out.close());
+  });
+  return out.stream;
+}
+
+/// The first wait before reading an unreadable team again; it doubles up
+/// to [groupRetryMax].
+const groupRetryFirst = Duration(seconds: 30);
+
+/// The longest wait between reads of an unreadable team.
+const groupRetryMax = Duration(minutes: 10);
 
 /// The switcher's list: one group read per membership (ARCH §6.2 query
 /// table), most recent activity first, archived teams last.
@@ -95,6 +147,22 @@ bool viewingAsSuperAdmin(Ref ref, GroupId groupId) {
   final memberships = ref.watch(myMembershipsProvider);
   if (!memberships.hasValue || memberships.isLoading) return false;
   return !memberships.value!.any((m) => m.groupId == groupId);
+}
+
+/// Saves edits to [groupId] (TEAM-5, CHAT-18): directly for its admins,
+/// through the audited admin callable for a super admin who isn't one
+/// (ADMIN-3).
+@riverpod
+TeamEditor teamEditor(Ref ref, GroupId groupId) {
+  final teamAdmin = ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false;
+  final superAdmin = ref.watch(
+    authUserProvider.select((a) => a.value?.isSuperAdmin ?? false),
+  );
+  return TeamEditor(
+    ref.watch(groupRepositoryProvider),
+    ref.watch(adminRepositoryProvider),
+    asSuperAdmin: superAdmin && !teamAdmin,
+  );
 }
 
 /// A URL for a stored team file (the logo, the chat background, or a Media

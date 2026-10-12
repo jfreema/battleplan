@@ -90,13 +90,26 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<void> uploadLogo(GroupId id, Uint8List jpegBytes) async {
+  Future<String> uploadLogoFile(GroupId id, Uint8List jpegBytes) async {
     final path =
         'groups/${id.value}/avatar/${DateTime.now().millisecondsSinceEpoch}.jpg';
     try {
       await _storage
           .ref(path)
           .putData(jpegBytes, SettableMetadata(contentType: 'image/jpeg'));
+      return path;
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'unauthorized' || 'permission-denied' => PermissionDenied(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  Future<void> uploadLogo(GroupId id, Uint8List jpegBytes) async {
+    final path = await uploadLogoFile(id, jpegBytes);
+    try {
       await _db.collection(Collections.groups).doc(id.value).update({
         'photoPath': path,
         'updatedAt': FieldValue.serverTimestamp(),

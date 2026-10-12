@@ -2,6 +2,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/chat/domain/message.dart' show PageCursor;
+import 'package:battleplan/features/groups/domain/group.dart';
 
 /// Owns `auditLogs`, `config`, and the admin callables (ARCH §5.2). Every
 /// call but [watchConfig] is for super admins only; the server checks the
@@ -37,6 +38,33 @@ abstract interface class AdminRepository {
 
   /// Permanently deletes the team; [confirmName] must match its name.
   Future<void> deleteGroup(GroupId id, String confirmName);
+
+  /// Edits the profile, settings, or chat look of a team the super admin
+  /// isn't an admin of (ADMIN-3, TEAM-5, CHAT-18), with the limits its own
+  /// admins have, and audited. [photoPath] names a logo already uploaded to
+  /// the team's `avatar/` folder; a chat background photo is in
+  /// [chatTheme], uploaded to its `theme/` folder.
+  Future<void> updateGroup(
+    GroupId id, {
+    String? name,
+    String? description,
+    String? color,
+    Sport? sport,
+    String? timeZone,
+    GroupSettings? settings,
+    ChatTheme? chatTheme,
+    String? photoPath,
+  });
+
+  /// Edits a player's name, number, and position on a team the super admin
+  /// isn't an admin of (ADMIN-3, PLAYER-2), audited. A blank number or
+  /// position clears it.
+  Future<void> updatePlayer(
+    PlayerId id, {
+    required String name,
+    String? jerseyNumber,
+    String? position,
+  });
 
   /// A page of people (ADMIN-4), after [after] when given.
   Future<AdminPage<AdminUserRow>> listUsers(

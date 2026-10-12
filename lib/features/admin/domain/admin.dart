@@ -290,7 +290,24 @@ abstract class AppConfig with _$AppConfig {
     @Default('') String supportEmail,
     Announcement? announcementBanner,
   }) = _AppConfig;
+
+  const new _();
+
+  /// The largest file anyone may upload right now, in bytes: [maxUploadMb],
+  /// never more than [Limits.maxUploadMb], the storage rules' own cap.
+  int get maxUploadBytes =>
+      maxUploadMb.clamp(1, Limits.maxUploadMb) * 1024 * 1024;
+
+  /// Where people write for help: [supportEmail], or
+  /// [defaultSupportEmail] until one is set.
+  String get supportAddress {
+    final email = supportEmail.trim();
+    return email.isEmpty ? defaultSupportEmail : email;
+  }
 }
+
+/// The support address until platform settings name one (ADMIN-7).
+const defaultSupportEmail = 'support@getbattleplan.app';
 
 /// What's wrong with a settings form (ADMIN-7), checked before saving; the
 /// server checks the same ranges.

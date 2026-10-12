@@ -19,6 +19,8 @@
   "signInOffline": "You're offline. Check your connection and try again.",
   "signInRateLimited": "Slow down, try again in a minute.",
   "signInDisabled": "This account has been disabled. Contact support.",
+  "accountDisabledContact": "This account has been disabled. For help, write to {email}.",
+  "@accountDisabledContact": {"placeholders": {"email": {"type": "String"}}},
   "signInPopupBlocked": "Your browser blocked the sign-in window. Allow pop-ups for this site, then try again.",
   "signInOtherMethod": "You've signed in to Battleplan a different way before. We emailed you a link to confirm it's you. After opening it, you can add this sign-in method in Settings → Sign-in methods.",
   "signInUnknownError": "Something went wrong. Try again.",

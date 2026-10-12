@@ -9,6 +9,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
@@ -86,16 +87,8 @@ Future<void> uploadDocument(
     showAppSnackBar(context, l10n.documentTypeNotAllowed);
     return;
   }
-  if (picked.size > documentMaxBytes) {
-    showAppSnackBar(
-      context,
-      l10n.documentTooBig(
-        formatBytes(picked.size),
-        documentMaxBytes ~/ (1024 * 1024),
-      ),
-    );
-    return;
-  }
+  // The limit is the platform setting (ADMIN-7).
+  if (!fitsUploadLimit(context, ref, picked.size)) return;
   final done = await showAdaptiveSheet<bool>(
     context,
     builder: (_) => UploadForm(

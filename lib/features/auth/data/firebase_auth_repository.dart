@@ -117,10 +117,22 @@ class FirebaseAuthRepository implements AuthRepository {
   Future<void> reloadUser() async {
     final user = _auth.currentUser;
     if (user == null) return;
-    await user.reload();
-    // reload() doesn't emit on idTokenChanges; a forced token refresh does,
-    // so watchUser picks up the new emailVerified value.
-    await user.getIdToken(true);
+    try {
+      await user.reload();
+      // reload() doesn't emit on idTokenChanges; a forced token refresh
+      // does, so watchUser picks up the new emailVerified value.
+      await user.getIdToken(true);
+    } on FirebaseAuthException catch (e) {
+      // A revoked or disabled session fails here, and the SDK signs out.
+      throw switch (e.code) {
+        'user-token-expired' ||
+        'user-disabled' ||
+        'user-not-found' ||
+        'invalid-user-token' => Unauthenticated(e.code),
+        'network-request-failed' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
   }
 
   @override

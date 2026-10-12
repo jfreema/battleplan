@@ -4,6 +4,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/domain/admin_repository.dart';
 import 'package:battleplan/features/chat/domain/message.dart' show PageCursor;
+import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
@@ -172,6 +173,55 @@ class FunctionsAdminRepository implements AdminRepository {
     'adminDeleteGroup',
     {'groupId': id.value, 'confirmName': confirmName},
   );
+
+  @override
+  Future<void> updateGroup(
+    GroupId id, {
+    String? name,
+    String? description,
+    String? color,
+    Sport? sport,
+    String? timeZone,
+    GroupSettings? settings,
+    ChatTheme? chatTheme,
+    String? photoPath,
+  }) => _call('adminUpdateGroup', {
+    'groupId': id.value,
+    'name': ?name?.trim(),
+    'description': ?description?.trim(),
+    'color': ?color,
+    'sport': ?sport?.value,
+    'timeZone': ?timeZone,
+    if (settings != null)
+      'settings': {
+        'membersCanCreateEvents': settings.membersCanCreateEvents,
+        'membersCanCreatePolls': settings.membersCanCreatePolls,
+        'membersCanUploadDocs': settings.membersCanUploadDocs,
+        'membersCanInvite': settings.membersCanInvite,
+        'allowMaybe': settings.allowMaybe,
+        'defaultReminderOffsets': settings.defaultReminderOffsets,
+      },
+    if (chatTheme != null)
+      'chatTheme': {
+        'bubbleColor': _hex(chatTheme.bubbleColor),
+        'background': chatTheme.background.name,
+        'backgroundPath': chatTheme.backgroundPath,
+      },
+    'photoPath': ?photoPath,
+  });
+
+  @override
+  Future<void> updatePlayer(
+    PlayerId id, {
+    required String name,
+    String? jerseyNumber,
+    String? position,
+  }) => _call('adminUpdatePlayer', {
+    'playerId': id.value,
+    'displayName': name.trim(),
+    'jerseyNumber': jerseyNumber?.trim() ?? '',
+    'position': position?.trim() ?? '',
+  });
 
   @override
   Future<AdminPage<AdminUserRow>> listUsers(
@@ -358,6 +408,11 @@ class FunctionsAdminRepository implements AdminRepository {
     });
   }
 }
+
+/// A palette color as the team docs store it, `#RRGGBB`, or null.
+String? _hex(int? argb) => argb == null
+    ? null
+    : '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
 /// Reads `config/app` (ARCH §6.2). Missing fields keep the defaults.
 AppConfig appConfigFromFirestore(Map<String, dynamic> d) {

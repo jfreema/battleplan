@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/presentation/storage_widgets.dart';
@@ -27,7 +28,11 @@ class ChatLookSection extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     try {
-      await ref.read(groupRepositoryProvider).updateChatTheme(group.id, theme);
+      // Through the audited admin callable for a super admin who isn't one
+      // of its admins (ADMIN-3).
+      await ref
+          .read(teamEditorProvider(group.id))
+          .updateChatTheme(group.id, theme);
     } on AppFailure {
       if (context.mounted) showAppSnackBar(context, l10n.profileSaveFailed);
     }
@@ -41,6 +46,7 @@ class ChatLookSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final photos = await ref.read(photoPickerProvider).pickChatPhotos(limit: 1);
     if (photos.isEmpty || !context.mounted) return;
+    if (!fitsUploadLimit(context, ref, photos.first.bytes.length)) return;
     // Storage filled while the picker was open: say so rather than upload
     // into a refusal (STORE-4).
     if (ref.read(groupProvider(group.id)).value?.storageFull ?? false) {
@@ -49,7 +55,7 @@ class ChatLookSection extends ConsumerWidget {
     }
     try {
       final path = await ref
-          .read(groupRepositoryProvider)
+          .read(teamEditorProvider(group.id))
           .uploadChatBackground(group.id, photos.first.bytes);
       if (!context.mounted) return;
       await _save(

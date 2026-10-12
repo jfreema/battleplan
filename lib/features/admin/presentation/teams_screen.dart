@@ -107,13 +107,16 @@ class _AdminTeamsScreenState extends ConsumerState<AdminTeamsScreen> {
           controls,
           const SizedBox(height: Space.lg),
           switch (teams) {
+            // A status filter scans a slice of the teams per page, so a
+            // page can come back empty with more to look through: then
+            // it's Load more, not "No teams" (ADMIN-2).
             AsyncValue(:final AdminList<AdminTeamRow> value)
-                when value.items.isEmpty =>
+                when value.items.isEmpty && value.reachedEnd =>
               EmptyState(icon: AppIcons.group, message: l10n.adminNoTeams),
             AsyncValue(:final AdminList<AdminTeamRow> value) => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (wide)
+                if (wide && value.items.isNotEmpty)
                   _TeamsTable(rows: value.items, onOpen: open)
                 else
                   for (final t in value.items)

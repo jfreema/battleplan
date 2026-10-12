@@ -5,4 +5,5 @@
 library;
 
 export 'presentation/announcement_banner.dart' show AnnouncementBanner;
+export 'presentation/upload_limit.dart' show fitsUploadLimit;
 export 'presentation/view_team_banner.dart' show ViewingAsSuperAdminBanner;

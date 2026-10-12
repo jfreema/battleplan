@@ -6,6 +6,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/auth.dart';
@@ -27,7 +28,6 @@ class SettingsScreen extends ConsumerWidget {
 
   static final Uri _terms = Uri.parse('https://getbattleplan.app/terms');
   static final Uri _privacy = Uri.parse('https://getbattleplan.app/privacy');
-  static final Uri _support = Uri.parse('mailto:support@getbattleplan.app');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,6 +37,8 @@ class SettingsScreen extends ConsumerWidget {
     final photoUrl = ref.watch(myPhotoUrlProvider).value;
     final links = ref.read(linkOpenerProvider);
     final error = Theme.of(context).colorScheme.error;
+    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    final support = ref.watch(supportEmailProvider);
 
     Widget section(String title) => Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -108,6 +110,14 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l10n.blockedPeople),
             onTap: () => context.push('/settings/blocked'),
           ),
+          // Also here for super admins on no team, who never see a team's
+          // account menu (ADMIN).
+          if (superAdmin)
+            ListTile(
+              leading: const Icon(AppIcons.admin),
+              title: Text(l10n.adminPanel),
+              onTap: () => context.push('/admin'),
+            ),
           if (showDevTools)
             ListTile(
               leading: const Icon(AppIcons.notifications),
@@ -133,10 +143,11 @@ class SettingsScreen extends ConsumerWidget {
               applicationVersion: appVersion,
             ),
           ),
+          // The address from platform settings (ADMIN-7).
           ListTile(
             title: Text(l10n.contactSupport),
-            subtitle: const Text('support@getbattleplan.app'),
-            onTap: () => links.open(_support),
+            subtitle: Text(support),
+            onTap: () => links.open(Uri(scheme: 'mailto', path: support)),
           ),
           const Divider(),
           ListTile(
