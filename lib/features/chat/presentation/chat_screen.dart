@@ -178,9 +178,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final group = ref.watch(groupProvider(widget.groupId)).value;
     final archived = group?.isArchived ?? false;
     // The team's chat look (CHAT-18): my bubble color and the background.
-    // A team that never set one keeps the brand color and a plain chat.
+    // No color chosen means the team color, as Team settings shows it, so
+    // changing only the background never changes the bubbles; a team with
+    // neither keeps the brand color and a plain chat.
     final look = group?.chatTheme;
-    final bubbleArgb = look == null ? null : look.bubbleColor ?? group!.color;
+    final bubbleArgb = look?.bubbleColor ?? group?.color;
     final bubbleColor = bubbleArgb == null ? null : Color(bubbleArgb);
     // Full storage stops photos, not text (STORE-4).
     final storageFull = group?.storageFull ?? false;

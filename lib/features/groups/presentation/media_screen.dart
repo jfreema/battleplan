@@ -122,6 +122,14 @@ class MediaScreen extends ConsumerWidget {
                       0,
                 ),
               ),
+              if (media.value?.truncated ?? false)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Space.lg),
+                  child: Text(
+                    l10n.mediaTruncated,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
               Expanded(child: content),
             ],
           ),
@@ -190,10 +198,12 @@ class _MediaRow extends ConsumerWidget {
 }
 
 /// "Chat photo · Sam Rivera", "Team logo", "Chat background", "Document",
-/// or "Unused file" (STORE-5). A logo or background the team no longer
-/// uses says so.
+/// or "Unused file" (STORE-5). A photo no message shows (say, from a send
+/// that failed), or a logo or background the team no longer uses, says so.
 String mediaKindLabel(AppLocalizations l10n, MediaItem item) =>
     switch (item.kind) {
+      MediaKind.chatPhoto when item.current == false =>
+        l10n.mediaKindUnusedChatPhoto,
       MediaKind.chatPhoto => switch (item.authorName) {
         final name? when name.isNotEmpty => l10n.mediaKindChatPhoto(name),
         _ => l10n.mediaKindChatPhotoNoName,
@@ -209,10 +219,11 @@ String mediaKindLabel(AppLocalizations l10n, MediaItem item) =>
     };
 
 /// What deleting does, in the confirm dialog: a chat photo leaves its
-/// message, and the logo or background resets (ARCH §6.11).
+/// message, and the logo or background resets (ARCH §6.11). A file nothing
+/// shows gets the plain wording.
 (String, String) _deleteWording(AppLocalizations l10n, MediaItem item) =>
     switch (item.kind) {
-      MediaKind.chatPhoto => (
+      MediaKind.chatPhoto when item.current != false => (
         l10n.deleteMediaPhotoTitle,
         l10n.deleteMediaPhotoBody,
       ),

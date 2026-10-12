@@ -1207,6 +1207,7 @@ class FakeMediaRepository implements MediaRepository {
   final List<String> deleted = [];
   int lists = 0;
   int storageQuotaBytes = 500 * bytesPerMb;
+  bool truncated = false;
 
   @override
   Future<TeamMedia> list(GroupId groupId) async {
@@ -1216,6 +1217,7 @@ class FakeMediaRepository implements MediaRepository {
       items: sorted,
       storageBytes: items.fold(0, (n, i) => n + i.size),
       storageQuotaBytes: storageQuotaBytes,
+      truncated: truncated,
     );
   }
 

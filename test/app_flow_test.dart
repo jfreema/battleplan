@@ -1051,6 +1051,66 @@ void main() {
       expect(repo.sent, ['Still here']);
     });
 
+    testWidgets('my bubbles take the team color unless admins pick another, '
+        'whatever the background (CHAT-18)', (tester) async {
+      const green = 0xFF2E7D32;
+      const purple = 0xFF6A1B9A;
+      Future<Color?> myBubble(Group team) async {
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: {'a': team},
+          memberships: [testMembership('a', 'coach')],
+          messageRepo: FakeMessageRepository([
+            msg(1, author: 'coach', name: 'Coach'),
+          ]),
+        );
+        final box = tester.widget<Container>(
+          find
+              .ancestor(
+                of: find.text('Message 1'),
+                matching: find.byWidgetPredicate(
+                  (w) => w is Container && w.decoration is BoxDecoration,
+                ),
+              )
+              .first,
+        );
+        return (box.decoration! as BoxDecoration).color;
+      }
+
+      final thunder = testGroup('a', 'Thunder');
+      // No team color and no look: the brand color.
+      final plain = await myBubble(thunder);
+      expect(
+        plain,
+        Theme.of(tester.element(find.text('Message 1'))).colorScheme.primary,
+      );
+      // The team color, before and after an admin sets only a background.
+      expect(
+        await myBubble(thunder.copyWith(color: green)),
+        const Color(green),
+      );
+      expect(
+        await myBubble(
+          thunder.copyWith(
+            color: green,
+            chatTheme: const ChatTheme(background: ChatBackground.pattern),
+          ),
+        ),
+        const Color(green),
+      );
+      // A palette color the admins picked.
+      expect(
+        await myBubble(
+          thunder.copyWith(
+            color: green,
+            chatTheme: const ChatTheme(bubbleColor: purple),
+          ),
+        ),
+        const Color(purple),
+      );
+    });
+
     testWidgets('scrolling up loads older messages 50 at a time', (
       tester,
     ) async {
@@ -1460,14 +1520,24 @@ void main() {
           contentType: 'image/jpeg',
           messageId: 'm1',
           authorName: 'Sam Rivera',
+          current: true,
           createdAt: DateTime(2026, 10, 2),
+        ),
+        // Uploaded for a send that never posted: no message shows it.
+        const MediaItem(
+          path: 'groups/a/messages/m9/0.jpg',
+          size: bytesPerMb,
+          kind: MediaKind.chatPhoto,
+          contentType: 'image/jpeg',
+          messageId: 'm9',
+          current: false,
         ),
         const MediaItem(
           path: 'groups/a/stray.bin',
           size: 5 * bytesPerMb,
           kind: MediaKind.other,
         ),
-      ]);
+      ])..truncated = true;
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
@@ -1485,6 +1555,20 @@ void main() {
       expect(top('Chat photo · Sam Rivera'), lessThan(top('Team logo')));
       expect(find.text('5.0 MB'), findsOneWidget);
       expect(find.textContaining('2.0 MB · '), findsOneWidget);
+      expect(find.textContaining('Showing the largest files'), findsOneWidget);
+
+      // A photo nothing shows isn't described as leaving the chat.
+      await tester.tap(
+        find.descendant(
+          of: find.widgetWithText(ListTile, 'Chat photo not in the chat'),
+          matching: find.byTooltip('Delete'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Delete this file?'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(media.deleted, isEmpty);
 
       await tester.tap(
         find.descendant(

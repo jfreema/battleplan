@@ -41,6 +41,12 @@ class ChatLookSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final photos = await ref.read(photoPickerProvider).pickChatPhotos(limit: 1);
     if (photos.isEmpty || !context.mounted) return;
+    // Storage filled while the picker was open: say so rather than upload
+    // into a refusal (STORE-4).
+    if (ref.read(groupProvider(group.id)).value?.storageFull ?? false) {
+      showStorageFull(context);
+      return;
+    }
     try {
       final path = await ref
           .read(groupRepositoryProvider)

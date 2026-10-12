@@ -747,6 +747,8 @@
   "mediaKindChatPhoto": "Chat photo · {name}",
   "@mediaKindChatPhoto": {"placeholders": {"name": {"type": "String"}}},
   "mediaKindChatPhotoNoName": "Chat photo",
+  "mediaKindUnusedChatPhoto": "Chat photo not in the chat",
+  "mediaTruncated": "Showing the largest files. Delete some to see the rest.",
   "mediaKindLogo": "Team logo",
   "mediaKindOldLogo": "Old team logo",
   "mediaKindBackground": "Chat background",

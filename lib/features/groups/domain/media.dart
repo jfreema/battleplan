@@ -39,5 +39,9 @@ abstract class TeamMedia with _$TeamMedia {
     required List<MediaItem> items,
     required int storageBytes,
     required int storageQuotaBytes,
+
+    /// The server left out the smallest files of a very large team; deleting
+    /// some brings the rest in.
+    @Default(false) bool truncated,
   }) = _TeamMedia;
 }

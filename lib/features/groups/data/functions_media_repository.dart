@@ -12,19 +12,9 @@ class FunctionsMediaRepository implements MediaRepository {
   final FirebaseFunctions _functions;
 
   @override
-  Future<TeamMedia> list(GroupId groupId) async {
-    final d = await _call('listTeamMedia', {'groupId': groupId.value});
-    final items = [
-      for (final x
-          in ((d['items'] as List?) ?? const []).cast<Map<Object?, Object?>>())
-        mediaItemFromCallable(x.cast<String, Object?>()),
-    ]..sort((a, b) => b.size.compareTo(a.size));
-    return TeamMedia(
-      items: items,
-      storageBytes: (d['storageBytes'] as num?)?.toInt() ?? 0,
-      storageQuotaBytes: (d['storageQuotaBytes'] as num?)?.toInt() ?? 0,
-    );
-  }
+  Future<TeamMedia> list(GroupId groupId) async => teamMediaFromCallable(
+    await _call('listTeamMedia', {'groupId': groupId.value}),
+  );
 
   @override
   Future<void> delete(GroupId groupId, String path) =>
@@ -50,6 +40,19 @@ class FunctionsMediaRepository implements MediaRepository {
     }
   }
 }
+
+/// What `listTeamMedia` returns: `{files, truncated, storageBytes,
+/// storageQuotaBytes}` (functions/src/teams/media.ts), files largest first.
+TeamMedia teamMediaFromCallable(Map<String, Object?> d) => TeamMedia(
+  items: [
+    for (final x
+        in ((d['files'] as List?) ?? const []).cast<Map<Object?, Object?>>())
+      mediaItemFromCallable(x.cast<String, Object?>()),
+  ]..sort((a, b) => b.size.compareTo(a.size)),
+  truncated: d['truncated'] == true,
+  storageBytes: (d['storageBytes'] as num?)?.toInt() ?? 0,
+  storageQuotaBytes: (d['storageQuotaBytes'] as num?)?.toInt() ?? 0,
+);
 
 /// One `listTeamMedia` item. Unknown kinds read as [MediaKind.other], so a
 /// newer server never breaks the list.

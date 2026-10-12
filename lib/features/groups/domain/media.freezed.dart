@@ -309,7 +309,9 @@ as bool?,
 mixin _$TeamMedia {
 
 /// Largest first.
- List<MediaItem> get items; int get storageBytes; int get storageQuotaBytes;
+ List<MediaItem> get items; int get storageBytes; int get storageQuotaBytes;/// The server left out the smallest files of a very large team; deleting
+/// some brings the rest in.
+ bool get truncated;
 /// Create a copy of TeamMedia
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -321,20 +323,20 @@ $TeamMediaCopyWith<TeamMedia> get copyWith => _$TeamMediaCopyWithImpl<TeamMedia>
 @override
 bool operator ==(Object other) {
   final _this = this as TeamMedia;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TeamMedia&&const DeepCollectionEquality().equals(other.items, _this.items)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TeamMedia&&const DeepCollectionEquality().equals(other.items, _this.items)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes)&&(identical(other.truncated, _this.truncated) || other.truncated == _this.truncated));
 }
 
 
 @override
 int get hashCode {
   final _this = this as TeamMedia;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.items),_this.storageBytes,_this.storageQuotaBytes);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.items),_this.storageBytes,_this.storageQuotaBytes,_this.truncated);
 }
 
 @override
 String toString() {
   final _this = this as TeamMedia;
-  return 'TeamMedia(items: ${_this.items}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes})';
+  return 'TeamMedia(items: ${_this.items}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes}, truncated: ${_this.truncated})';
 }
 
 
@@ -345,7 +347,7 @@ abstract mixin class $TeamMediaCopyWith<$Res>  {
   factory $TeamMediaCopyWith(TeamMedia value, $Res Function(TeamMedia) _then) = _$TeamMediaCopyWithImpl;
 @useResult
 $Res call({
- List<MediaItem> items, int storageBytes, int storageQuotaBytes
+ List<MediaItem> items, int storageBytes, int storageQuotaBytes, bool truncated
 });
 
 
@@ -362,12 +364,13 @@ class _$TeamMediaCopyWithImpl<$Res>
 
 /// Create a copy of TeamMedia
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? storageBytes = null,Object? storageQuotaBytes = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? items = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? truncated = null,}) {
   return _then(TeamMedia(
 items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,storageBytes: null == storageBytes ? _self.storageBytes : storageBytes // ignore: cast_nullable_to_non_nullable
 as int,storageQuotaBytes: null == storageQuotaBytes ? _self.storageQuotaBytes : storageQuotaBytes // ignore: cast_nullable_to_non_nullable
-as int,
+as int,truncated: null == truncated ? _self.truncated : truncated // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -452,10 +455,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<MediaItem> items,  int storageBytes,  int storageQuotaBytes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<MediaItem> items,  int storageBytes,  int storageQuotaBytes,  bool truncated)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TeamMedia() when $default != null:
-return $default(_that.items,_that.storageBytes,_that.storageQuotaBytes);case _:
+return $default(_that.items,_that.storageBytes,_that.storageQuotaBytes,_that.truncated);case _:
   return orElse();
 
 }
@@ -473,10 +476,10 @@ return $default(_that.items,_that.storageBytes,_that.storageQuotaBytes);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<MediaItem> items,  int storageBytes,  int storageQuotaBytes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<MediaItem> items,  int storageBytes,  int storageQuotaBytes,  bool truncated)  $default,) {final _that = this;
 switch (_that) {
 case _TeamMedia():
-return $default(_that.items,_that.storageBytes,_that.storageQuotaBytes);case _:
+return $default(_that.items,_that.storageBytes,_that.storageQuotaBytes,_that.truncated);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -493,10 +496,10 @@ return $default(_that.items,_that.storageBytes,_that.storageQuotaBytes);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<MediaItem> items,  int storageBytes,  int storageQuotaBytes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<MediaItem> items,  int storageBytes,  int storageQuotaBytes,  bool truncated)?  $default,) {final _that = this;
 switch (_that) {
 case _TeamMedia() when $default != null:
-return $default(_that.items,_that.storageBytes,_that.storageQuotaBytes);case _:
+return $default(_that.items,_that.storageBytes,_that.storageQuotaBytes,_that.truncated);case _:
   return null;
 
 }
@@ -508,7 +511,7 @@ return $default(_that.items,_that.storageBytes,_that.storageQuotaBytes);case _:
 
 
 class _TeamMedia implements TeamMedia {
-  const _TeamMedia({required  List<MediaItem> items, required this.storageBytes, required this.storageQuotaBytes}): _items = items;
+  const _TeamMedia({required  List<MediaItem> items, required this.storageBytes, required this.storageQuotaBytes, this.truncated = false}): _items = items;
   
 
 /// Largest first.
@@ -522,6 +525,9 @@ class _TeamMedia implements TeamMedia {
 
 @override final  int storageBytes;
 @override final  int storageQuotaBytes;
+/// The server left out the smallest files of a very large team; deleting
+/// some brings the rest in.
+@override@JsonKey() final  bool truncated;
 
 /// Create a copy of TeamMedia
 /// with the given fields replaced by the non-null parameter values.
@@ -533,18 +539,18 @@ _$TeamMediaCopyWith<_TeamMedia> get copyWith => __$TeamMediaCopyWithImpl<_TeamMe
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TeamMedia&&const DeepCollectionEquality().equals(other.items, _items)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TeamMedia&&const DeepCollectionEquality().equals(other.items, _items)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes)&&(identical(other.truncated, truncated) || other.truncated == truncated));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),storageBytes,storageQuotaBytes);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),storageBytes,storageQuotaBytes,truncated);
 }
 
 @override
 String toString() {
-    return 'TeamMedia(items: $items, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes)';
+    return 'TeamMedia(items: $items, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes, truncated: $truncated)';
 }
 
 
@@ -555,7 +561,7 @@ abstract mixin class _$TeamMediaCopyWith<$Res> implements $TeamMediaCopyWith<$Re
   factory _$TeamMediaCopyWith(_TeamMedia value, $Res Function(_TeamMedia) _then) = __$TeamMediaCopyWithImpl;
 @override @useResult
 $Res call({
- List<MediaItem> items, int storageBytes, int storageQuotaBytes
+ List<MediaItem> items, int storageBytes, int storageQuotaBytes, bool truncated
 });
 
 
@@ -572,12 +578,13 @@ class __$TeamMediaCopyWithImpl<$Res>
 
 /// Create a copy of TeamMedia
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? storageBytes = null,Object? storageQuotaBytes = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? items = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? truncated = null,}) {
   return _then(_TeamMedia(
 items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<MediaItem>,storageBytes: null == storageBytes ? _self.storageBytes : storageBytes // ignore: cast_nullable_to_non_nullable
 as int,storageQuotaBytes: null == storageQuotaBytes ? _self.storageQuotaBytes : storageQuotaBytes // ignore: cast_nullable_to_non_nullable
-as int,
+as int,truncated: null == truncated ? _self.truncated : truncated // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

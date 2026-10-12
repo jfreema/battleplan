@@ -43,6 +43,23 @@ void main() {
     expect(read(2048 * bytesPerMb).storageQuotaBytes, 2048 * bytesPerMb);
   });
 
+  test("listTeamMedia's reply reads as the team's media (STORE-5)", () {
+    final media = teamMediaFromCallable({
+      'files': [
+        {'path': 'groups/a/avatar/1.jpg', 'size': 10, 'kind': 'logo'},
+        {'path': 'groups/a/messages/m1/0.jpg', 'size': 30, 'kind': 'chatPhoto'},
+      ],
+      'truncated': true,
+      'storageBytes': 40,
+      'storageQuotaBytes': 500 * bytesPerMb,
+    });
+    expect(media.items.map((i) => i.size), [30, 10]);
+    expect(media.truncated, isTrue);
+    expect(media.storageBytes, 40);
+    expect(media.storageQuotaBytes, 500 * bytesPerMb);
+    expect(teamMediaFromCallable({}).items, isEmpty);
+  });
+
   test('Media items read from listTeamMedia (STORE-5)', () {
     final photo = mediaItemFromCallable({
       'path': 'groups/a/messages/m1/0.jpg',

@@ -146,6 +146,19 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
   static String _hex(int argb) =>
       '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
+  /// Picks and uploads a new team logo (TEAM-5).
+  Future<void> _changeLogo(GroupId id) async {
+    final bytes = await ref.read(photoPickerProvider).pickProfilePhoto();
+    if (bytes == null || !mounted) return;
+    // Storage filled while the picker was open: say so rather than upload
+    // into a refusal (STORE-4).
+    if (ref.read(groupProvider(id)).value?.storageFull ?? false) {
+      showStorageFull(context);
+      return;
+    }
+    await _save(() => ref.read(groupRepositoryProvider).uploadLogo(id, bytes));
+  }
+
   /// Super admins set this team's limit in MB (STORE-6).
   Future<void> _changeQuota(Group group) async {
     final l10n = AppLocalizations.of(context);
@@ -245,13 +258,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                       : null,
                   onPressed: full
                       ? () => showStorageFull(context)
-                      : () async {
-                          final bytes = await ref
-                              .read(photoPickerProvider)
-                              .pickProfilePhoto();
-                          if (bytes == null) return;
-                          await _save(() => repo.uploadLogo(group.id, bytes));
-                        },
+                      : () => unawaited(_changeLogo(group.id)),
                   child: Text(l10n.changeLogo),
                 ),
               ),
