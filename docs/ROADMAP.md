@@ -123,12 +123,12 @@ From here on, each feature ships with its own notifications.
 
 SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
 
-168. Remove the paid tier: plans, licenses, the Plan section, Plus badges, Plus checks in rules and Functions, and license reminders. Editing, 16 reactions, and the chat look are free for every team.
-169. 500 MB per team and 10 MB files; the storage meter in Team settings; the 90% warning in the team and a notification to admins (STORE-1 to STORE-3).
-170. Full storage: uploads, attachments, and scheduling new events stop, with one message for all three; nothing else turns off and nothing is deleted (STORE-4). The `hasRoom` rule is ready for events in M6.
-171. Media for admins: every photo, attachment, document, logo, and chat background, largest first, with delete (STORE-5).
-172. The unannounced super-admin storage limit for one team (STORE-6), in Team settings until the admin panel (M8) has it.
-173. Rules and tests for storage limits and Media.
+168. ✅ Remove the paid tier: plans, licenses, the Plan section, Plus badges, Plus checks in rules and Functions, and license reminders. Editing, 16 reactions, and the chat look are free for every team. *Done: no Plus code, rules, callables, or screens remain; the old callables were deleted from dev.*
+169. ✅ 500 MB per team and 10 MB files; the storage meter in Team settings; the 90% warning in the team and a notification to admins (STORE-1 to STORE-3). *Tested on dev: a team set to 1 MB warned admins at 960 KB with a notification and the in-team banner.*
+170. ✅ Full storage: uploads, attachments, and scheduling new events stop, with one message for all three; nothing else turns off and nothing is deleted (STORE-4). The `hasRoom` rule is ready for events in M6. *Tested on dev: past the limit, uploads were refused, admins were notified, and freeing space let uploads work again; an 11 MB document was refused.*
+171. ✅ Media for admins: every photo, attachment, document, logo, and chat background, largest first, with delete (STORE-5). *Tested on dev: members can't list or delete; deleting a message's last photo left "Photo removed by a team admin".*
+172. ✅ The unannounced super-admin storage limit for one team (STORE-6), in Team settings until the admin panel (M8) has it. *Tested on dev: only a super admin could change it.*
+173. ✅ Rules and tests for storage limits and Media. *130 rules and emulator tests in all.*
 
 **Done when** the STORE acceptance criteria pass (SPEC §6.14).
 

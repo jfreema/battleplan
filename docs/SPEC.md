@@ -957,7 +957,7 @@ What does cost money as teams grow is storage, so each team has a limit, and adm
   - Nothing else turns off: text messages, replies, reactions, polls, RSVPs, and existing events keep working. Nothing is ever deleted automatically.
 - **STORE-5 · MVP · Media (admins).**
   - Team menu → **Media** lists every photo, attachment, document, the team logo, and the chat background, largest first, with a preview, size, who added it, and when.
-  - Admins delete items to free space, after confirming. Deleting a chat photo removes it from its message ("Photo removed by a team admin"); deleting the logo or background resets it.
+  - Admins delete items to free space, after confirming. Deleting a chat photo removes it from its message, and a message left with no text or photos reads "Photo removed by a team admin"; deleting the logo or background resets it.
 - **STORE-6 · MVP · Raising a team's limit.** A super admin can raise (or lower) one team's limit, from the admin panel (ADMIN-3), and until that exists from Team settings while signed in as a super admin. The option isn't announced or advertised anywhere.
 - **STORE-7 · Later · Ads.** See ROADMAP "Ads, later".
 
@@ -1159,9 +1159,9 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
 
 ### Free for everyone and team storage · after M4
 
-- [ ] Remove the paid tier; its features are free for everyone (edit messages, 16 reactions, chat look).
-- [ ] 500 MB per team and 10 MB files; the 90% warning; full blocks uploads, attachments, and new events (STORE-1 to STORE-4).
-- [ ] Media for admins and the unannounced super-admin limit (STORE-5, STORE-6).
+- [x] Remove the paid tier; its features are free for everyone (edit messages, 16 reactions, chat look).
+- [x] 500 MB per team and 10 MB files; the 90% warning; full blocks uploads, attachments, and new events (STORE-1 to STORE-4).
+- [x] Media for admins and the unannounced super-admin limit (STORE-5, STORE-6).
 
 **Done when:** the STORE acceptance criteria pass.
 
