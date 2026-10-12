@@ -71,7 +71,7 @@ jobs:
       - run: npm run build
       - run: npm test
       - name: Rules tests on the emulator
-        run: npx --yes firebase-tools@15 emulators:exec --only firestore,storage --project demo-battleplan 'npm run test:rules'
+        run: npx --yes firebase-tools@15 emulators:exec --only auth,firestore,storage --project demo-battleplan 'npm run test:rules'
 
   # Deploys use keyless Workload Identity Federation (ARCH §9). They turn on
   # once the repository variables FIREBASE_DEPLOYS=true, WIF_PROVIDER, and
