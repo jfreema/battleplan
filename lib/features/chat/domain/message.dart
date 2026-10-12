@@ -31,7 +31,7 @@ abstract class Message with _$Message {
     @Default(<String, Reaction>{}) Map<String, Reaction> reactions,
     DateTime? deletedAt,
 
-    /// Set when the author edited the text (PLAN-6); shows "edited".
+    /// Set when the author edited the text (CHAT-15); shows "edited".
     DateTime? editedAt,
 
     /// Who deleted it: the author ("This message was deleted") or an admin

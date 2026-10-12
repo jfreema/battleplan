@@ -4,9 +4,12 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/invite_repository.dart';
+import 'package:battleplan/features/groups/domain/media.dart';
+import 'package:battleplan/features/groups/domain/media_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
-import 'package:battleplan/features/groups/domain/plan_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ProviderListenableSelect;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
@@ -79,22 +82,36 @@ Membership? myMembership(Ref ref, GroupId groupId) => ref
     ?.where((m) => m.groupId == groupId)
     .firstOrNull;
 
-/// A URL for a team logo path, or null.
+/// A URL for a stored team file (the logo, the chat background, or a Media
+/// preview), or null.
 @riverpod
 Future<String?> teamPhotoUrl(Ref ref, String path) =>
     ref.watch(groupRepositoryProvider).photoUrl(path);
 
 /// Overridden in app/providers.dart.
 @Riverpod(keepAlive: true)
-PlanRepository planRepository(Ref ref) =>
+MediaRepository mediaRepository(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
 
-/// Plus licenses I hold that haven't ended (PLAN-3).
+/// The team's files, largest first, for Media (STORE-5). Read once per
+/// visit (it lists the bucket); invalidate to refresh after a delete.
 @riverpod
-Stream<List<HeldLicense>> myLicenses(Ref ref) {
-  final uid = ref.watch(authUserProvider).value?.uid;
-  if (uid == null) return Stream.value(const []);
-  return ref.watch(planRepositoryProvider).watchMyLicenses(UserId(uid));
+Future<TeamMedia> teamMedia(Ref ref, GroupId groupId) =>
+    ref.watch(mediaRepositoryProvider).list(groupId);
+
+/// Storage banners dismissed this session, by team and level (STORE-3,
+/// STORE-4). Each level is its own, so filling up after dismissing the 90%
+/// warning still shows the full banner. A new sign-in starts over.
+@Riverpod(keepAlive: true)
+class DismissedStorageBanners extends _$DismissedStorageBanners {
+  @override
+  Set<(GroupId, StorageLevel)> build() {
+    ref.watch(authUserProvider.select((a) => a.value?.uid));
+    return const {};
+  }
+
+  void dismiss(GroupId groupId, StorageLevel level) =>
+      state = {...state, (groupId, level)};
 }
 
 /// Overridden in app/providers.dart.

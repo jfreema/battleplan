@@ -16,8 +16,9 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/invite_repository.dart';
+import 'package:battleplan/features/groups/domain/media.dart';
+import 'package:battleplan/features/groups/domain/media_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
-import 'package:battleplan/features/groups/domain/plan_repository.dart';
 import 'package:battleplan/features/notifications/domain/device_repository.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
 import 'package:battleplan/features/notifications/domain/notification_repository.dart';
@@ -257,8 +258,15 @@ class FakeGroupRepository implements GroupRepository {
     );
   }
 
+  int logosUploaded = 0;
+
   @override
-  Future<void> uploadLogo(GroupId id, Uint8List jpegBytes) async {}
+  Future<void> uploadLogo(GroupId id, Uint8List jpegBytes) async =>
+      logosUploaded++;
+
+  @override
+  Future<void> setStorageQuota(GroupId id, int quotaMb) async =>
+      updates.add('quota ${id.value} $quotaMb');
 
   @override
   Future<String?> photoUrl(String path) async => null;
@@ -1111,12 +1119,20 @@ class FakePhotoPicker implements PhotoPicker {
 
   final List<PickedPhoto> photos;
 
-  @override
-  Future<Uint8List?> pickProfilePhoto() async => null;
+  /// How many times a picker opened, to check full storage stops it.
+  int opened = 0;
 
   @override
-  Future<List<PickedPhoto>> pickChatPhotos({int limit = 10}) async =>
-      photos.take(limit).toList();
+  Future<Uint8List?> pickProfilePhoto() async {
+    opened++;
+    return null;
+  }
+
+  @override
+  Future<List<PickedPhoto>> pickChatPhotos({int limit = 10}) async {
+    opened++;
+    return photos.take(limit).toList();
+  }
 
   @override
   Future<PickedPhoto?> takeChatPhoto() async => null;
@@ -1182,31 +1198,30 @@ class FakeSafetyRepository implements SafetyRepository {
   }
 }
 
-/// Licenses in memory; [calls] records what was asked.
-class FakePlanRepository implements PlanRepository {
-  final List<HeldLicense> licenses = [];
-  final List<String> calls = [];
+/// A team's stored files in memory. [lists] counts reads, so tests can see
+/// the list refresh; [deleted] records deleted paths.
+class FakeMediaRepository implements MediaRepository {
+  new([List<MediaItem>? items]) : items = items ?? [];
+
+  final List<MediaItem> items;
+  final List<String> deleted = [];
+  int lists = 0;
+  int storageQuotaBytes = 500 * bytesPerMb;
 
   @override
-  Stream<List<HeldLicense>> watchMyLicenses(UserId uid) =>
-      Stream.value([...licenses]);
+  Future<TeamMedia> list(GroupId groupId) async {
+    lists++;
+    final sorted = [...items]..sort((a, b) => b.size.compareTo(a.size));
+    return TeamMedia(
+      items: sorted,
+      storageBytes: items.fold(0, (n, i) => n + i.size),
+      storageQuotaBytes: storageQuotaBytes,
+    );
+  }
 
   @override
-  Future<void> moveLicense(String licenseId, GroupId toGroupId) async =>
-      calls.add('move $licenseId ${toGroupId.value}');
-
-  @override
-  Future<void> grantLicense(
-    GroupId groupId,
-    UserId holder, {
-    int months = 12,
-  }) async => calls.add('grant ${groupId.value} ${holder.value} $months');
-
-  @override
-  Future<void> extendLicense(String licenseId, {int months = 12}) async =>
-      calls.add('extend $licenseId $months');
-
-  @override
-  Future<void> revokeLicense(String licenseId) async =>
-      calls.add('revoke $licenseId');
+  Future<void> delete(GroupId groupId, String path) async {
+    deleted.add(path);
+    items.removeWhere((i) => i.path == path);
+  }
 }

@@ -1,12 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
+import 'package:battleplan/features/groups/domain/media.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -948,94 +950,105 @@ void main() {
       },
     );
 
-    testWidgets('editing needs Plus (PLAN-6)', (tester) async {
+    testWidgets('anyone edits their own message, which shows "edited" '
+        '(CHAT-15)', (tester) async {
       final repo = FakeMessageRepository([
-        msg(1, author: 'coach', name: 'Coach'),
+        msg(2, author: 'coach', name: 'Coach'),
+        msg(1),
       ]);
-      Future<void> open(Group team) async {
-        await pumpApp(
-          tester,
-          auth: FakeAuthRepository(user: coach),
-          groups: {'a': team},
-          memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
-          messageRepo: repo,
-        );
-        await tester.longPress(find.text('Message 1'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Edit'));
-        await tester.pumpAndSettle();
-      }
-
-      // Free: Edit explains Plus.
-      await open(testGroup('a', 'Thunder'));
-      expect(find.text('What Plus adds'), findsOneWidget);
-      expect(repo.edits, isEmpty);
-    });
-
-    testWidgets('on Plus, editing saves and shows "edited"', (tester) async {
-      final repo = FakeMessageRepository([
-        msg(1, author: 'coach', name: 'Coach'),
-      ]);
+      // A plain member of a team that never set anything up.
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
-        groups: {
-          'a': testGroup('a', 'Thunder').copyWith(
-            plan: GroupPlan(
-              tier: PlanTier.plus,
-              endsAt: DateTime.now().add(const Duration(days: 30)),
-            ),
-          ),
-        },
-        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [
+          testMembership('a', 'coach'),
+          testMembership('a', 'sam', name: 'Sam Rivera'),
+        ],
         messageRepo: repo,
       );
-      await tester.longPress(find.text('Message 1'));
+      await tester.longPress(find.text('Message 2'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Edit'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).last, 'Message one, fixed');
+      await tester.enterText(find.byType(TextField).last, 'Message two, fixed');
       await tester.tap(find.widgetWithText(FilledButton, 'Save'));
       await tester.pumpAndSettle();
-      expect(repo.edits, ['m1 Message one, fixed']);
-      expect(find.text('Message one, fixed'), findsOneWidget);
+      expect(repo.edits, ['m2 Message two, fixed']);
+      expect(find.text('Message two, fixed'), findsOneWidget);
       expect(find.textContaining('edited'), findsOneWidget);
+      // Not on other people's messages.
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy text'), findsOneWidget);
+      expect(find.text('Edit'), findsNothing);
     });
 
-    testWidgets('Plus teams get 12 more reactions (PLAN-7)', (tester) async {
+    testWidgets('the picker has all 16 reactions on every team (CHAT-6)', (
+      tester,
+    ) async {
       final repo = FakeMessageRepository([msg(1)]);
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
-        groups: {
-          'a': testGroup('a', 'Thunder').copyWith(
-            plan: GroupPlan(
-              tier: PlanTier.plus,
-              endsAt: DateTime.now().add(const Duration(days: 30)),
-            ),
-          ),
-        },
+        groups: {'a': testGroup('a', 'Thunder')},
         memberships: [testMembership('a', 'coach')],
         messageRepo: repo,
       );
       await tester.longPress(find.text('Message 1'));
       await tester.pumpAndSettle();
+      for (final e in [
+        '👍', '❤️', '👎', '😂', '🔥', '👏', '🎉', '💯', //
+        '🙏', '😮', '😢', '😡', '⚾', '🏀', '⚽', '🏆',
+      ]) {
+        expect(find.text(e), findsOneWidget, reason: e);
+      }
       expect(find.text('More reactions'), findsNothing);
+      expect(find.text('Plus'), findsNothing);
       await tester.tap(find.text('⚾'));
       await tester.pumpAndSettle();
       expect(find.text('⚾ 1'), findsOneWidget);
     });
 
-    testWidgets('Free teams see More reactions with the Plus badge', (
+    testWidgets('full storage stops photos, and text still sends (STORE-4)', (
       tester,
     ) async {
-      await openChat(tester, FakeMessageRepository([msg(1)]));
-      await tester.longPress(find.text('Message 1'));
+      final repo = FakeMessageRepository();
+      final picker = FakePhotoPicker([
+        (bytes: Uint8List(4), contentType: 'image/jpeg'),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder').copyWith(
+            storageBytes: 500 * bytesPerMb,
+            storageQuotaBytes: 500 * bytesPerMb,
+          ),
+        },
+        memberships: [testMembership('a', 'coach')],
+        messageRepo: repo,
+        photoPicker: picker,
+      );
+      const full =
+          'Storage is full. Uploads, attachments, and scheduling new events '
+          'are disabled until storage is freed up.';
+      // The banner says it once; + says it again instead of the menu.
+      expect(find.text(full), findsOneWidget);
+      await tester.tap(find.byTooltip('Add photos'));
       await tester.pumpAndSettle();
-      expect(find.text('⚾'), findsNothing);
-      await tester.tap(find.text('More reactions'));
+      expect(find.text('Photo library'), findsNothing);
+      expect(find.text(full), findsNWidgets(2));
+      expect(picker.opened, 0);
+      expect(repo.photoBatches, isEmpty);
+      // Let the message go away from over the composer.
+      await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
-      expect(find.text('What Plus adds'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'Still here');
+      await tester.pump();
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
+      expect(repo.sent, ['Still here']);
     });
 
     testWidgets('scrolling up loads older messages 50 at a time', (
@@ -1261,101 +1274,284 @@ void main() {
     expect(safety.blocks, isEmpty);
     expect(find.text("You haven't blocked anyone."), findsOneWidget);
   });
-  group('Plus plan (PLAN-2 to PLAN-4)', () {
-    Future<void> openSettings(WidgetTester tester) async {
+
+  group('team storage and the chat look (STORE-1 to STORE-6, CHAT-18)', () {
+    const full =
+        'Storage is full. Uploads, attachments, and scheduling new events '
+        'are disabled until storage is freed up.';
+    const warning = 'Storage is 90% full. Free up space in Media.';
+
+    Group teamUsing(int usedMb, {int quotaMb = 500}) =>
+        testGroup('a', 'Thunder').copyWith(
+          storageBytes: usedMb * bytesPerMb,
+          storageQuotaBytes: quotaMb * bytesPerMb,
+        );
+
+    Future<void> openSettings(WidgetTester tester, {Finder? until}) async {
       await tester.tap(find.byTooltip('Team menu'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Team settings'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.text('What Plus adds'),
+        until ?? find.textContaining('MB used'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.pumpAndSettle();
     }
 
-    testWidgets('a super admin grants Plus to a team admin', (tester) async {
-      final plans = FakePlanRepository();
-      await pumpApp(
-        tester,
-        auth: FakeAuthRepository(user: coach.copyWith(isSuperAdmin: true)),
-        groups: {'a': testGroup('a', 'Thunder')},
-        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
-        plans: plans,
-      );
-      await openSettings(tester);
-      expect(find.text('Free'), findsOneWidget);
-      await tester.tap(find.text('Grant Plus (super admin)'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('coach').last);
-      await tester.pumpAndSettle();
-      expect(plans.calls, ['grant a coach 12']);
-    });
-
-    testWidgets('the holder moves Plus to another team they admin', (
+    testWidgets('admins set the chat look on any team (CHAT-18)', (
       tester,
     ) async {
-      final plans = FakePlanRepository();
-      final until = DateTime.now().add(const Duration(days: 200));
+      final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')});
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
-        groups: {
-          'a': testGroup('a', 'Thunder').copyWith(
-            plan: GroupPlan(
-              tier: PlanTier.plus,
-              endsAt: until,
-              licenseId: 'lic1',
-              holderId: 'coach',
-            ),
-          ),
-          'b': testGroup('b', 'Lightning'),
-        },
-        memberships: [
-          testMembership('a', 'coach', role: MemberRole.owner),
-          testMembership('b', 'coach', role: MemberRole.admin),
-        ],
-        plans: plans,
+        groupRepo: groupRepo,
+        memberships: [testMembership('a', 'coach', role: MemberRole.admin)],
       );
-      await openSettings(tester);
-      expect(find.textContaining('Plus until'), findsOneWidget);
-      await tester.tap(find.text('Move to another team'));
+      final pattern = find.text('Pattern');
+      await openSettings(tester, until: pattern);
+      await tester.ensureVisible(pattern);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Lightning').last);
+      expect(find.text('Plus'), findsNothing);
+      await tester.tap(pattern);
       await tester.pumpAndSettle();
-      expect(plans.calls, ['move lic1 b']);
+      expect(groupRepo.savedTheme?.background, ChatBackground.pattern);
     });
 
-    testWidgets('Plus admins set the chat look (PLAN-8)', (tester) async {
-      final groupRepo = FakeGroupRepository({
-        'a': testGroup('a', 'Thunder').copyWith(
-          plan: GroupPlan(
-            tier: PlanTier.plus,
-            endsAt: DateTime.now().add(const Duration(days: 30)),
-          ),
-        ),
-      });
+    testWidgets('the meter shows use, amber at 90% and red when full '
+        '(STORE-2, STORE-3)', (tester) async {
+      Future<Color?> meterAt(int usedMb) async {
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: {'a': teamUsing(usedMb)},
+          memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        );
+        await openSettings(tester);
+        return tester
+            .widget<LinearProgressIndicator>(
+              find.byType(LinearProgressIndicator),
+            )
+            .color;
+      }
+
+      final ok = await meterAt(212);
+      final scheme = Theme.of(
+        tester.element(find.byType(LinearProgressIndicator)),
+      ).colorScheme;
+      expect(find.text('212 MB of 500 MB used'), findsOneWidget);
+      expect(ok, scheme.primary);
+      expect(find.textContaining('Nearly full'), findsNothing);
+
+      expect(await meterAt(460), AppColors.light.maybe);
+      expect(find.text('460 MB of 500 MB used'), findsOneWidget);
+      expect(find.textContaining('Nearly full'), findsOneWidget);
+
+      expect(await meterAt(500), scheme.error);
+      expect(find.text('500 MB of 500 MB used'), findsOneWidget);
+      expect(find.textContaining('Full.'), findsOneWidget);
+    });
+
+    testWidgets("at 90%, admins see the warning with Media; members don't "
+        '(STORE-3)', (tester) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': teamUsing(460)},
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      );
+      expect(find.text(warning), findsOneWidget);
+      await tester.tap(find.widgetWithText(TextButton, 'Media'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Nothing stored yet'), findsOneWidget);
+
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': teamUsing(460)},
+        memberships: [testMembership('a', 'coach')],
+      );
+      expect(find.text(warning), findsNothing);
+      // Media isn't in a member's team menu either.
+      await tester.tap(find.byTooltip('Team menu'));
+      await tester.pumpAndSettle();
+      expect(find.text('Media'), findsNothing);
+    });
+
+    testWidgets('when full, everyone sees why; admins also get Media '
+        '(STORE-4)', (tester) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': teamUsing(500)},
+        memberships: [testMembership('a', 'coach')],
+      );
+      expect(find.text(full), findsOneWidget);
+      expect(find.text(warning), findsNothing);
+      expect(find.widgetWithText(TextButton, 'Media'), findsNothing);
+      // Dismissed for the session.
+      await tester.tap(find.byTooltip('Dismiss'));
+      await tester.pumpAndSettle();
+      expect(find.text(full), findsNothing);
+
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': teamUsing(512)},
+        memberships: [testMembership('a', 'coach', role: MemberRole.admin)],
+      );
+      expect(find.text(full), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Media'), findsOneWidget);
+    });
+
+    testWidgets('when full, a new logo or chat background is off (STORE-4)', (
+      tester,
+    ) async {
+      final picker = FakePhotoPicker([
+        (bytes: Uint8List(4), contentType: 'image/jpeg'),
+      ]);
+      final groupRepo = FakeGroupRepository({'a': teamUsing(500)});
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
         groupRepo: groupRepo,
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        photoPicker: picker,
       );
       await tester.tap(find.byTooltip('Team menu'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Team settings'));
       await tester.pumpAndSettle();
-      final pattern = find.text('Pattern');
+      await tester.tap(find.text('Change logo'));
+      await tester.pumpAndSettle();
+      expect(find.text(full), findsOneWidget);
+      final photo = find.text('Photo');
       await tester.scrollUntilVisible(
-        pattern,
+        photo,
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.ensureVisible(pattern);
+      await tester.ensureVisible(photo);
       await tester.pumpAndSettle();
-      await tester.tap(pattern);
+      await tester.tap(photo);
       await tester.pumpAndSettle();
-      expect(groupRepo.savedTheme?.background, ChatBackground.pattern);
+      expect(picker.opened, 0);
+      expect(groupRepo.logosUploaded, 0);
+      expect(groupRepo.savedTheme, isNull);
+    });
+
+    testWidgets('Media lists files largest first and deletes after '
+        'confirming (STORE-5)', (tester) async {
+      final media = FakeMediaRepository([
+        MediaItem(
+          path: 'groups/a/avatar/1.jpg',
+          size: 300 * 1024,
+          kind: MediaKind.logo,
+          contentType: 'image/jpeg',
+          current: true,
+          createdAt: DateTime(2026, 10),
+        ),
+        MediaItem(
+          path: 'groups/a/messages/m1/0.jpg',
+          size: 2 * bytesPerMb,
+          kind: MediaKind.chatPhoto,
+          contentType: 'image/jpeg',
+          messageId: 'm1',
+          authorName: 'Sam Rivera',
+          createdAt: DateTime(2026, 10, 2),
+        ),
+        const MediaItem(
+          path: 'groups/a/stray.bin',
+          size: 5 * bytesPerMb,
+          kind: MediaKind.other,
+        ),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': teamUsing(7)},
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        media: media,
+      );
+      await tester.tap(find.byTooltip('Team menu'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Media'));
+      await tester.pumpAndSettle();
+      expect(find.text('7.0 MB of 500 MB used'), findsOneWidget);
+      double top(String text) => tester.getTopLeft(find.text(text)).dy;
+      expect(top('Unused file'), lessThan(top('Chat photo · Sam Rivera')));
+      expect(top('Chat photo · Sam Rivera'), lessThan(top('Team logo')));
+      expect(find.text('5.0 MB'), findsOneWidget);
+      expect(find.textContaining('2.0 MB · '), findsOneWidget);
+
+      await tester.tap(
+        find.descendant(
+          of: find.widgetWithText(ListTile, 'Chat photo · Sam Rivera'),
+          matching: find.byTooltip('Delete'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Delete this photo?'), findsOneWidget);
+      expect(
+        find.text("It's removed from the chat for everyone."),
+        findsOneWidget,
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+      expect(media.deleted, ['groups/a/messages/m1/0.jpg']);
+      // Read again after the delete.
+      expect(media.lists, 2);
+      expect(find.text('Chat photo · Sam Rivera'), findsNothing);
+      expect(find.text('Unused file'), findsOneWidget);
+      expect(find.text('Team logo'), findsOneWidget);
+    });
+
+    testWidgets("only a super admin can change one team's limit (STORE-6)", (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': teamUsing(212)},
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      );
+      await openSettings(tester);
+      expect(find.text('Change storage limit'), findsNothing);
+
+      final groupRepo = FakeGroupRepository({'a': teamUsing(212)});
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach.copyWith(isSuperAdmin: true)),
+        groupRepo: groupRepo,
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      );
+      await openSettings(tester, until: find.text('Change storage limit'));
+      await tester.tap(find.text('Change storage limit'));
+      await tester.pumpAndSettle();
+      final field = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      );
+      final save = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(FilledButton, 'Save'),
+      );
+      // Out of range is caught before asking the server.
+      await tester.enterText(field, '0');
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Enter a whole number from 1 to 51,200.'),
+        findsOneWidget,
+      );
+      expect(groupRepo.updates, isEmpty);
+      await tester.enterText(field, '2048');
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      expect(groupRepo.updates, ['quota a 2048']);
+      expect(find.text('Storage limit is now 2.0 GB.'), findsOneWidget);
     });
   });
 }

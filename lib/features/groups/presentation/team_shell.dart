@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -15,6 +17,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
@@ -178,6 +181,7 @@ class TeamShell extends ConsumerWidget {
                 child: Column(
                   children: [
                     header,
+                    _StorageBanner(team: team),
                     Expanded(
                       child: Center(
                         child: ConstrainedBox(
@@ -204,6 +208,7 @@ class TeamShell extends ConsumerWidget {
             child: Column(
               children: [
                 header,
+                _StorageBanner(team: team),
                 Expanded(child: body),
               ],
             ),
@@ -274,6 +279,76 @@ class _TeamHeader extends StatelessWidget {
           ),
           if (!wide) const _AccountButton(),
         ],
+      ),
+    );
+  }
+}
+
+/// A slim line under the header about the team's storage: nearly full for
+/// admins (STORE-3), full for everyone (STORE-4). Admins also get Media.
+/// Dismissing hides that level for the rest of the session.
+class _StorageBanner extends ConsumerWidget {
+  const new({required this.team});
+
+  final MyTeam? team;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = team;
+    final dismissed = ref.watch(dismissedStorageBannersProvider);
+    if (t == null) return const SizedBox.shrink();
+    final level = t.group.storageLevel;
+    final isAdmin = t.membership.isAdmin;
+    final shown =
+        level == StorageLevel.full ||
+        (level == StorageLevel.nearlyFull && isAdmin);
+    if (!shown || dismissed.contains((t.group.id, level))) {
+      return const SizedBox.shrink();
+    }
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final full = level == StorageLevel.full;
+    final accent = full ? scheme.error : AppColors.of(context).maybe;
+    final width = MediaQuery.sizeOf(context).width;
+    return Material(
+      color: full
+          ? scheme.errorContainer
+          : Color.alphaBlend(accent.withValues(alpha: 0.14), scheme.surface),
+      child: Padding(
+        padding: EdgeInsets.only(left: Space.gutter(width), right: Space.xs),
+        child: Row(
+          children: [
+            Icon(AppIcons.storage, size: 20, color: accent),
+            const SizedBox(width: Space.sm),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: Space.sm),
+                child: Text(
+                  full
+                      ? l10n.storageFullMessage
+                      : l10n.storageWarningBanner(Limits.storageWarnPercent),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: full ? scheme.onErrorContainer : scheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+            if (isAdmin)
+              TextButton(
+                onPressed: () =>
+                    unawaited(context.push('/g/${t.group.id.value}/media')),
+                child: Text(l10n.mediaMenu),
+              ),
+            IconButton(
+              tooltip: l10n.dismiss,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(AppIcons.close, size: 20),
+              onPressed: () => ref
+                  .read(dismissedStorageBannersProvider.notifier)
+                  .dismiss(t.group.id, level),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -361,10 +436,18 @@ class _TeamMenu extends StatelessWidget {
       ('invite', AppIcons.invite, l10n.inviteMenu),
       ('notifications', AppIcons.notifications, l10n.teamNotificationsMenu),
       if (isAdmin) ('settings', AppIcons.settings, l10n.teamSettingsMenu),
+      if (isAdmin) ('media', AppIcons.media, l10n.mediaMenu),
       if (isAdmin) ('reports', AppIcons.report, l10n.reportsMenu),
       ('leave', AppIcons.leave, l10n.leaveTeamMenu),
     ];
-    const built = {'roster', 'settings', 'invite', 'reports', 'notifications'};
+    const built = {
+      'roster',
+      'settings',
+      'media',
+      'invite',
+      'reports',
+      'notifications',
+    };
     return PopupMenuButton<String>(
       tooltip: l10n.teamMenuTooltip,
       icon: const Icon(AppIcons.more),

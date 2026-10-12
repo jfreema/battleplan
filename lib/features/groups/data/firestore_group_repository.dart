@@ -163,6 +163,10 @@ class FirestoreGroupRepository implements GroupRepository {
   Future<void> deleteGroup(GroupId id, String confirmName) =>
       _call('deleteGroup', {'groupId': id.value, 'confirmName': confirmName});
 
+  @override
+  Future<void> setStorageQuota(GroupId id, int quotaMb) =>
+      _call('adminSetGroupQuota', {'groupId': id.value, 'quotaMb': quotaMb});
+
   Future<void> _call(String name, Map<String, Object?> data) async {
     try {
       await _functions.httpsCallable(name).call<void>(data);
@@ -171,7 +175,7 @@ class FirestoreGroupRepository implements GroupRepository {
         ('failed-precondition', 'owner-must-transfer') => OwnerMustTransfer(
           e.message,
         ),
-        ('invalid-argument', 'name-mismatch') => InvalidInput(e.message),
+        ('invalid-argument', _) => InvalidInput(e.message),
         ('permission-denied', _) => PermissionDenied(e.message),
         ('not-found', _) => NotFound(e.message),
         ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
@@ -371,7 +375,12 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
     timeZone: d['timeZone'] as String? ?? 'America/Chicago',
     settings: settingsFromFirestore(d['settings'] as Map<String, dynamic>?),
     storageBytes: (d['storageBytes'] as num?)?.toInt() ?? 0,
-    storageQuotaBytes: (d['storageQuotaBytes'] as num?)?.toInt() ?? 0,
+    // A team written before limits existed has none; it gets the default
+    // (STORE-1). A quota a super admin set is kept as is (STORE-6).
+    storageQuotaBytes: switch (d['storageQuotaBytes']) {
+      final num q when q > 0 => q.toInt(),
+      _ => Limits.defaultStorageQuotaMb * bytesPerMb,
+    },
     chatTheme: switch (d['chatTheme']) {
       final Map<String, dynamic> t => ChatTheme(
         bubbleColor: _parseColor(t['bubbleColor'] as String?),
@@ -381,15 +390,6 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
         backgroundPath: t['backgroundPath'] as String?,
       ),
       _ => null,
-    },
-    plan: switch (d['plan']) {
-      final Map<String, dynamic> p => GroupPlan(
-        tier: PlanTier.tryParse(p['tier'] as String?) ?? PlanTier.free,
-        endsAt: _date(p['endsAt']),
-        licenseId: p['licenseId'] as String?,
-        holderId: p['holderId'] as String?,
-      ),
-      _ => const GroupPlan(),
     },
   );
 }

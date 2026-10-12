@@ -19,11 +19,10 @@ abstract class GroupSettings with _$GroupSettings {
   }) = _GroupSettings;
 }
 
-/// The chat background choices (PLAN-8).
+/// The chat background choices (CHAT-18).
 enum ChatBackground { plain, pattern, photo }
 
-/// A Plus team's chat look (PLAN-8). Kept when Plus ends, but only used
-/// while the team is on Plus.
+/// A team's chat look (CHAT-18), chosen by its admins for everyone.
 @freezed
 abstract class ChatTheme with _$ChatTheme {
   const factory({
@@ -34,24 +33,30 @@ abstract class ChatTheme with _$ChatTheme {
   }) = _ChatTheme;
 }
 
-/// A team's plan, cached from its license by the server (ARCH §6.11).
-@freezed
-abstract class GroupPlan with _$GroupPlan {
-  const factory({
-    @Default(PlanTier.free) PlanTier tier,
-    DateTime? endsAt,
-    String? licenseId,
+/// Bytes in a megabyte, as the storage limits count them (ARCH §6.11).
+const int bytesPerMb = 1024 * 1024;
 
-    /// Who holds the license and can move it (PLAN-3).
-    String? holderId,
-  }) = _GroupPlan;
+/// Where a team's storage stands (ARCH §6.11 warning levels).
+enum StorageLevel {
+  ok,
 
-  const new _();
+  /// At or past 90% (STORE-3): amber, and admins are warned.
+  nearlyFull,
 
-  /// Plus right now: the tier, and an end date still ahead (the same test
-  /// the security rules make).
-  bool isPlusAt(DateTime now) =>
-      tier == PlanTier.plus && endsAt != null && endsAt!.isAfter(now);
+  /// At or past the limit (STORE-4): no uploads, attachments, or new
+  /// events. The same test as the rules' `hasRoom`.
+  full,
+}
+
+/// [used] against [quota]. No quota (only a team read without one) is
+/// never full.
+StorageLevel storageLevelOf(int used, int quota) {
+  if (quota <= 0) return StorageLevel.ok;
+  if (used >= quota) return StorageLevel.full;
+  if (used * 100 >= quota * Limits.storageWarnPercent) {
+    return StorageLevel.nearlyFull;
+  }
+  return StorageLevel.ok;
 }
 
 /// A team (ARCH §6.2 `groups`).
@@ -75,9 +80,13 @@ abstract class Group with _$Group {
     String? photoPath,
     @Default('America/Chicago') String timeZone,
     @Default(GroupSettings()) GroupSettings settings,
+
+    /// Bytes stored under `groups/{id}/`, kept by the Storage triggers.
     @Default(0) int storageBytes,
+
+    /// The team's limit: 500 MB unless a super admin changed it (STORE-1,
+    /// STORE-6). The data layer fills in the default when it's missing.
     @Default(0) int storageQuotaBytes,
-    @Default(GroupPlan()) GroupPlan plan,
     ChatTheme? chatTheme,
   }) = _Group;
 
@@ -85,10 +94,12 @@ abstract class Group with _$Group {
 
   bool get isArchived => archivedAt != null;
 
-  /// On Plus right now (PLAN-1).
-  bool get isPlus => plan.isPlusAt(DateTime.now());
+  StorageLevel get storageLevel =>
+      storageLevelOf(storageBytes, storageQuotaBytes);
 
-  /// Whether a Plus feature is live on this team; Free teams show the Plus
-  /// badge instead (PLAN-4). Every feature in [PlanFeature] is Plus-only.
-  bool has(PlanFeature feature) => isPlus;
+  /// At or past 90% of the limit (STORE-3), full included.
+  bool get storageNearlyFull => storageLevel != StorageLevel.ok;
+
+  /// At or past the limit (STORE-4). M6's New event checks this too.
+  bool get storageFull => storageLevel == StorageLevel.full;
 }

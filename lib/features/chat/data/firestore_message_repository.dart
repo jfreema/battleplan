@@ -316,7 +316,7 @@ class FirestoreMessageRepository implements MessageRepository {
   @override
   Future<void> editText(String messageId, String text) async {
     try {
-      // Rules allow it for the author on a Plus team (PLAN-6).
+      // Rules allow it for the author only (CHAT-15).
       await _db.collection(Collections.messages).doc(messageId).update({
         'text': text,
         'editedAt': FieldValue.serverTimestamp(),

@@ -20,7 +20,6 @@ import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
-import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -58,8 +57,8 @@ class MessageTile extends ConsumerStatefulWidget {
   /// Briefly tinted after jumping to it from a quote.
   final bool highlighted;
 
-  /// My bubbles' color on a Plus team with a chat look (PLAN-8); null uses
-  /// the brand color.
+  /// My bubbles' color from the team's chat look (CHAT-18); null uses the
+  /// brand color.
   final Color? bubbleColor;
 
   /// The original of a reply, when loaded, for the quote until the server
@@ -100,7 +99,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     onPressed: () => unawaited(_openMenu()),
   );
 
-  /// Edits my message's text in a dialog (PLAN-6).
+  /// Edits my message's text in a dialog (CHAT-15).
   Future<void> _edit() async {
     final l10n = AppLocalizations.of(context);
     final m = widget.message;
@@ -168,12 +167,6 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final canModerate =
         (user?.isSuperAdmin ?? false) ||
         (ref.read(myMembershipProvider(m.groupId))?.isAdmin ?? false);
-    final canEdit =
-        ref
-            .read(groupProvider(m.groupId))
-            .value
-            ?.has(PlanFeature.editMessages) ??
-        false;
     await showAdaptiveSheet<void>(
       context,
       builder: (sheet) => SafeArea(
@@ -183,16 +176,6 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ReactionPicker(
-                plus:
-                    ref
-                        .read(groupProvider(m.groupId))
-                        .value
-                        ?.has(PlanFeature.extraReactions) ??
-                    false,
-                onMore: () {
-                  Navigator.of(sheet).pop();
-                  unawaited(showWhatPlusAdds(context, isAdmin: canModerate));
-                },
                 mine: me == null ? null : m.reactions[me],
                 onPick: (r) {
                   Navigator.of(sheet).pop();
@@ -209,28 +192,16 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     reply();
                   },
                 ),
-              // Edit (PLAN-6): live on Plus teams; on Free it explains Plus.
+              // Edit my own text or photo caption (CHAT-15).
               if (widget.mine &&
                   !m.pending &&
                   (m.type == MessageType.text || m.type == MessageType.image))
                 ListTile(
                   leading: const Icon(AppIcons.edit),
-                  title: Row(
-                    children: [
-                      Text(l10n.editMessage),
-                      if (!canEdit) ...[
-                        const SizedBox(width: Space.sm),
-                        const PlusBadge(),
-                      ],
-                    ],
-                  ),
+                  title: Text(l10n.editMessage),
                   onTap: () {
                     Navigator.of(sheet).pop();
-                    unawaited(
-                      canEdit
-                          ? _edit()
-                          : showWhatPlusAdds(context, isAdmin: canModerate),
-                    );
+                    unawaited(_edit());
                   },
                 ),
               if (m.text.trim().isNotEmpty)

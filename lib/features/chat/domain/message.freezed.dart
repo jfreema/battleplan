@@ -18,7 +18,7 @@ mixin _$Message {
  String get id; GroupId get groupId; String get authorId; String get authorName; MessageType get type; String get text; String? get authorPhotoPath;/// "Emma #7, Liam #23" for a guardian on a youth team (PLAYER-8).
  String? get authorPlayerSummary; String? get replyToId;/// The quote a reply shows, written by the server (CHAT-13, D25).
  ReplyPreview? get replyPreview;/// Photos, up to 10 (CHAT-3).
- List<Attachment> get attachments; Map<String, Reaction> get reactions; DateTime? get deletedAt;/// Set when the author edited the text (PLAN-6); shows "edited".
+ List<Attachment> get attachments; Map<String, Reaction> get reactions; DateTime? get deletedAt;/// Set when the author edited the text (CHAT-15); shows "edited".
  DateTime? get editedAt;/// Who deleted it: the author ("This message was deleted") or an admin
 /// ("Removed by a team admin") (CHAT-8).
  String? get deletedReason;/// When the server stamped it. Null while a sent message is still local.
@@ -280,7 +280,7 @@ class _Message extends Message {
 }
 
 @override final  DateTime? deletedAt;
-/// Set when the author edited the text (PLAN-6); shows "edited".
+/// Set when the author edited the text (CHAT-15); shows "edited".
 @override final  DateTime? editedAt;
 /// Who deleted it: the author ("This message was deleted") or an admin
 /// ("Removed by a team admin") (CHAT-8).

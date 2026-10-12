@@ -9,24 +9,28 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/presentation/chat_look_section.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
-import 'package:battleplan/features/groups/presentation/plan_section.dart';
+import 'package:battleplan/features/groups/presentation/storage_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Reminder choices for events, in minutes (SCHED-3).
 const reminderChoices = [15, 60, 120, 1440, 2880, 10080];
 
 /// TEAM-5 at `/g/:groupId/settings` (admins): name, sport, logo, color,
-/// description, time zone, member permissions, default reminders, and
-/// storage used. The invite link joins with the invite screen.
+/// description, time zone, member permissions, default reminders, the chat
+/// look, and storage used with Media. The invite link joins with the invite
+/// screen.
 class TeamSettingsScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -142,10 +146,35 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
   static String _hex(int argb) =>
       '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
-  static String _size(int bytes) {
-    final gb = bytes / (1024 * 1024 * 1024);
-    if (gb >= 1) return '${gb.toStringAsFixed(1)} GB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(0)} MB';
+  /// Super admins set this team's limit in MB (STORE-6).
+  Future<void> _changeQuota(Group group) async {
+    final l10n = AppLocalizations.of(context);
+    final max = NumberFormat.decimalPattern(l10n.localeName)
+        .format(Limits.storageQuotaMaxMb);
+    final mb = await showDialog<int>(
+      context: context,
+      builder: (_) => _QuotaDialog(
+        initialMb: group.storageQuotaBytes ~/ bytesPerMb,
+        maxLabel: max,
+      ),
+    );
+    if (mb == null || !mounted) return;
+    try {
+      await ref.read(groupRepositoryProvider).setStorageQuota(group.id, mb);
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          l10n.storageLimitSaved(formatBytes(mb * bytesPerMb)),
+        );
+      }
+    } on AppFailure catch (e) {
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          e is PermissionDenied ? l10n.notAllowed : l10n.profileSaveFailed,
+        );
+      }
+    }
   }
 
   String _reminderLabel(AppLocalizations l10n, int minutes) =>
@@ -173,8 +202,12 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
       _loaded = true;
     }
     final s = group.settings;
-    final isOwner =
-        ref.watch(myMembershipProvider(group.id))?.role == MemberRole.owner;
+    final membership = ref.watch(myMembershipProvider(group.id));
+    final isOwner = membership?.role == MemberRole.owner;
+    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    final isAdmin = (membership?.isAdmin ?? false) || superAdmin;
+    // Full storage turns off a new logo too, with the one message (STORE-4).
+    final full = group.storageFull;
     void setSettings(GroupSettings next) => unawaited(
       _save(() => repo.updateGroup(group.id, settings: next), announce: false),
     );
@@ -205,13 +238,20 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
               ),
               Center(
                 child: TextButton(
-                  onPressed: () async {
-                    final bytes = await ref
-                        .read(photoPickerProvider)
-                        .pickProfilePhoto();
-                    if (bytes == null) return;
-                    await _save(() => repo.uploadLogo(group.id, bytes));
-                  },
+                  style: full
+                      ? TextButton.styleFrom(
+                          foregroundColor: theme.disabledColor,
+                        )
+                      : null,
+                  onPressed: full
+                      ? () => showStorageFull(context)
+                      : () async {
+                          final bytes = await ref
+                              .read(photoPickerProvider)
+                              .pickProfilePhoto();
+                          if (bytes == null) return;
+                          await _save(() => repo.uploadLogo(group.id, bytes));
+                        },
                   child: Text(l10n.changeLogo),
                 ),
               ),
@@ -346,28 +386,37 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                     ),
                 ],
               ),
-              // Free or Plus, and the license (PLAN-4).
-              section(l10n.planSection),
-              PlanSection(group: group),
-              // The chat's look for everyone on a Plus team (PLAN-8).
+              // The chat's look for everyone on the team (CHAT-18).
               section(l10n.chatLook),
               ChatLookSection(group: group),
-              // Storage used against the team's quota (D16).
+              // Storage used against the team's limit (STORE-2), with Media
+              // to free space (STORE-5).
               section(l10n.storageSection),
-              if (group.storageQuotaBytes > 0) ...[
-                LinearProgressIndicator(
-                  value: (group.storageBytes / group.storageQuotaBytes).clamp(
-                    0,
-                    1,
-                  ),
-                ),
-                const SizedBox(height: Space.xs),
-              ],
-              Text(
-                l10n.storageUsed(
-                  formatBytes(group.storageBytes),
-                  formatBytes(group.storageQuotaBytes),
-                ),
+              StorageMeter(
+                usedBytes: group.storageBytes,
+                quotaBytes: group.storageQuotaBytes,
+              ),
+              const SizedBox(height: Space.sm),
+              Wrap(
+                spacing: Space.sm,
+                runSpacing: Space.sm,
+                children: [
+                  if (isAdmin)
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          unawaited(context.push('/g/${group.id.value}/media')),
+                      icon: const Icon(AppIcons.media),
+                      label: Text(l10n.mediaMenu),
+                    ),
+                  // Raising one team's limit isn't advertised (STORE-6):
+                  // only super admins ever see it, until the admin panel
+                  // (M8) takes it over.
+                  if (superAdmin)
+                    TextButton(
+                      onPressed: () => unawaited(_changeQuota(group)),
+                      child: Text(l10n.changeStorageLimit),
+                    ),
+                ],
               ),
               if (isOwner) ...[
                 section(l10n.ownerActions),
@@ -392,13 +441,6 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                   onTap: () => _delete(group),
                 ),
               ],
-              section(l10n.storage),
-              Text(
-                l10n.storageUsed(
-                  _size(group.storageBytes),
-                  _size(group.storageQuotaBytes),
-                ),
-              ),
             ],
           ),
         ),
@@ -407,17 +449,67 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
   }
 }
 
-/// "0 B", "512 KB", "1.2 GB": sizes for the storage meter.
-String formatBytes(int bytes) {
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  var value = bytes.toDouble();
-  var unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit++;
+/// Asks for a limit in whole MB, 1 to [Limits.storageQuotaMaxMb]; pops it
+/// or null (STORE-6). The server checks the range again.
+class _QuotaDialog extends StatefulWidget {
+  const new({required this.initialMb, required this.maxLabel});
+
+  final int initialMb;
+  final String maxLabel;
+
+  @override
+  State<_QuotaDialog> createState() => _QuotaDialogState();
+}
+
+class _QuotaDialogState extends State<_QuotaDialog> {
+  late final _mb = TextEditingController(
+    text: widget.initialMb > 0 ? '${widget.initialMb}' : '',
+  );
+  String? _error;
+
+  @override
+  void dispose() {
+    _mb.dispose();
+    super.dispose();
   }
-  final text = unit == 0 || value >= 10
-      ? value.round().toString()
-      : value.toStringAsFixed(1);
-  return '$text ${units[unit]}';
+
+  void _submit() {
+    final mb = int.tryParse(_mb.text.trim());
+    if (mb == null || mb < 1 || mb > Limits.storageQuotaMaxMb) {
+      setState(
+        () =>
+            _error = AppLocalizations.of(context)
+                .storageLimitInvalid(widget.maxLabel),
+      );
+      return;
+    }
+    Navigator.of(context).pop(mb);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.storageLimitTitle),
+      content: TextField(
+        controller: _mb,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: InputDecoration(
+          labelText: l10n.storageLimitLabel,
+          helperText: l10n.storageLimitHelp(widget.maxLabel),
+          errorText: _error,
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(onPressed: _submit, child: Text(l10n.save)),
+      ],
+    );
+  }
 }

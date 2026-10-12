@@ -8,14 +8,13 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
-import 'package:battleplan/features/groups/presentation/plus.dart';
+import 'package:battleplan/features/groups/presentation/storage_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Team settings → Chat look (PLAN-8): the chat's bubble color and
-/// background for everyone on a Plus team. Free teams see it with the Plus
-/// badge.
+/// Team settings → Chat look (CHAT-18): the chat's bubble color and
+/// background for everyone on the team, set by its admins.
 class ChatLookSection extends ConsumerWidget {
   const new({required this.group, super.key});
 
@@ -60,21 +59,13 @@ class ChatLookSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    if (!group.has(PlanFeature.chatTheme)) {
-      return ListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Row(
-          children: [
-            Flexible(child: Text(l10n.chatLook)),
-            const SizedBox(width: Space.sm),
-            const PlusBadge(),
-          ],
-        ),
-        subtitle: Text(l10n.chatLookHelp),
-        onTap: () => unawaited(showWhatPlusAdds(context, isAdmin: true)),
-      );
-    }
     final theme = group.chatTheme ?? const ChatTheme();
+    // A new background photo is an upload, which full storage stops
+    // (STORE-4); colors, the pattern, and a photo already up still work.
+    final full = group.storageFull;
+    void pickPhoto() => full
+        ? showStorageFull(context)
+        : unawaited(_pickPhoto(context, ref, theme));
     final teamColor = group.color;
     Widget swatch(int? argb, String label) {
       final selected = theme.bubbleColor == argb;
@@ -151,7 +142,7 @@ class ChatLookSection extends ConsumerWidget {
           onSelectionChanged: (s) {
             final next = s.first;
             if (next == ChatBackground.photo && theme.backgroundPath == null) {
-              unawaited(_pickPhoto(context, ref, theme));
+              pickPhoto();
             } else {
               unawaited(_save(context, ref, theme.copyWith(background: next)));
             }
@@ -159,7 +150,12 @@ class ChatLookSection extends ConsumerWidget {
         ),
         if (theme.background == ChatBackground.photo)
           TextButton(
-            onPressed: () => unawaited(_pickPhoto(context, ref, theme)),
+            style: full
+                ? TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).disabledColor,
+                  )
+                : null,
+            onPressed: pickPhoto,
             child: Text(l10n.changeBackgroundPhoto),
           ),
       ],

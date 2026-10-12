@@ -370,7 +370,7 @@ class ChatMessages extends _$ChatMessages {
     await ref.read(memberRepositoryProvider).markRead(groupId, UserId(uid));
   }
 
-  /// Edits my message's text (PLAN-6). Plus teams only; rules enforce it.
+  /// Edits my message's text (CHAT-15). Rules allow only the author.
   Future<void> edit(Message message, String text) =>
       ref.read(messageRepositoryProvider).editText(message.id, text.trim());
 }

@@ -31,7 +31,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeMessageRepository? messageRepo,
   FakePhotoPicker? photoPicker,
   FakeSafetyRepository? safety,
-  FakePlanRepository? plans,
+  FakeMediaRepository? media,
   FakeDeviceRepository? devices,
   FakeNotificationRepository? notifications,
   FakeBrowserInfo browser = const FakeBrowserInfo(),
@@ -44,6 +44,9 @@ Future<FakeLocalPrefs> pumpApp(
   final localPrefs = prefs ?? FakeLocalPrefs();
   await tester.pumpWidget(
     ProviderScope(
+      // A fresh app each call, so a test can pump twice (say, as an admin
+      // and then as a member) without keeping the first one's providers.
+      key: UniqueKey(),
       overrides: [
         appEnvProvider.overrideWithValue(
           const AppEnv(flavor: AppFlavor.dev, useEmulators: true),
@@ -61,7 +64,9 @@ Future<FakeLocalPrefs> pumpApp(
         playerRepositoryProvider.overrideWithValue(
           playerRepo ?? FakePlayerRepository(),
         ),
-        planRepositoryProvider.overrideWithValue(plans ?? FakePlanRepository()),
+        mediaRepositoryProvider.overrideWithValue(
+          media ?? FakeMediaRepository(),
+        ),
         safetyRepositoryProvider.overrideWithValue(
           safety ?? FakeSafetyRepository(),
         ),

@@ -71,7 +71,7 @@ IconData notificationIcon(NotifyKind? kind) => switch (kind) {
   NotifyKind.guardianApproved ||
   NotifyKind.playerAdded => AppIcons.family,
   NotifyKind.contentReported => AppIcons.report,
-  NotifyKind.planReminder => AppIcons.plus,
+  NotifyKind.storageWarning => AppIcons.storage,
   NotifyKind.pollCreated || NotifyKind.pollClosed => AppIcons.poll,
   NotifyKind.eventCreated || NotifyKind.eventChanged => AppIcons.event,
   NotifyKind.eventReminder => AppIcons.reminder,

@@ -23,11 +23,15 @@ abstract interface class GroupRepository {
   /// Uploads a new team logo (TEAM-1, TEAM-5). Admins only.
   Future<void> uploadLogo(GroupId id, Uint8List jpegBytes);
 
-  /// Saves the chat look (PLAN-8). Admins of Plus teams.
+  /// Saves the chat look (CHAT-18). Admins only.
   Future<void> updateChatTheme(GroupId id, ChatTheme theme);
 
-  /// Uploads a chat background photo and returns its path (PLAN-8).
+  /// Uploads a chat background photo and returns its path (CHAT-18).
   Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes);
+
+  /// Sets one team's storage limit in MB, 1 to [Limits.storageQuotaMaxMb],
+  /// through `adminSetGroupQuota` (STORE-6). Super admins only.
+  Future<void> setStorageQuota(GroupId id, int quotaMb);
 
   /// Hands the team to another member (TEAM-6). Owner only.
   Future<void> transferOwnership(GroupId id, UserId newOwner);

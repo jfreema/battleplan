@@ -49,7 +49,9 @@ abstract final class AppIcons {
   static const IconData markAllRead = Symbols.done_all_rounded;
   static const IconData addedToTeam = Symbols.group_add_rounded;
   static const IconData family = Symbols.family_restroom_rounded;
-  static const IconData plus = Symbols.workspace_premium_rounded;
+  static const IconData storage = Symbols.storage_rounded;
+  static const IconData media = Symbols.perm_media_rounded;
+  static const IconData file = Symbols.insert_drive_file_rounded;
   static const IconData poll = Symbols.poll_rounded;
   static const IconData event = Symbols.event_rounded;
   static const IconData reminder = Symbols.alarm_rounded;

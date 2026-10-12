@@ -15,6 +15,7 @@ class Composer extends StatefulWidget {
     required this.onSend,
     this.onPickPhotos,
     this.onTakePhoto,
+    this.onAttachBlocked,
     this.replyingTo,
     this.onCancelReply,
     super.key,
@@ -30,6 +31,10 @@ class Composer extends StatefulWidget {
   /// it in M5.
   final VoidCallback? onPickPhotos;
   final VoidCallback? onTakePhoto;
+
+  /// When set, attaching is off (the team's storage is full, STORE-4): +
+  /// calls this to say why instead of opening the menu. Text still sends.
+  final VoidCallback? onAttachBlocked;
 
   @override
   State<Composer> createState() => _ComposerState();
@@ -86,7 +91,16 @@ class _ComposerState extends State<Composer> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            if (widget.onPickPhotos != null)
+            if (widget.onAttachBlocked case final blocked?)
+              IconButton(
+                tooltip: l10n.addToMessage,
+                onPressed: blocked,
+                icon: Icon(
+                  AppIcons.add,
+                  color: Theme.of(context).disabledColor,
+                ),
+              )
+            else if (widget.onPickPhotos != null)
               PopupMenuButton<VoidCallback>(
                 tooltip: l10n.addToMessage,
                 icon: const Icon(AppIcons.add),

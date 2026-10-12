@@ -2,4 +2,4 @@
 /// import this file, never groups' presentation/ files.
 library;
 
-export 'presentation/plus.dart' show PlusBadge, showWhatPlusAdds;
+export 'presentation/storage_widgets.dart' show showStorageFull;

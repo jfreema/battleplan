@@ -26,6 +26,7 @@ import 'package:battleplan/features/groups/presentation/email_invites_screen.dar
 import 'package:battleplan/features/groups/presentation/enter_code_screen.dart';
 import 'package:battleplan/features/groups/presentation/invite_screen.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
+import 'package:battleplan/features/groups/presentation/media_screen.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_settings_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
@@ -260,6 +261,11 @@ GoRouter router(Ref ref) {
             builder: (_, state) => TeamSettingsScreen(
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
+          ),
+          GoRoute(
+            path: 'media',
+            builder: (_, state) =>
+                MediaScreen(groupId: GroupId(state.pathParameters['groupId']!)),
           ),
           GoRoute(
             path: 'roster',

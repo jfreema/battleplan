@@ -6,21 +6,17 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
-import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The four reactions, in picker order (CHAT-6).
+/// The 16 reactions in picker order (CHAT-6): the main four, then the
+/// rest.
 const List<Reaction> reactionOrder = [
   Reaction.like,
   Reaction.love,
   Reaction.dislike,
   Reaction.laugh,
-];
-
-/// The 12 more Plus teams get (PLAN-7), in picker order.
-const List<Reaction> plusReactionOrder = [
   Reaction.fire,
   Reaction.clap,
   Reaction.party,
@@ -73,26 +69,16 @@ String reactionName(AppLocalizations l10n, Reaction r) => switch (r) {
   Reaction.trophy => l10n.reactionTrophy,
 };
 
-/// The reactions at the top of the message menu: the free four, then the
-/// 12 Plus ones on Plus teams, or a "More reactions" row with the Plus badge
-/// on Free teams (PLAN-7).
+/// How many of [reactionOrder] lead the picker on their own row.
+const _mainReactions = 4;
+
+/// The reactions at the top of the message menu (CHAT-6): the main four on
+/// one row, then the other 12.
 class ReactionPicker extends StatelessWidget {
-  const new({
-    required this.mine,
-    required this.onPick,
-    this.plus = false,
-    this.onMore,
-    super.key,
-  });
+  const new({required this.mine, required this.onPick, super.key});
 
   final Reaction? mine;
   final void Function(Reaction) onPick;
-
-  /// The team is on Plus: show all 16.
-  final bool plus;
-
-  /// On Free, explains Plus.
-  final VoidCallback? onMore;
 
   @override
   Widget build(BuildContext context) {
@@ -124,25 +110,16 @@ class ReactionPicker extends StatelessWidget {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [for (final r in reactionOrder) button(r)],
+          children: [
+            for (final r in reactionOrder.take(_mainReactions)) button(r),
+          ],
         ),
-        if (plus)
-          Wrap(
-            alignment: WrapAlignment.center,
-            children: [for (final r in plusReactionOrder) button(r)],
-          )
-        else if (onMore != null)
-          TextButton(
-            onPressed: onMore,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l10n.moreReactions),
-                const SizedBox(width: Space.sm),
-                const PlusBadge(),
-              ],
-            ),
-          ),
+        Wrap(
+          alignment: WrapAlignment.center,
+          children: [
+            for (final r in reactionOrder.skip(_mainReactions)) button(r),
+          ],
+        ),
       ],
     );
   }
@@ -175,7 +152,7 @@ class ReactionChips extends StatelessWidget {
       child: Wrap(
         spacing: Space.xs,
         children: [
-          for (final r in [...reactionOrder, ...plusReactionOrder])
+          for (final r in reactionOrder)
             if (counts[r] case final n?)
               Material(
                 color: r == mine
@@ -221,7 +198,7 @@ class ReactionsSheet extends ConsumerWidget {
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(vertical: Space.lg),
       children: [
-        for (final r in [...reactionOrder, ...plusReactionOrder])
+        for (final r in reactionOrder)
           for (final e in message.reactions.entries)
             if (e.value == r)
               ListTile(

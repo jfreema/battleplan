@@ -1,4 +1,4 @@
-import 'package:battleplan/features/groups/presentation/team_settings_screen.dart';
+import 'package:battleplan/features/groups/presentation/storage_widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

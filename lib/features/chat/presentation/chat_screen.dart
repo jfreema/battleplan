@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -15,6 +14,7 @@ import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/chat/presentation/message_tile.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -177,11 +177,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final me = ref.watch(authUserProvider).value?.uid;
     final group = ref.watch(groupProvider(widget.groupId)).value;
     final archived = group?.isArchived ?? false;
-    // A Plus team's chat look (PLAN-8): my bubble color and the background.
-    final themed = group?.has(PlanFeature.chatTheme) ?? false;
-    final look = themed ? (group!.chatTheme ?? const ChatTheme()) : null;
-    final bubbleArgb = look?.bubbleColor ?? (themed ? group!.color : null);
+    // The team's chat look (CHAT-18): my bubble color and the background.
+    // A team that never set one keeps the brand color and a plain chat.
+    final look = group?.chatTheme;
+    final bubbleArgb = look == null ? null : look.bubbleColor ?? group!.color;
     final bubbleColor = bubbleArgb == null ? null : Color(bubbleArgb);
+    // Full storage stops photos, not text (STORE-4).
+    final storageFull = group?.storageFull ?? false;
     final messages = chat.messages;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final picker = ref.watch(photoPickerProvider);
@@ -237,8 +239,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       for (final item in chat.outgoing)
         OutgoingPhotosTile(
           item: item,
-          onRetry: () =>
-              unawaited(controller.retryPhotos(item.id).catchError((_) {})),
+          // Retrying into full storage would only fail again (STORE-4).
+          onRetry: storageFull
+              ? () => showStorageFull(context)
+              : () => unawaited(
+                  controller.retryPhotos(item.id).catchError((_) {}),
+                ),
           onDiscard: () => controller.discardPhotos(item.id),
         ),
       for (final q in chat.queued)
@@ -357,6 +363,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             onTakePhoto: picker.canUseCamera
                 ? () => unawaited(_takePhoto(picker, controller))
                 : null,
+            onAttachBlocked: storageFull
+                ? () => showStorageFull(context)
+                : null,
           ),
       ],
     );
@@ -364,9 +373,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 }
 
 extension on _ChatScreenState {
+  /// Storage filled up while the picker was open: say so instead of
+  /// uploading into a refusal (STORE-4).
+  bool _fullAfterPicking() {
+    final full =
+        ref.read(groupProvider(widget.groupId)).value?.storageFull ?? false;
+    if (full && mounted) showStorageFull(context);
+    return full;
+  }
+
   Future<void> _pickPhotos(PhotoPicker picker, ChatMessages controller) async {
     final photos = await picker.pickChatPhotos();
-    if (photos.isEmpty) return;
+    if (photos.isEmpty || _fullAfterPicking()) return;
     await controller
         .sendPhotos([
           for (final p in photos) (bytes: p.bytes, contentType: p.contentType),
@@ -376,7 +394,7 @@ extension on _ChatScreenState {
 
   Future<void> _takePhoto(PhotoPicker picker, ChatMessages controller) async {
     final p = await picker.takeChatPhoto();
-    if (p == null) return;
+    if (p == null || _fullAfterPicking()) return;
     await controller
         .sendPhotos([(bytes: p.bytes, contentType: p.contentType)])
         .catchError((Object _) {});
@@ -411,7 +429,7 @@ String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
       : DateFormat.yMMMEd(l10n.localeName).format(d);
 }
 
-/// A Plus team's chat background (PLAN-8): a subtle pattern, or a photo
+/// The team's chat background (CHAT-18): a subtle pattern, or a photo
 /// under a scrim so messages stay readable.
 class _Backdrop extends ConsumerWidget {
   const new({required this.look});

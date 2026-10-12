@@ -438,17 +438,20 @@ final class MyMembershipFamily extends $Family
   String toString() => r'myMembershipProvider';
 }
 
-/// A URL for a team logo path, or null.
+/// A URL for a stored team file (the logo, the chat background, or a Media
+/// preview), or null.
 
 @ProviderFor(teamPhotoUrl)
 final teamPhotoUrlProvider = TeamPhotoUrlFamily._();
 
-/// A URL for a team logo path, or null.
+/// A URL for a stored team file (the logo, the chat background, or a Media
+/// preview), or null.
 
 final class TeamPhotoUrlProvider
     extends $FunctionalProvider<AsyncValue<String?>, String?, FutureOr<String?>>
     with $FutureModifier<String?>, $FutureProvider<String?> {
-  /// A URL for a team logo path, or null.
+  /// A URL for a stored team file (the logo, the chat background, or a Media
+  /// preview), or null.
   TeamPhotoUrlProvider._({
     required TeamPhotoUrlFamily super.from,
     required String super.argument,
@@ -494,7 +497,8 @@ final class TeamPhotoUrlProvider
 
 String _$teamPhotoUrlHash() => r'6d8e54677d8b41b22c87a6bf8c79309c213a2659';
 
-/// A URL for a team logo path, or null.
+/// A URL for a stored team file (the logo, the chat background, or a Media
+/// preview), or null.
 
 final class TeamPhotoUrlFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<String?>, String> {
@@ -507,7 +511,8 @@ final class TeamPhotoUrlFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// A URL for a team logo path, or null.
+  /// A URL for a stored team file (the logo, the chat background, or a Media
+  /// preview), or null.
 
   TeamPhotoUrlProvider call(String path) =>
       TeamPhotoUrlProvider._(argument: path, from: this);
@@ -518,95 +523,215 @@ final class TeamPhotoUrlFamily extends $Family
 
 /// Overridden in app/providers.dart.
 
-@ProviderFor(planRepository)
-final planRepositoryProvider = PlanRepositoryProvider._();
+@ProviderFor(mediaRepository)
+final mediaRepositoryProvider = MediaRepositoryProvider._();
 
 /// Overridden in app/providers.dart.
 
-final class PlanRepositoryProvider
-    extends $FunctionalProvider<PlanRepository, PlanRepository, PlanRepository>
-    with $Provider<PlanRepository> {
+final class MediaRepositoryProvider
+    extends
+        $FunctionalProvider<MediaRepository, MediaRepository, MediaRepository>
+    with $Provider<MediaRepository> {
   /// Overridden in app/providers.dart.
-  PlanRepositoryProvider._()
+  MediaRepositoryProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'planRepositoryProvider',
+        name: r'mediaRepositoryProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$planRepositoryHash();
+  String debugGetCreateSourceHash() => _$mediaRepositoryHash();
 
   @$internal
   @override
-  $ProviderElement<PlanRepository> $createElement($ProviderPointer pointer) =>
+  $ProviderElement<MediaRepository> $createElement($ProviderPointer pointer) =>
       $ProviderElement(pointer);
 
   @override
-  PlanRepository create(Ref ref) {
-    return planRepository(ref);
+  MediaRepository create(Ref ref) {
+    return mediaRepository(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(PlanRepository value) {
+  Override overrideWithValue(MediaRepository value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<PlanRepository>(value),
+      providerOverride: $SyncValueProvider<MediaRepository>(value),
     );
   }
 }
 
-String _$planRepositoryHash() => r'e1e20541b7caf208822cda6d0766c2adb0f5b2b6';
+String _$mediaRepositoryHash() => r'365ae5bb296846cf714f71c6b13adffc61bd2587';
 
-/// Plus licenses I hold that haven't ended (PLAN-3).
+/// The team's files, largest first, for Media (STORE-5). Read once per
+/// visit (it lists the bucket); invalidate to refresh after a delete.
 
-@ProviderFor(myLicenses)
-final myLicensesProvider = MyLicensesProvider._();
+@ProviderFor(teamMedia)
+final teamMediaProvider = TeamMediaFamily._();
 
-/// Plus licenses I hold that haven't ended (PLAN-3).
+/// The team's files, largest first, for Media (STORE-5). Read once per
+/// visit (it lists the bucket); invalidate to refresh after a delete.
 
-final class MyLicensesProvider
+final class TeamMediaProvider
     extends
         $FunctionalProvider<
-          AsyncValue<List<HeldLicense>>,
-          List<HeldLicense>,
-          Stream<List<HeldLicense>>
+          AsyncValue<TeamMedia>,
+          TeamMedia,
+          FutureOr<TeamMedia>
         >
-    with
-        $FutureModifier<List<HeldLicense>>,
-        $StreamProvider<List<HeldLicense>> {
-  /// Plus licenses I hold that haven't ended (PLAN-3).
-  MyLicensesProvider._()
+    with $FutureModifier<TeamMedia>, $FutureProvider<TeamMedia> {
+  /// The team's files, largest first, for Media (STORE-5). Read once per
+  /// visit (it lists the bucket); invalidate to refresh after a delete.
+  TeamMediaProvider._({
+    required TeamMediaFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamMediaProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamMediaHash();
+
+  @override
+  String toString() {
+    return r'teamMediaProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<TeamMedia> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<TeamMedia> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return teamMedia(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamMediaProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamMediaHash() => r'738964d53460208666f1a4048eb1cd9a5d9fce0a';
+
+/// The team's files, largest first, for Media (STORE-5). Read once per
+/// visit (it lists the bucket); invalidate to refresh after a delete.
+
+final class TeamMediaFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<TeamMedia>, GroupId> {
+  TeamMediaFamily._()
+    : super(
+        retry: null,
+        name: r'teamMediaProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The team's files, largest first, for Media (STORE-5). Read once per
+  /// visit (it lists the bucket); invalidate to refresh after a delete.
+
+  TeamMediaProvider call(GroupId groupId) =>
+      TeamMediaProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'teamMediaProvider';
+}
+
+/// Storage banners dismissed this session, by team and level (STORE-3,
+/// STORE-4). Each level is its own, so filling up after dismissing the 90%
+/// warning still shows the full banner. A new sign-in starts over.
+
+@ProviderFor(DismissedStorageBanners)
+final dismissedStorageBannersProvider = DismissedStorageBannersProvider._();
+
+/// Storage banners dismissed this session, by team and level (STORE-3,
+/// STORE-4). Each level is its own, so filling up after dismissing the 90%
+/// warning still shows the full banner. A new sign-in starts over.
+final class DismissedStorageBannersProvider
+    extends
+        $NotifierProvider<
+          DismissedStorageBanners,
+          Set<(GroupId, StorageLevel)>
+        > {
+  /// Storage banners dismissed this session, by team and level (STORE-3,
+  /// STORE-4). Each level is its own, so filling up after dismissing the 90%
+  /// warning still shows the full banner. A new sign-in starts over.
+  DismissedStorageBannersProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'myLicensesProvider',
-        isAutoDispose: true,
+        name: r'dismissedStorageBannersProvider',
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$myLicensesHash();
+  String debugGetCreateSourceHash() => _$dismissedStorageBannersHash();
 
   @$internal
   @override
-  $StreamProviderElement<List<HeldLicense>> $createElement(
-    $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
+  DismissedStorageBanners create() => DismissedStorageBanners();
 
-  @override
-  Stream<List<HeldLicense>> create(Ref ref) {
-    return myLicenses(ref);
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Set<(GroupId, StorageLevel)> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Set<(GroupId, StorageLevel)>>(value),
+    );
   }
 }
 
-String _$myLicensesHash() => r'ef2052826e571db230c69b939bb088e59ba28c4f';
+String _$dismissedStorageBannersHash() =>
+    r'4e7692471bb8bd63fdc5cb7cfcb6043cde8287f0';
+
+/// Storage banners dismissed this session, by team and level (STORE-3,
+/// STORE-4). Each level is its own, so filling up after dismissing the 90%
+/// warning still shows the full banner. A new sign-in starts over.
+
+abstract class _$DismissedStorageBanners
+    extends $Notifier<Set<(GroupId, StorageLevel)>> {
+  Set<(GroupId, StorageLevel)> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref =
+        this.ref
+            as $Ref<Set<(GroupId, StorageLevel)>, Set<(GroupId, StorageLevel)>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                Set<(GroupId, StorageLevel)>,
+                Set<(GroupId, StorageLevel)>
+              >,
+              Set<(GroupId, StorageLevel)>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
 
 /// Overridden in app/providers.dart.
 
