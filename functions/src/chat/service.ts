@@ -220,7 +220,10 @@ export function replyPushBody(m: Record<string, unknown>): string {
  * Notifies a new message (NOTIF-2): the person replied to gets "replied to
  * you" (it pushes even at Important only and lands in their notification
  * center), and everyone else but the author gets the plain message push.
- * Both dedupe on the message ID, since the trigger can run twice.
+ * They're left out of the plain push only when the reply push was for
+ * them: with Replies switched off (NOTIF-4) but Messages on, a reply still
+ * reaches them like any other message. Both dedupe on the message ID,
+ * since the trigger can run twice.
  */
 export async function notifyNewMessage(
   messageId: string,
@@ -239,20 +242,20 @@ export async function notifyNewMessage(
     params: { authorName: actor.name },
     ...(teamName !== null ? { teamName } : {}),
   };
-  if (repliedTo) {
-    await trySend({
-      ...common,
-      kind: 'reply',
-      recipients: { uids: [repliedTo] },
-      body: replyPushBody(message),
-      dedupeKey: `${messageId}_reply`,
-    });
-  }
+  const repliedPushed = repliedTo
+    ? await trySend({
+        ...common,
+        kind: 'reply',
+        recipients: { uids: [repliedTo] },
+        body: replyPushBody(message),
+        dedupeKey: `${messageId}_reply`,
+      })
+    : [];
   await trySend({
     ...common,
     kind: 'message',
     recipients: { members: true },
-    exclude: repliedTo ? [repliedTo] : [],
+    exclude: repliedPushed,
     body: messagePushBody(message),
     dedupeKey: messageId,
   });

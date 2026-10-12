@@ -186,9 +186,11 @@ export function tokensToDelete(responses: { success: boolean; error?: { code: st
 /**
  * Sends one notification (ARCH §6.5): dedupes, resolves who gets it, writes
  * their notification-center items, then pushes to those whose settings
- * allow it. Throws on failure; callers use [trySend].
+ * allow it. Returns who the push was for (whether or not they have a
+ * device), so a caller can keep a second push from reaching them. Throws on
+ * failure; callers use [trySend].
  */
-export async function send(input: NotifyInput): Promise<void> {
+export async function send(input: NotifyInput): Promise<string[]> {
   const info = NOTIFY_KINDS[input.kind];
   const now = Date.now();
 
@@ -204,20 +206,20 @@ export async function send(input: NotifyInput): Promise<void> {
         expiresAt: Timestamp.fromMillis(now + Limits.notifyLogTtlDays * DAY_MS),
       });
   } catch (e) {
-    if ((e as { code?: unknown }).code === ALREADY_EXISTS) return;
+    if ((e as { code?: unknown }).code === ALREADY_EXISTS) return [];
     throw e;
   }
 
   // 1. Recipients, minus the actor, the excluded, and people who blocked the actor.
   const teamName = input.teamName ?? (await teamNameOf(input.groupId));
-  if (teamName === null) return; // the team is gone
+  if (teamName === null) return []; // the team is gone
   const dropped = new Set(input.exclude ?? []);
   if (input.actor) {
     dropped.add(input.actor.uid);
     for (const uid of await blockersOf(input.actor.uid)) dropped.add(uid);
   }
   let members = (await resolveRecipients(input.groupId, input.recipients)).filter((m) => !dropped.has(m.uid));
-  if (!members.length) return;
+  if (!members.length) return [];
 
   // Profiles are read once, and only as far as needed. Center kinds read
   // every recipient's, so disabled accounts get no items; others read only
@@ -234,29 +236,32 @@ export async function send(input: NotifyInput): Promise<void> {
 
   // 3. Push filter: team level and mute, then account status and the global switch.
   let pushTo = members.filter((m) => levelAllowsPush(input.kind, m, now));
-  if (!pushTo.length) return;
+  if (!pushTo.length) return [];
   const known = profiles ?? (await readProfiles(pushTo.map((m) => m.uid)));
   pushTo = pushTo.filter((m) => {
     const p = known.get(m.uid);
     return canReceive(p) && prefAllowsPush(input.kind, p?.notificationPrefs);
   });
-  if (!pushTo.length) return;
+  if (!pushTo.length) return [];
 
   // 4. Deliver.
-  await deliver(input, pushTo.map((m) => m.uid), teamName);
+  const uids = pushTo.map((m) => m.uid);
+  await deliver(input, uids, teamName);
+  return uids;
 }
 
 /**
  * [send], logging instead of throwing: a failed notification never fails or
  * undoes the action that caused it. Pass a function when the input needs
  * reads of its own (names for the body), so those failures are caught too;
- * it returns null when there's nothing to send.
+ * it returns null when there's nothing to send. Returns who the push was
+ * for, or nobody when it failed.
  */
-export async function trySend(input: NotifyInput | (() => Promise<NotifyInput | null>)): Promise<void> {
+export async function trySend(input: NotifyInput | (() => Promise<NotifyInput | null>)): Promise<string[]> {
   let resolved: NotifyInput | null = null;
   try {
     resolved = typeof input === 'function' ? await input() : input;
-    if (resolved) await send(resolved);
+    return resolved ? await send(resolved) : [];
   } catch (e) {
     logger.error('notify_failed', {
       kind: resolved?.kind ?? null,
@@ -264,6 +269,7 @@ export async function trySend(input: NotifyInput | (() => Promise<NotifyInput | 
       dedupeKey: resolved?.dedupeKey ?? null,
       error: String(e),
     });
+    return [];
   }
 }
 
@@ -404,15 +410,14 @@ async function deliver(input: NotifyInput, uids: string[], teamName: string): Pr
     });
     return;
   }
-  const body = input.body;
   let sent = 0;
   let failed = 0;
   let removed = 0;
+  // One message per token, so per-person bodies need no second path.
+  // (sendEachForMulticast does the same underneath, and its token form is
+  // deprecated in firebase-admin 14.)
   for (const part of chunk(devices, Limits.pushTokensPerSend)) {
-    const res =
-      typeof body === 'string'
-        ? await messaging().sendEachForMulticast({ ...payload(body), tokens: part.map((d) => d.token) })
-        : await messaging().sendEach(part.map((d) => ({ ...payload(body(d.uid)), token: d.token })));
+    const res = await messaging().sendEach(part.map((d) => ({ ...payload(bodyFor(input, d.uid)), token: d.token })));
     sent += res.successCount;
     failed += res.failureCount;
     const dead = tokensToDelete(res.responses).flatMap((i) => part[i].refs);

@@ -10,7 +10,7 @@
     "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run test/unit",
-    "test:rules": "vitest run test/rules",
+    "test:rules": "vitest run test/rules test/emulator",
     "emulators:test": "firebase emulators:exec --only firestore,storage --project demo-battleplan 'npm run test:rules'"
   },
   "dependencies": {

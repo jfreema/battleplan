@@ -50,11 +50,9 @@ export const dailyCleanup = onSchedule(
       const group = await db().collection(Collections.groups).doc(r.groupId).get();
       const teamName = (group.get('name') as string | undefined) ?? 'Your team';
       const endsOn = r.endsAt.toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'America/Chicago' });
-      for (const uid of r.uids) {
-        const user = await db().collection(Collections.users).doc(uid).get();
-        const email = user.get('email') as string | undefined;
-        if (email) await sendEmail(planReminderEmail(email, teamName, endsOn, r.days, teamUrl(r.groupId)));
-      }
+      // The notification goes first: trySend never throws, while a failed
+      // email request would end the loop, and the reminder is already
+      // marked sent.
       await trySend({
         kind: 'planReminder',
         groupId: r.groupId,
@@ -68,6 +66,11 @@ export const dailyCleanup = onSchedule(
         dedupeKey: `planReminder_${r.licenseId}_${r.which}`,
         teamName,
       });
+      for (const uid of r.uids) {
+        const user = await db().collection(Collections.users).doc(uid).get();
+        const email = user.get('email') as string | undefined;
+        if (email) await sendEmail(planReminderEmail(email, teamName, endsOn, r.days, teamUrl(r.groupId)));
+      }
     }
     const teams = await reconcileAllStorage();
     logger.info('daily_cleanup', { plansEnded, reminders: reminders.length, devicesPruned, teamsReconciled: teams });
