@@ -322,11 +322,11 @@ void main() {
       expect(find.text('This poll was deleted.'), findsOneWidget);
     });
 
-    testWidgets('a failed post says so', (tester) async {
-      await openChat(
-        tester,
-        messages: FakeMessageRepository()..failPolls = true,
-      );
+    testWidgets('a failed post stays with Retry, and Retry posts it', (
+      tester,
+    ) async {
+      final messages = FakeMessageRepository()..failPolls = true;
+      final polls = await openChat(tester, messages: messages);
       await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Poll'));
@@ -341,6 +341,143 @@ void main() {
         find.text("The poll didn't post. Check your connection and try again."),
         findsOneWidget,
       );
+      // It stays in the chat by its question, so it isn't made twice.
+      expect(find.text('Poll: Dinner?'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      messages.failPolls = false;
+      await tester.tap(find.text('Retry'));
+      // Sends are spaced a second apart (CHAT-4).
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(polls.polls.values.single.question, 'Dinner?');
+      expect(find.text('Poll: Dinner?'), findsNothing);
+      expect(find.text('Dinner?'), findsOneWidget);
+    });
+
+    testWidgets('an option too long by the server’s count says so', (
+      tester,
+    ) async {
+      await openChat(tester);
+      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Poll'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).at(0), 'Dinner?');
+      // One emoji the field counts once and the server counts five times.
+      await tester.enterText(
+        find.byType(TextField).at(1),
+        '${'a' * 79}👨‍👩‍👧',
+      );
+      await tester.enterText(find.byType(TextField).at(2), 'No');
+      await tester.pump();
+      expect(find.text('Too long'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Post'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('the card turns Closed at its close time (POLL-4)', (
+      tester,
+    ) async {
+      await openChat(
+        tester,
+        existing: poll(createdBy: 'coach')
+            .copyWith(closesAt: DateTime.now().add(const Duration(seconds: 3))),
+      );
+      expect(find.text('Close poll'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
+      expect(find.text('No votes yet · Closed'), findsOneWidget);
+      expect(find.text('Close poll'), findsNothing);
+    });
+
+    testWidgets('a vote the server refuses says the poll closed, and a '
+        'failed close says so', (tester) async {
+      final polls = await openChat(tester, existing: poll(createdBy: 'coach'))
+        ..refuseVotes = true
+        ..failClose = true;
+      await tester.tap(find.text('Saturday'));
+      await tester.pumpAndSettle();
+      expect(find.text('This poll is closed.'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Close poll'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Close poll'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          "Couldn't close the poll. Check your connection and try again.",
+        ),
+        findsOneWidget,
+      );
+      expect(polls.closed, isEmpty);
+    });
+
+    testWidgets('super admins can close any poll', (tester) async {
+      final polls = FakePollRepository()..put(poll());
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach.copyWith(isSuperAdmin: true)),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [testMembership('a', 'coach')],
+        messageRepo: FakeMessageRepository([pollMessage()]),
+        pollRepo: polls,
+      );
+      expect(find.text('Close poll'), findsOneWidget);
+    });
+
+    testWidgets('archived teams show results but take no votes (TEAM-9)', (
+      tester,
+    ) async {
+      final polls = FakePollRepository()..put(poll(createdBy: 'coach'));
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder').copyWith(archivedAt: DateTime(2026)),
+        },
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        messageRepo: FakeMessageRepository([pollMessage()]),
+        pollRepo: polls,
+      );
+      expect(find.text('Saturday or Sunday?'), findsOneWidget);
+      expect(find.text('Close poll'), findsNothing);
+      await tester.tap(find.text('Saturday'));
+      await tester.pumpAndSettle();
+      expect(polls.votes['p1'], isNull);
+    });
+
+    testWidgets('full storage with no polls allowed: + just says why '
+        '(STORE-4)', (tester) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder').copyWith(
+            settings: const GroupSettings(membersCanCreatePolls: false),
+            storageBytes: 500 * bytesPerMb,
+            storageQuotaBytes: 500 * bytesPerMb,
+          ),
+        },
+        memberships: [testMembership('a', 'coach')],
+      );
+      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.pumpAndSettle();
+      expect(find.text('Photo library'), findsNothing);
+      expect(
+        find.text(
+          'Storage is full. Uploads, attachments, and scheduling new events '
+          'are disabled until storage is freed up.',
+        ),
+        findsNWidgets(2),
+      );
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
     });
   });
 

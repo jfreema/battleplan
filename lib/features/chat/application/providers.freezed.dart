@@ -21,7 +21,9 @@ mixin _$ChatState {
  bool get reachedStart;/// Photo messages still uploading, oldest first (CHAT-3).
  List<OutgoingPhotos> get outgoing;/// Text messages waiting their turn or refused, oldest first (CHAT-4).
 /// Each disappears once the server has it.
- List<OutgoingText> get queued;
+ List<OutgoingText> get queued;/// Polls waiting their turn in the send queue or refused (POLL-1), so a
+/// poll posted offline behind a queued text still shows as sending.
+ List<OutgoingPoll> get polls;
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -33,20 +35,20 @@ $ChatStateCopyWith<ChatState> get copyWith => _$ChatStateCopyWithImpl<ChatState>
 @override
 bool operator ==(Object other) {
   final _this = this as ChatState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&const DeepCollectionEquality().equals(other.messages, _this.messages)&&(identical(other.loading, _this.loading) || other.loading == _this.loading)&&(identical(other.loadingOlder, _this.loadingOlder) || other.loadingOlder == _this.loadingOlder)&&(identical(other.reachedStart, _this.reachedStart) || other.reachedStart == _this.reachedStart)&&const DeepCollectionEquality().equals(other.outgoing, _this.outgoing)&&const DeepCollectionEquality().equals(other.queued, _this.queued));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&const DeepCollectionEquality().equals(other.messages, _this.messages)&&(identical(other.loading, _this.loading) || other.loading == _this.loading)&&(identical(other.loadingOlder, _this.loadingOlder) || other.loadingOlder == _this.loadingOlder)&&(identical(other.reachedStart, _this.reachedStart) || other.reachedStart == _this.reachedStart)&&const DeepCollectionEquality().equals(other.outgoing, _this.outgoing)&&const DeepCollectionEquality().equals(other.queued, _this.queued)&&const DeepCollectionEquality().equals(other.polls, _this.polls));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ChatState;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.messages),_this.loading,_this.loadingOlder,_this.reachedStart,const DeepCollectionEquality().hash(_this.outgoing),const DeepCollectionEquality().hash(_this.queued));
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.messages),_this.loading,_this.loadingOlder,_this.reachedStart,const DeepCollectionEquality().hash(_this.outgoing),const DeepCollectionEquality().hash(_this.queued),const DeepCollectionEquality().hash(_this.polls));
 }
 
 @override
 String toString() {
   final _this = this as ChatState;
-  return 'ChatState(messages: ${_this.messages}, loading: ${_this.loading}, loadingOlder: ${_this.loadingOlder}, reachedStart: ${_this.reachedStart}, outgoing: ${_this.outgoing}, queued: ${_this.queued})';
+  return 'ChatState(messages: ${_this.messages}, loading: ${_this.loading}, loadingOlder: ${_this.loadingOlder}, reachedStart: ${_this.reachedStart}, outgoing: ${_this.outgoing}, queued: ${_this.queued}, polls: ${_this.polls})';
 }
 
 
@@ -57,7 +59,7 @@ abstract mixin class $ChatStateCopyWith<$Res>  {
   factory $ChatStateCopyWith(ChatState value, $Res Function(ChatState) _then) = _$ChatStateCopyWithImpl;
 @useResult
 $Res call({
- List<Message> messages, bool loading, bool loadingOlder, bool reachedStart, List<OutgoingPhotos> outgoing, List<OutgoingText> queued
+ List<Message> messages, bool loading, bool loadingOlder, bool reachedStart, List<OutgoingPhotos> outgoing, List<OutgoingText> queued, List<OutgoingPoll> polls
 });
 
 
@@ -74,7 +76,7 @@ class _$ChatStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? messages = null,Object? loading = null,Object? loadingOlder = null,Object? reachedStart = null,Object? outgoing = null,Object? queued = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? messages = null,Object? loading = null,Object? loadingOlder = null,Object? reachedStart = null,Object? outgoing = null,Object? queued = null,Object? polls = null,}) {
   return _then(ChatState(
 messages: null == messages ? _self.messages : messages // ignore: cast_nullable_to_non_nullable
 as List<Message>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
@@ -82,7 +84,8 @@ as bool,loadingOlder: null == loadingOlder ? _self.loadingOlder : loadingOlder /
 as bool,reachedStart: null == reachedStart ? _self.reachedStart : reachedStart // ignore: cast_nullable_to_non_nullable
 as bool,outgoing: null == outgoing ? _self.outgoing : outgoing // ignore: cast_nullable_to_non_nullable
 as List<OutgoingPhotos>,queued: null == queued ? _self.queued : queued // ignore: cast_nullable_to_non_nullable
-as List<OutgoingText>,
+as List<OutgoingText>,polls: null == polls ? _self.polls : polls // ignore: cast_nullable_to_non_nullable
+as List<OutgoingPoll>,
   ));
 }
 
@@ -167,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Message> messages,  bool loading,  bool loadingOlder,  bool reachedStart,  List<OutgoingPhotos> outgoing,  List<OutgoingText> queued)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Message> messages,  bool loading,  bool loadingOlder,  bool reachedStart,  List<OutgoingPhotos> outgoing,  List<OutgoingText> queued,  List<OutgoingPoll> polls)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatState() when $default != null:
-return $default(_that.messages,_that.loading,_that.loadingOlder,_that.reachedStart,_that.outgoing,_that.queued);case _:
+return $default(_that.messages,_that.loading,_that.loadingOlder,_that.reachedStart,_that.outgoing,_that.queued,_that.polls);case _:
   return orElse();
 
 }
@@ -188,10 +191,10 @@ return $default(_that.messages,_that.loading,_that.loadingOlder,_that.reachedSta
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Message> messages,  bool loading,  bool loadingOlder,  bool reachedStart,  List<OutgoingPhotos> outgoing,  List<OutgoingText> queued)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Message> messages,  bool loading,  bool loadingOlder,  bool reachedStart,  List<OutgoingPhotos> outgoing,  List<OutgoingText> queued,  List<OutgoingPoll> polls)  $default,) {final _that = this;
 switch (_that) {
 case _ChatState():
-return $default(_that.messages,_that.loading,_that.loadingOlder,_that.reachedStart,_that.outgoing,_that.queued);case _:
+return $default(_that.messages,_that.loading,_that.loadingOlder,_that.reachedStart,_that.outgoing,_that.queued,_that.polls);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +211,10 @@ return $default(_that.messages,_that.loading,_that.loadingOlder,_that.reachedSta
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Message> messages,  bool loading,  bool loadingOlder,  bool reachedStart,  List<OutgoingPhotos> outgoing,  List<OutgoingText> queued)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Message> messages,  bool loading,  bool loadingOlder,  bool reachedStart,  List<OutgoingPhotos> outgoing,  List<OutgoingText> queued,  List<OutgoingPoll> polls)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatState() when $default != null:
-return $default(_that.messages,_that.loading,_that.loadingOlder,_that.reachedStart,_that.outgoing,_that.queued);case _:
+return $default(_that.messages,_that.loading,_that.loadingOlder,_that.reachedStart,_that.outgoing,_that.queued,_that.polls);case _:
   return null;
 
 }
@@ -223,7 +226,7 @@ return $default(_that.messages,_that.loading,_that.loadingOlder,_that.reachedSta
 
 
 class _ChatState implements ChatState {
-  const _ChatState({ List<Message> messages = const <Message>[], this.loading = true, this.loadingOlder = false, this.reachedStart = false,  List<OutgoingPhotos> outgoing = const <OutgoingPhotos>[],  List<OutgoingText> queued = const <OutgoingText>[]}): _messages = messages,_outgoing = outgoing,_queued = queued;
+  const _ChatState({ List<Message> messages = const <Message>[], this.loading = true, this.loadingOlder = false, this.reachedStart = false,  List<OutgoingPhotos> outgoing = const <OutgoingPhotos>[],  List<OutgoingText> queued = const <OutgoingText>[],  List<OutgoingPoll> polls = const <OutgoingPoll>[]}): _messages = messages,_outgoing = outgoing,_queued = queued,_polls = polls;
   
 
 /// Every message loaded so far, newest first.
@@ -260,6 +263,17 @@ class _ChatState implements ChatState {
   return EqualUnmodifiableListView(_queued);
 }
 
+/// Polls waiting their turn in the send queue or refused (POLL-1), so a
+/// poll posted offline behind a queued text still shows as sending.
+ final  List<OutgoingPoll> _polls;
+/// Polls waiting their turn in the send queue or refused (POLL-1), so a
+/// poll posted offline behind a queued text still shows as sending.
+@override@JsonKey() List<OutgoingPoll> get polls {
+  if (_polls is EqualUnmodifiableListView) return _polls;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_polls);
+}
+
 
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
@@ -271,18 +285,18 @@ _$ChatStateCopyWith<_ChatState> get copyWith => __$ChatStateCopyWithImpl<_ChatSt
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatState&&const DeepCollectionEquality().equals(other.messages, _messages)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.loadingOlder, loadingOlder) || other.loadingOlder == loadingOlder)&&(identical(other.reachedStart, reachedStart) || other.reachedStart == reachedStart)&&const DeepCollectionEquality().equals(other.outgoing, _outgoing)&&const DeepCollectionEquality().equals(other.queued, _queued));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatState&&const DeepCollectionEquality().equals(other.messages, _messages)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.loadingOlder, loadingOlder) || other.loadingOlder == loadingOlder)&&(identical(other.reachedStart, reachedStart) || other.reachedStart == reachedStart)&&const DeepCollectionEquality().equals(other.outgoing, _outgoing)&&const DeepCollectionEquality().equals(other.queued, _queued)&&const DeepCollectionEquality().equals(other.polls, _polls));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_messages),loading,loadingOlder,reachedStart,const DeepCollectionEquality().hash(_outgoing),const DeepCollectionEquality().hash(_queued));
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_messages),loading,loadingOlder,reachedStart,const DeepCollectionEquality().hash(_outgoing),const DeepCollectionEquality().hash(_queued),const DeepCollectionEquality().hash(_polls));
 }
 
 @override
 String toString() {
-    return 'ChatState(messages: $messages, loading: $loading, loadingOlder: $loadingOlder, reachedStart: $reachedStart, outgoing: $outgoing, queued: $queued)';
+    return 'ChatState(messages: $messages, loading: $loading, loadingOlder: $loadingOlder, reachedStart: $reachedStart, outgoing: $outgoing, queued: $queued, polls: $polls)';
 }
 
 
@@ -293,7 +307,7 @@ abstract mixin class _$ChatStateCopyWith<$Res> implements $ChatStateCopyWith<$Re
   factory _$ChatStateCopyWith(_ChatState value, $Res Function(_ChatState) _then) = __$ChatStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Message> messages, bool loading, bool loadingOlder, bool reachedStart, List<OutgoingPhotos> outgoing, List<OutgoingText> queued
+ List<Message> messages, bool loading, bool loadingOlder, bool reachedStart, List<OutgoingPhotos> outgoing, List<OutgoingText> queued, List<OutgoingPoll> polls
 });
 
 
@@ -310,7 +324,7 @@ class __$ChatStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? messages = null,Object? loading = null,Object? loadingOlder = null,Object? reachedStart = null,Object? outgoing = null,Object? queued = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? messages = null,Object? loading = null,Object? loadingOlder = null,Object? reachedStart = null,Object? outgoing = null,Object? queued = null,Object? polls = null,}) {
   return _then(_ChatState(
 messages: null == messages ? _self._messages : messages // ignore: cast_nullable_to_non_nullable
 as List<Message>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
@@ -318,11 +332,302 @@ as bool,loadingOlder: null == loadingOlder ? _self.loadingOlder : loadingOlder /
 as bool,reachedStart: null == reachedStart ? _self.reachedStart : reachedStart // ignore: cast_nullable_to_non_nullable
 as bool,outgoing: null == outgoing ? _self._outgoing : outgoing // ignore: cast_nullable_to_non_nullable
 as List<OutgoingPhotos>,queued: null == queued ? _self._queued : queued // ignore: cast_nullable_to_non_nullable
-as List<OutgoingText>,
+as List<OutgoingText>,polls: null == polls ? _self._polls : polls // ignore: cast_nullable_to_non_nullable
+as List<OutgoingPoll>,
   ));
 }
 
 
+}
+
+/// @nodoc
+mixin _$OutgoingPoll {
+
+/// The ID its poll and message will have.
+ String get id; NewPoll get poll; bool get failed;
+/// Create a copy of OutgoingPoll
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$OutgoingPollCopyWith<OutgoingPoll> get copyWith => _$OutgoingPollCopyWithImpl<OutgoingPoll>(this as OutgoingPoll, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as OutgoingPoll;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OutgoingPoll&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.poll, _this.poll) || other.poll == _this.poll)&&(identical(other.failed, _this.failed) || other.failed == _this.failed));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as OutgoingPoll;
+  return Object.hash(runtimeType,_this.id,_this.poll,_this.failed);
+}
+
+@override
+String toString() {
+  final _this = this as OutgoingPoll;
+  return 'OutgoingPoll(id: ${_this.id}, poll: ${_this.poll}, failed: ${_this.failed})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $OutgoingPollCopyWith<$Res>  {
+  factory $OutgoingPollCopyWith(OutgoingPoll value, $Res Function(OutgoingPoll) _then) = _$OutgoingPollCopyWithImpl;
+@useResult
+$Res call({
+ String id, NewPoll poll, bool failed
+});
+
+
+$NewPollCopyWith<$Res> get poll;
+
+}
+/// @nodoc
+class _$OutgoingPollCopyWithImpl<$Res>
+    implements $OutgoingPollCopyWith<$Res> {
+  _$OutgoingPollCopyWithImpl(this._self, this._then);
+
+  final OutgoingPoll _self;
+  final $Res Function(OutgoingPoll) _then;
+
+/// Create a copy of OutgoingPoll
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? poll = null,Object? failed = null,}) {
+  return _then(OutgoingPoll(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,poll: null == poll ? _self.poll : poll // ignore: cast_nullable_to_non_nullable
+as NewPoll,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+/// Create a copy of OutgoingPoll
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$NewPollCopyWith<$Res> get poll {
+  
+  return $NewPollCopyWith<$Res>(_self.poll, (value) {
+    return _then(_self.copyWith(poll: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [OutgoingPoll].
+extension OutgoingPollPatterns on OutgoingPoll {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _OutgoingPoll value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _OutgoingPoll() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _OutgoingPoll value)  $default,){
+final _that = this;
+switch (_that) {
+case _OutgoingPoll():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _OutgoingPoll value)?  $default,){
+final _that = this;
+switch (_that) {
+case _OutgoingPoll() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  NewPoll poll,  bool failed)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _OutgoingPoll() when $default != null:
+return $default(_that.id,_that.poll,_that.failed);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  NewPoll poll,  bool failed)  $default,) {final _that = this;
+switch (_that) {
+case _OutgoingPoll():
+return $default(_that.id,_that.poll,_that.failed);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  NewPoll poll,  bool failed)?  $default,) {final _that = this;
+switch (_that) {
+case _OutgoingPoll() when $default != null:
+return $default(_that.id,_that.poll,_that.failed);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _OutgoingPoll implements OutgoingPoll {
+  const _OutgoingPoll({required this.id, required this.poll, this.failed = false});
+  
+
+/// The ID its poll and message will have.
+@override final  String id;
+@override final  NewPoll poll;
+@override@JsonKey() final  bool failed;
+
+/// Create a copy of OutgoingPoll
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$OutgoingPollCopyWith<_OutgoingPoll> get copyWith => __$OutgoingPollCopyWithImpl<_OutgoingPoll>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _OutgoingPoll&&(identical(other.id, id) || other.id == id)&&(identical(other.poll, poll) || other.poll == poll)&&(identical(other.failed, failed) || other.failed == failed));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,id,poll,failed);
+}
+
+@override
+String toString() {
+    return 'OutgoingPoll(id: $id, poll: $poll, failed: $failed)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$OutgoingPollCopyWith<$Res> implements $OutgoingPollCopyWith<$Res> {
+  factory _$OutgoingPollCopyWith(_OutgoingPoll value, $Res Function(_OutgoingPoll) _then) = __$OutgoingPollCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, NewPoll poll, bool failed
+});
+
+
+@override $NewPollCopyWith<$Res> get poll;
+
+}
+/// @nodoc
+class __$OutgoingPollCopyWithImpl<$Res>
+    implements _$OutgoingPollCopyWith<$Res> {
+  __$OutgoingPollCopyWithImpl(this._self, this._then);
+
+  final _OutgoingPoll _self;
+  final $Res Function(_OutgoingPoll) _then;
+
+/// Create a copy of OutgoingPoll
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? poll = null,Object? failed = null,}) {
+  return _then(_OutgoingPoll(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,poll: null == poll ? _self.poll : poll // ignore: cast_nullable_to_non_nullable
+as NewPoll,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+/// Create a copy of OutgoingPoll
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$NewPollCopyWith<$Res> get poll {
+  
+  return $NewPollCopyWith<$Res>(_self.poll, (value) {
+    return _then(_self.copyWith(poll: value));
+  });
+}
 }
 
 /// @nodoc

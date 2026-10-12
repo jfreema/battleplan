@@ -799,5 +799,6 @@
   "pollVotesTitle": "Votes",
   "deletePollBody": "The poll and its votes are deleted for everyone.",
   "pollDiscardTitle": "Discard this poll?",
-  "pollDiscard": "Discard"
+  "pollDiscard": "Discard",
+  "pollTooLong": "Too long"
 }

@@ -25,6 +25,9 @@ class FirestorePollRepository implements PollRepository {
       .collection(Collections.polls)
       .doc(pollId.value)
       .snapshots()
+      // Offline, a poll that was never cached reads as missing; wait for the
+      // server rather than call a live poll deleted.
+      .where((d) => d.exists || !d.metadata.isFromCache)
       .map((d) => d.exists ? pollFromFirestore(d.id, d.data()!) : null);
 
   @override

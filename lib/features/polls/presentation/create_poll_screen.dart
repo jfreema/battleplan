@@ -164,6 +164,10 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                   decoration: InputDecoration(
                     labelText: l10n.pollQuestion,
                     border: const OutlineInputBorder(),
+                    // Some emoji count as more than one character.
+                    errorText: tooLong(_question.text, Limits.pollQuestionMax)
+                        ? l10n.pollTooLong
+                        : null,
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -200,6 +204,13 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                                   isDense: true,
                                   counterText: '',
                                   border: const OutlineInputBorder(),
+                                  errorText:
+                                      tooLong(
+                                        o.text.text,
+                                        Limits.pollOptionTextMax,
+                                      )
+                                      ? l10n.pollTooLong
+                                      : null,
                                 ),
                                 onChanged: (_) => setState(() {}),
                               ),

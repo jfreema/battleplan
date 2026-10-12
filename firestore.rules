@@ -378,8 +378,14 @@ service cloud.firestore {
       allow list: if boundedQuery()
         && (resource.data.uid == uid() || openBallot(resource.data.pollId));
       allow create, update: if voteOk(voteId);
-      // Tapping your only choice again removes your vote, while it's open.
-      allow delete: if resource.data.uid == uid() && pollOpen(get(pollPath(resource.data.pollId)).data);
+      // Tapping your only choice again removes your vote, while it's open,
+      // with the same team checks as voting (archived teams are read-only).
+      allow delete: if resource.data.uid == uid()
+        && voteRemovable(get(pollPath(resource.data.pollId)).data);
+    }
+
+    function voteRemovable(p) {
+      return isMember(p.groupId) && active(p.groupId) && pollOpen(p);
     }
 
     // A teammate may see who chose what: the poll isn't anonymous. Read

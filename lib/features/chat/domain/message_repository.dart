@@ -54,9 +54,15 @@ abstract interface class MessageRepository {
     String? replyToId,
   });
 
-  /// Posts a poll and its chat message together (POLL-1); they share an ID.
-  /// Like text, it shows at once and goes out when the connection allows.
-  Future<void> sendPoll(GroupId groupId, UserId uid, NewPoll poll);
+  /// Posts a poll and its chat message together (POLL-1); they share an ID,
+  /// [id] or a new one. Like text, it shows once written and goes out when
+  /// the connection allows.
+  Future<void> sendPoll(
+    GroupId groupId,
+    UserId uid,
+    NewPoll poll, {
+    String? id,
+  });
 
   /// A URL to show a message photo.
   Future<String?> attachmentUrl(String path);

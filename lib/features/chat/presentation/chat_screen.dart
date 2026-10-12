@@ -259,6 +259,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 unawaited(controller.retryText(q.id).catchError((_) {})),
             onDiscard: () => controller.discardText(q.id),
           ),
+      // Polls waiting their turn, shown by their question (POLL-1).
+      for (final p in chat.polls)
+        if (!shownIds.contains(p.id))
+          OutgoingTextTile(
+            item: OutgoingText(
+              id: p.id,
+              text: '${l10n.pollLabel}: ${p.poll.tidy.question}',
+              failed: p.failed,
+            ),
+            onRetry: () =>
+                unawaited(controller.retryPoll(p.id).catchError((_) {})),
+            onDiscard: () => controller.discardPoll(p.id),
+          ),
     ].reversed.toList();
     // "Sent" goes under my newest message once the server has it, unless
     // something of mine is still on its way.

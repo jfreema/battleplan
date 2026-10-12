@@ -38,7 +38,22 @@ abstract class ChatState with _$ChatState {
     /// Text messages waiting their turn or refused, oldest first (CHAT-4).
     /// Each disappears once the server has it.
     @Default(<OutgoingText>[]) List<OutgoingText> queued,
+
+    /// Polls waiting their turn in the send queue or refused (POLL-1), so a
+    /// poll posted offline behind a queued text still shows as sending.
+    @Default(<OutgoingPoll>[]) List<OutgoingPoll> polls,
   }) = _ChatState;
+}
+
+/// A poll not yet on the server.
+@freezed
+abstract class OutgoingPoll with _$OutgoingPoll {
+  const factory({
+    /// The ID its poll and message will have.
+    required String id,
+    required NewPoll poll,
+    @Default(false) bool failed,
+  }) = _OutgoingPoll;
 }
 
 /// A text message not yet on the server: waiting in the send queue (for
@@ -259,13 +274,51 @@ class ChatMessages extends _$ChatMessages {
     return _sendText(item);
   }
 
-  /// Posts a poll (POLL-1), spaced from other sends like a message. Throws
-  /// if the server refuses it, so the chat can say it didn't post.
+  /// Posts a poll (POLL-1), spaced from other sends like a message. It
+  /// shows as sending at once, even while it waits behind queued texts.
+  /// Throws if the server refuses it; it then stays with Retry and Delete.
   Future<void> sendPoll(NewPoll poll) {
+    final item = OutgoingPoll(
+      id: ref.read(messageRepositoryProvider).newMessageId(),
+      poll: poll,
+    );
+    state = state.copyWith(polls: [...state.polls, item]);
+    return _sendPoll(item);
+  }
+
+  /// Tries a refused poll again.
+  Future<void> retryPoll(String id) {
+    final item = state.polls.where((p) => p.id == id).firstOrNull;
+    if (item == null) return Future.value();
+    _setPoll(id, failed: false);
+    return _sendPoll(item);
+  }
+
+  /// Drops a refused poll.
+  void discardPoll(String id) => state = state.copyWith(
+    polls: state.polls.where((p) => p.id != id).toList(),
+  );
+
+  void _setPoll(String id, {required bool failed}) => state = state.copyWith(
+    polls: [
+      for (final p in state.polls)
+        if (p.id == id) p.copyWith(failed: failed) else p,
+    ],
+  );
+
+  Future<void> _sendPoll(OutgoingPoll item) async {
     final uid = ref.read(authUserProvider).value?.uid;
-    if (uid == null) return Future.value();
+    if (uid == null) return;
     final repo = ref.read(messageRepositoryProvider);
-    return _enqueue(() => repo.sendPoll(groupId, UserId(uid), poll));
+    try {
+      await _enqueue(
+        () => repo.sendPoll(groupId, UserId(uid), item.poll, id: item.id),
+      );
+      discardPoll(item.id);
+    } on Object {
+      _setPoll(item.id, failed: true);
+      rethrow;
+    }
   }
 
   /// Tries a refused message again.

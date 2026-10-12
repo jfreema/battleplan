@@ -202,8 +202,13 @@ class FirestoreMessageRepository implements MessageRepository {
   );
 
   @override
-  Future<void> sendPoll(GroupId groupId, UserId uid, NewPoll poll) {
-    final ref = _db.collection(Collections.messages).doc();
+  Future<void> sendPoll(
+    GroupId groupId,
+    UserId uid,
+    NewPoll poll, {
+    String? id,
+  }) {
+    final ref = _db.collection(Collections.messages).doc(id);
     final p = poll.tidy;
     return _post(
       groupId,

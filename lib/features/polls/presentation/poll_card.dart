@@ -21,14 +21,48 @@ import 'package:material_ui/material_ui.dart';
 /// live result bar, count, and percentage, checkmarks on my choices, how
 /// many people voted, and when it closes. Tapping an option votes; tapping
 /// it again removes the vote. Results are always visible.
-class PollCard extends ConsumerWidget {
+class PollCard extends ConsumerStatefulWidget {
   const new({required this.pollId, required this.groupId, super.key});
 
   final PollId pollId;
   final GroupId groupId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PollCard> createState() => _PollCardState();
+}
+
+class _PollCardState extends ConsumerState<PollCard> {
+  /// Rebuilds the card at its close time, so it turns Closed on time even
+  /// though the server's tick writes closedAt a few minutes later.
+  Timer? _closeTimer;
+  DateTime? _timerFor;
+
+  /// Set when the timer for [_timerFor] fires.
+  bool _reachedClose = false;
+
+  @override
+  void dispose() {
+    _closeTimer?.cancel();
+    super.dispose();
+  }
+
+  void _rebuildAt(DateTime? closesAt) {
+    if (closesAt == _timerFor) return;
+    _closeTimer?.cancel();
+    _timerFor = closesAt;
+    _reachedClose = false;
+    final wait = closesAt?.difference(DateTime.now());
+    if (wait == null || wait.isNegative) return;
+    _closeTimer = Timer(wait, () {
+      if (mounted) setState(() => _reachedClose = true);
+    });
+  }
+
+  PollId get pollId => widget.pollId;
+  GroupId get groupId => widget.groupId;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -57,9 +91,15 @@ class PollCard extends ConsumerWidget {
     }
     final mine = ref.watch(myPollVoteProvider(pollId)).value ?? const {};
     final me = ref.watch(authUserProvider).value?.uid;
-    final isAdmin = ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false;
-    final closed = value.isClosedAt(DateTime.now());
-    final canClose = !closed && (value.createdBy == me || isAdmin);
+    final isAdmin =
+        (ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false) ||
+        (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
+    // Archived teams are read-only (TEAM-9): results show, nothing changes.
+    final archived =
+        ref.watch(groupProvider(groupId)).value?.isArchived ?? false;
+    if (value.closedAt == null) _rebuildAt(value.closesAt);
+    final closed = value.isClosedAt(DateTime.now()) || _reachedClose;
+    final canClose = !closed && !archived && (value.createdBy == me || isAdmin);
     final leaders = closed ? value.leaders : const <String>{};
 
     final tags = [
@@ -108,7 +148,7 @@ class PollCard extends ConsumerWidget {
               option: option,
               chosen: mine.contains(option.id),
               leading: leaders.contains(option.id),
-              onTap: closed
+              onTap: closed || archived
                   ? null
                   : () =>
                         unawaited(_vote(context, ref, value, mine, option.id)),

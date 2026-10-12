@@ -101,13 +101,17 @@ abstract class NewPoll with _$NewPoll {
   bool isValidAt(DateTime now) {
     final t = tidy;
     return t.question.isNotEmpty &&
-        t.question.length <= Limits.pollQuestionMax &&
+        !tooLong(t.question, Limits.pollQuestionMax) &&
         t.options.length >= Limits.pollOptionsMin &&
         t.options.length <= Limits.pollOptionsMax &&
-        t.options.every((o) => o.length <= Limits.pollOptionTextMax) &&
+        t.options.every((o) => !tooLong(o, Limits.pollOptionTextMax)) &&
         (closesAt == null || closesAt!.isAfter(now));
   }
 }
+
+/// Whether [text] is over [max] characters as the rules count them (code
+/// points), which can be more than a text field counts for some emoji.
+bool tooLong(String text, int max) => text.trim().runes.length > max;
 
 /// What tapping [optionId] does to [mine] (POLL-2): on a one-answer poll it
 /// picks that option, or removes the vote when it's already picked; on a

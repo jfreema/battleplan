@@ -168,6 +168,11 @@ describe('creating a poll (POLL-1)', () => {
     await assertFails(create('bob', 'Bob', { extra: true }));
   });
 
+  it('refuses new polls on an archived team (TEAM-9)', async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ archivedAt: ts('2026-02-01T00:00:00Z') }));
+    await assertFails(create('bob', 'Bob'));
+  });
+
   it("refuses another team's members", async () => {
     await assertFails(create('carol', 'Carol'));
   });
@@ -218,6 +223,17 @@ describe('voting (POLL-2)', () => {
   it('lets you remove your vote while the poll is open', async () => {
     await assertSucceeds(as('alice').doc('pollVotes/p1_alice').delete());
     await assertFails(as('bob').doc('pollVotes/p2_alice').delete());
+  });
+
+  it('refuses voting and removing a vote on an archived team (TEAM-9)', async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ archivedAt: ts('2026-02-01T00:00:00Z') }));
+    await assertFails(vote('bob', 'p1', ['0']));
+    await assertFails(as('alice').doc('pollVotes/p1_alice').delete());
+  });
+
+  it('refuses removing a vote after leaving the team', async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groupMembers/teamA_alice').delete());
+    await assertFails(as('alice').doc('pollVotes/p1_alice').delete());
   });
 
   it('refuses votes in another name, under another ID, or from another team', async () => {

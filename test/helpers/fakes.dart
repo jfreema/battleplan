@@ -983,10 +983,15 @@ class FakeMessageRepository implements MessageRepository {
   bool failPolls = false;
 
   @override
-  Future<void> sendPoll(GroupId groupId, UserId uid, NewPoll poll) async {
+  Future<void> sendPoll(
+    GroupId groupId,
+    UserId uid,
+    NewPoll poll, {
+    String? id,
+  }) async {
     if (failPolls) throw const PermissionDenied('poll');
     final p = poll.tidy;
-    final id = 'poll${polls.polls.length}';
+    id ??= 'poll${polls.polls.length}';
     polls.put(
       Poll(
         id: PollId(id),
@@ -1334,6 +1339,13 @@ class FakePollRepository implements PollRepository {
   final List<String> closed = [];
   final _changes = StreamController<void>.broadcast();
 
+  /// Makes votes fail as the rules refuse them once the server closed the
+  /// poll, while this device still shows it open.
+  bool refuseVotes = false;
+
+  /// Makes closing fail, as offline would.
+  bool failClose = false;
+
   /// Adds or replaces a poll, and tells anyone watching.
   void put(Poll poll) {
     polls[poll.id.value] = poll;
@@ -1357,7 +1369,7 @@ class FakePollRepository implements PollRepository {
   @override
   Future<void> setVote(Poll poll, UserId uid, Set<String> optionIds) async {
     final current = polls[poll.id.value]!;
-    if (current.isClosedAt(DateTime.now())) {
+    if (refuseVotes || current.isClosedAt(DateTime.now())) {
       throw const PermissionDenied('closed');
     }
     final byUid = votes.putIfAbsent(poll.id.value, () => {});
@@ -1385,6 +1397,7 @@ class FakePollRepository implements PollRepository {
 
   @override
   Future<void> closePoll(PollId pollId) async {
+    if (failClose) throw const Offline('close');
     closed.add(pollId.value);
     put(polls[pollId.value]!.copyWith(closedAt: DateTime.now()));
   }
