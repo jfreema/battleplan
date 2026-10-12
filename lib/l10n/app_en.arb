@@ -1245,5 +1245,7 @@
   "adminNotYourself": "You can't do that to your own account here. Use Settings instead.",
   "adminNameMismatch": "The name doesn't match, so nothing was deleted.",
   "adminNothingToDelete": "There's nothing to delete for a reported person.",
-  "teamSuspended": "This team has been suspended."
+  "teamSuspended": "This team has been suspended.",
+  "inviteContinue": "Continue to your team",
+  "inviteContinueTo": "Continue to {team}"
 }

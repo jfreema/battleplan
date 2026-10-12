@@ -35,8 +35,24 @@ class InviteScreen extends ConsumerWidget {
         (ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false) ||
         (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
     final group = ref.watch(groupProvider(groupId)).value;
+    // Right after creating a team there's nothing to go back to, so a clear
+    // way into the new team (its chat) sits at the bottom.
+    final dead = !context.canPop();
     return Scaffold(
       appBar: AppBar(title: Text(l10n.inviteMenu)),
+      bottomNavigationBar: dead
+          ? SafeArea(
+              minimum: const EdgeInsets.all(Space.lg),
+              child: FilledButton(
+                onPressed: () => context.go('/g/${groupId.value}/chat'),
+                child: Text(
+                  (group?.name ?? '').isEmpty
+                      ? l10n.inviteContinue
+                      : l10n.inviteContinueTo(group!.name),
+                ),
+              ),
+            )
+          : null,
       body: invite.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => EmptyState(

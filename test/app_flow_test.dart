@@ -12,6 +12,7 @@ import 'package:battleplan/features/groups/domain/media.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'helpers/fakes.dart';
@@ -164,6 +165,32 @@ void main() {
     await tester.pumpAndSettle();
     expect(users.savedName, 'Jordan Coach');
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
+  });
+
+  testWidgets('after creating a team, Continue leads from the invite screen '
+      'into the team', (tester) async {
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+    );
+    // Creating a team replaces the stack with its invite screen, so there's
+    // no back button (TEAM-1).
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/invite');
+    await tester.pumpAndSettle();
+    final go = find.widgetWithText(FilledButton, 'Continue to Thunder');
+    expect(go, findsOneWidget);
+    await tester.tap(go);
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Add photos or a poll'), findsOneWidget);
+
+    // Opened from the team menu, the screen has Back instead.
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invite').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Continue to Thunder'), findsNothing);
   });
 
   testWidgets('creating a team from the welcome screen', (tester) async {
