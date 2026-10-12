@@ -336,6 +336,9 @@ describe('every role, spot checks the other files leave out', () => {
   it("keeps people's own records their own, super admins included", async () => {
     await assertFails(root().doc('users/alice').update({ themeMode: 'dark' }));
     await assertFails(root().doc('userBlocks/alice_bob').delete());
+    await assertFails(
+      root().doc('userBlocks/alice_carol').set({ uid: 'alice', blockedUid: 'carol', blockedName: 'Carol' }),
+    );
     await assertFails(as('bob').doc('users/alice').update({ themeMode: 'dark' }));
   });
 
@@ -344,6 +347,8 @@ describe('every role, spot checks the other files leave out', () => {
     await assertFails(root().doc('rateLimits/alice_x').get());
     await assertFails(root().doc('eventSeries/s1').update({ createdBy: 'root' }));
     await assertFails(root().doc('devices/abcdefghijklmnop1234').get());
+    await assertFails(root().doc('devices/abcdefghijklmnop1234').delete());
     await assertFails(root().doc('notifications/n1_alice').get());
+    await assertFails(root().collection('notifications').where('uid', '==', 'alice').limit(10).get());
   });
 });

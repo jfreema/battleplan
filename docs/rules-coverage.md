@@ -12,11 +12,11 @@ Reviewed 2026-10-12. Update this page whenever a rule or a rules test changes.
 
 ## Bugs found and fixed
 
-1. **Storage ignored suspension.** `storage.rules`' `isMember` didn't check `suspendedAt`, unlike Firestore's, so members of a suspended team could still read its files and upload chat photos, documents, a logo, and a background. Fixed: membership needs an unsuspended team. Super admins still read (View team). Test: C "a suspended team".
-2. **Storage took uploads on archived teams.** TEAM-9 makes archived teams read-only, but every Storage upload rule only checked the quota. Fixed: `underQuota` also needs `archivedAt == null`, for everyone, super admins included. Test: C "an archived team".
-3. **Players stayed editable on archived teams.** The `players` update rule had no `active()`, so guardians and admins could rename players on an archived team. Fixed. Test: C "freezes the roster".
+1. **Storage ignored suspension.** `storage.rules`' `isMember` didn't check `suspendedAt`, unlike Firestore's, so members of a suspended team could still read its files and upload chat photos, documents, a logo, and a background. Fixed: membership needs an unsuspended team. Super admins still read (View team). Test: C "closes the team's files to its members, and takes no uploads".
+2. **Storage took uploads on archived teams.** TEAM-9 makes archived teams read-only, but every Storage upload rule only checked the quota. Fixed: `underQuota` also needs `archivedAt == null`, for everyone, super admins included. Test: C "takes no uploads from anyone, super admins included, and still shows its files".
+3. **Players stayed editable on archived teams.** The `players` update rule had no `active()`, so guardians and admins could rename players on an archived team. Fixed. Test: C "freezes the roster: guardians and admins edit no player".
 
-Each new test fails against the old rules and passes against the new ones. The Storage fix stays within the two Firestore documents a Storage rule may read (the membership and the team).
+Only those three tests fail against the old rules; they pass against the new ones. The rest of `coverage.test.ts` (signed-out visitors, the suspended team's Firestore reads and writes, "opens again when unsuspended", the archived team's mute and read marks, "edits players again once restored", and the spot checks) passes on the old rules too: it fills coverage gaps rather than proving a fix. Firestore's `isMember` already checked `suspendedAt`. The Storage fix stays within the two Firestore documents a Storage rule may read (the membership and the team).
 
 ## Team collections (Firestore)
 

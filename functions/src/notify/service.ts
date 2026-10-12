@@ -463,8 +463,15 @@ export async function removeTeamNotifications(groupId: string, uid: string): Pro
   );
 }
 
-/** Deletes a deleted account's devices and notification-center items. */
+/**
+ * Deletes a deleted account's devices and notification-center items, and
+ * other people's items about something they did: those name them in the
+ * body ("Alex: Field 3 is open"), and they're shown from "Deleted user"
+ * now (AUTH-10).
+ */
 export async function removeAccountNotifications(uid: string): Promise<void> {
   await removeDevices(uid);
-  await forEachPage(db().collection(Collections.notifications).where('uid', '==', uid), (b, d) => b.delete(d.ref));
+  for (const field of ['uid', 'actorId']) {
+    await forEachPage(db().collection(Collections.notifications).where(field, '==', uid), (b, d) => b.delete(d.ref));
+  }
 }

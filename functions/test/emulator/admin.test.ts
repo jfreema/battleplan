@@ -728,12 +728,15 @@ describe('reports (ADMIN-5, SAFE-4)', () => {
   });
 
   it('deletes reported content and closes the report with a note', async () => {
+    await groups().doc('thunder').update({ lastMessagePreview: { authorName: 'Sam Rivera', text: 'Buy now', type: 'text' } });
     expect(await resolve('r1', 'deleteContent', 'Spam link')).toMatchObject({ resolution: 'deletedMessage' });
     const m1 = (await db().collection(Collections.messages).doc('m1').get()).data()!;
     expect(m1).toMatchObject({ deletedReason: 'admin', deletedBy: 'root', text: '' });
+    // The copies of its text go too: the report's and the team switcher's (CHAT-8).
     expect((await db().collection(Collections.reports).doc('r1').get()).data()).toMatchObject({
-      status: 'actioned', resolution: 'deletedMessage', note: 'Spam link', resolvedBy: 'root',
+      status: 'actioned', resolution: 'deletedMessage', note: 'Spam link', resolvedBy: 'root', excerpt: '',
     });
+    expect((await groups().doc('thunder').get()).get('lastMessagePreview')).toBeNull();
     expect((await audits('actionReport'))[0]).toMatchObject({
       groupId: 'thunder', targetId: 'r1', after: { action: 'deleteContent', resolution: 'deletedMessage', note: 'Spam link' },
     });
@@ -753,7 +756,7 @@ describe('reports (ADMIN-5, SAFE-4)', () => {
     await report('r9', 'user', 'pat', 'pat');
     await expect(resolve('r9', 'removeMember')).rejects.toMatchObject({ message: 'owner' });
     expect((await db().collection(Collections.reports).doc('r9').get()).data()).toMatchObject({
-      status: 'open', resolution: null, resolvedBy: null,
+      status: 'open', resolution: null, resolvedBy: null, excerpt: 'Buy now',
     });
     expect((await audits('resolveReportRefused'))[0]).toMatchObject({
       actorId: 'root', targetId: 'r9', after: { action: 'removeMember', refused: 'owner' },
@@ -796,7 +799,7 @@ describe('reports (ADMIN-5, SAFE-4)', () => {
   it('dismisses, once', async () => {
     await resolve('r3', 'dismiss', 'Not a problem');
     expect((await db().collection(Collections.reports).doc('r3').get()).data()).toMatchObject({
-      status: 'dismissed', resolution: 'none', note: 'Not a problem',
+      status: 'dismissed', resolution: 'none', note: 'Not a problem', excerpt: '',
     });
     expect(await audits('dismissReport')).toHaveLength(1);
     await expect(resolve('r3', 'dismiss')).rejects.toMatchObject({ message: 'already-resolved' });

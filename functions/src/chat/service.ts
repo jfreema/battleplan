@@ -1,5 +1,6 @@
 // Chat domain service: owns messages.
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { isDeepStrictEqual } from 'node:util';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
@@ -8,7 +9,13 @@ import { deletePoll, pollCreatedBody } from '../polls/service.js';
 
 export const DELETED_USER_NAME = 'Deleted user';
 
-/** A deleted account's past messages stay, shown from "Deleted user" (AUTH-10). */
+/**
+ * A deleted account's past messages stay, shown from "Deleted user"
+ * (AUTH-10), and so do the copies of their name: the quote on every reply
+ * to them and the team switcher's preview when they wrote a team's newest
+ * message. Each page's quotes and previews are fixed before its messages
+ * are renamed, so a retry after a failure picks up where it stopped.
+ */
 export async function anonymizeAuthor(uid: string): Promise<void> {
   // Updates don't move documents out of an authorId query, so page by cursor
   // over authorName instead: renamed messages drop out of the query.
@@ -16,9 +23,28 @@ export async function anonymizeAuthor(uid: string): Promise<void> {
     .collection(Collections.messages)
     .where('authorId', '==', uid)
     .where('authorName', '!=', DELETED_USER_NAME);
+  const previewsDone = new Set<string>();
   for (;;) {
     const snap = await query.limit(400).get();
     if (snap.empty) break;
+    // A deleted message's replies already show "Original message was deleted".
+    const quoted = snap.docs.filter((d) => !d.get('deletedAt')).map((d) => d.id);
+    for (let i = 0; i < quoted.length; i += 30) {
+      await forEachPage(
+        db().collection(Collections.messages).where('replyToId', 'in', quoted.slice(i, i + 30)),
+        (batch, reply) => {
+          const preview = reply.get('replyPreview') as ReplyPreview | undefined;
+          if (preview && !preview.deleted && preview.authorName !== DELETED_USER_NAME) {
+            batch.update(reply.ref, { 'replyPreview.authorName': DELETED_USER_NAME });
+          }
+        },
+      );
+    }
+    for (const groupId of new Set(snap.docs.map((d) => String(d.get('groupId') ?? '')))) {
+      if (!groupId || previewsDone.has(groupId)) continue;
+      await rebuildLastMessagePreview(groupId, uid);
+      previewsDone.add(groupId);
+    }
     const batch = db().batch();
     snap.docs.forEach((d) =>
       batch.update(d.ref, { authorName: DELETED_USER_NAME, authorPhotoPath: null, authorPlayerSummary: null }),
@@ -138,6 +164,8 @@ async function afterErase(messageId: string, groupId: string): Promise<void> {
     (batch, reply) =>
       batch.update(reply.ref, { replyPreview: { authorName: '', text: '', type: 'text', deleted: true } }),
   );
+  // The team switcher's preview may be this message's first line.
+  await rebuildLastMessagePreview(groupId);
 }
 
 /**
@@ -262,6 +290,38 @@ export function lastMessagePreviewOf(m: Record<string, unknown>): { authorName: 
     text: text.length > 80 ? `${text.slice(0, 79)}…` : text,
     type,
   };
+}
+
+/** How many of a team's newest messages a rebuilt preview looks through. */
+const PREVIEW_SCAN = 20;
+
+/**
+ * Rebuilds the team switcher's preview (CHAT-9) from the team's newest
+ * message that isn't deleted, or blanks it when the newest few all are, so
+ * a deleted message's text doesn't stay there (CHAT-8). Messages by
+ * [anonymizedUid] show from "Deleted user" (AUTH-10), even before their
+ * own documents are renamed. `lastMessageAt` stays, so unread dots don't
+ * change. Writes only when the preview changes; safe to run twice.
+ */
+export async function rebuildLastMessagePreview(groupId: string, anonymizedUid?: string): Promise<void> {
+  const ref = db().collection(Collections.groups).doc(groupId);
+  const newest = db()
+    .collection(Collections.messages)
+    .where('groupId', '==', groupId)
+    .orderBy('createdAt', 'desc')
+    .limit(PREVIEW_SCAN);
+  await db().runTransaction(async (tx) => {
+    const group = await tx.get(ref);
+    if (!group.exists) return;
+    const latest = (await tx.get(newest)).docs.find((d) => !d.get('deletedAt'))?.data();
+    const preview = latest
+      ? lastMessagePreviewOf(
+          anonymizedUid && latest.authorId === anonymizedUid ? { ...latest, authorName: DELETED_USER_NAME } : latest,
+        )
+      : null;
+    if (isDeepStrictEqual(group.get('lastMessagePreview') ?? null, preview)) return;
+    tx.update(ref, { lastMessagePreview: preview });
+  });
 }
 
 /**

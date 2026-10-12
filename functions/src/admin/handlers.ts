@@ -526,7 +526,7 @@ async function resolveReport(
         break;
     }
   } catch (e) {
-    await reopenReport(input.reportId, actor);
+    await reopenReport(input.reportId, actor, String(report.excerpt ?? ''));
     throw e;
   }
 

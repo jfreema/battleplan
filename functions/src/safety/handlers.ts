@@ -79,6 +79,8 @@ export const resolveReport = onCall(async (request) => {
     resolution: input.resolution,
     resolvedBy: uid,
     resolvedAt: FieldValue.serverTimestamp(),
+    // The copy of what was reported goes with the decision (as closeReport).
+    excerpt: '',
   });
   await audit({
     actorId: uid,
