@@ -51,7 +51,7 @@ final class NotificationCenterProvider
 }
 
 String _$notificationCenterHash() =>
-    r'12139e96f2cc9b57f3e2c68a8b7467c5fb0a83d8';
+    r'3295f2874cb068827dd22c8339c2ad91c6589380';
 
 /// The center across all my teams: the live newest 30 plus older pages
 /// loaded by scrolling, merged by ID (ARCH §5.3). The listener runs only
