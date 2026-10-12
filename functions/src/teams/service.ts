@@ -14,6 +14,7 @@ import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
 import type { Role } from '../shared/roles.js';
+import { teamStatus } from './status.js';
 
 interface MemberRow {
   uid: string;
@@ -64,7 +65,12 @@ export async function removeAccountFromTeams(uid: string): Promise<void> {
           .update(db().collection(Collections.groupMembers).doc(groupMemberId(groupId, heir)), { role: 'owner' })
           .commit();
       } else {
-        await groupRef.update({ archivedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+        const suspended = (await groupRef.get()).get('suspendedAt') != null;
+        await groupRef.update({
+          archivedAt: FieldValue.serverTimestamp(),
+          status: suspended ? 'suspended' : 'archived',
+          updatedAt: FieldValue.serverTimestamp(),
+        });
       }
     }
     await m.ref.delete();
@@ -152,6 +158,7 @@ export async function createGroup(
       storageAlert: 'none',
       archivedAt: null,
       suspendedAt: null,
+      status: 'active',
       createdAt: now,
       updatedAt: now,
       schemaVersion: 1,
@@ -241,13 +248,6 @@ export async function setMemberRole(groupId: string, uid: string, role: 'admin' 
   });
 }
 
-/** The team's document, or `not-found`. */
-async function groupOrThrow(groupId: string): Promise<FirebaseFirestore.DocumentSnapshot> {
-  const group = await db().collection(Collections.groups).doc(groupId).get();
-  if (!group.exists) throw new HttpsError('not-found', 'No such team.');
-  return group;
-}
-
 /**
  * Archives (read-only) or restores a team (TEAM-9). Archiving a team that's
  * already archived keeps the date it was first archived. Returns whether it
@@ -265,6 +265,7 @@ export async function setGroupArchived(
     const was = group.get('archivedAt') as FirebaseFirestore.Timestamp | null | undefined;
     tx.update(ref, {
       archivedAt: archived ? (was ?? FieldValue.serverTimestamp()) : null,
+      status: teamStatus({ archivedAt: archived || null, suspendedAt: group.get('suspendedAt') }),
       updatedAt: FieldValue.serverTimestamp(),
     });
     return { archived: was != null, archivedAt: was ? was.toDate().toISOString() : null };
@@ -332,15 +333,17 @@ export async function updateGroupProfile(
  * super admins still see it. Returns whether it was suspended before.
  */
 export async function setGroupSuspended(groupId: string, suspended: boolean): Promise<boolean> {
-  const before = (await groupOrThrow(groupId)).get('suspendedAt') != null;
-  await db()
-    .collection(Collections.groups)
-    .doc(groupId)
-    .update({
+  const ref = db().collection(Collections.groups).doc(groupId);
+  return db().runTransaction(async (tx) => {
+    const group = await tx.get(ref);
+    if (!group.exists) throw new HttpsError('not-found', 'No such team.');
+    tx.update(ref, {
       suspendedAt: suspended ? FieldValue.serverTimestamp() : null,
+      status: teamStatus({ archivedAt: group.get('archivedAt'), suspendedAt: suspended || null }),
       updatedAt: FieldValue.serverTimestamp(),
     });
-  return before;
+    return group.get('suspendedAt') != null;
+  });
 }
 
 /**

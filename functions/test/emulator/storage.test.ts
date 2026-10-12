@@ -197,6 +197,49 @@ describe('storage warnings (STORE-3, STORE-4)', () => {
   });
 });
 
+describe('the platform upload limit (ADMIN-7)', () => {
+  type FileEvent = Parameters<typeof onGroupFileAdded.run>[0];
+  const added = (name: string, size: number) => onGroupFileAdded.run({ data: { name, size } } as unknown as FileEvent);
+  const config = () => db().collection(Collections.config).doc('app');
+
+  it('deletes an upload over a lowered limit, team files and profile photos alike', async () => {
+    await config().set({ maxUploadMb: 2 });
+    await file(`groups/${G}/documents/d1/big.pdf`, 3 * MB, 'application/pdf');
+    await file(`groups/${G}/documents/d2/small.pdf`, 2 * MB, 'application/pdf');
+    await file('users/sam/avatar/big.jpg', 3 * MB);
+    await added(`groups/${G}/documents/d1/big.pdf`, 3 * MB);
+    await added(`groups/${G}/documents/d2/small.pdf`, 2 * MB);
+    await added('users/sam/avatar/big.jpg', 3 * MB);
+    expect(await fileExists(`groups/${G}/documents/d1/big.pdf`)).toBe(false);
+    expect(await fileExists(`groups/${G}/documents/d2/small.pdf`)).toBe(true);
+    expect(await fileExists('users/sam/avatar/big.jpg')).toBe(false);
+    // The big file was counted; its delete trigger takes it off again.
+    expect((await group()).storageBytes).toBe(5 * MB);
+    await storage().bucket().file('users/sam/avatar/big.jpg').delete({ ignoreNotFound: true });
+  });
+
+  it('keeps to 10 MB when the setting is missing or out of range', async () => {
+    await file(`groups/${G}/documents/d1/a.pdf`, 4 * MB, 'application/pdf');
+    await config().set({ maxUploadMb: 50 });
+    await added(`groups/${G}/documents/d1/a.pdf`, 4 * MB);
+    expect(await fileExists(`groups/${G}/documents/d1/a.pdf`)).toBe(true);
+    await config().delete();
+    await added(`groups/${G}/documents/d1/a.pdf`, 4 * MB);
+    expect(await fileExists(`groups/${G}/documents/d1/a.pdf`)).toBe(true);
+  });
+});
+
+describe('team status (ADMIN-2)', () => {
+  it('is filled in for teams made before it existed by the daily recount', async () => {
+    await groupRef().update({ suspendedAt: Timestamp.now() });
+    await reconcileAllStorage();
+    expect((await group()).status).toBe('suspended');
+    await groupRef().update({ suspendedAt: null, archivedAt: null });
+    await reconcileAllStorage();
+    expect((await group()).status).toBe('active');
+  });
+});
+
 describe('new teams (STORE-1)', () => {
   it('start with the 500 MB limit, no warning, and no plan', async () => {
     const id = await createGroup(
@@ -206,7 +249,7 @@ describe('new teams (STORE-1)', () => {
       Limits.defaultStorageQuotaMb,
     );
     const data = (await db().collection(Collections.groups).doc(id).get()).data() ?? {};
-    expect(data).toMatchObject({ storageBytes: 0, storageQuotaBytes: 500 * MB, storageAlert: 'none' });
+    expect(data).toMatchObject({ storageBytes: 0, storageQuotaBytes: 500 * MB, storageAlert: 'none', status: 'active' });
     expect(data).not.toHaveProperty('plan');
   });
 });
@@ -343,6 +386,21 @@ describe('Media (STORE-5)', () => {
     await deleteTeamMedia.run(call('alex', { groupId: G, path: `groups/${G}/messages/x2/0.jpg` }));
     expect((await messageData('x2')).attachments).toEqual([]);
     expect(await fileExists('groups/teamB/avatar/logo.jpg')).toBe(true);
+  });
+
+  it('says who added the logo and background, by their name on the team or profile', async () => {
+    await file(`groups/${G}/avatar/1.jpg`, 30);
+    await storage().bucket().file(`groups/${G}/avatar/1.jpg`).setMetadata({ metadata: { uploadedBy: 'alex' } });
+    await file(`groups/${G}/theme/1.jpg`, 20);
+    await storage().bucket().file(`groups/${G}/theme/1.jpg`).setMetadata({ metadata: { uploadedBy: 'root' } });
+    await db().collection(Collections.users).doc('root').set({ displayName: 'Root Admin' });
+    await file(`groups/${G}/theme/2.jpg`, 10);
+    const { items } = await listTeamMedia.run(call('pat', { groupId: G }));
+    expect(items.map((i) => [i.path, i.authorName ?? null])).toEqual([
+      [`groups/${G}/avatar/1.jpg`, 'alex'],
+      [`groups/${G}/theme/1.jpg`, 'Root Admin'],
+      [`groups/${G}/theme/2.jpg`, null],
+    ]);
   });
 
   it('resets the logo or background in use, and leaves them alone otherwise', async () => {

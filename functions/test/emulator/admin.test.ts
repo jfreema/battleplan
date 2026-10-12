@@ -11,7 +11,10 @@ import * as admin from '../../src/admin/handlers.js';
 import type { Email } from '../../src/email/service.js';
 import { auth, db, storage } from '../../src/shared/admin.js';
 import { Collections } from '../../src/shared/constants.js';
+import { revokeInvite } from '../../src/invites/handlers.js';
+import { addPlayers, inviteGuardian } from '../../src/players/handlers.js';
 import { archiveGroup, createGroup } from '../../src/teams/handlers.js';
+import { teamStatus } from '../../src/teams/status.js';
 
 // Email stand-in: records every email instead of sending it.
 const mail = vi.hoisted(() => ({ sent: [] as Email[] }));
@@ -79,9 +82,9 @@ async function person(
   });
 }
 
-/** A team with [extra] fields. */
+/** A team with [extra] fields, its status following its dates as Functions keep it. */
 async function team(id: string, name: string, extra: object = {}): Promise<void> {
-  await groups().doc(id).set({
+  const data = {
     name,
     nameLower: name.toLowerCase(),
     sport: 'softball',
@@ -95,7 +98,8 @@ async function team(id: string, name: string, extra: object = {}): Promise<void>
     suspendedAt: null,
     createdAt: ago(30),
     ...extra,
-  });
+  };
+  await groups().doc(id).set({ status: teamStatus(data), ...data });
 }
 
 async function member(groupId: string, uid: string, role = 'member', displayName = uid): Promise<void> {
@@ -245,6 +249,20 @@ describe('teams (ADMIN-2)', () => {
     await expect(list({ cursor: 'nope' })).rejects.toMatchObject({ code: 'invalid-argument', message: 'bad-cursor' });
   });
 
+  it("keeps each team's status as it is archived, suspended, restored, and unsuspended", async () => {
+    const status = async (id: string) => (await groups().doc(id).get()).get('status');
+    await asRoot(admin.adminSetGroupSuspended, { groupId: 'hawks', suspended: true });
+    expect(await status('hawks')).toBe('suspended');
+    await asRoot(admin.adminArchiveGroup, { groupId: 'hawks', archived: false });
+    expect(await status('hawks')).toBe('suspended');
+    await asRoot(admin.adminSetGroupSuspended, { groupId: 'hawks', suspended: false });
+    expect(await status('hawks')).toBe('active');
+    await asRoot(admin.adminArchiveGroup, { groupId: 'thunder', archived: true });
+    expect(await status('thunder')).toBe('archived');
+    expect(ids(await list({ status: 'archived', sort: 'storage' }))).toEqual(['thunder']);
+    expect(ids(await list({ status: 'active', sort: 'members' }))).toEqual(['bears', 'hawks']);
+  });
+
   it('filters by Active, Archived, or Suspended', async () => {
     expect(ids(await list({ status: 'active' }))).toEqual(['thunder', 'bears']);
     expect(ids(await list({ status: 'archived' }))).toEqual(['hawks']);
@@ -254,9 +272,11 @@ describe('teams (ADMIN-2)', () => {
     expect(ids(await list({ status: 'active', limit: 1, cursor: page.nextCursor }))).toEqual(['bears']);
   });
 
-  it('searches by the start of the name, in name order', async () => {
-    // Bandits (banned) sorts before Bears.
+  it('searches by the start of the name, in the chosen sort', async () => {
+    // Bandits (banned) is newer than Bears; Bears has more people.
     expect(ids(await list({ query: 'b' }))).toEqual(['banned', 'bears']);
+    expect(ids(await list({ query: 'b', sort: 'members' }))).toEqual(['bears', 'banned']);
+    expect(ids(await list({ query: 'b', sort: 'storage', limit: 1 }))).toEqual(['bears']);
     expect(ids(await list({ query: 'THU' }))).toEqual(['thunder']);
     expect(ids(await list({ query: 'b', status: 'suspended' }))).toEqual(['banned']);
     expect(ids(await list({ query: 'zz' }))).toEqual([]);
@@ -290,6 +310,48 @@ describe('team detail and actions (ADMIN-3)', () => {
     expect(detail.invites).toEqual([expect.objectContaining({ code: 'CODE1234', useCount: 2 })]);
     expect(detail.counts).toEqual({ events: 1, documents: 2, polls: 0 });
     await expect(asRoot(admin.adminGetTeam, { groupId: 'nope' })).rejects.toMatchObject({ code: 'not-found' });
+  });
+
+  it('lists the latest messages to review, newest first, leaving out deleted and system ones', async () => {
+    const message = (id: string, minutesAgo: number, extra: object = {}) =>
+      db().collection(Collections.messages).doc(id).set({
+        groupId: 'thunder', type: 'text', authorId: 'sam', authorName: 'Sam Rivera', text: `Message ${id}`,
+        attachments: [], deletedAt: null, createdAt: Timestamp.fromMillis(Date.now() - minutesAgo * 60_000), ...extra,
+      });
+    await message('m1', 30);
+    await message('m2', 20, { text: '', attachments: [{ path: 'a.jpg' }, { path: 'b.jpg' }] });
+    await message('m3', 10, { deletedAt: ago(0), text: '' });
+    await message('m4', 5, { type: 'system', authorId: '', text: 'Sam joined' });
+    await message('x1', 1, { groupId: 'hawks' });
+    const detail = await asRoot<{ recentMessages: Record<string, unknown>[] }>(admin.adminGetTeam, { groupId: 'thunder' });
+    expect(detail.recentMessages.map((m) => [m.id, m.authorName, m.text, m.photoCount])).toEqual([
+      ['m2', 'Sam Rivera', '', 2],
+      ['m1', 'Sam Rivera', 'Message m1', 0],
+    ]);
+    expect(typeof detail.recentMessages[0].createdAt).toBe('string');
+  });
+
+  it('audits revoking an invite from the team page, once (ADMIN-3, ADMIN-6)', async () => {
+    await db().collection(Collections.invites).doc('CODE1234').set({
+      groupId: 'thunder', type: 'email', email: 'kim@example.com', createdBy: 'pat', revokedAt: null, createdAt: ago(1),
+    });
+    await asRoot(revokeInvite, { code: 'CODE1234' });
+    await asRoot(revokeInvite, { code: 'CODE1234' });
+    expect((await db().collection(Collections.invites).doc('CODE1234').get()).get('revokedAt')).toBeInstanceOf(Timestamp);
+    const entries = await audits('revokeInvite');
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      actorId: 'root',
+      groupId: 'thunder',
+      targetType: 'invite',
+      targetId: 'CODE1234',
+      before: { type: 'email', email: 'kim@example.com', createdBy: 'pat' },
+      after: { revoked: true },
+    });
+    // Someone else's invite on another team: refused, nothing audited.
+    await db().collection(Collections.invites).doc('HAWK1234').set({ groupId: 'hawks', type: 'link', createdBy: 'sam', revokedAt: null });
+    await expect(run(revokeInvite, 'pat', { code: 'HAWK1234' })).rejects.toMatchObject({ code: 'permission-denied' });
+    expect(await audits('revokeInvite')).toHaveLength(1);
   });
 
   it('records each View team in the audit log', async () => {
@@ -865,5 +927,40 @@ describe('platform settings (ADMIN-7) and createGroup', () => {
     await asRoot(admin.adminUpdateConfig, settings({ defaultStorageQuotaMb: 2048 }));
     const second = await newTeam('pat');
     expect((await groups().doc(second.groupId).get()).get('storageQuotaBytes')).toBe(2048 * MB);
+  });
+});
+
+describe('adding guardians by email needs a verified email (SAFE-5)', () => {
+  const VERIFIED = { email_verified: true };
+  const UNVERIFIED = { email_verified: false };
+  beforeEach(async () => {
+    await team('colts', 'Colts U10', { teamType: 'youth', ownerId: 'pat', playerCount: 1 });
+    await member('colts', 'pat', 'owner', 'Pat Owner');
+    await db().collection(Collections.players).doc('emma').set({ groupId: 'colts', displayName: 'Emma', displayNameLower: 'emma' });
+  });
+
+  it('refuses guardian emails from an unverified admin, and takes players alone', async () => {
+    const withEmail = { groupId: 'colts', players: [{ name: 'Mia', guardians: [{ email: 'kim@example.com' }] }] };
+    await expect(run(addPlayers, 'pat', withEmail, UNVERIFIED)).rejects.toMatchObject({
+      code: 'failed-precondition',
+      message: 'email-not-verified',
+    });
+    await run(addPlayers, 'pat', { groupId: 'colts', players: [{ name: 'Ava' }] }, UNVERIFIED);
+    await run(addPlayers, 'pat', withEmail, VERIFIED);
+    const names = (await db().collection(Collections.players).where('groupId', '==', 'colts').get()).docs.map((d) =>
+      d.get('displayName'),
+    );
+    expect(names.sort()).toEqual(['Ava', 'Emma', 'Mia']);
+  });
+
+  it('refuses inviting a guardian from an unverified account', async () => {
+    const input = { groupId: 'colts', playerId: 'emma', email: 'kim@example.com' };
+    await expect(run(inviteGuardian, 'pat', input, UNVERIFIED)).rejects.toMatchObject({
+      code: 'failed-precondition',
+      message: 'email-not-verified',
+    });
+    await run(inviteGuardian, 'pat', input, VERIFIED);
+    const links = await db().collection(Collections.playerGuardians).where('playerId', '==', 'emma').get();
+    expect(links.size).toBe(1);
   });
 });

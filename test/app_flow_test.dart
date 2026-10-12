@@ -34,6 +34,17 @@ void main() {
     expect(find.text('Continue with email'), findsOneWidget);
   });
 
+  testWidgets('sign-in links the Terms of Use and Privacy Policy (LEGAL-1)', (
+    tester,
+  ) async {
+    final links = FakeLinkOpener();
+    await pumpApp(tester, auth: FakeAuthRepository(), linkOpener: links);
+    await tester.tap(find.widgetWithText(TextButton, 'Terms of Use'));
+    await tester.tap(find.widgetWithText(TextButton, 'Privacy Policy'));
+    await tester.pumpAndSettle();
+    expect(links.opened.map((u) => u.path), ['/terms', '/privacy']);
+  });
+
   testWidgets(
     'email sign-in reaches the welcome screen when there are no teams',
     (tester) async {
@@ -149,12 +160,19 @@ void main() {
     tester,
   ) async {
     final users = FakeUserRepository(needsSetup: true);
+    final links = FakeLinkOpener();
     await pumpApp(
       tester,
       auth: FakeAuthRepository(user: coach),
       users: users,
+      linkOpener: links,
     );
     expect(find.textContaining('set up your profile'), findsOneWidget);
+    // The Terms and Privacy Policy can be read before agreeing (SAFE-3).
+    await tester.tap(find.widgetWithText(TextButton, 'Terms of Use'));
+    await tester.tap(find.widgetWithText(TextButton, 'Privacy Policy'));
+    await tester.pumpAndSettle();
+    expect(links.opened.map((u) => u.path), ['/terms', '/privacy']);
     final next = find.widgetWithText(FilledButton, 'Continue');
     expect(tester.widget<FilledButton>(next).onPressed, isNull);
     await tester.tap(find.text("I'm 18 or older"));
@@ -480,6 +498,38 @@ void main() {
       'Noah Bennett',
     ]);
     expect(find.text('Players added'), findsOneWidget);
+  });
+
+  testWidgets('adding guardians by email asks for a verified email first '
+      '(SAFE-5)', (tester) async {
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {
+        'y': testGroup('y', 'Lightning U10').copyWith(teamType: TeamType.youth),
+      },
+      memberships: [testMembership('y', 'coach', role: MemberRole.owner)],
+      playerRepo: RefusingPlayerRepository(const EmailNotVerified()),
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Roster'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add players'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Paste a list'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextField),
+      'Arjun Shah, Priya Shah, priya@example.com',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add 1 player'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Verify your email first, then you can add people by email.'),
+      findsOneWidget,
+    );
   });
 
   group('youth guardians (PLAYER-3 to PLAYER-5)', () {
@@ -1660,6 +1710,15 @@ void main() {
           size: 5 * bytesPerMb,
           kind: MediaKind.other,
         ),
+        // Who added it, from the file's uploadedBy tag.
+        const MediaItem(
+          path: 'groups/a/theme/1.jpg',
+          size: 200 * 1024,
+          kind: MediaKind.background,
+          contentType: 'image/jpeg',
+          authorName: 'Alex Kim',
+          current: true,
+        ),
       ])..truncated = true;
       await pumpApp(
         tester,
@@ -1676,6 +1735,7 @@ void main() {
       double top(String text) => tester.getTopLeft(find.text(text)).dy;
       expect(top('Unused file'), lessThan(top('Chat photo · Sam Rivera')));
       expect(top('Chat photo · Sam Rivera'), lessThan(top('Team logo')));
+      expect(top('Team logo'), lessThan(top('Chat background · Alex Kim')));
       expect(find.text('5.0 MB'), findsOneWidget);
       expect(find.textContaining('2.0 MB · '), findsOneWidget);
       expect(find.textContaining('Showing the largest files'), findsOneWidget);

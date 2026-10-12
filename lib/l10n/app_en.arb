@@ -1247,5 +1247,14 @@
   "adminNothingToDelete": "There's nothing to delete for a reported person.",
   "teamSuspended": "This team has been suspended.",
   "inviteContinue": "Continue to your team",
-  "inviteContinueTo": "Continue to {team}"
+  "inviteContinueTo": "Continue to {team}",
+  "adminRecentMessages": "Recent messages",
+  "adminNoRecentMessages": "No messages yet.",
+  "adminMessageDeleted": "Message deleted.",
+  "adminPhotosCount": "{count, plural, =1{1 photo} other{{count} photos}}",
+  "@adminPhotosCount": {"placeholders": {"count": {"type": "int"}}},
+  "adminDeleteMessageOf": "Delete message from {name}",
+  "@adminDeleteMessageOf": {"placeholders": {"name": {"type": "String"}}},
+  "mediaKindAddedBy": "{kind} · {name}",
+  "@mediaKindAddedBy": {"placeholders": {"kind": {"type": "String"}, "name": {"type": "String"}}}
 }

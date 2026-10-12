@@ -143,6 +143,16 @@ class FunctionsAdminRepository implements AdminRepository {
             createdAt: _date(_map(i)['createdAt']),
           ),
       ],
+      recentMessages: [
+        for (final m in _list(r['recentMessages']))
+          AdminMessage(
+            id: _str(_map(m)['id']),
+            authorName: _str(_map(m)['authorName']),
+            text: _str(_map(m)['text']),
+            photoCount: _int(_map(m)['photoCount']),
+            createdAt: _date(_map(m)['createdAt']),
+          ),
+      ],
       eventCount: _int(counts['events']),
       documentCount: _int(counts['documents']),
       pollCount: _int(counts['polls']),

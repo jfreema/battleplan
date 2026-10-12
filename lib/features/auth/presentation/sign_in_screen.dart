@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/features/auth/presentation/legal_links.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_controller.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_error_text.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -85,6 +86,7 @@ class SignInScreen extends ConsumerWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  const LegalLinks(),
                 ],
               ),
             ),

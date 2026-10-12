@@ -13,11 +13,23 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 /// Owns `groups` (ARCH §5.2 collection ownership).
 class FirestoreGroupRepository implements GroupRepository {
-  new(this._db, this._functions, this._storage);
+  new(this._db, this._functions, this._storage, {this.currentUid});
 
   final FirebaseFirestore _db;
   final FirebaseFunctions _functions;
   final FirebaseStorage _storage;
+
+  /// Who's signed in, to tag the logo and chat background they upload so
+  /// Media can say who added them (STORE-5).
+  final String? Function()? currentUid;
+
+  SettableMetadata _jpeg() => SettableMetadata(
+    contentType: 'image/jpeg',
+    customMetadata: switch (currentUid?.call()) {
+      final uid? => {'uploadedBy': uid},
+      null => null,
+    },
+  );
 
   @override
   Future<GroupId> createGroup({
@@ -94,9 +106,7 @@ class FirestoreGroupRepository implements GroupRepository {
     final path =
         'groups/${id.value}/avatar/${DateTime.now().millisecondsSinceEpoch}.jpg';
     try {
-      await _storage
-          .ref(path)
-          .putData(jpegBytes, SettableMetadata(contentType: 'image/jpeg'));
+      await _storage.ref(path).putData(jpegBytes, _jpeg());
       return path;
     } on FirebaseException catch (e) {
       throw switch (e.code) {
@@ -149,9 +159,7 @@ class FirestoreGroupRepository implements GroupRepository {
     final path =
         'groups/${id.value}/theme/${DateTime.now().millisecondsSinceEpoch}.jpg';
     try {
-      await _storage
-          .ref(path)
-          .putData(jpegBytes, SettableMetadata(contentType: 'image/jpeg'));
+      await _storage.ref(path).putData(jpegBytes, _jpeg());
       return path;
     } on FirebaseException catch (e) {
       throw switch (e.code) {

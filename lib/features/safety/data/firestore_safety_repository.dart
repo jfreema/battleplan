@@ -79,6 +79,9 @@ class FirestoreSafetyRepository implements SafetyRepository {
       .collection(Collections.reports)
       .where('groupId', isEqualTo: groupId.value)
       .where('status', isEqualTo: 'open')
+      // SAFE-1: reports about one of the team's admins are for super
+      // admins only; the rules refuse a list without this.
+      .where('teamVisible', isEqualTo: true)
       .orderBy('createdAt', descending: true)
       .limit(Limits.queryLimitMax)
       .snapshots()

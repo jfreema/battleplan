@@ -61,6 +61,11 @@ export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) =>
     throw new HttpsError('failed-precondition', 'too-many-players');
   }
   const guardianEmails = input.players.flatMap((p) => p.guardians.filter((g) => g.email)).length;
+  // SAFE-5: adding guardians by email needs a verified email, as adding
+  // people by email does (TEAM-7). Players alone don't.
+  if (guardianEmails > 0 && request.auth?.token.email_verified !== true) {
+    throw new HttpsError('failed-precondition', 'email-not-verified');
+  }
   await consumeRateLimit(
     input.groupId,
     'addByEmail',
@@ -273,6 +278,10 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   }
   if ((await guardianCount(input.playerId)) >= Limits.guardiansPerPlayerMax) {
     throw new HttpsError('failed-precondition', 'too-many-guardians');
+  }
+  // SAFE-5: adding someone by email needs a verified email.
+  if (request.auth?.token.email_verified !== true) {
+    throw new HttpsError('failed-precondition', 'email-not-verified');
   }
   await consumeRateLimit(input.groupId, 'addByEmail', Limits.addByEmailPerGroupPerDay);
   const user = await findOrProvisionUser(input.email, input.name ?? null);

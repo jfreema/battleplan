@@ -88,7 +88,7 @@ async function seed() {
     await db.doc('rsvps/e1_alice').set({ groupId: 'teamA', eventId: 'e1', participantType: 'member', participantId: 'alice', status: 'going' });
     await db.doc('eventSeries/s1').set({ groupId: 'teamA', createdBy: 'alice' });
     await db.doc('groupDocuments/d1').set({ groupId: 'teamA', kind: 'file', name: 'Schedule.pdf', uploadedBy: 'alice' });
-    await db.doc('reports/r1').set({ groupId: 'teamA', status: 'open', reporterId: 'bob', createdAt: ts('2026-10-01T00:00:00Z') });
+    await db.doc('reports/r1').set({ groupId: 'teamA', status: 'open', teamVisible: true, reporterId: 'bob', createdAt: ts('2026-10-01T00:00:00Z') });
     await db.doc('auditLogs/a1').set({ actorId: 'root', action: 'viewGroup', groupId: 'teamA', createdAt: ts('2026-10-01T00:00:00Z') });
     await db.doc('config/app').set({ allowUserGroupCreation: true, maxGroupsCreatedPerUserPerDay: 5 });
     await db.doc('users/bob').set({
@@ -269,7 +269,13 @@ describe('the audit log, reports, and settings (ADMIN-5 to ADMIN-7)', () => {
     await assertSucceeds(root().collection('reports').where('status', '==', 'open').limit(50).get());
     await assertFails(root().collection('reports').where('status', '==', 'open').get());
     await assertSucceeds(
-      as('alice').collection('reports').where('groupId', '==', 'teamA').where('status', '==', 'open').limit(50).get(),
+      as('alice')
+        .collection('reports')
+        .where('groupId', '==', 'teamA')
+        .where('status', '==', 'open')
+        .where('teamVisible', '==', true)
+        .limit(50)
+        .get(),
     );
     await assertFails(as('bob').collection('reports').where('groupId', '==', 'teamA').limit(50).get());
     await assertFails(root().doc('reports/r1').update({ status: 'dismissed' }));

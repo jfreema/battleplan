@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/auth/presentation/legal_links.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -111,6 +112,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
                   ),
+                  // SAFE-3: read them before agreeing.
+                  const LegalLinks(),
                   if (_failed) ...[
                     const SizedBox(height: Space.md),
                     Text(

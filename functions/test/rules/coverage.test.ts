@@ -116,7 +116,7 @@ async function seed(group: object = {}) {
     await db.doc('rsvps/e1_alice').set({ groupId: 'teamA', eventId: 'e1', participantType: 'member', participantId: 'alice', status: 'going' });
     await db.doc('groupDocuments/d1').set({ groupId: 'teamA', kind: 'link', name: 'Site', uploadedBy: 'bob' });
     await db.doc('notifications/n1_alice').set({ uid: 'alice', groupId: 'teamA', read: false });
-    await db.doc('reports/r1').set({ groupId: 'teamA', status: 'open', reporterId: 'bob' });
+    await db.doc('reports/r1').set({ groupId: 'teamA', status: 'open', teamVisible: true, reporterId: 'bob' });
     await db.doc('auditLogs/a1').set({ groupId: 'teamA', action: 'viewGroup' });
     await db.doc('config/app').set({ allowUserGroupCreation: true });
     await db.doc('invites/K7XPM2QR').set({ groupId: 'teamA', type: 'link' });

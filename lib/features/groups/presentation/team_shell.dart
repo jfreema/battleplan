@@ -99,13 +99,20 @@ class TeamShell extends ConsumerWidget {
         ? ref.watch(groupProvider(groupId))
         : const AsyncLoading<Group?>();
     if (onTeam && !viewing && group.hasValue && group.value == null) {
+      // Never a dead end: the account menu (Settings, Sign out) and the
+      // person's other teams, to switch, join, or create one.
       return Scaffold(
-        appBar: AppBar(),
-        body: EmptyState(
-          icon: AppIcons.group,
-          message: l10n.teamSuspended,
-          actionLabel: l10n.goToMyTeams,
-          onAction: () => context.go('/'),
+        appBar: AppBar(actions: const [_AccountButton()]),
+        body: ListView(
+          children: [
+            EmptyState(icon: AppIcons.group, message: l10n.teamSuspended),
+            TeamSwitcherList(
+              currentGroupId: groupId,
+              onSelect: (id) => context.go('/g/${id.value}/chat'),
+              onCreateTeam: () => unawaited(context.push('/g/new')),
+              onJoinTeam: () => unawaited(context.push('/join')),
+            ),
+          ],
         ),
       );
     }

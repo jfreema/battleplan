@@ -119,17 +119,30 @@ export interface TeamRow {
 }
 
 /**
- * How many teams one listing reads at most while filtering by status.
- * Archived and suspended aren't fields of their own (only the times are),
- * so a status filter checks each team in sort order; a page can come back
- * short, with a cursor to keep looking.
+ * The most name matches one search reads (ADMIN-2) before sorting them.
+ * A prefix search ranges over nameLower, so Firestore returns matches in
+ * name order; they're re-sorted by the chosen sort here. A search is one
+ * page of the best matches, without a cursor, as in the users search.
  */
-export const TEAM_SCAN_MAX = 500;
+export const TEAM_SEARCH_MAX = 500;
+
+/** [a] before [b] when its sort field is larger (newest, most active, largest); missing values last. */
+function bySortField(field: string) {
+  const value = (d: FirebaseFirestore.QueryDocumentSnapshot) => {
+    const v = d.get(field) as unknown;
+    if (v instanceof Timestamp) return v.toMillis();
+    return typeof v === 'number' ? v : -Infinity;
+  };
+  return (a: FirebaseFirestore.QueryDocumentSnapshot, b: FirebaseFirestore.QueryDocumentSnapshot) =>
+    value(b) - value(a) || a.id.localeCompare(b.id);
+}
 
 /**
  * A page of teams (ADMIN-2), newest, most active, largest, or using the
- * most storage first. A search matches the start of the name, and its rows
- * come in name order, as a prefix search ranges over nameLower.
+ * most storage first, optionally only Active, Archived, or Suspended ones
+ * (groups.status, one indexed query per sort and status). A search matches
+ * the start of the name and returns the best [limit] matches in the chosen
+ * sort and status, without paging.
  */
 export async function listTeams(input: {
   query?: string;
@@ -138,34 +151,29 @@ export async function listTeams(input: {
   cursor?: string;
   limit: number;
 }): Promise<Page<TeamRow>> {
-  let query: Query = db().collection(Collections.groups);
-  query = input.query
-    ? query.where('nameLower', '>=', input.query).where('nameLower', '<', prefixEnd(input.query)).orderBy('nameLower')
-    : query.orderBy(TEAM_SORT_FIELD[input.sort], 'desc');
-  let after: FirebaseFirestore.DocumentSnapshot | undefined = input.cursor
-    ? await cursorDoc(Collections.groups, input.cursor)
-    : undefined;
-
-  const found: FirebaseFirestore.QueryDocumentSnapshot[] = [];
-  // Without a filter every team matches, so one exact page is read.
-  const batch = input.status ? 100 : input.limit;
-  let scanned = 0;
-  let ended = false;
-  while (found.length < input.limit && scanned < TEAM_SCAN_MAX) {
-    const snap = await (after ? query.startAfter(after) : query).limit(batch).get();
-    let i = 0;
-    for (; i < snap.size; i++) {
-      const d = snap.docs[i];
-      after = d;
-      scanned++;
-      if (!input.status || teamStatus(d.data()) === input.status) found.push(d);
-      if (found.length === input.limit) break;
-    }
-    // A short page read to its end means there are no more teams.
-    if (snap.size < batch && i >= snap.size - 1) {
-      ended = true;
-      break;
-    }
+  const groups = db().collection(Collections.groups);
+  const sortField = TEAM_SORT_FIELD[input.sort];
+  let found: FirebaseFirestore.QueryDocumentSnapshot[];
+  let nextCursor: string | null = null;
+  if (input.query) {
+    const snap = await groups
+      .where('nameLower', '>=', input.query)
+      .where('nameLower', '<', prefixEnd(input.query))
+      .orderBy('nameLower')
+      .limit(TEAM_SEARCH_MAX)
+      .get();
+    // Teams made before groups.status existed are read by their dates.
+    found = snap.docs
+      .filter((d) => !input.status || teamStatus(d.data()) === input.status)
+      .sort(bySortField(sortField))
+      .slice(0, input.limit);
+  } else {
+    let query: Query = input.status ? groups.where('status', '==', input.status) : groups;
+    query = query.orderBy(sortField, 'desc').limit(input.limit);
+    if (input.cursor) query = query.startAfter(await cursorDoc(Collections.groups, input.cursor));
+    const snap = await query.get();
+    found = snap.docs;
+    if (snap.size === input.limit) nextCursor = snap.docs[snap.size - 1].id;
   }
 
   const owners = await fieldsOf(
@@ -191,21 +199,25 @@ export async function listTeams(input: {
       createdAt: iso(t.createdAt),
     };
   });
-  return { rows, nextCursor: ended || !after ? null : after.id };
+  return { rows, nextCursor };
 }
+
+/** How many of a team's latest messages its detail page reads for review (ADMIN-3 Content). */
+export const RECENT_MESSAGES_MAX = 20;
 
 /**
  * Everything the team detail page shows (ADMIN-3): the team, its owner's
  * name, its people with roles (up to Limits.membersPerGroupMax), its
- * players and guardian links on youth teams, its usable invites, and how
- * many events, documents, and polls it has. Dates are ISO 8601.
+ * players and guardian links on youth teams, its usable invites, its
+ * recent messages, and how many events, documents, and polls it has.
+ * Dates are ISO 8601.
  */
 export async function getTeam(groupId: string) {
   const group = await db().collection(Collections.groups).doc(groupId).get();
   if (!group.exists) throw new HttpsError('not-found', 'No such team.');
   const byTeam = (collection: string) => db().collection(collection).where('groupId', '==', groupId);
   const youth = group.get('teamType') === 'youth';
-  const [members, players, guardians, invites, events, documents, polls] = await Promise.all([
+  const [members, players, guardians, invites, events, documents, polls, messages] = await Promise.all([
     byTeam(Collections.groupMembers).limit(Limits.membersPerGroupMax).get(),
     youth ? byTeam(Collections.players).limit(Limits.playersPerGroupMax).get() : null,
     youth
@@ -215,6 +227,7 @@ export async function getTeam(groupId: string) {
     byTeam(Collections.events).count().get(),
     byTeam(Collections.groupDocuments).count().get(),
     byTeam(Collections.polls).count().get(),
+    byTeam(Collections.messages).orderBy('createdAt', 'desc').limit(RECENT_MESSAGES_MAX).get(),
   ]);
   const ownerId = String(group.get('ownerId') ?? '');
   return {
@@ -251,6 +264,19 @@ export async function getTeam(groupId: string) {
         expiresAt: iso(d.get('expiresAt')),
         maxUses: (d.get('maxUses') as number | null | undefined) ?? null,
         useCount: Number(d.get('useCount') ?? 0),
+        createdAt: iso(d.get('createdAt')),
+      })),
+    // ADMIN-3 Content: the latest messages to review, newest first, each
+    // deletable (deleteMessage, audited). Deleted and system messages are
+    // left out, so a page can hold fewer than RECENT_MESSAGES_MAX.
+    recentMessages: messages.docs
+      .filter((d) => d.get('deletedAt') == null && d.get('type') !== 'system')
+      .map((d) => ({
+        id: d.id,
+        authorId: String(d.get('authorId') ?? ''),
+        authorName: String(d.get('authorName') ?? ''),
+        text: String(d.get('text') ?? '').slice(0, 500),
+        photoCount: ((d.get('attachments') as unknown[] | undefined) ?? []).length,
         createdAt: iso(d.get('createdAt')),
       })),
     counts: {

@@ -61,6 +61,17 @@ export function reportedBody(targetType: ReportTarget): string {
       : 'A message was reported';
 }
 
+/**
+ * Whether the team's admins see a report about [subjectRole] (SAFE-1). A
+ * report about one of the team's own admins or its owner goes to the
+ * super-admin queue only: the rules let a team's admins read its reports,
+ * which hold the reporter, and the reported person is never told who
+ * reported them, nor gets to dismiss it.
+ */
+export function teamSeesReport(subjectRole: string | null): boolean {
+  return subjectRole !== 'owner' && subjectRole !== 'admin';
+}
+
 /** Files a report (SAFE-1). Returns its ID. */
 export async function fileReport(input: {
   reporterId: string;
@@ -70,6 +81,8 @@ export async function fileReport(input: {
   reason: string;
   details?: string;
   snapshot: { subjectId: string; subjectName: string; text: string };
+  /** Whether the team's admins see it (teamSeesReport); super admins always do. */
+  teamVisible: boolean;
 }): Promise<string> {
   const ref = await db()
     .collection(Collections.reports)
@@ -83,6 +96,7 @@ export async function fileReport(input: {
       subjectId: input.snapshot.subjectId,
       subjectName: input.snapshot.subjectName,
       excerpt: input.snapshot.text,
+      teamVisible: input.teamVisible,
       status: 'open',
       resolvedBy: null,
       resolution: null,

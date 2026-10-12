@@ -151,12 +151,18 @@ GoRouter router(Ref ref) {
         final last = ref.read(localPrefsRepositoryProvider).lastTeamRoute;
         final lastGroup = last?.split('/').elementAtOrNull(2);
         if (last != null && list.any((m) => m.groupId.value == lastGroup)) {
-          return last;
+          // Only a team its members can read: a suspended one (ADMIN-3)
+          // would hold them on its notice, so pick another below.
+          final g = ref.read(groupProvider(GroupId(lastGroup!)));
+          if (g.isLoading && !g.hasValue) return null;
+          if (g.value != null) return last;
         }
         // Otherwise the team with the most recent activity.
         if (list.any((m) => ref.read(groupProvider(m.groupId)).isLoading)) {
           return null;
         }
+        // When every team is suspended, the first one's notice offers
+        // Settings, Sign out, and joining or creating a team.
         final teams = ref.read(myTeamsProvider).value ?? const [];
         final id = teams.isNotEmpty ? teams.first.group.id : list.first.groupId;
         return '/g/${id.value}/chat';

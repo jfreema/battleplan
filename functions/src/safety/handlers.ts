@@ -11,7 +11,7 @@ import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
 import { trySend } from '../notify/service.js';
-import { fileReport, reportedBody, reportSnapshot } from './service.js';
+import { fileReport, reportedBody, reportSnapshot, teamSeesReport } from './service.js';
 
 const ReportInput = z.object({
   groupId: z.string().min(1),
@@ -36,10 +36,12 @@ export const reportContent = onCall(async (request) => {
   await consumeRateLimit(uid, 'report', Limits.reportsPerUserPerDay);
   const snapshot = await reportSnapshot(input.groupId, input.targetType, input.targetId);
   if (!snapshot) throw new HttpsError('not-found', 'Nothing to report.');
-  const reportId = await fileReport({ reporterId: uid, ...input, snapshot });
+  // A report about one of the team's admins goes to super admins only.
+  const teamVisible = teamSeesReport(snapshot.subjectId ? await roleOf(input.groupId, snapshot.subjectId) : null);
+  const reportId = await fileReport({ reporterId: uid, ...input, snapshot, teamVisible });
   // NOTIF-2: the team's admins are told, without who reported (no actor);
   // the reporter and the person reported are left out.
-  await trySend({
+  if (teamVisible) await trySend({
     kind: 'contentReported',
     groupId: input.groupId,
     recipients: { admins: true },
@@ -73,7 +75,13 @@ export const resolveReport = onCall(async (request) => {
   const report = await ref.get();
   if (!report.exists) throw new HttpsError('not-found', 'No such report.');
   const groupId = report.get('groupId') as string;
-  await requireTeamAdmin(groupId, uid, request.auth?.token.superAdmin === true);
+  const superAdmin = request.auth?.token.superAdmin === true;
+  await requireTeamAdmin(groupId, uid, superAdmin);
+  // SAFE-1: a report the team's admins don't see (one about an admin) is
+  // the super admins' to close, and nobody closes a report about themselves.
+  if (!superAdmin && (report.get('teamVisible') === false || report.get('subjectId') === uid)) {
+    throw new HttpsError('permission-denied', 'Only a super admin can close this report.');
+  }
   await ref.update({
     status: input.outcome,
     resolution: input.resolution,

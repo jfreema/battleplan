@@ -54,19 +54,26 @@ service firebase.storage {
             ]);
     }
 
+    // Who uploaded a team logo or chat background, for Media (STORE-5): the
+    // app tags it with uploadedBy, which may only name the uploader.
+    function uploaderOk() {
+      return request.resource.metadata == null
+        || request.resource.metadata.get('uploadedBy', request.auth.uid) == request.auth.uid;
+    }
+
     match /users/{uid}/avatar/{file} {
       allow read: if signedIn();
       allow write: if signedIn() && request.auth.uid == uid && isImage(10);
     }
     match /groups/{g}/avatar/{file} {
       allow read: if canRead(g);
-      allow write: if (superAdmin() || isAdmin(g)) && isImage(10) && underQuota(g);
+      allow write: if (superAdmin() || isAdmin(g)) && isImage(10) && underQuota(g) && uploaderOk();
     }
     // The chat background photo (CHAT-18), set by the team's admins (or a
     // super admin, ADMIN-3).
     match /groups/{g}/theme/{file} {
       allow read: if canRead(g);
-      allow write: if (superAdmin() || isAdmin(g)) && isImage(10) && underQuota(g);
+      allow write: if (superAdmin() || isAdmin(g)) && isImage(10) && underQuota(g) && uploaderOk();
     }
     match /groups/{g}/messages/{messageId}/{allPaths=**} {
       allow read: if canRead(g);

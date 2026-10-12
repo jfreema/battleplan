@@ -111,9 +111,11 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            e is RateLimited ? l10n.signInRateLimited : l10n.signInUnknownError,
-          ),
+          content: Text(switch (e) {
+            RateLimited() => l10n.signInRateLimited,
+            EmailNotVerified() => l10n.addByEmailNeedsVerified,
+            _ => l10n.signInUnknownError,
+          }),
         ),
       );
     } finally {

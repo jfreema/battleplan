@@ -10,6 +10,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { trySend } from '../notify/service.js';
 import { db, storage } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
+import { teamStatus } from './status.js';
 
 export const MB = 1024 * 1024;
 
@@ -32,6 +33,34 @@ export async function addStorageBytes(groupId: string, delta: number): Promise<v
     .catch((e: { code?: number }) => {
       if (e.code !== 5) throw e; // 5 = NOT_FOUND
     });
+}
+
+/**
+ * The largest upload platform settings allow, in bytes (ADMIN-7
+ * maxUploadMb): never over Limits.maxUploadMb (STORE-1), which
+ * storage.rules enforce themselves.
+ */
+export async function maxUploadBytes(): Promise<number> {
+  const mb = (await db().collection(Collections.config).doc('app').get()).get('maxUploadMb') as unknown;
+  const valid = typeof mb === 'number' && Number.isInteger(mb) && mb >= 1 && mb <= Limits.maxUploadMb;
+  return (valid ? mb : Limits.maxUploadMb) * MB;
+}
+
+/**
+ * Deletes an upload larger than platform settings allow (ADMIN-7). The app
+ * checks the limit before uploading; this holds it on the server for any
+ * client that doesn't (storage.rules can't read config/app: their two
+ * Firestore lookups go to the membership and the team). Only people's
+ * uploads are checked: `groups/` and `users/` files. Returns whether the
+ * file was deleted; its delete trigger then stops counting it.
+ */
+export async function enforceUploadLimit(path: string | undefined, size: number): Promise<boolean> {
+  if (!path || !(path.startsWith('groups/') || path.startsWith('users/'))) return false;
+  const max = await maxUploadBytes();
+  if (size <= max) return false;
+  await storage().bucket().file(path).delete({ ignoreNotFound: true });
+  logger.warn('upload_over_limit', { path, size, max });
+  return true;
 }
 
 /** Sums every file under `groups/{groupId}/` and stores the total. */
@@ -63,6 +92,13 @@ export async function reconcileAllStorage(): Promise<number> {
       const before = (team.get('storageBytes') as number | undefined) ?? 0;
       const after = await recomputeStorageBytes(team.id);
       if (before !== after) logger.warn('storage_drift', { groupId: team.id, before, after });
+      // Teams made before groups.status existed get it here (ADMIN-2).
+      const status = teamStatus(team.data());
+      if (team.get('status') !== status) {
+        await team.ref.update({ status }).catch((e: { code?: number }) => {
+          if (e.code !== 5) throw e; // 5 = NOT_FOUND
+        });
+      }
       // One team's failed warning mustn't stop the rest of the recount.
       await updateStorageAlert(team.id).catch((e) =>
         logger.error('storage_alert_failed', { groupId: team.id, error: String(e) }),

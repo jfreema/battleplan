@@ -213,6 +213,10 @@ class FirestorePlayerRepository implements PlayerRepository {
       throw switch ((e.code, e.message)) {
         ('failed-precondition', 'too-many-players' || 'too-many-guardians') =>
           InvalidInput(e.message),
+        // SAFE-5: adding guardians by email needs a verified email.
+        ('failed-precondition', 'email-not-verified') => EmailNotVerified(
+          e.message,
+        ),
         ('resource-exhausted', _) => RateLimited(e.message),
         ('permission-denied', _) => PermissionDenied(e.message),
         ('invalid-argument', _) => InvalidInput(e.message),

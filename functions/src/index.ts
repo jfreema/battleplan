@@ -10,6 +10,7 @@ export {
   signOutEverywhere,
 } from './accounts/handlers.js';
 export { onUserUpdated } from './accounts/triggers.js';
+export { auditDocumentDeleted, auditEventDeleted } from './audit/triggers.js';
 export {
   adminArchiveGroup,
   adminCreateUser,

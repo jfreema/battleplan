@@ -2,19 +2,23 @@
 import { onObjectDeleted, onObjectFinalized } from 'firebase-functions/v2/storage';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
-import { addStorageBytes, groupIdFromPath, reconcileAllStorage, updateStorageAlert } from './storage.js';
+import { addStorageBytes, enforceUploadLimit, groupIdFromPath, reconcileAllStorage, updateStorageAlert } from './storage.js';
 import { removeAllOrphanDocumentFiles } from '../documents/service.js';
 import { pruneDevices } from '../notify/service.js';
 
 /**
  * A file landed under `groups/{g}/`: count it toward the team's limit, and
- * warn its admins if that crossed 90% or filled it (STORE-3, STORE-4).
+ * warn its admins if that crossed 90% or filled it (STORE-3, STORE-4). Any
+ * upload (team files and profile photos) over the platform's upload limit
+ * is deleted (ADMIN-7); a team file is counted first, so its delete
+ * trigger's subtraction balances.
  */
 export const onGroupFileAdded = onObjectFinalized(async (event) => {
+  const size = Number(event.data.size ?? 0);
   const groupId = groupIdFromPath(event.data.name);
-  if (!groupId) return;
-  await addStorageBytes(groupId, Number(event.data.size ?? 0));
-  await updateStorageAlert(groupId);
+  if (groupId) await addStorageBytes(groupId, size);
+  const removed = await enforceUploadLimit(event.data.name, size);
+  if (groupId && !removed) await updateStorageAlert(groupId);
 });
 
 /**

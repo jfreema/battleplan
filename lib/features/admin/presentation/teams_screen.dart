@@ -107,9 +107,9 @@ class _AdminTeamsScreenState extends ConsumerState<AdminTeamsScreen> {
           controls,
           const SizedBox(height: Space.lg),
           switch (teams) {
-            // A status filter scans a slice of the teams per page, so a
-            // page can come back empty with more to look through: then
-            // it's Load more, not "No teams" (ADMIN-2).
+            // A page that comes back empty with a cursor still has more
+            // to look through: then it's Load more, not "No teams"
+            // (ADMIN-2).
             AsyncValue(:final AdminList<AdminTeamRow> value)
                 when value.items.isEmpty && value.reachedEnd =>
               EmptyState(icon: AppIcons.group, message: l10n.adminNoTeams),

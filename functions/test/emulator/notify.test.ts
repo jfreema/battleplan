@@ -363,15 +363,24 @@ describe('hooks (task 74)', () => {
     await person('pat', { role: 'owner' });
     await person('sub', { role: 'admin' });
     await person('sam');
-    await message('m1', { authorId: 'sub', authorName: 'sub', type: 'text', text: 'rude' });
+    await message('m1', { authorId: 'sam', authorName: 'sam', type: 'text', text: 'rude' });
     await reportContent.run(call('alex', { groupId: G, targetType: 'message', targetId: 'm1', reason: 'harassment' }));
     const items = await db().collection(Collections.notifications).get();
     // Admins only, minus the reporter (alex) and the person reported.
-    expect(items.docs.map((d) => d.get('uid'))).toEqual(['pat']);
+    expect(items.docs.map((d) => d.get('uid')).sort()).toEqual(['pat', 'sub']);
     expect(items.docs[0].get('actorId')).toBeNull();
-    expect(JSON.stringify(items.docs[0].data())).not.toContain('alex');
-    expect(pushedTokens()).toEqual(['tok-pat']);
+    expect(JSON.stringify(items.docs.map((d) => d.data()))).not.toContain('alex');
+    expect(pushedTokens().sort()).toEqual(['tok-pat', 'tok-sub']);
     expect(JSON.stringify(pushed())).not.toContain('alex');
+  });
+
+  it('a report about an admin goes to super admins only, so no team admin is told (SAFE-1)', async () => {
+    await person('pat', { role: 'owner' });
+    await person('sub', { role: 'admin' });
+    await message('m1', { authorId: 'sub', authorName: 'sub', type: 'text', text: 'rude' });
+    await reportContent.run(call('alex', { groupId: G, targetType: 'message', targetId: 'm1', reason: 'harassment' }));
+    expect((await db().collection(Collections.notifications).get()).size).toBe(0);
+    expect(pushed()).toEqual([]);
   });
 
   it('a new admin is told who made them one', async () => {

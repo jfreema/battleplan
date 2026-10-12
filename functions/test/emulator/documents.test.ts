@@ -9,7 +9,8 @@ import type { TokenMessage } from 'firebase-admin/messaging';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { anonymizeUploader, removeAllOrphanDocumentFiles } from '../../src/documents/service.js';
 import { onDocumentCreated, onDocumentDeleted } from '../../src/documents/triggers.js';
-import { reportContent } from '../../src/safety/handlers.js';
+import { auditDocumentDeleted, auditEventDeleted } from '../../src/audit/triggers.js';
+import { reportContent, resolveReport } from '../../src/safety/handlers.js';
 import { deleteTeamMedia, listTeamMedia } from '../../src/teams/handlers.js';
 import { db, storage } from '../../src/shared/admin.js';
 import { Collections } from '../../src/shared/constants.js';
@@ -253,7 +254,9 @@ describe('reporting a document (SAFE-1)', () => {
       call('lee', { groupId: G, targetType: 'document', targetId: 'd1', reason: 'inappropriate' }) as never,
     );
     const report = (await db().collection(Collections.reports).doc(reportId).get()).data();
-    expect(report).toMatchObject({ targetType: 'document', targetId: 'd1', subjectId: 'sam', subjectName: 'Sam', excerpt: 'Fall roster.pdf' });
+    expect(report).toMatchObject({
+      targetType: 'document', targetId: 'd1', subjectId: 'sam', subjectName: 'Sam', excerpt: 'Fall roster.pdf', teamVisible: true,
+    });
     // The admins hear about it; the reporter and the uploader don't.
     expect(pushes()).toEqual(['tok-pat:A document was reported']);
   });
@@ -263,6 +266,70 @@ describe('reporting a document (SAFE-1)', () => {
     await expect(
       reportContent.run(call('lee', { groupId: G, targetType: 'document', targetId: 'dB', reason: 'spam' }) as never),
     ).rejects.toMatchObject({ code: 'not-found' });
+  });
+});
+
+describe('a report about a team admin (SAFE-1)', () => {
+  it('goes to super admins only: not shown to the team, nobody told, and closed only by a super admin', async () => {
+    await docRef('d1').set(fileDoc('d1', { uploadedBy: 'pat', uploaderName: 'Pat' }));
+    const { reportId } = await reportContent.run(
+      call('lee', { groupId: G, targetType: 'document', targetId: 'd1', reason: 'harassment' }) as never,
+    );
+    const ref = db().collection(Collections.reports).doc(reportId);
+    expect((await ref.get()).data()).toMatchObject({ subjectId: 'pat', teamVisible: false, status: 'open' });
+    expect(pushes()).toEqual([]);
+    await expect(
+      resolveReport.run(call('pat', { reportId, outcome: 'dismissed', resolution: 'none' }) as never),
+    ).rejects.toMatchObject({ code: 'permission-denied' });
+    expect((await ref.get()).get('status')).toBe('open');
+    await resolveReport.run(call('root', { reportId, outcome: 'dismissed', resolution: 'none' }, { superAdmin: true }) as never);
+    expect((await ref.get()).get('status')).toBe('dismissed');
+  });
+
+  it("covers a report about a person who's an admin", async () => {
+    await person('ash', 'admin');
+    const { reportId } = await reportContent.run(
+      call('lee', { groupId: G, targetType: 'user', targetId: 'ash', reason: 'spam' }) as never,
+    );
+    expect((await db().collection(Collections.reports).doc(reportId).get()).get('teamVisible')).toBe(false);
+  });
+});
+
+describe('deletes made in the app (ADMIN-6, ADMIN-8)', () => {
+  type DocDeleted = Parameters<typeof auditDocumentDeleted.run>[0];
+  type EventDeleted = Parameters<typeof auditEventDeleted.run>[0];
+  /** A delete trigger event, with who made the write. */
+  const deleted = (param: string, id: string, data: object, authType: string, authId?: string) =>
+    ({ params: { [param]: id }, data: { id, data: () => data }, authType, authId }) as unknown;
+  const audits = async () =>
+    (await db().collection(Collections.auditLogs).get()).docs.map((d) => d.data());
+
+  it("audits an admin deleting someone else's document or event", async () => {
+    await auditDocumentDeleted.run(deleted('docId', 'd1', fileDoc('d1'), 'app_user', 'pat') as DocDeleted);
+    await auditEventDeleted.run(
+      deleted('eventId', 'e1', { groupId: G, title: 'Practice', type: 'practice', createdBy: 'sam' }, 'app_user', 'root') as EventDeleted,
+    );
+    const entries = (await audits()).sort((a, b) => String(a.action).localeCompare(String(b.action)));
+    expect(entries).toEqual([
+      expect.objectContaining({
+        actorId: 'pat', action: 'deleteDocument', groupId: G, targetType: 'document', targetId: 'd1',
+        before: { name: 'Fall roster.pdf', kind: 'file', uploadedBy: 'sam' },
+      }),
+      expect.objectContaining({
+        actorId: 'root', action: 'deleteEvent', groupId: G, targetType: 'event', targetId: 'e1',
+        before: { title: 'Practice', type: 'practice', createdBy: 'sam' },
+      }),
+    ]);
+  });
+
+  it('leaves out deletes by the author and by Functions, which audit their own', async () => {
+    await auditDocumentDeleted.run(deleted('docId', 'd1', fileDoc('d1'), 'app_user', 'sam') as DocDeleted);
+    await auditDocumentDeleted.run(deleted('docId', 'd2', fileDoc('d2'), 'service_account', 'functions@example') as DocDeleted);
+    await auditEventDeleted.run(
+      deleted('eventId', 'e1', { groupId: G, title: 'Game', createdBy: 'pat' }, 'app_user', 'pat') as EventDeleted,
+    );
+    await auditEventDeleted.run(deleted('eventId', 'e2', { groupId: G, title: 'Game', createdBy: 'pat' }, 'system') as EventDeleted);
+    expect(await audits()).toEqual([]);
   });
 });
 

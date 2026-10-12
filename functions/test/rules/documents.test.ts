@@ -163,6 +163,17 @@ describe('adding documents (DOC-2, DOC-3, TEAM-5)', () => {
     await assertFails(create('bob', file('bob', 'Bob', { path: null })));
   });
 
+  it('keeps files to a lowered platform upload limit (ADMIN-7), links unaffected', async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('config/app').set({ maxUploadMb: 2 }));
+    await assertSucceeds(create('bob', file('bob', 'Bob', { size: 2 * MB })));
+    await assertFails(create('bob', file('bob', 'Bob', { size: 2 * MB + 1 }, 'f2'), 'f2'));
+    await assertSucceeds(create('bob', link('bob', 'Bob'), 'l1'));
+    // A setting out of range falls back to 10 MB.
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('config/app').set({ maxUploadMb: 50 }));
+    await assertSucceeds(create('bob', file('bob', 'Bob', { size: 10 * MB }, 'f3'), 'f3'));
+    await assertFails(create('bob', file('bob', 'Bob', { size: 10 * MB + 1 }, 'f4'), 'f4'));
+  });
+
   it('takes allowed types up to 10 MB, and refuses bad fields', async () => {
     await assertSucceeds(create('bob', file('bob', 'Bob', { contentType: 'image/png' })));
     await assertSucceeds(create('bob', file('bob', 'Bob', { size: 10 * MB }, 'f2'), 'f2'));
