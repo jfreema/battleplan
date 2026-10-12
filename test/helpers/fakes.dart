@@ -45,6 +45,13 @@ class FakeAuthRepository implements AuthRepository {
   @override
   AuthUser? get currentUser => _user;
 
+  /// The session ends without the app signing out: a password change or
+  /// Sign out everywhere on another device.
+  void endSessionElsewhere() {
+    _user = null;
+    _controller.add(null);
+  }
+
   @override
   Stream<AuthUser?> watchUser() async* {
     yield _user;
@@ -576,14 +583,19 @@ class FakePushRepository implements PushRepository {
   @override
   Future<PushMessage?> initialMessage() async => launchMessage;
 
+  /// When true, deleting the token fails, as it does offline.
+  bool deleteFails = false;
+
   @override
-  Future<void> deleteToken() async {
+  Future<bool> deleteToken() async {
     log.add('push deleteToken');
+    if (deleteFails) return false;
     tokensDeleted++;
     if (tokenAfterDelete case final next?) {
       token = next;
       refreshes.add(next);
     }
+    return true;
   }
 }
 
@@ -632,6 +644,10 @@ class FakeNotificationRepository implements NotificationRepository {
   /// Loading older pages fails while this is set.
   bool failLoadOlder = false;
 
+  /// A stale cached answer the live page sends before the server's, as
+  /// Firestore does with persistence on.
+  List<NotificationItem>? cachedFirst;
+
   @override
   Stream<NotificationPage> watchNewest(
     UserId uid, {
@@ -645,6 +661,9 @@ class FakeNotificationRepository implements NotificationRepository {
       );
     }
 
+    if (cachedFirst case final cached?) {
+      yield NotificationPage(items: cached.take(limit).toList());
+    }
     yield page();
     await for (final _ in _changes.stream) {
       yield page();

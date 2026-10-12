@@ -6,6 +6,7 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/notifications/application/notification_center.dart';
+import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
 import 'package:battleplan/features/notifications/presentation/notification_labels.dart';
 import 'package:battleplan/features/notifications/presentation/open_route.dart';
@@ -94,7 +95,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       for (final n in center.items)
         if (n.visibleAt(now, blocked)) n,
     ];
-    final anyUnread = items.any((n) => !n.read);
+    // Hidden unread items (blocked people, expired) are marked read so the
+    // bell matches the list; Mark all as read also covers unread items not
+    // loaded yet, so it follows the bell as well as the list.
+    final hiddenUnread = [
+      for (final n in center.items)
+        if (!n.read && !n.visibleAt(now, blocked)) n,
+    ];
+    if (hiddenUnread.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          ref
+              .read(notificationCenterProvider.notifier)
+              .markHiddenRead(hiddenUnread)
+              .catchError((Object _) {}),
+        );
+      });
+    }
+    final anyUnread =
+        items.any((n) => !n.read) ||
+        (ref.watch(unreadNotificationCountProvider).value ?? 0) >
+            hiddenUnread.length;
 
     Widget body;
     if (center.loading) {

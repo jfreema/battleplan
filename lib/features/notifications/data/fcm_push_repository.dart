@@ -76,11 +76,13 @@ class FcmPushRepository implements PushRepository {
   }
 
   @override
-  Future<void> deleteToken() async {
+  Future<bool> deleteToken() async {
     try {
       await _messaging.deleteToken();
+      return true;
     } on Object catch (e) {
       Log.warn('Could not delete the push token', e);
+      return false;
     }
   }
 }
@@ -115,7 +117,7 @@ class UnavailablePushRepository implements PushRepository {
   Future<PushMessage?> initialMessage() async => null;
 
   @override
-  Future<void> deleteToken() async {}
+  Future<bool> deleteToken() async => true;
 }
 
 /// Platform checks live in implementations (ARCH §5.2 rule 8).

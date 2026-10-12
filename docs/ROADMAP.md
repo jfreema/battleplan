@@ -125,14 +125,14 @@ Later, with v1.1: pinned messages (PLAN-9), attendance history and exports (PLAN
 
 ## M4 · Notifications
 
-67. Device registration and the `notify` fan-out Function (one pipeline for push and the notification center).
-68. Asking permission at the right moment (NOTIF-1).
-69. Per-team level and mute, global switches, and the Notifications settings screen (NOTIF-3, NOTIF-4, SET-3).
-70. Notification wording, grouping, and multiple devices (NOTIF-5, NOTIF-8, NOTIF-10).
-71. Tap to open and in-app banners (NOTIF-6, NOTIF-7).
-72. Notification center with the bell (NOTIF-11).
-73. Web push and the iOS Safari tip (NOTIF-9).
-74. Turn on notifications for chat messages, replies, being added to a team, being made admin, guardian requests, and reports (NOTIF-2).
+67. ✅ Device registration and the `notify` fan-out Function (one pipeline for push and the notification center). *Tested on dev: the Android emulator registered a real FCM token, and account deletion removed its device.*
+68. ✅ Asking permission at the right moment (NOTIF-1). *The pre-prompt showed on the Android emulator after the first team, then the system prompt.*
+69. ✅ Per-team level and mute, global switches, and the Notifications settings screen (NOTIF-3, NOTIF-4, SET-3). *New events and Event changes are separate switches.*
+70. ✅ Notification wording, grouping, and multiple devices (NOTIF-5, NOTIF-8, NOTIF-10). *iOS stacks by team (`thread-id`); Android and web are bundled by the OS, since a replacing tag would hide earlier notifications. Android has six channels. The iOS entitlement comes with the APNs key (task 108).*
+71. ✅ Tap to open and in-app banners (NOTIF-6, NOTIF-7). *Tested on the Android emulator: tapping a reply push opened the chat at the reply, and a push while on Schedule showed the in-app banner instead of a system notification.*
+72. ✅ Notification center with the bell (NOTIF-11). *Tested on dev in Chrome: the bell counted a reply, and tapping it opened the message and marked it read.*
+73. ✅ Web push and the iOS Safari tip (NOTIF-9). *Web pushes carry a click link to the route. A project VAPID key (task 28) and the production service worker (task 116) come before launch; the tip gets an App Store link once the listing exists.*
+74. ✅ Turn on notifications for chat messages, replies, being added to a team, being made admin, guardian requests, and reports (NOTIF-2). *Also guardian approved and player added (PLAYER-3). A milestone review with independent skeptics confirmed 11 problems, all fixed with tests.*
 
 From here on, each feature ships with its own notifications.
 

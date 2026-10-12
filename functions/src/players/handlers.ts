@@ -1,4 +1,5 @@
 // Thin entry points for the players domain (ARCH §6.4).
+import { logger } from 'firebase-functions/v2';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -75,14 +76,18 @@ export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) =>
     targetId: input.groupId,
     after: { playersAdded: result.playersAdded, guardiansInvited: result.guardiansInvited },
   });
-  // AUTH-6: new guardians get a setup email.
   const actor = await db().collection(Collections.users).doc(uid).get();
   const actorName = (actor.get('displayName') as string | undefined) ?? 'A team admin';
-  for (const email of result.invitedEmails) {
-    await sendSetupEmail(email, group.get('name') as string, actorName);
-  }
   // NOTIF-2: guardians who weren't on the team are told they were added.
+  // First, since it never throws and a failed email below must not skip it.
   await notifyAddedToTeam(input.groupId, group.get('name') as string, { uid, name: actorName }, newMembers);
+  // AUTH-6: new guardians get a setup email. One failure doesn't stop the
+  // rest; the admin can resend from the roster.
+  for (const email of result.invitedEmails) {
+    await sendSetupEmail(email, group.get('name') as string, actorName).catch((e: unknown) =>
+      logger.error('setup_email_failed', { groupId: input.groupId, error: String(e) }),
+    );
+  }
   return result;
 });
 
@@ -277,12 +282,18 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   await refreshPlayerSummary(input.groupId, user.uid);
   const actorProfile = await db().collection(Collections.users).doc(actor).get();
   const actorName = (actorProfile.get('displayName') as string | undefined) ?? 'A teammate';
-  if (user.provisioned) {
-    await sendSetupEmail(input.email, teamName, actorName);
-  } else if (!wasMember) {
-    await sendEmail(addedToTeamEmail(input.email.trim().toLowerCase(), teamName, actorName, teamUrl(input.groupId)));
-  }
+  // The notification first: it never throws, and a failed email must not
+  // skip it or the audit entry.
   if (!wasMember) await notifyAddedToTeam(input.groupId, teamName, { uid: actor, name: actorName }, [user.uid]);
+  try {
+    if (user.provisioned) {
+      await sendSetupEmail(input.email, teamName, actorName);
+    } else if (!wasMember) {
+      await sendEmail(addedToTeamEmail(input.email.trim().toLowerCase(), teamName, actorName, teamUrl(input.groupId)));
+    }
+  } catch (e) {
+    logger.error('guardian_email_failed', { groupId: input.groupId, error: String(e) });
+  }
   await audit({
     actorId: actor,
     action: 'inviteGuardian',

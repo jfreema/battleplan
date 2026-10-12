@@ -74,9 +74,11 @@ class NotificationCenter extends _$NotificationCenter {
       _known[n.id] = n;
     }
     _liveCursor = page.next;
-    _publish(
-      reachedEnd: (!_loadedOlder && page.next == null) || state.reachedEnd,
-    );
+    // Until an older page has loaded, the live page alone decides whether
+    // there's more. Firestore can answer first from a stale cache (a short
+    // page) and then from the server (a full one); a sticky flag would
+    // leave a gap behind the newest 30.
+    _publish(reachedEnd: _loadedOlder ? state.reachedEnd : page.next == null);
   }
 
   void _publish({bool? loadingMore, bool? reachedEnd}) {
@@ -130,6 +132,26 @@ class NotificationCenter extends _$NotificationCenter {
     _publish();
     final container = ref.container;
     await ref.read(notificationRepositoryProvider).markRead(item.id);
+    _recount(container);
+  }
+
+  final Set<String> _hiddenMarked = {};
+
+  /// Marks read the unread items the center hides (from someone you
+  /// blocked, or expired and waiting for TTL deletion), so the bell never
+  /// counts what the list can't show (NOTIF-11). Each is marked once.
+  Future<void> markHiddenRead(Iterable<NotificationItem> hidden) async {
+    final todo = [
+      for (final n in hidden)
+        if (!n.read && _hiddenMarked.add(n.id)) n,
+    ];
+    if (todo.isEmpty) return;
+    for (final n in todo) {
+      _known[n.id] = n.copyWith(read: true);
+    }
+    final container = ref.container;
+    final repo = ref.read(notificationRepositoryProvider);
+    await Future.wait([for (final n in todo) repo.markRead(n.id)]);
     _recount(container);
   }
 

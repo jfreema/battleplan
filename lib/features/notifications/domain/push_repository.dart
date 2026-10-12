@@ -75,6 +75,7 @@ abstract interface class PushRepository {
   Future<PushMessage?> initialMessage();
 
   /// Forgets this device's token, so it stops getting pushes (sign-out,
-  /// NOTIF-10).
-  Future<void> deleteToken();
+  /// NOTIF-10). Returns false if it couldn't (usually offline), so the
+  /// caller can try again later.
+  Future<bool> deleteToken();
 }

@@ -34,8 +34,27 @@ class PushRegistration extends _$PushRegistration {
     // Runs again only when the signed-in person changes, which ends any
     // sign-out that paused it.
     _paused = false;
-    final uid = ref.watch(authUserProvider.select((a) => a.value?.uid));
-    if (uid == null) return;
+    final auth = ref.watch(
+      authUserProvider.select(
+        (a) => (settled: a.hasValue || a.hasError, uid: a.value?.uid),
+      ),
+    );
+    final uid = auth.uid;
+    if (uid == null) {
+      // Signed out without SessionService finishing the job: the server
+      // ended the session (password change, Sign out everywhere elsewhere),
+      // or sign-out ran offline. This install's token still reaches the
+      // account, so delete it now and on each return to the app until it
+      // works (NOTIF-10). FCM then refuses it and the server drops the doc.
+      if (auth.settled) {
+        final lifecycle = AppLifecycleListener(
+          onResume: () => unawaited(_forgetStaleToken()),
+        );
+        ref.onDispose(lifecycle.dispose);
+        unawaited(_forgetStaleToken());
+      }
+      return;
+    }
     // iOS reports the token at every start; the freshness check in _write
     // keeps that from costing a write each time.
     final sub = ref
@@ -53,6 +72,17 @@ class PushRegistration extends _$PushRegistration {
       lifecycle.dispose();
     });
     unawaited(_registerIfAllowed(uid));
+  }
+
+  /// Deletes the token of a registration left over from a session that
+  /// ended without SessionService, and forgets the registration once it's
+  /// gone, so the next sign-in always writes a fresh device doc.
+  Future<void> _forgetStaleToken() async {
+    final prefs = ref.read(localPrefsRepositoryProvider);
+    if (prefs.deviceRegistration == null) return;
+    if (await ref.read(pushRepositoryProvider).deleteToken()) {
+      await prefs.setDeviceRegistration(null);
+    }
   }
 
   /// Stops writing the device doc until sign-out finishes or [restore]

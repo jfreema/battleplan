@@ -122,7 +122,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // Another notification for this chat while it's open.
     final target = widget.initialMessageId;
     if (target != null && target != old.initialMessageId && _positioned) {
-      unawaited(_jumpTo(target));
+      // After this frame: jumping loads older pages, which changes
+      // providers, and that can't happen while the tree is building.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_jumpTo(target));
+      });
     }
   }
 

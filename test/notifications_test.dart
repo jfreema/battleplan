@@ -232,6 +232,59 @@ void main() {
       expect(find.text('Continue with Google'), findsOneWidget);
     });
 
+    testWidgets(
+      'a session ended elsewhere deletes the token; signing back in registers',
+      (tester) async {
+        final devices = FakeDeviceRepository();
+        final push = FakePushRepository();
+        final auth = FakeAuthRepository(user: coach);
+        final prefs = await pumpApp(
+          tester,
+          auth: auth,
+          push: push,
+          devices: devices,
+        );
+        expect(prefs.deviceRegistration?.uid, 'coach');
+        // A password change elsewhere: the session ends without SessionService.
+        auth.endSessionElsewhere();
+        await tester.pumpAndSettle();
+        expect(push.tokensDeleted, 1);
+        expect(prefs.deviceRegistration, isNull);
+        // The server deleted the device meanwhile (Sign out everywhere).
+        devices.docs.clear();
+        await auth.signInWithEmail(
+          email: FakeAuthRepository.knownEmail,
+          password: FakeAuthRepository.password,
+        );
+        await tester.pumpAndSettle();
+        expect(devices.docs[installId]?.uid, isNotNull);
+      },
+    );
+
+    testWidgets('an offline sign-out keeps trying to delete the token', (
+      tester,
+    ) async {
+      final push = FakePushRepository()..deleteFails = true;
+      final prefs = await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        push: push,
+        devices: FakeDeviceRepository(),
+      );
+      await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('Sign out'), 100);
+      await tester.tap(find.text('Sign out'));
+      await tester.pumpAndSettle();
+      expect(find.text('Continue with Google'), findsOneWidget);
+      // Not gone yet, so it's still on record to retry.
+      expect(prefs.deviceRegistration, isNotNull);
+      push.deleteFails = false;
+      await leaveAndReturn(tester);
+      expect(push.tokensDeleted, 1);
+      expect(prefs.deviceRegistration, isNull);
+    });
+
     testWidgets('a cancelled account deletion keeps this device registered', (
       tester,
     ) async {
@@ -574,9 +627,14 @@ void main() {
       expect(find.text('Old news'), findsNothing);
       expect(find.text('From someone blocked'), findsNothing);
 
+      // The hidden unread ones are marked read, so the bell matches.
+      expect(
+        notifications.markedRead,
+        unorderedEquals(['expired_coach', 'blocked_coach']),
+      );
       await tester.tap(find.text('Sam replied to you: Sounds good'));
       await tester.pumpAndSettle();
-      expect(notifications.markedRead, ['r1_coach']);
+      expect(notifications.markedRead.last, 'r1_coach');
       // The chat, at the message.
       expect(find.text('Message 1'), findsOneWidget);
       expect(find.byType(Composer), findsOneWidget);
@@ -667,6 +725,63 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Older reply'), findsOneWidget);
       expect(find.textContaining('Troll'), findsNothing);
+    });
+
+    testWidgets('unread items the center hides stop counting on the bell', (
+      tester,
+    ) async {
+      final notifications = FakeNotificationRepository([
+        item('blocked_coach', body: 'From someone blocked', actorId: 'troll'),
+      ]);
+      final safety = FakeSafetyRepository()
+        ..blocks.add(const BlockedPerson(uid: UserId('troll'), name: 'Troll'));
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        notifications: notifications,
+        safety: safety,
+      );
+      expect(bellBadge('1'), findsOneWidget);
+      await tester.tap(find.byTooltip('Notifications'));
+      await tester.pumpAndSettle();
+      expect(find.text('From someone blocked'), findsNothing);
+      expect(notifications.markedRead, ['blocked_coach']);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(bellBadge('1'), findsNothing);
+    });
+
+    testWidgets('a short cached page first still lets older items load', (
+      tester,
+    ) async {
+      final all = [
+        for (var i = 0; i < 40; i++)
+          item(
+            'n${i}_coach',
+            body: 'Item $i',
+            age: Duration(minutes: i),
+          ),
+      ];
+      final notifications = FakeNotificationRepository(all)
+        ..cachedFirst = all.skip(30).toList();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        notifications: notifications,
+      );
+      await tester.tap(find.byTooltip('Notifications'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Item 32'),
+        400,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(notifications.loadOlderCalls, greaterThan(0));
+      expect(find.text('Item 32'), findsOneWidget);
     });
 
     testWidgets('an empty center says what will appear', (tester) async {
@@ -791,6 +906,50 @@ void main() {
       // Replies have a center item, which the tap marks read.
       expect(notifications.markedRead, ['m2_reply_coach']);
     });
+
+    testWidgets(
+      "a push for another team opens that team's chat at the message",
+      (tester) async {
+        final pushes = FakePushRepository();
+        Message bMsg(int i) => msg(i).copyWith(
+          id: 'b$i',
+          groupId: const GroupId('b'),
+          text: 'Lightning $i',
+        );
+        final prefs = await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: teams,
+          memberships: mine(),
+          push: pushes,
+          messageRepo: FakeMessageRepository([
+            for (var i = 120; i > 0; i--) msg(i),
+            for (var i = 120; i > 0; i--) bMsg(i),
+          ]),
+        );
+        PushMessage open(String g, String m) => PushMessage(
+          title: 'Team',
+          body: 'Reply',
+          data: {
+            'groupId': g,
+            'route': '/g/$g/chat/m/$m',
+            'kind': 'reply',
+            'nkey': '${m}_reply',
+          },
+        );
+        pushes.opened.add(open('a', 'm2'));
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pumpAndSettle();
+        expect(find.text('Message 2'), findsOneWidget);
+        // The last team is remembered as Thunder's chat tab.
+        expect(prefs.lastTeamRoute, '/g/a/chat');
+        pushes.opened.add(open('b', 'b3'));
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pumpAndSettle();
+        expect(find.text('Lightning 3'), findsOneWidget);
+        expect(prefs.lastTeamRoute, '/g/b/chat');
+      },
+    );
 
     testWidgets('a push that launched the app opens its route', (tester) async {
       final notifications = FakeNotificationRepository();

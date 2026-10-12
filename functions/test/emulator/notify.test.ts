@@ -6,7 +6,7 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import type { TokenMessage } from 'firebase-admin/messaging';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { notifyNewMessage } from '../../src/chat/service.js';
+import { eraseMessage, notifyNewMessage } from '../../src/chat/service.js';
 import { onMessageCreated } from '../../src/chat/triggers.js';
 import { reportContent } from '../../src/safety/handlers.js';
 import { removeMember, updateGroupMember } from '../../src/teams/handlers.js';
@@ -232,6 +232,26 @@ describe('who gets a push (NOTIF-2, NOTIF-3, NOTIF-4)', () => {
   });
 });
 
+describe('big teams', () => {
+  it('reaches every member, past the 500 a single read returns', async () => {
+    // In batches of 200 people (400 writes), under Firestore's 500.
+    for (let start = 0; start < Limits.membersPerGroupMax + 5; start += 200) {
+      const batch = db().batch();
+      for (let i = start; i < Math.min(start + 200, Limits.membersPerGroupMax + 5); i++) {
+        const uid = `m${String(i).padStart(4, '0')}`;
+        batch.set(db().collection(Collections.groupMembers).doc(groupMemberId(G, uid)), {
+          groupId: G, uid, role: 'member', displayName: uid, notificationLevel: 'all', mutedUntil: null,
+        });
+        batch.set(db().collection(Collections.users).doc(uid), { displayName: uid, status: 'active', notificationPrefs: {} });
+      }
+      await batch.commit();
+    }
+    await send(input({ kind: 'reply', dedupeKey: 'big', recipients: { members: true } }));
+    // Everyone but the actor gets the center item.
+    expect((await centerFor('big')).length).toBe(Limits.membersPerGroupMax + 5);
+  });
+});
+
 describe('dedupe and delivery (ARCH §6.5 steps 0 and 4)', () => {
   it('sends once per dedupe key, so a retried trigger stays quiet', async () => {
     await person('sam');
@@ -316,6 +336,15 @@ describe('hooks (task 74)', () => {
     db().collection(Collections.messages).doc(id).set({
       groupId: G, attachments: [], reactions: {}, createdAt: Timestamp.now(), ...fields,
     });
+
+  it('deleting a message erases the notification-center items that quote it (CHAT-8)', async () => {
+    await person('sam');
+    await notifyNewMessage('m9', { groupId: G, authorId: 'alex', authorName: 'Alex', type: 'text', text: 'Rude words' }, 'Thunder', 'sam');
+    expect(await centerFor('m9_reply')).toEqual(['sam']);
+    await message('m9', { authorId: 'alex', authorName: 'Alex', type: 'text', text: 'Rude words', replyToId: 'm1' });
+    await eraseMessage('m9', 'alex', 'author');
+    expect(await centerFor('m9_reply')).toEqual([]);
+  });
 
   it('the message trigger tells the quoted author and the rest of the team', async () => {
     await person('sam');

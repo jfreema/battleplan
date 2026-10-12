@@ -332,7 +332,12 @@ GoRouter router(Ref ref) {
                     if (tab == 'chat')
                       GoRoute(
                         path: 'chat/m/:messageId',
+                        // Keyed by team: two teams' jump routes share one
+                        // page, and a new team needs a fresh chat state.
                         builder: (_, state) => ChatScreen(
+                          key: ValueKey(
+                            'chat-${state.pathParameters['groupId']}',
+                          ),
                           groupId: GroupId(state.pathParameters['groupId']!),
                           initialMessageId: state.pathParameters['messageId'],
                         ),
@@ -350,10 +355,17 @@ GoRouter router(Ref ref) {
   router.routerDelegate.addListener(() {
     final path = router.routerDelegate.currentConfiguration.uri.path;
     final segments = path.split('/');
-    if (segments.length == 4 &&
+    // A tab, or a message opened from a notification (/g/<id>/chat/m/<m>),
+    // which remembers its team's chat tab.
+    if (segments.length >= 4 &&
         segments[1] == 'g' &&
-        teamTabs.contains(segments[3])) {
-      unawaited(ref.read(localPrefsRepositoryProvider).setLastTeamRoute(path));
+        teamTabs.contains(segments[3]) &&
+        (segments.length == 4 || segments[4] == 'm')) {
+      unawaited(
+        ref
+            .read(localPrefsRepositoryProvider)
+            .setLastTeamRoute(segments.take(4).join('/')),
+      );
     }
   });
   ref.onDispose(router.dispose);

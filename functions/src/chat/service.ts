@@ -124,6 +124,15 @@ export async function eraseMessage(
     deletedBy,
     deletedReason: reason,
   });
+  // Notification-center items about it go too: their bodies quote the text
+  // (CHAT-8 erases it from the server, not just the chat).
+  await forEachPage(
+    db()
+      .collection(Collections.notifications)
+      .where('targetType', '==', 'message')
+      .where('targetId', '==', messageId),
+    (batch, item) => batch.delete(item.ref),
+  );
   // Photos go too; the Storage trigger takes them off the team's total.
   await storage()
     .bucket()

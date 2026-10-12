@@ -38,7 +38,8 @@ class SessionService {
   final Future<void> Function() _restorePush;
 
   /// Removing the device doc needs the server; offline, sign-out doesn't
-  /// wait for it. The server drops the doc once its token stops working.
+  /// wait for it. The token is deleted too (now, or by PushRegistration
+  /// once back online), and the server drops the doc when FCM refuses it.
   static const _removeTimeout = Duration(seconds: 5);
 
   /// Signs out on this device and stops its push notifications.
@@ -74,8 +75,9 @@ class SessionService {
       // No doc (push was never allowed here), offline, or refused.
       Log.warn('Could not remove this device', e);
     }
-    await _prefs.setDeviceRegistration(null);
-    await _push.deleteToken();
+    // The registration record stays until the token is really gone, so
+    // PushRegistration keeps trying while signed out (NOTIF-10).
+    if (await _push.deleteToken()) await _prefs.setDeviceRegistration(null);
   }
 }
 

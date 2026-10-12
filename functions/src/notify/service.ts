@@ -304,11 +304,19 @@ async function resolveRecipients(groupId: string, recipients: Recipients): Promi
   }
   let query = db().collection(Collections.groupMembers).where('groupId', '==', groupId);
   if ('admins' in recipients) query = query.where('role', 'in', ['owner', 'admin']);
-  const snap = await query
-    .select(...MEMBER_FIELDS)
-    .limit(Limits.membersPerGroupMax)
-    .get();
-  return snap.docs.map((d) => memberSettingsOf(d.get('uid') as string, d.data()));
+  // Page through the whole team: nothing caps team size, and a single
+  // capped read would silently leave the rest out.
+  const out: MemberSettings[] = [];
+  let last: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+  for (;;) {
+    let page = query.select(...MEMBER_FIELDS).orderBy('__name__').limit(Limits.membersPerGroupMax);
+    if (last) page = page.startAfter(last);
+    const snap = await page.get();
+    out.push(...snap.docs.map((d) => memberSettingsOf(d.get('uid') as string, d.data())));
+    if (snap.size < Limits.membersPerGroupMax) break;
+    last = snap.docs[snap.docs.length - 1];
+  }
+  return out;
 }
 
 async function readProfiles(uids: string[]): Promise<Map<string, Profile>> {

@@ -59,7 +59,7 @@ final class PushRegistrationProvider
   }
 }
 
-String _$pushRegistrationHash() => r'1e965b0e910cb5c2399e9d01bc91fb1615bea79d';
+String _$pushRegistrationHash() => r'0d400e84df4780016e48cef369933185e913207d';
 
 /// Keeps this install's `devices` doc current while someone is signed in
 /// and notifications are allowed (NOTIF-10, ARCH §6.5): written after

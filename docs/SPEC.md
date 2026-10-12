@@ -1173,11 +1173,11 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
 
 ### M4 · Notifications
 
-- [ ] Device registration and the fan-out Function.
-- [ ] Per-team level and mute; global switches.
-- [ ] Tap-to-open and in-app banners.
-- [ ] The notification center (NOTIF-11), on the same server pipeline as push.
-- [ ] Web push and the iOS Safari tip.
+- [x] Device registration and the fan-out Function.
+- [x] Per-team level and mute; global switches.
+- [x] Tap-to-open and in-app banners.
+- [x] The notification center (NOTIF-11), on the same server pipeline as push.
+- [x] Web push and the iOS Safari tip.
 
 From here on, each feature ships with its own notifications.
 
