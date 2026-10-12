@@ -767,5 +767,6 @@
   "deleteMediaDocumentBody": "It's removed from Documents for everyone.",
   "deleteMediaFileTitle": "Delete this file?",
   "deleteMediaFileBody": "Nothing uses it, and it can't be brought back.",
-  "mediaDeleted": "Deleted. Storage used updates in a few seconds."
+  "mediaDeleted": "Deleted. Storage used updates in a few seconds.",
+  "photoRemovedByAdmin": "Photo removed by a team admin."
 }

@@ -278,7 +278,7 @@ describe('Media (STORE-5)', () => {
 
     await deleteTeamMedia.run(call('alex', { groupId: G, path: `groups/${G}/messages/m1/1.jpg` }));
     const erased = await messageData('m1');
-    expect(erased).toMatchObject({ text: '', attachments: [], reactions: {}, deletedBy: 'alex', deletedReason: 'admin' });
+    expect(erased).toMatchObject({ text: '', attachments: [], reactions: {}, deletedBy: 'alex', deletedReason: 'media' });
     expect(erased.deletedAt).toBeInstanceOf(Timestamp);
     expect(await fileExists(`groups/${G}/messages/m1/1.jpg`)).toBe(false);
     expect((await messageData('r1')).replyPreview).toMatchObject({ deleted: true });

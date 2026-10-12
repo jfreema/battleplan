@@ -45,7 +45,7 @@ void main() {
 
   test("listTeamMedia's reply reads as the team's media (STORE-5)", () {
     final media = teamMediaFromCallable({
-      'files': [
+      'items': [
         {'path': 'groups/a/avatar/1.jpg', 'size': 10, 'kind': 'logo'},
         {'path': 'groups/a/messages/m1/0.jpg', 'size': 30, 'kind': 'chatPhoto'},
       ],

@@ -373,9 +373,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       ),
       child: deleted
           ? Text(
-              m.deletedReason == 'admin'
-                  ? l10n.messageRemovedByAdmin
-                  : l10n.messageDeleted,
+              switch (m.deletedReason) {
+                'admin' => l10n.messageRemovedByAdmin,
+                // Its last photo was deleted in Media (STORE-5).
+                'media' => l10n.photoRemovedByAdmin,
+                _ => l10n.messageDeleted,
+              },
               style: TextStyle(
                 fontStyle: FontStyle.italic,
                 color: scheme.onSurfaceVariant,

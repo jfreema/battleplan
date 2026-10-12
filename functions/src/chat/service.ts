@@ -101,7 +101,7 @@ export async function writeReplyPreview(
 }
 
 /** The fields that turn a message into a deleted placeholder (CHAT-8). */
-function erasedFields(deletedBy: string, reason: 'author' | 'admin'): Record<string, unknown> {
+function erasedFields(deletedBy: string, reason: 'author' | 'admin' | 'media'): Record<string, unknown> {
   return {
     text: '',
     attachments: [],
@@ -221,7 +221,9 @@ export async function removeAttachment(
     const erase = left.length === 0 && String(message.get('text') ?? '').trim() === '';
     tx.update(
       ref,
-      erase ? erasedFields(deletedBy, 'admin') : { attachments: left, ...(left.length ? {} : { type: 'text' }) },
+      // 'media': its last photo was deleted in Media, so the chat says
+      // "Photo removed by a team admin" (STORE-5).
+      erase ? erasedFields(deletedBy, 'media') : { attachments: left, ...(left.length ? {} : { type: 'text' }) },
     );
     return { erase, removed };
   });

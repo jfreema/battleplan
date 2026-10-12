@@ -41,12 +41,12 @@ class FunctionsMediaRepository implements MediaRepository {
   }
 }
 
-/// What `listTeamMedia` returns: `{files, truncated, storageBytes,
-/// storageQuotaBytes}` (functions/src/teams/media.ts), files largest first.
+/// What `listTeamMedia` returns: `{items, truncated, storageBytes,
+/// storageQuotaBytes}` (functions/src/teams/media.ts), largest first.
 TeamMedia teamMediaFromCallable(Map<String, Object?> d) => TeamMedia(
   items: [
     for (final x
-        in ((d['files'] as List?) ?? const []).cast<Map<Object?, Object?>>())
+        in ((d['items'] as List?) ?? const []).cast<Map<Object?, Object?>>())
       mediaItemFromCallable(x.cast<String, Object?>()),
   ]..sort((a, b) => b.size.compareTo(a.size)),
   truncated: d['truncated'] == true,
