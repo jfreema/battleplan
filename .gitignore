@@ -71,3 +71,6 @@ lib/l10n/gen/
 
 # Agent worktrees
 .claude/worktrees/
+
+# Golden diff images from a failed run (flutter test writes them here)
+test/goldens/failures/

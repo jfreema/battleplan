@@ -37,6 +37,17 @@ jobs:
       - name: Import boundaries (ENG-1)
         run: tools/check_imports.sh
       - run: flutter test
+      # The test-font goldens compare here, on Linux. If one fails, its diff
+      # images are kept to look at; after an intended change, run the
+      # Update goldens workflow (docs/a11y-perf.md).
+      - name: Keep golden diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/goldens/failures
+          if-no-files-found: ignore
+          retention-days: 7
       # The Hosting site: the website at the root and the app under /app
       # (WASM), the same layout the deploys use (ARCH §6.6, D40).
       - name: Hosting build (website + web app under /app)

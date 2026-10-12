@@ -24,6 +24,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:share_plus/share_plus.dart' show ShareResultStatus;
 
 import 'helpers/fakes.dart';
+import 'helpers/photo_fixtures.dart';
 import 'helpers/pump_app.dart';
 
 void main() {
@@ -654,6 +655,29 @@ void main() {
         await tester.pumpAndSettle();
         expect(docs.notified.values.single, isFalse);
         expect(docs.docs.values.single.contentType, 'text/plain');
+      });
+
+      testWidgets('a JPEG uploads without its location (Privacy Policy)', (
+        tester,
+      ) async {
+        final photo = jpegWith([exifSegment()]);
+        final docs = await startUpload(tester, (
+          name: 'IMG_0042.jpg',
+          size: photo.length,
+          readBytes: () async => photo,
+        ));
+        await tester.tap(find.widgetWithText(FilledButton, 'Upload'));
+        await tester.pump();
+        await tester.pump();
+        docs.upload!.finish();
+        await tester.pumpAndSettle();
+        final stored = docs.files.values.single;
+        expect(indexOfBytes(photo, gpsLatitude), isNot(-1));
+        expect(indexOfBytes(stored, gpsLatitude), -1);
+        expect(readIfd(exifTiff(stored)!, 8).$1.keys, isNot(contains(0x8825)));
+        // Same orientation, same image data.
+        expect(readIfd(exifTiff(stored)!, 8).$1[0x0112], 6);
+        expect(imageData(stored), imageData(photo));
       });
 
       testWidgets('Cancel stops it, and nothing is added', (tester) async {

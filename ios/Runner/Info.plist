@@ -14,6 +14,20 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Analytics runs without advertising IDs (Privacy Policy, LEGAL-2):
+	     ad storage, ad user data and ad personalization are denied from the
+	     first launch, and the app never asks to track
+	     (no NSUserTrackingUsageDescription), so iOS gives it no IDFA.
+	     Build releases with FIREBASE_ANALYTICS_WITHOUT_ADID=true in the
+	     environment (FIREBASE_ANALYTICS_WITHOUT_ADID=true flutter build ipa):
+	     firebase_analytics' Package.swift then links FirebaseAnalyticsCore,
+	     which leaves the IDFA code out altogether. -->
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS</key>
+	<false/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Battleplan uses your photo library so you can choose a profile photo and share photos with your teams.</string>
 	<key>NSCalendarsUsageDescription</key>

@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/photo_location.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -157,7 +158,8 @@ class _UploadFormState extends ConsumerState<UploadForm> {
       _progress = 0;
     });
     try {
-      final bytes = await widget.readBytes();
+      // A JPEG's location comes out first, as with photos (Privacy Policy).
+      final bytes = stripPhotoLocation(await widget.readBytes());
       if (!mounted) return;
       final id = repo.newDocumentId();
       final upload = repo.uploadFile(

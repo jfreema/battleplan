@@ -1,3 +1,4 @@
+import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A person's photo, or their initials on a color derived from a stable key
@@ -56,12 +57,16 @@ class Avatar extends StatelessWidget {
         dimension: size,
         child: ClipOval(
           child: url != null
-              ? Image.network(
-                  url,
+              ? Image(
+                  // Decoded at the size it's drawn, not the upload's, with
+                  // the shorter side covering the box so it stays sharp.
+                  image: CoverResizeImage.forBox(
+                    NetworkImage(url),
+                    logicalWidth: size,
+                    logicalHeight: size,
+                    devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                  ),
                   fit: BoxFit.cover,
-                  // Decoded at the size it's drawn, not the upload's.
-                  cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
-                      .ceil(),
                   errorBuilder: (_, _, _) => _initials(),
                 )
               : _initials(),

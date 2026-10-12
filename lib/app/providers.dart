@@ -11,6 +11,7 @@ import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/services/analytics.dart';
 import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
+import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/remote_config.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
@@ -69,7 +70,9 @@ List<Override> buildOverrides({
   analyticsProvider.overrideWithValue(analytics),
   crashReporterProvider.overrideWithValue(crashReporter),
   remoteConfigProvider.overrideWithValue(remoteConfig),
-  photoPickerProvider.overrideWithValue(const ImagePickerPhotoPicker()),
+  photoPickerProvider.overrideWithValue(
+    const LocationStrippingPhotoPicker(ImagePickerPhotoPicker()),
+  ),
   linkOpenerProvider.overrideWithValue(const UrlLauncherLinkOpener()),
   timeZonesProvider.overrideWithValue(const FlutterTimeZones()),
   sharerProvider.overrideWithValue(const SharePlusSharer()),

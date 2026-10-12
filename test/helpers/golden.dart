@@ -65,8 +65,15 @@ String _flutterRoot() {
 }
 
 /// The operating system the readable (real-font) goldens were made on.
-/// They're skipped elsewhere; the test-font goldens run everywhere.
+/// They're skipped elsewhere.
 const readableGoldensOs = 'macos';
+
+/// The operating system the test-font goldens in `test/goldens/ci` were
+/// made on: CI's. Even the test font's boxes antialias differently on each
+/// system (1.5% to 5.5% of pixels between macOS and Linux), so they're
+/// skipped elsewhere too. Record them with the Update goldens workflow
+/// (docs/a11y-perf.md).
+const ciGoldensOs = 'linux';
 
 /// Compares goldens allowing [tolerance] (0.01 is 1%) of pixels to differ,
 /// so antialiasing that differs slightly between machines doesn't fail a

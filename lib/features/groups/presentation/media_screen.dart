@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -172,11 +173,15 @@ class _MediaRow extends ConsumerWidget {
           color: scheme.surfaceContainerHigh,
           child: url == null
               ? placeholder
-              : Image.network(
-                  url,
-                  fit: BoxFit.cover,
+              : Image(
                   // Previews are small; don't decode a 2048 px photo.
-                  cacheWidth: 112,
+                  image: CoverResizeImage.forBox(
+                    NetworkImage(url),
+                    logicalWidth: 56,
+                    logicalHeight: 56,
+                    devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                  ),
+                  fit: BoxFit.cover,
                   semanticLabel: label,
                   errorBuilder: (_, _, _) => placeholder,
                 ),

@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A team's logo, or its initials on the team color (SPEC §5.2, §7.1).
@@ -30,12 +31,16 @@ class TeamBadge extends StatelessWidget {
         child: ClipRRect(
           borderRadius: radius,
           child: url != null
-              ? Image.network(
-                  url,
+              ? Image(
+                  // Decoded at the size it's drawn, not the upload's, with
+                  // the shorter side covering the box so it stays sharp.
+                  image: CoverResizeImage.forBox(
+                    NetworkImage(url),
+                    logicalWidth: size,
+                    logicalHeight: size,
+                    devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+                  ),
                   fit: BoxFit.cover,
-                  // Decoded at the size it's drawn, not the upload's.
-                  cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
-                      .ceil(),
                   errorBuilder: (_, _, _) => _initials(),
                 )
               : _initials(),

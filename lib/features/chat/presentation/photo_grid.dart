@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,8 +74,10 @@ class StoredPhoto extends ConsumerWidget {
   final String? semanticLabel;
 
   /// For thumbnails, the widest it's drawn in logical pixels: the photo is
-  /// decoded at that size rather than its full 2048 px, which keeps memory
-  /// down and scrolling smooth (SPEC §8.1). Null decodes it in full.
+  /// decoded so its shorter side is that size rather than its full 2048 px,
+  /// which keeps memory down and scrolling smooth (SPEC §8.1) while a wide
+  /// photo, which cover fills by height, stays sharp. Null decodes it in
+  /// full.
   final double? decodeWidth;
 
   @override
@@ -85,13 +88,18 @@ class StoredPhoto extends ConsumerWidget {
     );
     if (url == null) return placeholder;
     final width = decodeWidth;
-    return Image.network(
-      url,
+    final network = NetworkImage(url);
+    return Image(
+      image: width == null
+          ? network
+          : CoverResizeImage.forBox(
+              network,
+              logicalWidth: width,
+              logicalHeight: width,
+              devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+            ),
       fit: fit,
       semanticLabel: semanticLabel,
-      cacheWidth: width == null
-          ? null
-          : (width * MediaQuery.devicePixelRatioOf(context)).ceil(),
       loadingBuilder: (_, child, progress) =>
           progress == null ? child : placeholder,
       errorBuilder: (_, _, _) => placeholder,
@@ -106,12 +114,15 @@ class LocalPhoto extends StatelessWidget {
   final Uint8List bytes;
 
   @override
-  Widget build(BuildContext context) => Image.memory(
-    bytes,
+  Widget build(BuildContext context) => Image(
+    // A thumbnail in the grid: decoded at that size, not the photo's own.
+    image: CoverResizeImage.forBox(
+      MemoryImage(bytes),
+      logicalWidth: PhotoGrid.maxWidth,
+      logicalHeight: PhotoGrid.maxWidth,
+      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+    ),
     fit: BoxFit.cover,
     gaplessPlayback: true,
-    // A thumbnail in the grid: decoded at that size, not the photo's own.
-    cacheWidth: (PhotoGrid.maxWidth * MediaQuery.devicePixelRatioOf(context))
-        .ceil(),
   );
 }

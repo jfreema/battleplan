@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/presentation/document_actions.dart';
@@ -96,12 +97,16 @@ class DocumentThumbnail extends ConsumerWidget {
     if (url == null) return icon;
     return ClipRRect(
       borderRadius: BorderRadius.circular(Corners.chip),
-      child: Image.network(
-        url,
+      child: Image(
+        image: CoverResizeImage.forBox(
+          NetworkImage(url),
+          logicalWidth: 40,
+          logicalHeight: 40,
+          devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+        ),
         width: 40,
         height: 40,
         fit: BoxFit.cover,
-        cacheWidth: 120,
         errorBuilder: (_, _, _) => icon,
       ),
     );

@@ -10,6 +10,11 @@ import 'helpers/fakes.dart';
 import 'helpers/scenes.dart';
 
 void main() {
+  // A tap or long press that misses what it aims at fails the test rather
+  // than testing nothing.
+  setUpAll(() => WidgetController.hitTestWarningShouldBeFatal = true);
+  tearDownAll(() => WidgetController.hitTestWarningShouldBeFatal = false);
+
   final guidelines = {
     'Android tap targets': androidTapTargetGuideline,
     'iOS tap targets': iOSTapTargetGuideline,
@@ -32,8 +37,12 @@ void main() {
         100,
         scrollable: find.byType(Scrollable).first,
       );
+      // At large text sizes the scroll can leave it just off screen.
+      await tester.ensureVisible(find.text('Great hustle today'));
+      await tester.pumpAndSettle();
       await tester.longPress(find.text('Great hustle today'));
       await tester.pumpAndSettle();
+      expect(find.text('Copy text'), findsOneWidget, reason: 'menu open');
     },
     'roster': (WidgetTester tester, {required bool dark}) async {
       await pumpTeam(tester, dark: dark);
@@ -197,6 +206,70 @@ void main() {
       expect(messages.sent, isEmpty);
       await press(tester, LogicalKeyboardKey.enter);
       expect(messages.sent, ['On my way']);
+    });
+
+    testWidgets('Enter picks the word an input method is composing, and '
+        "doesn't send", (tester) async {
+      final messages = FakeMessageRepository(sceneMessages);
+      await pumpTeam(tester, dark: false, messages: messages);
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+      // Typing Japanese: 'にほ' is still a candidate, not yet confirmed.
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'にほ',
+          selection: TextSelection.collapsed(offset: 2),
+          composing: TextRange(start: 0, end: 2),
+        ),
+      );
+      await tester.pump();
+      await press(tester, LogicalKeyboardKey.enter);
+      expect(messages.sent, isEmpty);
+      // The word is confirmed; now Enter sends.
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: '日本',
+          selection: TextSelection.collapsed(offset: 2),
+        ),
+      );
+      await tester.pump();
+      await press(tester, LogicalKeyboardKey.enter);
+      expect(messages.sent, ['日本']);
+    });
+
+    testWidgets('a focused button draws the focus ring', (tester) async {
+      await pumpChat(tester, dark: false);
+      final button = find.byTooltip('Notifications');
+      // The button's own Material, which draws its shape and side.
+      BorderSide side() =>
+          (tester
+                      .widget<Material>(
+                        find
+                            .ancestor(
+                              of: button,
+                              matching: find.byType(Material),
+                            )
+                            .first,
+                      )
+                      .shape!
+                  as OutlinedBorder)
+              .side;
+      expect(side(), BorderSide.none);
+      for (var i = 0; i < 40; i++) {
+        await press(tester, LogicalKeyboardKey.tab);
+        final context = FocusManager.instance.primaryFocus?.context;
+        if (context?.findAncestorWidgetOfExactType<Tooltip>()?.message ==
+            'Notifications') {
+          break;
+        }
+      }
+      final primary = Theme.of(tester.element(button)).colorScheme.primary;
+      // A 3 px primary-colored ring (SPEC §7.6).
+      expect(side().width, 3);
+      expect(side().color, primary);
+      // It goes when focus moves on.
+      await press(tester, LogicalKeyboardKey.tab);
+      expect(side(), BorderSide.none);
     });
 
     testWidgets('Tab reaches the header, the composer, and the tabs, with a '
