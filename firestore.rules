@@ -224,8 +224,13 @@ service cloud.firestore {
         && incoming().authorId == uid()
         && authorSnapshotMatches(incoming())
         && incoming().type in ['text', 'image', 'poll']
-        && (incoming().type != 'poll'
-            || getAfter(/databases/$(database)/documents/polls/$(incoming().pollId)).data.messageId == messageId)
+        // A poll message shares its poll's ID and is written in the same
+        // batch; the poll rule checks the rest (POLL-1). Other messages
+        // carry no pollId.
+        && (incoming().type == 'poll'
+            ? incoming().get('pollId', null) == messageId
+              && getAfter(/databases/$(database)/documents/polls/$(messageId)).data.messageId == messageId
+            : !('pollId' in incoming()))
         && incoming().get('text', '').size() <= 4000
         && attachmentsOk(incoming(), messageId)
         && (incoming().get('replyToId', null) == null
@@ -307,11 +312,99 @@ service cloud.firestore {
     match /polls/{pollId} {
       allow get: if isMember(resource.data.groupId);
       allow list: if boundedQuery() && isMember(resource.data.groupId);
-      // Create rules arrive with polls (M5).
+      // POLL-1: made from the chat's + menu by anyone allowed to, in the same
+      // batch as its poll message, which has the same ID. Counts start at
+      // zero. Tallies, closing, and deleting go through Functions.
+      allow create: if isMember(incoming().groupId) && active(incoming().groupId)
+        && (settings(incoming().groupId).membersCanCreatePolls || isAdmin(incoming().groupId))
+        && incoming().createdBy == uid()
+        && incoming().messageId == pollId
+        && pollMessageOk(pollId)
+        && validPoll(incoming());
     }
 
+    // The poll's message: same team, same author, and its text is the
+    // question, so previews and notifications read it from the message.
+    function pollMessageOk(pollId) {
+      let m = getAfter(/databases/$(database)/documents/messages/$(pollId)).data;
+      return m.type == 'poll' && m.pollId == pollId
+        && m.groupId == incoming().groupId
+        && m.authorId == uid()
+        && m.text == incoming().question;
+    }
+
+    // A new poll (POLL-1): a question up to 200 characters, 2 to 10 options
+    // up to 80 characters each with IDs '0' to '9' in order, and an optional
+    // close time within a year.
+    function validPoll(p) {
+      return p.keys().hasOnly(['groupId', 'messageId', 'createdBy', 'question', 'options',
+             'allowMultiple', 'anonymous', 'closesAt', 'closedAt', 'voteCounts', 'voterCount',
+             'createdAt'])
+        && p.question is string && p.question.trim().size() > 0 && p.question.size() <= 200
+        && p.options is list && p.options.size() >= 2 && p.options.size() <= 10
+        && optionOk(p.options, 0) && optionOk(p.options, 1) && optionOk(p.options, 2)
+        && optionOk(p.options, 3) && optionOk(p.options, 4) && optionOk(p.options, 5)
+        && optionOk(p.options, 6) && optionOk(p.options, 7) && optionOk(p.options, 8)
+        && optionOk(p.options, 9)
+        && p.allowMultiple is bool && p.anonymous is bool
+        && (p.get('closesAt', null) == null
+            || (p.closesAt is timestamp && p.closesAt > request.time
+                && p.closesAt < request.time + duration.value(366, 'd')))
+        && p.closedAt == null
+        && p.voteCounts == {} && p.voterCount == 0
+        && p.createdAt == request.time;
+    }
+    function optionOk(o, i) {
+      // Kept short: ten of these stay inside the rules' expression budget.
+      return o.size() <= i
+        || (o[i].keys().hasOnly(['id', 'text']) && o[i].id == string(i)
+            && o[i].text.trim().size() > 0 && o[i].text.size() <= 80);
+    }
+    function pollPath(pollId) { return /databases/$(database)/documents/polls/$(pollId); }
+    // Votes count until the creator or an admin closes it, or its close
+    // time passes (POLL-4).
+    function pollOpen(p) {
+      return p.get('closedAt', null) == null
+        && (p.get('closesAt', null) == null || request.time < p.closesAt);
+    }
+
+    // POLL-2, POLL-3: one vote doc per person per poll. You always read your
+    // own; teammates read the others only on polls that aren't anonymous, so
+    // nobody in the app sees who chose what on an anonymous poll, admins
+    // included. A missing vote of your own reads as not found.
     match /pollVotes/{voteId} {
-      allow get, list: if false; // M5
+      allow get: if voteId.matches('[A-Za-z0-9]+_' + uid())
+        || openBallot(resource.data.pollId);
+      allow list: if boundedQuery()
+        && (resource.data.uid == uid() || openBallot(resource.data.pollId));
+      allow create, update: if voteOk(voteId);
+      // Tapping your only choice again removes your vote, while it's open.
+      allow delete: if resource.data.uid == uid() && pollOpen(get(pollPath(resource.data.pollId)).data);
+    }
+
+    // A teammate may see who chose what: the poll isn't anonymous. Read
+    // from the poll, so a list query needs only the pollId filter.
+    function openBallot(pollId) {
+      let p = get(pollPath(pollId)).data;
+      return isMember(p.groupId) && !p.anonymous;
+    }
+
+    // Your choices on an open poll of your team: one, or several on a
+    // multiple-answer poll, each an option of that poll.
+    function voteOk(voteId) {
+      let v = incoming();
+      let p = get(pollPath(v.pollId)).data;
+      return voteId == v.pollId + '_' + uid()
+        && v.uid == uid()
+        && v.groupId == p.groupId
+        && isMember(p.groupId) && active(p.groupId)
+        && pollOpen(p)
+        && v.keys().hasOnly(['pollId', 'groupId', 'uid', 'optionIds', 'updatedAt'])
+        && v.optionIds is list && v.optionIds.size() >= 1
+        && v.optionIds.size() <= (p.allowMultiple ? p.options.size() : 1)
+        && v.optionIds.toSet().size() == v.optionIds.size()
+        && v.optionIds.hasOnly(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'][0:p.options.size()])
+        && v.updatedAt == request.time;
     }
 
     // ---- Schedule ----------------------------------------------------------

@@ -138,7 +138,7 @@ SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
 76. Who voted, and anonymous polls (POLL-3).
 77. Closing early, auto-close in the `tick` job, and the "Poll closed" notification (POLL-4).
 78. Deleting a poll with its message (POLL-5).
-79. Rules and tests for polls and votes.
+79. ✅ Rules and tests for polls and votes.
 
 ## M6 · Schedule
 

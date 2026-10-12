@@ -4,6 +4,7 @@ import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
 import { trySend } from '../notify/service.js';
+import { deletePoll, pollCreatedBody } from '../polls/service.js';
 
 export const DELETED_USER_NAME = 'Deleted user';
 
@@ -154,6 +155,8 @@ export async function eraseMessage(
   const message = await ref.get();
   if (!message.exists || message.get('deletedAt')) return;
   await ref.update(erasedFields(deletedBy, reason));
+  // Deleting a poll's message deletes the poll and its votes (POLL-5).
+  if (message.get('type') === 'poll') await deletePoll(String(message.get('pollId') ?? messageId));
   await afterErase(messageId, message.get('groupId') as string);
 }
 
@@ -246,7 +249,9 @@ export async function removeAttachment(
 export function lastMessagePreviewOf(m: Record<string, unknown>): { authorName: string; text: string; type: string } {
   const type = String(m.type ?? 'text');
   const firstLine = String(m.text ?? '').split('\n')[0].trim();
-  const text = firstLine || (type === 'image' ? 'Photo' : type === 'poll' ? 'Poll' : '');
+  // A poll's text is its question (POLL-1): "Poll: Saturday or Sunday?".
+  const text =
+    type === 'poll' ? (firstLine ? `Poll: ${firstLine}` : 'Poll') : firstLine || (type === 'image' ? 'Photo' : '');
   return {
     authorName: String(m.authorName ?? ''),
     text: text.length > 80 ? `${text.slice(0, 79)}…` : text,
@@ -276,9 +281,9 @@ export async function touchLastMessage(groupId: string, message: Record<string, 
 }
 
 /**
- * Whether a new message notifies (ARCH §6.4 trigger map): text and photos.
- * System lines and event cards notify through their own domain; polls will
- * notify as pollCreated with M5.
+ * Whether a new message notifies as a message (ARCH §6.4 trigger map): text
+ * and photos. Polls notify as pollCreated; system lines and event cards
+ * notify through their own domain.
  */
 export function notifiesAsMessage(m: Record<string, unknown>): boolean {
   return m.type === 'text' || m.type === 'image';
@@ -337,7 +342,8 @@ export async function notifyNewMessage(
   teamName: string | null,
   repliedTo: string | null,
 ): Promise<void> {
-  if (!notifiesAsMessage(message)) return;
+  const isPoll = message.type === 'poll';
+  if (!isPoll && !notifiesAsMessage(message)) return;
   const groupId = message.groupId as string;
   const actor = { uid: String(message.authorId ?? ''), name: String(message.authorName ?? '') };
   const common = {
@@ -348,6 +354,17 @@ export async function notifyNewMessage(
     params: { authorName: actor.name },
     ...(teamName !== null ? { teamName } : {}),
   };
+  if (isPoll) {
+    // A new poll (POLL-1, NOTIF-2): the poll's message text is its question.
+    await trySend({
+      ...common,
+      kind: 'pollCreated',
+      recipients: { members: true },
+      body: pollCreatedBody(actor.name, String(message.text ?? '')),
+      dedupeKey: messageId,
+    });
+    return;
+  }
   const repliedPushed = repliedTo
     ? await trySend({
         ...common,
