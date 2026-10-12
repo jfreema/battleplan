@@ -1,7 +1,8 @@
 {
     "name": "Battleplan",
     "short_name": "Battleplan",
-    "start_url": ".",
+    "start_url": "./",
+    "scope": "./",
     "display": "standalone",
     "background_color": "#2F5BEA",
     "theme_color": "#2F5BEA",

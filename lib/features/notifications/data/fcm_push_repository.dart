@@ -45,7 +45,10 @@ class FcmPushRepository implements PushRepository {
     // undecided, so never ask for a token before permission is granted.
     if (await permissionStatus() != PushPermission.authorized) return null;
     try {
-      return await _messaging.getToken(vapidKey: vapidKey);
+      return await _messaging.getToken(
+        vapidKey: vapidKey,
+        serviceWorkerScriptPath: pushWorkerPath(isWeb: kIsWeb),
+      );
     } on Object catch (e) {
       // No APNs on the simulator, no network, and so on.
       Log.warn('Could not get a push token', e);
@@ -78,6 +81,9 @@ class FcmPushRepository implements PushRepository {
   @override
   Future<bool> deleteToken() async {
     try {
+      // On web, register our push worker first: without a registration the
+      // SDK looks for one at the domain root, where the website is (D40).
+      if (kIsWeb) await currentToken();
       await _messaging.deleteToken();
       return true;
     } on Object catch (e) {
@@ -119,6 +125,14 @@ class UnavailablePushRepository implements PushRepository {
   @override
   Future<bool> deleteToken() async => true;
 }
+
+/// The web push worker, relative to the page's base href. Under `/app/`
+/// (D40) the browser registers `/app/firebase-messaging-sw.js` with the
+/// `/app/` scope; Firebase's default is `/firebase-messaging-sw.js`, which
+/// the web app doesn't serve. Null on phones.
+@visibleForTesting
+String? pushWorkerPath({required bool isWeb}) =>
+    isWeb ? 'firebase-messaging-sw.js' : null;
 
 /// Platform checks live in implementations (ARCH §5.2 rule 8).
 DevicePlatform currentDevicePlatform() => kIsWeb

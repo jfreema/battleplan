@@ -5,6 +5,7 @@ import 'package:battleplan/app/update_required_screen.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/features/admin/presentation/admin_panel.dart'
@@ -90,6 +91,10 @@ GoRouter router(Ref ref) {
     initialLocation: '/',
     refreshListenable: refresh,
     redirect: (context, state) {
+      // Universal Links and App Links for /app/... arrive with the prefix the
+      // web app's base href removes in browsers (D40).
+      final unprefixed = stripAppPrefix(state.uri);
+      if (unprefixed != null) return unprefixed.toString();
       final path = state.uri.path;
 
       final remote = ref.read(remoteConfigProvider);

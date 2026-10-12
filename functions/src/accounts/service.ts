@@ -21,7 +21,7 @@ import {
   setupEmail,
 } from '../email/templates.js';
 import { sendEmail } from '../email/service.js';
-import { activateUrl } from '../links/service.js';
+import { activateUrl, appUrl } from '../links/service.js';
 import { projectId } from '../shared/project.js';
 import { initialDisplayName, needsSetup, signInMethodsOf, type AuthIdentity } from './profile.js';
 
@@ -276,7 +276,7 @@ export async function findOrProvisionUser(email: string, name: string | null): P
 
 /**
  * A one-time setup link for an added account (AUTH-6): an email-link
- * sign-in that lands on /activate, opening the app through App Links.
+ * sign-in that lands on /app/activate, opening the app through App Links.
  */
 export async function setupLink(email: string): Promise<string> {
   const prod = projectId() === 'battleplan-prod';
@@ -378,7 +378,8 @@ export async function sendPasswordReset(uid: string): Promise<void> {
   const user = await requireAccount(uid);
   const email = (profile.get('email') as string | null | undefined) ?? user.email;
   if (!email) throw new HttpsError('failed-precondition', 'no-email');
-  const link = await auth().generatePasswordResetLink(email);
+  // After the new password is set, Continue goes back to sign-in in the app.
+  const link = await auth().generatePasswordResetLink(email, { url: appUrl('/sign-in/email') });
   await sendEmail(passwordResetEmail(email, link));
 }
 

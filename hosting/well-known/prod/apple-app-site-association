@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["APPLE_TEAM_ID.app.getbattleplan"],
+        "components": [
+          { "/": "/join/*" },
+          { "/": "/activate*" },
+          { "/": "/g/*" },
+          { "/": "/app/*" },
+          { "/": "/__/auth/links*" }
+        ]
+      }
+    ]
+  }
+}

@@ -32,10 +32,39 @@
     }
   ],
   "hosting": {
-    "public": "build/web",
+    "public": "build/hosting",
     "ignore": [
       "firebase.json",
       "**/node_modules/**"
+    ],
+    "cleanUrls": true,
+    "redirects": [
+      {
+        "source": "/join",
+        "destination": "/app/join",
+        "type": 302
+      },
+      {
+        "source": "/join/:code",
+        "destination": "/app/join/:code",
+        "type": 302
+      },
+      {
+        "source": "/activate",
+        "destination": "/app/activate",
+        "type": 302
+      },
+      {
+        "source": "/g/:rest*",
+        "destination": "/app/g/:rest*",
+        "type": 302
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/app/**",
+        "destination": "/app/index.html"
+      }
     ],
     "headers": [
       {
@@ -44,23 +73,34 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
           }
         ]
       },
       {
-        "source": "**/*.@(js|wasm|mjs|json|html)",
+        "source": "/app{,/**}",
         "headers": [
           {
             "key": "Cache-Control",
             "value": "no-cache"
+          },
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
           }
         ]
-      }
-    ],
-    "rewrites": [
+      },
       {
-        "source": "**",
-        "destination": "/index.html"
+        "regex": "^/.+\\.[0-9a-f]{8,}\\.(css|js|mjs|wasm|png|jpe?g|webp|avif|svg|woff2?)$",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
       }
     ]
   },

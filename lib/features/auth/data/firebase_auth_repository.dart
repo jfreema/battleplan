@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/links.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -10,12 +11,13 @@ import 'package:flutter/foundation.dart';
 /// Firebase Authentication behind [AuthRepository]. Firebase types and
 /// exceptions stay in this file; callers get [AuthUser] and [AppFailure]s.
 class FirebaseAuthRepository implements AuthRepository {
-  new(this._auth, this._functions, {required this.linkHost});
+  new(this._auth, this._functions, {required this.links});
 
   final FirebaseFunctions _functions;
 
-  /// The Hosting domain email links point at (never a Dynamic Links domain).
-  final String linkHost;
+  /// Builds the email links, on our Hosting domain (never a Dynamic Links
+  /// domain). They open the web app under `/app` (D40).
+  final LinkService links;
 
   final FirebaseAuth _auth;
   AuthUser? _current;
@@ -102,7 +104,7 @@ class FirebaseAuthRepository implements AuthRepository {
     if (user == null || user.emailVerified) return;
     try {
       await user.sendEmailVerification(
-        ActionCodeSettings(url: 'https://$linkHost/'),
+        ActionCodeSettings(url: links.appRoot.toString()),
       );
     } on FirebaseAuthException catch (e) {
       throw switch (e.code) {
@@ -212,11 +214,11 @@ class FirebaseAuthRepository implements AuthRepository {
       await _auth.sendSignInLinkToEmail(
         email: email,
         actionCodeSettings: ActionCodeSettings(
-          url: 'https://$linkHost/activate',
+          url: links.activate.toString(),
           handleCodeInApp: true,
           // Firebase accepts only a custom Hosting domain here (M0 spike 2).
           // Without one, links use the project's firebaseapp.com domain.
-          linkDomain: _customDomain ? linkHost : null,
+          linkDomain: links.isCustomDomain ? links.host : null,
           androidPackageName: _androidPackage,
           iOSBundleId: _iosBundleId,
         ),
@@ -252,15 +254,12 @@ class FirebaseAuthRepository implements AuthRepository {
     }
   }
 
-  /// Deep links arrive as a path and query; Firebase wants a full URL.
+  /// Deep links arrive as an app route and query; Firebase wants a full URL.
   String _absolute(Uri link) =>
-      link.hasScheme ? link.toString() : 'https://$linkHost$link';
-
-  bool get _customDomain =>
-      !linkHost.endsWith('.web.app') && !linkHost.endsWith('.firebaseapp.com');
+      link.hasScheme ? link.toString() : links.app('$link').toString();
 
   /// The app that should open the link: prod for the prod domain, else dev.
-  String get _androidPackage => linkHost == 'getbattleplan.app'
+  String get _androidPackage => links.host == LinkService.prodHost
       ? 'app.getbattleplan'
       : 'app.getbattleplan.dev';
   String get _iosBundleId => _androidPackage;
@@ -357,7 +356,7 @@ class FirebaseAuthRepository implements AuthRepository {
     try {
       await _user.verifyBeforeUpdateEmail(
         newEmail,
-        ActionCodeSettings(url: 'https://$linkHost/'),
+        ActionCodeSettings(url: links.appRoot.toString()),
       );
     } on FirebaseAuthException catch (e) {
       _throwMethodError(e);

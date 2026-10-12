@@ -1,6 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { describe, expect, it } from 'vitest';
-import { linkHost } from '../../src/links/service.js';
 import {
   buildPayload,
   canReceive,
@@ -187,8 +186,9 @@ describe('buildPayload (ARCH §6.5)', () => {
       apns: { payload: { aps: { 'thread-id': 'g1', sound: 'default' } } },
       android: { priority: 'high', notification: { channelId: 'replies' } },
       webpush: {
-        notification: { icon: '/icons/Icon-192.png' },
-        fcmOptions: { link: `https://${linkHost()}/g/g1/chat/m/m1` },
+        // The web app is under /app (D40), so the click opens /app<route>.
+        notification: { icon: 'https://demo-battleplan.web.app/app/icons/Icon-192.png' },
+        fcmOptions: { link: 'https://demo-battleplan.web.app/app/g/g1/chat/m/m1' },
       },
     });
   });

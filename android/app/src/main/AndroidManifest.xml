@@ -26,7 +26,10 @@
             </intent-filter>
             <!-- App Links (ARCH §6.6): invite, setup, and content links on our
                  domain open the app. The host is set per flavor in
-                 build.gradle.kts and verified by /.well-known/assetlinks.json. -->
+                 build.gradle.kts and verified by /.well-known/assetlinks.json.
+                 The web app is under /app (D40); the router drops that prefix.
+                 The website's own pages aren't listed, so they stay in the
+                 browser. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -35,6 +38,7 @@
                 <data android:pathPrefix="/join/"/>
                 <data android:pathPrefix="/activate"/>
                 <data android:pathPrefix="/g/"/>
+                <data android:pathPrefix="/app/"/>
             </intent-filter>
             <!-- Email sign-in links. Firebase only accepts a custom domain as
                  linkDomain, so prod uses getbattleplan.app and dev uses the

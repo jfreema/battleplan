@@ -4,7 +4,7 @@
 import { FieldValue, Timestamp, type DocumentReference } from 'firebase-admin/firestore';
 import type { BaseMessage } from 'firebase-admin/messaging';
 import { logger } from 'firebase-functions/v2';
-import { linkHost } from '../links/service.js';
+import { appUrl } from '../links/service.js';
 import { db, messaging } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections, ID_SEPARATOR, Limits, NOTIFY_KINDS, type NotifyKind } from '../shared/constants.js';
@@ -153,9 +153,9 @@ export function buildPayload(c: PushContent): BaseMessage {
     apns: { payload: { aps: { 'thread-id': c.groupId, sound: 'default' } } },
     android: { priority: 'high', notification: { channelId: NOTIFY_KINDS[c.kind].channel } },
     webpush: {
-      notification: { icon: '/icons/Icon-192.png' },
+      notification: { icon: appUrl('/icons/Icon-192.png') },
       // The web SDK opens this on click; web has no getInitialMessage.
-      fcmOptions: { link: `https://${linkHost()}${c.route}` },
+      fcmOptions: { link: appUrl(c.route) },
     },
   };
 }

@@ -335,50 +335,54 @@ final class FileChooserProvider
 
 String _$fileChooserHash() => r'20ccd176452708f87ec03733eb88f0609b64be74';
 
-/// Where the web app lives, for links people share (an event's Share,
-/// SCHED-4). Paths under it are the app's routes (ARCH §5.4).
+/// Builds every Battleplan URL (ARCH §6.6): links people share (an event's
+/// Share, SCHED-4), invite links, and email links. Web app links are under
+/// `/app`; the paths after it are the app's routes (ARCH §5.4).
 
-@ProviderFor(appWebBase)
-final appWebBaseProvider = AppWebBaseProvider._();
+@ProviderFor(linkService)
+final linkServiceProvider = LinkServiceProvider._();
 
-/// Where the web app lives, for links people share (an event's Share,
-/// SCHED-4). Paths under it are the app's routes (ARCH §5.4).
+/// Builds every Battleplan URL (ARCH §6.6): links people share (an event's
+/// Share, SCHED-4), invite links, and email links. Web app links are under
+/// `/app`; the paths after it are the app's routes (ARCH §5.4).
 
-final class AppWebBaseProvider extends $FunctionalProvider<Uri, Uri, Uri>
-    with $Provider<Uri> {
-  /// Where the web app lives, for links people share (an event's Share,
-  /// SCHED-4). Paths under it are the app's routes (ARCH §5.4).
-  AppWebBaseProvider._()
+final class LinkServiceProvider
+    extends $FunctionalProvider<LinkService, LinkService, LinkService>
+    with $Provider<LinkService> {
+  /// Builds every Battleplan URL (ARCH §6.6): links people share (an event's
+  /// Share, SCHED-4), invite links, and email links. Web app links are under
+  /// `/app`; the paths after it are the app's routes (ARCH §5.4).
+  LinkServiceProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'appWebBaseProvider',
+        name: r'linkServiceProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$appWebBaseHash();
+  String debugGetCreateSourceHash() => _$linkServiceHash();
 
   @$internal
   @override
-  $ProviderElement<Uri> $createElement($ProviderPointer pointer) =>
+  $ProviderElement<LinkService> $createElement($ProviderPointer pointer) =>
       $ProviderElement(pointer);
 
   @override
-  Uri create(Ref ref) {
-    return appWebBase(ref);
+  LinkService create(Ref ref) {
+    return linkService(ref);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Uri value) {
+  Override overrideWithValue(LinkService value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Uri>(value),
+      providerOverride: $SyncValueProvider<LinkService>(value),
     );
   }
 }
 
-String _$appWebBaseHash() => r'571bd43f59ebbdc057359d86140beb39aab3b08e';
+String _$linkServiceHash() => r'733247de94a799b422e82325a15227b0e3e56e1e';

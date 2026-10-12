@@ -7,6 +7,7 @@ import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/app/services/url_launcher_link_opener.dart';
 import 'package:battleplan/app/services/web_browser_info.dart';
 import 'package:battleplan/core/env.dart';
+import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/services/analytics.dart';
 import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
@@ -74,13 +75,7 @@ List<Override> buildOverrides({
   sharerProvider.overrideWithValue(const SharePlusSharer()),
   calendarAdderProvider.overrideWithValue(const DeviceCalendarAdder()),
   fileChooserProvider.overrideWithValue(const FilePickerChooser()),
-  appWebBaseProvider.overrideWithValue(
-    Uri.parse(
-      env.isProd
-          ? 'https://getbattleplan.app/app'
-          : 'https://battleplan-dev-ecce4.web.app/app',
-    ),
-  ),
+  linkServiceProvider.overrideWithValue(LinkService.forEnv(isProd: env.isProd)),
   browserInfoProvider.overrideWithValue(
     kIsWeb ? WebBrowserInfo() : const PlainBrowserInfo(),
   ),
@@ -116,9 +111,7 @@ List<Override> buildOverrides({
     FirebaseAuthRepository(
       auth,
       functions,
-      linkHost: env.isProd
-          ? 'getbattleplan.app'
-          : 'battleplan-dev-ecce4.web.app',
+      links: LinkService.forEnv(isProd: env.isProd),
     ),
   ),
   userRepositoryProvider.overrideWithValue(

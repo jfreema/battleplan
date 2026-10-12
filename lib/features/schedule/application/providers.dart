@@ -448,9 +448,6 @@ class ScheduleView extends _$ScheduleView {
 
 /// A link to an event in the web app, for Share (SCHED-4).
 @riverpod
-Uri eventLink(Ref ref, GroupId groupId, EventId eventId) {
-  final base = ref.watch(appWebBaseProvider);
-  return base.replace(
-    path: '${base.path}/g/${groupId.value}/schedule/e/${eventId.value}',
-  );
-}
+Uri eventLink(Ref ref, GroupId groupId, EventId eventId) => ref
+    .watch(linkServiceProvider)
+    .app('/g/${groupId.value}/schedule/e/${eventId.value}');

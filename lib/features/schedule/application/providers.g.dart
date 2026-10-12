@@ -1429,7 +1429,7 @@ final class EventLinkProvider extends $FunctionalProvider<Uri, Uri, Uri>
   }
 }
 
-String _$eventLinkHash() => r'551c3dc1d2b2122ef255f97410eeab5aae295ff1';
+String _$eventLinkHash() => r'555152fd8b6f602a74731d1e354a0d0a3264c8a0';
 
 /// A link to an event in the web app, for Share (SCHED-4).
 

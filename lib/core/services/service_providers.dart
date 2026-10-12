@@ -1,3 +1,4 @@
+import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/calendar.dart';
 import 'package:battleplan/core/services/file_chooser.dart';
@@ -41,7 +42,8 @@ CalendarAdder calendarAdder(Ref ref) => const NoopCalendarAdder();
 @Riverpod(keepAlive: true)
 FileChooser fileChooser(Ref ref) => const NoopFileChooser();
 
-/// Where the web app lives, for links people share (an event's Share,
-/// SCHED-4). Paths under it are the app's routes (ARCH §5.4).
+/// Builds every Battleplan URL (ARCH §6.6): links people share (an event's
+/// Share, SCHED-4), invite links, and email links. Web app links are under
+/// `/app`; the paths after it are the app's routes (ARCH §5.4).
 @Riverpod(keepAlive: true)
-Uri appWebBase(Ref ref) => Uri.parse('https://getbattleplan.app/app');
+LinkService linkService(Ref ref) => const LinkService(LinkService.prodHost);
