@@ -9,7 +9,7 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
 - Each milestone ends working on iOS, Android, and web, with rules tests updated (SPEC §9).
 
-Last updated: 2026-10-12. Facebook sign-in was removed from the plan; it is a backlog item now.
+Last updated: 2026-10-12. M5 (Polls) and M6 (Schedule) are built. Facebook sign-in was removed from the plan; it is a backlog item now.
 
 ---
 
@@ -142,17 +142,17 @@ SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
 
 ## M6 · Schedule
 
-80. 👤 **Jared:** Confirm Q12 (can members create events by default; default admins only).
-81. Create an event with types and game fields (SCHED-3); event details (SCHED-4).
-82. RSVPs, including Maybe and admins answering for members (SCHED-5).
-83. Per-player RSVPs and guardian notifications on youth teams, plus coaches' and staff's own RSVPs counted apart from players (PLAYER-6, PLAYER-7, Q14).
-84. Upcoming, Past, and Calendar views (SCHED-1); All my teams, with each parent's player named (SCHED-2, PLAYER-9).
-85. Editing, cancel, and delete, with change notifications (SCHED-6, SCHED-7).
-86. Repeating events through `saveEventSeries`: daily and weekly, skip dates, this-and-following edits, cancel, and delete.
-87. Duplicate an event (SCHED-3).
-88. Reminders in the `tick` job (SCHED-8); event cards in chat (CHAT-11).
-89. Time zones (SCHED-9) and Add to calendar (SCHED-10).
-90. Rules and tests for events, series, and RSVPs.
+80. 👤 **Jared:** Confirm Q12 (can members create events by default; default admins only). Building with the default (admins only) until confirmed.
+81. ✅ Create an event with types and game fields (SCHED-3); event details (SCHED-4).
+82. ✅ RSVPs, including Maybe and admins answering for members (SCHED-5).
+83. ✅ Per-player RSVPs and guardian notifications on youth teams, plus coaches' and staff's own RSVPs counted apart from players (PLAYER-6, PLAYER-7, Q14).
+84. ✅ Upcoming, Past, and Calendar views (SCHED-1); All my teams, with each parent's player named (SCHED-2, PLAYER-9).
+85. ✅ Editing, cancel, and delete, with change notifications (SCHED-6, SCHED-7).
+86. ✅ Repeating events through `saveEventSeries`: daily and weekly, skip dates, this-and-following edits, cancel, and delete.
+87. ✅ Duplicate an event (SCHED-3).
+88. ✅ Reminders in the `tick` job (SCHED-8); event cards in chat (CHAT-11).
+89. ✅ Time zones (SCHED-9) and Add to calendar (SCHED-10).
+90. ✅ Rules and tests for events, series, and RSVPs.
 
 **M6 is done when** the SCHED and PLAYER acceptance criteria pass (SPEC §6.3, §6.7).
 
