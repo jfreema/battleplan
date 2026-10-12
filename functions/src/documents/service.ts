@@ -240,3 +240,19 @@ export async function anonymizeUploader(uid: string): Promise<void> {
 function isDocId(id: string): boolean {
   return id !== '' && id !== '.' && id !== '..' && !/^__.*__$/.test(id) && Buffer.byteLength(id) <= 1500;
 }
+
+/**
+ * Deletes one of a team's documents for a super admin acting on a report
+ * (ADMIN-5, SAFE-4). Only a record of [groupId] is deleted; its delete
+ * trigger then removes the file and the center items. Returns whether one
+ * was deleted.
+ */
+export async function deleteDocumentOf(groupId: string, docId: string): Promise<boolean> {
+  const ref = db().collection(Collections.groupDocuments).doc(docId);
+  return db().runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    if (!doc.exists || doc.get('groupId') !== groupId) return false;
+    tx.delete(ref);
+    return true;
+  });
+}

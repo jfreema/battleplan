@@ -40,4 +40,16 @@ const claims = JSON.parse(user.customAttributes ?? '{}');
 if (grant) claims.superAdmin = true;
 else delete claims.superAdmin;
 await call('update', { localId: user.localId, customAttributes: JSON.stringify(claims) });
+
+// Keep users/{uid}.superAdmin in step with the claim, as adminSetSuperAdmin
+// does, so the admin panel lists and counts this super admin. A person who
+// hasn't finished signing in has no profile yet; the claim is enough.
+const profile = await fetch(
+  `https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/users/${user.localId}` +
+    '?updateMask.fieldPaths=superAdmin&currentDocument.exists=true',
+  { method: 'PATCH', headers, body: JSON.stringify({ fields: { superAdmin: { booleanValue: grant } } }) },
+);
+if (!profile.ok && profile.status !== 404) {
+  console.warn(`Could not update users/${user.localId}.superAdmin: ${await profile.text()}`);
+}
 console.log(`${grant ? 'Granted' : 'Revoked'} superAdmin for ${email} (${user.localId}) in ${project}.`);

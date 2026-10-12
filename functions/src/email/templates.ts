@@ -16,6 +16,39 @@ export function setupEmail(to: string, teamName: string, addedBy: string, link: 
   };
 }
 
+/** ADMIN-4: a super admin set up an account for someone, without a team. */
+export function accountSetupEmail(to: string, addedBy: string, link: string): Email {
+  return {
+    to,
+    subject: `${addedBy} set up a Battleplan account for you`,
+    ...layout(
+      [
+        `${addedBy} set up a Battleplan account for you. Battleplan is the app teams use for chat, schedules, and RSVPs.`,
+        'Tap the button to finish setting it up. You can sign in with Google, Apple, or a password after that. The link works once and expires soon.',
+      ],
+      { label: 'Set up my account', url: link },
+    ),
+  };
+}
+
+/**
+ * ADMIN-4, AUTH-6: a super admin sent a password reset. The link lets the
+ * person choose a new password themselves; nobody else ever sees or sets it.
+ */
+export function passwordResetEmail(to: string, link: string): Email {
+  return {
+    to,
+    subject: 'Reset your Battleplan password',
+    ...layout(
+      [
+        'Battleplan support sent you a link to choose a new password.',
+        "If you sign in with Google or Apple, you don't need a password. If you didn't ask for this, you can ignore this email.",
+      ],
+      { label: 'Choose a new password', url: link },
+    ),
+  };
+}
+
 /** TEAM-7: someone with an account was added to a team. */
 export function addedToTeamEmail(to: string, teamName: string, addedBy: string, url: string): Email {
   return {

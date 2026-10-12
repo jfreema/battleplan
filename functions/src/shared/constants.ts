@@ -49,6 +49,8 @@ export const Limits = {
   documentNameMax: 100,
   documentDescriptionMax: 500,
   documentUrlMax: 2000,
+  announcementBannerMax: 280,
+  reportNoteMax: 500,
   seriesIntervalMax: 8,
   seriesEventsMax: 400,
   seriesSkipDatesMax: 100,

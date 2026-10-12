@@ -106,6 +106,9 @@ async function main() {
       acceptedTermsAt: minutesAgo(60 * 24 * 30),
       adultConfirmedAt: minutesAgo(60 * 24 * 30),
       lastActiveAt: minutesAgo(5),
+      // Kept in step with the claim, so the admin panel can list and count
+      // super admins (adminSetSuperAdmin).
+      ...(p.superAdmin ? { superAdmin: true } : {}),
       createdAt: minutesAgo(60 * 24 * 30),
       updatedAt: minutesAgo(60 * 24 * 30),
       schemaVersion: 1,

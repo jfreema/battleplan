@@ -1,0 +1,213 @@
+// What the admin callables accept (SPEC §6.11, ARCH §6.4), and the small
+// pure rules they share, kept free of Firebase calls so they can be unit
+// tested. Every list is bounded: at most ADMIN_PAGE_MAX rows per call.
+import { Timestamp } from 'firebase-admin/firestore';
+import { z } from 'zod';
+import { Limits, memberRoleValues, reportStatusValues } from '../shared/constants.js';
+
+/** The most rows one admin list call returns (ADMIN-2, ADMIN-4, ADMIN-5). */
+export const ADMIN_PAGE_MAX = 50;
+
+/** The longest announcement banner (ADMIN-7). */
+export const BANNER_TEXT_MAX = Limits.announcementBannerMax;
+/** The longest note a report resolution saves (ADMIN-5). */
+export const REPORT_NOTE_MAX = Limits.reportNoteMax;
+
+/** A document ID or uid as callers send it: no slashes, so it can't name a path. */
+export const Id = z.string().min(1).max(128).regex(/^[^/]+$/);
+
+const Limit = z.number().int().min(1).max(ADMIN_PAGE_MAX).default(25);
+/** A page's last row ID, from the previous call's `nextCursor`. */
+const Cursor = Id.optional();
+/** A search: a name (or email) prefix, case-insensitive. Blank means none. */
+const Query = z
+  .string()
+  .trim()
+  .max(100)
+  .optional()
+  .transform((q) => (q ? q.toLowerCase() : undefined));
+
+export const GroupInput = z.object({ groupId: Id });
+export const UidInput = z.object({ uid: Id });
+
+// ---- Teams (ADMIN-2, ADMIN-3) ------------------------------------------------
+
+export const teamSortValues = ['created', 'activity', 'members', 'storage'] as const;
+export type TeamSort = (typeof teamSortValues)[number];
+
+export const teamStatusValues = ['active', 'archived', 'suspended'] as const;
+export type TeamStatus = (typeof teamStatusValues)[number];
+
+/** The groups field each sort orders by, newest or largest first. */
+export const TEAM_SORT_FIELD: Record<TeamSort, string> = {
+  created: 'createdAt',
+  activity: 'lastMessageAt',
+  members: 'memberCount',
+  storage: 'storageBytes',
+};
+
+export const ListTeamsInput = z.object({
+  query: Query,
+  sort: z.enum(teamSortValues).default('created'),
+  status: z.enum(teamStatusValues).optional(),
+  cursor: Cursor,
+  limit: Limit,
+});
+
+export const SetSuspendedInput = z.object({
+  groupId: Id,
+  suspended: z.boolean(),
+  note: z.string().trim().max(REPORT_NOTE_MAX).optional(),
+});
+
+export const ArchiveInput = z.object({ groupId: Id, archived: z.boolean() });
+
+export const DeleteGroupInput = z.object({ groupId: Id, confirmName: z.string().max(Limits.groupNameMax + 10) });
+
+/**
+ * A team's status in the admin panel (ADMIN-2). Suspended wins over
+ * archived: a suspended team is closed to its members either way.
+ */
+export function teamStatus(group: { archivedAt?: unknown; suspendedAt?: unknown }): TeamStatus {
+  if (group.suspendedAt != null) return 'suspended';
+  if (group.archivedAt != null) return 'archived';
+  return 'active';
+}
+
+// ---- Users (ADMIN-4) ---------------------------------------------------------
+
+export const userFilterValues = ['added', 'active', 'disabled', 'superAdmin'] as const;
+export type UserFilter = (typeof userFilterValues)[number];
+
+/** The users field and value each filter matches ("Added" = an added account that hasn't signed in). */
+export const USER_FILTER: Record<UserFilter, [field: string, value: string | boolean]> = {
+  added: ['status', 'provisioned'],
+  active: ['status', 'active'],
+  disabled: ['status', 'disabled'],
+  superAdmin: ['superAdmin', true],
+};
+
+export const ListUsersInput = z.object({
+  query: Query,
+  filter: z.enum(userFilterValues).optional(),
+  cursor: Cursor,
+  limit: Limit,
+});
+
+/** Roles an admin can give when adding someone to a team; ownership moves only by transfer. */
+const AddRole = z.enum(memberRoleValues).exclude(['owner']);
+const DisplayName = z.string().trim().min(1).max(50);
+const Email = z.string().trim().toLowerCase().pipe(z.email()).pipe(z.string().max(200));
+
+export const CreateUserInput = z
+  .object({ email: Email, displayName: DisplayName, groupId: Id.optional(), role: AddRole.optional() })
+  .refine((u) => u.role === undefined || u.groupId !== undefined, { message: 'A role needs a team.' });
+
+export const UpdateUserInput = z
+  .object({
+    uid: Id,
+    displayName: DisplayName.optional(),
+    addToGroup: z.object({ groupId: Id, role: AddRole.default('member') }).optional(),
+  })
+  .refine((u) => u.displayName !== undefined || u.addToGroup !== undefined, { message: 'Nothing to change.' });
+
+export const SetDisabledInput = z.object({ uid: Id, disabled: z.boolean() });
+export const SetSuperAdminInput = z.object({ uid: Id, superAdmin: z.boolean() });
+
+// ---- Reports (ADMIN-5) -------------------------------------------------------
+
+export const ListReportsInput = z.object({
+  status: z.enum(reportStatusValues).default('open'),
+  cursor: Cursor,
+  limit: Limit,
+});
+
+export const reportActionValues = ['deleteContent', 'removeMember', 'disableUser', 'suspendTeam', 'dismiss'] as const;
+export type ReportAction = (typeof reportActionValues)[number];
+
+export const ResolveReportInput = z.object({
+  reportId: Id,
+  action: z.enum(reportActionValues),
+  note: z.string().trim().min(1).max(REPORT_NOTE_MAX),
+});
+
+/**
+ * What a report's resolution records for [action] (ARCH §6.2
+ * reports.resolution), or null when the action can't apply: a reported
+ * person has no content to delete.
+ */
+export function resolutionFor(
+  action: ReportAction,
+  targetType: string,
+): 'deletedMessage' | 'deletedDocument' | 'removedMember' | 'disabledUser' | 'suspendedTeam' | 'none' | null {
+  switch (action) {
+    case 'deleteContent':
+      return targetType === 'message' ? 'deletedMessage' : targetType === 'document' ? 'deletedDocument' : null;
+    case 'removeMember':
+      return 'removedMember';
+    case 'disableUser':
+      return 'disabledUser';
+    case 'suspendTeam':
+      return 'suspendedTeam';
+    case 'dismiss':
+      return 'none';
+  }
+}
+
+// ---- Platform settings (ADMIN-7) ---------------------------------------------
+
+export const bannerSeverityValues = ['info', 'warning', 'critical'] as const;
+
+export const UpdateConfigInput = z.object({
+  allowUserGroupCreation: z.boolean(),
+  // Nobody can be on more than groupsPerUserMax teams, so a higher daily
+  // limit would mean nothing.
+  maxGroupsCreatedPerUserPerDay: z.number().int().min(1).max(Limits.groupsPerUserMax),
+  defaultStorageQuotaMb: z.number().int().min(1).max(Limits.storageQuotaMaxMb),
+  // storage.rules refuse files over Limits.maxUploadMb whatever this says.
+  maxUploadMb: z.number().int().min(1).max(Limits.maxUploadMb),
+  supportEmail: Email,
+  announcementBanner: z
+    .object({
+      text: z.string().trim().min(1).max(BANNER_TEXT_MAX),
+      severity: z.enum(bannerSeverityValues),
+      // ISO 8601, e.g. "2026-11-01T00:00:00.000Z"; shown until then.
+      expiresAt: z.iso.datetime({ offset: true }),
+    })
+    .nullable(),
+});
+export type AppConfigInput = z.infer<typeof UpdateConfigInput>;
+
+/** config/app's fields for [input] (ARCH §6.2), with the banner's end as a Timestamp. */
+export function configFields(input: AppConfigInput): Record<string, unknown> {
+  return {
+    ...input,
+    announcementBanner: input.announcementBanner && {
+      text: input.announcementBanner.text,
+      severity: input.announcementBanner.severity,
+      expiresAt: Timestamp.fromDate(new Date(input.announcementBanner.expiresAt)),
+    },
+  };
+}
+
+// ---- Shapes the app reads ----------------------------------------------------
+
+/** A Firestore Timestamp as ISO 8601 (the callables' date format, as in Media), else null. */
+export function iso(value: unknown): string | null {
+  return value instanceof Timestamp ? value.toDate().toISOString() : null;
+}
+
+/** [data] with every Timestamp in it as ISO 8601, so it travels as plain JSON. */
+export function plain(data: unknown): unknown {
+  if (data instanceof Timestamp) return data.toDate().toISOString();
+  if (Array.isArray(data)) return data.map(plain);
+  if (data && typeof data === 'object') {
+    return Object.fromEntries(Object.entries(data).map(([k, v]) => [k, plain(v)]));
+  }
+  return data;
+}
+
+/** The end of a prefix range: every string that starts with [prefix] sorts below it. */
+export function prefixEnd(prefix: string): string {
+  return `${prefix}`;
+}

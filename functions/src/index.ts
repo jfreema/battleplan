@@ -11,6 +11,27 @@ export {
 } from './accounts/handlers.js';
 export { onUserUpdated } from './accounts/triggers.js';
 export {
+  adminArchiveGroup,
+  adminCreateUser,
+  adminDashboard,
+  adminDeleteGroup,
+  adminDeleteUser,
+  adminGetTeam,
+  adminGetUser,
+  adminListReports,
+  adminListTeams,
+  adminListUsers,
+  adminOpenGroup,
+  adminResolveReport,
+  adminRevokeSessions,
+  adminSendPasswordReset,
+  adminSetGroupSuspended,
+  adminSetSuperAdmin,
+  adminSetUserDisabled,
+  adminUpdateConfig,
+  adminUpdateUser,
+} from './admin/handlers.js';
+export {
   addMemberByEmail,
   adminSetGroupQuota,
   archiveGroup,

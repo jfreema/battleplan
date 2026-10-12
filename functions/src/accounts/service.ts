@@ -2,6 +2,8 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { randomUUID } from 'node:crypto';
+import type { UserRecord } from 'firebase-admin/auth';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { auth, db, storage } from '../shared/admin.js';
 import { Collections, notificationPrefValues, type NotificationPref } from '../shared/constants.js';
 import { anonymizeAuthor } from '../chat/service.js';
@@ -10,8 +12,14 @@ import { removeAccountNotifications, removeDevices } from '../notify/service.js'
 import { removeAccountFromPlayers } from '../players/service.js';
 import { removeAccountBlocks } from '../safety/service.js';
 import { removeUpcomingRsvps } from '../schedule/service.js';
-import { removeAccountFromTeams } from '../teams/service.js';
-import { setupEmail, securityNoticeEmail, methodName } from '../email/templates.js';
+import { removeAccountFromTeams, updateMemberSnapshots } from '../teams/service.js';
+import {
+  accountSetupEmail,
+  methodName,
+  passwordResetEmail,
+  securityNoticeEmail,
+  setupEmail,
+} from '../email/templates.js';
 import { sendEmail } from '../email/service.js';
 import { activateUrl } from '../links/service.js';
 import { projectId } from '../shared/project.js';
@@ -297,4 +305,132 @@ export async function clearPendingMemberships(uid: string): Promise<void> {
   const batch = db().batch();
   pending.forEach((d) => batch.update(d.ref, { pending: false }));
   await batch.commit();
+}
+
+// ---- Super admin account actions (ADMIN-4) ---------------------------------
+// The admin callables check the superAdmin claim; these do the work.
+
+/** The users doc for [uid], or `not-found`. */
+async function profileOrThrow(uid: string): Promise<FirebaseFirestore.DocumentSnapshot> {
+  const profile = await db().collection(Collections.users).doc(uid).get();
+  if (!profile.exists) throw new HttpsError('not-found', 'No such user.');
+  return profile;
+}
+
+/** Whether [e] is Firebase Auth's "no such user". */
+function isUserNotFound(e: unknown): boolean {
+  return (e as { code?: string }).code === 'auth/user-not-found';
+}
+
+/**
+ * Sends a setup email for an account a super admin created without a team
+ * (ADMIN-4, AUTH-6): the same one-time sign-in link as an added member gets.
+ */
+export async function sendAccountSetupEmail(email: string, addedBy: string): Promise<boolean> {
+  const link = await setupLink(email);
+  return sendEmail(accountSetupEmail(email, addedBy, link));
+}
+
+/**
+ * Renames a person (ADMIN-4): the profile and the copies on their
+ * memberships, which the roster and new messages read. Returns the old name.
+ */
+export async function setDisplayName(uid: string, displayName: string): Promise<string> {
+  const profile = await profileOrThrow(uid);
+  const name = displayName.trim().slice(0, 50);
+  await profile.ref.update({
+    displayName: name,
+    displayNameLower: name.toLowerCase(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  // A callable does its own follow-up (ARCH §6.4 rule 3); the users trigger
+  // writes the same values again, which changes nothing.
+  await updateMemberSnapshots(uid, name, (profile.get('photoPath') as string | null | undefined) ?? null);
+  return (profile.get('displayName') as string | undefined) ?? '';
+}
+
+/**
+ * Disables or re-enables an account (ADMIN-4, SAFE-4). Disabling blocks
+ * sign-in in Firebase Auth, signs the person out everywhere, and marks the
+ * profile 'disabled' (notify drops disabled accounts). Enabling puts the
+ * profile back to 'active', or 'provisioned' if they never signed in (no
+ * sign-in methods yet).
+ * Returns the profile's status before.
+ */
+export async function setAccountDisabled(uid: string, disabled: boolean): Promise<string> {
+  const profile = await profileOrThrow(uid);
+  const before = (profile.get('status') as string | undefined) ?? 'active';
+  await auth().updateUser(uid, { disabled });
+  // An added account that never signed in has no sign-in methods yet (AUTH-6).
+  const methods = (profile.get('signInMethods') as string[] | undefined) ?? [];
+  const status = disabled ? 'disabled' : methods.length ? 'active' : 'provisioned';
+  await profile.ref.update({ status, updatedAt: FieldValue.serverTimestamp() });
+  if (disabled) await signOutEverywhere(uid);
+  return before;
+}
+
+/**
+ * Emails [uid] a link to choose a new password (ADMIN-4, AUTH-6). Nobody
+ * but the person ever sets or sees the password; the link isn't returned.
+ */
+export async function sendPasswordReset(uid: string): Promise<void> {
+  const profile = await profileOrThrow(uid);
+  const user = await requireAccount(uid);
+  const email = (profile.get('email') as string | null | undefined) ?? user.email;
+  if (!email) throw new HttpsError('failed-precondition', 'no-email');
+  const link = await auth().generatePasswordResetLink(email);
+  await sendEmail(passwordResetEmail(email, link));
+}
+
+/**
+ * Grants or revokes the superAdmin claim (ARCH §6.1), keeping the person's
+ * other claims, and keeps users.superAdmin in step so super admins can be
+ * listed and counted. Revoking also revokes their refresh tokens, so the
+ * power goes with their sessions instead of lingering on a signed-in
+ * device; a grant applies when the app refreshes its token. Returns
+ * whether they had the claim before.
+ */
+export async function setSuperAdminClaim(uid: string, superAdmin: boolean): Promise<boolean> {
+  const user = await requireAccount(uid);
+  const claims: Record<string, unknown> = { ...(user.customClaims ?? {}) };
+  const before = claims.superAdmin === true;
+  if (superAdmin) claims.superAdmin = true;
+  else delete claims.superAdmin;
+  await auth().setCustomUserClaims(uid, claims);
+  await db()
+    .collection(Collections.users)
+    .doc(uid)
+    .update({ superAdmin, updatedAt: FieldValue.serverTimestamp() })
+    .catch((e: { code?: number }) => {
+      if (e.code !== 5) throw e; // 5 = NOT_FOUND: no profile yet, the claim is enough
+    });
+  if (!superAdmin) await auth().revokeRefreshTokens(uid);
+  return before;
+}
+
+/** The uid of the account with [email] in Firebase Auth, or null. */
+export async function uidForEmail(email: string): Promise<string | null> {
+  try {
+    return (await auth().getUserByEmail(email.trim().toLowerCase())).uid;
+  } catch (e) {
+    if (isUserNotFound(e)) return null;
+    throw e;
+  }
+}
+
+/** The account's Firebase Auth record, or `not-found`. */
+export async function requireAccount(uid: string): Promise<UserRecord> {
+  try {
+    return await auth().getUser(uid);
+  } catch (e) {
+    if (isUserNotFound(e)) throw new HttpsError('not-found', 'No such user.');
+    throw e;
+  }
+}
+
+/** The account's sign-in email in Firebase Auth, or `not-found` / `no-email`. */
+export async function authEmailOf(uid: string): Promise<string> {
+  const email = (await requireAccount(uid)).email;
+  if (!email) throw new HttpsError('failed-precondition', 'no-email');
+  return email;
 }

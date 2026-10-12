@@ -1,6 +1,5 @@
 // Thin entry points for the teams domain (ARCH §6.4).
 import { FieldValue } from 'firebase-admin/firestore';
-import { logger } from 'firebase-functions/v2';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -10,19 +9,23 @@ import { requireAuth, requireSuperAdmin } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { parse } from '../shared/validate.js';
 import { audit } from '../audit/service.js';
+import { groupCreationConfig } from '../admin/service.js';
 import { postSystemMessage } from '../chat/service.js';
 import { groupMemberId } from '../shared/ids.js';
 import { requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { displayNameOf, sendSetupEmail } from '../accounts/service.js';
 import { resendApiKey } from '../email/service.js';
-import { removeTeamNotifications, trySend } from '../notify/service.js';
+import { trySend } from '../notify/service.js';
 import {
   addMembersByEmail,
   canChangeRole,
   canRemove,
+  clearTeamNotifications,
   createGroup as create,
-  deleteGroupData,
+  deleteGroupNamed,
   refreshMemberCount,
+  removeFromTeam,
+  setGroupArchived,
 } from './service.js';
 import { deleteMedia, listMedia } from './media.js';
 import { setGroupQuota, updateStorageAlert } from './storage.js';
@@ -47,17 +50,13 @@ export const createGroup = onCall(async (request) => {
   if (!user.emailVerified) {
     throw new HttpsError('failed-precondition', 'email-not-verified');
   }
-  const config = (await db().collection(Collections.config).doc('app').get()).data() ?? {};
+  const config = await groupCreationConfig();
   const superAdmin = request.auth?.token.superAdmin === true;
-  if (config.allowUserGroupCreation === false && !superAdmin) {
+  if (!config.allowUserGroupCreation && !superAdmin) {
     throw new HttpsError('permission-denied', 'group-creation-off');
   }
   if (!superAdmin) {
-    await consumeRateLimit(
-      uid,
-      'createGroup',
-      (config.maxGroupsCreatedPerUserPerDay as number | undefined) ?? Limits.groupsCreatedPerUserPerDay,
-    );
+    await consumeRateLimit(uid, 'createGroup', config.maxGroupsCreatedPerUserPerDay);
   }
 
   // A person can be on up to 100 teams (TEAM-2).
@@ -78,7 +77,8 @@ export const createGroup = onCall(async (request) => {
       photoPath: (profile?.photoPath as string | null | undefined) ?? null,
     },
     input,
-    (config.defaultStorageQuotaMb as number | undefined) ?? Limits.defaultStorageQuotaMb,
+    // New teams start at the platform's default limit (STORE-1, ADMIN-7).
+    config.defaultStorageQuotaMb,
   );
   return { groupId };
 });
@@ -140,13 +140,6 @@ export const updateGroupMember = onCall(async (request) => {
   return { ok: true };
 });
 
-/** Clears a former member's notification-center items for the team; a failure only logs. */
-async function clearTeamNotifications(groupId: string, uid: string): Promise<void> {
-  await removeTeamNotifications(groupId, uid).catch((e) =>
-    logger.warn('team_notifications_cleanup_failed', { groupId, uid, error: String(e) }),
-  );
-}
-
 const RemoveMemberInput = z.object({ groupId: z.string().min(1), uid: z.string().min(1) });
 
 /** Removes someone from a team (TEAM-3). Leaving yourself is leaveGroup. */
@@ -155,15 +148,12 @@ export const removeMember = onCall(async (request) => {
   const input = parse(RemoveMemberInput, request.data);
   if (input.uid === actorUid) throw new HttpsError('invalid-argument', 'Use leave team instead.');
   const actor = await requireTeamAdmin(input.groupId, actorUid, request.auth?.token.superAdmin === true);
-  const ref = db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, input.uid));
-  const target = await ref.get();
-  if (!target.exists) return { ok: true };
-  const targetRole = target.get('role') as 'owner' | 'admin' | 'member';
+  const targetRole = await roleOf(input.groupId, input.uid);
+  if (!targetRole) return { ok: true };
   if (!canRemove(actor, targetRole)) {
     throw new HttpsError('permission-denied', 'Only the owner can remove an admin.');
   }
-  await ref.delete();
-  await refreshMemberCount(input.groupId);
+  await removeFromTeam(input.groupId, input.uid, actorUid);
   await audit({
     actorId: actorUid,
     action: 'removeMember',
@@ -172,9 +162,6 @@ export const removeMember = onCall(async (request) => {
     targetId: input.uid,
     before: { role: targetRole },
   });
-  const name = (target.get('displayName') as string) || 'Someone';
-  await postSystemMessage(input.groupId, 'removed', `${name} was removed`, actorUid, input.uid);
-  await clearTeamNotifications(input.groupId, input.uid);
   return { ok: true };
 });
 
@@ -239,13 +226,7 @@ export const archiveGroup = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(GroupOnly.extend({ archived: z.boolean() }), request.data);
   await requireOwner(input.groupId, uid, request.auth?.token.superAdmin === true);
-  await db()
-    .collection(Collections.groups)
-    .doc(input.groupId)
-    .update({
-      archivedAt: input.archived ? FieldValue.serverTimestamp() : null,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
+  await setGroupArchived(input.groupId, input.archived);
   await audit({
     actorId: uid,
     action: input.archived ? 'archiveGroup' : 'restoreGroup',
@@ -261,20 +242,16 @@ export const deleteGroup = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(GroupOnly.extend({ confirmName: z.string() }), request.data);
   await requireOwner(input.groupId, uid, request.auth?.token.superAdmin === true);
-  const group = await db().collection(Collections.groups).doc(input.groupId).get();
-  if (!group.exists) return { ok: true };
-  if (input.confirmName.trim() !== (group.get('name') as string).trim()) {
-    throw new HttpsError('invalid-argument', 'name-mismatch');
-  }
-  await audit({
-    actorId: uid,
-    action: 'deleteGroup',
-    groupId: input.groupId,
-    targetType: 'group',
-    targetId: input.groupId,
-    before: { name: group.get('name'), memberCount: group.get('memberCount') },
-  });
-  await deleteGroupData(input.groupId);
+  await deleteGroupNamed(input.groupId, input.confirmName, (before) =>
+    audit({
+      actorId: uid,
+      action: 'deleteGroup',
+      groupId: input.groupId,
+      targetType: 'group',
+      targetId: input.groupId,
+      before,
+    }),
+  );
   return { ok: true };
 });
 

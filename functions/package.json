@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run test/unit",
     "test:rules": "vitest run test/rules test/emulator",
-    "emulators:test": "firebase emulators:exec --only firestore,storage --project demo-battleplan 'npm run test:rules'"
+    "emulators:test": "firebase emulators:exec --only auth,firestore,storage --project demo-battleplan 'npm run test:rules'"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",

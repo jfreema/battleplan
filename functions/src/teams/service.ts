@@ -1,16 +1,19 @@
 // Teams domain service: owns groups and groupMembers (ARCH §6.4).
 import { FieldValue } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/v2';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { randomUUID } from 'node:crypto';
 import { findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
+import { postSystemMessage } from '../chat/service.js';
 import { sendEmail } from '../email/service.js';
 import { addedToTeamEmail } from '../email/templates.js';
 import { teamUrl } from '../links/service.js';
-import { trySend } from '../notify/service.js';
+import { removeTeamNotifications, trySend } from '../notify/service.js';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
-
 import { groupMemberId } from '../shared/ids.js';
+import type { Role } from '../shared/roles.js';
 
 interface MemberRow {
   uid: string;
@@ -197,6 +200,103 @@ export function canRemove(
 export async function refreshMemberCount(groupId: string): Promise<void> {
   const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();
   await db().collection(Collections.groups).doc(groupId).update({ memberCount: count.data().count });
+}
+
+/** Clears a former member's notification-center items for the team; a failure only logs. */
+export async function clearTeamNotifications(groupId: string, uid: string): Promise<void> {
+  await removeTeamNotifications(groupId, uid).catch((e) =>
+    logger.warn('team_notifications_cleanup_failed', { groupId, uid, error: String(e) }),
+  );
+}
+
+/**
+ * Takes someone off a team (TEAM-3, SAFE-4): the membership, the member
+ * count, "Sam was removed" in chat, and their center items for the team.
+ * Callers check who may remove whom (canRemove). Returns the role they had,
+ * or null when they weren't on the team.
+ */
+export async function removeFromTeam(groupId: string, uid: string, actorUid: string): Promise<Role | null> {
+  const ref = db().collection(Collections.groupMembers).doc(groupMemberId(groupId, uid));
+  const target = await ref.get();
+  if (!target.exists) return null;
+  await ref.delete();
+  await refreshMemberCount(groupId);
+  const name = (target.get('displayName') as string) || 'Someone';
+  await postSystemMessage(groupId, 'removed', `${name} was removed`, actorUid, uid);
+  await clearTeamNotifications(groupId, uid);
+  return target.get('role') as Role;
+}
+
+/**
+ * Changes a member's role (TEAM-4) for a caller that already checked it may
+ * (an admin panel add, ADMIN-4). Ownership moves only by transfer.
+ */
+export async function setMemberRole(groupId: string, uid: string, role: 'admin' | 'member'): Promise<void> {
+  const ref = db().collection(Collections.groupMembers).doc(groupMemberId(groupId, uid));
+  await db().runTransaction(async (tx) => {
+    const member = await tx.get(ref);
+    if (!member.exists) throw new HttpsError('not-found', 'Not a member.');
+    if (member.get('role') === 'owner') throw new HttpsError('failed-precondition', 'owner');
+    tx.update(ref, { role });
+  });
+}
+
+/** The team's document, or `not-found`. */
+async function groupOrThrow(groupId: string): Promise<FirebaseFirestore.DocumentSnapshot> {
+  const group = await db().collection(Collections.groups).doc(groupId).get();
+  if (!group.exists) throw new HttpsError('not-found', 'No such team.');
+  return group;
+}
+
+/** Archives (read-only) or restores a team (TEAM-9). */
+export async function setGroupArchived(groupId: string, archived: boolean): Promise<void> {
+  await groupOrThrow(groupId);
+  await db()
+    .collection(Collections.groups)
+    .doc(groupId)
+    .update({
+      archivedAt: archived ? FieldValue.serverTimestamp() : null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Suspends or unsuspends a team (ADMIN-3, SAFE-4). While suspendedAt is set
+ * the rules' isMember fails for everyone on it, so members can't read or
+ * write anything and the app shows "This team has been suspended"; only
+ * super admins still see it. Returns whether it was suspended before.
+ */
+export async function setGroupSuspended(groupId: string, suspended: boolean): Promise<boolean> {
+  const before = (await groupOrThrow(groupId)).get('suspendedAt') != null;
+  await db()
+    .collection(Collections.groups)
+    .doc(groupId)
+    .update({
+      suspendedAt: suspended ? FieldValue.serverTimestamp() : null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  return before;
+}
+
+/**
+ * Deletes a team once [confirmName] matches its name (TEAM-9, ADMIN-3), or
+ * throws `name-mismatch`. [beforeDelete] runs first with what the audit log
+ * keeps, so the entry is written even if the delete is cut short and
+ * retried. A team that's already gone is left alone.
+ */
+export async function deleteGroupNamed(
+  groupId: string,
+  confirmName: string,
+  beforeDelete: (before: { name: string; memberCount: number }) => Promise<void>,
+): Promise<void> {
+  const group = await db().collection(Collections.groups).doc(groupId).get();
+  if (!group.exists) return;
+  const name = (group.get('name') as string | undefined) ?? '';
+  if (confirmName.trim() !== name.trim()) {
+    throw new HttpsError('invalid-argument', 'name-mismatch');
+  }
+  await beforeDelete({ name, memberCount: (group.get('memberCount') as number | undefined) ?? 0 });
+  await deleteGroupData(groupId);
 }
 
 /** Every team-owned collection, for deleting a team (TEAM-9). */

@@ -38,6 +38,14 @@ service cloud.firestore {
       let t = get(groupPath(g)).data;
       return t.storageBytes < t.storageQuotaBytes;
     }
+    // Who may read a team's content: its members, and super admins on any
+    // team, joined or not ("View team", ADMIN-3; SPEC §3). Super admins
+    // only read here: every write rule still needs isMember, so they can't
+    // post, vote, or RSVP in a team they haven't joined, and moderation
+    // goes through callables (deleteMessage) or the rules that name them
+    // (documents, events). superAdmin() is checked first; it costs no
+    // lookup.
+    function canRead(g) { return superAdmin() || isMember(g); }
     // Archived teams are read-only (TEAM-9).
     function active(g) { return get(groupPath(g)).data.get('archivedAt', null) == null; }
 
@@ -161,9 +169,9 @@ service cloud.firestore {
 
     match /groupMembers/{memberId} {
       // Your own memberships (team switcher), or a roster of your team.
-      allow get: if signedIn() && (resource.data.uid == uid() || isMember(resource.data.groupId));
+      allow get: if signedIn() && (resource.data.uid == uid() || canRead(resource.data.groupId));
       allow list: if boundedQuery() && signedIn()
-        && (resource.data.uid == uid() || isMember(resource.data.groupId));
+        && (resource.data.uid == uid() || canRead(resource.data.groupId));
 
       // Members edit only their own preferences and read markers. When the
       // send batch sets lastPostedAt it must be the request time, and
@@ -193,8 +201,8 @@ service cloud.firestore {
     }
 
     match /players/{playerId} {
-      allow get: if isMember(resource.data.groupId);
-      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      allow get: if canRead(resource.data.groupId);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
       allow update: if (isGuardian(playerId) && isMember(resource.data.groupId)
                         || isAdmin(resource.data.groupId))
         && onlyChanges(['displayName', 'displayNameLower', 'jerseyNumber', 'position', 'updatedAt'])
@@ -202,22 +210,22 @@ service cloud.firestore {
     }
 
     match /playerGuardians/{linkId} {
-      allow get: if signedIn() && (resource.data.uid == uid() || isMember(resource.data.groupId));
+      allow get: if signedIn() && (resource.data.uid == uid() || canRead(resource.data.groupId));
       allow list: if boundedQuery() && signedIn()
-        && (resource.data.uid == uid() || isMember(resource.data.groupId));
+        && (resource.data.uid == uid() || canRead(resource.data.groupId));
     }
 
     match /guardianRequests/{requestId} {
-      allow get: if signedIn() && (resource.data.uid == uid() || isAdmin(resource.data.groupId));
+      allow get: if signedIn() && (resource.data.uid == uid() || superAdmin() || isAdmin(resource.data.groupId));
       allow list: if boundedQuery() && signedIn()
-        && (resource.data.uid == uid() || isAdmin(resource.data.groupId));
+        && (resource.data.uid == uid() || superAdmin() || isAdmin(resource.data.groupId));
     }
 
     // ---- Chat --------------------------------------------------------------
 
     match /messages/{messageId} {
-      allow get: if isMember(resource.data.groupId);
-      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      allow get: if canRead(resource.data.groupId);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
 
       // Message create rule (ARCH §6.3).
       allow create: if isMember(incoming().groupId) && active(incoming().groupId)
@@ -310,8 +318,8 @@ service cloud.firestore {
     // ---- Polls -------------------------------------------------------------
 
     match /polls/{pollId} {
-      allow get: if isMember(resource.data.groupId);
-      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      allow get: if canRead(resource.data.groupId);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
       // POLL-1: made from the chat's + menu by anyone allowed to, in the same
       // batch as its poll message, which has the same ID. Counts start at
       // zero. Tallies, closing, and deleting go through Functions.
@@ -369,9 +377,10 @@ service cloud.firestore {
     }
 
     // POLL-2, POLL-3: one vote doc per person per poll. You always read your
-    // own; teammates read the others only on polls that aren't anonymous, so
-    // nobody in the app sees who chose what on an anonymous poll, admins
-    // included. A missing vote of your own reads as not found.
+    // own; teammates (and super admins viewing the team) read the others
+    // only on polls that aren't anonymous, so nobody in the app sees who
+    // chose what on an anonymous poll, admins and super admins included. A
+    // missing vote of your own reads as not found.
     match /pollVotes/{voteId} {
       allow get: if voteId.matches('[A-Za-z0-9]+_' + uid())
         || openBallot(resource.data.pollId);
@@ -388,11 +397,12 @@ service cloud.firestore {
       return isMember(p.groupId) && active(p.groupId) && pollOpen(p);
     }
 
-    // A teammate may see who chose what: the poll isn't anonymous. Read
-    // from the poll, so a list query needs only the pollId filter.
+    // A teammate (or a super admin) may see who chose what: the poll isn't
+    // anonymous. Read from the poll, so a list query needs only the pollId
+    // filter.
     function openBallot(pollId) {
       let p = get(pollPath(pollId)).data;
-      return isMember(p.groupId) && !p.anonymous;
+      return !p.anonymous && canRead(p.groupId);
     }
 
     // Your choices on an open poll of your team: one, or several on a
@@ -417,13 +427,13 @@ service cloud.firestore {
 
     // Written only by saveEventSeries; members read (ARCH §6.3).
     match /eventSeries/{seriesId} {
-      allow get: if isMember(resource.data.groupId);
-      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      allow get: if canRead(resource.data.groupId);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
     }
 
     match /events/{eventId} {
-      allow get: if isMember(resource.data.groupId);
-      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      allow get: if canRead(resource.data.groupId);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
       // SCHED-3: one-off events, by admins or, when the team allows it, any
       // member (Q12), on an active team with storage left (STORE-4). Counts
       // start at zero; series, reminder, card, and cancel fields are unset.
@@ -522,8 +532,8 @@ service cloud.firestore {
     // participant, so two guardians answering for one player update the same
     // record (PLAYER-6, D15).
     match /rsvps/{rsvpId} {
-      allow get: if isMember(resource.data.groupId);
-      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      allow get: if canRead(resource.data.groupId);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
 
       // eventStartAt may follow a moved event (rsvpWriteOk pins it to the
       // event's start), so an answer made around a reschedule still saves.
@@ -577,8 +587,8 @@ service cloud.firestore {
     // ---- Documents, notifications, safety, admin --------------------------
 
     match /groupDocuments/{docId} {
-      allow get: if isMember(resource.data.groupId);
-      allow list: if boundedQuery() && isMember(resource.data.groupId);
+      allow get: if canRead(resource.data.groupId);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
       // DOC-2, DOC-3: admins, or any member while the team lets members add
       // documents (TEAM-5), on an active team. A file is uploaded first, to
       // this document's own folder (storage.rules check the room and size);
@@ -655,16 +665,22 @@ service cloud.firestore {
     }
 
     match /reports/{reportId} {
-      allow get, list: if superAdmin() || isAdmin(resource.data.groupId);
+      allow get: if superAdmin() || isAdmin(resource.data.groupId);
+      allow list: if boundedQuery() && (superAdmin() || isAdmin(resource.data.groupId));
     }
 
+    // The audit log (ADMIN-6): read-only, for super admins, a page at a time.
     match /auditLogs/{logId} {
-      allow get, list: if superAdmin();
+      allow get: if superAdmin();
+      allow list: if boundedQuery() && superAdmin();
     }
 
+    // config/app (ADMIN-7): every signed-in app reads it (the announcement
+    // banner). Super admins change it through adminUpdateConfig, which
+    // validates it and writes the audit entry (ADMIN-8), so no client
+    // writes it directly.
     match /config/{configId} {
       allow get: if signedIn();
-      allow write: if superAdmin();
     }
 
     // invites, rateLimits: Functions only (no client access).

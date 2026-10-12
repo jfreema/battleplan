@@ -1,5 +1,6 @@
 // Safety domain service: owns userBlocks and reports.
 import { FieldValue } from 'firebase-admin/firestore';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
 import { forEachPage } from '../shared/batch.js';
@@ -86,4 +87,47 @@ export async function fileReport(input: {
       createdAt: FieldValue.serverTimestamp(),
     });
   return ref.id;
+}
+
+/** How a report was closed (ARCH §6.2 reports.resolution). */
+export type ReportResolution =
+  | 'deletedMessage'
+  | 'deletedDocument'
+  | 'removedMember'
+  | 'disabledUser'
+  | 'suspendedTeam'
+  | 'none';
+
+/**
+ * Closes an open report from the admin panel (ADMIN-5): its status, what was
+ * done, the super admin's note, and who closed it. A report already closed
+ * is refused, so two admins can't act on it twice. Returns the report as it
+ * was, for the action and the audit log.
+ */
+export async function closeReport(
+  reportId: string,
+  close: { status: 'actioned' | 'dismissed'; resolution: ReportResolution; note: string; resolvedBy: string },
+): Promise<FirebaseFirestore.DocumentData> {
+  const ref = db().collection(Collections.reports).doc(reportId);
+  return db().runTransaction(async (tx) => {
+    const report = await tx.get(ref);
+    if (!report.exists) throw new HttpsError('not-found', 'No such report.');
+    if (report.get('status') !== 'open') throw new HttpsError('failed-precondition', 'already-resolved');
+    tx.update(ref, {
+      status: close.status,
+      resolution: close.resolution,
+      note: close.note,
+      resolvedBy: close.resolvedBy,
+      resolvedAt: FieldValue.serverTimestamp(),
+    });
+    return report.data()!;
+  });
+}
+
+/** An open report, or `not-found` / `already-resolved`, read before acting on it. */
+export async function openReport(reportId: string): Promise<FirebaseFirestore.DocumentData> {
+  const report = await db().collection(Collections.reports).doc(reportId).get();
+  if (!report.exists) throw new HttpsError('not-found', 'No such report.');
+  if (report.get('status') !== 'open') throw new HttpsError('failed-precondition', 'already-resolved');
+  return report.data()!;
 }
