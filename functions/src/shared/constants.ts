@@ -118,9 +118,6 @@ export type MessageType = (typeof messageTypeValues)[number];
 export const reactionValues = ['like', 'love', 'dislike', 'laugh', 'fire', 'clap', 'party', 'hundred', 'pray', 'wow', 'sad', 'angry', 'baseball', 'basketball', 'soccer', 'trophy'] as const;
 export type Reaction = (typeof reactionValues)[number];
 
-export const freeReactionValues = ['like', 'love', 'dislike', 'laugh'] as const;
-export type FreeReaction = (typeof freeReactionValues)[number];
-
 export const eventTypeValues = ['game', 'practice', 'meeting', 'social', 'other'] as const;
 export type EventType = (typeof eventTypeValues)[number];
 

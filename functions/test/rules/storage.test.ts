@@ -1,7 +1,8 @@
 // Rules tests for team storage limits (SPEC §6.14, STORE-1 and STORE-4;
 // roadmap task 173): a full team can't upload or attach, even by calling
-// Storage directly, yet still chats; no file is over 10 MB; and no team can
-// raise its own limit or silence its warning. Run with:
+// Storage directly, yet still chats; no file is over 10 MB; only Media
+// deletes team files; and no team can raise its own limit or silence its
+// warning. Run with:
 //   npm --prefix functions run emulators:test
 import {
   assertFails,
@@ -104,9 +105,46 @@ describe('a full team (STORE-4)', () => {
     await assertSucceeds(db.doc('messages/full_m').update({ 'reactions.bob': 'fire' }));
   });
 
+  it('still edits messages and answers RSVPs: nothing else turns off', async () => {
+    await assertSucceeds(as('alice').doc('messages/full_m').update({ text: 'Edited', editedAt: now() }));
+    const startAt = firebase.firestore.Timestamp.fromDate(new Date('2030-05-01T17:00:00Z'));
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('events/e1').set({ groupId: 'full', rsvpEnabled: true, rsvpFor: 'members', startAt }),
+    );
+    await assertSucceeds(as('bob').doc('rsvps/e1_bob').set({
+      eventId: 'e1', groupId: 'full', participantType: 'member', participantId: 'bob', participantName: 'Bob',
+      eventStartAt: startAt, status: 'going', respondedBy: 'bob', updatedAt: now(),
+    }));
+  });
+
   it('uploads again once space is freed', async () => {
     await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/full').update({ storageBytes: QUOTA - MB }));
     await assertSucceeds(put('bob', 'groups/full/messages/m1/0.jpg', jpeg));
+  });
+});
+
+describe('deleting and reading team files (STORE-5)', () => {
+  const ref = (uid: string, path: string) => env.authenticatedContext(uid).storage().ref(path);
+  const paths = ['messages/m1/0.jpg', 'avatar/1.jpg', 'theme/1.jpg', 'documents/d1/a.pdf'].map((p) => `groups/roomy/${p}`);
+
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      for (const p of paths) await ctx.storage().ref(p).put(jpeg, { contentType: 'image/jpeg' });
+    });
+  });
+
+  it('leaves deleting to Media: nobody deletes a team file directly, admins included', async () => {
+    for (const p of paths) {
+      await assertFails(ref('bob', p).delete());
+      await assertFails(ref('alice', p).delete());
+    }
+  });
+
+  it("keeps a team's files, its chat background included, to its members", async () => {
+    for (const p of paths) {
+      await assertSucceeds(ref('bob', p).getMetadata());
+      await assertFails(ref('eve', p).getMetadata());
+    }
   });
 });
 

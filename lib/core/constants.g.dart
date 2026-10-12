@@ -262,25 +262,6 @@ enum Reaction {
   }
 }
 
-enum FreeReaction {
-  like('like'),
-  love('love'),
-  dislike('dislike'),
-  laugh('laugh');
-
-  const FreeReaction(this.value);
-
-  /// The string stored in Firestore.
-  final String value;
-
-  static FreeReaction? tryParse(String? value) {
-    for (final e in values) {
-      if (e.value == value) return e;
-    }
-    return null;
-  }
-}
-
 enum EventType {
   game('game'),
   practice('practice'),

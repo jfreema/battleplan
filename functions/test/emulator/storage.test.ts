@@ -1,15 +1,18 @@
-// Team storage end to end (SPEC §6.14 STORE-3 to STORE-6, ARCH §6.11): the
-// warning levels and who hears about them, Media's listing and deletes, and
-// the super-admin limit, against the Firestore and Storage emulators with
-// FCM faked. Run with:
+// Team storage end to end (SPEC §6.14 STORE-1 to STORE-6, ARCH §6.11): the
+// warning levels and who hears about them (from the triggers and the daily
+// recount), new teams' limit, Media's listing and deletes, and the
+// super-admin limit, against the Firestore and Storage emulators with FCM
+// faked. Run with:
 //   npm --prefix functions run emulators:test
 import { Timestamp } from 'firebase-admin/firestore';
 import type { TokenMessage } from 'firebase-admin/messaging';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminSetGroupQuota, deleteTeamMedia, listTeamMedia } from '../../src/teams/handlers.js';
-import { updateStorageAlert } from '../../src/teams/storage.js';
+import { createGroup } from '../../src/teams/service.js';
+import { reconcileAllStorage, updateStorageAlert } from '../../src/teams/storage.js';
+import { onGroupFileAdded, onGroupFileRemoved } from '../../src/teams/triggers.js';
 import { db, storage } from '../../src/shared/admin.js';
-import { Collections } from '../../src/shared/constants.js';
+import { Collections, Limits } from '../../src/shared/constants.js';
 import { groupMemberId } from '../../src/shared/ids.js';
 
 // FCM stand-in: records every batch and accepts every token.
@@ -157,6 +160,55 @@ describe('storage warnings (STORE-3, STORE-4)', () => {
     await groupRef().delete();
     expect(await updateStorageAlert(G)).toBeNull();
   });
+
+  it('notifies once when several triggers see the same rise', async () => {
+    await groupRef().update({ storageBytes: 91 * MB });
+    const levels = await Promise.all([1, 2, 3, 4].map(() => updateStorageAlert(G)));
+    expect(levels.filter((l) => l === 'warn')).toHaveLength(1);
+    expect(pushed()).toHaveLength(2);
+  });
+
+  it('follows each file the Storage triggers count, and ignores files outside teams', async () => {
+    type FileEvent = Parameters<typeof onGroupFileAdded.run>[0];
+    const event = (name: string, size: number) => ({ data: { name, size } }) as unknown as FileEvent;
+    await groupRef().update({ storageBytes: 80 * MB });
+
+    await onGroupFileAdded.run(event(`groups/${G}/messages/m1/0.jpg`, 10 * MB));
+    expect(await group()).toMatchObject({ storageBytes: 90 * MB, storageAlert: 'warn' });
+    expect(pushed()).toHaveLength(2);
+
+    await onGroupFileRemoved.run(event(`groups/${G}/messages/m1/0.jpg`, 10 * MB));
+    expect(await group()).toMatchObject({ storageBytes: 80 * MB, storageAlert: 'none' });
+    expect(pushed()).toHaveLength(2);
+
+    await onGroupFileAdded.run(event('users/sam/avatar/1.jpg', 50 * MB));
+    expect((await group()).storageBytes).toBe(80 * MB);
+  });
+
+  it('catches up in the daily recount', async () => {
+    // The triggers missed a file: the recount finds it and warns once.
+    await groupRef().update({ storageQuotaBytes: 1000, storageBytes: 0 });
+    await file(`groups/${G}/messages/m1/0.jpg`, 950);
+    await reconcileAllStorage();
+    expect(await group()).toMatchObject({ storageBytes: 950, storageAlert: 'warn' });
+    expect(pushed().map((m) => m.token).sort()).toEqual(['tok-alex', 'tok-pat']);
+    await reconcileAllStorage();
+    expect(pushed()).toHaveLength(2);
+  });
+});
+
+describe('new teams (STORE-1)', () => {
+  it('start with the 500 MB limit, no warning, and no plan', async () => {
+    const id = await createGroup(
+      'pat',
+      { displayName: 'Pat', photoPath: null },
+      { name: 'New', sport: 'soccer', teamType: 'adult', timeZone: 'America/Chicago' },
+      Limits.defaultStorageQuotaMb,
+    );
+    const data = (await db().collection(Collections.groups).doc(id).get()).data() ?? {};
+    expect(data).toMatchObject({ storageBytes: 0, storageQuotaBytes: 500 * MB, storageAlert: 'none' });
+    expect(data).not.toHaveProperty('plan');
+  });
 });
 
 describe('Media (STORE-5)', () => {
@@ -187,7 +239,7 @@ describe('Media (STORE-5)', () => {
     expect(res.storageBytes).toBe(1060);
     expect(res.truncated).toBe(false);
     expect(res.storageQuotaBytes).toBe(100 * MB);
-    expect(res.files.map((f) => [f.path.replace(`groups/${G}/`, ''), f.size, f.kind, f.current ?? null])).toEqual([
+    expect(res.items.map((f) => [f.path.replace(`groups/${G}/`, ''), f.size, f.kind, f.current ?? null])).toEqual([
       ['theme/bg.jpg', 400, 'background', true],
       ['messages/m1/0.jpg', 300, 'chatPhoto', true],
       ['avatar/new.jpg', 200, 'logo', true],
@@ -195,10 +247,10 @@ describe('Media (STORE-5)', () => {
       ['documents/d1/plan.pdf', 50, 'document', null],
       ['messages/gone/0.jpg', 10, 'chatPhoto', false],
     ]);
-    const chat = res.files.find((f) => f.messageId === 'm1')!;
+    const chat = res.items.find((f) => f.messageId === 'm1')!;
     expect(chat).toMatchObject({ authorName: 'Sam', contentType: 'image/jpeg' });
     expect(Date.parse(chat.createdAt!)).toBeGreaterThan(Date.now() - 60_000);
-    expect(res.files.find((f) => f.messageId === 'gone')).not.toHaveProperty('authorName');
+    expect(res.items.find((f) => f.messageId === 'gone')).not.toHaveProperty('authorName');
   });
 
   it('is for team admins and super admins only', async () => {
@@ -206,7 +258,7 @@ describe('Media (STORE-5)', () => {
     await expect(deleteTeamMedia.run(call('sam', { groupId: G, path: `groups/${G}/avatar/a.jpg` }))).rejects.toMatchObject({
       code: 'permission-denied',
     });
-    await expect(listTeamMedia.run(root({ groupId: G }))).resolves.toMatchObject({ files: [] });
+    await expect(listTeamMedia.run(root({ groupId: G }))).resolves.toMatchObject({ items: [] });
   });
 
   it('removes a deleted photo from its message, and erases a message left empty', async () => {
@@ -237,12 +289,39 @@ describe('Media (STORE-5)', () => {
     expect(audits.docs.every((d) => d.get('actorId') === 'alex' && d.get('groupId') === G)).toBe(true);
   });
 
-  it('keeps a photo message that has text, without the photo', async () => {
+  it('keeps a photo message that has text, as a text message without the photo', async () => {
     await file(`groups/${G}/messages/m2/0.jpg`);
-    await message('m2', { type: 'image', text: 'Team pic', attachments: [photo('m2', 0)] });
+    await file(`groups/${G}/messages/m2/1.jpg`);
+    await message('m2', { type: 'image', text: 'Team pic', attachments: [photo('m2', 0), photo('m2', 1)] });
     await deleteTeamMedia.run(call('pat', { groupId: G, path: `groups/${G}/messages/m2/0.jpg` }));
-    expect(await messageData('m2')).toMatchObject({ text: 'Team pic', attachments: [], reactions: { pat: 'love' } });
+    expect(await messageData('m2')).toMatchObject({ type: 'image', attachments: [photo('m2', 1)] });
+    await deleteTeamMedia.run(call('pat', { groupId: G, path: `groups/${G}/messages/m2/1.jpg` }));
+    // `image` always has a photo, as the create rule requires.
+    expect(await messageData('m2')).toMatchObject({
+      type: 'text', text: 'Team pic', attachments: [], reactions: { pat: 'love' },
+    });
     expect((await messageData('m2')).deletedAt).toBeUndefined();
+  });
+
+  it('lists and deletes files with any name a member could upload', async () => {
+    // storage.rules let members pick the message folder and file name; one
+    // odd name must neither break the list nor stay stuck holding space.
+    const odd = ['messages/./0.jpg', 'messages/../1.jpg', 'messages/__x__/2.jpg', 'messages/m9/a..jpg', 'documents/d1/Roster..final.pdf'];
+    for (const [i, name] of odd.entries()) await file(`groups/${G}/${name}`, 100 - i);
+
+    const res = await listTeamMedia.run(call('alex', { groupId: G }));
+    expect(res.items.map((f) => [f.path.replace(`groups/${G}/`, ''), f.kind])).toEqual([
+      ['messages/./0.jpg', 'other'],
+      ['messages/../1.jpg', 'other'],
+      ['messages/__x__/2.jpg', 'other'],
+      ['messages/m9/a..jpg', 'chatPhoto'],
+      ['documents/d1/Roster..final.pdf', 'document'],
+    ]);
+
+    for (const name of odd) {
+      await expect(deleteTeamMedia.run(call('alex', { groupId: G, path: `groups/${G}/${name}` }))).resolves.toMatchObject({ ok: true });
+      expect(await fileExists(`groups/${G}/${name}`)).toBe(false);
+    }
   });
 
   it('never follows a message to another team, or its unchecked thumbPath', async () => {

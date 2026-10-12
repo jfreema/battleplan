@@ -2,6 +2,7 @@
 // uses it, and deleting one with whatever pointed at it fixed. Callers check
 // that the caller is a team admin. The Storage trigger lowers storageBytes
 // once a file is gone, which also clears the storage warning.
+import { posix } from 'node:path';
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { photosOfMessages, removeAttachment } from '../chat/service.js';
@@ -35,23 +36,41 @@ export interface MediaItem {
  */
 export const MEDIA_LIST_MAX = 2000;
 
-/** Whether [path] is a file of [groupId]'s and can't climb out of its folder. */
+/**
+ * Whether [path] is a file of [groupId]'s and can't climb out of its folder.
+ * Object names are literal (the Storage client encodes the whole name), so
+ * `..` can't reach another team; still, a name is refused if resolving its
+ * `.` and `..` would leave the team's folder. Anything else stays
+ * deletable: storage.rules let members name chat files freely (`a..jpg`,
+ * `messages/./x.jpg`), and an undeletable file would hold space for good.
+ */
 export function isTeamMediaPath(groupId: string, path: string): boolean {
   const prefix = `groups/${groupId}/`;
-  return !groupId.includes('/') && path.startsWith(prefix) && path.length > prefix.length && !path.includes('..');
+  const inside = (p: string) => p.startsWith(prefix) && p.length > prefix.length;
+  return !groupId.includes('/') && inside(path) && inside(posix.normalize(path));
+}
+
+/**
+ * Whether [id] can name a Firestore document. Storage rules let members
+ * pick any message folder name, and one file under `messages/__x__/` must
+ * not break Media for the whole team.
+ */
+function isDocId(id: string): boolean {
+  return id !== '.' && id !== '..' && !/^__.*__$/.test(id) && Buffer.byteLength(id) <= 1500;
 }
 
 /**
  * What a file under `groups/{groupId}/` is, from its path alone (the
  * folders in storage.rules): a chat photo (with its message ID), the team
- * logo, a chat background, a document, or anything else.
+ * logo, a chat background, a document, or anything else. A file in a
+ * message folder no message could have is an orphan ('other').
  */
 export function classifyMediaPath(groupId: string, path: string): { kind: MediaKind; messageId?: string } {
   if (!isTeamMediaPath(groupId, path)) return { kind: 'other' };
   const parts = path.slice(`groups/${groupId}/`.length).split('/');
   if (parts.some((p) => p === '')) return { kind: 'other' };
   const [folder] = parts;
-  if (folder === 'messages' && parts.length >= 3) return { kind: 'chatPhoto', messageId: parts[1] };
+  if (folder === 'messages' && parts.length >= 3 && isDocId(parts[1])) return { kind: 'chatPhoto', messageId: parts[1] };
   if (folder === 'avatar' && parts.length === 2) return { kind: 'logo' };
   if (folder === 'theme' && parts.length === 2) return { kind: 'background' };
   if (folder === 'documents' && parts.length === 3) return { kind: 'document' };
@@ -70,9 +89,10 @@ function isoOrNull(value: unknown): string | null {
  * rather than Firestore, so orphans show up too. The whole folder is
  * scanned (as the daily recount does) so that, past MEDIA_LIST_MAX files,
  * the ones returned are the largest; `truncated` says some were left out.
+ * The app reads `items` (FunctionsMediaRepository).
  */
 export async function listMedia(groupId: string): Promise<{
-  files: MediaItem[];
+  items: MediaItem[];
   truncated: boolean;
   storageBytes: number;
   storageQuotaBytes: number;
@@ -80,7 +100,7 @@ export async function listMedia(groupId: string): Promise<{
   const group = await db().collection(Collections.groups).doc(groupId).get();
   if (!group.exists) throw new HttpsError('not-found', 'No such team.');
   const [found] = await storage().bucket().getFiles({ prefix: `groups/${groupId}/` });
-  const files: MediaItem[] = found
+  const items: MediaItem[] = found
     .map((f) => ({
       path: f.name,
       size: Number(f.metadata.size ?? 0),
@@ -93,11 +113,11 @@ export async function listMedia(groupId: string): Promise<{
 
   const photos = await photosOfMessages(
     groupId,
-    files.flatMap((f) => (f.kind === 'chatPhoto' && f.messageId ? [f.messageId] : [])),
+    items.flatMap((f) => (f.kind === 'chatPhoto' && f.messageId ? [f.messageId] : [])),
   );
   const logo = group.get('photoPath') as string | null | undefined;
   const background = group.get('chatTheme.backgroundPath') as string | null | undefined;
-  for (const f of files) {
+  for (const f of items) {
     if (f.kind === 'chatPhoto') {
       const message = photos.get(f.messageId!);
       if (message) f.authorName = message.authorName;
@@ -109,8 +129,8 @@ export async function listMedia(groupId: string): Promise<{
     }
   }
   return {
-    files,
-    truncated: found.length > files.length,
+    items,
+    truncated: found.length > items.length,
     storageBytes: Number(group.get('storageBytes') ?? 0),
     storageQuotaBytes: quotaBytesOf(group.data()),
   };

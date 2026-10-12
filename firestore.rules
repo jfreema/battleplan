@@ -31,7 +31,8 @@ service cloud.firestore {
     function settings(g) { return get(groupPath(g)).data.settings; }
     // Whether the team has storage left (ARCH §6.3, §6.11): the same test as
     // storage.rules' underQuota. STORE-4: a full team can't schedule new
-    // events, so event creation (M6) must require hasRoom(g). Nothing else
+    // events, so event creation (M6) must require hasRoom(g), and
+    // saveEventSeries must make the same check on the server. Nothing else
     // checks it: messages, reactions, polls, RSVPs, and edits keep working.
     function hasRoom(g) {
       let t = get(groupPath(g)).data;

@@ -197,7 +197,9 @@ export async function photosOfMessages(groupId: string, messageIds: string[]): P
 /**
  * Takes one photo off a message after a team admin deleted it in Media
  * (STORE-5). A message left with no text and no photos is erased the way an
- * admin deletion is (CHAT-8: "Removed by a team admin"). The photo and its
+ * admin deletion is (CHAT-8: "Removed by a team admin"); one left with only
+ * its caption becomes a text message, so `image` keeps meaning at least one
+ * photo, as the create rule requires (attachmentsOk). The photo and its
  * thumbnail go too, and the Storage trigger takes them off the team's
  * total. Returns 'none' when the message isn't [groupId]'s or doesn't have
  * that photo.
@@ -217,7 +219,10 @@ export async function removeAttachment(
     if (!removed.length) return null;
     const left = attachments.filter((a) => !removed.includes(a));
     const erase = left.length === 0 && String(message.get('text') ?? '').trim() === '';
-    tx.update(ref, erase ? erasedFields(deletedBy, 'admin') : { attachments: left });
+    tx.update(
+      ref,
+      erase ? erasedFields(deletedBy, 'admin') : { attachments: left, ...(left.length ? {} : { type: 'text' }) },
+    );
     return { erase, removed };
   });
   if (!result) return 'none';

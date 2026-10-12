@@ -86,12 +86,6 @@
       "soccer",
       "trophy"
     ],
-    "freeReaction": [
-      "like",
-      "love",
-      "dislike",
-      "laugh"
-    ],
     "eventType": [
       "game",
       "practice",

@@ -66,6 +66,13 @@ describe('classifyMediaPath (STORE-5)', () => {
     expect(classifyMediaPath('g1', 'groups/g1/documents/d1/Schedule.pdf')).toEqual({ kind: 'document' });
   });
 
+  it('calls a file in a folder no message could have an orphan', () => {
+    expect(classifyMediaPath('g1', 'groups/g1/messages/./0.jpg')).toEqual({ kind: 'other' });
+    expect(classifyMediaPath('g1', 'groups/g1/messages/../0.jpg')).toEqual({ kind: 'other' });
+    expect(classifyMediaPath('g1', 'groups/g1/messages/__name__/0.jpg')).toEqual({ kind: 'other' });
+    expect(classifyMediaPath('g1', 'groups/g1/messages/m1/a..jpg')).toEqual({ kind: 'chatPhoto', messageId: 'm1' });
+  });
+
   it('calls anything else other', () => {
     expect(classifyMediaPath('g1', 'groups/g1/stray.jpg')).toEqual({ kind: 'other' });
     expect(classifyMediaPath('g1', 'groups/g1/messages/m1')).toEqual({ kind: 'other' });
@@ -80,7 +87,17 @@ describe('classifyMediaPath (STORE-5)', () => {
     expect(isTeamMediaPath('g1', 'groups/g1/')).toBe(false);
     expect(isTeamMediaPath('g1', 'groups/g10/avatar/1.jpg')).toBe(false);
     expect(isTeamMediaPath('g1', 'groups/g1/../g2/avatar/1.jpg')).toBe(false);
+    expect(isTeamMediaPath('g1', 'groups/g1/messages/../../g2/avatar/1.jpg')).toBe(false);
+    expect(isTeamMediaPath('g1', 'groups/g1/x/..')).toBe(false);
     expect(isTeamMediaPath('g1', 'users/u1/avatar/1.jpg')).toBe(false);
     expect(isTeamMediaPath('g1/x', 'groups/g1/x/avatar/1.jpg')).toBe(false);
+    expect(isTeamMediaPath('..', 'groups/../users/u1/avatar/1.jpg')).toBe(false);
+  });
+
+  it("keeps every name that stays in the team's folder deletable", () => {
+    expect(isTeamMediaPath('g1', 'groups/g1/documents/d1/Roster..final.pdf')).toBe(true);
+    expect(isTeamMediaPath('g1', 'groups/g1/messages/m1/a..jpg')).toBe(true);
+    expect(isTeamMediaPath('g1', 'groups/g1/messages/./0.jpg')).toBe(true);
+    expect(isTeamMediaPath('g1', 'groups/g1/messages/../0.jpg')).toBe(true);
   });
 });

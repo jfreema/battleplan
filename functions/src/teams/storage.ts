@@ -104,6 +104,20 @@ export function quotaBytesOf(data: FirebaseFirestore.DocumentData | undefined): 
   return typeof quota === 'number' ? quota : Limits.defaultStorageQuotaMb * MB;
 }
 
+/** A team's usage, the level it last recorded, and the level its usage is at now. */
+function alertLevels(group: FirebaseFirestore.DocumentSnapshot): {
+  bytes: number;
+  before: StorageAlert;
+  after: StorageAlert;
+} {
+  const bytes = Number(group.get('storageBytes') ?? 0);
+  return {
+    bytes,
+    before: (group.get('storageAlert') as StorageAlert | undefined) ?? 'none',
+    after: storageAlertLevel(bytes, quotaBytesOf(group.data())),
+  };
+}
+
 /**
  * Records a team's storage warning level and tells its admins when it rises
  * (ARCH §6.11): none → warn at 90%, → full at the limit. A fall lowers the
@@ -113,12 +127,18 @@ export function quotaBytesOf(data: FirebaseFirestore.DocumentData | undefined): 
  */
 export async function updateStorageAlert(groupId: string): Promise<StorageAlert | null> {
   const ref = db().collection(Collections.groups).doc(groupId);
+  // Nearly every file leaves the level where it was. A plain read settles
+  // those, so each upload doesn't lock the team's document (busy with chat)
+  // in a transaction. Each trigger reads after its own change, so a rise
+  // is never missed.
+  const peek = await ref.get();
+  if (!peek.exists) return null;
+  const now = alertLevels(peek);
+  if (now.after === now.before) return null;
   const change = await db().runTransaction(async (tx) => {
     const group = await tx.get(ref);
     if (!group.exists) return null;
-    const bytes = Number(group.get('storageBytes') ?? 0);
-    const before = (group.get('storageAlert') as StorageAlert | undefined) ?? 'none';
-    const after = storageAlertLevel(bytes, quotaBytesOf(group.data()));
+    const { bytes, before, after } = alertLevels(group);
     if (after === before) return null;
     tx.update(ref, { storageAlert: after });
     return {
