@@ -25,7 +25,6 @@ export const Collections = {
   auditLogs: 'auditLogs',
   rateLimits: 'rateLimits',
   config: 'config',
-  licenses: 'licenses',
   notifyLog: 'notifyLog',
 } as const;
 
@@ -66,17 +65,12 @@ export const Limits = {
   rateLimitTtlDays: 2,
   inviteCodeLength: 8,
   emailInviteExpiryDays: 14,
-  defaultStorageQuotaGb: 5,
-  maxUploadMb: 25,
+  defaultStorageQuotaMb: 500,
+  storageQuotaMaxMb: 51200,
+  storageWarnPercent: 90,
+  maxUploadMb: 10,
   maxImageMb: 10,
   lastReadThrottleSeconds: 10,
-  plusStorageQuotaGb: 25,
-  plusMaxUploadMb: 100,
-  licenseDefaultMonths: 12,
-  licenseMaxMonths: 36,
-  licenseMoveCooldownDays: 30,
-  licenseReminderFirstDays: 30,
-  licenseReminderSecondDays: 7,
   pinnedMessagesMax: 3,
   deviceStaleDays: 60,
   notificationBodyMax: 140,
@@ -154,16 +148,7 @@ export type ReportStatus = (typeof reportStatusValues)[number];
 export const devicePlatformValues = ['ios', 'android', 'web'] as const;
 export type DevicePlatform = (typeof devicePlatformValues)[number];
 
-export const planTierValues = ['free', 'plus'] as const;
-export type PlanTier = (typeof planTierValues)[number];
-
-export const planFeatureValues = ['editMessages', 'extraReactions', 'chatTheme', 'pinMessages', 'attendanceExport', 'brandedInvite', 'moreStorage'] as const;
-export type PlanFeature = (typeof planFeatureValues)[number];
-
-export const licenseSourceValues = ['grant', 'stripe', 'appStore', 'play'] as const;
-export type LicenseSource = (typeof licenseSourceValues)[number];
-
-export const notifyKindValues = ['message', 'reply', 'addedToTeam', 'madeAdmin', 'guardianRequest', 'guardianApproved', 'playerAdded', 'contentReported', 'planReminder', 'pollCreated', 'pollClosed', 'eventCreated', 'eventChanged', 'eventReminder', 'documentAdded'] as const;
+export const notifyKindValues = ['message', 'reply', 'addedToTeam', 'madeAdmin', 'guardianRequest', 'guardianApproved', 'playerAdded', 'contentReported', 'storageWarning', 'pollCreated', 'pollClosed', 'eventCreated', 'eventChanged', 'eventReminder', 'documentAdded'] as const;
 export type NotifyKind = (typeof notifyKindValues)[number];
 
 export const notificationPrefValues = ['messages', 'replies', 'mentions', 'polls', 'eventsNew', 'eventsChanged', 'reminders', 'documents'] as const;
@@ -182,7 +167,7 @@ export const NOTIFY_KINDS = {
   guardianApproved: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
   playerAdded: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
   contentReported: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
-  planReminder: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
+  storageWarning: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
   pollCreated: { important: false, pref: 'polls' as NotificationPref | null, center: true, channel: 'polls' as NotifyChannel },
   pollClosed: { important: false, pref: 'polls' as NotificationPref | null, center: true, channel: 'polls' as NotifyChannel },
   eventCreated: { important: false, pref: 'eventsNew' as NotificationPref | null, center: true, channel: 'events' as NotifyChannel },

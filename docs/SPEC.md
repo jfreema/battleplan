@@ -35,8 +35,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | **Team type** | **Adult**: the members are the players and answer RSVPs for themselves. **Youth**: the players are kids without accounts, and their guardians answer for them. |
 | **Player** | On a youth team, a kid on the roster. Players never have accounts. |
 | **Guardian** | A member linked to a player on a youth team, usually a parent, who answers RSVPs for that player |
-| **Plus** | The paid team plan ($70 a year or $7 a month). Teams without it are on **Free**. See [PLANS.md](PLANS.md). |
-| **License** | A year (or months) of Plus held by one person, applied to one team they admin, and movable to another (PLAN-3) |
+| **Storage limit** | How much a team can store in photos and files: 500 MB unless a super admin raises it (STORE-1) |
 
 ### Release tags
 
@@ -123,7 +122,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Forced app update (ARCH §9) | Lets us retire old app versions safely, including during a future SQL move |
 | Privacy Policy, Terms, store disclosures (LEGAL) | **Required** to publish |
 | Accessibility and translation-ready text (§7.6, §7.7) | Good practice, and cheap if done from the start |
-| A paid Plus plan per team, with licenses a super admin grants (§6.14, [PLANS.md](PLANS.md)) | Pays for the platform as it grows (Q4) without paywalling anything a team needs to run |
+| Everything free with no ads, and a 500 MB storage limit per team with a Media section to free space (§6.14, [PLANS.md](PLANS.md)) | Keeps adoption easy while capping what one team can cost (Q4); ads may come once adoption justifies them |
 
 ---
 
@@ -170,9 +169,8 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Leave the team | ✓ | ✓ | after transferring | — |
 | See all teams and users; suspend teams; disable users; create users anywhere | — | — | — | ✓ |
 | Grant or revoke super admin | — | — | — | ✓ |
-| Grant, extend, or revoke a Plus license (PLAN-2) | — | — | — | ✓ |
-| Move a Plus license you hold to another team you admin (PLAN-3) | — | holder | holder | ✓ any |
-| Use Plus features (PLAN-6 to PLAN-12) | on Plus teams | on Plus teams | on Plus teams | on Plus teams |
+| See storage used; delete photos and files in Media (STORE-2, STORE-5) | — | ✓ | ✓ | ✓ |
+| Raise or lower a team's storage limit (STORE-6) | — | — | — | ✓ |
 
 These rules are enforced on the server (Firestore rules and Functions), never only in the UI. The matrix is the source of truth if the backend ever moves to SQL (ARCH §12.2).
 
@@ -399,7 +397,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - allow "Maybe" RSVPs [on]
   - Default event reminders: 1 day before.
   - Manage the invite link.
-  - See storage used, e.g. "1.2 GB of 5 GB".
+  - See storage used, e.g. "212 MB of 500 MB", and open Media to free space (STORE-2, STORE-5).
 - **TEAM-6 · MVP · Transfer ownership.** The owner picks a member to take over and becomes an admin.
 - **TEAM-7 · MVP · Add members by email (admins).**
   - Add one person at a time, or paste a list of "Name, email" lines (up to 100).
@@ -535,7 +533,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - Offline, text messages queue and send by themselves when the connection returns. Photos wait for a connection.
   - The send queue spaces messages at least 1 second apart, which keeps everyone under the posting limit (SAFE-5) without noticing.
 - **CHAT-5 · MVP · Links.** URLs are tappable and open in the browser. On phones, phone numbers and email addresses are tappable too.
-- **CHAT-6 · MVP · Reactions: 👍 Like · ❤️ Love · 👎 Dislike · 😂 LOL.** Plus teams get 12 more (PLAN-7).
+- **CHAT-6 · MVP · Reactions: 👍 Like · ❤️ Love · 👎 Dislike · 😂 LOL, plus 🔥 👏 🎉 💯 🙏 😮 😢 😡 ⚾ 🏀 ⚽ 🏆.**
   - Open the picker with a long-press (phones), the hover button, or a right-click (web). Double-tap a message to ❤️ it (phones).
   - **One reaction per person per message.** Picking another replaces yours; picking the same one removes it.
   - Chips under the bubble show each reaction with its count, and yours is highlighted. Tap them to see who reacted.
@@ -571,7 +569,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - Typing @ suggests team members.
   - Mentions are highlighted and reach the person even at "Important only".
   - @everyone is for admins only.
-- **CHAT-15 · v1.1 · Edit, pin, announce.** Editing and pinning are Plus features (PLAN-6, PLAN-9); announcements stay free.
+- **CHAT-15 · Edit (MVP), pin and announce (v1.1).** Editing is built: people edit the text of their own messages, which then show "edited", and quotes in replies follow.
   - **Edit** your own messages; edited messages are marked "edited".
   - Admins can **pin** messages to a bar at the top.
   - Admins can send **announcements**, which notify everyone who hasn't turned the team off.
@@ -581,6 +579,8 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - Link previews, GIFs, video, voice notes.
   - Typing indicators and read receipts.
   - Direct messages (Q5).
+
+- **CHAT-18 · MVP · Chat look.** Team admins choose the chat's message color (the team color or any of the 12 palette colors) and background (plain, a subtle pattern, or a photo), which everyone on the team sees, with text kept readable (WCAG AA).
 
 **Acceptance (MVP)**
 
@@ -710,9 +710,9 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - Sort by Recent or Name, and filter by typing part of a name.
   - Empty state: "Share schedules, forms, and playbooks with your team."
 - **DOC-2 · MVP · Upload files** (if you're allowed).
-  - PDF, images, Word, Excel, PowerPoint, text, and CSV, up to 25 MB each (configurable).
+  - PDF, images, Word, Excel, PowerPoint, text, and CSV, up to 10 MB each (STORE-1).
   - Rename before uploading, add an optional description, and see progress with Cancel.
-  - If the team's storage is full, the app says so and points to the team's admins.
+  - If the team's storage is full, uploading is disabled with the message from STORE-4.
 - **DOC-3 · MVP · Add links.** A name and a URL, such as a Google Drive folder, a sign-up form, or a league website. Links open in the browser.
 - **DOC-4 · MVP · Open.**
   - PDFs and images open in an in-app viewer.
@@ -747,6 +747,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   | Guardian request (youth teams) | Team admins | **Yes** | ✓ | MVP |
   | Guardian request approved | The parent | **Yes** | ✓ | MVP |
   | Content reported | Team admins | **Yes** | ✓ | MVP |
+  | Storage 90% full, or full (STORE-3, STORE-4) | Team admins | **Yes** | ✓ | MVP |
   | @mention; announcement | The person mentioned; everyone | **Yes** | ✓ | v1.1 |
   | RSVP nudge | People who haven't answered\* | **Yes** | ✓ | v1.1 |
 
@@ -829,8 +830,7 @@ This is for platform operators (super admins) to manage every team and user.
   - **Edit:** the team's profile and settings.
   - **People:** change roles, remove members, add by email, transfer ownership, manage players and guardians.
   - **Content:** revoke invite links; review recent messages (delete any), events, and documents.
-  - **Storage:** see usage and change the quota.
-  - **Plan:** the team's plan and license; grant, extend, move, or revoke Plus (PLAN-2).
+  - **Storage:** see usage, open the team's Media, and raise or lower its limit (STORE-6).
   - **Actions:**
     - **View team**: opens its tabs without joining, read-only plus moderation, with a "Viewing as super admin" banner, and recorded in the audit log.
     - Archive or Restore.
@@ -898,7 +898,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Real people shouldn't notice them. The app spaces messages automatically, and anyone who hits a limit sees "Slow down, try again in a minute" without losing what they typed.
   - A verified email is required to create teams, send email invites, or add people by email.
   - App Check blocks traffic that doesn't come from the real apps.
-  - Every team has a storage quota (TEAM-5).
+  - Every team has a storage limit (STORE-1).
   - Super admins can disable people and suspend teams (ADMIN-3, ADMIN-4).
 - **SAFE-6 · MVP · Adults only.**
   - Accounts are for adults 18 and older (AUTH-5, Terms of Use).
@@ -927,53 +927,35 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Content stays until its author, an admin, or the team's deletion removes it.
   - Deleted content is erased from the database immediately and from backups within 7 days.
 
-### 6.14 Plans: Free and Plus (PLAN)
+### 6.14 Free for everyone, and team storage (STORE)
 
-Battleplan has two team plans. **[PLANS.md](PLANS.md) is the feature-by-feature comparison** and wins if this section disagrees with it. The rule behind it: everything a team needs to run (chat, photos, schedule and RSVPs, polls, documents, notifications, youth teams, invites, and every safety feature) is free forever. Plus adds polish, room, and admin tools.
+**Everything is free, with no ads.** Every team gets every feature. Ads may come later, once enough teams use Battleplan to justify the work; any ads plan has to respect children's privacy rules, because youth teams' guardians use the app (ROADMAP "Ads, later"). [PLANS.md](PLANS.md) summarizes this.
 
-**Pricing.** Plus is **$70 per team per year or $7 per month**.
+What does cost money as teams grow is storage, so each team has a limit, and admins can see and free their space.
 
 **Requirements**
 
-- **PLAN-1 · MVP · Plans and what they unlock.**
-  - Every team is on Free or Plus. A team is on Plus while a license is applied to it and hasn't ended.
-  - One list of Plus features (shared constants) drives the app and the server, so they always agree.
-  - The server enforces Plus features (rules and Functions), never only the app.
-- **PLAN-2 · MVP · Super admins grant licenses.**
-  - From the admin panel (ADMIN-3), a super admin creates a license for a person and a team: one year by default, or a number of months.
-  - They can extend it, move it, or revoke it. Each action is in the audit log.
-  - This is how paid teams are handled during the beta: they pay outside the app, and we apply the license. In-app purchase must exist before Plus is in the App Store (PLAN-14, Q19).
-- **PLAN-3 · MVP · Licenses are transferable.**
-  - A license belongs to its holder, not the team.
-  - The holder can move it to any team they're an owner or admin of. The old team goes back to Free, and the new team gets the remaining time.
-  - A license can move once every 30 days (super admins any time), so one license can't rotate across many teams.
-  - A team can have only one license at a time.
-- **PLAN-4 · MVP · The plan in the app.**
-  - Team settings shows the plan, when it ends, and who holds the license. The holder sees **Move to another team**.
-  - Plus features on a Free team show a small **Plus** badge. Tapping one explains what Plus adds and how to get it ("Ask a team admin" for members; for admins, contact details until self-serve checkout exists).
-- **PLAN-5 · MVP · Reminders and ending.**
-  - 30 and 7 days before a license ends, the holder and the team's admins get an email and a notification.
-  - When it ends, the team returns to Free and nothing is deleted ([PLANS.md](PLANS.md), "When Plus ends").
-- **PLAN-6 · MVP · Edit messages (Plus).**
-  - On Plus teams, people can edit the text of their own messages from the message menu. Edited messages show "edited".
-  - Only the text changes; photos, reactions, and replies stay. Quotes in replies update to the new text.
-- **PLAN-7 · MVP · More reactions (Plus).** Plus teams pick from 16 reactions: the free four plus 🔥 👏 🎉 💯 🙏 😮 😢 😡 ⚾ 🏀 ⚽ 🏆. Still one reaction per person per message.
-- **PLAN-8 · MVP · Chat look (Plus).**
-  - Admins of Plus teams choose the chat's bubble color (the team color or a palette) and a background (plain, a subtle pattern, or a photo).
-  - Everyone on the team sees it, in light and dark mode, with text contrast kept at WCAG AA.
-- **PLAN-9 · v1.1 · Pinned messages (Plus).** Admins pin up to 3 messages to a bar at the top of the chat (CHAT-15).
-- **PLAN-10 · v1.1 · Attendance history and exports (Plus).** Each member's or player's season RSVP history, and CSV exports of RSVPs and the roster for admins.
-- **PLAN-11 · MVP · More room (Plus).** 25 GB of team storage instead of 5 GB, and documents up to 100 MB instead of 25 MB.
-- **PLAN-12 · v1.1 · Branded invite page (Plus).** The `/join` page shows the team's logo and color.
-- **PLAN-13 · v1.1 · Self-serve checkout.** Admins buy Plus on the web, yearly or monthly, and the license is created automatically (Q19).
-- **PLAN-14 · Before Plus is in the stores · In-app purchase.** The iPhone and Android apps sell Plus through Apple's and Google's in-app purchase, yearly or monthly, creating the same kind of license. Required by App Store guideline 3.1.3(b) for the iPhone app to unlock Plus at all (Q19). Restore Purchases and the store's subscription management are included.
+- **STORE-1 · MVP · A storage limit per team.**
+  - Each team can store **500 MB**: chat photos, documents, the team logo, and the chat background all count (ARCH §6.8).
+  - A single file can be at most **10 MB** (chat photos are resized well under that before upload).
+- **STORE-2 · MVP · Storage used.** Team settings shows "212 MB of 500 MB used" with a meter, for the team's admins.
+- **STORE-3 · MVP · Nearly full.** At **90%**, the meter turns amber, the team's admins see a warning at the top of the team ("Storage is 90% full. Free up space in Media."), and they get a notification (NOTIF-2).
+- **STORE-4 · MVP · Full.**
+  - New uploads (chat photos, documents, the team logo, a chat background), attachments, and **scheduling new events** are disabled until storage is freed up.
+  - Everyone on the team sees: "Storage is full. Uploads, attachments, and scheduling new events are disabled until storage is freed up." Admins also get a notification.
+  - Nothing else turns off: text messages, replies, reactions, polls, RSVPs, and existing events keep working. Nothing is ever deleted automatically.
+- **STORE-5 · MVP · Media (admins).**
+  - Team menu → **Media** lists every photo, attachment, document, the team logo, and the chat background, largest first, with a preview, size, who added it, and when.
+  - Admins delete items to free space, after confirming. Deleting a chat photo removes it from its message ("Photo removed by a team admin"); deleting the logo or background resets it.
+- **STORE-6 · MVP · Raising a team's limit.** A super admin can raise (or lower) one team's limit, from the admin panel (ADMIN-3), and until that exists from Team settings while signed in as a super admin. The option isn't announced or advertised anywhere.
+- **STORE-7 · Later · Ads.** See ROADMAP "Ads, later".
 
 **Acceptance (MVP)**
 
-- A super admin grants a one-year license, and within seconds the team can edit messages, use the extra reactions, and change the chat's look.
-- A member on a Free team can't edit a message or use a Plus reaction, even by calling the database directly.
-- Moving a license turns Plus off on the old team and on for the new one, with the same end date.
-- When a license ends, the team is on Free the same day and no content is lost.
+- A team at 90% sees the warning and its admins are notified once.
+- A full team can't upload or attach, even by calling the database directly, and still chats.
+- Deleting photos in Media frees space within seconds, and uploads work again.
+- A super admin raises one team to 2 GB and only that team can store more.
 
 ---
 
@@ -1164,12 +1146,13 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
 
 **Done when:** the CHAT acceptance criteria pass.
 
-### Plus plan · after M3
+### Free for everyone and team storage · after M4
 
-- [x] Plans, licenses, and super-admin grants (PLAN-1 to PLAN-5).
-- [x] Edit messages, more reactions, chat look, more room (PLAN-6, PLAN-7, PLAN-8, PLAN-11).
+- [ ] Remove the paid tier; its features are free for everyone (edit messages, 16 reactions, chat look).
+- [ ] 500 MB per team and 10 MB files; the 90% warning; full blocks uploads, attachments, and new events (STORE-1 to STORE-4).
+- [ ] Media for admins and the unannounced super-admin limit (STORE-5, STORE-6).
 
-**Done when:** the PLAN acceptance criteria pass.
+**Done when:** the STORE acceptance criteria pass.
 
 ### M4 · Notifications
 
@@ -1224,7 +1207,7 @@ From here on, each feature ships with its own notifications.
 
 ### v1.1 backlog, in priority order
 
-1. @mentions, edits, pins, announcements (CHAT-14, CHAT-15)
+1. @mentions, pins, announcements (CHAT-14, CHAT-15)
 2. Roster details and contact sharing (TEAM-10); "Same answer for all my players" and RSVP history (PLAYER-11)
 3. Calendar subscription (SCHED-11)
 4. RSVP nudges and guest counts (SCHED-12)
@@ -1233,6 +1216,8 @@ From here on, each feature ships with its own notifications.
 7. Announcement-only mode (TEAM-12), polls list (POLL-6)
 8. App icon badges, hidden notification text (NOTIF-12), files in chat (CHAT-16)
 9. Persistent team list on very wide screens (§5.5)
+10. Attendance history and CSV exports of RSVPs and the roster for admins
+11. A branded invite page with the team's logo and color (`/join`)
 
 ---
 
@@ -1314,7 +1299,7 @@ Each question has a default. The build follows the default until someone decides
 | Q1 | ~~Should the app say "Team" or "Group"?~~ **Decided 2026-10-11:** "Team". | — |
 | Q2 | ~~Will youth players use Battleplan?~~ **Decided:** no. Accounts are for adults (18+), and parents and guardians answer for youth players (§6.3). | — |
 | Q3 | ~~Who can create teams?~~ **Decided 2026-10-11:** anyone with a verified email; super admins can turn it off. | — |
-| Q4 | ~~How will the platform be paid for once there are hundreds of teams?~~ **Decided 2026-10-11:** a paid Plus plan per team, $70 a year or $7 a month, granted by super admins at first (§6.14, [PLANS.md](PLANS.md)). Free stays free, with a 5 GB storage quota. | — |
+| Q4 | ~~How will the platform be paid for once there are hundreds of teams?~~ **Decided 2026-10-12:** everything is free with no ads for now; ads may come once adoption justifies them (ROADMAP "Ads, later"). Each team has a 500 MB storage limit that a super admin can raise (§6.14). A paid plan was planned on 2026-10-11 and dropped. | — |
 | Q5 | Are direct messages needed at launch? GroupMe has them. | Later |
 | Q6 | Reactions: one per person per message, or several? | One |
 | Q7 | On wide screens, bottom tabs or a side rail? | Side rail at 840 px and wider |
@@ -1327,8 +1312,3 @@ Each question has a default. The build follows the default until someone decides
 | Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). | — |
 | Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). | — |
 | Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email; Facebook sign-in, its Meta app, App Review, and LEGAL-5 move to their own roadmap section after M8. | — |
-| Q17 | What is the paid plan called? | **Plus** |
-| Q18 | When a super admin grants a license, is it yearly or monthly? | Whole months, one year by default; the $7 monthly price applies once self-serve checkout exists (PLAN-13) |
-| Q19 | How do people pay, especially in the iPhone and Android apps? | Super-admin grants during the beta. Before Plus ships in the App Store, Plus is also sold through in-app purchase in both apps (PLAN-14), because Apple lets an app unlock features bought on the web only if they're "also available as in-app purchases" (guideline 3.1.3(b)) and forbids unlocking with license keys (3.1.1). Apple's fee is 15% under the Small Business Program; Google's is 15% on subscriptions. The web checkout (PLAN-13) stays, and US iPhone users may get a button to it (3.1.1(a)). Same price everywhere unless decided otherwise. |
-| Q20 | Is there a grace period after a license ends? | No; reminders go out 30 and 7 days before, and the team returns to Free on the end date with nothing deleted |
-| Q21 | Should Plus also be sold per person (for example, extra reactions everywhere)? | No, per team only |

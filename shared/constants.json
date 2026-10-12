@@ -23,7 +23,6 @@
     "auditLogs": "auditLogs",
     "rateLimits": "rateLimits",
     "config": "config",
-    "licenses": "licenses",
     "notifyLog": "notifyLog"
   },
   "enums": {
@@ -137,25 +136,6 @@
       "android",
       "web"
     ],
-    "planTier": [
-      "free",
-      "plus"
-    ],
-    "planFeature": [
-      "editMessages",
-      "extraReactions",
-      "chatTheme",
-      "pinMessages",
-      "attendanceExport",
-      "brandedInvite",
-      "moreStorage"
-    ],
-    "licenseSource": [
-      "grant",
-      "stripe",
-      "appStore",
-      "play"
-    ],
     "notifyKind": [
       "message",
       "reply",
@@ -165,7 +145,7 @@
       "guardianApproved",
       "playerAdded",
       "contentReported",
-      "planReminder",
+      "storageWarning",
       "pollCreated",
       "pollClosed",
       "eventCreated",
@@ -229,17 +209,12 @@
     "rateLimitTtlDays": 2,
     "inviteCodeLength": 8,
     "emailInviteExpiryDays": 14,
-    "defaultStorageQuotaGb": 5,
-    "maxUploadMb": 25,
+    "defaultStorageQuotaMb": 500,
+    "storageQuotaMaxMb": 51200,
+    "storageWarnPercent": 90,
+    "maxUploadMb": 10,
     "maxImageMb": 10,
     "lastReadThrottleSeconds": 10,
-    "plusStorageQuotaGb": 25,
-    "plusMaxUploadMb": 100,
-    "licenseDefaultMonths": 12,
-    "licenseMaxMonths": 36,
-    "licenseMoveCooldownDays": 30,
-    "licenseReminderFirstDays": 30,
-    "licenseReminderSecondDays": 7,
     "pinnedMessagesMax": 3,
     "deviceStaleDays": 60,
     "notificationBodyMax": 140,
@@ -312,7 +287,7 @@
       "center": true,
       "channel": "team"
     },
-    "planReminder": {
+    "storageWarning": {
       "important": true,
       "pref": null,
       "center": true,

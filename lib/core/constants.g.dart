@@ -27,7 +27,6 @@ abstract final class Collections {
   static const String auditLogs = 'auditLogs';
   static const String rateLimits = 'rateLimits';
   static const String config = 'config';
-  static const String licenses = 'licenses';
   static const String notifyLog = 'notifyLog';
 }
 
@@ -69,17 +68,12 @@ abstract final class Limits {
   static const int rateLimitTtlDays = 2;
   static const int inviteCodeLength = 8;
   static const int emailInviteExpiryDays = 14;
-  static const int defaultStorageQuotaGb = 5;
-  static const int maxUploadMb = 25;
+  static const int defaultStorageQuotaMb = 500;
+  static const int storageQuotaMaxMb = 51200;
+  static const int storageWarnPercent = 90;
+  static const int maxUploadMb = 10;
   static const int maxImageMb = 10;
   static const int lastReadThrottleSeconds = 10;
-  static const int plusStorageQuotaGb = 25;
-  static const int plusMaxUploadMb = 100;
-  static const int licenseDefaultMonths = 12;
-  static const int licenseMaxMonths = 36;
-  static const int licenseMoveCooldownDays = 30;
-  static const int licenseReminderFirstDays = 30;
-  static const int licenseReminderSecondDays = 7;
   static const int pinnedMessagesMax = 3;
   static const int deviceStaleDays = 60;
   static const int notificationBodyMax = 140;
@@ -448,64 +442,6 @@ enum DevicePlatform {
   }
 }
 
-enum PlanTier {
-  free('free'),
-  plus('plus');
-
-  const PlanTier(this.value);
-
-  /// The string stored in Firestore.
-  final String value;
-
-  static PlanTier? tryParse(String? value) {
-    for (final e in values) {
-      if (e.value == value) return e;
-    }
-    return null;
-  }
-}
-
-enum PlanFeature {
-  editMessages('editMessages'),
-  extraReactions('extraReactions'),
-  chatTheme('chatTheme'),
-  pinMessages('pinMessages'),
-  attendanceExport('attendanceExport'),
-  brandedInvite('brandedInvite'),
-  moreStorage('moreStorage');
-
-  const PlanFeature(this.value);
-
-  /// The string stored in Firestore.
-  final String value;
-
-  static PlanFeature? tryParse(String? value) {
-    for (final e in values) {
-      if (e.value == value) return e;
-    }
-    return null;
-  }
-}
-
-enum LicenseSource {
-  grant('grant'),
-  stripe('stripe'),
-  appStore('appStore'),
-  play('play');
-
-  const LicenseSource(this.value);
-
-  /// The string stored in Firestore.
-  final String value;
-
-  static LicenseSource? tryParse(String? value) {
-    for (final e in values) {
-      if (e.value == value) return e;
-    }
-    return null;
-  }
-}
-
 enum NotifyKind {
   message('message'),
   reply('reply'),
@@ -515,7 +451,7 @@ enum NotifyKind {
   guardianApproved('guardianApproved'),
   playerAdded('playerAdded'),
   contentReported('contentReported'),
-  planReminder('planReminder'),
+  storageWarning('storageWarning'),
   pollCreated('pollCreated'),
   pollClosed('pollClosed'),
   eventCreated('eventCreated'),
@@ -649,7 +585,7 @@ const Map<NotifyKind, NotifyKindInfo> notifyKindInfo = {
     center: true,
     channel: NotifyChannel.team,
   ),
-  NotifyKind.planReminder: NotifyKindInfo(
+  NotifyKind.storageWarning: NotifyKindInfo(
     important: true,
     pref: null,
     center: true,

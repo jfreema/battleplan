@@ -508,9 +508,9 @@ groups/{groupId}
               membersCanInvite, allowMaybe, defaultReminderOffsets: [minutes] }
   memberCount, playerCount                              # cache ← groupMembers, players
   lastMessageAt, lastMessagePreview: { authorName, text, type }   # cache ← messages
-  storageBytes, storageQuotaBytes                       # cache ← Storage triggers; quota (set by plan)
-  plan: { tier: 'free' | 'plus', endsAt?, licenseId?, holderId? }   # cache ← licenses; Functions only (§6.11)
-  chatTheme?: { bubbleColor, background: 'plain' | 'pattern' | 'photo', backgroundPath? }   # Plus (PLAN-8)
+  storageBytes, storageQuotaBytes                       # cache ← Storage triggers; limit 500 MB unless a super admin changes it (§6.11)
+  storageAlert: 'none' | 'warn' | 'full'                # Functions only; which storage notification was last sent (STORE-3, STORE-4)
+  chatTheme?: { bubbleColor, background: 'plain' | 'pattern' | 'photo', backgroundPath? }   # CHAT-18
   archivedAt?, suspendedAt?, createdAt, updatedAt, schemaVersion
 
 groupMembers/{groupId}_{uid}
@@ -539,11 +539,6 @@ invites/{code}
   groupId, type: 'link' | 'email', email?, role: 'member'
   createdBy, expiresAt?, maxUses?, useCount, revokedAt?, createdAt
 
-licenses/{licenseId}                                    # Plus licenses (§6.11); Functions only
-  holderId, groupId?, tier: 'plus', startsAt, endsAt
-  source: 'grant' | 'stripe' | 'appStore' | 'play', grantedBy?, externalId?   # store transaction or subscription ID
-  lastMovedAt?, revokedAt?, remindedAt: { d30?, d7? }, createdAt
-
 messages/{messageId}
   groupId, authorId, authorName, authorPhotoPath, authorPlayerSummary?   # snapshot; rules check it
   type: 'text' | 'image' | 'poll' | 'event' | 'system'
@@ -551,7 +546,7 @@ messages/{messageId}
   attachments: [{ path, thumbPath, contentType, width, height, size }]   # ≤ 10
   replyToId?, replyPreview?: { authorName, text, type, deleted }        # cache ← messages
   pollId?, eventId?, systemEvent?: { kind, actorId, targetId }
-  reactions: { <uid>: 'like' | 'love' | 'dislike' | 'laugh' | <Plus reactions> }   # one per person (PLAN-7)
+  reactions: { <uid>: <one of the 16 reactions> }       # one per person (CHAT-6)
   editedAt?, deletedAt?, deletedBy?, deletedReason?: 'author' | 'admin'
   createdAt
 
@@ -669,8 +664,8 @@ function isMember(g)     { return signedIn() && exists(memberPath(g))
                                   && get(/databases/$(database)/documents/groups/$(g)).data.suspendedAt == null; }
 function isAdmin(g)      { return isMember(g) && get(memberPath(g)).data.role in ['owner', 'admin']; }
 function isGuardian(p)   { return exists(/databases/$(database)/documents/playerGuardians/$(p + '_' + request.auth.uid)); }
-function isPlus(g)       { let plan = get(/databases/$(database)/documents/groups/$(g)).data.get('plan', {});
-                           return plan.get('tier', 'free') == 'plus' && plan.endsAt > request.time; }   // §6.11
+function hasRoom(g)      { let t = get(/databases/$(database)/documents/groups/$(g)).data;
+                           return t.storageBytes < t.storageQuotaBytes; }   // STORE-4: new events need room too (§6.11)
 ```
 
 | Collection | Read | Client write |
@@ -755,7 +750,7 @@ functions/src/
 ├── notify/             # the only code that writes notifications or calls FCM (§6.5)
 ├── links/              # the only code that builds URLs (§6.6)
 └── accounts/  teams/  players/  invites/  chat/  polls/  schedule/
-    documents/  safety/  plans/  admin/  ops/
+    documents/  safety/  admin/  ops/
     ├── handlers.ts     # thin entry points: validate → authorize → call the service
     └── service.ts      # business logic; the only code that writes this domain's collections
 ```
@@ -788,7 +783,7 @@ All callables:
 | polls | `closePoll` |
 | schedule | `saveEventSeries`: create, edit, cancel, or delete a repeating series, or one event in it (`scope: 'this' \| 'following'`). Expands the rule into individual events in the series' time zone, minus `skipDates`. "This and following" splits the series: the old one ends the day before, and a new one starts from the chosen event. Events that keep their date keep their RSVPs; removed events' RSVPs are deleted; past events are never touched. Posts one event card and sends one `notify` per call, not per event, and sets `nextReminderAt` itself. |
 | safety | `reportContent` |
-| plans | `moveLicense` (the holder moves their license to another team they own or admin; once every 30 days). Super admins: `adminGrantLicense` (a person and a team, 12 months by default), `adminExtendLicense`, `adminMoveLicense`, `adminRevokeLicense`. Later, `stripeWebhook` (HTTP) creates and renews licenses from checkout (PLAN-13). Every change rewrites `groups.plan` and the storage quota through `plans.applyPlan()` and writes the audit log. |
+| storage (teams) | `listTeamMedia` and `deleteTeamMedia` (team admins: every file under `groups/{g}/` with what it belongs to, and deleting one, STORE-5); `adminSetGroupQuota` (super admins, STORE-6). |
 | admin | `adminCreateUser`, `adminSetUserDisabled`, `adminSetSuperAdmin`, `adminRevokeSessions`, `adminSendPasswordReset`, `adminSetGroupSuspended`, `adminSetGroupQuota`, `adminOpenGroup` (records a super admin viewing a team), `adminArchiveGroup`, `adminDeleteGroup`, `adminResolveReport`, `adminUpdateConfig`. Each checks the `superAdmin` claim. |
 | ops | `logClientError` (sampled web error reports, §9) |
 
@@ -799,7 +794,7 @@ These are the only triggers, and they react only to writes clients make directly
 | Trigger | Writes | Exits early when |
 |---|---|---|
 | `messages` created | `groups.lastMessageAt`/`lastMessagePreview`; `replyPreview` on the new message; `notify` for text, image, and poll messages (event cards and system messages notify through their own domain) | — |
-| `messages` updated | `replyPreview` on replies to an edited message (PLAN-6) | `text` unchanged |
+| `messages` updated | `replyPreview` on replies to an edited message (CHAT-15) | `text` unchanged |
 | `pollVotes` written | `polls.voteCounts`, `voterCount` | — |
 | `rsvps` written | `events.rsvpCounts` (which fires the `events` trigger, which exits early) | — |
 | `events` written | Create: event card in chat. Create, time or place change, cancel: `notify`. Any change: `nextReminderAt`. Delete: the event's `rsvps`. | only `rsvpCounts` or `nextReminderAt` changed; the event has a `seriesId` (`saveEventSeries` did the follow-up) |
@@ -815,7 +810,7 @@ Unit tests cover every early-exit condition.
 | Job | Every | Does |
 |---|---|---|
 | `tick` | 5 min | Send due event reminders (`nextReminderAt <= now`); auto-close polls past `closesAt` and notify voters |
-| `dailyCleanup` | 24 h | Expire invites; prune device tokens not updated in 60 days; reconcile `storageBytes`; compare recently active accounts' sign-in methods with `users.signInMethods` (§6.1); end Plus on teams whose license ended and send the 30- and 7-day reminders (§6.11) |
+| `dailyCleanup` | 24 h | Expire invites; prune device tokens not updated in 60 days; reconcile `storageBytes`; compare recently active accounts' sign-in methods with `users.signInMethods` (§6.1); update each team's storage warning (§6.11) |
 
 **Operations**
 
@@ -861,7 +856,7 @@ Plain chat messages don't create center items; unread counts cover them. Replies
 - `body` = "Alex: See you at 6", truncated to ~140 chars.
 - `data` = `{ route, groupId, kind, nkey }` (all strings). The app's center item for this push is `notifications/{nkey}_{myUid}`, so one multicast serves everyone.
 - Grouping (NOTIF-8): iOS stacks by team with `thread-id = groupId`. Android and web don't get a `tag`, because a tag *replaces* the previous notification instead of stacking; the OS bundles Battleplan's notifications instead.
-- Android channel by kind (`team` covers added to a team, made admin, guardian requests, reports, and Plus reminders). Web gets `fcmOptions.link = https://<host><route>`, which the service worker opens on click.
+- Android channel by kind (`team` covers added to a team, made admin, guardian requests, reports, and storage warnings). Web gets `fcmOptions.link = https://<host><route>`, which the service worker opens on click.
 
 **In the app**
 
@@ -983,37 +978,22 @@ Default to **`us-central1`** for Firestore, Functions, and Storage, assuming mos
 
 If most teams will be outside the US, pick the nearest single region instead.
 
-### 6.11 Plans and entitlements
+### 6.11 Team storage and the Media section
 
-Teams are on **Free** or **Plus** (SPEC §6.14; the feature list is [PLANS.md](PLANS.md)). The design keeps one question cheap everywhere: *is this team on Plus right now?*
+Every feature is free for every team (SPEC §6.14, [PLANS.md](PLANS.md)); storage is the one thing limited per team.
 
-**Licenses are the source of truth; `groups.plan` is the cache.**
+**Counting.** `groups.storageBytes` is kept by the Storage triggers (§6.4) and recomputed daily; `groups.storageQuotaBytes` starts at 500 MB (`Limits.defaultStorageQuotaMb`) and only `adminSetGroupQuota` (super admins, audited, up to `Limits.storageQuotaMaxMb`) changes it. The option isn't shown to anyone but super admins.
 
-- A `licenses` document is a span of Plus time held by a person (`holderId`) and applied to at most one team (`groupId`). Only Functions write it.
-- `plans.applyPlan(groupId)` is the one function that turns licenses into a team's plan. It finds the team's active license and writes `groups.plan` (`tier`, `endsAt`, `licenseId`, `holderId`) and `storageQuotaBytes` (5 GB on Free, 25 GB on Plus, from shared constants). Every grant, extension, move, revoke, renewal, and expiry calls it, so the cache can't drift.
-- Rules and the app read only `groups.plan`, which they already have: the app watches the group, and rules already `get()` the group for `active(g)`, so `isPlus(g)` costs no extra read in most rules.
-- `isPlus(g)` checks `endsAt > request.time` as well as the tier, so a team stops being Plus the moment its license ends even if `dailyCleanup` hasn't run yet.
+**Full means no new files, no attachments, and no new events (STORE-4).**
 
-**One feature list.** `shared/constants.json` gains `planFeatures` (for example `editMessages`, `extraReactions`, `chatTheme`, `pinMessages`, `attendanceExport`, `brandedInvite`) and per-plan limits (`storageQuotaGb`, `maxDocumentMb`). The generator emits them for Dart and TypeScript, so the app's badges, the rules, and Functions use the same names and numbers.
+- Storage rules refuse every upload under `groups/{g}/` when `storageBytes >= storageQuotaBytes` (`underQuota`), and files over 10 MB (`Limits.maxUploadMb`; images 10 MB).
+- Firestore rules' `hasRoom(g)` is the same test; event creation (M6) requires it, so scheduling new events stops too.
+- Nothing else is blocked: messages without photos, reactions, polls, RSVPs, and edits keep working. Nothing is deleted automatically.
+- The app reads the same two numbers from the group it already watches, disables the + menu, logo, background, and New event, and shows one message for all of them.
 
-**Enforcement, by feature.**
+**Warnings (STORE-3).** After each Storage trigger and the daily recount, `teams.updateStorageAlert(g)` compares usage with 90% (`Limits.storageWarnPercent`) and 100%. When the level rises (none → warn → full), it records `groups.storageAlert` and notifies the team's admins once (`storageWarning` kind, a center item and a push). When usage falls back, the level drops without a notification, so the next rise notifies again.
 
-| Feature | Enforced by |
-|---|---|
-| Edit messages (PLAN-6) | Rules: the author may update `text` and `editedAt` (set to `request.time`) only when `isPlus(g)`, the message isn't deleted, and the text is ≤ 4,000 characters. The `messages` updated trigger rewrites `replyPreview` on replies (exits early unless `text` changed). |
-| More reactions (PLAN-7) | Rules: reaction values outside the free four are allowed only when `isPlus(g)`. |
-| Chat look (PLAN-8) | Rules: admins may write `groups.chatTheme` only when `isPlus(g)`; the background photo lives at `groups/{g}/theme/` in Storage. On Free, the app ignores `chatTheme` but keeps it. |
-| Pins (PLAN-9) | Rules on `groups.pinnedMessageIds` (≤ 3), admins and `isPlus(g)`. |
-| Storage and upload size (PLAN-11) | `applyPlan` sets `storageQuotaBytes`; Storage rules read the plan for the 100 MB document limit. |
-| Attendance export, branded invite (PLAN-10, PLAN-12) | The callables that produce them check the plan. |
-
-**When Plus ends** nothing is deleted. `applyPlan` writes `tier: 'free'` and the Free quota, and the rules above simply stop allowing Plus writes. Data written under Plus (edited text, extra reactions, the theme, pins) stays readable.
-
-**Moving a license.** `moveLicense` runs in a transaction: the caller must hold the license, be an owner or admin of the target team, the target must have no active license, and `lastMovedAt` must be at least 30 days ago (super admins skip this). It sets the license's `groupId`, then calls `applyPlan` for both teams.
-
-**Payments.** During the beta there's no checkout: people pay outside the app and a super admin grants the license (SPEC Q19). Apple won't let the iPhone app unlock features bought elsewhere unless they're also sold by in-app purchase (guideline 3.1.3(b)), so before Plus ships in the App Store the apps add in-app purchase (PLAN-14): StoreKit and Google Play Billing through the `in_app_purchase` plugin, with a `verifyPurchase` callable that validates the receipt with Apple or Google, creates or extends the license (`source: 'appStore' | 'play'`), and server notifications (App Store Server Notifications, Google real-time developer notifications) that renew or end it. Self-serve web checkout (PLAN-13) uses Stripe Checkout with a `stripeWebhook` HTTP function on `checkout.session.completed` and `invoice.paid`. Every source is keyed by its store transaction or subscription ID, so retried notifications don't double up, and every source ends in `applyPlan`.
-
-**In the app.** `Group.plan` is mapped from the group document. `PlanFeature` (generated) and `group.has(PlanFeature.editMessages)` decide whether a control is live or shows the **Plus** badge with an explanation sheet. Team settings has a **Plan** section (PLAN-4), and the admin panel's team detail has grant, extend, move, and revoke (ADMIN-3).
+**Media (STORE-5).** `listTeamMedia(g)` (admins) lists every file under `groups/{g}/` from the bucket (path, size, content type, created), matched to what uses it: a chat photo (message ID and author), the team logo, the chat background, a document (M7), or nothing (an orphan). `deleteTeamMedia(g, path)` deletes one file and fixes what pointed at it: a chat photo is removed from its message's `attachments` (a message left with no text or photos becomes "Photo removed by a team admin"), the logo or background is cleared, and an orphan is just deleted. The Storage trigger then lowers `storageBytes`. Admin deletions are audited.
 
 ---
 
@@ -1350,10 +1330,11 @@ Each phase is incremental and reversible.
 | D32 | Each feature's repository providers are declared in its `application/providers.dart` and overridden with Firebase implementations in `app/providers.dart` | Presentation never imports `data/` or `app/`, and tests swap in fakes with the same overrides | — |
 | D33 | Facebook sign-in is deferred until after M8 (SPEC Q16) | Not needed for our team; skips the Meta app, App Review, and Limited Login work before launch. Google, Apple, and email cover sign-in, and Apple satisfies App Store guideline 4.8 | When teams ask for it |
 | D34 | On youth teams, team admins (coaches, staff) RSVP for themselves as `participantType: 'member'` on `rsvpFor: 'players'` events; counts keep players and adults apart (SPEC Q14) | Coaches need to know which coaches are coming too, and parents answer only for their kids, so their own RSVPs would be noise | If parents ask to RSVP for themselves |
-| D35 | Plus is per team, through licenses held by a person and movable between teams they admin; `groups.plan` caches the active license (SPEC §6.14, PLANS.md) | Matches how coaches pay (one person buys for a team) and lets a license follow a coach to next season's team; one cached field keeps every check cheap | Per-person plans or team bundles |
-| D36 | Plus features are enforced by rules and Functions from `groups.plan`, with `endsAt` checked at request time | A Free team can't use Plus by calling the database directly, and Plus ends on time without waiting for a job | — |
-| D37 | Ending Plus never deletes or hides data written under it | Teams don't lose content over a lapsed payment; resubscribing restores everything | — |
-| D38 | Super-admin grants during the beta; in-app purchase in both apps before Plus ships in the stores, plus Stripe Checkout on the web (SPEC Q19) | App Store guideline 3.1.3(b) lets the iPhone app unlock web-bought features only if they're also sold by in-app purchase, and 3.1.1 forbids license-key unlocks | If Apple's or Google's rules change |
+| D35 | ~~Plus is per team, through licenses held by a person and movable between teams they admin; `groups.plan` caches the active license (SPEC §6.14, PLANS.md)~~ Superseded by D39 (2026-10-12) | Matches how coaches pay (one person buys for a team) and lets a license follow a coach to next season's team; one cached field keeps every check cheap | — |
+| D36 | ~~Plus features are enforced by rules and Functions from `groups.plan`, with `endsAt` checked at request time~~ Superseded by D39 (2026-10-12) | A Free team can't use Plus by calling the database directly, and Plus ends on time without waiting for a job | — |
+| D37 | ~~Ending Plus never deletes or hides data written under it~~ Superseded by D39 (2026-10-12) | Teams don't lose content over a lapsed payment; resubscribing restores everything | — |
+| D38 | ~~Super-admin grants during the beta; in-app purchase in both apps before Plus ships in the stores, plus Stripe Checkout on the web (SPEC Q19)~~ Superseded by D39 (2026-10-12) | App Store guideline 3.1.3(b) lets the iPhone app unlock web-bought features only if they're also sold by in-app purchase, and 3.1.1 forbids license-key unlocks | — |
+| D39 | Everything is free with no ads; each team has a 500 MB storage limit (10 MB files) that only a super admin can change, unannounced; full storage stops uploads, attachments, and new events but nothing else (SPEC §6.14) | A paid tier meant store fees, Apple's in-app purchase rule (3.1.3(b)), and slower adoption; storage is the cost that grows per team | Ads, once adoption justifies them (with children's privacy rules) |
 
 ---
 

@@ -102,26 +102,9 @@ Last updated: 2026-10-11. Facebook sign-in moved to its own section after M8, an
 
 **M3 is done when** the CHAT acceptance criteria pass (SPEC §6.5).
 
-## Plus plan · after M3
+## Plus plan · removed
 
-The paid team plan (SPEC §6.14, [PLANS.md](PLANS.md)). These tasks are numbered after the original 156 so earlier numbers stay put.
-
-157. ✅ Plans in shared constants (`planFeatures`, per-plan storage and upload limits), `Group.plan` in the app, and the `isPlus` rules helper (PLAN-1).
-158. ✅ Licenses: `licenses` collection, `plans.applyPlan()`, and the super-admin callables to grant, extend, move, and revoke, with audit entries (PLAN-2). *Instead of a script, super admins grant, extend, and end Plus from Team settings until the admin panel's Plan section (M8) exists.*
-159. ✅ Moving a license to another team you admin, once every 30 days (PLAN-3).
-160. ✅ The plan in Team settings, the **Plus** badge, and the "What Plus adds" sheet (PLAN-4).
-161. ✅ Reminders 30 and 7 days before a license ends, and ending Plus in `dailyCleanup` (PLAN-5). *Tested on dev by running the job: a license 6 days out got its 7-day email, and a lapsed team went back to Free with the 5 GB quota. In-app notifications for reminders come with M4.*
-162. ✅ Edit messages, with "edited" and updated reply quotes (PLAN-6). *Tested on dev: an edit was refused on Free and allowed on Plus, another person couldn't edit it, and the reply's quote followed the new text.*
-163. ✅ 12 more reactions for Plus teams (PLAN-7). *Tested on dev: ⚾ was refused on Free and allowed on Plus; an unknown reaction was refused everywhere.*
-164. ✅ Chat look: bubble color and background (PLAN-8). *Tested on dev: refused on Free and for members, allowed for a Plus team's admin, and the chat showed the green bubbles and dot pattern.*
-165. ✅ 25 GB storage and 100 MB documents on Plus (PLAN-11). *`applyPlan` sets the quota (tested on dev with grants, moves, and expiry); Storage rules allow 100 MB documents only on Plus, ready for M7.*
-166. ✅ Rules and tests for every Plus feature, including a Free team trying each one directly. *`functions/test/rules/plans.test.ts`: 9 more rules tests (73 in all), covering Free teams, lapsed licenses, the wrong person, and bad values.*
-
-167. In-app purchase in the iPhone and Android apps, with receipt checks and store notifications that create, renew, and end licenses (PLAN-14). **Must ship before the iPhone app is in the App Store with Plus** (App Store guideline 3.1.3(b)); until then, Plus is granted by super admins during the beta. *Waits on the Apple membership (task 109) and the store products set up in App Store Connect and the Play Console.*
-
-Later, with v1.1: pinned messages (PLAN-9), attendance history and exports (PLAN-10), the branded invite page (PLAN-12), and self-serve checkout on the web (PLAN-13).
-
-**Plus is done when** the PLAN acceptance criteria pass (SPEC §6.14).
+Tasks 157 to 167 built a paid Plus tier on 2026-10-11 (licenses, grants, moving, reminders, and Plus-only features). It was dropped on 2026-10-12 in favor of free for everyone with no ads (SPEC Q4, ARCH D39); task 168 removes it. The features it gated (editing messages, 16 reactions, and the chat look) stay, free for every team. Task 167, in-app purchase, is no longer needed.
 
 ## M4 · Notifications
 
@@ -135,6 +118,19 @@ Later, with v1.1: pinned messages (PLAN-9), attendance history and exports (PLAN
 74. ✅ Turn on notifications for chat messages, replies, being added to a team, being made admin, guardian requests, and reports (NOTIF-2). *Also guardian approved and player added (PLAYER-3). A milestone review with independent skeptics confirmed 11 problems, all fixed with tests.*
 
 From here on, each feature ships with its own notifications.
+
+## Free for everyone and team storage · after M4
+
+SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
+
+168. Remove the paid tier: plans, licenses, the Plan section, Plus badges, Plus checks in rules and Functions, and license reminders. Editing, 16 reactions, and the chat look are free for every team.
+169. 500 MB per team and 10 MB files; the storage meter in Team settings; the 90% warning in the team and a notification to admins (STORE-1 to STORE-3).
+170. Full storage: uploads, attachments, and scheduling new events stop, with one message for all three; nothing else turns off and nothing is deleted (STORE-4). The `hasRoom` rule is ready for events in M6.
+171. Media for admins: every photo, attachment, document, logo, and chat background, largest first, with delete (STORE-5).
+172. The unannounced super-admin storage limit for one team (STORE-6), in Team settings until the admin panel (M8) has it.
+173. Rules and tests for storage limits and Media.
+
+**Done when** the STORE acceptance criteria pass (SPEC §6.14).
 
 ## M5 · Polls
 
@@ -252,5 +248,6 @@ In SPEC §9's priority order.
 154. Quiet hours, email digests, SMS (NOTIF-13).
 155. Per-team profanity filter (SAFE-7), sooner if App Review asks.
 156. Cloud SQL, if usage meets the ARCH §12.1 triggers.
+174. **Ads, once adoption justifies them** (SPEC STORE-7, [PLANS.md](PLANS.md)). Youth teams mean parents and guardians use the app for children, so the plan must address children's privacy rules first: COPPA in the US (no behavioral ads to children, verifiable parental consent for any data from under-13s), and Google Play's Families policy (certified ad SDKs only, no personalized ads, if the app targets children or joins the Families program). Likely shape: contextual, non-personalized ads on adult teams only, with the Privacy Policy, store privacy labels, and the Data safety form updated first.
 
 Things that are out of scope for v1 entirely are listed in SPEC §11.
