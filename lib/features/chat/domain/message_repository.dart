@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/polls/domain/poll.dart';
 
 /// Owns `messages` (ARCH §5.3). The newest page is live; older pages are
 /// one-shot reads, so a chat with years of history opens as fast as a new
@@ -52,6 +53,10 @@ abstract interface class MessageRepository {
     String caption = '',
     String? replyToId,
   });
+
+  /// Posts a poll and its chat message together (POLL-1); they share an ID.
+  /// Like text, it shows at once and goes out when the connection allows.
+  Future<void> sendPoll(GroupId groupId, UserId uid, NewPoll poll);
 
   /// A URL to show a message photo.
   Future<String?> attachmentUrl(String path);

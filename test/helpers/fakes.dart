@@ -25,6 +25,8 @@ import 'package:battleplan/features/notifications/domain/notification_repository
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
+import 'package:battleplan/features/polls/domain/poll.dart';
+import 'package:battleplan/features/polls/domain/poll_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:battleplan/features/safety/domain/safety_repository.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
@@ -974,6 +976,48 @@ class FakeMessageRepository implements MessageRepository {
 
   final List<int> photoBatches = [];
 
+  /// Where posted polls go; pumpApp links it to the fake poll repository.
+  FakePollRepository polls = FakePollRepository();
+
+  /// Set to make posting a poll fail, as a refusal would.
+  bool failPolls = false;
+
+  @override
+  Future<void> sendPoll(GroupId groupId, UserId uid, NewPoll poll) async {
+    if (failPolls) throw const PermissionDenied('poll');
+    final p = poll.tidy;
+    final id = 'poll${polls.polls.length}';
+    polls.put(
+      Poll(
+        id: PollId(id),
+        groupId: groupId,
+        createdBy: uid.value,
+        question: p.question,
+        options: [
+          for (final (i, text) in p.options.indexed)
+            PollOption(id: '$i', text: text),
+        ],
+        allowMultiple: p.allowMultiple,
+        anonymous: p.anonymous,
+        closesAt: p.closesAt,
+      ),
+    );
+    messages.insert(
+      0,
+      Message(
+        id: id,
+        groupId: groupId,
+        authorId: uid.value,
+        authorName: uid.value,
+        type: MessageType.poll,
+        text: p.question,
+        pollId: id,
+        createdAt: DateTime.now(),
+      ),
+    );
+    _changes.add(null);
+  }
+
   /// How many uploads fail, as if offline, before they work again.
   int failUploads = 0;
 
@@ -1277,5 +1321,71 @@ class FakeMediaRepository implements MediaRepository {
   Future<void> delete(GroupId groupId, String path) async {
     deleted.add(path);
     items.removeWhere((i) => i.path == path);
+  }
+}
+
+/// Polls and votes in memory. Votes recount the poll at once, as the
+/// server's trigger does a moment later.
+class FakePollRepository implements PollRepository {
+  final Map<String, Poll> polls = {};
+
+  /// Votes by poll ID, then uid.
+  final Map<String, Map<String, Set<String>>> votes = {};
+  final List<String> closed = [];
+  final _changes = StreamController<void>.broadcast();
+
+  /// Adds or replaces a poll, and tells anyone watching.
+  void put(Poll poll) {
+    polls[poll.id.value] = poll;
+    _changes.add(null);
+  }
+
+  Stream<T> _live<T>(T Function() read) async* {
+    yield read();
+    await for (final _ in _changes.stream) {
+      yield read();
+    }
+  }
+
+  @override
+  Stream<Poll?> watchPoll(PollId pollId) => _live(() => polls[pollId.value]);
+
+  @override
+  Stream<Set<String>> watchMyVote(PollId pollId, UserId uid) =>
+      _live(() => votes[pollId.value]?[uid.value] ?? const {});
+
+  @override
+  Future<void> setVote(Poll poll, UserId uid, Set<String> optionIds) async {
+    final current = polls[poll.id.value]!;
+    if (current.isClosedAt(DateTime.now())) {
+      throw const PermissionDenied('closed');
+    }
+    final byUid = votes.putIfAbsent(poll.id.value, () => {});
+    if (optionIds.isEmpty) {
+      byUid.remove(uid.value);
+    } else {
+      byUid[uid.value] = optionIds;
+    }
+    put(
+      current.copyWith(
+        voteCounts: {
+          for (final o in current.options)
+            o.id: byUid.values.where((v) => v.contains(o.id)).length,
+        },
+        voterCount: byUid.length,
+      ),
+    );
+  }
+
+  @override
+  Future<List<PollVote>> loadVotes(PollId pollId) async => [
+    for (final e in (votes[pollId.value] ?? const {}).entries)
+      PollVote(uid: e.key, optionIds: e.value),
+  ];
+
+  @override
+  Future<void> closePoll(PollId pollId) async {
+    closed.add(pollId.value);
+    put(polls[pollId.value]!.copyWith(closedAt: DateTime.now()));
   }
 }

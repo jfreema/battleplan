@@ -7,6 +7,7 @@ import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
+import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
@@ -15,6 +16,7 @@ import 'package:battleplan/features/chat/presentation/message_tile.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/groups.dart';
+import 'package:battleplan/features/polls/polls.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -365,6 +367,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             onTakePhoto: picker.canUseCamera
                 ? () => unawaited(_takePhoto(picker, controller))
                 : null,
+            // Polls (POLL-1) for admins, and for members if the team allows
+            // it (TEAM-5). Full storage doesn't stop them (STORE-4).
+            onCreatePoll:
+                (membership?.isAdmin ?? false) ||
+                    (group?.settings.membersCanCreatePolls ?? false)
+                ? () => unawaited(_createPoll(controller))
+                : null,
             onAttachBlocked: storageFull
                 ? () => showStorageFull(context)
                 : null,
@@ -392,6 +401,15 @@ extension on _ChatScreenState {
           for (final p in photos) (bytes: p.bytes, contentType: p.contentType),
         ])
         .catchError((Object _) {});
+  }
+
+  Future<void> _createPoll(ChatMessages controller) async {
+    final poll = await showCreatePoll(context);
+    if (poll == null || !mounted) return;
+    final l10n = AppLocalizations.of(context);
+    await controller.sendPoll(poll).catchError((Object _) {
+      if (mounted) showAppSnackBar(context, l10n.pollSendFailed);
+    });
   }
 
   Future<void> _takePhoto(PhotoPicker picker, ChatMessages controller) async {

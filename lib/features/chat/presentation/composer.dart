@@ -15,6 +15,7 @@ class Composer extends StatefulWidget {
     required this.onSend,
     this.onPickPhotos,
     this.onTakePhoto,
+    this.onCreatePoll,
     this.onAttachBlocked,
     this.replyingTo,
     this.onCancelReply,
@@ -27,13 +28,16 @@ class Composer extends StatefulWidget {
 
   final void Function(String text) onSend;
 
-  /// The + menu (CHAT-2): Photo library, and Camera on phones. Polls join
-  /// it in M5.
+  /// The + menu (CHAT-2): Photo library, Camera on phones, and Poll for
+  /// people allowed to make polls (POLL-1).
   final VoidCallback? onPickPhotos;
   final VoidCallback? onTakePhoto;
+  final VoidCallback? onCreatePoll;
 
-  /// When set, attaching is off (the team's storage is full, STORE-4): +
-  /// calls this to say why instead of opening the menu. Text still sends.
+  /// When set, attaching photos is off (the team's storage is full,
+  /// STORE-4): the photo items call this to say why. Polls and text still
+  /// work, so + opens the menu when there's a poll to make, and otherwise
+  /// says why straight away.
   final VoidCallback? onAttachBlocked;
 
   @override
@@ -91,7 +95,8 @@ class _ComposerState extends State<Composer> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            if (widget.onAttachBlocked case final blocked?)
+            if (widget.onAttachBlocked case final blocked?
+                when widget.onCreatePoll == null)
               IconButton(
                 tooltip: l10n.addToMessage,
                 onPressed: blocked,
@@ -107,7 +112,7 @@ class _ComposerState extends State<Composer> {
                 onSelected: (action) => action(),
                 itemBuilder: (_) => [
                   PopupMenuItem(
-                    value: widget.onPickPhotos,
+                    value: widget.onAttachBlocked ?? widget.onPickPhotos,
                     child: ListTile(
                       leading: const Icon(AppIcons.photo),
                       title: Text(l10n.photoLibrary),
@@ -115,10 +120,18 @@ class _ComposerState extends State<Composer> {
                   ),
                   if (widget.onTakePhoto case final take?)
                     PopupMenuItem(
-                      value: take,
+                      value: widget.onAttachBlocked ?? take,
                       child: ListTile(
                         leading: const Icon(AppIcons.camera),
                         title: Text(l10n.camera),
+                      ),
+                    ),
+                  if (widget.onCreatePoll case final poll?)
+                    PopupMenuItem(
+                      value: poll,
+                      child: ListTile(
+                        leading: const Icon(AppIcons.poll),
+                        title: Text(l10n.pollLabel),
                       ),
                     ),
                 ],

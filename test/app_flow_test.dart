@@ -692,7 +692,7 @@ void main() {
           (bytes: tinyPng, contentType: 'image/png'),
         ]),
       );
-      await tester.tap(find.byTooltip('Add photos'));
+      await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Photo library'));
       await tester.pumpAndSettle();
@@ -1008,11 +1008,14 @@ void main() {
       const full =
           'Storage is full. Uploads, attachments, and scheduling new events '
           'are disabled until storage is freed up.';
-      // The banner says it once; + says it again instead of the menu.
+      // The banner says it once; Photo library says it again instead of
+      // opening the picker. Polls still work (STORE-4).
       expect(find.text(full), findsOneWidget);
-      await tester.tap(find.byTooltip('Add photos'));
+      await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
-      expect(find.text('Photo library'), findsNothing);
+      expect(find.text('Poll'), findsOneWidget);
+      await tester.tap(find.text('Photo library'));
+      await tester.pumpAndSettle();
       expect(find.text(full), findsNWidgets(2));
       expect(picker.opened, 0);
       expect(repo.photoBatches, isEmpty);
@@ -1053,7 +1056,7 @@ void main() {
           'Storage is full. Uploads, attachments, and scheduling new events '
           'are disabled until storage is freed up.';
       expect(find.text(full), findsNothing);
-      await tester.tap(find.byTooltip('Add photos'));
+      await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Photo library'));
       await tester.pumpAndSettle();
@@ -1086,7 +1089,7 @@ void main() {
       const full =
           'Storage is full. Uploads, attachments, and scheduling new events '
           'are disabled until storage is freed up.';
-      await tester.tap(find.byTooltip('Add photos'));
+      await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Photo library'));
       await tester.pumpAndSettle();

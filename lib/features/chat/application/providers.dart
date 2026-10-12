@@ -6,6 +6,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -256,6 +257,15 @@ class ChatMessages extends _$ChatMessages {
     );
     state = state.copyWith(queued: [...state.queued, item]);
     return _sendText(item);
+  }
+
+  /// Posts a poll (POLL-1), spaced from other sends like a message. Throws
+  /// if the server refuses it, so the chat can say it didn't post.
+  Future<void> sendPoll(NewPoll poll) {
+    final uid = ref.read(authUserProvider).value?.uid;
+    if (uid == null) return Future.value();
+    final repo = ref.read(messageRepositoryProvider);
+    return _enqueue(() => repo.sendPoll(groupId, UserId(uid), poll));
   }
 
   /// Tries a refused message again.

@@ -20,6 +20,7 @@ import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/polls/polls.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -143,7 +144,10 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final ok = await showConfirmDialog(
       context,
       title: l10n.deleteMessageTitle,
-      message: l10n.deleteMessageBody,
+      // Deleting a poll's message deletes the poll (POLL-5).
+      message: widget.message.type == MessageType.poll
+          ? l10n.deletePollBody
+          : l10n.deleteMessageBody,
       confirmLabel: l10n.delete,
       cancelLabel: l10n.cancel,
       destructive: true,
@@ -415,17 +419,30 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               child: StoredPhoto(attachment: m.attachments[i]),
             ),
           );
-    final bubble = Column(
-      crossAxisAlignment: mine
-          ? CrossAxisAlignment.end
-          : CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ?photos,
-        if (photos != null && hasText) const SizedBox(height: 2),
-        if (photos == null || hasText || quote != null) textBubble,
-      ],
-    );
+    // A poll shows as its card (POLL-2, CHAT-11); its text is the question,
+    // which the card shows itself.
+    final isPoll = m.type == MessageType.poll && !deleted;
+    final bubble = isPoll
+        ? Column(
+            crossAxisAlignment: mine
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PollCard(pollId: PollId(m.pollId ?? m.id), groupId: m.groupId),
+            ],
+          )
+        : Column(
+            crossAxisAlignment: mine
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ?photos,
+              if (photos != null && hasText) const SizedBox(height: 2),
+              if (photos == null || hasText || quote != null) textBubble,
+            ],
+          );
 
     final header = widget.startsGroup && !mine
         ? Padding(
@@ -508,7 +525,8 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             // on the web. Double-tap loves it (CHAT-6).
             onLongPress: deleted ? null : () => unawaited(_openMenu()),
             onSecondaryTap: deleted ? null : () => unawaited(_openMenu()),
-            onDoubleTap: deleted || kIsWeb
+            // Not on polls: waiting for a second tap would hold up voting.
+            onDoubleTap: deleted || kIsWeb || isPoll
                 ? null
                 : () => fireAndForget(_react(Reaction.love)),
             child: Transform.translate(

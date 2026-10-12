@@ -6,6 +6,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
+import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -67,6 +68,7 @@ class FirestoreMessageRepository implements MessageRepository {
       type: MessageType.tryParse(x['type'] as String?) ?? MessageType.text,
       text: x['text'] as String? ?? '',
       replyToId: x['replyToId'] as String?,
+      pollId: x['pollId'] as String?,
       replyPreview: switch (x['replyPreview']) {
         final Map<String, dynamic> p => ReplyPreview(
           authorName: p['authorName'] as String? ?? '',
@@ -199,6 +201,43 @@ class FirestoreMessageRepository implements MessageRepository {
     ],
   );
 
+  @override
+  Future<void> sendPoll(GroupId groupId, UserId uid, NewPoll poll) {
+    final ref = _db.collection(Collections.messages).doc();
+    final p = poll.tidy;
+    return _post(
+      groupId,
+      uid,
+      ref,
+      type: MessageType.poll,
+      // The message's text is the question, so previews, quotes, and the
+      // notification read it (the rules check they match).
+      text: p.question,
+      pollId: ref.id,
+      // The poll is written in the same batch (ARCH §6.3).
+      also: (batch) =>
+          batch.set(_db.collection(Collections.polls).doc(ref.id), {
+            'groupId': groupId.value,
+            'messageId': ref.id,
+            'createdBy': uid.value,
+            'question': p.question,
+            'options': [
+              for (final (i, text) in p.options.indexed)
+                {'id': '$i', 'text': text},
+            ],
+            'allowMultiple': p.allowMultiple,
+            'anonymous': p.anonymous,
+            'closesAt': p.closesAt == null
+                ? null
+                : Timestamp.fromDate(p.closesAt!),
+            'closedAt': null,
+            'voteCounts': <String, int>{},
+            'voterCount': 0,
+            'createdAt': FieldValue.serverTimestamp(),
+          }),
+    );
+  }
+
   /// A photo's pixel size, read from its bytes.
   static Future<({int width, int height})> _dimensions(Uint8List bytes) async {
     try {
@@ -222,6 +261,8 @@ class FirestoreMessageRepository implements MessageRepository {
     required String text,
     List<Map<String, Object?>> attachments = const [],
     String? replyToId,
+    String? pollId,
+    void Function(WriteBatch batch)? also,
   }) async {
     final memberRef = _db
         .collection(Collections.groupMembers)
@@ -242,6 +283,7 @@ class FirestoreMessageRepository implements MessageRepository {
           'text': text,
           'attachments': attachments,
           'replyToId': ?replyToId,
+          'pollId': ?pollId,
           'createdAt': FieldValue.serverTimestamp(),
         })
         // The message rate limit (ARCH §6.3): the same batch stamps the
@@ -252,6 +294,7 @@ class FirestoreMessageRepository implements MessageRepository {
           'lastPostedMessageId': ref.id,
           'lastReadAt': FieldValue.serverTimestamp(),
         });
+      also?.call(batch);
       // The message shows at once from the local write; this completes when
       // the server has it, so the caller can space the next send from then.
       await batch.commit();

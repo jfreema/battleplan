@@ -7,6 +7,7 @@ import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
+import 'package:battleplan/features/polls/application/providers.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:flutter/widgets.dart';
@@ -29,6 +30,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeInviteRepository? invites,
   FakePlayerRepository? playerRepo,
   FakeMessageRepository? messageRepo,
+  FakePollRepository? pollRepo,
   FakePhotoPicker? photoPicker,
   FakeSafetyRepository? safety,
   FakeMediaRepository? media,
@@ -42,6 +44,10 @@ Future<FakeLocalPrefs> pumpApp(
     ..devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final localPrefs = prefs ?? FakeLocalPrefs();
+  // Posting a poll goes through the message repository, which puts it where
+  // the poll repository reads it, as one batch does on the server.
+  final polls = pollRepo ?? FakePollRepository();
+  final messages = (messageRepo ?? FakeMessageRepository())..polls = polls;
   await tester.pumpWidget(
     ProviderScope(
       // A fresh app each call, so a test can pump twice (say, as an admin
@@ -71,9 +77,8 @@ Future<FakeLocalPrefs> pumpApp(
           safety ?? FakeSafetyRepository(),
         ),
         photoPickerProvider.overrideWithValue(photoPicker ?? FakePhotoPicker()),
-        messageRepositoryProvider.overrideWithValue(
-          messageRepo ?? FakeMessageRepository(),
-        ),
+        messageRepositoryProvider.overrideWithValue(messages),
+        pollRepositoryProvider.overrideWithValue(polls),
         inviteRepositoryProvider.overrideWithValue(
           invites ?? FakeInviteRepository(),
         ),

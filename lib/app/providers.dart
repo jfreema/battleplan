@@ -25,6 +25,8 @@ import 'package:battleplan/features/notifications/data/firestore_device_reposito
 import 'package:battleplan/features/notifications/data/firestore_notification_repository.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/data/firestore_player_repository.dart';
+import 'package:battleplan/features/polls/application/providers.dart';
+import 'package:battleplan/features/polls/data/firestore_poll_repository.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/data/firestore_safety_repository.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
@@ -72,6 +74,9 @@ List<Override> buildOverrides({
   ),
   messageRepositoryProvider.overrideWithValue(
     FirestoreMessageRepository(firestore, storage, functions),
+  ),
+  pollRepositoryProvider.overrideWithValue(
+    FirestorePollRepository(firestore, functions),
   ),
   inviteRepositoryProvider.overrideWithValue(
     FunctionsInviteRepository(functions),
