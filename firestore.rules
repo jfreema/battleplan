@@ -415,6 +415,7 @@ service cloud.firestore {
 
     // ---- Schedule ----------------------------------------------------------
 
+    // Written only by saveEventSeries; members read (ARCH §6.3).
     match /eventSeries/{seriesId} {
       allow get: if isMember(resource.data.groupId);
       allow list: if boundedQuery() && isMember(resource.data.groupId);
@@ -423,7 +424,95 @@ service cloud.firestore {
     match /events/{eventId} {
       allow get: if isMember(resource.data.groupId);
       allow list: if boundedQuery() && isMember(resource.data.groupId);
-      // Create and edit rules arrive with the schedule (M6).
+      // SCHED-3: one-off events, by admins or, when the team allows it, any
+      // member (Q12), on an active team with storage left (STORE-4). Counts
+      // start at zero; series, reminder, card, and cancel fields are unset.
+      allow create: if eventCreatorOk(incoming().groupId)
+        && hasRoom(incoming().groupId)
+        && incoming().createdBy == uid()
+        && incoming().createdAt == request.time
+        && incoming().rsvpFor == (get(groupPath(incoming().groupId)).data.get('teamType', 'adult') == 'youth'
+                                  ? 'players' : 'members')
+        && incoming().rsvpCounts == {'going': 0, 'maybe': 0, 'notGoing': 0}
+        && incoming().staffCounts == {'going': 0, 'maybe': 0, 'notGoing': 0}
+        && incoming().get('seriesId', null) == null
+        && incoming().get('seriesDate', null) == null
+        && incoming().get('seriesOverrides', null) == null
+        && incoming().get('nextReminderAt', null) == null
+        && incoming().get('messageId', null) == null
+        && incoming().get('canceledAt', null) == null
+        && incoming().get('canceledBy', null) == null
+        && validEvent(incoming());
+      // SCHED-6, SCHED-7: admins, or the creator while members may create
+      // events. Series events change only through saveEventSeries. Cancel
+      // sets canceledAt once (to now) and never clears it.
+      allow update: if eventEditorOk(resource.data)
+        && !changed().hasAny(['groupId', 'rsvpFor', 'createdBy', 'createdAt', 'rsvpCounts',
+            'staffCounts', 'nextReminderAt', 'messageId', 'seriesId', 'seriesDate',
+            'seriesOverrides', 'notifyTeam', 'postToChat'])
+        && (!changed().hasAny(['canceledAt', 'canceledBy'])
+            || (resource.data.get('canceledAt', null) == null
+                && incoming().canceledAt == request.time && incoming().canceledBy == uid()))
+        && validEvent(incoming());
+      allow delete: if eventEditorOk(resource.data);
+    }
+
+    function eventCreatorOk(g) {
+      return isMember(g) && active(g) && (isAdmin(g) || settings(g).membersCanCreateEvents == true);
+    }
+    function eventEditorOk(e) {
+      return e.get('seriesId', null) == null
+        && isMember(e.groupId) && active(e.groupId)
+        && (isAdmin(e.groupId)
+            || (e.createdBy == uid() && settings(e.groupId).membersCanCreateEvents == true));
+    }
+
+    // An event's own fields (SCHED-3, ARCH §6.2). Game fields only on games;
+    // all-day events carry their dates, timed ones none.
+    function validEvent(e) {
+      return e.keys().hasOnly(['groupId', 'type', 'title', 'description', 'location', 'allDay',
+            'startAt', 'endAt', 'startDate', 'endDate', 'timeZone', 'arriveMinutesBefore',
+            'opponent', 'homeAway', 'rsvpEnabled', 'rsvpFor', 'rsvpDeadline', 'reminderOffsets',
+            'notifyTeam', 'postToChat', 'seriesId', 'seriesDate', 'seriesOverrides', 'rsvpCounts',
+            'staffCounts', 'nextReminderAt', 'messageId', 'canceledAt', 'canceledBy', 'createdBy',
+            'createdAt', 'updatedAt'])
+        && e.type in ['game', 'practice', 'meeting', 'social', 'other']
+        && e.title is string && e.title.trim().size() > 0 && e.title.size() <= 100
+        && e.description is string && e.description.size() <= 2000
+        && validLocation(e.get('location', null))
+        && e.startAt is timestamp && e.endAt is timestamp && e.endAt > e.startAt
+        && (e.allDay == true
+            ? e.startDate is string && e.startDate.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+              && e.endDate is string && e.endDate.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+              && e.endDate >= e.startDate
+            : e.allDay == false && e.get('startDate', null) == null && e.get('endDate', null) == null)
+        && e.timeZone is string && e.timeZone.size() > 0 && e.timeZone.size() <= 64
+        && gameFieldsOk(e)
+        && e.rsvpEnabled is bool
+        && (e.get('rsvpDeadline', null) == null
+            || (e.rsvpDeadline is timestamp && e.rsvpDeadline < e.startAt))
+        && e.reminderOffsets is list && e.reminderOffsets.size() <= 6
+        && e.reminderOffsets.hasOnly([15, 60, 120, 1440, 2880, 10080])
+        && e.reminderOffsets.toSet().size() == e.reminderOffsets.size()
+        && e.notifyTeam is bool && e.postToChat is bool
+        && e.updatedAt == request.time;
+    }
+    // A place: a name or an address, or none at all.
+    function validLocation(l) {
+      return l == null
+        || (l.keys().hasOnly(['name', 'address'])
+            && l.get('name', '') is string && l.get('name', '').size() <= 100
+            && l.get('address', '') is string && l.get('address', '').size() <= 200
+            && (l.get('name', '').size() > 0 || l.get('address', '').size() > 0));
+    }
+    function gameFieldsOk(e) {
+      let arrive = e.get('arriveMinutesBefore', null);
+      let opponent = e.get('opponent', null);
+      let homeAway = e.get('homeAway', null);
+      return (e.type == 'game' || (arrive == null && opponent == null && homeAway == null))
+        && (arrive == null || (arrive is int && arrive >= 0 && arrive <= 240))
+        && (opponent == null || (opponent is string && opponent.size() <= 60))
+        && (homeAway == null || homeAway in ['home', 'away']);
     }
 
     // RSVP write rule (ARCH §6.3): exactly one document per event and
@@ -457,6 +546,9 @@ service cloud.firestore {
         && (isAdmin(g) || event.get('rsvpDeadline', null) == null
             || request.time < event.rsvpDeadline)
         && r.status in ['going', 'maybe', 'not_going']
+        // A note up to 200 characters; guest counts wait for v1.1 (SCHED-12).
+        && r.get('note', '') is string && r.get('note', '').size() <= 200
+        && r.get('guests', 0) == 0
         && r.respondedBy == uid()
         && r.updatedAt == request.time
         && r.eventStartAt == event.startAt

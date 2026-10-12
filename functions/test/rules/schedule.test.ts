@@ -1,0 +1,370 @@
+// Security rules for the schedule (ARCH §6.3; SPEC SCHED-3 to SCHED-7,
+// PLAYER-6, Q12, Q14, STORE-4, TEAM-9).
+// Run against the emulator: npm --prefix functions run emulators:test
+import {
+  assertFails,
+  assertSucceeds,
+  initializeTestEnvironment,
+  type RulesTestEnvironment,
+} from '@firebase/rules-unit-testing';
+import firebase from 'firebase/compat/app';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+
+type Db = firebase.firestore.Firestore;
+
+let env: RulesTestEnvironment;
+const now = () => firebase.firestore.FieldValue.serverTimestamp();
+const ts = (iso: string) => firebase.firestore.Timestamp.fromDate(new Date(iso));
+const as = (uid: string): Db => env.authenticatedContext(uid).firestore();
+const zeros = { going: 0, maybe: 0, notGoing: 0 };
+const START = '2030-06-01T23:00:00Z';
+
+/** A whole event as stored, for seeding. */
+const stored = (groupId: string, rsvpFor: string, extra: object = {}) => ({
+  groupId,
+  type: 'practice',
+  title: 'Practice',
+  description: '',
+  location: { name: 'Riverside Park', address: '' },
+  allDay: false,
+  startAt: ts(START),
+  endAt: ts('2030-06-02T00:30:00Z'),
+  startDate: null,
+  endDate: null,
+  timeZone: 'America/Chicago',
+  arriveMinutesBefore: null,
+  opponent: null,
+  homeAway: null,
+  rsvpEnabled: true,
+  rsvpFor,
+  rsvpDeadline: null,
+  reminderOffsets: [60],
+  notifyTeam: true,
+  postToChat: true,
+  seriesId: null,
+  seriesDate: null,
+  seriesOverrides: [],
+  rsvpCounts: zeros,
+  staffCounts: zeros,
+  nextReminderAt: null,
+  messageId: null,
+  canceledAt: null,
+  canceledBy: null,
+  createdBy: 'bob',
+  createdAt: ts('2026-10-01T00:00:00Z'),
+  updatedAt: ts('2026-10-01T00:00:00Z'),
+  ...extra,
+});
+
+// teamA (adult): alice owner, bob member. teamY (youth): carol admin, dan
+// guardian of emma, frank member. teamB: gina. Events: eA (by bob) and
+// eS (a series event) on teamA, eY on teamY, eGone (canceled) on teamA.
+async function seed(settings: object = {}) {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    const s = { membersCanCreateEvents: false, membersCanCreatePolls: true, membersCanUploadDocs: true, ...settings };
+    for (const [g, teamType] of [['teamA', 'adult'], ['teamY', 'youth'], ['teamB', 'adult']]) {
+      await db.doc(`groups/${g}`).set({ name: g, nameLower: g, teamType, settings: s, storageBytes: 0, storageQuotaBytes: 100 });
+    }
+    const member = (g: string, uid: string, role: string) =>
+      db.doc(`groupMembers/${g}_${uid}`).set({ groupId: g, uid, role, displayName: uid, photoPath: null });
+    await member('teamA', 'alice', 'owner');
+    await member('teamA', 'bob', 'member');
+    await member('teamY', 'carol', 'admin');
+    await member('teamY', 'dan', 'member');
+    await member('teamY', 'frank', 'member');
+    await member('teamB', 'gina', 'admin');
+    await db.doc('players/emma').set({ groupId: 'teamY', displayName: 'Emma', displayNameLower: 'emma' });
+    await db.doc('playerGuardians/emma_dan').set({ groupId: 'teamY', playerId: 'emma', uid: 'dan' });
+    await db.doc('events/eA').set(stored('teamA', 'members'));
+    await db.doc('events/eS').set(stored('teamA', 'members', { seriesId: 's1', seriesDate: '2030-06-01', createdBy: 'alice' }));
+    await db.doc('events/eY').set(stored('teamY', 'players', { createdBy: 'carol' }));
+    await db.doc('events/eGone').set(stored('teamA', 'members', { canceledAt: ts('2026-10-02T00:00:00Z'), canceledBy: 'alice' }));
+    await db.doc('eventSeries/s1').set({ groupId: 'teamA', timeZone: 'America/Chicago', createdBy: 'alice' });
+  });
+}
+
+beforeAll(async () => {
+  env = await initializeTestEnvironment({
+    projectId: 'demo-battleplan',
+    firestore: { rules: readFileSync(resolve(process.cwd(), '../firestore.rules'), 'utf8') },
+  });
+});
+
+beforeEach(async () => {
+  await env.clearFirestore();
+  await seed();
+});
+
+afterAll(async () => {
+  await env?.cleanup();
+});
+
+const archive = (g: string) =>
+  env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc(`groups/${g}`).update({ archivedAt: ts('2026-10-01T00:00:00Z') }));
+const allowMembers = () =>
+  env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ 'settings.membersCanCreateEvents': true }));
+
+describe('creating events (SCHED-3, Q12)', () => {
+  /** A new one-off event as the app writes it. */
+  const fresh = (uid: string, groupId = 'teamA', extra: object = {}) => {
+    const e: Record<string, unknown> = {
+      ...stored(groupId, groupId === 'teamY' ? 'players' : 'members'),
+      createdBy: uid,
+      createdAt: now(),
+      updatedAt: now(),
+      ...extra,
+    };
+    for (const k of ['seriesId', 'seriesDate', 'seriesOverrides', 'nextReminderAt', 'messageId', 'canceledAt', 'canceledBy']) {
+      if (!(k in extra)) delete e[k];
+    }
+    return e;
+  };
+  const create = (uid: string, groupId = 'teamA', extra: object = {}) => as(uid).doc('events/new').set(fresh(uid, groupId, extra));
+
+  it('lets admins create events, and members only when the team allows it', async () => {
+    await assertSucceeds(create('alice'));
+    await assertFails(as('bob').doc('events/new2').set(fresh('bob')));
+    await allowMembers();
+    await assertSucceeds(as('bob').doc('events/new2').set(fresh('bob')));
+  });
+
+  it('takes game fields, all-day dates, a deadline, and up to 6 reminders', async () => {
+    await assertSucceeds(
+      create('alice', 'teamA', {
+        type: 'game',
+        title: 'vs. Eagles',
+        opponent: 'Eagles',
+        homeAway: 'home',
+        arriveMinutesBefore: 30,
+        rsvpDeadline: ts('2030-06-01T12:00:00Z'),
+        reminderOffsets: [15, 60, 120, 1440, 2880, 10080],
+        seriesId: null,
+        nextReminderAt: null,
+      }),
+    );
+    await assertSucceeds(
+      as('alice').doc('events/allday').set(
+        fresh('alice', 'teamA', {
+          allDay: true,
+          startDate: '2030-06-01',
+          endDate: '2030-06-02',
+          startAt: ts('2030-06-01T05:00:00Z'),
+          endAt: ts('2030-06-03T05:00:00Z'),
+          location: null,
+        }),
+      ),
+    );
+  });
+
+  it('refuses bad fields', async () => {
+    const bad: object[] = [
+      { title: '' },
+      { title: 'x'.repeat(101) },
+      { description: 'x'.repeat(2001) },
+      { type: 'party' },
+      { location: { name: '', address: '' } },
+      { location: { name: 'x'.repeat(101), address: '' } },
+      { location: { name: 'Park', address: 'x'.repeat(201) } },
+      { endAt: ts(START) },
+      { allDay: true },
+      { startDate: '2030-06-01' },
+      { opponent: 'Eagles' },
+      { type: 'game', opponent: 'x'.repeat(61) },
+      { type: 'game', arriveMinutesBefore: 241 },
+      { type: 'game', homeAway: 'neutral' },
+      { rsvpDeadline: ts('2030-06-02T00:00:00Z') },
+      { reminderOffsets: [30] },
+      { reminderOffsets: [60, 60] },
+      { reminderOffsets: [15, 60, 120, 1440, 2880, 10080, 15] },
+      { notifyTeam: 'yes' },
+      { extra: true },
+      { rsvpFor: 'players' },
+      { rsvpCounts: { going: 3, maybe: 0, notGoing: 0 } },
+      { staffCounts: { going: 1, maybe: 0, notGoing: 0 } },
+      { seriesId: 's1' },
+      { seriesDate: '2030-06-01' },
+      { seriesOverrides: ['title'] },
+      { nextReminderAt: ts(START) },
+      { messageId: 'm1' },
+      { canceledAt: now(), canceledBy: 'alice' },
+      { createdBy: 'bob' },
+      { updatedAt: ts('2026-01-01T00:00:00Z') },
+    ];
+    for (const extra of bad) await assertFails(create('alice', 'teamA', extra));
+  });
+
+  it("sets rsvpFor from the team's type (PLAYER-6)", async () => {
+    await assertSucceeds(create('carol', 'teamY'));
+    await assertFails(as('carol').doc('events/new3').set(fresh('carol', 'teamY', { rsvpFor: 'members' })));
+  });
+
+  it('refuses another team, archived teams, and full teams (TEAM-9, STORE-4)', async () => {
+    await assertFails(create('gina'));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ storageBytes: 100 }));
+    await assertFails(create('alice'));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ storageBytes: 99 }));
+    await assertSucceeds(create('alice'));
+    await archive('teamA');
+    await assertFails(as('alice').doc('events/new4').set(fresh('alice')));
+  });
+});
+
+describe('editing, canceling, and deleting events (SCHED-6, SCHED-7)', () => {
+  const edit = (uid: string, id: string, changes: object) =>
+    as(uid).doc(`events/${id}`).update({ updatedAt: now(), ...changes });
+
+  it('lets admins edit any one-off event', async () => {
+    await assertSucceeds(edit('alice', 'eA', { title: 'Scrimmage', startAt: ts('2030-06-01T22:00:00Z') }));
+    await assertSucceeds(edit('alice', 'eA', { location: null, description: 'Bring water' }));
+  });
+
+  it('lets the creator edit only while members may create events', async () => {
+    await assertFails(edit('bob', 'eA', { title: 'Scrimmage' }));
+    await allowMembers();
+    await assertSucceeds(edit('bob', 'eA', { title: 'Scrimmage' }));
+  });
+
+  it('keeps computed, series, and fixed fields out of reach', async () => {
+    for (const changes of [
+      { rsvpCounts: { going: 9, maybe: 0, notGoing: 0 } },
+      { staffCounts: { going: 9, maybe: 0, notGoing: 0 } },
+      { nextReminderAt: ts(START) },
+      { messageId: 'm1' },
+      { seriesId: 's1' },
+      { groupId: 'teamB' },
+      { rsvpFor: 'players' },
+      { createdBy: 'alice' },
+      { notifyTeam: false },
+      { postToChat: false },
+      { title: '' },
+    ]) {
+      await assertFails(edit('alice', 'eA', changes));
+    }
+    await assertFails(as('alice').doc('events/eA').update({ title: 'No timestamp' }));
+  });
+
+  it('cancels once, as now, by the person canceling, and never uncancels', async () => {
+    await assertFails(edit('alice', 'eA', { canceledAt: ts('2026-10-01T00:00:00Z'), canceledBy: 'alice' }));
+    await assertFails(edit('alice', 'eA', { canceledAt: now(), canceledBy: 'bob' }));
+    await assertSucceeds(edit('alice', 'eA', { canceledAt: now(), canceledBy: 'alice' }));
+    await assertFails(edit('alice', 'eGone', { canceledAt: null, canceledBy: null }));
+    await assertFails(edit('alice', 'eGone', { canceledAt: now(), canceledBy: 'alice' }));
+  });
+
+  it('leaves series events to saveEventSeries', async () => {
+    await assertFails(edit('alice', 'eS', { title: 'Scrimmage' }));
+    await assertFails(edit('alice', 'eS', { canceledAt: now(), canceledBy: 'alice' }));
+    await assertFails(as('alice').doc('events/eS').delete());
+  });
+
+  it('lets admins delete, and the creator while allowed', async () => {
+    await assertFails(as('bob').doc('events/eA').delete());
+    await allowMembers();
+    await assertSucceeds(as('bob').doc('events/eA').delete());
+    await assertSucceeds(as('alice').doc('events/eGone').delete());
+    await assertFails(as('gina').doc('events/eY').delete());
+  });
+
+  it('makes archived teams read-only (TEAM-9)', async () => {
+    await archive('teamA');
+    await assertFails(edit('alice', 'eA', { title: 'Scrimmage' }));
+    await assertFails(as('alice').doc('events/eA').delete());
+    await assertSucceeds(as('bob').doc('events/eA').get());
+  });
+});
+
+describe('reading the schedule', () => {
+  it('shows events and series to members only', async () => {
+    await assertSucceeds(as('bob').doc('events/eA').get());
+    await assertSucceeds(as('bob').collection('events').where('groupId', '==', 'teamA').orderBy('startAt').limit(50).get());
+    await assertFails(as('bob').collection('events').where('groupId', '==', 'teamA').get());
+    await assertFails(as('gina').doc('events/eA').get());
+    await assertSucceeds(as('bob').doc('eventSeries/s1').get());
+    await assertFails(as('gina').doc('eventSeries/s1').get());
+  });
+
+  it('never lets clients write series', async () => {
+    await assertFails(as('alice').doc('eventSeries/s1').update({ timeZone: 'Europe/London' }));
+    await assertFails(as('alice').doc('eventSeries/s2').set({ groupId: 'teamA', createdBy: 'alice' }));
+    await assertFails(as('alice').doc('eventSeries/s1').delete());
+  });
+});
+
+describe('RSVPs (SCHED-5, PLAYER-6, Q14)', () => {
+  const answer = (uid: string, eventId: string, participantType: string, participantId: string, extra: object = {}) =>
+    as(uid)
+      .doc(`rsvps/${eventId}_${participantId}`)
+      .set({
+        eventId,
+        groupId: eventId === 'eY' ? 'teamY' : 'teamA',
+        participantType,
+        participantId,
+        participantName: participantId,
+        eventStartAt: ts(START),
+        status: 'going',
+        note: '',
+        guests: 0,
+        respondedBy: uid,
+        updatedAt: now(),
+        ...extra,
+      });
+
+  it('takes a note up to 200 characters', async () => {
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob', { note: 'x'.repeat(200) }));
+    await assertFails(answer('bob', 'eA', 'member', 'bob', { note: 'x'.repeat(201) }));
+    await assertFails(answer('bob', 'eA', 'member', 'bob', { note: 5 }));
+  });
+
+  it('takes no guests yet (SCHED-12 is v1.1), and works without the field', async () => {
+    await assertFails(answer('bob', 'eA', 'member', 'bob', { guests: 2 }));
+    const db = as('bob');
+    await assertSucceeds(
+      db.doc('rsvps/eA_bob').set({
+        eventId: 'eA', groupId: 'teamA', participantType: 'member', participantId: 'bob', participantName: 'Bob',
+        eventStartAt: ts(START), status: 'maybe', respondedBy: 'bob', updatedAt: now(),
+      }),
+    );
+  });
+
+  it('lets adults answer for themselves and admins for anyone', async () => {
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob'));
+    await assertSucceeds(answer('alice', 'eA', 'member', 'bob', { status: 'not_going' }));
+    await assertFails(answer('bob', 'eA', 'member', 'alice'));
+  });
+
+  it('on youth teams: guardians per player, admins for players and themselves', async () => {
+    await assertSucceeds(answer('dan', 'eY', 'player', 'emma'));
+    await assertSucceeds(answer('carol', 'eY', 'player', 'emma', { status: 'maybe' }));
+    await assertSucceeds(answer('carol', 'eY', 'member', 'carol'));
+    await assertFails(answer('frank', 'eY', 'player', 'emma'));
+    await assertFails(answer('dan', 'eY', 'member', 'dan'));
+  });
+
+  it('closes after the deadline except for admins, and on canceled events', async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('events/eA').update({ rsvpDeadline: ts('2026-01-01T00:00:00Z') }),
+    );
+    await assertFails(answer('bob', 'eA', 'member', 'bob'));
+    await assertSucceeds(answer('alice', 'eA', 'member', 'bob'));
+    await assertFails(answer('alice', 'eGone', 'member', 'alice'));
+  });
+
+  it('refuses answers on archived teams and a stale event time', async () => {
+    await assertFails(answer('bob', 'eA', 'member', 'bob', { eventStartAt: ts('2030-06-02T23:00:00Z') }));
+    await archive('teamA');
+    await assertFails(answer('bob', 'eA', 'member', 'bob'));
+  });
+
+  it('keeps working when storage is full (STORE-4)', async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ storageBytes: 100 }));
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob'));
+  });
+
+  it('never lets clients delete answers', async () => {
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob'));
+    await assertFails(as('bob').doc('rsvps/eA_bob').delete());
+  });
+});

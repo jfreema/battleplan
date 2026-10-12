@@ -250,8 +250,13 @@ export function lastMessagePreviewOf(m: Record<string, unknown>): { authorName: 
   const type = String(m.type ?? 'text');
   const firstLine = String(m.text ?? '').split('\n')[0].trim();
   // A poll's text is its question (POLL-1): "Poll: Saturday or Sunday?".
-  const text =
-    type === 'poll' ? (firstLine ? `Poll: ${firstLine}` : 'Poll') : firstLine || (type === 'image' ? 'Photo' : '');
+  // An event card's is its summary (CHAT-11): "Event: Practice · Tue, Oct 13 at 6:00 PM".
+  const label = type === 'poll' ? 'Poll' : type === 'event' ? 'Event' : null;
+  const text = label
+    ? firstLine
+      ? `${label}: ${firstLine}`
+      : label
+    : firstLine || (type === 'image' ? 'Photo' : '');
   return {
     authorName: String(m.authorName ?? ''),
     text: text.length > 80 ? `${text.slice(0, 79)}…` : text,

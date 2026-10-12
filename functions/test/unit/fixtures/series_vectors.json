@@ -1,0 +1,1488 @@
+{
+  "about": [
+    "Shared expansion vectors for repeating events (SPEC SCHED-3). The server (functions/src/schedule/recurrence.ts) and the app (Dart form preview) must both produce `expected` from `recurrence` and `times`.",
+    "Dates walk from startDate. Daily: every `interval` days. Weekly: byWeekday days (ISO, Monday = 1) of every `interval`-th week counted from the Monday of startDate's week, never before startDate. Skip dates are dropped; `count` counts kept dates. Stops after untilDate, after count dates, 12 months after startDate (month ends clamp), or at 400 dates.",
+    "Times are wall-clock in timeZone. An end time not after the start is the next day. All-day: midnight to the next midnight in the zone, with startDate and endDate set. A time that happens twice when clocks fall back is the first one; a time skipped when clocks spring forward moves ahead by the gap."
+  ],
+  "vectors": [
+    {
+      "name": "weekly Tue/Thu in Chicago across the end of DST, skipping Thanksgiving",
+      "recurrence": {
+        "freq": "weekly",
+        "interval": 1,
+        "byWeekday": [
+          2,
+          4
+        ],
+        "untilDate": "2026-12-17",
+        "count": null,
+        "skipDates": [
+          "2026-11-26"
+        ],
+        "startDate": "2026-10-13"
+      },
+      "times": {
+        "allDay": false,
+        "startTime": "18:00",
+        "endTime": "19:30",
+        "timeZone": "America/Chicago"
+      },
+      "expected": [
+        {
+          "date": "2026-10-13",
+          "startAt": "2026-10-13T23:00:00.000Z",
+          "endAt": "2026-10-14T00:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-15",
+          "startAt": "2026-10-15T23:00:00.000Z",
+          "endAt": "2026-10-16T00:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-20",
+          "startAt": "2026-10-20T23:00:00.000Z",
+          "endAt": "2026-10-21T00:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-22",
+          "startAt": "2026-10-22T23:00:00.000Z",
+          "endAt": "2026-10-23T00:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-27",
+          "startAt": "2026-10-27T23:00:00.000Z",
+          "endAt": "2026-10-28T00:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-29",
+          "startAt": "2026-10-29T23:00:00.000Z",
+          "endAt": "2026-10-30T00:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-03",
+          "startAt": "2026-11-04T00:00:00.000Z",
+          "endAt": "2026-11-04T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-05",
+          "startAt": "2026-11-06T00:00:00.000Z",
+          "endAt": "2026-11-06T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-10",
+          "startAt": "2026-11-11T00:00:00.000Z",
+          "endAt": "2026-11-11T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-12",
+          "startAt": "2026-11-13T00:00:00.000Z",
+          "endAt": "2026-11-13T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-17",
+          "startAt": "2026-11-18T00:00:00.000Z",
+          "endAt": "2026-11-18T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-19",
+          "startAt": "2026-11-20T00:00:00.000Z",
+          "endAt": "2026-11-20T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-24",
+          "startAt": "2026-11-25T00:00:00.000Z",
+          "endAt": "2026-11-25T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-01",
+          "startAt": "2026-12-02T00:00:00.000Z",
+          "endAt": "2026-12-02T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-03",
+          "startAt": "2026-12-04T00:00:00.000Z",
+          "endAt": "2026-12-04T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-08",
+          "startAt": "2026-12-09T00:00:00.000Z",
+          "endAt": "2026-12-09T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-10",
+          "startAt": "2026-12-11T00:00:00.000Z",
+          "endAt": "2026-12-11T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-15",
+          "startAt": "2026-12-16T00:00:00.000Z",
+          "endAt": "2026-12-16T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-17",
+          "startAt": "2026-12-18T00:00:00.000Z",
+          "endAt": "2026-12-18T01:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        }
+      ]
+    },
+    {
+      "name": "every 2 weeks on Mon/Wed in London across the start of BST, 6 events",
+      "recurrence": {
+        "freq": "weekly",
+        "interval": 2,
+        "byWeekday": [
+          3,
+          1
+        ],
+        "untilDate": null,
+        "count": 6,
+        "skipDates": [],
+        "startDate": "2027-03-17"
+      },
+      "times": {
+        "allDay": false,
+        "startTime": "18:00",
+        "endTime": "19:00",
+        "timeZone": "Europe/London"
+      },
+      "expected": [
+        {
+          "date": "2027-03-17",
+          "startAt": "2027-03-17T18:00:00.000Z",
+          "endAt": "2027-03-17T19:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-03-29",
+          "startAt": "2027-03-29T17:00:00.000Z",
+          "endAt": "2027-03-29T18:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-03-31",
+          "startAt": "2027-03-31T17:00:00.000Z",
+          "endAt": "2027-03-31T18:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-04-12",
+          "startAt": "2027-04-12T17:00:00.000Z",
+          "endAt": "2027-04-12T18:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-04-14",
+          "startAt": "2027-04-14T17:00:00.000Z",
+          "endAt": "2027-04-14T18:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-04-26",
+          "startAt": "2027-04-26T17:00:00.000Z",
+          "endAt": "2027-04-26T18:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        }
+      ]
+    },
+    {
+      "name": "weekly from midweek: days before startDate in its first week are left out",
+      "recurrence": {
+        "freq": "weekly",
+        "interval": 2,
+        "byWeekday": [
+          2,
+          4
+        ],
+        "untilDate": "2026-11-30",
+        "count": null,
+        "skipDates": [],
+        "startDate": "2026-10-15"
+      },
+      "times": {
+        "allDay": false,
+        "startTime": "17:30",
+        "endTime": "19:00",
+        "timeZone": "America/Chicago"
+      },
+      "expected": [
+        {
+          "date": "2026-10-15",
+          "startAt": "2026-10-15T22:30:00.000Z",
+          "endAt": "2026-10-16T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-27",
+          "startAt": "2026-10-27T22:30:00.000Z",
+          "endAt": "2026-10-28T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-29",
+          "startAt": "2026-10-29T22:30:00.000Z",
+          "endAt": "2026-10-30T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-10",
+          "startAt": "2026-11-10T23:30:00.000Z",
+          "endAt": "2026-11-11T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-12",
+          "startAt": "2026-11-12T23:30:00.000Z",
+          "endAt": "2026-11-13T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-24",
+          "startAt": "2026-11-24T23:30:00.000Z",
+          "endAt": "2026-11-25T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-26",
+          "startAt": "2026-11-26T23:30:00.000Z",
+          "endAt": "2026-11-27T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        }
+      ]
+    },
+    {
+      "name": "count counts the dates kept after skip dates",
+      "recurrence": {
+        "freq": "weekly",
+        "interval": 1,
+        "byWeekday": [
+          6
+        ],
+        "untilDate": null,
+        "count": 4,
+        "skipDates": [
+          "2026-10-24"
+        ],
+        "startDate": "2026-10-17"
+      },
+      "times": {
+        "allDay": false,
+        "startTime": "09:00",
+        "endTime": "11:00",
+        "timeZone": "America/Chicago"
+      },
+      "expected": [
+        {
+          "date": "2026-10-17",
+          "startAt": "2026-10-17T14:00:00.000Z",
+          "endAt": "2026-10-17T16:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-31",
+          "startAt": "2026-10-31T14:00:00.000Z",
+          "endAt": "2026-10-31T16:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-07",
+          "startAt": "2026-11-07T15:00:00.000Z",
+          "endAt": "2026-11-07T17:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-14",
+          "startAt": "2026-11-14T15:00:00.000Z",
+          "endAt": "2026-11-14T17:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        }
+      ]
+    },
+    {
+      "name": "daily all-day camp in Chicago, 5 days",
+      "recurrence": {
+        "freq": "daily",
+        "interval": 1,
+        "byWeekday": [],
+        "untilDate": null,
+        "count": 5,
+        "skipDates": [],
+        "startDate": "2026-07-06"
+      },
+      "times": {
+        "allDay": true,
+        "startTime": null,
+        "endTime": null,
+        "timeZone": "America/Chicago"
+      },
+      "expected": [
+        {
+          "date": "2026-07-06",
+          "startAt": "2026-07-06T05:00:00.000Z",
+          "endAt": "2026-07-07T05:00:00.000Z",
+          "startDate": "2026-07-06",
+          "endDate": "2026-07-06"
+        },
+        {
+          "date": "2026-07-07",
+          "startAt": "2026-07-07T05:00:00.000Z",
+          "endAt": "2026-07-08T05:00:00.000Z",
+          "startDate": "2026-07-07",
+          "endDate": "2026-07-07"
+        },
+        {
+          "date": "2026-07-08",
+          "startAt": "2026-07-08T05:00:00.000Z",
+          "endAt": "2026-07-09T05:00:00.000Z",
+          "startDate": "2026-07-08",
+          "endDate": "2026-07-08"
+        },
+        {
+          "date": "2026-07-09",
+          "startAt": "2026-07-09T05:00:00.000Z",
+          "endAt": "2026-07-10T05:00:00.000Z",
+          "startDate": "2026-07-09",
+          "endDate": "2026-07-09"
+        },
+        {
+          "date": "2026-07-10",
+          "startAt": "2026-07-10T05:00:00.000Z",
+          "endAt": "2026-07-11T05:00:00.000Z",
+          "startDate": "2026-07-10",
+          "endDate": "2026-07-10"
+        }
+      ]
+    },
+    {
+      "name": "every 3 days in London across the end of BST, with a skip date",
+      "recurrence": {
+        "freq": "daily",
+        "interval": 3,
+        "byWeekday": [],
+        "untilDate": "2026-11-07",
+        "count": null,
+        "skipDates": [
+          "2026-10-28"
+        ],
+        "startDate": "2026-10-19"
+      },
+      "times": {
+        "allDay": false,
+        "startTime": "18:00",
+        "endTime": "20:00",
+        "timeZone": "Europe/London"
+      },
+      "expected": [
+        {
+          "date": "2026-10-19",
+          "startAt": "2026-10-19T17:00:00.000Z",
+          "endAt": "2026-10-19T19:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-22",
+          "startAt": "2026-10-22T17:00:00.000Z",
+          "endAt": "2026-10-22T19:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-25",
+          "startAt": "2026-10-25T18:00:00.000Z",
+          "endAt": "2026-10-25T20:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-31",
+          "startAt": "2026-10-31T18:00:00.000Z",
+          "endAt": "2026-10-31T20:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-03",
+          "startAt": "2026-11-03T18:00:00.000Z",
+          "endAt": "2026-11-03T20:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-06",
+          "startAt": "2026-11-06T18:00:00.000Z",
+          "endAt": "2026-11-06T20:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        }
+      ]
+    },
+    {
+      "name": "an end time not after the start ends the next day",
+      "recurrence": {
+        "freq": "daily",
+        "interval": 1,
+        "byWeekday": [],
+        "untilDate": null,
+        "count": 3,
+        "skipDates": [],
+        "startDate": "2026-10-30"
+      },
+      "times": {
+        "allDay": false,
+        "startTime": "22:00",
+        "endTime": "01:00",
+        "timeZone": "America/Chicago"
+      },
+      "expected": [
+        {
+          "date": "2026-10-30",
+          "startAt": "2026-10-31T03:00:00.000Z",
+          "endAt": "2026-10-31T06:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-31",
+          "startAt": "2026-11-01T03:00:00.000Z",
+          "endAt": "2026-11-01T06:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-01",
+          "startAt": "2026-11-02T04:00:00.000Z",
+          "endAt": "2026-11-02T07:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        }
+      ]
+    },
+    {
+      "name": "a time skipped by the spring-forward gap moves ahead by the gap",
+      "recurrence": {
+        "freq": "daily",
+        "interval": 1,
+        "byWeekday": [],
+        "untilDate": null,
+        "count": 3,
+        "skipDates": [],
+        "startDate": "2027-03-13"
+      },
+      "times": {
+        "allDay": false,
+        "startTime": "02:30",
+        "endTime": "03:30",
+        "timeZone": "America/Chicago"
+      },
+      "expected": [
+        {
+          "date": "2027-03-13",
+          "startAt": "2027-03-13T08:30:00.000Z",
+          "endAt": "2027-03-13T09:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-03-14",
+          "startAt": "2027-03-14T08:30:00.000Z",
+          "endAt": "2027-03-14T08:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-03-15",
+          "startAt": "2027-03-15T07:30:00.000Z",
+          "endAt": "2027-03-15T08:30:00.000Z",
+          "startDate": null,
+          "endDate": null
+        }
+      ]
+    },
+    {
+      "name": "an untilDate past 12 months stops at 12 months after startDate",
+      "recurrence": {
+        "freq": "weekly",
+        "interval": 1,
+        "byWeekday": [
+          1
+        ],
+        "untilDate": "2028-01-01",
+        "count": null,
+        "skipDates": [],
+        "startDate": "2026-10-12"
+      },
+      "times": {
+        "allDay": false,
+        "startTime": "18:00",
+        "endTime": "19:00",
+        "timeZone": "America/Chicago"
+      },
+      "expected": [
+        {
+          "date": "2026-10-12",
+          "startAt": "2026-10-12T23:00:00.000Z",
+          "endAt": "2026-10-13T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-19",
+          "startAt": "2026-10-19T23:00:00.000Z",
+          "endAt": "2026-10-20T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-10-26",
+          "startAt": "2026-10-26T23:00:00.000Z",
+          "endAt": "2026-10-27T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-02",
+          "startAt": "2026-11-03T00:00:00.000Z",
+          "endAt": "2026-11-03T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-09",
+          "startAt": "2026-11-10T00:00:00.000Z",
+          "endAt": "2026-11-10T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-16",
+          "startAt": "2026-11-17T00:00:00.000Z",
+          "endAt": "2026-11-17T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-23",
+          "startAt": "2026-11-24T00:00:00.000Z",
+          "endAt": "2026-11-24T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-11-30",
+          "startAt": "2026-12-01T00:00:00.000Z",
+          "endAt": "2026-12-01T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-07",
+          "startAt": "2026-12-08T00:00:00.000Z",
+          "endAt": "2026-12-08T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-14",
+          "startAt": "2026-12-15T00:00:00.000Z",
+          "endAt": "2026-12-15T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-21",
+          "startAt": "2026-12-22T00:00:00.000Z",
+          "endAt": "2026-12-22T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2026-12-28",
+          "startAt": "2026-12-29T00:00:00.000Z",
+          "endAt": "2026-12-29T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-01-04",
+          "startAt": "2027-01-05T00:00:00.000Z",
+          "endAt": "2027-01-05T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-01-11",
+          "startAt": "2027-01-12T00:00:00.000Z",
+          "endAt": "2027-01-12T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-01-18",
+          "startAt": "2027-01-19T00:00:00.000Z",
+          "endAt": "2027-01-19T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-01-25",
+          "startAt": "2027-01-26T00:00:00.000Z",
+          "endAt": "2027-01-26T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-02-01",
+          "startAt": "2027-02-02T00:00:00.000Z",
+          "endAt": "2027-02-02T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-02-08",
+          "startAt": "2027-02-09T00:00:00.000Z",
+          "endAt": "2027-02-09T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-02-15",
+          "startAt": "2027-02-16T00:00:00.000Z",
+          "endAt": "2027-02-16T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-02-22",
+          "startAt": "2027-02-23T00:00:00.000Z",
+          "endAt": "2027-02-23T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-03-01",
+          "startAt": "2027-03-02T00:00:00.000Z",
+          "endAt": "2027-03-02T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-03-08",
+          "startAt": "2027-03-09T00:00:00.000Z",
+          "endAt": "2027-03-09T01:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-03-15",
+          "startAt": "2027-03-15T23:00:00.000Z",
+          "endAt": "2027-03-16T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-03-22",
+          "startAt": "2027-03-22T23:00:00.000Z",
+          "endAt": "2027-03-23T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-03-29",
+          "startAt": "2027-03-29T23:00:00.000Z",
+          "endAt": "2027-03-30T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-04-05",
+          "startAt": "2027-04-05T23:00:00.000Z",
+          "endAt": "2027-04-06T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-04-12",
+          "startAt": "2027-04-12T23:00:00.000Z",
+          "endAt": "2027-04-13T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-04-19",
+          "startAt": "2027-04-19T23:00:00.000Z",
+          "endAt": "2027-04-20T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-04-26",
+          "startAt": "2027-04-26T23:00:00.000Z",
+          "endAt": "2027-04-27T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-05-03",
+          "startAt": "2027-05-03T23:00:00.000Z",
+          "endAt": "2027-05-04T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-05-10",
+          "startAt": "2027-05-10T23:00:00.000Z",
+          "endAt": "2027-05-11T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-05-17",
+          "startAt": "2027-05-17T23:00:00.000Z",
+          "endAt": "2027-05-18T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-05-24",
+          "startAt": "2027-05-24T23:00:00.000Z",
+          "endAt": "2027-05-25T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-05-31",
+          "startAt": "2027-05-31T23:00:00.000Z",
+          "endAt": "2027-06-01T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-06-07",
+          "startAt": "2027-06-07T23:00:00.000Z",
+          "endAt": "2027-06-08T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-06-14",
+          "startAt": "2027-06-14T23:00:00.000Z",
+          "endAt": "2027-06-15T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-06-21",
+          "startAt": "2027-06-21T23:00:00.000Z",
+          "endAt": "2027-06-22T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-06-28",
+          "startAt": "2027-06-28T23:00:00.000Z",
+          "endAt": "2027-06-29T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-07-05",
+          "startAt": "2027-07-05T23:00:00.000Z",
+          "endAt": "2027-07-06T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-07-12",
+          "startAt": "2027-07-12T23:00:00.000Z",
+          "endAt": "2027-07-13T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-07-19",
+          "startAt": "2027-07-19T23:00:00.000Z",
+          "endAt": "2027-07-20T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-07-26",
+          "startAt": "2027-07-26T23:00:00.000Z",
+          "endAt": "2027-07-27T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-08-02",
+          "startAt": "2027-08-02T23:00:00.000Z",
+          "endAt": "2027-08-03T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-08-09",
+          "startAt": "2027-08-09T23:00:00.000Z",
+          "endAt": "2027-08-10T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-08-16",
+          "startAt": "2027-08-16T23:00:00.000Z",
+          "endAt": "2027-08-17T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-08-23",
+          "startAt": "2027-08-23T23:00:00.000Z",
+          "endAt": "2027-08-24T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-08-30",
+          "startAt": "2027-08-30T23:00:00.000Z",
+          "endAt": "2027-08-31T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-09-06",
+          "startAt": "2027-09-06T23:00:00.000Z",
+          "endAt": "2027-09-07T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-09-13",
+          "startAt": "2027-09-13T23:00:00.000Z",
+          "endAt": "2027-09-14T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-09-20",
+          "startAt": "2027-09-20T23:00:00.000Z",
+          "endAt": "2027-09-21T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-09-27",
+          "startAt": "2027-09-27T23:00:00.000Z",
+          "endAt": "2027-09-28T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-10-04",
+          "startAt": "2027-10-04T23:00:00.000Z",
+          "endAt": "2027-10-05T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        },
+        {
+          "date": "2027-10-11",
+          "startAt": "2027-10-11T23:00:00.000Z",
+          "endAt": "2027-10-12T00:00:00.000Z",
+          "startDate": null,
+          "endDate": null
+        }
+      ]
+    },
+    {
+      "name": "the 12-month cap clamps a month end: Feb 29 to Feb 28",
+      "recurrence": {
+        "freq": "daily",
+        "interval": 5,
+        "byWeekday": [],
+        "untilDate": "2029-12-31",
+        "count": null,
+        "skipDates": [],
+        "startDate": "2028-02-29"
+      },
+      "times": {
+        "allDay": true,
+        "startTime": null,
+        "endTime": null,
+        "timeZone": "Europe/London"
+      },
+      "expected": [
+        {
+          "date": "2028-02-29",
+          "startAt": "2028-02-29T00:00:00.000Z",
+          "endAt": "2028-03-01T00:00:00.000Z",
+          "startDate": "2028-02-29",
+          "endDate": "2028-02-29"
+        },
+        {
+          "date": "2028-03-05",
+          "startAt": "2028-03-05T00:00:00.000Z",
+          "endAt": "2028-03-06T00:00:00.000Z",
+          "startDate": "2028-03-05",
+          "endDate": "2028-03-05"
+        },
+        {
+          "date": "2028-03-10",
+          "startAt": "2028-03-10T00:00:00.000Z",
+          "endAt": "2028-03-11T00:00:00.000Z",
+          "startDate": "2028-03-10",
+          "endDate": "2028-03-10"
+        },
+        {
+          "date": "2028-03-15",
+          "startAt": "2028-03-15T00:00:00.000Z",
+          "endAt": "2028-03-16T00:00:00.000Z",
+          "startDate": "2028-03-15",
+          "endDate": "2028-03-15"
+        },
+        {
+          "date": "2028-03-20",
+          "startAt": "2028-03-20T00:00:00.000Z",
+          "endAt": "2028-03-21T00:00:00.000Z",
+          "startDate": "2028-03-20",
+          "endDate": "2028-03-20"
+        },
+        {
+          "date": "2028-03-25",
+          "startAt": "2028-03-25T00:00:00.000Z",
+          "endAt": "2028-03-26T00:00:00.000Z",
+          "startDate": "2028-03-25",
+          "endDate": "2028-03-25"
+        },
+        {
+          "date": "2028-03-30",
+          "startAt": "2028-03-29T23:00:00.000Z",
+          "endAt": "2028-03-30T23:00:00.000Z",
+          "startDate": "2028-03-30",
+          "endDate": "2028-03-30"
+        },
+        {
+          "date": "2028-04-04",
+          "startAt": "2028-04-03T23:00:00.000Z",
+          "endAt": "2028-04-04T23:00:00.000Z",
+          "startDate": "2028-04-04",
+          "endDate": "2028-04-04"
+        },
+        {
+          "date": "2028-04-09",
+          "startAt": "2028-04-08T23:00:00.000Z",
+          "endAt": "2028-04-09T23:00:00.000Z",
+          "startDate": "2028-04-09",
+          "endDate": "2028-04-09"
+        },
+        {
+          "date": "2028-04-14",
+          "startAt": "2028-04-13T23:00:00.000Z",
+          "endAt": "2028-04-14T23:00:00.000Z",
+          "startDate": "2028-04-14",
+          "endDate": "2028-04-14"
+        },
+        {
+          "date": "2028-04-19",
+          "startAt": "2028-04-18T23:00:00.000Z",
+          "endAt": "2028-04-19T23:00:00.000Z",
+          "startDate": "2028-04-19",
+          "endDate": "2028-04-19"
+        },
+        {
+          "date": "2028-04-24",
+          "startAt": "2028-04-23T23:00:00.000Z",
+          "endAt": "2028-04-24T23:00:00.000Z",
+          "startDate": "2028-04-24",
+          "endDate": "2028-04-24"
+        },
+        {
+          "date": "2028-04-29",
+          "startAt": "2028-04-28T23:00:00.000Z",
+          "endAt": "2028-04-29T23:00:00.000Z",
+          "startDate": "2028-04-29",
+          "endDate": "2028-04-29"
+        },
+        {
+          "date": "2028-05-04",
+          "startAt": "2028-05-03T23:00:00.000Z",
+          "endAt": "2028-05-04T23:00:00.000Z",
+          "startDate": "2028-05-04",
+          "endDate": "2028-05-04"
+        },
+        {
+          "date": "2028-05-09",
+          "startAt": "2028-05-08T23:00:00.000Z",
+          "endAt": "2028-05-09T23:00:00.000Z",
+          "startDate": "2028-05-09",
+          "endDate": "2028-05-09"
+        },
+        {
+          "date": "2028-05-14",
+          "startAt": "2028-05-13T23:00:00.000Z",
+          "endAt": "2028-05-14T23:00:00.000Z",
+          "startDate": "2028-05-14",
+          "endDate": "2028-05-14"
+        },
+        {
+          "date": "2028-05-19",
+          "startAt": "2028-05-18T23:00:00.000Z",
+          "endAt": "2028-05-19T23:00:00.000Z",
+          "startDate": "2028-05-19",
+          "endDate": "2028-05-19"
+        },
+        {
+          "date": "2028-05-24",
+          "startAt": "2028-05-23T23:00:00.000Z",
+          "endAt": "2028-05-24T23:00:00.000Z",
+          "startDate": "2028-05-24",
+          "endDate": "2028-05-24"
+        },
+        {
+          "date": "2028-05-29",
+          "startAt": "2028-05-28T23:00:00.000Z",
+          "endAt": "2028-05-29T23:00:00.000Z",
+          "startDate": "2028-05-29",
+          "endDate": "2028-05-29"
+        },
+        {
+          "date": "2028-06-03",
+          "startAt": "2028-06-02T23:00:00.000Z",
+          "endAt": "2028-06-03T23:00:00.000Z",
+          "startDate": "2028-06-03",
+          "endDate": "2028-06-03"
+        },
+        {
+          "date": "2028-06-08",
+          "startAt": "2028-06-07T23:00:00.000Z",
+          "endAt": "2028-06-08T23:00:00.000Z",
+          "startDate": "2028-06-08",
+          "endDate": "2028-06-08"
+        },
+        {
+          "date": "2028-06-13",
+          "startAt": "2028-06-12T23:00:00.000Z",
+          "endAt": "2028-06-13T23:00:00.000Z",
+          "startDate": "2028-06-13",
+          "endDate": "2028-06-13"
+        },
+        {
+          "date": "2028-06-18",
+          "startAt": "2028-06-17T23:00:00.000Z",
+          "endAt": "2028-06-18T23:00:00.000Z",
+          "startDate": "2028-06-18",
+          "endDate": "2028-06-18"
+        },
+        {
+          "date": "2028-06-23",
+          "startAt": "2028-06-22T23:00:00.000Z",
+          "endAt": "2028-06-23T23:00:00.000Z",
+          "startDate": "2028-06-23",
+          "endDate": "2028-06-23"
+        },
+        {
+          "date": "2028-06-28",
+          "startAt": "2028-06-27T23:00:00.000Z",
+          "endAt": "2028-06-28T23:00:00.000Z",
+          "startDate": "2028-06-28",
+          "endDate": "2028-06-28"
+        },
+        {
+          "date": "2028-07-03",
+          "startAt": "2028-07-02T23:00:00.000Z",
+          "endAt": "2028-07-03T23:00:00.000Z",
+          "startDate": "2028-07-03",
+          "endDate": "2028-07-03"
+        },
+        {
+          "date": "2028-07-08",
+          "startAt": "2028-07-07T23:00:00.000Z",
+          "endAt": "2028-07-08T23:00:00.000Z",
+          "startDate": "2028-07-08",
+          "endDate": "2028-07-08"
+        },
+        {
+          "date": "2028-07-13",
+          "startAt": "2028-07-12T23:00:00.000Z",
+          "endAt": "2028-07-13T23:00:00.000Z",
+          "startDate": "2028-07-13",
+          "endDate": "2028-07-13"
+        },
+        {
+          "date": "2028-07-18",
+          "startAt": "2028-07-17T23:00:00.000Z",
+          "endAt": "2028-07-18T23:00:00.000Z",
+          "startDate": "2028-07-18",
+          "endDate": "2028-07-18"
+        },
+        {
+          "date": "2028-07-23",
+          "startAt": "2028-07-22T23:00:00.000Z",
+          "endAt": "2028-07-23T23:00:00.000Z",
+          "startDate": "2028-07-23",
+          "endDate": "2028-07-23"
+        },
+        {
+          "date": "2028-07-28",
+          "startAt": "2028-07-27T23:00:00.000Z",
+          "endAt": "2028-07-28T23:00:00.000Z",
+          "startDate": "2028-07-28",
+          "endDate": "2028-07-28"
+        },
+        {
+          "date": "2028-08-02",
+          "startAt": "2028-08-01T23:00:00.000Z",
+          "endAt": "2028-08-02T23:00:00.000Z",
+          "startDate": "2028-08-02",
+          "endDate": "2028-08-02"
+        },
+        {
+          "date": "2028-08-07",
+          "startAt": "2028-08-06T23:00:00.000Z",
+          "endAt": "2028-08-07T23:00:00.000Z",
+          "startDate": "2028-08-07",
+          "endDate": "2028-08-07"
+        },
+        {
+          "date": "2028-08-12",
+          "startAt": "2028-08-11T23:00:00.000Z",
+          "endAt": "2028-08-12T23:00:00.000Z",
+          "startDate": "2028-08-12",
+          "endDate": "2028-08-12"
+        },
+        {
+          "date": "2028-08-17",
+          "startAt": "2028-08-16T23:00:00.000Z",
+          "endAt": "2028-08-17T23:00:00.000Z",
+          "startDate": "2028-08-17",
+          "endDate": "2028-08-17"
+        },
+        {
+          "date": "2028-08-22",
+          "startAt": "2028-08-21T23:00:00.000Z",
+          "endAt": "2028-08-22T23:00:00.000Z",
+          "startDate": "2028-08-22",
+          "endDate": "2028-08-22"
+        },
+        {
+          "date": "2028-08-27",
+          "startAt": "2028-08-26T23:00:00.000Z",
+          "endAt": "2028-08-27T23:00:00.000Z",
+          "startDate": "2028-08-27",
+          "endDate": "2028-08-27"
+        },
+        {
+          "date": "2028-09-01",
+          "startAt": "2028-08-31T23:00:00.000Z",
+          "endAt": "2028-09-01T23:00:00.000Z",
+          "startDate": "2028-09-01",
+          "endDate": "2028-09-01"
+        },
+        {
+          "date": "2028-09-06",
+          "startAt": "2028-09-05T23:00:00.000Z",
+          "endAt": "2028-09-06T23:00:00.000Z",
+          "startDate": "2028-09-06",
+          "endDate": "2028-09-06"
+        },
+        {
+          "date": "2028-09-11",
+          "startAt": "2028-09-10T23:00:00.000Z",
+          "endAt": "2028-09-11T23:00:00.000Z",
+          "startDate": "2028-09-11",
+          "endDate": "2028-09-11"
+        },
+        {
+          "date": "2028-09-16",
+          "startAt": "2028-09-15T23:00:00.000Z",
+          "endAt": "2028-09-16T23:00:00.000Z",
+          "startDate": "2028-09-16",
+          "endDate": "2028-09-16"
+        },
+        {
+          "date": "2028-09-21",
+          "startAt": "2028-09-20T23:00:00.000Z",
+          "endAt": "2028-09-21T23:00:00.000Z",
+          "startDate": "2028-09-21",
+          "endDate": "2028-09-21"
+        },
+        {
+          "date": "2028-09-26",
+          "startAt": "2028-09-25T23:00:00.000Z",
+          "endAt": "2028-09-26T23:00:00.000Z",
+          "startDate": "2028-09-26",
+          "endDate": "2028-09-26"
+        },
+        {
+          "date": "2028-10-01",
+          "startAt": "2028-09-30T23:00:00.000Z",
+          "endAt": "2028-10-01T23:00:00.000Z",
+          "startDate": "2028-10-01",
+          "endDate": "2028-10-01"
+        },
+        {
+          "date": "2028-10-06",
+          "startAt": "2028-10-05T23:00:00.000Z",
+          "endAt": "2028-10-06T23:00:00.000Z",
+          "startDate": "2028-10-06",
+          "endDate": "2028-10-06"
+        },
+        {
+          "date": "2028-10-11",
+          "startAt": "2028-10-10T23:00:00.000Z",
+          "endAt": "2028-10-11T23:00:00.000Z",
+          "startDate": "2028-10-11",
+          "endDate": "2028-10-11"
+        },
+        {
+          "date": "2028-10-16",
+          "startAt": "2028-10-15T23:00:00.000Z",
+          "endAt": "2028-10-16T23:00:00.000Z",
+          "startDate": "2028-10-16",
+          "endDate": "2028-10-16"
+        },
+        {
+          "date": "2028-10-21",
+          "startAt": "2028-10-20T23:00:00.000Z",
+          "endAt": "2028-10-21T23:00:00.000Z",
+          "startDate": "2028-10-21",
+          "endDate": "2028-10-21"
+        },
+        {
+          "date": "2028-10-26",
+          "startAt": "2028-10-25T23:00:00.000Z",
+          "endAt": "2028-10-26T23:00:00.000Z",
+          "startDate": "2028-10-26",
+          "endDate": "2028-10-26"
+        },
+        {
+          "date": "2028-10-31",
+          "startAt": "2028-10-31T00:00:00.000Z",
+          "endAt": "2028-11-01T00:00:00.000Z",
+          "startDate": "2028-10-31",
+          "endDate": "2028-10-31"
+        },
+        {
+          "date": "2028-11-05",
+          "startAt": "2028-11-05T00:00:00.000Z",
+          "endAt": "2028-11-06T00:00:00.000Z",
+          "startDate": "2028-11-05",
+          "endDate": "2028-11-05"
+        },
+        {
+          "date": "2028-11-10",
+          "startAt": "2028-11-10T00:00:00.000Z",
+          "endAt": "2028-11-11T00:00:00.000Z",
+          "startDate": "2028-11-10",
+          "endDate": "2028-11-10"
+        },
+        {
+          "date": "2028-11-15",
+          "startAt": "2028-11-15T00:00:00.000Z",
+          "endAt": "2028-11-16T00:00:00.000Z",
+          "startDate": "2028-11-15",
+          "endDate": "2028-11-15"
+        },
+        {
+          "date": "2028-11-20",
+          "startAt": "2028-11-20T00:00:00.000Z",
+          "endAt": "2028-11-21T00:00:00.000Z",
+          "startDate": "2028-11-20",
+          "endDate": "2028-11-20"
+        },
+        {
+          "date": "2028-11-25",
+          "startAt": "2028-11-25T00:00:00.000Z",
+          "endAt": "2028-11-26T00:00:00.000Z",
+          "startDate": "2028-11-25",
+          "endDate": "2028-11-25"
+        },
+        {
+          "date": "2028-11-30",
+          "startAt": "2028-11-30T00:00:00.000Z",
+          "endAt": "2028-12-01T00:00:00.000Z",
+          "startDate": "2028-11-30",
+          "endDate": "2028-11-30"
+        },
+        {
+          "date": "2028-12-05",
+          "startAt": "2028-12-05T00:00:00.000Z",
+          "endAt": "2028-12-06T00:00:00.000Z",
+          "startDate": "2028-12-05",
+          "endDate": "2028-12-05"
+        },
+        {
+          "date": "2028-12-10",
+          "startAt": "2028-12-10T00:00:00.000Z",
+          "endAt": "2028-12-11T00:00:00.000Z",
+          "startDate": "2028-12-10",
+          "endDate": "2028-12-10"
+        },
+        {
+          "date": "2028-12-15",
+          "startAt": "2028-12-15T00:00:00.000Z",
+          "endAt": "2028-12-16T00:00:00.000Z",
+          "startDate": "2028-12-15",
+          "endDate": "2028-12-15"
+        },
+        {
+          "date": "2028-12-20",
+          "startAt": "2028-12-20T00:00:00.000Z",
+          "endAt": "2028-12-21T00:00:00.000Z",
+          "startDate": "2028-12-20",
+          "endDate": "2028-12-20"
+        },
+        {
+          "date": "2028-12-25",
+          "startAt": "2028-12-25T00:00:00.000Z",
+          "endAt": "2028-12-26T00:00:00.000Z",
+          "startDate": "2028-12-25",
+          "endDate": "2028-12-25"
+        },
+        {
+          "date": "2028-12-30",
+          "startAt": "2028-12-30T00:00:00.000Z",
+          "endAt": "2028-12-31T00:00:00.000Z",
+          "startDate": "2028-12-30",
+          "endDate": "2028-12-30"
+        },
+        {
+          "date": "2029-01-04",
+          "startAt": "2029-01-04T00:00:00.000Z",
+          "endAt": "2029-01-05T00:00:00.000Z",
+          "startDate": "2029-01-04",
+          "endDate": "2029-01-04"
+        },
+        {
+          "date": "2029-01-09",
+          "startAt": "2029-01-09T00:00:00.000Z",
+          "endAt": "2029-01-10T00:00:00.000Z",
+          "startDate": "2029-01-09",
+          "endDate": "2029-01-09"
+        },
+        {
+          "date": "2029-01-14",
+          "startAt": "2029-01-14T00:00:00.000Z",
+          "endAt": "2029-01-15T00:00:00.000Z",
+          "startDate": "2029-01-14",
+          "endDate": "2029-01-14"
+        },
+        {
+          "date": "2029-01-19",
+          "startAt": "2029-01-19T00:00:00.000Z",
+          "endAt": "2029-01-20T00:00:00.000Z",
+          "startDate": "2029-01-19",
+          "endDate": "2029-01-19"
+        },
+        {
+          "date": "2029-01-24",
+          "startAt": "2029-01-24T00:00:00.000Z",
+          "endAt": "2029-01-25T00:00:00.000Z",
+          "startDate": "2029-01-24",
+          "endDate": "2029-01-24"
+        },
+        {
+          "date": "2029-01-29",
+          "startAt": "2029-01-29T00:00:00.000Z",
+          "endAt": "2029-01-30T00:00:00.000Z",
+          "startDate": "2029-01-29",
+          "endDate": "2029-01-29"
+        },
+        {
+          "date": "2029-02-03",
+          "startAt": "2029-02-03T00:00:00.000Z",
+          "endAt": "2029-02-04T00:00:00.000Z",
+          "startDate": "2029-02-03",
+          "endDate": "2029-02-03"
+        },
+        {
+          "date": "2029-02-08",
+          "startAt": "2029-02-08T00:00:00.000Z",
+          "endAt": "2029-02-09T00:00:00.000Z",
+          "startDate": "2029-02-08",
+          "endDate": "2029-02-08"
+        },
+        {
+          "date": "2029-02-13",
+          "startAt": "2029-02-13T00:00:00.000Z",
+          "endAt": "2029-02-14T00:00:00.000Z",
+          "startDate": "2029-02-13",
+          "endDate": "2029-02-13"
+        },
+        {
+          "date": "2029-02-18",
+          "startAt": "2029-02-18T00:00:00.000Z",
+          "endAt": "2029-02-19T00:00:00.000Z",
+          "startDate": "2029-02-18",
+          "endDate": "2029-02-18"
+        },
+        {
+          "date": "2029-02-23",
+          "startAt": "2029-02-23T00:00:00.000Z",
+          "endAt": "2029-02-24T00:00:00.000Z",
+          "startDate": "2029-02-23",
+          "endDate": "2029-02-23"
+        },
+        {
+          "date": "2029-02-28",
+          "startAt": "2029-02-28T00:00:00.000Z",
+          "endAt": "2029-03-01T00:00:00.000Z",
+          "startDate": "2029-02-28",
+          "endDate": "2029-02-28"
+        }
+      ]
+    }
+  ]
+}
