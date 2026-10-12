@@ -69,7 +69,14 @@ class SignInScreen extends ConsumerWidget {
                   FilledButton.icon(
                     onPressed: loading
                         ? null
-                        : () => context.push('/sign-in/email'),
+                        // Keep where to go back to, such as an invite
+                        // link (INV-5 step 2).
+                        : () => context.push(
+                            Uri(
+                              path: '/sign-in/email',
+                              queryParameters: _from(context),
+                            ).toString(),
+                          ),
                     icon: const Icon(AppIcons.email),
                     label: Text(l10n.continueWithEmail),
                   ),
@@ -93,6 +100,12 @@ class SignInScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// The `from` the router put on `/sign-in`, to carry on to email sign-in.
+Map<String, String>? _from(BuildContext context) {
+  final from = GoRouterState.of(context).uri.queryParameters['from'];
+  return from == null ? null : {'from': from};
 }
 
 /// Placeholder mark until the logo is designed (SPEC Q9).

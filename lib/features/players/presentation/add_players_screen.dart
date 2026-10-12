@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/roster_parser.dart';
@@ -13,8 +15,8 @@ import 'package:material_ui/material_ui.dart';
 
 /// PLAYER-1 at `/g/:groupId/players/add` (admins): add one player with up
 /// to 4 guardians, or paste a list with one line per guardian. Guardians
-/// with accounts are linked now; new emails get an account and, once email
-/// sending is live, a setup email.
+/// with accounts are linked now; new emails get an account and a setup
+/// email. A results screen follows.
 class AddPlayersScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -61,18 +63,30 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
       name: _name.text.trim(),
       jerseyNumber: _number.text.trim(),
       position: _position.text.trim(),
+      // Name and email are both optional (PLAYER-1); a name alone is kept,
+      // and the results say it couldn't be linked.
       guardians: [
         for (var i = 0; i < _guardianRows; i++)
-          if (_guardianEmails[i].text.trim().isNotEmpty)
+          if (_guardianEmails[i].text.trim().isNotEmpty ||
+              _guardianNames[i].text.trim().isNotEmpty)
             NewGuardian(
-              name: _guardianNames[i].text.trim(),
-              email: _guardianEmails[i].text.trim(),
+              name: _guardianNames[i].text.trim().isEmpty
+                  ? null
+                  : _guardianNames[i].text.trim(),
+              email: _guardianEmails[i].text.trim().isEmpty
+                  ? null
+                  : _guardianEmails[i].text.trim(),
             ),
       ],
     ),
   ];
 
-  Future<void> _add(List<NewPlayer> players) async {
+  /// Adds [players]; [skipped] are pasted lines that couldn't be read,
+  /// listed with the results (PLAYER-1).
+  Future<void> _add(
+    List<NewPlayer> players, {
+    List<String> skipped = const [],
+  }) async {
     final l10n = AppLocalizations.of(context);
     if (players.isEmpty || players.any((p) => p.name.isEmpty)) {
       ScaffoldMessenger.of(context)
@@ -85,35 +99,46 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
           .read(playerRepositoryProvider)
           .addPlayers(widget.groupId, players);
       if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n.playersAddedTitle),
-          content: Text(
-            [
-              l10n.playersAddedCount(result.playersAdded),
-              l10n.guardiansLinkedCount(result.guardiansLinked),
-              l10n.guardiansInvitedCount(result.guardiansInvited),
-              if (result.problems.isNotEmpty)
-                l10n.addProblems(result.problems.join('\n')),
-            ].join('\n'),
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.done),
-            ),
-          ],
-        ),
+      // PLAYER-1: a results screen with the players added, guardians linked
+      // and invited, and any problems.
+      await AddResultsScreen.show(
+        context,
+        title: l10n.playersAddedTitle,
+        sections: [
+          ResultSection(l10n.resultsSummary, [
+            l10n.playersAddedCount(result.playersAdded),
+            l10n.guardiansLinkedCount(result.guardiansLinked),
+            l10n.guardiansInvitedCount(result.guardiansInvited),
+          ], counted: false),
+          ResultSection(l10n.guardiansWithoutEmailHeading, [
+            ...result.guardiansWithoutEmail,
+          ], problem: true),
+          ResultSection(l10n.resultsProblems, [
+            for (final p in result.problems) describeAddProblem(l10n, p),
+          ], problem: true),
+          ResultSection(l10n.linesSkipped, skipped, problem: true),
+        ],
       );
       if (mounted) context.pop();
     } on AppFailure catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            e is RateLimited ? l10n.signInRateLimited : l10n.signInUnknownError,
-          ),
+          content: Text(switch (e) {
+            RateLimited() => l10n.signInRateLimited,
+            EmailNotVerified() => l10n.addByEmailNeedsVerified,
+            InvalidInput(message: 'too-many-players') => l10n.tooManyPlayers(
+              Limits.playersPerGroupMax,
+            ),
+            InvalidInput() => l10n.tooManyRosterLines(
+              Limits.pastedRosterLinesMax,
+            ),
+            PermissionDenied(message: 'not-youth-team') => l10n.notYouthTeam,
+            PermissionDenied(message: 'team-archived') => l10n.teamArchived,
+            PermissionDenied() => l10n.notAllowed,
+            Offline() => l10n.signInOffline,
+            _ => l10n.signInUnknownError,
+          }),
         ),
       );
     } finally {
@@ -125,6 +150,8 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final parsed = parsePastedRoster(_paste.text);
+    // Up to 200 lines (PLAYER-1).
+    final tooManyLines = parsed.lines > Limits.pastedRosterLinesMax;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.addPlayers)),
       body: Center(
@@ -227,6 +254,13 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                 ),
                 const SizedBox(height: Space.md),
                 Text(l10n.pastePreview(parsed.players.length)),
+                if (tooManyLines)
+                  Text(
+                    l10n.tooManyRosterLines(Limits.pastedRosterLinesMax),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 if (parsed.problems.isNotEmpty)
                   Text(
                     l10n.addProblems(parsed.problems.join('\n')),
@@ -236,9 +270,11 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                   ),
                 const SizedBox(height: Space.lg),
                 FilledButton(
-                  onPressed: _saving || parsed.players.isEmpty
+                  onPressed: _saving || parsed.players.isEmpty || tooManyLines
                       ? null
-                      : () => unawaited(_add(parsed.players)),
+                      : () => unawaited(
+                          _add(parsed.players, skipped: parsed.problems),
+                        ),
                   child: Text(l10n.addPlayersCount(parsed.players.length)),
                 ),
               ],

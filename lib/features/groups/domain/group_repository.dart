@@ -9,7 +9,8 @@ abstract interface class GroupRepository {
   /// A single team. Emits null if it's gone or the caller can't read it.
   Stream<Group?> watchGroup(GroupId id);
 
-  /// Edits the team profile and settings (TEAM-5). Admins only.
+  /// Edits the team profile and settings (TEAM-5), and the team type
+  /// (TEAM-1: events keep the RSVPs they have). Admins only.
   Future<void> updateGroup(
     GroupId id, {
     String? name,
@@ -17,6 +18,7 @@ abstract interface class GroupRepository {
     String? color,
     String? description,
     String? timeZone,
+    TeamType? teamType,
     GroupSettings? settings,
   });
 
@@ -117,11 +119,21 @@ class AddMembersResult {
     required this.added,
     required this.invited,
     required this.alreadyMembers,
+    this.addedPeople = const [],
+    this.invitedPeople = const [],
     this.problems = const [],
   });
 
   final int added;
   final int invited;
   final int alreadyMembers;
+
+  /// Who was added (they had accounts) and who was invited (new accounts
+  /// with a setup email), for the results screen.
+  final List<({String name, String email})> addedPeople;
+  final List<({String name, String email})> invitedPeople;
+
+  /// Emails that couldn't be added; "email (too-many-teams)" for someone on
+  /// 100 teams already (TEAM-2).
   final List<String> problems;
 }

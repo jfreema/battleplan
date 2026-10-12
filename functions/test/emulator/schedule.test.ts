@@ -268,12 +268,12 @@ describe('"This event" (SCHED-6)', () => {
     expect(seriesId).toBeTruthy();
   });
 
-  it("lets the series' creator change it while members may create events", async () => {
+  it("lets the series' creator change it, even once members may no longer create events (§3 own only)", async () => {
     const { upcoming } = await runningSeries('pat');
     const edit = { action: 'update', eventId: upcoming[0], scope: 'this', template: template({ title: 'Mine' }) };
-    await expect(save('pat', edit)).rejects.toMatchObject({ code: 'permission-denied' });
-    await db().collection(Collections.groups).doc(G).update({ 'settings.membersCanCreateEvents': true });
     expect((await save('pat', edit)).updated).toBe(1);
+    await db().collection(Collections.groups).doc(G).update({ 'settings.membersCanCreateEvents': true });
+    expect((await save('pat', { ...edit, template: template({ title: 'Mine again' }) })).updated).toBe(1);
   });
 });
 

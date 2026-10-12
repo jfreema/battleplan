@@ -283,13 +283,18 @@ class FakeGroupRepository implements GroupRepository {
     String? color,
     String? description,
     String? timeZone,
+    TeamType? teamType,
     GroupSettings? settings,
   }) async {
     final g = groups[id.value]!;
     groups[id.value] = g.copyWith(
       name: name ?? g.name,
+      timeZone: timeZone ?? g.timeZone,
+      teamType: teamType ?? g.teamType,
       settings: settings ?? g.settings,
     );
+    if (timeZone != null) updates.add('timeZone $timeZone');
+    if (teamType != null) updates.add('teamType ${teamType.value}');
     updates.add(
       settings != null ? 'settings' : (name != null ? 'name $name' : 'other'),
     );
@@ -341,6 +346,9 @@ class FakeGroupRepository implements GroupRepository {
 
   final List<String> created = [];
 
+  /// The color each created team was given, null for none (TEAM-1).
+  final List<String?> createdColors = [];
+
   @override
   Future<GroupId> createGroup({
     required String name,
@@ -351,6 +359,7 @@ class FakeGroupRepository implements GroupRepository {
     String? description,
   }) async {
     created.add(name);
+    createdColors.add(color);
     final id = 'new${created.length}';
     groups[id] = testGroup(id, name);
     return GroupId(id);
@@ -428,6 +437,9 @@ class FakeMemberRepository implements MemberRepository {
       added: 0,
       invited: entries.length,
       alreadyMembers: 0,
+      invitedPeople: [
+        for (final e in entries) (name: e.name ?? e.email, email: e.email),
+      ],
     );
   }
 
@@ -790,22 +802,50 @@ class FakeInviteRepository implements InviteRepository {
     useCount: 0,
   );
 
+  /// The link's options, as the last update or reset set them.
+  InviteExpiry expiry = InviteExpiry.never;
+  int? maxUses;
+
+  /// True after revokeTeamInvite, until resetTeamInvite (§3).
+  bool linkOff = false;
+
   @override
-  Future<TeamInvite> teamInvite(GroupId groupId) async => _invite();
+  Future<TeamInvite> teamInvite(GroupId groupId) async {
+    if (linkOff) throw const InviteUnusable('link-off');
+    return _invite().copyWith(maxUses: maxUses);
+  }
+
+  @override
+  Future<TeamInvite> updateTeamInvite(
+    GroupId groupId, {
+    InviteExpiry expiry = InviteExpiry.never,
+    int? maxUses,
+  }) async {
+    if (linkOff) throw const InviteUnusable('link-off');
+    this.expiry = expiry;
+    this.maxUses = maxUses;
+    return _invite().copyWith(maxUses: maxUses);
+  }
+
+  @override
+  Future<void> revokeTeamInvite(GroupId groupId) async => linkOff = true;
+
+  /// What [preview] returns for K7XPM2QR.
+  InvitePreview previewed = const InvitePreview(
+    groupId: 'a',
+    name: 'Thunder',
+    sport: Sport.softball,
+    teamType: TeamType.adult,
+    memberCount: 12,
+    invitedBy: 'Alex Kim',
+  );
 
   final List<String> redeemed = [];
 
   @override
   Future<InvitePreview> preview(String code) async {
     if (code != 'K7XPM2QR') throw const InviteUnusable('unknown');
-    return const InvitePreview(
-      groupId: 'a',
-      name: 'Thunder',
-      sport: Sport.softball,
-      teamType: TeamType.adult,
-      memberCount: 12,
-      invitedBy: 'Alex Kim',
-    );
+    return previewed;
   }
 
   @override
@@ -825,6 +865,9 @@ class FakeInviteRepository implements InviteRepository {
     int? maxUses,
   }) async {
     resets++;
+    linkOff = false;
+    this.expiry = expiry;
+    this.maxUses = maxUses;
     code = 'NEWC0DE2'.replaceAll('0', 'Q');
     return _invite();
   }

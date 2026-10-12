@@ -1,19 +1,22 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// TEAM-1 at `/g/new`: team type, name, sport, color, time zone, and an
-/// optional description. The creator becomes the owner and lands in the
-/// new team. (The logo is added in Team settings.)
+/// TEAM-1 at `/g/new`: team type, name, sport, an optional logo, an
+/// optional color, time zone, and an optional description. The creator
+/// becomes the owner and goes on to "Invite your team".
 class CreateTeamScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -28,7 +31,9 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
   TeamType _type = TeamType.adult;
   // Baseball is the default; any sport can be picked.
   Sport _sport = Sport.baseball;
-  int _color = teamColorValues.first;
+  // Optional (TEAM-1): null is no color.
+  int? _color = teamColorValues.first;
+  Uint8List? _logo;
   String? _timeZone;
   List<String> _zones = const [];
   bool _saving = false;
@@ -58,6 +63,13 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     super.dispose();
   }
 
+  Future<void> _pickLogo() async {
+    final bytes = await ref.read(photoPickerProvider).pickProfilePhoto();
+    if (bytes == null || !mounted) return;
+    if (!fitsUploadLimit(context, ref, bytes.length)) return;
+    setState(() => _logo = bytes);
+  }
+
   static String _hex(int argb) =>
       '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
@@ -76,9 +88,18 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
             sport: _sport,
             teamType: _type,
             timeZone: _timeZone ?? 'America/Chicago',
-            color: _hex(_color),
+            color: _color == null ? null : _hex(_color!),
             description: _description.text.trim(),
           );
+      final logo = _logo;
+      if (logo != null) {
+        try {
+          await ref.read(groupRepositoryProvider).uploadLogo(id, logo);
+        } on AppFailure {
+          // The team is made; the logo can be added in Team settings.
+          if (mounted) showAppSnackBar(context, l10n.createTeamLogoFailed);
+        }
+      }
       // TEAM-1: the next screen is "Invite your team".
       if (mounted) context.go('/g/${id.value}/invite');
     } on AppFailure catch (e) {
@@ -163,12 +184,65 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                   onChanged: (s) => setState(() => _sport = s ?? _sport),
                 ),
                 const SizedBox(height: Space.xl),
+                Text(l10n.teamLogoLabel, style: theme.textTheme.titleSmall),
+                const SizedBox(height: Space.sm),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: Space.sm,
+                  runSpacing: Space.sm,
+                  children: [
+                    if (_logo != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(Corners.card),
+                        child: Image.memory(
+                          _logo!,
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.cover,
+                          semanticLabel: l10n.teamLogoLabel,
+                        ),
+                      ),
+                    ],
+                    OutlinedButton.icon(
+                      onPressed: () => unawaited(_pickLogo()),
+                      icon: const Icon(AppIcons.photo),
+                      label: Text(
+                        _logo == null ? l10n.addLogo : l10n.changeLogo,
+                      ),
+                    ),
+                    if (_logo != null)
+                      TextButton(
+                        onPressed: () => setState(() => _logo = null),
+                        child: Text(l10n.removeLogo),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: Space.xl),
                 Text(l10n.teamColorLabel, style: theme.textTheme.titleSmall),
                 const SizedBox(height: Space.sm),
                 Wrap(
                   spacing: Space.sm,
                   runSpacing: Space.sm,
                   children: [
+                    // No color (TEAM-1: optional).
+                    Semantics(
+                      button: true,
+                      selected: _color == null,
+                      label: l10n.noTeamColor,
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => setState(() => _color = null),
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                          child: Icon(
+                            _color == null ? AppIcons.check : AppIcons.close,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
                     for (final c in teamColorValues)
                       Semantics(
                         button: true,

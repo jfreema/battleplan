@@ -13,7 +13,7 @@ import { audit } from '../audit/service.js';
 import { groupCreationConfig } from '../admin/service.js';
 import { postSystemMessage } from '../chat/service.js';
 import { groupMemberId } from '../shared/ids.js';
-import { requireTeamAdmin, roleOf } from '../shared/roles.js';
+import { requireOpenTeam, requireTeamAdmin, requireTeamOwner, roleOf } from '../shared/roles.js';
 import { displayNameOf, sendSetupEmail } from '../accounts/service.js';
 import { resendApiKey } from '../email/service.js';
 import { trySend } from '../notify/service.js';
@@ -29,6 +29,7 @@ import {
   setGroupArchived,
 } from './service.js';
 import { deleteMedia, listMedia } from './media.js';
+import { removeGuardianFromTeam } from '../players/service.js';
 import { setGroupQuota, updateStorageAlert } from './storage.js';
 
 const CreateGroupInput = z.object({
@@ -168,19 +169,11 @@ export const removeMember = onCall(async (request) => {
 
 const GroupOnly = z.object({ groupId: z.string().min(1) });
 
-/** Throws unless the caller owns the team or is a super admin. */
-async function requireOwner(groupId: string, uid: string, superAdmin: boolean): Promise<void> {
-  if (superAdmin) return;
-  if ((await roleOf(groupId, uid)) !== 'owner') {
-    throw new HttpsError('permission-denied', 'Only the team owner can do that.');
-  }
-}
-
 /** Hands the team to another member; the old owner becomes an admin (TEAM-6). */
 export const transferOwnership = onCall(async (request) => {
   const actorUid = requireAuth(request);
   const input = parse(GroupOnly.extend({ uid: z.string().min(1) }), request.data);
-  await requireOwner(input.groupId, actorUid, request.auth?.token.superAdmin === true);
+  await requireTeamOwner(input.groupId, actorUid, request.auth?.token.superAdmin === true);
   const groupRef = db().collection(Collections.groups).doc(input.groupId);
   const ownerId = (await groupRef.get()).get('ownerId') as string;
   if (input.uid === ownerId) return { ok: true };
@@ -215,6 +208,8 @@ export const leaveGroup = onCall(async (request) => {
     throw new HttpsError('failed-precondition', 'owner-must-transfer');
   }
   await ref.delete();
+  // They stop being a guardian here too (TEAM-8, PLAYER-3).
+  await removeGuardianFromTeam(input.groupId, uid);
   await refreshMemberCount(input.groupId);
   const name = (me.get('displayName') as string) || 'Someone';
   await postSystemMessage(input.groupId, 'left', `${name} left`, uid);
@@ -222,11 +217,14 @@ export const leaveGroup = onCall(async (request) => {
   return { ok: true };
 });
 
-/** Archives (read-only) or restores a team (TEAM-9). */
+/**
+ * Archives (read-only) or restores a team (TEAM-9). Not while it's
+ * suspended, except by a super admin (§3).
+ */
 export const archiveGroup = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(GroupOnly.extend({ archived: z.boolean() }), request.data);
-  await requireOwner(input.groupId, uid, request.auth?.token.superAdmin === true);
+  await requireTeamOwner(input.groupId, uid, request.auth?.token.superAdmin === true, { allowArchived: true });
   const before = await setGroupArchived(input.groupId, input.archived);
   await audit({
     actorId: uid,
@@ -240,11 +238,21 @@ export const archiveGroup = onCall(async (request) => {
   return { ok: true };
 });
 
-/** Permanently deletes a team after the owner types its name (TEAM-9). */
+/**
+ * Permanently deletes a team after the owner types its name (TEAM-9). An
+ * archived team can be deleted; a suspended one only by a super admin, so
+ * its owner can't erase what it was suspended for (§3).
+ */
 export const deleteGroup = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(GroupOnly.extend({ confirmName: z.string() }), request.data);
-  await requireOwner(input.groupId, uid, request.auth?.token.superAdmin === true);
+  const superAdmin = request.auth?.token.superAdmin === true;
+  if (!superAdmin && (await roleOf(input.groupId, uid)) !== 'owner') {
+    throw new HttpsError('permission-denied', 'Only the team owner can do that.');
+  }
+  // A team that's already gone is left alone (deleteGroupNamed).
+  const group = await db().collection(Collections.groups).doc(input.groupId).get();
+  if (group.exists) await requireOpenTeam(input.groupId, superAdmin, { allowArchived: true });
   await deleteGroupNamed(input.groupId, input.confirmName, (before) =>
     audit({
       actorId: uid,
@@ -349,7 +357,8 @@ export const adminSetGroupQuota = onCall(async (request) => {
 export const listTeamMedia = onCall(async (request) => {
   const uid = requireAuth(request);
   const { groupId } = parse(z.object({ groupId: GroupId }), request.data);
-  await requireTeamAdmin(groupId, uid, request.auth?.token.superAdmin === true);
+  // Reading is fine on an archived team; deleting isn't (TEAM-9).
+  await requireTeamAdmin(groupId, uid, request.auth?.token.superAdmin === true, { allowArchived: true });
   return listMedia(groupId);
 });
 

@@ -6,13 +6,15 @@ import { db } from '../shared/admin.js';
 import { onCall } from '../shared/callable.js';
 import { Collections } from '../shared/constants.js';
 import { requireAuth } from '../shared/guards.js';
-import { roleOf } from '../shared/roles.js';
+import { requireOpenTeam, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
 import { eraseMessage } from './service.js';
 
 /**
  * Deletes a message (CHAT-8): its author, a team admin, or a super admin.
  * System messages can't be deleted. Admin deletions go in the audit log.
+ * Not on a suspended team, nor an archived (read-only) one, except by a
+ * super admin moderating it (§3, TEAM-9).
  */
 export const deleteMessage = onCall(async (request) => {
   const uid = requireAuth(request);
@@ -23,6 +25,7 @@ export const deleteMessage = onCall(async (request) => {
   if (message.get('type') === 'system') throw new HttpsError('failed-precondition', 'system-message');
   const isAuthor = message.get('authorId') === uid;
   const superAdmin = request.auth?.token.superAdmin === true;
+  await requireOpenTeam(groupId, superAdmin, { allowArchived: superAdmin });
   if (!isAuthor && !superAdmin) {
     const role = await roleOf(groupId, uid);
     if (role !== 'owner' && role !== 'admin') {

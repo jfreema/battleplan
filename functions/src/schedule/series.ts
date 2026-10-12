@@ -307,8 +307,9 @@ export async function saveSeries(input: SaveSeriesInput, caller: Caller, nowMs =
   if (!series.exists) throw new HttpsError('not-found', 'series-not-found');
   const ctx = await teamContext(String(target.get('groupId')), caller);
   const isCreator = series.get('createdBy') === caller.uid && ctx.isMember;
-  // SCHED-6: admins, or the series' creator while members may create events.
-  if (!ctx.isAdmin && !(isCreator && ctx.membersCanCreate)) {
+  // SCHED-6, §3 "own only": admins, or the member who made the series, even
+  // after the team stops letting members create events.
+  if (!ctx.isAdmin && !isCreator) {
     throw new HttpsError('permission-denied', 'Only team admins can change this series.');
   }
   const run = { target, series, ctx, caller, nowMs };

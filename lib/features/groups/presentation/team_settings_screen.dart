@@ -13,6 +13,7 @@ import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/application/team_editor.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/presentation/chat_look_section.dart';
@@ -27,9 +28,9 @@ import 'package:material_ui/material_ui.dart';
 const reminderChoices = [15, 60, 120, 1440, 2880, 10080];
 
 /// TEAM-5 at `/g/:groupId/settings` (admins): name, sport, logo, color,
-/// description, time zone, member permissions, default reminders, the chat
-/// look, and storage used with Media. The invite link joins with the invite
-/// screen.
+/// description, time zone, team type (TEAM-1), member permissions, default
+/// reminders, the invite link (managed on the invite screen), the chat look,
+/// and storage used with Media.
 class TeamSettingsScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -67,6 +68,41 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
         );
       }
     }
+  }
+
+  /// Picks a time zone from the device's list (TEAM-5), with search.
+  Future<void> _changeTimeZone(Group group, TeamEditor repo) async {
+    final zones = await ref.read(timeZonesProvider).available();
+    if (!mounted) return;
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (context) => _TimeZonePicker(
+        zones: zones.contains(group.timeZone)
+            ? zones
+            : [group.timeZone, ...zones],
+        current: group.timeZone,
+      ),
+    );
+    if (picked == null || picked == group.timeZone || !mounted) return;
+    await _save(() => repo.update(group.id, timeZone: picked));
+  }
+
+  /// Switches between adult and youth (TEAM-1). Events already on the
+  /// schedule keep the RSVPs they have.
+  Future<void> _changeType(Group group, TeamEditor repo, TeamType to) async {
+    final l10n = AppLocalizations.of(context);
+    if (to == group.teamType) return;
+    final ok = await showConfirmDialog(
+      context,
+      title: to == TeamType.youth
+          ? l10n.changeToYouthTeam
+          : l10n.changeToAdultTeam,
+      message: l10n.changeTeamTypeBody,
+      confirmLabel: l10n.changeTeamType,
+      cancelLabel: l10n.cancel,
+    );
+    if (!ok) return;
+    await _save(() => repo.changeTeamType(group.id, to));
   }
 
   Future<void> _transfer(Group group) async {
@@ -312,8 +348,40 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
               const SizedBox(height: Space.lg),
               ListTile(
                 contentPadding: EdgeInsets.zero,
+                leading: const Icon(AppIcons.timeZone),
                 title: Text(l10n.timeZoneLabel),
                 subtitle: Text(group.timeZone),
+                trailing: const Icon(AppIcons.edit),
+                onTap: () => unawaited(_changeTimeZone(group, repo)),
+              ),
+              if (repo.canChangeType) ...[
+                section(l10n.teamTypeLabel),
+                SegmentedButton<TeamType>(
+                  segments: [
+                    ButtonSegment(
+                      value: TeamType.adult,
+                      label: Text(l10n.teamTypeAdult),
+                    ),
+                    ButtonSegment(
+                      value: TeamType.youth,
+                      label: Text(l10n.teamTypeYouth),
+                    ),
+                  ],
+                  selected: {group.teamType},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (t) =>
+                      unawaited(_changeType(group, repo, t.first)),
+                ),
+              ],
+              // The invite link: expiry, uses, reset, and turn off (INV-2).
+              section(l10n.linkSettings),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(AppIcons.invite),
+                title: Text(l10n.manageInviteLink),
+                subtitle: Text(l10n.manageInviteLinkSubtitle),
+                onTap: () =>
+                    unawaited(context.push('/g/${group.id.value}/invite')),
               ),
               section(l10n.memberPermissions),
               SwitchListTile(
@@ -428,6 +496,65 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A searchable list of time zones (TEAM-5).
+class _TimeZonePicker extends StatefulWidget {
+  const new({required this.zones, required this.current});
+
+  final List<String> zones;
+  final String current;
+
+  @override
+  State<_TimeZonePicker> createState() => _TimeZonePickerState();
+}
+
+class _TimeZonePickerState extends State<_TimeZonePicker> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final q = _query.toLowerCase().replaceAll(' ', '_');
+    final shown = widget.zones
+        .where((z) => z.toLowerCase().contains(q))
+        .toList();
+    return AlertDialog(
+      title: Text(l10n.timeZoneLabel),
+      content: SizedBox(
+        width: 400,
+        height: 420,
+        child: Column(
+          children: [
+            TextField(
+              autofocus: true,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(AppIcons.search),
+                hintText: l10n.timeZoneSearch,
+              ),
+              onChanged: (v) => setState(() => _query = v.trim()),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: shown.length,
+                itemBuilder: (context, i) => ListTile(
+                  title: Text(shown[i]),
+                  selected: shown[i] == widget.current,
+                  onTap: () => Navigator.of(context).pop(shown[i]),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+      ],
     );
   }
 }

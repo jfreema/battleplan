@@ -40,11 +40,11 @@ service cloud.firestore {
     }
     // Who may read a team's content: its members, and super admins on any
     // team, joined or not ("View team", ADMIN-3; SPEC §3). Super admins
-    // only read here: every write rule still needs isMember, so they can't
-    // post, vote, or RSVP in a team they haven't joined, and moderation
-    // goes through callables (deleteMessage) or the rules that name them
-    // (documents, events). superAdmin() is checked first; it costs no
-    // lookup.
+    // can't post, vote, or RSVP for themselves in a team they haven't
+    // joined; the admin actions §3 gives them (create, edit, and delete
+    // events; RSVP for anyone; delete and pin documents) are in the rules
+    // that name them, and moderation goes through callables
+    // (deleteMessage). superAdmin() is checked first; it costs no lookup.
     function canRead(g) { return superAdmin() || isMember(g); }
     // Archived teams are read-only (TEAM-9).
     function active(g) { return get(groupPath(g)).data.get('archivedAt', null) == null; }
@@ -130,9 +130,11 @@ service cloud.firestore {
       // storageBytes, storageQuotaBytes, and storageAlert are left out on
       // purpose: Functions keep them (STORE-1, STORE-3, STORE-6), so no team
       // can give itself more room or silence its warning.
+      // teamType is in: admins can change it later (TEAM-1), and events
+      // keep the RSVPs they have, as rsvpFor is fixed on each event.
       allow update: if isAdmin(g) && active(g)
         && onlyChanges(['name', 'nameLower', 'description', 'photoPath', 'color',
-                        'sport', 'timeZone', 'settings', 'chatTheme', 'updatedAt'])
+                        'sport', 'timeZone', 'teamType', 'settings', 'chatTheme', 'updatedAt'])
         && validGroup(incoming(), g)
         && (!('chatTheme' in changed()) || validChatTheme(incoming().chatTheme, g));
       // Created and deleted by Functions (createGroup, deleteGroup).
@@ -156,6 +158,7 @@ service cloud.firestore {
         && t.nameLower == t.name.lower()
         && t.sport in ['baseball', 'basketball', 'football', 'hockey', 'lacrosse',
                        'soccer', 'softball', 'volleyball', 'other']
+        && t.get('teamType', 'adult') in ['adult', 'youth']
         && (t.color == null || t.color in ['#2F5BEA', '#7BAFD4', '#0F8A5F', '#C2410C', '#B91C1C',
             '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F', '#1D4ED8',
             '#9333EA', '#334155'])
@@ -455,8 +458,9 @@ service cloud.firestore {
         && incoming().get('canceledAt', null) == null
         && incoming().get('canceledBy', null) == null
         && validEvent(incoming());
-      // SCHED-6, SCHED-7: admins, or the creator while members may create
-      // events. Series events change only through saveEventSeries. Cancel
+      // SCHED-6, SCHED-7: admins and super admins, or the member who made
+      // it ("own only", §3, even after members may no longer create
+      // events). Series events change only through saveEventSeries. Cancel
       // sets canceledAt once (to now) and never clears it.
       allow update: if eventEditorOk(resource.data)
         && !changed().hasAny(['groupId', 'rsvpFor', 'createdBy', 'createdAt', 'rsvpCounts',
@@ -469,8 +473,11 @@ service cloud.firestore {
       allow delete: if eventEditorOk(resource.data);
     }
 
+    // Super admins on any team (§3), as saveEventSeries lets them.
     function eventCreatorOk(g) {
-      return isMember(g) && active(g) && (isAdmin(g) || settings(g).membersCanCreateEvents == true);
+      return active(g)
+        && (superAdmin()
+            || (isMember(g) && (isAdmin(g) || settings(g).membersCanCreateEvents == true)));
     }
     // Super admins too, as saveEventSeries lets them change series events.
     function eventEditorOk(e) {
@@ -478,8 +485,7 @@ service cloud.firestore {
         && active(e.groupId)
         && (superAdmin()
             || isAdmin(e.groupId)
-            || (isMember(e.groupId) && e.createdBy == uid()
-                && settings(e.groupId).membersCanCreateEvents == true));
+            || (isMember(e.groupId) && e.createdBy == uid()));
     }
 
     // An event's own fields (SCHED-3, ARCH §6.2). Game fields only on games;
@@ -548,7 +554,8 @@ service cloud.firestore {
       let r = incoming();
       let g = r.groupId;
       let event = get(/databases/$(database)/documents/events/$(r.eventId)).data;
-      return isMember(g) && active(g)
+      // Super admins answer for anyone on any team (§3), never for themselves.
+      return (isMember(g) || superAdmin()) && active(g)
         && rsvpId == r.eventId + '_' + r.participantId
         && event.groupId == g
         && event.rsvpEnabled == true
@@ -560,9 +567,13 @@ service cloud.firestore {
             || (event.rsvpFor == 'players' && r.participantType == 'member'
                 && isAdmin(g) && r.participantId == uid()))
         && rsvpWriterOk(g, r)
-        && (isAdmin(g) || event.get('rsvpDeadline', null) == null
+        && (rsvpAdmin(g) || event.get('rsvpDeadline', null) == null
             || request.time < event.rsvpDeadline)
         && r.status in ['going', 'maybe', 'not_going']
+        // "Allow Maybe" off (TEAM-5, SCHED-5): no new Maybe answers. One
+        // given before it was turned off may stay while the note changes.
+        && (r.status != 'maybe' || settings(g).get('allowMaybe', true) == true
+            || (request.method == 'update' && resource.data.status == 'maybe'))
         // A note up to 200 characters; guest counts wait for v1.1 (SCHED-12).
         && r.get('note', '') is string && r.get('note', '').size() <= 200
         && r.get('guests', 0) == 0
@@ -576,14 +587,18 @@ service cloud.firestore {
             'respondedBy', 'updatedAt']);
     }
 
-    // The member themselves, a guardian of the player, or a team admin. A
-    // player must belong to this team.
+    // Who answers for anyone on the team (§3): its admins, and super admins.
+    function rsvpAdmin(g) { return superAdmin() || isAdmin(g); }
+
+    // The member themselves, a guardian of the player, or a team admin (or
+    // super admin). A player must belong to this team.
     function rsvpWriterOk(g, r) {
       return (r.participantType == 'member'
-              && (r.participantId == uid() || (isAdmin(g) && exists(/databases/$(database)/documents/groupMembers/$(g + '_' + r.participantId)))))
+              && ((r.participantId == uid() && isMember(g))
+                  || (rsvpAdmin(g) && exists(/databases/$(database)/documents/groupMembers/$(g + '_' + r.participantId)))))
         || (r.participantType == 'player'
               && get(/databases/$(database)/documents/players/$(r.participantId)).data.groupId == g
-              && (isGuardian(r.participantId) || isAdmin(g)));
+              && ((isGuardian(r.participantId) && isMember(g)) || rsvpAdmin(g)));
     }
 
     // ---- Documents, notifications, safety, admin --------------------------
@@ -596,7 +611,8 @@ service cloud.firestore {
       // this document's own folder (storage.rules check the room and size);
       // a link needs no storage, so it's allowed when the team is full
       // (STORE-4). uploaderName is the uploader's membership name, kept so
-      // "who added it" still reads after they leave. Only admins may pin.
+      // "who added it" still reads after they leave. Only admins may pin
+      // (and super admins, on update: §3).
       allow create: if docCreatorOk(incoming().groupId)
         && incoming().uploadedBy == uid()
         && incoming().uploaderName == member(incoming().groupId).displayName
@@ -607,7 +623,7 @@ service cloud.firestore {
       // DOC-5: the uploader or an admin renames and edits the description;
       // admins also pin and unpin. Everything else is fixed.
       allow update: if docEditorOk(resource.data)
-        && onlyChanges(isAdmin(resource.data.groupId)
+        && onlyChanges(docPinnerOk(resource.data.groupId)
              ? ['name', 'nameLower', 'description', 'pinned', 'updatedAt']
              : ['name', 'nameLower', 'description', 'updatedAt'])
         && validDocument(incoming(), docId);
@@ -617,6 +633,11 @@ service cloud.firestore {
       allow delete: if docEditorOk(resource.data);
     }
 
+    // Who pins and unpins (DOC-5, §3): admins, and super admins on any team.
+    // The claim is read with get(): a ternary's condition can't be an error.
+    function docPinnerOk(g) {
+      return request.auth.token.get('superAdmin', false) == true || isAdmin(g);
+    }
     function docCreatorOk(g) {
       return isMember(g) && active(g)
         && (isAdmin(g) || settings(g).get('membersCanUploadDocs', true) == true);

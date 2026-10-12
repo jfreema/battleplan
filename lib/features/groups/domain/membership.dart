@@ -17,6 +17,10 @@ abstract class Membership with _$Membership {
     DateTime? lastReadAt,
     String? title,
 
+    /// Their profile photo's Storage path, copied onto the membership, for
+    /// the roster (TEAM-3).
+    String? photoPath,
+
     /// Youth teams: "Emma #7, Liam #23" for a guardian (PLAYER-8).
     String? playerSummary,
 

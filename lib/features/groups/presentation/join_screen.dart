@@ -4,12 +4,14 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -21,6 +23,7 @@ String inviteProblemMessage(AppLocalizations l10n, AppFailure failure) =>
       InviteUnusable(reason: 'revoked') => l10n.inviteRevoked,
       InviteUnusable(reason: 'used-up') => l10n.inviteUsedUp,
       InviteUnusable(reason: 'wrong-email') => l10n.inviteWrongEmail,
+      InviteUnusable(reason: 'link-off') => l10n.linkIsOff,
       InviteUnusable() => l10n.inviteUnknown,
       RateLimited() => l10n.inviteTooManyTries,
       TooManyTeams() => l10n.tooManyTeams,
@@ -30,15 +33,43 @@ String inviteProblemMessage(AppLocalizations l10n, AppFailure failure) =>
 
 /// Invite landing page, `/join/<CODE>` (INV-5, INV-7). Works signed out:
 /// it shows the team, and Join signs the person in first, then joins
-/// automatically (`?join=1` on the way back). The code is shown large so it
-/// can be typed into the app after installing it.
+/// automatically (`?join=1` on the way back). People already on the team
+/// go straight to it. In a browser it also offers Open in app, with Join
+/// as Continue in browser. The code is shown large so it can be typed into
+/// the app after installing it.
 class JoinScreen extends ConsumerStatefulWidget {
-  const new({required this.code, this.autoJoin = false, super.key});
+  const new({
+    required this.code,
+    this.autoJoin = false,
+    this.inBrowser = kIsWeb,
+    super.key,
+  });
 
   final String code;
 
   /// Join as soon as the preview loads (after returning from sign-in).
   final bool autoJoin;
+
+  /// Running in a browser, so Open in app is offered (INV-7).
+  final bool inBrowser;
+
+  /// The link that opens the app on [code] where it's installed (Universal
+  /// Links and App Links, INV-9), from the web app at [page]. Android
+  /// browsers get an intent link that falls back to this page.
+  static Uri openInAppLink(Uri page, String code, {required bool android}) {
+    final link = Uri(
+      scheme: 'https',
+      host: page.host,
+      port: page.hasPort ? page.port : null,
+      path: '/join/$code',
+    );
+    if (!android) return link;
+    final fallback = Uri.encodeComponent(page.toString());
+    return Uri.parse(
+      'intent://${link.authority}${link.path}'
+      '#Intent;scheme=https;S.browser_fallback_url=$fallback;end',
+    );
+  }
 
   /// Shows a raw 8-character code as `K7XP-M2QR`.
   static String formatCode(String code) {
@@ -68,11 +99,23 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
           .read(inviteRepositoryProvider)
           .preview(widget.code);
       if (!mounted) return;
+      final signedIn = ref.read(authUserProvider).value != null;
+      // People already on the team just go to it (INV-5).
+      if (signedIn) {
+        final mine = await ref.read(myMembershipsProvider.future);
+        if (!mounted) return;
+        if (mine.any((m) => m.groupId.value == preview.groupId)) {
+          // Leaving while this page is still sliding in would put the
+          // team's shell in the tree twice.
+          await _transitionDone();
+          if (mounted) context.go('/g/${preview.groupId}/chat');
+          return;
+        }
+      }
       setState(() {
         _preview = preview;
         _loading = false;
       });
-      final signedIn = ref.read(authUserProvider).value != null;
       if (widget.autoJoin && signedIn) await _join();
     } on AppFailure catch (e) {
       if (mounted) {
@@ -82,6 +125,21 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
         });
       }
     }
+  }
+
+  /// Completes once this page has finished coming in.
+  Future<void> _transitionDone() async {
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null || animation.isCompleted) return;
+    final done = Completer<void>();
+    void listener(AnimationStatus status) {
+      if (status != AnimationStatus.completed) return;
+      animation.removeStatusListener(listener);
+      done.complete();
+    }
+
+    animation.addStatusListener(listener);
+    await done.future;
   }
 
   Future<void> _join() async {
@@ -153,6 +211,7 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
           TeamBadge(
             name: preview.name,
             color: preview.color == null ? null : Color(preview.color!),
+            imageUrl: preview.logoUrl,
             size: 80,
           ),
           const SizedBox(height: Space.lg),
@@ -175,9 +234,33 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
             ),
             const SizedBox(height: Space.md),
           ],
+          if (widget.inBrowser) ...[
+            FilledButton.tonal(
+              onPressed: () => unawaited(
+                ref
+                    .read(linkOpenerProvider)
+                    .open(
+                      JoinScreen.openInAppLink(
+                        Uri.base,
+                        widget.code,
+                        android:
+                            defaultTargetPlatform == TargetPlatform.android,
+                      ),
+                    ),
+              ),
+              child: Text(l10n.openInApp),
+            ),
+            const SizedBox(height: Space.sm),
+          ],
           FilledButton(
             onPressed: _joining ? null : () => unawaited(_join()),
-            child: Text(signedIn ? l10n.joinTeamButton : l10n.signInToJoin),
+            child: Text(
+              signedIn
+                  ? l10n.joinTeamButton
+                  : widget.inBrowser
+                  ? l10n.continueInBrowser
+                  : l10n.signInToJoin,
+            ),
           ),
           const SizedBox(height: Space.xxl),
           Text(l10n.inviteCodeLabel, style: theme.textTheme.titleSmall),

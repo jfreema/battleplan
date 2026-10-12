@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/presentation/results_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -61,27 +62,31 @@ class _AddMembersScreenState extends ConsumerState<AddMembersScreen> {
           .read(memberRepositoryProvider)
           .addByEmail(widget.groupId, parsed.entries);
       if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n.peopleAddedTitle),
-          content: Text(
-            [
-              l10n.membersAddedCount(r.added),
-              l10n.membersInvitedCount(r.invited),
-              if (r.alreadyMembers > 0)
-                l10n.alreadyMembersCount(r.alreadyMembers),
-              if (r.problems.isNotEmpty)
-                l10n.addProblems(r.problems.join('\n')),
-            ].join('\n'),
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.done),
-            ),
-          ],
-        ),
+      // TEAM-7: a results screen lists who was added, who was invited,
+      // and any problems.
+      String person(({String name, String email}) p) =>
+          p.name.isEmpty || p.name == p.email
+          ? p.email
+          : '${p.name} · ${p.email}';
+      await AddResultsScreen.show(
+        context,
+        title: l10n.peopleAddedTitle,
+        sections: [
+          ResultSection(l10n.resultsAdded, [
+            for (final p in r.addedPeople) person(p),
+          ]),
+          ResultSection(l10n.resultsInvited, [
+            for (final p in r.invitedPeople) person(p),
+          ]),
+          ResultSection(l10n.resultsAlreadyMembers, [
+            if (r.alreadyMembers > 0)
+              l10n.alreadyMembersCount(r.alreadyMembers),
+          ], counted: false),
+          ResultSection(l10n.resultsProblems, [
+            for (final p in parsed.problems) p,
+            for (final p in r.problems) describeAddProblem(l10n, p),
+          ], problem: true),
+        ],
       );
       if (mounted) context.pop();
     } on AppFailure catch (e) {

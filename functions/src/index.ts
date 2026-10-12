@@ -59,8 +59,10 @@ export {
   redeemInvite,
   resendEmailInvite,
   resetGroupInvite,
+  revokeGroupInvite,
   revokeInvite,
   sendEmailInvites,
+  updateGroupInvite,
 } from './invites/handlers.js';
 export { logClientError } from './ops/handlers.js';
 export { tick } from './ops/jobs.js';

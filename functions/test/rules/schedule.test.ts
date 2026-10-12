@@ -196,6 +196,14 @@ describe('creating events (SCHED-3, Q12)', () => {
     for (const extra of bad) await assertFails(create('alice', 'teamA', extra));
   });
 
+  it('lets super admins create events on any team (§3), not archived ones', async () => {
+    const sam = env.authenticatedContext('sam', { superAdmin: true }).firestore();
+    await assertSucceeds(sam.doc('events/bySam').set(fresh('sam')));
+    await assertFails(sam.doc('events/bySam2').set(fresh('bob')));
+    await archive('teamA');
+    await assertFails(sam.doc('events/bySam3').set(fresh('sam')));
+  });
+
   it("sets rsvpFor from the team's type (PLAYER-6)", async () => {
     await assertSucceeds(create('carol', 'teamY'));
     await assertFails(as('carol').doc('events/new3').set(fresh('carol', 'teamY', { rsvpFor: 'members' })));
@@ -221,10 +229,14 @@ describe('editing, canceling, and deleting events (SCHED-6, SCHED-7)', () => {
     await assertSucceeds(edit('alice', 'eA', { location: null, description: 'Bring water' }));
   });
 
-  it('lets the creator edit only while members may create events', async () => {
-    await assertFails(edit('bob', 'eA', { title: 'Scrimmage' }));
-    await allowMembers();
+  it('lets the creator edit their own, even once members may no longer create events (§3)', async () => {
     await assertSucceeds(edit('bob', 'eA', { title: 'Scrimmage' }));
+    await allowMembers();
+    await assertSucceeds(edit('bob', 'eA', { title: 'Scrimmage 2' }));
+    // Not someone else's.
+    await assertFails(edit('bob', 'eS', { title: 'Scrimmage' }));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('events/eA').update({ createdBy: 'alice' }));
+    await assertFails(edit('bob', 'eA', { title: 'Scrimmage 3' }));
   });
 
   it('keeps computed, series, and fixed fields out of reach', async () => {
@@ -260,9 +272,8 @@ describe('editing, canceling, and deleting events (SCHED-6, SCHED-7)', () => {
     await assertFails(as('alice').doc('events/eS').delete());
   });
 
-  it('lets admins delete, and the creator while allowed', async () => {
-    await assertFails(as('bob').doc('events/eA').delete());
-    await allowMembers();
+  it('lets admins delete, and the creator their own (§3 "own only")', async () => {
+    await assertFails(as('frank').doc('events/eY').delete());
     await assertSucceeds(as('bob').doc('events/eA').delete());
     await assertSucceeds(as('alice').doc('events/eGone').delete());
     await assertFails(as('gina').doc('events/eY').delete());
@@ -387,6 +398,35 @@ describe('RSVPs (SCHED-5, PLAYER-6, Q14)', () => {
   it('keeps working when storage is full (STORE-4)', async () => {
     await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ storageBytes: 100 }));
     await assertSucceeds(answer('bob', 'eA', 'member', 'bob'));
+  });
+
+  it('lets super admins answer for any member or player, never for themselves (§3)', async () => {
+    const sam = env.authenticatedContext('sam', { superAdmin: true }).firestore();
+    const by = (eventId: string, type: string, id: string, extra: object = {}) =>
+      sam.doc(`rsvps/${eventId}_${id}`).set({
+        eventId, groupId: eventId === 'eY' ? 'teamY' : 'teamA', participantType: type, participantId: id,
+        participantName: id, eventStartAt: ts(START), status: 'going', note: '', guests: 0, respondedBy: 'sam',
+        updatedAt: now(), ...extra,
+      });
+    await assertSucceeds(by('eA', 'member', 'bob'));
+    await assertSucceeds(by('eY', 'player', 'emma'));
+    await assertFails(by('eA', 'member', 'sam'));
+    await assertFails(by('eA', 'member', 'gina'));
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('events/eA').update({ rsvpDeadline: ts('2026-01-01T00:00:00Z') }),
+    );
+    await assertSucceeds(by('eA', 'member', 'bob', { status: 'not_going' }));
+  });
+
+  it('takes no new Maybe when the team turned Maybe off (TEAM-5, SCHED-5)', async () => {
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob', { status: 'maybe' }));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ 'settings.allowMaybe': false }));
+    // One given before stays while the note changes; new ones are refused.
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob', { status: 'maybe', note: 'Late' }));
+    await assertFails(answer('alice', 'eA', 'member', 'alice', { status: 'maybe' }));
+    await assertSucceeds(answer('alice', 'eA', 'member', 'alice', { status: 'going' }));
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob', { status: 'not_going' }));
+    await assertFails(answer('bob', 'eA', 'member', 'bob', { status: 'maybe' }));
   });
 
   it('never lets clients delete answers', async () => {
