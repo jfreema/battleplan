@@ -1,0 +1,6 @@
+# The website is indexed; the web app under /app/ is not (WEB-5).
+User-agent: *
+Allow: /
+Disallow: /app/
+
+Sitemap: https://getbattleplan.app/sitemap.xml
