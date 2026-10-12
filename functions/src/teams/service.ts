@@ -248,16 +248,81 @@ async function groupOrThrow(groupId: string): Promise<FirebaseFirestore.Document
   return group;
 }
 
-/** Archives (read-only) or restores a team (TEAM-9). */
-export async function setGroupArchived(groupId: string, archived: boolean): Promise<void> {
-  await groupOrThrow(groupId);
-  await db()
-    .collection(Collections.groups)
-    .doc(groupId)
-    .update({
-      archivedAt: archived ? FieldValue.serverTimestamp() : null,
+/**
+ * Archives (read-only) or restores a team (TEAM-9). Archiving a team that's
+ * already archived keeps the date it was first archived. Returns whether it
+ * was archived before, and since when (ISO 8601), for the audit log
+ * (ADMIN-6).
+ */
+export async function setGroupArchived(
+  groupId: string,
+  archived: boolean,
+): Promise<{ archived: boolean; archivedAt: string | null }> {
+  const ref = db().collection(Collections.groups).doc(groupId);
+  return db().runTransaction(async (tx) => {
+    const group = await tx.get(ref);
+    if (!group.exists) throw new HttpsError('not-found', 'No such team.');
+    const was = group.get('archivedAt') as FirebaseFirestore.Timestamp | null | undefined;
+    tx.update(ref, {
+      archivedAt: archived ? (was ?? FieldValue.serverTimestamp()) : null,
       updatedAt: FieldValue.serverTimestamp(),
     });
+    return { archived: was != null, archivedAt: was ? was.toDate().toISOString() : null };
+  });
+}
+
+/** What a super admin may change on a team's profile and settings (ADMIN-3); the same fields team admins write (TEAM-5, CHAT-18). */
+export interface GroupEdit {
+  name?: string;
+  description?: string;
+  color?: string | null;
+  sport?: string;
+  timeZone?: string;
+  settings?: Record<string, unknown>;
+  chatTheme?: { bubbleColor?: string | null; background?: string; backgroundPath?: string | null };
+  photoPath?: string | null;
+  backgroundPath?: string | null;
+}
+
+/**
+ * Changes a team's profile and settings for a super admin who isn't on it
+ * (ADMIN-3); its admins write the same fields directly under the rules'
+ * validGroup. Callers validate [edit] the same way. Settings merge into the
+ * team's; a background path replaces the chat look's. An archived team is
+ * read-only (`archived`, TEAM-9). Returns each changed field before and
+ * after, for the audit log.
+ */
+export async function updateGroupProfile(
+  groupId: string,
+  edit: GroupEdit,
+): Promise<{ before: Record<string, unknown>; after: Record<string, unknown> }> {
+  const ref = db().collection(Collections.groups).doc(groupId);
+  return db().runTransaction(async (tx) => {
+    const group = await tx.get(ref);
+    if (!group.exists) throw new HttpsError('not-found', 'No such team.');
+    if (group.get('archivedAt') != null) throw new HttpsError('failed-precondition', 'archived');
+    const after: Record<string, unknown> = {};
+    for (const key of ['name', 'description', 'color', 'sport', 'timeZone', 'photoPath'] as const) {
+      if (edit[key] !== undefined) after[key] = edit[key];
+    }
+    if (edit.settings) {
+      after.settings = { ...((group.get('settings') as Record<string, unknown> | undefined) ?? {}), ...edit.settings };
+    }
+    if (edit.chatTheme || edit.backgroundPath !== undefined) {
+      const theme: Record<string, unknown> = {
+        ...(edit.chatTheme ?? (group.get('chatTheme') as Record<string, unknown> | undefined) ?? {}),
+      };
+      if (edit.backgroundPath !== undefined) theme.backgroundPath = edit.backgroundPath;
+      after.chatTheme = theme;
+    }
+    const before = Object.fromEntries(Object.keys(after).map((k) => [k, group.get(k) ?? null]));
+    tx.update(ref, {
+      ...after,
+      ...(edit.name !== undefined ? { nameLower: edit.name.toLowerCase() } : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return { before, after };
+  });
 }
 
 /**

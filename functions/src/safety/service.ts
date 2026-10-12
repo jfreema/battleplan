@@ -101,8 +101,9 @@ export type ReportResolution =
 /**
  * Closes an open report from the admin panel (ADMIN-5): its status, what was
  * done, the super admin's note, and who closed it. A report already closed
- * is refused, so two admins can't act on it twice. Returns the report as it
- * was, for the action and the audit log.
+ * is refused, so two admins can't act on it twice: callers close (claim)
+ * it before acting, and reopenReport it if the action then fails. Returns
+ * the report as it was, for the action and the audit log.
  */
 export async function closeReport(
   reportId: string,
@@ -121,6 +122,26 @@ export async function closeReport(
       resolvedAt: FieldValue.serverTimestamp(),
     });
     return report.data()!;
+  });
+}
+
+/**
+ * Puts back a report [resolvedBy] closed with closeReport when the action it
+ * claimed the report for then failed (ADMIN-5), so it's still in the open
+ * queue. A report someone else has since closed is left alone.
+ */
+export async function reopenReport(reportId: string, resolvedBy: string): Promise<void> {
+  const ref = db().collection(Collections.reports).doc(reportId);
+  await db().runTransaction(async (tx) => {
+    const report = await tx.get(ref);
+    if (!report.exists || report.get('status') === 'open' || report.get('resolvedBy') !== resolvedBy) return;
+    tx.update(ref, {
+      status: 'open',
+      resolution: null,
+      resolvedBy: null,
+      note: FieldValue.delete(),
+      resolvedAt: FieldValue.delete(),
+    });
   });
 }
 

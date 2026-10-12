@@ -16,11 +16,13 @@ service firebase.storage {
         /databases/(default)/documents/groupMembers/$(g + '_' + request.auth.uid)).data.role
         in ['owner', 'admin'];
     }
+    function superAdmin() { return signedIn() && request.auth.token.get('superAdmin', false) == true; }
     // Super admins read every team's files without joining ("View team",
-    // ADMIN-3, and Media); they never upload into a team through these
-    // rules.
+    // ADMIN-3, and Media). The only files they upload into a team they
+    // aren't on are its logo and chat background (ADMIN-3 Edit), which
+    // adminUpdateGroup then saves; they never post photos or documents.
     function canRead(g) {
-      return signedIn() && (request.auth.token.get('superAdmin', false) == true || isMember(g));
+      return superAdmin() || isMember(g);
     }
     // The same test as Firestore rules' hasRoom (STORE-4).
     function underQuota(g) {
@@ -51,12 +53,13 @@ service firebase.storage {
     }
     match /groups/{g}/avatar/{file} {
       allow read: if canRead(g);
-      allow write: if isAdmin(g) && isImage(10) && underQuota(g);
+      allow write: if (superAdmin() || isAdmin(g)) && isImage(10) && underQuota(g);
     }
-    // The chat background photo (CHAT-18), set by the team's admins.
+    // The chat background photo (CHAT-18), set by the team's admins (or a
+    // super admin, ADMIN-3).
     match /groups/{g}/theme/{file} {
       allow read: if canRead(g);
-      allow write: if isAdmin(g) && isImage(10) && underQuota(g);
+      allow write: if (superAdmin() || isAdmin(g)) && isImage(10) && underQuota(g);
     }
     match /groups/{g}/messages/{messageId}/{allPaths=**} {
       allow read: if canRead(g);

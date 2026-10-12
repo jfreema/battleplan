@@ -6,6 +6,7 @@
 import { AggregateField, FieldValue, Timestamp, type Query } from 'firebase-admin/firestore';
 import type { UserRecord } from 'firebase-admin/auth';
 import { HttpsError } from 'firebase-functions/v2/https';
+import { randomUUID } from 'node:crypto';
 import { signInMethodsOf } from '../accounts/profile.js';
 import { isUsable } from '../invites/service.js';
 import { auth, db } from '../shared/admin.js';
@@ -395,29 +396,61 @@ export async function getUser(uid: string) {
   };
 }
 
+/** How long one super-admin change may hold the lock before it's treated as abandoned. */
+export const SUPER_ADMIN_LOCK_MS = 30_000;
+/** How long to keep trying for the lock before giving up with `aborted`. */
+const LOCK_WAIT_MS = 10_000;
+
 /**
- * Whether taking super admin away from [uid] (revoking it, or deleting the
- * account) would leave nobody with it (ADMIN-4). The caller is a super
- * admin, so only removing yourself can do that; then another person must
- * be marked users.superAdmin.
+ * Runs [fn] while holding config/superAdmins' lock, so changes that can
+ * take away the last super admin (revoking, disabling, deleting) happen
+ * one at a time (ADMIN-4): each sees the others' Auth changes before its
+ * own check. A lock left by a crashed call lapses after
+ * SUPER_ADMIN_LOCK_MS. Busy for longer than LOCK_WAIT_MS is `aborted`.
  */
-export async function wouldLeaveNoSuperAdmin(uid: string, actorUid: string): Promise<boolean> {
-  if (uid !== actorUid) return false;
-  const others = await db()
-    .collection(Collections.users)
-    .where('superAdmin', '==', true)
-    .select()
-    .limit(2)
-    .get();
-  return !others.docs.some((d) => d.id !== uid);
+export async function withSuperAdminLock<T>(holder: string, fn: () => Promise<T>): Promise<T> {
+  const ref = db().collection(Collections.config).doc('superAdmins');
+  const token = randomUUID();
+  const giveUpAt = Date.now() + LOCK_WAIT_MS;
+  for (;;) {
+    const taken = await db().runTransaction(async (tx) => {
+      const until = (await tx.get(ref)).get('lockedUntil') as Timestamp | null | undefined;
+      if (until && until.toMillis() > Date.now()) return false;
+      tx.set(ref, {
+        lockToken: token,
+        lockedBy: holder,
+        lockedUntil: Timestamp.fromMillis(Date.now() + SUPER_ADMIN_LOCK_MS),
+      });
+      return true;
+    });
+    if (taken) break;
+    if (Date.now() > giveUpAt) throw new HttpsError('aborted', 'busy');
+    await new Promise((r) => setTimeout(r, 50 + Math.random() * 100));
+  }
+  try {
+    return await fn();
+  } finally {
+    await db().runTransaction(async (tx) => {
+      if ((await tx.get(ref)).get('lockToken') === token) tx.update(ref, { lockToken: null, lockedUntil: null });
+    });
+  }
 }
 
 /**
- * Marks the caller's own profile as a super admin's, so super admins made
- * before users.superAdmin existed (tools/seed/set-super-admin.ts) are
+ * Checks the caller still holds the superAdmin claim in Auth and isn't
+ * disabled, as their ID token may be up to an hour old (a revoked super
+ * admin's token keeps the claim until it expires): `permission-denied`
+ * otherwise. Then marks their profile as a super admin's, so super admins
+ * made before users.superAdmin existed (tools/seed/set-super-admin.ts) are
  * counted and listed too.
  */
-export async function markSuperAdmin(uid: string): Promise<void> {
+export async function requireCurrentSuperAdmin(uid: string): Promise<void> {
+  const user = await auth()
+    .getUser(uid)
+    .catch(() => undefined);
+  if (user?.customClaims?.superAdmin !== true || user.disabled) {
+    throw new HttpsError('permission-denied', 'Super admins only.');
+  }
   await db()
     .collection(Collections.users)
     .doc(uid)
@@ -425,6 +458,28 @@ export async function markSuperAdmin(uid: string): Promise<void> {
     .catch((e: { code?: number }) => {
       if (e.code !== 5) throw e; // 5 = NOT_FOUND
     });
+}
+
+/**
+ * Whether revoking, disabling, or deleting [uid] would leave no super
+ * admin who can sign in (ADMIN-4). Only people who hold the claim in Auth
+ * now and aren't disabled count; users.superAdmin only finds the
+ * candidates, so a stale flag can't stand in for one. Call it inside
+ * withSuperAdminLock, after requireCurrentSuperAdmin.
+ */
+export async function wouldLeaveNoSuperAdmin(uid: string): Promise<boolean> {
+  const flagged = await db()
+    .collection(Collections.users)
+    .where('superAdmin', '==', true)
+    .select()
+    .limit(Limits.queryLimitMax)
+    .get();
+  const others = flagged.docs.map((d) => d.id).filter((id) => id !== uid);
+  const users = await authUsers(others);
+  return !others.some((id) => {
+    const user = users.get(id);
+    return user?.customClaims?.superAdmin === true && !user.disabled;
+  });
 }
 
 // ---- Reports (ADMIN-5) -------------------------------------------------------

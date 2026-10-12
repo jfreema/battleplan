@@ -29,6 +29,8 @@ export {
   adminSetSuperAdmin,
   adminSetUserDisabled,
   adminUpdateConfig,
+  adminUpdateGroup,
+  adminUpdatePlayer,
   adminUpdateUser,
 } from './admin/handlers.js';
 export {

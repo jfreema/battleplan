@@ -197,9 +197,33 @@ describe("super admins don't take part in teams they haven't joined (SPEC §3)",
     await assertFails(db.doc('groupMembers/teamA_bob').update({ role: 'admin' }));
     await assertFails(db.doc('groupMembers/teamA_root').set({ groupId: 'teamA', uid: 'root', role: 'owner' }));
     const storage = env.authenticatedContext('root', { superAdmin: true }).storage();
-    for (const path of ['groups/teamA/messages/m9/x.jpg', 'groups/teamA/avatar/new.jpg', 'groups/teamA/documents/d9/x.jpg']) {
+    for (const path of ['groups/teamA/messages/m9/x.jpg', 'groups/teamA/documents/d9/x.jpg']) {
       await assertFails(storage.ref(path).put(jpeg, { contentType: 'image/jpeg' }).then(() => undefined));
     }
+  });
+});
+
+describe('super admins edit a team they are not on through adminUpdateGroup (ADMIN-3)', () => {
+  const upload = (path: string, data = jpeg, contentType = 'image/jpeg') =>
+    env.authenticatedContext('root', { superAdmin: true }).storage().ref(path).put(data, { contentType }).then(() => undefined);
+
+  it('uploads a new logo and chat background, which the callable then saves', async () => {
+    await assertSucceeds(upload('groups/teamA/avatar/new.jpg'));
+    await assertSucceeds(upload('groups/teamA/theme/new.jpg'));
+  });
+
+  it('only images, up to 10 MB, while the team has room (STORE-4)', async () => {
+    await assertFails(upload('groups/teamA/avatar/new.pdf', jpeg, 'application/pdf'));
+    await assertFails(upload('groups/teamA/theme/big.jpg', new Uint8Array(10 * MB + 1)));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ storageBytes: 100 * MB }));
+    await assertFails(upload('groups/teamA/avatar/new.jpg'));
+  });
+
+  it("doesn't let regular people outside the team upload them, nor super admins write the team directly", async () => {
+    const gina = env.authenticatedContext('gina').storage();
+    await assertFails(gina.ref('groups/teamA/avatar/new.jpg').put(jpeg, { contentType: 'image/jpeg' }).then(() => undefined));
+    await assertFails(gina.ref('groups/teamA/theme/new.jpg').put(jpeg, { contentType: 'image/jpeg' }).then(() => undefined));
+    await assertFails(root().doc('groups/teamA').update({ name: 'Renamed', nameLower: 'renamed', updatedAt: now() }));
   });
 });
 
@@ -257,5 +281,11 @@ describe('the audit log, reports, and settings (ADMIN-5 to ADMIN-7)', () => {
     // Super admins save settings through adminUpdateConfig, which audits it.
     await assertFails(root().doc('config/app').update({ allowUserGroupCreation: false }));
     await assertFails(as('bob').doc('config/app').update({ allowUserGroupCreation: false }));
+  });
+
+  it("keeps the other config docs (the super-admin lock) to Functions", async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('config/superAdmins').set({ lockedBy: 'root' }));
+    await assertFails(as('bob').doc('config/superAdmins').get());
+    await assertFails(root().doc('config/superAdmins').get());
   });
 });

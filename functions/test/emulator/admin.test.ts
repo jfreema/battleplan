@@ -11,7 +11,7 @@ import * as admin from '../../src/admin/handlers.js';
 import type { Email } from '../../src/email/service.js';
 import { auth, db, storage } from '../../src/shared/admin.js';
 import { Collections } from '../../src/shared/constants.js';
-import { createGroup } from '../../src/teams/handlers.js';
+import { archiveGroup, createGroup } from '../../src/teams/handlers.js';
 
 // Email stand-in: records every email instead of sending it.
 const mail = vi.hoisted(() => ({ sent: [] as Email[] }));
@@ -158,6 +158,8 @@ describe('only super admins (ADMIN-8)', () => {
     ['adminListReports', admin.adminListReports, {}],
     ['adminResolveReport', admin.adminResolveReport, { reportId: 'r1', action: 'dismiss', note: 'ok' }],
     ['adminUpdateConfig', admin.adminUpdateConfig, {}],
+    ['adminUpdateGroup', admin.adminUpdateGroup, { groupId: 'thunder', name: 'Renamed' }],
+    ['adminUpdatePlayer', admin.adminUpdatePlayer, { playerId: 'emma', displayName: 'Em' }],
   ];
 
   it.each(calls)('%s refuses team owners and anyone without the claim', async (_name, fn, data) => {
@@ -318,6 +320,31 @@ describe('team detail and actions (ADMIN-3)', () => {
     expect(await audits('restoreGroup')).toHaveLength(1);
   });
 
+  it('audits archive and restore with the state before and after (ADMIN-6), keeping the first archive date', async () => {
+    const hawksArchivedAt = (await groups().doc('hawks').get()).get('archivedAt').toDate().toISOString();
+    // hawks is already archived: archiving again changes nothing and says so.
+    await asRoot(admin.adminArchiveGroup, { groupId: 'hawks', archived: true });
+    expect((await groups().doc('hawks').get()).get('archivedAt').toDate().toISOString()).toBe(hawksArchivedAt);
+    await asRoot(admin.adminArchiveGroup, { groupId: 'thunder', archived: true });
+    expect((await audits('archiveGroup')).map((a) => [a.groupId, a.before, a.after])).toEqual([
+      ['hawks', { archived: true, archivedAt: hawksArchivedAt }, { archived: true }],
+      ['thunder', { archived: false, archivedAt: null }, { archived: true }],
+    ]);
+    await asRoot(admin.adminArchiveGroup, { groupId: 'hawks', archived: false });
+    expect((await audits('restoreGroup'))[0]).toMatchObject({
+      before: { archived: true, archivedAt: hawksArchivedAt },
+      after: { archived: false },
+    });
+    // The owner's own Archive in Team settings is audited the same way.
+    await run(archiveGroup, 'pat', { groupId: 'thunder', archived: false });
+    expect((await audits('restoreGroup'))[1]).toMatchObject({
+      actorId: 'pat',
+      groupId: 'thunder',
+      before: { archived: true, archivedAt: expect.any(String) },
+      after: { archived: false },
+    });
+  });
+
   it('deletes a team only when its name is typed', async () => {
     await storage().bucket().file('groups/thunder/avatar/a.jpg').save(Buffer.alloc(4), { contentType: 'image/jpeg' });
     await expect(asRoot(admin.adminDeleteGroup, { groupId: 'thunder', confirmName: 'Thunderr' })).rejects.toMatchObject({
@@ -331,6 +358,95 @@ describe('team detail and actions (ADMIN-3)', () => {
     const [exists] = await storage().bucket().file('groups/thunder/avatar/a.jpg').exists();
     expect(exists).toBe(false);
     expect((await audits('deleteGroup'))[0]).toMatchObject({ before: { name: 'Thunder', memberCount: 3 } });
+  });
+});
+
+describe('editing a team the super admin is not on (ADMIN-3)', () => {
+  const settings = {
+    membersCanCreateEvents: false, membersCanCreatePolls: true, membersCanUploadDocs: true, membersCanInvite: true,
+    allowMaybe: true, defaultReminderOffsets: [1440],
+  };
+  const upload = (path: string) => storage().bucket().file(path).save(Buffer.alloc(4), { contentType: 'image/jpeg' });
+
+  beforeEach(async () => {
+    await groups().doc('thunder').update({
+      description: 'Old', color: '#2F5BEA', timeZone: 'America/Chicago', photoPath: null, settings,
+      chatTheme: { bubbleColor: null, background: 'plain', backgroundPath: null },
+    });
+    await db().collection(Collections.players).doc('emma').set({
+      groupId: 'thunder', displayName: 'Emma', displayNameLower: 'emma', jerseyNumber: '7', position: 'SS',
+    });
+  });
+
+  it('changes the profile and settings, merging settings, and audits before and after', async () => {
+    await asRoot(admin.adminUpdateGroup, {
+      groupId: 'thunder', name: ' Thunder 12U ', description: 'New', color: '#0F8A5F', sport: 'baseball',
+      timeZone: 'America/Denver', settings: { allowMaybe: false, defaultReminderOffsets: [60, 1440] },
+    });
+    const t = (await groups().doc('thunder').get()).data()!;
+    expect(t).toMatchObject({
+      name: 'Thunder 12U', nameLower: 'thunder 12u', description: 'New', color: '#0F8A5F', sport: 'baseball',
+      timeZone: 'America/Denver', settings: { ...settings, allowMaybe: false, defaultReminderOffsets: [60, 1440] },
+    });
+    expect((await audits('updateGroup'))[0]).toMatchObject({
+      actorId: 'root', groupId: 'thunder', targetType: 'group', targetId: 'thunder',
+      before: { name: 'Thunder', description: 'Old', color: '#2F5BEA', sport: 'softball', timeZone: 'America/Chicago', settings },
+      after: { name: 'Thunder 12U', description: 'New', color: '#0F8A5F', sport: 'baseball' },
+    });
+  });
+
+  it('saves an uploaded logo and chat background', async () => {
+    await upload('groups/thunder/avatar/1.jpg');
+    await upload('groups/thunder/theme/1.jpg');
+    await asRoot(admin.adminUpdateGroup, { groupId: 'thunder', photoPath: 'groups/thunder/avatar/1.jpg' });
+    await asRoot(admin.adminUpdateGroup, { groupId: 'thunder', backgroundPath: 'groups/thunder/theme/1.jpg' });
+    await asRoot(admin.adminUpdateGroup, { groupId: 'thunder', chatTheme: { bubbleColor: '#B91C1C', background: 'photo', backgroundPath: 'groups/thunder/theme/1.jpg' } });
+    const t = (await groups().doc('thunder').get()).data()!;
+    expect(t.photoPath).toBe('groups/thunder/avatar/1.jpg');
+    expect(t.chatTheme).toEqual({ bubbleColor: '#B91C1C', background: 'photo', backgroundPath: 'groups/thunder/theme/1.jpg' });
+    expect((await audits('updateGroup'))[1]).toMatchObject({
+      before: { chatTheme: { backgroundPath: null } }, after: { chatTheme: { backgroundPath: 'groups/thunder/theme/1.jpg' } },
+    });
+  });
+
+  it('refuses what the rules refuse, files that were never uploaded, and archived teams', async () => {
+    await upload('groups/hawks/avatar/1.jpg');
+    const bad = [
+      { color: '#123456' }, { sport: 'cricket' }, { name: '' }, { name: 'x'.repeat(51) }, { description: 'x'.repeat(501) },
+      { settings: { secret: true } }, { settings: { defaultReminderOffsets: [7] } },
+      { chatTheme: { background: 'video' } }, { photoPath: 'groups/hawks/avatar/1.jpg' },
+      { photoPath: 'groups/thunder/avatar/a/b.jpg' }, { backgroundPath: 'groups/thunder/avatar/1.jpg' }, {},
+    ];
+    for (const edit of bad) {
+      await expect(asRoot(admin.adminUpdateGroup, { groupId: 'thunder', ...edit })).rejects.toMatchObject({ code: 'invalid-argument' });
+    }
+    await expect(asRoot(admin.adminUpdateGroup, { groupId: 'thunder', photoPath: 'groups/thunder/avatar/none.jpg' })).rejects.toMatchObject({
+      message: 'no-such-file',
+    });
+    await expect(asRoot(admin.adminUpdateGroup, { groupId: 'hawks', name: 'Hawks' })).rejects.toMatchObject({ message: 'archived' });
+    await expect(asRoot(admin.adminUpdateGroup, { groupId: 'nope', name: 'Nope' })).rejects.toMatchObject({ code: 'not-found' });
+    expect((await groups().doc('thunder').get()).get('name')).toBe('Thunder');
+    expect(await audits('updateGroup')).toHaveLength(0);
+  });
+
+  it('edits a player, a blank number or position clearing it, and audits it', async () => {
+    await asRoot(admin.adminUpdatePlayer, { playerId: 'emma', displayName: ' Emma R ', jerseyNumber: ' ', position: 'CF' });
+    expect((await db().collection(Collections.players).doc('emma').get()).data()).toMatchObject({
+      displayName: 'Emma R', displayNameLower: 'emma r', jerseyNumber: null, position: 'CF',
+    });
+    expect((await audits('updatePlayer'))[0]).toMatchObject({
+      actorId: 'root', groupId: 'thunder', targetType: 'player', targetId: 'emma',
+      before: { displayName: 'Emma', jerseyNumber: '7', position: 'SS' },
+      after: { displayName: 'Emma R', jerseyNumber: null, position: 'CF' },
+    });
+  });
+
+  it("refuses a player edit validPlayer would, and players that don't exist", async () => {
+    for (const edit of [{ displayName: '' }, { jerseyNumber: '12345' }, { position: 'x'.repeat(31) }, { groupId: 'hawks' }, {}]) {
+      await expect(asRoot(admin.adminUpdatePlayer, { playerId: 'emma', ...edit })).rejects.toMatchObject({ code: 'invalid-argument' });
+    }
+    await expect(asRoot(admin.adminUpdatePlayer, { playerId: 'nope', displayName: 'X' })).rejects.toMatchObject({ code: 'not-found' });
+    expect(await audits('updatePlayer')).toHaveLength(0);
   });
 });
 
@@ -519,6 +635,51 @@ describe('super admins (ADMIN-4)', () => {
     expect((await users().doc('old').get()).get('superAdmin')).toBe(true);
   });
 
+  it("doesn't count a disabled super admin as the one who's left", async () => {
+    await person('boss', 'Boss', { superAdmin: true });
+    await asRoot(admin.adminSetUserDisabled, { uid: 'boss', disabled: true });
+    await expect(asRoot(admin.adminSetSuperAdmin, { uid: 'root', superAdmin: false })).rejects.toMatchObject({
+      message: 'last-super-admin',
+    });
+    expect((await auth().getUser('root')).customClaims).toEqual({ superAdmin: true });
+  });
+
+  it("refuses a revoked super admin's old token, which can't mark them a super admin again", async () => {
+    await person('boss', 'Boss', { superAdmin: true });
+    await asRoot(admin.adminSetSuperAdmin, { uid: 'boss', superAdmin: false });
+    // boss's ID token still carries the claim for up to an hour.
+    await expect(run(admin.adminSetSuperAdmin, 'boss', { uid: 'pat', superAdmin: true }, ROOT)).rejects.toMatchObject({
+      code: 'permission-denied',
+    });
+    expect((await users().doc('boss').get()).get('superAdmin')).toBe(false);
+    expect((await auth().getUser('pat')).customClaims ?? {}).toEqual({});
+    // So root is still the last one.
+    await expect(asRoot(admin.adminSetSuperAdmin, { uid: 'root', superAdmin: false })).rejects.toMatchObject({
+      message: 'last-super-admin',
+    });
+  });
+
+  it('ignores a users.superAdmin flag without the claim behind it', async () => {
+    await person('ghost', 'Ghost');
+    await users().doc('ghost').update({ superAdmin: true });
+    await expect(asRoot(admin.adminSetSuperAdmin, { uid: 'root', superAdmin: false })).rejects.toMatchObject({
+      message: 'last-super-admin',
+    });
+  });
+
+  it('lets only one of two super admins step down at the same time', async () => {
+    await person('boss', 'Boss', { superAdmin: true });
+    const results = await Promise.allSettled([
+      asRoot(admin.adminSetSuperAdmin, { uid: 'root', superAdmin: false }),
+      run(admin.adminSetSuperAdmin, 'boss', { uid: 'boss', superAdmin: false }, ROOT),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(results.find((r) => r.status === 'rejected')).toMatchObject({ reason: { message: 'last-super-admin' } });
+    const left = await Promise.all(['root', 'boss'].map(async (uid) => (await auth().getUser(uid)).customClaims?.superAdmin));
+    expect(left.filter((c) => c === true)).toHaveLength(1);
+    expect((await db().collection(Collections.config).doc('superAdmins').get()).get('lockedUntil')).toBeNull();
+  });
+
   it('keeps the last super admin through account deletion too', async () => {
     await person('boss', 'Boss', { superAdmin: true });
     await asRoot(admin.adminDeleteUser, { uid: 'boss' });
@@ -591,7 +752,38 @@ describe('reports (ADMIN-5, SAFE-4)', () => {
   it("won't remove the team's owner", async () => {
     await report('r9', 'user', 'pat', 'pat');
     await expect(resolve('r9', 'removeMember')).rejects.toMatchObject({ message: 'owner' });
-    expect((await db().collection(Collections.reports).doc('r9').get()).get('status')).toBe('open');
+    expect((await db().collection(Collections.reports).doc('r9').get()).data()).toMatchObject({
+      status: 'open', resolution: null, resolvedBy: null,
+    });
+    expect((await audits('resolveReportRefused'))[0]).toMatchObject({
+      actorId: 'root', targetId: 'r9', after: { action: 'removeMember', refused: 'owner' },
+    });
+  });
+
+  it('acts once when two super admins resolve the same report together, and audits the refused one', async () => {
+    await person('boss', 'Boss', { superAdmin: true });
+    const results = await Promise.allSettled([
+      resolve('r1', 'dismiss', 'Fine'),
+      run(admin.adminResolveReport, 'boss', { reportId: 'r1', action: 'disableUser', note: 'Spammer' }, ROOT),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const r1 = (await db().collection(Collections.reports).doc('r1').get()).data()!;
+    // Whatever the report says was done is what was done, and nothing else.
+    expect((await auth().getUser('sam')).disabled).toBe(r1.resolution === 'disabledUser');
+    const done = [...(await audits('dismissReport')), ...(await audits('actionReport'))];
+    expect(done).toHaveLength(1);
+    expect(done[0].after).toMatchObject({ resolution: r1.resolution });
+    expect((await audits('resolveReportRefused'))[0]).toMatchObject({ targetId: 'r1', after: { refused: 'already-resolved' } });
+  });
+
+  it("won't disable the last super admin who can sign in through a report", async () => {
+    await person('boss', 'Boss', { superAdmin: true });
+    await report('r8', 'user', 'boss', 'boss');
+    await run(admin.adminSetSuperAdmin, 'boss', { uid: 'root', superAdmin: false }, ROOT);
+    // root's token is stale now; boss is the only super admin.
+    await expect(resolve('r8', 'disableUser')).rejects.toMatchObject({ code: 'permission-denied' });
+    expect((await auth().getUser('boss')).disabled).toBe(false);
+    expect((await db().collection(Collections.reports).doc('r8').get()).get('status')).toBe('open');
   });
 
   it('disables the person or suspends the team', async () => {

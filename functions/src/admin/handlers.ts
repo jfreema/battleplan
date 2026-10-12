@@ -21,8 +21,9 @@ import {
 import { eraseMessage } from '../chat/service.js';
 import { deleteDocumentOf } from '../documents/service.js';
 import { resendApiKey } from '../email/service.js';
-import { closeReport, openReport } from '../safety/service.js';
-import { db } from '../shared/admin.js';
+import { updatePlayerProfile } from '../players/service.js';
+import { closeReport, openReport, reopenReport } from '../safety/service.js';
+import { auth, db, storage } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
 import { requireSuperAdmin } from '../shared/guards.js';
 import { roleOf } from '../shared/roles.js';
@@ -34,6 +35,7 @@ import {
   setGroupArchived,
   setGroupSuspended,
   setMemberRole,
+  updateGroupProfile,
 } from '../teams/service.js';
 import {
   ArchiveInput,
@@ -43,13 +45,17 @@ import {
   ListReportsInput,
   ListTeamsInput,
   ListUsersInput,
+  type ReportAction,
   resolutionFor,
   ResolveReportInput,
   SetDisabledInput,
   SetSuperAdminInput,
   SetSuspendedInput,
+  plain,
   UidInput,
   UpdateConfigInput,
+  UpdateGroupInput,
+  UpdatePlayerInput,
   UpdateUserInput,
 } from './inputs.js';
 import {
@@ -59,8 +65,9 @@ import {
   listReports,
   listTeams,
   listUsers,
-  markSuperAdmin,
+  requireCurrentSuperAdmin,
   updateConfig,
+  withSuperAdminLock,
   wouldLeaveNoSuperAdmin,
 } from './service.js';
 
@@ -87,6 +94,28 @@ async function addToTeam(
   const result = await addMembersByEmail(groupId, { uid: actor, name: await actorName(actor) }, [{ email }]);
   if (result.problems.length) throw new HttpsError('internal', 'Could not add them to the team.');
   if (role === 'admin') await setMemberRole(groupId, uid, 'admin');
+}
+
+/**
+ * Disables [uid]'s account (signing them out everywhere) unless that would
+ * leave no super admin who can sign in (`last-super-admin`, ADMIN-4).
+ * Returns their status before.
+ */
+async function disableAccount(actor: string, uid: string): Promise<string> {
+  return withSuperAdminLock(actor, async () => {
+    await requireCurrentSuperAdmin(actor);
+    if (await wouldLeaveNoSuperAdmin(uid)) throw new HttpsError('failed-precondition', 'last-super-admin');
+    return setAccountDisabled(uid, true);
+  });
+}
+
+/** Throws `invalid-argument` unless each of [paths] is a file in Storage (an uploaded logo or background). */
+async function requireFiles(...paths: (string | null | undefined)[]): Promise<void> {
+  for (const path of paths) {
+    if (path && !(await storage().bucket().file(path).exists())[0]) {
+      throw new HttpsError('invalid-argument', 'no-such-file');
+    }
+  }
 }
 
 // ---- Dashboard and teams (ADMIN-1 to ADMIN-3) --------------------------------
@@ -146,13 +175,62 @@ export const adminSetGroupSuspended = onCall(async (request) => {
 export const adminArchiveGroup = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(ArchiveInput, request.data);
-  await setGroupArchived(input.groupId, input.archived);
+  const before = await setGroupArchived(input.groupId, input.archived);
   await audit({
     actorId: actor,
     action: input.archived ? 'archiveGroup' : 'restoreGroup',
     groupId: input.groupId,
     targetType: 'group',
     targetId: input.groupId,
+    before,
+    after: { archived: input.archived },
+  });
+  return { ok: true };
+});
+
+/**
+ * Changes the profile and settings of a team the super admin isn't on
+ * (ADMIN-3): any of name, description, color, sport, timeZone, settings
+ * (merged), chatTheme, photoPath, and backgroundPath (the chat look's
+ * photo), validated as the rules validate its admins' writes. A new logo or
+ * background is uploaded first; its path must name a file there
+ * (`no-such-file`). An archived team is `archived`. Audited with each
+ * changed field before and after.
+ */
+export const adminUpdateGroup = onCall(async (request) => {
+  const actor = requireSuperAdmin(request);
+  const { groupId, ...edit } = parse(UpdateGroupInput, request.data);
+  await requireFiles(edit.photoPath, edit.backgroundPath, edit.chatTheme?.backgroundPath);
+  const { before, after } = await updateGroupProfile(groupId, edit);
+  await audit({
+    actorId: actor,
+    action: 'updateGroup',
+    groupId,
+    targetType: 'group',
+    targetId: groupId,
+    before: plain(before) as Record<string, unknown>,
+    after: plain(after) as Record<string, unknown>,
+  });
+  return { ok: true };
+});
+
+/**
+ * Changes a player's name, number, or position on a team the super admin
+ * isn't on (ADMIN-3, PLAYER-10). A blank number or position clears it.
+ * Audited with each changed field before and after.
+ */
+export const adminUpdatePlayer = onCall(async (request) => {
+  const actor = requireSuperAdmin(request);
+  const { playerId, ...edit } = parse(UpdatePlayerInput, request.data);
+  const { groupId, before, after } = await updatePlayerProfile(playerId, edit);
+  await audit({
+    actorId: actor,
+    action: 'updatePlayer',
+    groupId,
+    targetType: 'player',
+    targetId: playerId,
+    before,
+    after,
   });
   return { ok: true };
 });
@@ -260,13 +338,16 @@ export const adminUpdateUser = onCall({ secrets: [resendApiKey] }, async (reques
 
 /**
  * Disables (signing them out everywhere) or re-enables an account
- * (ADMIN-4). You can't disable yourself (`cannot-disable-self`).
+ * (ADMIN-4). You can't disable yourself (`cannot-disable-self`), nor the
+ * last super admin who can sign in (`last-super-admin`).
  */
 export const adminSetUserDisabled = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(SetDisabledInput, request.data);
   if (input.disabled && input.uid === actor) throw new HttpsError('failed-precondition', 'cannot-disable-self');
-  const before = await setAccountDisabled(input.uid, input.disabled);
+  const before = input.disabled
+    ? await disableAccount(actor, input.uid)
+    : await setAccountDisabled(input.uid, false);
   await audit({
     actorId: actor,
     action: input.disabled ? 'disableUser' : 'enableUser',
@@ -306,7 +387,14 @@ export const adminDeleteUser = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const { uid } = parse(UidInput, request.data);
   if (uid === actor) throw new HttpsError('failed-precondition', 'cannot-delete-self');
-  if (await wouldLeaveNoSuperAdmin(uid, actor)) throw new HttpsError('failed-precondition', 'last-super-admin');
+  // Their super admin goes first, under the lock, so the check and the
+  // change happen together; the slow data deletion runs after.
+  await withSuperAdminLock(actor, async () => {
+    await requireCurrentSuperAdmin(actor);
+    if (await wouldLeaveNoSuperAdmin(uid)) throw new HttpsError('failed-precondition', 'last-super-admin');
+    const user = await auth().getUser(uid).catch(() => undefined);
+    if (user?.customClaims?.superAdmin === true) await setSuperAdminClaim(uid, false);
+  });
   const profile = await db().collection(Collections.users).doc(uid).get();
   await audit({
     actorId: actor,
@@ -323,19 +411,23 @@ export const adminDeleteUser = onCall(async (request) => {
 });
 
 /**
- * Grants or revokes super admin (ADMIN-4). The last super admin can't be
- * removed (`last-super-admin`). The app force-refreshes the person's token
- * when it's the caller's own.
+ * Grants or revokes super admin (ADMIN-4). The caller's claim is checked
+ * in Auth too, as a revoked super admin's token keeps it for up to an hour
+ * (`permission-denied`). The last super admin who can sign in can't be
+ * removed (`last-super-admin`); changes happen one at a time, so two
+ * super admins stepping down together can't both go. The app
+ * force-refreshes the person's token when it's the caller's own.
  */
 export const adminSetSuperAdmin = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(SetSuperAdminInput, request.data);
-  // The caller holds the claim, so make sure their profile says so too.
-  await markSuperAdmin(actor);
-  if (!input.superAdmin && (await wouldLeaveNoSuperAdmin(input.uid, actor))) {
-    throw new HttpsError('failed-precondition', 'last-super-admin');
-  }
-  const before = await setSuperAdminClaim(input.uid, input.superAdmin);
+  const before = await withSuperAdminLock(actor, async () => {
+    await requireCurrentSuperAdmin(actor);
+    if (!input.superAdmin && (await wouldLeaveNoSuperAdmin(input.uid))) {
+      throw new HttpsError('failed-precondition', 'last-super-admin');
+    }
+    return setSuperAdminClaim(input.uid, input.superAdmin);
+  });
   await audit({
     actorId: actor,
     action: input.superAdmin ? 'grantSuperAdmin' : 'revokeSuperAdmin',
@@ -359,52 +451,84 @@ export const adminListReports = onCall(async (request) => {
  * Acts on a report from any team and closes it with a note (ADMIN-5,
  * SAFE-4): delete the reported message or document, remove the person from
  * the team, disable their account, suspend the team, or dismiss. The
- * action goes through its own domain; the report records it.
+ * report is closed first, in a transaction, so a second resolve is refused
+ * (`already-resolved`) before it can act; if the action then fails, the
+ * report goes back to open. The action goes through its own domain; the
+ * report records it. A refused or failed attempt is audited too
+ * (resolveReportRefused, with why).
  */
 export const adminResolveReport = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(ResolveReportInput, request.data);
+  try {
+    return await resolveReport(actor, input);
+  } catch (e) {
+    await audit({
+      actorId: actor,
+      action: 'resolveReportRefused',
+      targetType: 'report',
+      targetId: input.reportId,
+      after: { action: input.action, note: input.note, refused: e instanceof HttpsError ? e.message : 'error' },
+    });
+    throw e;
+  }
+});
+
+async function resolveReport(
+  actor: string,
+  input: { reportId: string; action: ReportAction; note: string },
+): Promise<{ ok: true; resolution: string }> {
+  // A quick refusal for a report that's gone or closed; closeReport makes
+  // the same check in its transaction.
   const report = await openReport(input.reportId);
   const groupId = String(report.groupId ?? '');
   const subjectId = String(report.subjectId ?? '');
   const resolution = resolutionFor(input.action, String(report.targetType));
   if (!resolution) throw new HttpsError('failed-precondition', 'nothing-to-delete');
-
-  switch (input.action) {
-    case 'deleteContent':
-      if (report.targetType === 'message') {
-        const message = await db().collection(Collections.messages).doc(String(report.targetId)).get();
-        if (message.exists && message.get('groupId') === groupId && message.get('type') !== 'system') {
-          await eraseMessage(message.id, actor, 'admin');
-        }
-      } else {
-        await deleteDocumentOf(groupId, String(report.targetId));
-      }
-      break;
-    case 'removeMember': {
-      const role = await roleOf(groupId, subjectId);
-      if (role === 'owner') throw new HttpsError('failed-precondition', 'owner');
-      if (role) await removeFromTeam(groupId, subjectId, actor);
-      break;
-    }
-    case 'disableUser':
-      if (!subjectId) throw new HttpsError('failed-precondition', 'no-subject');
-      if (subjectId === actor) throw new HttpsError('failed-precondition', 'cannot-disable-self');
-      await setAccountDisabled(subjectId, true);
-      break;
-    case 'suspendTeam':
-      await setGroupSuspended(groupId, true);
-      break;
-    case 'dismiss':
-      break;
+  if (input.action === 'disableUser') {
+    if (!subjectId) throw new HttpsError('failed-precondition', 'no-subject');
+    if (subjectId === actor) throw new HttpsError('failed-precondition', 'cannot-disable-self');
   }
 
+  // Claim it: only one resolve gets past this.
   await closeReport(input.reportId, {
     status: input.action === 'dismiss' ? 'dismissed' : 'actioned',
     resolution,
     note: input.note,
     resolvedBy: actor,
   });
+  try {
+    switch (input.action) {
+      case 'deleteContent':
+        if (report.targetType === 'message') {
+          const message = await db().collection(Collections.messages).doc(String(report.targetId)).get();
+          if (message.exists && message.get('groupId') === groupId && message.get('type') !== 'system') {
+            await eraseMessage(message.id, actor, 'admin');
+          }
+        } else {
+          await deleteDocumentOf(groupId, String(report.targetId));
+        }
+        break;
+      case 'removeMember': {
+        const role = await roleOf(groupId, subjectId);
+        if (role === 'owner') throw new HttpsError('failed-precondition', 'owner');
+        if (role) await removeFromTeam(groupId, subjectId, actor);
+        break;
+      }
+      case 'disableUser':
+        await disableAccount(actor, subjectId);
+        break;
+      case 'suspendTeam':
+        await setGroupSuspended(groupId, true);
+        break;
+      case 'dismiss':
+        break;
+    }
+  } catch (e) {
+    await reopenReport(input.reportId, actor);
+    throw e;
+  }
+
   await audit({
     actorId: actor,
     action: input.action === 'dismiss' ? 'dismissReport' : 'actionReport',
@@ -415,7 +539,7 @@ export const adminResolveReport = onCall(async (request) => {
     after: { action: input.action, resolution, note: input.note },
   });
   return { ok: true, resolution };
-});
+}
 
 // ---- Platform settings (ADMIN-7) ---------------------------------------------
 

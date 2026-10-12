@@ -226,13 +226,15 @@ export const archiveGroup = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(GroupOnly.extend({ archived: z.boolean() }), request.data);
   await requireOwner(input.groupId, uid, request.auth?.token.superAdmin === true);
-  await setGroupArchived(input.groupId, input.archived);
+  const before = await setGroupArchived(input.groupId, input.archived);
   await audit({
     actorId: uid,
     action: input.archived ? 'archiveGroup' : 'restoreGroup',
     groupId: input.groupId,
     targetType: 'group',
     targetId: input.groupId,
+    before,
+    after: { archived: input.archived },
   });
   return { ok: true };
 });

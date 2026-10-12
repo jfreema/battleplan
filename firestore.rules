@@ -676,11 +676,12 @@ service cloud.firestore {
     }
 
     // config/app (ADMIN-7): every signed-in app reads it (the announcement
-    // banner). Super admins change it through adminUpdateConfig, which
-    // validates it and writes the audit entry (ADMIN-8), so no client
-    // writes it directly.
+    // banner, the upload limit, the support email). Super admins change it
+    // through adminUpdateConfig, which validates it and writes the audit
+    // entry (ADMIN-8), so no client writes it directly. Other config docs
+    // (superAdmins, the super-admin lock) are Functions only.
     match /config/{configId} {
-      allow get: if signedIn();
+      allow get: if signedIn() && configId == 'app';
     }
 
     // invites, rateLimits: Functions only (no client access).

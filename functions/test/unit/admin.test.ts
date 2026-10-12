@@ -21,6 +21,8 @@ import {
   SetSuspendedInput,
   teamStatus,
   UpdateConfigInput,
+  UpdateGroupInput,
+  UpdatePlayerInput,
   UpdateUserInput,
 } from '../../src/admin/inputs.js';
 import { accountSetupEmail, passwordResetEmail } from '../../src/email/templates.js';
@@ -89,6 +91,47 @@ describe('team inputs (ADMIN-3)', () => {
     expect(teamStatus({ archivedAt: at })).toBe('archived');
     expect(teamStatus({ suspendedAt: at })).toBe('suspended');
     expect(teamStatus({ archivedAt: at, suspendedAt: at })).toBe('suspended');
+  });
+});
+
+describe('super-admin team and player edits (ADMIN-3)', () => {
+  const group = (extra: object) => ({ groupId: 'g1', ...extra });
+
+  it("takes the fields a team's admins may write, validated as the rules do", () => {
+    expect(UpdateGroupInput.parse(group({ name: ' Thunder ', color: null, sport: 'soccer' }))).toEqual({
+      groupId: 'g1', name: 'Thunder', color: null, sport: 'soccer',
+    });
+    expect(ok(UpdateGroupInput, group({ settings: { allowMaybe: false, defaultReminderOffsets: [15, 60, 120, 1440, 2880, 10080] } }))).toBe(true);
+    expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: '#7C3AED', background: 'pattern', backgroundPath: null } }))).toBe(true);
+    for (const bad of [
+      {}, { color: '#000000' }, { sport: 'golf' }, { name: ' ' }, { name: 'x'.repeat(Limits.groupNameMax + 1) },
+      { description: 'x'.repeat(501) }, { settings: { membersCanPost: true } }, { settings: { defaultReminderOffsets: [30] } },
+      { settings: { defaultReminderOffsets: [15, 15, 15, 15, 15, 15, 15] } }, { chatTheme: { extra: 1 } },
+      { timeZone: '' }, { storageQuotaBytes: 1 },
+    ]) {
+      expect(ok(UpdateGroupInput, group(bad))).toBe(false);
+    }
+  });
+
+  it("names only files in the team's own logo and background folders", () => {
+    expect(ok(UpdateGroupInput, group({ photoPath: 'groups/g1/avatar/1.jpg', backgroundPath: 'groups/g1/theme/1.jpg' }))).toBe(true);
+    expect(ok(UpdateGroupInput, group({ photoPath: null }))).toBe(true);
+    for (const bad of [
+      { photoPath: 'groups/g2/avatar/1.jpg' }, { photoPath: 'groups/g1/theme/1.jpg' }, { photoPath: 'groups/g1/avatar/a/1.jpg' },
+      { photoPath: 'groups/g1/avatar/' }, { backgroundPath: 'users/u/avatar/1.jpg' }, { chatTheme: { backgroundPath: 'groups/g1/avatar/1.jpg' } },
+    ]) {
+      expect(ok(UpdateGroupInput, group(bad))).toBe(false);
+    }
+  });
+
+  it('edits only a name, number, and position, within validPlayer, a blank one clearing it (PLAYER-10)', () => {
+    expect(UpdatePlayerInput.parse({ playerId: 'p1', displayName: ' Emma ', jerseyNumber: '', position: ' SS ' })).toEqual({
+      playerId: 'p1', displayName: 'Emma', jerseyNumber: null, position: 'SS',
+    });
+    expect(UpdatePlayerInput.parse({ playerId: 'p1', jerseyNumber: null })).toEqual({ playerId: 'p1', jerseyNumber: null });
+    for (const bad of [{}, { displayName: '' }, { displayName: 'x'.repeat(61) }, { jerseyNumber: '12345' }, { position: 'x'.repeat(31) }]) {
+      expect(ok(UpdatePlayerInput, { playerId: 'p1', ...bad })).toBe(false);
+    }
   });
 });
 

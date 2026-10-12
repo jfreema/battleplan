@@ -3,7 +3,14 @@
 // tested. Every list is bounded: at most ADMIN_PAGE_MAX rows per call.
 import { Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
-import { Limits, memberRoleValues, reportStatusValues } from '../shared/constants.js';
+import {
+  Limits,
+  memberRoleValues,
+  REMINDER_OFFSETS_MINUTES,
+  reportStatusValues,
+  sportValues,
+  TEAM_COLORS,
+} from '../shared/constants.js';
 
 /** The most rows one admin list call returns (ADMIN-2, ADMIN-4, ADMIN-5). */
 export const ADMIN_PAGE_MAX = 50;
@@ -64,6 +71,70 @@ export const ArchiveInput = z.object({ groupId: Id, archived: z.boolean() });
 
 export const DeleteGroupInput = z.object({ groupId: Id, confirmName: z.string().max(Limits.groupNameMax + 10) });
 
+/** The longest team description (TEAM-5), as the rules' validGroup allows. */
+export const GROUP_DESCRIPTION_MAX = 500;
+/** The longest Storage path a team's logo or background may have. */
+const PATH_MAX = 512;
+
+/** A file name under one of a team's folders, as validGroup and validChatTheme match it. */
+const teamFile = (groupId: string, folder: 'avatar' | 'theme', path: string) =>
+  path.startsWith(`groups/${groupId}/${folder}/`) && /^[^/]+$/.test(path.slice(`groups/${groupId}/${folder}/`.length));
+
+const StoragePath = z.string().min(1).max(PATH_MAX).nullable().optional();
+
+/**
+ * A super admin's edit to a team they aren't on (ADMIN-3): the profile and
+ * settings fields its admins may write, validated as the rules' validGroup
+ * and validChatTheme do (TEAM-5, CHAT-18). The logo and background are
+ * uploaded first (storage.rules let super admins) and named here by path.
+ * `backgroundPath` changes only the chat look's photo.
+ */
+export const UpdateGroupInput = z
+  .object({
+    groupId: Id,
+    name: z.string().trim().min(1).max(Limits.groupNameMax).optional(),
+    description: z.string().trim().max(GROUP_DESCRIPTION_MAX).optional(),
+    color: z.enum(TEAM_COLORS).nullable().optional(),
+    sport: z.enum(sportValues).optional(),
+    timeZone: z.string().min(1).max(64).optional(),
+    settings: z
+      .strictObject({
+        membersCanCreateEvents: z.boolean().optional(),
+        membersCanCreatePolls: z.boolean().optional(),
+        membersCanUploadDocs: z.boolean().optional(),
+        membersCanInvite: z.boolean().optional(),
+        allowMaybe: z.boolean().optional(),
+        defaultReminderOffsets: z
+          .array(z.number().int().refine((m) => (REMINDER_OFFSETS_MINUTES as readonly number[]).includes(m)))
+          .max(Limits.eventRemindersMax)
+          .optional(),
+      })
+      .optional(),
+    chatTheme: z
+      .strictObject({
+        bubbleColor: z.enum(TEAM_COLORS).nullable().optional(),
+        background: z.enum(['plain', 'pattern', 'photo']).optional(),
+        backgroundPath: StoragePath,
+      })
+      .optional(),
+    photoPath: StoragePath,
+    backgroundPath: StoragePath,
+  })
+  .superRefine((g, ctx) => {
+    const check = (path: string | null | undefined, folder: 'avatar' | 'theme', at: (string | number)[]) => {
+      if (path && !teamFile(g.groupId, folder, path)) {
+        ctx.addIssue({ code: 'custom', path: at, message: `Must be a file in groups/${g.groupId}/${folder}/.` });
+      }
+    };
+    check(g.photoPath, 'avatar', ['photoPath']);
+    check(g.backgroundPath, 'theme', ['backgroundPath']);
+    check(g.chatTheme?.backgroundPath, 'theme', ['chatTheme', 'backgroundPath']);
+  })
+  .refine((g) => Object.entries(g).some(([k, v]) => k !== 'groupId' && v !== undefined), {
+    message: 'Nothing to change.',
+  });
+export type UpdateGroup = z.infer<typeof UpdateGroupInput>;
+
 /**
  * A team's status in the admin panel (ADMIN-2). Suspended wins over
  * archived: a suspended team is closed to its members either way.
@@ -113,6 +184,34 @@ export const UpdateUserInput = z
 
 export const SetDisabledInput = z.object({ uid: Id, disabled: z.boolean() });
 export const SetSuperAdminInput = z.object({ uid: Id, superAdmin: z.boolean() });
+
+// ---- Players (ADMIN-3) -------------------------------------------------------
+
+/** A player's optional text (number, position): trimmed, and blank saves as none. */
+const PlayerText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v || null));
+
+/**
+ * A super admin's edit to a player on a team they aren't on (ADMIN-3):
+ * only a name, number, and position (PLAYER-10), within the rules'
+ * validPlayer limits.
+ */
+export const UpdatePlayerInput = z
+  .object({
+    playerId: Id,
+    displayName: z.string().trim().min(1).max(60).optional(),
+    jerseyNumber: PlayerText(4),
+    position: PlayerText(30),
+  })
+  .refine((p) => p.displayName !== undefined || p.jerseyNumber !== undefined || p.position !== undefined, {
+    message: 'Nothing to change.',
+  });
 
 // ---- Reports (ADMIN-5) -------------------------------------------------------
 

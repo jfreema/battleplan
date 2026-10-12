@@ -1,5 +1,6 @@
 // Players domain service: owns players, playerGuardians, guardianRequests.
 import { FieldValue } from 'firebase-admin/firestore';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { findOrProvisionUser } from '../accounts/service.js';
 import { db } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
@@ -289,4 +290,39 @@ export async function removeGuardianLink(groupId: string, playerId: string, uid:
   await db().collection(Collections.playerGuardians).doc(compositeId(playerId, uid)).delete();
   await db().collection(Collections.guardianRequests).doc(compositeId(playerId, uid)).delete();
   await refreshPlayerSummary(groupId, uid);
+}
+
+/** What a super admin may change on a player (ADMIN-3): the same fields the rules' validPlayer allows (PLAYER-10). */
+export interface PlayerEdit {
+  displayName?: string;
+  jerseyNumber?: string | null;
+  position?: string | null;
+}
+
+/**
+ * Changes a player's name, number, or position for a super admin who isn't
+ * on the team (ADMIN-3); its admins and guardians write them directly.
+ * Callers validate [edit] as validPlayer does. Returns the player's team
+ * and each changed field before and after, for the audit log.
+ */
+export async function updatePlayerProfile(
+  playerId: string,
+  edit: PlayerEdit,
+): Promise<{ groupId: string; before: Record<string, unknown>; after: Record<string, unknown> }> {
+  const ref = db().collection(Collections.players).doc(playerId);
+  return db().runTransaction(async (tx) => {
+    const player = await tx.get(ref);
+    if (!player.exists) throw new HttpsError('not-found', 'No such player.');
+    const after: Record<string, unknown> = {};
+    for (const key of ['displayName', 'jerseyNumber', 'position'] as const) {
+      if (edit[key] !== undefined) after[key] = edit[key];
+    }
+    const before = Object.fromEntries(Object.keys(after).map((k) => [k, player.get(k) ?? null]));
+    tx.update(ref, {
+      ...after,
+      ...(edit.displayName !== undefined ? { displayNameLower: edit.displayName.toLowerCase() } : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return { groupId: String(player.get('groupId') ?? ''), before, after };
+  });
 }
