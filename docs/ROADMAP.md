@@ -9,7 +9,7 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
 - Each milestone ends working on iOS, Android, and web, with rules tests updated (SPEC §9).
 
-Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built. Facebook sign-in was removed from the plan; it is a backlog item now.
+Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. Facebook sign-in was removed from the plan; it is a backlog item now.
 
 ---
 
@@ -176,11 +176,11 @@ SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
 
 SPEC §4.3 (WEB-1 to WEB-5), ARCH §6.6 and D40. The website is the `website/` folder: static HTML and CSS with no framework or build step. The Flutter web app moves from the root to `/app`.
 
-175. The website in `website/`: a landing page explaining Battleplan (chat, schedule and RSVPs, polls, documents, youth teams; free, no ads), with screenshots and an **Open Battleplan** button to `/app` on every page; light and dark mode; works well on phones (WEB-1, WEB-5).
-176. The website's support and legal pages: `/support`, `/privacy`, `/terms`, `/delete-account` (WEB-2; their wording is task 121).
-177. One Hosting site for both: CI copies `website/` into `build/hosting/` and builds Flutter with `--base-href /app/` into `build/hosting/app/`; Hosting rewrites `/app/**` to the app, redirects `/join/*`, `/activate`, and `/g/*` into `/app` keeping query strings, and serves `.well-known` from the website. Dev gets the same layout; PR previews build both (WEB-3).
-178. Links follow the move: the app's `LinkService` and the Functions `links` module build `/app/...` links for content and email setup, keep invite links short (`/join/<CODE>`), and push notifications open `https://<host>/app<route>`; the Auth `url` becomes `/app/activate`; Universal Links and App Links also match `/app/*`, and the native apps ignore the `/app` prefix; the web app's service worker, manifest, and push service worker work under `/app/`. Tested on dev: an invite link, a setup email, and a notification click in the browser, and an invite link on the Android emulator (WEB-4).
-179. Website polish: favicon, Open Graph image and tags, `robots.txt` and a sitemap (the site indexed, `/app` not), and App Store and Google Play badges once the apps are listed (task 130).
+175. ✅ The website in `website/`: a landing page explaining Battleplan (chat, schedule and RSVPs, polls, documents, youth teams; free, no ads), with screenshots and an **Open Battleplan** button to `/app` on every page; light and dark mode; works well on phones (WEB-1, WEB-5).
+176. ✅ The website's support and legal pages: `/support`, `/privacy`, `/terms`, `/delete-account` (WEB-2; their wording is task 121).
+177. ✅ One Hosting site for both: CI copies `website/` into `build/hosting/` and builds Flutter with `--base-href /app/` into `build/hosting/app/`; Hosting rewrites `/app/**` to the app, redirects `/join/*`, `/activate`, and `/g/*` into `/app` keeping query strings, and serves `.well-known` from the website. Dev gets the same layout; PR previews build both (WEB-3).
+178. ✅ Links follow the move: the app's `LinkService` and the Functions `links` module build `/app/...` links for content and email setup, keep invite links short (`/join/<CODE>`), and push notifications open `https://<host>/app<route>`; the Auth `url` becomes `/app/activate`; Universal Links and App Links also match `/app/*`, and the native apps ignore the `/app` prefix; the web app's service worker, manifest, and push service worker work under `/app/`. Tested on dev: an invite link, a setup email, and a notification click in the browser, and an invite link on the Android emulator (WEB-4).
+179. ✅ Website polish (store badges in place but off until the apps are listed, task 130): favicon, Open Graph image and tags, `robots.txt` and a sitemap (the site indexed, `/app` not), and App Store and Google Play badges once the apps are listed (task 130).
 
 ## M9 · Hardening and team beta
 
