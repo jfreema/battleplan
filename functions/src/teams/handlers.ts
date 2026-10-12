@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { auth, db } from '../shared/admin.js';
 import { Collections, Limits, sportValues, TEAM_COLORS, teamTypeValues } from '../shared/constants.js';
-import { requireAuth } from '../shared/guards.js';
+import { requireAuth, requireSuperAdmin } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { parse } from '../shared/validate.js';
 import { audit } from '../audit/service.js';
@@ -24,6 +24,8 @@ import {
   deleteGroupData,
   refreshMemberCount,
 } from './service.js';
+import { deleteMedia, listMedia } from './media.js';
+import { setGroupQuota, updateStorageAlert } from './storage.js';
 
 const CreateGroupInput = z.object({
   name: z.string().trim().min(1).max(Limits.groupNameMax),
@@ -76,7 +78,7 @@ export const createGroup = onCall(async (request) => {
       photoPath: (profile?.photoPath as string | null | undefined) ?? null,
     },
     input,
-    (config.defaultStorageQuotaGb as number | undefined) ?? Limits.defaultStorageQuotaGb,
+    (config.defaultStorageQuotaMb as number | undefined) ?? Limits.defaultStorageQuotaMb,
   );
   return { groupId };
 });
@@ -329,4 +331,68 @@ export const resendSetupEmail = onCall({ secrets: [resendApiKey] }, async (reque
     (actor.get('displayName') as string | undefined) ?? 'A team admin',
   );
   return { ok: true };
+});
+
+// ---- Team storage (STORE-5, STORE-6, ARCH §6.11) ----------------------------
+
+/** A team ID as it appears in a Storage path: no slashes. */
+const GroupId = z.string().min(1).max(128).regex(/^[^/]+$/);
+
+const SetQuotaInput = z.object({
+  groupId: GroupId,
+  quotaMb: z.number().int().min(1).max(Limits.storageQuotaMaxMb),
+});
+
+/**
+ * Raises or lowers one team's storage limit (STORE-6). Super admins only,
+ * and the option isn't shown to anyone else. Audited, and the team's
+ * warning follows the new limit right away.
+ */
+export const adminSetGroupQuota = onCall(async (request) => {
+  const actor = requireSuperAdmin(request);
+  const input = parse(SetQuotaInput, request.data);
+  const { before, after } = await setGroupQuota(input.groupId, input.quotaMb);
+  await audit({
+    actorId: actor,
+    action: 'setGroupQuota',
+    groupId: input.groupId,
+    targetType: 'group',
+    targetId: input.groupId,
+    before: { storageQuotaBytes: before },
+    after: { storageQuotaBytes: after },
+  });
+  await updateStorageAlert(input.groupId);
+  return { storageQuotaBytes: after };
+});
+
+/** Every file the team stores, largest first, with what uses it (STORE-5). Team admins. */
+export const listTeamMedia = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const { groupId } = parse(z.object({ groupId: GroupId }), request.data);
+  await requireTeamAdmin(groupId, uid, request.auth?.token.superAdmin === true);
+  return listMedia(groupId);
+});
+
+const DeleteMediaInput = z.object({ groupId: GroupId, path: z.string().min(1).max(1024) });
+
+/**
+ * Deletes one team file to free space (STORE-5): a chat photo leaves its
+ * message, and the logo or background in use is reset. Team admins;
+ * audited.
+ */
+export const deleteTeamMedia = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(DeleteMediaInput, request.data);
+  await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
+  const deleted = await deleteMedia(input.groupId, input.path, uid);
+  await audit({
+    actorId: uid,
+    action: 'deleteTeamMedia',
+    groupId: input.groupId,
+    targetType: 'file',
+    targetId: input.path,
+    before: { kind: deleted.kind, size: deleted.size, messageId: deleted.messageId ?? null },
+    after: { fixed: deleted.fixed },
+  });
+  return { ok: true, kind: deleted.kind, fixed: deleted.fixed };
 });

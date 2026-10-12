@@ -83,7 +83,7 @@ describe('prefAllowsPush (NOTIF-4)', () => {
   it('kinds with no switch always pass', () => {
     const allOff = Object.fromEntries(notificationPrefValues.map((k) => [k, false]));
     for (const kind of ['addedToTeam', 'madeAdmin', 'guardianRequest', 'guardianApproved', 'playerAdded',
-      'contentReported', 'planReminder'] as const) {
+      'contentReported', 'storageWarning'] as const) {
       expect(prefAllowsPush(kind, { ...allOff, events: false })).toBe(true);
     }
   });
@@ -210,7 +210,7 @@ describe('buildPayload (ARCH §6.5)', () => {
     expect(channel('reply')).toBe('replies');
     expect(channel('addedToTeam')).toBe('team');
     expect(channel('contentReported')).toBe('team');
-    expect(channel('planReminder')).toBe('team');
+    expect(channel('storageWarning')).toBe('team');
     expect(channel('pollCreated')).toBe('polls');
     expect(channel('eventReminder')).toBe('events');
     expect(channel('documentAdded')).toBe('documents');

@@ -100,22 +100,9 @@ export async function writeReplyPreview(
   return data ? { authorId: String(data.authorId ?? ''), deleted: Boolean(data.deletedAt) } : null;
 }
 
-/**
- * Erases a message (CHAT-8): the text, photos, reactions, and quote are
- * removed from the server, not hidden, and the message becomes a
- * placeholder ("This message was deleted" or "Removed by a team admin").
- * Replies that quoted it now show "Original message was deleted".
- */
-export async function eraseMessage(
-  messageId: string,
-  deletedBy: string,
-  reason: 'author' | 'admin',
-): Promise<void> {
-  const ref = db().collection(Collections.messages).doc(messageId);
-  const message = await ref.get();
-  if (!message.exists || message.get('deletedAt')) return;
-  const groupId = message.get('groupId') as string;
-  await ref.update({
+/** The fields that turn a message into a deleted placeholder (CHAT-8). */
+function erasedFields(deletedBy: string, reason: 'author' | 'admin'): Record<string, unknown> {
+  return {
     text: '',
     attachments: [],
     reactions: {},
@@ -123,7 +110,14 @@ export async function eraseMessage(
     deletedAt: FieldValue.serverTimestamp(),
     deletedBy,
     deletedReason: reason,
-  });
+  };
+}
+
+/**
+ * What follows erasing a message: the notification-center items that quote
+ * it, its photos, and the quotes on replies to it.
+ */
+async function afterErase(messageId: string, groupId: string): Promise<void> {
   // Notification-center items about it go too: their bodies quote the text
   // (CHAT-8 erases it from the server, not just the chat).
   await forEachPage(
@@ -143,6 +137,102 @@ export async function eraseMessage(
     (batch, reply) =>
       batch.update(reply.ref, { replyPreview: { authorName: '', text: '', type: 'text', deleted: true } }),
   );
+}
+
+/**
+ * Erases a message (CHAT-8): the text, photos, reactions, and quote are
+ * removed from the server, not hidden, and the message becomes a
+ * placeholder ("This message was deleted" or "Removed by a team admin").
+ * Replies that quoted it now show "Original message was deleted".
+ */
+export async function eraseMessage(
+  messageId: string,
+  deletedBy: string,
+  reason: 'author' | 'admin',
+): Promise<void> {
+  const ref = db().collection(Collections.messages).doc(messageId);
+  const message = await ref.get();
+  if (!message.exists || message.get('deletedAt')) return;
+  await ref.update(erasedFields(deletedBy, reason));
+  await afterErase(messageId, message.get('groupId') as string);
+}
+
+/** The parts of a message photo this service reads (ARCH §6.2 attachments). */
+interface AttachmentRef {
+  path?: unknown;
+  thumbPath?: unknown;
+}
+
+/** Who sent a message's photos, and which files it still shows (Media, STORE-5). */
+export interface MessagePhotos {
+  authorName: string;
+  paths: string[];
+}
+
+/**
+ * The photos of [messageIds] that are still in [groupId]'s chat, keyed by
+ * message ID. Missing, deleted, and other teams' messages are left out.
+ * One masked getAll per 100 messages, not a read per file (ENG-5).
+ */
+export async function photosOfMessages(groupId: string, messageIds: string[]): Promise<Map<string, MessagePhotos>> {
+  const out = new Map<string, MessagePhotos>();
+  const ids = [...new Set(messageIds)];
+  for (let i = 0; i < ids.length; i += 100) {
+    const refs = ids.slice(i, i + 100).map((id) => db().collection(Collections.messages).doc(id));
+    const snaps = await db().getAll(...refs, { fieldMask: ['groupId', 'authorName', 'attachments', 'deletedAt'] });
+    for (const s of snaps) {
+      if (!s.exists || s.get('groupId') !== groupId || s.get('deletedAt')) continue;
+      const attachments = (s.get('attachments') as AttachmentRef[] | undefined) ?? [];
+      out.set(s.id, {
+        authorName: String(s.get('authorName') ?? ''),
+        paths: attachments
+          .flatMap((a) => [a.path, a.thumbPath])
+          .filter((p): p is string => typeof p === 'string'),
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Takes one photo off a message after a team admin deleted it in Media
+ * (STORE-5). A message left with no text and no photos is erased the way an
+ * admin deletion is (CHAT-8: "Removed by a team admin"). The photo and its
+ * thumbnail go too, and the Storage trigger takes them off the team's
+ * total. Returns 'none' when the message isn't [groupId]'s or doesn't have
+ * that photo.
+ */
+export async function removeAttachment(
+  groupId: string,
+  messageId: string,
+  path: string,
+  deletedBy: string,
+): Promise<'removed' | 'erased' | 'none'> {
+  const ref = db().collection(Collections.messages).doc(messageId);
+  const result = await db().runTransaction(async (tx) => {
+    const message = await tx.get(ref);
+    if (!message.exists || message.get('groupId') !== groupId || message.get('deletedAt')) return null;
+    const attachments = (message.get('attachments') as AttachmentRef[] | undefined) ?? [];
+    const removed = attachments.filter((a) => a.path === path);
+    if (!removed.length) return null;
+    const left = attachments.filter((a) => !removed.includes(a));
+    const erase = left.length === 0 && String(message.get('text') ?? '').trim() === '';
+    tx.update(ref, erase ? erasedFields(deletedBy, 'admin') : { attachments: left });
+    return { erase, removed };
+  });
+  if (!result) return 'none';
+  if (result.erase) {
+    await afterErase(messageId, groupId);
+    return 'erased';
+  }
+  // Only files in this message's own folder: the rules don't check
+  // thumbPath, so it must never lead to another team's files.
+  const folder = `groups/${groupId}/messages/${messageId}/`;
+  const files = result.removed
+    .flatMap((a) => [a.path, a.thumbPath])
+    .filter((p): p is string => typeof p === 'string' && p.startsWith(folder) && !p.includes('..'));
+  await Promise.all(files.map((p) => storage().bucket().file(p).delete({ ignoreNotFound: true })));
+  return 'removed';
 }
 
 /** The switcher's one-line preview of a message: "Photo" for photos. */

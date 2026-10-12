@@ -119,7 +119,7 @@ export async function createGroup(
   uid: string,
   owner: { displayName: string; photoPath: string | null },
   input: NewGroup,
-  quotaGb: number,
+  quotaMb: number,
 ): Promise<string> {
   const ref = db().collection(Collections.groups).doc();
   const now = FieldValue.serverTimestamp();
@@ -142,10 +142,11 @@ export async function createGroup(
       playerCount: 0,
       lastMessageAt: null,
       lastMessagePreview: null,
+      // Every team gets the same limit (STORE-1); only adminSetGroupQuota
+      // changes it (STORE-6).
       storageBytes: 0,
-      storageQuotaBytes: quotaGb * 1024 ** 3,
-      // Every team starts on Free (PLAN-1); licenses move it to Plus.
-      plan: { tier: 'free', endsAt: null, licenseId: null, holderId: null },
+      storageQuotaBytes: quotaMb * 1024 * 1024,
+      storageAlert: 'none',
       archivedAt: null,
       suspendedAt: null,
       createdAt: now,

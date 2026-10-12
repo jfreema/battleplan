@@ -29,7 +29,7 @@ export const onMessageCreated = onDocumentCreated('messages/{messageId}', async 
 });
 
 /**
- * messages updated → replies' quotes follow an edit (PLAN-6). Exits early
+ * messages updated → replies' quotes follow an edit (CHAT-15). Exits early
  * unless the text changed on a message that isn't deleted (reactions and
  * deletions don't count; deleteMessage updates quotes itself).
  */

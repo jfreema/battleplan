@@ -13,6 +13,7 @@ import firebase from 'firebase/compat/app';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { reactionValues } from '../../src/shared/constants.js';
 
 type Db = firebase.firestore.Firestore;
 
@@ -48,7 +49,10 @@ async function seed() {
       name: 'Thunder', nameLower: 'thunder', sport: 'softball', color: '#2F5BEA',
       photoPath: null, teamType: 'adult', settings, memberCount: 2,
     });
-    await db.doc('groups/teamB').set({ name: 'Lightning U10', teamType: 'youth', settings, memberCount: 4 });
+    await db.doc('groups/teamB').set({
+      name: 'Lightning U10', nameLower: 'lightning u10', sport: 'soccer', color: null,
+      photoPath: null, teamType: 'youth', settings, memberCount: 4,
+    });
     await db.doc('groupMembers/teamA_alice').set(memberDoc('teamA', 'alice', 'owner', 'Alice'));
     await db.doc('groupMembers/teamA_bob').set(memberDoc('teamA', 'bob', 'member', 'Bob'));
     await db.doc('groupMembers/teamB_carol').set(memberDoc('teamB', 'carol', 'admin', 'Carol'));
@@ -235,14 +239,86 @@ describe('message rate limit and create rule', () => {
   });
 });
 
-describe('reactions', () => {
+describe('reactions (CHAT-6)', () => {
   it('lets a member set and clear only their own reaction', async () => {
     const db = as('bob');
     await assertSucceeds(db.doc('messages/m1').update({ 'reactions.bob': 'love' }));
     await assertSucceeds(db.doc('messages/m1').update({ 'reactions.bob': firebase.firestore.FieldValue.delete() }));
     await assertFails(db.doc('messages/m1').update({ 'reactions.alice': 'like' }));
-    await assertFails(db.doc('messages/m1').update({ 'reactions.bob': 'fire' }));
     await assertFails(db.doc('messages/m1').update({ text: 'edited by bob' }));
+  });
+
+  it('allows all 16 reactions on every team, and nothing else', async () => {
+    for (const r of reactionValues) {
+      await assertSucceeds(as('bob').doc('messages/m1').update({ 'reactions.bob': r }));
+    }
+    await assertSucceeds(as('dan').doc('messages/m2').update({ 'reactions.dan': 'trophy' }));
+    await assertSucceeds(as('carol').doc('messages/m2').update({ 'reactions.carol': 'basketball' }));
+    await assertFails(as('bob').doc('messages/m1').update({ 'reactions.bob': 'skull' }));
+    await assertFails(as('bob').doc('messages/m2').update({ 'reactions.bob': 'like' }));
+  });
+});
+
+describe('editing messages (CHAT-15)', () => {
+  const edit = (uid: string, id: string, text = 'Edited') =>
+    as(uid).doc(`messages/${id}`).update({ text, editedAt: now() });
+
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await db.doc('messages/gone').set({
+        groupId: 'teamA', authorId: 'alice', type: 'text', text: '', reactions: {},
+        deletedAt: ts('2026-05-01T00:00:00Z'),
+      });
+      await db.doc('messages/pic').set({
+        groupId: 'teamA', authorId: 'bob', type: 'image', text: 'Team pic', reactions: {},
+        attachments: [{ path: 'groups/teamA/messages/pic/0.jpg' }],
+      });
+      // An admin removed every photo in Media (STORE-5); the caption stayed.
+      await db.doc('messages/bare').set({
+        groupId: 'teamA', authorId: 'bob', type: 'image', text: 'Team pic', reactions: {}, attachments: [],
+      });
+    });
+  });
+
+  it('lets authors edit the text of their own messages on every team', async () => {
+    await assertSucceeds(edit('alice', 'm1'));
+    await assertSucceeds(edit('carol', 'm2'));
+    await assertSucceeds(edit('bob', 'pic', ''));
+  });
+
+  it('refuses other people, deleted messages, other fields, and backdated edits', async () => {
+    await assertFails(edit('bob', 'm1'));
+    await assertFails(edit('carol', 'm1'));
+    await assertFails(edit('alice', 'gone'));
+    await assertFails(edit('alice', 'm1', 'x'.repeat(4001)));
+    await assertFails(as('alice').doc('messages/m1').update({ text: 'x', editedAt: ts('2020-01-01T00:00:00Z') }));
+    await assertFails(as('alice').doc('messages/m1').update({ text: 'x', editedAt: now(), authorName: 'Boss' }));
+  });
+
+  it('never empties a message with no photos', async () => {
+    await assertFails(edit('alice', 'm1', ''));
+    await assertFails(edit('bob', 'bare', ''));
+  });
+});
+
+describe('chat look (CHAT-18)', () => {
+  const look = (uid: string, g: string, theme: object) => as(uid).doc(`groups/${g}`).update({ chatTheme: theme });
+  const good = { bubbleColor: '#0F8A5F', background: 'pattern', backgroundPath: null };
+
+  it("lets every team's admins set it", async () => {
+    await assertSucceeds(look('alice', 'teamA', good));
+    await assertSucceeds(look('carol', 'teamB', { bubbleColor: null, background: 'photo', backgroundPath: 'groups/teamB/theme/1.jpg' }));
+  });
+
+  it('refuses members, other teams, and bad values', async () => {
+    await assertFails(look('bob', 'teamA', good));
+    await assertFails(look('dan', 'teamB', good));
+    await assertFails(look('alice', 'teamB', good));
+    await assertFails(look('alice', 'teamA', { ...good, bubbleColor: '#FFFFFF' }));
+    await assertFails(look('alice', 'teamA', { ...good, background: 'video' }));
+    await assertFails(look('alice', 'teamA', { ...good, backgroundPath: 'groups/teamB/theme/1.jpg' }));
+    await assertFails(look('alice', 'teamA', { ...good, extra: true }));
   });
 });
 

@@ -6,3 +6,10 @@ export function requireAuth(request: CallableRequest): string {
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
   return uid;
 }
+
+/** The caller's uid, unless they lack the `superAdmin` claim (ARCH §6.4 admin callables). */
+export function requireSuperAdmin(request: CallableRequest): string {
+  const uid = requireAuth(request);
+  if (request.auth?.token.superAdmin !== true) throw new HttpsError('permission-denied', 'Super admins only.');
+  return uid;
+}

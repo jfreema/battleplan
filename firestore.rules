@@ -29,12 +29,13 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/playerGuardians/$(playerId + '_' + uid()));
     }
     function settings(g) { return get(groupPath(g)).data.settings; }
-    // Plus (§6.11): the team's cached plan, and its end date checked now, so
-    // Plus stops on time even before the daily job runs.
-    function isPlus(g) {
-      let plan = get(groupPath(g)).data.get('plan', {});
-      return plan.get('tier', 'free') == 'plus' && plan.get('endsAt', null) != null
-        && plan.endsAt > request.time;
+    // Whether the team has storage left (ARCH §6.3, §6.11): the same test as
+    // storage.rules' underQuota. STORE-4: a full team can't schedule new
+    // events, so event creation (M6) must require hasRoom(g). Nothing else
+    // checks it: messages, reactions, polls, RSVPs, and edits keep working.
+    function hasRoom(g) {
+      let t = get(groupPath(g)).data;
+      return t.storageBytes < t.storageQuotaBytes;
     }
     // Archived teams are read-only (TEAM-9).
     function active(g) { return get(groupPath(g)).data.get('archivedAt', null) == null; }
@@ -117,17 +118,19 @@ service cloud.firestore {
 
     match /groups/{g} {
       allow get: if isMember(g) || superAdmin();
+      // storageBytes, storageQuotaBytes, and storageAlert are left out on
+      // purpose: Functions keep them (STORE-1, STORE-3, STORE-6), so no team
+      // can give itself more room or silence its warning.
       allow update: if isAdmin(g) && active(g)
         && onlyChanges(['name', 'nameLower', 'description', 'photoPath', 'color',
                         'sport', 'timeZone', 'settings', 'chatTheme', 'updatedAt'])
         && validGroup(incoming(), g)
-        // The chat look is a Plus feature (PLAN-8).
-        && (!('chatTheme' in changed()) || (isPlus(g) && validChatTheme(incoming().chatTheme, g)));
+        && (!('chatTheme' in changed()) || validChatTheme(incoming().chatTheme, g));
       // Created and deleted by Functions (createGroup, deleteGroup).
     }
 
-    // A team's chat look (PLAN-8): a bubble color from the team palette (or
-    // null for the team's own color) and a background.
+    // A team's chat look (CHAT-18), set by its admins: a bubble color from the
+    // team palette (or null for the team's own color) and a background.
     function validChatTheme(t, g) {
       return t is map && t.keys().hasOnly(['bubbleColor', 'background', 'backgroundPath'])
         && (t.get('bubbleColor', null) == null || t.bubbleColor in ['#2F5BEA', '#0F8A5F',
@@ -232,28 +235,28 @@ service cloud.firestore {
             'createdAt'])
         && rateLimitOk(incoming().groupId, messageId);
 
-      // Reactions: a member may set or clear only their own (CHAT-6, D6).
+      // Reactions: a member may set or clear only their own, any of the 16,
+      // on every team (CHAT-6, D6).
       allow update: if isMember(resource.data.groupId) && active(resource.data.groupId)
         && resource.data.get('deletedAt', null) == null
         && onlyChanges(['reactions'])
         && request.resource.data.reactions.diff(resource.data.get('reactions', {}))
              .affectedKeys().hasOnly([uid()])
         && (!(uid() in request.resource.data.reactions)
-            || request.resource.data.reactions[uid()] in ['like', 'love', 'dislike', 'laugh']
-            // 12 more on Plus teams (PLAN-7).
-            || (request.resource.data.reactions[uid()] in ['fire', 'clap', 'party', 'hundred',
-                  'pray', 'wow', 'sad', 'angry', 'baseball', 'basketball', 'soccer', 'trophy']
-                && isPlus(resource.data.groupId)));
-      // Editing (PLAN-6, Plus): the author may change only the text, on a
-      // Plus team, of a text or photo message that isn't deleted.
+            || request.resource.data.reactions[uid()] in ['like', 'love', 'dislike', 'laugh',
+                 'fire', 'clap', 'party', 'hundred', 'pray', 'wow', 'sad', 'angry',
+                 'baseball', 'basketball', 'soccer', 'trophy']);
+      // Editing (CHAT-15), on every team: the author may change only the
+      // text, of a text or photo message that isn't deleted. The text may be
+      // emptied only while photos remain; an admin may have removed them all
+      // in Media (STORE-5).
       allow update: if isMember(resource.data.groupId) && active(resource.data.groupId)
         && resource.data.authorId == uid()
         && resource.data.get('deletedAt', null) == null
         && resource.data.type in ['text', 'image']
-        && isPlus(resource.data.groupId)
         && onlyChanges(['text', 'editedAt'])
         && incoming().text is string && incoming().text.size() <= 4000
-        && (incoming().text.size() > 0 || resource.data.type == 'image')
+        && (incoming().text.size() > 0 || resource.data.get('attachments', []).size() > 0)
         && incoming().editedAt == request.time;
       // Deletion goes through the deleteMessage callable.
     }
@@ -389,14 +392,6 @@ service cloud.firestore {
 
     match /reports/{reportId} {
       allow get, list: if superAdmin() || isAdmin(resource.data.groupId);
-    }
-
-    // Plus licenses (§6.11): the holder and super admins can read them;
-    // only Functions write them.
-    match /licenses/{licenseId} {
-      allow get: if signedIn() && (resource.data.holderId == uid() || superAdmin());
-      allow list: if boundedQuery() && signedIn()
-        && (resource.data.holderId == uid() || superAdmin());
     }
 
     match /auditLogs/{logId} {

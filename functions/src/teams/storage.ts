@@ -1,11 +1,17 @@
-// Per-team storage accounting (ARCH §6.3, D16). Storage rules stop uploads
-// once groups.storageBytes reaches storageQuotaBytes. Triggers keep the
-// number current as files come and go, and dailyCleanup recomputes it from
-// the bucket so any drift (a missed event, a retried trigger) heals.
+// Per-team storage accounting (ARCH §6.11, D16). Storage rules stop uploads
+// once groups.storageBytes reaches storageQuotaBytes (STORE-4). Triggers keep
+// the number current as files come and go, and dailyCleanup recomputes it
+// from the bucket so any drift (a missed event, a retried trigger) heals.
+// After every change, updateStorageAlert tells admins when the team crosses
+// 90% or fills up (STORE-3, STORE-4).
 import { FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
+import { HttpsError } from 'firebase-functions/v2/https';
+import { trySend } from '../notify/service.js';
 import { db, storage } from '../shared/admin.js';
-import { Collections } from '../shared/constants.js';
+import { Collections, Limits } from '../shared/constants.js';
+
+export const MB = 1024 * 1024;
 
 /** The team a Storage path belongs to: `groups/{groupId}/...`, or null. */
 export function groupIdFromPath(path: string | undefined): string | null {
@@ -42,7 +48,10 @@ export async function recomputeStorageBytes(groupId: string): Promise<number> {
   return total;
 }
 
-/** Recomputes every team's storage total, a page of teams at a time. */
+/**
+ * Recomputes every team's storage total, a page of teams at a time, and
+ * brings each team's warning up to date (ARCH §6.4 dailyCleanup).
+ */
 export async function reconcileAllStorage(): Promise<number> {
   let teams = 0;
   let last: FirebaseFirestore.QueryDocumentSnapshot | undefined;
@@ -54,10 +63,107 @@ export async function reconcileAllStorage(): Promise<number> {
       const before = (team.get('storageBytes') as number | undefined) ?? 0;
       const after = await recomputeStorageBytes(team.id);
       if (before !== after) logger.warn('storage_drift', { groupId: team.id, before, after });
+      // One team's failed warning mustn't stop the rest of the recount.
+      await updateStorageAlert(team.id).catch((e) =>
+        logger.error('storage_alert_failed', { groupId: team.id, error: String(e) }),
+      );
       teams++;
     }
     if (snap.size < 200) break;
     last = snap.docs[snap.docs.length - 1];
   }
   return teams;
+}
+
+/** Which storage warning a team is at (ARCH §6.2 groups.storageAlert). */
+export type StorageAlert = 'none' | 'warn' | 'full';
+
+const ALERT_RANK: Record<StorageAlert, number> = { none: 0, warn: 1, full: 2 };
+
+/**
+ * How full a team's storage is: full at the limit (STORE-4), warn from
+ * Limits.storageWarnPercent (90%, STORE-3), otherwise none. A limit of zero
+ * or less is always full, matching the rules' `storageBytes < storageQuotaBytes`.
+ */
+export function storageAlertLevel(bytes: number, quotaBytes: number): StorageAlert {
+  if (bytes >= quotaBytes) return 'full';
+  if (bytes * 100 >= quotaBytes * Limits.storageWarnPercent) return 'warn';
+  return 'none';
+}
+
+/** The push and center-item wording for a storage warning (STORE-3, STORE-4). */
+export function storageAlertBody(level: Exclude<StorageAlert, 'none'>): string {
+  return level === 'warn'
+    ? `Storage is ${Limits.storageWarnPercent}% full. Free up space in Media.`
+    : 'Storage is full. Uploads, attachments, and scheduling new events are disabled until storage is freed up.';
+}
+
+/** A team's limit in bytes; teams written before the limit existed get the default (STORE-1). */
+export function quotaBytesOf(data: FirebaseFirestore.DocumentData | undefined): number {
+  const quota = data?.storageQuotaBytes;
+  return typeof quota === 'number' ? quota : Limits.defaultStorageQuotaMb * MB;
+}
+
+/**
+ * Records a team's storage warning level and tells its admins when it rises
+ * (ARCH §6.11): none → warn at 90%, → full at the limit. A fall lowers the
+ * level silently, so the next rise notifies again. The level is compared
+ * and written in a transaction, so concurrent or retried triggers notify
+ * once per rise. Returns the new level when it changed, else null.
+ */
+export async function updateStorageAlert(groupId: string): Promise<StorageAlert | null> {
+  const ref = db().collection(Collections.groups).doc(groupId);
+  const change = await db().runTransaction(async (tx) => {
+    const group = await tx.get(ref);
+    if (!group.exists) return null;
+    const bytes = Number(group.get('storageBytes') ?? 0);
+    const before = (group.get('storageAlert') as StorageAlert | undefined) ?? 'none';
+    const after = storageAlertLevel(bytes, quotaBytesOf(group.data()));
+    if (after === before) return null;
+    tx.update(ref, { storageAlert: after });
+    return {
+      before,
+      after,
+      bytes,
+      teamName: (group.get('name') as string | undefined) ?? '',
+      // The version this rise was read from: a retry of the same rise makes
+      // the same key, and no two rises share one.
+      version: group.updateTime?.toMillis() ?? Date.now(),
+    };
+  });
+  if (!change) return null;
+  if (change.after !== 'none' && ALERT_RANK[change.after] > ALERT_RANK[change.before]) {
+    await trySend({
+      kind: 'storageWarning',
+      groupId,
+      recipients: { admins: true },
+      actor: null,
+      target: { type: 'group', id: groupId },
+      route: `/g/${groupId}/media`,
+      params: { level: change.after },
+      body: storageAlertBody(change.after),
+      dedupeKey: `storage_${groupId}_${change.after}_${change.bytes}_${change.version}`,
+      teamName: change.teamName,
+    });
+  }
+  return change.after;
+}
+
+/**
+ * Sets one team's storage limit (STORE-6, super admins). Returns the limit
+ * before and after, in bytes, for the audit log; the caller then updates
+ * the team's warning.
+ */
+export async function setGroupQuota(
+  groupId: string,
+  quotaMb: number,
+): Promise<{ before: number; after: number }> {
+  const ref = db().collection(Collections.groups).doc(groupId);
+  const after = quotaMb * MB;
+  return db().runTransaction(async (tx) => {
+    const group = await tx.get(ref);
+    if (!group.exists) throw new HttpsError('not-found', 'No such team.');
+    tx.update(ref, { storageQuotaBytes: after, updatedAt: FieldValue.serverTimestamp() });
+    return { before: quotaBytesOf(group.data()), after };
+  });
 }
