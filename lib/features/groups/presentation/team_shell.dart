@@ -13,6 +13,7 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
+import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
@@ -32,6 +33,10 @@ const teamTabs = ['chat', 'schedule', 'documents'];
 
 /// The team view: header with the switcher, then Chat · Schedule · Documents
 /// as a bottom bar on phones or a left rail at 840 px and up (SPEC §5).
+///
+/// A super admin who isn't on the team sees it read-only instead, under
+/// "Viewing as super admin" (ADMIN-3 View team): no switcher, team menu,
+/// or composer, but the moderation the tabs offer them.
 class TeamShell extends ConsumerWidget {
   const new({required this.groupId, required this.navigationShell, super.key});
 
@@ -68,10 +73,12 @@ class TeamShell extends ConsumerWidget {
     final teams = ref.watch(myTeamsProvider);
     final memberships = ref.watch(myMembershipsProvider);
 
-    // Membership guard (ARCH §5.4): non-members see a "not a member" screen.
+    // Membership guard (ARCH §5.4): non-members see a "not a member" screen,
+    // except super admins viewing the team (ADMIN-3).
     final isMember =
         memberships.value?.any((m) => m.groupId == groupId) ?? true;
-    if (!isMember) {
+    final viewing = ref.watch(viewingAsSuperAdminProvider(groupId));
+    if (!isMember && !viewing) {
       return Scaffold(
         appBar: AppBar(),
         body: EmptyState(
@@ -83,7 +90,28 @@ class TeamShell extends ConsumerWidget {
       );
     }
 
+    // A suspended team can't be read by its members (the rules' isMember),
+    // while their membership still can: say so rather than load forever
+    // (ADMIN-3). Super admins still read it. Read only once the membership
+    // is known, so a team just joined isn't read (and refused) too early.
+    final onTeam = memberships.value?.any((m) => m.groupId == groupId) ?? false;
+    final group = onTeam || viewing
+        ? ref.watch(groupProvider(groupId))
+        : const AsyncLoading<Group?>();
+    if (onTeam && !viewing && group.hasValue && group.value == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: EmptyState(
+          icon: AppIcons.group,
+          message: l10n.teamSuspended,
+          actionLabel: l10n.goToMyTeams,
+          onAction: () => context.go('/'),
+        ),
+      );
+    }
+
     final team = teams.value?.where((t) => t.group.id == groupId).firstOrNull;
+    final viewed = viewing ? group.value : null;
     final otherUnread =
         teams.value?.any((t) => t.group.id != groupId && t.hasUnread) ?? false;
     final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
@@ -94,7 +122,9 @@ class TeamShell extends ConsumerWidget {
       (AppIcons.documents, l10n.tabDocuments),
     ];
     // The Chat tab shows this team's unread count (CHAT-9).
-    final unread = ref.watch(unreadCountProvider(groupId)).value ?? 0;
+    final unread = viewing
+        ? 0
+        : ref.watch(unreadCountProvider(groupId)).value ?? 0;
     Widget tabIcon(int index, Widget icon) => index == 0 && unread > 0
         ? Badge(label: Text(unreadLabel(unread)), child: icon)
         : icon;
@@ -121,16 +151,21 @@ class TeamShell extends ConsumerWidget {
       }
     }
 
-    final header = _TeamHeader(
-      team: team,
-      showOtherUnreadDot: otherUnread,
-      onOpenSwitcher: () => _openSwitcher(context),
-      onLeave: leave,
-    );
+    final Widget header = viewing
+        ? _ViewingHeader(group: viewed)
+        : _TeamHeader(
+            team: team,
+            showOtherUnreadDot: otherUnread,
+            onOpenSwitcher: () => _openSwitcher(context),
+            onLeave: leave,
+          );
+    // Under the header: "Viewing as super admin", or the storage warning.
+    final Widget banner = viewing
+        ? ViewingAsSuperAdminBanner(groupId: groupId)
+        : _StorageBanner(team: team);
 
-    final body = team == null && teams.isLoading
-        ? const SkeletonList()
-        : navigationShell;
+    final loading = viewing ? viewed == null : team == null && teams.isLoading;
+    final body = loading ? const SkeletonList() : navigationShell;
 
     // Ctrl/⌘+K opens the team switcher on web and desktop (SPEC §4.2).
     final shortcuts = <ShortcutActivator, VoidCallback>{
@@ -152,12 +187,19 @@ class TeamShell extends ConsumerWidget {
                 onDestinationSelected: navigationShell.goBranch,
                 leading: Padding(
                   padding: const EdgeInsets.symmetric(vertical: Space.sm),
-                  child: _SwitcherButton(
-                    team: team,
-                    showDot: otherUnread,
-                    compact: true,
-                    onPressed: () => _openSwitcher(context),
-                  ),
+                  child: viewing
+                      ? TeamBadge(
+                          name: viewed?.name ?? '',
+                          color: viewed?.color == null
+                              ? null
+                              : Color(viewed!.color!),
+                        )
+                      : _SwitcherButton(
+                          team: team,
+                          showDot: otherUnread,
+                          compact: true,
+                          onPressed: () => _openSwitcher(context),
+                        ),
                 ),
                 trailing: const Expanded(
                   child: Align(
@@ -181,7 +223,7 @@ class TeamShell extends ConsumerWidget {
                 child: Column(
                   children: [
                     header,
-                    _StorageBanner(team: team),
+                    banner,
                     Expanded(
                       child: Center(
                         child: ConstrainedBox(
@@ -208,7 +250,7 @@ class TeamShell extends ConsumerWidget {
             child: Column(
               children: [
                 header,
-                _StorageBanner(team: team),
+                banner,
                 Expanded(child: body),
               ],
             ),
@@ -232,8 +274,8 @@ class TeamShell extends ConsumerWidget {
       );
     }
     // Asks for notification permission once the person is in a team
-    // (NOTIF-1).
-    return NotificationPrePrompt(child: shell);
+    // (NOTIF-1); viewing someone else's team doesn't count.
+    return viewing ? shell : NotificationPrePrompt(child: shell);
   }
 }
 
@@ -278,6 +320,44 @@ class _TeamHeader extends StatelessWidget {
             onLeave: onLeave,
           ),
           if (!wide) const _AccountButton(),
+        ],
+      ),
+    );
+  }
+}
+
+/// The header while viewing as a super admin (ADMIN-3): the team's badge
+/// and name, without the switcher or the team menu.
+class _ViewingHeader extends StatelessWidget {
+  const new({required this.group});
+
+  final Group? group;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final color = group?.color;
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: Space.gutter(width),
+        vertical: Space.sm,
+      ),
+      child: Row(
+        children: [
+          TeamBadge(
+            name: group?.name ?? '',
+            color: color == null ? null : Color(color),
+          ),
+          const SizedBox(width: Space.sm),
+          Expanded(
+            child: Text(
+              group?.name ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          if (width < Breakpoints.wide) const _AccountButton(),
         ],
       ),
     );

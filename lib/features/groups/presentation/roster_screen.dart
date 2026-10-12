@@ -49,7 +49,9 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
     final players = youth
         ? ref.watch(playersProvider(widget.groupId)).value ?? const <Player>[]
         : const <Player>[];
-    final isAdmin = me?.isAdmin ?? false;
+    // Super admins act as the owner here, from the admin panel (ADMIN-3).
+    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    final isAdmin = (me?.isAdmin ?? false) || superAdmin;
     // Guardian requests sit at the top for admins (PLAYER-4).
     final requests = youth && isAdmin
         ? ref.watch(pendingGuardianRequestsProvider(widget.groupId)).value ??
@@ -64,7 +66,7 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
       appBar: AppBar(
         title: Text(l10n.rosterMenu),
         actions: [
-          if (youth && (me?.isAdmin ?? false))
+          if (youth && isAdmin)
             TextButton(
               onPressed: () =>
                   context.push('/g/${widget.groupId.value}/players/add'),
@@ -259,8 +261,10 @@ class MemberCard extends ConsumerWidget {
     final repo = ref.read(memberRepositoryProvider);
     final viewer = me;
     final isSelf = viewer?.uid == member.uid;
-    final viewerIsOwner = viewer?.role == MemberRole.owner;
-    final viewerIsAdmin = viewer?.isAdmin ?? false;
+    // A super admin can do what the owner can (SPEC §3).
+    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    final viewerIsOwner = viewer?.role == MemberRole.owner || superAdmin;
+    final viewerIsAdmin = (viewer?.isAdmin ?? false) || superAdmin;
     final targetIsOwner = member.role == MemberRole.owner;
     final targetIsAdmin = member.role == MemberRole.admin;
 

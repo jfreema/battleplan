@@ -163,12 +163,14 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     }
   }
 
-  /// React, Reply, Copy text, Delete (and Report with task 66).
+  /// React, Reply, Copy text, Delete (and Report with task 66). A super
+  /// admin viewing the team gets Copy text and Delete only (ADMIN-3).
   Future<void> _openMenu() async {
     final m = widget.message;
     final l10n = AppLocalizations.of(context);
     final user = ref.read(authUserProvider).value;
     final me = user?.uid;
+    final viewing = ref.read(viewingAsSuperAdminProvider(m.groupId));
     final canModerate =
         (user?.isSuperAdmin ?? false) ||
         (ref.read(myMembershipProvider(m.groupId))?.isAdmin ?? false);
@@ -180,14 +182,16 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ReactionPicker(
-                mine: me == null ? null : m.reactions[me],
-                onPick: (r) {
-                  Navigator.of(sheet).pop();
-                  fireAndForget(_react(r));
-                },
-              ),
-              const Divider(height: Space.xl),
+              if (!viewing) ...[
+                ReactionPicker(
+                  mine: me == null ? null : m.reactions[me],
+                  onPick: (r) {
+                    Navigator.of(sheet).pop();
+                    fireAndForget(_react(r));
+                  },
+                ),
+                const Divider(height: Space.xl),
+              ],
               if (widget.onReply case final reply?)
                 ListTile(
                   leading: const Icon(AppIcons.reply),
@@ -221,7 +225,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                 ),
               // Other people's messages: report them or block their author
               // (SAFE-1, SAFE-2).
-              if (!widget.mine) ...[
+              if (!widget.mine && !viewing) ...[
                 ListTile(
                   leading: const Icon(AppIcons.report),
                   title: Text(l10n.reportMessage),
@@ -538,7 +542,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             onLongPress: deleted ? null : () => unawaited(_openMenu()),
             onSecondaryTap: deleted ? null : () => unawaited(_openMenu()),
             // Not on polls: waiting for a second tap would hold up voting.
-            onDoubleTap: deleted || kIsWeb || isPoll || isEvent
+            onDoubleTap:
+                deleted ||
+                    kIsWeb ||
+                    isPoll ||
+                    isEvent ||
+                    ref.watch(viewingAsSuperAdminProvider(m.groupId))
                 ? null
                 : () => fireAndForget(_react(Reaction.love)),
             child: Transform.translate(

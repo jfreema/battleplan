@@ -18,10 +18,8 @@ import 'package:battleplan/features/groups/presentation/chat_look_section.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/storage_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Reminder choices for events, in minutes (SCHED-3).
@@ -161,33 +159,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
 
   /// Super admins set this team's limit in MB (STORE-6).
   Future<void> _changeQuota(Group group) async {
-    final l10n = AppLocalizations.of(context);
-    final max = NumberFormat.decimalPattern(l10n.localeName)
-        .format(Limits.storageQuotaMaxMb);
-    final mb = await showDialog<int>(
-      context: context,
-      builder: (_) => _QuotaDialog(
-        initialMb: group.storageQuotaBytes ~/ bytesPerMb,
-        maxLabel: max,
-      ),
-    );
-    if (mb == null || !mounted) return;
-    try {
-      await ref.read(groupRepositoryProvider).setStorageQuota(group.id, mb);
-      if (mounted) {
-        showAppSnackBar(
-          context,
-          l10n.storageLimitSaved(formatBytes(mb * bytesPerMb)),
-        );
-      }
-    } on AppFailure catch (e) {
-      if (mounted) {
-        showAppSnackBar(
-          context,
-          e is PermissionDenied ? l10n.notAllowed : l10n.profileSaveFailed,
-        );
-      }
-    }
+    await changeStorageQuota(context, ref, group);
   }
 
   String _reminderLabel(AppLocalizations l10n, int minutes) =>
@@ -452,71 +424,6 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Asks for a limit in whole MB, 1 to [Limits.storageQuotaMaxMb]; pops it
-/// or null (STORE-6). The server checks the range again.
-class _QuotaDialog extends StatefulWidget {
-  const new({required this.initialMb, required this.maxLabel});
-
-  final int initialMb;
-  final String maxLabel;
-
-  @override
-  State<_QuotaDialog> createState() => _QuotaDialogState();
-}
-
-class _QuotaDialogState extends State<_QuotaDialog> {
-  late final _mb = TextEditingController(
-    text: widget.initialMb > 0 ? '${widget.initialMb}' : '',
-  );
-  String? _error;
-
-  @override
-  void dispose() {
-    _mb.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final mb = int.tryParse(_mb.text.trim());
-    if (mb == null || mb < 1 || mb > Limits.storageQuotaMaxMb) {
-      setState(
-        () =>
-            _error = AppLocalizations.of(context)
-                .storageLimitInvalid(widget.maxLabel),
-      );
-      return;
-    }
-    Navigator.of(context).pop(mb);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AlertDialog(
-      title: Text(l10n.storageLimitTitle),
-      content: TextField(
-        controller: _mb,
-        autofocus: true,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: l10n.storageLimitLabel,
-          helperText: l10n.storageLimitHelp(widget.maxLabel),
-          errorText: _error,
-        ),
-        onSubmitted: (_) => _submit(),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel),
-        ),
-        FilledButton(onPressed: _submit, child: Text(l10n.save)),
-      ],
     );
   }
 }

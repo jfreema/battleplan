@@ -2,6 +2,7 @@ import 'package:battleplan/app/app.dart';
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
@@ -47,6 +48,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeFileChooser? fileChooser,
   FakeSharer? sharer,
   FakeLinkOpener? linkOpener,
+  FakeAdminRepository? admin,
   Size size = const Size(400, 1600),
 }) async {
   // A tall phone-sized screen, so long settings lists fit without scrolling.
@@ -116,6 +118,9 @@ Future<FakeLocalPrefs> pumpApp(
         fileChooserProvider.overrideWithValue(fileChooser ?? FakeFileChooser()),
         sharerProvider.overrideWithValue(sharer ?? FakeSharer()),
         linkOpenerProvider.overrideWithValue(linkOpener ?? FakeLinkOpener()),
+        adminRepositoryProvider.overrideWithValue(
+          admin ?? FakeAdminRepository(),
+        ),
         // PDFium doesn't run in tests; a stand-in names the file.
         pdfViewProvider.overrideWithValue(
           (bytes, name) => Text('PDF $name (${bytes.length} bytes)'),

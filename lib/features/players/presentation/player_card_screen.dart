@@ -38,7 +38,11 @@ class PlayerCardScreen extends ConsumerWidget {
     final links = ref.watch(guardianLinksProvider(groupId)).value ?? const [];
     final roster = ref.watch(rosterProvider(groupId)).value ?? const [];
     final me = ref.watch(authUserProvider).value?.uid;
-    final isAdmin = ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false;
+    // Super admins manage players and guardians from the admin panel too
+    // (ADMIN-3).
+    final isAdmin =
+        (ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false) ||
+        (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
     if (player == null) {
       return Scaffold(appBar: AppBar());
     }

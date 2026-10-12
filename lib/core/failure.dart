@@ -165,3 +165,24 @@ final class UploadCanceled extends AppFailure {
   @override
   String get code => 'uploadCanceled';
 }
+
+/// Removing super admin from the last one, or deleting them (ADMIN-4):
+/// there must always be at least one.
+final class LastSuperAdmin extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'lastSuperAdmin';
+}
+
+/// An admin action the server refused for a stated [reason] (ADMIN-3,
+/// ADMIN-4, ADMIN-5): `already-member`, `cannot-delete-self`,
+/// `cannot-disable-self`, `name-mismatch`, `owner`, `nothing-to-delete`.
+final class ActionRefused extends AppFailure {
+  const new(this.reason, [super.message]);
+
+  final String reason;
+
+  @override
+  String get code => 'actionRefused';
+}

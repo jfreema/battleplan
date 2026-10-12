@@ -7,7 +7,8 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
-import 'package:battleplan/features/admin/presentation/admin_screen.dart';
+import 'package:battleplan/features/admin/presentation/admin_panel.dart'
+    deferred as admin_panel;
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/presentation/activate_screen.dart';
 import 'package:battleplan/features/auth/presentation/disabled_screen.dart';
@@ -243,7 +244,63 @@ GoRouter router(Ref ref) {
             ),
         ],
       ),
-      GoRoute(path: '/admin', builder: (_, _) => const AdminScreen()),
+      // The God admin panel (ADMIN), for super admins (the redirect above).
+      GoRoute(
+        path: '/admin',
+        builder: (_, _) =>
+            _AdminPanel(() => admin_panel.AdminDashboardScreen()),
+        routes: [
+          GoRoute(
+            path: 'teams',
+            builder: (_, _) =>
+                _AdminPanel(() => admin_panel.AdminTeamsScreen()),
+            routes: [
+              GoRoute(
+                path: ':groupId',
+                builder: (_, state) => _AdminPanel(
+                  () => admin_panel.AdminTeamScreen(
+                    groupId: GroupId(state.pathParameters['groupId']!),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'users',
+            builder: (_, _) =>
+                _AdminPanel(() => admin_panel.AdminUsersScreen()),
+            routes: [
+              GoRoute(
+                path: ':uid',
+                builder: (_, state) => _AdminPanel(
+                  () => admin_panel.AdminUserScreen(
+                    uid: UserId(state.pathParameters['uid']!),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'reports',
+            builder: (_, _) =>
+                _AdminPanel(() => admin_panel.AdminReportsScreen()),
+          ),
+          GoRoute(
+            path: 'audit',
+            builder: (_, state) => _AdminPanel(
+              () => admin_panel.AdminAuditScreen(
+                actorId: state.uri.queryParameters['actor'],
+                groupId: state.uri.queryParameters['group'],
+              ),
+            ),
+          ),
+          GoRoute(
+            path: 'settings',
+            builder: (_, _) =>
+                _AdminPanel(() => admin_panel.PlatformSettingsScreen()),
+          ),
+        ],
+      ),
       GoRoute(path: '/g/new', builder: (_, _) => const CreateTeamScreen()),
       GoRoute(
         path: '/g/:groupId',
@@ -461,4 +518,66 @@ GoRouter router(Ref ref) {
   });
   ref.onDispose(router.dispose);
   return router;
+}
+
+/// Loads the admin panel's code the first time it's opened, then shows
+/// [page] (ARCH §5.6: deferred-loaded, so regular users never download
+/// it). Native builds have it already; loading is instant there.
+class _AdminPanel extends StatefulWidget {
+  const new(this.page);
+
+  final Widget Function() page;
+
+  /// One download per app run, shared by every admin page.
+  static Future<void>? _loading;
+  static bool _loaded = false;
+
+  @override
+  State<_AdminPanel> createState() => _AdminPanelState();
+}
+
+class _AdminPanelState extends State<_AdminPanel> {
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  void _load() {
+    if (_AdminPanel._loaded) return;
+    unawaited(
+      (_AdminPanel._loading ??= admin_panel.loadLibrary())
+          .then((_) {
+            _AdminPanel._loaded = true;
+            if (mounted) setState(() {});
+          })
+          .catchError((Object e) {
+            // A failed download can be tried again.
+            _AdminPanel._loading = null;
+            if (mounted) setState(() => _error = e);
+          }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_AdminPanel._loaded) return widget.page();
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.adminPanel)),
+      body: _error == null
+          ? const Center(child: CircularProgressIndicator())
+          : EmptyState(
+              icon: AppIcons.error,
+              message: l10n.loadError,
+              actionLabel: l10n.retry,
+              onAction: () {
+                setState(() => _error = null);
+                _load();
+              },
+            ),
+    );
+  }
 }

@@ -142,6 +142,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   /// is the one showing and the app is in front (CHAT-9).
   void _markRead() {
     if (!mounted || !_atBottom || !TickerMode.valuesOf(context).enabled) return;
+    // A super admin viewing the team has no read marker (ADMIN-3).
+    if (ref.read(viewingAsSuperAdminProvider(widget.groupId))) return;
     final life = WidgetsBinding.instance.lifecycleState;
     if (life != null && life != AppLifecycleState.resumed) return;
     unawaited(
@@ -179,6 +181,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final me = ref.watch(authUserProvider).value?.uid;
     final group = ref.watch(groupProvider(widget.groupId)).value;
     final archived = group?.isArchived ?? false;
+    // A super admin viewing the team reads it and moderates, nothing more
+    // (ADMIN-3): no composer, replies, or reactions.
+    final viewing = ref.watch(viewingAsSuperAdminProvider(widget.groupId));
     // The team's chat look (CHAT-18): my bubble color and the background.
     // No color chosen means the team color, as Team settings shows it, so
     // changing only the background never changes the bubbles; a team with
@@ -327,7 +332,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 // Until the server writes the quote, show it from the
                 // original if it's loaded.
                 quoted: m.replyToId == null ? null : byId[m.replyToId],
-                onReply: archived ? null : () => setState(() => _replyTo = m),
+                onReply: archived || viewing
+                    ? null
+                    : () => setState(() => _replyTo = m),
                 onOpenQuote: m.replyToId == null
                     ? null
                     : () => unawaited(_jumpTo(m.replyToId!)),
@@ -363,7 +370,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ],
           ),
         ),
-        if (archived)
+        if (viewing)
+          Padding(
+            padding: const EdgeInsets.all(Space.lg),
+            child: Text(l10n.chatViewingReadOnly, textAlign: TextAlign.center),
+          )
+        else if (archived)
           Padding(
             padding: const EdgeInsets.all(Space.lg),
             child: Text(l10n.chatArchived, textAlign: TextAlign.center),

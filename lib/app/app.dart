@@ -3,6 +3,7 @@ import 'package:battleplan/app/push_handler.dart';
 import 'package:battleplan/app/router.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
+import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/presentation/verify_email_banner.dart';
 import 'package:battleplan/features/notifications/application/push_registration.dart';
 import 'package:battleplan/features/notifications/presentation/push_banner.dart';
@@ -46,11 +47,14 @@ class BattleplanApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: ref.watch(routerProvider),
-      // The email verification banner sits above every screen (AUTH-3), and
-      // in-app push banners above that (NOTIF-7).
+      // The email verification banner sits above every screen (AUTH-3),
+      // the super admins' announcement above it (ADMIN-7), and in-app push
+      // banners above that (NOTIF-7).
       builder: (context, child) => PushBannerHost(
         onOpen: (m) => ref.read(pushHandlerProvider.notifier).open(m),
-        child: VerifyEmailBanner.wrap(child ?? const SizedBox.shrink()),
+        child: AnnouncementBanner.wrap(
+          VerifyEmailBanner.wrap(child ?? const SizedBox.shrink()),
+        ),
       ),
     );
     if (banner == null) return app;

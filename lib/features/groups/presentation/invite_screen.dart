@@ -7,6 +7,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -29,7 +30,10 @@ class InviteScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final invite = ref.watch(teamInviteProvider(groupId));
-    final isAdmin = ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false;
+    // Super admins reset and revoke links from the admin panel (ADMIN-3).
+    final isAdmin =
+        (ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false) ||
+        (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
     final group = ref.watch(groupProvider(groupId)).value;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.inviteMenu)),

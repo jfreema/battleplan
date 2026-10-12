@@ -67,6 +67,16 @@ abstract final class AppIcons {
   static const IconData search = Symbols.search_rounded;
   static const IconData sort = Symbols.sort_rounded;
   static const IconData info = Symbols.info_rounded;
+  static const IconData warning = Symbols.warning_rounded;
+  static const IconData dashboard = Symbols.dashboard_rounded;
+  static const IconData person = Symbols.person_rounded;
+  static const IconData history = Symbols.history_rounded;
+  static const IconData tune = Symbols.tune_rounded;
+  static const IconData back = Symbols.arrow_back_rounded;
+  static const IconData suspend = Symbols.pause_circle_rounded;
+  static const IconData archive = Symbols.archive_rounded;
+  static const IconData unarchive = Symbols.unarchive_rounded;
+  static const IconData key = Symbols.key_rounded;
   static const IconData homeScreen = Symbols.add_to_home_screen_rounded;
   static const IconData location = Symbols.location_on_rounded;
   static const IconData directions = Symbols.directions_rounded;

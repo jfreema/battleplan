@@ -82,6 +82,21 @@ Membership? myMembership(Ref ref, GroupId groupId) => ref
     ?.where((m) => m.groupId == groupId)
     .firstOrNull;
 
+/// True while a super admin looks at a team they aren't on (ADMIN-3 View
+/// team): its tabs, read-only, with the "Viewing as super admin" banner and
+/// moderation. False until their memberships have loaded.
+@riverpod
+bool viewingAsSuperAdmin(Ref ref, GroupId groupId) {
+  final superAdmin = ref.watch(
+    authUserProvider.select((a) => a.value?.isSuperAdmin ?? false),
+  );
+  if (!superAdmin) return false;
+  // Right after sign-in the list still holds the previous one.
+  final memberships = ref.watch(myMembershipsProvider);
+  if (!memberships.hasValue || memberships.isLoading) return false;
+  return !memberships.value!.any((m) => m.groupId == groupId);
+}
+
 /// A URL for a stored team file (the logo, the chat background, or a Media
 /// preview), or null.
 @riverpod

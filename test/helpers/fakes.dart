@@ -10,6 +10,8 @@ import 'package:battleplan/core/services/file_chooser.dart';
 import 'package:battleplan/core/services/link_opener.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/sharer.dart';
+import 'package:battleplan/features/admin/domain/admin.dart';
+import 'package:battleplan/features/admin/domain/admin_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/domain/user_profile.dart';
@@ -2142,5 +2144,288 @@ class FakeLinkOpener implements LinkOpener {
   Future<bool> open(Uri uri) async {
     opened.add(uri);
     return true;
+  }
+}
+
+/// The admin callables and `config/app` in memory (ADMIN). Lists page by
+/// [pageSize]; actions are logged in [calls] and change what's stored, as
+/// the server would. Set [failWith] to make the next action throw.
+class FakeAdminRepository implements AdminRepository {
+  new({
+    this.totalsValue = const AdminTotals(),
+    List<AdminTeamRow>? teams,
+    Map<String, AdminTeamDetail>? teamDetails,
+    List<AdminUserRow>? users,
+    Map<String, AdminUserDetail>? userDetails,
+    List<AdminReport>? reports,
+    List<AuditEntry>? audit,
+    this._config = const AppConfig(),
+    this.pageSize = 50,
+  }) : teams = teams ?? [],
+       teamDetails = teamDetails ?? {},
+       users = users ?? [],
+       userDetails = userDetails ?? {},
+       reports = reports ?? [],
+       audit = audit ?? [];
+
+  AdminTotals totalsValue;
+  final List<AdminTeamRow> teams;
+  final Map<String, AdminTeamDetail> teamDetails;
+  final List<AdminUserRow> users;
+  final Map<String, AdminUserDetail> userDetails;
+  final List<AdminReport> reports;
+  final List<AuditEntry> audit;
+  final int pageSize;
+
+  /// Every action, e.g. `suspend g1 true`, in order.
+  final List<String> calls = [];
+
+  /// The queries the lists were read with, newest last.
+  final List<AdminTeamQuery> teamQueries = [];
+  final List<AuditFilter> auditFilters = [];
+
+  /// Thrown by the next action instead of doing it.
+  AppFailure? failWith;
+
+  Future<void> _act(String call) async {
+    final failure = failWith;
+    if (failure != null) {
+      failWith = null;
+      throw failure;
+    }
+    calls.add(call);
+  }
+
+  AdminPage<T> _page<T>(List<T> all, PageCursor? after) {
+    final start = after == null ? 0 : after.handle as int;
+    final end = (start + pageSize).clamp(0, all.length);
+    return (
+      items: all.sublist(start, end),
+      next: end < all.length ? PageCursor(end) : null,
+    );
+  }
+
+  @override
+  Future<AdminTotals> totals() async => totalsValue;
+
+  @override
+  Future<AdminPage<AdminTeamRow>> listTeams(
+    AdminTeamQuery query, {
+    PageCursor? after,
+    int limit = adminPageSize,
+  }) async {
+    teamQueries.add(query);
+    final q = query.query.trim().toLowerCase();
+    final matching = [
+      for (final t in teams)
+        if (t.name.toLowerCase().startsWith(q) &&
+            (query.status == null || t.status == query.status))
+          t,
+    ];
+    int newest(DateTime? a, DateTime? b) =>
+        (b ?? DateTime(2000)).compareTo(a ?? DateTime(2000));
+    matching.sort(
+      (a, b) => switch (query.sort) {
+        AdminTeamSort.created => newest(a.createdAt, b.createdAt),
+        AdminTeamSort.activity => newest(a.lastMessageAt, b.lastMessageAt),
+        AdminTeamSort.members => b.memberCount.compareTo(a.memberCount),
+        AdminTeamSort.storage => b.storageBytes.compareTo(a.storageBytes),
+      },
+    );
+    return _page(matching, after);
+  }
+
+  @override
+  Future<AdminTeamDetail> team(GroupId id) async =>
+      teamDetails[id.value] ?? AdminTeamDetail(id: id);
+
+  /// Teams whose View team was recorded, in order.
+  final List<String> opened = [];
+
+  @override
+  Future<void> openGroup(GroupId id) async => opened.add(id.value);
+
+  @override
+  Future<void> setGroupSuspended(
+    GroupId id, {
+    required bool suspended,
+    String? note,
+  }) => _act('suspend ${id.value} $suspended ${note ?? ''}'.trim());
+
+  @override
+  Future<void> setGroupArchived(GroupId id, {required bool archived}) =>
+      _act('archive ${id.value} $archived');
+
+  @override
+  Future<void> deleteGroup(GroupId id, String confirmName) =>
+      _act('delete ${id.value} $confirmName');
+
+  @override
+  Future<AdminPage<AdminUserRow>> listUsers(
+    AdminUserQuery query, {
+    PageCursor? after,
+    int limit = adminPageSize,
+  }) async {
+    final q = query.query.trim().toLowerCase();
+    bool matches(AdminUserRow u) => switch (query.filter) {
+      null => true,
+      AdminUserFilter.added => u.status == UserStatus.provisioned,
+      AdminUserFilter.active => u.status == UserStatus.active,
+      AdminUserFilter.disabled => u.status == UserStatus.disabled,
+      AdminUserFilter.superAdmin => u.superAdmin,
+    };
+    return _page([
+      for (final u in users)
+        if ((u.displayName.toLowerCase().startsWith(q) ||
+                (u.email ?? '').toLowerCase().startsWith(q)) &&
+            matches(u))
+          u,
+    ], after);
+  }
+
+  @override
+  Future<AdminUserDetail> user(UserId uid) async {
+    final known = userDetails[uid.value];
+    if (known != null) return known;
+    final row = users.where((u) => u.uid == uid).firstOrNull;
+    if (row == null) throw const NotFound();
+    return AdminUserDetail(user: row);
+  }
+
+  void _updateUser(UserId uid, AdminUserRow Function(AdminUserRow) f) {
+    final i = users.indexWhere((u) => u.uid == uid);
+    if (i >= 0) users[i] = f(users[i]);
+    final d = userDetails[uid.value];
+    if (d != null) userDetails[uid.value] = d.copyWith(user: f(d.user));
+  }
+
+  @override
+  Future<UserId> createUser({
+    required String email,
+    required String displayName,
+    GroupId? groupId,
+    MemberRole? role,
+  }) async {
+    await _act(
+      'create $email $displayName ${groupId?.value ?? ''} ${role?.value ?? ''}'
+          .trim(),
+    );
+    final uid = UserId('new-${users.length}');
+    users.add(
+      AdminUserRow(
+        uid: uid,
+        displayName: displayName,
+        email: email,
+        status: UserStatus.provisioned,
+      ),
+    );
+    return uid;
+  }
+
+  @override
+  Future<void> renameUser(UserId uid, String displayName) async {
+    await _act('rename ${uid.value} $displayName');
+    _updateUser(uid, (u) => u.copyWith(displayName: displayName));
+  }
+
+  @override
+  Future<void> addUserToGroup(UserId uid, GroupId groupId, MemberRole role) =>
+      _act('addToTeam ${uid.value} ${groupId.value} ${role.value}');
+
+  @override
+  Future<void> setUserDisabled(UserId uid, {required bool disabled}) async {
+    await _act('disable ${uid.value} $disabled');
+    _updateUser(
+      uid,
+      (u) => u.copyWith(
+        status: disabled ? UserStatus.disabled : UserStatus.active,
+      ),
+    );
+  }
+
+  @override
+  Future<void> revokeSessions(UserId uid) => _act('signOut ${uid.value}');
+
+  @override
+  Future<void> sendPasswordReset(UserId uid) => _act('reset ${uid.value}');
+
+  @override
+  Future<void> deleteUser(UserId uid) => _act('deleteUser ${uid.value}');
+
+  @override
+  Future<void> setSuperAdmin(UserId uid, {required bool superAdmin}) async {
+    await _act('superAdmin ${uid.value} $superAdmin');
+    _updateUser(uid, (u) => u.copyWith(superAdmin: superAdmin));
+  }
+
+  @override
+  Future<AdminPage<AdminReport>> listReports(
+    ReportStatus status, {
+    PageCursor? after,
+    int limit = adminPageSize,
+  }) async => _page([
+    for (final r in reports)
+      if (r.status == status) r,
+  ], after);
+
+  @override
+  Future<void> resolveReport(
+    String reportId,
+    AdminReportAction action,
+    String note,
+  ) async {
+    await _act('resolve $reportId ${action.name} $note');
+    final i = reports.indexWhere((r) => r.id == reportId);
+    if (i >= 0) {
+      reports[i] = reports[i].copyWith(
+        status: action == AdminReportAction.dismiss
+            ? ReportStatus.dismissed
+            : ReportStatus.actioned,
+        note: note,
+      );
+    }
+  }
+
+  @override
+  Future<AdminPage<AuditEntry>> auditLog(
+    AuditFilter filter, {
+    PageCursor? after,
+    int limit = adminPageSize,
+  }) async {
+    auditFilters.add(filter);
+    return _page([
+      for (final e in audit)
+        if ((filter.actorId == null || e.actorId == filter.actorId) &&
+            (filter.action == null || e.action == filter.action) &&
+            (filter.groupId == null || e.groupId == filter.groupId))
+          e,
+    ], after);
+  }
+
+  AppConfig _config;
+  final _configChanges = StreamController<AppConfig>.broadcast();
+
+  /// Replaces `config/app` and tells anyone watching, like a server write.
+  set config(AppConfig value) {
+    _config = value;
+    _configChanges.add(value);
+  }
+
+  AppConfig get config => _config;
+
+  @override
+  Stream<AppConfig> watchConfig() async* {
+    yield _config;
+    yield* _configChanges.stream;
+  }
+
+  /// The settings saved, in order.
+  final List<AppConfig> savedConfigs = [];
+
+  @override
+  Future<void> updateConfig(AppConfig config) async {
+    await _act('updateConfig');
+    savedConfigs.add(config);
+    this.config = config;
   }
 }

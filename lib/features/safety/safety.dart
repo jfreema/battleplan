@@ -4,4 +4,4 @@ library;
 
 export 'domain/safety.dart' show ReportTargetType;
 export 'presentation/safety_actions.dart'
-    show confirmBlock, showReportSheet, unblock;
+    show confirmBlock, reportReasonLabel, showReportSheet, unblock;

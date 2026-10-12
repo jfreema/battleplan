@@ -12,6 +12,8 @@ import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
 import 'package:battleplan/core/services/remote_config.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/features/admin/application/providers.dart';
+import 'package:battleplan/features/admin/data/functions_admin_repository.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:battleplan/features/auth/data/firestore_user_repository.dart';
@@ -106,6 +108,9 @@ List<Override> buildOverrides({
   ),
   mediaRepositoryProvider.overrideWithValue(
     FunctionsMediaRepository(functions),
+  ),
+  adminRepositoryProvider.overrideWithValue(
+    FunctionsAdminRepository(firestore, functions),
   ),
   authRepositoryProvider.overrideWithValue(
     FirebaseAuthRepository(

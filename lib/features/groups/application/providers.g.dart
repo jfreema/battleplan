@@ -438,6 +438,103 @@ final class MyMembershipFamily extends $Family
   String toString() => r'myMembershipProvider';
 }
 
+/// True while a super admin looks at a team they aren't on (ADMIN-3 View
+/// team): its tabs, read-only, with the "Viewing as super admin" banner and
+/// moderation. False until their memberships have loaded.
+
+@ProviderFor(viewingAsSuperAdmin)
+final viewingAsSuperAdminProvider = ViewingAsSuperAdminFamily._();
+
+/// True while a super admin looks at a team they aren't on (ADMIN-3 View
+/// team): its tabs, read-only, with the "Viewing as super admin" banner and
+/// moderation. False until their memberships have loaded.
+
+final class ViewingAsSuperAdminProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// True while a super admin looks at a team they aren't on (ADMIN-3 View
+  /// team): its tabs, read-only, with the "Viewing as super admin" banner and
+  /// moderation. False until their memberships have loaded.
+  ViewingAsSuperAdminProvider._({
+    required ViewingAsSuperAdminFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'viewingAsSuperAdminProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$viewingAsSuperAdminHash();
+
+  @override
+  String toString() {
+    return r'viewingAsSuperAdminProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return viewingAsSuperAdmin(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ViewingAsSuperAdminProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$viewingAsSuperAdminHash() =>
+    r'2a73a7945409c7a899b46d7f0db4344552923118';
+
+/// True while a super admin looks at a team they aren't on (ADMIN-3 View
+/// team): its tabs, read-only, with the "Viewing as super admin" banner and
+/// moderation. False until their memberships have loaded.
+
+final class ViewingAsSuperAdminFamily extends $Family
+    with $FunctionalFamilyOverride<bool, GroupId> {
+  ViewingAsSuperAdminFamily._()
+    : super(
+        retry: null,
+        name: r'viewingAsSuperAdminProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// True while a super admin looks at a team they aren't on (ADMIN-3 View
+  /// team): its tabs, read-only, with the "Viewing as super admin" banner and
+  /// moderation. False until their memberships have loaded.
+
+  ViewingAsSuperAdminProvider call(GroupId groupId) =>
+      ViewingAsSuperAdminProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'viewingAsSuperAdminProvider';
+}
+
 /// A URL for a stored team file (the logo, the chat background, or a Media
 /// preview), or null.
 

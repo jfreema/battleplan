@@ -97,6 +97,8 @@ class _PollCardState extends ConsumerState<PollCard> {
     // Archived teams are read-only (TEAM-9): results show, nothing changes.
     final archived =
         ref.watch(groupProvider(groupId)).value?.isArchived ?? false;
+    // A super admin viewing the team sees results but can't vote (ADMIN-3).
+    final viewing = ref.watch(viewingAsSuperAdminProvider(groupId));
     if (value.closedAt == null) _rebuildAt(value.closesAt);
     final closed = value.isClosedAt(DateTime.now()) || _reachedClose;
     final canClose = !closed && !archived && (value.createdBy == me || isAdmin);
@@ -148,7 +150,7 @@ class _PollCardState extends ConsumerState<PollCard> {
               option: option,
               chosen: mine.contains(option.id),
               leading: leaders.contains(option.id),
-              onTap: closed || archived
+              onTap: closed || archived || viewing
                   ? null
                   : () =>
                         unawaited(_vote(context, ref, value, mine, option.id)),
