@@ -2,7 +2,7 @@
 // callable checks the superAdmin claim first, and every action (not the
 // reads) writes an audit entry (ADMIN-8). Nobody's password is ever set or
 // returned: admins send setup and reset emails only (AUTH-6).
-import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { audit } from '../audit/service.js';
 import {
   authEmailOf,
@@ -24,6 +24,7 @@ import { resendApiKey } from '../email/service.js';
 import { updatePlayerProfile } from '../players/service.js';
 import { closeReport, openReport, reopenReport } from '../safety/service.js';
 import { auth, db, storage } from '../shared/admin.js';
+import { onCall } from '../shared/callable.js';
 import { Collections } from '../shared/constants.js';
 import { requireSuperAdmin } from '../shared/guards.js';
 import { roleOf } from '../shared/roles.js';

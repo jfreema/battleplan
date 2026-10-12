@@ -203,8 +203,10 @@ service cloud.firestore {
     match /players/{playerId} {
       allow get: if canRead(resource.data.groupId);
       allow list: if boundedQuery() && canRead(resource.data.groupId);
+      // Archived teams are read-only (TEAM-9), players included.
       allow update: if (isGuardian(playerId) && isMember(resource.data.groupId)
                         || isAdmin(resource.data.groupId))
+        && active(resource.data.groupId)
         && onlyChanges(['displayName', 'displayNameLower', 'jerseyNumber', 'position', 'updatedAt'])
         && validPlayer(incoming());
     }

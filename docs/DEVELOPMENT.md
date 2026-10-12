@@ -83,6 +83,41 @@ npm --prefix functions run build
 firebase deploy --only functions,storage --project battleplan-dev-ecce4
 ```
 
+## App Check
+
+App Check proves requests come from the real apps (ARCH §6.9). It runs in **monitor mode** until the console shows nearly all traffic verified, then it's enforced on Functions, Firestore, and Storage.
+
+**The app** (`lib/app/app_check.dart`, started in `bootstrap.dart` right after `Firebase.initializeApp`, with token auto-refresh on):
+
+| Build | Provider |
+|---|---|
+| Emulators (`USE_EMULATORS=true`) | None. The `demo-` project has no App Check backend, and the emulators don't check tokens. |
+| Dev on a phone or simulator | Debug provider. Pass `--dart-define=APP_CHECK_DEBUG_TOKEN=<token>` to use a registered token (CI); without it the SDK makes one up and prints it in the native log (Xcode console or `adb logcat`, "debug token" / "debug secret"). |
+| Prod on Android / iOS | Play Integrity / App Attest, falling back to DeviceCheck before iOS 14. Never the debug provider. |
+| Web | reCAPTCHA Enterprise with `--dart-define=APP_CHECK_WEB_KEY=<site key>`. A dev web build can take `APP_CHECK_DEBUG_TOKEN` instead (generate one under Manage debug tokens). Without either, App Check is off on that build and the startup log says so; it never crashes. |
+
+The web SDK remembers the last provider in the browser's local storage and reuses it on the next load, so after switching keys clear the site data.
+
+**Functions** (`functions/src/shared/callable.ts`): every callable imports `onCall` from there, which sets `enforceAppCheck` from one switch (a unit test fails if a handler imports firebase-functions' `onCall` directly). `getInvitePreview` and `logClientError` still need no sign-in; once enforced, they need an App Check token like every other callable. In monitor mode a request without a valid token still runs, and each call logs `Callable request verification` with `verifications.app` = `VALID`, `MISSING`, or `INVALID`.
+
+**The one-line switch:** in `functions/src/shared/callable.ts`, change
+
+```ts
+const enforceAppCheckByDefault = false;
+```
+
+to `true`, then deploy Functions. To enforce on one project first, put `ENFORCE_APP_CHECK=true` in `functions/.env.<project id>` (git-ignored, so on the machine that deploys) instead; `false` there turns it back off for that project.
+
+**Console steps, per project** (`battleplan-dev-ecce4` first, then `battleplan-prod`):
+
+1. **Register the apps** in Firebase console → App Check → Apps:
+   - Android (`app.getbattleplan.dev`, `app.getbattleplan`): Play Integrity. Add the SHA-256 of the upload key and the Play app signing key in Project settings, and link the Play Console app to the Cloud project (Play Console → App integrity).
+   - iOS: App Attest (and DeviceCheck for the fallback). Needs the Team ID. Turn on the App Attest capability for `app.getbattleplan` in the Apple Developer portal; the prod configs already sign with `ios/Runner/RunnerProd.entitlements` (`appattest-environment` = `production`). DeviceCheck needs a DeviceCheck key (.p8) uploaded.
+   - Web: create a reCAPTCHA Enterprise key (Google Cloud console → Security → reCAPTCHA, type Website, domains `getbattleplan.app`, `battleplan-dev-ecce4.web.app`, the preview-channel domain, and `localhost`), register it as the web app's provider, and build with `--dart-define=APP_CHECK_WEB_KEY=<site key>`. The key isn't secret; it goes in the build script or CI variables.
+2. **Debug tokens** (Apps → ⋮ → Manage debug tokens), dev project only: one per developer machine or simulator (copy it from the native log or browser console on first run), and one for CI, stored as a GitHub secret and passed as `--dart-define=APP_CHECK_DEBUG_TOKEN=${{ secrets.APP_CHECK_DEBUG_TOKEN }}`. Never register debug tokens on prod. The emulator runs need none.
+3. **Monitor**: App Check → APIs shows verified, unverified-outdated, and unverified-invalid requests for Firestore and Storage. For Functions, filter Logs Explorer on `jsonPayload.message="Callable request verification passed"` or `"…failed"` and compare `jsonPayload.verifications.app`. Wait until old app versions without App Check have mostly updated (Remote Config `min_supported_version` can force it).
+4. **Enforce**: flip the switch above and deploy Functions, then App Check → APIs → **Enforce** for Cloud Firestore and Cloud Storage. Enforcement takes up to 15 minutes. To back out, unenforce in the console and set the switch to `false`.
+
 ## Super admins
 
 Grant the `superAdmin` claim to someone who has signed in at least once:

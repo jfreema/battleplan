@@ -1,8 +1,9 @@
 // Thin entry points for the chat domain (ARCH §6.4).
-import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { audit } from '../audit/service.js';
 import { db } from '../shared/admin.js';
+import { onCall } from '../shared/callable.js';
 import { Collections } from '../shared/constants.js';
 import { requireAuth } from '../shared/guards.js';
 import { roleOf } from '../shared/roles.js';

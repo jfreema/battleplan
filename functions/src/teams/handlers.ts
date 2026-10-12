@@ -1,9 +1,10 @@
 // Thin entry points for the teams domain (ARCH §6.4).
 import { FieldValue } from 'firebase-admin/firestore';
-import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { auth, db } from '../shared/admin.js';
+import { onCall } from '../shared/callable.js';
 import { Collections, Limits, sportValues, TEAM_COLORS, teamTypeValues } from '../shared/constants.js';
 import { requireAuth, requireSuperAdmin } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';

@@ -1,10 +1,11 @@
 // Thin entry points for the players domain (ARCH §6.4).
 import { logger } from 'firebase-functions/v2';
-import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { audit } from '../audit/service.js';
 import { db } from '../shared/admin.js';
+import { onCall } from '../shared/callable.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { requireAuth } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';

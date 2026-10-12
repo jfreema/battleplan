@@ -1,7 +1,8 @@
 // Thin entry points for the accounts domain (ARCH §6.4).
-import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { resendApiKey } from '../email/service.js';
+import { onCall } from '../shared/callable.js';
 import { requireAuth } from '../shared/guards.js';
 import { parse } from '../shared/validate.js';
 import {

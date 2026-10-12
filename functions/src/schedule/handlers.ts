@@ -1,5 +1,5 @@
 // Thin entry points for the schedule domain (ARCH §6.4).
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall } from '../shared/callable.js';
 import { requireAuth } from '../shared/guards.js';
 import { parse } from '../shared/validate.js';
 import { SaveSeriesInput, saveSeries } from './series.js';

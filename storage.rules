@@ -7,9 +7,14 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     function signedIn() { return request.auth != null; }
+    function team(g) { return firestore.get(/databases/(default)/documents/groups/$(g)).data; }
+    // As in firestore.rules: members of a suspended team lose the team
+    // (ADMIN-3), files included. A rule reads at most two Firestore
+    // documents, so every check here uses only the membership and the team.
     function isMember(g) {
       return signedIn() && firestore.exists(
-        /databases/(default)/documents/groupMembers/$(g + '_' + request.auth.uid));
+        /databases/(default)/documents/groupMembers/$(g + '_' + request.auth.uid))
+        && team(g).get('suspendedAt', null) == null;
     }
     function isAdmin(g) {
       return isMember(g) && firestore.get(
@@ -24,10 +29,12 @@ service firebase.storage {
     function canRead(g) {
       return superAdmin() || isMember(g);
     }
-    // The same test as Firestore rules' hasRoom (STORE-4).
+    // The same test as Firestore rules' hasRoom (STORE-4), on an active
+    // team: archived teams are read-only (TEAM-9), so nothing uploads there.
     function underQuota(g) {
-      let group = firestore.get(/databases/(default)/documents/groups/$(g)).data;
-      return group.storageBytes < group.storageQuotaBytes;
+      let group = team(g);
+      return group.storageBytes < group.storageQuotaBytes
+        && group.get('archivedAt', null) == null;
     }
     function isImage(maxMb) {
       return request.resource.contentType.matches('image/.*')
@@ -74,9 +81,7 @@ service firebase.storage {
     match /groups/{g}/documents/{docId}/{file} {
       allow read: if canRead(g);
       allow create: if isMember(g) && underQuota(g) && isDocument(10)
-        && (isAdmin(g) || firestore.get(
-             /databases/(default)/documents/groups/$(g)).data.settings
-               .get('membersCanUploadDocs', true) == true);
+        && (isAdmin(g) || team(g).settings.get('membersCanUploadDocs', true) == true);
     }
   }
 }

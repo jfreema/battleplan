@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/app/app.dart';
+import 'package:battleplan/app/app_check.dart';
 import 'package:battleplan/app/firebase_options_emulator.dart';
 import 'package:battleplan/app/providers.dart';
 import 'package:battleplan/app/services/crashlytics_reporter.dart';
@@ -53,6 +54,8 @@ Future<void> bootstrap({
   await Firebase.initializeApp(
     options: env.useEmulators ? emulatorFirebaseOptions() : cloudOptions(),
   );
+  // Before anything else talks to Firebase, so every request carries a token.
+  await activateAppCheck(planAppCheck(env: env, isWeb: kIsWeb));
   final auth = FirebaseAuth.instance;
   final firestore = FirebaseFirestore.instance;
   final functions = FirebaseFunctions.instanceFor(region: 'us-central1');
