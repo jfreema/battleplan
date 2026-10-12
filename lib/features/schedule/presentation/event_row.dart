@@ -146,6 +146,9 @@ class EventRow extends StatelessWidget {
                     ],
                   ),
                   Text(timeRange(l10n, event, viewerZone), style: muted),
+                  // "6:00 PM CDT · 7:00 PM your time" (SCHED-9).
+                  if (otherZoneLine(l10n, event, viewerZone) case final z?)
+                    Text(z, style: muted),
                   if (event.location case final loc?)
                     Text(
                       loc.label,

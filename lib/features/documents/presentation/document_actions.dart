@@ -74,12 +74,26 @@ Future<void> openDocument(
     await downloadDocument(context, ref, doc);
     return;
   }
-  final path = doc.path;
-  final url = path == null
-      ? null
-      : await ref.read(documentRepositoryProvider).fileUrl(path);
-  final opened =
-      url != null && await ref.read(linkOpenerProvider).open(Uri.parse(url));
+  // On phones the file itself goes to the default app for its type; when
+  // no app takes it, the browser gets its address instead.
+  final bytes = await _bytes(ref, doc);
+  var opened =
+      bytes != null &&
+      await ref
+          .read(fileChooserProvider)
+          .openFile(
+            bytes,
+            name: doc.fileName,
+            mimeType: doc.contentType ?? 'application/octet-stream',
+          );
+  if (!opened) {
+    final path = doc.path;
+    final url = path == null
+        ? null
+        : await ref.read(documentRepositoryProvider).fileUrl(path);
+    opened =
+        url != null && await ref.read(linkOpenerProvider).open(Uri.parse(url));
+  }
   if (!opened && context.mounted) {
     showAppSnackBar(context, l10n.documentOpenFailed);
   }

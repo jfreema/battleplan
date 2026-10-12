@@ -245,6 +245,8 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     _set(
       (d) => d.copyWith(
         rsvpDeadline: ZonedTime.instantOf(d.timeZone, day, minutes),
+        deadlineDaysBefore: null,
+        deadlineMinutes: null,
       ),
     );
   }
@@ -373,6 +375,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final d = _current;
+    final deadline = d.deadline;
     final title = _isNew ? l10n.eventNew : l10n.eventEditTitle;
     final missingDate = d.date == null;
 
@@ -653,10 +656,12 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(AppIcons.rsvp),
                     title: Text(
-                      d.rsvpDeadline == null
-                          ? l10n.eventNoDeadline
-                          : '${dayLabel(l10n, ZonedTime.wallClock(d.timeZone, d.rsvpDeadline!))} '
-                                '${timeIn(l10n, d.rsvpDeadline!, d.timeZone)}',
+                      deadline == null
+                          ? (d.deadlineDaysBefore != null
+                                ? l10n.eventDeadlineAfterDate
+                                : l10n.eventNoDeadline)
+                          : '${dayLabel(l10n, ZonedTime.wallClock(d.timeZone, deadline))} '
+                                '${timeIn(l10n, deadline, d.timeZone)}',
                       style:
                           _tried &&
                               d.problemAt(DateTime.now()) ==
@@ -665,13 +670,19 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                           : null,
                     ),
                     subtitle: Text(l10n.eventRsvpDeadline),
-                    trailing: d.rsvpDeadline == null
+                    trailing:
+                        d.rsvpDeadline == null && d.deadlineDaysBefore == null
                         ? const Icon(AppIcons.edit)
                         : IconButton(
                             tooltip: l10n.eventClearDeadline,
                             icon: const Icon(AppIcons.close),
-                            onPressed: () =>
-                                _set((d) => d.copyWith(rsvpDeadline: null)),
+                            onPressed: () => _set(
+                              (d) => d.copyWith(
+                                rsvpDeadline: null,
+                                deadlineDaysBefore: null,
+                                deadlineMinutes: null,
+                              ),
+                            ),
                           ),
                     onTap: () => unawaited(_pickDeadline()),
                   ),

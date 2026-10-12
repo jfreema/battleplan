@@ -23,6 +23,15 @@ abstract interface class FileChooser {
     required String mimeType,
   });
 
+  /// Opens [bytes] as [name] in the phone's default app for its type
+  /// (DOC-4). False if no app took it. Browsers download instead
+  /// ([downloadsInsteadOfOpening]).
+  Future<bool> openFile(
+    Uint8List bytes, {
+    required String name,
+    required String mimeType,
+  });
+
   /// True in browsers, where files the app can't show download instead of
   /// opening in another app (DOC-4).
   bool get downloadsInsteadOfOpening;
@@ -37,6 +46,13 @@ class NoopFileChooser implements FileChooser {
 
   @override
   Future<bool> saveFile(
+    Uint8List bytes, {
+    required String name,
+    required String mimeType,
+  }) async => false;
+
+  @override
+  Future<bool> openFile(
     Uint8List bytes, {
     required String name,
     required String mimeType,

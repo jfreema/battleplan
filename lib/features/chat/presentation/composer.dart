@@ -19,8 +19,12 @@ class Composer extends StatefulWidget {
     this.onAttachBlocked,
     this.replyingTo,
     this.onCancelReply,
+    this.teamName = '',
     super.key,
   });
+
+  /// Names the team in the hint, "Message Thunder U14…" (SPEC §5.4).
+  final String teamName;
 
   /// The message being replied to, shown above the box with ✕ (CHAT-13).
   final Message? replyingTo;
@@ -149,7 +153,9 @@ class _ComposerState extends State<Composer> {
                 keyboardType: TextInputType.multiline,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: l10n.messageHint,
+                  hintText: widget.teamName.trim().isEmpty
+                      ? l10n.messageHint
+                      : l10n.messageTeamHint(widget.teamName.trim()),
                   isDense: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(Corners.bubble),

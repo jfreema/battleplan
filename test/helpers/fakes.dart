@@ -1573,7 +1573,7 @@ class FakeEventRepository implements EventRepository {
       homeAway: t.homeAway,
       rsvpEnabled: t.rsvpEnabled,
       rsvpFor: youth ? RsvpFor.players : RsvpFor.members,
-      rsvpDeadline: d.rsvpDeadline,
+      rsvpDeadline: d.deadline,
       reminderOffsets: t.reminderOffsets,
       notifyTeam: t.notifyTeam,
       postToChat: t.postToChat,
@@ -2123,6 +2123,22 @@ class FakeFileChooser implements FileChooser {
   }) async {
     saved.add(name);
     return true;
+  }
+
+  /// Files handed to the default app, as "name type" (DOC-4).
+  final List<String> opened = [];
+
+  /// False: no app on the phone takes the file.
+  bool appOpens = true;
+
+  @override
+  Future<bool> openFile(
+    Uint8List bytes, {
+    required String name,
+    required String mimeType,
+  }) async {
+    opened.add('$name $mimeType');
+    return appOpens;
   }
 
   @override

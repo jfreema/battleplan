@@ -566,6 +566,8 @@ class _AccountButton extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final user = ref.watch(authUserProvider).value;
     final name = user?.displayName ?? user?.email ?? '';
+    // My photo when I have one (SPEC §5.4), else my initials.
+    final photoUrl = ref.watch(myPhotoUrlProvider).value;
     return PopupMenuButton<String>(
       tooltip: l10n.accountMenuTooltip,
       onSelected: (value) => switch (value) {
@@ -582,7 +584,12 @@ class _AccountButton extends ConsumerWidget {
       ],
       child: Padding(
         padding: const EdgeInsets.all(Space.sm),
-        child: Avatar(name: name, colorKey: user?.uid, size: 32),
+        child: Avatar(
+          name: name,
+          colorKey: user?.uid,
+          imageUrl: photoUrl,
+          size: 32,
+        ),
       ),
     );
   }

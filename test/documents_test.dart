@@ -511,6 +511,31 @@ void main() {
       expect(find.text('Load more'), findsNothing);
     });
 
+    testWidgets('typing finds a match past the first 100 (DOC-1)', (
+      tester,
+    ) async {
+      await openDocuments(
+        tester,
+        docs: [
+          for (var i = 0; i < 250; i++)
+            file(
+              'd$i',
+              'Doc ${i.toString().padLeft(3, '0')}',
+              age: Duration(minutes: i),
+            ),
+        ],
+      );
+      expect(find.text('Doc 240'), findsNothing);
+      await tester.enterText(find.byType(TextField), 'doc 24');
+      await tester.pumpAndSettle();
+      // Every page loaded, so the oldest matches list too.
+      expect(rowOrder(tester), [for (var i = 240; i < 250; i++) 'Doc $i']);
+      expect(find.text('Load more'), findsNothing);
+      await tester.enterText(find.byType(TextField), 'zebra');
+      await tester.pumpAndSettle();
+      expect(find.text('No documents match "zebra".'), findsOneWidget);
+    });
+
     testWidgets('documents from Load more follow deletes and edits '
         '(DOC-5)', (tester) async {
       final r = await openDocuments(
@@ -956,13 +981,29 @@ void main() {
         );
         await tester.tap(find.text('Playbook.docx'));
         await tester.pumpAndSettle();
+        // The file itself goes to the app for its type, not the browser.
+        expect(r.chooser.opened, ['Playbook.docx $wordType']);
+        expect(r.opener.opened, isEmpty);
+        expect(r.chooser.saved, isEmpty);
+      });
+
+      testWidgets('with no app for the type, the browser opens it', (
+        tester,
+      ) async {
+        final r = await openDocuments(
+          tester,
+          chooser: FakeFileChooser()..appOpens = false,
+          files: {'groups/a/documents/playbook/Playbook.docx': wordBytes},
+        );
+        await tester.tap(find.text('Playbook.docx'));
+        await tester.pumpAndSettle();
+        expect(r.chooser.opened, ['Playbook.docx $wordType']);
         expect(r.opener.opened, [
           Uri.parse(
             'https://files.test/groups/a/documents/playbook/'
             'Playbook.docx',
           ),
         ]);
-        expect(r.chooser.saved, isEmpty);
       });
 
       testWidgets('and download in the browser', (tester) async {

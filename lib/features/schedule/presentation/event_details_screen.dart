@@ -427,6 +427,7 @@ class RsvpButtons extends ConsumerWidget {
     required this.enabled,
     this.label,
     this.allowMaybe = true,
+    this.compact = false,
     super.key,
   });
 
@@ -438,6 +439,10 @@ class RsvpButtons extends ConsumerWidget {
   /// "Emma #7" for a player, "You" beside players; null when it's only me.
   final String? label;
   final bool allowMaybe;
+
+  /// The chat card's smaller buttons (SPEC §5.4): no icons and no note,
+  /// which the event's page has.
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -454,7 +459,10 @@ class RsvpButtons extends ConsumerWidget {
       children: [
         if (label != null)
           Padding(
-            padding: const EdgeInsets.only(top: Space.sm, bottom: Space.xs),
+            padding: EdgeInsets.only(
+              top: compact ? Space.xs : Space.sm,
+              bottom: Space.xs,
+            ),
             child: Text(label!, style: theme.textTheme.titleSmall),
           ),
         SizedBox(
@@ -466,13 +474,14 @@ class RsvpButtons extends ConsumerWidget {
               for (final s in statuses)
                 ButtonSegment(
                   value: s,
-                  icon: Icon(statusIcon(s)),
+                  icon: compact ? null : Icon(statusIcon(s)),
                   label: Text(statusLabel(l10n, s)),
                 ),
             ],
             selected: {?current},
             style: SegmentedButton.styleFrom(
-              minimumSize: const Size(0, 52),
+              // Still a full 48 px tap target on the card.
+              minimumSize: Size(0, compact ? 48 : 52),
               selectedBackgroundColor: current == null
                   ? null
                   : statusColor(context, current).withValues(alpha: 0.18),
@@ -487,30 +496,31 @@ class RsvpButtons extends ConsumerWidget {
                 : null,
           ),
         ),
-        Row(
-          children: [
-            if (answer?.note.isNotEmpty ?? false)
-              Expanded(
-                child: Text(
-                  answer!.note,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
+        if (!compact)
+          Row(
+            children: [
+              if (answer?.note.isNotEmpty ?? false)
+                Expanded(
+                  child: Text(
+                    answer!.note,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                )
+              else
+                const Spacer(),
+              if (enabled && current != null)
+                TextButton(
+                  onPressed: () => unawaited(_editNote(context, ref, current)),
+                  child: Text(
+                    answer?.note.isNotEmpty ?? false
+                        ? l10n.eventEditNote
+                        : l10n.eventAddNote,
                   ),
                 ),
-              )
-            else
-              const Spacer(),
-            if (enabled && current != null)
-              TextButton(
-                onPressed: () => unawaited(_editNote(context, ref, current)),
-                child: Text(
-                  answer?.note.isNotEmpty ?? false
-                      ? l10n.eventEditNote
-                      : l10n.eventAddNote,
-                ),
-              ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }

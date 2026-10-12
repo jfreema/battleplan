@@ -197,12 +197,28 @@ void main() {
       await tester.tap(find.text('Calendar'));
       await tester.pumpAndSettle();
       expect(find.text('Late practice'), findsOneWidget);
+      expect(find.byKey(const ValueKey('dot-t')), findsOneWidget);
       // Another day of the month has nothing.
       final other = today().day == 1 ? 2 : 1;
       await tester.tap(find.text('$other').first);
       await tester.pumpAndSettle();
       expect(find.text('Late practice'), findsNothing);
       expect(find.text('Nothing on this day.'), findsOneWidget);
+    });
+
+    testWidgets('a busy day has a dot for each event', (tester) async {
+      await openSchedule(
+        tester,
+        events: [
+          for (var i = 0; i < 5; i++)
+            event('busy$i', days: 0, hour: 19 + i, title: 'Session $i'),
+        ],
+      );
+      await tester.tap(find.text('Calendar'));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 5; i++) {
+        expect(find.byKey(ValueKey('dot-busy$i')), findsOneWidget);
+      }
     });
 
     testWidgets('canceled events are struck through with a badge (SCHED-7)', (
@@ -362,6 +378,64 @@ void main() {
       await tester.pumpAndSettle();
       expect(rsvps.events.calls, isEmpty);
       expect(find.text('Pick a date'), findsWidgets);
+    });
+
+    testWidgets("duplicating last week's game takes a new date and opponent "
+        '(SCHED-3 acceptance)', (tester) async {
+      final original = event(
+        'e1',
+        days: -7,
+        title: 'vs. Eagles',
+        type: EventType.game,
+      ).copyWith(opponent: 'Eagles', homeAway: HomeAway.home);
+      // Answers were due the evening before, at 8:00 PM.
+      final game = original.copyWith(
+        rsvpDeadline: ZonedTime.instantOf(zone, addDays(today(), -8), 20 * 60),
+      );
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [game],
+      );
+      await tester.tap(find.text('Past'));
+      await tester.pumpAndSettle();
+      await openDetails(tester, 'vs. Eagles');
+      await menu(tester, 'Duplicate');
+      // The title stays automatic, so it follows the new opponent.
+      expect(find.widgetWithText(TextField, 'vs. Eagles'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Opponent'),
+        'Hawks',
+      );
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(TextField, 'vs. Hawks'), findsOneWidget);
+      // The deadline waits for the date, then lands as far before it.
+      await tester.scrollUntilVisible(
+        find.text('Set from the date you pick'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.scrollUntilVisible(
+        find.text('Pick a date'),
+        -200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Pick a date'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      final saved = rsvps.events.events.values.firstWhere(
+        (e) => e.id.value != 'e1',
+      );
+      expect(saved.title, 'vs. Hawks');
+      expect(saved.opponent, 'Hawks');
+      expect(
+        saved.rsvpDeadline,
+        ZonedTime.instantOf(zone, addDays(today(), -1), 20 * 60),
+      );
     });
   });
 
@@ -736,6 +810,43 @@ void main() {
       expect(find.text('Directions'), findsOneWidget);
     });
 
+    testWidgets('answers from the card, with live counts (SPEC 5.4)', (
+      tester,
+    ) async {
+      final rsvps = await openSchedule(
+        tester,
+        tapSchedule: false,
+        events: [event('e1')],
+        messages: FakeMessageRepository([card('e1')]),
+      );
+      expect(find.text('Going'), findsOneWidget);
+      expect(find.text('Maybe'), findsOneWidget);
+      expect(find.text('Not going'), findsOneWidget);
+      expect(find.text('No answers yet'), findsOneWidget);
+      await tester.tap(find.text('Going'));
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.status, RsvpStatus.going);
+      expect(rsvps.rsvps.single.participantId, 'coach');
+      expect(find.text('1 going'), findsOneWidget);
+      // Answering from the card stays in the chat.
+      expect(find.text('Directions'), findsNothing);
+    });
+
+    testWidgets('canceled and RSVP-off cards take no answers', (tester) async {
+      await openSchedule(
+        tester,
+        tapSchedule: false,
+        events: [
+          event('e1', title: 'Drill', canceledAt: DateTime.now()),
+          event('e2', title: 'Dinner').copyWith(rsvpEnabled: false),
+        ],
+        messages: FakeMessageRepository([card('e1'), card('e2')]),
+      );
+      expect(find.text('Drill'), findsOneWidget);
+      expect(find.text('Dinner'), findsOneWidget);
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNothing);
+    });
+
     testWidgets('says when the event was deleted', (tester) async {
       await openSchedule(
         tester,
@@ -991,6 +1102,51 @@ void main() {
         'updateSeries following dry',
         'updateSeries following',
       ]);
+    });
+  });
+
+  group('time zones (SCHED-9)', () {
+    testWidgets("rows and chat cards show the event's time and mine", (
+      tester,
+    ) async {
+      // A game in New York, seen from Chicago.
+      final away = event(
+        'e1',
+        title: 'vs. Eagles',
+        type: EventType.game,
+      ).copyWith(timeZone: 'America/New_York');
+      final msg = Message(
+        id: 'm-e1',
+        groupId: const GroupId('a'),
+        authorId: 'coach',
+        authorName: 'Coach Lee',
+        type: MessageType.event,
+        text: 'vs. Eagles',
+        eventId: 'e1',
+        createdAt: DateTime.now().subtract(const Duration(minutes: 1)),
+      );
+      await openSchedule(
+        tester,
+        tapSchedule: false,
+        events: [away],
+        messages: FakeMessageRepository([msg]),
+      );
+      // Times have a (narrow) space before PM.
+      expect(
+        find.textContaining(RegExp(r'^7:00\sPM E[DS]T · 6:00\sPM your time$')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Schedule'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining(RegExp(r'6:00\sPM your time')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('one line when the zones agree', (tester) async {
+      await openSchedule(tester, events: [event('e1')]);
+      expect(find.textContaining('your time'), findsNothing);
     });
   });
 }

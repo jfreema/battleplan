@@ -384,6 +384,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           )
         else
           Composer(
+            teamName: group?.name ?? '',
             replyingTo: _replyTo,
             onCancelReply: () => setState(() => _replyTo = null),
             onSend: (text) {

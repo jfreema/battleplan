@@ -1,6 +1,10 @@
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
+import 'package:battleplan/features/schedule/domain/event.dart';
+import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
+import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/features/schedule/presentation/event_row.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
@@ -12,7 +16,9 @@ import 'package:material_ui/material_ui.dart';
 /// place, kept live, so a canceled event shows struck through and a
 /// deleted one says so. A series' card whose event is gone shows the
 /// series' next event, or, with none left, the series as posted.
-/// Tapping opens the event (SCHED-4).
+/// Tapping opens the event (SCHED-4). While it takes answers, it has
+/// Going / Maybe / Not going buttons (one set per player for guardians)
+/// and the live counts, as in the chat mockup (SPEC §5.4).
 class EventCard extends ConsumerWidget {
   const new({
     required this.eventId,
@@ -112,11 +118,68 @@ class EventCard extends ConsumerWidget {
                 ),
               ),
               Text(timeRange(l10n, event, zone, withDay: true), style: muted),
+              if (otherZoneLine(l10n, event, zone) case final z?)
+                Text(z, style: muted),
               if (event.location case final loc?) Text(loc.label, style: muted),
+              _CardRsvps(event: event, groupId: groupId),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The card's answer buttons and counts (SPEC §5.4, SCHED-5): the same
+/// answers as the event's page, without the notes.
+class _CardRsvps extends ConsumerWidget {
+  const new({required this.event, required this.groupId});
+
+  final Event event;
+  final GroupId groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!event.takesRsvps) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final group = ref.watch(groupProvider(groupId)).value;
+    if (group == null) return const SizedBox.shrink();
+    final me = ref.watch(myMembershipProvider(groupId));
+    final mine = ref.watch(myParticipantsProvider(groupId));
+    final rsvps =
+        ref.watch(eventRsvpsProvider(groupId, event.id)).value ?? const [];
+    final open = canAnswerNow(event, group, me, DateTime.now());
+    final allowMaybe = group.settings.allowMaybe;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final p in mine)
+          Padding(
+            padding: const EdgeInsets.only(top: Space.sm),
+            child: RsvpButtons(
+              event: event,
+              participant: p,
+              answer: answerOf(rsvps, p.id),
+              label: mine.length > 1 || p.isPlayer
+                  ? (p.isPlayer ? p.shownName : l10n.eventYou)
+                  : null,
+              enabled: open,
+              allowMaybe: allowMaybe,
+              compact: true,
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(top: Space.xs),
+          child: Text(
+            countsText(l10n, event.rsvpCounts, allowMaybe: allowMaybe),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
