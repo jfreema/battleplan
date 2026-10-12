@@ -128,8 +128,9 @@ class NotificationCenter extends _$NotificationCenter {
     if (item.read) return;
     _known[item.id] = item.copyWith(read: true);
     _publish();
+    final container = ref.container;
     await ref.read(notificationRepositoryProvider).markRead(item.id);
-    if (ref.mounted) ref.invalidate(unreadNotificationCountProvider);
+    _recount(container);
   }
 
   /// "Mark all as read" (NOTIF-11).
@@ -140,7 +141,15 @@ class NotificationCenter extends _$NotificationCenter {
       _known[n.id] = n.copyWith(read: true);
     }
     _publish();
+    final container = ref.container;
     await ref.read(notificationRepositoryProvider).markAllRead(UserId(uid));
-    if (ref.mounted) ref.invalidate(unreadNotificationCountProvider);
+    _recount(container);
   }
+
+  /// Recounts the bell once the write is done. Opening a team tab from the
+  /// center replaces the screen, so this provider is usually gone by then
+  /// and the bell, still on screen, would keep the old count; the container
+  /// outlives both.
+  void _recount(ProviderContainer container) =>
+      container.invalidate(unreadNotificationCountProvider);
 }

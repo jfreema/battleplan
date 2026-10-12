@@ -5,6 +5,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderListenableSelect;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -14,24 +15,49 @@ part 'push_registration.g.dart';
 /// Keeps this install's `devices` doc current while someone is signed in
 /// and notifications are allowed (NOTIF-10, ARCH §6.5): written after
 /// sign-in, again whenever FCM rotates the token, and at least daily on
-/// start so the 60-day device prune never removes a device in use. Started
-/// from app.dart; SessionService removes the doc at sign-out.
+/// start or return to the app so the 60-day device prune never removes a
+/// device in use. Started from app.dart; SessionService removes the doc at
+/// sign-out.
 @Riverpod(keepAlive: true)
 class PushRegistration extends _$PushRegistration {
-  /// On start, the doc is rewritten only if the last write is older.
+  /// The doc is rewritten for the same person and token only if the last
+  /// write is older.
   static const refreshAfter = Duration(days: 1);
+
+  /// Set while SessionService signs out. A token FCM issues once the old
+  /// one is deleted, or a start-up write still on its way, must not put
+  /// back the doc sign-out just removed.
+  bool _paused = false;
 
   @override
   void build() {
+    // Runs again only when the signed-in person changes, which ends any
+    // sign-out that paused it.
+    _paused = false;
     final uid = ref.watch(authUserProvider.select((a) => a.value?.uid));
     if (uid == null) return;
+    // iOS reports the token at every start; the freshness check in _write
+    // keeps that from costing a write each time.
     final sub = ref
         .watch(pushRepositoryProvider)
         .tokenRefreshes()
-        .listen((token) => unawaited(_write(uid, token, force: true)));
-    ref.onDispose(() => unawaited(sub.cancel()));
+        .listen((token) => unawaited(_write(uid, token, force: false)));
+    // Notifications turned on in the system settings while the app was in
+    // the background (the help Settings shows, NOTIF-1) take effect on
+    // return, not at the next cold start.
+    final lifecycle = AppLifecycleListener(
+      onResume: () => unawaited(_registerIfAllowed(uid)),
+    );
+    ref.onDispose(() {
+      unawaited(sub.cancel());
+      lifecycle.dispose();
+    });
     unawaited(_registerIfAllowed(uid));
   }
+
+  /// Stops writing the device doc until sign-out finishes or [restore]
+  /// runs. SessionService calls it before removing the doc.
+  void pause() => _paused = true;
 
   /// Shows the system prompt, then registers this device if allowed (the
   /// pre-prompt's Allow and Settings' Turn on, NOTIF-1). Returns the result.
@@ -48,6 +74,7 @@ class PushRegistration extends _$PushRegistration {
   /// Writes the device doc again now, if push is allowed: after a sign-out
   /// or account deletion that didn't go through, which removed it first.
   Future<void> restore() async {
+    _paused = false;
     final uid = ref.read(authUserProvider).value?.uid;
     if (uid != null) await _registerIfAllowed(uid, force: true);
   }
@@ -61,8 +88,12 @@ class PushRegistration extends _$PushRegistration {
   }
 
   Future<void> _write(String uid, String token, {required bool force}) async {
-    // They may have signed out while the token was on its way.
-    if (!ref.mounted || ref.read(authUserProvider).value?.uid != uid) return;
+    // They may have signed out, or begun to, while the token was on its way.
+    if (!ref.mounted ||
+        _paused ||
+        ref.read(authUserProvider).value?.uid != uid) {
+      return;
+    }
     final prefs = ref.read(localPrefsRepositoryProvider);
     final last = prefs.deviceRegistration;
     final now = DateTime.now();
@@ -82,9 +113,12 @@ class PushRegistration extends _$PushRegistration {
             platform: ref.read(pushRepositoryProvider).platform,
             appVersion: ref.read(deviceAppVersionProvider),
           );
+      // Sign-out began meanwhile: it removes the doc after this write, and
+      // its cleared record must stay cleared.
+      if (_paused) return;
       await prefs.setDeviceRegistration((uid: uid, token: token, at: now));
     } on Object catch (e) {
-      // Tried again on the next start or token change.
+      // Tried again on the next start, return to the app, or token change.
       Log.warn('Could not register this device for push', e);
     }
   }

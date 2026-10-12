@@ -28,6 +28,10 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   final _scroll = ScrollController();
 
+  /// Set when loading older items fails, so the check after each frame
+  /// doesn't retry in a loop. Retry at the end of the list tries again.
+  bool _loadFailed = false;
+
   @override
   void initState() {
     super.initState();
@@ -41,14 +45,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   void _maybeLoadMore() {
+    if (_loadFailed) return;
     final p = _scroll.position;
-    if (p.pixels >= p.maxScrollExtent - 400) {
-      unawaited(
-        ref
-            .read(notificationCenterProvider.notifier)
-            .loadMore()
-            .catchError((Object _) {}),
-      );
+    if (p.pixels >= p.maxScrollExtent - 400) unawaited(_loadMore());
+  }
+
+  Future<void> _loadMore() async {
+    if (_loadFailed) setState(() => _loadFailed = false);
+    try {
+      await ref.read(notificationCenterProvider.notifier).loadMore();
+    } on Object {
+      if (mounted) setState(() => _loadFailed = true);
     }
   }
 
@@ -92,14 +99,16 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     Widget body;
     if (center.loading) {
       body = const SkeletonList();
-    } else if (items.isEmpty) {
+    } else if (items.isEmpty && center.reachedEnd) {
       body = EmptyState(
         icon: AppIcons.notifications,
         message: l10n.notificationsPlaceholder,
       );
     } else {
-      // A short list can't scroll, so check after layout too.
-      if (!center.reachedEnd) {
+      // A short list can't scroll, so check after layout too. That includes
+      // a page whose items are all hidden (blocked or expired): older ones
+      // may still show.
+      if (!center.reachedEnd && !_loadFailed) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && _scroll.hasClients) _maybeLoadMore();
         });
@@ -109,9 +118,16 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         itemCount: items.length + (center.reachedEnd ? 0 : 1),
         itemBuilder: (context, i) {
           if (i == items.length) {
-            return const Padding(
-              padding: EdgeInsets.all(Space.lg),
-              child: Center(child: CircularProgressIndicator()),
+            return Padding(
+              padding: const EdgeInsets.all(Space.lg),
+              child: Center(
+                child: _loadFailed
+                    ? TextButton(
+                        onPressed: () => unawaited(_loadMore()),
+                        child: Text(l10n.retry),
+                      )
+                    : const CircularProgressIndicator(),
+              ),
             );
           }
           final n = items[i];

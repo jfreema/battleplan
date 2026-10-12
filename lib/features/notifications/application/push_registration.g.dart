@@ -11,8 +11,9 @@ part of 'push_registration.dart';
 /// Keeps this install's `devices` doc current while someone is signed in
 /// and notifications are allowed (NOTIF-10, ARCH §6.5): written after
 /// sign-in, again whenever FCM rotates the token, and at least daily on
-/// start so the 60-day device prune never removes a device in use. Started
-/// from app.dart; SessionService removes the doc at sign-out.
+/// start or return to the app so the 60-day device prune never removes a
+/// device in use. Started from app.dart; SessionService removes the doc at
+/// sign-out.
 
 @ProviderFor(PushRegistration)
 final pushRegistrationProvider = PushRegistrationProvider._();
@@ -20,15 +21,17 @@ final pushRegistrationProvider = PushRegistrationProvider._();
 /// Keeps this install's `devices` doc current while someone is signed in
 /// and notifications are allowed (NOTIF-10, ARCH §6.5): written after
 /// sign-in, again whenever FCM rotates the token, and at least daily on
-/// start so the 60-day device prune never removes a device in use. Started
-/// from app.dart; SessionService removes the doc at sign-out.
+/// start or return to the app so the 60-day device prune never removes a
+/// device in use. Started from app.dart; SessionService removes the doc at
+/// sign-out.
 final class PushRegistrationProvider
     extends $NotifierProvider<PushRegistration, void> {
   /// Keeps this install's `devices` doc current while someone is signed in
   /// and notifications are allowed (NOTIF-10, ARCH §6.5): written after
   /// sign-in, again whenever FCM rotates the token, and at least daily on
-  /// start so the 60-day device prune never removes a device in use. Started
-  /// from app.dart; SessionService removes the doc at sign-out.
+  /// start or return to the app so the 60-day device prune never removes a
+  /// device in use. Started from app.dart; SessionService removes the doc at
+  /// sign-out.
   PushRegistrationProvider._()
     : super(
         from: null,
@@ -56,13 +59,14 @@ final class PushRegistrationProvider
   }
 }
 
-String _$pushRegistrationHash() => r'8d8f522ec301a7979617458fee43f92d92da04f9';
+String _$pushRegistrationHash() => r'1e965b0e910cb5c2399e9d01bc91fb1615bea79d';
 
 /// Keeps this install's `devices` doc current while someone is signed in
 /// and notifications are allowed (NOTIF-10, ARCH §6.5): written after
 /// sign-in, again whenever FCM rotates the token, and at least daily on
-/// start so the 60-day device prune never removes a device in use. Started
-/// from app.dart; SessionService removes the doc at sign-out.
+/// start or return to the app so the 60-day device prune never removes a
+/// device in use. Started from app.dart; SessionService removes the doc at
+/// sign-out.
 
 abstract class _$PushRegistration extends $Notifier<void> {
   void build();

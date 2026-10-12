@@ -22,6 +22,7 @@ class SessionService {
     this._push,
     this._devices,
     this._prefs, {
+    required this._pausePush,
     required this._restorePush,
   });
 
@@ -29,6 +30,9 @@ class SessionService {
   final PushRepository _push;
   final DeviceRepository _devices;
   final LocalPrefsRepository _prefs;
+
+  /// Stops the app writing the device doc again while signing out.
+  final void Function() _pausePush;
 
   /// Registers this device again when ending the session fails.
   final Future<void> Function() _restorePush;
@@ -49,6 +53,7 @@ class SessionService {
   Future<void> signOutEverywhere() => _endSession(_auth.signOutEverywhere);
 
   Future<void> _endSession(Future<void> Function() end) async {
+    _pausePush();
     await _stopPushHere();
     try {
       await end();
@@ -80,5 +85,6 @@ SessionService sessionService(Ref ref) => SessionService(
   ref.watch(pushRepositoryProvider),
   ref.watch(deviceRepositoryProvider),
   ref.watch(localPrefsRepositoryProvider),
+  pausePush: () => ref.read(pushRegistrationProvider.notifier).pause(),
   restorePush: () => ref.read(pushRegistrationProvider.notifier).restore(),
 );

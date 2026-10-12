@@ -69,6 +69,19 @@ void main() {
     matching: find.text(label),
   );
 
+  /// The app goes to the background and comes back.
+  Future<void> leaveAndReturn(WidgetTester tester) async {
+    [
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ].forEach(tester.binding.handleAppLifecycleStateChanged);
+    await tester.pumpAndSettle();
+  }
+
   Future<void> openNotificationSettings(WidgetTester tester) async {
     await tester.tap(find.byTooltip('Account'));
     await tester.pumpAndSettle();
@@ -115,6 +128,10 @@ void main() {
         devices: devices,
       );
       expect(devices.writes, 0);
+      // iOS reports the same token at every start.
+      push.refreshes.add('fcm-token-1');
+      await tester.pumpAndSettle();
+      expect(devices.writes, 0);
       push.refreshes.add('fcm-token-2');
       await tester.pumpAndSettle();
       expect(devices.writes, 1);
@@ -148,6 +165,44 @@ void main() {
         push: FakePushRepository(permission: PushPermission.denied),
         devices: devices,
       );
+      expect(devices.docs, isEmpty);
+    });
+
+    testWidgets(
+      'allowing notifications in system settings registers on return',
+      (tester) async {
+        final devices = FakeDeviceRepository();
+        final push = FakePushRepository(permission: PushPermission.denied);
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          push: push,
+          devices: devices,
+        );
+        expect(devices.docs, isEmpty);
+        push.permission = PushPermission.authorized;
+        await leaveAndReturn(tester);
+        expect(devices.docs[installId]?.uid, 'coach');
+      },
+    );
+
+    testWidgets('a token issued during sign-out does not register again', (
+      tester,
+    ) async {
+      final devices = FakeDeviceRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        push: FakePushRepository(tokenAfterDelete: 'fcm-token-2'),
+        devices: devices,
+      );
+      expect(devices.docs, isNotEmpty);
+      await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('Sign out'), 100);
+      await tester.tap(find.text('Sign out'));
+      await tester.pumpAndSettle();
+      expect(find.text('Continue with Google'), findsOneWidget);
       expect(devices.docs, isEmpty);
     });
 
@@ -549,6 +604,69 @@ void main() {
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(bellBadge('2'), findsNothing);
+    });
+
+    testWidgets('opening an item in a team tab lowers the bell', (
+      tester,
+    ) async {
+      final notifications = FakeNotificationRepository([
+        // Opens Thunder's chat, a team tab.
+        item('n1'),
+        item('n2', body: 'Second'),
+      ])..writeDelay = const Duration(seconds: 1);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        notifications: notifications,
+      );
+      expect(bellBadge('2'), findsOneWidget);
+      await tester.tap(find.byTooltip('Notifications'));
+      await tester.pumpAndSettle();
+      // The chat replaces the center before the write is done.
+      await tester.tap(find.text('Sam replied to you: Sounds good'));
+      await tester.pumpAndSettle();
+      expect(find.byType(Composer), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(bellBadge('1'), findsOneWidget);
+    });
+
+    testWidgets('older items load past a hidden page, with Retry on failure', (
+      tester,
+    ) async {
+      // A full first page from someone I blocked, then one I can see.
+      final notifications = FakeNotificationRepository([
+        for (var i = 0; i < 30; i++)
+          item('t$i', body: 'Troll $i', actorId: 'troll'),
+        item('old', body: 'Older reply', age: const Duration(days: 1)),
+      ])..failLoadOlder = true;
+      final safety = FakeSafetyRepository()
+        ..blocks.add(const BlockedPerson(uid: UserId('troll'), name: 'Troll'));
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        notifications: notifications,
+        safety: safety,
+      );
+      await tester.tap(find.byTooltip('Notifications'));
+      await tester.pumpAndSettle();
+      // One failed try, not a loop, and not the empty state.
+      expect(notifications.loadOlderCalls, 1);
+      expect(find.text('Retry'), findsOneWidget);
+      expect(
+        find.text('Activity from all your teams will appear here.'),
+        findsNothing,
+      );
+
+      notifications.failLoadOlder = false;
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+      expect(find.text('Older reply'), findsOneWidget);
+      expect(find.textContaining('Troll'), findsNothing);
     });
 
     testWidgets('an empty center says what will appear', (tester) async {

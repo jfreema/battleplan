@@ -528,6 +528,7 @@ class FakePushRepository implements PushRepository {
     this.answer = PushPermission.authorized,
     this.token = 'fcm-token-1',
     this.launchMessage,
+    this.tokenAfterDelete,
     List<String>? log,
   }) : log = log ?? [];
 
@@ -536,6 +537,9 @@ class FakePushRepository implements PushRepository {
   String? token;
   PushMessage? launchMessage;
   final List<String> log;
+
+  /// A new token FCM reports right after the old one is deleted.
+  String? tokenAfterDelete;
 
   int permissionRequests = 0;
   int tokensDeleted = 0;
@@ -576,6 +580,10 @@ class FakePushRepository implements PushRepository {
   Future<void> deleteToken() async {
     log.add('push deleteToken');
     tokensDeleted++;
+    if (tokenAfterDelete case final next?) {
+      token = next;
+      refreshes.add(next);
+    }
   }
 }
 
@@ -615,7 +623,14 @@ class FakeNotificationRepository implements NotificationRepository {
   final List<NotificationItem> items;
   final List<String> markedRead = [];
   int markAllCalls = 0;
+  int loadOlderCalls = 0;
   final _changes = StreamController<void>.broadcast();
+
+  /// How long marking read takes, like a real network write.
+  Duration writeDelay = Duration.zero;
+
+  /// Loading older pages fails while this is set.
+  bool failLoadOlder = false;
 
   @override
   Stream<NotificationPage> watchNewest(
@@ -642,6 +657,8 @@ class FakeNotificationRepository implements NotificationRepository {
     NotificationCursor after, {
     int limit = Limits.notificationPageSize,
   }) async {
+    loadOlderCalls++;
+    if (failLoadOlder) throw const Offline('test');
     final all = items;
     final start = after.handle as int;
     final end = (start + limit).clamp(0, all.length);
@@ -660,6 +677,7 @@ class FakeNotificationRepository implements NotificationRepository {
   @override
   Future<void> markRead(String id) async {
     markedRead.add(id);
+    if (writeDelay > Duration.zero) await Future<void>.delayed(writeDelay);
     final i = items.indexWhere((n) => n.id == id);
     if (i < 0) return;
     items[i] = items[i].copyWith(read: true);
