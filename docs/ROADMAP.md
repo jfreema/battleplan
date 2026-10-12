@@ -142,7 +142,7 @@ SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
 
 ## M6 · Schedule
 
-80. 👤 **Jared:** Confirm Q12 (can members create events by default; default admins only). Building with the default (admins only) until confirmed.
+80. ✅ 👤 **Jared:** Confirm Q12 (can members create events by default). Decided 2026-10-12: admins only by default; each team can change it.
 81. ✅ Create an event with types and game fields (SCHED-3); event details (SCHED-4).
 82. ✅ RSVPs, including Maybe and admins answering for members (SCHED-5).
 83. ✅ Per-player RSVPs and guardian notifications on youth teams, plus coaches' and staff's own RSVPs counted apart from players (PLAYER-6, PLAYER-7, Q14).

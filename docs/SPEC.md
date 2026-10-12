@@ -1314,7 +1314,7 @@ Each question has a default. The build follows the default until someone decides
 | Q9 | Logo and primary color? | Placeholder mark; blue `#2F5BEA` |
 | Q10 | Which email provider? | One with a free tier (e.g. Postmark or Resend) |
 | Q11 | Where are most teams located? | US, so `us-central1` |
-| Q12 | Can members create events by default? TeamReach limits this to admins. | Admins only; each team can change it |
+| Q12 | ~~Can members create events by default?~~ **Decided 2026-10-12:** only admins create events by default; each team can let members create them in Team settings (TEAM-5). | — |
 | Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
 | Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). | — |
 | Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). | — |
