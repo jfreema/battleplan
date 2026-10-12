@@ -54,6 +54,11 @@ class LinkService {
     path: page.startsWith('/') ? page : '/$page',
   );
 
+  /// The iPhone app's App Store listing (NOTIF-9), through `/ios` on our
+  /// domain, which Hosting redirects to the listing (firebase.json), so the
+  /// link in installed apps never has to change.
+  Uri get iosApp => site('/ios');
+
   /// Whether [host] is a custom domain. Firebase accepts only a custom
   /// Hosting domain as an email link's `linkDomain` (M0 spike 2).
   bool get isCustomDomain =>

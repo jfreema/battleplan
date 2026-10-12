@@ -8,7 +8,14 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { deleteAccount } from '../../src/accounts/service.js';
-import { DELETED_USER_NAME, eraseMessage, lastMessagePreviewOf, removeAttachment } from '../../src/chat/service.js';
+import {
+  DELETED_USER_NAME,
+  eraseMessage,
+  lastMessagePreviewOf,
+  postRenamedLine,
+  removeAttachment,
+} from '../../src/chat/service.js';
+import { clearPendingMemberships } from '../../src/accounts/service.js';
 import { resolveReport } from '../../src/safety/handlers.js';
 import { db } from '../../src/shared/admin.js';
 import { Collections } from '../../src/shared/constants.js';
@@ -181,5 +188,32 @@ describe("a report's copy of what was reported (SAFE-4)", () => {
     await eraseMessage('m1', 'pat', 'admin');
     await resolveReport.run(call('pat', { reportId: 'rep1', outcome: 'actioned', resolution: 'deletedMessage' }));
     expect((await report().get()).data()).toMatchObject({ status: 'actioned', resolvedBy: 'pat', excerpt: '' });
+  });
+});
+
+describe('system lines (CHAT-10)', () => {
+  const lines = async () =>
+    (await messages().where('groupId', '==', G).where('type', '==', 'system').get()).docs.map((d) => d.get('text') as string);
+
+  it('posts one rename line naming the admin, even when the trigger runs twice', async () => {
+    await db().collection(Collections.groupMembers).doc(groupMemberId(G, 'pat')).update({ displayName: 'Pat Lee' });
+    expect(await postRenamedLine(G, 'Thunder', 'Thunder 12U', 'pat', 'evt1')).toBe(true);
+    expect(await postRenamedLine(G, 'Thunder', 'Thunder 12U', 'pat', 'evt1')).toBe(true);
+    expect(await postRenamedLine(G, 'Thunder 12U', 'Thunder 12U', 'pat', 'evt2')).toBe(false);
+    expect(await lines()).toEqual(['Pat Lee renamed the team to "Thunder 12U"']);
+  });
+
+  it('leaves the name out when nobody on the team made the change', async () => {
+    await postRenamedLine(G, 'Thunder', 'Storm', 'functions@example.iam.gserviceaccount.com', 'evt3');
+    expect(await lines()).toEqual(['The team was renamed to "Storm"']);
+  });
+
+  it('says an added account joined when it first signs in', async () => {
+    await db().collection(Collections.groupMembers).doc(groupMemberId(G, 'kim')).set({
+      groupId: G, uid: 'kim', role: 'member', displayName: 'Kim Park', pending: true,
+    });
+    await clearPendingMemberships('kim');
+    expect(await lines()).toEqual(['Kim Park joined']);
+    expect((await db().collection(Collections.groupMembers).doc(groupMemberId(G, 'kim')).get()).get('pending')).toBe(false);
   });
 });

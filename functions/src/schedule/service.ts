@@ -110,6 +110,8 @@ export interface EventView {
   reminderOffsets: number[];
   canceled: boolean;
   rsvpFor: string;
+  /** game, practice, meeting, social, or other; read by the new-event line. */
+  type?: string;
 }
 
 function msOf(v: unknown): number {
@@ -131,6 +133,7 @@ export function eventView(d: DocumentData): EventView {
     reminderOffsets: Array.isArray(d.reminderOffsets) ? d.reminderOffsets.filter((o): o is number => typeof o === 'number') : [],
     canceled: Boolean(d.canceledAt),
     rsvpFor: String(d.rsvpFor ?? 'members'),
+    type: typeof d.type === 'string' ? d.type : 'other',
   };
 }
 
@@ -188,9 +191,19 @@ export function locationLabel(location: EventView['location']): string {
   return (location?.name ?? '').trim() || (location?.address ?? '').trim();
 }
 
-/** "New: Practice, Tue, Oct 13 at 6:00 PM" (NOTIF-2 eventCreated). */
+/** "game", "practice", "meeting", or "event" for the new-event line. */
+function typeWord(type: string | undefined): string {
+  return type === 'game' || type === 'practice' || type === 'meeting' ? type : 'event';
+}
+
+/**
+ * "New game: vs. Eagles · Sat Oct 18, 10:00 AM" (NOTIF-5, NOTIF-2
+ * eventCreated), or "New event: Tournament · Sat Oct 17" all day.
+ */
 export function eventCreatedBody(e: EventView): string {
-  return `New: ${e.title}, ${whenLabel(e)}`;
+  const day = eventDay(e).replace(',', '');
+  const when = e.allDay ? day : `${day}, ${timeLabel(e.startMs, e.timeZone)}`;
+  return `New ${typeWord(e.type)}: ${e.title} · ${when}`;
 }
 
 /** "Canceled: Practice, Tue, Oct 13 at 6:00 PM" (SCHED-7). */

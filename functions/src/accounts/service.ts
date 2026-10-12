@@ -6,7 +6,7 @@ import type { UserRecord } from 'firebase-admin/auth';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { auth, db, storage } from '../shared/admin.js';
 import { Collections, notificationPrefValues, type NotificationPref } from '../shared/constants.js';
-import { anonymizeAuthor } from '../chat/service.js';
+import { anonymizeAuthor, joinedLine, postSystemMessage } from '../chat/service.js';
 import { anonymizeUploader } from '../documents/service.js';
 import { removeAccountNotifications, removeDevices } from '../notify/service.js';
 import { removeAccountFromPlayers } from '../players/service.js';
@@ -305,6 +305,10 @@ export async function clearPendingMemberships(uid: string): Promise<void> {
   const batch = db().batch();
   pending.forEach((d) => batch.update(d.ref, { pending: false }));
   await batch.commit();
+  // They've joined now (CHAT-10): "Maria joined" in each team's chat.
+  for (const d of pending) {
+    await postSystemMessage(String(d.get('groupId')), 'joined', joinedLine(d.get('displayName')), uid);
+  }
 }
 
 // ---- Super admin account actions (ADMIN-4) ---------------------------------

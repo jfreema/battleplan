@@ -1,0 +1,358 @@
+// The chat's paging, read position, delivery, and photo input (SPEC CHAT-1,
+// CHAT-2, CHAT-4, CHAT-9, CHAT-12, CHAT-18, CHAT acceptance, §8.1).
+import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/features/chat/application/providers.dart';
+import 'package:battleplan/features/chat/domain/chat_queue_store.dart';
+import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/chat/presentation/message_tile.dart';
+import 'package:battleplan/features/chat/presentation/photo_grid.dart';
+import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/safety/domain/safety.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'helpers/fakes.dart';
+import 'helpers/pump_app.dart';
+import 'helpers/scenes.dart';
+
+void main() {
+  final start = DateTime.now().subtract(const Duration(days: 1));
+
+  /// Message [i] from Sam, [i] minutes after [start].
+  Message msg(
+    int i, {
+    String author = 'sam',
+    String name = 'Sam Rivera',
+    MessageType type = MessageType.text,
+  }) => Message(
+    id: 'm$i',
+    groupId: const GroupId('a'),
+    authorId: author,
+    authorName: name,
+    type: type,
+    text: 'Message $i',
+    createdAt: start.add(Duration(minutes: i)),
+  );
+
+  /// Messages 1 to [count], newest first, as the repository keeps them.
+  List<Message> chat(int count) => [for (var i = count; i >= 1; i--) msg(i)];
+
+  Future<void> openChat(
+    WidgetTester tester,
+    FakeMessageRepository repo, {
+    DateTime? readAt,
+    FakeMemberRepository? members,
+    FakeSafetyRepository? safety,
+    Group? group,
+    FakePhotoPicker? picker,
+    List<Override> overrides = const [],
+  }) => pumpApp(
+    tester,
+    auth: FakeAuthRepository(user: coach),
+    groups: {'a': group ?? testGroup('a', 'Thunder')},
+    memberRepo:
+        members ??
+        FakeMemberRepository([
+          testMembership(
+            'a',
+            'coach',
+            role: MemberRole.owner,
+          ).copyWith(lastReadAt: readAt),
+          testMembership('a', 'sam', name: 'Sam Rivera'),
+        ]),
+    messageRepo: repo,
+    safety: safety,
+    photoPicker: picker,
+    overrides: overrides,
+  );
+
+  /// Team a's chat as the screen has it.
+  ChatState chatState(WidgetTester tester) =>
+      ProviderScope.containerOf(tester.element(find.byType(CustomScrollView)))
+          .read(chatMessagesProvider(const GroupId('a')));
+
+  /// Whether [text] is on screen, not just built off it.
+  bool onScreen(WidgetTester tester, String text) =>
+      find.text(text).hitTestable().evaluate().isNotEmpty;
+
+  group('opening at the first unread message (CHAT-1, CHAT-9)', () {
+    testWidgets('with more unread than one page holds, it opens at the '
+        'first unread and loads the rest scrolling down', (tester) async {
+      // 100 unread after message 20: twice what the newest page holds.
+      final repo = FakeMessageRepository(chat(120));
+      await openChat(tester, repo, readAt: msg(20).createdAt);
+      await tester.pumpAndSettle();
+      // It read the 50 after the marker, as well as the newest 50.
+      expect(repo.newerReads, [msg(20).createdAt]);
+      expect(find.text('New messages'), findsOneWidget);
+      expect(onScreen(tester, 'Message 21'), isTrue);
+      expect(onScreen(tester, 'Message 120'), isFalse);
+      // The divider sits right above the first unread message.
+      final divider = tester.getRect(find.text('New messages'));
+      final first = tester.getRect(find.text('Message 21'));
+      expect(first.top, greaterThan(divider.bottom));
+      expect(
+        tester.getRect(find.text('Message 20')).bottom,
+        lessThan(divider.top),
+      );
+
+      // Scrolling down loads the messages in between, then reaches the
+      // newest ones.
+      for (var i = 0; i < 40 && !onScreen(tester, 'Message 120'); i++) {
+        await tester.drag(find.byType(CustomScrollView), const Offset(0, -800));
+        await tester.pumpAndSettle();
+      }
+      expect(repo.newerReads, hasLength(greaterThan(1)));
+      expect(onScreen(tester, 'Message 120'), isTrue);
+      // Nothing missing between the first unread and the newest.
+      final state = chatState(tester);
+      expect(state.gapAfter, isNull);
+      expect(
+        state.messages.map((m) => m.id),
+        containsAll([for (var i = 21; i <= 120; i++) 'm$i']),
+      );
+    });
+
+    testWidgets('scrolling up from the first unread loads older messages', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository(chat(200));
+      await openChat(tester, repo, readAt: msg(120).createdAt);
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 40 && repo.olderReads.isEmpty; i++) {
+        await tester.drag(find.byType(CustomScrollView), const Offset(0, 800));
+        await tester.pumpAndSettle();
+      }
+      // Older pages continue from the first unread message back.
+      expect(repo.olderReads.first, 80);
+      expect(chatState(tester).messages.map((m) => m.id), contains('m75'));
+    });
+
+    testWidgets('reading partway up moves the marker to the newest message '
+        'on screen', (tester) async {
+      final members = FakeMemberRepository([
+        testMembership(
+          'a',
+          'coach',
+          role: MemberRole.owner,
+        ).copyWith(lastReadAt: msg(20).createdAt),
+      ]);
+      final repo = FakeMessageRepository(chat(120));
+      await openChat(tester, repo, members: members);
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 3));
+      // Not everything: up to a message on screen, past the old marker.
+      expect(members.readsUpTo, isNotEmpty);
+      final upTo = members.readsUpTo.last;
+      expect(upTo.isAfter(msg(21).createdAt!), isTrue);
+      expect(upTo.isBefore(msg(120).createdAt!), isTrue);
+      final shown = upTo.difference(start).inMinutes;
+      expect(onScreen(tester, 'Message $shown'), isTrue);
+    });
+  });
+
+  testWidgets('a chat with 10,000 messages opens with one page (CHAT '
+      'acceptance)', (tester) async {
+    final repo = FakeMessageRepository(chat(10000));
+    await openChat(tester, repo, readAt: msg(10000).createdAt);
+    await tester.pumpAndSettle();
+    expect(repo.olderReads, isEmpty);
+    expect(repo.newerReads, isEmpty);
+    expect(onScreen(tester, 'Message 10000'), isTrue);
+    expect(
+      find.byType(MessageTile, skipOffstage: false).evaluate().length,
+      lessThanOrEqualTo(50),
+    );
+  });
+
+  testWidgets('unread counts leave out system lines and blocked people '
+      '(CHAT-9, CHAT-12)', (tester) async {
+    final safety = FakeSafetyRepository()
+      ..blocks.add(const BlockedPerson(uid: UserId('pat'), name: 'Pat Kim'));
+    final repo = FakeMessageRepository([
+      msg(5, author: 'pat', name: 'Pat Kim'),
+      msg(4, type: MessageType.system, author: 'system', name: ''),
+      msg(3),
+      msg(2),
+    ]);
+    await openChat(
+      tester,
+      repo,
+      readAt: msg(2).createdAt,
+      safety: safety,
+      group: testGroup('a', 'Thunder', lastMessageAt: msg(5).createdAt),
+    );
+    // Only Sam's message 3 counts.
+    expect(
+      find.descendant(of: find.byType(Badge), matching: find.text('1')),
+      findsOneWidget,
+    );
+  });
+
+  group('delivery (CHAT-4)', () {
+    testWidgets('each of my messages says it was sent, with its time', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([
+        for (final i in [3, 2, 1]) msg(i, author: 'coach', name: 'Coach'),
+      ]);
+      await openChat(tester, repo, readAt: msg(3).createdAt);
+      // Under my newest message.
+      expect(find.text('Sent'), findsOneWidget);
+      await tester.tap(find.text('Message 2'));
+      // Past the wait for a double tap (which loves it, CHAT-6).
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(find.textContaining(' · Sent'), findsOneWidget);
+    });
+
+    testWidgets('texts queued offline survive the app closing, and go out '
+        'when it opens the chat again', (tester) async {
+      final store = MemoryChatQueueStore();
+      await store.save(const GroupId('a'), [
+        (id: 'q1', text: 'Running late', replyToId: null),
+        // Already in the chat (the offline cache kept it): not sent twice.
+        (id: 'm1', text: 'Message 1', replyToId: null),
+      ]);
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(
+        tester,
+        repo,
+        readAt: msg(1).createdAt,
+        overrides: [chatQueueStoreProvider.overrideWithValue(store)],
+      );
+      await tester.pump(const Duration(seconds: 2));
+      // The fake's live page can miss a send this early; the server's won't.
+      repo.refresh();
+      await tester.pumpAndSettle();
+      expect(repo.sent, ['Running late']);
+      expect(store.load(const GroupId('a')), isEmpty);
+      expect(find.text('Running late'), findsOneWidget);
+    });
+
+    testWidgets('a message not sent yet stays saved on the device', (
+      tester,
+    ) async {
+      final store = MemoryChatQueueStore();
+      final repo = FakeMessageRepository()..failSends = const Offline('test');
+      await openChat(
+        tester,
+        repo,
+        overrides: [chatQueueStoreProvider.overrideWithValue(store)],
+      );
+      await tester.enterText(find.byType(TextField), 'See you at 6');
+      await tester.pump();
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
+      expect(store.load(const GroupId('a')).single.text, 'See you at 6');
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(store.load(const GroupId('a')), isEmpty);
+    });
+
+    testWidgets('photos wait for a connection, then send by themselves', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository()..offline = true;
+      await openChat(
+        tester,
+        repo,
+        picker: FakePhotoPicker([(bytes: tinyPng, contentType: 'image/png')]),
+      );
+      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Photo library'));
+      await tester.pumpAndSettle();
+      expect(repo.photoBatches, isEmpty);
+      expect(find.text('Waiting for a connection…'), findsOneWidget);
+
+      repo
+        ..offline = false
+        ..refresh();
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(repo.photoBatches, [1]);
+      expect(find.text('Waiting for a connection…'), findsNothing);
+    });
+
+    testWidgets("a message still sending is in the team's bubble color "
+        '(CHAT-18)', (tester) async {
+      const green = 0xFF2E7D32;
+      final repo = FakeMessageRepository()
+        ..failSends = const PermissionDenied('test');
+      await openChat(
+        tester,
+        repo,
+        group: testGroup('a', 'Thunder').copyWith(color: green),
+      );
+      await tester.enterText(find.byType(TextField), 'Field 3 is open');
+      await tester.pump();
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
+      final box = tester.widget<Container>(
+        find
+            .ancestor(
+              of: find.text('Field 3 is open'),
+              matching: find.byWidgetPredicate(
+                (w) => w is Container && w.decoration is BoxDecoration,
+              ),
+            )
+            .first,
+      );
+      expect((box.decoration! as BoxDecoration).color, const Color(green));
+    });
+  });
+
+  testWidgets('photos pasted or dragged in send as one message (CHAT-2)', (
+    tester,
+  ) async {
+    final drops = FakePhotoDrops();
+    final repo = FakeMessageRepository();
+    await openChat(
+      tester,
+      repo,
+      overrides: [photoDropsProvider.overrideWithValue(drops)],
+    );
+    drops.drop([
+      (bytes: tinyPng, contentType: 'image/jpeg'),
+      (bytes: tinyPng, contentType: 'image/jpeg'),
+    ]);
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(repo.photoBatches, [2]);
+  });
+
+  testWidgets('phones save a photo to the photo library (CHAT-3)', (
+    tester,
+  ) async {
+    final saver = FakePhotoSaver();
+    final repo = FakeMessageRepository([
+      msg(1).copyWith(
+        type: MessageType.image,
+        text: '',
+        attachments: const [Attachment(path: 'groups/a/messages/m1/0.jpg')],
+      ),
+    ])..photoBytes = tinyPng;
+    await openChat(
+      tester,
+      repo,
+      readAt: msg(1).createdAt,
+      overrides: [photoSaverProvider.overrideWithValue(saver)],
+    );
+    await tester.tap(find.byType(StoredPhoto));
+    // Past the wait for a double tap (which loves it, CHAT-6).
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Save photo'));
+    await tester.pumpAndSettle();
+    expect(saver.saved, ['battleplan-photo-1']);
+    expect(find.text('Photo saved.'), findsOneWidget);
+  });
+}

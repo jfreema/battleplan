@@ -54,6 +54,7 @@ class MessageTile extends ConsumerStatefulWidget {
   final bool endsGroup;
 
   /// Shows "Sent" under it: my newest message, once the server has it.
+  /// Every other message of mine says so with its time (tap or hover).
   final bool showSent;
 
   /// Briefly tinted after jumping to it from a quote.
@@ -590,7 +591,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             ),
           ),
         // Delivery state (CHAT-4): sending until the server has it, then
-        // "Sent" under my newest message.
+        // "Sent" under my newest message, and with the time on the others.
         if (m.pending || widget.showSent)
           Padding(
             padding: const EdgeInsets.only(top: 2, right: Space.xs),
@@ -603,10 +604,21 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           )
         else if ((_showTime || _hovering) &&
             time != null &&
-            !widget.startsGroup)
+            (mine || !widget.startsGroup))
           Padding(
-            padding: const EdgeInsets.only(top: 2, left: Space.md),
-            child: Text(time, style: theme.textTheme.labelSmall),
+            padding: EdgeInsets.only(
+              top: 2,
+              left: mine ? 0 : Space.md,
+              right: mine ? Space.xs : 0,
+            ),
+            child: Text(
+              !mine
+                  ? time
+                  : widget.startsGroup
+                  ? l10n.messageSent
+                  : '$time · ${l10n.messageSent}',
+              style: theme.textTheme.labelSmall,
+            ),
           ),
       ],
     );
@@ -677,10 +689,14 @@ class OutgoingPhotosTile extends StatelessWidget {
     required this.item,
     required this.onRetry,
     required this.onDiscard,
+    this.online = true,
     super.key,
   });
 
   final OutgoingPhotos item;
+
+  /// False while the chat is offline: the photos wait for the connection.
+  final bool online;
   final VoidCallback onRetry;
   final VoidCallback onDiscard;
 
@@ -688,32 +704,64 @@ class OutgoingPhotosTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final waiting = !item.failed && (item.waiting || !online);
+    // Progress shows in the bubble itself (CHAT-3): a ring over the photos.
+    final grid = PhotoGrid(
+      count: item.photos.length,
+      tile: (i) => LocalPhoto(bytes: item.photos[i].bytes),
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(Space.md, Space.sm, Space.md, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Opacity(
-            opacity: item.failed ? 0.5 : 1,
-            child: PhotoGrid(
-              count: item.photos.length,
-              tile: (i) => LocalPhoto(bytes: item.photos[i].bytes),
+          if (item.failed)
+            Opacity(opacity: 0.5, child: grid)
+          else
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Opacity(opacity: 0.7, child: grid),
+                Container(
+                  padding: const EdgeInsets.all(Space.sm),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox.square(
+                    dimension: 36,
+                    child: waiting
+                        ? const Icon(AppIcons.cloudOff, color: Colors.white)
+                        : CircularProgressIndicator(
+                            value: item.progress == 0 ? null : item.progress,
+                            color: Colors.white,
+                            strokeWidth: 3,
+                            semanticsLabel: l10n.photosUploading,
+                          ),
+                  ),
+                ),
+              ],
             ),
-          ),
           if (item.caption.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(item.caption),
             ),
           const SizedBox(height: Space.xs),
-          if (item.failed)
+          if (item.failed || item.waiting)
             Wrap(
               spacing: Space.sm,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
+                // Offline they wait for the connection and go by themselves;
+                // Retry tries now, Delete gives up.
                 Text(
-                  l10n.photosFailed,
-                  style: TextStyle(color: theme.colorScheme.error),
+                  item.failed ? l10n.photosFailed : l10n.photosWaiting,
+                  style: TextStyle(
+                    color: item.failed
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: onRetry,
@@ -724,10 +772,13 @@ class OutgoingPhotosTile extends StatelessWidget {
               ],
             )
           else
-            SizedBox(
-              width: 280,
-              child: LinearProgressIndicator(
-                value: item.progress == 0 ? null : item.progress,
+            Padding(
+              padding: const EdgeInsets.only(right: Space.xs),
+              child: Text(
+                waiting ? l10n.photosWaiting : l10n.messageSending,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
         ],
@@ -744,10 +795,15 @@ class OutgoingTextTile extends StatelessWidget {
     required this.item,
     required this.onRetry,
     required this.onDiscard,
+    this.bubbleColor,
     super.key,
   });
 
   final OutgoingText item;
+
+  /// My bubbles' color from the team's chat look (CHAT-18), as on the
+  /// messages already sent; null uses the brand color.
+  final Color? bubbleColor;
   final VoidCallback onRetry;
   final VoidCallback onDiscard;
 
@@ -756,6 +812,13 @@ class OutgoingTextTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final custom = bubbleColor;
+    final background = custom ?? scheme.primary;
+    final foreground = custom == null
+        ? scheme.onPrimary
+        : ThemeData.estimateBrightnessForColor(custom) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
     return Padding(
       padding: const EdgeInsets.fromLTRB(Space.md, 2, Space.md, Space.xs),
       child: Column(
@@ -770,14 +833,12 @@ class OutgoingTextTile extends StatelessWidget {
                 vertical: Space.md,
               ),
               decoration: BoxDecoration(
-                color: scheme.primary,
+                color: background,
                 borderRadius: BorderRadius.circular(Corners.bubble),
               ),
               child: Text(
                 item.text,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: scheme.onPrimary,
-                ),
+                style: theme.textTheme.bodyLarge?.copyWith(color: foreground),
               ),
             ),
           ),

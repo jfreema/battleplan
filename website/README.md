@@ -31,7 +31,7 @@ Hosting serves `support.html` at `/support` because `firebase.json` sets `cleanU
 The App Store and Google Play badges wait for the listings (ROADMAP tasks 130 and 179). They're already in `index.html` (hero) and `support.html` (Getting the app) inside a `<template data-store-badges>`, which the browser never renders or loads. When the apps are listed:
 
 1. Add the official badge artwork to `images/` (`app-store-badge.svg`, `google-play-badge.png`) following Apple's and Google's badge guidelines.
-2. Replace `APP_STORE_ID` in the App Store URL, and check the Play package (`app.getbattleplan`).
+2. Replace `APP_STORE_ID` in the App Store URL, and check the Play package (`app.getbattleplan`). Point the `/ios` redirect in `firebase.json` at the same App Store URL: the web app's iPhone notification tip links there (NOTIF-9), and until then it lands on the home page.
 3. Remove the `<template>` wrapper around the `store-badges` div in both files.
 4. Update the copy that says the apps are "on the way" (landing page card, support page).
 

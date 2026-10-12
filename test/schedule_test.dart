@@ -736,6 +736,83 @@ void main() {
       expect(find.text('Directions'), findsOneWidget);
     });
 
+    testWidgets('answers Going right on the card, with live counts', (
+      tester,
+    ) async {
+      final rsvps = await openSchedule(
+        tester,
+        tapSchedule: false,
+        events: [event('e1', title: 'vs. Eagles', type: EventType.game)],
+        messages: FakeMessageRepository([card('e1')]),
+      );
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      expect(find.text('No answers yet'), findsOneWidget);
+      await tester.tap(find.text('Going'));
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.status, RsvpStatus.going);
+      expect(rsvps.rsvps.single.participantId, 'coach');
+      expect(find.text('1 going'), findsOneWidget);
+      // Still in the chat: answering doesn't open the event.
+      expect(find.text('Directions'), findsNothing);
+    });
+
+    testWidgets('guardians answer for each player on the card (PLAYER-6)', (
+      tester,
+    ) async {
+      final players =
+          FakePlayerRepository(const [
+              Player(
+                id: PlayerId('p1'),
+                groupId: GroupId('a'),
+                displayName: 'Emma Rivera',
+                jerseyNumber: '7',
+              ),
+              Player(
+                id: PlayerId('p2'),
+                groupId: GroupId('a'),
+                displayName: 'Liam Rivera',
+              ),
+            ])
+            ..links.addAll(const [
+              GuardianLink(
+                playerId: PlayerId('p1'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+              ),
+              GuardianLink(
+                playerId: PlayerId('p2'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+              ),
+            ]);
+      final rsvps = await openSchedule(
+        tester,
+        tapSchedule: false,
+        teamType: TeamType.youth,
+        players: players,
+        events: [event('e1', rsvpFor: RsvpFor.players)],
+        messages: FakeMessageRepository([card('e1')]),
+      );
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
+      expect(find.text('Emma #7'), findsOneWidget);
+      await tester.tap(find.text('Going').last);
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.participantId, 'p2');
+      expect(find.text('1 of 2 players going'), findsOneWidget);
+    });
+
+    testWidgets('a canceled event takes no answers on the card', (
+      tester,
+    ) async {
+      await openSchedule(
+        tester,
+        tapSchedule: false,
+        events: [event('e1').copyWith(canceledAt: DateTime.now())],
+        messages: FakeMessageRepository([card('e1')]),
+      );
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNothing);
+    });
+
     testWidgets('says when the event was deleted', (tester) async {
       await openSchedule(
         tester,

@@ -52,7 +52,36 @@ class FirestoreMessageRepository implements MessageRepository {
   ) => MessagePage(
     messages: [for (final d in q.docs) _message(d, groupId)],
     next: q.docs.length < limit ? null : PageCursor(q.docs.last),
+    fromCache: q.metadata.isFromCache,
   );
+
+  @override
+  Future<MessagePage> loadNewer(
+    GroupId groupId, {
+    DateTime? after,
+    PageCursor? cursor,
+    int limit = 50,
+  }) async {
+    // Oldest first from the read marker (the groupId + createdAt ascending
+    // index), then turned newest first like every other page.
+    var q = _db
+        .collection(Collections.messages)
+        .where('groupId', isEqualTo: groupId.value)
+        .orderBy('createdAt');
+    if (cursor != null) {
+      q = q.startAfterDocument(cursor.handle as DocumentSnapshot<Object?>);
+    } else if (after != null) {
+      q = q.where('createdAt', isGreaterThan: Timestamp.fromDate(after));
+    }
+    final s = await q.limit(limit).get();
+    return MessagePage(
+      messages: [for (final d in s.docs.reversed) _message(d, groupId)],
+      next: s.docs.length < limit ? null : PageCursor(s.docs.last),
+      // The descending query continues older from the oldest of them.
+      older: s.docs.isEmpty ? null : PageCursor(s.docs.first),
+      fromCache: s.metadata.isFromCache,
+    );
+  }
 
   Message _message(DocumentSnapshot<Map<String, dynamic>> d, GroupId groupId) {
     final x = d.data()!;
@@ -337,16 +366,38 @@ class FirestoreMessageRepository implements MessageRepository {
     GroupId groupId,
     DateTime since, {
     int cap = 100,
+    Set<String> skipAuthors = const {},
   }) async {
-    final q = await _db
+    final after = _db
         .collection(Collections.messages)
         .where('groupId', isEqualTo: groupId.value)
-        .where('createdAt', isGreaterThan: Timestamp.fromDate(since))
+        .where('createdAt', isGreaterThan: Timestamp.fromDate(since));
+    // People's messages only: system lines like "Sam joined" don't count.
+    final all = await after
+        .where('type', whereIn: countedTypes)
         .limit(cap)
         .count()
         .get();
-    return q.count ?? 0;
+    var count = all.count ?? 0;
+    // Nor do messages from people I blocked (CHAT-12), which are collapsed.
+    // Rarely anyone, so usually no second read. `in` takes up to 30.
+    final skip = skipAuthors.take(30).toList();
+    if (count > 0 && skip.isNotEmpty) {
+      final blocked = await after
+          .where('authorId', whereIn: skip)
+          .limit(cap)
+          .count()
+          .get();
+      count -= blocked.count ?? 0;
+    }
+    return count < 0 ? 0 : count;
   }
+
+  /// The message types an unread count includes (CHAT-9).
+  static final List<String> countedTypes = [
+    for (final t in MessageType.values)
+      if (t != MessageType.system) t.value,
+  ];
 
   @override
   Future<void> deleteMessage(String messageId) async {

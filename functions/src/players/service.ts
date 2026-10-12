@@ -2,6 +2,7 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { findOrProvisionUser } from '../accounts/service.js';
+import { joinedLine, postSystemMessage } from '../chat/service.js';
 import { db } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
 import { forEachPage } from '../shared/batch.js';
@@ -121,6 +122,11 @@ export async function linkGuardian(
   });
   const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();
   await db().collection(Collections.groups).doc(groupId).update({ memberCount: count.data().count });
+  // "Maria joined" (CHAT-10). An added account joins when it first signs
+  // in (clearPendingMemberships).
+  if (created && user.provisioned !== true) {
+    await postSystemMessage(groupId, 'joined', joinedLine(user.displayName), user.uid);
+  }
   return created;
 }
 

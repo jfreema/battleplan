@@ -1,7 +1,9 @@
-// Storage triggers and the daily job for team storage (ARCH §6.4, §6.11).
+// Storage triggers, the rename line, and the daily job for teams (ARCH §6.4, §6.11).
 import { onObjectDeleted, onObjectFinalized } from 'firebase-functions/v2/storage';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onDocumentUpdatedWithAuthContext } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
+import { postRenamedLine, renamedLine } from '../chat/service.js';
 import { addStorageBytes, groupIdFromPath, reconcileAllStorage, updateStorageAlert } from './storage.js';
 import { removeAllOrphanDocumentFiles } from '../documents/service.js';
 import { pruneDevices } from '../notify/service.js';
@@ -50,4 +52,19 @@ export const dailyCleanup = onSchedule({ schedule: 'every day 04:00', timeZone: 
   });
   const teams = await reconcileAllStorage();
   logger.info('daily_cleanup', { devicesPruned, orphanDocumentFiles, teamsReconciled: teams });
+});
+
+/**
+ * groups updated → the "renamed" line in the team's chat (CHAT-10). Team
+ * admins rename a team by writing its doc directly; the writer's team name
+ * names who did it. Exits early when the name didn't change, which is
+ * every other update (the last-message preview, storage totals).
+ */
+export const onGroupUpdated = onDocumentUpdatedWithAuthContext('groups/{groupId}', async (event) => {
+  const before = event.data?.before.get('name');
+  const after = event.data?.after.get('name');
+  if (renamedLine(before, after, null) === null) return;
+  // A Functions write (a super admin's change) has no member behind it.
+  const actor = event.authType === 'service_account' || event.authType === 'system' ? null : (event.authId ?? null);
+  await postRenamedLine(event.params.groupId, before, after, actor, event.id);
 });

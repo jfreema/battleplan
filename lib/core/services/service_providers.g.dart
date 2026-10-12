@@ -386,3 +386,95 @@ final class LinkServiceProvider
 }
 
 String _$linkServiceHash() => r'733247de94a799b422e82325a15227b0e3e56e1e';
+
+/// Photos pasted or dragged into the chat on the web (CHAT-2).
+
+@ProviderFor(photoDrops)
+final photoDropsProvider = PhotoDropsProvider._();
+
+/// Photos pasted or dragged into the chat on the web (CHAT-2).
+
+final class PhotoDropsProvider
+    extends $FunctionalProvider<PhotoDrops, PhotoDrops, PhotoDrops>
+    with $Provider<PhotoDrops> {
+  /// Photos pasted or dragged into the chat on the web (CHAT-2).
+  PhotoDropsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'photoDropsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$photoDropsHash();
+
+  @$internal
+  @override
+  $ProviderElement<PhotoDrops> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PhotoDrops create(Ref ref) {
+    return photoDrops(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PhotoDrops value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PhotoDrops>(value),
+    );
+  }
+}
+
+String _$photoDropsHash() => r'48fb963c30e4aed3cdbded44a7d93a5a7b40737f';
+
+/// Saves chat photos to the phone's photo library (CHAT-3).
+
+@ProviderFor(photoSaver)
+final photoSaverProvider = PhotoSaverProvider._();
+
+/// Saves chat photos to the phone's photo library (CHAT-3).
+
+final class PhotoSaverProvider
+    extends $FunctionalProvider<PhotoSaver, PhotoSaver, PhotoSaver>
+    with $Provider<PhotoSaver> {
+  /// Saves chat photos to the phone's photo library (CHAT-3).
+  PhotoSaverProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'photoSaverProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$photoSaverHash();
+
+  @$internal
+  @override
+  $ProviderElement<PhotoSaver> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PhotoSaver create(Ref ref) {
+    return photoSaver(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PhotoSaver value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PhotoSaver>(value),
+    );
+  }
+}
+
+String _$photoSaverHash() => r'b4d6a0d8f4171299a1237650519fd5d04e6d7202';

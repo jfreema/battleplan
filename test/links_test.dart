@@ -54,6 +54,10 @@ void main() {
       );
     });
 
+    test('the iPhone app link goes through our domain (NOTIF-9)', () {
+      expect(prod.iosApp.toString(), 'https://getbattleplan.app/ios');
+    });
+
     test('website pages stay at the root', () {
       expect(
         prod.site('privacy').toString(),

@@ -4,7 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { randomUUID } from 'node:crypto';
 import { findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
-import { postSystemMessage } from '../chat/service.js';
+import { joinedLine, postSystemMessage } from '../chat/service.js';
 import { sendEmail } from '../email/service.js';
 import { addedToTeamEmail } from '../email/templates.js';
 import { teamUrl } from '../links/service.js';
@@ -471,6 +471,8 @@ export async function addMembersByEmail(
         await sendSetupEmail(entry.email, teamName, actor.name);
         result.invited++;
       } else {
+        // An added account joins when it first signs in (clearPendingMemberships).
+        await postSystemMessage(groupId, 'joined', joinedLine(user.displayName), user.uid);
         await sendEmail(addedToTeamEmail(entry.email, teamName, actor.name, teamUrl(groupId)));
         result.added++;
       }

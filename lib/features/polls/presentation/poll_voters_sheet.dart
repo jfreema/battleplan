@@ -8,12 +8,16 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Who chose each option, and who hasn't voted yet (POLL-3). Only for
-/// polls that aren't anonymous; the rules refuse the read otherwise.
+/// Who chose each option, or just [optionId] when an option was tapped, and
+/// who hasn't voted yet (POLL-3). Only for polls that aren't anonymous; the
+/// rules refuse the read otherwise.
 class PollVotersSheet extends ConsumerWidget {
-  const new({required this.poll, super.key});
+  const new({required this.poll, this.optionId, super.key});
 
   final Poll poll;
+
+  /// The option tapped, or null for every option.
+  final String? optionId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,11 +65,12 @@ class PollVotersSheet extends ConsumerWidget {
       children: [
         heading(l10n.pollVotesTitle),
         for (final option in poll.options)
-          if (list.where((v) => v.optionIds.contains(option.id)).toList()
-              case final chose) ...[
-            heading('${option.text} · ${l10n.pollOptionVotes(chose.length)}'),
-            for (final v in chose) person(v.uid),
-          ],
+          if (optionId == null || option.id == optionId)
+            if (list.where((v) => v.optionIds.contains(option.id)).toList()
+                case final chose) ...[
+              heading('${option.text} · ${l10n.pollOptionVotes(chose.length)}'),
+              for (final v in chose) person(v.uid),
+            ],
         if (notVoted.isNotEmpty) ...[
           heading('${l10n.pollNotVoted} · ${notVoted.length}'),
           for (final uid in notVoted) person(uid),

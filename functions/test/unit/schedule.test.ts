@@ -200,15 +200,18 @@ const view = (over: Partial<EventView> = {}): EventView => ({
 
 describe('notification wording (NOTIF-5)', () => {
   it('words new, canceled, and card lines in the event zone', () => {
-    expect(eventCreatedBody(view())).toBe('New: Practice, Tue, Oct 13 at 6:00 PM');
+    expect(eventCreatedBody(view({ type: 'practice' }))).toBe('New practice: Practice · Tue Oct 13, 6:00 PM');
     expect(eventCanceledBody(view())).toBe('Canceled: Practice, Tue, Oct 13 at 6:00 PM');
     expect(eventCardText(view())).toBe('Practice · Tue, Oct 13 at 6:00 PM · Riverside Park');
-    expect(eventCreatedBody(view({ timeZone: LON }))).toBe('New: Practice, Wed, Oct 14 at 12:00 AM');
+    expect(eventCreatedBody(view({ timeZone: LON }))).toBe('New event: Practice · Wed Oct 14, 12:00 AM');
+    // The SPEC's own example (NOTIF-5).
+    const game = view({ type: 'game', title: 'vs. Eagles', startMs: Date.parse('2026-10-17T15:00:00Z') });
+    expect(eventCreatedBody(game)).toBe('New game: vs. Eagles · Sat Oct 17, 10:00 AM');
   });
 
   it('never shifts an all-day event to another day', () => {
     const tournament = view({ title: 'Tournament', allDay: true, startDate: '2026-10-17', startMs: Date.parse('2026-10-17T05:00:00Z') });
-    expect(eventCreatedBody(tournament)).toBe('New: Tournament, Sat, Oct 17');
+    expect(eventCreatedBody(tournament)).toBe('New event: Tournament · Sat Oct 17');
   });
 
   it('says what changed (SCHED-6), or nothing for other edits', () => {

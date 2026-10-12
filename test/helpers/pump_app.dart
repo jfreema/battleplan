@@ -16,6 +16,7 @@ import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'fakes.dart';
@@ -50,6 +51,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeLinkOpener? linkOpener,
   FakeAdminRepository? admin,
   Size size = const Size(400, 1600),
+  List<Override> overrides = const [],
 }) async {
   // A tall phone-sized screen, so long settings lists fit without scrolling.
   tester.view
@@ -125,6 +127,7 @@ Future<FakeLocalPrefs> pumpApp(
         pdfViewProvider.overrideWithValue(
           (bytes, name) => Text('PDF $name (${bytes.length} bytes)'),
         ),
+        ...overrides,
       ],
       child: const BattleplanApp(),
     ),
