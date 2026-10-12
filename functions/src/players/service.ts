@@ -28,9 +28,15 @@ export interface AddPlayersResult {
  * Guardians with accounts are linked now; new emails get an added account
  * (AUTH-6). Every guardian becomes a team member.
  */
-export async function addPlayers(groupId: string, actorUid: string, players: PlayerInput[]): Promise<AddPlayersResult> {
+export async function addPlayers(
+  groupId: string,
+  actorUid: string,
+  players: PlayerInput[],
+): Promise<{ result: AddPlayersResult; newMembers: string[] }> {
   const result: AddPlayersResult = { playersAdded: 0, guardiansLinked: 0, guardiansInvited: 0, invitedEmails: [], problems: [] };
   const touchedGuardians = new Set<string>();
+  // Guardians who weren't on the team yet, to be told they were added (NOTIF-2).
+  const newMembers = new Set<string>();
   for (const input of players) {
     const playerRef = db().collection(Collections.players).doc();
     const name = input.name.trim().slice(0, 60);
@@ -49,7 +55,7 @@ export async function addPlayers(groupId: string, actorUid: string, players: Pla
       if (!g.email) continue; // a name alone can't be linked
       try {
         const user = await findOrProvisionUser(g.email, g.name ?? null);
-        await linkGuardian(groupId, playerRef.id, user, actorUid, 'admin');
+        if (await linkGuardian(groupId, playerRef.id, user, actorUid, 'admin')) newMembers.add(user.uid);
         touchedGuardians.add(user.uid);
         if (user.provisioned) {
           result.guardiansInvited++;
@@ -64,20 +70,24 @@ export async function addPlayers(groupId: string, actorUid: string, players: Pla
   }
   for (const uid of touchedGuardians) await refreshPlayerSummary(groupId, uid);
   await refreshPlayerCount(groupId);
-  return result;
+  return { result, newMembers: [...newMembers] };
 }
 
-/** Links a guardian to a player and makes them a team member if needed. */
+/**
+ * Links a guardian to a player and makes them a team member if needed.
+ * Returns whether it made them a member, so callers can tell them they
+ * were added.
+ */
 export async function linkGuardian(
   groupId: string,
   playerId: string,
   user: { uid: string; displayName: string; photoPath: string | null; provisioned?: boolean },
   addedBy: string,
   via: 'admin' | 'request' | 'guardian' | 'self',
-): Promise<void> {
+): Promise<boolean> {
   const now = FieldValue.serverTimestamp();
   const memberRef = db().collection(Collections.groupMembers).doc(groupMemberId(groupId, user.uid));
-  await db().runTransaction(async (tx) => {
+  const created = await db().runTransaction(async (tx) => {
     const member = await tx.get(memberRef);
     tx.set(db().collection(Collections.playerGuardians).doc(compositeId(playerId, user.uid)), {
       playerId,
@@ -105,9 +115,11 @@ export async function linkGuardian(
         pending: user.provisioned === true,
       });
     }
+    return !member.exists;
   });
   const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();
   await db().collection(Collections.groups).doc(groupId).update({ memberCount: count.data().count });
+  return created;
 }
 
 /** Rewrites a guardian's "Emma #7, Liam #23" label on their membership (PLAYER-8). */
@@ -157,10 +169,11 @@ export async function isGuardian(playerId: string, uid: string): Promise<boolean
 /**
  * Asks the team's admins to link [uid] to each player (PLAYER-3, Q15).
  * Players they already guard are skipped; a declined request can be sent
- * again. Returns how many requests are now pending.
+ * again. Returns the names of the players now requested, for the admins'
+ * notification.
  */
-export async function requestGuardianLinks(groupId: string, uid: string, playerIds: string[]): Promise<number> {
-  let requested = 0;
+export async function requestGuardianLinks(groupId: string, uid: string, playerIds: string[]): Promise<string[]> {
+  const requested: string[] = [];
   for (const playerId of new Set(playerIds)) {
     const player = await db().collection(Collections.players).doc(playerId).get();
     if (!player.exists || player.get('groupId') !== groupId) continue;
@@ -177,7 +190,7 @@ export async function requestGuardianLinks(groupId: string, uid: string, playerI
         decidedAt: null,
         createdAt: FieldValue.serverTimestamp(),
       });
-    requested++;
+    requested.push((player.get('displayName') as string | undefined) || 'a player');
   }
   return requested;
 }

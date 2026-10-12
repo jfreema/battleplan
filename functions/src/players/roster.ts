@@ -52,3 +52,10 @@ export function playerLabel(name: string, jerseyNumber?: string | null): string 
   const first = name.trim().split(/\s+/)[0] ?? name;
   return jerseyNumber ? `${first} #${jerseyNumber}` : first;
 }
+
+/** "Emma", "Emma and Liam", "Emma, Liam, and Ava": players named in notifications (NOTIF-5). */
+export function joinNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+}

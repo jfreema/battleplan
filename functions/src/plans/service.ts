@@ -194,13 +194,21 @@ export function dueReminder(
   return null;
 }
 
+/** One reminder to send (PLAN-5): which license, which of the two, and who to tell. */
+export interface DueReminder {
+  licenseId: string;
+  which: 'd30' | 'd7';
+  groupId: string;
+  endsAt: Date;
+  days: number;
+  uids: string[];
+}
+
 /**
  * Licenses due a reminder, 30 and 7 days before they end (PLAN-5): each
  * with who to tell (the holder and the team's admins). Marks them reminded.
  */
-export async function takeDueReminders(
-  now = new Date(),
-): Promise<{ groupId: string; endsAt: Date; days: number; uids: string[] }[]> {
+export async function takeDueReminders(now = new Date()): Promise<DueReminder[]> {
   const horizon = Timestamp.fromMillis(now.getTime() + Limits.licenseReminderFirstDays * 86_400_000);
   const snap = await db()
     .collection(Collections.licenses)
@@ -208,7 +216,7 @@ export async function takeDueReminders(
     .where('endsAt', '>', Timestamp.fromDate(now))
     .limit(500)
     .get();
-  const due: { groupId: string; endsAt: Date; days: number; uids: string[] }[] = [];
+  const due: DueReminder[] = [];
   for (const d of snap.docs) {
     const l = d.data() as LicenseDoc & { remindedAt?: { d30?: unknown; d7?: unknown } };
     if (l.revokedAt || !l.groupId) continue;
@@ -223,6 +231,8 @@ export async function takeDueReminders(
     const uids = [...new Set([l.holderId, ...admins.docs.map((a) => a.get('uid') as string)])];
     await d.ref.update({ [`remindedAt.${which}`]: FieldValue.serverTimestamp() });
     due.push({
+      licenseId: d.id,
+      which,
       groupId: l.groupId,
       endsAt: l.endsAt.toDate(),
       days: which === 'd7' ? Limits.licenseReminderSecondDays : Limits.licenseReminderFirstDays,

@@ -1,5 +1,6 @@
 // Thin entry points for the players domain (ARCH §6.4).
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { audit } from '../audit/service.js';
 import { db } from '../shared/admin.js';
@@ -8,11 +9,14 @@ import { requireAuth } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
-import { findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
+import { displayNameOf, findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
 import { resendApiKey, sendEmail } from '../email/service.js';
 import { addedToTeamEmail } from '../email/templates.js';
 import { teamUrl } from '../links/service.js';
+import { trySend } from '../notify/service.js';
+import { notifyAddedToTeam } from '../teams/service.js';
 import { groupMemberId } from '../shared/ids.js';
+import { joinNames } from './roster.js';
 import {
   addPlayers as add,
   addMyPlayer as addMine,
@@ -62,7 +66,7 @@ export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) =>
     'day',
     Math.max(guardianEmails, 1),
   );
-  const result = await add(input.groupId, uid, input.players);
+  const { result, newMembers } = await add(input.groupId, uid, input.players);
   await audit({
     actorId: uid,
     action: 'addPlayers',
@@ -77,6 +81,8 @@ export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) =>
   for (const email of result.invitedEmails) {
     await sendSetupEmail(email, group.get('name') as string, actorName);
   }
+  // NOTIF-2: guardians who weren't on the team are told they were added.
+  await notifyAddedToTeam(input.groupId, group.get('name') as string, { uid, name: actorName }, newMembers);
   return result;
 });
 
@@ -116,9 +122,30 @@ export const requestGuardianLink = onCall(async (request) => {
     z.object({ groupId: z.string().min(1), playerIds: z.array(z.string().min(1)).min(1).max(10) }),
     request.data,
   );
-  await requireYouthMember(input.groupId, uid);
+  const { teamName } = await requireYouthMember(input.groupId, uid);
   await consumeRateLimit(uid, 'guardianRequest', Limits.guardianRequestsPerUserPerDay);
-  return { requested: await requestGuardianLinks(input.groupId, uid, input.playerIds) };
+  const players = await requestGuardianLinks(input.groupId, uid, input.playerIds);
+  if (players.length) {
+    // NOTIF-2: the team's admins are asked, even at Important only.
+    await trySend(async () => {
+      const name = await displayNameOf(uid, 'Someone');
+      const playerNames = joinNames(players);
+      return {
+        kind: 'guardianRequest',
+        groupId: input.groupId,
+        recipients: { admins: true },
+        actor: { uid, name },
+        target: { type: 'user', id: uid },
+        route: `/g/${input.groupId}/roster`,
+        params: { actorName: name, playerNames },
+        body: `${name} asked to be ${playerNames}'s guardian`,
+        // Request IDs are reused when someone asks again, so each ask gets its own key.
+        dedupeKey: randomUUID(),
+        teamName,
+      };
+    });
+  }
+  return { requested: players.length };
 });
 
 /** Admins approve or decline a guardian request (PLAYER-4). */
@@ -143,6 +170,28 @@ export const resolveGuardianLink = onCall(async (request) => {
       targetType: 'player',
       targetId: input.playerId,
       after: { uid: input.uid },
+    });
+  }
+  if (done && input.approve) {
+    // NOTIF-2: the parent hears they're approved. A decline isn't announced.
+    await trySend(async () => {
+      const [player, actorName] = await Promise.all([
+        db().collection(Collections.players).doc(input.playerId).get(),
+        displayNameOf(actor, 'A team admin'),
+      ]);
+      if (!player.exists) return null;
+      const playerName = (player.get('displayName') as string | undefined) || 'a player';
+      return {
+        kind: 'guardianApproved',
+        groupId: input.groupId,
+        recipients: { uids: [input.uid] },
+        actor: { uid: actor, name: actorName },
+        target: { type: 'player', id: input.playerId },
+        route: `/g/${input.groupId}/roster/players/${input.playerId}`,
+        params: { playerId: input.playerId, playerName },
+        body: `You're now ${playerName}'s guardian`,
+        dedupeKey: randomUUID(),
+      };
     });
   }
   return { ok: done };
@@ -173,6 +222,22 @@ export const addMyPlayer = onCall(async (request) => {
     targetType: 'player',
     targetId: playerId,
     after: { name: input.name },
+  });
+  // PLAYER-3: admins hear about a player a parent added, to check it.
+  await trySend(async () => {
+    const name = await displayNameOf(uid, 'A parent');
+    return {
+      kind: 'playerAdded',
+      groupId: input.groupId,
+      recipients: { admins: true },
+      actor: { uid, name },
+      target: { type: 'player', id: playerId },
+      route: `/g/${input.groupId}/roster/players/${playerId}`,
+      params: { actorName: name, playerId, playerName: input.name },
+      body: `${name} added a player: ${input.name}`,
+      dedupeKey: randomUUID(),
+      teamName: group.get('name') as string,
+    };
   });
   return { playerId };
 });
@@ -217,6 +282,7 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   } else if (!wasMember) {
     await sendEmail(addedToTeamEmail(input.email.trim().toLowerCase(), teamName, actorName, teamUrl(input.groupId)));
   }
+  if (!wasMember) await notifyAddedToTeam(input.groupId, teamName, { uid: actor, name: actorName }, [user.uid]);
   await audit({
     actorId: actor,
     action: 'inviteGuardian',

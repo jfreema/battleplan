@@ -6,6 +6,7 @@ import { addStorageBytes, groupIdFromPath, reconcileAllStorage } from './storage
 import { resendApiKey, sendEmail } from '../email/service.js';
 import { planReminderEmail } from '../email/templates.js';
 import { teamUrl } from '../links/service.js';
+import { pruneDevices, trySend } from '../notify/service.js';
 import { endExpiredPlans, takeDueReminders } from '../plans/service.js';
 import { db } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
@@ -26,16 +27,23 @@ export const onGroupFileRemoved = onObjectDeleted(async (event) => {
 });
 
 /**
- * Daily housekeeping (ARCH §6.4 scheduled jobs): ends lapsed Plus plans and
- * sends their reminders, then recomputes every team's storage total from
- * the bucket. Expiring invites and pruning device tokens join it with their
- * features.
+ * Daily housekeeping (ARCH §6.4 scheduled jobs): prunes devices that
+ * stopped checking in, ends lapsed Plus plans and sends their reminders,
+ * then recomputes every team's storage total from the bucket. Expiring
+ * invites joins it with its feature.
  */
 export const dailyCleanup = onSchedule(
   { schedule: 'every day 04:00', timeZone: 'America/Chicago', secrets: [resendApiKey] },
   async () => {
-    // Plus first (PLAN-5): end lapsed plans (which also resets the storage
-    // quota), then remind holders and admins 30 and 7 days ahead.
+    // NOTIF-10: the app rewrites its device at least daily, so one untouched
+    // for 60 days is abandoned. Pruned first, so today's pushes skip it.
+    const devicesPruned = await pruneDevices().catch((e) => {
+      logger.error('device_prune_failed', { error: String(e) });
+      return 0;
+    });
+    // Plus (PLAN-5): end lapsed plans (which also resets the storage quota),
+    // then remind holders and admins 30 and 7 days ahead, by email and
+    // notification.
     const plansEnded = await endExpiredPlans();
     const reminders = await takeDueReminders();
     for (const r of reminders) {
@@ -47,8 +55,21 @@ export const dailyCleanup = onSchedule(
         const email = user.get('email') as string | undefined;
         if (email) await sendEmail(planReminderEmail(email, teamName, endsOn, r.days, teamUrl(r.groupId)));
       }
+      await trySend({
+        kind: 'planReminder',
+        groupId: r.groupId,
+        recipients: { uids: r.uids },
+        actor: null,
+        target: { type: 'license', id: r.licenseId },
+        route: `/g/${r.groupId}/settings`,
+        params: { endsOn },
+        body: `Plus ends on ${endsOn}`,
+        // One per license and reminder, so a rerun of the job can't send it twice.
+        dedupeKey: `planReminder_${r.licenseId}_${r.which}`,
+        teamName,
+      });
     }
     const teams = await reconcileAllStorage();
-    logger.info('daily_cleanup', { plansEnded, reminders: reminders.length, teamsReconciled: teams });
+    logger.info('daily_cleanup', { plansEnded, reminders: reminders.length, devicesPruned, teamsReconciled: teams });
   },
 );

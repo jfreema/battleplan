@@ -9,7 +9,8 @@ import { requireAuth } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
-import { fileReport, reportSnapshot } from './service.js';
+import { trySend } from '../notify/service.js';
+import { fileReport, reportedBody, reportSnapshot } from './service.js';
 
 const ReportInput = z.object({
   groupId: z.string().min(1),
@@ -35,6 +36,20 @@ export const reportContent = onCall(async (request) => {
   const snapshot = await reportSnapshot(input.groupId, input.targetType, input.targetId);
   if (!snapshot) throw new HttpsError('not-found', 'Nothing to report.');
   const reportId = await fileReport({ reporterId: uid, ...input, snapshot });
+  // NOTIF-2: the team's admins are told, without who reported (no actor);
+  // the reporter and the person reported are left out.
+  await trySend({
+    kind: 'contentReported',
+    groupId: input.groupId,
+    recipients: { admins: true },
+    exclude: [uid, snapshot.subjectId],
+    actor: null,
+    target: { type: 'report', id: reportId },
+    route: `/g/${input.groupId}/reports`,
+    params: { targetType: input.targetType },
+    body: reportedBody(input.targetType),
+    dedupeKey: reportId,
+  });
   return { reportId };
 });
 

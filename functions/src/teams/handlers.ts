@@ -1,6 +1,8 @@
 // Thin entry points for the teams domain (ARCH §6.4).
 import { FieldValue } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/v2';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { auth, db } from '../shared/admin.js';
 import { Collections, Limits, sportValues, TEAM_COLORS, teamTypeValues } from '../shared/constants.js';
@@ -11,8 +13,9 @@ import { audit } from '../audit/service.js';
 import { postSystemMessage } from '../chat/service.js';
 import { groupMemberId } from '../shared/ids.js';
 import { requireTeamAdmin, roleOf } from '../shared/roles.js';
-import { sendSetupEmail } from '../accounts/service.js';
+import { displayNameOf, sendSetupEmail } from '../accounts/service.js';
 import { resendApiKey } from '../email/service.js';
+import { removeTeamNotifications, trySend } from '../notify/service.js';
 import {
   addMembersByEmail,
   canChangeRole,
@@ -116,9 +119,31 @@ export const updateGroupMember = onCall(async (request) => {
   if (update.role === 'admin') {
     const name = (target.get('displayName') as string) || 'Someone';
     await postSystemMessage(input.groupId, 'madeAdmin', `${name} is now an admin`, actorUid, input.uid);
+    // NOTIF-2: the new admin is told, even at Important only.
+    await trySend(async () => {
+      const actorName = await displayNameOf(actorUid, 'A team admin');
+      return {
+        kind: 'madeAdmin',
+        groupId: input.groupId,
+        recipients: { uids: [input.uid] },
+        actor: { uid: actorUid, name: actorName },
+        target: { type: 'user', id: input.uid },
+        route: `/g/${input.groupId}/chat`,
+        params: { actorName },
+        body: `${actorName} made you an admin`,
+        dedupeKey: randomUUID(),
+      };
+    });
   }
   return { ok: true };
 });
+
+/** Clears a former member's notification-center items for the team; a failure only logs. */
+async function clearTeamNotifications(groupId: string, uid: string): Promise<void> {
+  await removeTeamNotifications(groupId, uid).catch((e) =>
+    logger.warn('team_notifications_cleanup_failed', { groupId, uid, error: String(e) }),
+  );
+}
 
 const RemoveMemberInput = z.object({ groupId: z.string().min(1), uid: z.string().min(1) });
 
@@ -147,6 +172,7 @@ export const removeMember = onCall(async (request) => {
   });
   const name = (target.get('displayName') as string) || 'Someone';
   await postSystemMessage(input.groupId, 'removed', `${name} was removed`, actorUid, input.uid);
+  await clearTeamNotifications(input.groupId, input.uid);
   return { ok: true };
 });
 
@@ -202,6 +228,7 @@ export const leaveGroup = onCall(async (request) => {
   await refreshMemberCount(input.groupId);
   const name = (me.get('displayName') as string) || 'Someone';
   await postSystemMessage(input.groupId, 'left', `${name} left`, uid);
+  await clearTeamNotifications(input.groupId, uid);
   return { ok: true };
 });
 

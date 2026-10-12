@@ -48,6 +48,15 @@ export async function reportSnapshot(
   };
 }
 
+/** The admins' notification for a report (NOTIF-2): what was reported, never by whom. */
+export function reportedBody(targetType: ReportTarget): string {
+  return targetType === 'user'
+    ? 'A person was reported'
+    : targetType === 'document'
+      ? 'A document was reported'
+      : 'A message was reported';
+}
+
 /** Files a report (SAFE-1). Returns its ID. */
 export async function fileReport(input: {
   reporterId: string;

@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { auth, db, storage } from '../shared/admin.js';
 import { Collections, notificationPrefValues, type NotificationPref } from '../shared/constants.js';
 import { anonymizeAuthor } from '../chat/service.js';
-import { removeAccountNotifications } from '../notify/service.js';
+import { removeAccountNotifications, removeDevices } from '../notify/service.js';
 import { removeAccountFromPlayers } from '../players/service.js';
 import { removeAccountBlocks } from '../safety/service.js';
 import { removeUpcomingRsvps } from '../schedule/service.js';
@@ -140,10 +140,18 @@ async function copyProviderPhoto(uid: string, url: string): Promise<void> {
 /**
  * Ends every session for [uid] (AUTH-9): revokes refresh tokens, so other
  * devices are signed out when their current ID token expires (within an
- * hour) and can't refresh it.
+ * hour) and can't refresh it, and removes every device so pushes stop
+ * right away (NOTIF-10).
  */
 export async function signOutEverywhere(uid: string): Promise<void> {
   await auth().revokeRefreshTokens(uid);
+  await removeDevices(uid);
+}
+
+/** A person's display name for notification wording, or [fallback]. */
+export async function displayNameOf(uid: string, fallback: string): Promise<string> {
+  const profile = await db().collection(Collections.users).doc(uid).get();
+  return (profile.get('displayName') as string | undefined) || fallback;
 }
 
 /**

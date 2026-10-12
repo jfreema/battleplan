@@ -3,6 +3,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
+import { trySend } from '../notify/service.js';
 
 export const DELETED_USER_NAME = 'Deleted user';
 
@@ -74,17 +75,29 @@ export function replyPreviewOf(original: Record<string, unknown> | undefined): R
   };
 }
 
+/** Who wrote the message a reply quotes, for the reply notification. */
+export interface QuotedMessage {
+  authorId: string;
+  deleted: boolean;
+}
+
 /**
  * Writes the quote on a reply. The original must be in the same team; a
- * missing or foreign original reads as deleted.
+ * missing or foreign original reads as deleted. Returns who wrote the
+ * original (null when it's missing or foreign).
  */
-export async function writeReplyPreview(messageId: string, groupId: string, replyToId: string): Promise<void> {
+export async function writeReplyPreview(
+  messageId: string,
+  groupId: string,
+  replyToId: string,
+): Promise<QuotedMessage | null> {
   const original = await db().collection(Collections.messages).doc(replyToId).get();
   const data = original.exists && original.get('groupId') === groupId ? original.data() : undefined;
   await db()
     .collection(Collections.messages)
     .doc(messageId)
     .update({ replyPreview: replyPreviewOf(data) });
+  return data ? { authorId: String(data.authorId ?? ''), deleted: Boolean(data.deletedAt) } : null;
 }
 
 /**
@@ -138,18 +151,110 @@ export function lastMessagePreviewOf(m: Record<string, unknown>): { authorName: 
 /**
  * Moves the team's `lastMessageAt` and preview forward to [message]. Runs
  * in a transaction and never moves backward, since triggers can arrive out
- * of order or twice.
+ * of order or twice. Returns the team's name (null if the team is gone),
+ * so the message's notification needn't read the team again.
  */
-export async function touchLastMessage(groupId: string, message: Record<string, unknown>): Promise<void> {
+export async function touchLastMessage(groupId: string, message: Record<string, unknown>): Promise<string | null> {
   const at = message.createdAt as Timestamp | undefined;
-  if (!at) return;
+  if (!at) return null;
   const ref = db().collection(Collections.groups).doc(groupId);
-  await db().runTransaction(async (tx) => {
+  return db().runTransaction(async (tx) => {
     const group = await tx.get(ref);
-    if (!group.exists) return;
+    if (!group.exists) return null;
+    const name = (group.get('name') as string | undefined) ?? '';
     const current = group.get('lastMessageAt') as Timestamp | undefined;
-    if (current && current.toMillis() >= at.toMillis()) return;
+    if (current && current.toMillis() >= at.toMillis()) return name;
     tx.update(ref, { lastMessageAt: at, lastMessagePreview: lastMessagePreviewOf(message) });
+    return name;
+  });
+}
+
+/**
+ * Whether a new message notifies (ARCH §6.4 trigger map): text and photos.
+ * System lines and event cards notify through their own domain; polls will
+ * notify as pollCreated with M5.
+ */
+export function notifiesAsMessage(m: Record<string, unknown>): boolean {
+  return m.type === 'text' || m.type === 'image';
+}
+
+/**
+ * Who gets the "replied to you" notification (NOTIF-2): the original's
+ * author, unless it was a system line, they're replying to themselves, or
+ * the original is deleted.
+ */
+export function replyRecipientOf(original: QuotedMessage | null, replierId: string): string | null {
+  if (!original || original.deleted) return null;
+  const { authorId } = original;
+  if (!authorId || authorId === 'system' || authorId === replierId) return null;
+  return authorId;
+}
+
+function pushWording(m: Record<string, unknown>): { name: string; text: string; photos: number } {
+  return {
+    name: String(m.authorName ?? '').trim() || 'Someone',
+    text: String(m.text ?? '').trim(),
+    photos: ((m.attachments as unknown[] | undefined) ?? []).length,
+  };
+}
+
+function photosPhrase(photos: number): string {
+  return photos > 1 ? `${photos} photos` : 'a photo';
+}
+
+/** A message's push (NOTIF-5): "Alex: Field 3 is open", or "Alex sent a photo". */
+export function messagePushBody(m: Record<string, unknown>): string {
+  const { name, text, photos } = pushWording(m);
+  if (text) return `${name}: ${text}`;
+  return m.type === 'image' || photos ? `${name} sent ${photosPhrase(photos)}` : `${name} sent a message`;
+}
+
+/** A reply's push to the person quoted (NOTIF-5): "Alex replied to you: Sounds good". */
+export function replyPushBody(m: Record<string, unknown>): string {
+  const { name, text, photos } = pushWording(m);
+  if (text) return `${name} replied to you: ${text}`;
+  return `${name} replied to you with ${photosPhrase(Math.max(photos, 1))}`;
+}
+
+/**
+ * Notifies a new message (NOTIF-2): the person replied to gets "replied to
+ * you" (it pushes even at Important only and lands in their notification
+ * center), and everyone else but the author gets the plain message push.
+ * Both dedupe on the message ID, since the trigger can run twice.
+ */
+export async function notifyNewMessage(
+  messageId: string,
+  message: Record<string, unknown>,
+  teamName: string | null,
+  repliedTo: string | null,
+): Promise<void> {
+  if (!notifiesAsMessage(message)) return;
+  const groupId = message.groupId as string;
+  const actor = { uid: String(message.authorId ?? ''), name: String(message.authorName ?? '') };
+  const common = {
+    groupId,
+    actor,
+    target: { type: 'message', id: messageId },
+    route: `/g/${groupId}/chat/m/${messageId}`,
+    params: { authorName: actor.name },
+    ...(teamName !== null ? { teamName } : {}),
+  };
+  if (repliedTo) {
+    await trySend({
+      ...common,
+      kind: 'reply',
+      recipients: { uids: [repliedTo] },
+      body: replyPushBody(message),
+      dedupeKey: `${messageId}_reply`,
+    });
+  }
+  await trySend({
+    ...common,
+    kind: 'message',
+    recipients: { members: true },
+    exclude: repliedTo ? [repliedTo] : [],
+    body: messagePushBody(message),
+    dedupeKey: messageId,
   });
 }
 

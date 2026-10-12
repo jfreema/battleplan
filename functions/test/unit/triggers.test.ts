@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { snapshotChanged } from '../../src/accounts/triggers.js';
-import { lastMessagePreviewOf, replyPreviewOf } from '../../src/chat/service.js';
+import {
+  lastMessagePreviewOf,
+  messagePushBody,
+  notifiesAsMessage,
+  replyPreviewOf,
+  replyPushBody,
+  replyRecipientOf,
+} from '../../src/chat/service.js';
+import { reportedBody } from '../../src/safety/service.js';
 
 describe('users trigger early exit', () => {
   it('runs only when the name or photo changed', () => {
@@ -38,5 +46,51 @@ describe('lastMessagePreviewOf', () => {
   it('uses the first line, or Photo for a photo without text', () => {
     expect(lastMessagePreviewOf({ authorName: 'Sam', text: 'Game moved\nto 6', type: 'text' }).text).toBe('Game moved');
     expect(lastMessagePreviewOf({ authorName: 'Sam', text: '', type: 'image' }).text).toBe('Photo');
+  });
+});
+
+describe('message notifications (NOTIF-2, NOTIF-5)', () => {
+  it('notifies text and photos; system lines, event cards, and polls notify elsewhere', () => {
+    expect(notifiesAsMessage({ type: 'text' })).toBe(true);
+    expect(notifiesAsMessage({ type: 'image' })).toBe(true);
+    expect(notifiesAsMessage({ type: 'system' })).toBe(false);
+    expect(notifiesAsMessage({ type: 'event' })).toBe(false);
+    expect(notifiesAsMessage({ type: 'poll' })).toBe(false);
+  });
+
+  it('tells the quoted author about a reply, unless it is their own, a system line, or deleted', () => {
+    expect(replyRecipientOf({ authorId: 'sam', deleted: false }, 'alex')).toBe('sam');
+    expect(replyRecipientOf({ authorId: 'alex', deleted: false }, 'alex')).toBeNull();
+    expect(replyRecipientOf({ authorId: 'system', deleted: false }, 'alex')).toBeNull();
+    expect(replyRecipientOf({ authorId: 'sam', deleted: true }, 'alex')).toBeNull();
+    expect(replyRecipientOf({ authorId: '', deleted: false }, 'alex')).toBeNull();
+    expect(replyRecipientOf(null, 'alex')).toBeNull();
+  });
+
+  it('words a message push', () => {
+    expect(messagePushBody({ authorName: 'Alex', type: 'text', text: 'Field 3 is open' })).toBe('Alex: Field 3 is open');
+    expect(messagePushBody({ authorName: 'Alex', type: 'image', text: '', attachments: [{}] })).toBe('Alex sent a photo');
+    expect(messagePushBody({ authorName: 'Alex', type: 'image', text: '', attachments: [{}, {}, {}] })).toBe(
+      'Alex sent 3 photos',
+    );
+    expect(messagePushBody({ authorName: 'Alex', type: 'image', text: 'Team pic', attachments: [{}] })).toBe(
+      'Alex: Team pic',
+    );
+    expect(messagePushBody({ authorName: '', type: 'text', text: 'hi' })).toBe('Someone: hi');
+  });
+
+  it('words a reply push', () => {
+    expect(replyPushBody({ authorName: 'Alex', type: 'text', text: 'Sounds good' })).toBe('Alex replied to you: Sounds good');
+    expect(replyPushBody({ authorName: 'Alex', type: 'image', text: '', attachments: [{}] })).toBe(
+      'Alex replied to you with a photo',
+    );
+  });
+});
+
+describe('report notifications (NOTIF-2)', () => {
+  it('says what was reported, never by whom', () => {
+    expect(reportedBody('message')).toBe('A message was reported');
+    expect(reportedBody('user')).toBe('A person was reported');
+    expect(reportedBody('document')).toBe('A document was reported');
   });
 });

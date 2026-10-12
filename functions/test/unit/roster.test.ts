@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parsePastedRoster, playerLabel } from '../../src/players/roster.js';
+import { joinNames, parsePastedRoster, playerLabel } from '../../src/players/roster.js';
 
 describe('parsePastedRoster (PLAYER-1)', () => {
   it('merges lines for the same player into one with several guardians', () => {
@@ -26,5 +26,14 @@ describe('parsePastedRoster (PLAYER-1)', () => {
   it('labels players by first name and number', () => {
     expect(playerLabel('Emma Rodriguez', '7')).toBe('Emma #7');
     expect(playerLabel('Noah Bennett', null)).toBe('Noah');
+  });
+});
+
+describe('joinNames (NOTIF-5)', () => {
+  it('lists players the way a sentence would', () => {
+    expect(joinNames([])).toBe('');
+    expect(joinNames(['Emma'])).toBe('Emma');
+    expect(joinNames(['Emma', 'Liam'])).toBe('Emma and Liam');
+    expect(joinNames(['Emma', 'Liam', 'Ava'])).toBe('Emma, Liam, and Ava');
   });
 });
