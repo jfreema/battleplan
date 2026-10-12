@@ -68,3 +68,6 @@ service-account*.json
 .env
 .env.*
 lib/l10n/gen/
+
+# Agent worktrees
+.claude/worktrees/
