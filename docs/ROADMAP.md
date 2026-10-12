@@ -9,7 +9,7 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
 - Each milestone ends working on iOS, Android, and web, with rules tests updated (SPEC §9).
 
-Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), and M7 (Documents) are built. Facebook sign-in was removed from the plan; it is a backlog item now.
+Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built. Facebook sign-in was removed from the plan; it is a backlog item now.
 
 ---
 
@@ -166,11 +166,11 @@ SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
 
 ## M8 · God admin panel
 
-96. Admin panel shell at `/admin`, loaded separately; dashboard (ADMIN-1).
-97. Teams list and team detail, including View team, suspend, archive, and delete (ADMIN-2, ADMIN-3).
-98. Users: create, disable, reset, sign out everywhere, grant super admin (ADMIN-4).
-99. Report queue (ADMIN-5) and audit log (ADMIN-6).
-100. Platform settings and the announcement banner (ADMIN-7); safeguards (ADMIN-8).
+96. ✅ Admin panel shell at `/admin`, loaded separately; dashboard (ADMIN-1).
+97. ✅ Teams list and team detail, including View team, suspend, archive, and delete (ADMIN-2, ADMIN-3).
+98. ✅ Users: create, disable, reset, sign out everywhere, grant super admin (ADMIN-4).
+99. ✅ Report queue (ADMIN-5) and audit log (ADMIN-6).
+100. ✅ Platform settings and the announcement banner (ADMIN-7); safeguards (ADMIN-8).
 
 ## Website and the web app at /app · before M9
 

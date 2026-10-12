@@ -370,7 +370,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 ### 6.2 Teams and membership (TEAM)
 
 - **TEAM-1 · MVP · Create a team.**
-  - **Who:** any signed-in user with a verified email. Super admins can turn this off, and each person can create up to 5 teams a day.
+  - **Who:** any signed-in user with a verified email. Super admins can turn this off, and each person can create up to 5 teams a day (super admins can change the limit, ADMIN-7).
   - **Fields:**
     - **Team type:** Adult team (the members are the players) or Youth team (kids are the players; parents and guardians use the app). Admins can change it later; events already on the schedule keep the RSVPs they have.
     - Name (required, ≤ 50 characters).
@@ -897,7 +897,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
     | Action | Limit |
     |---|---|
     | Sending messages | 1 per second per person per team |
-    | Creating teams | 5 per person per day |
+    | Creating teams | 5 per person per day (super admins can change it, ADMIN-7) |
     | Email invites | 50 per person and 200 per team per day |
     | Adding people or players by email | 200 per team per day |
     | Invite code attempts | 20 per person per hour |
@@ -944,7 +944,7 @@ What does cost money as teams grow is storage, so each team has a limit, and adm
 **Requirements**
 
 - **STORE-1 · MVP · A storage limit per team.**
-  - Each team can store **500 MB**: chat photos, documents, the team logo, and the chat background all count (ARCH §6.8).
+  - Each team can store **500 MB** (the default for new teams, which super admins can change, ADMIN-7): chat photos, documents, the team logo, and the chat background all count (ARCH §6.8).
   - A single file can be at most **10 MB** (chat photos are resized well under that before upload).
 - **STORE-2 · MVP · Storage used.** Team settings shows "212 MB of 500 MB used" with a meter, for the team's admins.
 - **STORE-3 · MVP · Nearly full.** At **90%**, the meter turns amber, the team's admins see a warning at the top of the team ("Storage is 90% full. Free up space in Media."), and they get a notification (NOTIF-2).
@@ -955,7 +955,7 @@ What does cost money as teams grow is storage, so each team has a limit, and adm
 - **STORE-5 · MVP · Media (admins).**
   - Team menu → **Media** lists every photo, attachment, document, the team logo, and the chat background, largest first, with a preview, size, who added it, and when.
   - Admins delete items to free space, after confirming. Deleting a chat photo removes it from its message, and a message left with no text or photos reads "Photo removed by a team admin"; deleting the logo or background resets it.
-- **STORE-6 · MVP · Raising a team's limit.** A super admin can raise (or lower) one team's limit, from the admin panel (ADMIN-3), and until that exists from Team settings while signed in as a super admin. The option isn't announced or advertised anywhere.
+- **STORE-6 · MVP · Raising a team's limit.** A super admin can raise (or lower) one team's limit, from the admin panel (ADMIN-3) or from Team settings while signed in as a super admin. The option isn't announced or advertised anywhere.
 - **STORE-7 · Later · Ads.** See ROADMAP "Ads, later".
 
 **Acceptance (MVP)**
