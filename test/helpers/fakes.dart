@@ -233,8 +233,21 @@ class FakeGroupRepository implements GroupRepository {
   Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes) async =>
       'groups/${id.value}/theme/bg.jpg';
 
+  final _changes = StreamController<String>.broadcast();
+
+  /// Replaces a team and tells anyone watching it, like a server write.
+  void setGroup(Group group) {
+    groups[group.id.value] = group;
+    _changes.add(group.id.value);
+  }
+
   @override
-  Stream<Group?> watchGroup(GroupId id) => Stream.value(groups[id.value]);
+  Stream<Group?> watchGroup(GroupId id) async* {
+    yield groups[id.value];
+    await for (final changed in _changes.stream) {
+      if (changed == id.value) yield groups[id.value];
+    }
+  }
 
   final List<String> updates = [];
 
@@ -1122,6 +1135,10 @@ class FakePhotoPicker implements PhotoPicker {
   /// How many times a picker opened, to check full storage stops it.
   int opened = 0;
 
+  /// Runs while the picker is open, e.g. to fill storage before the pick
+  /// returns.
+  void Function()? whilePicking;
+
   @override
   Future<Uint8List?> pickProfilePhoto() async {
     opened++;
@@ -1131,6 +1148,8 @@ class FakePhotoPicker implements PhotoPicker {
   @override
   Future<List<PickedPhoto>> pickChatPhotos({int limit = 10}) async {
     opened++;
+    whilePicking?.call();
+    await Future<void>.delayed(Duration.zero);
     return photos.take(limit).toList();
   }
 

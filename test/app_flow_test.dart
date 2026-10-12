@@ -1051,6 +1051,45 @@ void main() {
       expect(repo.sent, ['Still here']);
     });
 
+    testWidgets('storage filling up while picking stops the upload '
+        '(STORE-4)', (tester) async {
+      final repo = FakeMessageRepository();
+      final groupRepo = FakeGroupRepository({
+        'a': testGroup(
+          'a',
+          'Thunder',
+        ).copyWith(storageBytes: 0, storageQuotaBytes: 500 * bytesPerMb),
+      });
+      // Someone else's upload fills the team while the picker is open.
+      final picker =
+          FakePhotoPicker([(bytes: Uint8List(4), contentType: 'image/jpeg')])
+            ..whilePicking = () => groupRepo.setGroup(
+              groupRepo.groups['a']!.copyWith(storageBytes: 500 * bytesPerMb),
+            );
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groupRepo: groupRepo,
+        memberships: [testMembership('a', 'coach')],
+        messageRepo: repo,
+        photoPicker: picker,
+      );
+      const full =
+          'Storage is full. Uploads, attachments, and scheduling new events '
+          'are disabled until storage is freed up.';
+      expect(find.text(full), findsNothing);
+      await tester.tap(find.byTooltip('Add photos'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Photo library'));
+      await tester.pumpAndSettle();
+      expect(picker.opened, 1);
+      // The banner, plus the message saying why the photo didn't go.
+      expect(find.text(full), findsNWidgets(2));
+      expect(repo.photoBatches, isEmpty);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('my bubbles take the team color unless admins pick another, '
         'whatever the background (CHAT-18)', (tester) async {
       const green = 0xFF2E7D32;
