@@ -90,6 +90,7 @@ export const Limits = {
 
 export const TEAM_COLORS = [
   '#2F5BEA',
+  '#7BAFD4',
   '#0F8A5F',
   '#C2410C',
   '#B91C1C',

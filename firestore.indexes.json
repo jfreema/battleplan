@@ -257,42 +257,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "pinned",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "groupDocuments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "groupId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "nameLower",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "groupDocuments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "groupId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "pinned",
-          "order": "DESCENDING"
-        },
-        {
           "fieldPath": "nameLower",
           "order": "ASCENDING"
         }
@@ -309,6 +273,20 @@
         {
           "fieldPath": "uploaderName",
           "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "groupDocuments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "groupId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
         }
       ]
     }
