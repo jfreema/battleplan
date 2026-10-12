@@ -44,23 +44,28 @@
     <div class="wrap narrow">
       <h1>Privacy Policy</h1>
       <div class="note draft" role="note">
-        <p><strong>Draft: final wording pending (task 121).</strong> This page shows the structure of the policy and the commitments already decided. Sections in <span class="placeholder">italics</span> are placeholders and will be written before launch.</p>
+        <p><strong>Draft for the owner's review: not yet in effect.</strong> This is the proposed final wording, written before launch for Battleplan's owner to review. It is not legal advice. Text in <span class="placeholder">[brackets]</span> still needs a decision.</p>
       </div>
+      <p>Effective date: <span class="placeholder">[date]</span></p>
       <p class="lead">Battleplan is team chat and scheduling for sports teams. This policy explains what we collect, why, who can see it, how long we keep it, and how to delete it.</p>
 
       <nav class="toc" aria-labelledby="toc-title">
         <h2 id="toc-title">On this page</h2>
         <ol>
           <li><a href="#short">The short version</a></li>
+          <li><a href="#about">Who we are</a></li>
           <li><a href="#collect">What we collect</a></li>
           <li><a href="#use">How we use it</a></li>
           <li><a href="#who">Who can see it</a></li>
+          <li><a href="#providers">Companies that help us run Battleplan</a></li>
           <li><a href="#no-tracking">No ads, no selling, no tracking</a></li>
           <li><a href="#youth">Youth teams and children</a></li>
+          <li><a href="#location">Where your data is stored</a></li>
           <li><a href="#retention">How long we keep it</a></li>
+          <li><a href="#security">Keeping it safe</a></li>
           <li><a href="#delete">Deleting your data</a></li>
           <li><a href="#rights">Your choices and rights</a></li>
-          <li><a href="#website">This website</a></li>
+          <li><a href="#cookies">Cookies and browser storage</a></li>
           <li><a href="#changes">Changes to this policy</a></li>
           <li><a href="#contact">Contact</a></li>
         </ol>
@@ -68,72 +73,146 @@
 
       <h2 id="short">The short version</h2>
       <ul>
-        <li>No ads. We don't sell your data, and we don't track you across other apps and websites.</li>
-        <li>Your team's messages, photos, schedule, and documents are visible to your team's members.</li>
-        <li>Battleplan's super admins can access team content for moderation and support.</li>
+        <li>No ads. We don't sell your data, and we don't track you across other companies' apps and websites.</li>
+        <li>What you share in a team (messages, photos, schedule, documents) is visible to that team's members.</li>
+        <li>The people who run Battleplan can access team content for moderation and support, and every time they do, it's recorded.</li>
         <li>Accounts are for adults. On youth teams, adults enter only a player's name, jersey number, and position.</li>
-        <li>You can delete your account at any time, in the app or by email.</li>
+        <li>You can delete your account at any time, in the app or by email, and ask us for a copy of your data.</li>
       </ul>
+
+      <h2 id="about">Who we are</h2>
+      <p>Battleplan is run by <span class="placeholder">[operator's legal name, and state]</span> ("Battleplan", "we", "us"). This policy covers the Battleplan apps for iPhone and Android, the web app at <a href="/app/">getbattleplan.app/app</a>, this website, and the emails we send.</p>
 
       <h2 id="collect">What we collect</h2>
+      <h3>From you</h3>
       <ul>
-        <li><strong>Account and profile:</strong> your name, email address, and profile photo.</li>
-        <li><strong>What you share with your teams:</strong> messages, photos, files and links, reactions, poll votes, events, and RSVPs.</li>
-        <li><strong>Youth teams:</strong> the player details adults enter: a player's name, jersey number, and position.</li>
-        <li><strong>Devices:</strong> device tokens, so we can send notifications to the phones and browsers you're signed in on.</li>
-        <li><strong>Usage analytics:</strong> how the app is used, collected without advertising IDs.</li>
-        <li><strong>Crash reports:</strong> technical details when the app crashes, so we can fix it.</li>
+        <li><strong>Account and profile:</strong> your name, email address, and profile photo, plus your settings (theme and notification choices). When you first sign in with Google or Apple, we copy your name, email, and photo from that account to start your profile. After that, only you change your profile. If you use Apple's "Hide My Email", we get Apple's relay address, not your real one.</li>
+        <li><strong>Sign-in:</strong> which sign-in methods you use (Google, Apple, or email and password). Passwords are handled by our sign-in provider (Firebase Authentication); we never see or store them.</li>
+        <li><strong>Confirmations:</strong> when you confirmed you're 18 or older and agreed to the Terms of Use.</li>
+        <li><strong>What you share with your teams:</strong> messages, replies, photos, reactions, polls and votes, events, RSVPs and their notes, and documents and links. The app removes location data from photos before uploading them.</li>
+        <li><strong>Reports and blocks:</strong> the reports you file (what you reported, the reason, and any details you add) and the people you block.</li>
+        <li><strong>Messages to us:</strong> what you send when you email support, and our replies.</li>
       </ul>
-      <p class="placeholder">[Final wording: sources of the data, sign-in providers (Google, Apple, email), and the service providers that store and process it for us.]</p>
+      <h3>From other people</h3>
+      <ul>
+        <li><strong>Added by a team admin:</strong> a team admin can add you to their team by entering your name and email address. That creates an account for you and sends you a setup email. Until you set it up, you appear on the roster as "Not joined yet", and admins can answer RSVPs for you.</li>
+        <li><strong>Invites:</strong> when someone invites you by email, we store your email address with the invite.</li>
+        <li><strong>Youth players:</strong> coaches and guardians enter a player's name, and optionally a jersey number and position, and link the player to their guardians' accounts.</li>
+      </ul>
+      <h3>Automatically</h3>
+      <ul>
+        <li><strong>Devices:</strong> a notification token for each phone or browser you're signed in on, with its platform (iPhone, Android, or web) and app version, so we can send you notifications.</li>
+        <li><strong>Usage analytics:</strong> on iPhone and Android, Google Analytics for Firebase records how the app is used, such as app opens and screens, with device and app details (model, operating system, app version, and approximate country from your IP address). It never includes what you write, and it doesn't use advertising IDs.</li>
+        <li><strong>Crash and error reports:</strong> technical details when something goes wrong (what failed, the device and app version) so we can fix it. On iPhone and Android these go to Firebase Crashlytics. In the web app, a sample of errors is sent to our own servers with your account ID.</li>
+        <li><strong>Security and abuse prevention:</strong> checks that requests come from the real Battleplan apps (Firebase App Check), counters that enforce limits like how many invites you can send a day, and your account's last-active time.</li>
+        <li><strong>Admin records:</strong> a log of actions by team admins and by the people who run Battleplan (who did what, to what, and when), including each time we open a team's content.</li>
+      </ul>
 
       <h2 id="use">How we use it</h2>
-      <p class="placeholder">[Final wording: to run the service (deliver messages, schedules, reminders, and notifications), keep accounts secure, handle reports of abuse, answer support requests, and fix and improve the app.]</p>
+      <p>We use your information only to run Battleplan:</p>
+      <ul>
+        <li>to provide the service: show your teams their chat, schedule, polls, and documents, deliver messages, send reminders and notifications, and send the emails you need (setup links, invites, and security notices such as "a sign-in method was added to your account");</li>
+        <li>to keep accounts and teams safe: verify sign-ins, prevent spam and abuse, enforce limits, and review reports;</li>
+        <li>to answer support requests;</li>
+        <li>to find and fix bugs and understand which features are used, so we can improve the app;</li>
+        <li>to comply with the law.</li>
+      </ul>
+      <p>We don't use your information for advertising, and we don't make automated decisions about you that have legal or similar effects.</p>
 
       <h2 id="who">Who can see it</h2>
       <ul>
-        <li><strong>Your teams:</strong> what you share in a team is visible to that team's members. Your name and photo appear next to what you post.</li>
-        <li><strong>Team admins</strong> manage their team: for example, they can see the roster and remove messages and documents.</li>
-        <li><strong>Battleplan's super admins</strong> can access team content, including messages, photos, and documents, for moderation and support, for example to act on a report of abuse or to help with a support request.</li>
+        <li><strong>Your teams:</strong> what you share in a team is visible to that team's members, along with your name, photo, and title. Teams are walled off from each other: members of one team can't see your other teams or what you share there.</li>
+        <li><strong>Team admins</strong> manage their team. They can see the roster, including who hasn't joined yet, answer RSVPs for people who haven't joined, see the team's reports, and remove messages, photos, documents, and members.</li>
+        <li><strong>Guardians</strong> on youth teams see the players they're linked to and answer RSVPs for them.</li>
+        <li><strong>The people who run Battleplan</strong> ("super admins") can access any team's content, including messages, photos, and documents, and account details such as your email address. They use this only for moderation and support: for example, to act on a report of abuse or to help with a request you sent. Every time a super admin opens a team or takes an action, it's recorded in an audit log.</li>
+        <li><strong>Companies that help us run Battleplan</strong>, listed below, process data for us under contract and only to provide their service.</li>
+        <li><strong>The law:</strong> we may disclose information if the law requires it (for example, a valid subpoena or court order), or if we believe in good faith that it's needed to protect someone's safety or to protect Battleplan and its users from fraud or abuse.</li>
+        <li><strong>A new owner:</strong> if Battleplan is ever transferred to another person or company (including a company formed by its current owner), your information would move with it and stay covered by this policy's commitments. We'd tell you first.</li>
       </ul>
-      <p class="placeholder">[Final wording: service providers, legal requests, and any other cases.]</p>
+      <p>We don't share your information with anyone else.</p>
+
+      <h2 id="providers">Companies that help us run Battleplan</h2>
+      <ul>
+        <li><strong>Google (Firebase and Google Cloud):</strong> sign-in, database, file storage, server functions, push notifications (Firebase Cloud Messaging), app settings (Remote Config), app verification (App Check), crash reports (Crashlytics), and usage analytics (Google Analytics for Firebase). Read <a href="https://firebase.google.com/support/privacy">Firebase's privacy information</a>.</li>
+        <li><strong>Apple:</strong> push notifications to iPhones (Apple Push Notification service), and Sign in with Apple if you use it.</li>
+        <li><strong>Google sign-in</strong>, if you use it.</li>
+        <li><strong>Resend:</strong> sends Battleplan's emails, such as setup links, invites, and security notices.</li>
+        <li><strong>Google reCAPTCHA</strong> in the web app, which checks that requests come from a real browser and not a bot (see <a href="#cookies">Cookies and browser storage</a>).</li>
+      </ul>
+      <p>Apple's App Store and Google Play handle app downloads under their own privacy policies; we don't get personal information about you from them.</p>
 
       <h2 id="no-tracking">No ads, no selling, no tracking</h2>
       <ul>
         <li>There are no ads in Battleplan.</li>
-        <li>We don't sell your data.</li>
+        <li>We don't sell your personal information, and we don't share it for targeted advertising.</li>
         <li>We don't track you across other companies' apps or websites, so the app never asks for permission to track you.</li>
-        <li>Our analytics run without advertising IDs.</li>
+        <li>Our analytics run without advertising IDs, and we don't link analytics to your name or email.</li>
       </ul>
+      <p>If we ever decide to show ads, we'll update this policy and tell you before anything changes, and any ads would follow the rules that protect children's privacy.</p>
 
       <h2 id="youth">Youth teams and children</h2>
       <ul>
-        <li>Battleplan accounts are for adults 18 and older.</li>
-        <li>Players on youth teams never sign in or get accounts. Coaches and guardians enter only a player's name, jersey number, and position: no photos, birthdates, or contact details.</li>
-        <li>Photos shared in a team's chat may show children. They're visible only to that team's members, and anyone on the team can report one.</li>
+        <li>Battleplan accounts are for adults 18 and older. We don't knowingly let anyone younger create an account, and if we learn that one has, we'll delete it.</li>
+        <li>Players on youth teams never sign in or get accounts, and we never collect information directly from children. Coaches and guardians enter only a player's name, jersey number, and position: no photos, birthdates, or contact details.</li>
+        <li>A player's details are visible only to that team's members. A guardian or team admin can change them, and a team admin can remove a player. A parent or guardian can also email <a href="mailto:privacy@getbattleplan.app">privacy@getbattleplan.app</a> to have their child's details removed.</li>
+        <li>Photos shared in a team's chat may show children. They're visible only to that team's members, admins can delete them, and anyone on the team can report one. Please share photos of other people's children only with their parents' permission.</li>
       </ul>
-      <p class="placeholder">[Final wording: applicable children's privacy rules.]</p>
+
+      <h2 id="location">Where your data is stored</h2>
+      <p>Battleplan's database, files, and server functions run on Google Cloud in the United States (the <span class="placeholder">[us-central1, Iowa]</span> region). Some of our providers, such as Google for analytics and crash reports and Resend for email, may process data in other places. If you use Battleplan from outside the United States, your information is transferred to and stored in the United States.</p>
 
       <h2 id="retention">How long we keep it</h2>
       <ul>
-        <li>What you share stays until its author, a team admin, or the team's deletion removes it.</li>
-        <li>Deleted content is erased from our database right away and from our backups within 7 days.</li>
+        <li><strong>Your profile and sign-in details:</strong> until you delete your account.</li>
+        <li><strong>What you share in a team:</strong> until its author, a team admin, or the team's deletion removes it. Deleting your account doesn't remove your past messages and documents; they stay with the team, shown from "Deleted user" (see <a href="/delete-account">Delete your account</a>).</li>
+        <li><strong>Deleted items</strong> are erased from our database and file storage right away, and from our backups within 7 days. A deleted message leaves only a "This message was deleted" placeholder, with no text or photos.</li>
+        <li><strong>Archived teams</strong> are kept, read-only, until the owner restores or deletes them.</li>
+        <li><strong>Notification-center items:</strong> 90 days.</li>
+        <li><strong>Notification tokens:</strong> until you sign out on that device or delete your account, or after 60 days without use.</li>
+        <li><strong>Limit counters:</strong> 2 days.</li>
+        <li><strong>Admin and audit records:</strong> 1 year.</li>
+        <li><strong>Reports:</strong> as long as the team exists.</li>
+        <li><strong>Analytics:</strong> <span class="placeholder">[14 months]</span>, Google Analytics' retention setting for user-level data.</li>
+        <li><strong>Crash and error reports:</strong> about 90 days in Crashlytics, and <span class="placeholder">[30 days]</span> in our server logs.</li>
+        <li><strong>Support emails:</strong> as long as needed to help you, and no longer than <span class="placeholder">[2 years]</span>.</li>
       </ul>
-      <p class="placeholder">[Final wording: retention of analytics, crash reports, and logs.]</p>
+
+      <h2 id="security">Keeping it safe</h2>
+      <ul>
+        <li>All data travels over encrypted connections (HTTPS), and Google encrypts it where it's stored.</li>
+        <li>Database and storage rules let people see only the teams they belong to, and only the apps we publish can reach our servers.</li>
+        <li>Nobody at Battleplan, and no team admin, can see or set your password. Admins can only send setup and password-reset emails.</li>
+        <li>Changes to your sign-in methods, email, or password send a notice to your email address.</li>
+      </ul>
+      <p>No system is perfectly secure. If a breach affects your information, we'll tell you as the law requires.</p>
 
       <h2 id="delete">Deleting your data</h2>
-      <p>You can delete your account in the app (<span class="ui">Settings</span> → <span class="ui">Delete account</span>) or by emailing us. <a href="/delete-account">Delete your account</a> explains the steps and what happens to your messages, teams, and players.</p>
+      <p>You can delete your account in the app (<span class="ui">Settings</span> → <span class="ui">Delete account</span>) or by emailing us. <a href="/delete-account">Delete your account</a> explains the steps and what happens to your messages, teams, and players. You can also delete your own messages and documents at any time, and a team's owner can delete the whole team, which erases everything in it.</p>
 
       <h2 id="rights">Your choices and rights</h2>
-      <p class="placeholder">[Final wording: seeing and correcting your information, notification and email choices, and rights under the laws that apply to you.]</p>
+      <ul>
+        <li><strong>See and correct:</strong> you can see and edit your profile in <span class="ui">Settings</span>. Team admins and guardians can correct a player's details.</li>
+        <li><strong>Get a copy:</strong> email <a href="mailto:privacy@getbattleplan.app">privacy@getbattleplan.app</a> and we'll send you a copy of your profile and the content you've shared, in a common file format.</li>
+        <li><strong>Delete:</strong> delete your account in the app, or ask us by email.</li>
+        <li><strong>Notifications:</strong> choose which notifications you get, per team and overall, in <span class="ui">Settings</span>, or turn them off in your phone's or browser's settings. We send only the emails the service needs; there are no marketing emails.</li>
+        <li><strong>Blocking:</strong> block someone to hide their messages from you and stop notifications from them.</li>
+      </ul>
+      <p>Depending on where you live (for example, California, other US states, the European Union, or the United Kingdom), the law may give you more rights, such as to object to or restrict how we use your information, or to complain to a data protection authority. We honor the requests above for everyone, wherever they live. We answer requests within <span class="placeholder">[30]</span> days, and we may ask you to confirm the request from your account's email address so we know it's you. We won't treat you differently for using these rights.</p>
+      <p>Because we don't sell or share personal information for advertising, there's nothing to opt out of. We treat browser "Global Privacy Control" and "Do Not Track" signals the same way: we don't track you either way.</p>
 
-      <h2 id="website">This website</h2>
-      <p>The pages on getbattleplan.app (outside the web app at <a href="/app/">/app</a>) use no cookies, analytics, or third-party scripts.</p>
+      <h2 id="cookies">Cookies and browser storage</h2>
+      <ul>
+        <li><strong>This website:</strong> the pages on getbattleplan.app outside the web app use no cookies, analytics, or third-party scripts.</li>
+        <li><strong>The web app at <a href="/app/">/app</a></strong> keeps you signed in and saves a copy of recent team data and your settings in your browser's own storage, so it opens quickly and works on a spotty connection. You can clear it at any time in your browser's settings. It uses no advertising or analytics cookies.</li>
+        <li><strong>Google reCAPTCHA</strong> runs in the web app to check that requests come from a real browser. It may set its own cookies and collect information about your browser and device, under <a href="https://policies.google.com/privacy">Google's Privacy Policy</a> and <a href="https://policies.google.com/terms">Terms of Service</a>.</li>
+      </ul>
 
       <h2 id="changes">Changes to this policy</h2>
-      <p class="placeholder">[Final wording: how we'll tell you about changes, and the effective date.]</p>
+      <p>If we change this policy, we'll post the new version here with a new effective date. If a change matters, for example if we start collecting something new or using it in a new way, we'll tell you in the app or by email before it takes effect.</p>
 
       <h2 id="contact">Contact</h2>
-      <p>Questions about privacy: <a href="mailto:privacy@getbattleplan.app">privacy@getbattleplan.app</a>. Anything else: <a href="mailto:support@getbattleplan.app">support@getbattleplan.app</a>.</p>
+      <p>Questions about privacy, or a request about your data: <a href="mailto:privacy@getbattleplan.app">privacy@getbattleplan.app</a>. Anything else: <a href="mailto:support@getbattleplan.app">support@getbattleplan.app</a>.</p>
+      <p><span class="placeholder">[Optional mailing address]</span></p>
     </div>
   </main>
 
