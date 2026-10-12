@@ -47,6 +47,8 @@ class QuoteBlock extends StatelessWidget {
           ? l10n.quoteDeleted
           : l10n.quoteSemantics(authorName, text),
       excludeSemantics: true,
+      // The InkWell's own tap is excluded with its semantics.
+      onTap: onTap,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(Corners.chip),

@@ -30,22 +30,31 @@ class TeamBadge extends StatelessWidget {
         child: ClipRRect(
           borderRadius: radius,
           child: url != null
-              ? Image.network(url, fit: BoxFit.cover)
-              : ColoredBox(
-                  color: color ?? AppTokens.brand,
-                  child: Center(
-                    child: Text(
-                      Avatar.initialsOf(name),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: size * 0.38,
-                      ),
-                    ),
-                  ),
-                ),
+              ? Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  // Decoded at the size it's drawn, not the upload's.
+                  cacheWidth: (size * MediaQuery.devicePixelRatioOf(context))
+                      .ceil(),
+                  errorBuilder: (_, _, _) => _initials(),
+                )
+              : _initials(),
         ),
       ),
     );
   }
+
+  Widget _initials() => ColoredBox(
+    color: color ?? AppTokens.brand,
+    child: Center(
+      child: Text(
+        Avatar.initialsOf(name),
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: size * 0.38,
+        ),
+      ),
+    ),
+  );
 }

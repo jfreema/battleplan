@@ -59,9 +59,12 @@ class _ComposerState extends State<Composer> {
     final enter =
         event.logicalKey == LogicalKeyboardKey.enter ||
         event.logicalKey == LogicalKeyboardKey.numpadEnter;
+    // Enter while an input method is still composing a word picks the
+    // word, not sends.
     if (event is KeyDownEvent &&
         enter &&
-        !HardwareKeyboard.instance.isShiftPressed) {
+        !HardwareKeyboard.instance.isShiftPressed &&
+        !_text.value.composing.isValid) {
       _send();
       return KeyEventResult.handled;
     }

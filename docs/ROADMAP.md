@@ -193,13 +193,13 @@ SPEC §4.3 (WEB-1 to WEB-5), ARCH §6.6 and D40. The website is the `website/` f
 110. Turn on iOS Universal Links with the Associated Domains entitlement (spike 2).
 111. 👤 **Jared:** Turn on Cloudflare Email Routing and forward `support@` and `privacy@getbattleplan.app` to your Gmail.
 112. 👤 **Jared:** Customize Firebase's email domain (`noreply@getbattleplan.app`, sender "Battleplan") and register both sending addresses with Apple's private email relay.
-113. 👤 **Jared:** Confirm Q11 (where most teams are; default US, `us-central1`). **The prod database's region is permanent.**
+113. ✅ 👤 **Jared:** Confirm Q11 (where most teams are; default US, `us-central1`). **The prod database's region is permanent.**
 114. 👤 **Jared:** Upgrade `battleplan-prod` to Blaze and set its budget alerts.
 115. Create prod's database in that region; deploy rules, indexes, TTL policies, and functions; turn on daily backups; set the Remote Config minimum version.
 116. 👤 **Jared:** Connect `getbattleplan.app` to prod's Hosting, with the Cloudflare records set to **DNS only** (grey cloud). It serves the website and the web app at `/app` (tasks 175 to 179).
 117. Set up the manual prod release workflow, and decide where iOS builds run (macOS minutes on GitHub are 10×).
 118. Bootstrap the first super admin on prod.
-119. 👤 **Jared:** Confirm Q9 (logo and primary color; default placeholder mark and blue `#2F5BEA`).
+119. ✅ 👤 **Jared:** Confirm Q9 (logo and primary color; default placeholder mark and blue `#2F5BEA`).
 120. App icons and splash screens.
 121. Legal pages: Privacy Policy, Terms of Use, `/delete-account` (LEGAL-1, LEGAL-3), as pages on the website (task 176); no-tracking setup checked (LEGAL-2).
 122. Beta with our team: TestFlight on iOS, Firebase App Distribution on Android, and the web; a bug bash.

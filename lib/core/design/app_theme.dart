@@ -38,6 +38,11 @@ abstract final class AppTheme {
       materialTapTargetSize: MaterialTapTargetSize.padded,
     );
     final text = base.textTheme;
+    // A visible focus ring for keyboard users (SPEC §7.6): buttons get an
+    // outline when focused, and other tappable rows a stronger highlight.
+    final ring = WidgetStateProperty<BorderSide?>.fromMap({
+      WidgetState.focused: BorderSide(color: scheme.primary, width: 3),
+    });
     final cardShape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(Corners.card),
     );
@@ -45,6 +50,7 @@ abstract final class AppTheme {
     return base.copyWith(
       extensions: [appColors],
       scaffoldBackgroundColor: scheme.surface,
+      focusColor: scheme.primary.withValues(alpha: 0.24),
       textTheme: text.copyWith(
         headlineMedium: text.headlineMedium?.copyWith(
           fontSize: TypeScale.headline,
@@ -95,13 +101,18 @@ abstract final class AppTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size(64, 48),
           shape: const StadiumBorder(),
-        ),
+        ).copyWith(side: ring),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(64, 48),
           shape: const StadiumBorder(),
-        ),
+        ).copyWith(side: ring),
+      ),
+      textButtonTheme: TextButtonThemeData(style: ButtonStyle(side: ring)),
+      iconButtonTheme: IconButtonThemeData(style: ButtonStyle(side: ring)),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(side: ring),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: scheme.surfaceContainer,

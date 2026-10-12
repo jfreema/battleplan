@@ -1,4 +1,5 @@
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Placeholder rows shown while a list loads. Lists never show spinners
@@ -20,7 +21,7 @@ class SkeletonList extends StatelessWidget {
       ),
     );
     return Semantics(
-      label: 'Loading',
+      label: AppLocalizations.of(context).loadingLabel,
       child: ExcludeSemantics(
         child: ListView.separated(
           physics: const NeverScrollableScrollPhysics(),

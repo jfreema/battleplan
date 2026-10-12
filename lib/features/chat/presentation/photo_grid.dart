@@ -19,6 +19,9 @@ class PhotoGrid extends StatelessWidget {
   /// Width over height of a lone photo, when known.
   final double? single;
 
+  /// The widest a grid is drawn, in logical pixels.
+  static const double maxWidth = 280;
+
   @override
   Widget build(BuildContext context) {
     const gap = 3.0;
@@ -26,7 +29,7 @@ class PhotoGrid extends StatelessWidget {
       return ClipRRect(
         borderRadius: BorderRadius.circular(Corners.card),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 280, maxHeight: 360),
+          constraints: const BoxConstraints(maxWidth: maxWidth, maxHeight: 360),
           child: AspectRatio(
             aspectRatio: (single ?? 1).clamp(0.5, 2.0),
             child: tile(0),
@@ -38,7 +41,7 @@ class PhotoGrid extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(Corners.card),
       child: SizedBox(
-        width: 280,
+        width: maxWidth,
         child: GridView.count(
           crossAxisCount: columns,
           mainAxisSpacing: gap,
@@ -55,10 +58,24 @@ class PhotoGrid extends StatelessWidget {
 
 /// A stored message photo, loaded from its download URL.
 class StoredPhoto extends ConsumerWidget {
-  const new({required this.attachment, super.key, this.fit = BoxFit.cover});
+  const new({
+    required this.attachment,
+    super.key,
+    this.fit = BoxFit.cover,
+    this.semanticLabel,
+    this.decodeWidth,
+  });
 
   final Attachment attachment;
   final BoxFit fit;
+
+  /// What screen readers say: "Photo from Alex" (SPEC §7.6).
+  final String? semanticLabel;
+
+  /// For thumbnails, the widest it's drawn in logical pixels: the photo is
+  /// decoded at that size rather than its full 2048 px, which keeps memory
+  /// down and scrolling smooth (SPEC §8.1). Null decodes it in full.
+  final double? decodeWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,10 +84,14 @@ class StoredPhoto extends ConsumerWidget {
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
     );
     if (url == null) return placeholder;
+    final width = decodeWidth;
     return Image.network(
       url,
       fit: fit,
-      semanticLabel: 'Photo',
+      semanticLabel: semanticLabel,
+      cacheWidth: width == null
+          ? null
+          : (width * MediaQuery.devicePixelRatioOf(context)).ceil(),
       loadingBuilder: (_, child, progress) =>
           progress == null ? child : placeholder,
       errorBuilder: (_, _, _) => placeholder,
@@ -85,6 +106,12 @@ class LocalPhoto extends StatelessWidget {
   final Uint8List bytes;
 
   @override
-  Widget build(BuildContext context) =>
-      Image.memory(bytes, fit: BoxFit.cover, gaplessPlayback: true);
+  Widget build(BuildContext context) => Image.memory(
+    bytes,
+    fit: BoxFit.cover,
+    gaplessPlayback: true,
+    // A thumbnail in the grid: decoded at that size, not the photo's own.
+    cacheWidth: (PhotoGrid.maxWidth * MediaQuery.devicePixelRatioOf(context))
+        .ceil(),
+  );
 }

@@ -177,7 +177,8 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     await showAdaptiveSheet<void>(
       context,
       builder: (sheet) => SafeArea(
-        child: Padding(
+        // Scrolls when large text or a short screen can't fit it all.
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: Space.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -369,11 +370,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               onTap: widget.onOpenQuote,
             ),
           );
+    // A one-line bubble is 48 tall, a full tap target (SPEC §7.6).
     final textBubble = Container(
       constraints: const BoxConstraints(maxWidth: 520),
       padding: const EdgeInsets.symmetric(
         horizontal: Space.md,
-        vertical: Space.sm,
+        vertical: Space.md,
       ),
       decoration: BoxDecoration(
         color: deleted ? Colors.transparent : background,
@@ -418,11 +420,24 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         : PhotoGrid(
             count: m.attachments.length,
             single: m.attachments.first.aspectRatio,
-            tile: (i) => GestureDetector(
-              onTap: () =>
-                  unawaited(PhotoViewer.open(context, m.attachments, i)),
-              child: StoredPhoto(attachment: m.attachments[i]),
-            ),
+            tile: (i) {
+              void open() =>
+                  unawaited(PhotoViewer.open(context, m.attachments, i));
+              // "Photo from Alex", a button that opens the viewer.
+              return Semantics(
+                button: true,
+                label: l10n.photoFrom(m.authorName),
+                excludeSemantics: true,
+                onTap: open,
+                child: GestureDetector(
+                  onTap: open,
+                  child: StoredPhoto(
+                    attachment: m.attachments[i],
+                    decodeWidth: PhotoGrid.maxWidth,
+                  ),
+                ),
+              );
+            },
           );
     // A poll shows as its card (POLL-2, CHAT-11); its text is the question,
     // which the card shows itself.
@@ -752,7 +767,7 @@ class OutgoingTextTile extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 520),
               padding: const EdgeInsets.symmetric(
                 horizontal: Space.md,
-                vertical: Space.sm,
+                vertical: Space.md,
               ),
               decoration: BoxDecoration(
                 color: scheme.primary,

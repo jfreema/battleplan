@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/tap_target.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -92,7 +93,13 @@ class ReactionPicker extends StatelessWidget {
         customBorder: const CircleBorder(),
         onTap: () => onPick(r),
         child: Container(
-          padding: const EdgeInsets.all(Space.sm),
+          padding: const EdgeInsets.all(Space.xs),
+          // At least 48 × 48 to tap (SPEC §7.6).
+          constraints: const BoxConstraints(
+            minWidth: kMinInteractiveDimension,
+            minHeight: kMinInteractiveDimension,
+          ),
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: r == mine ? scheme.primaryContainer : null,
@@ -147,36 +154,46 @@ class ReactionChips extends StatelessWidget {
       counts[r] = (counts[r] ?? 0) + 1;
     }
     final mine = me == null ? null : message.reactions[me];
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: Wrap(
-        spacing: Space.xs,
-        children: [
-          for (final r in reactionOrder)
-            if (counts[r] case final n?)
-              Material(
-                color: r == mine
-                    ? scheme.primaryContainer
-                    : scheme.surfaceContainerHigh,
-                shape: StadiumBorder(
-                  side: BorderSide(
-                    color: r == mine ? scheme.primary : scheme.outlineVariant,
-                  ),
-                ),
-                child: InkWell(
-                  customBorder: const StadiumBorder(),
-                  onTap: onShowWho,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: Space.sm,
-                      vertical: 2,
+    final l10n = AppLocalizations.of(context);
+    return Wrap(
+      spacing: Space.xs,
+      children: [
+        for (final r in reactionOrder)
+          if (counts[r] case final n?)
+            // Read as "Like, 2" rather than the emoji, and a 48-point
+            // target around the small chip (SPEC §7.6).
+            Semantics(
+              container: true,
+              button: true,
+              selected: r == mine,
+              label: l10n.reactionChipLabel(reactionName(l10n, r), n),
+              excludeSemantics: true,
+              onTap: onShowWho,
+              child: TapTargetPadding(
+                child: Material(
+                  color: r == mine
+                      ? scheme.primaryContainer
+                      : scheme.surfaceContainerHigh,
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: r == mine ? scheme.primary : scheme.outlineVariant,
                     ),
-                    child: Text('${reactionEmoji(r)} $n'),
+                  ),
+                  child: InkWell(
+                    customBorder: const StadiumBorder(),
+                    onTap: onShowWho,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Space.sm,
+                        vertical: 2,
+                      ),
+                      child: Text('${reactionEmoji(r)} $n'),
+                    ),
                   ),
                 ),
               ),
-        ],
-      ),
+            ),
+      ],
     );
   }
 }

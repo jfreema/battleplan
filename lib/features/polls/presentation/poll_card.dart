@@ -297,51 +297,56 @@ class _OptionRow extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             onLongPress: onLongPress,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: FractionallySizedBox(
-                    alignment: AlignmentDirectional.centerStart,
-                    widthFactor: share,
-                    child: ColoredBox(
-                      color: chosen || leading
-                          ? scheme.primaryContainer
-                          : scheme.surfaceContainerHighest,
+            // At least 48 tall, so each option is easy to tap (SPEC §7.6).
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Stack(
+                alignment: AlignmentDirectional.centerStart,
+                children: [
+                  Positioned.fill(
+                    child: FractionallySizedBox(
+                      alignment: AlignmentDirectional.centerStart,
+                      widthFactor: share,
+                      child: ColoredBox(
+                        color: chosen || leading
+                            ? scheme.primaryContainer
+                            : scheme.surfaceContainerHighest,
+                      ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Space.sm,
-                    vertical: Space.sm,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        check,
-                        size: 20,
-                        color: chosen ? scheme.primary : scheme.outline,
-                      ),
-                      const SizedBox(width: Space.sm),
-                      Expanded(
-                        child: Text(
-                          option.text,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: leading ? FontWeight.w600 : null,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Space.sm,
+                      vertical: Space.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          check,
+                          size: 20,
+                          color: chosen ? scheme.primary : scheme.outline,
+                        ),
+                        const SizedBox(width: Space.sm),
+                        Expanded(
+                          child: Text(
+                            option.text,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: leading ? FontWeight.w600 : null,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: Space.sm),
-                      Text(
-                        '$votes · ${(share * 100).round()}%',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                        const SizedBox(width: Space.sm),
+                        Text(
+                          '$votes · ${(share * 100).round()}%',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

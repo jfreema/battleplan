@@ -81,27 +81,25 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         sort: view.sort,
         filter: view.filter,
       );
-      body = ListView(
+      final noMatches = shown.isEmpty;
+      final more = !state.reachedEnd;
+      // Rows are built as they scroll into view, so image thumbnails below
+      // the fold don't all look up their files at once (SPEC §8.1).
+      body = ListView.builder(
         padding: const EdgeInsets.only(bottom: Space.xxxl * 2),
-        children: [
-          if (shown.isEmpty)
-            Padding(
+        itemCount: (noMatches ? 1 : shown.length) + (more ? 1 : 0),
+        itemBuilder: (context, i) {
+          if (noMatches && i == 0) {
+            return Padding(
               padding: EdgeInsets.all(gutter),
               child: Text(
                 l10n.documentsNoMatches(view.filter.trim()),
                 textAlign: TextAlign.center,
               ),
-            ),
-          for (final d in shown)
-            DocumentRow(
-              key: ValueKey(d.id.value),
-              doc: d,
-              group: group,
-              me: me,
-              onTap: () => unawaited(openDocument(context, ref, d)),
-            ),
-          if (!state.reachedEnd)
-            Padding(
+            );
+          }
+          if (i == (noMatches ? 1 : shown.length)) {
+            return Padding(
               padding: const EdgeInsets.all(Space.md),
               child: Center(
                 child: state.loadingMore
@@ -111,8 +109,17 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                         child: Text(l10n.documentsLoadMore),
                       ),
               ),
-            ),
-        ],
+            );
+          }
+          final d = shown[i];
+          return DocumentRow(
+            key: ValueKey(d.id.value),
+            doc: d,
+            group: group,
+            me: me,
+            onTap: () => unawaited(openDocument(context, ref, d)),
+          );
+        },
       );
     }
 
@@ -136,58 +143,84 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             ),
           Padding(
             padding: EdgeInsets.fromLTRB(gutter, Space.sm, gutter, Space.xs),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _filter,
-                    decoration: InputDecoration(
-                      hintText: l10n.documentsFilterHint,
-                      prefixIcon: const Icon(AppIcons.search),
-                      isDense: true,
-                      border: const OutlineInputBorder(),
-                      suffixIcon: view.filter.isEmpty
-                          ? null
-                          : IconButton(
-                              tooltip: l10n.cancel,
-                              icon: const Icon(AppIcons.close),
-                              onPressed: () {
-                                _filter.clear();
-                                ref
-                                    .read(documentsViewOptionsProvider.notifier)
-                                    .setFilter('');
-                              },
-                            ),
-                    ),
-                    onChanged: (v) => ref
-                        .read(documentsViewOptionsProvider.notifier)
-                        .setFilter(v),
+            child: _FilterBar(
+              filter: TextField(
+                controller: _filter,
+                decoration: InputDecoration(
+                  hintText: l10n.documentsFilterHint,
+                  prefixIcon: const Icon(AppIcons.search),
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                  suffixIcon: view.filter.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: l10n.cancel,
+                          icon: const Icon(AppIcons.close),
+                          onPressed: () {
+                            _filter.clear();
+                            ref
+                                .read(documentsViewOptionsProvider.notifier)
+                                .setFilter('');
+                          },
+                        ),
+                ),
+                onChanged: (v) => ref
+                    .read(documentsViewOptionsProvider.notifier)
+                    .setFilter(v),
+              ),
+              sort: SegmentedButton<DocumentSort>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: DocumentSort.recent,
+                    label: Text(l10n.documentsSortRecent),
                   ),
-                ),
-                const SizedBox(width: Space.sm),
-                SegmentedButton<DocumentSort>(
-                  showSelectedIcon: false,
-                  segments: [
-                    ButtonSegment(
-                      value: DocumentSort.recent,
-                      label: Text(l10n.documentsSortRecent),
-                    ),
-                    ButtonSegment(
-                      value: DocumentSort.name,
-                      label: Text(l10n.documentsSortName),
-                    ),
-                  ],
-                  selected: {view.sort},
-                  onSelectionChanged: (s) => ref
-                      .read(documentsViewOptionsProvider.notifier)
-                      .setSort(s.first),
-                ),
-              ],
+                  ButtonSegment(
+                    value: DocumentSort.name,
+                    label: Text(l10n.documentsSortName),
+                  ),
+                ],
+                selected: {view.sort},
+                onSelectionChanged: (s) => ref
+                    .read(documentsViewOptionsProvider.notifier)
+                    .setSort(s.first),
+              ),
             ),
           ),
           Expanded(child: body),
         ],
       ),
+    );
+  }
+}
+
+/// The filter box with the sort beside it, or under it when large text
+/// wouldn't fit them side by side (SPEC §7.6).
+class _FilterBar extends StatelessWidget {
+  const new({required this.filter, required this.sort});
+
+  final Widget filter;
+  final Widget sort;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    if (scale > 1.3) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          filter,
+          const SizedBox(height: Space.sm),
+          sort,
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: filter),
+        const SizedBox(width: Space.sm),
+        sort,
+      ],
     );
   }
 }

@@ -79,7 +79,13 @@ class EventRow extends StatelessWidget {
                 color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(Corners.chip),
               ),
-              child: Icon(typeIcon(event.type), color: color, size: 20),
+              // The type is read out, as it isn't written on the row.
+              child: Icon(
+                typeIcon(event.type),
+                color: color,
+                size: 20,
+                semanticLabel: typeLabel(l10n, event.type),
+              ),
             ),
             const SizedBox(width: Space.md),
             Expanded(
@@ -251,9 +257,12 @@ class _MyAnswer extends StatelessWidget {
           Icon(statusIcon(s), size: 16, color: color),
           const SizedBox(width: 2),
         ],
-        Text(
-          label == null ? text : '$label: $text',
-          style: theme.textTheme.labelMedium?.copyWith(color: color),
+        // Wraps rather than overflowing with large text (SPEC §7.6).
+        Flexible(
+          child: Text(
+            label == null ? text : '$label: $text',
+            style: theme.textTheme.labelMedium?.copyWith(color: color),
+          ),
         ),
       ],
     );

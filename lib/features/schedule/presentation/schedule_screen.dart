@@ -148,27 +148,18 @@ class EventList extends ConsumerWidget {
       );
     }
     final range = _range(state.events, zone);
-    final rows = <Widget>[];
-    DateTime? lastDay;
-    for (final e in events) {
-      final day = dayOf(e, zone);
-      rows.add(
-        ScheduleEventRow(
-          event: e,
-          viewerZone: zone,
-          day: day == lastDay ? null : day,
-          showTeam: options.allTeams,
-          rsvpRange: range,
-        ),
-      );
-      lastDay = day;
-    }
-    return ListView(
+    // Each row's date block shows only on the first event of its day.
+    final days = [for (final e in events) dayOf(e, zone)];
+    final more = !state.reachedEnd;
+    // Built as they scroll into view, so a long list (or one with more
+    // pages loaded) doesn't build every row and its RSVP lookups at once
+    // (SPEC §8.1).
+    return ListView.builder(
       padding: const EdgeInsets.only(bottom: Space.xxxl * 2),
-      children: [
-        ...rows,
-        if (!state.reachedEnd)
-          Padding(
+      itemCount: events.length + (more ? 1 : 0),
+      itemBuilder: (context, i) {
+        if (i == events.length) {
+          return Padding(
             padding: const EdgeInsets.all(Space.md),
             child: Center(
               child: state.loadingMore
@@ -178,8 +169,18 @@ class EventList extends ConsumerWidget {
                       child: Text(l10n.scheduleLoadMore),
                     ),
             ),
-          ),
-      ],
+          );
+        }
+        final e = events[i];
+        return ScheduleEventRow(
+          key: ValueKey(e.id.value),
+          event: e,
+          viewerZone: zone,
+          day: i > 0 && days[i] == days[i - 1] ? null : days[i],
+          showTeam: options.allTeams,
+          rsvpRange: range,
+        );
+      },
     );
   }
 

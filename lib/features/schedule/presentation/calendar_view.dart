@@ -220,11 +220,14 @@ class _DayCell extends StatelessWidget {
       label:
           '${dayLabel(l10n, day)}, ${l10n.calendarEventCount(events.length)}',
       excludeSemantics: true,
+      // The InkWell's own tap is excluded with its semantics.
+      onTap: onTap,
       child: InkWell(
         borderRadius: BorderRadius.circular(Corners.chip),
         onTap: onTap,
         child: Container(
-          height: 48,
+          // At least 48 tall, taller with large text (SPEC §7.6).
+          constraints: const BoxConstraints(minHeight: 48),
           margin: const EdgeInsets.all(1),
           decoration: BoxDecoration(
             color: isSelected ? scheme.primaryContainer : null,
@@ -232,6 +235,7 @@ class _DayCell extends StatelessWidget {
             borderRadius: BorderRadius.circular(Corners.chip),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(

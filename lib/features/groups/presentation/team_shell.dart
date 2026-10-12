@@ -421,7 +421,6 @@ class _StorageBanner extends ConsumerWidget {
               ),
             IconButton(
               tooltip: l10n.dismiss,
-              visualDensity: VisualDensity.compact,
               icon: const Icon(AppIcons.close, size: 20),
               onPressed: () => ref
                   .read(dismissedStorageBannersProvider.notifier)
@@ -468,6 +467,8 @@ class _SwitcherButton extends StatelessWidget {
       button: true,
       label: '${l10n.switchTeamTooltip}: $name',
       excludeSemantics: true,
+      // The InkWell's own tap is excluded with its semantics.
+      onTap: onPressed,
       child: InkWell(
         borderRadius: BorderRadius.circular(Corners.card),
         onTap: onPressed,

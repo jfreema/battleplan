@@ -100,6 +100,8 @@ class _PhotoViewerState extends ConsumerState<PhotoViewer> {
             child: StoredPhoto(
               attachment: widget.photos[i],
               fit: BoxFit.contain,
+              semanticLabel:
+                  '${l10n.quotePhoto}, ${l10n.photoCount(i + 1, count)}',
             ),
           ),
         ),

@@ -123,6 +123,9 @@ class _Banner extends StatelessWidget {
                         button: true,
                         label: l10n.dismissNotification,
                         excludeSemantics: true,
+                        // Excluding the button's own semantics drops its
+                        // tap, so screen readers get it here.
+                        onTap: onDismiss,
                         child: IconButton(
                           onPressed: onDismiss,
                           icon: const Icon(AppIcons.close),

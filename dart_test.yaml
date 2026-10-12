@@ -1,0 +1,7 @@
+# Test tags (ARCH §9). Golden tests are tagged `golden`:
+#   flutter test --tags golden                  # only the goldens
+#   flutter test --exclude-tags golden          # everything else
+#   flutter test --tags golden --update-goldens # after an intended change
+tags:
+  golden:
+    description: Golden image tests of the main screens in light and dark.
