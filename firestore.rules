@@ -579,7 +579,72 @@ service cloud.firestore {
     match /groupDocuments/{docId} {
       allow get: if isMember(resource.data.groupId);
       allow list: if boundedQuery() && isMember(resource.data.groupId);
-      // Create and edit rules arrive with documents (M7).
+      // DOC-2, DOC-3: admins, or any member while the team lets members add
+      // documents (TEAM-5), on an active team. A file is uploaded first, to
+      // this document's own folder (storage.rules check the room and size);
+      // a link needs no storage, so it's allowed when the team is full
+      // (STORE-4). uploaderName is the uploader's membership name, kept so
+      // "who added it" still reads after they leave. Only admins may pin.
+      allow create: if docCreatorOk(incoming().groupId)
+        && incoming().uploadedBy == uid()
+        && incoming().uploaderName == member(incoming().groupId).displayName
+        && (incoming().pinned == false || isAdmin(incoming().groupId))
+        && incoming().notifyTeam is bool
+        && incoming().createdAt == request.time
+        && validDocument(incoming(), docId);
+      // DOC-5: the uploader or an admin renames and edits the description;
+      // admins also pin and unpin. Everything else is fixed.
+      allow update: if docEditorOk(resource.data)
+        && onlyChanges(isAdmin(resource.data.groupId)
+             ? ['name', 'nameLower', 'description', 'pinned', 'updatedAt']
+             : ['name', 'nameLower', 'description', 'updatedAt'])
+        && validDocument(incoming(), docId);
+      // DOC-5, SAFE-4: the uploader, an admin, or a super admin (resolving a
+      // report). The file follows through onDocumentDeleted; clients never
+      // delete Storage files.
+      allow delete: if docEditorOk(resource.data);
+    }
+
+    function docCreatorOk(g) {
+      return isMember(g) && active(g)
+        && (isAdmin(g) || settings(g).get('membersCanUploadDocs', true) == true);
+    }
+    // Archived teams are read-only (TEAM-9), for super admins too.
+    function docEditorOk(d) {
+      return active(d.groupId)
+        && (superAdmin() || isAdmin(d.groupId) || (isMember(d.groupId) && d.uploadedBy == uid()));
+    }
+
+    // A document's own fields (ARCH §6.2). A file names its Storage path in
+    // this document's folder of this team, an allowed type (storage.rules'
+    // isDocument), and its size up to 10 MB (STORE-1); a link names an
+    // http(s) URL. Neither carries the other's fields.
+    function validDocument(d, docId) {
+      return d.keys().hasOnly(['groupId', 'kind', 'name', 'nameLower', 'description', 'pinned',
+            'path', 'contentType', 'size', 'url', 'uploadedBy', 'uploaderName', 'notifyTeam',
+            'createdAt', 'updatedAt'])
+        && d.name is string && d.name.trim().size() > 0 && d.name.size() <= 100
+        && d.nameLower == d.name.lower()
+        && d.description is string && d.description.size() <= 500
+        && d.pinned is bool
+        && d.updatedAt == request.time
+        && (d.kind == 'file'
+            ? d.path is string
+              && d.path.matches('groups/' + d.groupId + '/documents/' + docId + '/[^/]+')
+              && d.contentType is string
+              && (d.contentType.matches('image/.*') || d.contentType in [
+                  'application/pdf', 'text/plain', 'text/csv', 'application/msword',
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  'application/vnd.ms-excel',
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  'application/vnd.ms-powerpoint',
+                  'application/vnd.openxmlformats-officedocument.presentationml.presentation'])
+              && d.size is int && d.size >= 0 && d.size <= 10 * 1024 * 1024
+              && d.get('url', null) == null
+            : d.kind == 'link'
+              && d.url is string && d.url.size() <= 2000 && d.url.matches('(?i)https?://[^ ]+')
+              && d.get('path', null) == null && d.get('contentType', null) == null
+              && d.get('size', null) == null);
     }
 
     match /notifications/{notificationId} {

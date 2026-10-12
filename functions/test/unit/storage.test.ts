@@ -63,7 +63,12 @@ describe('classifyMediaPath (STORE-5)', () => {
     });
     expect(classifyMediaPath('g1', 'groups/g1/avatar/1700000000000.jpg')).toEqual({ kind: 'logo' });
     expect(classifyMediaPath('g1', 'groups/g1/theme/1700000000000.jpg')).toEqual({ kind: 'background' });
-    expect(classifyMediaPath('g1', 'groups/g1/documents/d1/Schedule.pdf')).toEqual({ kind: 'document' });
+    expect(classifyMediaPath('g1', 'groups/g1/documents/d1/Schedule.pdf')).toEqual({
+      kind: 'document',
+      documentId: 'd1',
+    });
+    // A folder no document could have is still a document file, with no record.
+    expect(classifyMediaPath('g1', 'groups/g1/documents/__x__/a.pdf')).toEqual({ kind: 'document' });
   });
 
   it('calls a file in a folder no message could have an orphan', () => {

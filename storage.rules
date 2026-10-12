@@ -56,11 +56,18 @@ service firebase.storage {
       allow read: if isMember(g);
       allow create: if isMember(g) && isImage(10) && underQuota(g);
     }
+    // A document's file (DOC-2), uploaded before its groupDocuments record,
+    // which must name this path. A team that never set membersCanUploadDocs
+    // lets members upload (TEAM-5's default), as the Firestore rule does.
+    // No client deletes: deleting the document removes the file
+    // (onDocumentDeleted), and dailyCleanup removes uploads whose document
+    // was never created.
     match /groups/{g}/documents/{docId}/{file} {
       allow read: if isMember(g);
       allow create: if isMember(g) && underQuota(g) && isDocument(10)
         && (isAdmin(g) || firestore.get(
-             /databases/(default)/documents/groups/$(g)).data.settings.membersCanUploadDocs == true);
+             /databases/(default)/documents/groups/$(g)).data.settings
+               .get('membersCanUploadDocs', true) == true);
     }
   }
 }

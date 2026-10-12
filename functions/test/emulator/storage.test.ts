@@ -244,7 +244,8 @@ describe('Media (STORE-5)', () => {
       ['messages/m1/0.jpg', 300, 'chatPhoto', true],
       ['avatar/new.jpg', 200, 'logo', true],
       ['avatar/old.jpg', 100, 'logo', false],
-      ['documents/d1/plan.pdf', 50, 'document', null],
+      // No document names this file, so nothing uses it (M7).
+      ['documents/d1/plan.pdf', 50, 'document', false],
       ['messages/gone/0.jpg', 10, 'chatPhoto', false],
     ]);
     const chat = res.items.find((f) => f.messageId === 'm1')!;

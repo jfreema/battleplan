@@ -377,8 +377,9 @@ const DeleteMediaInput = z.object({ groupId: GroupId, path: z.string().min(1).ma
 
 /**
  * Deletes one team file to free space (STORE-5): a chat photo leaves its
- * message, and the logo or background in use is reset. Team admins;
- * audited.
+ * message, the logo or background in use is reset, and a document's file
+ * takes its document with it (the response's `fixed` is 'deletedDocument').
+ * Team admins; audited.
  */
 export const deleteTeamMedia = onCall(async (request) => {
   const uid = requireAuth(request);
@@ -391,7 +392,12 @@ export const deleteTeamMedia = onCall(async (request) => {
     groupId: input.groupId,
     targetType: 'file',
     targetId: input.path,
-    before: { kind: deleted.kind, size: deleted.size, messageId: deleted.messageId ?? null },
+    before: {
+      kind: deleted.kind,
+      size: deleted.size,
+      messageId: deleted.messageId ?? null,
+      documentId: deleted.documentId ?? null,
+    },
     after: { fixed: deleted.fixed },
   });
   return { ok: true, kind: deleted.kind, fixed: deleted.fixed };

@@ -6,6 +6,7 @@ import { posix } from 'node:path';
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { photosOfMessages, removeAttachment } from '../chat/service.js';
+import { deleteDocumentOfFile, documentsOfFiles } from '../documents/service.js';
 import { db, storage } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
 import { quotaBytesOf } from './storage.js';
@@ -23,9 +24,16 @@ export interface MediaItem {
   kind: MediaKind;
   /** Chat photos: the message the file was uploaded for. */
   messageId?: string;
-  /** Chat photos: who sent it, while the message still exists. */
+  /** Chat photos: who sent it, while the message still exists. Documents: who added it. */
   authorName?: string;
-  /** Whether it's still in use: the team's logo or background, or a photo its message still shows. */
+  /** Documents: the groupDocuments record the file was uploaded for. */
+  documentId?: string;
+  /** Documents: the document's name, while its record still exists (DOC-1). */
+  documentName?: string;
+  /**
+   * Whether it's still in use: the team's logo or background, a photo its
+   * message still shows, or the file its document points at.
+   */
   current?: boolean;
 }
 
@@ -62,10 +70,14 @@ function isDocId(id: string): boolean {
 /**
  * What a file under `groups/{groupId}/` is, from its path alone (the
  * folders in storage.rules): a chat photo (with its message ID), the team
- * logo, a chat background, a document, or anything else. A file in a
- * message folder no message could have is an orphan ('other').
+ * logo, a chat background, a document (with its document ID), or anything
+ * else. A file in a message folder no message could have is an orphan
+ * ('other').
  */
-export function classifyMediaPath(groupId: string, path: string): { kind: MediaKind; messageId?: string } {
+export function classifyMediaPath(
+  groupId: string,
+  path: string,
+): { kind: MediaKind; messageId?: string; documentId?: string } {
   if (!isTeamMediaPath(groupId, path)) return { kind: 'other' };
   const parts = path.slice(`groups/${groupId}/`.length).split('/');
   if (parts.some((p) => p === '')) return { kind: 'other' };
@@ -73,7 +85,9 @@ export function classifyMediaPath(groupId: string, path: string): { kind: MediaK
   if (folder === 'messages' && parts.length >= 3 && isDocId(parts[1])) return { kind: 'chatPhoto', messageId: parts[1] };
   if (folder === 'avatar' && parts.length === 2) return { kind: 'logo' };
   if (folder === 'theme' && parts.length === 2) return { kind: 'background' };
-  if (folder === 'documents' && parts.length === 3) return { kind: 'document' };
+  if (folder === 'documents' && parts.length === 3) {
+    return isDocId(parts[1]) ? { kind: 'document', documentId: parts[1] } : { kind: 'document' };
+  }
   return { kind: 'other' };
 }
 
@@ -115,6 +129,11 @@ export async function listMedia(groupId: string): Promise<{
     groupId,
     items.flatMap((f) => (f.kind === 'chatPhoto' && f.messageId ? [f.messageId] : [])),
   );
+  // One getAll per 100 documents, for their names and uploaders (M7).
+  const documents = await documentsOfFiles(
+    groupId,
+    items.flatMap((f) => (f.kind === 'document' && f.documentId ? [f.documentId] : [])),
+  );
   const logo = group.get('photoPath') as string | null | undefined;
   // A photo is the background in use only while Photo is picked: Chat look
   // keeps the path after switching to Pattern or Plain, so switching back
@@ -132,6 +151,13 @@ export async function listMedia(groupId: string): Promise<{
       f.current = f.path === logo;
     } else if (f.kind === 'background') {
       f.current = f.path === background;
+    } else if (f.kind === 'document') {
+      const doc = f.documentId ? documents.get(f.documentId) : undefined;
+      if (doc) {
+        f.documentName = doc.name;
+        f.authorName = doc.uploaderName;
+      }
+      f.current = doc?.path === f.path;
     }
   }
   return {
@@ -177,15 +203,19 @@ export interface DeletedMedia {
   /** Null when the file was already gone. */
   size: number | null;
   messageId?: string;
-  /** What pointed at it and was fixed: the photo's message, or the logo or background. */
-  fixed: 'removed' | 'erased' | 'reset' | 'none';
+  documentId?: string;
+  /**
+   * What pointed at it and was fixed: the photo's message, the logo or
+   * background, or the document, which was deleted with its file.
+   */
+  fixed: 'removed' | 'erased' | 'reset' | 'deletedDocument' | 'none';
 }
 
 /**
  * Deletes one team file and fixes what pointed at it (STORE-5): a chat
  * photo leaves its message (chat removes it, and erases a message left
- * empty), and the logo or background in use is reset. An orphan is just
- * deleted. Safe to retry.
+ * empty), the logo or background in use is reset, and a document's file
+ * takes its document with it. An orphan is just deleted. Safe to retry.
  */
 export async function deleteMedia(groupId: string, path: string, actorUid: string): Promise<DeletedMedia> {
   if (!isTeamMediaPath(groupId, path)) throw new HttpsError('invalid-argument', 'bad-path');
@@ -197,16 +227,18 @@ export async function deleteMedia(groupId: string, path: string, actorUid: strin
       throw e;
     },
   );
-  const { kind, messageId } = classifyMediaPath(groupId, path);
+  const { kind, messageId, documentId } = classifyMediaPath(groupId, path);
   let fixed: DeletedMedia['fixed'] = 'none';
   // References first, so nothing shows a missing file while it's deleted.
   if (kind === 'chatPhoto') {
     fixed = await removeAttachment(groupId, messageId!, path, actorUid);
   } else if (kind === 'logo' || kind === 'background') {
     fixed = (await resetGroupImage(groupId, kind, path)) ? 'reset' : 'none';
+  } else if (kind === 'document' && documentId) {
+    // STORE-5: the document goes too, so Documents never lists a missing
+    // file. Its delete trigger also removes the folder and center items.
+    fixed = (await deleteDocumentOfFile(groupId, documentId, path)) ? 'deletedDocument' : 'none';
   }
-  // Documents (M7) must also remove their groupDocuments record here,
-  // through the documents service.
   await file.delete({ ignoreNotFound: true });
-  return { kind, size, fixed, ...(messageId ? { messageId } : {}) };
+  return { kind, size, fixed, ...(messageId ? { messageId } : {}), ...(documentId ? { documentId } : {}) };
 }

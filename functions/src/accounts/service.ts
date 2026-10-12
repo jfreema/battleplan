@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { auth, db, storage } from '../shared/admin.js';
 import { Collections, notificationPrefValues, type NotificationPref } from '../shared/constants.js';
 import { anonymizeAuthor } from '../chat/service.js';
+import { anonymizeUploader } from '../documents/service.js';
 import { removeAccountNotifications, removeDevices } from '../notify/service.js';
 import { removeAccountFromPlayers } from '../players/service.js';
 import { removeAccountBlocks } from '../safety/service.js';
@@ -189,7 +190,8 @@ export async function recordSignInMethodChange(
 
 /**
  * Deletes an account (AUTH-10, required by both stores). Each domain clears
- * its own data through its service; then the profile, avatar files, and the
+ * its own data through its service (a deleted person's messages and
+ * documents stay, from "Deleted user"); then the profile, avatar files, and the
  * Auth user go. Safe to retry: every step skips what's already gone.
  */
 export async function deleteAccount(uid: string): Promise<void> {
@@ -197,6 +199,7 @@ export async function deleteAccount(uid: string): Promise<void> {
   await removeAccountFromPlayers(uid);
   await removeUpcomingRsvps(uid);
   await anonymizeAuthor(uid);
+  await anonymizeUploader(uid);
   await removeAccountNotifications(uid);
   await removeAccountBlocks(uid);
   await storage()

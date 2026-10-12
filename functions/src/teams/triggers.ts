@@ -3,6 +3,7 @@ import { onObjectDeleted, onObjectFinalized } from 'firebase-functions/v2/storag
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { addStorageBytes, groupIdFromPath, reconcileAllStorage, updateStorageAlert } from './storage.js';
+import { removeAllOrphanDocumentFiles } from '../documents/service.js';
 import { pruneDevices } from '../notify/service.js';
 
 /**
@@ -30,9 +31,9 @@ export const onGroupFileRemoved = onObjectDeleted(async (event) => {
 
 /**
  * Daily housekeeping (ARCH §6.4 scheduled jobs): prunes devices that
- * stopped checking in, then recomputes every team's storage total from the
- * bucket and updates its warning. Expiring invites joins it with its
- * feature.
+ * stopped checking in, removes document uploads whose document was never
+ * created, then recomputes every team's storage total from the bucket and
+ * updates its warning. Expiring invites joins it with its feature.
  */
 export const dailyCleanup = onSchedule({ schedule: 'every day 04:00', timeZone: 'America/Chicago' }, async () => {
   // NOTIF-10: the app rewrites its device at least daily, so one untouched
@@ -41,6 +42,12 @@ export const dailyCleanup = onSchedule({ schedule: 'every day 04:00', timeZone: 
     logger.error('device_prune_failed', { error: String(e) });
     return 0;
   });
+  // DOC-2: an upload whose document was never saved (the app closed, the
+  // save failed) is gone after a day. Before the recount, so it counts.
+  const orphanDocumentFiles = await removeAllOrphanDocumentFiles().catch((e) => {
+    logger.error('orphan_document_cleanup_failed', { error: String(e) });
+    return 0;
+  });
   const teams = await reconcileAllStorage();
-  logger.info('daily_cleanup', { devicesPruned, teamsReconciled: teams });
+  logger.info('daily_cleanup', { devicesPruned, orphanDocumentFiles, teamsReconciled: teams });
 });

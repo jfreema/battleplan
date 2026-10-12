@@ -41,10 +41,11 @@ export async function reportSnapshot(
   }
   const doc = await db().collection(Collections.groupDocuments).doc(targetId).get();
   if (!doc.exists || doc.get('groupId') !== groupId) return null;
+  // The name admins see in Reports, with the uploader's snapshot name (M7).
   return {
     subjectId: String(doc.get('uploadedBy') ?? ''),
-    subjectName: String(doc.get('uploadedByName') ?? ''),
-    text: String(doc.get('title') ?? doc.get('fileName') ?? ''),
+    subjectName: String(doc.get('uploaderName') ?? ''),
+    text: String(doc.get('name') ?? '').slice(0, 500),
   };
 }
 
