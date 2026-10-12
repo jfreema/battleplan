@@ -15,8 +15,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Settings (SPEC §6.10): profile, appearance, sign-in methods, about, and
-/// the account actions. Notification settings join in M4.
+/// Settings (SPEC §6.10): profile, appearance, notifications, sign-in
+/// methods, about, and the account actions.
 class SettingsScreen extends ConsumerWidget {
   const new({required this.appVersion, this.showDevTools = false, super.key});
 
@@ -93,6 +93,11 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           section(l10n.account),
+          ListTile(
+            leading: const Icon(AppIcons.notifications),
+            title: Text(l10n.notificationSettings),
+            onTap: () => context.push('/settings/notifications'),
+          ),
           ListTile(
             leading: const Icon(AppIcons.settings),
             title: Text(l10n.signInMethods),

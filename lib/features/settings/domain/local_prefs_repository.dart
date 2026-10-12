@@ -1,5 +1,9 @@
 import 'package:battleplan/core/constants.g.dart';
 
+/// The last `devices` doc this install wrote: for whom, with which token,
+/// and when (NOTIF-10).
+typedef DeviceRegistration = ({String uid, String token, DateTime at});
+
 /// Preferences kept on this device (SPEC SET-2, §5.2 "Memory"). The theme
 /// also syncs to the profile once `users` exists (M1).
 abstract interface class LocalPrefsRepository {
@@ -18,4 +22,20 @@ abstract interface class LocalPrefsRepository {
   String? get pendingSignInEmail;
 
   Future<void> setPendingSignInEmail(String? email);
+
+  /// A random ID for this app install, made on first use and kept: the
+  /// install's `devices` doc ID (ARCH §6.5). Never tied to a person.
+  String get installId;
+
+  /// Whether the notification pre-prompt (or the iOS Safari tip) has been
+  /// shown on this install. It's shown at most once (NOTIF-1).
+  bool get pushPrePromptShown;
+
+  Future<void> setPushPrePromptShown();
+
+  /// Lets the app rewrite its device doc at most daily on start, and always
+  /// for a new person or token. Cleared at sign-out.
+  DeviceRegistration? get deviceRegistration;
+
+  Future<void> setDeviceRegistration(DeviceRegistration? value);
 }

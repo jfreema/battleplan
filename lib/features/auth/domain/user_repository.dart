@@ -19,6 +19,14 @@ abstract interface class UserRepository {
   /// Saves the theme to the account so it follows the person (SET-2).
   Future<void> setThemeMode(String uid, ThemePreference mode);
 
+  /// Turns one global notification switch on or off for every team
+  /// (NOTIF-4). The server reads it before each push.
+  Future<void> setNotificationPref(
+    String uid,
+    NotificationPref pref, {
+    required bool enabled,
+  });
+
   /// Uploads a new profile photo and points the profile at it (SET-1).
   Future<void> uploadPhoto(String uid, Uint8List jpegBytes);
 

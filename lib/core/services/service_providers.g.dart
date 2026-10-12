@@ -196,3 +196,49 @@ final class SharerProvider extends $FunctionalProvider<Sharer, Sharer, Sharer>
 }
 
 String _$sharerHash() => r'5a159f8e549a4b36db142cdc12aa46b6fdf89916';
+
+/// Browser quirks on web, such as iOS needing Add to Home Screen for push.
+
+@ProviderFor(browserInfo)
+final browserInfoProvider = BrowserInfoProvider._();
+
+/// Browser quirks on web, such as iOS needing Add to Home Screen for push.
+
+final class BrowserInfoProvider
+    extends $FunctionalProvider<BrowserInfo, BrowserInfo, BrowserInfo>
+    with $Provider<BrowserInfo> {
+  /// Browser quirks on web, such as iOS needing Add to Home Screen for push.
+  BrowserInfoProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'browserInfoProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$browserInfoHash();
+
+  @$internal
+  @override
+  $ProviderElement<BrowserInfo> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  BrowserInfo create(Ref ref) {
+    return browserInfo(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(BrowserInfo value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<BrowserInfo>(value),
+    );
+  }
+}
+
+String _$browserInfoHash() => r'200d0c9eb4e2d5356326c00a10240acb3454b56a';

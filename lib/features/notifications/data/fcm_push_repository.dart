@@ -1,6 +1,8 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 
 /// Firebase Cloud Messaging behind [PushRepository]: APNs on iOS, FCM on
 /// Android, and Web Push in browsers (through web/firebase-messaging-sw.js).
@@ -14,37 +16,73 @@ class FcmPushRepository implements PushRepository {
   final String? vapidKey;
 
   @override
-  Future<String?> requestPermissionAndGetToken() async {
+  DevicePlatform get platform => currentDevicePlatform();
+
+  @override
+  Future<PushPermission> permissionStatus() async {
     try {
-      final settings = await _messaging.requestPermission();
-      if (settings.authorizationStatus == AuthorizationStatus.denied) {
-        return null;
-      }
+      return _permissionOf(await _messaging.getNotificationSettings());
+    } on Object catch (e) {
+      // Browsers without web push (iOS Safari outside Add to Home Screen).
+      Log.warn('Push permission unavailable', e);
+      return PushPermission.unavailable;
+    }
+  }
+
+  @override
+  Future<PushPermission> requestPermission() async {
+    try {
+      return _permissionOf(await _messaging.requestPermission());
+    } on Object catch (e) {
+      Log.warn('Push permission request failed', e);
+      return PushPermission.unavailable;
+    }
+  }
+
+  @override
+  Future<String?> currentToken() async {
+    // On web, getToken shows the browser's prompt when permission is
+    // undecided, so never ask for a token before permission is granted.
+    if (await permissionStatus() != PushPermission.authorized) return null;
+    try {
       return await _messaging.getToken(vapidKey: vapidKey);
     } on Object catch (e) {
-      // Unsupported browser, no APNs on the simulator, and so on.
-      Log.warn('Push registration failed', e);
+      // No APNs on the simulator, no network, and so on.
+      Log.warn('Could not get a push token', e);
       return null;
     }
   }
 
   @override
-  Future<void> unregister() async {
+  Stream<String> tokenRefreshes() => _messaging.onTokenRefresh;
+
+  @override
+  Stream<PushMessage> foregroundMessages() =>
+      FirebaseMessaging.onMessage.map(_message);
+
+  @override
+  Stream<PushMessage> openedMessages() =>
+      FirebaseMessaging.onMessageOpenedApp.map(_message);
+
+  @override
+  Future<PushMessage?> initialMessage() async {
+    try {
+      final m = await _messaging.getInitialMessage();
+      return m == null ? null : _message(m);
+    } on Object catch (e) {
+      Log.warn('Could not read the launch notification', e);
+      return null;
+    }
+  }
+
+  @override
+  Future<void> deleteToken() async {
     try {
       await _messaging.deleteToken();
     } on Object catch (e) {
       Log.warn('Could not delete the push token', e);
     }
   }
-
-  @override
-  Stream<PushMessage> foregroundMessages() => FirebaseMessaging.onMessage.map(
-    (m) => PushMessage(
-      title: m.notification?.title,
-      body: m.notification?.body,
-      data: m.data,
-    ),
-  );
 }
 
 /// Used with the emulators, which have no push service.
@@ -52,11 +90,53 @@ class UnavailablePushRepository implements PushRepository {
   const new();
 
   @override
-  Future<String?> requestPermissionAndGetToken() async => null;
+  DevicePlatform get platform => currentDevicePlatform();
 
   @override
-  Future<void> unregister() async {}
+  Future<PushPermission> permissionStatus() async => PushPermission.unavailable;
+
+  @override
+  Future<PushPermission> requestPermission() async =>
+      PushPermission.unavailable;
+
+  @override
+  Future<String?> currentToken() async => null;
+
+  @override
+  Stream<String> tokenRefreshes() => const Stream.empty();
 
   @override
   Stream<PushMessage> foregroundMessages() => const Stream.empty();
+
+  @override
+  Stream<PushMessage> openedMessages() => const Stream.empty();
+
+  @override
+  Future<PushMessage?> initialMessage() async => null;
+
+  @override
+  Future<void> deleteToken() async {}
 }
+
+/// Platform checks live in implementations (ARCH §5.2 rule 8).
+DevicePlatform currentDevicePlatform() => kIsWeb
+    ? DevicePlatform.web
+    : switch (defaultTargetPlatform) {
+        TargetPlatform.iOS || TargetPlatform.macOS => DevicePlatform.ios,
+        _ => DevicePlatform.android,
+      };
+
+PushPermission _permissionOf(NotificationSettings s) =>
+    switch (s.authorizationStatus) {
+      AuthorizationStatus.authorized ||
+      AuthorizationStatus.provisional => PushPermission.authorized,
+      AuthorizationStatus.denied ||
+      AuthorizationStatus.deniedPermanently => PushPermission.denied,
+      AuthorizationStatus.notDetermined => PushPermission.notDetermined,
+    };
+
+PushMessage _message(RemoteMessage m) => PushMessage(
+  title: m.notification?.title,
+  body: m.notification?.body,
+  data: m.data,
+);

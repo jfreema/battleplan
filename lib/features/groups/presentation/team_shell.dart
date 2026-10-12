@@ -17,6 +17,7 @@ import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
+import 'package:battleplan/features/notifications/notifications.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -136,8 +137,9 @@ class TeamShell extends ConsumerWidget {
           _openSwitcher(context),
     };
 
+    final Widget shell;
     if (wide) {
-      return CallbackShortcuts(
+      shell = CallbackShortcuts(
         bindings: shortcuts,
         child: Scaffold(
           body: Row(
@@ -193,37 +195,40 @@ class TeamShell extends ConsumerWidget {
           ),
         ),
       );
-    }
-
-    return CallbackShortcuts(
-      bindings: shortcuts,
-      child: Scaffold(
-        body: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              header,
-              Expanded(child: body),
+    } else {
+      shell = CallbackShortcuts(
+        bindings: shortcuts,
+        child: Scaffold(
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                header,
+                Expanded(child: body),
+              ],
+            ),
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: navigationShell.currentIndex,
+            onDestinationSelected: (i) => navigationShell.goBranch(
+              i,
+              initialLocation: i == navigationShell.currentIndex,
+            ),
+            destinations: [
+              for (final (i, (icon, label)) in destinations.indexed)
+                NavigationDestination(
+                  icon: tabIcon(i, Icon(icon)),
+                  selectedIcon: tabIcon(i, Icon(icon, fill: 1)),
+                  label: label,
+                ),
             ],
           ),
         ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: (i) => navigationShell.goBranch(
-            i,
-            initialLocation: i == navigationShell.currentIndex,
-          ),
-          destinations: [
-            for (final (i, (icon, label)) in destinations.indexed)
-              NavigationDestination(
-                icon: tabIcon(i, Icon(icon)),
-                selectedIcon: tabIcon(i, Icon(icon, fill: 1)),
-                label: label,
-              ),
-          ],
-        ),
-      ),
-    );
+      );
+    }
+    // Asks for notification permission once the person is in a team
+    // (NOTIF-1).
+    return NotificationPrePrompt(child: shell);
   }
 }
 
@@ -242,7 +247,6 @@ class _TeamHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -261,11 +265,8 @@ class _TeamHeader extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(
-            tooltip: l10n.notificationsTooltip,
-            icon: const Icon(AppIcons.notifications),
-            onPressed: () => context.push('/notifications'),
-          ),
+          // Unread notification-center items across all teams (NOTIF-11).
+          const NotificationBell(),
           _TeamMenu(
             groupId: team?.group.id,
             isAdmin: team?.membership.isAdmin ?? false,
@@ -363,7 +364,7 @@ class _TeamMenu extends StatelessWidget {
       if (isAdmin) ('reports', AppIcons.report, l10n.reportsMenu),
       ('leave', AppIcons.leave, l10n.leaveTeamMenu),
     ];
-    const built = {'roster', 'settings', 'invite', 'reports'};
+    const built = {'roster', 'settings', 'invite', 'reports', 'notifications'};
     return PopupMenuButton<String>(
       tooltip: l10n.teamMenuTooltip,
       icon: const Icon(AppIcons.more),

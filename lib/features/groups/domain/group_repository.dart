@@ -89,6 +89,18 @@ abstract interface class MemberRepository {
   /// Marks the team's chat read up to now (CHAT-9). Syncs to every device
   /// through the membership's `lastReadAt`.
   Future<void> markRead(GroupId groupId, UserId uid);
+
+  /// My push level for this team: All activity, Important only, or Off
+  /// (NOTIF-3). Syncs to every device.
+  Future<void> setNotificationLevel(
+    GroupId groupId,
+    UserId uid,
+    NotificationLevel level,
+  );
+
+  /// Mutes this team's pushes until [until], or unmutes with null
+  /// (NOTIF-3). "Until unmuted" is [Limits.mutedForeverMs].
+  Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until);
 }
 
 /// What happened when adding people by email (TEAM-7 results screen).

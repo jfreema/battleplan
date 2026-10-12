@@ -39,9 +39,10 @@ class _PushTestScreenState extends ConsumerState<PushTestScreen> {
   }
 
   Future<void> _register() async {
-    final token = await ref
-        .read(pushRepositoryProvider)
-        .requestPermissionAndGetToken();
+    final push = ref.read(pushRepositoryProvider);
+    await push.requestPermission();
+    final token = await push.currentToken();
+    if (!mounted) return;
     setState(() {
       _asked = true;
       _token = token;

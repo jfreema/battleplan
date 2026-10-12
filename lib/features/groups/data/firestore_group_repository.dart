@@ -247,6 +247,41 @@ class FirestoreMemberRepository implements MemberRepository {
   }
 
   @override
+  Future<void> setNotificationLevel(
+    GroupId groupId,
+    UserId uid,
+    NotificationLevel level,
+  ) => _updateMine(groupId, uid, {'notificationLevel': level.value});
+
+  @override
+  Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until) =>
+      _updateMine(groupId, uid, {
+        'mutedUntil': until == null ? null : Timestamp.fromDate(until),
+      });
+
+  /// Members edit their own notification settings directly; rules allow
+  /// only those fields (ARCH §6.3).
+  Future<void> _updateMine(
+    GroupId groupId,
+    UserId uid,
+    Map<String, Object?> fields,
+  ) async {
+    try {
+      await _db
+          .collection(Collections.groupMembers)
+          .doc(CompositeIds.groupMember(groupId, uid))
+          .update(fields);
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        'not-found' => NotFound(e.code),
+        'unavailable' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
   Future<void> removeMember(GroupId groupId, UserId uid) =>
       _call('removeMember', {'groupId': groupId.value, 'uid': uid.value});
 

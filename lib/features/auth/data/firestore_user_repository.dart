@@ -69,6 +69,13 @@ class FirestoreUserRepository implements UserRepository {
       _update(uid, {'themeMode': mode.value});
 
   @override
+  Future<void> setNotificationPref(
+    String uid,
+    NotificationPref pref, {
+    required bool enabled,
+  }) => _update(uid, {'notificationPrefs.${pref.value}': enabled});
+
+  @override
   Future<void> uploadPhoto(String uid, Uint8List jpegBytes) async {
     final previous = (await _doc(uid).get()).data()?['photoPath'] as String?;
     final path =
@@ -134,4 +141,22 @@ UserProfile userProfileFromFirestore(String uid, Map<String, dynamic> d) =>
       ],
       adultConfirmedAt: _date(d['adultConfirmedAt']),
       acceptedTermsAt: _date(d['acceptedTermsAt']),
+      notificationPrefs: notificationPrefsFromFirestore(d['notificationPrefs']),
     );
+
+/// The switches that are set. Before New events and Event changes were
+/// split, one `events` key covered both, so an old `events: false` turns
+/// both off until either is set on its own.
+Map<NotificationPref, bool> notificationPrefsFromFirestore(Object? raw) {
+  if (raw is! Map) return const {};
+  final legacyEvents = raw['events'];
+  return {
+    if (legacyEvents is bool) ...{
+      NotificationPref.eventsNew: legacyEvents,
+      NotificationPref.eventsChanged: legacyEvents,
+    },
+    for (final MapEntry(:key, :value) in raw.entries)
+      if (NotificationPref.tryParse('$key') case final pref? when value is bool)
+        pref: value,
+  };
+}

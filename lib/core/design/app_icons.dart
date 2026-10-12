@@ -45,6 +45,16 @@ abstract final class AppIcons {
   static const IconData arrowDown = Symbols.arrow_downward_rounded;
   static const IconData report = Symbols.flag_rounded;
   static const IconData block = Symbols.block_rounded;
+  static const IconData notificationsOn = Symbols.notifications_active_rounded;
+  static const IconData markAllRead = Symbols.done_all_rounded;
+  static const IconData addedToTeam = Symbols.group_add_rounded;
+  static const IconData family = Symbols.family_restroom_rounded;
+  static const IconData plus = Symbols.workspace_premium_rounded;
+  static const IconData poll = Symbols.poll_rounded;
+  static const IconData event = Symbols.event_rounded;
+  static const IconData reminder = Symbols.alarm_rounded;
+  static const IconData document = Symbols.description_rounded;
+  static const IconData homeScreen = Symbols.add_to_home_screen_rounded;
 
   /// The icon for a sport (shown in the team switcher).
   static IconData sport(Sport sport) => switch (sport) {

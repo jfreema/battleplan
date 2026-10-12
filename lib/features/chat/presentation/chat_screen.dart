@@ -27,9 +27,13 @@ const _groupGap = Duration(minutes: 5);
 /// older pages loading as you scroll up, date separators, and messages
 /// grouped by sender.
 class ChatScreen extends ConsumerStatefulWidget {
-  const new({required this.groupId, super.key});
+  const new({required this.groupId, this.initialMessageId, super.key});
 
   final GroupId groupId;
+
+  /// Opens scrolled to this message, briefly highlighted, instead of at the
+  /// first unread one (a notification tap, NOTIF-6).
+  final String? initialMessageId;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -112,6 +116,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ..addListener(_trackBottom);
   }
 
+  @override
+  void didUpdateWidget(ChatScreen old) {
+    super.didUpdateWidget(old);
+    // Another notification for this chat while it's open.
+    final target = widget.initialMessageId;
+    if (target != null && target != old.initialMessageId && _positioned) {
+      unawaited(_jumpTo(target));
+    }
+  }
+
   void _trackBottom() {
     final atBottom = _scroll.position.pixels < 150;
     if (atBottom != _atBottom) setState(() => _atBottom = atBottom);
@@ -186,10 +200,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               )
               .lastOrNull
               ?.id;
-    // Open at the first unread message (CHAT-9), then keep the marker.
+    // Open at the message a notification named (NOTIF-6), or else at the
+    // first unread message (CHAT-9), then keep the marker.
     if (!_positioned && !chat.loading) {
       _positioned = true;
-      if (firstUnreadId != null) {
+      final target = widget.initialMessageId;
+      if (target != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_jumpTo(target));
+        });
+      } else if (firstUnreadId != null) {
         unawaited(_scrollToRow(firstUnreadId, alignment: 0.9));
       }
     }

@@ -32,6 +32,9 @@ Future<FakeLocalPrefs> pumpApp(
   FakePhotoPicker? photoPicker,
   FakeSafetyRepository? safety,
   FakePlanRepository? plans,
+  FakeDeviceRepository? devices,
+  FakeNotificationRepository? notifications,
+  FakeBrowserInfo browser = const FakeBrowserInfo(),
 }) async {
   // A tall phone-sized screen, so long settings lists fit without scrolling.
   tester.view
@@ -70,6 +73,14 @@ Future<FakeLocalPrefs> pumpApp(
           invites ?? FakeInviteRepository(),
         ),
         pushRepositoryProvider.overrideWithValue(push ?? FakePushRepository()),
+        deviceRepositoryProvider.overrideWithValue(
+          devices ?? FakeDeviceRepository(),
+        ),
+        notificationRepositoryProvider.overrideWithValue(
+          notifications ?? FakeNotificationRepository(),
+        ),
+        deviceAppVersionProvider.overrideWithValue('1.0.0'),
+        browserInfoProvider.overrideWithValue(browser),
       ],
       child: const BattleplanApp(),
     ),

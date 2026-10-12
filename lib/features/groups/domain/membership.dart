@@ -39,8 +39,16 @@ abstract class Membership with _$Membership {
 
   /// True when pushes from this team are off or snoozed (NOTIF-3).
   bool isMutedAt(DateTime now) =>
-      notificationLevel == NotificationLevel.none ||
-      (mutedUntil != null && mutedUntil!.isAfter(now));
+      notificationLevel == NotificationLevel.none || isSnoozedAt(now);
+
+  /// Muted for a while or until unmuted, whatever the level (NOTIF-3).
+  bool isSnoozedAt(DateTime now) =>
+      mutedUntil != null && mutedUntil!.isAfter(now);
+
+  /// Muted "until unmuted": the far-future sentinel, not a real time.
+  bool get isMutedForever =>
+      mutedUntil != null &&
+      mutedUntil!.millisecondsSinceEpoch >= Limits.mutedForeverMs;
 }
 
 /// "Maria R." from "Maria Rodriguez": first name and last initial.

@@ -3,8 +3,10 @@ import 'package:battleplan/app/services/flutter_time_zones.dart';
 import 'package:battleplan/app/services/image_picker_photo_picker.dart';
 import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/app/services/url_launcher_link_opener.dart';
+import 'package:battleplan/app/services/web_browser_info.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/services/analytics.dart';
+import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
 import 'package:battleplan/core/services/remote_config.dart';
 import 'package:battleplan/core/services/service_providers.dart';
@@ -19,6 +21,8 @@ import 'package:battleplan/features/groups/data/functions_invite_repository.dart
 import 'package:battleplan/features/groups/data/functions_plan_repository.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/data/fcm_push_repository.dart';
+import 'package:battleplan/features/notifications/data/firestore_device_repository.dart';
+import 'package:battleplan/features/notifications/data/firestore_notification_repository.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/data/firestore_player_repository.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
@@ -30,6 +34,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -56,6 +61,9 @@ List<Override> buildOverrides({
   linkOpenerProvider.overrideWithValue(const UrlLauncherLinkOpener()),
   timeZonesProvider.overrideWithValue(const FlutterTimeZones()),
   sharerProvider.overrideWithValue(const SharePlusSharer()),
+  browserInfoProvider.overrideWithValue(
+    kIsWeb ? WebBrowserInfo() : const PlainBrowserInfo(),
+  ),
   playerRepositoryProvider.overrideWithValue(
     FirestorePlayerRepository(firestore, functions),
   ),
@@ -94,5 +102,12 @@ List<Override> buildOverrides({
         ? const UnavailablePushRepository()
         : FcmPushRepository(messaging),
   ),
+  deviceRepositoryProvider.overrideWithValue(
+    FirestoreDeviceRepository(firestore),
+  ),
+  notificationRepositoryProvider.overrideWithValue(
+    FirestoreNotificationRepository(firestore),
+  ),
+  deviceAppVersionProvider.overrideWithValue(version),
   localPrefsRepositoryProvider.overrideWithValue(SharedPrefsRepository(prefs)),
 ];

@@ -17,10 +17,18 @@ abstract class UserProfile with _$UserProfile {
     @Default(<String>[]) List<String> signInMethods,
     DateTime? adultConfirmedAt,
     DateTime? acceptedTermsAt,
+
+    /// The global notification switches that are set (NOTIF-4). A missing
+    /// switch is on; use [notifies].
+    @Default(<NotificationPref, bool>{})
+    Map<NotificationPref, bool> notificationPrefs,
   }) = _UserProfile;
 
   const new _();
 
   /// First-run setup (18+ and Terms) is still to do (AUTH-5).
   bool get needsSetup => adultConfirmedAt == null || acceptedTermsAt == null;
+
+  /// Whether the global switch [pref] is on (NOTIF-4). Unset means on.
+  bool notifies(NotificationPref pref) => notificationPrefs[pref] ?? true;
 }

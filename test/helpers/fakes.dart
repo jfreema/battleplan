@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -17,6 +18,9 @@ import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/plan_repository.dart';
+import 'package:battleplan/features/notifications/domain/device_repository.dart';
+import 'package:battleplan/features/notifications/domain/notification_item.dart';
+import 'package:battleplan/features/notifications/domain/notification_repository.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
@@ -25,9 +29,12 @@ import 'package:battleplan/features/safety/domain/safety_repository.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
 
 class FakeAuthRepository implements AuthRepository {
-  new({AuthUser? user}) : _user = user {
+  new({AuthUser? user, List<String>? log}) : _user = user, log = log ?? [] {
     _controller.add(user);
   }
+
+  /// Shared with other fakes to check the order of calls across them.
+  final List<String> log;
 
   final _controller = StreamController<AuthUser?>.broadcast();
   AuthUser? _user;
@@ -195,6 +202,7 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {
+    log.add('auth signOut');
     _user = null;
     _controller.add(null);
   }
@@ -291,8 +299,45 @@ class FakeMemberRepository implements MemberRepository {
   new(this.memberships);
 
   final List<Membership> memberships;
+  final _changes = StreamController<void>.broadcast();
 
   final List<String> calls = [];
+
+  void _updateMine(
+    GroupId groupId,
+    UserId uid,
+    Membership Function(Membership) f,
+  ) {
+    final i = memberships.indexWhere(
+      (m) => m.groupId == groupId && m.uid == uid,
+    );
+    if (i < 0) return;
+    memberships[i] = f(memberships[i]);
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> setNotificationLevel(
+    GroupId groupId,
+    UserId uid,
+    NotificationLevel level,
+  ) async {
+    calls.add('level ${groupId.value} ${level.value}');
+    _updateMine(groupId, uid, (m) => m.copyWith(notificationLevel: level));
+  }
+
+  DateTime? mutedUntil;
+
+  @override
+  Future<void> setMutedUntil(
+    GroupId groupId,
+    UserId uid,
+    DateTime? until,
+  ) async {
+    calls.add('mute ${groupId.value} ${until == null ? 'off' : 'on'}');
+    mutedUntil = until;
+    _updateMine(groupId, uid, (m) => m.copyWith(mutedUntil: until));
+  }
 
   @override
   Stream<List<Membership>> watchRoster(GroupId groupId) =>
@@ -329,8 +374,13 @@ class FakeMemberRepository implements MemberRepository {
       calls.add('resend ${uid.value}');
 
   @override
-  Stream<List<Membership>> watchMyMemberships(UserId uid) =>
-      Stream.value(memberships.where((m) => m.uid == uid).toList());
+  Stream<List<Membership>> watchMyMemberships(UserId uid) async* {
+    List<Membership> mine() => memberships.where((m) => m.uid == uid).toList();
+    yield mine();
+    await for (final _ in _changes.stream) {
+      yield mine();
+    }
+  }
 
   final List<String> reads = [];
 
@@ -359,6 +409,22 @@ class FakeLocalPrefs implements LocalPrefsRepository {
   @override
   Future<void> setThemePreference(ThemePreference value) async =>
       themePreference = value;
+
+  @override
+  String installId = 'test-install-0000000000000';
+
+  @override
+  bool pushPrePromptShown = false;
+
+  @override
+  Future<void> setPushPrePromptShown() async => pushPrePromptShown = true;
+
+  @override
+  DeviceRegistration? deviceRegistration;
+
+  @override
+  Future<void> setDeviceRegistration(DeviceRegistration? value) async =>
+      deviceRegistration = value;
 }
 
 Group testGroup(String id, String name, {DateTime? lastMessageAt}) => Group(
@@ -392,6 +458,8 @@ class FakeUserRepository implements UserRepository {
   ThemePreference themeMode = ThemePreference.system;
   int photosUploaded = 0;
 
+  final Map<NotificationPref, bool> notificationPrefs = {};
+
   UserProfile _profile(String uid) => UserProfile(
     uid: uid,
     displayName: savedName ?? 'Jordan Coach',
@@ -399,7 +467,18 @@ class FakeUserRepository implements UserRepository {
     adultConfirmedAt: needsSetup ? null : DateTime(2026),
     acceptedTermsAt: needsSetup ? null : DateTime(2026),
     themeMode: themeMode,
+    notificationPrefs: {...notificationPrefs},
   );
+
+  @override
+  Future<void> setNotificationPref(
+    String uid,
+    NotificationPref pref, {
+    required bool enabled,
+  }) async {
+    notificationPrefs[pref] = enabled;
+    _changes.add(null);
+  }
 
   @override
   Stream<UserProfile?> watchProfile(String uid) async* {
@@ -440,17 +519,169 @@ class FakeUserRepository implements UserRepository {
   }
 }
 
+/// Push on a pretend device. Permission starts granted with a token, so
+/// the pre-prompt stays away unless a test sets [permission] to
+/// notDetermined. [answer] is what the system prompt returns.
 class FakePushRepository implements PushRepository {
-  int unregistered = 0;
+  new({
+    this.permission = PushPermission.authorized,
+    this.answer = PushPermission.authorized,
+    this.token = 'fcm-token-1',
+    this.launchMessage,
+    List<String>? log,
+  }) : log = log ?? [];
+
+  PushPermission permission;
+  PushPermission answer;
+  String? token;
+  PushMessage? launchMessage;
+  final List<String> log;
+
+  int permissionRequests = 0;
+  int tokensDeleted = 0;
+
+  final foreground = StreamController<PushMessage>.broadcast();
+  final opened = StreamController<PushMessage>.broadcast();
+  final refreshes = StreamController<String>.broadcast();
 
   @override
-  Future<String?> requestPermissionAndGetToken() async => null;
+  DevicePlatform get platform => DevicePlatform.android;
 
   @override
-  Future<void> unregister() async => unregistered++;
+  Future<PushPermission> permissionStatus() async => permission;
 
   @override
-  Stream<PushMessage> foregroundMessages() => const Stream.empty();
+  Future<PushPermission> requestPermission() async {
+    permissionRequests++;
+    return permission = answer;
+  }
+
+  @override
+  Future<String?> currentToken() async =>
+      permission == PushPermission.authorized ? token : null;
+
+  @override
+  Stream<String> tokenRefreshes() => refreshes.stream;
+
+  @override
+  Stream<PushMessage> foregroundMessages() => foreground.stream;
+
+  @override
+  Stream<PushMessage> openedMessages() => opened.stream;
+
+  @override
+  Future<PushMessage?> initialMessage() async => launchMessage;
+
+  @override
+  Future<void> deleteToken() async {
+    log.add('push deleteToken');
+    tokensDeleted++;
+  }
+}
+
+/// Device docs in memory, by install ID.
+class FakeDeviceRepository implements DeviceRepository {
+  new({List<String>? log}) : log = log ?? [];
+
+  final List<String> log;
+  final Map<String, ({String uid, String token, DevicePlatform platform})>
+  docs = {};
+  int writes = 0;
+
+  @override
+  Future<void> register(
+    String installId, {
+    required String uid,
+    required String token,
+    required DevicePlatform platform,
+    required String appVersion,
+  }) async {
+    writes++;
+    log.add('device register $installId');
+    docs[installId] = (uid: uid, token: token, platform: platform);
+  }
+
+  @override
+  Future<void> remove(String installId) async {
+    log.add('device remove $installId');
+    docs.remove(installId);
+  }
+}
+
+/// The notification center on an in-memory list, newest first.
+class FakeNotificationRepository implements NotificationRepository {
+  new([List<NotificationItem>? items]) : items = items ?? [];
+
+  final List<NotificationItem> items;
+  final List<String> markedRead = [];
+  int markAllCalls = 0;
+  final _changes = StreamController<void>.broadcast();
+
+  @override
+  Stream<NotificationPage> watchNewest(
+    UserId uid, {
+    int limit = Limits.notificationPageSize,
+  }) async* {
+    NotificationPage page() {
+      final all = items;
+      return NotificationPage(
+        items: all.take(limit).toList(),
+        next: all.length > limit ? NotificationCursor(limit) : null,
+      );
+    }
+
+    yield page();
+    await for (final _ in _changes.stream) {
+      yield page();
+    }
+  }
+
+  @override
+  Future<NotificationPage> loadOlder(
+    UserId uid,
+    NotificationCursor after, {
+    int limit = Limits.notificationPageSize,
+  }) async {
+    final all = items;
+    final start = after.handle as int;
+    final end = (start + limit).clamp(0, all.length);
+    return NotificationPage(
+      items: all.sublist(start, end),
+      next: end < all.length ? NotificationCursor(end) : null,
+    );
+  }
+
+  @override
+  Future<int> countUnread(
+    UserId uid, {
+    int cap = Limits.unreadCountCap,
+  }) async => items.where((n) => !n.read).take(cap).length;
+
+  @override
+  Future<void> markRead(String id) async {
+    markedRead.add(id);
+    final i = items.indexWhere((n) => n.id == id);
+    if (i < 0) return;
+    items[i] = items[i].copyWith(read: true);
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> markAllRead(UserId uid) async {
+    markAllCalls++;
+    for (var i = 0; i < items.length; i++) {
+      items[i] = items[i].copyWith(read: true);
+    }
+    _changes.add(null);
+  }
+}
+
+/// A browser that may need Add to Home Screen for push (NOTIF-9).
+class FakeBrowserInfo implements BrowserInfo {
+  const new({this.pushNeedsHomeScreen = false});
+
+  @override
+  final bool pushNeedsHomeScreen;
 }
 
 class FakeInviteRepository implements InviteRepository {

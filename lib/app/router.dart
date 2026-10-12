@@ -30,8 +30,10 @@ import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_settings_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
+import 'package:battleplan/features/notifications/presentation/notification_settings_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notifications_screen.dart';
 import 'package:battleplan/features/notifications/presentation/push_test_screen.dart';
+import 'package:battleplan/features/notifications/presentation/team_notifications_screen.dart';
 import 'package:battleplan/features/players/presentation/add_players_screen.dart';
 import 'package:battleplan/features/players/presentation/player_card_screen.dart';
 import 'package:battleplan/features/players/presentation/who_are_you_screen.dart';
@@ -220,6 +222,10 @@ GoRouter router(Ref ref) {
             path: 'blocked',
             builder: (_, _) => const BlockedPeopleScreen(),
           ),
+          GoRoute(
+            path: 'notifications',
+            builder: (_, _) => const NotificationSettingsScreen(),
+          ),
           if (!env.isProd)
             GoRoute(
               path: 'push-test',
@@ -283,6 +289,12 @@ GoRouter router(Ref ref) {
             ),
           ),
           GoRoute(
+            path: 'notifications',
+            builder: (_, state) => TeamNotificationsScreen(
+              groupId: GroupId(state.pathParameters['groupId']!),
+            ),
+          ),
+          GoRoute(
             path: 'who',
             builder: (_, state) => WhoAreYouScreen(
               groupId: GroupId(state.pathParameters['groupId']!),
@@ -314,6 +326,17 @@ GoRouter router(Ref ref) {
                         };
                       },
                     ),
+                    // A message from a notification tap (NOTIF-6): the
+                    // chat, scrolled to it. A sibling rather than a child,
+                    // so it doesn't stack a second chat on the first.
+                    if (tab == 'chat')
+                      GoRoute(
+                        path: 'chat/m/:messageId',
+                        builder: (_, state) => ChatScreen(
+                          groupId: GroupId(state.pathParameters['groupId']!),
+                          initialMessageId: state.pathParameters['messageId'],
+                        ),
+                      ),
                   ],
                 ),
             ],

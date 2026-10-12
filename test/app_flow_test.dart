@@ -1120,7 +1120,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(auth.signedOutEverywhere, isTrue);
-    expect(push.unregistered, 1);
+    expect(push.tokensDeleted, 1);
     expect(find.text('Continue with Google'), findsOneWidget);
   });
 
