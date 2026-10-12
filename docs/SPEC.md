@@ -378,7 +378,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Name (required, ≤ 50 characters).
     - Sport: Baseball, Basketball, Football, Hockey, Lacrosse, Soccer, Softball, Volleyball, or Other.
     - Logo or photo (optional).
-    - Team color (optional). Chosen from 12 colors that pass contrast checks in both themes.
+    - Team color (optional). Chosen from 13 colors that pass contrast checks in both themes.
     - Time zone (defaults to the device's).
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).
@@ -591,7 +591,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - Typing indicators and read receipts.
   - Direct messages (Q5).
 
-- **CHAT-18 · MVP · Chat look.** Team admins choose the chat's message color (the team color or any of the 12 palette colors) and background (plain, a subtle pattern, or a photo), which everyone on the team sees, with text kept readable (WCAG AA).
+- **CHAT-18 · MVP · Chat look.** Team admins choose the chat's message color (the team color or any of the 13 palette colors) and background (plain, a subtle pattern, or a photo), which everyone on the team sees, with text kept readable (WCAG AA).
 
 **Acceptance (MVP)**
 

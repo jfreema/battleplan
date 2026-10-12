@@ -85,6 +85,7 @@ abstract final class Limits {
 /// The 12 team colors (TEAM-1), as ARGB.
 const List<int> teamColorValues = [
   0xFF2F5BEA,
+  0xFF7BAFD4,
   0xFF0F8A5F,
   0xFFC2410C,
   0xFFB91C1C,

@@ -682,30 +682,6 @@ void main() {
     ) async {
       final repo = FakeMessageRepository();
       // A 1x1 PNG.
-      final png = Uint8List.fromList(const [
-        137,
-        80,
-        78,
-        71,
-        13,
-        10,
-        26,
-        10,
-        0,
-        0,
-        0,
-        13,
-        73,
-        72,
-        68,
-        82,
-        0,
-        0,
-        0, //
-        1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65,
-        84, 120, 156, 99, 248, 15, 4, 0, 9, 251, 3, 253, 227, 85, 242, 156, 0,
-        0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
-      ]);
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
@@ -713,8 +689,8 @@ void main() {
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
         messageRepo: repo,
         photoPicker: FakePhotoPicker([
-          (bytes: png, contentType: 'image/png'),
-          (bytes: png, contentType: 'image/png'),
+          (bytes: tinyPng, contentType: 'image/png'),
+          (bytes: tinyPng, contentType: 'image/png'),
         ]),
       );
       await tester.tap(find.byTooltip('Add photos'));
@@ -1088,6 +1064,69 @@ void main() {
       expect(repo.photoBatches, isEmpty);
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('Retry on a failed photo waits while storage is full '
+        '(STORE-4)', (tester) async {
+      final repo = FakeMessageRepository()..failUploads = 1;
+      Group using(int mb) => testGroup('a', 'Thunder').copyWith(
+        storageBytes: mb * bytesPerMb,
+        storageQuotaBytes: 500 * bytesPerMb,
+      );
+      final groupRepo = FakeGroupRepository({'a': using(0)});
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groupRepo: groupRepo,
+        memberships: [testMembership('a', 'coach')],
+        messageRepo: repo,
+        photoPicker: FakePhotoPicker([
+          (bytes: tinyPng, contentType: 'image/png'),
+        ]),
+      );
+      const full =
+          'Storage is full. Uploads, attachments, and scheduling new events '
+          'are disabled until storage is freed up.';
+      await tester.tap(find.byTooltip('Add photos'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Photo library'));
+      await tester.pumpAndSettle();
+      expect(find.text('Retry'), findsOneWidget);
+
+      groupRepo.setGroup(using(500));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+      // The banner, plus the message saying why Retry didn't upload.
+      expect(find.text(full), findsNWidgets(2));
+      expect(repo.photoBatches, isEmpty);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      // Once space is freed, Retry sends it.
+      groupRepo.setGroup(using(100));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+      expect(repo.photoBatches, [1]);
+      expect(find.text('Retry'), findsNothing);
+    });
+
+    testWidgets('a deleted message says who removed it (CHAT-8, STORE-5)', (
+      tester,
+    ) async {
+      final gone = DateTime.now();
+      await openChat(
+        tester,
+        FakeMessageRepository([
+          msg(3).copyWith(text: '', deletedAt: gone, deletedReason: 'media'),
+          msg(2).copyWith(text: '', deletedAt: gone, deletedReason: 'admin'),
+          msg(1).copyWith(text: '', deletedAt: gone, deletedReason: 'author'),
+        ]),
+      );
+      expect(find.text('Photo removed by a team admin.'), findsOneWidget);
+      expect(find.text('Removed by a team admin.'), findsOneWidget);
+      expect(find.text('This message was deleted.'), findsOneWidget);
     });
 
     testWidgets('my bubbles take the team color unless admins pick another, '
@@ -1477,6 +1516,25 @@ void main() {
       await tester.tap(find.byTooltip('Team menu'));
       await tester.pumpAndSettle();
       expect(find.text('Media'), findsNothing);
+    });
+
+    testWidgets('dismissing the 90% warning still shows the full banner '
+        'later (STORE-4)', (tester) async {
+      final groupRepo = FakeGroupRepository({'a': teamUsing(460)});
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groupRepo: groupRepo,
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      );
+      expect(find.text(warning), findsOneWidget);
+      await tester.tap(find.byTooltip('Dismiss'));
+      await tester.pumpAndSettle();
+      expect(find.text(warning), findsNothing);
+
+      groupRepo.setGroup(teamUsing(500));
+      await tester.pumpAndSettle();
+      expect(find.text(full), findsOneWidget);
     });
 
     testWidgets('when full, everyone sees why; admins also get Media '

@@ -134,8 +134,8 @@ service cloud.firestore {
     // team palette (or null for the team's own color) and a background.
     function validChatTheme(t, g) {
       return t is map && t.keys().hasOnly(['bubbleColor', 'background', 'backgroundPath'])
-        && (t.get('bubbleColor', null) == null || t.bubbleColor in ['#2F5BEA', '#0F8A5F',
-            '#C2410C', '#B91C1C', '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F',
+        && (t.get('bubbleColor', null) == null || t.bubbleColor in ['#2F5BEA', '#7BAFD4',
+            '#0F8A5F', '#C2410C', '#B91C1C', '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F',
             '#1D4ED8', '#9333EA', '#334155'])
         && t.get('background', 'plain') in ['plain', 'pattern', 'photo']
         && (t.get('backgroundPath', null) == null
@@ -148,7 +148,7 @@ service cloud.firestore {
         && t.nameLower == t.name.lower()
         && t.sport in ['baseball', 'basketball', 'football', 'hockey', 'lacrosse',
                        'soccer', 'softball', 'volleyball', 'other']
-        && (t.color == null || t.color in ['#2F5BEA', '#0F8A5F', '#C2410C', '#B91C1C',
+        && (t.color == null || t.color in ['#2F5BEA', '#7BAFD4', '#0F8A5F', '#C2410C', '#B91C1C',
             '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F', '#1D4ED8',
             '#9333EA', '#334155'])
         && t.get('description', '').size() <= 500

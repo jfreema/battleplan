@@ -974,12 +974,19 @@ class FakeMessageRepository implements MessageRepository {
 
   final List<int> photoBatches = [];
 
+  /// How many uploads fail, as if offline, before they work again.
+  int failUploads = 0;
+
   @override
   Future<UploadedPhotos> uploadPhotos(
     GroupId groupId,
     List<NewPhoto> photos, {
     void Function(double progress)? onProgress,
   }) async {
+    if (failUploads > 0) {
+      failUploads--;
+      throw const Offline('upload');
+    }
     onProgress?.call(1);
     final id = 'photos${photoBatches.length}';
     return (
@@ -1125,6 +1132,32 @@ class FakeMessageRepository implements MessageRepository {
           );
   }
 }
+
+/// A valid 1×1 PNG, for photos the app decodes.
+final tinyPng = Uint8List.fromList(const [
+  137,
+  80,
+  78,
+  71,
+  13,
+  10,
+  26,
+  10,
+  0,
+  0,
+  0,
+  13,
+  73,
+  72,
+  68,
+  82,
+  0,
+  0,
+  0, //
+  1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65,
+  84, 120, 156, 99, 248, 15, 4, 0, 9, 251, 3, 253, 227, 85, 242, 156, 0,
+  0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+]);
 
 /// Returns [photos] when asked for chat photos.
 class FakePhotoPicker implements PhotoPicker {

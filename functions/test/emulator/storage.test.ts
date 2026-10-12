@@ -365,6 +365,19 @@ describe('Media (STORE-5)', () => {
     expect(await fileExists(`groups/${G}/theme/bg.jpg`)).toBe(false);
   });
 
+  it('leaves Pattern alone when deleting a photo it kept from an earlier Photo background', async () => {
+    await file(`groups/${G}/theme/bg.jpg`, 400);
+    await groupRef().update({
+      chatTheme: { bubbleColor: null, background: 'pattern', backgroundPath: `groups/${G}/theme/bg.jpg` },
+    });
+    const listed = await listTeamMedia.run(call('alex', { groupId: G }));
+    expect(listed.items.find((f) => f.kind === 'background')?.current).toBe(false);
+
+    await deleteTeamMedia.run(call('alex', { groupId: G, path: `groups/${G}/theme/bg.jpg` }));
+    expect((await group()).chatTheme).toEqual({ bubbleColor: null, background: 'pattern', backgroundPath: null });
+    expect(await fileExists(`groups/${G}/theme/bg.jpg`)).toBe(false);
+  });
+
   it("refuses paths outside the team's folder", async () => {
     await file('groups/teamB/avatar/logo.jpg');
     for (const path of ['groups/teamB/avatar/logo.jpg', `groups/${G}/../teamB/avatar/logo.jpg`, 'users/sam/avatar/1.jpg', `groups/${G}/`]) {

@@ -116,7 +116,13 @@ export async function listMedia(groupId: string): Promise<{
     items.flatMap((f) => (f.kind === 'chatPhoto' && f.messageId ? [f.messageId] : [])),
   );
   const logo = group.get('photoPath') as string | null | undefined;
-  const background = group.get('chatTheme.backgroundPath') as string | null | undefined;
+  // A photo is the background in use only while Photo is picked: Chat look
+  // keeps the path after switching to Pattern or Plain, so switching back
+  // needs no new upload.
+  const background =
+    group.get('chatTheme.background') === 'photo'
+      ? (group.get('chatTheme.backgroundPath') as string | null | undefined)
+      : null;
   for (const f of items) {
     if (f.kind === 'chatPhoto') {
       const message = photos.get(f.messageId!);
@@ -151,12 +157,15 @@ async function resetGroupImage(groupId: string, kind: 'logo' | 'background', pat
       return true;
     }
     if (kind === 'background' && group.get('chatTheme.backgroundPath') === path) {
+      // Only a background showing this photo goes back to Plain; a kept
+      // path behind Pattern or Plain is just cleared.
+      const inUse = group.get('chatTheme.background') === 'photo';
       tx.update(ref, {
-        'chatTheme.background': 'plain',
+        ...(inUse ? { 'chatTheme.background': 'plain' } : {}),
         'chatTheme.backgroundPath': null,
         updatedAt: FieldValue.serverTimestamp(),
       });
-      return true;
+      return inUse;
     }
     return false;
   });

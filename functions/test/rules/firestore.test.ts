@@ -13,7 +13,7 @@ import firebase from 'firebase/compat/app';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
-import { reactionValues } from '../../src/shared/constants.js';
+import { reactionValues, TEAM_COLORS } from '../../src/shared/constants.js';
 
 type Db = firebase.firestore.Firestore;
 
@@ -319,6 +319,15 @@ describe('chat look (CHAT-18)', () => {
     await assertFails(look('alice', 'teamA', { ...good, background: 'video' }));
     await assertFails(look('alice', 'teamA', { ...good, backgroundPath: 'groups/teamB/theme/1.jpg' }));
     await assertFails(look('alice', 'teamA', { ...good, extra: true }));
+  });
+
+  // The rules list the palette by hand; this keeps them in step with
+  // shared/constants.json (TEAM-1).
+  it('accepts every palette color as the team color and the bubble color', async () => {
+    for (const color of TEAM_COLORS) {
+      await assertSucceeds(look('alice', 'teamA', { ...good, bubbleColor: color }));
+      await assertSucceeds(as('alice').doc('groups/teamA').update({ color }));
+    }
   });
 });
 

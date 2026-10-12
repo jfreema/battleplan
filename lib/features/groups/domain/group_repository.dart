@@ -49,7 +49,7 @@ abstract interface class GroupRepository {
   Future<String?> photoUrl(String path);
 
   /// Creates a team with the caller as owner (TEAM-1) and returns its ID.
-  /// [color] is one of the 12 team colors as `#RRGGBB`.
+  /// [color] is one of the 13 team colors as `#RRGGBB`.
   Future<GroupId> createGroup({
     required String name,
     required Sport sport,
