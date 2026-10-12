@@ -4,6 +4,7 @@ import 'package:battleplan/app/router.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/features/admin/admin.dart';
+import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/presentation/verify_email_banner.dart';
 import 'package:battleplan/features/notifications/application/push_registration.dart';
 import 'package:battleplan/features/notifications/presentation/push_banner.dart';
@@ -29,7 +30,9 @@ class BattleplanApp extends ConsumerWidget {
     // handling taps and foreground pushes.
     ref
       ..watch(pushRegistrationProvider)
-      ..watch(pushHandlerProvider);
+      ..watch(pushHandlerProvider)
+      // Signs out when this account's sessions were ended elsewhere (AUTH-9).
+      ..watch(sessionRevocationWatcherProvider);
     final banner = ref.watch(appEnvProvider).bannerLabel;
     final app = MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appName,

@@ -15,7 +15,11 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserProfile {
 
- String get uid; String get displayName; UserStatus get status; String? get email; String? get photoPath; ThemePreference get themeMode; List<String> get signInMethods; DateTime? get adultConfirmedAt; DateTime? get acceptedTermsAt;/// The global notification switches that are set (NOTIF-4). A missing
+ String get uid; String get displayName; UserStatus get status; String? get email; String? get photoPath; ThemePreference get themeMode; List<String> get signInMethods; DateTime? get adultConfirmedAt; DateTime? get acceptedTermsAt;/// An admin-added account that signed in by its setup link still has to
+/// choose how to sign in from now on (AUTH-6).
+ bool get chooseSignIn;/// Set by "Sign out of all devices": every session that signed in
+/// before it ends at once (AUTH-9).
+ DateTime? get sessionsRevokedAt;/// The global notification switches that are set (NOTIF-4). A missing
 /// switch is on; use [notifies].
  Map<NotificationPref, bool> get notificationPrefs;
 /// Create a copy of UserProfile
@@ -29,20 +33,20 @@ $UserProfileCopyWith<UserProfile> get copyWith => _$UserProfileCopyWithImpl<User
 @override
 bool operator ==(Object other) {
   final _this = this as UserProfile;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserProfile&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.themeMode, _this.themeMode) || other.themeMode == _this.themeMode)&&const DeepCollectionEquality().equals(other.signInMethods, _this.signInMethods)&&(identical(other.adultConfirmedAt, _this.adultConfirmedAt) || other.adultConfirmedAt == _this.adultConfirmedAt)&&(identical(other.acceptedTermsAt, _this.acceptedTermsAt) || other.acceptedTermsAt == _this.acceptedTermsAt)&&const DeepCollectionEquality().equals(other.notificationPrefs, _this.notificationPrefs));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserProfile&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.themeMode, _this.themeMode) || other.themeMode == _this.themeMode)&&const DeepCollectionEquality().equals(other.signInMethods, _this.signInMethods)&&(identical(other.adultConfirmedAt, _this.adultConfirmedAt) || other.adultConfirmedAt == _this.adultConfirmedAt)&&(identical(other.acceptedTermsAt, _this.acceptedTermsAt) || other.acceptedTermsAt == _this.acceptedTermsAt)&&(identical(other.chooseSignIn, _this.chooseSignIn) || other.chooseSignIn == _this.chooseSignIn)&&(identical(other.sessionsRevokedAt, _this.sessionsRevokedAt) || other.sessionsRevokedAt == _this.sessionsRevokedAt)&&const DeepCollectionEquality().equals(other.notificationPrefs, _this.notificationPrefs));
 }
 
 
 @override
 int get hashCode {
   final _this = this as UserProfile;
-  return Object.hash(runtimeType,_this.uid,_this.displayName,_this.status,_this.email,_this.photoPath,_this.themeMode,const DeepCollectionEquality().hash(_this.signInMethods),_this.adultConfirmedAt,_this.acceptedTermsAt,const DeepCollectionEquality().hash(_this.notificationPrefs));
+  return Object.hash(runtimeType,_this.uid,_this.displayName,_this.status,_this.email,_this.photoPath,_this.themeMode,const DeepCollectionEquality().hash(_this.signInMethods),_this.adultConfirmedAt,_this.acceptedTermsAt,_this.chooseSignIn,_this.sessionsRevokedAt,const DeepCollectionEquality().hash(_this.notificationPrefs));
 }
 
 @override
 String toString() {
   final _this = this as UserProfile;
-  return 'UserProfile(uid: ${_this.uid}, displayName: ${_this.displayName}, status: ${_this.status}, email: ${_this.email}, photoPath: ${_this.photoPath}, themeMode: ${_this.themeMode}, signInMethods: ${_this.signInMethods}, adultConfirmedAt: ${_this.adultConfirmedAt}, acceptedTermsAt: ${_this.acceptedTermsAt}, notificationPrefs: ${_this.notificationPrefs})';
+  return 'UserProfile(uid: ${_this.uid}, displayName: ${_this.displayName}, status: ${_this.status}, email: ${_this.email}, photoPath: ${_this.photoPath}, themeMode: ${_this.themeMode}, signInMethods: ${_this.signInMethods}, adultConfirmedAt: ${_this.adultConfirmedAt}, acceptedTermsAt: ${_this.acceptedTermsAt}, chooseSignIn: ${_this.chooseSignIn}, sessionsRevokedAt: ${_this.sessionsRevokedAt}, notificationPrefs: ${_this.notificationPrefs})';
 }
 
 
@@ -53,7 +57,7 @@ abstract mixin class $UserProfileCopyWith<$Res>  {
   factory $UserProfileCopyWith(UserProfile value, $Res Function(UserProfile) _then) = _$UserProfileCopyWithImpl;
 @useResult
 $Res call({
- String uid, String displayName, UserStatus status, String? email, String? photoPath, ThemePreference themeMode, List<String> signInMethods, DateTime? adultConfirmedAt, DateTime? acceptedTermsAt, Map<NotificationPref, bool> notificationPrefs
+ String uid, String displayName, UserStatus status, String? email, String? photoPath, ThemePreference themeMode, List<String> signInMethods, DateTime? adultConfirmedAt, DateTime? acceptedTermsAt, bool chooseSignIn, DateTime? sessionsRevokedAt, Map<NotificationPref, bool> notificationPrefs
 });
 
 
@@ -70,7 +74,7 @@ class _$UserProfileCopyWithImpl<$Res>
 
 /// Create a copy of UserProfile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uid = null,Object? displayName = null,Object? status = null,Object? email = freezed,Object? photoPath = freezed,Object? themeMode = null,Object? signInMethods = null,Object? adultConfirmedAt = freezed,Object? acceptedTermsAt = freezed,Object? notificationPrefs = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? uid = null,Object? displayName = null,Object? status = null,Object? email = freezed,Object? photoPath = freezed,Object? themeMode = null,Object? signInMethods = null,Object? adultConfirmedAt = freezed,Object? acceptedTermsAt = freezed,Object? chooseSignIn = null,Object? sessionsRevokedAt = freezed,Object? notificationPrefs = null,}) {
   return _then(UserProfile(
 uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
@@ -81,6 +85,8 @@ as String?,themeMode: null == themeMode ? _self.themeMode : themeMode // ignore:
 as ThemePreference,signInMethods: null == signInMethods ? _self.signInMethods : signInMethods // ignore: cast_nullable_to_non_nullable
 as List<String>,adultConfirmedAt: freezed == adultConfirmedAt ? _self.adultConfirmedAt : adultConfirmedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,acceptedTermsAt: freezed == acceptedTermsAt ? _self.acceptedTermsAt : acceptedTermsAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,chooseSignIn: null == chooseSignIn ? _self.chooseSignIn : chooseSignIn // ignore: cast_nullable_to_non_nullable
+as bool,sessionsRevokedAt: freezed == sessionsRevokedAt ? _self.sessionsRevokedAt : sessionsRevokedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,notificationPrefs: null == notificationPrefs ? _self.notificationPrefs : notificationPrefs // ignore: cast_nullable_to_non_nullable
 as Map<NotificationPref, bool>,
   ));
@@ -167,10 +173,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String uid,  String displayName,  UserStatus status,  String? email,  String? photoPath,  ThemePreference themeMode,  List<String> signInMethods,  DateTime? adultConfirmedAt,  DateTime? acceptedTermsAt,  Map<NotificationPref, bool> notificationPrefs)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String uid,  String displayName,  UserStatus status,  String? email,  String? photoPath,  ThemePreference themeMode,  List<String> signInMethods,  DateTime? adultConfirmedAt,  DateTime? acceptedTermsAt,  bool chooseSignIn,  DateTime? sessionsRevokedAt,  Map<NotificationPref, bool> notificationPrefs)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserProfile() when $default != null:
-return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photoPath,_that.themeMode,_that.signInMethods,_that.adultConfirmedAt,_that.acceptedTermsAt,_that.notificationPrefs);case _:
+return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photoPath,_that.themeMode,_that.signInMethods,_that.adultConfirmedAt,_that.acceptedTermsAt,_that.chooseSignIn,_that.sessionsRevokedAt,_that.notificationPrefs);case _:
   return orElse();
 
 }
@@ -188,10 +194,10 @@ return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photo
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String uid,  String displayName,  UserStatus status,  String? email,  String? photoPath,  ThemePreference themeMode,  List<String> signInMethods,  DateTime? adultConfirmedAt,  DateTime? acceptedTermsAt,  Map<NotificationPref, bool> notificationPrefs)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String uid,  String displayName,  UserStatus status,  String? email,  String? photoPath,  ThemePreference themeMode,  List<String> signInMethods,  DateTime? adultConfirmedAt,  DateTime? acceptedTermsAt,  bool chooseSignIn,  DateTime? sessionsRevokedAt,  Map<NotificationPref, bool> notificationPrefs)  $default,) {final _that = this;
 switch (_that) {
 case _UserProfile():
-return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photoPath,_that.themeMode,_that.signInMethods,_that.adultConfirmedAt,_that.acceptedTermsAt,_that.notificationPrefs);case _:
+return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photoPath,_that.themeMode,_that.signInMethods,_that.adultConfirmedAt,_that.acceptedTermsAt,_that.chooseSignIn,_that.sessionsRevokedAt,_that.notificationPrefs);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +214,10 @@ return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photo
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String uid,  String displayName,  UserStatus status,  String? email,  String? photoPath,  ThemePreference themeMode,  List<String> signInMethods,  DateTime? adultConfirmedAt,  DateTime? acceptedTermsAt,  Map<NotificationPref, bool> notificationPrefs)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String uid,  String displayName,  UserStatus status,  String? email,  String? photoPath,  ThemePreference themeMode,  List<String> signInMethods,  DateTime? adultConfirmedAt,  DateTime? acceptedTermsAt,  bool chooseSignIn,  DateTime? sessionsRevokedAt,  Map<NotificationPref, bool> notificationPrefs)?  $default,) {final _that = this;
 switch (_that) {
 case _UserProfile() when $default != null:
-return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photoPath,_that.themeMode,_that.signInMethods,_that.adultConfirmedAt,_that.acceptedTermsAt,_that.notificationPrefs);case _:
+return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photoPath,_that.themeMode,_that.signInMethods,_that.adultConfirmedAt,_that.acceptedTermsAt,_that.chooseSignIn,_that.sessionsRevokedAt,_that.notificationPrefs);case _:
   return null;
 
 }
@@ -223,7 +229,7 @@ return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photo
 
 
 class _UserProfile extends UserProfile {
-  const _UserProfile({required this.uid, required this.displayName, required this.status, this.email, this.photoPath, this.themeMode = ThemePreference.system,  List<String> signInMethods = const <String>[], this.adultConfirmedAt, this.acceptedTermsAt,  Map<NotificationPref, bool> notificationPrefs = const <NotificationPref, bool>{}}): _signInMethods = signInMethods,_notificationPrefs = notificationPrefs,super._();
+  const _UserProfile({required this.uid, required this.displayName, required this.status, this.email, this.photoPath, this.themeMode = ThemePreference.system,  List<String> signInMethods = const <String>[], this.adultConfirmedAt, this.acceptedTermsAt, this.chooseSignIn = false, this.sessionsRevokedAt,  Map<NotificationPref, bool> notificationPrefs = const <NotificationPref, bool>{}}): _signInMethods = signInMethods,_notificationPrefs = notificationPrefs,super._();
   
 
 @override final  String uid;
@@ -241,6 +247,12 @@ class _UserProfile extends UserProfile {
 
 @override final  DateTime? adultConfirmedAt;
 @override final  DateTime? acceptedTermsAt;
+/// An admin-added account that signed in by its setup link still has to
+/// choose how to sign in from now on (AUTH-6).
+@override@JsonKey() final  bool chooseSignIn;
+/// Set by "Sign out of all devices": every session that signed in
+/// before it ends at once (AUTH-9).
+@override final  DateTime? sessionsRevokedAt;
 /// The global notification switches that are set (NOTIF-4). A missing
 /// switch is on; use [notifies].
  final  Map<NotificationPref, bool> _notificationPrefs;
@@ -263,18 +275,18 @@ _$UserProfileCopyWith<_UserProfile> get copyWith => __$UserProfileCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserProfile&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.status, status) || other.status == status)&&(identical(other.email, email) || other.email == email)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&const DeepCollectionEquality().equals(other.signInMethods, _signInMethods)&&(identical(other.adultConfirmedAt, adultConfirmedAt) || other.adultConfirmedAt == adultConfirmedAt)&&(identical(other.acceptedTermsAt, acceptedTermsAt) || other.acceptedTermsAt == acceptedTermsAt)&&const DeepCollectionEquality().equals(other.notificationPrefs, _notificationPrefs));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserProfile&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.status, status) || other.status == status)&&(identical(other.email, email) || other.email == email)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&const DeepCollectionEquality().equals(other.signInMethods, _signInMethods)&&(identical(other.adultConfirmedAt, adultConfirmedAt) || other.adultConfirmedAt == adultConfirmedAt)&&(identical(other.acceptedTermsAt, acceptedTermsAt) || other.acceptedTermsAt == acceptedTermsAt)&&(identical(other.chooseSignIn, chooseSignIn) || other.chooseSignIn == chooseSignIn)&&(identical(other.sessionsRevokedAt, sessionsRevokedAt) || other.sessionsRevokedAt == sessionsRevokedAt)&&const DeepCollectionEquality().equals(other.notificationPrefs, _notificationPrefs));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,uid,displayName,status,email,photoPath,themeMode,const DeepCollectionEquality().hash(_signInMethods),adultConfirmedAt,acceptedTermsAt,const DeepCollectionEquality().hash(_notificationPrefs));
+    return Object.hash(runtimeType,uid,displayName,status,email,photoPath,themeMode,const DeepCollectionEquality().hash(_signInMethods),adultConfirmedAt,acceptedTermsAt,chooseSignIn,sessionsRevokedAt,const DeepCollectionEquality().hash(_notificationPrefs));
 }
 
 @override
 String toString() {
-    return 'UserProfile(uid: $uid, displayName: $displayName, status: $status, email: $email, photoPath: $photoPath, themeMode: $themeMode, signInMethods: $signInMethods, adultConfirmedAt: $adultConfirmedAt, acceptedTermsAt: $acceptedTermsAt, notificationPrefs: $notificationPrefs)';
+    return 'UserProfile(uid: $uid, displayName: $displayName, status: $status, email: $email, photoPath: $photoPath, themeMode: $themeMode, signInMethods: $signInMethods, adultConfirmedAt: $adultConfirmedAt, acceptedTermsAt: $acceptedTermsAt, chooseSignIn: $chooseSignIn, sessionsRevokedAt: $sessionsRevokedAt, notificationPrefs: $notificationPrefs)';
 }
 
 
@@ -285,7 +297,7 @@ abstract mixin class _$UserProfileCopyWith<$Res> implements $UserProfileCopyWith
   factory _$UserProfileCopyWith(_UserProfile value, $Res Function(_UserProfile) _then) = __$UserProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String uid, String displayName, UserStatus status, String? email, String? photoPath, ThemePreference themeMode, List<String> signInMethods, DateTime? adultConfirmedAt, DateTime? acceptedTermsAt, Map<NotificationPref, bool> notificationPrefs
+ String uid, String displayName, UserStatus status, String? email, String? photoPath, ThemePreference themeMode, List<String> signInMethods, DateTime? adultConfirmedAt, DateTime? acceptedTermsAt, bool chooseSignIn, DateTime? sessionsRevokedAt, Map<NotificationPref, bool> notificationPrefs
 });
 
 
@@ -302,7 +314,7 @@ class __$UserProfileCopyWithImpl<$Res>
 
 /// Create a copy of UserProfile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uid = null,Object? displayName = null,Object? status = null,Object? email = freezed,Object? photoPath = freezed,Object? themeMode = null,Object? signInMethods = null,Object? adultConfirmedAt = freezed,Object? acceptedTermsAt = freezed,Object? notificationPrefs = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? uid = null,Object? displayName = null,Object? status = null,Object? email = freezed,Object? photoPath = freezed,Object? themeMode = null,Object? signInMethods = null,Object? adultConfirmedAt = freezed,Object? acceptedTermsAt = freezed,Object? chooseSignIn = null,Object? sessionsRevokedAt = freezed,Object? notificationPrefs = null,}) {
   return _then(_UserProfile(
 uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
@@ -313,6 +325,8 @@ as String?,themeMode: null == themeMode ? _self.themeMode : themeMode // ignore:
 as ThemePreference,signInMethods: null == signInMethods ? _self._signInMethods : signInMethods // ignore: cast_nullable_to_non_nullable
 as List<String>,adultConfirmedAt: freezed == adultConfirmedAt ? _self.adultConfirmedAt : adultConfirmedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,acceptedTermsAt: freezed == acceptedTermsAt ? _self.acceptedTermsAt : acceptedTermsAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,chooseSignIn: null == chooseSignIn ? _self.chooseSignIn : chooseSignIn // ignore: cast_nullable_to_non_nullable
+as bool,sessionsRevokedAt: freezed == sessionsRevokedAt ? _self.sessionsRevokedAt : sessionsRevokedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,notificationPrefs: null == notificationPrefs ? _self._notificationPrefs : notificationPrefs // ignore: cast_nullable_to_non_nullable
 as Map<NotificationPref, bool>,
   ));

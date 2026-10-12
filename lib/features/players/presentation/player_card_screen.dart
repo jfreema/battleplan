@@ -216,6 +216,7 @@ class PlayerCardScreen extends ConsumerWidget {
         showAppSnackBar(context, switch (e) {
           InvalidInput() => l10n.tooManyGuardians,
           RateLimited() => l10n.signInRateLimited,
+          EmailNotVerified() => l10n.addByEmailNeedsVerified,
           _ => l10n.signInUnknownError,
         });
       }

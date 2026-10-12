@@ -10,7 +10,9 @@ import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/auth.dart';
+import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
+import 'package:battleplan/features/settings/presentation/new_owners_dialog.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -184,11 +186,21 @@ class SettingsScreen extends ConsumerWidget {
                 destructive: true,
               );
               if (!ok || !context.mounted) return;
+              // AUTH-10: owners pick who takes over each team they own.
+              final owned = ownedTeams(ref.read(myTeamsProvider).value ?? []);
+              var newOwners = const <String, String>{};
+              if (owned.isNotEmpty) {
+                final picks = await pickNewOwners(context, owned);
+                if (picks == null || !context.mounted) return;
+                newOwners = picks;
+              }
               try {
                 await withFreshSignIn(
                   context,
                   ref,
-                  ref.read(sessionServiceProvider).deleteAccount,
+                  () => ref
+                      .read(sessionServiceProvider)
+                      .deleteAccount(newOwners: newOwners),
                 );
               } on AppFailure {
                 if (context.mounted) {

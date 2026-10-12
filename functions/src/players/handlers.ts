@@ -7,7 +7,7 @@ import { audit } from '../audit/service.js';
 import { db } from '../shared/admin.js';
 import { onCall } from '../shared/callable.js';
 import { Collections, Limits } from '../shared/constants.js';
-import { requireAuth } from '../shared/guards.js';
+import { requireAuth, requireVerifiedEmail } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
@@ -61,6 +61,8 @@ export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) =>
     throw new HttpsError('failed-precondition', 'too-many-players');
   }
   const guardianEmails = input.players.flatMap((p) => p.guardians.filter((g) => g.email)).length;
+  // Guardians' emails add people by email: a verified email first (AUTH-3).
+  if (guardianEmails > 0) requireVerifiedEmail(request);
   await consumeRateLimit(
     input.groupId,
     'addByEmail',
@@ -265,6 +267,8 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
     }),
     request.data,
   );
+  // Adding someone by email needs a verified email (AUTH-3).
+  requireVerifiedEmail(request);
   const { role, teamName } = await requireYouthMember(input.groupId, actor);
   const player = await db().collection(Collections.players).doc(input.playerId).get();
   if (!player.exists || player.get('groupId') !== input.groupId) throw new HttpsError('not-found', 'no-player');

@@ -1,4 +1,5 @@
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -55,6 +56,9 @@ class _ActivateScreenState extends ConsumerState<ActivateScreen> {
           .read(authRepositoryProvider)
           .signInWithLink(email: email.trim(), link: widget.link);
       await ref.read(localPrefsRepositoryProvider).setPendingSignInEmail(null);
+    } on PermissionDenied {
+      // A disabled account sees only the disabled screen (AUTH-11).
+      if (mounted) context.go('/disabled');
     } on Exception {
       if (mounted) setState(() => _invalid = true);
     } finally {

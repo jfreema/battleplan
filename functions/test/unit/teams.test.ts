@@ -22,6 +22,17 @@ describe('nextOwner', () => {
     ], 'owner')).toBe('m1');
     expect(nextOwner([{ uid: 'owner', role: 'owner' }], 'owner')).toBeNull();
   });
+
+  it('takes the member the owner picked while they are still on the team (AUTH-10)', () => {
+    const members = [
+      { uid: 'owner', role: 'owner', joinedAt: at(1) },
+      { uid: 'a1', role: 'admin', joinedAt: at(2) },
+      { uid: 'm1', role: 'member', joinedAt: at(3) },
+    ];
+    expect(nextOwner(members, 'owner', 'm1')).toBe('m1');
+    expect(nextOwner(members, 'owner', 'gone')).toBe('a1');
+    expect(nextOwner(members, 'owner', 'owner')).toBe('a1');
+  });
 });
 
 import { canChangeRole, canRemove } from '../../src/teams/service.js';

@@ -4,6 +4,10 @@ import 'package:battleplan/core/constants.g.dart';
 /// and when (NOTIF-10).
 typedef DeviceRegistration = ({String uid, String token, DateTime at});
 
+/// A sign-in method waiting to be linked to the account for `email`
+/// (AUTH-7): `google.com` or `apple.com`.
+typedef PendingLink = ({String providerId, String email});
+
 /// Preferences kept on this device (SPEC SET-2, §5.2 "Memory"). The theme
 /// also syncs to the profile once `users` exists (M1).
 abstract interface class LocalPrefsRepository {
@@ -22,6 +26,13 @@ abstract interface class LocalPrefsRepository {
   String? get pendingSignInEmail;
 
   Future<void> setPendingSignInEmail(String? email);
+
+  /// A sign-in method to link once the emailed link proves the email
+  /// (AUTH-7): someone tried Google or Apple with an email that already has
+  /// an account. Cleared once linked or declined.
+  PendingLink? get pendingLink;
+
+  Future<void> setPendingLink(PendingLink? value);
 
   /// A random ID for this app install, made on first use and kept: the
   /// install's `devices` doc ID (ARCH §6.5). Never tied to a person.

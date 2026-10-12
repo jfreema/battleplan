@@ -47,7 +47,7 @@ final class SignInControllerProvider
   }
 }
 
-String _$signInControllerHash() => r'3df183bd9f42eec9f9c7f7ed9b5ab2d041ea54a4';
+String _$signInControllerHash() => r'b4b4493d71f3f24dccd8e3a05991f2fcc6ec5d7f';
 
 /// State for the sign-in screen: idle, loading, or the last error.
 /// Navigation after success is the router's job (it watches the auth user).

@@ -13,3 +13,13 @@ export function requireSuperAdmin(request: CallableRequest): string {
   if (request.auth?.token.superAdmin !== true) throw new HttpsError('permission-denied', 'Super admins only.');
   return uid;
 }
+
+/**
+ * `email-not-verified` unless the caller's email is verified (AUTH-3): needed
+ * to create a team, send email invites, or add people by email.
+ */
+export function requireVerifiedEmail(request: CallableRequest): void {
+  if (request.auth?.token.email_verified !== true) {
+    throw new HttpsError('failed-precondition', 'email-not-verified');
+  }
+}

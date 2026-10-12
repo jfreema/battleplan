@@ -43,6 +43,7 @@ class FirebaseAuthRepository implements AuthRepository {
       emailVerified: user.emailVerified,
       isSuperAdmin: token.claims?['superAdmin'] == true,
       providerIds: [for (final p in user.providerData) p.providerId],
+      authTime: token.authTime,
     );
   }
 
@@ -179,8 +180,8 @@ class FirebaseAuthRepository implements AuthRepository {
     } on FirebaseAuthException catch (e) {
       if (_cancelCodes.contains(e.code)) return;
       // AUTH-7: never merge on matching emails. Prove the email instead:
-      // send a sign-in link; once in, the person links this provider from
-      // Settings → Sign-in methods.
+      // send a sign-in link; once it's opened, the app offers to link this
+      // provider (the caller remembers which one).
       final email = e.email;
       if (e.code == 'account-exists-with-different-credential' &&
           email != null) {
@@ -189,8 +190,9 @@ class FirebaseAuthRepository implements AuthRepository {
       }
       throw switch (e.code) {
         'popup-blocked' => PopupBlocked(e.code),
+        // No email to send a link to: nothing was sent.
         'account-exists-with-different-credential' =>
-          AccountExistsWithOtherMethod(e.code),
+          const AccountExistsWithOtherMethod(),
         'user-disabled' => PermissionDenied(e.code),
         'network-request-failed' => Offline(e.code),
         _ => UnknownFailure(e.code),
@@ -286,12 +288,33 @@ class FirebaseAuthRepository implements AuthRepository {
     _ => UnknownFailure(e.code),
   };
 
+  /// How recent the sign-in must be to change sign-in methods, the email,
+  /// or the password (AUTH-7). The server asks the same for deleting.
+  static const _recentSignIn = Duration(minutes: 5);
+
+  /// AUTH-7: a fresh sign-in first. Firebase asks for one only for some
+  /// changes (not linking or unlinking), so the app checks every time.
+  Future<void> _requireRecentSignIn() async {
+    final DateTime? at;
+    try {
+      at = (await _user.getIdTokenResult()).authTime;
+    } on FirebaseAuthException catch (e) {
+      _throwMethodError(e);
+    }
+    if (!isRecentSignIn(at, DateTime.now())) {
+      throw const RequiresRecentLogin('requires-recent-login');
+    }
+  }
+
   /// Tells the server the methods changed, so `users.signInMethods` stays a
-  /// true copy and the security notice can go out (AUTH-7).
-  Future<void> _recordMethodChange() async {
+  /// true copy and the security notice can go out (AUTH-7). With
+  /// [passwordChanged], the notice says the password changed.
+  Future<void> _recordMethodChange({bool passwordChanged = false}) async {
     await _user.getIdToken(true);
     try {
-      await _functions.httpsCallable('recordSignInMethodChange').call<void>();
+      await _functions.httpsCallable('recordSignInMethodChange').call<void>({
+        if (passwordChanged) 'passwordChanged': true,
+      });
     } on FirebaseFunctionsException catch (e) {
       // The daily reconcile job catches anything missed (ARCH §6.1).
       throw UnknownFailure('recordSignInMethodChange: ${e.code}');
@@ -299,9 +322,10 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> linkGoogle() async {
+  Future<bool> linkGoogle() async {
     final provider = GoogleAuthProvider()
       ..setCustomParameters({'prompt': 'select_account'});
+    await _requireRecentSignIn();
     try {
       if (kIsWeb) {
         await _user.linkWithPopup(provider);
@@ -309,10 +333,11 @@ class FirebaseAuthRepository implements AuthRepository {
         await _user.linkWithProvider(provider);
       }
     } on FirebaseAuthException catch (e) {
-      if (_cancelCodes.contains(e.code)) return;
+      if (_cancelCodes.contains(e.code)) return false;
       _throwMethodError(e);
     }
     await _recordMethodChange();
+    return true;
   }
 
   @override
@@ -321,6 +346,7 @@ class FirebaseAuthRepository implements AuthRepository {
     if (user.providerData.length <= 1) {
       throw const InvalidInput('The last sign-in method stays.');
     }
+    await _requireRecentSignIn();
     try {
       await user.unlink(providerId);
     } on FirebaseAuthException catch (e) {
@@ -335,6 +361,7 @@ class FirebaseAuthRepository implements AuthRepository {
     final hasPassword = user.providerData.any(
       (p) => p.providerId == 'password',
     );
+    await _requireRecentSignIn();
     try {
       if (hasPassword) {
         await user.updatePassword(newPassword);
@@ -348,11 +375,15 @@ class FirebaseAuthRepository implements AuthRepository {
     } on FirebaseAuthException catch (e) {
       _throwMethodError(e);
     }
-    await _recordMethodChange();
+    await _recordMethodChange(passwordChanged: hasPassword);
   }
 
+  /// The new address confirms the link, then Firebase changes the email
+  /// and ends this session. At the next sign-in, ensureUserProfile copies
+  /// the new address into the profile and emails both addresses (AUTH-8).
   @override
   Future<void> changeEmail(String newEmail) async {
+    await _requireRecentSignIn();
     try {
       await _user.verifyBeforeUpdateEmail(
         newEmail,
@@ -396,9 +427,11 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> deleteAccount() async {
+  Future<void> deleteAccount({Map<String, String> newOwners = const {}}) async {
     try {
-      await _functions.httpsCallable('deleteAccount').call<void>();
+      await _functions.httpsCallable('deleteAccount').call<void>({
+        if (newOwners.isNotEmpty) 'newOwners': newOwners,
+      });
     } on FirebaseFunctionsException catch (e) {
       throw switch (e.code) {
         'failed-precondition' => RequiresRecentLogin(e.message),
@@ -426,3 +459,10 @@ class FirebaseAuthRepository implements AuthRepository {
     await _auth.signOut();
   }
 }
+
+/// Whether a sign-in at [authTime] is recent enough at [now] to change
+/// sign-in methods, the email, or the password (AUTH-7).
+@visibleForTesting
+bool isRecentSignIn(DateTime? authTime, DateTime now) =>
+    authTime != null &&
+    now.difference(authTime) <= FirebaseAuthRepository._recentSignIn;

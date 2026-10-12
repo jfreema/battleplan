@@ -15,6 +15,7 @@ class SharedPrefsRepository implements LocalPrefsRepository {
   static const _themeKey = 'themePreference';
   static const _lastRouteKey = 'lastTeamRoute';
   static const _pendingEmailKey = 'pendingSignInEmail';
+  static const _pendingLinkKey = 'pendingLink';
   static const _installIdKey = 'installId';
   static const _prePromptKey = 'pushPrePromptShown';
   static const _deviceKey = 'deviceRegistration';
@@ -25,6 +26,7 @@ class SharedPrefsRepository implements LocalPrefsRepository {
     _themeKey,
     _lastRouteKey,
     _pendingEmailKey,
+    _pendingLinkKey,
     _installIdKey,
     _prePromptKey,
     _deviceKey,
@@ -56,6 +58,19 @@ class SharedPrefsRepository implements LocalPrefsRepository {
   Future<void> setPendingSignInEmail(String? email) => email == null
       ? _prefs.remove(_pendingEmailKey)
       : _prefs.setString(_pendingEmailKey, email);
+
+  /// Stored as `providerId email`; neither has a space.
+  @override
+  PendingLink? get pendingLink {
+    final parts = _prefs.getString(_pendingLinkKey)?.split(' ');
+    if (parts == null || parts.length != 2) return null;
+    return (providerId: parts[0], email: parts[1]);
+  }
+
+  @override
+  Future<void> setPendingLink(PendingLink? value) => value == null
+      ? _prefs.remove(_pendingLinkKey)
+      : _prefs.setString(_pendingLinkKey, '${value.providerId} ${value.email}');
 
   @override
   String get installId {

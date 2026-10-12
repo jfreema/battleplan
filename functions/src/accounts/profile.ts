@@ -30,3 +30,24 @@ export function initialDisplayName(identity: AuthIdentity): string {
 export function needsSetup(profile: { adultConfirmedAt?: unknown; acceptedTermsAt?: unknown }): boolean {
   return profile.adultConfirmedAt == null || profile.acceptedTermsAt == null;
 }
+
+/**
+ * The new contact email when the sign-in email changed through the verified
+ * change-email flow (AUTH-8, AUTH-12), else null. users.email follows only a
+ * verified Auth email, so nobody can point the profile at an address they
+ * don't own.
+ */
+export function changedEmail(
+  profileEmail: string | null | undefined,
+  authEmail: string | null | undefined,
+  authEmailVerified: boolean,
+): string | null {
+  const next = authEmail?.trim().toLowerCase();
+  if (!next || !authEmailVerified) return null;
+  return next === profileEmail?.trim().toLowerCase() ? null : next;
+}
+
+/** True when an added account's first sign-in already chose a lasting method (AUTH-6). */
+export function choseLastingMethod(providerIds: string[]): boolean {
+  return providerIds.includes('google.com') || providerIds.includes('apple.com');
+}
