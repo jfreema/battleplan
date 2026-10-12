@@ -4,13 +4,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'document.freezed.dart';
 
-/// The longest name, description, and link the rules accept (ARCH §6.2
-/// `groupDocuments`).
-// TODO(M7): move these three to shared/constants.json with the rules.
-const int documentNameMax = 100;
-const int documentDescriptionMax = 500;
-const int documentUrlMax = 2000;
-
 /// The largest file a team can upload (STORE-1), in bytes.
 const int documentMaxBytes = Limits.maxUploadMb * 1024 * 1024;
 
@@ -139,7 +132,7 @@ Uri? parseDocumentUrl(String text) {
   var t = text.trim();
   if (t.isEmpty || t.contains(RegExp(r'\s'))) return null;
   if (!t.contains('://')) t = 'https://$t';
-  if (t.length > documentUrlMax) return null;
+  if (t.length > Limits.documentUrlMax) return null;
   final uri = Uri.tryParse(t);
   if (uri == null || !(uri.isScheme('http') || uri.isScheme('https'))) {
     return null;
@@ -155,12 +148,12 @@ Uri? parseDocumentUrl(String text) {
 /// to 100 characters as the rules count them (code points).
 bool isValidDocumentName(String name) {
   final t = name.trim();
-  return t.isNotEmpty && t.runes.length <= documentNameMax;
+  return t.isNotEmpty && t.runes.length <= Limits.documentNameMax;
 }
 
 /// Whether [description] fits (500 characters; empty is fine).
 bool isValidDocumentDescription(String description) =>
-    description.trim().runes.length <= documentDescriptionMax;
+    description.trim().runes.length <= Limits.documentDescriptionMax;
 
 /// How the Documents tab orders its rows (DOC-1).
 enum DocumentSort { recent, name }

@@ -49,6 +49,9 @@ abstract final class Limits {
   static const int opponentMax = 60;
   static const int arriveMinutesMax = 240;
   static const int rsvpNoteMax = 200;
+  static const int documentNameMax = 100;
+  static const int documentDescriptionMax = 500;
+  static const int documentUrlMax = 2000;
   static const int seriesIntervalMax = 8;
   static const int seriesEventsMax = 400;
   static const int seriesSkipDatesMax = 100;

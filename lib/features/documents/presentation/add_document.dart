@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -414,7 +415,7 @@ class _LinkFormState extends ConsumerState<LinkForm> {
               enabled: !_saving,
               keyboardType: TextInputType.url,
               autocorrect: false,
-              maxLength: documentUrlMax,
+              maxLength: Limits.documentUrlMax,
               buildCounter: (
                 _, {
                 required currentLength,

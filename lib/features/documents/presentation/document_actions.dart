@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -429,19 +430,19 @@ class DocumentFields extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final nameBad =
         name.text.isNotEmpty && !isValidDocumentName(name.text) ||
-        name.text.runes.length > documentNameMax;
+        name.text.runes.length > Limits.documentNameMax;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextField(
           controller: name,
           enabled: enabled,
-          maxLength: documentNameMax,
+          maxLength: Limits.documentNameMax,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
             labelText: l10n.documentNameLabel,
             errorText: nameBad
-                ? l10n.documentNameInvalid(documentNameMax)
+                ? l10n.documentNameInvalid(Limits.documentNameMax)
                 : null,
           ),
           onChanged: (_) => onChanged(),
@@ -450,14 +451,16 @@ class DocumentFields extends StatelessWidget {
         TextField(
           controller: description,
           enabled: enabled,
-          maxLength: documentDescriptionMax,
+          maxLength: Limits.documentDescriptionMax,
           minLines: 1,
           maxLines: 4,
           decoration: InputDecoration(
             labelText: l10n.documentDescriptionLabel,
             errorText: isValidDocumentDescription(description.text)
                 ? null
-                : l10n.documentDescriptionTooLong(documentDescriptionMax),
+                : l10n.documentDescriptionTooLong(
+                    Limits.documentDescriptionMax,
+                  ),
           ),
           onChanged: (_) => onChanged(),
         ),
