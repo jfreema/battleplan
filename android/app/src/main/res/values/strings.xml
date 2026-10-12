@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notification channel names, shown in Android's notification
+         settings (ARCH §6.5). app_name is set per flavor in build.gradle.kts. -->
+    <string name="notification_channel_messages">Messages</string>
+    <string name="notification_channel_replies">Replies</string>
+    <string name="notification_channel_team">Team and admin</string>
+    <string name="notification_channel_polls">Polls</string>
+    <string name="notification_channel_events">Events and reminders</string>
+    <string name="notification_channel_documents">Documents</string>
+</resources>
