@@ -285,6 +285,40 @@ void main() {
       expect(d['mutedUntil'], isNull);
     });
 
+    test('shares and stops sharing my phone and email (TEAM-10)', () async {
+      final repo = FirestoreMemberRepository(db, functions);
+      await repo.setContact(
+        _g,
+        _me,
+        phone: ' 555 0100 ',
+        email: 'alex@example.com',
+      );
+      var d = (await db.doc('groupMembers/g1_alex').get()).data()!;
+      expect(d['contactPhone'], '555 0100');
+      expect(d['contactEmail'], 'alex@example.com');
+      var alex = (await repo.watchRoster(_g).first).firstWhere(
+        (m) => m.uid == _me,
+      );
+      expect(alex.contactPhone, '555 0100');
+      expect(alex.sharesContact, isTrue);
+      // Blank is the same as not shared.
+      await repo.setContact(_g, _me, phone: '  ');
+      d = (await db.doc('groupMembers/g1_alex').get()).data()!;
+      expect(d['contactPhone'], isNull);
+      expect(d['contactEmail'], isNull);
+      alex = (await repo.watchRoster(_g).first).firstWhere((m) => m.uid == _me);
+      expect(alex.sharesContact, isFalse);
+      // A blank stored value reads as not shared.
+      expect(
+        membershipFromFirestore(const {
+          'groupId': 'g1',
+          'uid': 'x',
+          'contactEmail': ' ',
+        }).sharesContact,
+        isFalse,
+      );
+    });
+
     test(
       'maps my-settings refusals to failures, and ignores a missed read marker',
       () async {

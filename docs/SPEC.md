@@ -146,6 +146,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Read the team's chat, schedule, documents, members | ✓ | ✓ | ✓ | ✓ any team |
 | Send messages and photos, react, vote; RSVP for self | ✓ | ✓ | ✓ | in teams they've joined |
 | Delete own messages | ✓ | ✓ | ✓ | ✓ |
+| Share your own phone and email with the team (TEAM-10) | ✓ | ✓ | ✓ | in teams they've joined |
 | **Delete anyone's message** | — | ✓ | ✓ | ✓ |
 | Mention people with @ (CHAT-14) | ✓ | ✓ | ✓ | in teams they've joined |
 | Mention @everyone; send announcements; pin messages (CHAT-14, CHAT-15) | — | ✓ | ✓ | pin any team; others in teams they've joined |
@@ -428,9 +429,9 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **TEAM-9 · MVP · Archive or delete (owner, super admins).**
   - **Archive** makes the team read-only and moves it to "Archived" in the switcher. It can be restored.
   - **Delete** requires typing the team name. It permanently removes all messages, events, documents, and files.
-- **TEAM-10 · v1.1 · Roster details.**
-  - Sort the roster by jersey number. (Number and position live on players, PLAYER-1, and a member who is a player shows theirs.)
-  - Optional contact sharing: members can share a phone number and email with a team. These appear on their card with call, text, and email buttons.
+- **TEAM-10 · v1.1 · Roster details.** Built (task 136).
+  - Sort the roster's players by jersey number (the default; players without one come last) or by name, from the sort button. (Number and position live on players, PLAYER-1, and a member who is a player shows theirs.) Admins and members are listed by name, the owner first.
+  - Optional contact sharing: on their own card, members share a phone number and email with that team ("Share my phone and email"; the account's email is offered), and change them or stop sharing at any time. They appear on their card for everyone on the team with call, text, and email buttons. Each team is separate. Sharing needs an open team; stopping works even on an archived or suspended one. Leaving the team or deleting the account removes them.
 - **TEAM-11 · MVP · Players on every team.** Players, guardians, and claims are specified in §6.3 (PLAYER).
 - **TEAM-12 · v1.1 · Announcement-only mode.** Only admins can post in chat. Everyone can still react, vote, and RSVP.
 - **TEAM-13 · Later.**
@@ -963,7 +964,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Privacy Policy at `/privacy` and Terms of Use at `/terms`, on the website (WEB-2).
   - Linked from sign-in, Settings, the store listings, and the Apple developer settings.
   - The Privacy Policy covers:
-    - what we collect: name, email, photo, messages, files, device tokens, usage analytics, crash reports, and the player records members enter on any team (name, jersey number, position, plus the optional details in PLAYER-12: date of birth, emergency contacts, medical notes, and notes, seen only by the team's admins and the player's linked people). Some player records are managed by parents and may be children's. Medical notes are health information and are saved only with consent;
+    - what we collect: name, email, photo, messages, files, the phone number and email members choose to share with a team (TEAM-10), device tokens, usage analytics, crash reports, and the player records members enter on any team (name, jersey number, position, plus the optional details in PLAYER-12: date of birth, emergency contacts, medical notes, and notes, seen only by the team's admins and the player's linked people). Some player records are managed by parents and may be children's. Medical notes are health information and are saved only with consent;
     - that super admins can access content for moderation and support;
     - how long data is kept;
     - how to delete it.
@@ -1320,7 +1321,7 @@ The web parts are built before the Phase 1 go-live (ROADMAP). Native-only parts,
 
 
 1. @mentions, pins, announcements (CHAT-14, CHAT-15). Built (task 135).
-2. Roster details and contact sharing (TEAM-10); "Same answer for all my players" and RSVP history (PLAYER-11)
+2. Roster details and contact sharing (TEAM-10); "Same answer for all my players" and RSVP history (PLAYER-11). Built (tasks 136 and 137).
 3. Calendar subscription (SCHED-11)
 4. RSVP nudges and guest counts (SCHED-12)
 5. Team-specific link previews for invites (ARCH §6.6)

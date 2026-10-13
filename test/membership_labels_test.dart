@@ -37,4 +37,20 @@ void main() {
     expect(_m('Coach Kim').nameWithPlayers, 'Coach Kim');
     expect(_m('Madonna', 'Lola').nameWithPlayers, 'Madonna · Lola');
   });
+
+  test('shared contact info, and which emails can be shared (TEAM-10)', () {
+    expect(_m('Coach Kim').sharesContact, isFalse);
+    expect(
+      _m('Coach Kim').copyWith(contactPhone: '555 0100').sharesContact,
+      isTrue,
+    );
+    expect(
+      _m('Coach Kim').copyWith(contactEmail: 'kim@example.com').sharesContact,
+      isTrue,
+    );
+    expect(looksLikeEmail('kim@example.com'), isTrue);
+    expect(looksLikeEmail('kim@example'), isFalse);
+    expect(looksLikeEmail('kim example@x.co'), isFalse);
+    expect(looksLikeEmail('@example.com'), isFalse);
+  });
 }

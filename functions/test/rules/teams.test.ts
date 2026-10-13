@@ -104,6 +104,48 @@ describe('teams and memberships', () => {
   });
 });
 
+describe('sharing contact info with the team (TEAM-10)', () => {
+  const share = (uid: string, groupId: string, fields: object) =>
+    as(uid).doc(`groupMembers/${groupId}_${uid}`).update(fields);
+
+  it('lets a member share a phone and email on their own card, which the team reads', async () => {
+    await assertSucceeds(share('bob', 'teamA', { contactPhone: '+1 (555) 010-0199', contactEmail: 'bob@example.com' }));
+    const card = await assertSucceeds(as('alice').doc('groupMembers/teamA_bob').get());
+    if (card.get('contactEmail') !== 'bob@example.com') throw new Error('not shared');
+    // Other teams never see it.
+    await assertFails(as('carol').doc('groupMembers/teamA_bob').get());
+  });
+
+  it("refuses sharing on someone else's card, even for the owner", async () => {
+    await assertFails(as('alice').doc('groupMembers/teamA_bob').update({ contactPhone: '555 0100' }));
+    await assertFails(share('bob', 'teamB', { contactPhone: '555 0100' }));
+  });
+
+  it('checks the phone and email', async () => {
+    await assertFails(share('bob', 'teamA', { contactPhone: 'call me' }));
+    await assertFails(share('bob', 'teamA', { contactPhone: '5'.repeat(31) }));
+    await assertFails(share('bob', 'teamA', { contactPhone: 5550100 }));
+    await assertFails(share('bob', 'teamA', { contactEmail: 'bob' }));
+    await assertFails(share('bob', 'teamA', { contactEmail: 'bob@example' }));
+    await assertFails(share('bob', 'teamA', { contactEmail: `${'b'.repeat(250)}@x.co` }));
+    await assertSucceeds(share('bob', 'teamA', { contactPhone: '5'.repeat(30) }));
+  });
+
+  it('lets anyone stop sharing, but share nothing new, on an archived or suspended team', async () => {
+    await assertSucceeds(share('bob', 'teamA', { contactPhone: '555 0100' }));
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('groups/teamA').update({ archivedAt: firebase.firestore.Timestamp.now() }),
+    );
+    await assertFails(share('bob', 'teamA', { contactPhone: '555 0199' }));
+    await assertSucceeds(share('bob', 'teamA', { contactPhone: null }));
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('groups/teamA').update({ archivedAt: null, suspendedAt: firebase.firestore.Timestamp.now() }),
+    );
+    await assertFails(share('bob', 'teamA', { contactEmail: 'bob@example.com' }));
+    await assertSucceeds(share('bob', 'teamA', { contactEmail: firebase.firestore.FieldValue.delete() }));
+  });
+});
+
 describe('players across teams', () => {
   it("hides a team's players and player links from other teams", async () => {
     await assertSucceeds(as('frank').doc('players/emma').get());
