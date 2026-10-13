@@ -41,7 +41,7 @@ The screenshots are real captures of the web app with sample data, taken locally
 
 1. Start the emulators and seed them (DEVELOPMENT.md, `tools/seed`), and add any extra sample messages, polls, events, and documents you want shown.
 2. `flutter build web --wasm -t lib/main_dev.dart --dart-define=USE_EMULATORS=true -o <a folder outside the repo>` and serve that folder on a local port.
-3. Sign in as a seeded user in headless Chrome at 390 × 844 (device scale 2) and capture each screen with `prefers-color-scheme` set to light and then dark. Hide the "Running in emulator mode" banner.
+3. Sign in as a seeded user in headless Chrome at 390 × 844 (device scale 2) and capture each screen with `prefers-color-scheme` set to light and then dark. Hide the "Running in emulator mode" banner, and the "EMU" corner ribbon (build from a scratch copy of the repo with `bannerLabel` in `lib/core/env.dart` returning null; never commit that change).
 4. Resize to 600 px wide and save as WebP (quality about 80) under `images/` with the same names, so the pages don't change.
 
 Regenerate `images/og.png` from the new screenshots at 1200 × 630.
