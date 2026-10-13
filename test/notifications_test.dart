@@ -397,9 +397,27 @@ void main() {
       );
       expect(find.text('Notifications on iPhone and iPad'), findsOneWidget);
       expect(find.textContaining('Add to Home Screen'), findsOneWidget);
+      expect(find.text('Get the iPhone app'), findsOneWidget);
       await tester.tap(find.text('Got it'));
       await tester.pumpAndSettle();
       expect(push.permissionRequests, 0);
+      expect(find.text('Notifications on iPhone and iPad'), findsNothing);
+    });
+
+    testWidgets('the tip links to the App Store app (NOTIF-9)', (tester) async {
+      final opener = FakeLinkOpener();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        push: FakePushRepository(permission: PushPermission.unavailable),
+        browser: const FakeBrowserInfo(pushNeedsHomeScreen: true),
+        linkOpener: opener,
+      );
+      await tester.tap(find.text('Get the iPhone app'));
+      await tester.pumpAndSettle();
+      expect(opener.opened.single.path, '/ios');
       expect(find.text('Notifications on iPhone and iPad'), findsNothing);
     });
   });

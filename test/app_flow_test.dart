@@ -1040,7 +1040,7 @@ void main() {
       expect(find.text(full), findsOneWidget);
       await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
-      expect(find.text('Poll'), findsOneWidget);
+      expect(find.text('Create poll'), findsOneWidget);
       await tester.tap(find.text('Photo library'));
       await tester.pumpAndSettle();
       expect(find.text(full), findsNWidgets(2));

@@ -60,6 +60,55 @@ final class MessageRepositoryProvider
 
 String _$messageRepositoryHash() => r'e8ec38e76707df4993060a741746e031e4e6be42';
 
+/// Where the send queue is kept on the device (CHAT-4). In memory unless
+/// app/providers.dart wires the stored one.
+
+@ProviderFor(chatQueueStore)
+final chatQueueStoreProvider = ChatQueueStoreProvider._();
+
+/// Where the send queue is kept on the device (CHAT-4). In memory unless
+/// app/providers.dart wires the stored one.
+
+final class ChatQueueStoreProvider
+    extends $FunctionalProvider<ChatQueueStore, ChatQueueStore, ChatQueueStore>
+    with $Provider<ChatQueueStore> {
+  /// Where the send queue is kept on the device (CHAT-4). In memory unless
+  /// app/providers.dart wires the stored one.
+  ChatQueueStoreProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'chatQueueStoreProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$chatQueueStoreHash();
+
+  @$internal
+  @override
+  $ProviderElement<ChatQueueStore> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ChatQueueStore create(Ref ref) {
+    return chatQueueStore(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ChatQueueStore value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ChatQueueStore>(value),
+    );
+  }
+}
+
+String _$chatQueueStoreHash() => r'51e07b24d2eaf254bea5b403006d8f3e266cd263';
+
 /// A team's unread message count for the switcher and the Chat tab, up to
 /// 100 (CHAT-9). It only queries when the team's last message is newer
 /// than the person's read marker, so a read team costs nothing.
@@ -120,7 +169,7 @@ final class UnreadCountProvider
   }
 }
 
-String _$unreadCountHash() => r'474f962f21d1c941b931831089a896fc3c0dc240';
+String _$unreadCountHash() => r'126fba42fdffa16acf229832582ba1e894de69dd';
 
 /// A team's unread message count for the switcher and the Chat tab, up to
 /// 100 (CHAT-9). It only queries when the team's last message is newer
@@ -288,7 +337,7 @@ final class ChatMessagesProvider
   }
 }
 
-String _$chatMessagesHash() => r'3ef263383f984dde99b1c4c6239d30a3b4fdfccb';
+String _$chatMessagesHash() => r'8ca1949b47c4e8684bce45710b75d8a9e768841c';
 
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out

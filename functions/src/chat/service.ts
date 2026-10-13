@@ -4,6 +4,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
+import { groupMemberId } from '../shared/ids.js';
 import { trySend } from '../notify/service.js';
 import { deletePoll, pollCreatedBody } from '../polls/service.js';
 
@@ -66,8 +67,10 @@ export async function postSystemMessage(
   text: string,
   actorId: string,
   targetId?: string,
+  id?: string,
 ): Promise<void> {
-  await db().collection(Collections.messages).add({
+  const messages = db().collection(Collections.messages);
+  const line = {
     groupId,
     authorId: 'system',
     authorName: '',
@@ -79,7 +82,67 @@ export async function postSystemMessage(
     reactions: {},
     systemEvent: { kind, actorId, targetId: targetId ?? null },
     createdAt: FieldValue.serverTimestamp(),
-  });
+  };
+  if (!id) {
+    await messages.add(line);
+    return;
+  }
+  // A trigger passes an ID of its own, so a retried run posts the line once.
+  try {
+    await messages.doc(id).create(line);
+  } catch (e) {
+    // ALREADY_EXISTS: an earlier run of the same trigger posted it.
+    if ((e as { code?: number }).code !== 6) throw e;
+  }
+}
+
+/** "Sam joined" (CHAT-10). */
+export function joinedLine(name: unknown): string {
+  const n = typeof name === 'string' ? name.trim() : '';
+  return `${n || 'Someone'} joined`;
+}
+
+/**
+ * The line for a team rename (CHAT-10): 'Alex renamed the team to
+ * "Thunder 12U"', or without a name when it isn't known (a super admin's
+ * change, say). Null when the name didn't change, so the groups trigger
+ * exits early on every other update.
+ */
+export function renamedLine(before: unknown, after: unknown, actorName: string | null): string | null {
+  const was = typeof before === 'string' ? before.trim() : '';
+  const now = typeof after === 'string' ? after.trim() : '';
+  if (!now || was === now) return null;
+  return actorName ? `${actorName} renamed the team to "${now}"` : `The team was renamed to "${now}"`;
+}
+
+/**
+ * Posts the rename line for a team whose name changed (CHAT-10). [actorUid]
+ * is whoever wrote the change, when known; their team name is used. The
+ * line's ID comes from the trigger event, so a retry doesn't repeat it.
+ */
+export async function postRenamedLine(
+  groupId: string,
+  before: unknown,
+  after: unknown,
+  actorUid: string | null,
+  eventId: string,
+): Promise<boolean> {
+  if (renamedLine(before, after, null) === null) return false;
+  let actorName: string | null = null;
+  if (actorUid) {
+    const member = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, actorUid)).get();
+    const name = member.get('displayName');
+    actorName = typeof name === 'string' && name.trim() ? name.trim() : null;
+  }
+  await postSystemMessage(
+    groupId,
+    'renamed',
+    renamedLine(before, after, actorName)!,
+    actorUid ?? 'system',
+    undefined,
+    `renamed_${eventId}`.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 120),
+  );
+  return true;
 }
 
 /** What a reply shows of the message it quotes (ARCH §6.2 replyPreview). */

@@ -8,7 +8,9 @@ import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/calendar.dart';
 import 'package:battleplan/core/services/file_chooser.dart';
 import 'package:battleplan/core/services/link_opener.dart';
+import 'package:battleplan/core/services/photo_drops.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
+import 'package:battleplan/core/services/photo_saver.dart';
 import 'package:battleplan/core/services/sharer.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/domain/admin_repository.dart';
@@ -465,9 +467,14 @@ class FakeMemberRepository implements MemberRepository {
 
   final List<String> reads = [];
 
+  /// The marker each partial read set (CHAT-9), in order.
+  final List<DateTime> readsUpTo = [];
+
   @override
-  Future<void> markRead(GroupId groupId, UserId uid) async =>
-      reads.add(groupId.value);
+  Future<void> markRead(GroupId groupId, UserId uid, {DateTime? upTo}) async {
+    reads.add(groupId.value);
+    if (upTo != null) readsUpTo.add(upTo);
+  }
 }
 
 class FakeLocalPrefs implements LocalPrefsRepository {
@@ -1050,6 +1057,15 @@ class FakeMessageRepository implements MessageRepository {
   final List<String> sent = [];
   final _changes = StreamController<void>.broadcast();
 
+  /// Pages as if offline, from the cache (CHAT-4); [refresh] to apply.
+  bool offline = false;
+
+  /// Sends the live page again, as a change on the server would.
+  void refresh() => _changes.add(null);
+
+  /// Every older page read, by its cursor.
+  final List<Object> olderReads = [];
+
   @override
   Stream<MessagePage> watchNewest(GroupId groupId, {int limit = 50}) async* {
     MessagePage page() {
@@ -1057,6 +1073,7 @@ class FakeMessageRepository implements MessageRepository {
       return MessagePage(
         messages: all.take(limit).toList(),
         next: all.length > limit ? PageCursor(limit) : null,
+        fromCache: offline,
       );
     }
 
@@ -1072,6 +1089,7 @@ class FakeMessageRepository implements MessageRepository {
     PageCursor before, {
     int limit = 50,
   }) async {
+    olderReads.add(before.handle);
     final all = messages.where((m) => m.groupId == groupId).toList();
     final start = before.handle as int;
     final end = (start + limit).clamp(0, all.length);
@@ -1183,15 +1201,46 @@ class FakeMessageRepository implements MessageRepository {
     GroupId groupId,
     DateTime since, {
     int cap = 100,
+    Set<String> skipAuthors = const {},
   }) async => messages
       .where(
         (m) =>
             m.groupId == groupId &&
             (m.createdAt?.isAfter(since) ?? false) &&
-            !m.isSystem,
+            !m.isSystem &&
+            !skipAuthors.contains(m.authorId),
       )
       .take(cap)
       .length;
+
+  /// Every newer page read, by its `after` time or cursor (CHAT-1).
+  final List<Object?> newerReads = [];
+
+  @override
+  Future<MessagePage> loadNewer(
+    GroupId groupId, {
+    DateTime? after,
+    PageCursor? cursor,
+    int limit = 50,
+  }) async {
+    newerReads.add(cursor?.handle ?? after);
+    final all = messages.where((m) => m.groupId == groupId).toList();
+    // Indexes into the newest-first list: [start, end) are the page.
+    final end = cursor != null
+        ? cursor.handle as int
+        : switch (all.indexWhere(
+            (m) => !(m.createdAt?.isAfter(after!) ?? true),
+          )) {
+            -1 => all.length,
+            final i => i,
+          };
+    final start = (end - limit).clamp(0, end);
+    return MessagePage(
+      messages: all.sublist(start, end),
+      next: start > 0 ? PageCursor(start) : null,
+      older: end < all.length ? PageCursor(end) : null,
+    );
+  }
 
   final List<String> deleted = [];
 
@@ -1238,8 +1287,11 @@ class FakeMessageRepository implements MessageRepository {
   @override
   Future<String?> attachmentUrl(String path) async => null;
 
+  /// What every message photo downloads as; null fails like a missing file.
+  Uint8List? photoBytes;
+
   @override
-  Future<Uint8List?> attachmentBytes(String path) async => null;
+  Future<Uint8List?> attachmentBytes(String path) async => photoBytes;
 
   int _ids = 0;
 
@@ -2610,5 +2662,29 @@ class ExistingAccountAuth extends FakeAuthRepository {
   Future<void> signInWithGoogle() async {
     await sendSignInLink(FakeAuthRepository.knownEmail);
     throw const AccountExistsWithOtherMethod(FakeAuthRepository.knownEmail);
+  }
+}
+
+/// Photos pasted or dropped onto the page (CHAT-2): [drop] sends some.
+class FakePhotoDrops implements PhotoDrops {
+  final _drops = StreamController<List<PickedPhoto>>.broadcast();
+
+  void drop(List<PickedPhoto> photos) => _drops.add(photos);
+
+  @override
+  Stream<List<PickedPhoto>> get photos => _drops.stream;
+}
+
+/// The phone's photo library (CHAT-3): what was saved, by name.
+class FakePhotoSaver implements PhotoSaver {
+  final List<String> saved = [];
+
+  @override
+  bool get available => true;
+
+  @override
+  Future<bool> saveImage(Uint8List bytes, {required String name}) async {
+    saved.add(name);
+    return true;
   }
 }

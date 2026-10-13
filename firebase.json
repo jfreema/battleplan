@@ -58,6 +58,11 @@
         "source": "/g/:rest*",
         "destination": "/app/g/:rest*",
         "type": 302
+      },
+      {
+        "source": "/ios",
+        "destination": "/",
+        "type": 302
       }
     ],
     "rewrites": [

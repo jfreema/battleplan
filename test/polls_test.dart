@@ -163,7 +163,7 @@ void main() {
       final polls = await openChat(tester, messages: messages);
       await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Poll'));
+      await tester.tap(find.text('Create poll'));
       await tester.pumpAndSettle();
       expect(find.text('New poll'), findsOneWidget);
       FilledButton post() => tester.widget<FilledButton>(
@@ -200,7 +200,7 @@ void main() {
       final polls = await openChat(tester);
       await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Poll'));
+      await tester.tap(find.text('Create poll'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).at(0), 'Half typed');
       await tester.tap(find.byTooltip('Cancel'));
@@ -217,7 +217,7 @@ void main() {
       await openChat(tester, membersCanCreatePolls: false);
       await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
-      expect(find.text('Poll'), findsNothing);
+      expect(find.text('Create poll'), findsNothing);
 
       await openChat(
         tester,
@@ -226,7 +226,7 @@ void main() {
       );
       await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
-      expect(find.text('Poll'), findsOneWidget);
+      expect(find.text('Create poll'), findsOneWidget);
     });
 
     testWidgets('tap to vote, tap again to remove it (POLL-2)', (tester) async {
@@ -272,6 +272,29 @@ void main() {
       expect(find.text("Hasn't voted · 2"), findsOneWidget);
       expect(find.text('Coach Lee'), findsOneWidget);
       expect(find.text('Pat Kim'), findsOneWidget);
+    });
+
+    testWidgets("tapping an option's count shows who chose it, and "
+        'voting still works on the rest of the row (POLL-3)', (tester) async {
+      final polls = await openChat(tester, existing: poll());
+      await polls.setVote(poll(), const UserId('sam'), {'0'});
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('1 · 100%'));
+      await tester.pumpAndSettle();
+      expect(find.text('Saturday · 1 vote'), findsOneWidget);
+      expect(find.text('Sunday · 0 votes'), findsNothing);
+      expect(find.text("Hasn't voted · 2"), findsOneWidget);
+      expect(polls.votes['p1']?['coach'], isNull);
+    });
+
+    testWidgets("who hasn't voted is there before anyone votes (POLL-3)", (
+      tester,
+    ) async {
+      await openChat(tester, existing: poll());
+      expect(find.text('No votes yet'), findsOneWidget);
+      await tester.tap(find.text('See votes'));
+      await tester.pumpAndSettle();
+      expect(find.text("Hasn't voted · 3"), findsOneWidget);
     });
 
     testWidgets('anonymous polls show only counts (POLL-3)', (tester) async {
@@ -329,7 +352,7 @@ void main() {
       final polls = await openChat(tester, messages: messages);
       await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Poll'));
+      await tester.tap(find.text('Create poll'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).at(0), 'Dinner?');
       await tester.enterText(find.byType(TextField).at(1), 'Yes');
@@ -361,7 +384,7 @@ void main() {
       await openChat(tester);
       await tester.tap(find.byTooltip('Add photos or a poll'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Poll'));
+      await tester.tap(find.text('Create poll'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).at(0), 'Dinner?');
       // One emoji the field counts once and the server counts five times.

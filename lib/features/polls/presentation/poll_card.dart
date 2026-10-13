@@ -20,7 +20,10 @@ import 'package:material_ui/material_ui.dart';
 /// A poll in the chat (POLL-2, CHAT-11): the question, each option with a
 /// live result bar, count, and percentage, checkmarks on my choices, how
 /// many people voted, and when it closes. Tapping an option votes; tapping
-/// it again removes the vote. Results are always visible.
+/// it again removes the vote. Results are always visible. On polls that
+/// aren't anonymous, tapping an option's count (or long-pressing the
+/// option) shows who chose it, and See votes shows everyone, including who
+/// hasn't voted (POLL-3).
 class PollCard extends ConsumerStatefulWidget {
   const new({required this.pollId, required this.groupId, super.key});
 
@@ -154,9 +157,11 @@ class _PollCardState extends ConsumerState<PollCard> {
                   ? null
                   : () =>
                         unawaited(_vote(context, ref, value, mine, option.id)),
-              onLongPress: value.anonymous || value.voterCount == 0
+              onShowVoters: value.anonymous
                   ? null
-                  : () => unawaited(_showVoters(context, value)),
+                  : () => unawaited(
+                      _showVoters(context, value, optionId: option.id),
+                    ),
             ),
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -168,7 +173,8 @@ class _PollCardState extends ConsumerState<PollCard> {
                   color: scheme.onSurfaceVariant,
                 ),
               ),
-              if (!value.anonymous && value.voterCount > 0)
+              // Even before anyone votes: it lists who hasn't (POLL-3).
+              if (!value.anonymous)
                 TextButton(
                   onPressed: () => unawaited(_showVoters(context, value)),
                   child: Text(l10n.pollSeeVotes),
@@ -208,11 +214,14 @@ class _PollCardState extends ConsumerState<PollCard> {
     }
   }
 
-  Future<void> _showVoters(BuildContext context, Poll poll) =>
-      showAdaptiveSheet<void>(
-        context,
-        builder: (_) => PollVotersSheet(poll: poll),
-      );
+  Future<void> _showVoters(
+    BuildContext context,
+    Poll poll, {
+    String? optionId,
+  }) => showAdaptiveSheet<void>(
+    context,
+    builder: (_) => PollVotersSheet(poll: poll, optionId: optionId),
+  );
 
   Future<void> _close(BuildContext context, WidgetRef ref, Poll poll) async {
     final l10n = AppLocalizations.of(context);
@@ -248,7 +257,7 @@ String closesLabel(AppLocalizations l10n, DateTime at, DateTime now) {
 }
 
 /// One option: a bar filled to its share of voters behind the text, my
-/// checkmark, and the count and percentage.
+/// checkmark, and the count and percentage, which shows who chose it.
 class _OptionRow extends StatelessWidget {
   const new({
     required this.poll,
@@ -256,7 +265,7 @@ class _OptionRow extends StatelessWidget {
     required this.chosen,
     required this.leading,
     required this.onTap,
-    required this.onLongPress,
+    required this.onShowVoters,
   });
 
   final Poll poll;
@@ -266,7 +275,9 @@ class _OptionRow extends StatelessWidget {
   /// Ahead once the poll has closed.
   final bool leading;
   final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
+
+  /// Who chose this option (POLL-3); null on anonymous polls.
+  final VoidCallback? onShowVoters;
 
   @override
   Widget build(BuildContext context) {
@@ -289,14 +300,14 @@ class _OptionRow extends StatelessWidget {
         // actions too, or screen readers couldn't vote.
         excludeSemantics: true,
         onTap: onTap,
-        onLongPress: onLongPress,
+        onLongPress: onShowVoters,
         child: Material(
           color: scheme.surface,
           borderRadius: radius,
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
-            onLongPress: onLongPress,
+            onLongPress: onShowVoters,
             // At least 48 tall, so each option is easy to tap (SPEC §7.6).
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 48),
@@ -336,12 +347,39 @@ class _OptionRow extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: Space.sm),
-                        Text(
-                          '$votes · ${(share * 100).round()}%',
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
+                        if (onShowVoters case final show?)
+                          // Its own tap target: the count shows who chose
+                          // it, the rest of the row votes.
+                          Tooltip(
+                            message: l10n.pollSeeWhoChose(option.text),
+                            child: InkWell(
+                              onTap: show,
+                              borderRadius: radius,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minHeight: 40,
+                                  minWidth: 48,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '$votes · ${(share * 100).round()}%',
+                                    style: theme.textTheme.labelMedium
+                                        ?.copyWith(
+                                          color: scheme.primary,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          Text(
+                            '$votes · ${(share * 100).round()}%',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),

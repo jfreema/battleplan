@@ -20,6 +20,17 @@ abstract interface class MessageRepository {
     int limit = 50,
   });
 
+  /// The [limit] messages after [after], or after [cursor] (a newer page's
+  /// [MessagePage.next]), newest first, for opening a chat at its first
+  /// unread message and scrolling down from there (CHAT-1). Its `next` is
+  /// null once the newest message is reached; its `older` continues older.
+  Future<MessagePage> loadNewer(
+    GroupId groupId, {
+    DateTime? after,
+    PageCursor? cursor,
+    int limit = 50,
+  });
+
   /// A fresh message ID, so a queued message keeps one identity from the
   /// moment it's typed until the server has it.
   String newMessageId();
@@ -70,9 +81,15 @@ abstract interface class MessageRepository {
   /// A message photo's bytes, for sharing or saving.
   Future<Uint8List?> attachmentBytes(String path);
 
-  /// How many messages arrived after [since], up to [cap] (CHAT-9). One
-  /// aggregate read, not one read per message.
-  Future<int> countUnread(GroupId groupId, DateTime since, {int cap = 100});
+  /// How many messages arrived after [since], up to [cap] (CHAT-9): people's
+  /// messages, not system lines ("Sam joined"), and not from [skipAuthors]
+  /// (people I blocked, CHAT-12). Aggregate reads, not one per message.
+  Future<int> countUnread(
+    GroupId groupId,
+    DateTime since, {
+    int cap = 100,
+    Set<String> skipAuthors = const {},
+  });
 
   /// Deletes a message through the `deleteMessage` callable (CHAT-8): the
   /// author, a team admin, or a super admin.

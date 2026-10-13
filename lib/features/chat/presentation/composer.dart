@@ -134,7 +134,7 @@ class _ComposerState extends State<Composer> {
                       value: poll,
                       child: ListTile(
                         leading: const Icon(AppIcons.poll),
-                        title: Text(l10n.pollLabel),
+                        title: Text(l10n.createPoll),
                       ),
                     ),
                 ],

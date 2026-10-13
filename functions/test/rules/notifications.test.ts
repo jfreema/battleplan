@@ -102,6 +102,8 @@ describe('per-team level and mute (NOTIF-3)', () => {
     await assertSucceeds(member('bob').update({ mutedUntil: firebase.firestore.Timestamp.fromMillis(253402214400000) }));
     await assertSucceeds(member('bob').update({ mutedUntil: null }));
     await assertSucceeds(member('bob').update({ lastReadAt: now() }));
+    // Read partway up the chat (CHAT-9): the newest message on screen.
+    await assertSucceeds(member('bob').update({ lastReadAt: at(-60_000) }));
   });
 
   it('refuses bad values and other people', async () => {
@@ -109,6 +111,7 @@ describe('per-team level and mute (NOTIF-3)', () => {
     await assertFails(member('bob').update({ mutedUntil: at(-60_000) }));
     await assertFails(member('bob').update({ mutedUntil: 'tomorrow' }));
     await assertFails(member('bob').update({ lastReadAt: at(86_400_000) }));
+    await assertFails(member('bob').update({ lastReadAt: 'now' }));
     await assertFails(as('bob').doc('groupMembers/teamA_alice').update({ notificationLevel: 'none' }));
   });
 });

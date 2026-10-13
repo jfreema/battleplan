@@ -53,7 +53,14 @@ class _NotificationPrePromptState extends ConsumerState<NotificationPrePrompt> {
     final l10n = AppLocalizations.of(context);
     if (ref.read(browserInfoProvider).pushNeedsHomeScreen) {
       await prefs.setPushPrePromptShown();
-      if (mounted) await showHomeScreenTip(context, l10n);
+      if (!mounted) return;
+      final links = ref.read(linkServiceProvider);
+      final opener = ref.read(linkOpenerProvider);
+      await showHomeScreenTip(
+        context,
+        l10n,
+        onGetApp: () => unawaited(opener.open(links.iosApp)),
+      );
       return;
     }
     final status = await ref.read(pushRepositoryProvider).permissionStatus();
@@ -77,19 +84,30 @@ class _NotificationPrePromptState extends ConsumerState<NotificationPrePrompt> {
 }
 
 /// On iPhone and iPad, browser notifications need Add to Home Screen first
-/// (NOTIF-9).
-Future<void> showHomeScreenTip(BuildContext context, AppLocalizations l10n) =>
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(AppIcons.homeScreen),
-        title: Text(l10n.pushHomeScreenTitle),
-        content: Text(l10n.pushHomeScreenBody),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.gotIt),
-          ),
-        ],
+/// (NOTIF-9). The tip links to the App Store app with [onGetApp].
+Future<void> showHomeScreenTip(
+  BuildContext context,
+  AppLocalizations l10n, {
+  VoidCallback? onGetApp,
+}) => showDialog<void>(
+  context: context,
+  builder: (context) => AlertDialog(
+    icon: const Icon(AppIcons.homeScreen),
+    title: Text(l10n.pushHomeScreenTitle),
+    content: Text(l10n.pushHomeScreenBody),
+    actions: [
+      if (onGetApp != null)
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            onGetApp();
+          },
+          child: Text(l10n.pushHomeScreenGetApp),
+        ),
+      FilledButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(l10n.gotIt),
       ),
-    );
+    ],
+  ),
+);

@@ -1307,5 +1307,14 @@
   "backToRoster": "Back to the roster",
   "upcomingRsvps": "Upcoming RSVPs",
   "noUpcomingRsvps": "No upcoming events take RSVPs for players.",
-  "rsvpNoAnswer": "No answer"
+  "rsvpNoAnswer": "No answer",
+  "photosWaiting": "Waiting for a connection…",
+  "photosUploading": "Uploading photos",
+  "createPoll": "Create poll",
+  "pushHomeScreenGetApp": "Get the iPhone app",
+  "pollSeeWhoChose": "See who chose {option}",
+  "@pollSeeWhoChose": {"placeholders": {"option": {"type": "String"}}},
+  "photoSave": "Save photo",
+  "photoSaved": "Photo saved.",
+  "photoSaveFailed": "Couldn't save the photo. Check that Battleplan may add photos in your phone's settings."
 }

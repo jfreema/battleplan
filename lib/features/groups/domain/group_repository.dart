@@ -96,9 +96,10 @@ abstract interface class MemberRepository {
   /// Sends a fresh setup email to someone not joined yet (AUTH-6).
   Future<void> resendSetupEmail(GroupId groupId, UserId uid);
 
-  /// Marks the team's chat read up to now (CHAT-9). Syncs to every device
-  /// through the membership's `lastReadAt`.
-  Future<void> markRead(GroupId groupId, UserId uid);
+  /// Marks the team's chat read up to now, or up to [upTo] (the newest
+  /// message on screen while reading partway up, CHAT-9). Syncs to every
+  /// device through the membership's `lastReadAt`.
+  Future<void> markRead(GroupId groupId, UserId uid, {DateTime? upTo});
 
   /// My push level for this team: All activity, Important only, or Off
   /// (NOTIF-3). Syncs to every device.

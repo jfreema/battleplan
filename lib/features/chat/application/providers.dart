@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/chat/domain/chat_queue_store.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
+import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -17,6 +20,11 @@ part 'providers.g.dart';
 @Riverpod(keepAlive: true)
 MessageRepository messageRepository(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
+
+/// Where the send queue is kept on the device (CHAT-4). In memory unless
+/// app/providers.dart wires the stored one.
+@Riverpod(keepAlive: true)
+ChatQueueStore chatQueueStore(Ref ref) => MemoryChatQueueStore();
 
 /// What the chat screen shows (CHAT-1).
 @freezed
@@ -31,6 +39,17 @@ abstract class ChatState with _$ChatState {
 
     /// True once the first message of the chat is loaded.
     @Default(false) bool reachedStart,
+
+    /// Opened at the first unread message with more unread than the newest
+    /// page holds (CHAT-1): the newest message loaded below it, after which
+    /// messages are missing until scrolling down loads them. Null when
+    /// nothing is missing.
+    String? gapAfter,
+    @Default(false) bool loadingNewer,
+
+    /// False while the newest page comes from the offline cache: photos
+    /// wait for a connection (CHAT-4).
+    @Default(true) bool online,
 
     /// Photo messages still uploading, oldest first (CHAT-3).
     @Default(<OutgoingPhotos>[]) List<OutgoingPhotos> outgoing,
@@ -78,6 +97,10 @@ abstract class OutgoingPhotos with _$OutgoingPhotos {
     @Default('') String caption,
     @Default(0) double progress,
     @Default(false) bool failed,
+
+    /// Offline: waiting for the connection to come back, then it uploads
+    /// by itself (CHAT-4).
+    @Default(false) bool waiting,
   }) = _OutgoingPhotos;
 }
 
@@ -91,9 +114,16 @@ Future<int> unreadCount(Ref ref, GroupId groupId) async {
   if (last == null || membership == null) return 0;
   final read = membership.lastReadAt;
   if (read != null && !last.isAfter(read)) return 0;
+  // Messages from people I blocked are collapsed, so they don't count
+  // (CHAT-12); nor do system lines like "Sam joined".
+  final blocked = ref.watch(blockedIdsProvider);
   return await ref
       .read(messageRepositoryProvider)
-      .countUnread(groupId, read ?? DateTime.fromMillisecondsSinceEpoch(0));
+      .countUnread(
+        groupId,
+        read ?? DateTime.fromMillisecondsSinceEpoch(0),
+        skipAuthors: blocked,
+      );
 }
 
 /// "1" to "99", then "99+" (CHAT-9).
@@ -116,6 +146,19 @@ class ChatMessages extends _$ChatMessages {
   PageCursor? _olderCursor;
   bool _loadedOlder = false;
 
+  /// Continues loading newer messages into the gap (CHAT-1).
+  PageCursor? _newerCursor;
+  bool _anchored = false;
+
+  /// Set while [openAt] loads; older pages wait for it, since they then
+  /// continue from the first unread message back.
+  Future<void>? _anchoring;
+
+  /// Texts saved on the device from an earlier run, sent once the newest
+  /// page shows which of them the server or the offline cache already has.
+  List<SavedText>? _restore;
+  Timer? _photoRetry;
+
   /// Each send starts at least this long after the server confirmed the
   /// previous one. The server stamps a message before it confirms, so two
   /// stamps are always more than a second apart, which keeps everyone under
@@ -126,6 +169,8 @@ class ChatMessages extends _$ChatMessages {
 
   @override
   ChatState build(GroupId groupId) {
+    final saved = ref.read(chatQueueStoreProvider).load(groupId);
+    _restore = saved.isEmpty ? null : saved;
     final sub = ref
         .watch(messageRepositoryProvider)
         .watchNewest(groupId)
@@ -142,16 +187,111 @@ class ChatMessages extends _$ChatMessages {
             _known[m.id] = m;
           }
           _liveCursor = page.next;
+          final wasOnline = state.online;
           _publish(
             reachedStart:
                 (!_loadedOlder && page.next == null) || state.reachedStart,
           );
+          state = state.copyWith(online: !page.fromCache);
+          // Back online: photos waiting for the connection go now.
+          if (!wasOnline && state.online) _retryWaitingPhotos();
+          _restoreQueue();
         });
     ref.onDispose(() {
       unawaited(sub.cancel());
       _markAgain?.cancel();
+      _photoRetry?.cancel();
     });
     return const ChatState();
+  }
+
+  /// Sends texts saved from an earlier run (CHAT-4). One already in the
+  /// chat (the server has it, or the offline cache will send it) is done.
+  void _restoreQueue() {
+    final saved = _restore;
+    if (saved == null) return;
+    _restore = null;
+    final items = [
+      for (final s in saved)
+        if (!_known.containsKey(s.id) && !state.queued.any((q) => q.id == s.id))
+          OutgoingText(id: s.id, text: s.text, replyToId: s.replyToId),
+    ];
+    state = state.copyWith(queued: [...state.queued, ...items]);
+    _saveQueue();
+    for (final item in items) {
+      unawaited(_sendText(item));
+    }
+  }
+
+  /// Keeps the queued texts on the device, so closing the app offline
+  /// loses none of them (CHAT-4).
+  void _saveQueue() => unawaited(
+    ref
+        .read(chatQueueStoreProvider)
+        .save(groupId, [
+          for (final q in state.queued)
+            (id: q.id, text: q.text, replyToId: q.replyToId),
+        ])
+        .catchError((Object _) {}),
+  );
+
+  /// Opens the chat at the first unread message (CHAT-1, CHAT-9). When more
+  /// arrived since [readAt] than the newest page holds, loads the 50 just
+  /// after it; the rest load as the person scrolls down ([loadNewer]).
+  Future<void> openAt(DateTime readAt) async {
+    if (_anchored) return;
+    _anchored = true;
+    // The newest page holds the whole chat, or reaches back to the marker.
+    if (_liveCursor == null) return;
+    final live = [for (final id in _liveIds) ?_known[id]?.createdAt];
+    if (live.isEmpty || live.any((at) => !at.isAfter(readAt))) return;
+    final done = Completer<void>();
+    _anchoring = done.future;
+    state = state.copyWith(loadingNewer: true);
+    try {
+      final page = await ref
+          .read(messageRepositoryProvider)
+          .loadNewer(groupId, after: readAt);
+      _addNewer(page);
+      // Older pages now continue from the first unread message back.
+      _loadedOlder = true;
+      _olderCursor = page.older;
+      _publish(reachedStart: page.older == null);
+    } finally {
+      _anchoring = null;
+      done.complete();
+      state = state.copyWith(loadingNewer: false);
+    }
+  }
+
+  /// Loads the next 50 newer messages into the gap below the first unread
+  /// ones (scrolling down, CHAT-1), until it meets the newest page.
+  Future<void> loadNewer() async {
+    final cursor = _newerCursor;
+    if (cursor == null || state.loadingNewer) return;
+    state = state.copyWith(loadingNewer: true);
+    try {
+      final page = await ref
+          .read(messageRepositoryProvider)
+          .loadNewer(groupId, cursor: cursor);
+      _addNewer(page);
+      _publish();
+    } finally {
+      state = state.copyWith(loadingNewer: false);
+    }
+  }
+
+  /// Merges a newer page; the gap closes once it reaches the newest page.
+  void _addNewer(MessagePage page) {
+    for (final m in page.messages) {
+      _known.putIfAbsent(m.id, () => m);
+    }
+    final joined =
+        page.next == null ||
+        page.messages.isEmpty ||
+        page.messages.any((m) => _liveIds.contains(m.id));
+    _newerCursor = joined ? null : page.next;
+    state = state.copyWith(gapAfter: joined ? null : page.messages.first.id);
   }
 
   void _publish({bool? loadingOlder, bool? reachedStart}) {
@@ -172,6 +312,7 @@ class ChatMessages extends _$ChatMessages {
 
   /// Loads the next 50 older messages (scrolling up).
   Future<void> loadOlder() async {
+    if (_anchoring case final anchoring?) await anchoring;
     if (state.loadingOlder || state.reachedStart) return;
     final cursor = _loadedOlder ? _olderCursor : _liveCursor;
     if (cursor == null) {
@@ -214,14 +355,33 @@ class ChatMessages extends _$ChatMessages {
   Future<void> retryPhotos(int id) {
     final item = state.outgoing.where((o) => o.id == id).firstOrNull;
     if (item == null) return Future.value();
-    _updateOutgoing(id, (o) => o.copyWith(failed: false, progress: 0));
-    return _upload(item);
+    _updateOutgoing(
+      id,
+      (o) => o.copyWith(failed: false, waiting: false, progress: 0),
+    );
+    return _upload(item, evenOffline: true);
   }
 
   /// Drops a failed photo message.
   void discardPhotos(int id) => state = state.copyWith(
     outgoing: state.outgoing.where((o) => o.id != id).toList(),
   );
+
+  /// Photos wait for a connection (CHAT-4): uploads that stopped offline
+  /// start again when the chat is back online, and every 30 seconds in
+  /// case the chat doesn't notice.
+  void _retryWaitingPhotos() {
+    _photoRetry?.cancel();
+    _photoRetry = null;
+    for (final o in state.outgoing) {
+      if (o.waiting) unawaited(retryPhotos(o.id));
+    }
+  }
+
+  void _waitForConnection(int id) {
+    _updateOutgoing(id, (o) => o.copyWith(waiting: true, progress: 0));
+    _photoRetry ??= Timer(const Duration(seconds: 30), _retryWaitingPhotos);
+  }
 
   void _updateOutgoing(int id, OutgoingPhotos Function(OutgoingPhotos) f) =>
       state = state.copyWith(
@@ -233,10 +393,15 @@ class ChatMessages extends _$ChatMessages {
 
   /// Uploads right away, then joins the send queue only to post, so a slow
   /// upload never holds up text messages sent after it.
-  Future<void> _upload(OutgoingPhotos item) async {
+  Future<void> _upload(OutgoingPhotos item, {bool evenOffline = false}) async {
     final uid = ref.read(authUserProvider).value?.uid;
     if (uid == null) return;
     final repo = ref.read(messageRepositoryProvider);
+    // Offline: wait for the connection instead of failing (CHAT-4).
+    if (!state.online && !evenOffline) {
+      _waitForConnection(item.id);
+      return;
+    }
     try {
       final uploaded = await repo.uploadPhotos(
         groupId,
@@ -253,6 +418,9 @@ class ChatMessages extends _$ChatMessages {
         ),
       );
       discardPhotos(item.id);
+    } on Offline {
+      // The connection dropped mid-upload: wait for it, then go again.
+      _waitForConnection(item.id);
     } on Object {
       // Shown in the chat with Retry and Delete; nothing else to report.
       _updateOutgoing(item.id, (o) => o.copyWith(failed: true));
@@ -271,6 +439,7 @@ class ChatMessages extends _$ChatMessages {
       replyToId: replyToId,
     );
     state = state.copyWith(queued: [...state.queued, item]);
+    _saveQueue();
     return _sendText(item);
   }
 
@@ -330,9 +499,12 @@ class ChatMessages extends _$ChatMessages {
   }
 
   /// Drops a refused message.
-  void discardText(String id) => state = state.copyWith(
-    queued: state.queued.where((q) => q.id != id).toList(),
-  );
+  void discardText(String id) {
+    state = state.copyWith(
+      queued: state.queued.where((q) => q.id != id).toList(),
+    );
+    _saveQueue();
+  }
 
   void _setQueued(String id, {required bool failed}) => state = state.copyWith(
     queued: [
@@ -393,11 +565,18 @@ class ChatMessages extends _$ChatMessages {
         );
   }
 
-  /// Loads older pages until [messageId] is loaded or the chat's start is
-  /// reached, for jumping to a quoted message (CHAT-13). Gives up after
-  /// [maxPages] pages (2,000 messages).
+  /// Loads pages until [messageId] is loaded or the chat's start is
+  /// reached, for jumping to a quoted message (CHAT-13): first the gap
+  /// below the first unread messages, if any, then older pages. Gives up
+  /// after [maxPages] pages (2,000 messages).
   Future<bool> loadUntil(String messageId, {int maxPages = 40}) async {
-    for (var i = 0; i < maxPages; i++) {
+    var pages = 0;
+    while (state.gapAfter != null &&
+        !_known.containsKey(messageId) &&
+        pages++ < maxPages) {
+      await loadNewer();
+    }
+    for (var i = pages; i < maxPages; i++) {
       if (_known.containsKey(messageId)) return true;
       if (state.reachedStart) return false;
       await loadOlder();
@@ -411,26 +590,36 @@ class ChatMessages extends _$ChatMessages {
 
   DateTime _lastMarked = DateTime.fromMillisecondsSinceEpoch(0);
   Timer? _markAgain;
+  DateTime? _markUpTo;
 
-  /// Marks the chat read when its newest message is on screen (CHAT-9), at
-  /// most every 2 seconds and only when something is newer than the marker.
-  Future<void> markRead() async {
+  /// Marks messages read as they come on screen (CHAT-9): all of them when
+  /// the newest is on screen, or up to [upTo], the newest one on screen,
+  /// while reading partway up. At most every 2 seconds, and only when it
+  /// moves the marker forward.
+  Future<void> markRead({DateTime? upTo}) async {
     final uid = ref.read(authUserProvider).value?.uid;
     final newest = state.messages.where((m) => !m.pending).firstOrNull;
-    if (uid == null || newest?.createdAt == null) return;
+    final newestAt = newest?.createdAt;
+    if (uid == null || newestAt == null) return;
+    // Up to the newest message is the same as all of it, and when there's
+    // a gap below, the newest message isn't the last one: say so exactly.
+    final partial = upTo != null && upTo.isBefore(newestAt) ? upTo : null;
     final read = ref.read(myMembershipProvider(groupId))?.lastReadAt;
-    if (read != null && !newest!.createdAt!.isAfter(read)) return;
+    if (read != null && !(partial ?? newestAt).isAfter(read)) return;
     final since = DateTime.now().difference(_lastMarked);
     if (since < const Duration(seconds: 2)) {
       // Try again once the 2 seconds are up, so the last message counts.
+      _markUpTo = partial;
       _markAgain ??= Timer(const Duration(seconds: 2) - since, () {
         _markAgain = null;
-        unawaited(markRead().catchError((Object _) {}));
+        unawaited(markRead(upTo: _markUpTo).catchError((Object _) {}));
       });
       return;
     }
     _lastMarked = DateTime.now();
-    await ref.read(memberRepositoryProvider).markRead(groupId, UserId(uid));
+    await ref
+        .read(memberRepositoryProvider)
+        .markRead(groupId, UserId(uid), upTo: partial);
   }
 
   /// Edits my message's text (CHAT-15). Rules allow only the author.

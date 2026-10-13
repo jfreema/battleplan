@@ -397,7 +397,12 @@ $ReplyPreviewCopyWith<$Res>? get replyPreview {
 /// @nodoc
 mixin _$MessagePage {
 
- List<Message> get messages; PageCursor? get next;
+ List<Message> get messages;/// Continues the paging: older messages for the newest page and older
+/// pages, newer ones for a newer page. Null at the chat's start or end.
+ PageCursor? get next;/// For a newer page: continues older, before its oldest message.
+ PageCursor? get older;/// True when the page came from the offline cache rather than the
+/// server: the device is offline, or hasn't heard back yet (CHAT-4).
+ bool get fromCache;
 /// Create a copy of MessagePage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -409,20 +414,20 @@ $MessagePageCopyWith<MessagePage> get copyWith => _$MessagePageCopyWithImpl<Mess
 @override
 bool operator ==(Object other) {
   final _this = this as MessagePage;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MessagePage&&const DeepCollectionEquality().equals(other.messages, _this.messages)&&(identical(other.next, _this.next) || other.next == _this.next));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MessagePage&&const DeepCollectionEquality().equals(other.messages, _this.messages)&&(identical(other.next, _this.next) || other.next == _this.next)&&(identical(other.older, _this.older) || other.older == _this.older)&&(identical(other.fromCache, _this.fromCache) || other.fromCache == _this.fromCache));
 }
 
 
 @override
 int get hashCode {
   final _this = this as MessagePage;
-  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.messages),_this.next);
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.messages),_this.next,_this.older,_this.fromCache);
 }
 
 @override
 String toString() {
   final _this = this as MessagePage;
-  return 'MessagePage(messages: ${_this.messages}, next: ${_this.next})';
+  return 'MessagePage(messages: ${_this.messages}, next: ${_this.next}, older: ${_this.older}, fromCache: ${_this.fromCache})';
 }
 
 
@@ -433,7 +438,7 @@ abstract mixin class $MessagePageCopyWith<$Res>  {
   factory $MessagePageCopyWith(MessagePage value, $Res Function(MessagePage) _then) = _$MessagePageCopyWithImpl;
 @useResult
 $Res call({
- List<Message> messages, PageCursor? next
+ List<Message> messages, PageCursor? next, PageCursor? older, bool fromCache
 });
 
 
@@ -450,11 +455,13 @@ class _$MessagePageCopyWithImpl<$Res>
 
 /// Create a copy of MessagePage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? messages = null,Object? next = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? messages = null,Object? next = freezed,Object? older = freezed,Object? fromCache = null,}) {
   return _then(MessagePage(
 messages: null == messages ? _self.messages : messages // ignore: cast_nullable_to_non_nullable
 as List<Message>,next: freezed == next ? _self.next : next // ignore: cast_nullable_to_non_nullable
-as PageCursor?,
+as PageCursor?,older: freezed == older ? _self.older : older // ignore: cast_nullable_to_non_nullable
+as PageCursor?,fromCache: null == fromCache ? _self.fromCache : fromCache // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -539,10 +546,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Message> messages,  PageCursor? next)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Message> messages,  PageCursor? next,  PageCursor? older,  bool fromCache)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MessagePage() when $default != null:
-return $default(_that.messages,_that.next);case _:
+return $default(_that.messages,_that.next,_that.older,_that.fromCache);case _:
   return orElse();
 
 }
@@ -560,10 +567,10 @@ return $default(_that.messages,_that.next);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Message> messages,  PageCursor? next)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Message> messages,  PageCursor? next,  PageCursor? older,  bool fromCache)  $default,) {final _that = this;
 switch (_that) {
 case _MessagePage():
-return $default(_that.messages,_that.next);case _:
+return $default(_that.messages,_that.next,_that.older,_that.fromCache);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -580,10 +587,10 @@ return $default(_that.messages,_that.next);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Message> messages,  PageCursor? next)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Message> messages,  PageCursor? next,  PageCursor? older,  bool fromCache)?  $default,) {final _that = this;
 switch (_that) {
 case _MessagePage() when $default != null:
-return $default(_that.messages,_that.next);case _:
+return $default(_that.messages,_that.next,_that.older,_that.fromCache);case _:
   return null;
 
 }
@@ -595,7 +602,7 @@ return $default(_that.messages,_that.next);case _:
 
 
 class _MessagePage extends MessagePage {
-  const _MessagePage({required  List<Message> messages, this.next}): _messages = messages,super._();
+  const _MessagePage({required  List<Message> messages, this.next, this.older, this.fromCache = false}): _messages = messages,super._();
   
 
  final  List<Message> _messages;
@@ -605,7 +612,14 @@ class _MessagePage extends MessagePage {
   return EqualUnmodifiableListView(_messages);
 }
 
+/// Continues the paging: older messages for the newest page and older
+/// pages, newer ones for a newer page. Null at the chat's start or end.
 @override final  PageCursor? next;
+/// For a newer page: continues older, before its oldest message.
+@override final  PageCursor? older;
+/// True when the page came from the offline cache rather than the
+/// server: the device is offline, or hasn't heard back yet (CHAT-4).
+@override@JsonKey() final  bool fromCache;
 
 /// Create a copy of MessagePage
 /// with the given fields replaced by the non-null parameter values.
@@ -617,18 +631,18 @@ _$MessagePageCopyWith<_MessagePage> get copyWith => __$MessagePageCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MessagePage&&const DeepCollectionEquality().equals(other.messages, _messages)&&(identical(other.next, next) || other.next == next));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MessagePage&&const DeepCollectionEquality().equals(other.messages, _messages)&&(identical(other.next, next) || other.next == next)&&(identical(other.older, older) || other.older == older)&&(identical(other.fromCache, fromCache) || other.fromCache == fromCache));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_messages),next);
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_messages),next,older,fromCache);
 }
 
 @override
 String toString() {
-    return 'MessagePage(messages: $messages, next: $next)';
+    return 'MessagePage(messages: $messages, next: $next, older: $older, fromCache: $fromCache)';
 }
 
 
@@ -639,7 +653,7 @@ abstract mixin class _$MessagePageCopyWith<$Res> implements $MessagePageCopyWith
   factory _$MessagePageCopyWith(_MessagePage value, $Res Function(_MessagePage) _then) = __$MessagePageCopyWithImpl;
 @override @useResult
 $Res call({
- List<Message> messages, PageCursor? next
+ List<Message> messages, PageCursor? next, PageCursor? older, bool fromCache
 });
 
 
@@ -656,11 +670,13 @@ class __$MessagePageCopyWithImpl<$Res>
 
 /// Create a copy of MessagePage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? messages = null,Object? next = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? messages = null,Object? next = freezed,Object? older = freezed,Object? fromCache = null,}) {
   return _then(_MessagePage(
 messages: null == messages ? _self._messages : messages // ignore: cast_nullable_to_non_nullable
 as List<Message>,next: freezed == next ? _self.next : next // ignore: cast_nullable_to_non_nullable
-as PageCursor?,
+as PageCursor?,older: freezed == older ? _self.older : older // ignore: cast_nullable_to_non_nullable
+as PageCursor?,fromCache: null == fromCache ? _self.fromCache : fromCache // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

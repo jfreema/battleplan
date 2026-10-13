@@ -189,7 +189,10 @@ service cloud.firestore {
         // Mute (NOTIF-3): cleared, or a time still ahead.
         && (!('mutedUntil' in changed()) || incoming().mutedUntil == null
             || (incoming().mutedUntil is timestamp && incoming().mutedUntil > request.time))
-        && (!('lastReadAt' in changed()) || incoming().lastReadAt == request.time);
+        // The read marker (CHAT-9): now, or the time of the newest message
+        // read so far when only part of the chat was on screen. Never ahead.
+        && (!('lastReadAt' in changed())
+            || (incoming().lastReadAt is timestamp && incoming().lastReadAt <= request.time));
     }
 
     // ---- Youth teams -------------------------------------------------------

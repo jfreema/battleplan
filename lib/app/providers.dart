@@ -2,15 +2,18 @@ import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/services/device_calendar_adder.dart';
 import 'package:battleplan/app/services/file_picker_chooser.dart';
 import 'package:battleplan/app/services/flutter_time_zones.dart';
+import 'package:battleplan/app/services/gal_photo_saver.dart';
 import 'package:battleplan/app/services/image_picker_photo_picker.dart';
 import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/app/services/url_launcher_link_opener.dart';
 import 'package:battleplan/app/services/web_browser_info.dart';
+import 'package:battleplan/app/services/web_photo_drops.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/services/analytics.dart';
 import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
+import 'package:battleplan/core/services/photo_drops.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/remote_config.dart';
 import 'package:battleplan/core/services/service_providers.dart';
@@ -21,6 +24,7 @@ import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:battleplan/features/auth/data/firestore_user_repository.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/data/firestore_message_repository.dart';
+import 'package:battleplan/features/chat/data/prefs_chat_queue_store.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/data/firestore_document_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -82,6 +86,10 @@ List<Override> buildOverrides({
   browserInfoProvider.overrideWithValue(
     kIsWeb ? WebBrowserInfo() : const PlainBrowserInfo(),
   ),
+  photoSaverProvider.overrideWithValue(const GalPhotoSaver()),
+  photoDropsProvider.overrideWithValue(
+    kIsWeb ? const WebPhotoDrops() : const NoPhotoDrops(),
+  ),
   playerRepositoryProvider.overrideWithValue(
     FirestorePlayerRepository(firestore, functions),
   ),
@@ -91,6 +99,7 @@ List<Override> buildOverrides({
   messageRepositoryProvider.overrideWithValue(
     FirestoreMessageRepository(firestore, storage, functions),
   ),
+  chatQueueStoreProvider.overrideWithValue(PrefsChatQueueStore(prefs)),
   pollRepositoryProvider.overrideWithValue(
     FirestorePollRepository(firestore, functions),
   ),

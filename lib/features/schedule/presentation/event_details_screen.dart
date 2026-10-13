@@ -427,6 +427,7 @@ class RsvpButtons extends ConsumerWidget {
     required this.enabled,
     this.label,
     this.allowMaybe = true,
+    this.notes = true,
     super.key,
   });
 
@@ -434,6 +435,10 @@ class RsvpButtons extends ConsumerWidget {
   final Participant participant;
   final Rsvp? answer;
   final bool enabled;
+
+  /// Shows the note and Add a note; off on the compact chat card (CHAT-11),
+  /// where the event's page has them.
+  final bool notes;
 
   /// "Emma #7" for a player, "You" beside players; null when it's only me.
   final String? label;
@@ -487,30 +492,31 @@ class RsvpButtons extends ConsumerWidget {
                 : null,
           ),
         ),
-        Row(
-          children: [
-            if (answer?.note.isNotEmpty ?? false)
-              Expanded(
-                child: Text(
-                  answer!.note,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
+        if (notes)
+          Row(
+            children: [
+              if (answer?.note.isNotEmpty ?? false)
+                Expanded(
+                  child: Text(
+                    answer!.note,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                )
+              else
+                const Spacer(),
+              if (enabled && current != null)
+                TextButton(
+                  onPressed: () => unawaited(_editNote(context, ref, current)),
+                  child: Text(
+                    answer?.note.isNotEmpty ?? false
+                        ? l10n.eventEditNote
+                        : l10n.eventAddNote,
                   ),
                 ),
-              )
-            else
-              const Spacer(),
-            if (enabled && current != null)
-              TextButton(
-                onPressed: () => unawaited(_editNote(context, ref, current)),
-                child: Text(
-                  answer?.note.isNotEmpty ?? false
-                      ? l10n.eventEditNote
-                      : l10n.eventAddNote,
-                ),
-              ),
-          ],
-        ),
+            ],
+          ),
       ],
     );
   }

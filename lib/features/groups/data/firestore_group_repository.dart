@@ -273,12 +273,16 @@ class FirestoreMemberRepository implements MemberRepository {
   });
 
   @override
-  Future<void> markRead(GroupId groupId, UserId uid) async {
+  Future<void> markRead(GroupId groupId, UserId uid, {DateTime? upTo}) async {
     try {
       await _db
           .collection(Collections.groupMembers)
           .doc(CompositeIds.groupMember(groupId, uid))
-          .update({'lastReadAt': FieldValue.serverTimestamp()});
+          .update({
+            'lastReadAt': upTo == null
+                ? FieldValue.serverTimestamp()
+                : Timestamp.fromDate(upTo),
+          });
     } on FirebaseException {
       // A missed read marker only leaves a count up; the next one fixes it.
     }

@@ -114,4 +114,5 @@ abstract final class AppIcons {
     Sport.volleyball => Symbols.sports_volleyball_rounded,
     Sport.other => Symbols.sports_rounded,
   };
+  static const IconData cloudOff = Symbols.cloud_off_rounded;
 }

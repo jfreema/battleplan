@@ -3,7 +3,9 @@ import 'package:battleplan/core/services/browser_info.dart';
 import 'package:battleplan/core/services/calendar.dart';
 import 'package:battleplan/core/services/file_chooser.dart';
 import 'package:battleplan/core/services/link_opener.dart';
+import 'package:battleplan/core/services/photo_drops.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
+import 'package:battleplan/core/services/photo_saver.dart';
 import 'package:battleplan/core/services/sharer.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -47,3 +49,11 @@ FileChooser fileChooser(Ref ref) => const NoopFileChooser();
 /// `/app`; the paths after it are the app's routes (ARCH §5.4).
 @Riverpod(keepAlive: true)
 LinkService linkService(Ref ref) => const LinkService(LinkService.prodHost);
+
+/// Photos pasted or dragged into the chat on the web (CHAT-2).
+@Riverpod(keepAlive: true)
+PhotoDrops photoDrops(Ref ref) => const NoPhotoDrops();
+
+/// Saves chat photos to the phone's photo library (CHAT-3).
+@Riverpod(keepAlive: true)
+PhotoSaver photoSaver(Ref ref) => const NoPhotoSaver();

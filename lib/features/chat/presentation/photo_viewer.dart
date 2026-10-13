@@ -12,8 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Full-screen photos (CHAT-3): pinch or scroll to zoom, swipe between a
-/// message's photos, and Share (which offers Save on phones) or Download
-/// (web).
+/// message's photos, Share, and Save photo (phones) or Download (web).
 class PhotoViewer extends ConsumerStatefulWidget {
   const new({required this.photos, this.initial = 0, super.key});
 
@@ -59,6 +58,22 @@ class _PhotoViewerState extends ConsumerState<PhotoViewer> {
     if (!shared && mounted) showAppSnackBar(context, l10n.photoShareFailed);
   }
 
+  /// Saves the photo to the phone's photo library.
+  Future<void> _save() async {
+    final l10n = AppLocalizations.of(context);
+    final bytes = await ref
+        .read(messageRepositoryProvider)
+        .attachmentBytes(widget.photos[_index].path);
+    final saved =
+        bytes != null &&
+        await ref
+            .read(photoSaverProvider)
+            .saveImage(bytes, name: 'battleplan-photo-${_index + 1}');
+    if (mounted) {
+      showAppSnackBar(context, saved ? l10n.photoSaved : l10n.photoSaveFailed);
+    }
+  }
+
   Future<void> _download() async {
     final url = await ref
         .read(messageRepositoryProvider)
@@ -77,7 +92,13 @@ class _PhotoViewerState extends ConsumerState<PhotoViewer> {
         foregroundColor: Colors.white,
         title: count > 1 ? Text(l10n.photoCount(_index + 1, count)) : null,
         actions: [
-          if (kIsWeb)
+          if (ref.watch(photoSaverProvider).available)
+            IconButton(
+              tooltip: l10n.photoSave,
+              icon: const Icon(AppIcons.download),
+              onPressed: () => unawaited(_save()),
+            )
+          else if (kIsWeb)
             IconButton(
               tooltip: l10n.download,
               icon: const Icon(AppIcons.download),

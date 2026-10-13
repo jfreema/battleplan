@@ -71,8 +71,20 @@ class PageCursor {
 /// A page of older or newer messages, newest first.
 @freezed
 abstract class MessagePage with _$MessagePage {
-  const factory({required List<Message> messages, PageCursor? next}) =
-      _MessagePage;
+  const factory({
+    required List<Message> messages,
+
+    /// Continues the paging: older messages for the newest page and older
+    /// pages, newer ones for a newer page. Null at the chat's start or end.
+    PageCursor? next,
+
+    /// For a newer page: continues older, before its oldest message.
+    PageCursor? older,
+
+    /// True when the page came from the offline cache rather than the
+    /// server: the device is offline, or hasn't heard back yet (CHAT-4).
+    @Default(false) bool fromCache,
+  }) = _MessagePage;
 
   const new _();
 

@@ -47,7 +47,7 @@ export {
   transferOwnership,
   updateGroupMember,
 } from './teams/handlers.js';
-export { dailyCleanup, onGroupFileAdded, onGroupFileRemoved } from './teams/triggers.js';
+export { dailyCleanup, onGroupFileAdded, onGroupFileRemoved, onGroupUpdated } from './teams/triggers.js';
 export { deleteMessage } from './chat/handlers.js';
 export { onDocumentCreated, onDocumentDeleted } from './documents/triggers.js';
 export { reportContent, resolveReport } from './safety/handlers.js';

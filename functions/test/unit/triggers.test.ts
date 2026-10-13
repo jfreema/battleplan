@@ -1,14 +1,31 @@
 import { describe, expect, it } from 'vitest';
 import { snapshotChanged } from '../../src/accounts/triggers.js';
 import {
+  joinedLine,
   lastMessagePreviewOf,
   messagePushBody,
   notifiesAsMessage,
+  renamedLine,
   replyPreviewOf,
   replyPushBody,
   replyRecipientOf,
 } from '../../src/chat/service.js';
 import { reportedBody } from '../../src/safety/service.js';
+
+describe('groups trigger early exit and system lines (CHAT-10)', () => {
+  it('posts a rename line only when the name changed', () => {
+    expect(renamedLine('Thunder', 'Thunder', 'Alex')).toBeNull();
+    expect(renamedLine('Thunder', ' Thunder ', 'Alex')).toBeNull();
+    expect(renamedLine('Thunder', undefined, 'Alex')).toBeNull();
+    expect(renamedLine('Thunder', 'Thunder 12U', 'Alex')).toBe('Alex renamed the team to "Thunder 12U"');
+    expect(renamedLine('Thunder', 'Thunder 12U', null)).toBe('The team was renamed to "Thunder 12U"');
+  });
+
+  it('words a joined line', () => {
+    expect(joinedLine('Maria R.')).toBe('Maria R. joined');
+    expect(joinedLine('')).toBe('Someone joined');
+  });
+});
 
 describe('users trigger early exit', () => {
   it('runs only when the name or photo changed', () => {
