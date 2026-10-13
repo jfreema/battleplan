@@ -4,7 +4,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
-import { trySend } from '../notify/service.js';
+import { removeTargetNotifications, trySend } from '../notify/service.js';
 import { deletePoll, pollCreatedBody } from '../polls/service.js';
 
 export const DELETED_USER_NAME = 'Deleted user';
@@ -147,13 +147,7 @@ function erasedFields(deletedBy: string, reason: 'author' | 'admin' | 'media'): 
 async function afterErase(messageId: string, groupId: string): Promise<void> {
   // Notification-center items about it go too: their bodies quote the text
   // (CHAT-8 erases it from the server, not just the chat).
-  await forEachPage(
-    db()
-      .collection(Collections.notifications)
-      .where('targetType', '==', 'message')
-      .where('targetId', '==', messageId),
-    (batch, item) => batch.delete(item.ref),
-  );
+  await removeTargetNotifications('message', messageId);
   // Photos go too; the Storage trigger takes them off the team's total.
   await storage()
     .bucket()

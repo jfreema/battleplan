@@ -6,10 +6,9 @@
 // whose document was never created.
 import { logger } from 'firebase-functions/v2';
 import { db, storage } from '../shared/admin.js';
-import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
 import { DELETED_USER_NAME } from '../chat/service.js';
-import { trySend } from '../notify/service.js';
+import { removeTargetNotifications, trySend } from '../notify/service.js';
 
 const DAY_MS = 86_400_000;
 
@@ -87,10 +86,7 @@ export async function removeDocumentLeftovers(docId: string, data: DocumentData 
       .deleteFiles({ prefix: documentFolder(groupId, docId) })
       .catch((e) => logger.warn('document_file_cleanup_failed', { docId, error: String(e) }));
   }
-  await forEachPage(
-    db().collection(Collections.notifications).where('targetType', '==', 'document').where('targetId', '==', docId),
-    (batch, item) => batch.delete(item.ref),
-  );
+  await removeTargetNotifications('document', docId);
 }
 
 /** What Media shows of a document file: its record's name and uploader. */

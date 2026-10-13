@@ -47,12 +47,46 @@ dependencies:
 
 dev_dependencies:
   build_runner: ^2.16.2
+  fake_cloud_firestore: ^4.3.0
+  firebase_auth_mocks: ^0.15.2
+  firebase_storage_mocks: ^0.8.1
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
   flutter_test:
     sdk: flutter
   freezed: ^4.0.2
   json_serializable: ^6.14.1
+  mock_exceptions: ^0.8.2
   riverpod_generator: ^4.0.9
+  shared_preferences_platform_interface: ^2.4.2
   very_good_analysis: ^11.0.0
 flutter:
   uses-material-design: true
   generate: true
+
+# App icons and splash screens from the placeholder mark on #2F5BEA (SPEC
+# §7.1, Q9). Regenerate with tools/brand_icons.sh.
+flutter_launcher_icons:
+  image_path: assets/brand/icon.png
+  android: true
+  adaptive_icon_background: "#2F5BEA"
+  # The tool insets these 16% into the adaptive icon's safe zone.
+  adaptive_icon_foreground: assets/brand/foreground.png
+  adaptive_icon_monochrome: assets/brand/foreground.png
+  ios: true
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: assets/brand/icon.png
+    background_color: "#2F5BEA"
+    theme_color: "#2F5BEA"
+
+flutter_native_splash:
+  color: "#2F5BEA"
+  image: assets/brand/mark.png
+  android_12:
+    color: "#2F5BEA"
+    image: assets/brand/mark.png
+    icon_background_color: "#2F5BEA"
+  # The web app keeps its own loading screen in web/index.html (ARCH §5.6).
+  web: false

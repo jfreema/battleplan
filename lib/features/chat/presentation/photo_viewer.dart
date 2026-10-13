@@ -7,7 +7,6 @@ import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -77,7 +76,7 @@ class _PhotoViewerState extends ConsumerState<PhotoViewer> {
         foregroundColor: Colors.white,
         title: count > 1 ? Text(l10n.photoCount(_index + 1, count)) : null,
         actions: [
-          if (kIsWeb)
+          if (ref.watch(browserInfoProvider).isWeb)
             IconButton(
               tooltip: l10n.download,
               icon: const Icon(AppIcons.download),

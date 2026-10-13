@@ -9,5 +9,8 @@ class WebBrowserInfo implements BrowserInfo {
   new() : pushNeedsHomeScreen = platform.pushNeedsHomeScreen();
 
   @override
+  bool get isWeb => true;
+
+  @override
   final bool pushNeedsHomeScreen;
 }

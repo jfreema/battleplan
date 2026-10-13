@@ -127,6 +127,21 @@ npm --prefix tools/seed run super-admin -- battleplan-dev-ecce4 someone@example.
 npm --prefix tools/seed run super-admin -- battleplan-dev-ecce4 someone@example.com --revoke
 ```
 
+## App Review demo account
+
+App Review needs a demo account with a seeded team (SPEC §10). `tools/seed/demo.ts` makes one on the **dev** project, which review builds point at until launch, and refuses every other project. It uses your gcloud sign-in (`gcloud auth application-default login`, then `gcloud auth application-default set-quota-project battleplan-dev-ecce4`), so there's no key file:
+
+```sh
+DEMO_PASSWORD='<at least 12 characters>' npm --prefix tools/seed run demo -- \
+  --project battleplan-dev-ecce4 --write-to-dev
+```
+
+It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which owns the adult team *Riverside Thunder* and is a parent on the youth team *Lightning U10*, with messages, events, RSVPs, and a pinned link. Running it again resets the password and rewrites the same `demo-` documents. Put the email and password in the App Review notes, never in the repo. To try it locally, start the emulators and run `npm --prefix tools/seed run demo:emulators`. A prod demo account, at launch, is made by hand.
+
+## App icons and splash screens
+
+The icons and splash screens come from the placeholder mark in `assets/brand/` on `#2F5BEA` (SPEC Q9). After changing the mark, run `tools/brand_icons.sh` (it needs Google Chrome to render the SVGs) and commit what it writes under `android/`, `ios/`, and `web/`.
+
 ## Everyday commands
 
 | What | Command |
@@ -135,9 +150,12 @@ npm --prefix tools/seed run super-admin -- battleplan-dev-ecce4 someone@example.
 | Regenerate shared constants after editing `shared/constants.json` | `dart run tools/gen_constants.dart` |
 | Strings | Edit `lib/l10n/app_en.arb`; `flutter gen-l10n` (also run by `flutter run` and `flutter build`) writes `lib/l10n/gen/`, which isn't committed |
 | App tests | `flutter test` |
+| App coverage (at least 80% of domain and data layers) | `flutter test --coverage && dart run tools/check_coverage.dart` |
 | Lints | `flutter analyze` and `tools/check_imports.sh` |
 | Functions tests | `npm --prefix functions test` |
 | Security-rules tests | `npm --prefix functions run emulators:test` (starts its own emulators) |
+| Functions coverage (at least 80%, all functions tests) | `npm --prefix functions run emulators:coverage` |
+| Seed and demo-seed tests | `npm --prefix tools/seed test` |
 
 CI runs all of these on every PR (`.github/workflows/ci.yml`). Generated model and provider files (`*.g.dart`, `*.freezed.dart`) and `constants.g.dart` are committed, and CI fails if they're stale.
 

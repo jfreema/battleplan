@@ -32,7 +32,7 @@
       font: 600 22px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: var(--fg); transition: opacity 200ms ease;
     }
-    #splash .mark { width: 72px; height: 72px; border-radius: 20px; background: #2F5BEA; }
+    #splash .mark { width: 72px; height: 72px; display: block; }
     @media (prefers-reduced-motion: no-preference) {
       #splash .mark { animation: pulse 1.2s ease-in-out infinite; }
     }
@@ -40,7 +40,8 @@
   </style>
 </head>
 <body>
-  <div id="splash" aria-label="Loading Battleplan"><div class="mark"></div>Battleplan</div>
+  <!-- The placeholder mark, as in the app icon (SPEC §7.1, Q9). -->
+  <div id="splash" aria-label="Loading Battleplan"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#2F5BEA"/><rect x="18" y="13" width="5" height="40" rx="2.5" fill="#fff"/><path d="M25 14.5h18.5a2 2 0 0 1 1.6 3.2L40.6 24l4.5 6.3a2 2 0 0 1-1.6 3.2H25z" fill="#fff"/></svg>Battleplan</div>
   <script>
     window.addEventListener('flutter-first-frame', function () {
       var s = document.getElementById('splash');
