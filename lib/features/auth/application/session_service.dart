@@ -45,12 +45,15 @@ class SessionService {
   /// Signs out on this device and stops its push notifications.
   Future<void> signOut() => _endSession(_auth.signOut);
 
-  /// Deletes the account (AUTH-10). The caller wraps this in
-  /// withFreshSignIn, since the server needs a recent sign-in.
-  Future<void> deleteAccount() => _endSession(_auth.deleteAccount);
+  /// Deletes the account (AUTH-10), handing each team in [newOwners] to the
+  /// member the owner picked. The caller wraps this in withFreshSignIn,
+  /// since the server needs a recent sign-in.
+  Future<void> deleteAccount({Map<String, String> newOwners = const {}}) =>
+      _endSession(() => _auth.deleteAccount(newOwners: newOwners));
 
-  /// Ends every session for this account (other devices within an hour),
-  /// then signs out here. The server removes the other devices' docs.
+  /// Ends every session for this account at once, then signs out here. The
+  /// server removes the other devices' docs and stamps the profile, which
+  /// signs them out ([sessionRevocationWatcher]).
   Future<void> signOutEverywhere() => _endSession(_auth.signOutEverywhere);
 
   Future<void> _endSession(Future<void> Function() end) async {
@@ -90,3 +93,28 @@ SessionService sessionService(Ref ref) => SessionService(
   pausePush: () => ref.read(pushRegistrationProvider.notifier).pause(),
   restorePush: () => ref.read(pushRegistrationProvider.notifier).restore(),
 );
+
+/// Whether a session that signed in at [authTime] was ended by "Sign out of
+/// all devices" at [revokedAt] (AUTH-9). Compared in whole seconds, like
+/// Firebase's own token check, since auth_time has no milliseconds.
+bool sessionRevoked(DateTime? authTime, DateTime? revokedAt) {
+  if (authTime == null || revokedAt == null) return false;
+  int seconds(DateTime t) => t.millisecondsSinceEpoch ~/ 1000;
+  return seconds(authTime) < seconds(revokedAt);
+}
+
+/// AUTH-9: "Sign out of all devices" ends every session at once. Revoking
+/// refresh tokens alone would leave other devices signed in until their
+/// ID token expires (up to an hour), so the server also stamps
+/// `users.sessionsRevokedAt`; this device signs out as soon as it sees a
+/// stamp newer than its own sign-in. The app watches it while running.
+@Riverpod(keepAlive: true)
+void sessionRevocationWatcher(Ref ref) {
+  ref.listen(myProfileProvider, (_, next) {
+    final user = ref.read(authUserProvider).value;
+    if (sessionRevoked(user?.authTime, next.value?.sessionsRevokedAt)) {
+      Log.debug('Signed out: every session was ended from another device');
+      unawaited(ref.read(sessionServiceProvider).signOut());
+    }
+  }, fireImmediately: true);
+}

@@ -3,13 +3,15 @@ import 'dart:async';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/auth/presentation/legal_links.dart';
+import 'package:battleplan/features/auth/presentation/profile_photo.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// First-run setup (AUTH-5, SAFE-3, SAFE-6) at `/setup`: confirm the name
-/// prefilled from the sign-in provider, confirm being 18 or older, and
-/// accept the Terms. Only the confirmations and their dates are stored. The
+/// and photo prefilled from the sign-in provider (or pick one), confirm
+/// being 18 or older, and accept the Terms (linked). Only the confirmations and their dates are stored. The
 /// router sends people here until it's done, then on to their teams.
 class SetupScreen extends ConsumerStatefulWidget {
   const new({super.key});
@@ -25,6 +27,16 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   bool _saving = false;
   bool _failed = false;
   bool _prefilled = false;
+  bool _uploading = false;
+
+  Future<void> _changePhoto(String uid) async {
+    setState(() => _uploading = true);
+    try {
+      await changeProfilePhoto(context, ref, uid);
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -53,6 +65,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final profile = ref.watch(myProfileProvider).value;
+    // The provider's photo, copied in at first sign-in (AUTH-12).
+    final photoUrl = ref.watch(myPhotoUrlProvider).value;
     if (!_prefilled && profile != null) {
       _name.text = profile.displayName;
       _prefilled = true;
@@ -77,10 +91,29 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   ),
                   const SizedBox(height: Space.xl),
                   Center(
-                    child: Avatar(
-                      name: _name.text,
-                      colorKey: profile?.uid,
-                      size: 72,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Avatar(
+                          name: _name.text,
+                          colorKey: profile?.uid,
+                          imageUrl: photoUrl,
+                          size: 72,
+                        ),
+                        if (_uploading) const CircularProgressIndicator(),
+                      ],
+                    ),
+                  ),
+                  Center(
+                    child: TextButton(
+                      onPressed: profile == null || _uploading
+                          ? null
+                          : () => unawaited(_changePhoto(profile.uid)),
+                      child: Text(
+                        profile?.photoPath == null
+                            ? l10n.addPhoto
+                            : l10n.changePhoto,
+                      ),
                     ),
                   ),
                   const SizedBox(height: Space.xl),
@@ -111,6 +144,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
                   ),
+                  const LegalLinks(),
                   if (_failed) ...[
                     const SizedBox(height: Space.md),
                     Text(

@@ -153,10 +153,15 @@ class FakeAuthRepository implements AuthRepository {
     _controller.add(_user);
   }
 
+  /// When true, linking Google behaves as if the person closed the sheet.
+  bool linkCancels = false;
+
   @override
-  Future<void> linkGoogle() async {
+  Future<bool> linkGoogle() async {
     _requireRecent();
+    if (linkCancels) return false;
     _setProviders([..._user!.providerIds, 'google.com']);
+    return true;
   }
 
   @override
@@ -193,11 +198,13 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   bool deleted = false;
+  Map<String, String>? deletedNewOwners;
 
   @override
-  Future<void> deleteAccount() async {
+  Future<void> deleteAccount({Map<String, String> newOwners = const {}}) async {
     _requireRecent();
     deleted = true;
+    deletedNewOwners = newOwners;
     await signOut();
   }
 
@@ -466,6 +473,12 @@ class FakeLocalPrefs implements LocalPrefsRepository {
       pendingSignInEmail = email;
 
   @override
+  PendingLink? pendingLink;
+
+  @override
+  Future<void> setPendingLink(PendingLink? value) async => pendingLink = value;
+
+  @override
   Future<void> setLastTeamRoute(String route) async => lastTeamRoute = route;
 
   @override
@@ -525,10 +538,21 @@ class FakeUserRepository implements UserRepository {
 
   final Map<NotificationPref, bool> notificationPrefs = {};
 
+  /// An added account that hasn't chosen how to sign in yet (AUTH-6).
+  bool chooseSignIn = false;
+
+  /// When "Sign out of all devices" last ran (AUTH-9).
+  DateTime? sessionsRevokedAt;
+
+  /// Shows a profile change made elsewhere (the server, another device).
+  void changed() => _changes.add(null);
+
   UserProfile _profile(String uid) => UserProfile(
     uid: uid,
     displayName: savedName ?? 'Jordan Coach',
     status: status,
+    chooseSignIn: chooseSignIn,
+    sessionsRevokedAt: sessionsRevokedAt,
     adultConfirmedAt: needsSetup ? null : DateTime(2026),
     acceptedTermsAt: needsSetup ? null : DateTime(2026),
     themeMode: themeMode,
@@ -576,7 +600,12 @@ class FakeUserRepository implements UserRepository {
   Future<void> ensureProfile({
     String? displayName,
     bool finishSetup = false,
+    bool signInChosen = false,
   }) async {
+    if (signInChosen) {
+      chooseSignIn = false;
+      _changes.add(null);
+    }
     if (!finishSetup) return;
     savedName = displayName;
     needsSetup = false;
@@ -2507,5 +2536,36 @@ class FakeAdminRepository implements AdminRepository {
     await _act('updateConfig');
     savedConfigs.add(config);
     this.config = config;
+  }
+}
+
+/// Google sign-in that fails offline the first time, then works (AUTH
+/// edge cases: Retry).
+class OfflineOnceAuth extends FakeAuthRepository {
+  int googleAttempts = 0;
+
+  @override
+  Future<void> signInWithGoogle() async {
+    if (++googleAttempts == 1) throw const Offline('network-request-failed');
+    await super.signInWithGoogle();
+  }
+}
+
+/// Every sign-in is refused: the account is disabled (AUTH-11).
+class DisabledAuth extends FakeAuthRepository {
+  @override
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+  }) async => throw const PermissionDenied('user-disabled');
+}
+
+/// Google finds an existing account for the same email, so a sign-in
+/// link goes out instead of merging (AUTH-7).
+class ExistingAccountAuth extends FakeAuthRepository {
+  @override
+  Future<void> signInWithGoogle() async {
+    await sendSignInLink(FakeAuthRepository.knownEmail);
+    throw const AccountExistsWithOtherMethod(FakeAuthRepository.knownEmail);
   }
 }

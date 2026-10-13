@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/features/auth/presentation/legal_links.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_controller.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_error_text.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -24,6 +25,7 @@ class SignInScreen extends ConsumerWidget {
     final controller = ref.read(signInControllerProvider.notifier);
     final loading = state.isLoading;
     final error = state.hasError ? signInErrorOf(state.error!) : null;
+    listenForDisabledAccount(context, ref);
 
     return Scaffold(
       body: SafeArea(
@@ -58,11 +60,11 @@ class SignInScreen extends ConsumerWidget {
                   const SizedBox(height: Space.md),
                   Tooltip(
                     message: appleEnabled ? '' : l10n.comingSoon,
-                    child: OutlinedButton(
+                    child: AppleSignInButton(
+                      label: l10n.continueWithApple,
                       onPressed: appleEnabled && !loading
                           ? controller.signInWithApple
                           : null,
-                      child: Text(l10n.continueWithApple),
                     ),
                   ),
                   const SizedBox(height: Space.md),
@@ -75,7 +77,7 @@ class SignInScreen extends ConsumerWidget {
                   ),
                   if (error != null) ...[
                     const SizedBox(height: Space.lg),
-                    SignInErrorText(error: error),
+                    SignInErrorText(error: error, onRetry: controller.retry),
                   ],
                   const SizedBox(height: Space.xxl),
                   Text(
@@ -85,12 +87,45 @@ class SignInScreen extends ConsumerWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  const LegalLinks(),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The Apple button as Apple's design rules ask (AUTH-1): black with white
+/// text in light mode, white with black text in dark mode, the Apple logo
+/// before the title, and the same size and shape as the other buttons.
+class AppleSignInButton extends StatelessWidget {
+  const new({required this.label, this.onPressed, super.key});
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  /// The Apple logo. Brand marks aren't in Material Symbols (AppIcons).
+  static const IconData _logo = Icons.apple;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final background = dark ? Colors.white : Colors.black;
+    final foreground = dark ? Colors.black : Colors.white;
+    return FilledButton.icon(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: background,
+        foregroundColor: foreground,
+        // Disabled keeps Apple's colors, faded, rather than turning gray.
+        disabledBackgroundColor: background.withValues(alpha: 0.38),
+        disabledForegroundColor: foreground.withValues(alpha: 0.9),
+      ),
+      icon: const Icon(_logo),
+      label: Text(label),
     );
   }
 }

@@ -12,52 +12,81 @@ class SignInController extends _$SignInController {
   @override
   AsyncValue<void> build() => const AsyncData(null);
 
-  Future<void> signInWithEmail(String email, String password) async {
+  /// The last attempt, for Retry after an offline error (AUTH edge cases).
+  Future<void> Function()? _last;
+
+  /// Runs [attempt], keeping it for [retry].
+  Future<void> _run(Future<void> Function() attempt) async {
+    _last = attempt;
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref
-          .read(authRepositoryProvider)
-          .signInWithEmail(email: email.trim(), password: password),
-    );
+    state = await AsyncValue.guard(attempt);
   }
+
+  /// Tries the last sign-in again.
+  Future<void> retry() async {
+    final last = _last;
+    if (last != null) await _run(last);
+  }
+
+  Future<void> signInWithEmail(String email, String password) => _run(
+    () => ref
+        .read(authRepositoryProvider)
+        .signInWithEmail(email: email.trim(), password: password),
+  );
 
   Future<void> createAccount({
     required String name,
     required String email,
     required String password,
-  }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref
-          .read(authRepositoryProvider)
-          .createAccount(
-            name: name.trim(),
-            email: email.trim(),
-            password: password,
-          ),
-    );
-  }
+  }) => _run(
+    () => ref
+        .read(authRepositoryProvider)
+        .createAccount(
+          name: name.trim(),
+          email: email.trim(),
+          password: password,
+        ),
+  );
 
-  Future<void> signInWithApple() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).signInWithApple(),
-    );
-  }
+  Future<void> signInWithApple() => _run(
+    () => _withLinkLater(
+      'apple.com',
+      ref.read(authRepositoryProvider).signInWithApple,
+    ),
+  );
 
-  Future<void> signInWithGoogle() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(authRepositoryProvider).signInWithGoogle(),
-    );
+  Future<void> signInWithGoogle() => _run(
+    () => _withLinkLater(
+      'google.com',
+      ref.read(authRepositoryProvider).signInWithGoogle,
+    ),
+  );
+
+  /// AUTH-7: when the email already has an account, the repository emails a
+  /// sign-in link. Remember the address (so the link finishes here without
+  /// asking) and the method, which the app offers to link once it's open.
+  Future<void> _withLinkLater(
+    String providerId,
+    Future<void> Function() signIn,
+  ) async {
+    try {
+      await signIn();
+    } on AccountExistsWithOtherMethod catch (e) {
+      final email = e.message;
+      if (email != null) {
+        final prefs = ref.read(localPrefsRepositoryProvider);
+        await prefs.setPendingSignInEmail(email);
+        await prefs.setPendingLink((providerId: providerId, email: email));
+      }
+      rethrow;
+    }
   }
 
   /// Emails a sign-in link and remembers the address on this device, so
   /// opening the link here finishes without asking for it again.
   Future<void> sendSignInLink(String email) async {
     final address = email.trim();
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
+    await _run(() async {
       await ref.read(authRepositoryProvider).sendSignInLink(address);
       await ref
           .read(localPrefsRepositoryProvider)

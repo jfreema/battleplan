@@ -2,16 +2,15 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
-import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
-import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/auth/presentation/profile_photo.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// SET-1 at `/settings/profile`: photo (shown as a circle) and display name,
+/// SET-1 at `/settings/profile`: photo (cropped to a circle) and display name,
 /// used on every team. The email is shown read-only; it changes in
 /// Sign-in methods.
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -46,16 +45,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  /// Pick, crop to the circle, then upload (SET-1).
   Future<void> _changePhoto(String uid) async {
-    final l10n = AppLocalizations.of(context);
-    final bytes = await ref.read(photoPickerProvider).pickProfilePhoto();
-    if (bytes == null || !mounted) return;
-    if (!fitsUploadLimit(context, ref, bytes.length)) return;
     setState(() => _uploading = true);
     try {
-      await ref.read(userRepositoryProvider).uploadPhoto(uid, bytes);
-    } on AppFailure {
-      if (mounted) showAppSnackBar(context, l10n.profileSaveFailed);
+      await changeProfilePhoto(context, ref, uid);
     } finally {
       if (mounted) setState(() => _uploading = false);
     }

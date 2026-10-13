@@ -23,10 +23,12 @@ interface MemberRow {
 
 /**
  * Picks who takes over a team when its owner leaves (AUTH-10): the
+ * member the owner picked if they're still on the team, else the
  * longest-serving admin, else the longest-serving member, else nobody.
  */
-export function nextOwner(members: MemberRow[], leavingUid: string): string | null {
+export function nextOwner(members: MemberRow[], leavingUid: string, picked?: string): string | null {
   const others = members.filter((m) => m.uid !== leavingUid);
+  if (picked && others.some((m) => m.uid === picked)) return picked;
   const byTenure = (a: MemberRow, b: MemberRow) =>
     (a.joinedAt?.toMillis() ?? 0) - (b.joinedAt?.toMillis() ?? 0);
   const admins = others.filter((m) => m.role === 'admin').sort(byTenure);
@@ -38,8 +40,9 @@ export function nextOwner(members: MemberRow[], leavingUid: string): string | nu
 /**
  * Removes a deleted account from every team: owned teams pass to the next
  * owner (or are archived when nobody is left), then all memberships go.
+ * [newOwners] maps a team ID to the member its owner picked (AUTH-10).
  */
-export async function removeAccountFromTeams(uid: string): Promise<void> {
+export async function removeAccountFromTeams(uid: string, newOwners: Record<string, string> = {}): Promise<void> {
   const memberships = await db()
     .collection(Collections.groupMembers)
     .where('uid', '==', uid)
@@ -57,6 +60,7 @@ export async function removeAccountFromTeams(uid: string): Promise<void> {
       const heir = nextOwner(
         members.docs.map((d) => d.data() as MemberRow),
         uid,
+        newOwners[groupId],
       );
       if (heir) {
         await db().batch()

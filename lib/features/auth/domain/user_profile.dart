@@ -18,6 +18,14 @@ abstract class UserProfile with _$UserProfile {
     DateTime? adultConfirmedAt,
     DateTime? acceptedTermsAt,
 
+    /// An admin-added account that signed in by its setup link still has to
+    /// choose how to sign in from now on (AUTH-6).
+    @Default(false) bool chooseSignIn,
+
+    /// Set by "Sign out of all devices": every session that signed in
+    /// before it ends at once (AUTH-9).
+    DateTime? sessionsRevokedAt,
+
     /// The global notification switches that are set (NOTIF-4). A missing
     /// switch is on; use [notifies].
     @Default(<NotificationPref, bool>{})

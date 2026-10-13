@@ -65,6 +65,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     final error = state.hasError ? signInErrorOf(state.error!) : null;
     final linkSentTo = ref.watch(signInLinkSentProvider);
     final creating = _mode == _Mode.create;
+    listenForDisabledAccount(context, ref);
 
     return Scaffold(
       appBar: AppBar(),
@@ -164,7 +165,12 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                       ),
                       const SizedBox(height: Space.lg),
                       if (error != null) ...[
-                        SignInErrorText(error: error),
+                        SignInErrorText(
+                          error: error,
+                          onRetry: ref
+                              .read(signInControllerProvider.notifier)
+                              .retry,
+                        ),
                         const SizedBox(height: Space.md),
                       ],
                       FilledButton(

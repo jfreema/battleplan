@@ -32,9 +32,11 @@ class FirestoreUserRepository implements UserRepository {
   Future<void> ensureProfile({
     String? displayName,
     bool finishSetup = false,
+    bool signInChosen = false,
   }) async {
     try {
       await _functions.httpsCallable('ensureUserProfile').call<void>({
+        if (signInChosen) 'signInChosen': true,
         if (finishSetup)
           'setup': {
             'displayName': displayName,
@@ -78,12 +80,18 @@ class FirestoreUserRepository implements UserRepository {
   @override
   Future<void> uploadPhoto(String uid, Uint8List jpegBytes) async {
     final previous = (await _doc(uid).get()).data()?['photoPath'] as String?;
+    // The crop step (SET-1) makes a PNG; the picker alone makes a JPEG.
+    final png = isPng(jpegBytes);
     final path =
-        'users/$uid/avatar/${DateTime.now().millisecondsSinceEpoch}.jpg';
+        'users/$uid/avatar/${DateTime.now().millisecondsSinceEpoch}'
+        '.${png ? 'png' : 'jpg'}';
     try {
       await _storage
           .ref(path)
-          .putData(jpegBytes, SettableMetadata(contentType: 'image/jpeg'));
+          .putData(
+            jpegBytes,
+            SettableMetadata(contentType: png ? 'image/png' : 'image/jpeg'),
+          );
     } on FirebaseException catch (e) {
       throw switch (e.code) {
         'unauthorized' => PermissionDenied(e.code),
@@ -141,6 +149,8 @@ UserProfile userProfileFromFirestore(String uid, Map<String, dynamic> d) =>
       ],
       adultConfirmedAt: _date(d['adultConfirmedAt']),
       acceptedTermsAt: _date(d['acceptedTermsAt']),
+      chooseSignIn: d['chooseSignIn'] == true,
+      sessionsRevokedAt: _date(d['sessionsRevokedAt']),
       notificationPrefs: notificationPrefsFromFirestore(d['notificationPrefs']),
     );
 
@@ -160,3 +170,11 @@ Map<NotificationPref, bool> notificationPrefsFromFirestore(Object? raw) {
         pref: value,
   };
 }
+
+/// Whether [bytes] start with the PNG signature.
+bool isPng(Uint8List bytes) =>
+    bytes.length > 8 &&
+    bytes[0] == 0x89 &&
+    bytes[1] == 0x50 &&
+    bytes[2] == 0x4E &&
+    bytes[3] == 0x47;

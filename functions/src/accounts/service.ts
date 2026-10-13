@@ -23,7 +23,14 @@ import {
 import { sendEmail } from '../email/service.js';
 import { activateUrl, appUrl } from '../links/service.js';
 import { projectId } from '../shared/project.js';
-import { initialDisplayName, needsSetup, signInMethodsOf, type AuthIdentity } from './profile.js';
+import {
+  changedEmail,
+  choseLastingMethod,
+  initialDisplayName,
+  needsSetup,
+  signInMethodsOf,
+  type AuthIdentity,
+} from './profile.js';
 
 /** Every global notification switch on (NOTIF-4); the server reads a missing key as on. */
 export function defaultNotificationPrefs(): Record<NotificationPref, boolean> {
@@ -40,6 +47,13 @@ export interface ProfileResult {
   created: boolean;
   activated?: boolean;
   needsSetup: boolean;
+  /** The old contact email, when it just followed a verified email change. */
+  emailChangedFrom?: string | null;
+}
+
+export interface EnsureOptions {
+  /** An added account answered "How do you want to sign in next time?" (AUTH-6). */
+  signInChosen?: boolean;
 }
 
 /**
@@ -47,8 +61,16 @@ export interface ProfileResult {
  * Provider details are used once, here, to prefill the profile; after that
  * only the person changes it (AUTH-12). With [setup], it also records the
  * 18+ confirmation and Terms acceptance and the chosen name (AUTH-5).
+ *
+ * The app calls it at every sign-in, so it also keeps the contact email in
+ * step with a verified change of the sign-in email (AUTH-8) and tells the
+ * old address (AUTH-7).
  */
-export async function ensureUserProfile(uid: string, setup?: SetupInput): Promise<ProfileResult> {
+export async function ensureUserProfile(
+  uid: string,
+  setup?: SetupInput,
+  options: EnsureOptions = {},
+): Promise<ProfileResult> {
   const user = await auth().getUser(uid);
   const identity: AuthIdentity = {
     uid,
@@ -63,6 +85,7 @@ export async function ensureUserProfile(uid: string, setup?: SetupInput): Promis
     const now = FieldValue.serverTimestamp();
     let created = false;
     let activated = false;
+    let emailChangedFrom: string | null = null;
     let data = snap.data();
 
     if (!snap.exists) {
@@ -89,12 +112,26 @@ export async function ensureUserProfile(uid: string, setup?: SetupInput): Promis
       tx.set(ref, data);
     } else if (data?.status === 'provisioned') {
       // An admin-added account signing in for the first time (AUTH-6).
+      // Signing in with Google or Apple already chose how to sign in next
+      // time; the setup link asks.
       tx.update(ref, {
         status: 'active',
         signInMethods: signInMethodsOf(identity.providerIds),
+        ...(choseLastingMethod(identity.providerIds) ? { chooseSignIn: false } : {}),
         updatedAt: now,
       });
       activated = true;
+    }
+
+    // The sign-in email changed through the verified flow (AUTH-8): the
+    // contact email follows it (AUTH-12).
+    const nextEmail = snap.exists ? changedEmail(data?.email as string | null, user.email, user.emailVerified) : null;
+    if (nextEmail) {
+      emailChangedFrom = (data?.email as string | null | undefined) ?? null;
+      tx.update(ref, { email: nextEmail, emailLower: nextEmail, updatedAt: now });
+    }
+    if (options.signInChosen && snap.exists) {
+      tx.update(ref, { chooseSignIn: false, updatedAt: now });
     }
 
     if (setup) {
@@ -111,12 +148,21 @@ export async function ensureUserProfile(uid: string, setup?: SetupInput): Promis
       } else {
         tx.update(ref, update);
       }
-      return { created, activated, needsSetup: false };
+      return { created, activated, needsSetup: false, emailChangedFrom };
     }
-    return { created, activated, needsSetup: needsSetup(data ?? {}) };
+    return { created, activated, needsSetup: needsSetup(data ?? {}), emailChangedFrom };
   });
 
   if (result.activated) await clearPendingMemberships(uid);
+
+  // AUTH-7, AUTH-8: the old address hears about the change from us too,
+  // not only from Firebase, and so does the new one.
+  if (result.emailChangedFrom && user.email) {
+    logger.info('account_email_changed', { uid });
+    const change = `The email for your Battleplan account was changed to ${user.email.toLowerCase()}.`;
+    await sendEmail(securityNoticeEmail(result.emailChangedFrom, change));
+    await sendEmail(securityNoticeEmail(user.email.toLowerCase(), change));
+  }
 
   if (result.created && user.photoURL) {
     await copyProviderPhoto(uid, user.photoURL);
@@ -147,13 +193,20 @@ async function copyProviderPhoto(uid: string, url: string): Promise<void> {
 }
 
 /**
- * Ends every session for [uid] (AUTH-9): revokes refresh tokens, so other
- * devices are signed out when their current ID token expires (within an
- * hour) and can't refresh it, and removes every device so pushes stop
- * right away (NOTIF-10).
+ * Ends every session for [uid] at once (AUTH-9): revokes refresh tokens, so
+ * no device can get a new ID token; stamps users.sessionsRevokedAt, which
+ * every signed-in app watches and signs out on when its own sign-in is
+ * older; and removes every device so pushes stop right away (NOTIF-10).
  */
 export async function signOutEverywhere(uid: string): Promise<void> {
   await auth().revokeRefreshTokens(uid);
+  await db()
+    .collection(Collections.users)
+    .doc(uid)
+    .update({ sessionsRevokedAt: FieldValue.serverTimestamp() })
+    .catch((e: { code?: number }) => {
+      if (e.code !== 5) throw e; // 5 = NOT_FOUND: no profile, nothing to watch
+    });
   await removeDevices(uid);
 }
 
@@ -165,12 +218,14 @@ export async function displayNameOf(uid: string, fallback: string): Promise<stri
 
 /**
  * Re-reads the caller's sign-in methods from Firebase Auth into
- * users.signInMethods after the app adds or removes one (AUTH-7). Returns
- * what changed. The emailed security notice joins once email sending exists
- * (roadmap task 46); until then the change is logged.
+ * users.signInMethods after the app adds or removes one (AUTH-7), and
+ * emails the account a security notice about it. With [passwordChanged]
+ * (the app changed the password, which leaves the methods as they were),
+ * the notice says so. Returns what changed.
  */
 export async function recordSignInMethodChange(
   uid: string,
+  passwordChanged = false,
 ): Promise<{ added: string[]; removed: string[] }> {
   const user = await auth().getUser(uid);
   const now = signInMethodsOf(user.providerData.map((p) => p.providerId));
@@ -183,16 +238,16 @@ export async function recordSignInMethodChange(
   if (added.length || removed.length) {
     await ref.update({ signInMethods: now, updatedAt: FieldValue.serverTimestamp() });
     logger.info('sign_in_methods_changed', { uid, added, removed });
-    // AUTH-7: tell the account's email about every change.
-    const email = (snap.get('email') as string | undefined) ?? user.email;
-    if (email) {
-      const change = [
-        ...added.map((m) => `${methodName(m)} sign-in was added to your Battleplan account.`),
-        ...removed.map((m) => `${methodName(m)} sign-in was removed from your Battleplan account.`),
-      ].join(' ');
-      await sendEmail(securityNoticeEmail(email, change));
-    }
   }
+  // AUTH-7: tell the account's email about every change.
+  const lines = [
+    ...added.map((m) => `${methodName(m)} sign-in was added to your Battleplan account.`),
+    ...removed.map((m) => `${methodName(m)} sign-in was removed from your Battleplan account.`),
+    // A new password already reads as "Password sign-in was added".
+    ...(passwordChanged && !added.includes('password') ? ['The password for your Battleplan account was changed.'] : []),
+  ];
+  const email = (snap.get('email') as string | undefined) ?? user.email;
+  if (email && lines.length) await sendEmail(securityNoticeEmail(email, lines.join(' ')));
   return { added, removed };
 }
 
@@ -201,9 +256,11 @@ export async function recordSignInMethodChange(
  * its own data through its service (a deleted person's messages and
  * documents stay, from "Deleted user"); then the profile, avatar files, and the
  * Auth user go. Safe to retry: every step skips what's already gone.
+ * [newOwners] maps a team the person owns to the member they picked to take
+ * it over; other owned teams go to the longest-serving admin or member.
  */
-export async function deleteAccount(uid: string): Promise<void> {
-  await removeAccountFromTeams(uid);
+export async function deleteAccount(uid: string, newOwners: Record<string, string> = {}): Promise<void> {
+  await removeAccountFromTeams(uid, newOwners);
   await removeAccountFromPlayers(uid);
   await removeUpcomingRsvps(uid);
   await anonymizeAuthor(uid);
@@ -262,6 +319,8 @@ export async function findOrProvisionUser(email: string, name: string | null): P
     photoPath: null,
     status: 'provisioned',
     signInMethods: [],
+    // The setup link asks how they want to sign in next time (AUTH-6).
+    chooseSignIn: true,
     themeMode: 'system',
     notificationPrefs: defaultNotificationPrefs(),
     acceptedTermsAt: null,

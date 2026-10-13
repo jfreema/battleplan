@@ -14,6 +14,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/presentation/activate_screen.dart';
 import 'package:battleplan/features/auth/presentation/disabled_screen.dart';
 import 'package:battleplan/features/auth/presentation/email_sign_in_screen.dart';
+import 'package:battleplan/features/auth/presentation/link_method_screens.dart';
 import 'package:battleplan/features/auth/presentation/profile_screen.dart';
 import 'package:battleplan/features/auth/presentation/reset_password_screen.dart';
 import 'package:battleplan/features/auth/presentation/setup_screen.dart';
@@ -63,6 +64,8 @@ const _publicPaths = {
   '/reset-password',
   '/update-required',
   '/activate',
+  // A refused sign-in for a disabled account (AUTH-11).
+  '/disabled',
   // Firebase's email-link path; App Links deliver it to the app.
   '/__/auth/links',
 };
@@ -131,6 +134,24 @@ GoRouter router(Ref ref) {
       if (disabled) return path == '/disabled' ? null : '/disabled';
       if (path == '/disabled') return '/';
 
+      // AUTH-7: the emailed link proved the email after Google sign-in
+      // found an existing account; offer to finish linking Google.
+      final pendingLink = ref.read(localPrefsRepositoryProvider).pendingLink;
+      final finishLink =
+          pendingLink?.providerId == 'google.com' &&
+          pendingLink?.email.toLowerCase() == user.email?.toLowerCase();
+      if (finishLink) return path == '/finish-link' ? null : '/finish-link';
+      if (path == '/finish-link') return '/';
+
+      // AUTH-6: an added account chooses how to sign in from now on, right
+      // after its setup link signed it in.
+      final chooseSignIn =
+          ref.read(myProfileProvider).value?.chooseSignIn ?? false;
+      if (chooseSignIn) {
+        return path == '/choose-sign-in' ? null : '/choose-sign-in';
+      }
+      if (path == '/choose-sign-in') return '/';
+
       // First-run setup (AUTH-5) comes before anything else. Until the
       // profile exists (the callable creates it), nothing is blocked.
       final profile = ref.read(myProfileProvider).value;
@@ -190,6 +211,14 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(path: '/setup', builder: (_, _) => const SetupScreen()),
       GoRoute(path: '/disabled', builder: (_, _) => const DisabledScreen()),
+      GoRoute(
+        path: '/choose-sign-in',
+        builder: (_, _) => const ChooseSignInScreen(),
+      ),
+      GoRoute(
+        path: '/finish-link',
+        builder: (_, _) => const FinishLinkScreen(),
+      ),
       GoRoute(
         path: '/reset-password',
         builder: (_, state) => ResetPasswordScreen(

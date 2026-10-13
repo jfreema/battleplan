@@ -54,10 +54,12 @@ abstract interface class AuthRepository {
   Future<void> signInWithLink({required String email, required Uri link});
 
   // Sign-in methods (AUTH-7, AUTH-8). Each throws RequiresRecentLogin when
-  // the last sign-in is too old; reauthenticate, then retry.
+  // the last sign-in is more than 5 minutes old; reauthenticate, then retry.
+  // Each change emails the account a security notice.
 
   /// Links Google to the signed-in account by completing Google's sign-in.
-  Future<void> linkGoogle();
+  /// Returns false if the person closed Google's sheet.
+  Future<bool> linkGoogle();
 
   /// Removes a sign-in method. The last one can't be removed.
   Future<void> unlink(String providerId);
@@ -66,7 +68,8 @@ abstract interface class AuthRepository {
   Future<void> setPassword(String newPassword);
 
   /// Changes the account email once the new address confirms a link; the
-  /// old address gets a notice from Firebase (AUTH-8).
+  /// profile's contact email follows, and both addresses get a notice
+  /// (AUTH-8, AUTH-12).
   Future<void> changeEmail(String newEmail);
 
   /// A fresh sign-in with the account's password.
@@ -76,12 +79,15 @@ abstract interface class AuthRepository {
   Future<void> reauthenticateWithProvider(String providerId);
 
   /// Deletes the account and its data on the server, then signs out here
-  /// (AUTH-10). Throws RequiresRecentLogin without a fresh sign-in.
-  Future<void> deleteAccount();
+  /// (AUTH-10). [newOwners] maps a team the person owns to the member they
+  /// picked to take it over; the rest go to the longest-serving admin or
+  /// member. Throws RequiresRecentLogin without a fresh sign-in.
+  Future<void> deleteAccount({Map<String, String> newOwners = const {}});
 
   Future<void> signOut();
 
-  /// Ends this account's sessions on every device, then signs out here
-  /// (AUTH-9). Other devices sign out within an hour.
+  /// Ends this account's sessions on every device at once, then signs out
+  /// here (AUTH-9). Other devices see `users.sessionsRevokedAt` and sign
+  /// out (sessionRevocationWatcher).
   Future<void> signOutEverywhere();
 }

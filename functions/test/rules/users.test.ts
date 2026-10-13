@@ -88,6 +88,9 @@ describe('users: writing', () => {
     await assertFails(db.doc('users/alice').update({ signInMethods: ['google.com'] }));
     await assertFails(db.doc('users/alice').update({ adultConfirmedAt: now() }));
     await assertFails(db.doc('users/alice').update({ acceptedTermsAt: null }));
+    // AUTH-6 and AUTH-9: set by Functions only.
+    await assertFails(db.doc('users/alice').update({ chooseSignIn: false }));
+    await assertFails(db.doc('users/alice').update({ sessionsRevokedAt: null }));
   });
 
   it('rejects invalid values', async () => {
@@ -115,6 +118,9 @@ describe('profile photos in Storage', () => {
     await assertSucceeds(storage.ref('users/alice/avatar/1.jpg').put(jpeg, { contentType: 'image/jpeg' }).then(() => undefined));
     await assertFails(storage.ref('users/bob/avatar/1.jpg').put(jpeg, { contentType: 'image/jpeg' }).then(() => undefined));
     await assertFails(storage.ref('users/alice/avatar/1.txt').put(jpeg, { contentType: 'text/plain' }).then(() => undefined));
+    // The crop step (SET-1) uploads a PNG.
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+    await assertSucceeds(storage.ref('users/alice/avatar/2.png').put(png, { contentType: 'image/png' }).then(() => undefined));
   });
 
   it('lets signed-in people see avatars, but not visitors', async () => {
