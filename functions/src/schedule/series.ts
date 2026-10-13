@@ -258,9 +258,11 @@ async function teamContext(groupId: string, caller: Caller): Promise<TeamContext
     db().collection(Collections.groupMembers).doc(groupMemberId(groupId, caller.uid)).get(),
   ]);
   if (!group.exists) throw new HttpsError('not-found', 'team-not-found');
-  // Archived teams are read-only (TEAM-9); suspended ones are closed.
+  // Archived teams are read-only (TEAM-9); suspended ones are closed to
+  // everyone on them but super admins, as the rules' eventCreatorOk and
+  // eventEditorOk let super admins write single events there (§3).
   if (group.get('archivedAt')) throw new HttpsError('failed-precondition', 'team-archived');
-  if (group.get('suspendedAt')) throw new HttpsError('failed-precondition', 'team-suspended');
+  if (group.get('suspendedAt') && !caller.superAdmin) throw new HttpsError('failed-precondition', 'team-suspended');
   if (!member.exists && !caller.superAdmin) throw new HttpsError('permission-denied', 'Members only.');
   const role = member.exists ? String(member.get('role')) : null;
   return {

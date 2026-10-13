@@ -18,6 +18,7 @@ import { resolveReport } from '../../src/safety/handlers.js';
 import { auth, db, storage } from '../../src/shared/admin.js';
 import { Collections, Limits } from '../../src/shared/constants.js';
 import * as teams from '../../src/teams/handlers.js';
+import { setMemberRole } from '../../src/teams/service.js';
 
 const mail = vi.hoisted(() => ({ sent: [] as Email[] }));
 vi.mock('../../src/email/service.js', async (importOriginal) => ({
@@ -261,6 +262,37 @@ describe('leaving or being removed takes guardian links and requests too (TEAM-8
   });
 });
 
+describe('reports about someone promoted (SAFE-1)', () => {
+  const report = (id: string, subjectId: string, status = 'open') =>
+    db().collection(Collections.reports).doc(id).set({
+      groupId: 'open', subjectId, reporterId: 'lee', status, teamVisible: true, createdAt: Timestamp.now(),
+    });
+  const visible = async (id: string) => (await db().collection(Collections.reports).doc(id).get()).get('teamVisible');
+
+  it('go to the super-admin queue when a member is made an admin', async () => {
+    await report('r1', 'sam');
+    await report('r2', 'sam', 'dismissed');
+    await report('r3', 'lee');
+    await run(teams.updateGroupMember, 'pat', { groupId: 'open', uid: 'sam', role: 'admin' });
+    expect(await visible('r1')).toBe(false);
+    // Closed reports and reports about others stay as they were.
+    expect(await visible('r2')).toBe(true);
+    expect(await visible('r3')).toBe(true);
+  });
+
+  it('go to the super-admin queue when a member is handed the team', async () => {
+    await report('r1', 'sam');
+    await run(teams.transferOwnership, 'pat', { groupId: 'open', uid: 'sam' });
+    expect(await visible('r1')).toBe(false);
+  });
+
+  it('go to the super-admin queue when the admin panel adds them as an admin (ADMIN-4)', async () => {
+    await report('r1', 'sam');
+    await setMemberRole('open', 'sam', 'admin');
+    expect(await visible('r1')).toBe(false);
+  });
+});
+
 describe("the team's link (INV-2, §3)", () => {
   it('sets an expiry and use limit keeping the code', async () => {
     const link = await run<{ code: string }>(invites.getTeamInvite, 'ada', { groupId: 'open' });
@@ -281,6 +313,19 @@ describe("the team's link (INV-2, §3)", () => {
     expect(await previewInvite(link.code)).toBe('revoked');
     await expect(run(invites.getTeamInvite, 'sam', { groupId: 'open' })).rejects.toMatchObject({ message: 'link-off' });
     await expect(run(invites.updateGroupInvite, 'ada', { groupId: 'open', maxUses: 5 })).rejects.toMatchObject({ message: 'link-off' });
+    const fresh = await run<{ code: string }>(invites.resetGroupInvite, 'ada', { groupId: 'open' });
+    expect(fresh.code).not.toBe(link.code);
+    expect((await run<{ code: string }>(invites.getTeamInvite, 'sam', { groupId: 'open' })).code).toBe(fresh.code);
+  });
+
+  it('stays off when revoked by code from the admin panel (ADMIN-3), and only admins can', async () => {
+    const link = await run<{ code: string }>(invites.getTeamInvite, 'sam', { groupId: 'open' });
+    // Sam opened the link first, but it is the team's: only admins turn it off.
+    await expect(run(invites.revokeInvite, 'sam', { code: link.code })).rejects.toMatchObject({ code: 'permission-denied' });
+    await run(invites.revokeInvite, 'root', { code: link.code }, ROOT);
+    expect(await previewInvite(link.code)).toBe('revoked');
+    await expect(run(invites.getTeamInvite, 'sam', { groupId: 'open' })).rejects.toMatchObject({ message: 'link-off' });
+    await expect(run(invites.getTeamInvite, 'ada', { groupId: 'open' })).rejects.toMatchObject({ message: 'link-off' });
     const fresh = await run<{ code: string }>(invites.resetGroupInvite, 'ada', { groupId: 'open' });
     expect(fresh.code).not.toBe(link.code);
     expect((await run<{ code: string }>(invites.getTeamInvite, 'sam', { groupId: 'open' })).code).toBe(fresh.code);

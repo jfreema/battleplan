@@ -134,6 +134,18 @@ describe('closing (POLL-4)', () => {
     expect((await pollData('p1'))?.closedAt).toBeNull();
   });
 
+  it('refuses the creator and admins on a suspended team, but not a super admin (§3)', async () => {
+    await poll('p1');
+    await db().collection(Collections.groups).doc(G).update({ suspendedAt: Timestamp.now() });
+    for (const uid of ['pat', 'alex']) {
+      await expect(closePoll.run(call(uid, { pollId: 'p1' }))).rejects
+        .toMatchObject({ code: 'permission-denied', message: 'team-suspended' });
+    }
+    expect((await pollData('p1'))?.closedAt).toBeNull();
+    await closePoll.run(call('root', { pollId: 'p1' }, { superAdmin: true }));
+    expect((await pollData('p1'))?.closedAt).toBeInstanceOf(Timestamp);
+  });
+
   it('closes polls past their close time on the tick, and only those', async () => {
     const past = Timestamp.fromMillis(Date.now() - 60_000);
     await poll('due', { closesAt: past });

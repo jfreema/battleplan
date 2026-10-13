@@ -17,6 +17,7 @@ import { requireOpenTeam, requireTeamAdmin, requireTeamOwner, roleOf } from '../
 import { displayNameOf, sendSetupEmail } from '../accounts/service.js';
 import { resendApiKey } from '../email/service.js';
 import { trySend } from '../notify/service.js';
+import { hideReportsAbout } from '../safety/service.js';
 import {
   addMembersByEmail,
   canChangeRole,
@@ -121,6 +122,7 @@ export const updateGroupMember = onCall(async (request) => {
     after: update,
   });
   if (update.role === 'admin') {
+    await hideReportsAbout(input.groupId, input.uid);
     const name = (target.get('displayName') as string) || 'Someone';
     await postSystemMessage(input.groupId, 'madeAdmin', `${name} is now an admin`, actorUid, input.uid);
     // NOTIF-2: the new admin is told, even at Important only.
@@ -185,6 +187,7 @@ export const transferOwnership = onCall(async (request) => {
     .update(db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, ownerId)), { role: 'admin' })
     .update(groupRef, { ownerId: input.uid, updatedAt: FieldValue.serverTimestamp() })
     .commit();
+  await hideReportsAbout(input.groupId, input.uid);
   await audit({
     actorId: actorUid,
     action: 'transferOwnership',

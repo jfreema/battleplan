@@ -455,6 +455,19 @@ function dateBefore(date: string): string {
   return new Date(d.getTime() - DAY).toISOString().slice(0, 10);
 }
 
+describe('a suspended team (§3)', () => {
+  it('refuses its owner but lets a super admin change a series, as the rules do for one event', async () => {
+    const { upcoming } = await runningSeries();
+    await db().collection(Collections.groups).doc(G).update({ suspendedAt: Timestamp.now() });
+    await expect(save('alex', { action: 'cancel', eventId: upcoming[0], scope: 'this' })).rejects
+      .toMatchObject({ code: 'failed-precondition', message: 'team-suspended' });
+    expect((await eventData(upcoming[0]))?.canceledAt).toBeNull();
+    const out = await save('root', { action: 'cancel', eventId: upcoming[0], scope: 'this' }, { superAdmin: true });
+    expect(out.canceled).toBe(1);
+    expect((await eventData(upcoming[0]))?.canceledAt).toBeInstanceOf(Timestamp);
+  });
+});
+
 describe('canceling and deleting in a series (SCHED-7)', () => {
   it('cancels one event, telling everyone but Not going, guardians included', async () => {
     const res = await save('coach', { action: 'create', groupId: Y, recurrence: daily(3, 3), template: template() });

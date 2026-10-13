@@ -706,6 +706,9 @@ service cloud.firestore {
     // its admins (teamVisible false), which go to super admins only, so a
     // reported admin never learns who reported them. A list must ask for
     // teamVisible == true; a get also refuses a report about the reader.
+    // Promoting someone to admin or owner turns teamVisible off on the open
+    // reports about them (hideReportsAbout), so the list can't show them
+    // their own.
     match /reports/{reportId} {
       allow get: if superAdmin()
         || (isAdmin(resource.data.groupId) && resource.data.get('teamVisible', false) == true

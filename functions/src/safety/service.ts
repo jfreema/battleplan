@@ -72,6 +72,25 @@ export function teamSeesReport(subjectRole: string | null): boolean {
   return subjectRole !== 'owner' && subjectRole !== 'admin';
 }
 
+/**
+ * Moves the open reports about [uid] on a team to the super-admin queue
+ * (teamVisible false) when they become an admin or the owner (SAFE-1).
+ * teamSeesReport is decided when a report is filed, so without this a
+ * member reported and then promoted would list the report about them, and
+ * who filed it, as the private-report rules otherwise prevent.
+ */
+export async function hideReportsAbout(groupId: string, uid: string): Promise<void> {
+  await forEachPage(
+    db()
+      .collection(Collections.reports)
+      .where('groupId', '==', groupId)
+      .where('subjectId', '==', uid)
+      .where('status', '==', 'open')
+      .where('teamVisible', '==', true),
+    (b, d) => b.update(d.ref, { teamVisible: false }),
+  );
+}
+
 /** Files a report (SAFE-1). Returns its ID. */
 export async function fileReport(input: {
   reporterId: string;

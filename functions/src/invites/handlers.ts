@@ -218,8 +218,11 @@ export const listEmailInvites = onCall(async (request) => {
 });
 
 /**
- * Turns an invite off at once (INV-4 Revoke, ADMIN-3 Content). The inviter,
- * a team admin, or a super admin. Each revoke goes in the audit log
+ * Turns an invite off at once (INV-4 Revoke, ADMIN-3 Content). An email
+ * invite: its inviter, a team admin, or a super admin. The team's link: a
+ * team admin or a super admin, and it stays off the way revokeGroupInvite
+ * leaves it (§3 "revoke"), so getTeamInvite makes no new one until an admin
+ * turns one on with resetGroupInvite. Each revoke goes in the audit log
  * (ADMIN-6), as resetting the team link does.
  */
 export const revokeInvite = onCall(async (request) => {
@@ -229,14 +232,20 @@ export const revokeInvite = onCall(async (request) => {
   const invite = await ref.get();
   if (!invite.exists) return { ok: true };
   const groupId = invite.get('groupId') as string;
+  const isLink = invite.get('type') === 'link';
   // Turning an invite off is fine on an archived team, not a suspended one.
-  if (invite.get('createdBy') !== uid) {
+  // The link belongs to the team, not the member who first opened it.
+  if (isLink || invite.get('createdBy') !== uid) {
     await requireTeamAdmin(groupId, uid, request.auth?.token.superAdmin === true, { allowArchived: true });
   } else {
     await requireOpenTeam(groupId, request.auth?.token.superAdmin === true, { allowArchived: true });
   }
   if (invite.get('revokedAt') != null) return { ok: true };
-  await ref.update({ revokedAt: FieldValue.serverTimestamp() });
+  if (isLink) {
+    await revokeTeamLinks(groupId, true);
+  } else {
+    await ref.update({ revokedAt: FieldValue.serverTimestamp() });
+  }
   await audit({
     actorId: uid,
     action: 'revokeInvite',

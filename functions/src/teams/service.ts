@@ -10,6 +10,7 @@ import { addedToTeamEmail } from '../email/templates.js';
 import { teamUrl } from '../links/service.js';
 import { removeTeamNotifications, trySend } from '../notify/service.js';
 import { removeGuardianFromTeam } from '../players/service.js';
+import { hideReportsAbout } from '../safety/service.js';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections, Limits } from '../shared/constants.js';
@@ -69,6 +70,7 @@ export async function removeAccountFromTeams(uid: string, newOwners: Record<stri
           .update(groupRef, { ownerId: heir, updatedAt: FieldValue.serverTimestamp() })
           .update(db().collection(Collections.groupMembers).doc(groupMemberId(groupId, heir)), { role: 'owner' })
           .commit();
+        await hideReportsAbout(groupId, heir);
       } else {
         const suspended = (await groupRef.get()).get('suspendedAt') != null;
         await groupRef.update({
@@ -252,6 +254,7 @@ export async function setMemberRole(groupId: string, uid: string, role: 'admin' 
     if (member.get('role') === 'owner') throw new HttpsError('failed-precondition', 'owner');
     tx.update(ref, { role });
   });
+  if (role === 'admin') await hideReportsAbout(groupId, uid);
 }
 
 /**
