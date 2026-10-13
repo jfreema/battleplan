@@ -37,6 +37,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeMessageRepository? messageRepo,
   FakePollRepository? pollRepo,
   FakePhotoPicker? photoPicker,
+  FakePhotoDrops? photoDrops,
   FakeSafetyRepository? safety,
   FakeMediaRepository? media,
   FakeDeviceRepository? devices,
@@ -93,6 +94,8 @@ Future<FakeLocalPrefs> pumpApp(
           safety ?? FakeSafetyRepository(),
         ),
         photoPickerProvider.overrideWithValue(photoPicker ?? FakePhotoPicker()),
+        if (photoDrops != null)
+          photoDropsProvider.overrideWithValue(photoDrops),
         messageRepositoryProvider.overrideWithValue(messages),
         pollRepositoryProvider.overrideWithValue(polls),
         inviteRepositoryProvider.overrideWithValue(

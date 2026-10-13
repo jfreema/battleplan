@@ -1,5 +1,5 @@
-// The main screens with real fonts (Roboto for Inter, Material Symbols for
-// icons) in light and dark at a phone size, at 2x, to look at in review
+// The key screens with real fonts (the bundled Inter, Material Symbols for
+// icons) in light and dark at a phone size (one at a wide size), at 2x, to look at in review
 // (ARCH §9). Fonts rasterize a little differently on each operating
 // system, so these compare only on the one that made them
 // ([readableGoldensOs]); screens_golden_test.dart covers CI's.
@@ -27,7 +27,7 @@ void main() {
       ? null
       : 'Readable goldens compare on $readableGoldensOs only';
 
-  for (final MapEntry(key: name, value: pump) in mainScreens.entries) {
+  for (final MapEntry(key: name, value: pump) in goldenScreens.entries) {
     for (final dark in [false, true]) {
       final theme = dark ? 'dark' : 'light';
       testWidgets('$name ($theme)', skip: skip != null, (tester) async {
@@ -36,9 +36,10 @@ void main() {
         // shadows rather than the test's solid outlines (reset before the
         // test ends, as the test framework checks).
         debugDisableShadows = false;
+        final logical = tester.view.physicalSize / tester.view.devicePixelRatio;
         tester.view
           ..devicePixelRatio = 2
-          ..physicalSize = phoneSize * 2;
+          ..physicalSize = logical * 2;
         try {
           await tester.pumpAndSettle();
           await expectLater(

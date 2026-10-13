@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
@@ -489,6 +490,7 @@ class RsvpButtons extends ConsumerWidget {
             onSelectionChanged: enabled
                 ? (s) {
                     if (s.isEmpty) return;
+                    Haptics.selection();
                     unawaited(
                       _answer(context, ref, s.first, answer?.note ?? ''),
                     );

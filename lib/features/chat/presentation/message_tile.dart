@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
@@ -83,6 +84,9 @@ class _MessageTileState extends ConsumerState<MessageTile> {
   bool _showTime = false;
   bool _hovering = false;
 
+  /// Focused from the keyboard (SPEC §7.6), and so ringed.
+  bool _focused = false;
+
   /// A blocked person's message the viewer chose to see.
   bool _revealed = false;
 
@@ -150,7 +154,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       message: widget.message.type == MessageType.poll
           ? l10n.deletePollBody
           : l10n.deleteMessageBody,
-      confirmLabel: l10n.delete,
+      confirmLabel: l10n.deleteMessageAction,
       cancelLabel: l10n.cancel,
       destructive: true,
     );
@@ -160,7 +164,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           .read(chatMessagesProvider(widget.message.groupId).notifier)
           .delete(widget.message);
     } on AppFailure {
-      if (mounted) showAppSnackBar(context, l10n.signInUnknownError);
+      if (mounted) showAppSnackBar(context, l10n.errorDeleteMessage);
     }
   }
 
@@ -189,6 +193,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                   mine: me == null ? null : m.reactions[me],
                   onPick: (r) {
                     Navigator.of(sheet).pop();
+                    Haptics.light();
                     fireAndForget(_react(r));
                   },
                 ),
@@ -548,14 +553,19 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                 ? null
                 : (_) {
                     if (_swipe >= _swipeToReply) {
-                      unawaited(HapticFeedback.selectionClick());
+                      Haptics.selection();
                       widget.onReply!();
                     }
                     setState(() => _swipe = 0);
                   },
             // The message menu (CHAT-7): long-press on phones, right-click
             // on the web. Double-tap loves it (CHAT-6).
-            onLongPress: deleted ? null : () => unawaited(_openMenu()),
+            onLongPress: deleted
+                ? null
+                : () {
+                    Haptics.medium();
+                    unawaited(_openMenu());
+                  },
             onSecondaryTap: deleted ? null : () => unawaited(_openMenu()),
             // Not on polls: waiting for a second tap would hold up voting.
             onDoubleTap:
@@ -565,16 +575,49 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     isEvent ||
                     ref.watch(viewingAsSuperAdminProvider(m.groupId))
                 ? null
-                : () => fireAndForget(_react(Reaction.love)),
-            child: Transform.translate(
-              offset: Offset(_swipe, 0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (mine && _hovering && !deleted) _hoverButton(),
-                  Flexible(child: bubble),
-                  if (!mine && _hovering && !deleted) _hoverButton(),
-                ],
+                : () {
+                    Haptics.light();
+                    fireAndForget(_react(Reaction.love));
+                  },
+            // Full keyboard navigation (SPEC §7.6): Tab reaches each
+            // message, and Enter, Space, the menu key, or Shift+F10 opens
+            // its menu, as long-press and right-click do.
+            child: FocusableActionDetector(
+              enabled: !deleted,
+              onShowFocusHighlight: (on) => setState(() => _focused = on),
+              shortcuts: const {
+                SingleActivator(LogicalKeyboardKey.contextMenu):
+                    ActivateIntent(),
+                SingleActivator(LogicalKeyboardKey.f10, shift: true):
+                    ActivateIntent(),
+              },
+              actions: {
+                ActivateIntent: CallbackAction<ActivateIntent>(
+                  onInvoke: (_) => unawaited(_openMenu()),
+                ),
+              },
+              child: Transform.translate(
+                offset: Offset(_swipe, 0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (mine && _hovering && !deleted) _hoverButton(),
+                    Flexible(
+                      child: DecoratedBox(
+                        // The visible focus ring (SPEC §7.6).
+                        position: DecorationPosition.foreground,
+                        decoration: BoxDecoration(
+                          border: _focused
+                              ? Border.all(color: scheme.primary, width: 2)
+                              : null,
+                          borderRadius: BorderRadius.circular(Corners.bubble),
+                        ),
+                        child: bubble,
+                      ),
+                    ),
+                    if (!mine && _hovering && !deleted) _hoverButton(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -653,7 +696,8 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       ),
     );
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+      duration: Motion.of(context, Motion.slow),
+      curve: Motion.curve,
       color: widget.highlighted
           ? scheme.primaryContainer.withValues(alpha: 0.5)
           : Colors.transparent,

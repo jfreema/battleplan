@@ -37,7 +37,10 @@ class MediaScreen extends ConsumerWidget {
       context,
       title: title,
       message: body,
-      confirmLabel: l10n.delete,
+      // The verb and what goes (SPEC §7.5).
+      confirmLabel: item.kind == MediaKind.chatPhoto && item.current != false
+          ? l10n.deletePhotoAction
+          : l10n.deleteFileAction,
       cancelLabel: l10n.cancel,
       destructive: true,
     );
@@ -47,7 +50,7 @@ class MediaScreen extends ConsumerWidget {
       await ref.read(mediaRepositoryProvider).delete(groupId, item.path);
       done = l10n.mediaDeleted;
     } on AppFailure catch (e) {
-      done = e is PermissionDenied ? l10n.notAllowed : l10n.signInUnknownError;
+      done = e is PermissionDenied ? l10n.notAllowed : l10n.errorDeleteFile;
     }
     if (!context.mounted) return;
     showAppSnackBar(context, done);

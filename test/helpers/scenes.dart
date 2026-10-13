@@ -376,3 +376,41 @@ mainScreens = {
   'documents': pumpDocuments,
   'admin_dashboard': pumpAdminDashboard,
 };
+
+/// A wide screen: a laptop browser window, for the rail layout (SPEC §5.5).
+const wideSize = Size(1280, 800);
+
+/// Every key screen with a golden in both themes (SPEC §7.4): the main
+/// screens, and welcome, the team switcher, roster, settings, invite, and
+/// the wide rail layout.
+final Map<String, Future<void> Function(WidgetTester, {required bool dark})>
+goldenScreens = {
+  ...mainScreens,
+  'welcome': (tester, {required dark}) => pumpApp(
+    tester,
+    auth: FakeAuthRepository(user: coach),
+    prefs: _prefs(dark: dark),
+    users: FakeUserRepository()
+      ..themeMode = dark ? ThemePreference.dark : ThemePreference.light,
+    size: phoneSize,
+  ),
+  'team_switcher': (tester, {required dark}) async {
+    await pumpTeam(tester, dark: dark);
+    await tester.tap(find.bySemanticsLabel('Switch team: Thunder U14'));
+    await tester.pumpAndSettle();
+  },
+  'roster': (tester, {required dark}) async {
+    await pumpTeam(tester, dark: dark);
+    await goTo(tester, '/g/a/roster');
+  },
+  'settings': (tester, {required dark}) async {
+    await pumpTeam(tester, dark: dark);
+    await goTo(tester, '/settings');
+  },
+  'invite': (tester, {required dark}) async {
+    await pumpTeam(tester, dark: dark);
+    await goTo(tester, '/g/a/invite');
+  },
+  'chat_wide': (tester, {required dark}) =>
+      pumpTeam(tester, dark: dark, size: wideSize),
+};

@@ -1,6 +1,7 @@
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/polls/application/providers.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
@@ -49,10 +50,8 @@ class PollVotersSheet extends ConsumerWidget {
 
     final list = votes.value;
     if (list == null) {
-      return const Padding(
-        padding: EdgeInsets.all(Space.xl),
-        child: Center(child: CircularProgressIndicator()),
-      );
+      // Lists load with skeleton rows, not spinners (SPEC §7.5).
+      return const SkeletonList(rows: 3);
     }
     final voted = {for (final v in list) v.uid};
     final notVoted = [

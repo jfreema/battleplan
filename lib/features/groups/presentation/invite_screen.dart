@@ -241,7 +241,7 @@ class _InviteBody extends ConsumerWidget {
       ref.invalidate(teamInviteProvider(groupId));
       messenger.showSnackBar(SnackBar(content: Text(l10n.profileSaved)));
     } on AppFailure {
-      messenger.showSnackBar(SnackBar(content: Text(l10n.signInUnknownError)));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errorResetLink)));
     }
   }
 

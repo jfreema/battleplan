@@ -12,7 +12,7 @@ import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
-import 'package:battleplan/core/widgets/team_badge.dart';
+import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
@@ -22,6 +22,7 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
+import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,20 +38,38 @@ const teamTabs = ['chat', 'schedule', 'documents'];
 /// A super admin who isn't on the team sees it read-only instead, under
 /// "Viewing as super admin" (ADMIN-3 View team): no switcher, team menu,
 /// or composer, but the moderation the tabs offer them.
-class TeamShell extends ConsumerWidget {
+class TeamShell extends ConsumerStatefulWidget {
   const new({required this.groupId, required this.navigationShell, super.key});
 
   final GroupId groupId;
   final StatefulNavigationShell navigationShell;
+
+  @override
+  ConsumerState<TeamShell> createState() => _TeamShellState();
+}
+
+class _TeamShellState extends ConsumerState<TeamShell> {
+  /// The header's switcher, which the wide-screen dropdown hangs from
+  /// (SPEC §5.2), Ctrl/⌘+K's included.
+  final GlobalKey _switcherKey = GlobalKey();
+
+  GroupId get groupId => widget.groupId;
+  StatefulNavigationShell get navigationShell => widget.navigationShell;
 
   void _switchTo(BuildContext context, GroupId id) {
     final tab = teamTabs[navigationShell.currentIndex];
     context.go('/g/${id.value}/$tab');
   }
 
-  Future<void> _openSwitcher(BuildContext context) async {
+  /// A bottom sheet on phones; a dropdown panel under the switcher on wide
+  /// screens (SPEC §5.2).
+  Future<void> _openSwitcher(
+    BuildContext context, {
+    BuildContext? anchor,
+  }) async {
     final selected = await showAdaptiveSheet<GroupId>(
       context,
+      anchor: anchor ?? _switcherKey.currentContext,
       builder: (sheetContext) => TeamSwitcherList(
         currentGroupId: groupId,
         onSelect: (id) => Navigator.of(sheetContext).pop(id),
@@ -68,7 +87,7 @@ class TeamShell extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final teams = ref.watch(myTeamsProvider);
     final memberships = ref.watch(myMembershipsProvider);
@@ -132,9 +151,19 @@ class TeamShell extends ConsumerWidget {
     final unread = viewing
         ? 0
         : ref.watch(unreadCountProvider(groupId)).value ?? 0;
-    Widget tabIcon(int index, Widget icon) => index == 0 && unread > 0
-        ? Badge(label: Text(unreadLabel(unread)), child: icon)
-        : icon;
+    // The Schedule tab shows the events in the next 14 days still waiting
+    // for my answer or my players' (SPEC §5.3).
+    final awaiting = viewing
+        ? 0
+        : ref.watch(awaitingRsvpCountProvider(groupId)).value ?? 0;
+    Widget tabIcon(int index, Widget icon) => switch (index) {
+      0 when unread > 0 => Badge(label: Text(unreadLabel(unread)), child: icon),
+      1 when awaiting > 0 => Badge(
+        label: Text(unreadLabel(awaiting)),
+        child: icon,
+      ),
+      _ => icon,
+    };
 
     Future<void> leave() async {
       final current = team;
@@ -154,7 +183,7 @@ class TeamShell extends ConsumerWidget {
       } on OwnerMustTransfer {
         if (context.mounted) showAppSnackBar(context, l10n.ownerMustTransfer);
       } on AppFailure {
-        if (context.mounted) showAppSnackBar(context, l10n.signInUnknownError);
+        if (context.mounted) showAppSnackBar(context, l10n.errorLeaveTeam);
       }
     }
 
@@ -162,8 +191,9 @@ class TeamShell extends ConsumerWidget {
         ? _ViewingHeader(group: viewed)
         : _TeamHeader(
             team: team,
+            switcherKey: _switcherKey,
             showOtherUnreadDot: otherUnread,
-            onOpenSwitcher: () => _openSwitcher(context),
+            onOpenSwitcher: (anchor) => _openSwitcher(context, anchor: anchor),
             onLeave: leave,
           );
     // Under the header: "Viewing as super admin", or the storage warning.
@@ -195,17 +225,16 @@ class TeamShell extends ConsumerWidget {
                 leading: Padding(
                   padding: const EdgeInsets.symmetric(vertical: Space.sm),
                   child: viewing
-                      ? TeamBadge(
-                          name: viewed?.name ?? '',
-                          color: viewed?.color == null
-                              ? null
-                              : Color(viewed!.color!),
-                        )
-                      : _SwitcherButton(
-                          team: team,
-                          showDot: otherUnread,
-                          compact: true,
-                          onPressed: () => _openSwitcher(context),
+                      ? GroupBadge(group: viewed)
+                      : Builder(
+                          builder: (button) => TeamSwitcherButton(
+                            name: team?.group.name ?? '',
+                            badge: GroupBadge(group: team?.group),
+                            showDot: otherUnread,
+                            compact: true,
+                            onPressed: () =>
+                                _openSwitcher(context, anchor: button),
+                          ),
                         ),
                 ),
                 trailing: const Expanded(
@@ -289,14 +318,18 @@ class TeamShell extends ConsumerWidget {
 class _TeamHeader extends StatelessWidget {
   const new({
     required this.team,
+    required this.switcherKey,
     required this.showOtherUnreadDot,
     required this.onOpenSwitcher,
     required this.onLeave,
   });
 
   final MyTeam? team;
+  final GlobalKey switcherKey;
   final bool showOtherUnreadDot;
-  final VoidCallback onOpenSwitcher;
+
+  /// Opens the switcher from the button given.
+  final void Function(BuildContext anchor) onOpenSwitcher;
   final Future<void> Function() onLeave;
 
   @override
@@ -312,10 +345,15 @@ class _TeamHeader extends StatelessWidget {
           Expanded(
             child: Align(
               alignment: Alignment.centerLeft,
-              child: _SwitcherButton(
-                team: team,
+              child: TeamSwitcherButton(
+                key: switcherKey,
+                name: team?.group.name ?? '',
+                badge: GroupBadge(group: team?.group),
                 showDot: showOtherUnreadDot && !wide,
-                onPressed: onOpenSwitcher,
+                onPressed: () {
+                  final anchor = switcherKey.currentContext;
+                  if (anchor != null) onOpenSwitcher(anchor);
+                },
               ),
             ),
           ),
@@ -343,7 +381,6 @@ class _ViewingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final color = group?.color;
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: Space.gutter(width),
@@ -351,10 +388,7 @@ class _ViewingHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          TeamBadge(
-            name: group?.name ?? '',
-            color: color == null ? null : Color(color),
-          ),
+          GroupBadge(group: group),
           const SizedBox(width: Space.sm),
           Expanded(
             child: Text(
@@ -434,69 +468,6 @@ class _StorageBanner extends ConsumerWidget {
                   .dismiss(t.group.id, level),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SwitcherButton extends StatelessWidget {
-  const new({
-    required this.team,
-    required this.showDot,
-    required this.onPressed,
-    this.compact = false,
-  });
-
-  final MyTeam? team;
-  final bool showDot;
-  final bool compact;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final name = team?.group.name ?? '';
-    final color = team?.group.color;
-    final badge = Badge(
-      isLabelVisible: showDot,
-      smallSize: 10,
-      child: TeamBadge(name: name, color: color == null ? null : Color(color)),
-    );
-    if (compact) {
-      return IconButton(
-        tooltip: l10n.switchTeamTooltip,
-        onPressed: onPressed,
-        icon: badge,
-      );
-    }
-    return Semantics(
-      button: true,
-      label: '${l10n.switchTeamTooltip}: $name',
-      excludeSemantics: true,
-      // The InkWell's own tap is excluded with its semantics.
-      onTap: onPressed,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(Corners.card),
-        onTap: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.all(Space.sm),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              badge,
-              const SizedBox(width: Space.sm),
-              Flexible(
-                child: Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              const Icon(AppIcons.expand),
-            ],
-          ),
         ),
       ),
     );

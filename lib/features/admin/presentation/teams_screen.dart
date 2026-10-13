@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -131,7 +132,7 @@ class _AdminTeamsScreenState extends ConsumerState<AdminTeamsScreen> {
               ],
             ),
             AsyncError() => Center(child: Text(l10n.loadError)),
-            _ => const Center(child: CircularProgressIndicator()),
+            _ => const SkeletonList(),
           },
         ],
       ),

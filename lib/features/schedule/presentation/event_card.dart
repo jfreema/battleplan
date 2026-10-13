@@ -123,7 +123,7 @@ class EventCard extends ConsumerWidget {
               if (otherZoneLine(l10n, event, zone) case final z?)
                 Text(z, style: muted),
               if (event.location case final loc?) Text(loc.label, style: muted),
-              _CardRsvps(event: event, groupId: groupId),
+              _CardRsvps(event: event, groupId: groupId, zone: zone),
             ],
           ),
         ),
@@ -133,13 +133,15 @@ class EventCard extends ConsumerWidget {
 }
 
 /// The card's answer buttons, one set per person I answer for (PLAYER-6),
-/// and the live counts (CHAT-11, SPEC §5.4, SCHED-5): the same answers as
-/// the event's page, without the notes. Canceled events take no answers.
+/// while I can still answer, and the live counts (CHAT-11, SPEC §5.4,
+/// §7.5, SCHED-5): the same answers as the event's page, without the
+/// notes. Canceled and started events take no answers.
 class _CardRsvps extends ConsumerWidget {
-  const new({required this.event, required this.groupId});
+  const new({required this.event, required this.groupId, required this.zone});
 
   final Event event;
   final GroupId groupId;
+  final String zone;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -149,17 +151,21 @@ class _CardRsvps extends ConsumerWidget {
     final group = ref.watch(groupProvider(groupId)).value;
     if (group == null) return const SizedBox.shrink();
     final me = ref.watch(myMembershipProvider(groupId));
-    final mine = event.isCanceled
-        ? const <Participant>[]
-        : ref.watch(myParticipantsProvider(groupId));
-    final rsvps = mine.isEmpty
-        ? const <Rsvp>[]
-        : ref.watch(eventRsvpsProvider(groupId, event.id)).value ??
-              const <Rsvp>[];
+    final now = DateTime.now();
+    final open = !event.startedBefore(now) && canAnswerNow(event, group, me, now);
+    final mine = open
+        ? ref.watch(myParticipantsProvider(groupId))
+        : const <Participant>[];
+    // My answers from today on, one listener for every card in the chat.
+    final answers = mine.isEmpty
+        ? const <String, Rsvp>{}
+        : ref
+                  .watch(myRsvpsProvider(groupId, from: startOfDay(zone, now)))
+                  .value?[event.id.value] ??
+              const <String, Rsvp>{};
     final players = event.forPlayers
         ? ref.watch(playersProvider(groupId)).value?.length ?? 0
         : 0;
-    final open = canAnswerNow(event, group, me, DateTime.now());
     final allowMaybe = group.settings.allowMaybe;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,11 +177,11 @@ class _CardRsvps extends ConsumerWidget {
             child: RsvpButtons(
               event: event,
               participant: p,
-              answer: answerOf(rsvps, p.id),
+              answer: answers[p.id],
               label: mine.length > 1 || p.isPlayer
                   ? (p.isPlayer ? p.shownName : l10n.eventYou)
                   : null,
-              enabled: open,
+              enabled: true,
               allowMaybe: allowMaybe,
               compact: true,
             ),

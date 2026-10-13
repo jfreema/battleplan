@@ -114,3 +114,32 @@ Rsvp? answerOf(Iterable<Rsvp> rsvps, String participantId) =>
 /// else, for "Set RSVP for a member or player" (SCHED-4).
 bool isSelf(Participant p, UserId uid) =>
     p.type == ParticipantType.member && p.id == uid.value;
+
+/// How far ahead the Schedule tab's badge looks (SPEC §5.3).
+const awaitingRsvpWindow = Duration(days: 14);
+
+/// The Schedule tab's badge (SPEC §5.3): how many of [events] in the next
+/// 14 days from [now] still wait for an answer from someone I answer for
+/// ([participants]: me, or my players on youth teams). Only events I
+/// can still answer count: taking answers, not started, and before the
+/// deadline unless I'm an admin (SCHED-5). [answers] are mine by event ID,
+/// then participant ID.
+int countAwaitingRsvp({
+  required List<Event> events,
+  required Group group,
+  required Membership me,
+  required List<Participant> participants,
+  required Map<String, Map<String, Rsvp>> answers,
+  required DateTime now,
+}) {
+  final until = now.add(awaitingRsvpWindow);
+  var count = 0;
+  for (final e in events) {
+    if (e.startedBefore(now) || !e.startAt.isBefore(until)) continue;
+    if (!canAnswerNow(e, group, me, now)) continue;
+    // Everyone I answer for, as event details shows them (PLAYER-6).
+    final mine = answers[e.id.value] ?? const {};
+    if (participants.any((p) => !mine.containsKey(p.id))) count++;
+  }
+  return count;
+}

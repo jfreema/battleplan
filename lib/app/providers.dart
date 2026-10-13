@@ -1,4 +1,5 @@
 import 'package:battleplan/app/app_services.dart';
+import 'package:battleplan/app/services/browser_photo_drops.dart';
 import 'package:battleplan/app/services/device_calendar_adder.dart';
 import 'package:battleplan/app/services/file_picker_chooser.dart';
 import 'package:battleplan/app/services/flutter_time_zones.dart';
@@ -7,7 +8,6 @@ import 'package:battleplan/app/services/image_picker_photo_picker.dart';
 import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/app/services/url_launcher_link_opener.dart';
 import 'package:battleplan/app/services/web_browser_info.dart';
-import 'package:battleplan/app/services/web_photo_drops.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/services/analytics.dart';
@@ -77,6 +77,9 @@ List<Override> buildOverrides({
   photoPickerProvider.overrideWithValue(
     const LocationStrippingPhotoPicker(ImagePickerPhotoPicker()),
   ),
+  photoDropsProvider.overrideWithValue(
+    LocationStrippingPhotoDrops(browserPhotoDrops()),
+  ),
   linkOpenerProvider.overrideWithValue(const UrlLauncherLinkOpener()),
   timeZonesProvider.overrideWithValue(const FlutterTimeZones()),
   sharerProvider.overrideWithValue(const SharePlusSharer()),
@@ -87,9 +90,6 @@ List<Override> buildOverrides({
     kIsWeb ? WebBrowserInfo() : const PlainBrowserInfo(),
   ),
   photoSaverProvider.overrideWithValue(const GalPhotoSaver()),
-  photoDropsProvider.overrideWithValue(
-    kIsWeb ? const WebPhotoDrops() : const NoPhotoDrops(),
-  ),
   playerRepositoryProvider.overrideWithValue(
     FirestorePlayerRepository(firestore, functions),
   ),

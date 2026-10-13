@@ -20,6 +20,11 @@ part 'service_providers.g.dart';
 PhotoPicker photoPicker(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
 
+/// Photos pasted or dropped onto the web page (CHAT-2, SPEC §4.2); none on
+/// phones.
+@Riverpod(keepAlive: true)
+PhotoDrops photoDrops(Ref ref) => const NoPhotoDrops();
+
 /// Opens web and mailto links.
 @Riverpod(keepAlive: true)
 LinkOpener linkOpener(Ref ref) => const NoopLinkOpener();
@@ -49,10 +54,6 @@ FileChooser fileChooser(Ref ref) => const NoopFileChooser();
 /// `/app`; the paths after it are the app's routes (ARCH §5.4).
 @Riverpod(keepAlive: true)
 LinkService linkService(Ref ref) => const LinkService(LinkService.prodHost);
-
-/// Photos pasted or dragged into the chat on the web (CHAT-2).
-@Riverpod(keepAlive: true)
-PhotoDrops photoDrops(Ref ref) => const NoPhotoDrops();
 
 /// Saves chat photos to the phone's photo library (CHAT-3).
 @Riverpod(keepAlive: true)

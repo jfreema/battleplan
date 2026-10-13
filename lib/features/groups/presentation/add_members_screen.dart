@@ -96,7 +96,7 @@ class _AddMembersScreenState extends ConsumerState<AddMembersScreen> {
           content: Text(switch (e) {
             EmailNotVerified() => l10n.addByEmailNeedsVerified,
             RateLimited() => l10n.signInRateLimited,
-            _ => l10n.signInUnknownError,
+            _ => l10n.errorAddMembers,
           }),
         ),
       );

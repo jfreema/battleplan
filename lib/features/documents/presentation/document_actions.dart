@@ -194,7 +194,7 @@ Future<bool> deleteDocument(
     context,
     title: l10n.documentDeleteTitle(doc.name),
     message: l10n.documentDeleteBody,
-    confirmLabel: l10n.documentDelete,
+    confirmLabel: l10n.deleteDocumentAction,
     cancelLabel: l10n.cancel,
     destructive: true,
   );

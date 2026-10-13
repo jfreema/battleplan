@@ -137,7 +137,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
             PermissionDenied(message: 'team-archived') => l10n.teamArchived,
             PermissionDenied() => l10n.notAllowed,
             Offline() => l10n.signInOffline,
-            _ => l10n.signInUnknownError,
+            _ => l10n.errorAddPlayers,
           }),
         ),
       );

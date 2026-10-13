@@ -37,15 +37,23 @@ abstract final class Breakpoints {
   static const double contentMax = 840;
 }
 
+/// Quick, subtle motion: 150 to 250 ms with standard easing, and none at
+/// all when the system asks to reduce motion (SPEC §7.3).
 abstract final class Motion {
   static const Duration fast = Duration(milliseconds: 150);
   static const Duration normal = Duration(milliseconds: 200);
   static const Duration slow = Duration(milliseconds: 250);
-  static const Curve curve = Curves.easeInOutCubicEmphasized;
 
-  /// Respects the system "reduce motion" setting (SPEC §7.3).
+  /// Material 3's standard easing.
+  static const Curve curve = Easing.standard;
+
+  /// Whether the system asks to reduce motion.
+  static bool reduced(BuildContext context) =>
+      MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+  /// [d], or zero when the system asks to reduce motion (SPEC §7.3).
   static Duration of(BuildContext context, Duration d) =>
-      MediaQuery.disableAnimationsOf(context) ? Duration.zero : d;
+      reduced(context) ? Duration.zero : d;
 }
 
 /// Type scale: 28 / 22 / 18 / 16 / 14 / 12.

@@ -1452,3 +1452,105 @@ final class EventLinkFamily extends $Family
   @override
   String toString() => r'eventLinkProvider';
 }
+
+/// The Schedule tab's badge (SPEC §5.3): events in the next 14 days still
+/// waiting for my answer or my players'. Reads the team's events and my
+/// answers from the start of this hour for 15 days, one live query each,
+/// so the window moves only when they change.
+
+@ProviderFor(awaitingRsvpCount)
+final awaitingRsvpCountProvider = AwaitingRsvpCountFamily._();
+
+/// The Schedule tab's badge (SPEC §5.3): events in the next 14 days still
+/// waiting for my answer or my players'. Reads the team's events and my
+/// answers from the start of this hour for 15 days, one live query each,
+/// so the window moves only when they change.
+
+final class AwaitingRsvpCountProvider
+    extends
+        $FunctionalProvider<AsyncValue<int>, AsyncValue<int>, AsyncValue<int>>
+    with $Provider<AsyncValue<int>> {
+  /// The Schedule tab's badge (SPEC §5.3): events in the next 14 days still
+  /// waiting for my answer or my players'. Reads the team's events and my
+  /// answers from the start of this hour for 15 days, one live query each,
+  /// so the window moves only when they change.
+  AwaitingRsvpCountProvider._({
+    required AwaitingRsvpCountFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'awaitingRsvpCountProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$awaitingRsvpCountHash();
+
+  @override
+  String toString() {
+    return r'awaitingRsvpCountProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<AsyncValue<int>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AsyncValue<int> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return awaitingRsvpCount(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AsyncValue<int> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AsyncValue<int>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AwaitingRsvpCountProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$awaitingRsvpCountHash() => r'4471cb47e8536122dbc6128a569dcdf49ccde6ff';
+
+/// The Schedule tab's badge (SPEC §5.3): events in the next 14 days still
+/// waiting for my answer or my players'. Reads the team's events and my
+/// answers from the start of this hour for 15 days, one live query each,
+/// so the window moves only when they change.
+
+final class AwaitingRsvpCountFamily extends $Family
+    with $FunctionalFamilyOverride<AsyncValue<int>, GroupId> {
+  AwaitingRsvpCountFamily._()
+    : super(
+        retry: null,
+        name: r'awaitingRsvpCountProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The Schedule tab's badge (SPEC §5.3): events in the next 14 days still
+  /// waiting for my answer or my players'. Reads the team's events and my
+  /// answers from the start of this hour for 15 days, one live query each,
+  /// so the window moves only when they change.
+
+  AwaitingRsvpCountProvider call(GroupId groupId) =>
+      AwaitingRsvpCountProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'awaitingRsvpCountProvider';
+}

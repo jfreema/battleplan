@@ -1,16 +1,34 @@
 import 'dart:typed_data';
 
+import 'package:battleplan/app/services/web_share_stub.dart'
+    if (dart.library.js_interop) 'package:battleplan/app/services/web_share_web.dart'
+    as platform;
 import 'package:battleplan/core/services/sharer.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:share_plus/share_plus.dart';
 
 /// `share_plus` behind [Sharer].
 class SharePlusSharer implements Sharer {
-  const new();
+  const new({
+    this.web = kIsWeb,
+    this.canWebShareLink = platform.canWebShareLink,
+  });
 
+  /// Running in a browser.
+  final bool web;
+
+  /// Whether the browser has Web Share for a link.
+  final bool Function(Uri uri) canWebShareLink;
+
+  /// Links: Web Share where the browser has it, and otherwise false, so the
+  /// caller copies the link (SPEC §4.2 parity: "Web Share where supported,
+  /// otherwise copy link"). share_plus's own fallback would open an email
+  /// instead.
   @override
   Future<bool> shareLink(Uri uri, {String? subject}) =>
-      _share(ShareParams(uri: uri, subject: subject));
+      web && !canWebShareLink(uri)
+      ? Future.value(false)
+      : _share(ShareParams(uri: uri, subject: subject));
 
   @override
   Future<bool> shareImage(Uint8List bytes, {required String name}) => _share(
@@ -34,7 +52,7 @@ class SharePlusSharer implements Sharer {
   Future<bool> _share(ShareParams params) async {
     try {
       final result = await SharePlus.instance.share(params);
-      return sharedFrom(result.status, web: kIsWeb);
+      return sharedFrom(result.status, web: web);
     } on Object {
       return false;
     }

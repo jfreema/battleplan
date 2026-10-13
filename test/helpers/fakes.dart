@@ -2681,16 +2681,6 @@ class ExistingAccountAuth extends FakeAuthRepository {
   }
 }
 
-/// Photos pasted or dropped onto the page (CHAT-2): [drop] sends some.
-class FakePhotoDrops implements PhotoDrops {
-  final _drops = StreamController<List<PickedPhoto>>.broadcast();
-
-  void drop(List<PickedPhoto> photos) => _drops.add(photos);
-
-  @override
-  Stream<List<PickedPhoto>> get photos => _drops.stream;
-}
-
 /// The phone's photo library (CHAT-3): what was saved, by name.
 class FakePhotoSaver implements PhotoSaver {
   final List<String> saved = [];
@@ -2724,4 +2714,23 @@ class RefusingPlayerRepository extends FakePlayerRepository {
     required String email,
     String? name,
   }) async => throw failure;
+}
+
+/// Photos pasted or dropped onto the page (CHAT-2, SPEC §4.2), sent by the
+/// test.
+class FakePhotoDrops implements PhotoDrops {
+  final _photos = StreamController<List<PickedPhoto>>.broadcast();
+  final _dragging = StreamController<bool>.broadcast();
+
+  @override
+  Stream<List<PickedPhoto>> get photos => _photos.stream;
+
+  @override
+  Stream<bool> get dragging => _dragging.stream;
+
+  /// Pastes or drops [list].
+  void drop(List<PickedPhoto> list) => _photos.add(list);
+
+  /// Files start or stop being dragged over the page.
+  void drag({required bool on}) => _dragging.add(on);
 }
