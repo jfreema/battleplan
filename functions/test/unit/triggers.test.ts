@@ -1,15 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { snapshotChanged } from '../../src/accounts/triggers.js';
 import {
+  announcementPushBody,
+  isAnnouncement,
   joinedLine,
   lastMessagePreviewOf,
+  mentionedUids,
+  mentionPushBody,
   messagePushBody,
   notifiesAsMessage,
+  pinnedIdsOf,
   renamedLine,
   replyPreviewOf,
   replyPushBody,
   replyRecipientOf,
 } from '../../src/chat/service.js';
+import { Limits } from '../../src/shared/constants.js';
 import { reportedBody, teamSeesReport } from '../../src/safety/service.js';
 
 describe('groups trigger early exit and system lines (CHAT-10)', () => {
@@ -101,6 +107,50 @@ describe('message notifications (NOTIF-2, NOTIF-5)', () => {
     expect(replyPushBody({ authorName: 'Alex', type: 'image', text: '', attachments: [{}] })).toBe(
       'Alex replied to you with a photo',
     );
+  });
+});
+
+describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
+  it('words a mention push, for one person or everyone', () => {
+    expect(mentionPushBody({ authorName: 'Alex', type: 'text', text: '@Sam can you drive?' })).toBe(
+      'Alex mentioned you: @Sam can you drive?',
+    );
+    expect(mentionPushBody({ authorName: 'Alex', type: 'text', text: '@everyone 5pm', mentionsEveryone: true })).toBe(
+      'Alex mentioned everyone: @everyone 5pm',
+    );
+    expect(mentionPushBody({ authorName: 'Alex', type: 'image', text: '', attachments: [{}, {}] })).toBe(
+      'Alex mentioned you with 2 photos',
+    );
+  });
+
+  it('words an announcement push', () => {
+    expect(announcementPushBody({ authorName: 'Coach', type: 'text', text: 'No practice Friday' })).toBe(
+      'Announcement from Coach: No practice Friday',
+    );
+  });
+
+  it('counts only text marked as an announcement', () => {
+    expect(isAnnouncement({ type: 'text', announcement: true })).toBe(true);
+    expect(isAnnouncement({ type: 'text', announcement: 'yes' })).toBe(false);
+    expect(isAnnouncement({ type: 'image', announcement: true })).toBe(false);
+    expect(isAnnouncement({ type: 'text' })).toBe(false);
+  });
+
+  it('reads who a message names: IDs only, once each, never the author, up to the limit', () => {
+    expect(mentionedUids({ authorId: 'alex', mentions: ['sam', 'sam', 'alex', 7, '', 'a/b', 'x_y', 'pat'] })).toEqual([
+      'sam',
+      'pat',
+    ]);
+    expect(mentionedUids({ authorId: 'alex', mentions: 'sam' })).toEqual([]);
+    expect(mentionedUids({ authorId: 'alex' })).toEqual([]);
+    const many = Array.from({ length: 30 }, (_, i) => `u${i}`);
+    expect(mentionedUids({ authorId: 'alex', mentions: many })).toHaveLength(Limits.mentionsMax);
+  });
+
+  it("reads a team's pins, skipping anything that isn't an ID", () => {
+    expect(pinnedIdsOf(['m1', 3, 'm2'])).toEqual(['m1', 'm2']);
+    expect(pinnedIdsOf(undefined)).toEqual([]);
+    expect(pinnedIdsOf('m1')).toEqual([]);
   });
 });
 

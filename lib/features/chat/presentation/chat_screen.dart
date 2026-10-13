@@ -13,9 +13,11 @@ import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
+import 'package:battleplan/features/chat/domain/mentions.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/chat/presentation/message_tile.dart';
+import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/groups.dart';
@@ -58,6 +60,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   /// The message the next send replies to (CHAT-13).
   Message? _replyTo;
+
+  /// An admin is writing an announcement (CHAT-15).
+  bool _announcing = false;
 
   /// Keys for message rows, so a tapped quote can scroll to its original.
   final Map<String, GlobalKey> _rowKeys = {};
@@ -383,8 +388,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final messages = chat.messages;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final picker = ref.watch(photoPickerProvider);
+    final candidates = ref.watch(mentionCandidatesProvider(widget.groupId));
     final byId = {for (final m in messages) m.id: m};
     final membership = ref.watch(myMembershipProvider(widget.groupId));
+    final isAdmin = membership?.isAdmin ?? false;
+    // The bar at the top, newest pin first (CHAT-15).
+    final pinnedIds = ref.watch(pinnedMessageIdsProvider(widget.groupId));
     if (!_openedMarkerTaken &&
         !chat.loading &&
         (membership != null || viewing)) {
@@ -517,6 +526,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             showSent: m.id == sentId,
             bubbleColor: bubbleColor,
             highlighted: m.id == _highlighted,
+            pinned: pinnedIds.contains(m.id),
             // Until the server writes the quote, show it from the
             // original if it's loaded.
             quoted: m.replyToId == null ? null : byId[m.replyToId],
@@ -586,6 +596,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Column(
       children: [
+        if (pinnedIds.isNotEmpty)
+          _PinnedBar(
+            groupId: widget.groupId,
+            ids: pinnedIds,
+            onOpen: (id) => unawaited(_jumpTo(id)),
+          ),
         Expanded(
           child: Stack(
             children: [
@@ -629,9 +645,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             teamName: group?.name ?? '',
             replyingTo: _replyTo,
             onCancelReply: () => setState(() => _replyTo = null),
+            mentionCandidates: candidates,
+            // @everyone is for admins (CHAT-14).
+            canMentionEveryone: isAdmin,
+            onAnnounce: isAdmin
+                ? () => setState(() => _announcing = true)
+                : null,
+            announcing: _announcing && isAdmin,
+            onCancelAnnouncement: () => setState(() => _announcing = false),
             onSend: (text) {
-              unawaited(controller.send(text, replyToId: _replyTo?.id));
-              setState(() => _replyTo = null);
+              // Whom it names, from the names in the text (CHAT-14).
+              final named = mentionsIn(
+                text,
+                candidates,
+                canMentionEveryone: isAdmin,
+              );
+              unawaited(
+                controller.send(
+                  text,
+                  replyToId: _replyTo?.id,
+                  mentions: named.uids,
+                  mentionsEveryone: named.everyone,
+                  announcement: _announcing && isAdmin,
+                ),
+              );
+              setState(() {
+                _replyTo = null;
+                _announcing = false;
+              });
               _scrollToBottomSoon();
             },
             onPickPhotos: () => unawaited(_pickPhotos(picker, controller)),
@@ -641,8 +682,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             // Polls (POLL-1) for admins, and for members if the team allows
             // it (TEAM-5). Full storage doesn't stop them (STORE-4).
             onCreatePoll:
-                (membership?.isAdmin ?? false) ||
-                    (group?.settings.membersCanCreatePolls ?? false)
+                isAdmin || (group?.settings.membersCanCreatePolls ?? false)
                 ? () => unawaited(_createPoll(controller))
                 : null,
             onAttachBlocked: storageFull
@@ -796,6 +836,94 @@ class _DotsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DotsPainter old) => old.color != color;
+}
+
+/// The pinned messages at the top of the chat (CHAT-15): one at a time,
+/// newest pin first, "Pinned 1 of 3" when there are more. Tapping opens
+/// the message, loading older pages if needed, and moves on to the next.
+class _PinnedBar extends ConsumerStatefulWidget {
+  const new({required this.groupId, required this.ids, required this.onOpen});
+
+  final GroupId groupId;
+  final List<String> ids;
+  final void Function(String messageId) onOpen;
+
+  @override
+  ConsumerState<_PinnedBar> createState() => _PinnedBarState();
+}
+
+class _PinnedBarState extends ConsumerState<_PinnedBar> {
+  int _index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final count = widget.ids.length;
+    final index = _index % count;
+    final id = widget.ids[index];
+    final message = ref.watch(pinnedMessageProvider(widget.groupId, id)).value;
+    final label = count > 1
+        ? l10n.pinnedOf(index + 1, count)
+        : l10n.pinnedMessage;
+    final preview = message == null
+        ? ''
+        : [
+            if (message.authorName.isNotEmpty) message.authorName,
+            quoteText(l10n, message.type, message.text),
+          ].where((p) => p.isNotEmpty).join(': ');
+    return Semantics(
+      button: true,
+      label: l10n.pinnedBarLabel(label, preview),
+      excludeSemantics: true,
+      child: Material(
+        color: scheme.surfaceContainerLow,
+        child: InkWell(
+          onTap: () {
+            widget.onOpen(id);
+            setState(() => _index = index + 1);
+          },
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Space.lg,
+              vertical: Space.xs,
+            ),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
+            ),
+            child: Row(
+              children: [
+                Icon(AppIcons.pin, size: 20, color: scheme.primary),
+                const SizedBox(width: Space.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: scheme.primary,
+                        ),
+                      ),
+                      Text(
+                        preview,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Where messages are still missing (CHAT-1): below the first unread ones,

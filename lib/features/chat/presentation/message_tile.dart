@@ -266,9 +266,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               // archived team, which is read-only.
               if (canModerate && !archived && !m.pending)
                 ListTile(
-                  leading: Icon(
-                    widget.pinned ? AppIcons.unpin : AppIcons.pin,
-                  ),
+                  leading: Icon(widget.pinned ? AppIcons.unpin : AppIcons.pin),
                   title: Text(
                     widget.pinned ? l10n.unpinMessage : l10n.pinMessage,
                   ),
@@ -414,10 +412,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final highlights = <TextHighlight>[
       for (final r in mentionRanges(
         m.text,
-        names: {
-          for (final uid in m.mentions)
-            if (names[uid] case final name?) uid: name,
-        },
+        names: {for (final uid in m.mentions) uid: ?names[uid]},
         everyone: m.mentionsEveryone,
         me: ref.watch(authUserProvider).value?.uid,
       ))
@@ -507,7 +502,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                         ),
                         const SizedBox(width: Space.xs),
                         Text(
-                          l10n.announcementLabel,
+                          l10n.chatAnnouncementLabel,
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: foreground,
                           ),

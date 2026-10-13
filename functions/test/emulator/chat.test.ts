@@ -16,6 +16,7 @@ import {
   removeAttachment,
 } from '../../src/chat/service.js';
 import { clearPendingMemberships } from '../../src/accounts/service.js';
+import { pinMessage } from '../../src/chat/handlers.js';
 import { resolveReport } from '../../src/safety/handlers.js';
 import { db } from '../../src/shared/admin.js';
 import { Collections } from '../../src/shared/constants.js';
@@ -215,5 +216,67 @@ describe('system lines (CHAT-10)', () => {
     await clearPendingMemberships('kim');
     expect(await lines()).toEqual(['Kim Park joined']);
     expect((await db().collection(Collections.groupMembers).doc(groupMemberId(G, 'kim')).get()).get('pending')).toBe(false);
+  });
+});
+
+describe('pinning messages (CHAT-15)', () => {
+  type CallRequest = Parameters<typeof pinMessage.run>[0];
+  const call = (uid: string, data: object, token: object = {}) =>
+    ({ data, auth: { uid, token }, rawRequest: {} }) as unknown as CallRequest;
+  const pin = (uid: string, messageId: string, pinned = true, token: object = {}) =>
+    pinMessage.run(call(uid, { messageId, pinned }, token));
+  const pins = async (groupId = G) =>
+    ((await db().collection(Collections.groups).doc(groupId).get()).get('pinnedMessageIds') as string[] | undefined) ?? [];
+
+  beforeEach(async () => {
+    for (const [id, minute] of [['m1', 1], ['m2', 2], ['m3', 3], ['m4', 4]] as const) await message(id, minute);
+  });
+
+  it('team admins pin up to three, oldest pin first, and unpin; each change is audited', async () => {
+    for (const id of ['m1', 'm2', 'm3']) await pin('pat', id);
+    expect(await pins()).toEqual(['m1', 'm2', 'm3']);
+    await expect(pin('pat', 'm4')).rejects.toMatchObject({ code: 'failed-precondition', message: 'too-many-pins' });
+    // Pinning a pinned message again changes nothing, and isn't audited.
+    await pin('pat', 'm2');
+    await pin('pat', 'm2', false);
+    expect(await pins()).toEqual(['m1', 'm3']);
+    await pin('pat', 'm4');
+    expect(await pins()).toEqual(['m1', 'm3', 'm4']);
+    const audited = await db().collection(Collections.auditLogs).where('actorId', '==', 'pat').get();
+    expect(audited.docs.map((d) => `${d.get('action')} ${d.get('targetId')}`).sort()).toEqual([
+      'pinMessage m1',
+      'pinMessage m2',
+      'pinMessage m3',
+      'pinMessage m4',
+      'unpinMessage m2',
+    ]);
+  });
+
+  it('members, other teams, system lines, and deleted messages are refused', async () => {
+    await expect(pin('sam', 'm1')).rejects.toMatchObject({ code: 'permission-denied' });
+    await message('h1', 5, {}, H);
+    await db().collection(Collections.groupMembers).doc(groupMemberId(H, 'pat')).delete();
+    await expect(pin('pat', 'h1')).rejects.toMatchObject({ code: 'permission-denied' });
+    await message('sys', 6, { type: 'system', authorId: 'system' });
+    await expect(pin('pat', 'sys')).rejects.toMatchObject({ code: 'failed-precondition', message: 'not-pinnable' });
+    await eraseMessage('m1', 'sam', 'author');
+    await expect(pin('pat', 'm1')).rejects.toMatchObject({ code: 'failed-precondition', message: 'not-pinnable' });
+    await expect(pin('pat', 'nope')).rejects.toMatchObject({ code: 'not-found' });
+    expect(await pins()).toEqual([]);
+  });
+
+  it('deleting a pinned message takes it off the bar', async () => {
+    await pin('pat', 'm1');
+    await pin('pat', 'm2');
+    await eraseMessage('m1', 'sam', 'author');
+    expect(await pins()).toEqual(['m2']);
+  });
+
+  it('archived teams are read-only; super admins pin on any open team', async () => {
+    await db().collection(Collections.groups).doc(G).update({ archivedAt: Timestamp.now() });
+    await expect(pin('pat', 'm1')).rejects.toMatchObject({ code: 'failed-precondition', message: 'team-archived' });
+    await db().collection(Collections.groups).doc(G).update({ archivedAt: null });
+    await pin('boss', 'm1', true, { superAdmin: true });
+    expect(await pins()).toEqual(['m1']);
   });
 });

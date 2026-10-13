@@ -240,6 +240,55 @@ describe('message rate limit and create rule', () => {
   });
 });
 
+describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
+  /** Posts as [uid], a while after their last message, so only [extra] decides. */
+  const send = async (uid: string, name: string, id: string, extra: object) => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc(`groupMembers/teamA_${uid}`).update({ lastPostedAt: ts('2026-01-01T00:00:00Z') }),
+    );
+    const db = as(uid);
+    const batch = db.batch();
+    batch.set(db.doc(`messages/${id}`), {
+      groupId: 'teamA', authorId: uid, authorName: name, authorPhotoPath: null,
+      type: 'text', text: '@Bob see you', createdAt: now(), ...extra,
+    });
+    batch.update(db.doc(`groupMembers/teamA_${uid}`), { lastPostedAt: now(), lastPostedMessageId: id });
+    return batch.commit();
+  };
+
+  it('lets anyone name up to 20 people, on text and photos', async () => {
+    await assertSucceeds(send('bob', 'Bob', 'n1', { mentions: ['alice'] }));
+    await assertSucceeds(send('alice', 'Alice', 'n2', { mentions: Array.from({ length: 20 }, (_, i) => `u${i}`) }));
+    const photo = { path: 'groups/teamA/messages/n6/0.jpg', width: 10, height: 10 };
+    await assertSucceeds(send('bob', 'Bob', 'n6', { type: 'image', attachments: [photo], mentions: ['alice'] }));
+  });
+
+  it('refuses more than 20, and a list that is not a list', async () => {
+    await assertFails(send('bob', 'Bob', 'n3', { mentions: Array.from({ length: 21 }, (_, i) => `u${i}`) }));
+    await assertFails(send('bob', 'Bob', 'n4', { mentions: 'alice' }));
+  });
+
+  it('keeps @everyone for admins', async () => {
+    await assertFails(send('bob', 'Bob', 'e1', { mentionsEveryone: true }));
+    await assertSucceeds(send('bob', 'Bob', 'e2', { mentionsEveryone: false }));
+    await assertSucceeds(send('alice', 'Alice', 'e3', { mentionsEveryone: true }));
+    await assertFails(send('alice', 'Alice', 'e4', { mentionsEveryone: 'yes' }));
+  });
+
+  it('keeps announcements for admins, as text', async () => {
+    await assertFails(send('bob', 'Bob', 'a1', { announcement: true }));
+    await assertSucceeds(send('alice', 'Alice', 'a2', { announcement: true }));
+    const photo = { path: 'groups/teamA/messages/a3/0.jpg', width: 10, height: 10 };
+    await assertFails(send('alice', 'Alice', 'a3', { announcement: true, type: 'image', attachments: [photo] }));
+    await assertFails(send('alice', 'Alice', 'a4', { announcement: 1 }));
+  });
+
+  it("leaves a team's pins to pinMessage: not even admins write them", async () => {
+    await assertFails(as('alice').doc('groups/teamA').update({ pinnedMessageIds: ['m1'] }));
+    await assertFails(as('bob').doc('messages/m1').update({ pinnedAt: now() }));
+  });
+});
+
 describe('reactions (CHAT-6)', () => {
   it('lets a member set and clear only their own reaction', async () => {
     const db = as('bob');

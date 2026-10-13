@@ -147,6 +147,8 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Send messages and photos, react, vote; RSVP for self | ✓ | ✓ | ✓ | in teams they've joined |
 | Delete own messages | ✓ | ✓ | ✓ | ✓ |
 | **Delete anyone's message** | — | ✓ | ✓ | ✓ |
+| Mention people with @ (CHAT-14) | ✓ | ✓ | ✓ | in teams they've joined |
+| Mention @everyone; send announcements; pin messages (CHAT-14, CHAT-15) | — | ✓ | ✓ | pin any team; others in teams they've joined |
 | Create polls | setting (on) | ✓ | ✓ | ✓ |
 | Close any poll | — | ✓ | ✓ | ✓ |
 | Create events | setting (off) | ✓ | ✓ | ✓ |
@@ -584,8 +586,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - **One reaction per person per message.** Picking another replaces yours; picking the same one removes it.
   - Chips under the bubble show each reaction with its count, and yours is highlighted. Tap them to see who reacted.
 - **CHAT-7 · MVP · Message menu** (long-press or right-click).
-  - React, Reply, Copy text, Delete (your own; admins can delete any), Report (other people's).
-  - Edit and Pin come in v1.1.
+  - React, Reply, Edit (your own, CHAT-15), Copy text, Pin and Unpin (admins, CHAT-15), Delete (your own; admins can delete any), Report (other people's).
 - **CHAT-8 · MVP · Deleting messages.**
   - Always asks for confirmation.
   - When the author deletes, everyone sees "This message was deleted." When an admin deletes, everyone sees "Removed by a team admin."
@@ -611,14 +612,16 @@ Players that others answer for never get accounts, and every account belongs to 
   - The server creates quotes from the original message, so they can't be faked.
   - If the original is deleted, the quote shows "Original message was deleted".
   - The person replied to gets a notification, even at "Important only", and a notification-center item (NOTIF-11).
-- **CHAT-14 · v1.1 · @mentions.**
-  - Typing @ suggests team members.
-  - Mentions are highlighted and reach the person even at "Important only".
-  - @everyone is for admins only.
-- **CHAT-15 · Edit (MVP), pin and announce (v1.1).** Editing is built: people edit the text of their own messages, which then show "edited", and quotes in replies follow.
-  - **Edit** your own messages; edited messages are marked "edited".
-  - Admins can **pin** messages to a bar at the top.
-  - Admins can send **announcements**, which notify everyone who hasn't turned the team off.
+- **CHAT-14 · v1.1 · @mentions.** Built (task 135).
+  - Typing @ suggests team members whose name, or a word of it, starts with what's typed, up to 5, never yourself. Tap one, or use the arrow keys and Enter or Tab on a keyboard; Escape closes the list. Picking one puts "@Full Name " in the message.
+  - A message names whoever's full name follows an @, matched without regard to case, with the longest name winning ("@Mary Ann Lee" over "Mary Ann"). An @ inside an email address never counts. Up to 20 people per message, on text messages and photo captions.
+  - Mentions are shown in bold, and a mention of you, or @everyone, is highlighted. They reach the person even at "Important only", with a notification-center item ("Alex mentioned you: …"). Someone who is both replied to and mentioned gets only the reply. The Mentions switch (NOTIF-4) turns the push off; the message then reaches them like any other.
+  - @everyone is for admins only, and reaches everyone on the team as a mention. A member typing "@everyone" names nobody.
+  - Editing a message doesn't notify anyone new.
+- **CHAT-15 · Edit (MVP), pin and announce (v1.1).** All built: editing in the MVP, pins and announcements in task 135.
+  - **Edit** your own messages; edited messages are marked "edited", and quotes in replies follow.
+  - Admins can **pin** up to 3 messages to a bar at the top of the chat, from the message menu (Pin, Unpin). The bar shows the newest pin first, "Pinned 1 of 3" when there are several; tapping it opens that message, loading older messages if needed, and moves on to the next pin. Pinned messages say "Pinned" beside their time. A fourth pin is refused with "Unpin one first." Deleting a pinned message takes it off the bar. Not on an archived team.
+  - Admins can send **announcements**: + → Announcement, then the next text message is one ("Announcement: notifies everyone on the team, even at Important only", with ✕ to cancel). It shows with a megaphone and "Announcement" in the chat, and notifies everyone who hasn't turned the team off or muted it, even at "Important only", with a notification-center item ("Announcement from Coach: …"). It stands in for the reply and mention notifications. There's no switch to turn announcements off; muting the team or setting it to Off does.
 - **CHAT-16 · v1.1 · Files in chat.** Attach any document type; it's also saved to the Documents tab.
 - **CHAT-17 · Later.**
   - Message search, which needs a search service or SQL (ARCH §12).
@@ -794,7 +797,8 @@ Players that others answer for never get accounts, and every account belongs to 
   | Player request approved | The member who asked | **Yes** | ✓ | MVP |
   | Content reported | Team admins | **Yes** | ✓ | MVP |
   | Storage 90% full, or full (STORE-3, STORE-4) | Team admins | **Yes** | ✓ | MVP |
-  | @mention; announcement | The person mentioned; everyone | **Yes** | ✓ | v1.1 |
+  | @mention (CHAT-14) | The people mentioned; everyone, for an admin's @everyone | **Yes** | ✓ | v1.1 (built) |
+  | Announcement (CHAT-15) | Everyone except the sender | **Yes** | ✓ | v1.1 (built) |
   | RSVP nudge | People who haven't answered\* | **Yes** | ✓ | v1.1 |
 
   \* For players, these go to the member who is the player and to the guardians of the matching players, plus members who answered for themselves (PLAYER-7).
@@ -805,10 +809,12 @@ Players that others answer for never get accounts, and every account belongs to 
   - **Level:** All activity (default), Important only, or Off.
   - **Mute** for 1 hour, 8 hours, 1 week, or until unmuted. Muted teams show a muted icon, and their unread counts turn gray.
   - These settings control pushes only. Notification-center items and unread counts still appear, so nothing is lost.
-- **NOTIF-4 · MVP · Global switches.** Settings → Notifications has switches for Messages, Replies, Polls, New events, Event changes, Reminders, and Documents. They apply to every team.
+- **NOTIF-4 · MVP · Global switches.** Settings → Notifications has switches for Messages, Replies, Mentions (v1.1, CHAT-14), Polls, New events, Event changes, Reminders, and Documents. They apply to every team. Announcements have no switch (CHAT-15).
 - **NOTIF-5 · MVP · Wording.** The title is always the team name. Examples:
   - "Alex: Field 3 is open"
   - "Alex replied to you: Sounds good"
+  - "Alex mentioned you: Can you bring the cones?" (CHAT-14)
+  - "Announcement from Coach: No practice Friday" (CHAT-15)
   - "Alex sent a photo"
   - "Alex created a poll: Pizza after the game?"
   - "New game: vs. Eagles · Sat Oct 18, 10:00 AM"
@@ -829,7 +835,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Read state syncs across devices. Items older than 90 days are removed automatically.
 - **NOTIF-12 · v1.1.**
   - App icon badge: the number of unread notification-center items.
-  - Mention notifications.
+  - Mention notifications. Built with CHAT-14 (task 135).
   - A "Hide message text in notifications" option.
 - **NOTIF-13 · Later.**
   - Quiet hours.
@@ -1294,7 +1300,7 @@ Decided 2026-10-12, at the owner's request (ARCH D60). The first go-live is the 
 The web parts are built before the Phase 1 go-live (ROADMAP). Native-only parts, such as app icon badges, come with Phases 4 and 5.
 
 
-1. @mentions, pins, announcements (CHAT-14, CHAT-15)
+1. @mentions, pins, announcements (CHAT-14, CHAT-15). Built (task 135).
 2. Roster details and contact sharing (TEAM-10); "Same answer for all my players" and RSVP history (PLAYER-11)
 3. Calendar subscription (SCHED-11)
 4. RSVP nudges and guest counts (SCHED-12)

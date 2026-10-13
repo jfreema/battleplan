@@ -2,7 +2,7 @@
 
 The roadmap task 104 review of `firestore.rules` and `storage.rules` against the rules tests in `functions/test/rules/` (run with `npm --prefix functions run emulators:test`). ARCH §9 asks for every collection and role to be tested. The Functions tests in `functions/test/emulator/` run as the Admin SDK, which skips rules, so they don't count here. There's no `test/emulator` in the Flutter app.
 
-Reviewed 2026-10-12, and updated the same day for one team type (pending players, `self` links, and super admins' RSVPs and events) and for player details (`playerDetails`). Update this page whenever a rule or a rules test changes.
+Reviewed 2026-10-12, and updated the same day for one team type (pending players, `self` links, and super admins' RSVPs and events) and for player details (`playerDetails`); updated 2026-10-13 for mentions, announcements, and pins (CHAT-14, CHAT-15). Update this page whenever a rule or a rules test changes.
 
 **Legend:** ✓ tested and allowed · ✗ tested and refused · ✓\* / ✗\* added in this review (`coverage.test.ts`) · `=` the rule can't tell this role from the column to its left, so that test covers it · `·` doesn't apply · **gap** not tested.
 
@@ -26,6 +26,7 @@ Only those three tests fail against the old rules; they pass against the new one
 | | list | ✗\* | · | ✗\* | = | = | = | ✗\* | C |
 | | create, delete | ✗\* | · | · | · | · | ✗ | · | T, C |
 | | update (profile, settings, chat look) | ✗\* | ✗ | ✗ | ✗\* | ✓ | ✓ | ✗ | F, T, A, St, C |
+| | update `pinnedMessageIds` (`pinMessage` only) | · | · | · | · | · | ✗ | · | F |
 | | update storage fields | · | · | ✗ | · | · | ✗ | ✗ | St |
 | `groupMembers` | get, list (roster) | ✗\* | ✗ | ✓ | = | = | = | ✓ | T, A, F |
 | | list own (switcher) | · | ✗ (others') | ✓ | = | = | = | · | F |
@@ -49,6 +50,9 @@ Only those three tests fail against the old rules; they pass against the new one
 | | create (rate limit, author snapshot, photos) | ✗\* | ✗ | ✓ | = | = | ✓ | ✗ | F, P, St, A |
 | | update reactions | ✗\* | ✗ | ✓ | ✓ | ✓ | = | ✗ | F, A |
 | | update text (author only) | ✗\* | ✗ | ✓ / ✗ (others') | = | = | ✗\* (others') | · | F, C |
+| | create with `mentions` (≤ 20; not on polls) | · | · | ✓ | = | ✓ | = | · | F, P |
+| | create with `mentionsEveryone` or `announcement` (admins; announcements text only) | · | · | ✗ | = | ✓ | ✓ | · | F, P |
+| | update pin fields (`pinMessage` only) | · | · | ✗ | = | = | = | · | F |
 | | delete | ✗\* | · | ✗\* | · | · | ✗\* | ✗\* | C |
 | `polls` | get, list | ✗\* | ✗ | ✓\* | = | = | = | ✓ | A, C |
 | | create (with its message) | ✗\* | ✗ | ✓ | = | = | ✓ | **gap**¹ | P |

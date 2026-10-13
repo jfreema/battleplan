@@ -751,7 +751,7 @@ void main() {
                 '{"g1":[{"id":"m1","text":"ok"},{"id":2},"x"],"g2":"nope"}',
           });
       final store = await open();
-      expect(store.load(_g), [(id: 'm1', text: 'ok', replyToId: null)]);
+      expect(store.load(_g), [const SavedText(id: 'm1', text: 'ok')]);
       expect(store.load(const GroupId('g2')), isEmpty);
     });
   });

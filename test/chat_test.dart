@@ -13,6 +13,7 @@ import 'package:battleplan/features/chat/presentation/message_tile.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -398,5 +399,270 @@ void main() {
     await tester.pumpAndSettle();
     expect(saver.saved, ['battleplan-photo-1']);
     expect(find.text('Photo saved.'), findsOneWidget);
+  });
+
+  group('mentions, pins, and announcements (CHAT-14, CHAT-15)', () {
+    /// A plain member's view of the team: Coach isn't an admin.
+    FakeMemberRepository asMember() => FakeMemberRepository([
+      testMembership('a', 'coach', name: 'Coach Lee'),
+      testMembership('a', 'sam', name: 'Sam Rivera'),
+    ]);
+
+    /// The composer's text field.
+    Finder composer() => find.byType(TextField).last;
+
+    String typed(WidgetTester tester) =>
+        tester.widget<TextField>(composer()).controller!.text;
+
+    Future<void> send(WidgetTester tester) async {
+      // Typing enables Send on the next frame.
+      await tester.pump();
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('typing @ suggests people; the one picked is named', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(tester, repo, readAt: msg(1).createdAt);
+      await tester.enterText(composer(), 'Thanks @sa');
+      await tester.pumpAndSettle();
+      final suggestion = find.widgetWithText(ListTile, 'Sam Rivera');
+      expect(suggestion, findsOneWidget);
+      // Nobody is offered themselves.
+      expect(find.widgetWithText(ListTile, 'Coach Lee'), findsNothing);
+      await tester.tap(suggestion);
+      await tester.pumpAndSettle();
+      expect(typed(tester), 'Thanks @Sam Rivera ');
+      expect(suggestion, findsNothing);
+      await send(tester);
+      expect(repo.sent, ['Thanks @Sam Rivera']);
+      expect(repo.sentDetails.single.mentions, ['sam']);
+      expect(repo.sentDetails.single.everyone, isFalse);
+    });
+
+    testWidgets('a name typed out in full counts too, and Escape closes the '
+        'list', (tester) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(tester, repo, readAt: msg(1).createdAt);
+      await tester.enterText(composer(), '@sam');
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(ListTile, 'Sam Rivera'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(ListTile, 'Sam Rivera'), findsNothing);
+      await tester.enterText(composer(), '@sam rivera, can you drive?');
+      await tester.pumpAndSettle();
+      await send(tester);
+      expect(repo.sentDetails.single.mentions, ['sam']);
+    });
+
+    testWidgets('the arrow keys and Enter pick a suggestion', (tester) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(
+        tester,
+        repo,
+        readAt: msg(1).createdAt,
+        members: FakeMemberRepository([
+          testMembership('a', 'coach', role: MemberRole.owner),
+          testMembership('a', 'sam', name: 'Sam Rivera'),
+          testMembership('a', 'sal', name: 'Sal Ortiz'),
+        ]),
+      );
+      await tester.enterText(composer(), '@sa');
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      // Sal comes before Sam; the arrow moved to Sam, and Enter picked
+      // him instead of sending.
+      expect(typed(tester), '@Sam Rivera ');
+      expect(repo.sent, isEmpty);
+    });
+
+    testWidgets('@everyone is for admins', (tester) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(tester, repo, readAt: msg(1).createdAt);
+      await tester.enterText(composer(), '@ev');
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, '@everyone'));
+      await tester.pumpAndSettle();
+      await tester.enterText(composer(), '${typed(tester)}game moved to 5');
+      await send(tester);
+      expect(repo.sent, ['@everyone game moved to 5']);
+      expect(repo.sentDetails.single.everyone, isTrue);
+    });
+
+    testWidgets('a member gets no @everyone, and typing it names nobody', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(
+        tester,
+        repo,
+        readAt: msg(1).createdAt,
+        members: asMember(),
+      );
+      await tester.enterText(composer(), '@ev');
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(ListTile, '@everyone'), findsNothing);
+      await tester.enterText(composer(), '@everyone hi');
+      await send(tester);
+      expect(repo.sentDetails.single.everyone, isFalse);
+    });
+
+    testWidgets('a mention of me stands out', (tester) async {
+      final repo = FakeMessageRepository([
+        msg(1).copyWith(
+          text: 'Can @Coach Lee bring cones? @Sam Rivera has the balls',
+          mentions: ['coach', 'sam'],
+        ),
+      ]);
+      await openChat(
+        tester,
+        repo,
+        readAt: msg(1).createdAt,
+        members: FakeMemberRepository([
+          testMembership(
+            'a',
+            'coach',
+            role: MemberRole.owner,
+            name: 'Coach Lee',
+          ),
+          testMembership('a', 'sam', name: 'Sam Rivera'),
+        ]),
+      );
+      final text = tester.widget<Text>(find.textContaining('bring cones'));
+      final spans = <TextSpan>[];
+      text.textSpan!.visitChildren((span) {
+        if (span is TextSpan && span.text != null) spans.add(span);
+        return true;
+      });
+      final me = spans.singleWhere((s) => s.text == '@Coach Lee');
+      final sam = spans.singleWhere((s) => s.text == '@Sam Rivera');
+      expect(me.style?.fontWeight, FontWeight.w700);
+      expect(me.style?.backgroundColor, isNotNull);
+      expect(sam.style?.fontWeight, FontWeight.w700);
+      expect(sam.style?.backgroundColor, isNull);
+    });
+
+    testWidgets('an admin sends an announcement from the + menu', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(tester, repo, readAt: msg(1).createdAt);
+      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Announcement'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('notifies everyone'), findsOneWidget);
+      await tester.enterText(composer(), 'No practice Friday');
+      await send(tester);
+      expect(repo.sentDetails.single.announcement, isTrue);
+      // The banner goes with it; the next message is plain.
+      expect(find.textContaining('notifies everyone'), findsNothing);
+      // Shown as an announcement in the chat.
+      expect(find.text('Announcement'), findsOneWidget);
+      await tester.enterText(composer(), 'And bring water');
+      await send(tester);
+      expect(repo.sentDetails.last.announcement, isFalse);
+    });
+
+    testWidgets('✕ cancels an announcement; members have none', (tester) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(tester, repo, readAt: msg(1).createdAt);
+      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Announcement'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Cancel announcement'));
+      await tester.pumpAndSettle();
+      await tester.enterText(composer(), 'Just a message');
+      await send(tester);
+      expect(repo.sentDetails.single.announcement, isFalse);
+
+      await openChat(
+        tester,
+        FakeMessageRepository([msg(1)]),
+        readAt: msg(1).createdAt,
+        members: asMember(),
+      );
+      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.pumpAndSettle();
+      expect(find.text('Announcement'), findsNothing);
+    });
+
+    testWidgets('admins pin a message to the bar at the top, and unpin it', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([msg(2), msg(1)]);
+      await openChat(tester, repo, readAt: msg(2).createdAt);
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pin'));
+      await tester.pumpAndSettle();
+      expect(repo.pins, ['m1 pinned']);
+      expect(find.text('Pinned message'), findsOneWidget);
+      expect(find.text('Sam Rivera: Message 1'), findsOneWidget);
+      expect(find.textContaining('Pinned', findRichText: true), findsWidgets);
+
+      await tester.longPress(find.text('Message 1').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Unpin'));
+      await tester.pumpAndSettle();
+      expect(repo.pins, ['m1 pinned', 'm1 unpinned']);
+      expect(find.text('Pinned message'), findsNothing);
+    });
+
+    testWidgets('the bar shows the newest pin first and steps through them', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository(chat(3));
+      await openChat(
+        tester,
+        repo,
+        readAt: msg(3).createdAt,
+        group: testGroup(
+          'a',
+          'Thunder',
+        ).copyWith(pinnedMessageIds: ['m1', 'm2']),
+      );
+      expect(find.text('Pinned 1 of 2'), findsOneWidget);
+      expect(find.text('Sam Rivera: Message 2'), findsOneWidget);
+      await tester.tap(find.text('Pinned 1 of 2'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pinned 2 of 2'), findsOneWidget);
+      expect(find.text('Sam Rivera: Message 1'), findsOneWidget);
+    });
+
+    testWidgets('a full bar says to unpin one first; members get no Pin', (
+      tester,
+    ) async {
+      final repo = FakeMessageRepository([msg(1)])
+        ..failPins = const InvalidInput('too-many-pins');
+      await openChat(tester, repo, readAt: msg(1).createdAt);
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pin'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Up to 3 messages can be pinned. Unpin one first.'),
+        findsOneWidget,
+      );
+
+      await openChat(
+        tester,
+        FakeMessageRepository([msg(1)]),
+        readAt: msg(1).createdAt,
+        members: asMember(),
+      );
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy text'), findsOneWidget);
+      expect(find.text('Pin'), findsNothing);
+    });
   });
 }

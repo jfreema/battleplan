@@ -1462,7 +1462,7 @@
   "mentionSuggestions": "People to mention",
   "mentionEveryoneName": "@everyone",
   "mentionEveryoneHelp": "Notify everyone on the team",
-  "announcementLabel": "Announcement",
+  "chatAnnouncementLabel": "Announcement",
   "announceAction": "Announcement",
   "announcementBanner": "Announcement: notifies everyone on the team, even at Important only",
   "announcementHint": "Write an announcement…",

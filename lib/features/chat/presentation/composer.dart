@@ -142,16 +142,15 @@ class _ComposerState extends State<Composer> {
     }
     final key = event.logicalKey;
     final enter =
-        key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter;
+        key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter;
     // While suggestions show, the arrows, Enter, and Tab pick one, and
     // Escape closes the list (CHAT-14).
     if (_suggestions.isNotEmpty) {
       if (key == LogicalKeyboardKey.arrowDown ||
           key == LogicalKeyboardKey.arrowUp) {
         final step = key == LogicalKeyboardKey.arrowDown ? 1 : -1;
-        setState(
-          () => _selected = (_selected + step) % _suggestions.length,
-        );
+        setState(() => _selected = (_selected + step) % _suggestions.length);
         return KeyEventResult.handled;
       }
       if ((enter || key == LogicalKeyboardKey.tab) &&
@@ -315,12 +314,7 @@ class _ComposerState extends State<Composer> {
           _AnnouncementBanner(onCancel: widget.onCancelAnnouncement),
         if (replying != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Space.lg,
-              Space.xs,
-              Space.xs,
-              0,
-            ),
+            padding: const EdgeInsets.fromLTRB(Space.lg, Space.xs, Space.xs, 0),
             child: Row(
               children: [
                 Expanded(
@@ -362,28 +356,36 @@ class _MentionList extends StatelessWidget {
     return Semantics(
       container: true,
       label: l10n.mentionSuggestions,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(Space.md, Space.xs, Space.md, 0),
-        decoration: BoxDecoration(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Space.md, Space.xs, Space.md, 0),
+        // Its own Material, so the rows' highlight and ink show.
+        child: Material(
           color: scheme.surfaceContainerHigh,
-          border: Border.all(color: scheme.outlineVariant),
-          borderRadius: BorderRadius.circular(Corners.bubble),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final (i, c) in suggestions.indexed)
-              ListTile(
-                dense: true,
-                selected: i == selected,
-                leading: c.uid.isEmpty
-                    ? const Icon(AppIcons.group)
-                    : Avatar(name: c.name, colorKey: c.uid, size: 28),
-                title: Text(c.uid.isEmpty ? l10n.mentionEveryoneName : c.name),
-                subtitle: c.uid.isEmpty ? Text(l10n.mentionEveryoneHelp) : null,
-                onTap: () => onPick(c),
-              ),
-          ],
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: scheme.outlineVariant),
+            borderRadius: BorderRadius.circular(Corners.bubble),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final (i, c) in suggestions.indexed)
+                ListTile(
+                  dense: true,
+                  selected: i == selected,
+                  leading: c.uid.isEmpty
+                      ? const Icon(AppIcons.group)
+                      : Avatar(name: c.name, colorKey: c.uid, size: 28),
+                  title: Text(
+                    c.uid.isEmpty ? l10n.mentionEveryoneName : c.name,
+                  ),
+                  subtitle: c.uid.isEmpty
+                      ? Text(l10n.mentionEveryoneHelp)
+                      : null,
+                  onTap: () => onPick(c),
+                ),
+            ],
+          ),
         ),
       ),
     );

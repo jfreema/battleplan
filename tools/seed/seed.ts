@@ -249,10 +249,12 @@ async function main() {
   await batch.commit();
 
   // Messages, with the team preview the messages trigger would write (M3).
-  const chats: Record<string, [string, string, number][]> = {
+  // Thunder's first is the coach's announcement, pinned to the top, and
+  // Alex mentions the coach (CHAT-14, CHAT-15).
+  const chats: Record<string, [string, string, number, Record<string, unknown>?][]> = {
     thunder: [
-      ['coach', 'Field 3 is open tonight. See everyone at 6!', 240],
-      ['alex', 'I can bring the extra bats.', 200],
+      ['coach', 'Field 3 is open tonight. See everyone at 6!', 240, { announcement: true }],
+      ['alex', `@${nameOf('coach')} I can bring the extra bats.`, 200, { mentions: ['coach'] }],
       ['sam', 'On my way!', 30],
     ],
     lightning: [
@@ -262,7 +264,7 @@ async function main() {
     hawks: [['priya', 'Great hustle at practice today, team.', 45]],
   };
   for (const [groupId, list] of Object.entries(chats)) {
-    for (const [i, [uid, text, ago]] of list.entries()) {
+    for (const [i, [uid, text, ago, extra]] of list.entries()) {
       const m = memberships.find((x) => x[0] === groupId && x[1] === uid)!;
       await db.doc(`messages/${groupId}-seed-${i}`).set({
         groupId,
@@ -274,6 +276,7 @@ async function main() {
         text,
         attachments: [],
         reactions: i === 0 ? { alex: 'like', sam: 'love' } : {},
+        ...extra,
         createdAt: minutesAgo(ago),
       });
     }
@@ -281,6 +284,7 @@ async function main() {
     await db.doc(`groups/${groupId}`).update({
       lastMessageAt: minutesAgo(lastAgo),
       lastMessagePreview: { authorName: nameOf(lastUid), text: lastText, type: 'text' },
+      ...(groupId === 'thunder' ? { pinnedMessageIds: ['thunder-seed-0'] } : {}),
     });
   }
 

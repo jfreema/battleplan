@@ -440,6 +440,8 @@ void main() {
       for (final label in [
         'Messages',
         'Replies',
+        // @mentions (CHAT-14, NOTIF-12).
+        'Mentions',
         'Polls',
         'New events',
         'Event changes',
@@ -448,14 +450,19 @@ void main() {
       ]) {
         expect(find.widgetWithText(SwitchListTile, label), findsOneWidget);
       }
-      // Mentions arrive in v1.1.
-      expect(find.text('Mentions'), findsNothing);
+      // Announcements reach everyone who hasn't turned the team off
+      // (CHAT-15), so they have no switch.
+      expect(find.text('Announcements'), findsNothing);
+
+      await tester.tap(find.widgetWithText(SwitchListTile, 'Mentions'));
+      await tester.pumpAndSettle();
+      expect(users.notificationPrefs, {NotificationPref.mentions: false});
 
       final polls = find.widgetWithText(SwitchListTile, 'Polls');
       expect(tester.widget<SwitchListTile>(polls).value, isTrue);
       await tester.tap(polls);
       await tester.pumpAndSettle();
-      expect(users.notificationPrefs, {NotificationPref.polls: false});
+      expect(users.notificationPrefs[NotificationPref.polls], isFalse);
       expect(tester.widget<SwitchListTile>(polls).value, isFalse);
 
       await tester.tap(find.widgetWithText(SwitchListTile, 'Event changes'));

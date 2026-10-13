@@ -46,6 +46,7 @@ void main() {
       'storageBytes': 1024,
       'storageQuotaBytes': 0,
       'chatTheme': {'bubbleColor': '#0F8A5F', 'background': 'pattern'},
+      'pinnedMessageIds': ['m1', 7, 'm2'],
     });
   });
 
@@ -64,6 +65,9 @@ void main() {
       expect(g.storageQuotaBytes, Limits.defaultStorageQuotaMb * bytesPerMb);
       expect(g.chatTheme!.background, ChatBackground.pattern);
       expect(g.chatTheme!.bubbleColor, 0xFF0F8A5F);
+      // Pinned messages, oldest pin first (CHAT-15); anything but an ID
+      // is skipped.
+      expect(g.pinnedMessageIds, ['m1', 'm2']);
       // An old team's teamType is ignored; a missing kind is a team.
       expect(g.kind, GroupKind.team);
       expect(await repo.watchGroup(const GroupId('none')).first, isNull);
@@ -74,6 +78,7 @@ void main() {
       expect(sparse.color, isNull);
       expect(sparse.storageQuotaBytes, 5);
       expect(sparse.settings, const GroupSettings());
+      expect(sparse.pinnedMessageIds, isEmpty);
     });
 
     test('creates a team through createGroup', () async {

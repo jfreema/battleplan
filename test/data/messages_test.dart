@@ -218,6 +218,85 @@ void main() {
     }
   });
 
+  test('sends whom a message names and announcements only when set '
+      '(CHAT-14, CHAT-15)', () async {
+    await repo.sendText(
+      _g,
+      _me,
+      '@everyone and @Sam Rivera',
+      id: 'm9',
+      mentions: ['sam'],
+      mentionsEveryone: true,
+      announcement: true,
+    );
+    final m = (await db.doc('messages/m9').get()).data()!;
+    expect(m['mentions'], ['sam']);
+    expect(m['mentionsEveryone'], isTrue);
+    expect(m['announcement'], isTrue);
+    final read = await repo.watchMessage(_g, 'm9').first;
+    expect(read?.mentions, ['sam']);
+    expect(read?.mentionsEveryone, isTrue);
+    expect(read?.announcement, isTrue);
+    expect(read?.mentionsMe('sam'), isTrue);
+
+    // A plain message carries none of the fields, as the rules expect.
+    await repo.sendText(_g, _me, 'Hi', id: 'm10');
+    final plain = (await db.doc('messages/m10').get()).data()!;
+    expect(
+      plain.keys,
+      isNot(anyOf(contains('mentions'), contains('mentionsEveryone'))),
+    );
+    expect(plain.containsKey('announcement'), isFalse);
+    expect(
+      (await repo.watchMessage(_g, 'm10').first)?.mentionsMe('sam'),
+      isFalse,
+    );
+  });
+
+  test("a watched message is null when it's gone or another team's", () async {
+    expect(await repo.watchMessage(_g, 'nope').first, isNull);
+    await db.doc('messages/x1').set({
+      'groupId': 'other',
+      'authorId': 'sam',
+      'type': 'text',
+      'text': 'Elsewhere',
+    });
+    expect(await repo.watchMessage(_g, 'x1').first, isNull);
+  });
+
+  test('pins through pinMessage, mapping a full bar (CHAT-15)', () async {
+    await repo.setPinned('m1', pinned: true);
+    expect(functions.lastData('pinMessage'), {
+      'messageId': 'm1',
+      'pinned': true,
+    });
+    await repo.setPinned('m1', pinned: false);
+    expect(functions.lastData('pinMessage'), {
+      'messageId': 'm1',
+      'pinned': false,
+    });
+    functions.fail('pinMessage', 'failed-precondition', 'too-many-pins');
+    await expectLater(
+      repo.setPinned('m2', pinned: true),
+      throwsA(
+        isA<InvalidInput>().having(
+          (e) => e.message,
+          'message',
+          'too-many-pins',
+        ),
+      ),
+    );
+    for (final (code, type) in [
+      ('permission-denied', isA<PermissionDenied>()),
+      ('not-found', isA<NotFound>()),
+      ('unavailable', isA<Offline>()),
+      ('internal', isA<UnknownFailure>()),
+    ]) {
+      functions.fail('pinMessage', code);
+      await expectLater(repo.setPinned('m1', pinned: true), throwsA(type));
+    }
+  });
+
   test('maps write refusals to failures', () async {
     for (final (code, type) in [
       ('permission-denied', isA<PermissionDenied>()),

@@ -565,6 +565,98 @@ final class PinnedMessageIdsFamily extends $Family
   String toString() => r'pinnedMessageIdsProvider';
 }
 
+/// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+
+@ProviderFor(memberNames)
+final memberNamesProvider = MemberNamesFamily._();
+
+/// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+
+final class MemberNamesProvider
+    extends
+        $FunctionalProvider<
+          Map<String, String>,
+          Map<String, String>,
+          Map<String, String>
+        >
+    with $Provider<Map<String, String>> {
+  /// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+  MemberNamesProvider._({
+    required MemberNamesFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'memberNamesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$memberNamesHash();
+
+  @override
+  String toString() {
+    return r'memberNamesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<Map<String, String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  Map<String, String> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return memberNames(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, String>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MemberNamesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$memberNamesHash() => r'756491b6172439944284984d6da8897572e986ed';
+
+/// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+
+final class MemberNamesFamily extends $Family
+    with $FunctionalFamilyOverride<Map<String, String>, GroupId> {
+  MemberNamesFamily._()
+    : super(
+        retry: null,
+        name: r'memberNamesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+
+  MemberNamesProvider call(GroupId groupId) =>
+      MemberNamesProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'memberNamesProvider';
+}
+
 /// Who can be named with @ in a team's chat (CHAT-14): everyone on the
 /// team but me, by name.
 
@@ -636,7 +728,7 @@ final class MentionCandidatesProvider
   }
 }
 
-String _$mentionCandidatesHash() => r'f69e18d4542449e1829fc54e883a9d9e0ce320b4';
+String _$mentionCandidatesHash() => r'7c779a1a684d2d95c9c403d44be83a37a245e6a7';
 
 /// Who can be named with @ in a team's chat (CHAT-14): everyone on the
 /// team but me, by name.

@@ -9,6 +9,7 @@ import 'package:battleplan/features/chat/domain/mentions.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
@@ -676,9 +677,8 @@ class ChatMessages extends _$ChatMessages {
       ref.read(messageRepositoryProvider).editText(message.id, text.trim());
 
   /// Pins or unpins a message on the bar at the top (CHAT-15). Admins.
-  Future<void> setPinned(Message message, {required bool pinned}) => ref
-      .read(messageRepositoryProvider)
-      .setPinned(message.id, pinned: pinned);
+  Future<void> setPinned(Message message, {required bool pinned}) =>
+      ref.read(messageRepositoryProvider).setPinned(message.id, pinned: pinned);
 }
 
 /// A pinned message, live, for the bar at the top of the chat (CHAT-15).
@@ -697,7 +697,8 @@ List<String> pinnedMessageIds(Ref ref, GroupId groupId) => [
 /// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
 @riverpod
 Map<String, String> memberNames(Ref ref, GroupId groupId) => {
-  for (final m in ref.watch(rosterProvider(groupId)).value ?? const [])
+  for (final m
+      in ref.watch(rosterProvider(groupId)).value ?? const <Membership>[])
     if (m.displayName.trim().isNotEmpty) m.uid.value: m.displayName.trim(),
 };
 

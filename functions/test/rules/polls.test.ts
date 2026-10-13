@@ -126,6 +126,12 @@ describe('creating a poll (POLL-1)', () => {
     await assertSucceeds(create('bob', 'Bob'));
   });
 
+  it("refuses mentions and announcements on a poll's message (CHAT-14, CHAT-15)", async () => {
+    await assertFails(create('alice', 'Alice', {}, { mentions: ['bob'] }));
+    await assertFails(create('alice', 'Alice', {}, { mentionsEveryone: true }));
+    await assertFails(create('alice', 'Alice', {}, { announcement: true }));
+  });
+
   it('takes 10 options, several answers, anonymity, and a close time', async () => {
     await assertSucceeds(
       create('alice', 'Alice', {

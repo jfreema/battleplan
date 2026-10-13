@@ -330,6 +330,68 @@ describe('message hook (NOTIF-2, NOTIF-5, CHAT-13)', () => {
   });
 });
 
+describe('mentions and announcements (CHAT-14, CHAT-15, NOTIF-2)', () => {
+  const said = () => pushed().map((m) => `${m.token}:${m.data?.kind}:${m.notification?.body}`).sort();
+  const text = (fields: object) => ({ groupId: G, authorId: 'alex', authorName: 'Alex', type: 'text', ...fields });
+
+  it('the people named get "mentioned you", even at Important only; the rest get the message', async () => {
+    await person('sam', { level: 'important' });
+    await person('pat');
+    await person('lee', { level: 'important' });
+    await notifyNewMessage('m1', text({ text: '@sam can you drive?', mentions: ['sam', 'nobody'] }), 'Thunder', null);
+    expect(said()).toEqual([
+      'tok-pat:message:Alex: @sam can you drive?',
+      'tok-sam:mention:Alex mentioned you: @sam can you drive?',
+    ]);
+    // Only the person named gets a center item; someone not on the team gets nothing.
+    expect(await centerFor('m1_mention')).toEqual(['sam']);
+  });
+
+  it('someone both replied to and named gets only the reply', async () => {
+    await person('sam');
+    await notifyNewMessage('m1', text({ text: 'Yes @sam', mentions: ['sam'] }), 'Thunder', 'sam');
+    expect(said()).toEqual(['tok-sam:reply:Alex replied to you: Yes @sam']);
+    expect(await centerFor('m1_mention')).toEqual([]);
+    expect(await centerFor('m1_reply')).toEqual(['sam']);
+  });
+
+  it('with Mentions off and Messages on, a mention arrives as a message, and keeps its center item', async () => {
+    await person('sam', { prefs: { mentions: false } });
+    await notifyNewMessage('m1', text({ text: '@sam hi', mentions: ['sam'] }), 'Thunder', null);
+    expect(said()).toEqual(['tok-sam:message:Alex: @sam hi']);
+    expect(await centerFor('m1_mention')).toEqual(['sam']);
+  });
+
+  it("an admin's @everyone reaches everyone as a mention; Off still means off", async () => {
+    await person('sam', { level: 'important' });
+    await person('lee', { level: 'none' });
+    await notifyNewMessage('m1', text({ text: '@everyone 5pm', mentionsEveryone: true }), 'Thunder', null);
+    expect(said()).toEqual(['tok-sam:mention:Alex mentioned everyone: @everyone 5pm']);
+    // Center items for everyone but the author, Off included (NOTIF-3).
+    expect(await centerFor('m1_mention')).toEqual(['lee', 'sam']);
+  });
+
+  it('an announcement reaches everyone who has not turned the team off or muted it, and nothing else is sent', async () => {
+    await person('sam', { level: 'important' });
+    await person('pat', { prefs: { messages: false, mentions: false } });
+    await person('lee', { level: 'none' });
+    await person('kim', { mutedFor: 60_000 });
+    await notifyNewMessage(
+      'm1',
+      text({ text: 'No practice Friday', announcement: true, mentions: ['sam'] }),
+      'Thunder',
+      'sam',
+    );
+    expect(said()).toEqual([
+      'tok-pat:announcement:Announcement from Alex: No practice Friday',
+      'tok-sam:announcement:Announcement from Alex: No practice Friday',
+    ]);
+    expect(await centerFor('m1_announcement')).toEqual(['kim', 'lee', 'pat', 'sam']);
+    expect(await centerFor('m1_reply')).toEqual([]);
+    expect(await centerFor('m1_mention')).toEqual([]);
+  });
+});
+
 describe('hooks (task 74)', () => {
   type CallRequest = Parameters<typeof reportContent.run>[0];
   const call = (uid: string, data: object) => ({ data, auth: { uid, token: {} }, rawRequest: {} }) as unknown as CallRequest;
