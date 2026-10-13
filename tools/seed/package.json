@@ -7,7 +7,9 @@
     "super-admin": "tsx set-super-admin.ts",
     "demo": "tsx demo.ts",
     "demo:emulators": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 tsx demo.ts --project demo-battleplan",
-    "test": "tsx --test demo.test.ts"
+    "test": "tsx --test demo.test.ts migrate-one-type.test.ts",
+    "migrate-one-type": "tsx migrate-one-type.ts",
+    "test:emulators": "firebase emulators:exec --only firestore --project demo-battleplan 'npm test'"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0"

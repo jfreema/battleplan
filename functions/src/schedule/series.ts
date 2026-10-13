@@ -249,7 +249,6 @@ interface TeamContext {
   isMember: boolean;
   isAdmin: boolean;
   membersCanCreate: boolean;
-  rsvpFor: 'members' | 'players';
 }
 
 async function teamContext(groupId: string, caller: Caller): Promise<TeamContext> {
@@ -271,7 +270,6 @@ async function teamContext(groupId: string, caller: Caller): Promise<TeamContext
     isMember: member.exists,
     isAdmin: caller.superAdmin || role === 'owner' || role === 'admin',
     membersCanCreate: group.get('settings.membersCanCreateEvents') === true,
-    rsvpFor: group.get('teamType') === 'youth' ? 'players' : 'members',
   };
 }
 
@@ -360,7 +358,7 @@ function newSeriesEvent(
   groupId: string,
   t: TemplateInput,
   occ: Occurrence,
-  extra: { seriesId: string; rsvpFor: string; createdBy: string; messageId: string | null },
+  extra: { seriesId: string; createdBy: string; messageId: string | null },
   nowMs: number,
 ): Record<string, unknown> {
   const now = Timestamp.fromMillis(nowMs);
@@ -370,7 +368,6 @@ function newSeriesEvent(
       ...eventFields(t, occ),
       notifyTeam: t.notifyTeam,
       postToChat: t.postToChat,
-      rsvpFor: extra.rsvpFor,
       rsvpDeadline: null,
       seriesId: extra.seriesId,
       seriesDate: occ.date,
@@ -418,7 +415,7 @@ async function createSeries(
       input.groupId,
       template,
       occurrenceOn(date, template),
-      { seriesId, rsvpFor: ctx.rsvpFor, createdBy: caller.uid, messageId },
+      { seriesId, createdBy: caller.uid, messageId },
       nowMs,
     ),
   }));
@@ -583,7 +580,7 @@ async function updateFollowing(
           groupId,
           template,
           occ,
-          { seriesId: newId, rsvpFor: String(target.get('rsvpFor') ?? ctx.rsvpFor), createdBy: String(series.get('createdBy') ?? caller.uid), messageId },
+          { seriesId: newId, createdBy: String(series.get('createdBy') ?? caller.uid), messageId },
           nowMs,
         ),
       );

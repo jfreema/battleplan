@@ -21,9 +21,9 @@ let env: RulesTestEnvironment;
 const now = () => firebase.firestore.FieldValue.serverTimestamp();
 const ts = (iso: string) => firebase.firestore.Timestamp.fromDate(new Date(iso));
 
-// Team A (adult) has alice (owner) and bob (member). Team B (youth) has
-// carol (admin) and two guardians of player emma: dan and erin. Frank is a
-// parent on team B with no player link.
+// Team A has alice (owner) and bob (member). Team B (an old doc that still
+// says teamType 'youth') has carol (admin) and two guardians of player
+// emma: dan and erin. Frank is on team B with no player link.
 const memberDoc = (groupId: string, uid: string, role: string, name: string) => ({
   groupId,
   uid,
@@ -47,7 +47,7 @@ async function seed() {
     };
     await db.doc('groups/teamA').set({
       name: 'Thunder', nameLower: 'thunder', sport: 'softball', color: '#2F5BEA',
-      photoPath: null, teamType: 'adult', settings, memberCount: 2,
+      photoPath: null, kind: 'team', settings, memberCount: 2,
     });
     await db.doc('groups/teamB').set({
       name: 'Lightning U10', nameLower: 'lightning u10', sport: 'soccer', color: null,
@@ -64,17 +64,18 @@ async function seed() {
     await db.doc('playerGuardians/emma_erin').set({ playerId: 'emma', groupId: 'teamB', uid: 'erin' });
     await db.doc('messages/m1').set({ groupId: 'teamA', authorId: 'alice', type: 'text', text: 'Hi', reactions: {} });
     await db.doc('messages/m2').set({ groupId: 'teamB', authorId: 'carol', type: 'text', text: 'Hi', reactions: {} });
-    const event = (groupId: string, rsvpFor: string) => ({
+    // rsvpFor is only on events made before one team type.
+    const event = (groupId: string, rsvpFor: string | null) => ({
       groupId,
       type: 'practice',
       title: 'Practice',
       rsvpEnabled: true,
-      rsvpFor,
+      ...(rsvpFor ? { rsvpFor } : {}),
       startAt: ts('2030-06-01T18:00:00Z'),
       rsvpCounts: { going: 0, maybe: 0, notGoing: 0 },
     });
     await db.doc('events/eA').set(event('teamA', 'members'));
-    await db.doc('events/eB').set(event('teamB', 'players'));
+    await db.doc('events/eB').set(event('teamB', null));
     await db.doc('events/eLate').set({ ...event('teamA', 'members'), rsvpDeadline: ts('2020-01-01T00:00:00Z') });
   });
 }
@@ -370,7 +371,7 @@ describe('one RSVP per event and participant', () => {
     await assertFails(rsvp(as('frank'), 'eB', 'player', 'emma', 'frank', 'going'));
   });
 
-  it('lets a youth-team admin answer for a player', async () => {
+  it("lets a team admin answer for a player", async () => {
     await assertSucceeds(rsvp(as('carol'), 'eB', 'player', 'emma', 'carol', 'maybe'));
   });
 
@@ -383,10 +384,19 @@ describe('one RSVP per event and participant', () => {
     }));
   });
 
-  it('lets youth-team admins RSVP for themselves, but not parents (Q14)', async () => {
+  it('lets every member RSVP for themselves next to the players, and admins for them (SCHED-5, Q14)', async () => {
     await assertSucceeds(rsvp(as('carol'), 'eB', 'member', 'carol', 'carol', 'going'));
-    await assertFails(rsvp(as('dan'), 'eB', 'member', 'dan', 'dan', 'going'));
-    await assertFails(rsvp(as('carol'), 'eB', 'member', 'dan', 'carol', 'going'));
+    await assertSucceeds(rsvp(as('dan'), 'eB', 'member', 'dan', 'dan', 'going'));
+    await assertSucceeds(rsvp(as('carol'), 'eB', 'member', 'frank', 'carol', 'going'));
+    await assertFails(rsvp(as('frank'), 'eB', 'member', 'dan', 'frank', 'going'));
+  });
+
+  it("takes player answers on an old 'members' event (rsvpFor is ignored)", async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('players/ace').set({ groupId: 'teamA', displayName: 'Ace', displayNameLower: 'ace' }),
+    );
+    await assertSucceeds(rsvp(as('alice'), 'eA', 'player', 'ace', 'alice', 'going'));
+    await assertFails(rsvp(as('bob'), 'eA', 'player', 'ace', 'bob', 'going'));
   });
 
   it('rejects answers given in someone else’s name', async () => {
@@ -403,12 +413,16 @@ describe('one RSVP per event and participant', () => {
   });
 });
 
-describe('team type (TEAM-1)', () => {
-  it('lets admins switch between adult and youth, and nothing else', async () => {
-    await assertSucceeds(as('alice').doc('groups/teamA').update({ teamType: 'youth', updatedAt: now() }));
-    await assertSucceeds(as('alice').doc('groups/teamA').update({ teamType: 'adult', updatedAt: now() }));
-    await assertFails(as('alice').doc('groups/teamA').update({ teamType: 'league' }));
+describe('one team type (TEAM-1)', () => {
+  it('has no type to switch: admins set neither teamType nor kind', async () => {
+    await assertFails(as('alice').doc('groups/teamA').update({ teamType: 'youth', updatedAt: now() }));
+    await assertFails(as('alice').doc('groups/teamA').update({ kind: 'group', updatedAt: now() }));
     await assertFails(as('bob').doc('groups/teamA').update({ teamType: 'youth' }));
+  });
+
+  it("still lets admins edit an old team that says teamType, which stays as it is", async () => {
+    await assertSucceeds(as('carol').doc('groups/teamB').update({ name: 'Lightning', nameLower: 'lightning', updatedAt: now() }));
+    await assertFails(as('carol').doc('groups/teamB').update({ teamType: 'adult', updatedAt: now() }));
   });
 });
 

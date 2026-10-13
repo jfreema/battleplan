@@ -53,17 +53,18 @@ const settings = {
   defaultReminderOffsets: [1440],
 };
 
+// One team type (TEAM-1): every team has players.
 const teams = [
-  { id: 'thunder', name: 'Thunder', sport: 'softball', teamType: 'adult', color: '#2F5BEA' },
-  { id: 'lightning', name: 'Lightning U10', sport: 'soccer', teamType: 'youth', color: '#0F8A5F' },
-  { id: 'hawks', name: 'Hawks U14', sport: 'basketball', teamType: 'youth', color: '#C2410C' },
+  { id: 'thunder', name: 'Thunder', sport: 'softball', color: '#2F5BEA' },
+  { id: 'lightning', name: 'Lightning U10', sport: 'soccer', color: '#0F8A5F' },
+  { id: 'hawks', name: 'Hawks U14', sport: 'basketball', color: '#C2410C' },
 ] as const;
 
 // [team, uid, role, playerSummary?]. Coach and Maria are on more than one team.
 const memberships: [string, string, string, string?][] = [
   ['thunder', 'coach', 'owner'],
-  ['thunder', 'alex', 'admin'],
-  ['thunder', 'sam', 'member'],
+  ['thunder', 'alex', 'admin', '#3'],
+  ['thunder', 'sam', 'member', '#12'],
   ['thunder', 'maria', 'member'],
   ['lightning', 'coach', 'owner'],
   ['lightning', 'maria', 'member', 'Emma #7'],
@@ -73,13 +74,28 @@ const memberships: [string, string, string, string?][] = [
   ['hawks', 'maria', 'member', 'Liam #23'],
 ];
 
-// A parent with players on two teams, two guardians for one player, and a
-// player whose guardian hasn't joined yet.
-const players = [
+// A parent with players on two teams, two guardians for one player, a
+// player whose guardian hasn't joined yet, adults who are players
+// themselves ('self'), an unclaimed player, and a pending player Maria
+// asked to add to Thunder (PLAYER-3, PLAYER-4).
+const players: {
+  id: string;
+  groupId: string;
+  name: string;
+  number: string | null;
+  position: string | null;
+  guardians: string[];
+  self?: string;
+  pendingBy?: string;
+}[] = [
   { id: 'emma', groupId: 'lightning', name: 'Emma Rodriguez', number: '7', position: 'Forward', guardians: ['maria', 'luis'] },
   { id: 'arjun', groupId: 'lightning', name: 'Arjun Shah', number: '11', position: 'Keeper', guardians: ['priya'] },
   { id: 'noah', groupId: 'lightning', name: 'Noah Bennett', number: '4', position: 'Defense', guardians: [] },
   { id: 'liam', groupId: 'hawks', name: 'Liam Rodriguez', number: '23', position: 'Guard', guardians: ['maria'] },
+  { id: 'alex-kim', groupId: 'thunder', name: 'Alex Kim', number: '3', position: 'Pitcher', guardians: [], self: 'alex' },
+  { id: 'sam-rivera', groupId: 'thunder', name: 'Sam Rivera', number: '12', position: 'Shortstop', guardians: [], self: 'sam' },
+  { id: 'casey-park', groupId: 'thunder', name: 'Casey Park', number: '5', position: 'Outfield', guardians: [] },
+  { id: 'maria-rodriguez', groupId: 'thunder', name: 'Maria Rodriguez', number: null, position: null, guardians: [], pendingBy: 'maria' },
 ];
 
 async function main() {
@@ -127,13 +143,13 @@ async function main() {
       photoPath: null,
       color: t.color,
       sport: t.sport,
-      teamType: t.teamType,
+      kind: 'team',
       ownerId: owner,
       createdBy: owner,
       timeZone: 'America/Chicago',
       settings,
       memberCount: members.length,
-      playerCount: players.filter((p) => p.groupId === t.id).length,
+      playerCount: players.filter((p) => p.groupId === t.id && !p.pendingBy).length,
       lastMessageAt: null,
       lastMessagePreview: null,
       // The same limit createGroup gives every team (STORE-1).
@@ -169,21 +185,40 @@ async function main() {
       displayNameLower: p.name.toLowerCase(),
       jerseyNumber: p.number,
       position: p.position,
-      createdBy: 'coach',
+      status: p.pendingBy ? 'pending' : 'active',
+      // Linked to its proposer once an admin approves it (PLAYER-4).
+      ...(p.pendingBy ? { proposedBy: p.pendingBy, proposedRelation: 'self', decidedBy: null, decidedAt: null } : {}),
+      createdBy: p.pendingBy ?? 'coach',
       createdAt: minutesAgo(60 * 24 * 20),
       updatedAt: minutesAgo(60 * 24 * 20),
     });
-    for (const uid of p.guardians) {
+    const links: [string, 'self' | 'guardian'][] = [
+      ...p.guardians.map((uid): [string, 'guardian'] => [uid, 'guardian']),
+      ...(p.self ? [[p.self, 'self'] as [string, 'self']] : []),
+    ];
+    for (const [uid, relation] of links) {
       batch.set(db.doc(`playerGuardians/${p.id}_${uid}`), {
         playerId: p.id,
         groupId: p.groupId,
         uid,
+        relation,
         addedBy: 'coach',
-        via: 'admin',
+        via: relation === 'self' ? 'request' : 'admin',
         createdAt: minutesAgo(60 * 24 * 20),
       });
     }
   }
+  // Luis claims Noah as a guardian, waiting for the coach (PLAYER-3).
+  batch.set(db.doc('guardianRequests/noah_luis'), {
+    playerId: 'noah',
+    groupId: 'lightning',
+    uid: 'luis',
+    relation: 'guardian',
+    status: 'pending',
+    decidedBy: null,
+    decidedAt: null,
+    createdAt: minutesAgo(60),
+  });
   await batch.commit();
 
   // Messages, with the team preview the messages trigger would write (M3).
@@ -222,12 +257,13 @@ async function main() {
     });
   }
 
-  // Upcoming events with a few RSVPs; youth RSVPs are per player.
-  const events = [
-    { id: 'thunder-practice', groupId: 'thunder', type: 'practice', title: 'Practice', day: 2, hour: 18, rsvpFor: 'members' },
-    { id: 'thunder-game', groupId: 'thunder', type: 'game', title: 'vs. Eagles', day: 5, hour: 10, rsvpFor: 'members', opponent: 'Eagles', homeAway: 'home' },
-    { id: 'lightning-practice', groupId: 'lightning', type: 'practice', title: 'Practice', day: 1, hour: 17, rsvpFor: 'players' },
-    { id: 'hawks-game', groupId: 'hawks', type: 'game', title: '@ Bulls', day: 3, hour: 19, rsvpFor: 'players', opponent: 'Bulls', homeAway: 'away' },
+  // Upcoming events with a few RSVPs: per player on every team, and
+  // members answering for themselves (coaches and others, SCHED-5).
+  const events: { id: string; groupId: string; type: string; title: string; day: number; hour: number; opponent?: string; homeAway?: string }[] = [
+    { id: 'thunder-practice', groupId: 'thunder', type: 'practice', title: 'Practice', day: 2, hour: 18 },
+    { id: 'thunder-game', groupId: 'thunder', type: 'game', title: 'vs. Eagles', day: 5, hour: 10, opponent: 'Eagles', homeAway: 'home' },
+    { id: 'lightning-practice', groupId: 'lightning', type: 'practice', title: 'Practice', day: 1, hour: 17 },
+    { id: 'hawks-game', groupId: 'hawks', type: 'game', title: '@ Bulls', day: 3, hour: 19, opponent: 'Bulls', homeAway: 'away' },
   ];
   for (const e of events) {
     const startAt = daysFromNow(e.day, e.hour);
@@ -244,9 +280,9 @@ async function main() {
       opponent: e.opponent ?? null,
       homeAway: e.homeAway ?? null,
       rsvpEnabled: true,
-      rsvpFor: e.rsvpFor,
       reminderOffsets: [1440],
       rsvpCounts: { going: 0, maybe: 0, notGoing: 0 },
+      staffCounts: { going: 0, maybe: 0, notGoing: 0 },
       createdBy: 'coach',
       createdAt: minutesAgo(60 * 24),
       updatedAt: minutesAgo(60 * 24),
@@ -254,8 +290,9 @@ async function main() {
     });
   }
   const rsvps: [string, 'member' | 'player', string, string, string][] = [
-    ['thunder-practice', 'member', 'alex', 'going', 'alex'],
-    ['thunder-practice', 'member', 'sam', 'maybe', 'sam'],
+    ['thunder-practice', 'player', 'alex-kim', 'going', 'alex'],
+    ['thunder-practice', 'player', 'sam-rivera', 'maybe', 'sam'],
+    ['thunder-practice', 'member', 'coach', 'going', 'coach'],
     ['lightning-practice', 'player', 'emma', 'going', 'luis'],
     ['lightning-practice', 'player', 'arjun', 'not_going', 'priya'],
   ];
@@ -276,14 +313,16 @@ async function main() {
       updatedAt: FieldValue.serverTimestamp(),
     });
   }
+  const countsOf = (answers: typeof rsvps) => ({
+    going: answers.filter((r) => r[3] === 'going').length,
+    maybe: answers.filter((r) => r[3] === 'maybe').length,
+    notGoing: answers.filter((r) => r[3] === 'not_going').length,
+  });
   for (const e of events) {
     const answers = rsvps.filter((r) => r[0] === e.id);
     await db.doc(`events/${e.id}`).update({
-      rsvpCounts: {
-        going: answers.filter((r) => r[3] === 'going').length,
-        maybe: answers.filter((r) => r[3] === 'maybe').length,
-        notGoing: answers.filter((r) => r[3] === 'not_going').length,
-      },
+      rsvpCounts: countsOf(answers.filter((r) => r[1] === 'player')),
+      staffCounts: countsOf(answers.filter((r) => r[1] === 'member')),
     });
   }
 

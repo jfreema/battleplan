@@ -39,24 +39,15 @@ export interface RsvpRow {
 }
 
 /**
- * Counts an event's answers. On 'players' events (youth teams) rsvpCounts
- * counts players and staffCounts the admins' own answers, counted apart
- * (PLAYER-6, D34); on 'members' events staffCounts stays at zero.
+ * Counts an event's answers, the same on every team (SCHED-5, PLAYER-6):
+ * rsvpCounts counts players, staffCounts everyone answering for themselves
+ * ("coaches and others", D34). An old event's rsvpFor is ignored.
  */
-export function countsOf(rsvpFor: string, rsvps: RsvpRow[]): { rsvpCounts: RsvpCounts; staffCounts: RsvpCounts } {
+export function countsOf(rsvps: RsvpRow[]): { rsvpCounts: RsvpCounts; staffCounts: RsvpCounts } {
   const rsvpCounts = { ...ZERO_COUNTS };
   const staffCounts = { ...ZERO_COUNTS };
   for (const r of rsvps) {
-    const counts =
-      rsvpFor === 'players'
-        ? r.participantType === 'player'
-          ? rsvpCounts
-          : r.participantType === 'member'
-            ? staffCounts
-            : null
-        : r.participantType === 'member'
-          ? rsvpCounts
-          : null;
+    const counts = r.participantType === 'player' ? rsvpCounts : r.participantType === 'member' ? staffCounts : null;
     if (!counts) continue;
     if (r.status === 'going') counts.going++;
     else if (r.status === 'maybe') counts.maybe++;
@@ -83,7 +74,7 @@ export async function recountEventRsvps(eventId: string): Promise<void> {
     const event = await tx.get(eventRef);
     if (!event.exists) return; // Deleted; its RSVPs go with it.
     const snap = await tx.get(rsvps);
-    const { rsvpCounts, staffCounts } = countsOf(String(event.get('rsvpFor') ?? 'members'), snap.docs.map((d) => d.data()));
+    const { rsvpCounts, staffCounts } = countsOf(snap.docs.map((d) => d.data()));
     if (sameCounts(rsvpCounts, event.get('rsvpCounts')) && sameCounts(staffCounts, event.get('staffCounts'))) return;
     tx.update(eventRef, { rsvpCounts, staffCounts });
   });
@@ -109,7 +100,6 @@ export interface EventView {
   location: { name?: string; address?: string } | null;
   reminderOffsets: number[];
   canceled: boolean;
-  rsvpFor: string;
   /** game, practice, meeting, social, or other; read by the new-event line. */
   type?: string;
 }
@@ -132,7 +122,6 @@ export function eventView(d: DocumentData): EventView {
     location: d.location && typeof d.location === 'object' ? (d.location as EventView['location']) : null,
     reminderOffsets: Array.isArray(d.reminderOffsets) ? d.reminderOffsets.filter((o): o is number => typeof o === 'number') : [],
     canceled: Boolean(d.canceledAt),
-    rsvpFor: String(d.rsvpFor ?? 'members'),
     type: typeof d.type === 'string' ? d.type : 'other',
   };
 }
@@ -271,7 +260,8 @@ export function relativeDay(e: EventView, nowMs: number): string {
 /**
  * A reminder (SCHED-8): "Reminder: Practice today at 6:00 PM · Riverside
  * Park". A guardian's names their players instead (PLAYER-7): "Emma,
- * Liam: Practice today at 6:00 PM · Riverside Park".
+ * Liam: Practice today at 6:00 PM · Riverside Park". A member who is the
+ * player gets the plain reminder.
  */
 export function reminderBody(e: EventView, nowMs: number, playerNames: string[] = []): string {
   const time = e.allDay ? '' : ` at ${timeLabel(e.startMs, e.timeZone)}`;
@@ -374,10 +364,10 @@ export function reminderDedupeKey(eventId: string, offset: number, startMs: numb
 
 /** What choosing an event's audience reads. */
 export interface AudienceInput {
-  rsvpFor: string;
   members: { uid: string; admin: boolean }[];
-  guardians: { uid: string; playerId: string }[];
-  /** Players on the team, by ID. */
+  /** Player links; a missing relation is a guardian's. */
+  links: { uid: string; playerId: string; relation?: string }[];
+  /** Active players on the team, by ID (pending ones aren't on the roster). */
   playerNames: Map<string, string>;
   /** Each participant's answer, by participant ID. */
   statuses: Map<string, string>;
@@ -386,33 +376,35 @@ export interface AudienceInput {
 }
 
 /**
- * Who hears about an event, each with the players to name (PLAYER-7).
- * Adult events: members who didn't say Not going (no answer counts). Youth
- * events: guardians of players who didn't say Not going, named per player,
- * and admins by their own answer (Q14); for a change, other members too,
- * except guardians all of whose players said Not going.
+ * Who hears about an event, each with the players to name (PLAYER-7), the
+ * same on every team. A member linked to players hears for the ones who
+ * didn't say Not going: a guardian named per player, the player themselves
+ * plainly ("You" when they're also a guardian there). Admins and members
+ * not linked to any player go by their own answer (no answer counts).
+ * Linked members all of whose players said Not going hear nothing, unless
+ * they're admins who didn't say Not going themselves. [mode] is kept for
+ * callers; both modes pick the same people now that everyone has an
+ * answer of their own or their players'.
  */
 export function audienceOf(a: AudienceInput): Map<string, string[]> {
   const out = new Map<string, string[]>();
   const live = (id: string) => a.statuses.get(id) !== 'not_going';
-  if (a.rsvpFor !== 'players') {
-    for (const m of a.members) if (live(m.uid)) out.set(m.uid, []);
-    return out;
-  }
-  const playersOf = new Map<string, string[]>();
-  for (const g of a.guardians) {
-    if (!a.playerNames.has(g.playerId)) continue;
-    playersOf.set(g.uid, [...(playersOf.get(g.uid) ?? []), g.playerId]);
+  const linksOf = new Map<string, { playerId: string; self: boolean }[]>();
+  for (const l of a.links) {
+    if (!a.playerNames.has(l.playerId)) continue;
+    linksOf.set(l.uid, [...(linksOf.get(l.uid) ?? []), { playerId: l.playerId, self: l.relation === 'self' }]);
   }
   for (const m of a.members) {
-    const players = playersOf.get(m.uid) ?? [];
-    const names = players
-      .filter(live)
-      .map((id) => a.playerNames.get(id)!)
+    const links = linksOf.get(m.uid) ?? [];
+    const liveLinks = links.filter((l) => live(l.playerId));
+    const self = liveLinks.some((l) => l.self);
+    const names = liveLinks
+      .filter((l) => !l.self)
+      .map((l) => a.playerNames.get(l.playerId)!)
       .sort((x, y) => x.localeCompare(y));
-    if (names.length) out.set(m.uid, names);
-    else if (m.admin && live(m.uid)) out.set(m.uid, []);
-    else if (a.mode === 'change' && !players.length && !m.admin) out.set(m.uid, []);
+    if (names.length) out.set(m.uid, self ? ['You', ...names] : names);
+    else if (self) out.set(m.uid, []);
+    else if ((m.admin || !links.length) && live(m.uid)) out.set(m.uid, []);
   }
   return out;
 }
@@ -426,28 +418,31 @@ function firstName(name: string): string {
 export async function eventAudience(
   groupId: string,
   eventId: string,
-  rsvpFor: string,
   mode: AudienceInput['mode'],
 ): Promise<Map<string, string[]>> {
-  const youth = rsvpFor === 'players';
-  const [members, rsvps, guardians, players] = await Promise.all([
+  const [members, rsvps, links, players] = await Promise.all([
     db().collection(Collections.groupMembers).where('groupId', '==', groupId).select('uid', 'role').get(),
     db().collection(Collections.rsvps).where('eventId', '==', eventId).select('participantId', 'status').get(),
-    youth
-      ? db().collection(Collections.playerGuardians).where('groupId', '==', groupId).select('uid', 'playerId').get()
-      : null,
-    youth ? db().collection(Collections.players).where('groupId', '==', groupId).select('displayName').get() : null,
+    db().collection(Collections.playerGuardians).where('groupId', '==', groupId).select('uid', 'playerId', 'relation').get(),
+    db().collection(Collections.players).where('groupId', '==', groupId).select('displayName', 'status').get(),
   ]);
   return audienceOf({
-    rsvpFor,
     mode,
     members: members.docs.map((d) => ({
       uid: String(d.get('uid')),
       admin: ['owner', 'admin'].includes(String(d.get('role'))),
     })),
     statuses: new Map(rsvps.docs.map((d) => [String(d.get('participantId')), String(d.get('status'))])),
-    guardians: (guardians?.docs ?? []).map((d) => ({ uid: String(d.get('uid')), playerId: String(d.get('playerId')) })),
-    playerNames: new Map((players?.docs ?? []).map((d) => [d.id, firstName(String(d.get('displayName') ?? ''))])),
+    links: links.docs.map((d) => ({
+      uid: String(d.get('uid')),
+      playerId: String(d.get('playerId')),
+      relation: d.get('relation') === 'self' ? 'self' : 'guardian',
+    })),
+    playerNames: new Map(
+      players.docs
+        .filter((d) => d.get('status') !== 'pending')
+        .map((d) => [d.id, firstName(String(d.get('displayName') ?? ''))]),
+    ),
   });
 }
 
@@ -472,7 +467,7 @@ export async function notifyEventAudience(input: {
   dedupeKey: string;
 }): Promise<string[]> {
   return trySend(async () => {
-    const audience = await eventAudience(input.groupId, input.eventId, input.event.rsvpFor, input.mode);
+    const audience = await eventAudience(input.groupId, input.eventId, input.mode);
     if (!audience.size) return null;
     return {
       kind: input.kind,

@@ -200,7 +200,7 @@ describe('adding guardians by email needs a verified email (AUTH-3)', () => {
   beforeEach(async () => {
     await person('pat');
     await db().collection(Collections.groups).doc('cubs').set({
-      name: 'Cubs', teamType: 'youth', ownerId: 'pat', memberCount: 1, playerCount: 0, archivedAt: null,
+      name: 'Cubs', kind: 'team', ownerId: 'pat', memberCount: 1, playerCount: 0, archivedAt: null,
     });
     await member('cubs', 'pat', 'owner', 30);
     await db().collection(Collections.players).doc('p1').set({ groupId: 'cubs', name: 'Emma' });

@@ -43,8 +43,10 @@ const NOTIFICATION_PREFS = {
 };
 
 /**
- * The demo account owns an adult team (so admin screens show) and is a
- * guardian on a youth team (so per-player RSVPs show).
+ * The demo account owns an adult team (so admin screens show, with a
+ * player and a pending player to approve) and is a guardian on a youth
+ * team (so a parent's per-player RSVPs show). One team type: both teams
+ * have players (TEAM-1).
  */
 export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoDoc[] {
   const ago = (minutes: number) => new Date(now.getTime() - minutes * 60_000);
@@ -85,15 +87,28 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
   const memberships: [string, string, string, string | null, string | null][] = [
     [DEMO_TEAM, demo.uid, 'owner', 'Coach', null],
     [DEMO_TEAM, 'demo-jordan', 'admin', 'Assistant coach', null],
-    [DEMO_TEAM, 'demo-sam', 'member', null, null],
+    [DEMO_TEAM, 'demo-sam', 'member', null, '#12'],
     [DEMO_TEAM, 'demo-maria', 'member', null, null],
     [DEMO_YOUTH_TEAM, 'demo-priya', 'owner', 'Coach', null],
     [DEMO_YOUTH_TEAM, demo.uid, 'member', null, 'Riley #9'],
     [DEMO_YOUTH_TEAM, 'demo-maria', 'member', null, 'Emma #7'],
   ];
-  const players = [
-    { id: 'demo-riley', groupId: DEMO_YOUTH_TEAM, name: 'Riley Review', number: '9', position: 'Midfield', guardian: demo.uid },
-    { id: 'demo-emma', groupId: DEMO_YOUTH_TEAM, name: 'Emma Rodriguez', number: '7', position: 'Forward', guardian: 'demo-maria' },
+  // Sam is a player on Thunder ('self'); Casey isn't claimed yet; Maria
+  // asked to join Thunder's roster, waiting for the demo account to approve.
+  const players: {
+    id: string;
+    groupId: string;
+    name: string;
+    number: string;
+    position: string;
+    link: { uid: string; relation: 'self' | 'guardian' } | null;
+    pendingBy?: string;
+  }[] = [
+    { id: 'demo-riley', groupId: DEMO_YOUTH_TEAM, name: 'Riley Review', number: '9', position: 'Midfield', link: { uid: demo.uid, relation: 'guardian' } },
+    { id: 'demo-emma', groupId: DEMO_YOUTH_TEAM, name: 'Emma Rodriguez', number: '7', position: 'Forward', link: { uid: 'demo-maria', relation: 'guardian' } },
+    { id: 'demo-sam-rivera', groupId: DEMO_TEAM, name: 'Sam Rivera', number: '12', position: 'Shortstop', link: { uid: 'demo-sam', relation: 'self' } },
+    { id: 'demo-casey', groupId: DEMO_TEAM, name: 'Casey Park', number: '5', position: 'Outfield', link: null },
+    { id: 'demo-maria-rodriguez', groupId: DEMO_TEAM, name: 'Maria Rodriguez', number: '', position: '', link: null, pendingBy: 'demo-maria' },
   ];
   const chats: Record<string, [string, string, number][]> = {
     [DEMO_TEAM]: [
@@ -108,8 +123,8 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
   };
 
   const teams = [
-    { id: DEMO_TEAM, name: 'Riverside Thunder', sport: 'softball', teamType: 'adult', color: '#2F5BEA' },
-    { id: DEMO_YOUTH_TEAM, name: 'Lightning U10', sport: 'soccer', teamType: 'youth', color: '#0F8A5F' },
+    { id: DEMO_TEAM, name: 'Riverside Thunder', sport: 'softball', color: '#2F5BEA' },
+    { id: DEMO_YOUTH_TEAM, name: 'Lightning U10', sport: 'soccer', color: '#0F8A5F' },
   ];
   for (const t of teams) {
     const members = memberships.filter((m) => m[0] === t.id);
@@ -122,13 +137,13 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
       photoPath: null,
       color: t.color,
       sport: t.sport,
-      teamType: t.teamType,
+      kind: 'team',
       ownerId: owner,
       createdBy: owner,
       timeZone: 'America/Chicago',
       settings: SETTINGS,
       memberCount: members.length,
-      playerCount: players.filter((p) => p.groupId === t.id).length,
+      playerCount: players.filter((p) => p.groupId === t.id && !p.pendingBy).length,
       lastMessageAt: ago(last[2]),
       lastMessagePreview: { authorName: nameOf(last[0]), text: last[1], type: 'text' },
       storageBytes: 0,
@@ -157,24 +172,33 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
     });
   }
   for (const p of players) {
+    const owner = memberships.find((m) => m[0] === p.groupId && m[2] === 'owner')![1];
     add(`players/${p.id}`, {
       groupId: p.groupId,
       displayName: p.name,
       displayNameLower: p.name.toLowerCase(),
-      jerseyNumber: p.number,
-      position: p.position,
-      createdBy: 'demo-priya',
+      jerseyNumber: p.number || null,
+      position: p.position || null,
+      status: p.pendingBy ? 'pending' : 'active',
+      // A pending player is linked to its proposer on approval (PLAYER-4).
+      ...(p.pendingBy
+        ? { proposedBy: p.pendingBy, proposedRelation: 'self', decidedBy: null, decidedAt: null }
+        : {}),
+      createdBy: p.pendingBy ?? owner,
       createdAt: month,
       updatedAt: month,
     });
-    add(`playerGuardians/${p.id}_${p.guardian}`, {
-      playerId: p.id,
-      groupId: p.groupId,
-      uid: p.guardian,
-      addedBy: 'demo-priya',
-      via: 'admin',
-      createdAt: month,
-    });
+    if (p.link) {
+      add(`playerGuardians/${p.id}_${p.link.uid}`, {
+        playerId: p.id,
+        groupId: p.groupId,
+        uid: p.link.uid,
+        relation: p.link.relation,
+        addedBy: owner,
+        via: p.link.relation === 'self' ? 'request' : 'admin',
+        createdAt: month,
+      });
+    }
   }
   for (const [groupId, list] of Object.entries(chats)) {
     for (const [i, [uid, text, minutes]] of list.entries()) {
@@ -195,16 +219,23 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
   }
 
   const events = [
-    { id: 'demo-thunder-practice', groupId: DEMO_TEAM, type: 'practice', title: 'Practice', day: 2, hour: 18, rsvpFor: 'members' },
-    { id: 'demo-thunder-game', groupId: DEMO_TEAM, type: 'game', title: 'vs. Eagles', day: 5, hour: 10, rsvpFor: 'members', opponent: 'Eagles', homeAway: 'home' },
-    { id: 'demo-lightning-practice', groupId: DEMO_YOUTH_TEAM, type: 'practice', title: 'Practice', day: 1, hour: 17, rsvpFor: 'players' },
+    { id: 'demo-thunder-practice', groupId: DEMO_TEAM, type: 'practice', title: 'Practice', day: 2, hour: 18 },
+    { id: 'demo-thunder-game', groupId: DEMO_TEAM, type: 'game', title: 'vs. Eagles', day: 5, hour: 10, opponent: 'Eagles', homeAway: 'home' },
+    { id: 'demo-lightning-practice', groupId: DEMO_YOUTH_TEAM, type: 'practice', title: 'Practice', day: 1, hour: 17 },
   ];
-  // [event, type, participant, status, respondedBy]
+  // [event, type, participant, status, respondedBy]. Players count in
+  // rsvpCounts, members answering for themselves in staffCounts (SCHED-5).
   const rsvps: [string, string, string, string, string][] = [
     ['demo-thunder-practice', 'member', 'demo-jordan', 'going', 'demo-jordan'],
-    ['demo-thunder-practice', 'member', 'demo-sam', 'maybe', 'demo-sam'],
+    ['demo-thunder-practice', 'player', 'demo-sam-rivera', 'maybe', 'demo-sam'],
     ['demo-lightning-practice', 'player', 'demo-emma', 'going', 'demo-maria'],
+    ['demo-lightning-practice', 'member', 'demo-priya', 'going', 'demo-priya'],
   ];
+  const countsOf = (answers: typeof rsvps) => ({
+    going: answers.filter((r) => r[3] === 'going').length,
+    maybe: answers.filter((r) => r[3] === 'maybe').length,
+    notGoing: answers.filter((r) => r[3] === 'not_going').length,
+  });
   for (const e of events) {
     const startAt = inDays(e.day, e.hour);
     const answers = rsvps.filter((r) => r[0] === e.id);
@@ -221,14 +252,9 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
       opponent: e.opponent ?? null,
       homeAway: e.homeAway ?? null,
       rsvpEnabled: true,
-      rsvpFor: e.rsvpFor,
       reminderOffsets: [1440],
-      rsvpCounts: {
-        going: answers.filter((r) => r[3] === 'going').length,
-        maybe: answers.filter((r) => r[3] === 'maybe').length,
-        notGoing: answers.filter((r) => r[3] === 'not_going').length,
-      },
-      staffCounts: { going: 0, maybe: 0, notGoing: 0 },
+      rsvpCounts: countsOf(answers.filter((r) => r[1] === 'player')),
+      staffCounts: countsOf(answers.filter((r) => r[1] === 'member')),
       notifyTeam: false,
       postToChat: false,
       seriesId: null,

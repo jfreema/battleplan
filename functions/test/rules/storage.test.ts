@@ -42,7 +42,7 @@ beforeEach(async () => {
       sport: 'baseball',
       color: '#2F5BEA',
       photoPath: null,
-      teamType: 'adult',
+      kind: 'team',
       settings: { membersCanUploadDocs: true, defaultReminderOffsets: [1440] },
       storageBytes,
       storageQuotaBytes: QUOTA,
@@ -109,7 +109,7 @@ describe('a full team (STORE-4)', () => {
     await assertSucceeds(as('alice').doc('messages/full_m').update({ text: 'Edited', editedAt: now() }));
     const startAt = firebase.firestore.Timestamp.fromDate(new Date('2030-05-01T17:00:00Z'));
     await env.withSecurityRulesDisabled((ctx) =>
-      ctx.firestore().doc('events/e1').set({ groupId: 'full', rsvpEnabled: true, rsvpFor: 'members', startAt }),
+      ctx.firestore().doc('events/e1').set({ groupId: 'full', rsvpEnabled: true, startAt }),
     );
     await assertSucceeds(as('bob').doc('rsvps/e1_bob').set({
       eventId: 'e1', groupId: 'full', participantType: 'member', participantId: 'bob', participantName: 'Bob',

@@ -152,16 +152,15 @@ enum ThemePreference {
   }
 }
 
-enum TeamType {
-  adult('adult'),
-  youth('youth');
+enum GroupKind {
+  team('team');
 
-  const TeamType(this.value);
+  const GroupKind(this.value);
 
   /// The string stored in Firestore.
   final String value;
 
-  static TeamType? tryParse(String? value) {
+  static GroupKind? tryParse(String? value) {
     for (final e in values) {
       if (e.value == value) return e;
     }
@@ -317,16 +316,33 @@ enum HomeAway {
   }
 }
 
-enum RsvpFor {
-  members('members'),
-  players('players');
+enum PlayerStatus {
+  active('active'),
+  pending('pending');
 
-  const RsvpFor(this.value);
+  const PlayerStatus(this.value);
 
   /// The string stored in Firestore.
   final String value;
 
-  static RsvpFor? tryParse(String? value) {
+  static PlayerStatus? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum PlayerRelation {
+  self('self'),
+  guardian('guardian');
+
+  const PlayerRelation(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static PlayerRelation? tryParse(String? value) {
     for (final e in values) {
       if (e.value == value) return e;
     }

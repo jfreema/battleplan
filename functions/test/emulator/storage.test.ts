@@ -245,7 +245,7 @@ describe('new teams (STORE-1)', () => {
     const id = await createGroup(
       'pat',
       { displayName: 'Pat', photoPath: null },
-      { name: 'New', sport: 'soccer', teamType: 'adult', timeZone: 'America/Chicago' },
+      { name: 'New', sport: 'soccer', timeZone: 'America/Chicago' },
       Limits.defaultStorageQuotaMb,
     );
     const data = (await db().collection(Collections.groups).doc(id).get()).data() ?? {};

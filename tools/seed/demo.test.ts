@@ -81,7 +81,7 @@ describe('demoDocs', () => {
     for (const team of [DEMO_TEAM, DEMO_YOUTH_TEAM]) {
       const group = byPath.get(`groups/${team}`)!;
       const members = inCollection('groupMembers').filter((d) => d.data.groupId === team);
-      const players = inCollection('players').filter((d) => d.data.groupId === team);
+      const players = inCollection('players').filter((d) => d.data.groupId === team && d.data.status === 'active');
       assert.equal(group.memberCount, members.length);
       assert.equal(group.playerCount, players.length);
     }
@@ -93,10 +93,37 @@ describe('demoDocs', () => {
     }
     for (const e of inCollection('events')) {
       const answers = inCollection('rsvps').filter((r) => r.data.eventId === e.path.split('/')[1]);
-      const counts = e.data.rsvpCounts as Record<string, number>;
-      assert.equal(counts.going + counts.maybe + counts.notGoing, answers.length, e.path);
+      const total = (c: unknown) => Object.values(c as Record<string, number>).reduce((a, b) => a + b, 0);
+      const players = answers.filter((r) => r.data.participantType === 'player').length;
+      assert.equal(total(e.data.rsvpCounts), players, e.path);
+      assert.equal(total(e.data.staffCounts), answers.length - players, e.path);
       assert.ok((e.data.startAt as Date).getTime() > Date.parse('2026-10-12T15:00:00Z'), 'upcoming');
     }
+  });
+});
+
+describe('demo data: one team type (TEAM-1, PLAYER-3, PLAYER-4)', () => {
+  const docs = demoDocs({ uid: 'demo-appreview', email: DEFAULT_DEMO_EMAIL }, new Date('2026-10-12T15:00:00Z'));
+  const inCollection = (c: string) => docs.filter((d) => d.path.startsWith(`${c}/`));
+
+  it('writes kind team and no teamType or rsvpFor', () => {
+    for (const g of inCollection('groups')) {
+      assert.equal(g.data.kind, 'team');
+      assert.ok(!('teamType' in g.data), g.path);
+    }
+    for (const e of inCollection('events')) assert.ok(!('rsvpFor' in e.data), e.path);
+  });
+
+  it('gives every player a status and every link a relation, with a player on the adult team', () => {
+    for (const p of inCollection('players')) assert.ok(['active', 'pending'].includes(p.data.status as string), p.path);
+    for (const l of inCollection('playerGuardians')) assert.ok(['self', 'guardian'].includes(l.data.relation as string), l.path);
+    const self = inCollection('playerGuardians').find((l) => l.data.relation === 'self');
+    assert.equal(self?.data.groupId, DEMO_TEAM);
+    const pending = inCollection('players').filter((p) => p.data.status === 'pending');
+    assert.equal(pending.length, 1);
+    assert.ok(pending[0].data.proposedBy);
+    // No link until it's approved.
+    assert.ok(!inCollection('playerGuardians').some((l) => l.data.playerId === pending[0].path.split('/')[1]));
   });
 });
 

@@ -72,11 +72,12 @@ export { onPollVoteWritten } from './polls/triggers.js';
 export { saveEventSeries } from './schedule/handlers.js';
 export { onEventWritten, onRsvpWritten } from './schedule/triggers.js';
 export {
-  addMyPlayer,
   addPlayers,
+  claimPlayer,
   inviteGuardian,
+  proposePlayer,
   removeGuardian,
   removePlayer,
-  requestGuardianLink,
-  resolveGuardianLink,
+  resolvePendingPlayer,
+  resolvePlayerClaim,
 } from './players/handlers.js';

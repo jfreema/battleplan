@@ -158,7 +158,6 @@ export interface InvitePreview {
   groupId: string;
   name: string;
   sport: string;
-  teamType: string;
   memberCount: number;
   color: string | null;
   /** A link to the team's logo, readable signed out (INV-5), or null. */
@@ -200,7 +199,6 @@ export async function previewInvite(code: string): Promise<InvitePreview | Invit
     groupId,
     name: group.get('name') as string,
     sport: group.get('sport') as string,
-    teamType: group.get('teamType') as string,
     memberCount: (group.get('memberCount') as number) ?? 0,
     color: (group.get('color') as string | null) ?? null,
     logoUrl: await logoUrlOf(group.get('photoPath') as string | null | undefined),
@@ -217,7 +215,7 @@ export async function redeem(
   uid: string,
   email: string | null,
   member: { displayName: string; photoPath: string | null },
-): Promise<{ groupId: string; teamType: string; alreadyMember: boolean } | InviteProblem> {
+): Promise<{ groupId: string; alreadyMember: boolean } | InviteProblem> {
   const inviteRef = db().collection(Collections.invites).doc(code);
   return db().runTransaction(async (tx) => {
     const invite = await tx.get(inviteRef);
@@ -228,10 +226,7 @@ export async function redeem(
       : null;
     if (memberRef && groupId) {
       const existing = await tx.get(memberRef);
-      if (existing.exists) {
-        const group = await tx.get(db().collection(Collections.groups).doc(groupId));
-        return { groupId, teamType: group.get('teamType') as string, alreadyMember: true };
-      }
+      if (existing.exists) return { groupId, alreadyMember: true };
     }
     const problem = problemWith(data, email);
     if (problem || !groupId || !memberRef) return problem ?? 'unknown';
@@ -255,7 +250,7 @@ export async function redeem(
       inviteCode: code,
     });
     tx.update(inviteRef, { useCount: FieldValue.increment(1) });
-    return { groupId, teamType: group.get('teamType') as string, alreadyMember: false };
+    return { groupId, alreadyMember: false };
   });
 }
 

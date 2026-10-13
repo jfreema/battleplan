@@ -9,6 +9,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { randomUUID } from 'node:crypto';
 import { signInMethodsOf } from '../accounts/profile.js';
 import { isUsable } from '../invites/service.js';
+import { playerStatusOf, relationOf } from '../players/roster.js';
 import { auth, db } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import {
@@ -107,7 +108,6 @@ export interface TeamRow {
   id: string;
   name: string;
   sport: string;
-  teamType: string;
   ownerId: string;
   ownerName: string;
   memberCount: number;
@@ -188,7 +188,6 @@ export async function listTeams(input: {
       id: d.id,
       name: String(t.name ?? ''),
       sport: String(t.sport ?? ''),
-      teamType: String(t.teamType ?? 'adult'),
       ownerId,
       ownerName: String(owners.get(`${d.id}_${ownerId}`)?.displayName ?? ''),
       memberCount: Number(t.memberCount ?? 0),
@@ -208,7 +207,7 @@ export const RECENT_MESSAGES_MAX = 20;
 /**
  * Everything the team detail page shows (ADMIN-3): the team, its owner's
  * name, its people with roles (up to Limits.membersPerGroupMax), its
- * players and guardian links on youth teams, its usable invites, its
+ * players (active and pending) and player links, its usable invites, its
  * recent messages, and how many events, documents, and polls it has.
  * Dates are ISO 8601.
  */
@@ -216,13 +215,11 @@ export async function getTeam(groupId: string) {
   const group = await db().collection(Collections.groups).doc(groupId).get();
   if (!group.exists) throw new HttpsError('not-found', 'No such team.');
   const byTeam = (collection: string) => db().collection(collection).where('groupId', '==', groupId);
-  const youth = group.get('teamType') === 'youth';
   const [members, players, guardians, invites, events, documents, polls, messages] = await Promise.all([
     byTeam(Collections.groupMembers).limit(Limits.membersPerGroupMax).get(),
-    youth ? byTeam(Collections.players).limit(Limits.playersPerGroupMax).get() : null,
-    youth
-      ? byTeam(Collections.playerGuardians).limit(Limits.playersPerGroupMax * Limits.guardiansPerPlayerMax).get()
-      : null,
+    byTeam(Collections.players).limit(Limits.playersPerGroupMax).get(),
+    // Up to 4 guardians and one 'self' link per player (PLAYER-3).
+    byTeam(Collections.playerGuardians).limit(Limits.playersPerGroupMax * (Limits.guardiansPerPlayerMax + 1)).get(),
     byTeam(Collections.invites).where('revokedAt', '==', null).limit(Limits.queryLimitMax).get(),
     byTeam(Collections.events).count().get(),
     byTeam(Collections.groupDocuments).count().get(),
@@ -243,16 +240,18 @@ export async function getTeam(groupId: string) {
       pending: d.get('pending') === true,
       joinedAt: iso(d.get('joinedAt')),
     })),
-    players: (players?.docs ?? []).map((d) => ({
+    players: players.docs.map((d) => ({
       id: d.id,
       displayName: String(d.get('displayName') ?? ''),
       jerseyNumber: (d.get('jerseyNumber') as string | null | undefined) ?? null,
       position: (d.get('position') as string | null | undefined) ?? null,
+      status: playerStatusOf(d.data()),
     })),
-    guardians: (guardians?.docs ?? []).map((d) => ({
+    guardians: guardians.docs.map((d) => ({
       playerId: d.get('playerId') as string,
       uid: d.get('uid') as string,
       via: (d.get('via') as string | undefined) ?? null,
+      relation: relationOf(d.data()),
     })),
     invites: invites.docs
       .filter((d) => isUsable(d.data()))

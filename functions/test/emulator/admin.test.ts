@@ -88,7 +88,7 @@ async function team(id: string, name: string, extra: object = {}): Promise<void>
     name,
     nameLower: name.toLowerCase(),
     sport: 'softball',
-    teamType: 'adult',
+    kind: 'team',
     ownerId: '',
     memberCount: 0,
     lastMessageAt: null,
@@ -307,6 +307,17 @@ describe('team detail and actions (ADMIN-3)', () => {
     expect(detail.ownerName).toBe('Pat Owner');
     expect(detail.members.map((m) => `${m.uid}:${m.role}`).sort()).toEqual(['lee:member', 'pat:owner', 'sam:member']);
     expect(detail.players).toEqual([]);
+    // Every team has players: active and pending ones, with each link's relation.
+    await db().collection(Collections.players).doc('p1').set({ groupId: 'thunder', displayName: 'Sam Rivera', jerseyNumber: '4' });
+    await db().collection(Collections.players).doc('p2').set({ groupId: 'thunder', displayName: 'Kai', status: 'pending', proposedBy: 'lee' });
+    await db().collection(Collections.playerGuardians).doc('p1_sam').set({ groupId: 'thunder', playerId: 'p1', uid: 'sam', relation: 'self', via: 'claim' });
+    await db().collection(Collections.playerGuardians).doc('p1_lee').set({ groupId: 'thunder', playerId: 'p1', uid: 'lee', via: 'admin' });
+    const withPlayers = await asRoot<{ players: { id: string; status: string }[]; guardians: { uid: string; relation: string }[] }>(
+      admin.adminGetTeam,
+      { groupId: 'thunder' },
+    );
+    expect(withPlayers.players.map((p) => `${p.id}:${p.status}`).sort()).toEqual(['p1:active', 'p2:pending']);
+    expect(withPlayers.guardians.map((g) => `${g.uid}:${g.relation}`).sort()).toEqual(['lee:guardian', 'sam:self']);
     expect(detail.invites).toEqual([expect.objectContaining({ code: 'CODE1234', useCount: 2 })]);
     expect(detail.counts).toEqual({ events: 1, documents: 2, polls: 0 });
     await expect(asRoot(admin.adminGetTeam, { groupId: 'nope' })).rejects.toMatchObject({ code: 'not-found' });
@@ -883,7 +894,7 @@ describe('platform settings (ADMIN-7) and createGroup', () => {
     ...extra,
   });
   const newTeam = (uid: string, token: object = {}) =>
-    run<{ groupId: string }>(createGroup, uid, { name: 'New Team', sport: 'soccer', teamType: 'adult', timeZone: 'America/Chicago' }, token);
+    run<{ groupId: string }>(createGroup, uid, { name: 'New Team', sport: 'soccer', timeZone: 'America/Chicago' }, token);
   const config = async () => (await db().collection(Collections.config).doc('app').get()).data()!;
 
   it('saves the settings and the banner, keeping other fields, and audits the change', async () => {
@@ -905,6 +916,17 @@ describe('platform settings (ADMIN-7) and createGroup', () => {
     await asRoot(admin.adminUpdateConfig, settings());
     expect((await config()).announcementBanner).toBeNull();
     await expect(asRoot(admin.adminUpdateConfig, settings({ maxUploadMb: 50 }))).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it("makes one kind of team: kind 'team', no teamType, even if an old app sends one (TEAM-1)", async () => {
+    const { groupId } = await newTeam('pat');
+    const team = (await groups().doc(groupId).get()).data()!;
+    expect(team.kind).toBe('team');
+    expect(team).not.toHaveProperty('teamType');
+    const old = await run<{ groupId: string }>(createGroup, 'sam', {
+      name: 'Old App', sport: 'soccer', teamType: 'youth', timeZone: 'America/Chicago',
+    });
+    expect((await groups().doc(old.groupId).get()).data()).not.toHaveProperty('teamType');
   });
 
   it('turns team creation off for everyone but super admins', async () => {
@@ -934,7 +956,7 @@ describe('adding guardians by email needs a verified email (SAFE-5)', () => {
   const VERIFIED = { email_verified: true };
   const UNVERIFIED = { email_verified: false };
   beforeEach(async () => {
-    await team('colts', 'Colts U10', { teamType: 'youth', ownerId: 'pat', playerCount: 1 });
+    await team('colts', 'Colts U10', { ownerId: 'pat', playerCount: 1 });
     await member('colts', 'pat', 'owner', 'Pat Owner');
     await db().collection(Collections.players).doc('emma').set({ groupId: 'colts', displayName: 'Emma', displayNameLower: 'emma' });
   });

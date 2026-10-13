@@ -69,7 +69,7 @@ const FILES = [
   'groups/teamA/documents/d1/a.jpg',
 ];
 
-// teamA (youth): alice owner, carol admin, bob member, dan guardian of emma.
+// teamA: alice owner, carol admin, bob member, dan guardian of emma.
 // teamB: gina admin (the other team). root is a super admin on no team.
 async function seed(group: object = {}) {
   await env.withSecurityRulesDisabled(async (ctx) => {
@@ -80,7 +80,7 @@ async function seed(group: object = {}) {
     };
     for (const g of ['teamA', 'teamB']) {
       await db.doc(`groups/${g}`).set({
-        name: g, nameLower: g.toLowerCase(), sport: 'soccer', color: null, photoPath: null, teamType: 'youth',
+        name: g, nameLower: g.toLowerCase(), sport: 'soccer', color: null, photoPath: null, kind: 'team',
         settings, storageBytes: 0, storageQuotaBytes: 100 * MB, ...(g === 'teamA' ? group : {}),
       });
     }
@@ -109,7 +109,7 @@ async function seed(group: object = {}) {
     await db.doc('events/e1').set({
       groupId: 'teamA', type: 'practice', title: 'Practice', description: '', location: null, allDay: false,
       startAt: ts(START), endAt: ts('2030-06-02T00:30:00Z'), timeZone: 'America/Chicago', rsvpEnabled: true,
-      rsvpFor: 'players', reminderOffsets: [], notifyTeam: true, postToChat: true,
+      reminderOffsets: [], notifyTeam: true, postToChat: true,
       rsvpCounts: { going: 0, maybe: 0, notGoing: 0 }, staffCounts: { going: 0, maybe: 0, notGoing: 0 },
       createdBy: 'bob', createdAt: ts('2026-10-01T00:00:00Z'), updatedAt: ts('2026-10-01T00:00:00Z'),
     });
@@ -324,7 +324,7 @@ describe('every role, spot checks the other files leave out', () => {
     const event = (uid: string) => ({
       groupId: 'teamA', type: 'practice', title: 'Extra', description: '', location: null, allDay: false,
       startAt: ts(START), endAt: ts('2030-06-02T00:30:00Z'), timeZone: 'America/Chicago', rsvpEnabled: true,
-      rsvpFor: 'players', reminderOffsets: [], notifyTeam: false, postToChat: false,
+      reminderOffsets: [], notifyTeam: false, postToChat: false,
       rsvpCounts: { going: 0, maybe: 0, notGoing: 0 }, staffCounts: { going: 0, maybe: 0, notGoing: 0 },
       createdBy: uid, createdAt: now(), updatedAt: now(),
     });

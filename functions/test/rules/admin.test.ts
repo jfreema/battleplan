@@ -49,7 +49,7 @@ const TEAM_FILES = [
   'groups/teamA/documents/d1/Schedule.pdf',
 ];
 
-// teamA (youth): alice owner, bob member. teamB: gina admin. root is a
+// teamA: alice owner, bob member. teamB: gina admin. root is a
 // super admin on no team; bob is on teamA only.
 async function seed() {
   await env.withSecurityRulesDisabled(async (ctx) => {
@@ -57,7 +57,7 @@ async function seed() {
     const settings = { membersCanCreateEvents: true, membersCanCreatePolls: true, membersCanUploadDocs: true };
     for (const g of ['teamA', 'teamB']) {
       await db.doc(`groups/${g}`).set({
-        name: g, nameLower: g.toLowerCase(), teamType: 'youth', settings, storageBytes: 0, storageQuotaBytes: 100 * MB,
+        name: g, nameLower: g.toLowerCase(), kind: 'team', settings, storageBytes: 0, storageQuotaBytes: 100 * MB,
         archivedAt: null, suspendedAt: null,
       });
     }
@@ -82,7 +82,7 @@ async function seed() {
       await db.doc(`pollVotes/${p}_alice`).set({ pollId: p, groupId: 'teamA', uid: 'alice', optionIds: ['0'] });
     }
     await db.doc('events/e1').set({
-      groupId: 'teamA', type: 'practice', title: 'Practice', rsvpEnabled: true, rsvpFor: 'members',
+      groupId: 'teamA', type: 'practice', title: 'Practice', rsvpEnabled: true,
       startAt: ts('2027-01-01T18:00:00Z'), endAt: ts('2027-01-01T19:00:00Z'), createdBy: 'alice',
     });
     await db.doc('rsvps/e1_alice').set({ groupId: 'teamA', eventId: 'e1', participantType: 'member', participantId: 'alice', status: 'going' });

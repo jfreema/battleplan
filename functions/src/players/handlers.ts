@@ -18,18 +18,21 @@ import { teamUrl } from '../links/service.js';
 import { trySend } from '../notify/service.js';
 import { notifyAddedToTeam } from '../teams/service.js';
 import { groupMemberId } from '../shared/ids.js';
-import { joinNames } from './roster.js';
+import type { Relation } from './roster.js';
 import {
   addPlayers as add,
-  addMyPlayer as addMine,
+  claimPlayer as claim,
   guardianCount,
   isGuardian,
   linkGuardian,
+  linkOf,
+  playersOnTeam,
+  proposePlayer as propose,
   refreshPlayerSummary,
   removeGuardianLink,
   removePlayer as remove,
-  requestGuardianLinks,
-  resolveGuardianRequest,
+  resolvePendingPlayer as resolvePending,
+  resolvePlayerClaim as resolveClaim,
 } from './service.js';
 
 const Guardian = z.object({
@@ -59,14 +62,13 @@ const AddPlayersInput = z.object({
     .refine((players) => rosterLines(players) <= Limits.pastedRosterLinesMax, 'too-many-lines'),
 });
 
-/** Adds players with their guardians to a youth team (PLAYER-1). Admins only. */
+/** Adds players with their guardians to a team (PLAYER-1), active at once. Admins only. */
 export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(AddPlayersInput, request.data);
   await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
   const group = await db().collection(Collections.groups).doc(input.groupId).get();
-  if (group.get('teamType') !== 'youth') throw new HttpsError('failed-precondition', 'not-youth-team');
-  const players = (group.get('playerCount') as number | undefined) ?? 0;
+  const players = await playersOnTeam(input.groupId);
   if (players + input.players.length > Limits.playersPerGroupMax) {
     throw new HttpsError('failed-precondition', 'too-many-players');
   }
@@ -124,12 +126,12 @@ export const removePlayer = onCall(async (request) => {
 });
 
 /**
- * Throws unless [groupId] is an open youth team (requireOpenTeam) the caller
+ * Throws unless [groupId] is an open team (requireOpenTeam) the caller
  * belongs to. A super admin who isn't on it acts as an admin when
- * [superAdmin] is passed (§3: adding a guardian); calls that make the caller
- * a guardian themselves leave it false.
+ * [superAdmin] is passed (§3: adding a guardian); calls that link the
+ * caller themselves leave it false.
  */
-async function requireYouthMember(
+async function requireTeamMember(
   groupId: string,
   uid: string,
   superAdmin = false,
@@ -137,135 +139,264 @@ async function requireYouthMember(
   const role = (await roleOf(groupId, uid)) ?? (superAdmin ? 'superAdmin' : null);
   if (!role) throw new HttpsError('permission-denied', 'Not a member.');
   const group = await requireOpenTeam(groupId, superAdmin);
-  if (group.get('teamType') !== 'youth') throw new HttpsError('failed-precondition', 'not-youth-team');
   return { role, teamName: group.get('name') as string };
 }
 
-/** "Who are you here for?": ask admins to link you to players (PLAYER-3). */
-export const requestGuardianLink = onCall(async (request) => {
+const isTeamAdmin = (role: string) => role === 'owner' || role === 'admin';
+
+const RelationInput = z.enum(['self', 'guardian']);
+
+/** The team a player is on, checked against [groupId] when the caller passed one. */
+async function teamOfPlayer(playerId: string, groupId?: string): Promise<string> {
+  const player = await db().collection(Collections.players).doc(playerId).get();
+  const team = player.exists ? String(player.get('groupId') ?? '') : '';
+  if (!team || (groupId && groupId !== team)) throw new HttpsError('not-found', 'no-player');
+  return team;
+}
+
+/** "Maria R. asked to be Emma's guardian" / "Jared F. asked to be linked as the player Jared" (NOTIF-2). */
+export function claimBody(name: string, playerName: string, relation: Relation): string {
+  return relation === 'self' ? `${name} asked to be linked as the player ${playerName}` : `${name} asked to be ${playerName}'s guardian`;
+}
+
+/** "Maria R. asked to add a player: Emma" / "Jared F. asked to join the roster as Jared" (NOTIF-2). */
+export function pendingPlayerBody(name: string, playerName: string, relation: Relation): string {
+  return relation === 'self' ? `${name} asked to join the roster as ${playerName}` : `${name} asked to add a player: ${playerName}`;
+}
+
+/** What an approved member hears (NOTIF-2): a claim, or a player they proposed. */
+export function approvedBody(playerName: string, relation: Relation, proposal: boolean): string {
+  if (relation === 'self') return `You're now on the roster as ${playerName}`;
+  return proposal ? `${playerName} was added to the roster` : `You're now ${playerName}'s guardian`;
+}
+
+/** Asks the team's admins to decide on a claim or pending player (NOTIF-2, kind guardianRequest). */
+async function askAdmins(input: {
+  groupId: string;
+  uid: string;
+  teamName: string;
+  playerId: string;
+  playerName: string;
+  relation: Relation;
+  request: 'claim' | 'player';
+}): Promise<void> {
+  // The team's admins are asked, even at Important only.
+  await trySend(async () => {
+    const name = await displayNameOf(input.uid, 'Someone');
+    return {
+      kind: 'guardianRequest',
+      groupId: input.groupId,
+      recipients: { admins: true },
+      actor: { uid: input.uid, name },
+      target: { type: 'player', id: input.playerId },
+      route: `/g/${input.groupId}/roster`,
+      params: {
+        actorName: name,
+        playerId: input.playerId,
+        playerNames: input.playerName,
+        relation: input.relation,
+        request: input.request,
+      },
+      body:
+        input.request === 'claim'
+          ? claimBody(name, input.playerName, input.relation)
+          : pendingPlayerBody(name, input.playerName, input.relation),
+      // Claim IDs are reused when someone asks again, so each ask gets its own key.
+      dedupeKey: randomUUID(),
+      teamName: input.teamName,
+    };
+  });
+}
+
+/** Tells a member an admin approved their claim or player (NOTIF-2). A decline isn't announced. */
+async function tellApproved(input: {
+  groupId: string;
+  uid: string;
+  actor: string;
+  playerId: string;
+  playerName: string;
+  relation: Relation;
+  proposal: boolean;
+}): Promise<void> {
+  await trySend(async () => {
+    const actorName = await displayNameOf(input.actor, 'A team admin');
+    return {
+      kind: 'guardianApproved',
+      groupId: input.groupId,
+      recipients: { uids: [input.uid] },
+      actor: { uid: input.actor, name: actorName },
+      target: { type: 'player', id: input.playerId },
+      route: `/g/${input.groupId}/roster/players/${input.playerId}`,
+      params: { playerId: input.playerId, playerName: input.playerName, relation: input.relation },
+      body: approvedBody(input.playerName, input.relation, input.proposal),
+      dedupeKey: randomUUID(),
+    };
+  });
+}
+
+/**
+ * Claim a player (PLAYER-3): "I am this player" ('self') or "I'm their
+ * parent or guardian". Admins' claims are approved at once; others wait for
+ * an admin (PLAYER-4). Input { playerId, relation, groupId? }; returns
+ * { status: 'linked' | 'requested' }.
+ */
+export const claimPlayer = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(
-    z.object({ groupId: z.string().min(1), playerIds: z.array(z.string().min(1)).min(1).max(10) }),
+    z.object({ groupId: z.string().min(1).optional(), playerId: z.string().min(1), relation: RelationInput }),
     request.data,
   );
-  const { teamName } = await requireYouthMember(input.groupId, uid);
-  await consumeRateLimit(uid, 'guardianRequest', Limits.guardianRequestsPerUserPerDay);
-  const players = await requestGuardianLinks(input.groupId, uid, input.playerIds);
-  if (players.length) {
-    // NOTIF-2: the team's admins are asked, even at Important only.
-    await trySend(async () => {
-      const name = await displayNameOf(uid, 'Someone');
-      const playerNames = joinNames(players);
-      return {
-        kind: 'guardianRequest',
-        groupId: input.groupId,
-        recipients: { admins: true },
-        actor: { uid, name },
-        target: { type: 'user', id: uid },
-        route: `/g/${input.groupId}/roster`,
-        params: { actorName: name, playerNames },
-        body: `${name} asked to be ${playerNames}'s guardian`,
-        // Request IDs are reused when someone asks again, so each ask gets its own key.
-        dedupeKey: randomUUID(),
-        teamName,
-      };
+  const groupId = await teamOfPlayer(input.playerId, input.groupId);
+  const { role, teamName } = await requireTeamMember(groupId, uid);
+  const admin = isTeamAdmin(role);
+  if (!admin) await consumeRateLimit(uid, 'guardianRequest', Limits.guardianRequestsPerUserPerDay);
+  const result = await claim(groupId, uid, input.playerId, input.relation, admin);
+  await audit({
+    actorId: uid,
+    action: 'claimPlayer',
+    groupId,
+    targetType: 'player',
+    targetId: input.playerId,
+    after: { relation: input.relation, status: result.status },
+  });
+  if (result.status === 'requested') {
+    await askAdmins({
+      groupId,
+      uid,
+      teamName,
+      playerId: input.playerId,
+      playerName: result.playerName,
+      relation: input.relation,
+      request: 'claim',
     });
   }
-  return { requested: players.length };
+  return { status: result.status };
 });
 
-/** Admins approve or decline a guardian request (PLAYER-4). */
-export const resolveGuardianLink = onCall(async (request) => {
+/**
+ * Admins approve or decline a claim (PLAYER-4). Input { playerId, uid,
+ * approve, groupId? }; returns { ok }.
+ */
+export const resolvePlayerClaim = onCall(async (request) => {
   const actor = requireAuth(request);
   const input = parse(
     z.object({
-      groupId: z.string().min(1),
+      groupId: z.string().min(1).optional(),
       playerId: z.string().min(1),
       uid: z.string().min(1),
       approve: z.boolean(),
     }),
     request.data,
   );
-  await requireTeamAdmin(input.groupId, actor, request.auth?.token.superAdmin === true);
-  const done = await resolveGuardianRequest(input.groupId, input.playerId, input.uid, input.approve, actor);
-  if (done) {
+  const groupId = await teamOfPlayer(input.playerId, input.groupId);
+  await requireTeamAdmin(groupId, actor, request.auth?.token.superAdmin === true);
+  const relation = await resolveClaim(groupId, input.playerId, input.uid, input.approve, actor);
+  if (relation) {
     await audit({
       actorId: actor,
-      action: input.approve ? 'approveGuardian' : 'declineGuardian',
-      groupId: input.groupId,
+      action: input.approve ? 'approveClaim' : 'declineClaim',
+      groupId,
       targetType: 'player',
       targetId: input.playerId,
-      after: { uid: input.uid },
+      after: { uid: input.uid, relation },
     });
   }
-  if (done && input.approve) {
-    // NOTIF-2: the parent hears they're approved. A decline isn't announced.
-    await trySend(async () => {
-      const [player, actorName] = await Promise.all([
-        db().collection(Collections.players).doc(input.playerId).get(),
-        displayNameOf(actor, 'A team admin'),
-      ]);
-      if (!player.exists) return null;
-      const playerName = (player.get('displayName') as string | undefined) || 'a player';
-      return {
-        kind: 'guardianApproved',
-        groupId: input.groupId,
-        recipients: { uids: [input.uid] },
-        actor: { uid: actor, name: actorName },
-        target: { type: 'player', id: input.playerId },
-        route: `/g/${input.groupId}/roster/players/${input.playerId}`,
-        params: { playerId: input.playerId, playerName },
-        body: `You're now ${playerName}'s guardian`,
-        dedupeKey: randomUUID(),
-      };
+  if (relation && input.approve) {
+    const player = await db().collection(Collections.players).doc(input.playerId).get();
+    await tellApproved({
+      groupId,
+      uid: input.uid,
+      actor,
+      playerId: input.playerId,
+      playerName: (player.get('displayName') as string | undefined) || 'a player',
+      relation,
+      proposal: false,
     });
   }
-  return { ok: done };
+  return { ok: relation != null };
 });
 
-/** A parent adds their player who isn't listed (PLAYER-3). */
-export const addMyPlayer = onCall(async (request) => {
+/**
+ * Add a player who isn't on the roster (PLAYER-3), saying how you're
+ * linked. A member's player is pending until an admin approves it; an
+ * admin's is active at once. Input { groupId, displayName, jerseyNumber?,
+ * position?, relation }; returns { playerId, status: 'active' | 'pending' }.
+ */
+export const proposePlayer = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(
     z.object({
       groupId: z.string().min(1),
-      name: z.string().trim().min(1).max(60),
+      displayName: z.string().trim().min(1).max(60),
       jerseyNumber: z.string().trim().max(4).nullable().optional(),
+      position: z.string().trim().max(30).nullable().optional(),
+      relation: RelationInput,
     }),
     request.data,
   );
-  await requireYouthMember(input.groupId, uid);
-  await consumeRateLimit(uid, 'guardianRequest', Limits.guardianRequestsPerUserPerDay);
-  const group = await db().collection(Collections.groups).doc(input.groupId).get();
-  if (((group.get('playerCount') as number | undefined) ?? 0) >= Limits.playersPerGroupMax) {
+  const { role, teamName } = await requireTeamMember(input.groupId, uid);
+  const admin = isTeamAdmin(role);
+  if (!admin) await consumeRateLimit(uid, 'guardianRequest', Limits.guardianRequestsPerUserPerDay);
+  if ((await playersOnTeam(input.groupId)) >= Limits.playersPerGroupMax) {
     throw new HttpsError('failed-precondition', 'too-many-players');
   }
-  const playerId = await addMine(input.groupId, uid, input);
+  const result = await propose(input.groupId, uid, input, admin);
   await audit({
     actorId: uid,
-    action: 'addMyPlayer',
+    action: 'proposePlayer',
     groupId: input.groupId,
     targetType: 'player',
-    targetId: playerId,
-    after: { name: input.name },
+    targetId: result.playerId,
+    after: { name: input.displayName, relation: input.relation, status: result.status },
   });
-  // PLAYER-3: admins hear about a player a parent added, to check it.
-  await trySend(async () => {
-    const name = await displayNameOf(uid, 'A parent');
-    return {
-      kind: 'playerAdded',
+  if (result.status === 'pending') {
+    await askAdmins({
       groupId: input.groupId,
-      recipients: { admins: true },
-      actor: { uid, name },
-      target: { type: 'player', id: playerId },
-      route: `/g/${input.groupId}/roster/players/${playerId}`,
-      params: { actorName: name, playerId, playerName: input.name },
-      body: `${name} added a player: ${input.name}`,
-      dedupeKey: randomUUID(),
-      teamName: group.get('name') as string,
-    };
+      uid,
+      teamName,
+      playerId: result.playerId,
+      playerName: input.displayName,
+      relation: input.relation,
+      request: 'player',
+    });
+  }
+  return result;
+});
+
+/**
+ * Admins approve or decline a pending player (PLAYER-4). Declining deletes
+ * it. Input { playerId, approve, groupId? }; returns { ok, linked }.
+ */
+export const resolvePendingPlayer = onCall(async (request) => {
+  const actor = requireAuth(request);
+  const input = parse(
+    z.object({ groupId: z.string().min(1).optional(), playerId: z.string().min(1), approve: z.boolean() }),
+    request.data,
+  );
+  const groupId = await teamOfPlayer(input.playerId, input.groupId);
+  await requireTeamAdmin(groupId, actor, request.auth?.token.superAdmin === true);
+  const decision = await resolvePending(groupId, input.playerId, input.approve, actor);
+  if (!decision) return { ok: false, linked: false };
+  await audit({
+    actorId: actor,
+    action: input.approve ? 'approvePlayer' : 'declinePlayer',
+    groupId,
+    targetType: 'player',
+    targetId: input.playerId,
+    after: { name: decision.playerName, proposedBy: decision.proposedBy, relation: decision.relation },
   });
-  return { playerId };
+  if (input.approve && decision.proposedBy && decision.linked) {
+    await tellApproved({
+      groupId,
+      uid: decision.proposedBy,
+      actor,
+      playerId: input.playerId,
+      playerName: decision.playerName,
+      relation: decision.relation,
+      proposal: true,
+    });
+  }
+  return { ok: true, linked: decision.linked };
 });
 
 /**
@@ -288,9 +419,12 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   // Adding someone by email needs a verified email (AUTH-3).
   requireVerifiedEmail(request);
   const superAdmin = request.auth?.token.superAdmin === true;
-  const { role, teamName } = await requireYouthMember(input.groupId, actor, superAdmin);
+  const { role, teamName } = await requireTeamMember(input.groupId, actor, superAdmin);
   const player = await db().collection(Collections.players).doc(input.playerId).get();
-  if (!player.exists || player.get('groupId') !== input.groupId) throw new HttpsError('not-found', 'no-player');
+  if (!player.exists || player.get('groupId') !== input.groupId || player.get('status') === 'pending') {
+    throw new HttpsError('not-found', 'no-player');
+  }
+  // A guardian vouches for a co-parent; the player themselves ('self') doesn't add guardians.
   if (role === 'member' && !superAdmin && !(await isGuardian(input.playerId, actor))) {
     throw new HttpsError('permission-denied', 'Only guardians and admins can add guardians.');
   }
@@ -304,6 +438,8 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   ).exists;
   // A person can be on up to 100 teams (TEAM-2).
   if (!wasMember) await requireRoomForAnotherTeam(user.uid, Limits.groupsPerUserMax);
+  // The player themselves can't also be their own guardian.
+  if ((await linkOf(input.playerId, user.uid)) === 'self') throw new HttpsError('failed-precondition', 'already-linked');
   await linkGuardian(input.groupId, input.playerId, user, actor, 'guardian');
   await refreshPlayerSummary(input.groupId, user.uid);
   const actorProfile = await db().collection(Collections.users).doc(actor).get();
@@ -331,7 +467,7 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   return { uid: user.uid, invited: user.provisioned };
 });
 
-/** Removes a guardian from a player (PLAYER-2): admins, or the guardian. */
+/** Removes a link from a player (PLAYER-2): admins, or the linked member themselves. */
 export const removeGuardian = onCall(async (request) => {
   const actor = requireAuth(request);
   const input = parse(

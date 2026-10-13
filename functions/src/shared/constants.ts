@@ -117,8 +117,8 @@ export type UserStatus = (typeof userStatusValues)[number];
 export const themePreferenceValues = ['system', 'light', 'dark'] as const;
 export type ThemePreference = (typeof themePreferenceValues)[number];
 
-export const teamTypeValues = ['adult', 'youth'] as const;
-export type TeamType = (typeof teamTypeValues)[number];
+export const groupKindValues = ['team'] as const;
+export type GroupKind = (typeof groupKindValues)[number];
 
 export const sportValues = ['baseball', 'basketball', 'football', 'hockey', 'lacrosse', 'soccer', 'softball', 'volleyball', 'other'] as const;
 export type Sport = (typeof sportValues)[number];
@@ -141,8 +141,11 @@ export type EventType = (typeof eventTypeValues)[number];
 export const homeAwayValues = ['home', 'away'] as const;
 export type HomeAway = (typeof homeAwayValues)[number];
 
-export const rsvpForValues = ['members', 'players'] as const;
-export type RsvpFor = (typeof rsvpForValues)[number];
+export const playerStatusValues = ['active', 'pending'] as const;
+export type PlayerStatus = (typeof playerStatusValues)[number];
+
+export const playerRelationValues = ['self', 'guardian'] as const;
+export type PlayerRelation = (typeof playerRelationValues)[number];
 
 export const participantTypeValues = ['member', 'player'] as const;
 export type ParticipantType = (typeof participantTypeValues)[number];

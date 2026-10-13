@@ -29,7 +29,7 @@ beforeEach(async () => {
   await env.clearFirestore();
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
-    await db.doc('groups/teamA').set({ name: 'Thunder', teamType: 'adult' });
+    await db.doc('groups/teamA').set({ name: 'Thunder', kind: 'team' });
     await db.doc('groupMembers/teamA_alice').set({ groupId: 'teamA', uid: 'alice', role: 'owner', displayName: 'Alice', notificationLevel: 'all' });
     await db.doc('groupMembers/teamA_bob').set({ groupId: 'teamA', uid: 'bob', role: 'member', displayName: 'Bob', notificationLevel: 'all' });
     await db.doc(`devices/${INSTALL}`).set({ uid: 'alice', token: 't1', platform: 'web', appVersion: '1.0.0', updatedAt: at(0) });

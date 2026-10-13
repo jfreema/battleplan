@@ -25,6 +25,8 @@ service cloud.firestore {
     }
     function member(g) { return get(memberPath(g)).data; }
     function isAdmin(g) { return isMember(g) && member(g).role in ['owner', 'admin']; }
+    // Any player link: a parent or guardian, or the member who is the
+    // player ('self'). Both answer for the player and edit their details.
     function isGuardian(playerId) {
       return exists(/databases/$(database)/documents/playerGuardians/$(playerId + '_' + uid()));
     }
@@ -130,11 +132,11 @@ service cloud.firestore {
       // storageBytes, storageQuotaBytes, and storageAlert are left out on
       // purpose: Functions keep them (STORE-1, STORE-3, STORE-6), so no team
       // can give itself more room or silence its warning.
-      // teamType is in: admins can change it later (TEAM-1), and events
-      // keep the RSVPs they have, as rsvpFor is fixed on each event.
+      // One team type (TEAM-1): kind is set by Functions and isn't
+      // changed here; an old team's teamType is left alone.
       allow update: if isAdmin(g) && active(g)
         && onlyChanges(['name', 'nameLower', 'description', 'photoPath', 'color',
-                        'sport', 'timeZone', 'teamType', 'settings', 'chatTheme', 'updatedAt'])
+                        'sport', 'timeZone', 'settings', 'chatTheme', 'updatedAt'])
         && validGroup(incoming(), g)
         && (!('chatTheme' in changed()) || validChatTheme(incoming().chatTheme, g));
       // Created and deleted by Functions (createGroup, deleteGroup).
@@ -158,7 +160,6 @@ service cloud.firestore {
         && t.nameLower == t.name.lower()
         && t.sport in ['baseball', 'basketball', 'football', 'hockey', 'lacrosse',
                        'soccer', 'softball', 'volleyball', 'other']
-        && t.get('teamType', 'adult') in ['adult', 'youth']
         && (t.color == null || t.color in ['#2F5BEA', '#7BAFD4', '#0F8A5F', '#C2410C', '#B91C1C',
             '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F', '#1D4ED8',
             '#9333EA', '#334155'])
@@ -195,10 +196,11 @@ service cloud.firestore {
             || (incoming().lastReadAt is timestamp && incoming().lastReadAt <= request.time));
     }
 
-    // ---- Youth teams -------------------------------------------------------
+    // ---- Players, guardians, and claims -------------------------------------
 
-    // Kids' privacy (PLAYER-10): a player is only a name, number, and
-    // position. Functions create players; edits can't add anything else.
+    // Privacy (PLAYER-10): a player is only a name, number, and position
+    // (players managed by others may be children). Functions create players
+    // and set status, proposedBy, and decisions; edits can't add anything.
     function validPlayer(p) {
       return p.displayName is string && p.displayName.size() >= 1 && p.displayName.size() <= 60
         && p.displayNameLower == p.displayName.lower()
@@ -206,9 +208,26 @@ service cloud.firestore {
         && (p.get('position', null) == null || (p.position is string && p.position.size() <= 30));
     }
 
+    // Active players are on the roster for everyone on the team. A pending
+    // player (PLAYER-4) is seen only by the team's admins, super admins,
+    // and the member who proposed it. One read treats a player with no
+    // status (made before approvals) as active; a query can't be proven
+    // with defaults (rules are not filters), so members list with
+    // status == 'active' (or proposedBy == themselves), and every player
+    // carries a status (Functions write it; tools/seed/migrate-one-type adds it to old ones).
+    function playerVisible(p) {
+      return p.get('status', 'active') == 'active' || playerManager(p);
+    }
+    function playerListable(p) {
+      return p.status == 'active' || playerManager(p);
+    }
+    function playerManager(p) {
+      return superAdmin() || isAdmin(p.groupId) || p.proposedBy == uid();
+    }
+
     match /players/{playerId} {
-      allow get: if canRead(resource.data.groupId);
-      allow list: if boundedQuery() && canRead(resource.data.groupId);
+      allow get: if canRead(resource.data.groupId) && playerVisible(resource.data);
+      allow list: if boundedQuery() && canRead(resource.data.groupId) && playerListable(resource.data);
       // Archived teams are read-only (TEAM-9), players included.
       allow update: if (isGuardian(playerId) && isMember(resource.data.groupId)
                         || isAdmin(resource.data.groupId))
@@ -217,12 +236,16 @@ service cloud.firestore {
         && validPlayer(incoming());
     }
 
+    // Player links (relation 'self' or 'guardian'; missing is a guardian).
+    // Functions make them, and only for active players, so the roster's
+    // links never reveal a pending one.
     match /playerGuardians/{linkId} {
       allow get: if signedIn() && (resource.data.uid == uid() || canRead(resource.data.groupId));
       allow list: if boundedQuery() && signedIn()
         && (resource.data.uid == uid() || canRead(resource.data.groupId));
     }
 
+    // Player claims: seen by the member who claimed and the team's admins.
     match /guardianRequests/{requestId} {
       allow get: if signedIn() && (resource.data.uid == uid() || superAdmin() || isAdmin(resource.data.groupId));
       allow list: if boundedQuery() && signedIn()
@@ -449,8 +472,8 @@ service cloud.firestore {
         && hasRoom(incoming().groupId)
         && incoming().createdBy == uid()
         && incoming().createdAt == request.time
-        && incoming().rsvpFor == (get(groupPath(incoming().groupId)).data.get('teamType', 'adult') == 'youth'
-                                  ? 'players' : 'members')
+        // Every event takes per-player RSVPs (SCHED-5); rsvpFor is gone.
+        && incoming().get('rsvpFor', null) == null
         && incoming().rsvpCounts == {'going': 0, 'maybe': 0, 'notGoing': 0}
         && incoming().staffCounts == {'going': 0, 'maybe': 0, 'notGoing': 0}
         && incoming().get('seriesId', null) == null
@@ -563,12 +586,10 @@ service cloud.firestore {
         && event.groupId == g
         && event.rsvpEnabled == true
         && event.get('canceledAt', null) == null
-        && ((event.rsvpFor == 'members' && r.participantType == 'member')
-            || (event.rsvpFor == 'players' && r.participantType == 'player')
-            // Coaches and staff (team admins) answer for themselves on youth
-            // events too (SPEC Q14, D34).
-            || (event.rsvpFor == 'players' && r.participantType == 'member'
-                && isAdmin(g) && r.participantId == uid()))
+        // Players, and members answering for themselves (coaches and
+        // others, SCHED-5, D34), on every event. An old event's rsvpFor
+        // is ignored.
+        && r.participantType in ['member', 'player']
         && rsvpWriterOk(g, r)
         && (rsvpAdmin(g) || event.get('rsvpDeadline', null) == null
             || request.time < event.rsvpDeadline)
@@ -593,15 +614,19 @@ service cloud.firestore {
     // Who answers for anyone on the team (§3): its admins, and super admins.
     function rsvpAdmin(g) { return superAdmin() || isAdmin(g); }
 
-    // The member themselves, a guardian of the player, or a team admin (or
-    // super admin). A player must belong to this team.
+    // The member themselves, or for a player the member who is the player
+    // or a guardian (a player link), or a team admin (or super admin). A
+    // player must be an active one on this team.
     function rsvpWriterOk(g, r) {
       return (r.participantType == 'member'
               && ((r.participantId == uid() && isMember(g))
                   || (rsvpAdmin(g) && exists(/databases/$(database)/documents/groupMembers/$(g + '_' + r.participantId)))))
         || (r.participantType == 'player'
-              && get(/databases/$(database)/documents/players/$(r.participantId)).data.groupId == g
+              && rsvpPlayerOk(get(/databases/$(database)/documents/players/$(r.participantId)).data, g)
               && ((isGuardian(r.participantId) && isMember(g)) || rsvpAdmin(g)));
+    }
+    function rsvpPlayerOk(p, g) {
+      return p.groupId == g && p.get('status', 'active') == 'active';
     }
 
     // ---- Documents, notifications, safety, admin --------------------------

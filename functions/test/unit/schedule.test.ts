@@ -194,7 +194,6 @@ const view = (over: Partial<EventView> = {}): EventView => ({
   location: { name: 'Riverside Park', address: '1 River Rd' },
   reminderOffsets: [60, 1440],
   canceled: false,
-  rsvpFor: 'members',
   ...over,
 });
 
@@ -328,16 +327,17 @@ describe('counts (SCHED-1, PLAYER-6)', () => {
     { participantType: 'player', status: 'bogus' },
   ];
 
-  it('counts members on adult events', () => {
-    expect(countsOf('members', rows)).toEqual({
-      rsvpCounts: { going: 1, maybe: 1, notGoing: 0 },
-      staffCounts: { going: 0, maybe: 0, notGoing: 0 },
+  it('counts players, and everyone else apart, on every event (D34)', () => {
+    expect(countsOf(rows)).toEqual({
+      rsvpCounts: { going: 1, maybe: 0, notGoing: 1 },
+      staffCounts: { going: 1, maybe: 1, notGoing: 0 },
     });
   });
 
-  it('counts players, and coaches apart, on youth events (D34)', () => {
-    expect(countsOf('players', rows)).toEqual({
-      rsvpCounts: { going: 1, maybe: 0, notGoing: 1 },
+  it('counts members apart on an old adult event too: rsvpFor is gone', () => {
+    // An old 'members' event's answers are all members' own: "others".
+    expect(countsOf(rows.filter((r) => r.participantType === 'member'))).toEqual({
+      rsvpCounts: { going: 0, maybe: 0, notGoing: 0 },
       staffCounts: { going: 1, maybe: 1, notGoing: 0 },
     });
   });
@@ -384,18 +384,18 @@ describe('who hears about an event (SCHED-6, SCHED-8, PLAYER-7, Q14)', () => {
     { uid: 'dan', admin: false },
     { uid: 'aunt', admin: false },
   ];
-  const guardians = [
+  const links = [
     { uid: 'maria', playerId: 'emma' },
-    { uid: 'maria', playerId: 'liam' },
+    { uid: 'maria', playerId: 'liam', relation: 'guardian' },
     { uid: 'dan', playerId: 'ava' },
   ];
   const playerNames = new Map([['emma', 'Emma'], ['liam', 'Liam'], ['ava', 'Ava']]);
   const sorted = (m: Map<string, string[]>) => Object.fromEntries([...m.entries()].sort());
 
-  it('on adult teams: everyone but Not going, no answer counting', () => {
+  it('with no player links: everyone but Not going, no answer counting', () => {
     const statuses = new Map([['maria', 'not_going'], ['dan', 'maybe']]);
     for (const mode of ['change', 'reminder'] as const) {
-      expect(sorted(audienceOf({ rsvpFor: 'members', members, guardians: [], playerNames, statuses, mode }))).toEqual({
+      expect(sorted(audienceOf({ members, links: [], playerNames, statuses, mode }))).toEqual({
         aunt: [],
         coach: [],
         dan: [],
@@ -403,31 +403,56 @@ describe('who hears about an event (SCHED-6, SCHED-8, PLAYER-7, Q14)', () => {
     }
   });
 
-  it('on youth teams: guardians named per player still coming, admins by their own answer', () => {
+  it('guardians named per player still coming; admins and unlinked members by their own answer', () => {
     const statuses = new Map([['liam', 'not_going'], ['ava', 'not_going'], ['coach', 'going']]);
-    expect(sorted(audienceOf({ rsvpFor: 'players', members, guardians, playerNames, statuses, mode: 'reminder' }))).toEqual({
-      coach: [],
-      maria: ['Emma'],
+    for (const mode of ['change', 'reminder'] as const) {
+      // Dan's only player said Not going; the aunt isn't linked and didn't say Not going.
+      expect(sorted(audienceOf({ members, links, playerNames, statuses, mode }))).toEqual({
+        aunt: [],
+        coach: [],
+        maria: ['Emma'],
+      });
+    }
+    expect(audienceOf({ members, links, playerNames, statuses: new Map([['aunt', 'not_going']]), mode: 'reminder' }).has('aunt')).toBe(false);
+  });
+
+  it('a member who is the player hears plainly, by the player\'s answer, not their own', () => {
+    const asPlayer = [...links, { uid: 'aunt', playerId: 'zoe', relation: 'self' }];
+    const names = new Map([...playerNames, ['zoe', 'Zoe']]);
+    expect(audienceOf({ members, links: asPlayer, playerNames: names, statuses: new Map(), mode: 'reminder' }).get('aunt')).toEqual([]);
+    // Zoe said Not going: the aunt hears nothing, whatever she said herself.
+    const out = audienceOf({
+      members,
+      links: asPlayer,
+      playerNames: names,
+      statuses: new Map([['zoe', 'not_going'], ['aunt', 'going']]),
+      mode: 'change',
     });
-    // A change also reaches members with no players; Dan's only player said Not going.
-    expect(sorted(audienceOf({ rsvpFor: 'players', members, guardians, playerNames, statuses, mode: 'change' }))).toEqual({
-      aunt: [],
-      coach: [],
-      maria: ['Emma'],
-    });
+    expect(out.has('aunt')).toBe(false);
+  });
+
+  it('a player who is also a guardian hears "You" and their players', () => {
+    const both = [...links, { uid: 'dan', playerId: 'dad', relation: 'self' }];
+    const names = new Map([...playerNames, ['dad', 'Dan']]);
+    expect(audienceOf({ members, links: both, playerNames: names, statuses: new Map(), mode: 'reminder' }).get('dan')).toEqual(['You', 'Ava']);
+  });
+
+  it('ignores links to players not on the roster (pending or removed)', () => {
+    const pending = [{ uid: 'aunt', playerId: 'pending1', relation: 'self' }];
+    // The aunt counts as unlinked, so her own answer decides.
+    expect(audienceOf({ members, links: pending, playerNames, statuses: new Map(), mode: 'reminder' }).get('aunt')).toEqual([]);
   });
 
   it('leaves out an admin who said Not going, unless they guard a player who is coming', () => {
     const statuses = new Map([['coach', 'not_going']]);
-    const asGuardian = [...guardians, { uid: 'coach', playerId: 'ava' }];
-    expect(audienceOf({ rsvpFor: 'players', members, guardians, playerNames, statuses, mode: 'change' }).has('coach')).toBe(false);
-    expect(audienceOf({ rsvpFor: 'players', members, guardians: asGuardian, playerNames, statuses, mode: 'reminder' }).get('coach')).toEqual(['Ava']);
+    const asGuardian = [...links, { uid: 'coach', playerId: 'ava' }];
+    expect(audienceOf({ members, links, playerNames, statuses, mode: 'change' }).has('coach')).toBe(false);
+    expect(audienceOf({ members, links: asGuardian, playerNames, statuses, mode: 'reminder' }).get('coach')).toEqual(['Ava']);
   });
 
   it('names both players with no answers yet, alphabetically', () => {
-    const out = audienceOf({ rsvpFor: 'players', members, guardians, playerNames, statuses: new Map(), mode: 'reminder' });
+    const out = audienceOf({ members, links, playerNames, statuses: new Map(), mode: 'reminder' });
     expect(out.get('maria')).toEqual(['Emma', 'Liam']);
-    expect(out.has('aunt')).toBe(false);
   });
 });
 

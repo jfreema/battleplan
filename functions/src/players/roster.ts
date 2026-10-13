@@ -59,3 +59,31 @@ export function joinNames(names: string[]): string {
   if (names.length === 2) return `${names[0]} and ${names[1]}`;
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 }
+
+/** How a member is linked to a player (PLAYER-3): they are the player, or a parent or guardian. */
+export type Relation = 'self' | 'guardian';
+
+/** A player link's relation; links made before 'self' existed are guardians. */
+export function relationOf(link: { relation?: unknown } | undefined): Relation {
+  return link?.relation === 'self' ? 'self' : 'guardian';
+}
+
+/** A player's status; players made before approvals existed are active. */
+export function playerStatusOf(player: { status?: unknown } | undefined): 'active' | 'pending' {
+  return player?.status === 'pending' ? 'pending' : 'active';
+}
+
+/**
+ * A member's "Who's who" label from their links (PLAYER-8): a guardian's
+ * players, "Emma #7, Liam #23"; a member who is a player, their number,
+ * "#12", or nothing without one. Both when they're both, the number first.
+ */
+export function playerSummaryOf(links: { relation: Relation; name: string; jerseyNumber?: string | null }[]): string | null {
+  const self = links.find((l) => l.relation === 'self');
+  const guarded = links
+    .filter((l) => l.relation !== 'self')
+    .map((l) => playerLabel(l.name, l.jerseyNumber))
+    .sort();
+  const parts = [...(self?.jerseyNumber ? [`#${self.jerseyNumber}`] : []), ...guarded];
+  return parts.length ? parts.join(', ') : null;
+}

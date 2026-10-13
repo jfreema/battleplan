@@ -36,9 +36,8 @@
       "light",
       "dark"
     ],
-    "teamType": [
-      "adult",
-      "youth"
+    "groupKind": [
+      "team"
     ],
     "sport": [
       "baseball",
@@ -97,9 +96,13 @@
       "home",
       "away"
     ],
-    "rsvpFor": [
-      "members",
-      "players"
+    "playerStatus": [
+      "active",
+      "pending"
+    ],
+    "playerRelation": [
+      "self",
+      "guardian"
     ],
     "participantType": [
       "member",

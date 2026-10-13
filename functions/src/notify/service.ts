@@ -34,7 +34,7 @@ export interface NotifyInput {
   /** Where a tap goes (NOTIF-6), e.g. /g/{g}/chat/m/{messageId}. */
   route: string;
   params: Record<string, string>;
-  /** Pre-rendered English (NOTIF-5). A function gives each person their own (youth teams, M6). */
+  /** Pre-rendered English (NOTIF-5). A function gives each person their own (players named per person, PLAYER-7). */
   body: string | ((uid: string) => string);
   /**
    * One per action. Triggers pass the triggering doc's ID so a retried

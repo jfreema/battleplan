@@ -21,8 +21,11 @@ const as = (uid: string): Db => env.authenticatedContext(uid).firestore();
 const zeros = { going: 0, maybe: 0, notGoing: 0 };
 const START = '2030-06-01T23:00:00Z';
 
-/** A whole event as stored, for seeding. */
-const stored = (groupId: string, rsvpFor: string, extra: object = {}) => ({
+/**
+ * A whole event as stored, for seeding. [rsvpFor] is only on events made
+ * before one team type (null leaves it out, as new events are).
+ */
+const stored = (groupId: string, rsvpFor: string | null, extra: object = {}) => ({
   groupId,
   type: 'practice',
   title: 'Practice',
@@ -38,7 +41,7 @@ const stored = (groupId: string, rsvpFor: string, extra: object = {}) => ({
   opponent: null,
   homeAway: null,
   rsvpEnabled: true,
-  rsvpFor,
+  ...(rsvpFor ? { rsvpFor } : {}),
   rsvpDeadline: null,
   reminderOffsets: [60],
   notifyTeam: true,
@@ -58,15 +61,19 @@ const stored = (groupId: string, rsvpFor: string, extra: object = {}) => ({
   ...extra,
 });
 
-// teamA (adult): alice owner, bob member. teamY (youth): carol admin, dan
-// guardian of emma, frank member. teamB: gina. Events: eA (by bob) and
-// eS (a series event) on teamA, eY on teamY, eGone (canceled) on teamA.
+// teamA: alice owner, bob member who is the player jared ('self').
+// teamY (an old doc still saying teamType 'youth'): carol admin, dan
+// guardian of emma, frank member who proposed the pending player pend.
+// teamB: gina. Events: eA (by bob, an old one with rsvpFor 'members') and
+// eS (a series event) on teamA, eY on teamY (new: no rsvpFor), eGone
+// (canceled) on teamA.
 async function seed(settings: object = {}) {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
     const s = { membersCanCreateEvents: false, membersCanCreatePolls: true, membersCanUploadDocs: true, ...settings };
-    for (const [g, teamType] of [['teamA', 'adult'], ['teamY', 'youth'], ['teamB', 'adult']]) {
-      await db.doc(`groups/${g}`).set({ name: g, nameLower: g, teamType, settings: s, storageBytes: 0, storageQuotaBytes: 100 });
+    for (const g of ['teamA', 'teamY', 'teamB']) {
+      const kind = g === 'teamY' ? { teamType: 'youth' } : { kind: 'team' };
+      await db.doc(`groups/${g}`).set({ name: g, nameLower: g, ...kind, settings: s, storageBytes: 0, storageQuotaBytes: 100 });
     }
     const member = (g: string, uid: string, role: string) =>
       db.doc(`groupMembers/${g}_${uid}`).set({ groupId: g, uid, role, displayName: uid, photoPath: null });
@@ -78,9 +85,14 @@ async function seed(settings: object = {}) {
     await member('teamB', 'gina', 'admin');
     await db.doc('players/emma').set({ groupId: 'teamY', displayName: 'Emma', displayNameLower: 'emma' });
     await db.doc('playerGuardians/emma_dan').set({ groupId: 'teamY', playerId: 'emma', uid: 'dan' });
+    await db.doc('players/jared').set({ groupId: 'teamA', displayName: 'Jared', displayNameLower: 'jared', status: 'active' });
+    await db.doc('playerGuardians/jared_bob').set({ groupId: 'teamA', playerId: 'jared', uid: 'bob', relation: 'self' });
+    await db.doc('players/pend').set({
+      groupId: 'teamY', displayName: 'Pending', displayNameLower: 'pending', status: 'pending', proposedBy: 'frank',
+    });
     await db.doc('events/eA').set(stored('teamA', 'members'));
     await db.doc('events/eS').set(stored('teamA', 'members', { seriesId: 's1', seriesDate: '2030-06-01', createdBy: 'alice' }));
-    await db.doc('events/eY').set(stored('teamY', 'players', { createdBy: 'carol' }));
+    await db.doc('events/eY').set(stored('teamY', null, { createdBy: 'carol' }));
     await db.doc('events/eGone').set(stored('teamA', 'members', { canceledAt: ts('2026-10-02T00:00:00Z'), canceledBy: 'alice' }));
     await db.doc('eventSeries/s1').set({ groupId: 'teamA', timeZone: 'America/Chicago', createdBy: 'alice' });
   });
@@ -111,7 +123,7 @@ describe('creating events (SCHED-3, Q12)', () => {
   /** A new one-off event as the app writes it. */
   const fresh = (uid: string, groupId = 'teamA', extra: object = {}) => {
     const e: Record<string, unknown> = {
-      ...stored(groupId, groupId === 'teamY' ? 'players' : 'members'),
+      ...stored(groupId, null),
       createdBy: uid,
       createdAt: now(),
       updatedAt: now(),
@@ -204,9 +216,14 @@ describe('creating events (SCHED-3, Q12)', () => {
     await assertFails(sam.doc('events/bySam3').set(fresh('sam')));
   });
 
-  it("sets rsvpFor from the team's type (PLAYER-6)", async () => {
+  it('takes no rsvpFor on new events: one team type, per-player RSVPs everywhere (SCHED-5)', async () => {
     await assertSucceeds(create('carol', 'teamY'));
     await assertFails(as('carol').doc('events/new3').set(fresh('carol', 'teamY', { rsvpFor: 'members' })));
+    await assertFails(as('alice').doc('events/new3').set(fresh('alice', 'teamA', { rsvpFor: 'players' })));
+  });
+
+  it("leaves an old event's rsvpFor alone on edits", async () => {
+    await assertSucceeds(as('alice').doc('events/eA').update({ title: 'Scrimmage', updatedAt: now() }));
   });
 
   it('refuses another team, archived teams, and full teams (TEAM-9, STORE-4)', async () => {
@@ -356,12 +373,40 @@ describe('RSVPs (SCHED-5, PLAYER-6, Q14)', () => {
     await assertFails(answer('bob', 'eA', 'member', 'alice'));
   });
 
-  it('on youth teams: guardians per player, admins for players and themselves', async () => {
+  it('players on every team: their guardians and admins answer, other members don\'t', async () => {
     await assertSucceeds(answer('dan', 'eY', 'player', 'emma'));
     await assertSucceeds(answer('carol', 'eY', 'player', 'emma', { status: 'maybe' }));
     await assertSucceeds(answer('carol', 'eY', 'member', 'carol'));
     await assertFails(answer('frank', 'eY', 'player', 'emma'));
-    await assertFails(answer('dan', 'eY', 'member', 'dan'));
+  });
+
+  it('lets any member answer for themselves, linked or not (SCHED-5)', async () => {
+    await assertSucceeds(answer('dan', 'eY', 'member', 'dan'));
+    await assertSucceeds(answer('frank', 'eY', 'member', 'frank'));
+    await assertFails(answer('frank', 'eY', 'member', 'dan'));
+  });
+
+  it("lets a member who is the player answer on the player's row, on an old 'members' event too", async () => {
+    await assertSucceeds(answer('bob', 'eA', 'player', 'jared'));
+    await assertSucceeds(answer('alice', 'eA', 'player', 'jared', { status: 'not_going' }));
+    // A player of another team can't be answered for here.
+    await assertFails(answer('alice', 'eA', 'player', 'emma'));
+  });
+
+  it('takes no answers for a pending player, even from admins or its proposer (PLAYER-4)', async () => {
+    await assertFails(answer('carol', 'eY', 'player', 'pend'));
+    await assertFails(answer('frank', 'eY', 'player', 'pend'));
+    const sam = env.authenticatedContext('sam', { superAdmin: true }).firestore();
+    await assertFails(
+      sam.doc('rsvps/eY_pend').set({
+        eventId: 'eY', groupId: 'teamY', participantType: 'player', participantId: 'pend', participantName: 'P',
+        eventStartAt: ts(START), status: 'going', note: '', guests: 0, respondedBy: 'sam', updatedAt: now(),
+      }),
+    );
+  });
+
+  it('refuses an unknown participant type', async () => {
+    await assertFails(answer('bob', 'eA', 'guest', 'bob'));
   });
 
   it('closes after the deadline except for admins, and on canceled events', async () => {

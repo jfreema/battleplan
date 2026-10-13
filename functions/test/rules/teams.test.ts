@@ -17,9 +17,10 @@ type Db = firebase.firestore.Firestore;
 let env: RulesTestEnvironment;
 const GB = 1024 ** 3;
 
-// Team A (adult): alice owns it, bob is a member. Team B (youth): carol is
-// an admin, dan guards emma, frank is a parent waiting on a request for
-// emma. Team C is full: its storage quota is used up.
+// Team A: alice owns it, bob is a member. Team B (an old doc that still
+// says teamType 'youth'): carol is an admin, dan guards emma, frank is
+// waiting on a claim for emma and proposed zoe, a pending player. Team C is
+// full: its storage quota is used up.
 const member = (groupId: string, uid: string, role = 'member') => ({
   groupId,
   uid,
@@ -41,9 +42,9 @@ beforeEach(async () => {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
     const settings = { membersCanUploadDocs: false };
-    await db.doc('groups/teamA').set({ name: 'Thunder', teamType: 'adult', settings, storageBytes: 0, storageQuotaBytes: 5 * GB });
+    await db.doc('groups/teamA').set({ name: 'Thunder', kind: 'team', settings, storageBytes: 0, storageQuotaBytes: 5 * GB });
     await db.doc('groups/teamB').set({ name: 'Lightning', teamType: 'youth', settings, storageBytes: 0, storageQuotaBytes: 5 * GB });
-    await db.doc('groups/teamC').set({ name: 'Full', teamType: 'adult', settings, storageBytes: 5 * GB, storageQuotaBytes: 5 * GB });
+    await db.doc('groups/teamC').set({ name: 'Full', kind: 'team', settings, storageBytes: 5 * GB, storageQuotaBytes: 5 * GB });
     await db.doc('groupMembers/teamA_alice').set(member('teamA', 'alice', 'owner'));
     await db.doc('groupMembers/teamA_bob').set(member('teamA', 'bob'));
     await db.doc('groupMembers/teamB_carol').set(member('teamB', 'carol', 'admin'));
@@ -52,7 +53,12 @@ beforeEach(async () => {
     await db.doc('groupMembers/teamC_alice').set(member('teamC', 'alice', 'owner'));
     await db.doc('players/emma').set({ groupId: 'teamB', displayName: 'Emma', displayNameLower: 'emma' });
     await db.doc('playerGuardians/emma_dan').set({ playerId: 'emma', groupId: 'teamB', uid: 'dan' });
-    await db.doc('guardianRequests/emma_frank').set({ playerId: 'emma', groupId: 'teamB', uid: 'frank', status: 'pending' });
+    await db.doc('guardianRequests/emma_frank').set({ playerId: 'emma', groupId: 'teamB', uid: 'frank', relation: 'guardian', status: 'pending' });
+    await db.doc('players/zoe').set({
+      groupId: 'teamB', displayName: 'Zoe', displayNameLower: 'zoe', jerseyNumber: null, position: null,
+      status: 'pending', proposedBy: 'frank', proposedRelation: 'guardian', decidedBy: null, decidedAt: null,
+    });
+    await db.doc('players/liam').set({ groupId: 'teamB', displayName: 'Liam', displayNameLower: 'liam', status: 'active' });
     await db.doc('invites/K7XPM2QR').set({ groupId: 'teamA', type: 'link', useCount: 0 });
     await db.doc('auditLogs/a1').set({ groupId: 'teamA', action: 'createGroup' });
     await db.doc('reports/rep1').set({ groupId: 'teamB', reporterId: 'dan', subjectId: 'frank', teamVisible: true, status: 'open', reason: 'spam' });
@@ -74,7 +80,7 @@ const list = (db: Db, collection: string, field: string, value: string) =>
 
 describe('teams and memberships', () => {
   it('leaves creating and deleting teams to Functions', async () => {
-    await assertFails(as('alice').doc('groups/new').set({ name: 'Mine', teamType: 'adult' }));
+    await assertFails(as('alice').doc('groups/new').set({ name: 'Mine', kind: 'team' }));
     await assertFails(as('alice').doc('groups/teamA').delete());
   });
 
@@ -99,7 +105,7 @@ describe('teams and memberships', () => {
 });
 
 describe('players across teams', () => {
-  it("hides a youth team's players and guardians from other teams", async () => {
+  it("hides a team's players and player links from other teams", async () => {
     await assertSucceeds(as('frank').doc('players/emma').get());
     await assertFails(as('bob').doc('players/emma').get());
     await assertFails(list(as('bob'), 'players', 'groupId', 'teamB'));
@@ -114,8 +120,49 @@ describe('players across teams', () => {
   });
 });
 
-describe('guardian requests (PLAYER-3, PLAYER-4)', () => {
-  it('lets the parent see their own request and admins see the queue', async () => {
+describe('pending players (PLAYER-3, PLAYER-4)', () => {
+  const players = (db: Db) => db.collection('players').where('groupId', '==', 'teamB');
+
+  it('shows a pending player to admins, super admins, and its proposer only', async () => {
+    await assertSucceeds(as('frank').doc('players/zoe').get());
+    await assertSucceeds(as('carol').doc('players/zoe').get());
+    await assertSucceeds(env.authenticatedContext('sam', { superAdmin: true }).firestore().doc('players/zoe').get());
+    await assertFails(as('dan').doc('players/zoe').get());
+    await assertFails(as('bob').doc('players/zoe').get());
+  });
+
+  it('lets members list the roster by status, and admins and proposers see pending ones', async () => {
+    await assertSucceeds(players(as('dan')).where('status', '==', 'active').limit(100).get());
+    await assertFails(players(as('dan')).limit(100).get());
+    await assertFails(players(as('dan')).where('status', '==', 'pending').limit(100).get());
+    await assertSucceeds(players(as('carol')).limit(100).get());
+    await assertSucceeds(players(as('frank')).where('proposedBy', '==', 'frank').limit(100).get());
+    await assertFails(players(as('dan')).where('proposedBy', '==', 'frank').limit(100).get());
+    await assertSucceeds(as('dan').doc('players/liam').get());
+    // Old players without a status are active.
+    await assertSucceeds(as('dan').doc('players/emma').get());
+  });
+
+  it('leaves status and decisions to Functions; admins still fix the name', async () => {
+    await assertFails(as('carol').doc('players/zoe').update({ status: 'active' }));
+    await assertFails(as('frank').doc('players/zoe').update({ status: 'active' }));
+    await assertFails(as('frank').doc('players/zoe').update({ displayName: 'Zoey', displayNameLower: 'zoey' }));
+    await assertFails(as('carol').doc('players/zoe').update({ proposedBy: 'carol' }));
+    await assertSucceeds(as('carol').doc('players/zoe').update({ displayName: 'Zoey', displayNameLower: 'zoey' }));
+    await assertFails(as('frank').doc('players/new').set({ groupId: 'teamB', displayName: 'X', displayNameLower: 'x', status: 'active' }));
+  });
+
+  it("lets a member who is the player edit their own details, not their link's relation", async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('playerGuardians/liam_frank').set({ playerId: 'liam', groupId: 'teamB', uid: 'frank', relation: 'self' }),
+    );
+    await assertSucceeds(as('frank').doc('players/liam').update({ jerseyNumber: '12' }));
+    await assertFails(as('frank').doc('playerGuardians/liam_frank').update({ relation: 'guardian' }));
+  });
+});
+
+describe('player claims (PLAYER-3, PLAYER-4)', () => {
+  it('lets the claimer see their own claim and admins see the queue', async () => {
     await assertSucceeds(as('frank').doc('guardianRequests/emma_frank').get());
     await assertSucceeds(
       as('frank').collection('guardianRequests').where('groupId', '==', 'teamB').where('uid', '==', 'frank').limit(50).get(),

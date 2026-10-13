@@ -111,7 +111,6 @@ export async function updateMemberSnapshots(
 export interface NewGroup {
   name: string;
   sport: string;
-  teamType: 'adult' | 'youth';
   color?: string;
   timeZone: string;
   description?: string;
@@ -149,7 +148,9 @@ export async function createGroup(
       photoPath: null,
       color: input.color ?? null,
       sport: input.sport,
-      teamType: input.teamType,
+      // One team type (TEAM-1): every team has players. kind leaves room
+      // for a basic 'group' later (TEAM-14) without another migration.
+      kind: 'team',
       ownerId: uid,
       createdBy: uid,
       timeZone: input.timeZone,

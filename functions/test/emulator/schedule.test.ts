@@ -66,10 +66,10 @@ async function person(g: string, uid: string, role = 'member'): Promise<void> {
   await db().collection(Collections.users).doc(uid).set({ displayName: uid, status: 'active', notificationPrefs: {} });
 }
 
-async function team(g: string, teamType: string, extra: object = {}): Promise<void> {
+async function team(g: string, extra: object = {}): Promise<void> {
   await db().collection(Collections.groups).doc(g).set({
     name: g === G ? 'Thunder' : 'Tigers',
-    teamType,
+    kind: 'team',
     timeZone: CHI,
     settings: { membersCanCreateEvents: false, defaultReminderOffsets: [1440] },
     storageBytes: 0,
@@ -118,12 +118,13 @@ beforeEach(async () => {
     { method: 'DELETE' },
   );
   expect(res.ok).toBe(true);
-  await team(G, 'adult');
+  await team(G);
   await person(G, 'alex', 'owner');
   await person(G, 'pat');
   await person(G, 'sam');
   await person(G, 'lee');
-  await team(Y, 'youth');
+  // Y is an old team doc that still says teamType 'youth'; nothing reads it.
+  await team(Y, { teamType: 'youth' });
   await person(Y, 'coach', 'admin');
   await person(Y, 'maria');
   await person(Y, 'dan');
@@ -154,9 +155,10 @@ describe('creating a series (SCHED-3)', () => {
     expect(events.map((e) => e.get('seriesDate'))).toEqual([day(3), day(4), day(5), day(6), day(7)]);
     for (const e of events) {
       expect(e.data()).toMatchObject({
-        groupId: G, rsvpFor: 'members', seriesOverrides: [], messageId: res.seriesId, canceledAt: null,
+        groupId: G, seriesOverrides: [], messageId: res.seriesId, canceledAt: null,
         rsvpCounts: { going: 0, maybe: 0, notGoing: 0 }, staffCounts: { going: 0, maybe: 0, notGoing: 0 },
       });
+      expect(e.get('rsvpFor')).toBeUndefined();
       // 6 PM in Chicago, and the 1-hour reminder before it.
       expect(dateInZone(ms(e.get('startAt')), CHI)).toBe(e.get('seriesDate'));
       expect(ms(e.get('nextReminderAt'))).toBe(ms(e.get('startAt')) - 3_600_000);
@@ -202,9 +204,9 @@ describe('creating a series (SCHED-3)', () => {
     expect((await db().collection(Collections.events).get()).size).toBe(0);
   });
 
-  it('makes youth events take player RSVPs (PLAYER-6)', async () => {
+  it('writes no rsvpFor on any team, an old youth one included: one team type (SCHED-5)', async () => {
     const res = await save('coach', { action: 'create', groupId: Y, recurrence: daily(3, 1), template: template() });
-    expect((await eventsOf(res.seriesId))[0].get('rsvpFor')).toBe('players');
+    expect((await eventsOf(res.seriesId))[0].data()).not.toHaveProperty('rsvpFor');
   });
 });
 
@@ -533,7 +535,7 @@ function oneOff(inMs: number, extra: object = {}): Record<string, unknown> {
   return {
     groupId: G, type: 'practice', title: 'Practice', description: '', location: { name: 'Riverside Park', address: '' },
     allDay: false, startAt: Timestamp.fromMillis(start), endAt: Timestamp.fromMillis(start + 5_400_000), startDate: null, endDate: null,
-    timeZone: CHI, arriveMinutesBefore: null, opponent: null, homeAway: null, rsvpEnabled: true, rsvpFor: 'members', rsvpDeadline: null,
+    timeZone: CHI, arriveMinutesBefore: null, opponent: null, homeAway: null, rsvpEnabled: true, rsvpDeadline: null,
     reminderOffsets: [60, 1440], notifyTeam: true, postToChat: true, rsvpCounts: { going: 0, maybe: 0, notGoing: 0 },
     staffCounts: { going: 0, maybe: 0, notGoing: 0 }, createdBy: 'alex', createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
     ...extra,
@@ -591,8 +593,8 @@ describe('the events trigger (ARCH §6.4)', () => {
     expect((await eventData('e1'))?.nextReminderAt).toBeNull();
   });
 
-  it('names players for guardians on youth teams (PLAYER-7)', async () => {
-    const data = oneOff(3 * DAY, { groupId: Y, rsvpFor: 'players', createdBy: 'coach', messageId: 'y1' });
+  it('names players for guardians (PLAYER-7)', async () => {
+    const data = oneOff(3 * DAY, { groupId: Y, createdBy: 'coach', messageId: 'y1' });
     await writeEvent('y1', data);
     await rsvp('y1', 'liam', 'not_going', 'player', Y);
     await writeEvent('y1', { ...data, location: { name: 'Field 3', address: '' }, updatedAt: Timestamp.now() });
@@ -650,8 +652,8 @@ describe('reminder times from fresh data (SCHED-8)', () => {
 
 describe('removing a player (PLAYER-2)', () => {
   it("deletes the player's answers to upcoming events, and keeps past ones", async () => {
-    await db().collection(Collections.events).doc('y1').set(oneOff(DAY, { groupId: Y, rsvpFor: 'players' }));
-    await db().collection(Collections.events).doc('y0').set(oneOff(-DAY, { groupId: Y, rsvpFor: 'players' }));
+    await db().collection(Collections.events).doc('y1').set(oneOff(DAY, { groupId: Y }));
+    await db().collection(Collections.events).doc('y0').set(oneOff(-DAY, { groupId: Y }));
     await rsvp('y1', 'emma', 'going', 'player', Y);
     await rsvp('y1', 'liam', 'going', 'player', Y);
     await rsvp('y0', 'emma', 'going', 'player', Y);
@@ -665,20 +667,23 @@ describe('removing a player (PLAYER-2)', () => {
 });
 
 describe('RSVP counts (SCHED-1, PLAYER-6)', () => {
-  it('recounts members on adult events', async () => {
-    await db().collection(Collections.events).doc('e1').set(oneOff(DAY));
+  it("counts members' own answers apart, as others, on an old 'members' event too", async () => {
+    await db().collection(Collections.events).doc('e1').set(oneOff(DAY, { rsvpFor: 'members' }));
     await rsvp('e1', 'pat', 'going');
     await rsvp('e1', 'sam', 'going');
     await rsvp('e1', 'lee', 'not_going');
     await recountEventRsvps('e1');
-    expect((await eventData('e1'))?.rsvpCounts).toEqual({ going: 2, maybe: 0, notGoing: 1 });
+    expect(await eventData('e1')).toMatchObject({
+      rsvpCounts: { going: 0, maybe: 0, notGoing: 0 },
+      staffCounts: { going: 2, maybe: 0, notGoing: 1 },
+    });
     await rsvp('e1', 'sam', 'maybe');
     await recountEventRsvps('e1');
-    expect((await eventData('e1'))?.rsvpCounts).toEqual({ going: 1, maybe: 1, notGoing: 1 });
+    expect((await eventData('e1'))?.staffCounts).toEqual({ going: 1, maybe: 1, notGoing: 1 });
   });
 
-  it('counts players, and coaches apart, on youth events (D34)', async () => {
-    await db().collection(Collections.events).doc('y1').set(oneOff(DAY, { groupId: Y, rsvpFor: 'players' }));
+  it('counts players, and everyone else apart, on every event (D34)', async () => {
+    await db().collection(Collections.events).doc('y1').set(oneOff(DAY, { groupId: Y }));
     await rsvp('y1', 'emma', 'going', 'player', Y);
     await rsvp('y1', 'liam', 'maybe', 'player', Y);
     await rsvp('y1', 'coach', 'going', 'member', Y);
@@ -726,18 +731,41 @@ describe('reminders on the tick (SCHED-8)', () => {
     expect((await eventData('later'))?.nextReminderAt).toBeInstanceOf(Timestamp);
   });
 
-  it('reminds guardians of players still coming, and coaches by their own answer (PLAYER-7, Q14)', async () => {
+  it('reminds guardians of players still coming, and others by their own answer (PLAYER-7, Q14)', async () => {
     const data = oneOff(30 * 60_000, {
-      groupId: Y, rsvpFor: 'players', location: null, nextReminderAt: Timestamp.fromMillis(Date.now() - 1000),
+      groupId: Y, location: null, nextReminderAt: Timestamp.fromMillis(Date.now() - 1000),
     });
     await db().collection(Collections.events).doc('y1').set(data);
     await rsvp('y1', 'ava', 'not_going', 'player', Y);
     await rsvp('y1', 'emma', 'going', 'player', Y);
     await runTick();
     const [key] = await sends('eventReminder');
-    expect(await centerFor(key)).toEqual(['coach', 'maria']);
+    // Dan's only player said Not going; the aunt isn't linked to a player and didn't answer.
+    expect(await centerFor(key)).toEqual(['aunt', 'coach', 'maria']);
     expect(await body(key, 'maria')).toMatch(/^Emma, Liam: Practice (today|tomorrow) at [\d:]+ [AP]M$/);
     expect(await body(key, 'coach')).toMatch(/^Reminder: Practice /);
+    expect(await body(key, 'aunt')).toMatch(/^Reminder: Practice /);
+  });
+
+  it("reminds a member who is the player by the player's answer, with no name (PLAYER-7)", async () => {
+    await db().collection(Collections.players).doc('pat-p').set({ groupId: G, displayName: 'Pat Doe', status: 'active' });
+    await db().collection(Collections.playerGuardians).doc('pat-p_pat').set({ groupId: G, playerId: 'pat-p', uid: 'pat', relation: 'self' });
+    // A pending player isn't on the roster: its proposer goes by their own answer.
+    await db().collection(Collections.players).doc('sam-p').set({ groupId: G, displayName: 'Sam', status: 'pending', proposedBy: 'sam' });
+    const data = oneOff(30 * 60_000, { reminderOffsets: [60], nextReminderAt: Timestamp.fromMillis(Date.now() - 1000) });
+    await db().collection(Collections.events).doc('e1').set(data);
+    await rsvp('e1', 'pat', 'not_going');
+    await rsvp('e1', 'lee', 'not_going');
+    await runTick();
+    const [key] = await sends('eventReminder');
+    // Pat's own "member" answer doesn't matter: Pat answers on the player's row.
+    expect(await centerFor(key)).toEqual(['alex', 'pat', 'sam']);
+    expect(await body(key, 'pat')).toMatch(/^Reminder: Practice /);
+    await db().collection(Collections.events).doc('e2').set({ ...data, reminderOffsets: [60] });
+    await rsvp('e2', 'pat-p', 'not_going', 'player');
+    await runTick();
+    const e2 = (await sends('eventReminder')).find((k) => k.startsWith('e2_'))!;
+    expect(await centerFor(e2)).toEqual(['alex', 'lee', 'sam']);
   });
 });
 
