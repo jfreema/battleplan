@@ -775,6 +775,30 @@
       "fieldPath": "description",
       "ttl": false,
       "indexes": []
+    },
+    {
+      "collectionGroup": "playerDetails",
+      "fieldPath": "dateOfBirth",
+      "ttl": false,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playerDetails",
+      "fieldPath": "emergencyContacts",
+      "ttl": false,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playerDetails",
+      "fieldPath": "medicalNotes",
+      "ttl": false,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playerDetails",
+      "fieldPath": "notes",
+      "ttl": false,
+      "indexes": []
     }
   ]
 }

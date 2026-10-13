@@ -19,17 +19,47 @@ import {
   type Relation,
 } from './roster.js';
 
+/** A player's details (PLAYER-12): same ID as the player. */
+const detailsRef = (playerId: string) => db().collection(Collections.playerDetails).doc(playerId);
+
+/**
+ * Deletes a player's document and its details together (PLAYER-12): the
+ * details belong to the player, so they go wherever a player goes. Callers
+ * clear the player's links, claims, and answers.
+ */
+async function deletePlayerDoc(playerId: string): Promise<void> {
+  const player = db().collection(Collections.players).doc(playerId);
+  await db().batch().delete(detailsRef(playerId)).delete(player).commit();
+}
+
+/**
+ * Deletes pending players by page, with their details (two writes each, so
+ * half a page per batch). A pending player can't have details (the rules
+ * refuse them), but they're cleared anyway, as on every player delete.
+ */
+async function deletePendingPlayers(query: FirebaseFirestore.Query): Promise<void> {
+  await forEachPage(
+    query,
+    (b, d) => {
+      b.delete(detailsRef(d.id));
+      b.delete(d.ref);
+    },
+    200,
+  );
+}
+
 /**
  * A deleted account stops being a player or guardian; its players stay
- * (AUTH-10). Players it proposed that no admin approved yet go with it.
+ * (AUTH-10), and so do their details (PLAYER-12: they belong to the
+ * player, not to a link). Players it proposed that no admin approved yet
+ * go with it.
  */
 export async function removeAccountFromPlayers(uid: string): Promise<void> {
   for (const collection of [Collections.playerGuardians, Collections.guardianRequests]) {
     await forEachPage(db().collection(collection).where('uid', '==', uid), (b, d) => b.delete(d.ref));
   }
-  await forEachPage(
+  await deletePendingPlayers(
     db().collection(Collections.players).where('proposedBy', '==', uid).where('status', '==', 'pending'),
-    (b, d) => b.delete(d.ref),
   );
 }
 
@@ -38,7 +68,8 @@ export async function removeAccountFromPlayers(uid: string): Promise<void> {
  * guardian there (TEAM-8, TEAM-3): their player links and claims on it go,
  * so coming back by link needs an admin's approval again (PLAYER-3, Q15)
  * and an old claim can't put them back on the team. Their players stay,
- * except pending ones they proposed, which no admin approved.
+ * with their details (PLAYER-12), except pending ones they proposed, which
+ * no admin approved.
  */
 export async function removeGuardianFromTeam(groupId: string, uid: string): Promise<void> {
   for (const collection of [Collections.playerGuardians, Collections.guardianRequests]) {
@@ -47,13 +78,12 @@ export async function removeGuardianFromTeam(groupId: string, uid: string): Prom
       (b, d) => b.delete(d.ref),
     );
   }
-  await forEachPage(
+  await deletePendingPlayers(
     db()
       .collection(Collections.players)
       .where('groupId', '==', groupId)
       .where('proposedBy', '==', uid)
       .where('status', '==', 'pending'),
-    (b, d) => b.delete(d.ref),
   );
 }
 
@@ -204,7 +234,7 @@ export interface LinkOptions {
  * `already-linked` when they're linked another way, and the limit's code.
  * Linking someone the same way again changes nothing.
  *
- * A member (not an admin) who becomes the player answers on the player's
+ * A member (admins too) who becomes the player answers on the player's
  * row from then on, so their own upcoming answers move to it
  * (moveMemberRsvpsToPlayer, PLAYER-6).
  */
@@ -377,8 +407,9 @@ export async function playersOnTeam(groupId: string): Promise<number> {
 }
 
 /**
- * Removes a player, their links and claims, and their answers to upcoming
- * events, so those events' counts drop (PLAYER-2, PLAYER-6).
+ * Removes a player, their details (PLAYER-12), links and claims, and their
+ * answers to upcoming events, so those events' counts drop (PLAYER-2,
+ * PLAYER-6).
  */
 export async function removePlayer(groupId: string, playerId: string): Promise<void> {
   const links = await db().collection(Collections.playerGuardians).where('playerId', '==', playerId).limit(20).get();
@@ -386,7 +417,7 @@ export async function removePlayer(groupId: string, playerId: string): Promise<v
   for (const collection of [Collections.playerGuardians, Collections.guardianRequests]) {
     await forEachPage(db().collection(collection).where('playerId', '==', playerId), (b, d) => b.delete(d.ref));
   }
-  await db().collection(Collections.players).doc(playerId).delete();
+  await deletePlayerDoc(playerId);
   await removeUpcomingRsvps(playerId);
   for (const uid of guardians) await refreshPlayerSummary(groupId, uid);
   await refreshPlayerCount(groupId);
@@ -614,7 +645,7 @@ export async function proposePlayer(
       });
     } catch (e) {
       // Became a player meanwhile (PLAYER-3): no unlinked duplicate is left.
-      await ref.delete();
+      await deletePlayerDoc(ref.id);
       throw e;
     }
     await refreshPlayerSummary(groupId, uid);
@@ -634,8 +665,9 @@ export interface PendingDecision {
 /**
  * An admin approves or declines a pending player (PLAYER-4). Approving
  * makes it active and links its proposer as they said, if they're still on
- * the team and the limits allow it; declining deletes it. Returns null
- * when there's no pending player to decide.
+ * the team and the limits allow it; declining deletes it (and any details,
+ * though a pending player can't have them). Returns null when there's no
+ * pending player to decide.
  */
 export async function resolvePendingPlayer(
   groupId: string,
@@ -653,7 +685,7 @@ export async function resolvePendingPlayer(
     for (const collection of [Collections.playerGuardians, Collections.guardianRequests]) {
       await forEachPage(db().collection(collection).where('playerId', '==', playerId), (b, d) => b.delete(d.ref));
     }
-    await ref.delete();
+    await deletePlayerDoc(playerId);
     return { playerName, proposedBy, relation, linked: false };
   }
   await ref.update({ status: 'active', decidedBy: actorUid, decidedAt: FieldValue.serverTimestamp() });
@@ -679,7 +711,8 @@ export async function resolvePendingPlayer(
 
 /**
  * Removes one link from a player, a guardian's or the player's own
- * (PLAYER-2). They stay on the team; only the link and its label go.
+ * (PLAYER-2). They stay on the team; only the link and its label go. The
+ * player's details stay too: they belong to the player (PLAYER-12).
  */
 export async function removeGuardianLink(groupId: string, playerId: string, uid: string): Promise<void> {
   await db().collection(Collections.playerGuardians).doc(compositeId(playerId, uid)).delete();

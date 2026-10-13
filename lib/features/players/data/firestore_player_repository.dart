@@ -3,12 +3,14 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/live_pages.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
 /// Players, player links, and claims from Firestore; adding, claiming,
-/// deciding, and removing through callables.
+/// deciding, and removing through callables. Player details are read and
+/// written directly (PLAYER-12).
 class FirestorePlayerRepository implements PlayerRepository {
   new(this._db, this._functions);
 
@@ -272,6 +274,92 @@ class FirestorePlayerRepository implements PlayerRepository {
         'uid': uid.value,
       });
 
+  DocumentReference<Map<String, dynamic>> _details(PlayerId playerId) =>
+      _db.collection(Collections.playerDetails).doc(playerId.value);
+
+  /// A missing document is a player without details: the rules let the
+  /// team's admins and linked members ask either way.
+  @override
+  Stream<PlayerDetails?> watchPlayerDetails(PlayerId playerId) =>
+      _details(playerId).snapshots().map(
+        (s) => s.exists ? playerDetailsFromFirestore(s.id, s.data()!) : null,
+      );
+
+  /// The rules let only the team's admins list by team.
+  @override
+  Stream<List<PlayerDetails>> watchTeamPlayerDetails(GroupId groupId) =>
+      _allPages(
+        _db
+            .collection(Collections.playerDetails)
+            .where('groupId', isEqualTo: groupId.value),
+        (d) => playerDetailsFromFirestore(d.id, d.data()),
+      );
+
+  /// One merge write with exactly the keys the rules allow (ARCH §6.2
+  /// `playerDetails`). The consent fields are written only when the
+  /// medical notes are new or changed (stamped now, by [by]) or cleared
+  /// (cleared with them); otherwise they're left out, so the merge keeps
+  /// them.
+  @override
+  Future<void> savePlayerDetails(
+    PlayerDetails details, {
+    required UserId by,
+    PlayerDetails? stored,
+  }) async {
+    final d = details.cleaned;
+    final consent = medicalConsentFor(
+      stored: stored,
+      medicalNotes: d.medicalNotes,
+    );
+    try {
+      await _details(d.playerId).set({
+        'groupId': d.groupId.value,
+        'dateOfBirth': d.dateOfBirth,
+        'emergencyContacts': [
+          for (final c in d.emergencyContacts)
+            {
+              'name': c.name,
+              'phone': c.phone,
+              // Left out when blank, as the rules allow.
+              'relationship': ?c.relationship,
+            },
+        ],
+        'medicalNotes': d.medicalNotes,
+        ...switch (consent) {
+          MedicalConsent.record => {
+            'medicalConsentAt': FieldValue.serverTimestamp(),
+            'medicalConsentBy': by.value,
+          },
+          MedicalConsent.clear => {
+            'medicalConsentAt': null,
+            'medicalConsentBy': null,
+          },
+          MedicalConsent.keep => const <String, Object?>{},
+        },
+        'notes': d.notes,
+        'updatedBy': by.value,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } on FirebaseException catch (e) {
+      throw _writeFailure(e);
+    }
+  }
+
+  @override
+  Future<void> deletePlayerDetails(PlayerId playerId) async {
+    try {
+      await _details(playerId).delete();
+    } on FirebaseException catch (e) {
+      throw _writeFailure(e);
+    }
+  }
+
+  AppFailure _writeFailure(FirebaseException e) => switch (e.code) {
+    'permission-denied' => PermissionDenied(e.code),
+    'unavailable' => Offline(e.code),
+    _ => UnknownFailure(e.code),
+  };
+
   Future<Map<String, dynamic>> _call(
     String name,
     Map<String, Object?> data,
@@ -329,3 +417,27 @@ Player playerFromFirestore(
 /// A link's or claim's relation; old ones without it are guardians.
 PlayerRelation relationFromFirestore(Object? value) =>
     PlayerRelation.tryParse(value as String?) ?? PlayerRelation.guardian;
+
+/// A player's details from their Firestore fields (ARCH §6.2
+/// `playerDetails`). Timestamps still being written read as null.
+PlayerDetails playerDetailsFromFirestore(String id, Map<String, dynamic> d) =>
+    PlayerDetails(
+      playerId: PlayerId(id),
+      groupId: GroupId(d['groupId'] as String? ?? ''),
+      dateOfBirth: d['dateOfBirth'] as String?,
+      emergencyContacts: [
+        for (final c in (d['emergencyContacts'] as List?) ?? const [])
+          if (c is Map)
+            EmergencyContact(
+              name: c['name'] as String? ?? '',
+              phone: c['phone'] as String? ?? '',
+              relationship: c['relationship'] as String?,
+            ),
+      ],
+      medicalNotes: d['medicalNotes'] as String?,
+      medicalConsentAt: (d['medicalConsentAt'] as Timestamp?)?.toDate(),
+      medicalConsentBy: d['medicalConsentBy'] as String?,
+      notes: d['notes'] as String?,
+      updatedBy: d['updatedBy'] as String?,
+      updatedAt: (d['updatedAt'] as Timestamp?)?.toDate(),
+    );

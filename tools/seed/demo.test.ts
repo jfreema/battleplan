@@ -127,6 +127,30 @@ describe('demo data: one team type (TEAM-1, PLAYER-3, PLAYER-4)', () => {
   });
 });
 
+describe('demo data: player details (PLAYER-12)', () => {
+  const docs = demoDocs({ uid: 'demo-appreview', email: DEFAULT_DEMO_EMAIL }, new Date('2026-10-12T15:00:00Z'));
+  const byPath = new Map(docs.map((d) => [d.path, d.data]));
+  const details = docs.filter((d) => d.path.startsWith('playerDetails/'));
+
+  it('writes them as the rules take them, for active players, on their team', () => {
+    assert.ok(details.length >= 1);
+    const keys = ['groupId', 'dateOfBirth', 'emergencyContacts', 'medicalNotes', 'medicalConsentAt', 'medicalConsentBy',
+      'notes', 'updatedBy', 'updatedAt'];
+    for (const d of details) {
+      const player = byPath.get(`players/${d.path.split('/')[1]}`);
+      assert.equal(player?.status, 'active', d.path);
+      assert.equal(d.data.groupId, player?.groupId, d.path);
+      for (const k of Object.keys(d.data)) assert.ok(keys.includes(k), `${d.path}: ${k}`);
+      assert.match(d.data.dateOfBirth as string, /^\d{4}-\d{2}-\d{2}$/);
+      assert.ok(Date.parse(d.data.dateOfBirth as string) < Date.parse('2026-10-12T00:00:00Z'), 'in the past');
+      const contacts = d.data.emergencyContacts as { name: string; phone: string }[];
+      assert.ok(contacts.length <= 2 && contacts.every((c) => c.name && c.phone), d.path);
+      // Medical notes carry consent (PLAYER-12).
+      if (d.data.medicalNotes) assert.ok(d.data.medicalConsentAt instanceof Date && d.data.medicalConsentBy, d.path);
+    }
+  });
+});
+
 function errorOf(result: ReturnType<typeof demoTarget>): string {
   return 'error' in result ? result.error : '';
 }

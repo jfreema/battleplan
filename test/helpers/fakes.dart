@@ -34,6 +34,7 @@ import 'package:battleplan/features/notifications/domain/notification_item.dart'
 import 'package:battleplan/features/notifications/domain/notification_repository.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/polls/domain/poll_repository.dart';
@@ -1125,6 +1126,79 @@ class FakePlayerRepository implements PlayerRepository {
     PlayerId playerId,
     UserId uid,
   ) async => calls.add('removeGuardian ${playerId.value} ${uid.value}');
+
+  /// Players' details by player ID (PLAYER-12). Saves and deletes change
+  /// them, and the watches update, as Firestore's would.
+  final Map<PlayerId, PlayerDetails> details = {};
+
+  /// The details asked for, `player <id>` and `team <id>`, so a test can
+  /// check that nobody else's app asks (PLAYER-12).
+  final List<String> detailsReads = [];
+
+  final _detailsChanges = StreamController<void>.broadcast();
+
+  @override
+  Stream<PlayerDetails?> watchPlayerDetails(PlayerId playerId) async* {
+    detailsReads.add('player ${playerId.value}');
+    yield details[playerId];
+    await for (final _ in _detailsChanges.stream) {
+      yield details[playerId];
+    }
+  }
+
+  @override
+  Stream<List<PlayerDetails>> watchTeamPlayerDetails(GroupId groupId) async* {
+    detailsReads.add('team ${groupId.value}');
+    List<PlayerDetails> team() => [
+      for (final d in details.values)
+        if (d.groupId == groupId) d,
+    ];
+    yield team();
+    await for (final _ in _detailsChanges.stream) {
+      yield team();
+    }
+  }
+
+  /// Saves as the Firestore repository does: cleaned, with the consent
+  /// recorded, kept, or cleared ([medicalConsentFor]), logged in [calls]
+  /// as `saveDetails <id> <consent>`.
+  @override
+  Future<void> savePlayerDetails(
+    PlayerDetails details, {
+    required UserId by,
+    PlayerDetails? stored,
+  }) async {
+    final d = details.cleaned;
+    final consent = medicalConsentFor(
+      stored: stored,
+      medicalNotes: d.medicalNotes,
+    );
+    final before = this.details[d.playerId];
+    final now = DateTime.now();
+    this.details[d.playerId] = d.copyWith(
+      medicalConsentAt: switch (consent) {
+        MedicalConsent.record => now,
+        MedicalConsent.clear => null,
+        MedicalConsent.keep => before?.medicalConsentAt,
+      },
+      medicalConsentBy: switch (consent) {
+        MedicalConsent.record => by.value,
+        MedicalConsent.clear => null,
+        MedicalConsent.keep => before?.medicalConsentBy,
+      },
+      updatedBy: by.value,
+      updatedAt: now,
+    );
+    calls.add('saveDetails ${d.playerId.value} ${consent.name}');
+    _detailsChanges.add(null);
+  }
+
+  @override
+  Future<void> deletePlayerDetails(PlayerId playerId) async {
+    details.remove(playerId);
+    calls.add('deleteDetails ${playerId.value}');
+    _detailsChanges.add(null);
+  }
 }
 
 /// Chat on an in-memory list. [sent] records what was sent; each send also

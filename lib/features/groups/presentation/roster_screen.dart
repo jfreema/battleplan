@@ -16,6 +16,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -29,8 +30,9 @@ import 'package:material_ui/material_ui.dart';
 /// their guardians. Admins see pending players and claims at the top with
 /// Approve and Decline (PLAYER-4); anyone can add a player (pending until
 /// an admin approves, unless they're an admin), and members not linked yet
-/// get "Who are you here for?" (PLAYER-3). Tapping a person opens their
-/// card with only the actions you're allowed.
+/// get "Who are you here for?" (PLAYER-3). The team's admins see "Age 12"
+/// on each player with a date of birth (PLAYER-12). Tapping a person opens
+/// their card with only the actions you're allowed.
 class RosterScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -78,6 +80,13 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                 const <GuardianRequest>[])
             .any((r) => r.status == GuardianRequestStatus.pending);
     final canAdd = superAdmin || (me != null && !(group?.isArchived ?? false));
+    // Ages for the team's admins, from one list of the team's player
+    // details (PLAYER-12); nobody else's app asks for it.
+    final details = (me?.isAdmin ?? false)
+        ? ref.watch(teamPlayerDetailsProvider(widget.groupId)).value ??
+              const <PlayerId, PlayerDetails>{}
+        : const <PlayerId, PlayerDetails>{};
+    final today = DateTime.now();
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.rosterMenu),
@@ -170,6 +179,7 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               for (final p in shownPlayers)
                 _PlayerRow(
                   player: p,
+                  age: details[p.id]?.ageAt(today),
                   // TEAM-3: number, name, position, and who's linked.
                   linked: [
                     for (final l in links)
@@ -227,17 +237,23 @@ String? whoLabel(
   return parts.isEmpty ? null : parts.join(' · ');
 }
 
-/// A player: number, name, position, and who's linked (TEAM-3).
+/// A player: number, name, position, age for admins (PLAYER-12), and
+/// who's linked (TEAM-3).
 class _PlayerRow extends StatelessWidget {
-  const new({required this.player, required this.linked});
+  const new({required this.player, required this.linked, this.age});
 
   final Player player;
   final List<String> linked;
 
+  /// Null without a date of birth, and for everyone but admins.
+  final int? age;
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final details = [
       if (player.position?.isNotEmpty ?? false) player.position!,
+      if (age case final age?) l10n.playerAge(age),
       if (linked.isNotEmpty) linked.join(', '),
     ];
     return ListTile(

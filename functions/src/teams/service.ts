@@ -388,6 +388,8 @@ const TEAM_COLLECTIONS = [
   Collections.groupDocuments,
   Collections.playerGuardians,
   Collections.guardianRequests,
+  // Before players: a player's details carry its team's groupId (PLAYER-12).
+  Collections.playerDetails,
   Collections.players,
   Collections.invites,
   Collections.notifications,

@@ -671,3 +671,192 @@ final class PlayerRsvpsFamily extends $Family
   @override
   String toString() => r'playerRsvpsProvider';
 }
+
+/// A player's details (PLAYER-12). Watched only for the team's admins and
+/// the members linked to the player ([seesPlayerDetails]): nobody else's
+/// app asks for them.
+
+@ProviderFor(playerDetails)
+final playerDetailsProvider = PlayerDetailsFamily._();
+
+/// A player's details (PLAYER-12). Watched only for the team's admins and
+/// the members linked to the player ([seesPlayerDetails]): nobody else's
+/// app asks for them.
+
+final class PlayerDetailsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<PlayerDetails?>,
+          PlayerDetails?,
+          Stream<PlayerDetails?>
+        >
+    with $FutureModifier<PlayerDetails?>, $StreamProvider<PlayerDetails?> {
+  /// A player's details (PLAYER-12). Watched only for the team's admins and
+  /// the members linked to the player ([seesPlayerDetails]): nobody else's
+  /// app asks for them.
+  PlayerDetailsProvider._({
+    required PlayerDetailsFamily super.from,
+    required PlayerId super.argument,
+  }) : super(
+         retry: null,
+         name: r'playerDetailsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$playerDetailsHash();
+
+  @override
+  String toString() {
+    return r'playerDetailsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<PlayerDetails?> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<PlayerDetails?> create(Ref ref) {
+    final argument = this.argument as PlayerId;
+    return playerDetails(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PlayerDetailsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$playerDetailsHash() => r'4a388b6863417c0ff896a76dc7c6e68cb45429b6';
+
+/// A player's details (PLAYER-12). Watched only for the team's admins and
+/// the members linked to the player ([seesPlayerDetails]): nobody else's
+/// app asks for them.
+
+final class PlayerDetailsFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<PlayerDetails?>, PlayerId> {
+  PlayerDetailsFamily._()
+    : super(
+        retry: null,
+        name: r'playerDetailsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A player's details (PLAYER-12). Watched only for the team's admins and
+  /// the members linked to the player ([seesPlayerDetails]): nobody else's
+  /// app asks for them.
+
+  PlayerDetailsProvider call(PlayerId playerId) =>
+      PlayerDetailsProvider._(argument: playerId, from: this);
+
+  @override
+  String toString() => r'playerDetailsProvider';
+}
+
+/// A team's player details by player ID, for ages on the roster
+/// (PLAYER-12). One list for the whole team, watched only for its admins.
+
+@ProviderFor(teamPlayerDetails)
+final teamPlayerDetailsProvider = TeamPlayerDetailsFamily._();
+
+/// A team's player details by player ID, for ages on the roster
+/// (PLAYER-12). One list for the whole team, watched only for its admins.
+
+final class TeamPlayerDetailsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<PlayerId, PlayerDetails>>,
+          Map<PlayerId, PlayerDetails>,
+          Stream<Map<PlayerId, PlayerDetails>>
+        >
+    with
+        $FutureModifier<Map<PlayerId, PlayerDetails>>,
+        $StreamProvider<Map<PlayerId, PlayerDetails>> {
+  /// A team's player details by player ID, for ages on the roster
+  /// (PLAYER-12). One list for the whole team, watched only for its admins.
+  TeamPlayerDetailsProvider._({
+    required TeamPlayerDetailsFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamPlayerDetailsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamPlayerDetailsHash();
+
+  @override
+  String toString() {
+    return r'teamPlayerDetailsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<PlayerId, PlayerDetails>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<PlayerId, PlayerDetails>> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return teamPlayerDetails(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamPlayerDetailsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamPlayerDetailsHash() => r'b82bd559b737f58d85157cc851b65967490d6d66';
+
+/// A team's player details by player ID, for ages on the roster
+/// (PLAYER-12). One list for the whole team, watched only for its admins.
+
+final class TeamPlayerDetailsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          Stream<Map<PlayerId, PlayerDetails>>,
+          GroupId
+        > {
+  TeamPlayerDetailsFamily._()
+    : super(
+        retry: null,
+        name: r'teamPlayerDetailsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A team's player details by player ID, for ages on the roster
+  /// (PLAYER-12). One list for the whole team, watched only for its admins.
+
+  TeamPlayerDetailsProvider call(GroupId groupId) =>
+      TeamPlayerDetailsProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'teamPlayerDetailsProvider';
+}

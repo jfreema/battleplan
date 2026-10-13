@@ -14,6 +14,8 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_details.dart';
+import 'package:battleplan/features/players/presentation/player_details_section.dart';
 import 'package:battleplan/features/players/presentation/player_dialogs.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -26,9 +28,11 @@ import 'package:material_ui/material_ui.dart';
 /// members (the player themselves included) and admins edit the details
 /// and add a guardian (PLAYER-5); admins remove links and the player, and
 /// a linked member can remove their own link. A member who isn't linked can claim
-/// the player, as the player or a parent or guardian (PLAYER-3). Upcoming
-/// RSVPs list the player's answer on each of the next events that take
-/// RSVPs, each opening its event.
+/// the player, as the player or a parent or guardian (PLAYER-3). The
+/// team's admins and linked members also see the player's Details, and
+/// edit them unless the team is archived (PLAYER-12); nobody else sees
+/// the section. Upcoming RSVPs list the player's answer on each of the
+/// next events that take RSVPs, each opening its event.
 class PlayerCardScreen extends ConsumerWidget {
   const new({required this.groupId, required this.playerId, super.key});
 
@@ -81,6 +85,18 @@ class PlayerCardScreen extends ConsumerWidget {
     // player, so a super admin who is neither saves through the audited
     // admin callable.
     final viaAdmin = superAdmin && !teamAdmin && myLink == null;
+    // Details only for the team's admins and members linked to this player
+    // (PLAYER-12); for anyone else they're never asked for. Read-only on an
+    // archived team, as the rules refuse writes there.
+    final seesDetails = seesPlayerDetails(
+      me,
+      playerId,
+      teamAdmin: teamAdmin,
+      links: links,
+    );
+    final group = ref.watch(groupProvider(groupId)).value;
+    final detailsEditable =
+        group != null && !group.isArchived && group.suspendedAt == null;
 
     return Scaffold(
       appBar: AppBar(
@@ -108,6 +124,14 @@ class PlayerCardScreen extends ConsumerWidget {
             title: Text(l10n.positionLabel),
             subtitle: Text(player.position ?? '—'),
           ),
+          if (seesDetails) ...[
+            const SizedBox(height: Space.lg),
+            PlayerDetailsSection(
+              groupId: groupId,
+              playerId: playerId,
+              canEdit: detailsEditable,
+            ),
+          ],
           const SizedBox(height: Space.lg),
           Text(
             l10n.playerLinksLabel,

@@ -41,6 +41,7 @@ const DOCS: [collection: string, id: string, field: string, value: string][] = [
   ['players', 'emma', 'groupId', 'teamA'],
   ['playerGuardians', 'emma_dan', 'groupId', 'teamA'],
   ['guardianRequests', 'emma_bob', 'groupId', 'teamA'],
+  ['playerDetails', 'emma', 'groupId', 'teamA'],
   ['messages', 'm1', 'groupId', 'teamA'],
   ['polls', 'p1', 'groupId', 'teamA'],
   ['pollVotes', 'p1_alice', 'pollId', 'p1'],
@@ -99,6 +100,7 @@ async function seed(group: object = {}) {
     await db.doc('players/emma').set({ groupId: 'teamA', displayName: 'Emma', displayNameLower: 'emma', jerseyNumber: '7' });
     await db.doc('playerGuardians/emma_dan').set({ groupId: 'teamA', playerId: 'emma', uid: 'dan' });
     await db.doc('guardianRequests/emma_bob').set({ groupId: 'teamA', playerId: 'emma', uid: 'bob', status: 'pending' });
+    await db.doc('playerDetails/emma').set({ groupId: 'teamA', emergencyContacts: [], notes: 'Wears glasses', updatedBy: 'dan' });
     await db.doc('messages/m1').set({ groupId: 'teamA', authorId: 'bob', authorName: 'bob', type: 'text', text: 'Hi', reactions: {} });
     await db.doc('polls/p1').set({
       groupId: 'teamA', messageId: 'p1', createdBy: 'alice', question: 'When?', anonymous: false, allowMultiple: false,
@@ -198,6 +200,9 @@ describe('a suspended team (ADMIN-3)', () => {
     }
     await assertFails(as('alice').collection('reports').where('groupId', '==', 'teamA').limit(10).get());
     await assertFails(as('alice').collection('guardianRequests').where('groupId', '==', 'teamA').limit(10).get());
+    // Player details (PLAYER-12): closed to the admins and the guardian too.
+    await assertFails(as('alice').collection('playerDetails').where('groupId', '==', 'teamA').limit(10).get());
+    for (const uid of ['alice', 'carol', 'dan']) await assertFails(as(uid).doc('playerDetails/emma').get());
   });
 
   it('refuses every write a member could make', async () => {

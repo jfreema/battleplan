@@ -208,6 +208,33 @@ async function main() {
       });
     }
   }
+  // Details for coaches (PLAYER-12), sample values only: Emma's from her
+  // guardian Maria, with the medical consent the app asks for, and Alex's
+  // own. The coach sees both, and their ages on the rosters.
+  const year = new Date(now).getFullYear();
+  batch.set(db.doc('playerDetails/emma'), {
+    groupId: 'lightning',
+    dateOfBirth: `${year - 9}-05-14`,
+    emergencyContacts: [
+      { name: 'Maria Rodriguez', phone: '555-0100', relationship: 'Mom' },
+      { name: 'Luis Rodriguez', phone: '555-0101', relationship: 'Dad' },
+    ],
+    medicalNotes: 'Peanut allergy',
+    medicalConsentAt: minutesAgo(60 * 24 * 10),
+    medicalConsentBy: 'maria',
+    notes: 'Wears glasses for games.',
+    updatedBy: 'maria',
+    updatedAt: minutesAgo(60 * 24 * 10),
+  });
+  batch.set(db.doc('playerDetails/alex-kim'), {
+    groupId: 'thunder',
+    dateOfBirth: `${year - 31}-02-20`,
+    emergencyContacts: [{ name: 'Jamie Kim', phone: '555-0142', relationship: 'Partner' }],
+    medicalNotes: null,
+    notes: null,
+    updatedBy: 'alex',
+    updatedAt: minutesAgo(60 * 24 * 10),
+  });
   // Luis claims Noah as a guardian, waiting for the coach (PLAYER-3).
   batch.set(db.doc('guardianRequests/noah_luis'), {
     playerId: 'noah',

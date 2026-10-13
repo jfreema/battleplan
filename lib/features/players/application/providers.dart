@@ -1,6 +1,7 @@
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
@@ -83,3 +84,21 @@ Stream<Map<String, Rsvp>> playerRsvps(
       playerId.value,
     ], from: DateTime.now().subtract(const Duration(days: 1)))
     .map((list) => {for (final r in list) r.eventId.value: r});
+
+/// A player's details (PLAYER-12). Watched only for the team's admins and
+/// the members linked to the player ([seesPlayerDetails]): nobody else's
+/// app asks for them.
+@riverpod
+Stream<PlayerDetails?> playerDetails(Ref ref, PlayerId playerId) =>
+    ref.watch(playerRepositoryProvider).watchPlayerDetails(playerId);
+
+/// A team's player details by player ID, for ages on the roster
+/// (PLAYER-12). One list for the whole team, watched only for its admins.
+@riverpod
+Stream<Map<PlayerId, PlayerDetails>> teamPlayerDetails(
+  Ref ref,
+  GroupId groupId,
+) => ref
+    .watch(playerRepositoryProvider)
+    .watchTeamPlayerDetails(groupId)
+    .map((list) => {for (final d in list) d.playerId: d});

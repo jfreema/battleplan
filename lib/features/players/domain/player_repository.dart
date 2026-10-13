@@ -1,9 +1,10 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_details.dart';
 
-/// Owns `players`, `playerGuardians` (player links), and
-/// `guardianRequests` (player claims) (ARCH §5.2).
+/// Owns `players`, `playerGuardians` (player links), `guardianRequests`
+/// (player claims), and `playerDetails` (ARCH §5.2).
 abstract interface class PlayerRepository {
   /// A team's active players, the roster everyone sees (PLAYER-4).
   Stream<List<Player>> watchPlayers(GroupId groupId);
@@ -89,4 +90,25 @@ abstract interface class PlayerRepository {
   /// Removes a link from a player (PLAYER-2). Admins, or the linked
   /// member themselves.
   Future<void> removeGuardian(GroupId groupId, PlayerId playerId, UserId uid);
+
+  /// A player's details (PLAYER-12), or null when there are none. Only the
+  /// team's admins and the members linked to the player may ask.
+  Stream<PlayerDetails?> watchPlayerDetails(PlayerId playerId);
+
+  /// Every player's details on a team, for their ages on the roster
+  /// (PLAYER-12). Admins only.
+  Stream<List<PlayerDetails>> watchTeamPlayerDetails(GroupId groupId);
+
+  /// Saves a player's details as [by] (PLAYER-12). [stored] is what was
+  /// there, which decides the medical consent ([medicalConsentFor]): new
+  /// or changed medical notes record it, and clearing them clears it.
+  /// Admins and linked members, while the team isn't archived.
+  Future<void> savePlayerDetails(
+    PlayerDetails details, {
+    required UserId by,
+    PlayerDetails? stored,
+  });
+
+  /// Removes a player's details (PLAYER-12). Admins and linked members.
+  Future<void> deletePlayerDetails(PlayerId playerId);
 }

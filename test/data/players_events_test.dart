@@ -4,6 +4,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/players/data/firestore_player_repository.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/schedule/data/firestore_event_repository.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_draft.dart';
@@ -339,6 +340,235 @@ void main() {
           repo.removePlayer(_g, const PlayerId('emma')),
           throwsA(type),
         );
+      }
+    });
+  });
+
+  group('FirestorePlayerRepository player details (PLAYER-12)', () {
+    const emma = PlayerId('emma');
+    const maria = UserId('maria');
+    const coach = UserId('coach');
+
+    /// Exactly the keys the rules allow (ARCH §6.2 `playerDetails`).
+    const allowed = {
+      'groupId',
+      'dateOfBirth',
+      'emergencyContacts',
+      'medicalNotes',
+      'medicalConsentAt',
+      'medicalConsentBy',
+      'notes',
+      'updatedBy',
+      'updatedAt',
+    };
+
+    Future<Map<String, dynamic>> stored() async =>
+        (await db.doc('playerDetails/emma').get()).data()!;
+
+    test('saves the shape the rules want, recording consent for new medical '
+        'notes', () async {
+      final repo = FirestorePlayerRepository(db, functions);
+      await repo.savePlayerDetails(
+        const PlayerDetails(
+          playerId: emma,
+          groupId: _g,
+          dateOfBirth: '2014-03-03',
+          emergencyContacts: [
+            EmergencyContact(
+              name: ' Maria R ',
+              phone: ' 555-0100 ',
+              relationship: 'Mom',
+            ),
+            // No relationship: the key is left out.
+            EmergencyContact(name: 'Luis', phone: '555-0101', relationship: ''),
+            // Nothing filled in: dropped.
+            EmergencyContact(name: ' ', phone: ''),
+          ],
+          medicalNotes: ' Peanut allergy ',
+          notes: 'Wears glasses',
+        ),
+        by: maria,
+      );
+      final d = await stored();
+      expect(d.keys.toSet(), allowed);
+      expect(d['groupId'], 'g1');
+      expect(d['dateOfBirth'], '2014-03-03');
+      expect(d['emergencyContacts'], [
+        {'name': 'Maria R', 'phone': '555-0100', 'relationship': 'Mom'},
+        {'name': 'Luis', 'phone': '555-0101'},
+      ]);
+      expect(d['medicalNotes'], 'Peanut allergy');
+      expect(d['medicalConsentAt'], isA<Timestamp>());
+      expect(d['medicalConsentBy'], 'maria');
+      expect(d['notes'], 'Wears glasses');
+      expect(d['updatedBy'], 'maria');
+      expect(d['updatedAt'], isA<Timestamp>());
+    });
+
+    test('without medical notes, writes no consent at all', () async {
+      final repo = FirestorePlayerRepository(db, functions);
+      await repo.savePlayerDetails(
+        const PlayerDetails(playerId: emma, groupId: _g, notes: 'Lefty'),
+        by: coach,
+      );
+      final d = await stored();
+      expect(
+        d.keys.toSet(),
+        allowed.difference({'medicalConsentAt', 'medicalConsentBy'}),
+      );
+      expect(d['dateOfBirth'], isNull);
+      expect(d['medicalNotes'], isNull);
+      expect(d['emergencyContacts'], isEmpty);
+    });
+
+    test('keeps the consent when the medical notes are unchanged, records it '
+        'again when they change, and clears it with them', () async {
+      final first = Timestamp.fromDate(DateTime.utc(2026));
+      await db.doc('playerDetails/emma').set({
+        'groupId': 'g1',
+        'dateOfBirth': null,
+        'emergencyContacts': <Object>[],
+        'medicalNotes': 'Peanut allergy',
+        'medicalConsentAt': first,
+        'medicalConsentBy': 'maria',
+        'notes': null,
+        'updatedBy': 'maria',
+        'updatedAt': first,
+      });
+      final repo = FirestorePlayerRepository(db, functions);
+      final before = await repo.watchPlayerDetails(emma).first;
+      expect(before!.medicalConsentAt, first.toDate());
+
+      // The same notes, by someone else: the consent stays as it was.
+      await repo.savePlayerDetails(
+        before.copyWith(notes: 'Wears glasses'),
+        by: coach,
+        stored: before,
+      );
+      var d = await stored();
+      expect(d['medicalConsentAt'], first);
+      expect(d['medicalConsentBy'], 'maria');
+      expect(d['notes'], 'Wears glasses');
+      expect(d['updatedBy'], 'coach');
+
+      // Changed notes: consent recorded now, by whoever changed them.
+      final kept = (await repo.watchPlayerDetails(emma).first)!;
+      await repo.savePlayerDetails(
+        kept.copyWith(medicalNotes: 'Peanut and egg allergy'),
+        by: coach,
+        stored: kept,
+      );
+      d = await stored();
+      expect(d['medicalNotes'], 'Peanut and egg allergy');
+      expect(d['medicalConsentAt'], isNot(first));
+      expect(d['medicalConsentAt'], isA<Timestamp>());
+      expect(d['medicalConsentBy'], 'coach');
+
+      // Cleared notes clear the consent with them.
+      final changed = (await repo.watchPlayerDetails(emma).first)!;
+      await repo.savePlayerDetails(
+        changed.copyWith(medicalNotes: '  '),
+        by: maria,
+        stored: changed,
+      );
+      d = await stored();
+      expect(d.keys.toSet(), allowed);
+      expect(d['medicalNotes'], isNull);
+      expect(d['medicalConsentAt'], isNull);
+      expect(d['medicalConsentBy'], isNull);
+    });
+
+    test("watches one player's details, and a team's", () async {
+      await db.doc('playerDetails/emma').set({
+        'groupId': 'g1',
+        'dateOfBirth': '2014-03-03',
+        'emergencyContacts': [
+          {'name': 'Maria', 'phone': '555-0100', 'relationship': 'Mom'},
+          {'name': 'Luis', 'phone': '555-0101'},
+          'not a contact',
+        ],
+        'medicalNotes': 'Peanut allergy',
+        'medicalConsentAt': Timestamp.fromDate(DateTime.utc(2026)),
+        'medicalConsentBy': 'maria',
+        'notes': 'Wears glasses',
+        'updatedBy': 'maria',
+        'updatedAt': Timestamp.fromDate(DateTime.utc(2026, 2)),
+      });
+      await db.doc('playerDetails/noah').set({
+        'groupId': 'g1',
+        'dateOfBirth': '2015-06-01',
+      });
+      await db.doc('playerDetails/x').set({
+        'groupId': 'g2',
+        'dateOfBirth': '2010-01-01',
+      });
+      final repo = FirestorePlayerRepository(db, functions);
+      final d = (await repo.watchPlayerDetails(emma).first)!;
+      expect(d.playerId, emma);
+      expect(d.groupId, _g);
+      expect(d.dateOfBirth, '2014-03-03');
+      expect(d.emergencyContacts, const [
+        EmergencyContact(name: 'Maria', phone: '555-0100', relationship: 'Mom'),
+        EmergencyContact(name: 'Luis', phone: '555-0101'),
+      ]);
+      expect(d.medicalNotes, 'Peanut allergy');
+      expect(d.medicalConsentAt!.toUtc(), DateTime.utc(2026));
+      expect(d.medicalConsentBy, 'maria');
+      expect(d.notes, 'Wears glasses');
+      expect(d.updatedBy, 'maria');
+      expect(d.updatedAt!.toUtc(), DateTime.utc(2026, 2));
+      // A player with no details yet.
+      expect(
+        await repo.watchPlayerDetails(const PlayerId('liam')).first,
+        isNull,
+      );
+
+      final team = await repo.watchTeamPlayerDetails(_g).first;
+      expect(team.map((d) => d.playerId.value), ['emma', 'noah']);
+      expect(team.last.emergencyContacts, isEmpty);
+      expect(team.last.medicalConsentAt, isNull);
+    });
+
+    test('a missing field reads as empty', () {
+      final d = playerDetailsFromFirestore('emma', const {});
+      expect(d.groupId, const GroupId(''));
+      expect(d.dateOfBirth, isNull);
+      expect(d.emergencyContacts, isEmpty);
+      expect(d.updatedAt, isNull);
+      final contact = playerDetailsFromFirestore('emma', const {
+        'emergencyContacts': [<String, Object?>{}],
+      }).emergencyContacts.single;
+      expect(contact, const EmergencyContact(name: '', phone: ''));
+    });
+
+    test('deletes them', () async {
+      await db.doc('playerDetails/emma').set({'groupId': 'g1'});
+      final repo = FirestorePlayerRepository(db, functions);
+      await repo.deletePlayerDetails(emma);
+      expect((await db.doc('playerDetails/emma').get()).exists, isFalse);
+    });
+
+    test('maps refused writes to failures', () async {
+      for (final (code, type) in [
+        ('permission-denied', isA<PermissionDenied>()),
+        ('unavailable', isA<Offline>()),
+        ('aborted', isA<UnknownFailure>()),
+      ]) {
+        final db = FakeFirebaseFirestore();
+        final doc = db.doc('playerDetails/emma');
+        whenCalling(Invocation.method(#set, null)).on(doc).thenThrow(_fs(code));
+        whenCalling(Invocation.method(#delete, null))
+            .on(doc)
+            .thenThrow(_fs(code));
+        final repo = FirestorePlayerRepository(db, functions);
+        await expectLater(
+          repo.savePlayerDetails(
+            const PlayerDetails(playerId: emma, groupId: _g, notes: 'Lefty'),
+            by: maria,
+          ),
+          throwsA(type),
+        );
+        await expectLater(repo.deletePlayerDetails(emma), throwsA(type));
       }
     });
   });

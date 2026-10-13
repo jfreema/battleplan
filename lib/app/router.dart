@@ -42,6 +42,7 @@ import 'package:battleplan/features/notifications/presentation/push_test_screen.
 import 'package:battleplan/features/notifications/presentation/team_notifications_screen.dart';
 import 'package:battleplan/features/players/presentation/add_players_screen.dart';
 import 'package:battleplan/features/players/presentation/player_card_screen.dart';
+import 'package:battleplan/features/players/presentation/player_details_screen.dart';
 import 'package:battleplan/features/players/presentation/who_are_you_screen.dart';
 import 'package:battleplan/features/safety/presentation/blocked_people_screen.dart';
 import 'package:battleplan/features/safety/presentation/reports_screen.dart';
@@ -433,6 +434,19 @@ GoRouter router(Ref ref) {
                     playerId: PlayerId(state.pathParameters['playerId']!),
                   ),
                 ),
+                routes: [
+                  // The player's details form (PLAYER-12).
+                  GoRoute(
+                    path: 'details',
+                    pageBuilder: (_, state) => PanelPage(
+                      key: state.pageKey,
+                      child: PlayerDetailsRoute(
+                        groupId: GroupId(state.pathParameters['groupId']!),
+                        playerId: PlayerId(state.pathParameters['playerId']!),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

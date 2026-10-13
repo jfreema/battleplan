@@ -9,7 +9,7 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
 - Milestones M0 to M8 each ended working on iOS, Android, and web, with rules tests updated (SPEC §9). Go-live then runs in six phases, web first (below). Until Phase 4 the native apps keep building and passing tests, but don't ship.
 
-Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. Teams are now one type with players on every team, claims, and admin approval (tasks 181 to 186). The old M9 and Launch sections are replaced by six go-live phases: the website and web app first, then GDPR, backups, and security, then Sign in with Apple, the App Store, Google Play, and Facebook sign-in, each in its own phase (D60).
+Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. Teams are now one type with players on every team, claims, and admin approval (tasks 181 to 186), and coaches can keep player details such as date of birth (tasks 216 to 218). The old M9 and Launch sections are replaced by six go-live phases: the website and web app first, then GDPR, backups, and security, then Sign in with Apple, the App Store, Google Play, and Facebook sign-in, each in its own phase (D60).
 
 ---
 
@@ -193,6 +193,14 @@ SPEC Q17, §6.3 (PLAYER-1 to PLAYER-11), ARCH §6.2 and D59. The owner asked for
 184. ✅ App: no type step when creating a team; a Players section on every roster with Add player (pending for members), Claim this player, and Approve and Decline for admins; "Who are you here for?" on every team; RSVP rows per player plus a Me row for admins and members not linked to a player (never for a member who is a player), with "12 of 15 players going · 2 others", or "12 going · 3 maybe · 2 no" on a team with no players (PLAYER-3, PLAYER-4, PLAYER-6).
 185. ✅ Labels and notifications: "Jared F. #12" for a member who is a player, "Maria R. · Emma #7" for a guardian; youth-team wording removed (PLAYER-7, PLAYER-8).
 186. ✅ Docs and website: SPEC, ARCH, and the landing and support pages describe one team type ("Players and parents").
+
+## Player details for coaches · after M8
+
+SPEC PLAYER-12 and Q18, ARCH §6.2, §6.3, and D63. The owner asked to keep player information such as date of birth for easier team administration.
+
+216. ✅ Server: `playerDetails/{playerId}` with rules (admins and the player's linked members read and write; super admins read only; nobody else sees them; strict fields and sizes; consent stamped with who and when for medical notes); deleted with the player and the team; sample details in the seed and demo data; rules and emulator tests.
+217. ✅ App: a Details section on the player card for admins and linked members (age and date of birth, emergency contacts with tap to call, medical notes, notes) with an Edit form and the consent tick for medical notes; ages on the roster for admins.
+218. ✅ Docs and website: SPEC PLAYER-10 and PLAYER-12, §3, LEGAL-1 and LEGAL-7; ARCH data model, rules, and D63; the privacy, terms, and delete-account pages and the landing page.
 
 ## Go-live in six phases
 

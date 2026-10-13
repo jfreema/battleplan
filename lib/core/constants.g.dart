@@ -13,6 +13,7 @@ abstract final class Collections {
   static const String groupMembers = 'groupMembers';
   static const String players = 'players';
   static const String playerGuardians = 'playerGuardians';
+  static const String playerDetails = 'playerDetails';
   static const String guardianRequests = 'guardianRequests';
   static const String invites = 'invites';
   static const String messages = 'messages';
@@ -64,6 +65,13 @@ abstract final class Limits {
   static const int membersPerGroupMax = 500;
   static const int playersPerGroupMax = 200;
   static const int guardiansPerPlayerMax = 4;
+  static const int emergencyContactsMax = 2;
+  static const int emergencyContactNameMax = 60;
+  static const int emergencyContactPhoneMax = 30;
+  static const int emergencyContactRelationshipMax = 30;
+  static const int medicalNotesMax = 500;
+  static const int playerNotesMax = 500;
+  static const int playerAgeMaxYears = 100;
   static const int pastedRosterLinesMax = 200;
   static const int pastedMembersMax = 100;
   static const int emailInvitesPerBatchMax = 50;
