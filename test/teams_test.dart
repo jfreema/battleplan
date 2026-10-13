@@ -533,6 +533,182 @@ void main() {
     });
   });
 
+  group('roster details and contact sharing (TEAM-10)', () {
+    final people = [
+      testMembership('y', 'coach', role: MemberRole.owner, name: 'Jordan'),
+      testMembership('y', 'maria', name: 'Maria Rodriguez'),
+      testMembership('y', 'ann', role: MemberRole.admin, name: 'Ann Admin'),
+    ];
+    FakePlayerRepository threePlayers() => FakePlayerRepository([
+      emma,
+      const Player(
+        id: PlayerId('zed'),
+        groupId: GroupId('y'),
+        displayName: 'Zed Adams',
+        jerseyNumber: '2',
+      ),
+      const Player(
+        id: PlayerId('amy'),
+        groupId: GroupId('y'),
+        displayName: 'Amy Zhou',
+      ),
+    ]);
+
+    /// The players' names in the order they're on screen.
+    List<String> playerOrder(WidgetTester tester) {
+      final names = ['Zed Adams', 'Emma Rodriguez', 'Amy Zhou'];
+      return names.toList()..sort(
+        (a, b) => tester
+            .getTopLeft(find.text(a))
+            .dy
+            .compareTo(tester.getTopLeft(find.text(b)).dy),
+      );
+    }
+
+    testWidgets('players by number, or by name; people by name, owner first', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberships: people,
+        playerRepo: threePlayers(),
+      );
+      await go(tester, '/g/y/roster');
+      // By number, players without one last.
+      expect(playerOrder(tester), ['Zed Adams', 'Emma Rodriguez', 'Amy Zhou']);
+      final owner = tester.getTopLeft(find.text('Jordan')).dy;
+      expect(owner, lessThan(tester.getTopLeft(find.text('Ann Admin')).dy));
+
+      await tester.tap(find.byTooltip('Sort players'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('By name'));
+      await tester.pumpAndSettle();
+      expect(playerOrder(tester), ['Amy Zhou', 'Emma Rodriguez', 'Zed Adams']);
+    });
+
+    testWidgets('I share my phone and email; the team can call, text, and '
+        'email me', (tester) async {
+      final members = FakeMemberRepository([...people]);
+      final links = FakeLinkOpener();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberRepo: members,
+        linkOpener: links,
+      );
+      await go(tester, '/g/y/roster');
+      await tester.tap(find.text('Jordan'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Share my phone and email'));
+      await tester.pumpAndSettle();
+      // The account's email is offered.
+      expect(find.text('coach@example.com'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Phone'),
+        '(555) 010-0199',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(members.calls, ['contact coach (555) 010-0199 coach@example.com']);
+      expect(find.text('Shared with the team'), findsOneWidget);
+      // The card shows them at once, with the buttons.
+      expect(find.text('(555) 010-0199'), findsOneWidget);
+      await tester.tap(find.byTooltip('Text Jordan'));
+      await tester.tap(find.byTooltip('Call Jordan'));
+      await tester.tap(find.byTooltip('Email Jordan'));
+      expect(links.opened.map((u) => u.toString()), [
+        'sms:5550100199',
+        'tel:5550100199',
+        'mailto:coach@example.com',
+      ]);
+
+      // Stop sharing from the same place.
+      await tester.tap(find.text('Edit my phone and email'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Stop sharing'));
+      await tester.pumpAndSettle();
+      expect(members.calls.last, 'contact coach null null');
+      expect(find.text('(555) 010-0199'), findsNothing);
+    });
+
+    testWidgets("someone else's card shows what they share, and nothing to "
+        'edit', (tester) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberships: [
+          people.first,
+          people[1].copyWith(contactEmail: 'maria@example.com'),
+        ],
+      );
+      await go(tester, '/g/y/roster');
+      await tester.tap(find.text('Maria Rodriguez'));
+      await tester.pumpAndSettle();
+      expect(find.text('maria@example.com'), findsOneWidget);
+      expect(find.byTooltip('Email Maria Rodriguez'), findsOneWidget);
+      // No phone shared, so no call or text.
+      expect(find.byTooltip('Call Maria Rodriguez'), findsNothing);
+      expect(find.text('Share my phone and email'), findsNothing);
+    });
+
+    testWidgets('bad entries are caught before saving', (tester) async {
+      final members = FakeMemberRepository([...people]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberRepo: members,
+      );
+      await go(tester, '/g/y/roster');
+      await tester.tap(find.text('Jordan'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Share my phone and email'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Phone'),
+        'call me',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Email'),
+        'not an email',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('Enter a phone number, up to 30 characters'), findsOne);
+      expect(find.text('Enter an email address'), findsOneWidget);
+      expect(members.calls, isEmpty);
+    });
+
+    testWidgets('on an archived team I can only stop sharing', (tester) async {
+      final members = FakeMemberRepository([
+        people.first.copyWith(contactPhone: '555 0100'),
+        people[1],
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'y': testGroup(
+            'y',
+            'Lightning U10',
+          ).copyWith(archivedAt: DateTime(2026)),
+        },
+        memberRepo: members,
+      );
+      await go(tester, '/g/y/roster');
+      await tester.tap(find.text('Jordan'));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit my phone and email'), findsNothing);
+      await tester.tap(find.text('Stop sharing'));
+      await tester.pumpAndSettle();
+      expect(members.calls, ['contact coach null null']);
+    });
+  });
+
   group('joining (INV-5, INV-7)', () {
     testWidgets('people already on the team go straight to it', (tester) async {
       final invites = FakeInviteRepository();
