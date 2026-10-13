@@ -242,6 +242,12 @@ describe('managing documents (DOC-5)', () => {
     await assertSucceeds(edit('alice', 'dBob', { pinned: false }));
   });
 
+  it('lets super admins pin on any team (§3), not only admins on theirs', async () => {
+    const root = env.authenticatedContext('root', { superAdmin: true }).firestore();
+    await assertSucceeds(edit('root', 'dBob', { pinned: true }, root));
+    await assertSucceeds(edit('root', 'dBob', { pinned: false }, root));
+  });
+
   it('keeps everything else fixed, and checks the new values', async () => {
     for (const changes of [
       { path: 'groups/teamA/documents/dBob/Other.pdf' },

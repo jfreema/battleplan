@@ -9,7 +9,7 @@ import { onCall } from '../shared/callable.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { requireAuth, requireVerifiedEmail } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
-import { requireTeamAdmin, roleOf } from '../shared/roles.js';
+import { requireOpenTeam, requireRoomForAnotherTeam, requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
 import { displayNameOf, findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
 import { resendApiKey, sendEmail } from '../email/service.js';
@@ -44,9 +44,19 @@ const Player = z.object({
   guardians: z.array(Guardian).max(Limits.guardiansPerPlayerMax).default([]),
 });
 
+/** Roster lines a list of players stands for: one per guardian, or one for a player with none (PLAYER-1). */
+export function rosterLines(players: { guardians: unknown[] }[]): number {
+  return players.reduce((n, p) => n + Math.max(1, p.guardians.length), 0);
+}
+
 const AddPlayersInput = z.object({
   groupId: z.string().min(1),
-  players: z.array(Player).min(1).max(Limits.pastedRosterLinesMax),
+  players: z
+    .array(Player)
+    .min(1)
+    .max(Limits.pastedRosterLinesMax)
+    // Up to 200 lines, one per guardian (PLAYER-1), not 200 players.
+    .refine((players) => rosterLines(players) <= Limits.pastedRosterLinesMax, 'too-many-lines'),
 });
 
 /** Adds players with their guardians to a youth team (PLAYER-1). Admins only. */
@@ -113,13 +123,21 @@ export const removePlayer = onCall(async (request) => {
   return { ok: true };
 });
 
-/** Throws unless [groupId] is a youth team the caller belongs to. */
-async function requireYouthMember(groupId: string, uid: string): Promise<{ role: string; teamName: string }> {
-  const role = await roleOf(groupId, uid);
+/**
+ * Throws unless [groupId] is an open youth team (requireOpenTeam) the caller
+ * belongs to. A super admin who isn't on it acts as an admin when
+ * [superAdmin] is passed (§3: adding a guardian); calls that make the caller
+ * a guardian themselves leave it false.
+ */
+async function requireYouthMember(
+  groupId: string,
+  uid: string,
+  superAdmin = false,
+): Promise<{ role: string; teamName: string }> {
+  const role = (await roleOf(groupId, uid)) ?? (superAdmin ? 'superAdmin' : null);
   if (!role) throw new HttpsError('permission-denied', 'Not a member.');
-  const group = await db().collection(Collections.groups).doc(groupId).get();
+  const group = await requireOpenTeam(groupId, superAdmin);
   if (group.get('teamType') !== 'youth') throw new HttpsError('failed-precondition', 'not-youth-team');
-  if (group.get('archivedAt')) throw new HttpsError('failed-precondition', 'team-archived');
   return { role, teamName: group.get('name') as string };
 }
 
@@ -269,10 +287,11 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   );
   // Adding someone by email needs a verified email (AUTH-3).
   requireVerifiedEmail(request);
-  const { role, teamName } = await requireYouthMember(input.groupId, actor);
+  const superAdmin = request.auth?.token.superAdmin === true;
+  const { role, teamName } = await requireYouthMember(input.groupId, actor, superAdmin);
   const player = await db().collection(Collections.players).doc(input.playerId).get();
   if (!player.exists || player.get('groupId') !== input.groupId) throw new HttpsError('not-found', 'no-player');
-  if (role === 'member' && !(await isGuardian(input.playerId, actor))) {
+  if (role === 'member' && !superAdmin && !(await isGuardian(input.playerId, actor))) {
     throw new HttpsError('permission-denied', 'Only guardians and admins can add guardians.');
   }
   if ((await guardianCount(input.playerId)) >= Limits.guardiansPerPlayerMax) {
@@ -283,6 +302,8 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   const wasMember = (
     await db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, user.uid)).get()
   ).exists;
+  // A person can be on up to 100 teams (TEAM-2).
+  if (!wasMember) await requireRoomForAnotherTeam(user.uid, Limits.groupsPerUserMax);
   await linkGuardian(input.groupId, input.playerId, user, actor, 'guardian');
   await refreshPlayerSummary(input.groupId, user.uid);
   const actorProfile = await db().collection(Collections.users).doc(actor).get();
@@ -319,6 +340,8 @@ export const removeGuardian = onCall(async (request) => {
   );
   if (input.uid !== actor) {
     await requireTeamAdmin(input.groupId, actor, request.auth?.token.superAdmin === true);
+  } else {
+    await requireOpenTeam(input.groupId, request.auth?.token.superAdmin === true);
   }
   const player = await db().collection(Collections.players).doc(input.playerId).get();
   if (!player.exists || player.get('groupId') !== input.groupId) return { ok: true };

@@ -3,7 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { findOrProvisionUser } from '../accounts/service.js';
 import { db } from '../shared/admin.js';
-import { Collections } from '../shared/constants.js';
+import { Collections, Limits } from '../shared/constants.js';
 import { forEachPage } from '../shared/batch.js';
 import { compositeId, groupMemberId } from '../shared/ids.js';
 import { removeUpcomingRsvps } from '../schedule/service.js';
@@ -16,12 +16,34 @@ export async function removeAccountFromPlayers(uid: string): Promise<void> {
   }
 }
 
+/**
+ * Someone who leaves or is removed from a team stops being a guardian there
+ * (TEAM-8, TEAM-3): their guardian links and requests on it go, so coming
+ * back by link needs an admin's approval again (PLAYER-3, Q15) and an old
+ * request can't put them back on the team. Their players stay.
+ */
+export async function removeGuardianFromTeam(groupId: string, uid: string): Promise<void> {
+  for (const collection of [Collections.playerGuardians, Collections.guardianRequests]) {
+    await forEachPage(
+      db().collection(collection).where('groupId', '==', groupId).where('uid', '==', uid),
+      (b, d) => b.delete(d.ref),
+    );
+  }
+}
+
 export interface AddPlayersResult {
   playersAdded: number;
   guardiansLinked: number;
   guardiansInvited: number;
   /** Emails of guardians who got a new added account (for setup emails). */
   invitedEmails: string[];
+  /**
+   * Guardians given a name but no email, "Emma: Maria R." (PLAYER-1: both
+   * are optional). Nobody can be linked without an email, so the results
+   * say so instead of dropping them.
+   */
+  guardiansWithoutEmail: string[];
+  /** "Emma: maria@example.com", with " (too-many-teams)" when they're on 100 teams (TEAM-2). */
   problems: string[];
 }
 
@@ -35,7 +57,14 @@ export async function addPlayers(
   actorUid: string,
   players: PlayerInput[],
 ): Promise<{ result: AddPlayersResult; newMembers: string[] }> {
-  const result: AddPlayersResult = { playersAdded: 0, guardiansLinked: 0, guardiansInvited: 0, invitedEmails: [], problems: [] };
+  const result: AddPlayersResult = {
+    playersAdded: 0,
+    guardiansLinked: 0,
+    guardiansInvited: 0,
+    invitedEmails: [],
+    guardiansWithoutEmail: [],
+    problems: [],
+  };
   const touchedGuardians = new Set<string>();
   // Guardians who weren't on the team yet, to be told they were added (NOTIF-2).
   const newMembers = new Set<string>();
@@ -54,9 +83,22 @@ export async function addPlayers(
     });
     result.playersAdded++;
     for (const g of input.guardians) {
-      if (!g.email) continue; // a name alone can't be linked
+      if (!g.email) {
+        // A name alone can't be linked; the results list it (PLAYER-1).
+        if (g.name?.trim()) result.guardiansWithoutEmail.push(`${name}: ${g.name.trim()}`);
+        continue;
+      }
       try {
         const user = await findOrProvisionUser(g.email, g.name ?? null);
+        // A person can be on up to 100 teams (TEAM-2).
+        const member = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, user.uid)).get();
+        if (!member.exists) {
+          const teams = await db().collection(Collections.groupMembers).where('uid', '==', user.uid).count().get();
+          if (teams.data().count >= Limits.groupsPerUserMax) {
+            result.problems.push(`${name}: ${g.email} (too-many-teams)`);
+            continue;
+          }
+        }
         if (await linkGuardian(groupId, playerRef.id, user, actorUid, 'admin')) newMembers.add(user.uid);
         touchedGuardians.add(user.uid);
         if (user.provisioned) {
@@ -215,6 +257,12 @@ export async function resolveGuardianRequest(
   const ref = db().collection(Collections.guardianRequests).doc(compositeId(playerId, uid));
   const request = await ref.get();
   if (!request.exists || request.get('groupId') !== groupId || request.get('status') !== 'pending') return false;
+  // Someone who has left the team since asking isn't put back on it (TEAM-8).
+  const member = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, uid)).get();
+  if (!member.exists) {
+    await ref.delete();
+    return false;
+  }
   if (approve) {
     const profile = await db().collection(Collections.users).doc(uid).get();
     await linkGuardian(

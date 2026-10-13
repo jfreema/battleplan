@@ -1,6 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/live_pages.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,40 +15,54 @@ class FirestorePlayerRepository implements PlayerRepository {
   final FirebaseFunctions _functions;
 
   @override
-  Stream<List<Player>> watchPlayers(GroupId groupId) => _db
-      .collection(Collections.players)
-      .where('groupId', isEqualTo: groupId.value)
-      .limit(Limits.queryLimitMax)
-      .snapshots()
-      .map(
-        (q) => [
-          for (final d in q.docs)
-            Player(
-              id: PlayerId(d.id),
-              groupId: groupId,
-              displayName: d.data()['displayName'] as String? ?? '',
-              jerseyNumber: d.data()['jerseyNumber'] as String?,
-              position: d.data()['position'] as String?,
-            ),
-        ],
-      );
+  Stream<List<Player>> watchPlayers(GroupId groupId) => _allPages(
+    _db
+        .collection(Collections.players)
+        .where('groupId', isEqualTo: groupId.value),
+    (d) => Player(
+      id: PlayerId(d.id),
+      groupId: groupId,
+      displayName: d.data()['displayName'] as String? ?? '',
+      jerseyNumber: d.data()['jerseyNumber'] as String?,
+      position: d.data()['position'] as String?,
+    ),
+  );
 
   @override
-  Stream<List<GuardianLink>> watchGuardianLinks(GroupId groupId) => _db
-      .collection(Collections.playerGuardians)
-      .where('groupId', isEqualTo: groupId.value)
-      .limit(Limits.queryLimitMax)
-      .snapshots()
-      .map(
-        (q) => [
-          for (final d in q.docs)
-            GuardianLink(
-              playerId: PlayerId(d.data()['playerId'] as String),
-              groupId: groupId,
-              uid: UserId(d.data()['uid'] as String),
+  Stream<List<GuardianLink>> watchGuardianLinks(GroupId groupId) => _allPages(
+    _db
+        .collection(Collections.playerGuardians)
+        .where('groupId', isEqualTo: groupId.value),
+    (d) => GuardianLink(
+      playerId: PlayerId(d.data()['playerId'] as String),
+      groupId: groupId,
+      uid: UserId(d.data()['uid'] as String),
+    ),
+  );
+
+  /// Every match, 100 to a page, each page live. A team can have 200
+  /// players with 4 guardians each, past the query cap; a guardian missing
+  /// from the list couldn't answer for their player (TEAM-3, PLAYER-6).
+  Stream<List<T>> _allPages<T>(
+    Query<Map<String, dynamic>> query,
+    T Function(QueryDocumentSnapshot<Map<String, dynamic>> d) map,
+  ) {
+    final q = query.orderBy(FieldPath.documentId);
+    return livePages<T, String>((after) {
+      final page = after == null ? q : q.startAfter([after]);
+      return page
+          .limit(Limits.queryLimitMax)
+          .snapshots()
+          .map(
+            (snap) => (
+              items: [for (final d in snap.docs) map(d)],
+              next: snap.docs.length < Limits.queryLimitMax
+                  ? null
+                  : snap.docs.last.id,
             ),
-        ],
-      );
+          );
+    });
+  }
 
   @override
   Future<AddPlayersResult> addPlayers(
@@ -72,6 +87,10 @@ class FirestorePlayerRepository implements PlayerRepository {
       playersAdded: (data['playersAdded'] as num).toInt(),
       guardiansLinked: (data['guardiansLinked'] as num).toInt(),
       guardiansInvited: (data['guardiansInvited'] as num).toInt(),
+      guardiansWithoutEmail: [
+        for (final p in (data['guardiansWithoutEmail'] as List?) ?? const [])
+          '$p',
+      ],
       problems: [for (final p in (data['problems'] as List?) ?? const []) '$p'],
     );
   }
@@ -213,10 +232,13 @@ class FirestorePlayerRepository implements PlayerRepository {
       throw switch ((e.code, e.message)) {
         ('failed-precondition', 'too-many-players' || 'too-many-guardians') =>
           InvalidInput(e.message),
-        // AUTH-3: adding guardians by email needs a verified email.
+        ('failed-precondition', 'too-many-teams') => TooManyTeams(e.message),
         ('failed-precondition', 'email-not-verified') => EmailNotVerified(
           e.message,
         ),
+        // The team became an adult team (TEAM-1), or was archived.
+        ('failed-precondition', 'not-youth-team' || 'team-archived') =>
+          PermissionDenied(e.message),
         ('resource-exhausted', _) => RateLimited(e.message),
         ('permission-denied', _) => PermissionDenied(e.message),
         ('invalid-argument', _) => InvalidInput(e.message),

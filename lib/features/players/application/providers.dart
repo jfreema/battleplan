@@ -2,6 +2,8 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
+import 'package:battleplan/features/schedule/application/providers.dart';
+import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
@@ -47,3 +49,17 @@ Stream<List<GuardianRequest>> myGuardianRequests(Ref ref, GroupId groupId) {
       .watch(playerRepositoryProvider)
       .watchMyRequests(groupId, UserId(uid));
 }
+
+/// A player's answers on the team's events from yesterday on, by event ID,
+/// for the player card's upcoming RSVPs (PLAYER-2).
+@riverpod
+Stream<Map<String, Rsvp>> playerRsvps(
+  Ref ref,
+  GroupId groupId,
+  PlayerId playerId,
+) => ref
+    .watch(rsvpRepositoryProvider)
+    .watchMine(groupId, [
+      playerId.value,
+    ], from: DateTime.now().subtract(const Duration(days: 1)))
+    .map((list) => {for (final r in list) r.eventId.value: r});

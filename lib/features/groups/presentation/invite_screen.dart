@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -18,9 +19,10 @@ import 'package:material_ui/material_ui.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /// INV-1 at `/g/:groupId/invite`: the team's link, QR code, and code, with
-/// Copy, Share, and a full-screen QR to hold up at practice. Admins can set
-/// an expiry and use limit and reset the link (INV-2). Links lead to email
-/// invites (INV-4) and, for admins, adding people by email (TEAM-7).
+/// Copy, Share, and a full-screen QR to hold up at practice. Admins set an
+/// expiry and use limit on the current link, reset it, or turn it off (INV-2,
+/// §3); Team settings opens this screen to manage it (TEAM-5). Links lead
+/// to email invites (INV-4) and, for admins, adding people by email (TEAM-7).
 class InviteScreen extends ConsumerWidget {
   const new({required this.groupId, super.key});
 
@@ -30,7 +32,6 @@ class InviteScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final invite = ref.watch(teamInviteProvider(groupId));
-    // Super admins reset and revoke links from the admin panel (ADMIN-3).
     final isAdmin =
         (ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false) ||
         (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
@@ -55,12 +56,14 @@ class InviteScreen extends ConsumerWidget {
           : null,
       body: invite.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => EmptyState(
-          icon: AppIcons.invite,
-          message: e is PermissionDenied
-              ? l10n.invitesAdminsOnly
-              : l10n.loadError,
-        ),
+        error: (e, _) => e is InviteUnusable && e.reason == 'link-off'
+            ? _LinkOff(groupId: groupId, isAdmin: isAdmin)
+            : EmptyState(
+                icon: AppIcons.invite,
+                message: e is PermissionDenied
+                    ? l10n.invitesAdminsOnly
+                    : l10n.loadError,
+              ),
         data: (inv) => _InviteBody(
           invite: inv,
           groupId: groupId,
@@ -178,12 +181,23 @@ class _InviteBody extends ConsumerWidget {
           const SizedBox(height: Space.sm),
           Text(_linkSummary(context, invite)),
           const SizedBox(height: Space.sm),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton(
-              onPressed: () => unawaited(_reset(context, ref)),
-              child: Text(l10n.resetLink),
-            ),
+          Wrap(
+            spacing: Space.sm,
+            runSpacing: Space.sm,
+            children: [
+              OutlinedButton(
+                onPressed: () => unawaited(_change(context, ref)),
+                child: Text(l10n.linkChangeOptions),
+              ),
+              OutlinedButton(
+                onPressed: () => unawaited(_reset(context, ref)),
+                child: Text(l10n.resetLink),
+              ),
+              TextButton(
+                onPressed: () => unawaited(_turnOff(context, ref)),
+                child: Text(l10n.linkTurnOff),
+              ),
+            ],
           ),
         ],
       ],
@@ -204,76 +218,199 @@ class _InviteBody extends ConsumerWidget {
     return '$expires · $uses';
   }
 
-  Future<void> _reset(BuildContext context, WidgetRef ref) async {
+  /// Sets the expiry and use limit on the link people already have (INV-2).
+  Future<void> _change(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
-    var expiry = InviteExpiry.never;
-    final usesController = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text(l10n.resetLink),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.resetLinkBody),
-              const SizedBox(height: Space.lg),
-              DropdownButtonFormField<InviteExpiry>(
-                initialValue: expiry,
-                isExpanded: true,
-                decoration: InputDecoration(labelText: l10n.linkExpiryLabel),
-                items: [
-                  for (final e in InviteExpiry.values)
-                    DropdownMenuItem(
-                      value: e,
-                      child: Text(switch (e) {
-                        InviteExpiry.never => l10n.expiryNever,
-                        InviteExpiry.oneDay => l10n.expiry1d,
-                        InviteExpiry.sevenDays => l10n.expiry7d,
-                        InviteExpiry.thirtyDays => l10n.expiry30d,
-                      }),
-                    ),
-                ],
-                onChanged: (e) => setState(() => expiry = e ?? expiry),
-              ),
-              const SizedBox(height: Space.md),
-              TextField(
-                controller: usesController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: l10n.linkMaxUsesLabel),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(l10n.resetLink),
-            ),
-          ],
-        ),
-      ),
+    final options = await askLinkOptions(
+      context,
+      title: l10n.linkChangeOptions,
+      body: l10n.linkChangeOptionsBody,
+      confirm: l10n.save,
+      maxUses: invite.maxUses,
     );
-    if (ok != true || !context.mounted) return;
-    // The screen reloads after the reset, so keep the messenger now.
+    if (options == null || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
       await ref
           .read(inviteRepositoryProvider)
-          .resetTeamInvite(
+          .updateTeamInvite(
             groupId,
-            expiry: expiry,
-            maxUses: int.tryParse(usesController.text.trim()),
+            expiry: options.expiry,
+            maxUses: options.maxUses,
           );
       ref.invalidate(teamInviteProvider(groupId));
-      messenger.showSnackBar(SnackBar(content: Text(l10n.linkReset)));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.profileSaved)));
     } on AppFailure {
       messenger.showSnackBar(SnackBar(content: Text(l10n.signInUnknownError)));
     }
+  }
+
+  Future<void> _reset(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final options = await askLinkOptions(
+      context,
+      title: l10n.resetLink,
+      body: l10n.resetLinkBody,
+      confirm: l10n.resetLink,
+    );
+    if (options == null || !context.mounted) return;
+    await resetTeamLink(context, ref, groupId, options);
+  }
+
+  /// Turns the link off with no new one (§3 "revoke").
+  Future<void> _turnOff(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.linkTurnOff,
+      message: l10n.linkTurnOffBody,
+      confirmLabel: l10n.linkTurnOff,
+      cancelLabel: l10n.cancel,
+    );
+    if (!ok || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(inviteRepositoryProvider).revokeTeamInvite(groupId);
+      ref.invalidate(teamInviteProvider(groupId));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.linkTurnedOff)));
+    } on AppFailure {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.signInUnknownError)));
+    }
+  }
+}
+
+/// Replaces the team's link with a new one with [options] (INV-2), which
+/// also turns a link that was turned off back on.
+Future<void> resetTeamLink(
+  BuildContext context,
+  WidgetRef ref,
+  GroupId groupId,
+  ({InviteExpiry expiry, int? maxUses}) options,
+) async {
+  final l10n = AppLocalizations.of(context);
+  // The screen reloads after the reset, so keep the messenger now.
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    await ref
+        .read(inviteRepositoryProvider)
+        .resetTeamInvite(
+          groupId,
+          expiry: options.expiry,
+          maxUses: options.maxUses,
+        );
+    ref.invalidate(teamInviteProvider(groupId));
+    messenger.showSnackBar(SnackBar(content: Text(l10n.linkReset)));
+  } on AppFailure {
+    messenger.showSnackBar(SnackBar(content: Text(l10n.signInUnknownError)));
+  }
+}
+
+/// Asks for a link's expiry and use limit (INV-2). Null when cancelled.
+Future<({InviteExpiry expiry, int? maxUses})?> askLinkOptions(
+  BuildContext context, {
+  required String title,
+  required String body,
+  required String confirm,
+  int? maxUses,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  var expiry = InviteExpiry.never;
+  final usesController = TextEditingController(text: maxUses?.toString());
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(body),
+            const SizedBox(height: Space.lg),
+            DropdownButtonFormField<InviteExpiry>(
+              initialValue: expiry,
+              isExpanded: true,
+              decoration: InputDecoration(labelText: l10n.linkExpiryLabel),
+              items: [
+                for (final e in InviteExpiry.values)
+                  DropdownMenuItem(
+                    value: e,
+                    child: Text(switch (e) {
+                      InviteExpiry.never => l10n.expiryNever,
+                      InviteExpiry.oneDay => l10n.expiry1d,
+                      InviteExpiry.sevenDays => l10n.expiry7d,
+                      InviteExpiry.thirtyDays => l10n.expiry30d,
+                    }),
+                  ),
+              ],
+              onChanged: (e) => setState(() => expiry = e ?? expiry),
+            ),
+            const SizedBox(height: Space.md),
+            TextField(
+              controller: usesController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: l10n.linkMaxUsesLabel),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(confirm),
+          ),
+        ],
+      ),
+    ),
+  );
+  // Not disposed here: the dialog still uses it while it animates away.
+  final uses = int.tryParse(usesController.text.trim());
+  if (ok != true) return null;
+  return (expiry: expiry, maxUses: uses != null && uses > 0 ? uses : null);
+}
+
+/// The team's link is turned off (§3): admins can turn a new one on.
+class _LinkOff extends ConsumerWidget {
+  const new({required this.groupId, required this.isAdmin});
+
+  final GroupId groupId;
+  final bool isAdmin;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return ListView(
+      padding: const EdgeInsets.all(Space.xl),
+      children: [
+        EmptyState(icon: AppIcons.invite, message: l10n.linkIsOff),
+        if (isAdmin)
+          Center(
+            child: FilledButton(
+              onPressed: () async {
+                final options = await askLinkOptions(
+                  context,
+                  title: l10n.linkTurnOn,
+                  body: l10n.linkTurnOnBody,
+                  confirm: l10n.linkTurnOn,
+                );
+                if (options == null || !context.mounted) return;
+                await resetTeamLink(context, ref, groupId, options);
+              },
+              child: Text(l10n.linkTurnOn),
+            ),
+          ),
+        const SizedBox(height: Space.xl),
+        ListTile(
+          leading: const Icon(AppIcons.email),
+          title: Text(l10n.emailInvites),
+          subtitle: Text(l10n.emailInvitesSubtitle),
+          onTap: () => context.push('/g/${groupId.value}/invite/email'),
+        ),
+      ],
+    );
   }
 }
 

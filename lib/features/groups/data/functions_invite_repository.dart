@@ -26,6 +26,7 @@ class FunctionsInviteRepository implements InviteRepository {
       teamType: TeamType.tryParse(d['teamType'] as String?) ?? TeamType.adult,
       memberCount: (d['memberCount'] as num?)?.toInt() ?? 0,
       color: _color(d['color'] as String?),
+      logoUrl: d['logoUrl'] as String?,
       invitedBy: d['invitedBy'] as String?,
     );
   }
@@ -50,6 +51,21 @@ class FunctionsInviteRepository implements InviteRepository {
     'expiresInDays': expiry.days,
     'maxUses': maxUses,
   });
+
+  @override
+  Future<TeamInvite> updateTeamInvite(
+    GroupId groupId, {
+    InviteExpiry expiry = InviteExpiry.never,
+    int? maxUses,
+  }) => _call('updateGroupInvite', {
+    'groupId': groupId.value,
+    'expiresInDays': expiry.days,
+    'maxUses': maxUses,
+  });
+
+  @override
+  Future<void> revokeTeamInvite(GroupId groupId) =>
+      _raw('revokeGroupInvite', {'groupId': groupId.value});
 
   @override
   Future<int> sendEmailInvites(
@@ -104,6 +120,8 @@ class FunctionsInviteRepository implements InviteRepository {
     } on FirebaseFunctionsException catch (e) {
       throw switch ((e.code, e.message)) {
         ('not-found', final reason?) => InviteUnusable(reason),
+        // An admin turned the team's link off (§3).
+        ('failed-precondition', 'link-off') => const InviteUnusable('link-off'),
         ('failed-precondition', 'too-many-teams') => TooManyTeams(e.message),
         ('failed-precondition', 'email-not-verified') => EmailNotVerified(
           e.message,

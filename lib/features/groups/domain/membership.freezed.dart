@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Membership {
 
- GroupId get groupId; UserId get uid; MemberRole get role; String get displayName; NotificationLevel get notificationLevel; DateTime? get mutedUntil; DateTime? get lastReadAt; String? get title;/// Youth teams: "Emma #7, Liam #23" for a guardian (PLAYER-8).
+ GroupId get groupId; UserId get uid; MemberRole get role; String get displayName; NotificationLevel get notificationLevel; DateTime? get mutedUntil; DateTime? get lastReadAt; String? get title;/// Their profile photo's Storage path, copied onto the membership, for
+/// the roster (TEAM-3).
+ String? get photoPath;/// Youth teams: "Emma #7, Liam #23" for a guardian (PLAYER-8).
  String? get playerSummary;/// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
  bool get pending;
 /// Create a copy of Membership
@@ -29,20 +31,20 @@ $MembershipCopyWith<Membership> get copyWith => _$MembershipCopyWithImpl<Members
 @override
 bool operator ==(Object other) {
   final _this = this as Membership;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Membership&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.role, _this.role) || other.role == _this.role)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.notificationLevel, _this.notificationLevel) || other.notificationLevel == _this.notificationLevel)&&(identical(other.mutedUntil, _this.mutedUntil) || other.mutedUntil == _this.mutedUntil)&&(identical(other.lastReadAt, _this.lastReadAt) || other.lastReadAt == _this.lastReadAt)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.playerSummary, _this.playerSummary) || other.playerSummary == _this.playerSummary)&&(identical(other.pending, _this.pending) || other.pending == _this.pending));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Membership&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.uid, _this.uid) || other.uid == _this.uid)&&(identical(other.role, _this.role) || other.role == _this.role)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.notificationLevel, _this.notificationLevel) || other.notificationLevel == _this.notificationLevel)&&(identical(other.mutedUntil, _this.mutedUntil) || other.mutedUntil == _this.mutedUntil)&&(identical(other.lastReadAt, _this.lastReadAt) || other.lastReadAt == _this.lastReadAt)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.playerSummary, _this.playerSummary) || other.playerSummary == _this.playerSummary)&&(identical(other.pending, _this.pending) || other.pending == _this.pending));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Membership;
-  return Object.hash(runtimeType,_this.groupId,_this.uid,_this.role,_this.displayName,_this.notificationLevel,_this.mutedUntil,_this.lastReadAt,_this.title,_this.playerSummary,_this.pending);
+  return Object.hash(runtimeType,_this.groupId,_this.uid,_this.role,_this.displayName,_this.notificationLevel,_this.mutedUntil,_this.lastReadAt,_this.title,_this.photoPath,_this.playerSummary,_this.pending);
 }
 
 @override
 String toString() {
   final _this = this as Membership;
-  return 'Membership(groupId: ${_this.groupId}, uid: ${_this.uid}, role: ${_this.role}, displayName: ${_this.displayName}, notificationLevel: ${_this.notificationLevel}, mutedUntil: ${_this.mutedUntil}, lastReadAt: ${_this.lastReadAt}, title: ${_this.title}, playerSummary: ${_this.playerSummary}, pending: ${_this.pending})';
+  return 'Membership(groupId: ${_this.groupId}, uid: ${_this.uid}, role: ${_this.role}, displayName: ${_this.displayName}, notificationLevel: ${_this.notificationLevel}, mutedUntil: ${_this.mutedUntil}, lastReadAt: ${_this.lastReadAt}, title: ${_this.title}, photoPath: ${_this.photoPath}, playerSummary: ${_this.playerSummary}, pending: ${_this.pending})';
 }
 
 
@@ -53,7 +55,7 @@ abstract mixin class $MembershipCopyWith<$Res>  {
   factory $MembershipCopyWith(Membership value, $Res Function(Membership) _then) = _$MembershipCopyWithImpl;
 @useResult
 $Res call({
- GroupId groupId, UserId uid, MemberRole role, String displayName, NotificationLevel notificationLevel, DateTime? mutedUntil, DateTime? lastReadAt, String? title, String? playerSummary, bool pending
+ GroupId groupId, UserId uid, MemberRole role, String displayName, NotificationLevel notificationLevel, DateTime? mutedUntil, DateTime? lastReadAt, String? title, String? photoPath, String? playerSummary, bool pending
 });
 
 
@@ -70,7 +72,7 @@ class _$MembershipCopyWithImpl<$Res>
 
 /// Create a copy of Membership
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? groupId = null,Object? uid = null,Object? role = null,Object? displayName = null,Object? notificationLevel = null,Object? mutedUntil = freezed,Object? lastReadAt = freezed,Object? title = freezed,Object? playerSummary = freezed,Object? pending = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? groupId = null,Object? uid = null,Object? role = null,Object? displayName = null,Object? notificationLevel = null,Object? mutedUntil = freezed,Object? lastReadAt = freezed,Object? title = freezed,Object? photoPath = freezed,Object? playerSummary = freezed,Object? pending = null,}) {
   return _then(Membership(
 groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
@@ -80,6 +82,7 @@ as String,notificationLevel: null == notificationLevel ? _self.notificationLevel
 as NotificationLevel,mutedUntil: freezed == mutedUntil ? _self.mutedUntil : mutedUntil // ignore: cast_nullable_to_non_nullable
 as DateTime?,lastReadAt: freezed == lastReadAt ? _self.lastReadAt : lastReadAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String?,photoPath: freezed == photoPath ? _self.photoPath : photoPath // ignore: cast_nullable_to_non_nullable
 as String?,playerSummary: freezed == playerSummary ? _self.playerSummary : playerSummary // ignore: cast_nullable_to_non_nullable
 as String?,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -167,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId groupId,  UserId uid,  MemberRole role,  String displayName,  NotificationLevel notificationLevel,  DateTime? mutedUntil,  DateTime? lastReadAt,  String? title,  String? playerSummary,  bool pending)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId groupId,  UserId uid,  MemberRole role,  String displayName,  NotificationLevel notificationLevel,  DateTime? mutedUntil,  DateTime? lastReadAt,  String? title,  String? photoPath,  String? playerSummary,  bool pending)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Membership() when $default != null:
-return $default(_that.groupId,_that.uid,_that.role,_that.displayName,_that.notificationLevel,_that.mutedUntil,_that.lastReadAt,_that.title,_that.playerSummary,_that.pending);case _:
+return $default(_that.groupId,_that.uid,_that.role,_that.displayName,_that.notificationLevel,_that.mutedUntil,_that.lastReadAt,_that.title,_that.photoPath,_that.playerSummary,_that.pending);case _:
   return orElse();
 
 }
@@ -188,10 +191,10 @@ return $default(_that.groupId,_that.uid,_that.role,_that.displayName,_that.notif
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId groupId,  UserId uid,  MemberRole role,  String displayName,  NotificationLevel notificationLevel,  DateTime? mutedUntil,  DateTime? lastReadAt,  String? title,  String? playerSummary,  bool pending)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId groupId,  UserId uid,  MemberRole role,  String displayName,  NotificationLevel notificationLevel,  DateTime? mutedUntil,  DateTime? lastReadAt,  String? title,  String? photoPath,  String? playerSummary,  bool pending)  $default,) {final _that = this;
 switch (_that) {
 case _Membership():
-return $default(_that.groupId,_that.uid,_that.role,_that.displayName,_that.notificationLevel,_that.mutedUntil,_that.lastReadAt,_that.title,_that.playerSummary,_that.pending);case _:
+return $default(_that.groupId,_that.uid,_that.role,_that.displayName,_that.notificationLevel,_that.mutedUntil,_that.lastReadAt,_that.title,_that.photoPath,_that.playerSummary,_that.pending);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +211,10 @@ return $default(_that.groupId,_that.uid,_that.role,_that.displayName,_that.notif
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId groupId,  UserId uid,  MemberRole role,  String displayName,  NotificationLevel notificationLevel,  DateTime? mutedUntil,  DateTime? lastReadAt,  String? title,  String? playerSummary,  bool pending)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId groupId,  UserId uid,  MemberRole role,  String displayName,  NotificationLevel notificationLevel,  DateTime? mutedUntil,  DateTime? lastReadAt,  String? title,  String? photoPath,  String? playerSummary,  bool pending)?  $default,) {final _that = this;
 switch (_that) {
 case _Membership() when $default != null:
-return $default(_that.groupId,_that.uid,_that.role,_that.displayName,_that.notificationLevel,_that.mutedUntil,_that.lastReadAt,_that.title,_that.playerSummary,_that.pending);case _:
+return $default(_that.groupId,_that.uid,_that.role,_that.displayName,_that.notificationLevel,_that.mutedUntil,_that.lastReadAt,_that.title,_that.photoPath,_that.playerSummary,_that.pending);case _:
   return null;
 
 }
@@ -223,7 +226,7 @@ return $default(_that.groupId,_that.uid,_that.role,_that.displayName,_that.notif
 
 
 class _Membership extends Membership {
-  const _Membership({required this.groupId, required this.uid, required this.role, required this.displayName, this.notificationLevel = NotificationLevel.all, this.mutedUntil, this.lastReadAt, this.title, this.playerSummary, this.pending = false}): super._();
+  const _Membership({required this.groupId, required this.uid, required this.role, required this.displayName, this.notificationLevel = NotificationLevel.all, this.mutedUntil, this.lastReadAt, this.title, this.photoPath, this.playerSummary, this.pending = false}): super._();
   
 
 @override final  GroupId groupId;
@@ -234,6 +237,9 @@ class _Membership extends Membership {
 @override final  DateTime? mutedUntil;
 @override final  DateTime? lastReadAt;
 @override final  String? title;
+/// Their profile photo's Storage path, copied onto the membership, for
+/// the roster (TEAM-3).
+@override final  String? photoPath;
 /// Youth teams: "Emma #7, Liam #23" for a guardian (PLAYER-8).
 @override final  String? playerSummary;
 /// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
@@ -249,18 +255,18 @@ _$MembershipCopyWith<_Membership> get copyWith => __$MembershipCopyWithImpl<_Mem
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Membership&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.role, role) || other.role == role)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.notificationLevel, notificationLevel) || other.notificationLevel == notificationLevel)&&(identical(other.mutedUntil, mutedUntil) || other.mutedUntil == mutedUntil)&&(identical(other.lastReadAt, lastReadAt) || other.lastReadAt == lastReadAt)&&(identical(other.title, title) || other.title == title)&&(identical(other.playerSummary, playerSummary) || other.playerSummary == playerSummary)&&(identical(other.pending, pending) || other.pending == pending));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Membership&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.uid, uid) || other.uid == uid)&&(identical(other.role, role) || other.role == role)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.notificationLevel, notificationLevel) || other.notificationLevel == notificationLevel)&&(identical(other.mutedUntil, mutedUntil) || other.mutedUntil == mutedUntil)&&(identical(other.lastReadAt, lastReadAt) || other.lastReadAt == lastReadAt)&&(identical(other.title, title) || other.title == title)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.playerSummary, playerSummary) || other.playerSummary == playerSummary)&&(identical(other.pending, pending) || other.pending == pending));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,groupId,uid,role,displayName,notificationLevel,mutedUntil,lastReadAt,title,playerSummary,pending);
+    return Object.hash(runtimeType,groupId,uid,role,displayName,notificationLevel,mutedUntil,lastReadAt,title,photoPath,playerSummary,pending);
 }
 
 @override
 String toString() {
-    return 'Membership(groupId: $groupId, uid: $uid, role: $role, displayName: $displayName, notificationLevel: $notificationLevel, mutedUntil: $mutedUntil, lastReadAt: $lastReadAt, title: $title, playerSummary: $playerSummary, pending: $pending)';
+    return 'Membership(groupId: $groupId, uid: $uid, role: $role, displayName: $displayName, notificationLevel: $notificationLevel, mutedUntil: $mutedUntil, lastReadAt: $lastReadAt, title: $title, photoPath: $photoPath, playerSummary: $playerSummary, pending: $pending)';
 }
 
 
@@ -271,7 +277,7 @@ abstract mixin class _$MembershipCopyWith<$Res> implements $MembershipCopyWith<$
   factory _$MembershipCopyWith(_Membership value, $Res Function(_Membership) _then) = __$MembershipCopyWithImpl;
 @override @useResult
 $Res call({
- GroupId groupId, UserId uid, MemberRole role, String displayName, NotificationLevel notificationLevel, DateTime? mutedUntil, DateTime? lastReadAt, String? title, String? playerSummary, bool pending
+ GroupId groupId, UserId uid, MemberRole role, String displayName, NotificationLevel notificationLevel, DateTime? mutedUntil, DateTime? lastReadAt, String? title, String? photoPath, String? playerSummary, bool pending
 });
 
 
@@ -288,7 +294,7 @@ class __$MembershipCopyWithImpl<$Res>
 
 /// Create a copy of Membership
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? groupId = null,Object? uid = null,Object? role = null,Object? displayName = null,Object? notificationLevel = null,Object? mutedUntil = freezed,Object? lastReadAt = freezed,Object? title = freezed,Object? playerSummary = freezed,Object? pending = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? groupId = null,Object? uid = null,Object? role = null,Object? displayName = null,Object? notificationLevel = null,Object? mutedUntil = freezed,Object? lastReadAt = freezed,Object? title = freezed,Object? photoPath = freezed,Object? playerSummary = freezed,Object? pending = null,}) {
   return _then(_Membership(
 groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId,uid: null == uid ? _self.uid : uid // ignore: cast_nullable_to_non_nullable
@@ -298,6 +304,7 @@ as String,notificationLevel: null == notificationLevel ? _self.notificationLevel
 as NotificationLevel,mutedUntil: freezed == mutedUntil ? _self.mutedUntil : mutedUntil // ignore: cast_nullable_to_non_nullable
 as DateTime?,lastReadAt: freezed == lastReadAt ? _self.lastReadAt : lastReadAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String?,photoPath: freezed == photoPath ? _self.photoPath : photoPath // ignore: cast_nullable_to_non_nullable
 as String?,playerSummary: freezed == playerSummary ? _self.playerSummary : playerSummary // ignore: cast_nullable_to_non_nullable
 as String?,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
 as bool,

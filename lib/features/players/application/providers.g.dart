@@ -403,3 +403,98 @@ final class MyGuardianRequestsFamily extends $Family
   @override
   String toString() => r'myGuardianRequestsProvider';
 }
+
+/// A player's answers on the team's events from yesterday on, by event ID,
+/// for the player card's upcoming RSVPs (PLAYER-2).
+
+@ProviderFor(playerRsvps)
+final playerRsvpsProvider = PlayerRsvpsFamily._();
+
+/// A player's answers on the team's events from yesterday on, by event ID,
+/// for the player card's upcoming RSVPs (PLAYER-2).
+
+final class PlayerRsvpsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, Rsvp>>,
+          Map<String, Rsvp>,
+          Stream<Map<String, Rsvp>>
+        >
+    with
+        $FutureModifier<Map<String, Rsvp>>,
+        $StreamProvider<Map<String, Rsvp>> {
+  /// A player's answers on the team's events from yesterday on, by event ID,
+  /// for the player card's upcoming RSVPs (PLAYER-2).
+  PlayerRsvpsProvider._({
+    required PlayerRsvpsFamily super.from,
+    required (GroupId, PlayerId) super.argument,
+  }) : super(
+         retry: null,
+         name: r'playerRsvpsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$playerRsvpsHash();
+
+  @override
+  String toString() {
+    return r'playerRsvpsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<String, Rsvp>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<String, Rsvp>> create(Ref ref) {
+    final argument = this.argument as (GroupId, PlayerId);
+    return playerRsvps(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PlayerRsvpsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$playerRsvpsHash() => r'd889be7bb5e0c425aed44c2be159b3bc5baecf38';
+
+/// A player's answers on the team's events from yesterday on, by event ID,
+/// for the player card's upcoming RSVPs (PLAYER-2).
+
+final class PlayerRsvpsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          Stream<Map<String, Rsvp>>,
+          (GroupId, PlayerId)
+        > {
+  PlayerRsvpsFamily._()
+    : super(
+        retry: null,
+        name: r'playerRsvpsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A player's answers on the team's events from yesterday on, by event ID,
+  /// for the player card's upcoming RSVPs (PLAYER-2).
+
+  PlayerRsvpsProvider call(GroupId groupId, PlayerId playerId) =>
+      PlayerRsvpsProvider._(argument: (groupId, playerId), from: this);
+
+  @override
+  String toString() => r'playerRsvpsProvider';
+}

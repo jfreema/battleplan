@@ -60,6 +60,13 @@ abstract class AddPlayersResult with _$AddPlayersResult {
     required int playersAdded,
     required int guardiansLinked,
     required int guardiansInvited,
+
+    /// Guardians given a name and no email, "Emma: Maria R.": nobody can be
+    /// linked without an email, so they're listed instead (PLAYER-1).
+    @Default(<String>[]) List<String> guardiansWithoutEmail,
+
+    /// "Emma: maria@example.com", with " (too-many-teams)" for someone on
+    /// 100 teams already (TEAM-2).
     @Default(<String>[]) List<String> problems,
   }) = _AddPlayersResult;
 }

@@ -320,7 +320,7 @@ describe('every role, spot checks the other files leave out', () => {
     await assertSucceeds(as('bob').doc('messages/m1').update({ text: 'Edited', editedAt: now() }));
   });
 
-  it("stops super admins creating events and other teams' admins editing them", async () => {
+  it("lets super admins create events (§3), and stops other teams' admins editing them", async () => {
     const event = (uid: string) => ({
       groupId: 'teamA', type: 'practice', title: 'Extra', description: '', location: null, allDay: false,
       startAt: ts(START), endAt: ts('2030-06-02T00:30:00Z'), timeZone: 'America/Chicago', rsvpEnabled: true,
@@ -328,7 +328,7 @@ describe('every role, spot checks the other files leave out', () => {
       rsvpCounts: { going: 0, maybe: 0, notGoing: 0 }, staffCounts: { going: 0, maybe: 0, notGoing: 0 },
       createdBy: uid, createdAt: now(), updatedAt: now(),
     });
-    await assertFails(root().doc('events/eRoot').set(event('root')));
+    await assertSucceeds(root().doc('events/eRoot').set(event('root')));
     await assertSucceeds(as('alice').doc('events/eAlice').set(event('alice')));
     await assertFails(as('gina').doc('events/e1').update({ title: 'Taken', updatedAt: now() }));
   });

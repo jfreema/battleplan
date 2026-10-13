@@ -156,8 +156,16 @@ GoRouter router(Ref ref) {
       // profile exists (the callable creates it), nothing is blocked.
       final profile = ref.read(myProfileProvider).value;
       final needsSetup = profile?.needsSetup ?? false;
-      if (needsSetup && path != '/setup') return '/setup';
-      if (!needsSetup && path == '/setup') return '/';
+      // A new account on its way somewhere (an invite link, INV-5 step 2)
+      // goes there after setup.
+      if (needsSetup && path != '/setup') {
+        return path == '/'
+            ? '/setup'
+            : '/setup?from=${Uri.encodeComponent(state.uri.toString())}';
+      }
+      if (!needsSetup && path == '/setup') {
+        return state.uri.queryParameters['from'] ?? '/';
+      }
 
       if (path.startsWith('/admin') && !user.isSuperAdmin) return '/';
 

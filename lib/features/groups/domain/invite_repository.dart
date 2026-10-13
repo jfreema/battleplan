@@ -21,6 +21,20 @@ abstract interface class InviteRepository {
     int? maxUses,
   });
 
+  /// Sets the current link's expiry and use limit, keeping its code so the
+  /// link and QR already shared still work (INV-2). Admins. Throws
+  /// InviteUnusable('link-off') when the link is turned off.
+  Future<TeamInvite> updateTeamInvite(
+    GroupId groupId, {
+    InviteExpiry expiry = InviteExpiry.never,
+    int? maxUses,
+  });
+
+  /// Turns the team's link off with no new one (§3 "revoke"). Admins turn
+  /// a new one on with [resetTeamInvite]. Until then [teamInvite] throws
+  /// InviteUnusable('link-off').
+  Future<void> revokeTeamInvite(GroupId groupId);
+
   /// Emails single-use invites that expire in 14 days (INV-4). Returns how
   /// many were invited. Throws EmailNotVerified or RateLimited.
   Future<int> sendEmailInvites(

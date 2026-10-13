@@ -23,10 +23,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// TEAM-3 at `/g/:groupId/roster`: Admins, then Members, searchable by name.
-/// Tapping a person opens their card with only the actions you're allowed.
-/// Youth teams add a Players section; admins see guardian requests at the
-/// top (PLAYER-4), and parents not linked yet get "Who are you here for?".
+/// TEAM-3 at `/g/:groupId/roster`: Admins, then Members, searchable by name,
+/// each with their photo or initials. Tapping a person opens their card with
+/// only the actions you're allowed. Youth teams add a Players section, each
+/// player with their guardians; admins see guardian requests at the top
+/// (PLAYER-4), and parents not linked yet get "Who are you here for?".
 class RosterScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -58,10 +59,11 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               const <GuardianRequest>[]
         : const <GuardianRequest>[];
     final myUid = ref.watch(authUserProvider).value?.uid;
-    final linked =
-        youth &&
-        (ref.watch(guardianLinksProvider(widget.groupId)).value ?? const [])
-            .any((l) => l.uid.value == myUid);
+    final links = youth
+        ? ref.watch(guardianLinksProvider(widget.groupId)).value ??
+              const <GuardianLink>[]
+        : const <GuardianLink>[];
+    final linked = links.any((l) => l.uid.value == myUid);
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.rosterMenu),
@@ -106,7 +108,11 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               ),
               if (requests.isNotEmpty) ...[
                 _Section(title: l10n.guardianRequestsTitle),
-                for (final r in requests)
+                // A request from someone no longer on the team isn't shown
+                // (TEAM-8): the server drops it when they leave.
+                for (final r in requests.where(
+                  (r) => members.any((m) => m.uid == r.uid),
+                ))
                   _RequestRow(
                     request: r,
                     who: members
@@ -129,17 +135,25 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               if (youth) ...[
                 _Section(title: l10n.rosterPlayers),
                 for (final p in shownPlayers)
-                  ListTile(
-                    leading: CircleAvatar(child: Text(p.jerseyNumber ?? '')),
-                    title: Text(p.displayName),
-                    subtitle: p.position == null ? null : Text(p.position!),
-                    onTap: () => context.push(
-                      '/g/${widget.groupId.value}/roster/players/${p.id.value}',
-                    ),
+                  _PlayerRow(
+                    player: p,
+                    // TEAM-3: number, name, position, and guardians.
+                    guardians: [
+                      for (final l in links)
+                        if (l.playerId == p.id)
+                          ?members
+                              .where((m) => m.uid == l.uid)
+                              .firstOrNull
+                              ?.displayName,
+                    ],
                   ),
                 _Section(title: l10n.rosterParentsStaff),
                 for (final m in [...admins, ...others])
-                  _MemberRow(member: m, me: me),
+                  _MemberRow(
+                    member: m,
+                    me: me,
+                    players: _playersOf(m.uid, links, players),
+                  ),
               ] else ...[
                 if (admins.isNotEmpty) _Section(title: l10n.rosterAdmins),
                 for (final m in admins) _MemberRow(member: m, me: me),
@@ -150,6 +164,63 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+/// The players [uid] is a guardian of, as "Emma #7" (TEAM-3).
+List<String> _playersOf(
+  UserId uid,
+  List<GuardianLink> links,
+  List<Player> players,
+) => [
+  for (final l in links)
+    if (l.uid == uid)
+      ?players.where((p) => p.id == l.playerId).firstOrNull?.label,
+];
+
+/// A player: number, name, position, and guardians (TEAM-3).
+class _PlayerRow extends StatelessWidget {
+  const new({required this.player, required this.guardians});
+
+  final Player player;
+  final List<String> guardians;
+
+  @override
+  Widget build(BuildContext context) {
+    final details = [
+      if (player.position?.isNotEmpty ?? false) player.position!,
+      if (guardians.isNotEmpty) guardians.join(', '),
+    ];
+    return ListTile(
+      leading: CircleAvatar(child: Text(player.jerseyNumber ?? '')),
+      title: Text(player.displayName),
+      subtitle: details.isEmpty ? null : Text(details.join(' · ')),
+      onTap: () => context.push(
+        '/g/${player.groupId.value}/roster/players/${player.id.value}',
+      ),
+    );
+  }
+}
+
+/// A member's photo, or initials when they have none (TEAM-3).
+class _MemberAvatar extends ConsumerWidget {
+  const new({required this.member, this.size = 40});
+
+  final Membership member;
+  final double size;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final path = member.photoPath;
+    final url = path == null
+        ? null
+        : ref.watch(teamPhotoUrlProvider(path)).value;
+    return Avatar(
+      name: member.displayName,
+      colorKey: member.uid.value,
+      imageUrl: url,
+      size: size,
     );
   }
 }
@@ -218,10 +289,13 @@ String? roleBadge(AppLocalizations l10n, MemberRole role) => switch (role) {
 };
 
 class _MemberRow extends StatelessWidget {
-  const new({required this.member, required this.me});
+  const new({required this.member, required this.me, this.players = const []});
 
   final Membership member;
   final Membership? me;
+
+  /// The players they're a guardian of, for their card (TEAM-3).
+  final List<String> players;
 
   @override
   Widget build(BuildContext context) {
@@ -235,25 +309,33 @@ class _MemberRow extends StatelessWidget {
       if (member.pending) l10n.notJoinedYet,
     ];
     return ListTile(
-      leading: Avatar(name: member.displayName, colorKey: member.uid.value),
+      leading: _MemberAvatar(member: member),
       title: Text(member.displayName),
       subtitle: details.isEmpty ? null : Text(details.join(' · ')),
       trailing: badge == null ? null : Chip(label: Text(badge)),
       onTap: () => showAdaptiveSheet<void>(
         context,
-        builder: (_) => MemberCard(member: member, me: me),
+        builder: (_) => MemberCard(member: member, me: me, players: players),
       ),
     );
   }
 }
 
-/// A person's card (TEAM-3): photo, name, title, role, and the actions the
-/// viewer is allowed (SPEC §3). Report and Block join with M3.
+/// A person's card (TEAM-3): photo, name, title, role, their players, and
+/// the actions the viewer is allowed (SPEC §3), Report and Block included.
 class MemberCard extends ConsumerWidget {
-  const new({required this.member, required this.me, super.key});
+  const new({
+    required this.member,
+    required this.me,
+    this.players = const [],
+    super.key,
+  });
 
   final Membership member;
   final Membership? me;
+
+  /// The players they're a guardian of, "Emma #7" (youth teams).
+  final List<String> players;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -298,11 +380,7 @@ class MemberCard extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Avatar(
-              name: member.displayName,
-              colorKey: member.uid.value,
-              size: 72,
-            ),
+            _MemberAvatar(member: member, size: 72),
             const SizedBox(height: Space.md),
             Text(
               member.displayName,
@@ -312,6 +390,10 @@ class MemberCard extends ConsumerWidget {
             if (badge != null) ...[
               const SizedBox(height: Space.sm),
               Chip(label: Text(badge)),
+            ],
+            if (players.isNotEmpty) ...[
+              const SizedBox(height: Space.sm),
+              Text(l10n.parentOf(players.join(', '))),
             ],
             const SizedBox(height: Space.lg),
             if (canPromote)

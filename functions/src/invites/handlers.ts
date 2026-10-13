@@ -12,7 +12,7 @@ import { postSystemMessage } from '../chat/service.js';
 import { refreshMemberCount } from '../teams/service.js';
 import { normalizeCode } from './codes.js';
 import { requireAuth } from '../shared/guards.js';
-import { requireTeamAdmin, roleOf } from '../shared/roles.js';
+import { requireOpenTeam, requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
 import { resendApiKey, sendEmail } from '../email/service.js';
 import { inviteEmail } from '../email/templates.js';
@@ -25,6 +25,8 @@ import {
   previewInvite,
   redeem,
   revokeTeamLinks,
+  teamLinkIsOff,
+  updateTeamLink,
 } from './service.js';
 
 const LinkOptions = z.object({
@@ -40,15 +42,58 @@ export const getTeamInvite = onCall(async (request) => {
   const uid = requireAuth(request);
   const { groupId } = parse(z.object({ groupId: z.string().min(1) }), request.data);
   const superAdmin = request.auth?.token.superAdmin === true;
-  const role = await roleOf(groupId, uid);
-  if (!superAdmin && !role) throw new HttpsError('permission-denied', 'Not a member.');
-  if (!superAdmin && role === 'member') {
-    const group = await db().collection(Collections.groups).doc(groupId).get();
-    if (group.get('settings.membersCanInvite') !== true) {
-      throw new HttpsError('permission-denied', 'invites-admins-only');
-    }
-  }
-  return (await activeTeamLink(groupId)) ?? (await createTeamLink(groupId, uid));
+  await requireInviter(groupId, uid, superAdmin);
+  // Nobody can join a suspended or archived team (redeem), so it gets no new link.
+  await requireOpenTeam(groupId, superAdmin);
+  const link = await activeTeamLink(groupId);
+  if (link) return link;
+  // An admin turned the link off (§3): no new one until they turn it on.
+  if (await teamLinkIsOff(groupId)) throw new HttpsError('failed-precondition', 'link-off');
+  return createTeamLink(groupId, uid);
+});
+
+/**
+ * Sets an expiry and use limit on the team's current link, keeping its code
+ * so the link and QR already shared still work (INV-2). Admins only.
+ */
+export const updateGroupInvite = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(LinkOptions.extend({ groupId: z.string().min(1) }), request.data);
+  await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
+  const link = await updateTeamLink(input.groupId, {
+    expiresInDays: input.expiresInDays ?? null,
+    maxUses: input.maxUses ?? null,
+  });
+  if (!link) throw new HttpsError('failed-precondition', 'link-off');
+  await audit({
+    actorId: uid,
+    action: 'updateGroupInvite',
+    groupId: input.groupId,
+    targetType: 'invite',
+    targetId: link.code,
+    after: { expiresInDays: input.expiresInDays ?? null, maxUses: input.maxUses ?? null },
+  });
+  return link;
+});
+
+/**
+ * Turns the team's link off without a new one (§3 "Reset or revoke invite
+ * links"). Admins turn it back on with resetGroupInvite. Email invites
+ * aren't affected. Admins only.
+ */
+export const revokeGroupInvite = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const { groupId } = parse(z.object({ groupId: z.string().min(1) }), request.data);
+  await requireTeamAdmin(groupId, uid, request.auth?.token.superAdmin === true, { allowArchived: true });
+  await revokeTeamLinks(groupId, true);
+  await audit({
+    actorId: uid,
+    action: 'revokeGroupInvite',
+    groupId,
+    targetType: 'group',
+    targetId: groupId,
+  });
+  return { ok: true };
 });
 
 /**
@@ -113,7 +158,10 @@ export const redeemInvite = onCall(async (request) => {
   return result;
 });
 
-/** Throws unless the caller may invite: admins, or members when the team allows it. */
+/**
+ * Throws unless the caller may invite: admins, or members when the team
+ * allows it. Callers that send invites also check requireOpenTeam.
+ */
 async function requireInviter(groupId: string, uid: string, superAdmin: boolean): Promise<void> {
   if (superAdmin) return;
   const role = await roleOf(groupId, uid);
@@ -140,6 +188,7 @@ export const sendEmailInvites = onCall({ secrets: [resendApiKey] }, async (reque
   const uid = requireAuth(request);
   const input = parse(SendInvitesInput, request.data);
   await requireInviter(input.groupId, uid, request.auth?.token.superAdmin === true);
+  await requireOpenTeam(input.groupId, request.auth?.token.superAdmin === true);
   if (request.auth?.token.email_verified !== true) {
     throw new HttpsError('failed-precondition', 'email-not-verified');
   }
@@ -164,6 +213,7 @@ export const listEmailInvites = onCall(async (request) => {
   const uid = requireAuth(request);
   const { groupId } = parse(z.object({ groupId: z.string().min(1) }), request.data);
   await requireInviter(groupId, uid, request.auth?.token.superAdmin === true);
+  await requireOpenTeam(groupId, request.auth?.token.superAdmin === true, { allowArchived: true });
   return { invites: await listInvites(groupId) };
 });
 
@@ -175,8 +225,11 @@ export const revokeInvite = onCall(async (request) => {
   const invite = await ref.get();
   if (!invite.exists) return { ok: true };
   const groupId = invite.get('groupId') as string;
+  // Turning an invite off is fine on an archived team, not a suspended one.
   if (invite.get('createdBy') !== uid) {
-    await requireTeamAdmin(groupId, uid, request.auth?.token.superAdmin === true);
+    await requireTeamAdmin(groupId, uid, request.auth?.token.superAdmin === true, { allowArchived: true });
+  } else {
+    await requireOpenTeam(groupId, request.auth?.token.superAdmin === true, { allowArchived: true });
   }
   await ref.update({ revokedAt: FieldValue.serverTimestamp() });
   return { ok: true };
@@ -191,6 +244,7 @@ export const resendEmailInvite = onCall({ secrets: [resendApiKey] }, async (requ
   if (!invite.exists || invite.get('type') !== 'email') throw new HttpsError('not-found', 'unknown');
   const groupId = invite.get('groupId') as string;
   await requireInviter(groupId, uid, request.auth?.token.superAdmin === true);
+  await requireOpenTeam(groupId, request.auth?.token.superAdmin === true);
   if ((invite.get('useCount') ?? 0) >= 1) throw new HttpsError('failed-precondition', 'already-joined');
   await consumeRateLimit(uid, 'emailInvite', Limits.emailInvitesPerUserPerDay);
   await ref.update({

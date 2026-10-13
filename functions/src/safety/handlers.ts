@@ -8,7 +8,7 @@ import { onCall } from '../shared/callable.js';
 import { Collections, Limits, reportReasonValues } from '../shared/constants.js';
 import { requireAuth } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
-import { requireTeamAdmin, roleOf } from '../shared/roles.js';
+import { requireOpenTeam, requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
 import { trySend } from '../notify/service.js';
 import { fileReport, reportedBody, reportSnapshot } from './service.js';
@@ -30,6 +30,8 @@ export const reportContent = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(ReportInput, request.data);
   if (!(await roleOf(input.groupId, uid))) throw new HttpsError('permission-denied', 'Not a member.');
+  // Not on a suspended team (§3); an archived one can still be reported (SAFE-1).
+  await requireOpenTeam(input.groupId, false, { allowArchived: true });
   if (input.targetType === 'user' && input.targetId === uid) {
     throw new HttpsError('invalid-argument', 'You cannot report yourself.');
   }
@@ -73,7 +75,10 @@ export const resolveReport = onCall(async (request) => {
   const report = await ref.get();
   if (!report.exists) throw new HttpsError('not-found', 'No such report.');
   const groupId = report.get('groupId') as string;
-  await requireTeamAdmin(groupId, uid, request.auth?.token.superAdmin === true);
+  // Team admins can't act on a suspended or archived team; super admins
+  // still close its reports (§3, TEAM-9).
+  const superAdmin = request.auth?.token.superAdmin === true;
+  await requireTeamAdmin(groupId, uid, superAdmin, { allowArchived: superAdmin });
   await ref.update({
     status: input.outcome,
     resolution: input.resolution,

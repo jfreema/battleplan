@@ -298,7 +298,8 @@ as int?,
 /// @nodoc
 mixin _$InvitePreview {
 
- String get groupId; String get name; Sport get sport; TeamType get teamType; int get memberCount; int? get color; String? get invitedBy;
+ String get groupId; String get name; Sport get sport; TeamType get teamType; int get memberCount; int? get color;/// The team's logo, readable signed out (INV-5), or null.
+ String? get logoUrl; String? get invitedBy;
 /// Create a copy of InvitePreview
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -310,20 +311,20 @@ $InvitePreviewCopyWith<InvitePreview> get copyWith => _$InvitePreviewCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as InvitePreview;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvitePreview&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.teamType, _this.teamType) || other.teamType == _this.teamType)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.invitedBy, _this.invitedBy) || other.invitedBy == _this.invitedBy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvitePreview&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.teamType, _this.teamType) || other.teamType == _this.teamType)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.logoUrl, _this.logoUrl) || other.logoUrl == _this.logoUrl)&&(identical(other.invitedBy, _this.invitedBy) || other.invitedBy == _this.invitedBy));
 }
 
 
 @override
 int get hashCode {
   final _this = this as InvitePreview;
-  return Object.hash(runtimeType,_this.groupId,_this.name,_this.sport,_this.teamType,_this.memberCount,_this.color,_this.invitedBy);
+  return Object.hash(runtimeType,_this.groupId,_this.name,_this.sport,_this.teamType,_this.memberCount,_this.color,_this.logoUrl,_this.invitedBy);
 }
 
 @override
 String toString() {
   final _this = this as InvitePreview;
-  return 'InvitePreview(groupId: ${_this.groupId}, name: ${_this.name}, sport: ${_this.sport}, teamType: ${_this.teamType}, memberCount: ${_this.memberCount}, color: ${_this.color}, invitedBy: ${_this.invitedBy})';
+  return 'InvitePreview(groupId: ${_this.groupId}, name: ${_this.name}, sport: ${_this.sport}, teamType: ${_this.teamType}, memberCount: ${_this.memberCount}, color: ${_this.color}, logoUrl: ${_this.logoUrl}, invitedBy: ${_this.invitedBy})';
 }
 
 
@@ -334,7 +335,7 @@ abstract mixin class $InvitePreviewCopyWith<$Res>  {
   factory $InvitePreviewCopyWith(InvitePreview value, $Res Function(InvitePreview) _then) = _$InvitePreviewCopyWithImpl;
 @useResult
 $Res call({
- String groupId, String name, Sport sport, TeamType teamType, int memberCount, int? color, String? invitedBy
+ String groupId, String name, Sport sport, TeamType teamType, int memberCount, int? color, String? logoUrl, String? invitedBy
 });
 
 
@@ -351,7 +352,7 @@ class _$InvitePreviewCopyWithImpl<$Res>
 
 /// Create a copy of InvitePreview
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? groupId = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? color = freezed,Object? invitedBy = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? groupId = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? color = freezed,Object? logoUrl = freezed,Object? invitedBy = freezed,}) {
   return _then(InvitePreview(
 groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -359,7 +360,8 @@ as String,sport: null == sport ? _self.sport : sport // ignore: cast_nullable_to
 as Sport,teamType: null == teamType ? _self.teamType : teamType // ignore: cast_nullable_to_non_nullable
 as TeamType,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as int?,invitedBy: freezed == invitedBy ? _self.invitedBy : invitedBy // ignore: cast_nullable_to_non_nullable
+as int?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
+as String?,invitedBy: freezed == invitedBy ? _self.invitedBy : invitedBy // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -445,10 +447,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String groupId,  String name,  Sport sport,  TeamType teamType,  int memberCount,  int? color,  String? invitedBy)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String groupId,  String name,  Sport sport,  TeamType teamType,  int memberCount,  int? color,  String? logoUrl,  String? invitedBy)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InvitePreview() when $default != null:
-return $default(_that.groupId,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.color,_that.invitedBy);case _:
+return $default(_that.groupId,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.color,_that.logoUrl,_that.invitedBy);case _:
   return orElse();
 
 }
@@ -466,10 +468,10 @@ return $default(_that.groupId,_that.name,_that.sport,_that.teamType,_that.member
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String groupId,  String name,  Sport sport,  TeamType teamType,  int memberCount,  int? color,  String? invitedBy)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String groupId,  String name,  Sport sport,  TeamType teamType,  int memberCount,  int? color,  String? logoUrl,  String? invitedBy)  $default,) {final _that = this;
 switch (_that) {
 case _InvitePreview():
-return $default(_that.groupId,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.color,_that.invitedBy);case _:
+return $default(_that.groupId,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.color,_that.logoUrl,_that.invitedBy);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -486,10 +488,10 @@ return $default(_that.groupId,_that.name,_that.sport,_that.teamType,_that.member
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String groupId,  String name,  Sport sport,  TeamType teamType,  int memberCount,  int? color,  String? invitedBy)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String groupId,  String name,  Sport sport,  TeamType teamType,  int memberCount,  int? color,  String? logoUrl,  String? invitedBy)?  $default,) {final _that = this;
 switch (_that) {
 case _InvitePreview() when $default != null:
-return $default(_that.groupId,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.color,_that.invitedBy);case _:
+return $default(_that.groupId,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.color,_that.logoUrl,_that.invitedBy);case _:
   return null;
 
 }
@@ -501,7 +503,7 @@ return $default(_that.groupId,_that.name,_that.sport,_that.teamType,_that.member
 
 
 class _InvitePreview implements InvitePreview {
-  const _InvitePreview({required this.groupId, required this.name, required this.sport, required this.teamType, required this.memberCount, this.color, this.invitedBy});
+  const _InvitePreview({required this.groupId, required this.name, required this.sport, required this.teamType, required this.memberCount, this.color, this.logoUrl, this.invitedBy});
   
 
 @override final  String groupId;
@@ -510,6 +512,8 @@ class _InvitePreview implements InvitePreview {
 @override final  TeamType teamType;
 @override final  int memberCount;
 @override final  int? color;
+/// The team's logo, readable signed out (INV-5), or null.
+@override final  String? logoUrl;
 @override final  String? invitedBy;
 
 /// Create a copy of InvitePreview
@@ -522,18 +526,18 @@ _$InvitePreviewCopyWith<_InvitePreview> get copyWith => __$InvitePreviewCopyWith
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvitePreview&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.teamType, teamType) || other.teamType == teamType)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.color, color) || other.color == color)&&(identical(other.invitedBy, invitedBy) || other.invitedBy == invitedBy));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvitePreview&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.teamType, teamType) || other.teamType == teamType)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.color, color) || other.color == color)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.invitedBy, invitedBy) || other.invitedBy == invitedBy));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,groupId,name,sport,teamType,memberCount,color,invitedBy);
+    return Object.hash(runtimeType,groupId,name,sport,teamType,memberCount,color,logoUrl,invitedBy);
 }
 
 @override
 String toString() {
-    return 'InvitePreview(groupId: $groupId, name: $name, sport: $sport, teamType: $teamType, memberCount: $memberCount, color: $color, invitedBy: $invitedBy)';
+    return 'InvitePreview(groupId: $groupId, name: $name, sport: $sport, teamType: $teamType, memberCount: $memberCount, color: $color, logoUrl: $logoUrl, invitedBy: $invitedBy)';
 }
 
 
@@ -544,7 +548,7 @@ abstract mixin class _$InvitePreviewCopyWith<$Res> implements $InvitePreviewCopy
   factory _$InvitePreviewCopyWith(_InvitePreview value, $Res Function(_InvitePreview) _then) = __$InvitePreviewCopyWithImpl;
 @override @useResult
 $Res call({
- String groupId, String name, Sport sport, TeamType teamType, int memberCount, int? color, String? invitedBy
+ String groupId, String name, Sport sport, TeamType teamType, int memberCount, int? color, String? logoUrl, String? invitedBy
 });
 
 
@@ -561,7 +565,7 @@ class __$InvitePreviewCopyWithImpl<$Res>
 
 /// Create a copy of InvitePreview
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? groupId = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? color = freezed,Object? invitedBy = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? groupId = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? color = freezed,Object? logoUrl = freezed,Object? invitedBy = freezed,}) {
   return _then(_InvitePreview(
 groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -569,7 +573,8 @@ as String,sport: null == sport ? _self.sport : sport // ignore: cast_nullable_to
 as Sport,teamType: null == teamType ? _self.teamType : teamType // ignore: cast_nullable_to_non_nullable
 as TeamType,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as int?,invitedBy: freezed == invitedBy ? _self.invitedBy : invitedBy // ignore: cast_nullable_to_non_nullable
+as int?,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
+as String?,invitedBy: freezed == invitedBy ? _self.invitedBy : invitedBy // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

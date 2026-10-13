@@ -41,6 +41,9 @@ abstract class InvitePreview with _$InvitePreview {
     required TeamType teamType,
     required int memberCount,
     int? color,
+
+    /// The team's logo, readable signed out (INV-5), or null.
+    String? logoUrl,
     String? invitedBy,
   }) = _InvitePreview;
 }

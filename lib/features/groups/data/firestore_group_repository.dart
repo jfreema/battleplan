@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/live_pages.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
@@ -64,6 +65,7 @@ class FirestoreGroupRepository implements GroupRepository {
     String? color,
     String? description,
     String? timeZone,
+    TeamType? teamType,
     GroupSettings? settings,
   }) async {
     final trimmed = name?.trim();
@@ -77,6 +79,7 @@ class FirestoreGroupRepository implements GroupRepository {
         'color': ?color,
         'description': ?description?.trim(),
         'timeZone': ?timeZone,
+        'teamType': ?teamType?.value,
         if (settings != null) 'settings': settingsToFirestore(settings),
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -230,12 +233,30 @@ class FirestoreMemberRepository implements MemberRepository {
   final FirebaseFunctions _functions;
 
   @override
-  Stream<List<Membership>> watchRoster(GroupId groupId) => _db
-      .collection(Collections.groupMembers)
-      .where('groupId', isEqualTo: groupId.value)
-      .limit(Limits.queryLimitMax)
-      .snapshots()
-      .map((q) => [for (final d in q.docs) membershipFromFirestore(d.data())]);
+  Stream<List<Membership>> watchRoster(GroupId groupId) {
+    // Every member, 100 to a page, each page live: a big team's roster
+    // isn't cut at the query cap (TEAM-3).
+    final q = _db
+        .collection(Collections.groupMembers)
+        .where('groupId', isEqualTo: groupId.value)
+        .orderBy(FieldPath.documentId);
+    return livePages<Membership, String>((after) {
+      final page = after == null ? q : q.startAfter([after]);
+      return page
+          .limit(Limits.queryLimitMax)
+          .snapshots()
+          .map(
+            (snap) => (
+              items: [
+                for (final d in snap.docs) membershipFromFirestore(d.data()),
+              ],
+              next: snap.docs.length < Limits.queryLimitMax
+                  ? null
+                  : snap.docs.last.id,
+            ),
+          );
+    });
+  }
 
   @override
   Future<void> updateMember(
@@ -321,6 +342,8 @@ class FirestoreMemberRepository implements MemberRepository {
         added: (d['added'] as num).toInt(),
         invited: (d['invited'] as num).toInt(),
         alreadyMembers: (d['alreadyMembers'] as num).toInt(),
+        addedPeople: _people(d['addedPeople']),
+        invitedPeople: _people(d['invitedPeople']),
         problems: [for (final p in (d['problems'] as List?) ?? const []) '$p'],
       );
     } on FirebaseFunctionsException catch (e) {
@@ -418,6 +441,7 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   mutedUntil: _date(d['mutedUntil']),
   lastReadAt: _date(d['lastReadAt']),
   title: d['title'] as String?,
+  photoPath: d['photoPath'] as String?,
   playerSummary: d['playerSummary'] as String?,
   pending: d['pending'] as bool? ?? false,
 );
@@ -453,3 +477,9 @@ Map<String, Object> settingsToFirestore(GroupSettings s) => {
   'allowMaybe': s.allowMaybe,
   'defaultReminderOffsets': s.defaultReminderOffsets,
 };
+
+/// `[{name, email}]` from addMemberByEmail (TEAM-7).
+List<({String name, String email})> _people(Object? list) => [
+  for (final p in ((list as List?) ?? const []).cast<Map<Object?, Object?>>())
+    (name: '${p['name'] ?? ''}', email: '${p['email'] ?? ''}'),
+];

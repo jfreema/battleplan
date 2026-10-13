@@ -50,6 +50,14 @@ class TeamEditor {
           settings: settings,
         );
 
+  /// Changes the team type (TEAM-1). Only the team's own admins: the
+  /// admin panel's `adminUpdateGroup` doesn't change it ([canChangeType]).
+  Future<void> changeTeamType(GroupId id, TeamType type) =>
+      _groups.updateGroup(id, teamType: type);
+
+  /// Whether [changeTeamType] is open to this editor.
+  bool get canChangeType => !asSuperAdmin;
+
   /// Uploads and sets a new logo (TEAM-5).
   Future<void> uploadLogo(GroupId id, Uint8List jpegBytes) async {
     if (!asSuperAdmin) {

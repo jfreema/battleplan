@@ -7,12 +7,14 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,7 +23,9 @@ import 'package:material_ui/material_ui.dart';
 /// PLAYER-2 at `/g/:groupId/roster/players/:playerId`: name, number,
 /// position, and guardians. Guardians and admins can edit the details and
 /// add a guardian (PLAYER-5); admins remove guardians and the player, and a
-/// guardian can remove themself. Upcoming RSVPs join with the schedule.
+/// guardian can remove themself. Upcoming RSVPs list the player's answer
+/// on each of the next events that take player RSVPs, each opening its
+/// event.
 class PlayerCardScreen extends ConsumerWidget {
   const new({required this.groupId, required this.playerId, super.key});
 
@@ -46,7 +50,20 @@ class PlayerCardScreen extends ConsumerWidget {
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final isAdmin = teamAdmin || superAdmin;
     if (player == null) {
-      return Scaffold(appBar: AppBar());
+      final loading =
+          !ref.watch(playersProvider(groupId)).hasValue ||
+          ref.watch(playersProvider(groupId)).isLoading;
+      return Scaffold(
+        appBar: AppBar(),
+        body: loading
+            ? const Center(child: CircularProgressIndicator())
+            : EmptyState(
+                icon: AppIcons.roster,
+                message: l10n.playerNotFound,
+                actionLabel: l10n.backToRoster,
+                onAction: () => context.go('/g/${groupId.value}/roster'),
+              ),
+      );
     }
     final guardianIds = {
       for (final l in links)
@@ -123,6 +140,8 @@ class PlayerCardScreen extends ConsumerWidget {
                 label: Text(l10n.addGuardian),
               ),
             ),
+          const SizedBox(height: Space.lg),
+          _UpcomingRsvps(groupId: groupId, playerId: playerId),
           if (isAdmin) ...[
             const SizedBox(height: Space.xl),
             OutlinedButton(
@@ -315,5 +334,67 @@ class PlayerCardScreen extends ConsumerWidget {
     } on AppFailure {
       if (context.mounted) showAppSnackBar(context, l10n.profileSaveFailed);
     }
+  }
+}
+
+/// How many upcoming events the player card lists (PLAYER-2).
+const playerCardEventsShown = 5;
+
+/// The player's answers on the next events that take player RSVPs
+/// (PLAYER-2), "No answer" where nobody has answered yet. Each opens its
+/// event, where guardians and admins answer.
+class _UpcomingRsvps extends ConsumerWidget {
+  const new({required this.groupId, required this.playerId});
+
+  final GroupId groupId;
+  final PlayerId playerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final list = ref.watch(teamEventsProvider(groupId, past: false));
+    final answers =
+        ref.watch(playerRsvpsProvider(groupId, playerId)).value ?? const {};
+    final events = list.events
+        .where((e) => e.forPlayers && e.takesRsvps)
+        .take(playerCardEventsShown)
+        .toList();
+    final dates = MaterialLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.upcomingRsvps, style: theme.textTheme.titleSmall),
+        if (list.loading)
+          const Padding(
+            padding: EdgeInsets.all(Space.md),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (events.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: Space.sm),
+            child: Text(l10n.noUpcomingRsvps),
+          ),
+        for (final e in events)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(e.title),
+            subtitle: Text(
+              e.allDay
+                  ? dates.formatMediumDate(e.startAt)
+                  : '${dates.formatMediumDate(e.startAt.toLocal())} · '
+                        '${dates.formatTimeOfDay(TimeOfDay.fromDateTime(e.startAt.toLocal()))}',
+            ),
+            trailing: Text(switch (answers[e.id.value]?.status) {
+              RsvpStatus.going => l10n.rsvpGoing,
+              RsvpStatus.maybe => l10n.rsvpMaybe,
+              RsvpStatus.notGoing => l10n.rsvpNotGoing,
+              null => l10n.rsvpNoAnswer,
+            }),
+            onTap: () =>
+                context.push('/g/${groupId.value}/schedule/e/${e.id.value}'),
+          ),
+      ],
+    );
   }
 }

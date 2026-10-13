@@ -1,6 +1,6 @@
 // Invites domain service: owns invites (ARCH §6.4, §6.6).
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
-import { db } from '../shared/admin.js';
+import { db, storage } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { joinUrl } from '../links/service.js';
 import { groupMemberId } from '../shared/ids.js';
@@ -80,8 +80,12 @@ export async function createTeamLink(groupId: string, createdBy: string, options
   throw new Error('Could not find a free invite code.');
 }
 
-/** Turns off every link for the team at once (INV-2 "Reset link"). */
-export async function revokeTeamLinks(groupId: string): Promise<void> {
+/**
+ * Turns off every link for the team at once (INV-2 "Reset link", §3
+ * "revoke"). [turnedOff] marks a revoke that isn't followed by a new link:
+ * the team then has no link until an admin turns one on (teamLinkIsOff).
+ */
+export async function revokeTeamLinks(groupId: string, turnedOff = false): Promise<void> {
   const snap = await db()
     .collection(Collections.invites)
     .where('groupId', '==', groupId)
@@ -90,8 +94,45 @@ export async function revokeTeamLinks(groupId: string): Promise<void> {
     .limit(50)
     .get();
   const batch = db().batch();
-  snap.docs.forEach((d) => batch.update(d.ref, { revokedAt: FieldValue.serverTimestamp() }));
+  snap.docs.forEach((d) =>
+    batch.update(d.ref, { revokedAt: FieldValue.serverTimestamp(), ...(turnedOff ? { turnedOff: true } : {}) }),
+  );
   await batch.commit();
+}
+
+/**
+ * Whether an admin turned the team's link off (§3 "revoke"): its newest
+ * link was revoked without a new one. getTeamInvite then makes no new link
+ * until an admin turns one on with resetGroupInvite.
+ */
+export async function teamLinkIsOff(groupId: string): Promise<boolean> {
+  const snap = await db()
+    .collection(Collections.invites)
+    .where('groupId', '==', groupId)
+    .where('type', '==', 'link')
+    .orderBy('createdAt', 'desc')
+    .limit(1)
+    .get();
+  return snap.docs[0]?.get('turnedOff') === true;
+}
+
+/**
+ * Changes the current link's expiry and use limit without changing its
+ * code, so the link and QR already shared keep working (INV-2). An expiry
+ * counts from now; null clears it, as null maxUses does. Returns the link,
+ * or null when the team has no usable one.
+ */
+export async function updateTeamLink(
+  groupId: string,
+  options: { expiresInDays: 1 | 7 | 30 | null; maxUses: number | null },
+  now = Date.now(),
+): Promise<TeamLink | null> {
+  const link = await activeTeamLink(groupId);
+  if (!link) return null;
+  const ref = db().collection(Collections.invites).doc(link.code);
+  const expiresAt = options.expiresInDays ? Timestamp.fromMillis(now + options.expiresInDays * 86_400_000) : null;
+  await ref.update({ expiresAt, maxUses: options.maxUses });
+  return toTeamLink(link.code, (await ref.get()).data() ?? {});
 }
 
 export type InviteProblem = 'unknown' | 'expired' | 'revoked' | 'used-up' | 'wrong-email';
@@ -120,7 +161,30 @@ export interface InvitePreview {
   teamType: string;
   memberCount: number;
   color: string | null;
+  /** A link to the team's logo, readable signed out (INV-5), or null. */
+  logoUrl: string | null;
   invitedBy: string | null;
+}
+
+/**
+ * A download link for the team's logo, which visitors who aren't on the
+ * team can't read through the Storage rules (INV-5 "logo"). Logos uploaded
+ * from the app carry a download token, which the link is built from; null
+ * without one, or on any error.
+ */
+export async function logoUrlOf(photoPath: string | null | undefined): Promise<string | null> {
+  if (!photoPath) return null;
+  try {
+    const file = storage().bucket().file(photoPath);
+    const [meta] = await file.getMetadata();
+    const token = String(meta.metadata?.firebaseStorageDownloadTokens ?? '').split(',')[0];
+    if (!token) return null;
+    const emulator = process.env.FIREBASE_STORAGE_EMULATOR_HOST;
+    const origin = emulator ? `http://${emulator.replace(/^https?:\/\//, '')}` : 'https://firebasestorage.googleapis.com';
+    return `${origin}/v0/b/${file.bucket.name}/o/${encodeURIComponent(photoPath)}?alt=media&token=${encodeURIComponent(token)}`;
+  } catch {
+    return null;
+  }
 }
 
 /** What the /join page shows before sign-in (INV-5, INV-7). */
@@ -139,6 +203,7 @@ export async function previewInvite(code: string): Promise<InvitePreview | Invit
     teamType: group.get('teamType') as string,
     memberCount: (group.get('memberCount') as number) ?? 0,
     color: (group.get('color') as string | null) ?? null,
+    logoUrl: await logoUrlOf(group.get('photoPath') as string | null | undefined),
     invitedBy: (creator.get('displayName') as string | undefined) ?? null,
   };
 }

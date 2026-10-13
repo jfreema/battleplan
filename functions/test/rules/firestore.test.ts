@@ -403,6 +403,15 @@ describe('one RSVP per event and participant', () => {
   });
 });
 
+describe('team type (TEAM-1)', () => {
+  it('lets admins switch between adult and youth, and nothing else', async () => {
+    await assertSucceeds(as('alice').doc('groups/teamA').update({ teamType: 'youth', updatedAt: now() }));
+    await assertSucceeds(as('alice').doc('groups/teamA').update({ teamType: 'adult', updatedAt: now() }));
+    await assertFails(as('alice').doc('groups/teamA').update({ teamType: 'league' }));
+    await assertFails(as('bob').doc('groups/teamA').update({ teamType: 'youth' }));
+  });
+});
+
 describe('cache and server-only fields', () => {
   it('rejects members editing team cache fields or other people’s memberships', async () => {
     await assertFails(as('alice').doc('groups/teamA').update({ memberCount: 99 }));

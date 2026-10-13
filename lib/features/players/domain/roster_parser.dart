@@ -3,17 +3,21 @@ import 'package:battleplan/features/players/domain/player.dart';
 /// Parses a pasted roster, one line per guardian: "Player name, Guardian
 /// name, Guardian email" (PLAYER-1). Lines with the same player name become
 /// one player with up to 4 guardians. Mirrors functions/src/players/roster.ts,
-/// so the app can show what it will add before sending.
-({List<NewPlayer> players, List<String> problems}) parsePastedRoster(
+/// so the app can show what it will add before sending. `lines` counts the
+/// lines that aren't blank, of which there can be up to 200
+/// (`Limits.pastedRosterLinesMax`).
+({List<NewPlayer> players, List<String> problems, int lines}) parsePastedRoster(
   String text, {
   int maxGuardians = 4,
 }) {
+  var lines = 0;
   final byName = <String, NewPlayer>{};
   final problems = <String>[];
   final email = RegExp(r'^\S+@\S+\.\S+$');
   for (final raw in text.split(RegExp(r'\r?\n'))) {
     final line = raw.trim();
     if (line.isEmpty) continue;
+    lines++;
     final parts = line.split(RegExp('[,\t]')).map((p) => p.trim()).toList();
     final name = parts.isNotEmpty ? parts[0] : '';
     final guardianName = parts.length > 1 ? parts[1] : '';
@@ -44,5 +48,5 @@ import 'package:battleplan/features/players/domain/player.dart';
       byName[key] = current;
     }
   }
-  return (players: byName.values.toList(), problems: problems);
+  return (players: byName.values.toList(), problems: problems, lines: lines);
 }

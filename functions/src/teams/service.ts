@@ -9,9 +9,10 @@ import { sendEmail } from '../email/service.js';
 import { addedToTeamEmail } from '../email/templates.js';
 import { teamUrl } from '../links/service.js';
 import { removeTeamNotifications, trySend } from '../notify/service.js';
+import { removeGuardianFromTeam } from '../players/service.js';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
-import { Collections } from '../shared/constants.js';
+import { Collections, Limits } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
 import type { Role } from '../shared/roles.js';
 
@@ -214,8 +215,8 @@ export async function clearTeamNotifications(groupId: string, uid: string): Prom
 }
 
 /**
- * Takes someone off a team (TEAM-3, SAFE-4): the membership, the member
- * count, "Sam was removed" in chat, and their center items for the team.
+ * Takes someone off a team (TEAM-3, SAFE-4): the membership, their
+ * guardian links and requests there, the member count, "Sam was removed" in chat, and their center items for the team.
  * Callers check who may remove whom (canRemove). Returns the role they had,
  * or null when they weren't on the team.
  */
@@ -224,6 +225,7 @@ export async function removeFromTeam(groupId: string, uid: string, actorUid: str
   const target = await ref.get();
   if (!target.exists) return null;
   await ref.delete();
+  await removeGuardianFromTeam(groupId, uid);
   await refreshMemberCount(groupId);
   const name = (target.get('displayName') as string) || 'Someone';
   await postSystemMessage(groupId, 'removed', `${name} was removed`, actorUid, uid);
@@ -398,10 +400,19 @@ export async function deleteGroupData(groupId: string): Promise<void> {
   await db().collection(Collections.groups).doc(groupId).delete();
 }
 
+export interface AddedPerson {
+  name: string;
+  email: string;
+}
+
 export interface AddMembersResult {
   added: number;
   invited: number;
   alreadyMembers: number;
+  /** Who was added (had an account) and who was invited (got one), for the results screen (TEAM-7). */
+  addedPeople: AddedPerson[];
+  invitedPeople: AddedPerson[];
+  /** Emails that couldn't be added; "email (too-many-teams)" when the person is on 100 teams (TEAM-2). */
   problems: string[];
 }
 
@@ -441,7 +452,14 @@ export async function addMembersByEmail(
   actor: { uid: string; name: string },
   entries: { name?: string | null; email: string }[],
 ): Promise<AddMembersResult> {
-  const result: AddMembersResult = { added: 0, invited: 0, alreadyMembers: 0, problems: [] };
+  const result: AddMembersResult = {
+    added: 0,
+    invited: 0,
+    alreadyMembers: 0,
+    addedPeople: [],
+    invitedPeople: [],
+    problems: [],
+  };
   const group = await db().collection(Collections.groups).doc(groupId).get();
   const teamName = group.get('name') as string;
   const addedUids: string[] = [];
@@ -451,6 +469,12 @@ export async function addMembersByEmail(
       const ref = db().collection(Collections.groupMembers).doc(groupMemberId(groupId, user.uid));
       if ((await ref.get()).exists) {
         result.alreadyMembers++;
+        continue;
+      }
+      // A person can be on up to 100 teams (TEAM-2).
+      const teams = await db().collection(Collections.groupMembers).where('uid', '==', user.uid).count().get();
+      if (teams.data().count >= Limits.groupsPerUserMax) {
+        result.problems.push(`${entry.email} (too-many-teams)`);
         continue;
       }
       const now = FieldValue.serverTimestamp();
@@ -471,12 +495,15 @@ export async function addMembersByEmail(
         pending: user.provisioned,
       });
       addedUids.push(user.uid);
+      const person = { name: user.displayName, email: entry.email.trim().toLowerCase() };
       if (user.provisioned) {
         await sendSetupEmail(entry.email, teamName, actor.name);
         result.invited++;
+        result.invitedPeople.push(person);
       } else {
         await sendEmail(addedToTeamEmail(entry.email, teamName, actor.name, teamUrl(groupId)));
         result.added++;
+        result.addedPeople.push(person);
       }
     } catch {
       result.problems.push(entry.email);
