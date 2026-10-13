@@ -444,8 +444,34 @@ class FakeMemberRepository implements MemberRepository {
   }
 
   @override
-  Stream<List<Membership>> watchRoster(GroupId groupId) =>
-      Stream.value(memberships.where((m) => m.groupId == groupId).toList());
+  Stream<List<Membership>> watchRoster(GroupId groupId) async* {
+    List<Membership> team() =>
+        memberships.where((m) => m.groupId == groupId).toList();
+    yield team();
+    await for (final _ in _changes.stream) {
+      yield team();
+    }
+  }
+
+  /// Shares or stops sharing my contact info (TEAM-10), as the rules let
+  /// me write it: blank is not shared.
+  @override
+  Future<void> setContact(
+    GroupId groupId,
+    UserId uid, {
+    String? phone,
+    String? email,
+  }) async {
+    String? shared(String? v) =>
+        v == null || v.trim().isEmpty ? null : v.trim();
+    calls.add('contact ${uid.value} ${shared(phone)} ${shared(email)}');
+    _updateMine(
+      groupId,
+      uid,
+      (m) =>
+          m.copyWith(contactPhone: shared(phone), contactEmail: shared(email)),
+    );
+  }
 
   @override
   Future<void> updateMember(

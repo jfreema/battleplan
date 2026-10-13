@@ -305,6 +305,17 @@ class FirestoreMemberRepository implements MemberRepository {
         'mutedUntil': until == null ? null : Timestamp.fromDate(until),
       });
 
+  @override
+  Future<void> setContact(
+    GroupId groupId,
+    UserId uid, {
+    String? phone,
+    String? email,
+  }) => _updateMine(groupId, uid, {
+    'contactPhone': _shared(phone),
+    'contactEmail': _shared(email),
+  });
+
   /// Members edit their own notification settings directly; rules allow
   /// only those fields (ARCH §6.3).
   Future<void> _updateMine(
@@ -456,7 +467,14 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   photoPath: d['photoPath'] as String?,
   playerSummary: d['playerSummary'] as String?,
   pending: d['pending'] as bool? ?? false,
+  contactPhone: _shared(d['contactPhone']),
+  contactEmail: _shared(d['contactEmail']),
 );
+
+/// A shared contact field (TEAM-10): its text, or null when it's missing
+/// or blank.
+String? _shared(Object? value) =>
+    value is String && value.trim().isNotEmpty ? value.trim() : null;
 
 int? _parseColor(String? hex) {
   if (hex == null || !hex.startsWith('#') || hex.length != 7) return null;

@@ -65,6 +65,8 @@ abstract final class Limits {
   static const int membersPerGroupMax = 500;
   static const int playersPerGroupMax = 200;
   static const int guardiansPerPlayerMax = 4;
+  static const int contactPhoneMax = 30;
+  static const int contactEmailMax = 254;
   static const int emergencyContactsMax = 2;
   static const int emergencyContactNameMax = 60;
   static const int emergencyContactPhoneMax = 30;

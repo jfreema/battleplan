@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
@@ -31,8 +32,10 @@ import 'package:material_ui/material_ui.dart';
 /// Approve and Decline (PLAYER-4); anyone can add a player (pending until
 /// an admin approves, unless they're an admin), and members not linked yet
 /// get "Who are you here for?" (PLAYER-3). The team's admins see "Age 12"
-/// on each player with a date of birth (PLAYER-12). Tapping a person opens
-/// their card with only the actions you're allowed.
+/// on each player with a date of birth (PLAYER-12). Players are listed by
+/// jersey number or by name (TEAM-10), people by name with the owner
+/// first. Tapping a person opens their card with only the actions you're
+/// allowed, and the phone and email they share with the team (TEAM-10).
 class RosterScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -87,10 +90,30 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               const <PlayerId, PlayerDetails>{}
         : const <PlayerId, PlayerDetails>{};
     final today = DateTime.now();
+    final order = ref.watch(rosterViewProvider);
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.rosterMenu),
         actions: [
+          // By number or by name (TEAM-10).
+          PopupMenuButton<RosterOrder>(
+            tooltip: l10n.sortRoster,
+            icon: const Icon(AppIcons.sort),
+            initialValue: order,
+            onSelected: (o) => ref.read(rosterViewProvider.notifier).order = o,
+            itemBuilder: (_) => [
+              CheckedPopupMenuItem(
+                value: RosterOrder.number,
+                checked: order == RosterOrder.number,
+                child: Text(l10n.sortByNumber),
+              ),
+              CheckedPopupMenuItem(
+                value: RosterOrder.name,
+                checked: order == RosterOrder.name,
+                child: Text(l10n.sortByName),
+              ),
+            ],
+          ),
           // Anyone can add a player; a member's waits for an admin (PLAYER-4).
           if (canAdd)
             TextButton(
@@ -110,12 +133,23 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               : members
                     .where((m) => m.displayName.toLowerCase().contains(q))
                     .toList();
-          final admins = shown.where((m) => m.isAdmin).toList()
-            ..sort((a, b) => a.role == MemberRole.owner ? -1 : 0);
+          // By name (the roster comes that way), the owner first.
+          final admins = [
+            ...shown.where((m) => m.role == MemberRole.owner),
+            ...shown.where((m) => m.role == MemberRole.admin),
+          ];
           final others = shown.where((m) => !m.isAdmin).toList();
           bool matches(Player p) =>
               q.isEmpty || p.displayName.toLowerCase().contains(q);
+          // Players come by number (sortPlayers); by name on request.
           final shownPlayers = players.where(matches).toList();
+          if (order == RosterOrder.name) {
+            shownPlayers.sort(
+              (a, b) => a.displayName.toLowerCase().compareTo(
+                b.displayName.toLowerCase(),
+              ),
+            );
+          }
           String? nameOf(String? uid) =>
               members.where((m) => m.uid.value == uid).firstOrNull?.displayName;
           // A claim from someone no longer on the team isn't shown (TEAM-8):
@@ -482,8 +516,11 @@ class _MemberRow extends StatelessWidget {
   }
 }
 
-/// A person's card (TEAM-3): photo, name, title, role, who's who, and
-/// the actions the viewer is allowed (SPEC §3), Report and Block included.
+/// A person's card (TEAM-3): photo, name, title, role, who's who, the
+/// phone and email they share with the team with call, text, and email
+/// buttons (TEAM-10), and the actions the viewer is allowed (SPEC §3),
+/// Report and Block included. On my own card I share or stop sharing my
+/// phone and email.
 class MemberCard extends ConsumerWidget {
   const new({required this.member, required this.me, this.who, super.key});
 
@@ -497,6 +534,14 @@ class MemberCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final repo = ref.read(memberRepositoryProvider);
+    // Kept live, so sharing my contact info shows on the card at once.
+    final member =
+        ref
+            .watch(rosterProvider(this.member.groupId))
+            .value
+            ?.where((m) => m.uid == this.member.uid)
+            .firstOrNull ??
+        this.member;
     final viewer = me;
     final isSelf = viewer?.uid == member.uid;
     // A super admin can do what the owner can (SPEC §3).
@@ -552,6 +597,7 @@ class MemberCard extends ConsumerWidget {
               Text(label),
             ],
             const SizedBox(height: Space.lg),
+            _SharedContact(member: member, isSelf: isSelf),
             if (canPromote)
               ListTile(
                 title: Text(l10n.makeAdmin),
@@ -667,6 +713,228 @@ class MemberCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The phone and email someone shares with the team (TEAM-10), with call,
+/// text, and email buttons; on my own card, sharing them, changing them,
+/// and stopping. Sharing needs an open team; stopping always works.
+class _SharedContact extends ConsumerWidget {
+  const new({required this.member, required this.isSelf});
+
+  final Membership member;
+  final bool isSelf;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final name = member.displayName;
+    final group = ref.watch(groupProvider(member.groupId)).value;
+    final open = group != null && !group.isArchived;
+    Future<void> launch(Uri uri) async {
+      final opened = await ref.read(linkOpenerProvider).open(uri);
+      if (!opened && context.mounted) {
+        showAppSnackBar(context, l10n.linkOpenFailed);
+      }
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (member.contactPhone case final phone?)
+          ListTile(
+            leading: const Icon(AppIcons.call),
+            title: Text(phone),
+            subtitle: Text(l10n.contactPhoneLabel),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: l10n.callContact(name),
+                  icon: const Icon(AppIcons.call),
+                  onPressed: () => unawaited(
+                    launch(Uri(scheme: 'tel', path: dialable(phone))),
+                  ),
+                ),
+                IconButton(
+                  tooltip: l10n.textContact(name),
+                  icon: const Icon(AppIcons.sms),
+                  onPressed: () => unawaited(
+                    launch(Uri(scheme: 'sms', path: dialable(phone))),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (member.contactEmail case final email?)
+          ListTile(
+            leading: const Icon(AppIcons.email),
+            title: Text(email),
+            subtitle: Text(l10n.contactEmailLabel),
+            trailing: IconButton(
+              tooltip: l10n.emailContact(name),
+              icon: const Icon(AppIcons.send),
+              onPressed: () =>
+                  unawaited(launch(Uri(scheme: 'mailto', path: email))),
+            ),
+          ),
+        if (isSelf && open)
+          ListTile(
+            leading: const Icon(AppIcons.contactInfo),
+            title: Text(
+              member.sharesContact
+                  ? l10n.editContactInfo
+                  : l10n.shareContactInfo,
+            ),
+            subtitle: Text(l10n.contactInfoHelp(group.name)),
+            onTap: () => unawaited(_edit(context, ref, group.name)),
+          )
+        else if (isSelf && member.sharesContact)
+          ListTile(
+            leading: const Icon(AppIcons.contactInfo),
+            title: Text(l10n.stopSharingContact),
+            onTap: () => unawaited(_save(context, ref, null, null)),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _edit(BuildContext context, WidgetRef ref, String team) async {
+    final account = ref.read(authUserProvider).value?.email;
+    final result = await showDialog<({String? phone, String? email})>(
+      context: context,
+      builder: (_) => _ContactDialog(
+        team: team,
+        phone: member.contactPhone,
+        // Offered from the account when nothing's shared yet.
+        email: member.sharesContact ? member.contactEmail : account,
+        canStop: member.sharesContact,
+      ),
+    );
+    if (result == null || !context.mounted) return;
+    await _save(context, ref, result.phone, result.email);
+  }
+
+  Future<void> _save(
+    BuildContext context,
+    WidgetRef ref,
+    String? phone,
+    String? email,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await ref
+          .read(memberRepositoryProvider)
+          .setContact(member.groupId, member.uid, phone: phone, email: email);
+      if (context.mounted) {
+        showAppSnackBar(
+          context,
+          phone == null && email == null
+              ? l10n.contactStopped
+              : l10n.contactSaved,
+        );
+      }
+    } on AppFailure {
+      if (context.mounted) showAppSnackBar(context, l10n.contactSaveFailed);
+    }
+  }
+}
+
+/// My phone and email for this team (TEAM-10), either left blank to keep
+/// it to myself. Pops the two (null for blank), or both null for Stop
+/// sharing.
+class _ContactDialog extends StatefulWidget {
+  const new({
+    required this.team,
+    required this.canStop,
+    this.phone,
+    this.email,
+  });
+
+  final String team;
+  final String? phone;
+  final String? email;
+
+  /// Something is shared already, so Stop sharing is offered.
+  final bool canStop;
+
+  @override
+  State<_ContactDialog> createState() => _ContactDialogState();
+}
+
+class _ContactDialogState extends State<_ContactDialog> {
+  final _form = GlobalKey<FormState>();
+  late final _phone = TextEditingController(text: widget.phone);
+  late final _email = TextEditingController(text: widget.email);
+
+  @override
+  void dispose() {
+    _phone.dispose();
+    _email.dispose();
+    super.dispose();
+  }
+
+  String? _blank(String v) => v.trim().isEmpty ? null : v.trim();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.contactInfoTitle),
+      content: Form(
+        key: _form,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.contactInfoHelp(widget.team)),
+            TextFormField(
+              controller: _phone,
+              autofocus: true,
+              keyboardType: TextInputType.phone,
+              maxLength: Limits.contactPhoneMax,
+              decoration: InputDecoration(labelText: l10n.contactPhoneLabel),
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? null
+                  : hasDialableDigits(v) &&
+                        v.trim().length <= Limits.contactPhoneMax
+                  ? null
+                  : l10n.contactPhoneInvalid(Limits.contactPhoneMax),
+            ),
+            TextFormField(
+              controller: _email,
+              keyboardType: TextInputType.emailAddress,
+              maxLength: Limits.contactEmailMax,
+              decoration: InputDecoration(labelText: l10n.contactEmailLabel),
+              validator: (v) => v == null || v.trim().isEmpty
+                  ? null
+                  : looksLikeEmail(v.trim())
+                  ? null
+                  : l10n.contactEmailInvalid,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        if (widget.canStop)
+          TextButton(
+            onPressed: () =>
+                Navigator.of(context).pop((phone: null, email: null)),
+            child: Text(l10n.stopSharingContact),
+          ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (!(_form.currentState?.validate() ?? false)) return;
+            Navigator.of(context)
+                .pop((phone: _blank(_phone.text), email: _blank(_email.text)));
+          },
+          child: Text(l10n.save),
+        ),
+      ],
     );
   }
 }

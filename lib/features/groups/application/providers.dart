@@ -112,6 +112,25 @@ AsyncValue<List<MyTeam>> myTeams(Ref ref) {
   });
 }
 
+/// How the roster lists its players (TEAM-10).
+enum RosterOrder {
+  /// By jersey number, players without one last, then by name. The default.
+  number,
+
+  /// By name.
+  name,
+}
+
+/// The roster's order (TEAM-10), kept while the app runs.
+@Riverpod(keepAlive: true)
+class RosterView extends _$RosterView {
+  @override
+  RosterOrder build() => RosterOrder.number;
+
+  RosterOrder get order => state;
+  set order(RosterOrder value) => state = value;
+}
+
 /// A team's roster, sorted by name (TEAM-3).
 @riverpod
 Stream<List<Membership>> roster(Ref ref, GroupId groupId) => ref

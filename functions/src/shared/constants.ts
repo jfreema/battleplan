@@ -62,6 +62,8 @@ export const Limits = {
   membersPerGroupMax: 500,
   playersPerGroupMax: 200,
   guardiansPerPlayerMax: 4,
+  contactPhoneMax: 30,
+  contactEmailMax: 254,
   emergencyContactsMax: 2,
   emergencyContactNameMax: 60,
   emergencyContactPhoneMax: 30,

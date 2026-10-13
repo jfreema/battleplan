@@ -28,6 +28,11 @@ abstract class Membership with _$Membership {
 
     /// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
     @Default(false) bool pending,
+
+    /// A phone number and email they chose to share with this team, shown
+    /// on their card with call, text, and email buttons (TEAM-10).
+    String? contactPhone,
+    String? contactEmail,
   }) = _Membership;
 
   const new _();
@@ -43,6 +48,9 @@ abstract class Membership with _$Membership {
   /// Owners and admins manage the team (SPEC §3).
   bool get isAdmin => role == MemberRole.owner || role == MemberRole.admin;
 
+  /// Whether they share a phone number or email with the team (TEAM-10).
+  bool get sharesContact => contactPhone != null || contactEmail != null;
+
   /// True when pushes from this team are off or snoozed (NOTIF-3).
   bool isMutedAt(DateTime now) =>
       notificationLevel == NotificationLevel.none || isSnoozedAt(now);
@@ -56,6 +64,11 @@ abstract class Membership with _$Membership {
       mutedUntil != null &&
       mutedUntil!.millisecondsSinceEpoch >= Limits.mutedForeverMs;
 }
+
+/// Whether [email] could be an address to share (TEAM-10): something, an
+/// @, and a domain with a dot, as the rules check it.
+bool looksLikeEmail(String email) =>
+    RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
 
 /// "Maria R." from "Maria Rodriguez": first name and last initial.
 String shortNameOf(String displayName) {

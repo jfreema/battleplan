@@ -109,6 +109,16 @@ abstract interface class MemberRepository {
   /// Mutes this team's pushes until [until], or unmutes with null
   /// (NOTIF-3). "Until unmuted" is [Limits.mutedForeverMs].
   Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until);
+
+  /// Shares my phone number and email with this team, or stops sharing one
+  /// with null or blank (TEAM-10). Everyone on the team sees them on my
+  /// card. Stopping always works; sharing needs an active team.
+  Future<void> setContact(
+    GroupId groupId,
+    UserId uid, {
+    String? phone,
+    String? email,
+  });
 }
 
 /// What happened when adding people by email (TEAM-7 results screen).

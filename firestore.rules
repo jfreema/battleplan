@@ -183,7 +183,13 @@ service cloud.firestore {
       // (see the message rate limit below).
       allow update: if signedIn() && resource.data.uid == uid()
         && onlyChanges(['notificationLevel', 'mutedUntil', 'lastReadAt',
-                        'lastPostedAt', 'lastPostedMessageId'])
+                        'lastPostedAt', 'lastPostedMessageId',
+                        'contactPhone', 'contactEmail'])
+        // Contact sharing (TEAM-10): a phone with a digit, up to 30
+        // characters, and an email, up to 254. Stopping (null) always
+        // works; sharing needs an open team (not suspended or archived).
+        && sharedContactOk('contactPhone', '.*[0-9].*', 30)
+        && sharedContactOk('contactEmail', '[^@ ]+@[^@ ]+[.][^@ ]+', 254)
         && (!('lastPostedAt' in changed()) || incoming().lastPostedAt == request.time)
         && (!('notificationLevel' in changed())
             || incoming().notificationLevel in ['all', 'important', 'none'])
@@ -194,6 +200,16 @@ service cloud.firestore {
         // read so far when only part of the chat was on screen. Never ahead.
         && (!('lastReadAt' in changed())
             || (incoming().lastReadAt is timestamp && incoming().lastReadAt <= request.time));
+    }
+
+    // A contact field a member shares with their team (TEAM-10), unchanged,
+    // cleared, or set to text matching [pattern] of at most [max]
+    // characters on a team that takes changes.
+    function sharedContactOk(field, pattern, max) {
+      let value = incoming().get(field, null);
+      return !(field in changed()) || value == null
+        || (value is string && value.size() <= max && value.matches(pattern)
+            && isMember(resource.data.groupId) && active(resource.data.groupId));
     }
 
     // ---- Players, guardians, and claims -------------------------------------

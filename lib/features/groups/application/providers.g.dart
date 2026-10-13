@@ -297,6 +297,64 @@ final class MyTeamsProvider
 
 String _$myTeamsHash() => r'cc5acf94ad9d18a01c61592c8c94979afd05bdc4';
 
+/// The roster's order (TEAM-10), kept while the app runs.
+
+@ProviderFor(RosterView)
+final rosterViewProvider = RosterViewProvider._();
+
+/// The roster's order (TEAM-10), kept while the app runs.
+final class RosterViewProvider
+    extends $NotifierProvider<RosterView, RosterOrder> {
+  /// The roster's order (TEAM-10), kept while the app runs.
+  RosterViewProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'rosterViewProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$rosterViewHash();
+
+  @$internal
+  @override
+  RosterView create() => RosterView();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(RosterOrder value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<RosterOrder>(value),
+    );
+  }
+}
+
+String _$rosterViewHash() => r'c433d3cc61a94551dfd261fd6173988d77a7a305';
+
+/// The roster's order (TEAM-10), kept while the app runs.
+
+abstract class _$RosterView extends $Notifier<RosterOrder> {
+  RosterOrder build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<RosterOrder, RosterOrder>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<RosterOrder, RosterOrder>,
+              RosterOrder,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// A team's roster, sorted by name (TEAM-3).
 
 @ProviderFor(roster)

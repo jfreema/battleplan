@@ -97,6 +97,10 @@ abstract final class AppIcons {
   static const IconData announcement = Symbols.campaign_rounded;
   static const IconData unpin = Symbols.keep_off_rounded;
 
+  /// Contact sharing (TEAM-10).
+  static const IconData sms = Symbols.sms_rounded;
+  static const IconData contactInfo = Symbols.contact_phone_rounded;
+
   /// Player details (PLAYER-12).
   static const IconData birthday = Symbols.cake_rounded;
   static const IconData call = Symbols.call_rounded;
