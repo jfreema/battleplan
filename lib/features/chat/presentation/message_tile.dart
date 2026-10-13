@@ -41,6 +41,7 @@ class MessageTile extends ConsumerStatefulWidget {
     required this.endsGroup,
     this.showSent = false,
     this.highlighted = false,
+    this.pinned = false,
     this.bubbleColor,
     this.quoted,
     this.onReply,
@@ -59,6 +60,10 @@ class MessageTile extends ConsumerStatefulWidget {
 
   /// Briefly tinted after jumping to it from a quote.
   final bool highlighted;
+
+  /// On the bar at the top of the chat (CHAT-15): says "Pinned", and the
+  /// menu offers Unpin to admins.
+  final bool pinned;
 
   /// My bubbles' color from the team's chat look (CHAT-18); null uses the
   /// brand color.
@@ -140,6 +145,27 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       await ref.read(chatMessagesProvider(m.groupId).notifier).edit(m, updated);
     } on AppFailure {
       if (mounted) showAppSnackBar(context, l10n.editFailed);
+    }
+  }
+
+  /// Pins or unpins it on the bar at the top of the chat (CHAT-15).
+  Future<void> _setPinned({required bool pinned}) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await ref
+          .read(chatMessagesProvider(widget.message.groupId).notifier)
+          .setPinned(widget.message, pinned: pinned);
+      if (mounted) {
+        showAppSnackBar(context, pinned ? l10n.pinnedDone : l10n.unpinnedDone);
+      }
+    } on AppFailure catch (e) {
+      if (!mounted) return;
+      showAppSnackBar(
+        context,
+        e is InvalidInput && e.message == 'too-many-pins'
+            ? l10n.pinLimitReached(Limits.pinnedMessagesMax)
+            : l10n.pinFailed,
+      );
     }
   }
 
@@ -233,6 +259,21 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     Navigator.of(sheet).pop();
                     unawaited(Clipboard.setData(ClipboardData(text: m.text)));
                     showAppSnackBar(context, l10n.textCopied);
+                  },
+                ),
+              // Admins pin to the bar at the top (CHAT-15); not on an
+              // archived team, which is read-only.
+              if (canModerate && !archived && !m.pending)
+                ListTile(
+                  leading: Icon(
+                    widget.pinned ? AppIcons.unpin : AppIcons.pin,
+                  ),
+                  title: Text(
+                    widget.pinned ? l10n.unpinMessage : l10n.pinMessage,
+                  ),
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    unawaited(_setPinned(pinned: !widget.pinned));
                   },
                 ),
               // Other people's messages: report them or block their author
