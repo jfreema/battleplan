@@ -26,7 +26,6 @@ import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -291,6 +290,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final m = widget.message;
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    final web = ref.watch(browserInfoProvider).isWeb;
     if (m.isSystem) {
       // CHAT-10: small centered lines like "Sam joined".
       return Padding(
@@ -409,7 +409,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                 if (hasText)
                   LinkifiedText(
                     m.text,
-                    phones: !kIsWeb,
+                    phones: !web,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: foreground,
                     ),
@@ -544,12 +544,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           child: GestureDetector(
             onTap: () => setState(() => _showTime = !_showTime),
             // Swipe right to reply (CHAT-13, phones).
-            onHorizontalDragUpdate: widget.onReply == null || kIsWeb
+            onHorizontalDragUpdate: widget.onReply == null || web
                 ? null
                 : (d) => setState(
                     () => _swipe = (_swipe + d.delta.dx).clamp(0, 96),
                   ),
-            onHorizontalDragEnd: widget.onReply == null || kIsWeb
+            onHorizontalDragEnd: widget.onReply == null || web
                 ? null
                 : (_) {
                     if (_swipe >= _swipeToReply) {
@@ -570,7 +570,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             // Not on polls: waiting for a second tap would hold up voting.
             onDoubleTap:
                 deleted ||
-                    kIsWeb ||
+                    web ||
                     isPoll ||
                     isEvent ||
                     ref.watch(viewingAsSuperAdminProvider(m.groupId))

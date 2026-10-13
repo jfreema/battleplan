@@ -4,7 +4,10 @@
   "type": "module",
   "scripts": {
     "seed": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=demo-battleplan tsx seed.ts",
-    "super-admin": "tsx set-super-admin.ts"
+    "super-admin": "tsx set-super-admin.ts",
+    "demo": "tsx demo.ts",
+    "demo:emulators": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 tsx demo.ts --project demo-battleplan",
+    "test": "tsx --test demo.test.ts"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0"

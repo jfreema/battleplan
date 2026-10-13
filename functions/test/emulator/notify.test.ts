@@ -13,6 +13,7 @@ import { removeMember, updateGroupMember } from '../../src/teams/handlers.js';
 import {
   pruneDevices,
   removeDevices,
+  removeTargetNotifications,
   removeTeamNotifications,
   send,
   type NotifyInput,
@@ -426,5 +427,19 @@ describe('cleanup (ARCH §6.5 devices)', () => {
     expect(await exists(`${Collections.notifications}/a`)).toBe(false);
     expect(await exists(`${Collections.notifications}/b`)).toBe(true);
     expect(await exists(`${Collections.notifications}/c`)).toBe(true);
+  });
+
+  it('removes everyone\'s center items about an erased message or deleted document (ENG-4)', async () => {
+    const item = (id: string, targetType: string, targetId: string) =>
+      db().collection(Collections.notifications).doc(id).set({ uid: 'sam', groupId: G, type: 'reply', targetType, targetId, read: false });
+    await item('m1-sam', 'message', 'm1');
+    await item('m1-pat', 'message', 'm1');
+    await item('m2-sam', 'message', 'm2');
+    await item('d1-sam', 'document', 'm1');
+    expect(await removeTargetNotifications('message', 'm1')).toBe(2);
+    expect(await exists(`${Collections.notifications}/m1-pat`)).toBe(false);
+    expect(await exists(`${Collections.notifications}/m2-sam`)).toBe(true);
+    expect(await exists(`${Collections.notifications}/d1-sam`)).toBe(true);
+    expect(await removeTargetNotifications('document', 'm1')).toBe(1);
   });
 });

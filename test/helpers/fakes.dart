@@ -821,10 +821,13 @@ class FakeNotificationRepository implements NotificationRepository {
 
 /// A browser that may need Add to Home Screen for push (NOTIF-9).
 class FakeBrowserInfo implements BrowserInfo {
-  const new({this.pushNeedsHomeScreen = false});
+  const new({this.pushNeedsHomeScreen = false, this.isWeb = false});
 
   @override
   final bool pushNeedsHomeScreen;
+
+  @override
+  final bool isWeb;
 }
 
 class FakeInviteRepository implements InviteRepository {

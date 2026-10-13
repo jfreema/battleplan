@@ -464,6 +464,18 @@ export async function removeTeamNotifications(groupId: string, uid: string): Pro
 }
 
 /**
+ * Erasing a message or deleting a document takes the center items about it
+ * too: their bodies quote it (CHAT-8, DOC-5). Only this service touches
+ * `notifications` (ENG-4).
+ */
+export async function removeTargetNotifications(targetType: 'message' | 'document', targetId: string): Promise<number> {
+  return forEachPage(
+    db().collection(Collections.notifications).where('targetType', '==', targetType).where('targetId', '==', targetId),
+    (b, d) => b.delete(d.ref),
+  );
+}
+
+/**
  * Deletes a deleted account's devices and notification-center items, and
  * other people's items about something they did: those name them in the
  * body ("Alex: Field 3 is open"), and they're shown from "Deleted user"

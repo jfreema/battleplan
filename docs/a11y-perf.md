@@ -88,6 +88,6 @@ The page wasn't cross-origin isolated, so it ran skwasm in single-threaded mode.
 ## Open items for a human
 
 1. **Inter is bundled** (done): the five weights the app uses ship under `assets/fonts/inter/` with the OFL text, which Licenses lists, and `loadAppFonts()` draws the readable goldens with it. Still to check on the deployed web app: whether the web engine still fetches its default Roboto fallback from `fonts.gstatic.com` at first load (LEGAL-2); if it does, self-host the fallback with `fontFallbackBaseUrl`.
-2. **ARCH §5.6 says images go through `cached_network_image`.** The app uses `Image.network` everywhere and that package isn't a dependency. Either add it (a decision-log entry) or correct the ARCH line. On the web, the browser's HTTP cache does the caching either way.
+2. ~~**ARCH §5.6 says images go through `cached_network_image`.**~~ Settled: ARCH §5.6 now says `Image.network` with Flutter's image cache and the HTTP cache (D50).
 3. **VoiceOver and TalkBack on devices** (SPEC §7.6, "before launch") still need a person. The automated checks cover labels, actions, sizes, and contrast, but not reading order or how it sounds.
 4. **Emoji in goldens** render as boxes. That's harmless, but the reaction chips can't be checked by eye in the PNGs.
