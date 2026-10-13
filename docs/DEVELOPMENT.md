@@ -27,7 +27,7 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
    | Email | Who |
    |---|---|
    | `coach@example.com` | Owner of Thunder (adult players) and Lightning U10 (kids) |
-   | `maria@example.com` | Parent on three teams, with players on two; asked to join Thunder's roster as a player (pending) |
+   | `maria@example.com` | Parent on three teams, with players on two (two kids on Lightning U10); asked to join Thunder's roster as a player (pending) |
    | `priya@example.com` | Owner of Hawks U14, parent on Lightning U10 |
    | `alex@example.com`, `sam@example.com` | Players on Thunder, linked to their own players (Alex is also an admin) |
    | `luis@example.com` | Parent on Lightning U10 |

@@ -1794,6 +1794,15 @@ void main() {
       }
       expect(find.text('More reactions'), findsNothing);
       expect(find.text('Plus'), findsNothing);
+      // The rest wrap in rows of buttons, not one per line, so the menu's
+      // actions stay close below them.
+      final fire = tester.getRect(find.text('🔥'));
+      final clap = tester.getRect(find.text('👏'));
+      expect(clap.top, fire.top);
+      expect(
+        tester.getRect(find.text('🏆')).bottom - fire.top,
+        lessThan(4 * kMinInteractiveDimension),
+      );
       await tester.tap(find.text('⚾'));
       await tester.pumpAndSettle();
       expect(find.text('⚾ 1'), findsOneWidget);

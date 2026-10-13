@@ -67,14 +67,15 @@ const memberships: [string, string, string, string?][] = [
   ['thunder', 'sam', 'member', '#12'],
   ['thunder', 'maria', 'member'],
   ['lightning', 'coach', 'owner'],
-  ['lightning', 'maria', 'member', 'Emma #7'],
+  ['lightning', 'maria', 'member', 'Emma #7, Mia #9'],
   ['lightning', 'luis', 'member', 'Emma #7'],
   ['lightning', 'priya', 'member', 'Arjun #11'],
   ['hawks', 'priya', 'owner'],
   ['hawks', 'maria', 'member', 'Liam #23'],
 ];
 
-// A parent with players on two teams, two guardians for one player, a
+// A parent with players on two teams and two on one (for "All my
+// players", PLAYER-11), two guardians for one player, a
 // player whose guardian hasn't joined yet, adults who are players
 // themselves ('self'), an unclaimed player, and a pending player Maria
 // asked to add to Thunder (PLAYER-3, PLAYER-4).
@@ -89,6 +90,7 @@ const players: {
   pendingBy?: string;
 }[] = [
   { id: 'emma', groupId: 'lightning', name: 'Emma Rodriguez', number: '7', position: 'Forward', guardians: ['maria', 'luis'] },
+  { id: 'mia', groupId: 'lightning', name: 'Mia Rodriguez', number: '9', position: 'Midfield', guardians: ['maria'] },
   { id: 'arjun', groupId: 'lightning', name: 'Arjun Shah', number: '11', position: 'Keeper', guardians: ['priya'] },
   { id: 'noah', groupId: 'lightning', name: 'Noah Bennett', number: '4', position: 'Defense', guardians: [] },
   { id: 'liam', groupId: 'hawks', name: 'Liam Rodriguez', number: '23', position: 'Guard', guardians: ['maria'] },

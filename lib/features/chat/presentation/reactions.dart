@@ -94,20 +94,25 @@ class ReactionPicker extends StatelessWidget {
         onTap: () => onPick(r),
         child: Container(
           padding: const EdgeInsets.all(Space.xs),
-          // At least 48 × 48 to tap (SPEC §7.6).
+          // At least 48 × 48 to tap (SPEC §7.6), and no wider than that
+          // (no alignment, which would stretch it), so the rest of the
+          // reactions wrap in rows.
           constraints: const BoxConstraints(
             minWidth: kMinInteractiveDimension,
             minHeight: kMinInteractiveDimension,
           ),
-          alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: r == mine ? scheme.primaryContainer : null,
           ),
-          child: Text(
-            reactionEmoji(r),
-            style: const TextStyle(fontSize: 28),
-            semanticsLabel: reactionName(l10n, r),
+          child: Center(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: Text(
+              reactionEmoji(r),
+              style: const TextStyle(fontSize: 28),
+              semanticsLabel: reactionName(l10n, r),
+            ),
           ),
         ),
       ),
