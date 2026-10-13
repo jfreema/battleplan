@@ -92,7 +92,7 @@ void main() {
     test('punctuation ends a name; letters and email addresses do not', () {
       expect(
         mentionsIn(
-          'Thanks @Sam Rivera. And @Sam Rivera\'s mom!',
+          "Thanks @Sam Rivera. And @Sam Rivera's mom!",
           team,
           canMentionEveryone: false,
         ).uids,
