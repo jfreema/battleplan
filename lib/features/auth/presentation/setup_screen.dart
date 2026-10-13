@@ -144,6 +144,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
                   ),
+                  // SAFE-3: read them before agreeing.
                   const LegalLinks(),
                   if (_failed) ...[
                     const SizedBox(height: Space.md),

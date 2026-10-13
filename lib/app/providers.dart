@@ -130,7 +130,12 @@ List<Override> buildOverrides({
     FirestoreUserRepository(firestore, functions, storage),
   ),
   groupRepositoryProvider.overrideWithValue(
-    FirestoreGroupRepository(firestore, functions, storage),
+    FirestoreGroupRepository(
+      firestore,
+      functions,
+      storage,
+      currentUid: () => auth.currentUser?.uid,
+    ),
   ),
   memberRepositoryProvider.overrideWithValue(
     FirestoreMemberRepository(firestore, functions),

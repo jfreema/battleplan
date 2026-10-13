@@ -1158,11 +1158,288 @@ as DateTime?,
 }
 
 /// @nodoc
+mixin _$AdminMessage {
+
+ String get id; String get authorName; String get text; int get photoCount; DateTime? get createdAt;
+/// Create a copy of AdminMessage
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AdminMessageCopyWith<AdminMessage> get copyWith => _$AdminMessageCopyWithImpl<AdminMessage>(this as AdminMessage, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as AdminMessage;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminMessage&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.photoCount, _this.photoCount) || other.photoCount == _this.photoCount)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as AdminMessage;
+  return Object.hash(runtimeType,_this.id,_this.authorName,_this.text,_this.photoCount,_this.createdAt);
+}
+
+@override
+String toString() {
+  final _this = this as AdminMessage;
+  return 'AdminMessage(id: ${_this.id}, authorName: ${_this.authorName}, text: ${_this.text}, photoCount: ${_this.photoCount}, createdAt: ${_this.createdAt})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AdminMessageCopyWith<$Res>  {
+  factory $AdminMessageCopyWith(AdminMessage value, $Res Function(AdminMessage) _then) = _$AdminMessageCopyWithImpl;
+@useResult
+$Res call({
+ String id, String authorName, String text, int photoCount, DateTime? createdAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$AdminMessageCopyWithImpl<$Res>
+    implements $AdminMessageCopyWith<$Res> {
+  _$AdminMessageCopyWithImpl(this._self, this._then);
+
+  final AdminMessage _self;
+  final $Res Function(AdminMessage) _then;
+
+/// Create a copy of AdminMessage
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? authorName = null,Object? text = null,Object? photoCount = null,Object? createdAt = freezed,}) {
+  return _then(AdminMessage(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
+as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
+as String,photoCount: null == photoCount ? _self.photoCount : photoCount // ignore: cast_nullable_to_non_nullable
+as int,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [AdminMessage].
+extension AdminMessagePatterns on AdminMessage {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _AdminMessage value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _AdminMessage() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _AdminMessage value)  $default,){
+final _that = this;
+switch (_that) {
+case _AdminMessage():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _AdminMessage value)?  $default,){
+final _that = this;
+switch (_that) {
+case _AdminMessage() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String authorName,  String text,  int photoCount,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _AdminMessage() when $default != null:
+return $default(_that.id,_that.authorName,_that.text,_that.photoCount,_that.createdAt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String authorName,  String text,  int photoCount,  DateTime? createdAt)  $default,) {final _that = this;
+switch (_that) {
+case _AdminMessage():
+return $default(_that.id,_that.authorName,_that.text,_that.photoCount,_that.createdAt);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String authorName,  String text,  int photoCount,  DateTime? createdAt)?  $default,) {final _that = this;
+switch (_that) {
+case _AdminMessage() when $default != null:
+return $default(_that.id,_that.authorName,_that.text,_that.photoCount,_that.createdAt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _AdminMessage implements AdminMessage {
+  const _AdminMessage({required this.id, this.authorName = '', this.text = '', this.photoCount = 0, this.createdAt});
+  
+
+@override final  String id;
+@override@JsonKey() final  String authorName;
+@override@JsonKey() final  String text;
+@override@JsonKey() final  int photoCount;
+@override final  DateTime? createdAt;
+
+/// Create a copy of AdminMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$AdminMessageCopyWith<_AdminMessage> get copyWith => __$AdminMessageCopyWithImpl<_AdminMessage>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.text, text) || other.text == text)&&(identical(other.photoCount, photoCount) || other.photoCount == photoCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,id,authorName,text,photoCount,createdAt);
+}
+
+@override
+String toString() {
+    return 'AdminMessage(id: $id, authorName: $authorName, text: $text, photoCount: $photoCount, createdAt: $createdAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$AdminMessageCopyWith<$Res> implements $AdminMessageCopyWith<$Res> {
+  factory _$AdminMessageCopyWith(_AdminMessage value, $Res Function(_AdminMessage) _then) = __$AdminMessageCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String authorName, String text, int photoCount, DateTime? createdAt
+});
+
+
+
+
+}
+/// @nodoc
+class __$AdminMessageCopyWithImpl<$Res>
+    implements _$AdminMessageCopyWith<$Res> {
+  __$AdminMessageCopyWithImpl(this._self, this._then);
+
+  final _AdminMessage _self;
+  final $Res Function(_AdminMessage) _then;
+
+/// Create a copy of AdminMessage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? authorName = null,Object? text = null,Object? photoCount = null,Object? createdAt = freezed,}) {
+  return _then(_AdminMessage(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,authorName: null == authorName ? _self.authorName : authorName // ignore: cast_nullable_to_non_nullable
+as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
+as String,photoCount: null == photoCount ? _self.photoCount : photoCount // ignore: cast_nullable_to_non_nullable
+as int,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$AdminTeamDetail {
 
  GroupId get id; String get ownerName; TeamStatus get status; DateTime? get createdAt;/// Everyone on the team, with their roles.
  List<Membership> get members;/// Youth teams: the players and who guards them.
- List<Player> get players; List<GuardianLink> get guardians; List<AdminInvite> get invites; int get eventCount; int get documentCount; int get pollCount;
+ List<Player> get players; List<GuardianLink> get guardians; List<AdminInvite> get invites;/// The latest messages, newest first, to review (ADMIN-3 Content).
+ List<AdminMessage> get recentMessages; int get eventCount; int get documentCount; int get pollCount;
 /// Create a copy of AdminTeamDetail
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1174,20 +1451,20 @@ $AdminTeamDetailCopyWith<AdminTeamDetail> get copyWith => _$AdminTeamDetailCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as AdminTeamDetail;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminTeamDetail&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.ownerName, _this.ownerName) || other.ownerName == _this.ownerName)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&const DeepCollectionEquality().equals(other.members, _this.members)&&const DeepCollectionEquality().equals(other.players, _this.players)&&const DeepCollectionEquality().equals(other.guardians, _this.guardians)&&const DeepCollectionEquality().equals(other.invites, _this.invites)&&(identical(other.eventCount, _this.eventCount) || other.eventCount == _this.eventCount)&&(identical(other.documentCount, _this.documentCount) || other.documentCount == _this.documentCount)&&(identical(other.pollCount, _this.pollCount) || other.pollCount == _this.pollCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminTeamDetail&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.ownerName, _this.ownerName) || other.ownerName == _this.ownerName)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&const DeepCollectionEquality().equals(other.members, _this.members)&&const DeepCollectionEquality().equals(other.players, _this.players)&&const DeepCollectionEquality().equals(other.guardians, _this.guardians)&&const DeepCollectionEquality().equals(other.invites, _this.invites)&&const DeepCollectionEquality().equals(other.recentMessages, _this.recentMessages)&&(identical(other.eventCount, _this.eventCount) || other.eventCount == _this.eventCount)&&(identical(other.documentCount, _this.documentCount) || other.documentCount == _this.documentCount)&&(identical(other.pollCount, _this.pollCount) || other.pollCount == _this.pollCount));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AdminTeamDetail;
-  return Object.hash(runtimeType,_this.id,_this.ownerName,_this.status,_this.createdAt,const DeepCollectionEquality().hash(_this.members),const DeepCollectionEquality().hash(_this.players),const DeepCollectionEquality().hash(_this.guardians),const DeepCollectionEquality().hash(_this.invites),_this.eventCount,_this.documentCount,_this.pollCount);
+  return Object.hash(runtimeType,_this.id,_this.ownerName,_this.status,_this.createdAt,const DeepCollectionEquality().hash(_this.members),const DeepCollectionEquality().hash(_this.players),const DeepCollectionEquality().hash(_this.guardians),const DeepCollectionEquality().hash(_this.invites),const DeepCollectionEquality().hash(_this.recentMessages),_this.eventCount,_this.documentCount,_this.pollCount);
 }
 
 @override
 String toString() {
   final _this = this as AdminTeamDetail;
-  return 'AdminTeamDetail(id: ${_this.id}, ownerName: ${_this.ownerName}, status: ${_this.status}, createdAt: ${_this.createdAt}, members: ${_this.members}, players: ${_this.players}, guardians: ${_this.guardians}, invites: ${_this.invites}, eventCount: ${_this.eventCount}, documentCount: ${_this.documentCount}, pollCount: ${_this.pollCount})';
+  return 'AdminTeamDetail(id: ${_this.id}, ownerName: ${_this.ownerName}, status: ${_this.status}, createdAt: ${_this.createdAt}, members: ${_this.members}, players: ${_this.players}, guardians: ${_this.guardians}, invites: ${_this.invites}, recentMessages: ${_this.recentMessages}, eventCount: ${_this.eventCount}, documentCount: ${_this.documentCount}, pollCount: ${_this.pollCount})';
 }
 
 
@@ -1198,7 +1475,7 @@ abstract mixin class $AdminTeamDetailCopyWith<$Res>  {
   factory $AdminTeamDetailCopyWith(AdminTeamDetail value, $Res Function(AdminTeamDetail) _then) = _$AdminTeamDetailCopyWithImpl;
 @useResult
 $Res call({
- GroupId id, String ownerName, TeamStatus status, DateTime? createdAt, List<Membership> members, List<Player> players, List<GuardianLink> guardians, List<AdminInvite> invites, int eventCount, int documentCount, int pollCount
+ GroupId id, String ownerName, TeamStatus status, DateTime? createdAt, List<Membership> members, List<Player> players, List<GuardianLink> guardians, List<AdminInvite> invites, List<AdminMessage> recentMessages, int eventCount, int documentCount, int pollCount
 });
 
 
@@ -1215,7 +1492,7 @@ class _$AdminTeamDetailCopyWithImpl<$Res>
 
 /// Create a copy of AdminTeamDetail
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerName = null,Object? status = null,Object? createdAt = freezed,Object? members = null,Object? players = null,Object? guardians = null,Object? invites = null,Object? eventCount = null,Object? documentCount = null,Object? pollCount = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerName = null,Object? status = null,Object? createdAt = freezed,Object? members = null,Object? players = null,Object? guardians = null,Object? invites = null,Object? recentMessages = null,Object? eventCount = null,Object? documentCount = null,Object? pollCount = null,}) {
   return _then(AdminTeamDetail(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,ownerName: null == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
@@ -1225,7 +1502,8 @@ as DateTime?,members: null == members ? _self.members : members // ignore: cast_
 as List<Membership>,players: null == players ? _self.players : players // ignore: cast_nullable_to_non_nullable
 as List<Player>,guardians: null == guardians ? _self.guardians : guardians // ignore: cast_nullable_to_non_nullable
 as List<GuardianLink>,invites: null == invites ? _self.invites : invites // ignore: cast_nullable_to_non_nullable
-as List<AdminInvite>,eventCount: null == eventCount ? _self.eventCount : eventCount // ignore: cast_nullable_to_non_nullable
+as List<AdminInvite>,recentMessages: null == recentMessages ? _self.recentMessages : recentMessages // ignore: cast_nullable_to_non_nullable
+as List<AdminMessage>,eventCount: null == eventCount ? _self.eventCount : eventCount // ignore: cast_nullable_to_non_nullable
 as int,documentCount: null == documentCount ? _self.documentCount : documentCount // ignore: cast_nullable_to_non_nullable
 as int,pollCount: null == pollCount ? _self.pollCount : pollCount // ignore: cast_nullable_to_non_nullable
 as int,
@@ -1313,10 +1591,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String ownerName,  TeamStatus status,  DateTime? createdAt,  List<Membership> members,  List<Player> players,  List<GuardianLink> guardians,  List<AdminInvite> invites,  int eventCount,  int documentCount,  int pollCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String ownerName,  TeamStatus status,  DateTime? createdAt,  List<Membership> members,  List<Player> players,  List<GuardianLink> guardians,  List<AdminInvite> invites,  List<AdminMessage> recentMessages,  int eventCount,  int documentCount,  int pollCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AdminTeamDetail() when $default != null:
-return $default(_that.id,_that.ownerName,_that.status,_that.createdAt,_that.members,_that.players,_that.guardians,_that.invites,_that.eventCount,_that.documentCount,_that.pollCount);case _:
+return $default(_that.id,_that.ownerName,_that.status,_that.createdAt,_that.members,_that.players,_that.guardians,_that.invites,_that.recentMessages,_that.eventCount,_that.documentCount,_that.pollCount);case _:
   return orElse();
 
 }
@@ -1334,10 +1612,10 @@ return $default(_that.id,_that.ownerName,_that.status,_that.createdAt,_that.memb
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String ownerName,  TeamStatus status,  DateTime? createdAt,  List<Membership> members,  List<Player> players,  List<GuardianLink> guardians,  List<AdminInvite> invites,  int eventCount,  int documentCount,  int pollCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String ownerName,  TeamStatus status,  DateTime? createdAt,  List<Membership> members,  List<Player> players,  List<GuardianLink> guardians,  List<AdminInvite> invites,  List<AdminMessage> recentMessages,  int eventCount,  int documentCount,  int pollCount)  $default,) {final _that = this;
 switch (_that) {
 case _AdminTeamDetail():
-return $default(_that.id,_that.ownerName,_that.status,_that.createdAt,_that.members,_that.players,_that.guardians,_that.invites,_that.eventCount,_that.documentCount,_that.pollCount);case _:
+return $default(_that.id,_that.ownerName,_that.status,_that.createdAt,_that.members,_that.players,_that.guardians,_that.invites,_that.recentMessages,_that.eventCount,_that.documentCount,_that.pollCount);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1354,10 +1632,10 @@ return $default(_that.id,_that.ownerName,_that.status,_that.createdAt,_that.memb
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String ownerName,  TeamStatus status,  DateTime? createdAt,  List<Membership> members,  List<Player> players,  List<GuardianLink> guardians,  List<AdminInvite> invites,  int eventCount,  int documentCount,  int pollCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String ownerName,  TeamStatus status,  DateTime? createdAt,  List<Membership> members,  List<Player> players,  List<GuardianLink> guardians,  List<AdminInvite> invites,  List<AdminMessage> recentMessages,  int eventCount,  int documentCount,  int pollCount)?  $default,) {final _that = this;
 switch (_that) {
 case _AdminTeamDetail() when $default != null:
-return $default(_that.id,_that.ownerName,_that.status,_that.createdAt,_that.members,_that.players,_that.guardians,_that.invites,_that.eventCount,_that.documentCount,_that.pollCount);case _:
+return $default(_that.id,_that.ownerName,_that.status,_that.createdAt,_that.members,_that.players,_that.guardians,_that.invites,_that.recentMessages,_that.eventCount,_that.documentCount,_that.pollCount);case _:
   return null;
 
 }
@@ -1369,7 +1647,7 @@ return $default(_that.id,_that.ownerName,_that.status,_that.createdAt,_that.memb
 
 
 class _AdminTeamDetail implements AdminTeamDetail {
-  const _AdminTeamDetail({required this.id, this.ownerName = '', this.status = TeamStatus.active, this.createdAt,  List<Membership> members = const <Membership>[],  List<Player> players = const <Player>[],  List<GuardianLink> guardians = const <GuardianLink>[],  List<AdminInvite> invites = const <AdminInvite>[], this.eventCount = 0, this.documentCount = 0, this.pollCount = 0}): _members = members,_players = players,_guardians = guardians,_invites = invites;
+  const _AdminTeamDetail({required this.id, this.ownerName = '', this.status = TeamStatus.active, this.createdAt,  List<Membership> members = const <Membership>[],  List<Player> players = const <Player>[],  List<GuardianLink> guardians = const <GuardianLink>[],  List<AdminInvite> invites = const <AdminInvite>[],  List<AdminMessage> recentMessages = const <AdminMessage>[], this.eventCount = 0, this.documentCount = 0, this.pollCount = 0}): _members = members,_players = players,_guardians = guardians,_invites = invites,_recentMessages = recentMessages;
   
 
 @override final  GroupId id;
@@ -1408,6 +1686,15 @@ class _AdminTeamDetail implements AdminTeamDetail {
   return EqualUnmodifiableListView(_invites);
 }
 
+/// The latest messages, newest first, to review (ADMIN-3 Content).
+ final  List<AdminMessage> _recentMessages;
+/// The latest messages, newest first, to review (ADMIN-3 Content).
+@override@JsonKey() List<AdminMessage> get recentMessages {
+  if (_recentMessages is EqualUnmodifiableListView) return _recentMessages;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_recentMessages);
+}
+
 @override@JsonKey() final  int eventCount;
 @override@JsonKey() final  int documentCount;
 @override@JsonKey() final  int pollCount;
@@ -1422,18 +1709,18 @@ _$AdminTeamDetailCopyWith<_AdminTeamDetail> get copyWith => __$AdminTeamDetailCo
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminTeamDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.members, _members)&&const DeepCollectionEquality().equals(other.players, _players)&&const DeepCollectionEquality().equals(other.guardians, _guardians)&&const DeepCollectionEquality().equals(other.invites, _invites)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.documentCount, documentCount) || other.documentCount == documentCount)&&(identical(other.pollCount, pollCount) || other.pollCount == pollCount));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminTeamDetail&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.members, _members)&&const DeepCollectionEquality().equals(other.players, _players)&&const DeepCollectionEquality().equals(other.guardians, _guardians)&&const DeepCollectionEquality().equals(other.invites, _invites)&&const DeepCollectionEquality().equals(other.recentMessages, _recentMessages)&&(identical(other.eventCount, eventCount) || other.eventCount == eventCount)&&(identical(other.documentCount, documentCount) || other.documentCount == documentCount)&&(identical(other.pollCount, pollCount) || other.pollCount == pollCount));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,ownerName,status,createdAt,const DeepCollectionEquality().hash(_members),const DeepCollectionEquality().hash(_players),const DeepCollectionEquality().hash(_guardians),const DeepCollectionEquality().hash(_invites),eventCount,documentCount,pollCount);
+    return Object.hash(runtimeType,id,ownerName,status,createdAt,const DeepCollectionEquality().hash(_members),const DeepCollectionEquality().hash(_players),const DeepCollectionEquality().hash(_guardians),const DeepCollectionEquality().hash(_invites),const DeepCollectionEquality().hash(_recentMessages),eventCount,documentCount,pollCount);
 }
 
 @override
 String toString() {
-    return 'AdminTeamDetail(id: $id, ownerName: $ownerName, status: $status, createdAt: $createdAt, members: $members, players: $players, guardians: $guardians, invites: $invites, eventCount: $eventCount, documentCount: $documentCount, pollCount: $pollCount)';
+    return 'AdminTeamDetail(id: $id, ownerName: $ownerName, status: $status, createdAt: $createdAt, members: $members, players: $players, guardians: $guardians, invites: $invites, recentMessages: $recentMessages, eventCount: $eventCount, documentCount: $documentCount, pollCount: $pollCount)';
 }
 
 
@@ -1444,7 +1731,7 @@ abstract mixin class _$AdminTeamDetailCopyWith<$Res> implements $AdminTeamDetail
   factory _$AdminTeamDetailCopyWith(_AdminTeamDetail value, $Res Function(_AdminTeamDetail) _then) = __$AdminTeamDetailCopyWithImpl;
 @override @useResult
 $Res call({
- GroupId id, String ownerName, TeamStatus status, DateTime? createdAt, List<Membership> members, List<Player> players, List<GuardianLink> guardians, List<AdminInvite> invites, int eventCount, int documentCount, int pollCount
+ GroupId id, String ownerName, TeamStatus status, DateTime? createdAt, List<Membership> members, List<Player> players, List<GuardianLink> guardians, List<AdminInvite> invites, List<AdminMessage> recentMessages, int eventCount, int documentCount, int pollCount
 });
 
 
@@ -1461,7 +1748,7 @@ class __$AdminTeamDetailCopyWithImpl<$Res>
 
 /// Create a copy of AdminTeamDetail
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ownerName = null,Object? status = null,Object? createdAt = freezed,Object? members = null,Object? players = null,Object? guardians = null,Object? invites = null,Object? eventCount = null,Object? documentCount = null,Object? pollCount = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ownerName = null,Object? status = null,Object? createdAt = freezed,Object? members = null,Object? players = null,Object? guardians = null,Object? invites = null,Object? recentMessages = null,Object? eventCount = null,Object? documentCount = null,Object? pollCount = null,}) {
   return _then(_AdminTeamDetail(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,ownerName: null == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
@@ -1471,7 +1758,8 @@ as DateTime?,members: null == members ? _self._members : members // ignore: cast
 as List<Membership>,players: null == players ? _self._players : players // ignore: cast_nullable_to_non_nullable
 as List<Player>,guardians: null == guardians ? _self._guardians : guardians // ignore: cast_nullable_to_non_nullable
 as List<GuardianLink>,invites: null == invites ? _self._invites : invites // ignore: cast_nullable_to_non_nullable
-as List<AdminInvite>,eventCount: null == eventCount ? _self.eventCount : eventCount // ignore: cast_nullable_to_non_nullable
+as List<AdminInvite>,recentMessages: null == recentMessages ? _self._recentMessages : recentMessages // ignore: cast_nullable_to_non_nullable
+as List<AdminMessage>,eventCount: null == eventCount ? _self.eventCount : eventCount // ignore: cast_nullable_to_non_nullable
 as int,documentCount: null == documentCount ? _self.documentCount : documentCount // ignore: cast_nullable_to_non_nullable
 as int,pollCount: null == pollCount ? _self.pollCount : pollCount // ignore: cast_nullable_to_non_nullable
 as int,

@@ -202,7 +202,7 @@ class _MediaRow extends ConsumerWidget {
   }
 }
 
-/// "Chat photo · Sam Rivera", "Team logo", "Chat background", a document
+/// "Chat photo · Sam Rivera", "Team logo · Alex Kim", "Chat background", a document
 /// ("Fall roster.pdf · Sam Rivera", or "Document" once its record is gone),
 /// or "Unused file" (STORE-5). A photo no message shows (say, from a send
 /// that failed), or a logo or background the team no longer uses, says so.
@@ -214,12 +214,18 @@ String mediaKindLabel(AppLocalizations l10n, MediaItem item) =>
         final name? when name.isNotEmpty => l10n.mediaKindChatPhoto(name),
         _ => l10n.mediaKindChatPhotoNoName,
       },
-      MediaKind.logo =>
+      MediaKind.logo => _addedBy(
+        l10n,
         item.current == false ? l10n.mediaKindOldLogo : l10n.mediaKindLogo,
-      MediaKind.background =>
+        item.authorName,
+      ),
+      MediaKind.background => _addedBy(
+        l10n,
         item.current == false
             ? l10n.mediaKindOldBackground
             : l10n.mediaKindBackground,
+        item.authorName,
+      ),
       MediaKind.document => switch ((item.documentName, item.authorName)) {
         (final doc?, final name?) when doc.isNotEmpty && name.isNotEmpty =>
           l10n.mediaKindDocumentNamed(doc, name),
@@ -228,6 +234,11 @@ String mediaKindLabel(AppLocalizations l10n, MediaItem item) =>
       },
       MediaKind.other => l10n.mediaKindOther,
     };
+
+/// "Team logo · Alex Kim": who added the logo or background (STORE-5),
+/// when the file says.
+String _addedBy(AppLocalizations l10n, String label, String? name) =>
+    name == null || name.isEmpty ? label : l10n.mediaKindAddedBy(label, name);
 
 /// What deleting does, in the confirm dialog: a chat photo leaves its
 /// message, and the logo or background resets (ARCH §6.11). A file nothing

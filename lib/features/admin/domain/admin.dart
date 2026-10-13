@@ -97,6 +97,20 @@ abstract class AdminInvite with _$AdminInvite {
   }) = _AdminInvite;
 }
 
+/// One of a team's latest messages, for review on its admin page
+/// (ADMIN-3 Content). Deleting it goes through deleteMessage, which audits
+/// it.
+@freezed
+abstract class AdminMessage with _$AdminMessage {
+  const factory({
+    required String id,
+    @Default('') String authorName,
+    @Default('') String text,
+    @Default(0) int photoCount,
+    DateTime? createdAt,
+  }) = _AdminMessage;
+}
+
 /// ADMIN-3: what the team's own documents don't say. The team itself is
 /// read live from `groups`.
 @freezed
@@ -114,6 +128,9 @@ abstract class AdminTeamDetail with _$AdminTeamDetail {
     @Default(<Player>[]) List<Player> players,
     @Default(<GuardianLink>[]) List<GuardianLink> guardians,
     @Default(<AdminInvite>[]) List<AdminInvite> invites,
+
+    /// The latest messages, newest first, to review (ADMIN-3 Content).
+    @Default(<AdminMessage>[]) List<AdminMessage> recentMessages,
     @Default(0) int eventCount,
     @Default(0) int documentCount,
     @Default(0) int pollCount,

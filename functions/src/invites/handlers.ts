@@ -217,7 +217,11 @@ export const listEmailInvites = onCall(async (request) => {
   return { invites: await listInvites(groupId) };
 });
 
-/** Turns an invite off at once (INV-4 Revoke). The inviter or an admin. */
+/**
+ * Turns an invite off at once (INV-4 Revoke, ADMIN-3 Content). The inviter,
+ * a team admin, or a super admin. Each revoke goes in the audit log
+ * (ADMIN-6), as resetting the team link does.
+ */
 export const revokeInvite = onCall(async (request) => {
   const uid = requireAuth(request);
   const { code } = parse(z.object({ code: z.string().min(4) }), request.data);
@@ -231,7 +235,21 @@ export const revokeInvite = onCall(async (request) => {
   } else {
     await requireOpenTeam(groupId, request.auth?.token.superAdmin === true, { allowArchived: true });
   }
+  if (invite.get('revokedAt') != null) return { ok: true };
   await ref.update({ revokedAt: FieldValue.serverTimestamp() });
+  await audit({
+    actorId: uid,
+    action: 'revokeInvite',
+    groupId,
+    targetType: 'invite',
+    targetId: invite.id,
+    before: {
+      type: (invite.get('type') as string | undefined) ?? null,
+      email: (invite.get('email') as string | null | undefined) ?? null,
+      createdBy: (invite.get('createdBy') as string | undefined) ?? null,
+    },
+    after: { revoked: true },
+  });
   return { ok: true };
 });
 

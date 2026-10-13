@@ -622,7 +622,8 @@ service cloud.firestore {
         && (incoming().pinned == false || isAdmin(incoming().groupId))
         && incoming().notifyTeam is bool
         && incoming().createdAt == request.time
-        && validDocument(incoming(), docId);
+        && validDocument(incoming(), docId)
+        && (incoming().kind != 'file' || incoming().size <= maxUploadBytes());
       // DOC-5: the uploader or an admin renames and edits the description;
       // admins also pin and unpin. Everything else is fixed.
       allow update: if docEditorOk(resource.data)
@@ -641,6 +642,17 @@ service cloud.firestore {
     function docPinnerOk(g) {
       return request.auth.token.get('superAdmin', false) == true || isAdmin(g);
     }
+
+    // The largest new file platform settings allow (ADMIN-7 maxUploadMb),
+    // never over 10 MB (STORE-1). storage.rules refuse anything over 10 MB;
+    // a lower setting is enforced here for documents and by the Storage
+    // trigger (onGroupFileAdded) for every upload.
+    function maxUploadBytes() {
+      let path = /databases/$(database)/documents/config/app;
+      let mb = exists(path) ? get(path).data.get('maxUploadMb', 10) : 10;
+      return (mb is int && mb >= 1 && mb <= 10 ? mb : 10) * 1024 * 1024;
+    }
+
     function docCreatorOk(g) {
       return isMember(g) && active(g)
         && (isAdmin(g) || settings(g).get('membersCanUploadDocs', true) == true);
@@ -690,9 +702,16 @@ service cloud.firestore {
         && onlyChanges(['read']) && incoming().read == true;
     }
 
+    // SAFE-1: a team's admins read its reports, except those about one of
+    // its admins (teamVisible false), which go to super admins only, so a
+    // reported admin never learns who reported them. A list must ask for
+    // teamVisible == true; a get also refuses a report about the reader.
     match /reports/{reportId} {
-      allow get: if superAdmin() || isAdmin(resource.data.groupId);
-      allow list: if boundedQuery() && (superAdmin() || isAdmin(resource.data.groupId));
+      allow get: if superAdmin()
+        || (isAdmin(resource.data.groupId) && resource.data.get('teamVisible', false) == true
+            && resource.data.get('subjectId', null) != uid());
+      allow list: if boundedQuery() && (superAdmin()
+        || (isAdmin(resource.data.groupId) && resource.data.teamVisible == true));
     }
 
     // The audit log (ADMIN-6): read-only, for super admins, a page at a time.

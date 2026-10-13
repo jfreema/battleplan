@@ -11,6 +11,7 @@ import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
+import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
@@ -79,7 +80,11 @@ class AdminTeamScreen extends ConsumerWidget {
                         detail: value,
                         onChanged: () => _refresh(ref),
                       ),
-                      _Content(group: g, detail: value),
+                      _Content(
+                        group: g,
+                        detail: value,
+                        onChanged: () => _refresh(ref),
+                      ),
                     ],
                   ),
                   AsyncError() => Text(l10n.loadError),
@@ -585,17 +590,38 @@ class _Invites extends ConsumerWidget {
   }
 }
 
-/// How much the team has, and View team to review it and delete anything
-/// (ADMIN-3).
-class _Content extends StatelessWidget {
-  const new({required this.group, required this.detail});
+/// How much the team has, its latest messages to review and delete, and
+/// View team to review the rest (ADMIN-3 Content). Deleting a message asks
+/// first (ADMIN-8) and is audited by deleteMessage (ADMIN-6).
+class _Content extends ConsumerWidget {
+  const new({
+    required this.group,
+    required this.detail,
+    required this.onChanged,
+  });
 
   final Group group;
   final AdminTeamDetail detail;
+  final VoidCallback onChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    Future<void> delete(AdminMessage m) async {
+      final ok = await confirmAndRun(
+        context,
+        title: l10n.deleteMessageTitle,
+        message: l10n.deleteMessageBody,
+        confirmLabel: l10n.deleteMessage,
+        action: () => ref.read(messageRepositoryProvider).deleteMessage(m.id),
+        done: l10n.adminMessageDeleted,
+        destructive: true,
+      );
+      if (ok) onChanged();
+    }
+
     return AdminSectionCard(
       title: l10n.adminContent,
       children: [
@@ -607,10 +633,32 @@ class _Content extends StatelessWidget {
           ].join(' · '),
         ),
         const SizedBox(height: Space.xs),
-        Text(
-          l10n.adminContentHelp,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(l10n.adminContentHelp, style: theme.textTheme.bodySmall),
+        const SizedBox(height: Space.md),
+        Text(l10n.adminRecentMessages, style: theme.textTheme.titleSmall),
+        if (detail.recentMessages.isEmpty) Text(l10n.adminNoRecentMessages),
+        for (final m in detail.recentMessages)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              m.text.isNotEmpty ? m.text : l10n.adminPhotosCount(m.photoCount),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              [
+                m.authorName,
+                if (m.text.isNotEmpty && m.photoCount > 0)
+                  l10n.adminPhotosCount(m.photoCount),
+                adminDateTime(l10n, m.createdAt),
+              ].join(' · '),
+            ),
+            trailing: IconButton(
+              tooltip: l10n.adminDeleteMessageOf(m.authorName),
+              icon: Icon(AppIcons.delete, color: theme.colorScheme.error),
+              onPressed: () => unawaited(delete(m)),
+            ),
+          ),
       ],
     );
   }

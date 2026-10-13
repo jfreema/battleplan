@@ -55,7 +55,11 @@ beforeEach(async () => {
     await db.doc('guardianRequests/emma_frank').set({ playerId: 'emma', groupId: 'teamB', uid: 'frank', status: 'pending' });
     await db.doc('invites/K7XPM2QR').set({ groupId: 'teamA', type: 'link', useCount: 0 });
     await db.doc('auditLogs/a1').set({ groupId: 'teamA', action: 'createGroup' });
-    await db.doc('reports/rep1').set({ groupId: 'teamB', reporterId: 'dan', status: 'open', reason: 'spam' });
+    await db.doc('reports/rep1').set({ groupId: 'teamB', reporterId: 'dan', subjectId: 'frank', teamVisible: true, status: 'open', reason: 'spam' });
+    // About an admin: for super admins only (SAFE-1).
+    await db.doc('reports/rep2').set({ groupId: 'teamB', reporterId: 'dan', subjectId: 'carol', teamVisible: false, status: 'open', reason: 'harassment' });
+    // Filed while carol wasn't an admin yet: still never shown to her.
+    await db.doc('reports/rep3').set({ groupId: 'teamB', reporterId: 'dan', subjectId: 'carol', teamVisible: true, status: 'open', reason: 'spam' });
     await db.doc('userBlocks/dan_frank').set({ uid: 'dan', blockedUid: 'frank', blockedName: 'Frank' });
   });
 });
@@ -153,10 +157,25 @@ describe('reports and blocks (SAFE-1, SAFE-2, SAFE-4)', () => {
   it("shows a team's reports to its admins only", async () => {
     await assertSucceeds(as('carol').doc('reports/rep1').get());
     await assertSucceeds(
-      as('carol').collection('reports').where('groupId', '==', 'teamB').where('status', '==', 'open').limit(50).get(),
+      as('carol')
+        .collection('reports')
+        .where('groupId', '==', 'teamB')
+        .where('status', '==', 'open')
+        .where('teamVisible', '==', true)
+        .limit(50)
+        .get(),
     );
     await assertFails(as('dan').doc('reports/rep1').get());
     await assertFails(as('alice').doc('reports/rep1').get());
+  });
+
+  it('never shows a team admin a report about an admin, or who reported them (SAFE-1)', async () => {
+    await assertFails(as('carol').doc('reports/rep2').get());
+    await assertFails(as('carol').doc('reports/rep3').get());
+    // A list must leave out the reports about admins.
+    await assertFails(
+      as('carol').collection('reports').where('groupId', '==', 'teamB').where('status', '==', 'open').limit(50).get(),
+    );
   });
 
   it('leaves filing and closing reports to Functions', async () => {

@@ -285,6 +285,7 @@ void main() {
     Future<(FakeAdminRepository, FakeMemberRepository)> openTeam(
       WidgetTester tester, {
       Group? group,
+      FakeMessageRepository? messageRepo,
     }) async {
       final admin = FakeAdminRepository(
         teams: teamRows(),
@@ -303,6 +304,19 @@ void main() {
               testMembership('t1', 'sam', name: 'Sam Rivera'),
             ],
             invites: const [AdminInvite(code: 'K7XPM2QR', useCount: 3)],
+            recentMessages: [
+              AdminMessage(
+                id: 'm1',
+                authorName: 'Sam Rivera',
+                text: 'Buy cheap pills here',
+                createdAt: now.subtract(const Duration(hours: 1)),
+              ),
+              const AdminMessage(
+                id: 'm2',
+                authorName: 'Olive Owner',
+                photoCount: 2,
+              ),
+            ],
             eventCount: 4,
             documentCount: 2,
             pollCount: 1,
@@ -317,6 +331,7 @@ void main() {
         '/admin/teams/t1',
         admin: admin,
         memberRepo: members,
+        messageRepo: messageRepo,
         groupRepo: FakeGroupRepository({
           'a': testGroup('a', 'Home team'),
           't1':
@@ -339,6 +354,33 @@ void main() {
       expect(find.text('K7XPM2QR · Used 3 times'), findsOneWidget);
       expect(find.text('4 events · 2 documents · 1 poll'), findsOneWidget);
       expect(find.text('212 MB of 500 MB used'), findsOneWidget);
+    });
+
+    testWidgets('recent messages can be reviewed and deleted after asking', (
+      tester,
+    ) async {
+      final messages = FakeMessageRepository();
+      await openTeam(tester, messageRepo: messages);
+      final pills = find.text('Buy cheap pills here');
+      await tester.scrollUntilVisible(pills, 200);
+      expect(pills, findsOneWidget);
+      expect(find.text('2 photos'), findsOneWidget);
+
+      final delete = find.byTooltip('Delete message from Sam Rivera');
+      await tester.ensureVisible(delete);
+      await tester.pumpAndSettle();
+      await tester.tap(delete);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(messages.deleted, isEmpty);
+
+      await tester.tap(delete);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+      expect(messages.deleted, ['m1']);
+      expect(find.text('Message deleted.'), findsOneWidget);
     });
 
     testWidgets('archive and suspend ask first, and canceling does nothing', (
@@ -1432,6 +1474,52 @@ void main() {
         ]),
       );
       expect(find.text('This team has been suspended.'), findsOneWidget);
+    });
+
+    testWidgets('a suspended team is never a dead end: other teams, Settings, '
+        'and Sign out are there, and the app opens on a readable team', (
+      tester,
+    ) async {
+      final memberRepo = FakeMemberRepository([
+        testMembership('a', 'coach'),
+        testMembership('t9', 'coach'),
+      ]);
+      await open(tester, '/g/t9/chat', user: coach, memberRepo: memberRepo);
+      expect(find.text('This team has been suspended.'), findsOneWidget);
+      await tester.tap(find.byTooltip('Account'));
+      await tester.pumpAndSettle();
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('Sign out'), findsOneWidget);
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Home team'));
+      await tester.pumpAndSettle();
+      expect(find.text('This team has been suspended.'), findsNothing);
+      expect(find.text('Home team'), findsWidgets);
+
+      // Remembered on the suspended team: '/' skips it.
+      final prefs = FakeLocalPrefs()..lastTeamRoute = '/g/t9/schedule';
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        prefs: prefs,
+        groupRepo: FakeGroupRepository({'a': testGroup('a', 'Home team')}),
+        memberRepo: FakeMemberRepository([
+          testMembership('a', 'coach'),
+          testMembership('t9', 'coach'),
+        ]),
+        size: wide,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('This team has been suspended.'), findsNothing);
+      expect(
+        GoRouter.of(tester.element(find.byType(Scaffold).first))
+            .routerDelegate
+            .currentConfiguration
+            .uri
+            .path,
+        '/g/a/chat',
+      );
     });
 
     testWidgets('members see the team again once it is unsuspended', (

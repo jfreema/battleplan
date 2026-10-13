@@ -11,6 +11,7 @@ import {
   sportValues,
   TEAM_COLORS,
 } from '../shared/constants.js';
+import { teamStatusValues } from '../teams/status.js';
 
 /** The most rows one admin list call returns (ADMIN-2, ADMIN-4, ADMIN-5). */
 export const ADMIN_PAGE_MAX = 50;
@@ -42,8 +43,7 @@ export const UidInput = z.object({ uid: Id });
 export const teamSortValues = ['created', 'activity', 'members', 'storage'] as const;
 export type TeamSort = (typeof teamSortValues)[number];
 
-export const teamStatusValues = ['active', 'archived', 'suspended'] as const;
-export type TeamStatus = (typeof teamStatusValues)[number];
+export { teamStatus, teamStatusValues, type TeamStatus } from '../teams/status.js';
 
 /** The groups field each sort orders by, newest or largest first. */
 export const TEAM_SORT_FIELD: Record<TeamSort, string> = {
@@ -135,15 +135,6 @@ export const UpdateGroupInput = z
   });
 export type UpdateGroup = z.infer<typeof UpdateGroupInput>;
 
-/**
- * A team's status in the admin panel (ADMIN-2). Suspended wins over
- * archived: a suspended team is closed to its members either way.
- */
-export function teamStatus(group: { archivedAt?: unknown; suspendedAt?: unknown }): TeamStatus {
-  if (group.suspendedAt != null) return 'suspended';
-  if (group.archivedAt != null) return 'archived';
-  return 'active';
-}
 
 // ---- Users (ADMIN-4) ---------------------------------------------------------
 

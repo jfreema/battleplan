@@ -9,6 +9,7 @@ import { photosOfMessages, removeAttachment } from '../chat/service.js';
 import { deleteDocumentOfFile, documentsOfFiles } from '../documents/service.js';
 import { db, storage } from '../shared/admin.js';
 import { Collections } from '../shared/constants.js';
+import { groupMemberId } from '../shared/ids.js';
 import { quotaBytesOf } from './storage.js';
 
 /** What a team file is (ARCH §6.8 layout); 'other' is an orphan nothing uses. */
@@ -24,7 +25,11 @@ export interface MediaItem {
   kind: MediaKind;
   /** Chat photos: the message the file was uploaded for. */
   messageId?: string;
-  /** Chat photos: who sent it, while the message still exists. Documents: who added it. */
+  /**
+   * Chat photos: who sent it, while the message still exists. Documents:
+   * who added it. The logo and backgrounds: who uploaded it, from the
+   * file's `uploadedBy` metadata (storage.rules keep it to the uploader).
+   */
   authorName?: string;
   /** Documents: the groupDocuments record the file was uploaded for. */
   documentId?: string;
@@ -91,6 +96,33 @@ export function classifyMediaPath(
   return { kind: 'other' };
 }
 
+/**
+ * The names of the people in [uids], for Media's "who added it" (STORE-5):
+ * their name on the team, or their profile name for someone who isn't on
+ * it (a super admin, or someone who left). Unknown people are left out.
+ */
+async function namesOf(groupId: string, uids: string[]): Promise<Map<string, string>> {
+  const unique = [...new Set(uids.filter((u) => u && isDocId(u)))];
+  const names = new Map<string, string>();
+  if (unique.length === 0) return names;
+  const members = await db().getAll(
+    ...unique.map((u) => db().collection(Collections.groupMembers).doc(groupMemberId(groupId, u))),
+  );
+  members.forEach((m, i) => {
+    const name = m.get('displayName') as unknown;
+    if (typeof name === 'string' && name) names.set(unique[i], name);
+  });
+  const rest = unique.filter((u) => !names.has(u));
+  if (rest.length > 0) {
+    const users = await db().getAll(...rest.map((u) => db().collection(Collections.users).doc(u)));
+    users.forEach((u, i) => {
+      const name = u.get('displayName') as unknown;
+      if (typeof name === 'string' && name) names.set(rest[i], name);
+    });
+  }
+  return names;
+}
+
 function isoOrNull(value: unknown): string | null {
   if (typeof value !== 'string' || !value) return null;
   const date = new Date(value);
@@ -114,6 +146,11 @@ export async function listMedia(groupId: string): Promise<{
   const group = await db().collection(Collections.groups).doc(groupId).get();
   if (!group.exists) throw new HttpsError('not-found', 'No such team.');
   const [found] = await storage().bucket().getFiles({ prefix: `groups/${groupId}/` });
+  const uploaders = new Map<string, string>();
+  for (const f of found) {
+    const by = f.metadata.metadata?.uploadedBy;
+    if (typeof by === 'string' && by) uploaders.set(f.name, by);
+  }
   const items: MediaItem[] = found
     .map((f) => ({
       path: f.name,
@@ -134,6 +171,10 @@ export async function listMedia(groupId: string): Promise<{
     groupId,
     items.flatMap((f) => (f.kind === 'document' && f.documentId ? [f.documentId] : [])),
   );
+  const names = await namesOf(
+    groupId,
+    items.flatMap((f) => (f.kind === 'logo' || f.kind === 'background' ? [uploaders.get(f.path) ?? ''] : [])),
+  );
   const logo = group.get('photoPath') as string | null | undefined;
   // A photo is the background in use only while Photo is picked: Chat look
   // keeps the path after switching to Pattern or Plain, so switching back
@@ -147,10 +188,10 @@ export async function listMedia(groupId: string): Promise<{
       const message = photos.get(f.messageId!);
       if (message) f.authorName = message.authorName;
       f.current = message?.paths.includes(f.path) ?? false;
-    } else if (f.kind === 'logo') {
-      f.current = f.path === logo;
-    } else if (f.kind === 'background') {
-      f.current = f.path === background;
+    } else if (f.kind === 'logo' || f.kind === 'background') {
+      f.current = f.path === (f.kind === 'logo' ? logo : background);
+      const name = names.get(uploaders.get(f.path) ?? '');
+      if (name) f.authorName = name;
     } else if (f.kind === 'document') {
       const doc = f.documentId ? documents.get(f.documentId) : undefined;
       if (doc) {

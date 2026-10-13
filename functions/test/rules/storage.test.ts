@@ -158,6 +158,20 @@ describe('uploads with room (STORE-1)', () => {
     await assertFails(put('alice', 'groups/roomy/theme/1.pdf', jpeg, 'application/pdf'));
   });
 
+  it('tags the logo and background with their uploader only (STORE-5)', async () => {
+    const tagged = (uid: string, path: string, uploadedBy: string) =>
+      env
+        .authenticatedContext(uid)
+        .storage()
+        .ref(path)
+        .put(jpeg, { contentType: 'image/jpeg', customMetadata: { uploadedBy } })
+        .then(() => undefined);
+    await assertSucceeds(tagged('alice', 'groups/roomy/avatar/2.jpg', 'alice'));
+    await assertSucceeds(tagged('alice', 'groups/roomy/theme/2.jpg', 'alice'));
+    await assertFails(tagged('alice', 'groups/roomy/avatar/3.jpg', 'bob'));
+    await assertFails(tagged('alice', 'groups/roomy/theme/3.jpg', 'bob'));
+  });
+
   it('takes files up to 10 MB and refuses anything bigger', async () => {
     const tenMb = new Uint8Array(10 * MB);
     const tooBig = new Uint8Array(10 * MB + 1);

@@ -2704,3 +2704,24 @@ class FakePhotoSaver implements PhotoSaver {
     return true;
   }
 }
+
+/// Players whose adds by email are refused with [failure] (SAFE-5).
+class RefusingPlayerRepository extends FakePlayerRepository {
+  new(this.failure, [super.players]);
+
+  final AppFailure failure;
+
+  @override
+  Future<AddPlayersResult> addPlayers(
+    GroupId groupId,
+    List<NewPlayer> players,
+  ) async => throw failure;
+
+  @override
+  Future<bool> inviteGuardian(
+    GroupId groupId,
+    PlayerId playerId, {
+    required String email,
+    String? name,
+  }) async => throw failure;
+}

@@ -1323,5 +1323,14 @@
     "placeholders": {
       "team": {"type": "String"}
     }
-  }
+  },
+  "adminRecentMessages": "Recent messages",
+  "adminNoRecentMessages": "No messages yet.",
+  "adminMessageDeleted": "Message deleted.",
+  "adminPhotosCount": "{count, plural, =1{1 photo} other{{count} photos}}",
+  "@adminPhotosCount": {"placeholders": {"count": {"type": "int"}}},
+  "adminDeleteMessageOf": "Delete message from {name}",
+  "@adminDeleteMessageOf": {"placeholders": {"name": {"type": "String"}}},
+  "mediaKindAddedBy": "{kind} · {name}",
+  "@mediaKindAddedBy": {"placeholders": {"kind": {"type": "String"}, "name": {"type": "String"}}}
 }

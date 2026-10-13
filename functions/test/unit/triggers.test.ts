@@ -10,7 +10,7 @@ import {
   replyPushBody,
   replyRecipientOf,
 } from '../../src/chat/service.js';
-import { reportedBody } from '../../src/safety/service.js';
+import { reportedBody, teamSeesReport } from '../../src/safety/service.js';
 
 describe('groups trigger early exit and system lines (CHAT-10)', () => {
   it('posts a rename line only when the name changed', () => {
@@ -109,5 +109,12 @@ describe('report notifications (NOTIF-2)', () => {
     expect(reportedBody('message')).toBe('A message was reported');
     expect(reportedBody('user')).toBe('A person was reported');
     expect(reportedBody('document')).toBe('A document was reported');
+  });
+
+  it("keeps a report about one of the team's admins from the team (SAFE-1)", () => {
+    expect(teamSeesReport('owner')).toBe(false);
+    expect(teamSeesReport('admin')).toBe(false);
+    expect(teamSeesReport('member')).toBe(true);
+    expect(teamSeesReport(null)).toBe(true);
   });
 });
