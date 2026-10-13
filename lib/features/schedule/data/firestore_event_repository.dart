@@ -151,7 +151,6 @@ class FirestoreEventRepository implements EventRepository {
     GroupId groupId,
     EventDraft draft, {
     required UserId createdBy,
-    required bool youth,
   }) async {
     const zero = {'going': 0, 'maybe': 0, 'notGoing': 0};
     final ref = _events.doc();
@@ -159,7 +158,6 @@ class FirestoreEventRepository implements EventRepository {
       () => ref.set({
         ..._fields(draft),
         'groupId': groupId.value,
-        'rsvpFor': youth ? RsvpFor.players.value : RsvpFor.members.value,
         'notifyTeam': draft.notifyTeam,
         'postToChat': draft.postToChat,
         'rsvpCounts': zero,
@@ -367,7 +365,6 @@ Event eventFromFirestore(String id, Map<String, dynamic> x) {
     opponent: x['opponent'] as String?,
     homeAway: HomeAway.tryParse(x['homeAway'] as String?),
     rsvpEnabled: x['rsvpEnabled'] != false,
-    rsvpFor: RsvpFor.tryParse(x['rsvpFor'] as String?) ?? RsvpFor.members,
     rsvpDeadline: _time(x['rsvpDeadline']),
     reminderOffsets: [
       for (final o in (x['reminderOffsets'] as List?) ?? const [])

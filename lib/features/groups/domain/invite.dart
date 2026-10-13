@@ -38,7 +38,6 @@ abstract class InvitePreview with _$InvitePreview {
     required String groupId,
     required String name,
     required Sport sport,
-    required TeamType teamType,
     required int memberCount,
     int? color,
 
@@ -51,11 +50,8 @@ abstract class InvitePreview with _$InvitePreview {
 /// The result of joining (INV-5).
 @freezed
 abstract class JoinResult with _$JoinResult {
-  const factory({
-    required String groupId,
-    required TeamType teamType,
-    required bool alreadyMember,
-  }) = _JoinResult;
+  const factory({required String groupId, required bool alreadyMember}) =
+      _JoinResult;
 }
 
 /// Where an email invite stands (INV-4).

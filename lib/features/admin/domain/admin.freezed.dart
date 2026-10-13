@@ -579,7 +579,7 @@ as TeamStatus?,
 /// @nodoc
 mixin _$AdminTeamRow {
 
- GroupId get id; String get name; Sport get sport; TeamType get teamType; String? get ownerId; String get ownerName; int get memberCount; DateTime? get lastMessageAt; int get storageBytes; int get storageQuotaBytes; TeamStatus get status; DateTime? get createdAt;
+ GroupId get id; String get name; Sport get sport; String? get ownerId; String get ownerName; int get memberCount; DateTime? get lastMessageAt; int get storageBytes; int get storageQuotaBytes; TeamStatus get status; DateTime? get createdAt;
 /// Create a copy of AdminTeamRow
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -591,20 +591,20 @@ $AdminTeamRowCopyWith<AdminTeamRow> get copyWith => _$AdminTeamRowCopyWithImpl<A
 @override
 bool operator ==(Object other) {
   final _this = this as AdminTeamRow;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminTeamRow&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.teamType, _this.teamType) || other.teamType == _this.teamType)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId)&&(identical(other.ownerName, _this.ownerName) || other.ownerName == _this.ownerName)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminTeamRow&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId)&&(identical(other.ownerName, _this.ownerName) || other.ownerName == _this.ownerName)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AdminTeamRow;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.sport,_this.teamType,_this.ownerId,_this.ownerName,_this.memberCount,_this.lastMessageAt,_this.storageBytes,_this.storageQuotaBytes,_this.status,_this.createdAt);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.sport,_this.ownerId,_this.ownerName,_this.memberCount,_this.lastMessageAt,_this.storageBytes,_this.storageQuotaBytes,_this.status,_this.createdAt);
 }
 
 @override
 String toString() {
   final _this = this as AdminTeamRow;
-  return 'AdminTeamRow(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, teamType: ${_this.teamType}, ownerId: ${_this.ownerId}, ownerName: ${_this.ownerName}, memberCount: ${_this.memberCount}, lastMessageAt: ${_this.lastMessageAt}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes}, status: ${_this.status}, createdAt: ${_this.createdAt})';
+  return 'AdminTeamRow(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, ownerId: ${_this.ownerId}, ownerName: ${_this.ownerName}, memberCount: ${_this.memberCount}, lastMessageAt: ${_this.lastMessageAt}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes}, status: ${_this.status}, createdAt: ${_this.createdAt})';
 }
 
 
@@ -615,7 +615,7 @@ abstract mixin class $AdminTeamRowCopyWith<$Res>  {
   factory $AdminTeamRowCopyWith(AdminTeamRow value, $Res Function(AdminTeamRow) _then) = _$AdminTeamRowCopyWithImpl;
 @useResult
 $Res call({
- GroupId id, String name, Sport sport, TeamType teamType, String? ownerId, String ownerName, int memberCount, DateTime? lastMessageAt, int storageBytes, int storageQuotaBytes, TeamStatus status, DateTime? createdAt
+ GroupId id, String name, Sport sport, String? ownerId, String ownerName, int memberCount, DateTime? lastMessageAt, int storageBytes, int storageQuotaBytes, TeamStatus status, DateTime? createdAt
 });
 
 
@@ -632,13 +632,12 @@ class _$AdminTeamRowCopyWithImpl<$Res>
 
 /// Create a copy of AdminTeamRow
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? ownerId = freezed,Object? ownerName = null,Object? memberCount = null,Object? lastMessageAt = freezed,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? status = null,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? ownerId = freezed,Object? ownerName = null,Object? memberCount = null,Object? lastMessageAt = freezed,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? status = null,Object? createdAt = freezed,}) {
   return _then(AdminTeamRow(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,sport: null == sport ? _self.sport : sport // ignore: cast_nullable_to_non_nullable
-as Sport,teamType: null == teamType ? _self.teamType : teamType // ignore: cast_nullable_to_non_nullable
-as TeamType,ownerId: freezed == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
+as Sport,ownerId: freezed == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
 as String?,ownerName: null == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
 as String,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int,lastMessageAt: freezed == lastMessageAt ? _self.lastMessageAt : lastMessageAt // ignore: cast_nullable_to_non_nullable
@@ -731,10 +730,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  String? ownerId,  String ownerName,  int memberCount,  DateTime? lastMessageAt,  int storageBytes,  int storageQuotaBytes,  TeamStatus status,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  String? ownerId,  String ownerName,  int memberCount,  DateTime? lastMessageAt,  int storageBytes,  int storageQuotaBytes,  TeamStatus status,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AdminTeamRow() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.ownerId,_that.ownerName,_that.memberCount,_that.lastMessageAt,_that.storageBytes,_that.storageQuotaBytes,_that.status,_that.createdAt);case _:
+return $default(_that.id,_that.name,_that.sport,_that.ownerId,_that.ownerName,_that.memberCount,_that.lastMessageAt,_that.storageBytes,_that.storageQuotaBytes,_that.status,_that.createdAt);case _:
   return orElse();
 
 }
@@ -752,10 +751,10 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.ownerId,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  String? ownerId,  String ownerName,  int memberCount,  DateTime? lastMessageAt,  int storageBytes,  int storageQuotaBytes,  TeamStatus status,  DateTime? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  String? ownerId,  String ownerName,  int memberCount,  DateTime? lastMessageAt,  int storageBytes,  int storageQuotaBytes,  TeamStatus status,  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _AdminTeamRow():
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.ownerId,_that.ownerName,_that.memberCount,_that.lastMessageAt,_that.storageBytes,_that.storageQuotaBytes,_that.status,_that.createdAt);case _:
+return $default(_that.id,_that.name,_that.sport,_that.ownerId,_that.ownerName,_that.memberCount,_that.lastMessageAt,_that.storageBytes,_that.storageQuotaBytes,_that.status,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -772,10 +771,10 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.ownerId,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  String? ownerId,  String ownerName,  int memberCount,  DateTime? lastMessageAt,  int storageBytes,  int storageQuotaBytes,  TeamStatus status,  DateTime? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  String? ownerId,  String ownerName,  int memberCount,  DateTime? lastMessageAt,  int storageBytes,  int storageQuotaBytes,  TeamStatus status,  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _AdminTeamRow() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.ownerId,_that.ownerName,_that.memberCount,_that.lastMessageAt,_that.storageBytes,_that.storageQuotaBytes,_that.status,_that.createdAt);case _:
+return $default(_that.id,_that.name,_that.sport,_that.ownerId,_that.ownerName,_that.memberCount,_that.lastMessageAt,_that.storageBytes,_that.storageQuotaBytes,_that.status,_that.createdAt);case _:
   return null;
 
 }
@@ -787,13 +786,12 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.ownerId,_th
 
 
 class _AdminTeamRow implements AdminTeamRow {
-  const _AdminTeamRow({required this.id, required this.name, this.sport = Sport.other, this.teamType = TeamType.adult, this.ownerId, this.ownerName = '', this.memberCount = 0, this.lastMessageAt, this.storageBytes = 0, this.storageQuotaBytes = 0, this.status = TeamStatus.active, this.createdAt});
+  const _AdminTeamRow({required this.id, required this.name, this.sport = Sport.other, this.ownerId, this.ownerName = '', this.memberCount = 0, this.lastMessageAt, this.storageBytes = 0, this.storageQuotaBytes = 0, this.status = TeamStatus.active, this.createdAt});
   
 
 @override final  GroupId id;
 @override final  String name;
 @override@JsonKey() final  Sport sport;
-@override@JsonKey() final  TeamType teamType;
 @override final  String? ownerId;
 @override@JsonKey() final  String ownerName;
 @override@JsonKey() final  int memberCount;
@@ -813,18 +811,18 @@ _$AdminTeamRowCopyWith<_AdminTeamRow> get copyWith => __$AdminTeamRowCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminTeamRow&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.teamType, teamType) || other.teamType == teamType)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminTeamRow&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.ownerName, ownerName) || other.ownerName == ownerName)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes)&&(identical(other.status, status) || other.status == status)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,sport,teamType,ownerId,ownerName,memberCount,lastMessageAt,storageBytes,storageQuotaBytes,status,createdAt);
+    return Object.hash(runtimeType,id,name,sport,ownerId,ownerName,memberCount,lastMessageAt,storageBytes,storageQuotaBytes,status,createdAt);
 }
 
 @override
 String toString() {
-    return 'AdminTeamRow(id: $id, name: $name, sport: $sport, teamType: $teamType, ownerId: $ownerId, ownerName: $ownerName, memberCount: $memberCount, lastMessageAt: $lastMessageAt, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes, status: $status, createdAt: $createdAt)';
+    return 'AdminTeamRow(id: $id, name: $name, sport: $sport, ownerId: $ownerId, ownerName: $ownerName, memberCount: $memberCount, lastMessageAt: $lastMessageAt, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes, status: $status, createdAt: $createdAt)';
 }
 
 
@@ -835,7 +833,7 @@ abstract mixin class _$AdminTeamRowCopyWith<$Res> implements $AdminTeamRowCopyWi
   factory _$AdminTeamRowCopyWith(_AdminTeamRow value, $Res Function(_AdminTeamRow) _then) = __$AdminTeamRowCopyWithImpl;
 @override @useResult
 $Res call({
- GroupId id, String name, Sport sport, TeamType teamType, String? ownerId, String ownerName, int memberCount, DateTime? lastMessageAt, int storageBytes, int storageQuotaBytes, TeamStatus status, DateTime? createdAt
+ GroupId id, String name, Sport sport, String? ownerId, String ownerName, int memberCount, DateTime? lastMessageAt, int storageBytes, int storageQuotaBytes, TeamStatus status, DateTime? createdAt
 });
 
 
@@ -852,13 +850,12 @@ class __$AdminTeamRowCopyWithImpl<$Res>
 
 /// Create a copy of AdminTeamRow
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? ownerId = freezed,Object? ownerName = null,Object? memberCount = null,Object? lastMessageAt = freezed,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? status = null,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? ownerId = freezed,Object? ownerName = null,Object? memberCount = null,Object? lastMessageAt = freezed,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? status = null,Object? createdAt = freezed,}) {
   return _then(_AdminTeamRow(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,sport: null == sport ? _self.sport : sport // ignore: cast_nullable_to_non_nullable
-as Sport,teamType: null == teamType ? _self.teamType : teamType // ignore: cast_nullable_to_non_nullable
-as TeamType,ownerId: freezed == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
+as Sport,ownerId: freezed == ownerId ? _self.ownerId : ownerId // ignore: cast_nullable_to_non_nullable
 as String?,ownerName: null == ownerName ? _self.ownerName : ownerName // ignore: cast_nullable_to_non_nullable
 as String,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int,lastMessageAt: freezed == lastMessageAt ? _self.lastMessageAt : lastMessageAt // ignore: cast_nullable_to_non_nullable
@@ -1437,7 +1434,8 @@ as DateTime?,
 mixin _$AdminTeamDetail {
 
  GroupId get id; String get ownerName; TeamStatus get status; DateTime? get createdAt;/// Everyone on the team, with their roles.
- List<Membership> get members;/// Youth teams: the players and who guards them.
+ List<Membership> get members;/// The players (active and pending) and their links, as the player or
+/// a guardian.
  List<Player> get players; List<GuardianLink> get guardians; List<AdminInvite> get invites;/// The latest messages, newest first, to review (ADMIN-3 Content).
  List<AdminMessage> get recentMessages; int get eventCount; int get documentCount; int get pollCount;
 /// Create a copy of AdminTeamDetail
@@ -1663,9 +1661,11 @@ class _AdminTeamDetail implements AdminTeamDetail {
   return EqualUnmodifiableListView(_members);
 }
 
-/// Youth teams: the players and who guards them.
+/// The players (active and pending) and their links, as the player or
+/// a guardian.
  final  List<Player> _players;
-/// Youth teams: the players and who guards them.
+/// The players (active and pending) and their links, as the player or
+/// a guardian.
 @override@JsonKey() List<Player> get players {
   if (_players is EqualUnmodifiableListView) return _players;
   // ignore: implicit_dynamic_type

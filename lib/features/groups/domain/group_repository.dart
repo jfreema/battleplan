@@ -9,8 +9,7 @@ abstract interface class GroupRepository {
   /// A single team. Emits null if it's gone or the caller can't read it.
   Stream<Group?> watchGroup(GroupId id);
 
-  /// Edits the team profile and settings (TEAM-5), and the team type
-  /// (TEAM-1: events keep the RSVPs they have). Admins only.
+  /// Edits the team profile and settings (TEAM-5). Admins only.
   Future<void> updateGroup(
     GroupId id, {
     String? name,
@@ -18,7 +17,6 @@ abstract interface class GroupRepository {
     String? color,
     String? description,
     String? timeZone,
-    TeamType? teamType,
     GroupSettings? settings,
   });
 
@@ -59,7 +57,6 @@ abstract interface class GroupRepository {
   Future<GroupId> createGroup({
     required String name,
     required Sport sport,
-    required TeamType teamType,
     required String timeZone,
     String? color,
     String? description,

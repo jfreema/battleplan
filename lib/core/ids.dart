@@ -31,7 +31,8 @@ abstract final class CompositeIds {
   static String pollVote(PollId pollId, UserId uid) =>
       _join(pollId.value, uid.value);
 
-  /// [participantId] is a uid on adult teams and a player ID on youth teams.
+  /// [participantId] is a uid for a member answering for themselves and a
+  /// player ID for a player (PLAYER-6).
   static String rsvp(EventId eventId, String participantId) =>
       _join(eventId.value, participantId);
 

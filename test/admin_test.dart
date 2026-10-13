@@ -502,7 +502,7 @@ void main() {
   group("a super admin on a team they aren't on (ADMIN-3)", () {
     FakeGroupRepository youthTeam() => FakeGroupRepository({
       'a': testGroup('a', 'Home team'),
-      't1': testGroup('t1', 'Thunder').copyWith(teamType: TeamType.youth),
+      't1': testGroup('t1', 'Thunder'),
     });
     FakeMemberRepository thunderPeople() => FakeMemberRepository([
       testMembership('a', 'boss', role: MemberRole.owner),

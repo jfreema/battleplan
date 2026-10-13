@@ -23,6 +23,16 @@ void main() {
     );
   });
 
+  test('a member who is a player shows their number (PLAYER-8)', () {
+    expect(_m('Jared Freeman', '#12').nameWithPlayers, 'Jared F. #12');
+    expect(
+      _m('Jared Freeman', '#12, Emma #7').nameWithPlayers,
+      'Jared F. #12 · Emma #7',
+    );
+    // A player without a number has no summary, so just the name.
+    expect(_m('Jared Freeman', ' ').nameWithPlayers, 'Jared Freeman');
+  });
+
   test('everyone else shows just their name', () {
     expect(_m('Coach Kim').nameWithPlayers, 'Coach Kim');
     expect(_m('Madonna', 'Lola').nameWithPlayers, 'Madonna · Lola');

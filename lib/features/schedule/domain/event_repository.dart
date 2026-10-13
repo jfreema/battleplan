@@ -49,13 +49,12 @@ abstract interface class EventRepository {
   /// A series, live, for its "Repeats weekly…" line (SCHED-4).
   Stream<EventSeries?> watchSeries(String seriesId);
 
-  /// Writes a new one-off event (SCHED-3). [youth] makes it take RSVPs per
-  /// player. Returns its ID.
+  /// Writes a new one-off event (SCHED-3), taking RSVPs per player and
+  /// from members for themselves (PLAYER-6). Returns its ID.
   Future<EventId> createEvent(
     GroupId groupId,
     EventDraft draft, {
     required UserId createdBy,
-    required bool youth,
   });
 
   /// Saves the form over a one-off event (SCHED-6).

@@ -66,8 +66,11 @@ abstract class Group with _$Group {
     required GroupId id,
     required String name,
     required Sport sport,
-    required TeamType teamType,
     required int memberCount,
+
+    /// One kind of team (TEAM-1); a missing kind reads as a team, so a
+    /// basic group can be added later (TEAM-14).
+    @Default(GroupKind.team) GroupKind kind,
     String? description,
 
     /// ARGB team color (one of `teamColorValues`).

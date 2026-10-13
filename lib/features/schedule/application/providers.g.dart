@@ -466,16 +466,16 @@ final class EventRsvpsFamily extends $Family
   String toString() => r'eventRsvpsProvider';
 }
 
-/// The people the signed-in person answers for on a team (PLAYER-6):
-/// themselves, or on youth teams their players (and themselves when an
-/// admin, Q14).
+/// The people the signed-in person answers for on a team (PLAYER-6): the
+/// players they're linked to, and themselves when they're an admin or
+/// aren't linked to any player ([participantsFor]).
 
 @ProviderFor(myParticipants)
 final myParticipantsProvider = MyParticipantsFamily._();
 
-/// The people the signed-in person answers for on a team (PLAYER-6):
-/// themselves, or on youth teams their players (and themselves when an
-/// admin, Q14).
+/// The people the signed-in person answers for on a team (PLAYER-6): the
+/// players they're linked to, and themselves when they're an admin or
+/// aren't linked to any player ([participantsFor]).
 
 final class MyParticipantsProvider
     extends
@@ -485,9 +485,9 @@ final class MyParticipantsProvider
           List<Participant>
         >
     with $Provider<List<Participant>> {
-  /// The people the signed-in person answers for on a team (PLAYER-6):
-  /// themselves, or on youth teams their players (and themselves when an
-  /// admin, Q14).
+  /// The people the signed-in person answers for on a team (PLAYER-6): the
+  /// players they're linked to, and themselves when they're an admin or
+  /// aren't linked to any player ([participantsFor]).
   MyParticipantsProvider._({
     required MyParticipantsFamily super.from,
     required GroupId super.argument,
@@ -540,11 +540,11 @@ final class MyParticipantsProvider
   }
 }
 
-String _$myParticipantsHash() => r'6c9b56f91400060cea94acfb649eecb8ffc0e804';
+String _$myParticipantsHash() => r'e4bc8d03ddb584ac157844284ba8ec478e5322e6';
 
-/// The people the signed-in person answers for on a team (PLAYER-6):
-/// themselves, or on youth teams their players (and themselves when an
-/// admin, Q14).
+/// The people the signed-in person answers for on a team (PLAYER-6): the
+/// players they're linked to, and themselves when they're an admin or
+/// aren't linked to any player ([participantsFor]).
 
 final class MyParticipantsFamily extends $Family
     with $FunctionalFamilyOverride<List<Participant>, GroupId> {
@@ -557,9 +557,9 @@ final class MyParticipantsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// The people the signed-in person answers for on a team (PLAYER-6):
-  /// themselves, or on youth teams their players (and themselves when an
-  /// admin, Q14).
+  /// The people the signed-in person answers for on a team (PLAYER-6): the
+  /// players they're linked to, and themselves when they're an admin or
+  /// aren't linked to any player ([participantsFor]).
 
   MyParticipantsProvider call(GroupId groupId) =>
       MyParticipantsProvider._(argument: groupId, from: this);

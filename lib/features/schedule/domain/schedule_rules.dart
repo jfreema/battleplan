@@ -39,11 +39,11 @@ bool canAnswerNow(Event event, Group group, Membership? me, DateTime now) =>
     event.takesRsvps &&
     (!event.deadlinePassedAt(now) || me.isAdmin);
 
-/// The people the signed-in person answers for on [group] (PLAYER-6, Q14):
-/// themselves on adult teams; on youth teams their players, plus
-/// themselves when they're an admin (counted apart, D34).
+/// The people the signed-in person answers for on a team (PLAYER-6, Q14):
+/// the active players they're linked to, as the player or a guardian, and
+/// themselves ("Me") when they're an admin or aren't linked to any player.
+/// A member who is a player answers on their player's row.
 List<Participant> participantsFor({
-  required Group group,
   required Membership me,
   List<Player> players = const [],
   List<GuardianLink> links = const [],
@@ -53,15 +53,23 @@ List<Participant> participantsFor({
     id: me.uid.value,
     name: me.displayName,
   );
-  if (group.teamType != TeamType.youth) return [self];
-  final mine = {
-    for (final l in links)
-      if (l.uid == me.uid) l.playerId,
+  final mine = linksOf(me.uid, links);
+  final myPlayers = [
+    // The member's own player first, then the players they're here for.
+    for (final p in players)
+      if (mine.any((l) => l.playerId == p.id && l.isSelf)) p,
+    for (final p in players)
+      if (mine.any((l) => l.playerId == p.id && !l.isSelf)) p,
+  ];
+  final mySelf = {
+    for (final l in mine)
+      if (l.isSelf) l.playerId,
   };
   return [
-    if (me.isAdmin) self,
-    for (final p in players)
-      if (mine.contains(p.id)) playerParticipant(p),
+    if (me.isAdmin || mine.isEmpty) self,
+    for (final p in myPlayers)
+      if (!p.isPending)
+        playerParticipant(p).copyWith(isMe: mySelf.contains(p.id)),
   ];
 }
 
@@ -73,37 +81,40 @@ Participant playerParticipant(Player p) => Participant(
   label: p.label,
 );
 
-/// Everyone who can be answered for on [event]: on youth events the
-/// players and, apart, the admins (Q14); otherwise every member. "No
-/// response" lists those without an answer (SCHED-4).
+/// Everyone who can be answered for on an event (SCHED-4, PLAYER-6): the
+/// active players, and apart, the members who answer for themselves
+/// ("coaches and others", Q14): admins, members not linked to any player,
+/// and anyone who already answered for themselves, as on events made
+/// before one team type. "No response" lists those without an answer.
 ({List<Participant> main, List<Participant> staff}) eventParticipants(
-  Event event,
   List<Membership> roster,
-  List<Player> players,
-) {
-  Participant member(Membership m) => Participant(
-    type: ParticipantType.member,
-    id: m.uid.value,
-    name: m.displayName,
-  );
-  if (!event.forPlayers) {
-    return (main: [for (final m in roster) member(m)], staff: const []);
-  }
+  List<Player> players, {
+  List<GuardianLink> links = const [],
+  List<Rsvp> rsvps = const [],
+}) {
+  final linked = {for (final l in links) l.uid};
+  final answeredForSelf = {
+    for (final r in rsvps)
+      if (r.participantType == ParticipantType.member) r.participantId,
+  };
   return (
-    main: [for (final p in players) playerParticipant(p)],
+    main: [
+      for (final p in players)
+        if (!p.isPending) playerParticipant(p),
+    ],
     staff: [
       for (final m in roster)
-        if (m.isAdmin) member(m),
+        if (m.isAdmin ||
+            !linked.contains(m.uid) ||
+            answeredForSelf.contains(m.uid.value))
+          Participant(
+            type: ParticipantType.member,
+            id: m.uid.value,
+            name: m.displayName,
+          ),
     ],
   );
 }
-
-/// Whether an admin ([me]) may set [p]'s answer on [event] (SCHED-4), as
-/// the rules allow it: anyone on adult events; on youth events any
-/// player, but of the coaches only themselves, since each admin answers
-/// for themselves (Q14).
-bool canSetRsvpFor(Event event, Participant p, UserId me) =>
-    !event.forPlayers || p.type == ParticipantType.player || isSelf(p, me);
 
 /// The answer [participantId] gave, if any.
 Rsvp? answerOf(Iterable<Rsvp> rsvps, String participantId) =>
@@ -119,7 +130,7 @@ const awaitingRsvpWindow = Duration(days: 14);
 
 /// The Schedule tab's badge (SPEC §5.3): how many of [events] in the next
 /// 14 days from [now] still wait for an answer from someone I answer for
-/// ([participants]: me, or my players on youth teams). Only events I
+/// ([participants]: me and my players, [participantsFor]). Only events I
 /// can still answer count: taking answers, not started, and before the
 /// deadline unless I'm an admin (SCHED-5). [answers] are mine by event ID,
 /// then participant ID.

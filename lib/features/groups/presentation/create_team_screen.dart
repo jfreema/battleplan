@@ -14,9 +14,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// TEAM-1 at `/g/new`: team type, name, sport, an optional logo, an
+/// TEAM-1 at `/g/new`: name, sport, an optional logo, an
 /// optional color, time zone, and an optional description. The creator
-/// becomes the owner and goes on to "Invite your team".
+/// becomes the owner and goes on to "Invite your team". There's one kind
+/// of team, so there's no type to pick: every team has players (§6.3).
 class CreateTeamScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -28,7 +29,6 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _description = TextEditingController();
-  TeamType _type = TeamType.adult;
   // Baseball is the default; any sport can be picked.
   Sport _sport = Sport.baseball;
   // Optional (TEAM-1): null is no color.
@@ -86,7 +86,6 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
           .createGroup(
             name: _name.text.trim(),
             sport: _sport,
-            teamType: _type,
             timeZone: _timeZone ?? 'America/Chicago',
             color: _color == null ? null : _hex(_color!),
             description: _description.text.trim(),
@@ -134,31 +133,6 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
             child: ListView(
               padding: const EdgeInsets.all(Space.xl),
               children: [
-                Text(l10n.teamTypeLabel, style: theme.textTheme.titleSmall),
-                const SizedBox(height: Space.sm),
-                SegmentedButton<TeamType>(
-                  segments: [
-                    ButtonSegment(
-                      value: TeamType.adult,
-                      label: Text(l10n.teamTypeAdult),
-                    ),
-                    ButtonSegment(
-                      value: TeamType.youth,
-                      label: Text(l10n.teamTypeYouth),
-                    ),
-                  ],
-                  selected: {_type},
-                  showSelectedIcon: false,
-                  onSelectionChanged: (s) => setState(() => _type = s.first),
-                ),
-                const SizedBox(height: Space.sm),
-                Text(
-                  _type == TeamType.adult
-                      ? l10n.teamTypeAdultHelp
-                      : l10n.teamTypeYouthHelp,
-                  style: theme.textTheme.bodySmall,
-                ),
-                const SizedBox(height: Space.xl),
                 TextFormField(
                   controller: _name,
                   maxLength: Limits.groupNameMax,

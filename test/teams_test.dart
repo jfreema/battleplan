@@ -46,9 +46,8 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  final youth = {
-    'y': testGroup('y', 'Lightning U10').copyWith(teamType: TeamType.youth),
-  };
+  // One team type: any team has players (§6.3).
+  final youth = {'y': testGroup('y', 'Lightning U10')};
   const emma = Player(
     id: PlayerId('emma'),
     groupId: GroupId('y'),
@@ -83,6 +82,8 @@ void main() {
       await tester.tap(create);
       await tester.pumpAndSettle();
       expect(groupRepo.created, ['Thunder']);
+      // There's no team type to pick (TEAM-1).
+      expect(find.text('Team type'), findsNothing);
       expect(groupRepo.createdColors, [null]);
       expect(groupRepo.logosUploaded, 1);
     });
@@ -134,18 +135,11 @@ void main() {
       expect(groupRepo.updates, contains('timeZone America/Chicago'));
     });
 
-    testWidgets('admins change the team type, after a warning (TEAM-1)', (
-      tester,
-    ) async {
-      final groupRepo = await openSettings(tester);
-      final youthButton = find.text('Youth team');
-      await tester.ensureVisible(youthButton);
-      await tester.tap(youthButton);
-      await tester.pumpAndSettle();
-      expect(find.text('Make this a youth team?'), findsOneWidget);
-      await tester.tap(find.widgetWithText(FilledButton, 'Change team type'));
-      await tester.pumpAndSettle();
-      expect(groupRepo.updates, contains('teamType youth'));
+    testWidgets('there is no team type to change (TEAM-1)', (tester) async {
+      await openSettings(tester);
+      expect(find.text('Team type'), findsNothing);
+      expect(find.text('Youth team'), findsNothing);
+      expect(find.text('Adult team'), findsNothing);
     });
 
     testWidgets('Manage invite link opens the invite screen', (tester) async {
@@ -362,9 +356,58 @@ void main() {
       );
       await go(tester, '/g/y/roster');
       expect(find.text('Maria Rodriguez'), findsWidgets);
+      // Who's who on the row, from the player links (PLAYER-8).
+      expect(find.text('Parent of Emma #7'), findsOneWidget);
       await tester.tap(find.text('Maria Rodriguez').last);
       await tester.pumpAndSettle();
-      expect(find.text('Parent of Emma #7'), findsOneWidget);
+      expect(find.text('Parent of Emma #7'), findsNWidgets(2));
+    });
+
+    testWidgets('a member who is a player shows their number, and players '
+        'show who is the player (PLAYER-8)', (tester) async {
+      final repo =
+          FakePlayerRepository([
+              emma,
+              const Player(
+                id: PlayerId('jared'),
+                groupId: GroupId('y'),
+                displayName: 'Jared Freeman',
+                jerseyNumber: '12',
+                position: 'Pitcher',
+              ),
+              const Player(
+                id: PlayerId('lee'),
+                groupId: GroupId('y'),
+                displayName: 'Lee Park',
+              ),
+            ])
+            ..links.addAll([
+              const GuardianLink(
+                playerId: PlayerId('jared'),
+                groupId: GroupId('y'),
+                uid: UserId('coach'),
+                relation: PlayerRelation.self,
+              ),
+              link('coach'),
+              const GuardianLink(
+                playerId: PlayerId('lee'),
+                groupId: GroupId('y'),
+                uid: UserId('maria'),
+                relation: PlayerRelation.self,
+              ),
+            ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberships: people,
+        playerRepo: repo,
+      );
+      await go(tester, '/g/y/roster');
+      expect(find.text('Player #12 · Parent of Emma #7'), findsOneWidget);
+      // Maria is the player Lee, who has no number.
+      expect(find.text('Player'), findsOneWidget);
+      expect(find.text('Pitcher · Jordan (player)'), findsOneWidget);
     });
 
     testWidgets('the player card lists upcoming RSVPs', (tester) async {
@@ -379,7 +422,6 @@ void main() {
           endAt: start.add(const Duration(hours: 1)),
           timeZone: 'America/Chicago',
           createdBy: 'coach',
-          rsvpFor: RsvpFor.players,
         ),
         Event(
           id: const EventId('e2'),
@@ -390,7 +432,6 @@ void main() {
           endAt: start.add(const Duration(days: 1, hours: 1)),
           timeZone: 'America/Chicago',
           createdBy: 'coach',
-          rsvpFor: RsvpFor.players,
         ),
       ]);
       final rsvps = FakeRsvpRepository(events)
@@ -518,7 +559,6 @@ void main() {
           groupId: 'a',
           name: 'Thunder',
           sport: Sport.softball,
-          teamType: TeamType.adult,
           memberCount: 12,
           logoUrl: 'https://example.com/logo.jpg',
         );

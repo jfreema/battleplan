@@ -291,7 +291,6 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
             group.id,
             draft,
             createdBy: UserId(uid),
-            youth: group.teamType == TeamType.youth,
           );
           if (!mounted) return;
           context.pushReplacement(

@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Message {
 
- String get id; GroupId get groupId; String get authorId; String get authorName; MessageType get type; String get text; String? get authorPhotoPath;/// "Emma #7, Liam #23" for a guardian on a youth team (PLAYER-8).
+ String get id; GroupId get groupId; String get authorId; String get authorName; MessageType get type; String get text; String? get authorPhotoPath;/// "Emma #7, Liam #23" for a guardian, "#12" for a member who is a
+/// player (PLAYER-8).
  String? get authorPlayerSummary; String? get replyToId;/// The poll a poll message shows; it has the message's ID (POLL-1).
  String? get pollId;/// The event an event card shows (CHAT-11, SCHED-3).
  String? get eventId;/// A repeating series' card: its series, so the card can show the next
@@ -265,7 +266,8 @@ class _Message extends Message {
 @override final  MessageType type;
 @override@JsonKey() final  String text;
 @override final  String? authorPhotoPath;
-/// "Emma #7, Liam #23" for a guardian on a youth team (PLAYER-8).
+/// "Emma #7, Liam #23" for a guardian, "#12" for a member who is a
+/// player (PLAYER-8).
 @override final  String? authorPlayerSummary;
 @override final  String? replyToId;
 /// The poll a poll message shows; it has the message's ID (POLL-1).

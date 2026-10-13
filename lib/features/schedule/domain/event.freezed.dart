@@ -18,13 +18,14 @@ mixin _$Event {
  EventId get id; GroupId get groupId; EventType get type; String get title; DateTime get startAt; DateTime get endAt; String get timeZone; String get createdBy;/// The form's Notes; '' when none.
  String get description; EventLocation? get location; bool get allDay;/// 'YYYY-MM-DD', set only on all-day events. [endDate] is the last day.
  String? get startDate; String? get endDate;/// Games only (SCHED-3): "Arrive 30 min early".
- int? get arriveMinutesBefore; String? get opponent; HomeAway? get homeAway; bool get rsvpEnabled;/// 'players' on youth teams: guardians answer per player (PLAYER-6).
- RsvpFor get rsvpFor; DateTime? get rsvpDeadline;/// Minutes before the start, from [reminderOffsetsMinutes] (SCHED-8).
+ int? get arriveMinutesBefore; String? get opponent; HomeAway? get homeAway; bool get rsvpEnabled; DateTime? get rsvpDeadline;/// Minutes before the start, from [reminderOffsetsMinutes] (SCHED-8).
  List<int> get reminderOffsets; bool get notifyTeam; bool get postToChat;/// Set by Functions on events of a repeating series (SCHED-6).
  String? get seriesId;/// The occurrence's date in [timeZone], 'YYYY-MM-DD'.
  String? get seriesDate;/// Fields edited with "This event"; later series edits leave them be.
- List<String> get seriesOverrides;/// Kept by the server from the RSVPs. On 'players' events these count
-/// players only; [staffCounts] counts the admins' own answers (D34).
+ List<String> get seriesOverrides;/// Kept by the server from the RSVPs: [rsvpCounts] counts players, and
+/// [staffCounts] everyone answering for themselves, coaches and others
+/// (PLAYER-6, D34). Events made before one team type may still count
+/// members in [rsvpCounts].
  RsvpCounts get rsvpCounts; RsvpCounts get staffCounts;/// Set once when canceled (SCHED-7); never cleared.
  DateTime? get canceledAt; String? get canceledBy; DateTime? get createdAt; DateTime? get updatedAt;
 /// Create a copy of Event
@@ -38,20 +39,20 @@ $EventCopyWith<Event> get copyWith => _$EventCopyWithImpl<Event>(this as Event, 
 @override
 bool operator ==(Object other) {
   final _this = this as Event;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Event&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.startAt, _this.startAt) || other.startAt == _this.startAt)&&(identical(other.endAt, _this.endAt) || other.endAt == _this.endAt)&&(identical(other.timeZone, _this.timeZone) || other.timeZone == _this.timeZone)&&(identical(other.createdBy, _this.createdBy) || other.createdBy == _this.createdBy)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.location, _this.location) || other.location == _this.location)&&(identical(other.allDay, _this.allDay) || other.allDay == _this.allDay)&&(identical(other.startDate, _this.startDate) || other.startDate == _this.startDate)&&(identical(other.endDate, _this.endDate) || other.endDate == _this.endDate)&&(identical(other.arriveMinutesBefore, _this.arriveMinutesBefore) || other.arriveMinutesBefore == _this.arriveMinutesBefore)&&(identical(other.opponent, _this.opponent) || other.opponent == _this.opponent)&&(identical(other.homeAway, _this.homeAway) || other.homeAway == _this.homeAway)&&(identical(other.rsvpEnabled, _this.rsvpEnabled) || other.rsvpEnabled == _this.rsvpEnabled)&&(identical(other.rsvpFor, _this.rsvpFor) || other.rsvpFor == _this.rsvpFor)&&(identical(other.rsvpDeadline, _this.rsvpDeadline) || other.rsvpDeadline == _this.rsvpDeadline)&&const DeepCollectionEquality().equals(other.reminderOffsets, _this.reminderOffsets)&&(identical(other.notifyTeam, _this.notifyTeam) || other.notifyTeam == _this.notifyTeam)&&(identical(other.postToChat, _this.postToChat) || other.postToChat == _this.postToChat)&&(identical(other.seriesId, _this.seriesId) || other.seriesId == _this.seriesId)&&(identical(other.seriesDate, _this.seriesDate) || other.seriesDate == _this.seriesDate)&&const DeepCollectionEquality().equals(other.seriesOverrides, _this.seriesOverrides)&&(identical(other.rsvpCounts, _this.rsvpCounts) || other.rsvpCounts == _this.rsvpCounts)&&(identical(other.staffCounts, _this.staffCounts) || other.staffCounts == _this.staffCounts)&&(identical(other.canceledAt, _this.canceledAt) || other.canceledAt == _this.canceledAt)&&(identical(other.canceledBy, _this.canceledBy) || other.canceledBy == _this.canceledBy)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Event&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.startAt, _this.startAt) || other.startAt == _this.startAt)&&(identical(other.endAt, _this.endAt) || other.endAt == _this.endAt)&&(identical(other.timeZone, _this.timeZone) || other.timeZone == _this.timeZone)&&(identical(other.createdBy, _this.createdBy) || other.createdBy == _this.createdBy)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.location, _this.location) || other.location == _this.location)&&(identical(other.allDay, _this.allDay) || other.allDay == _this.allDay)&&(identical(other.startDate, _this.startDate) || other.startDate == _this.startDate)&&(identical(other.endDate, _this.endDate) || other.endDate == _this.endDate)&&(identical(other.arriveMinutesBefore, _this.arriveMinutesBefore) || other.arriveMinutesBefore == _this.arriveMinutesBefore)&&(identical(other.opponent, _this.opponent) || other.opponent == _this.opponent)&&(identical(other.homeAway, _this.homeAway) || other.homeAway == _this.homeAway)&&(identical(other.rsvpEnabled, _this.rsvpEnabled) || other.rsvpEnabled == _this.rsvpEnabled)&&(identical(other.rsvpDeadline, _this.rsvpDeadline) || other.rsvpDeadline == _this.rsvpDeadline)&&const DeepCollectionEquality().equals(other.reminderOffsets, _this.reminderOffsets)&&(identical(other.notifyTeam, _this.notifyTeam) || other.notifyTeam == _this.notifyTeam)&&(identical(other.postToChat, _this.postToChat) || other.postToChat == _this.postToChat)&&(identical(other.seriesId, _this.seriesId) || other.seriesId == _this.seriesId)&&(identical(other.seriesDate, _this.seriesDate) || other.seriesDate == _this.seriesDate)&&const DeepCollectionEquality().equals(other.seriesOverrides, _this.seriesOverrides)&&(identical(other.rsvpCounts, _this.rsvpCounts) || other.rsvpCounts == _this.rsvpCounts)&&(identical(other.staffCounts, _this.staffCounts) || other.staffCounts == _this.staffCounts)&&(identical(other.canceledAt, _this.canceledAt) || other.canceledAt == _this.canceledAt)&&(identical(other.canceledBy, _this.canceledBy) || other.canceledBy == _this.canceledBy)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Event;
-  return Object.hashAll([runtimeType,_this.id,_this.groupId,_this.type,_this.title,_this.startAt,_this.endAt,_this.timeZone,_this.createdBy,_this.description,_this.location,_this.allDay,_this.startDate,_this.endDate,_this.arriveMinutesBefore,_this.opponent,_this.homeAway,_this.rsvpEnabled,_this.rsvpFor,_this.rsvpDeadline,const DeepCollectionEquality().hash(_this.reminderOffsets),_this.notifyTeam,_this.postToChat,_this.seriesId,_this.seriesDate,const DeepCollectionEquality().hash(_this.seriesOverrides),_this.rsvpCounts,_this.staffCounts,_this.canceledAt,_this.canceledBy,_this.createdAt,_this.updatedAt]);
+  return Object.hashAll([runtimeType,_this.id,_this.groupId,_this.type,_this.title,_this.startAt,_this.endAt,_this.timeZone,_this.createdBy,_this.description,_this.location,_this.allDay,_this.startDate,_this.endDate,_this.arriveMinutesBefore,_this.opponent,_this.homeAway,_this.rsvpEnabled,_this.rsvpDeadline,const DeepCollectionEquality().hash(_this.reminderOffsets),_this.notifyTeam,_this.postToChat,_this.seriesId,_this.seriesDate,const DeepCollectionEquality().hash(_this.seriesOverrides),_this.rsvpCounts,_this.staffCounts,_this.canceledAt,_this.canceledBy,_this.createdAt,_this.updatedAt]);
 }
 
 @override
 String toString() {
   final _this = this as Event;
-  return 'Event(id: ${_this.id}, groupId: ${_this.groupId}, type: ${_this.type}, title: ${_this.title}, startAt: ${_this.startAt}, endAt: ${_this.endAt}, timeZone: ${_this.timeZone}, createdBy: ${_this.createdBy}, description: ${_this.description}, location: ${_this.location}, allDay: ${_this.allDay}, startDate: ${_this.startDate}, endDate: ${_this.endDate}, arriveMinutesBefore: ${_this.arriveMinutesBefore}, opponent: ${_this.opponent}, homeAway: ${_this.homeAway}, rsvpEnabled: ${_this.rsvpEnabled}, rsvpFor: ${_this.rsvpFor}, rsvpDeadline: ${_this.rsvpDeadline}, reminderOffsets: ${_this.reminderOffsets}, notifyTeam: ${_this.notifyTeam}, postToChat: ${_this.postToChat}, seriesId: ${_this.seriesId}, seriesDate: ${_this.seriesDate}, seriesOverrides: ${_this.seriesOverrides}, rsvpCounts: ${_this.rsvpCounts}, staffCounts: ${_this.staffCounts}, canceledAt: ${_this.canceledAt}, canceledBy: ${_this.canceledBy}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
+  return 'Event(id: ${_this.id}, groupId: ${_this.groupId}, type: ${_this.type}, title: ${_this.title}, startAt: ${_this.startAt}, endAt: ${_this.endAt}, timeZone: ${_this.timeZone}, createdBy: ${_this.createdBy}, description: ${_this.description}, location: ${_this.location}, allDay: ${_this.allDay}, startDate: ${_this.startDate}, endDate: ${_this.endDate}, arriveMinutesBefore: ${_this.arriveMinutesBefore}, opponent: ${_this.opponent}, homeAway: ${_this.homeAway}, rsvpEnabled: ${_this.rsvpEnabled}, rsvpDeadline: ${_this.rsvpDeadline}, reminderOffsets: ${_this.reminderOffsets}, notifyTeam: ${_this.notifyTeam}, postToChat: ${_this.postToChat}, seriesId: ${_this.seriesId}, seriesDate: ${_this.seriesDate}, seriesOverrides: ${_this.seriesOverrides}, rsvpCounts: ${_this.rsvpCounts}, staffCounts: ${_this.staffCounts}, canceledAt: ${_this.canceledAt}, canceledBy: ${_this.canceledBy}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -62,7 +63,7 @@ abstract mixin class $EventCopyWith<$Res>  {
   factory $EventCopyWith(Event value, $Res Function(Event) _then) = _$EventCopyWithImpl;
 @useResult
 $Res call({
- EventId id, GroupId groupId, EventType type, String title, DateTime startAt, DateTime endAt, String timeZone, String createdBy, String description, EventLocation? location, bool allDay, String? startDate, String? endDate, int? arriveMinutesBefore, String? opponent, HomeAway? homeAway, bool rsvpEnabled, RsvpFor rsvpFor, DateTime? rsvpDeadline, List<int> reminderOffsets, bool notifyTeam, bool postToChat, String? seriesId, String? seriesDate, List<String> seriesOverrides, RsvpCounts rsvpCounts, RsvpCounts staffCounts, DateTime? canceledAt, String? canceledBy, DateTime? createdAt, DateTime? updatedAt
+ EventId id, GroupId groupId, EventType type, String title, DateTime startAt, DateTime endAt, String timeZone, String createdBy, String description, EventLocation? location, bool allDay, String? startDate, String? endDate, int? arriveMinutesBefore, String? opponent, HomeAway? homeAway, bool rsvpEnabled, DateTime? rsvpDeadline, List<int> reminderOffsets, bool notifyTeam, bool postToChat, String? seriesId, String? seriesDate, List<String> seriesOverrides, RsvpCounts rsvpCounts, RsvpCounts staffCounts, DateTime? canceledAt, String? canceledBy, DateTime? createdAt, DateTime? updatedAt
 });
 
 
@@ -79,7 +80,7 @@ class _$EventCopyWithImpl<$Res>
 
 /// Create a copy of Event
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? type = null,Object? title = null,Object? startAt = null,Object? endAt = null,Object? timeZone = null,Object? createdBy = null,Object? description = null,Object? location = freezed,Object? allDay = null,Object? startDate = freezed,Object? endDate = freezed,Object? arriveMinutesBefore = freezed,Object? opponent = freezed,Object? homeAway = freezed,Object? rsvpEnabled = null,Object? rsvpFor = null,Object? rsvpDeadline = freezed,Object? reminderOffsets = null,Object? notifyTeam = null,Object? postToChat = null,Object? seriesId = freezed,Object? seriesDate = freezed,Object? seriesOverrides = null,Object? rsvpCounts = null,Object? staffCounts = null,Object? canceledAt = freezed,Object? canceledBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? type = null,Object? title = null,Object? startAt = null,Object? endAt = null,Object? timeZone = null,Object? createdBy = null,Object? description = null,Object? location = freezed,Object? allDay = null,Object? startDate = freezed,Object? endDate = freezed,Object? arriveMinutesBefore = freezed,Object? opponent = freezed,Object? homeAway = freezed,Object? rsvpEnabled = null,Object? rsvpDeadline = freezed,Object? reminderOffsets = null,Object? notifyTeam = null,Object? postToChat = null,Object? seriesId = freezed,Object? seriesDate = freezed,Object? seriesOverrides = null,Object? rsvpCounts = null,Object? staffCounts = null,Object? canceledAt = freezed,Object? canceledBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(Event(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as EventId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -98,8 +99,7 @@ as String?,arriveMinutesBefore: freezed == arriveMinutesBefore ? _self.arriveMin
 as int?,opponent: freezed == opponent ? _self.opponent : opponent // ignore: cast_nullable_to_non_nullable
 as String?,homeAway: freezed == homeAway ? _self.homeAway : homeAway // ignore: cast_nullable_to_non_nullable
 as HomeAway?,rsvpEnabled: null == rsvpEnabled ? _self.rsvpEnabled : rsvpEnabled // ignore: cast_nullable_to_non_nullable
-as bool,rsvpFor: null == rsvpFor ? _self.rsvpFor : rsvpFor // ignore: cast_nullable_to_non_nullable
-as RsvpFor,rsvpDeadline: freezed == rsvpDeadline ? _self.rsvpDeadline : rsvpDeadline // ignore: cast_nullable_to_non_nullable
+as bool,rsvpDeadline: freezed == rsvpDeadline ? _self.rsvpDeadline : rsvpDeadline // ignore: cast_nullable_to_non_nullable
 as DateTime?,reminderOffsets: null == reminderOffsets ? _self.reminderOffsets : reminderOffsets // ignore: cast_nullable_to_non_nullable
 as List<int>,notifyTeam: null == notifyTeam ? _self.notifyTeam : notifyTeam // ignore: cast_nullable_to_non_nullable
 as bool,postToChat: null == postToChat ? _self.postToChat : postToChat // ignore: cast_nullable_to_non_nullable
@@ -227,10 +227,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( EventId id,  GroupId groupId,  EventType type,  String title,  DateTime startAt,  DateTime endAt,  String timeZone,  String createdBy,  String description,  EventLocation? location,  bool allDay,  String? startDate,  String? endDate,  int? arriveMinutesBefore,  String? opponent,  HomeAway? homeAway,  bool rsvpEnabled,  RsvpFor rsvpFor,  DateTime? rsvpDeadline,  List<int> reminderOffsets,  bool notifyTeam,  bool postToChat,  String? seriesId,  String? seriesDate,  List<String> seriesOverrides,  RsvpCounts rsvpCounts,  RsvpCounts staffCounts,  DateTime? canceledAt,  String? canceledBy,  DateTime? createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( EventId id,  GroupId groupId,  EventType type,  String title,  DateTime startAt,  DateTime endAt,  String timeZone,  String createdBy,  String description,  EventLocation? location,  bool allDay,  String? startDate,  String? endDate,  int? arriveMinutesBefore,  String? opponent,  HomeAway? homeAway,  bool rsvpEnabled,  DateTime? rsvpDeadline,  List<int> reminderOffsets,  bool notifyTeam,  bool postToChat,  String? seriesId,  String? seriesDate,  List<String> seriesOverrides,  RsvpCounts rsvpCounts,  RsvpCounts staffCounts,  DateTime? canceledAt,  String? canceledBy,  DateTime? createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Event() when $default != null:
-return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_that.endAt,_that.timeZone,_that.createdBy,_that.description,_that.location,_that.allDay,_that.startDate,_that.endDate,_that.arriveMinutesBefore,_that.opponent,_that.homeAway,_that.rsvpEnabled,_that.rsvpFor,_that.rsvpDeadline,_that.reminderOffsets,_that.notifyTeam,_that.postToChat,_that.seriesId,_that.seriesDate,_that.seriesOverrides,_that.rsvpCounts,_that.staffCounts,_that.canceledAt,_that.canceledBy,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_that.endAt,_that.timeZone,_that.createdBy,_that.description,_that.location,_that.allDay,_that.startDate,_that.endDate,_that.arriveMinutesBefore,_that.opponent,_that.homeAway,_that.rsvpEnabled,_that.rsvpDeadline,_that.reminderOffsets,_that.notifyTeam,_that.postToChat,_that.seriesId,_that.seriesDate,_that.seriesOverrides,_that.rsvpCounts,_that.staffCounts,_that.canceledAt,_that.canceledBy,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -248,10 +248,10 @@ return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( EventId id,  GroupId groupId,  EventType type,  String title,  DateTime startAt,  DateTime endAt,  String timeZone,  String createdBy,  String description,  EventLocation? location,  bool allDay,  String? startDate,  String? endDate,  int? arriveMinutesBefore,  String? opponent,  HomeAway? homeAway,  bool rsvpEnabled,  RsvpFor rsvpFor,  DateTime? rsvpDeadline,  List<int> reminderOffsets,  bool notifyTeam,  bool postToChat,  String? seriesId,  String? seriesDate,  List<String> seriesOverrides,  RsvpCounts rsvpCounts,  RsvpCounts staffCounts,  DateTime? canceledAt,  String? canceledBy,  DateTime? createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( EventId id,  GroupId groupId,  EventType type,  String title,  DateTime startAt,  DateTime endAt,  String timeZone,  String createdBy,  String description,  EventLocation? location,  bool allDay,  String? startDate,  String? endDate,  int? arriveMinutesBefore,  String? opponent,  HomeAway? homeAway,  bool rsvpEnabled,  DateTime? rsvpDeadline,  List<int> reminderOffsets,  bool notifyTeam,  bool postToChat,  String? seriesId,  String? seriesDate,  List<String> seriesOverrides,  RsvpCounts rsvpCounts,  RsvpCounts staffCounts,  DateTime? canceledAt,  String? canceledBy,  DateTime? createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Event():
-return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_that.endAt,_that.timeZone,_that.createdBy,_that.description,_that.location,_that.allDay,_that.startDate,_that.endDate,_that.arriveMinutesBefore,_that.opponent,_that.homeAway,_that.rsvpEnabled,_that.rsvpFor,_that.rsvpDeadline,_that.reminderOffsets,_that.notifyTeam,_that.postToChat,_that.seriesId,_that.seriesDate,_that.seriesOverrides,_that.rsvpCounts,_that.staffCounts,_that.canceledAt,_that.canceledBy,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_that.endAt,_that.timeZone,_that.createdBy,_that.description,_that.location,_that.allDay,_that.startDate,_that.endDate,_that.arriveMinutesBefore,_that.opponent,_that.homeAway,_that.rsvpEnabled,_that.rsvpDeadline,_that.reminderOffsets,_that.notifyTeam,_that.postToChat,_that.seriesId,_that.seriesDate,_that.seriesOverrides,_that.rsvpCounts,_that.staffCounts,_that.canceledAt,_that.canceledBy,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -268,10 +268,10 @@ return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( EventId id,  GroupId groupId,  EventType type,  String title,  DateTime startAt,  DateTime endAt,  String timeZone,  String createdBy,  String description,  EventLocation? location,  bool allDay,  String? startDate,  String? endDate,  int? arriveMinutesBefore,  String? opponent,  HomeAway? homeAway,  bool rsvpEnabled,  RsvpFor rsvpFor,  DateTime? rsvpDeadline,  List<int> reminderOffsets,  bool notifyTeam,  bool postToChat,  String? seriesId,  String? seriesDate,  List<String> seriesOverrides,  RsvpCounts rsvpCounts,  RsvpCounts staffCounts,  DateTime? canceledAt,  String? canceledBy,  DateTime? createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( EventId id,  GroupId groupId,  EventType type,  String title,  DateTime startAt,  DateTime endAt,  String timeZone,  String createdBy,  String description,  EventLocation? location,  bool allDay,  String? startDate,  String? endDate,  int? arriveMinutesBefore,  String? opponent,  HomeAway? homeAway,  bool rsvpEnabled,  DateTime? rsvpDeadline,  List<int> reminderOffsets,  bool notifyTeam,  bool postToChat,  String? seriesId,  String? seriesDate,  List<String> seriesOverrides,  RsvpCounts rsvpCounts,  RsvpCounts staffCounts,  DateTime? canceledAt,  String? canceledBy,  DateTime? createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Event() when $default != null:
-return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_that.endAt,_that.timeZone,_that.createdBy,_that.description,_that.location,_that.allDay,_that.startDate,_that.endDate,_that.arriveMinutesBefore,_that.opponent,_that.homeAway,_that.rsvpEnabled,_that.rsvpFor,_that.rsvpDeadline,_that.reminderOffsets,_that.notifyTeam,_that.postToChat,_that.seriesId,_that.seriesDate,_that.seriesOverrides,_that.rsvpCounts,_that.staffCounts,_that.canceledAt,_that.canceledBy,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_that.endAt,_that.timeZone,_that.createdBy,_that.description,_that.location,_that.allDay,_that.startDate,_that.endDate,_that.arriveMinutesBefore,_that.opponent,_that.homeAway,_that.rsvpEnabled,_that.rsvpDeadline,_that.reminderOffsets,_that.notifyTeam,_that.postToChat,_that.seriesId,_that.seriesDate,_that.seriesOverrides,_that.rsvpCounts,_that.staffCounts,_that.canceledAt,_that.canceledBy,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -283,7 +283,7 @@ return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_tha
 
 
 class _Event extends Event {
-  const _Event({required this.id, required this.groupId, required this.type, required this.title, required this.startAt, required this.endAt, required this.timeZone, required this.createdBy, this.description = '', this.location, this.allDay = false, this.startDate, this.endDate, this.arriveMinutesBefore, this.opponent, this.homeAway, this.rsvpEnabled = true, this.rsvpFor = RsvpFor.members, this.rsvpDeadline,  List<int> reminderOffsets = const <int>[], this.notifyTeam = true, this.postToChat = true, this.seriesId, this.seriesDate,  List<String> seriesOverrides = const <String>[], this.rsvpCounts = const RsvpCounts(), this.staffCounts = const RsvpCounts(), this.canceledAt, this.canceledBy, this.createdAt, this.updatedAt}): _reminderOffsets = reminderOffsets,_seriesOverrides = seriesOverrides,super._();
+  const _Event({required this.id, required this.groupId, required this.type, required this.title, required this.startAt, required this.endAt, required this.timeZone, required this.createdBy, this.description = '', this.location, this.allDay = false, this.startDate, this.endDate, this.arriveMinutesBefore, this.opponent, this.homeAway, this.rsvpEnabled = true, this.rsvpDeadline,  List<int> reminderOffsets = const <int>[], this.notifyTeam = true, this.postToChat = true, this.seriesId, this.seriesDate,  List<String> seriesOverrides = const <String>[], this.rsvpCounts = const RsvpCounts(), this.staffCounts = const RsvpCounts(), this.canceledAt, this.canceledBy, this.createdAt, this.updatedAt}): _reminderOffsets = reminderOffsets,_seriesOverrides = seriesOverrides,super._();
   
 
 @override final  EventId id;
@@ -306,8 +306,6 @@ class _Event extends Event {
 @override final  String? opponent;
 @override final  HomeAway? homeAway;
 @override@JsonKey() final  bool rsvpEnabled;
-/// 'players' on youth teams: guardians answer per player (PLAYER-6).
-@override@JsonKey() final  RsvpFor rsvpFor;
 @override final  DateTime? rsvpDeadline;
 /// Minutes before the start, from [reminderOffsetsMinutes] (SCHED-8).
  final  List<int> _reminderOffsets;
@@ -333,8 +331,10 @@ class _Event extends Event {
   return EqualUnmodifiableListView(_seriesOverrides);
 }
 
-/// Kept by the server from the RSVPs. On 'players' events these count
-/// players only; [staffCounts] counts the admins' own answers (D34).
+/// Kept by the server from the RSVPs: [rsvpCounts] counts players, and
+/// [staffCounts] everyone answering for themselves, coaches and others
+/// (PLAYER-6, D34). Events made before one team type may still count
+/// members in [rsvpCounts].
 @override@JsonKey() final  RsvpCounts rsvpCounts;
 @override@JsonKey() final  RsvpCounts staffCounts;
 /// Set once when canceled (SCHED-7); never cleared.
@@ -353,18 +353,18 @@ _$EventCopyWith<_Event> get copyWith => __$EventCopyWithImpl<_Event>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Event&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.type, type) || other.type == type)&&(identical(other.title, title) || other.title == title)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.timeZone, timeZone) || other.timeZone == timeZone)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.allDay, allDay) || other.allDay == allDay)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.arriveMinutesBefore, arriveMinutesBefore) || other.arriveMinutesBefore == arriveMinutesBefore)&&(identical(other.opponent, opponent) || other.opponent == opponent)&&(identical(other.homeAway, homeAway) || other.homeAway == homeAway)&&(identical(other.rsvpEnabled, rsvpEnabled) || other.rsvpEnabled == rsvpEnabled)&&(identical(other.rsvpFor, rsvpFor) || other.rsvpFor == rsvpFor)&&(identical(other.rsvpDeadline, rsvpDeadline) || other.rsvpDeadline == rsvpDeadline)&&const DeepCollectionEquality().equals(other.reminderOffsets, _reminderOffsets)&&(identical(other.notifyTeam, notifyTeam) || other.notifyTeam == notifyTeam)&&(identical(other.postToChat, postToChat) || other.postToChat == postToChat)&&(identical(other.seriesId, seriesId) || other.seriesId == seriesId)&&(identical(other.seriesDate, seriesDate) || other.seriesDate == seriesDate)&&const DeepCollectionEquality().equals(other.seriesOverrides, _seriesOverrides)&&(identical(other.rsvpCounts, rsvpCounts) || other.rsvpCounts == rsvpCounts)&&(identical(other.staffCounts, staffCounts) || other.staffCounts == staffCounts)&&(identical(other.canceledAt, canceledAt) || other.canceledAt == canceledAt)&&(identical(other.canceledBy, canceledBy) || other.canceledBy == canceledBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Event&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.type, type) || other.type == type)&&(identical(other.title, title) || other.title == title)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.timeZone, timeZone) || other.timeZone == timeZone)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.allDay, allDay) || other.allDay == allDay)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.arriveMinutesBefore, arriveMinutesBefore) || other.arriveMinutesBefore == arriveMinutesBefore)&&(identical(other.opponent, opponent) || other.opponent == opponent)&&(identical(other.homeAway, homeAway) || other.homeAway == homeAway)&&(identical(other.rsvpEnabled, rsvpEnabled) || other.rsvpEnabled == rsvpEnabled)&&(identical(other.rsvpDeadline, rsvpDeadline) || other.rsvpDeadline == rsvpDeadline)&&const DeepCollectionEquality().equals(other.reminderOffsets, _reminderOffsets)&&(identical(other.notifyTeam, notifyTeam) || other.notifyTeam == notifyTeam)&&(identical(other.postToChat, postToChat) || other.postToChat == postToChat)&&(identical(other.seriesId, seriesId) || other.seriesId == seriesId)&&(identical(other.seriesDate, seriesDate) || other.seriesDate == seriesDate)&&const DeepCollectionEquality().equals(other.seriesOverrides, _seriesOverrides)&&(identical(other.rsvpCounts, rsvpCounts) || other.rsvpCounts == rsvpCounts)&&(identical(other.staffCounts, staffCounts) || other.staffCounts == staffCounts)&&(identical(other.canceledAt, canceledAt) || other.canceledAt == canceledAt)&&(identical(other.canceledBy, canceledBy) || other.canceledBy == canceledBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,groupId,type,title,startAt,endAt,timeZone,createdBy,description,location,allDay,startDate,endDate,arriveMinutesBefore,opponent,homeAway,rsvpEnabled,rsvpFor,rsvpDeadline,const DeepCollectionEquality().hash(_reminderOffsets),notifyTeam,postToChat,seriesId,seriesDate,const DeepCollectionEquality().hash(_seriesOverrides),rsvpCounts,staffCounts,canceledAt,canceledBy,createdAt,updatedAt]);
+    return Object.hashAll([runtimeType,id,groupId,type,title,startAt,endAt,timeZone,createdBy,description,location,allDay,startDate,endDate,arriveMinutesBefore,opponent,homeAway,rsvpEnabled,rsvpDeadline,const DeepCollectionEquality().hash(_reminderOffsets),notifyTeam,postToChat,seriesId,seriesDate,const DeepCollectionEquality().hash(_seriesOverrides),rsvpCounts,staffCounts,canceledAt,canceledBy,createdAt,updatedAt]);
 }
 
 @override
 String toString() {
-    return 'Event(id: $id, groupId: $groupId, type: $type, title: $title, startAt: $startAt, endAt: $endAt, timeZone: $timeZone, createdBy: $createdBy, description: $description, location: $location, allDay: $allDay, startDate: $startDate, endDate: $endDate, arriveMinutesBefore: $arriveMinutesBefore, opponent: $opponent, homeAway: $homeAway, rsvpEnabled: $rsvpEnabled, rsvpFor: $rsvpFor, rsvpDeadline: $rsvpDeadline, reminderOffsets: $reminderOffsets, notifyTeam: $notifyTeam, postToChat: $postToChat, seriesId: $seriesId, seriesDate: $seriesDate, seriesOverrides: $seriesOverrides, rsvpCounts: $rsvpCounts, staffCounts: $staffCounts, canceledAt: $canceledAt, canceledBy: $canceledBy, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Event(id: $id, groupId: $groupId, type: $type, title: $title, startAt: $startAt, endAt: $endAt, timeZone: $timeZone, createdBy: $createdBy, description: $description, location: $location, allDay: $allDay, startDate: $startDate, endDate: $endDate, arriveMinutesBefore: $arriveMinutesBefore, opponent: $opponent, homeAway: $homeAway, rsvpEnabled: $rsvpEnabled, rsvpDeadline: $rsvpDeadline, reminderOffsets: $reminderOffsets, notifyTeam: $notifyTeam, postToChat: $postToChat, seriesId: $seriesId, seriesDate: $seriesDate, seriesOverrides: $seriesOverrides, rsvpCounts: $rsvpCounts, staffCounts: $staffCounts, canceledAt: $canceledAt, canceledBy: $canceledBy, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -375,7 +375,7 @@ abstract mixin class _$EventCopyWith<$Res> implements $EventCopyWith<$Res> {
   factory _$EventCopyWith(_Event value, $Res Function(_Event) _then) = __$EventCopyWithImpl;
 @override @useResult
 $Res call({
- EventId id, GroupId groupId, EventType type, String title, DateTime startAt, DateTime endAt, String timeZone, String createdBy, String description, EventLocation? location, bool allDay, String? startDate, String? endDate, int? arriveMinutesBefore, String? opponent, HomeAway? homeAway, bool rsvpEnabled, RsvpFor rsvpFor, DateTime? rsvpDeadline, List<int> reminderOffsets, bool notifyTeam, bool postToChat, String? seriesId, String? seriesDate, List<String> seriesOverrides, RsvpCounts rsvpCounts, RsvpCounts staffCounts, DateTime? canceledAt, String? canceledBy, DateTime? createdAt, DateTime? updatedAt
+ EventId id, GroupId groupId, EventType type, String title, DateTime startAt, DateTime endAt, String timeZone, String createdBy, String description, EventLocation? location, bool allDay, String? startDate, String? endDate, int? arriveMinutesBefore, String? opponent, HomeAway? homeAway, bool rsvpEnabled, DateTime? rsvpDeadline, List<int> reminderOffsets, bool notifyTeam, bool postToChat, String? seriesId, String? seriesDate, List<String> seriesOverrides, RsvpCounts rsvpCounts, RsvpCounts staffCounts, DateTime? canceledAt, String? canceledBy, DateTime? createdAt, DateTime? updatedAt
 });
 
 
@@ -392,7 +392,7 @@ class __$EventCopyWithImpl<$Res>
 
 /// Create a copy of Event
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? type = null,Object? title = null,Object? startAt = null,Object? endAt = null,Object? timeZone = null,Object? createdBy = null,Object? description = null,Object? location = freezed,Object? allDay = null,Object? startDate = freezed,Object? endDate = freezed,Object? arriveMinutesBefore = freezed,Object? opponent = freezed,Object? homeAway = freezed,Object? rsvpEnabled = null,Object? rsvpFor = null,Object? rsvpDeadline = freezed,Object? reminderOffsets = null,Object? notifyTeam = null,Object? postToChat = null,Object? seriesId = freezed,Object? seriesDate = freezed,Object? seriesOverrides = null,Object? rsvpCounts = null,Object? staffCounts = null,Object? canceledAt = freezed,Object? canceledBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? type = null,Object? title = null,Object? startAt = null,Object? endAt = null,Object? timeZone = null,Object? createdBy = null,Object? description = null,Object? location = freezed,Object? allDay = null,Object? startDate = freezed,Object? endDate = freezed,Object? arriveMinutesBefore = freezed,Object? opponent = freezed,Object? homeAway = freezed,Object? rsvpEnabled = null,Object? rsvpDeadline = freezed,Object? reminderOffsets = null,Object? notifyTeam = null,Object? postToChat = null,Object? seriesId = freezed,Object? seriesDate = freezed,Object? seriesOverrides = null,Object? rsvpCounts = null,Object? staffCounts = null,Object? canceledAt = freezed,Object? canceledBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_Event(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as EventId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -411,8 +411,7 @@ as String?,arriveMinutesBefore: freezed == arriveMinutesBefore ? _self.arriveMin
 as int?,opponent: freezed == opponent ? _self.opponent : opponent // ignore: cast_nullable_to_non_nullable
 as String?,homeAway: freezed == homeAway ? _self.homeAway : homeAway // ignore: cast_nullable_to_non_nullable
 as HomeAway?,rsvpEnabled: null == rsvpEnabled ? _self.rsvpEnabled : rsvpEnabled // ignore: cast_nullable_to_non_nullable
-as bool,rsvpFor: null == rsvpFor ? _self.rsvpFor : rsvpFor // ignore: cast_nullable_to_non_nullable
-as RsvpFor,rsvpDeadline: freezed == rsvpDeadline ? _self.rsvpDeadline : rsvpDeadline // ignore: cast_nullable_to_non_nullable
+as bool,rsvpDeadline: freezed == rsvpDeadline ? _self.rsvpDeadline : rsvpDeadline // ignore: cast_nullable_to_non_nullable
 as DateTime?,reminderOffsets: null == reminderOffsets ? _self._reminderOffsets : reminderOffsets // ignore: cast_nullable_to_non_nullable
 as List<int>,notifyTeam: null == notifyTeam ? _self.notifyTeam : notifyTeam // ignore: cast_nullable_to_non_nullable
 as bool,postToChat: null == postToChat ? _self.postToChat : postToChat // ignore: cast_nullable_to_non_nullable

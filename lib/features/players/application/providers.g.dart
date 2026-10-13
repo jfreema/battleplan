@@ -59,12 +59,14 @@ final class PlayerRepositoryProvider
 
 String _$playerRepositoryHash() => r'f94248185382f6ab3608ad1ba482ab3ad9f94149';
 
-/// A youth team's players, by jersey number then name (TEAM-3).
+/// A team's active players, by jersey number then name (TEAM-3). Every
+/// team has them.
 
 @ProviderFor(players)
 final playersProvider = PlayersFamily._();
 
-/// A youth team's players, by jersey number then name (TEAM-3).
+/// A team's active players, by jersey number then name (TEAM-3). Every
+/// team has them.
 
 final class PlayersProvider
     extends
@@ -74,7 +76,8 @@ final class PlayersProvider
           Stream<List<Player>>
         >
     with $FutureModifier<List<Player>>, $StreamProvider<List<Player>> {
-  /// A youth team's players, by jersey number then name (TEAM-3).
+  /// A team's active players, by jersey number then name (TEAM-3). Every
+  /// team has them.
   PlayersProvider._({
     required PlayersFamily super.from,
     required GroupId super.argument,
@@ -119,9 +122,10 @@ final class PlayersProvider
   }
 }
 
-String _$playersHash() => r'80c5fa2eeaf62d9718d6337f1107309247e48655';
+String _$playersHash() => r'7c75892f9d335c0be7aaf398b5d084888a994701';
 
-/// A youth team's players, by jersey number then name (TEAM-3).
+/// A team's active players, by jersey number then name (TEAM-3). Every
+/// team has them.
 
 final class PlayersFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<Player>>, GroupId> {
@@ -134,7 +138,8 @@ final class PlayersFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// A youth team's players, by jersey number then name (TEAM-3).
+  /// A team's active players, by jersey number then name (TEAM-3). Every
+  /// team has them.
 
   PlayersProvider call(GroupId groupId) =>
       PlayersProvider._(argument: groupId, from: this);
@@ -143,12 +148,180 @@ final class PlayersFamily extends $Family
   String toString() => r'playersProvider';
 }
 
-/// A youth team's guardian links.
+/// A team's pending players (PLAYER-4). Only admins can read them all.
+
+@ProviderFor(pendingPlayers)
+final pendingPlayersProvider = PendingPlayersFamily._();
+
+/// A team's pending players (PLAYER-4). Only admins can read them all.
+
+final class PendingPlayersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Player>>,
+          List<Player>,
+          Stream<List<Player>>
+        >
+    with $FutureModifier<List<Player>>, $StreamProvider<List<Player>> {
+  /// A team's pending players (PLAYER-4). Only admins can read them all.
+  PendingPlayersProvider._({
+    required PendingPlayersFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'pendingPlayersProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingPlayersHash();
+
+  @override
+  String toString() {
+    return r'pendingPlayersProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Player>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Player>> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return pendingPlayers(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PendingPlayersProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pendingPlayersHash() => r'1cf0c616ee70cdab53aa6f6e49f074498dc32e84';
+
+/// A team's pending players (PLAYER-4). Only admins can read them all.
+
+final class PendingPlayersFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<Player>>, GroupId> {
+  PendingPlayersFamily._()
+    : super(
+        retry: null,
+        name: r'pendingPlayersProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A team's pending players (PLAYER-4). Only admins can read them all.
+
+  PendingPlayersProvider call(GroupId groupId) =>
+      PendingPlayersProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'pendingPlayersProvider';
+}
+
+/// The pending players the signed-in person added (PLAYER-4).
+
+@ProviderFor(myPendingPlayers)
+final myPendingPlayersProvider = MyPendingPlayersFamily._();
+
+/// The pending players the signed-in person added (PLAYER-4).
+
+final class MyPendingPlayersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Player>>,
+          List<Player>,
+          Stream<List<Player>>
+        >
+    with $FutureModifier<List<Player>>, $StreamProvider<List<Player>> {
+  /// The pending players the signed-in person added (PLAYER-4).
+  MyPendingPlayersProvider._({
+    required MyPendingPlayersFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'myPendingPlayersProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myPendingPlayersHash();
+
+  @override
+  String toString() {
+    return r'myPendingPlayersProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Player>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Player>> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return myPendingPlayers(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyPendingPlayersProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myPendingPlayersHash() => r'cb1e44fa435eac0ffbb9a107cec60b16bcfa71aa';
+
+/// The pending players the signed-in person added (PLAYER-4).
+
+final class MyPendingPlayersFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<Player>>, GroupId> {
+  MyPendingPlayersFamily._()
+    : super(
+        retry: null,
+        name: r'myPendingPlayersProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The pending players the signed-in person added (PLAYER-4).
+
+  MyPendingPlayersProvider call(GroupId groupId) =>
+      MyPendingPlayersProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'myPendingPlayersProvider';
+}
+
+/// A team's player links, as the player or a guardian.
 
 @ProviderFor(guardianLinks)
 final guardianLinksProvider = GuardianLinksFamily._();
 
-/// A youth team's guardian links.
+/// A team's player links, as the player or a guardian.
 
 final class GuardianLinksProvider
     extends
@@ -160,7 +333,7 @@ final class GuardianLinksProvider
     with
         $FutureModifier<List<GuardianLink>>,
         $StreamProvider<List<GuardianLink>> {
-  /// A youth team's guardian links.
+  /// A team's player links, as the player or a guardian.
   GuardianLinksProvider._({
     required GuardianLinksFamily super.from,
     required GroupId super.argument,
@@ -207,7 +380,7 @@ final class GuardianLinksProvider
 
 String _$guardianLinksHash() => r'55719c25bfd58d226b0e2dbe58b120b48987f6ba';
 
-/// A youth team's guardian links.
+/// A team's player links, as the player or a guardian.
 
 final class GuardianLinksFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<GuardianLink>>, GroupId> {
@@ -220,7 +393,7 @@ final class GuardianLinksFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// A youth team's guardian links.
+  /// A team's player links, as the player or a guardian.
 
   GuardianLinksProvider call(GroupId groupId) =>
       GuardianLinksProvider._(argument: groupId, from: this);
@@ -229,12 +402,12 @@ final class GuardianLinksFamily extends $Family
   String toString() => r'guardianLinksProvider';
 }
 
-/// A team's pending guardian requests (PLAYER-4). Only admins can read them.
+/// A team's pending claims (PLAYER-4). Only admins can read them.
 
 @ProviderFor(pendingGuardianRequests)
 final pendingGuardianRequestsProvider = PendingGuardianRequestsFamily._();
 
-/// A team's pending guardian requests (PLAYER-4). Only admins can read them.
+/// A team's pending claims (PLAYER-4). Only admins can read them.
 
 final class PendingGuardianRequestsProvider
     extends
@@ -246,7 +419,7 @@ final class PendingGuardianRequestsProvider
     with
         $FutureModifier<List<GuardianRequest>>,
         $StreamProvider<List<GuardianRequest>> {
-  /// A team's pending guardian requests (PLAYER-4). Only admins can read them.
+  /// A team's pending claims (PLAYER-4). Only admins can read them.
   PendingGuardianRequestsProvider._({
     required PendingGuardianRequestsFamily super.from,
     required GroupId super.argument,
@@ -295,7 +468,7 @@ final class PendingGuardianRequestsProvider
 String _$pendingGuardianRequestsHash() =>
     r'3931c360053f5235a9f50117822d4bf6641652d9';
 
-/// A team's pending guardian requests (PLAYER-4). Only admins can read them.
+/// A team's pending claims (PLAYER-4). Only admins can read them.
 
 final class PendingGuardianRequestsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<GuardianRequest>>, GroupId> {
@@ -308,7 +481,7 @@ final class PendingGuardianRequestsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// A team's pending guardian requests (PLAYER-4). Only admins can read them.
+  /// A team's pending claims (PLAYER-4). Only admins can read them.
 
   PendingGuardianRequestsProvider call(GroupId groupId) =>
       PendingGuardianRequestsProvider._(argument: groupId, from: this);
@@ -317,12 +490,12 @@ final class PendingGuardianRequestsFamily extends $Family
   String toString() => r'pendingGuardianRequestsProvider';
 }
 
-/// The signed-in person's own guardian requests on a team (PLAYER-3).
+/// The signed-in person's own claims on a team (PLAYER-3).
 
 @ProviderFor(myGuardianRequests)
 final myGuardianRequestsProvider = MyGuardianRequestsFamily._();
 
-/// The signed-in person's own guardian requests on a team (PLAYER-3).
+/// The signed-in person's own claims on a team (PLAYER-3).
 
 final class MyGuardianRequestsProvider
     extends
@@ -334,7 +507,7 @@ final class MyGuardianRequestsProvider
     with
         $FutureModifier<List<GuardianRequest>>,
         $StreamProvider<List<GuardianRequest>> {
-  /// The signed-in person's own guardian requests on a team (PLAYER-3).
+  /// The signed-in person's own claims on a team (PLAYER-3).
   MyGuardianRequestsProvider._({
     required MyGuardianRequestsFamily super.from,
     required GroupId super.argument,
@@ -382,7 +555,7 @@ final class MyGuardianRequestsProvider
 String _$myGuardianRequestsHash() =>
     r'21d0ecaf2e5edc869ea69a74578b4c8de9ee14c2';
 
-/// The signed-in person's own guardian requests on a team (PLAYER-3).
+/// The signed-in person's own claims on a team (PLAYER-3).
 
 final class MyGuardianRequestsFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<GuardianRequest>>, GroupId> {
@@ -395,7 +568,7 @@ final class MyGuardianRequestsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// The signed-in person's own guardian requests on a team (PLAYER-3).
+  /// The signed-in person's own claims on a team (PLAYER-3).
 
   MyGuardianRequestsProvider call(GroupId groupId) =>
       MyGuardianRequestsProvider._(argument: groupId, from: this);

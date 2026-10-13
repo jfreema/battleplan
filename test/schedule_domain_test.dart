@@ -360,6 +360,76 @@ void main() {
       expect(countsText(l10n, const RsvpCounts()), 'No answers yet');
     });
 
+    test('event counts: players, then everyone else apart (PLAYER-6)', () {
+      final e = Event(
+        id: const EventId('e'),
+        groupId: const GroupId('g'),
+        type: EventType.practice,
+        title: 'Practice',
+        startAt: DateTime.utc(2026, 10, 13, 23),
+        endAt: DateTime.utc(2026, 10, 14),
+        timeZone: 'America/Chicago',
+        createdBy: 'a',
+        rsvpCounts: const RsvpCounts(going: 12, maybe: 1),
+        staffCounts: const RsvpCounts(going: 2, notGoing: 1),
+      );
+      expect(
+        eventCountsText(l10n, e, players: 15),
+        '12 of 15 players going · 2 others',
+      );
+      expect(
+        eventCountsText(
+          l10n,
+          e.copyWith(staffCounts: const RsvpCounts(going: 1)),
+          players: 15,
+        ),
+        '12 of 15 players going · 1 other',
+      );
+      expect(
+        eventCountsText(
+          l10n,
+          e.copyWith(staffCounts: const RsvpCounts()),
+          players: 15,
+        ),
+        '12 of 15 players going',
+      );
+      // No players: everyone together, old events' member counts included.
+      expect(eventCountsText(l10n, e, players: 0), '14 going · 1 maybe · 1 no');
+      expect(
+        eventCountsText(l10n, e, players: 0, allowMaybe: false),
+        '14 going · 1 no',
+      );
+      expect(
+        const RsvpCounts(going: 1) + const RsvpCounts(maybe: 2, notGoing: 3),
+        const RsvpCounts(going: 1, maybe: 2, notGoing: 3),
+      );
+    });
+
+    test('answer rows say whose they are (PLAYER-6)', () {
+      const me = Participant(
+        type: ParticipantType.member,
+        id: 'u',
+        name: 'Jared',
+      );
+      const emma = Participant(
+        type: ParticipantType.player,
+        id: 'p1',
+        name: 'Emma R',
+        label: 'Emma #7',
+      );
+      const self = Participant(
+        type: ParticipantType.player,
+        id: 'p2',
+        name: 'Jared F',
+        label: 'Jared #12',
+        isMe: true,
+      );
+      expect(rsvpRowLabel(l10n, me, 1), isNull);
+      expect(rsvpRowLabel(l10n, me, 2), 'You');
+      expect(rsvpRowLabel(l10n, emma, 1), 'Emma #7');
+      expect(rsvpRowLabel(l10n, self, 1), 'Jared #12 (you)');
+    });
+
     test('the series summary and repeat line (SCHED-3, SCHED-4)', () {
       const rule = Recurrence(
         freq: RepeatFreq.weekly,
@@ -403,47 +473,77 @@ void main() {
   });
 
   group('who may do what (Q12, PLAYER-6, Q14)', () {
-    test('admins set answers for players and themselves on youth events, '
-        'and for anyone on adult events (SCHED-4, Q14)', () {
-      final youth = Event(
-        id: const EventId('e'),
-        groupId: const GroupId('g'),
-        type: EventType.practice,
-        title: 'Practice',
-        startAt: DateTime.utc(2026, 10, 13, 23),
-        endAt: DateTime.utc(2026, 10, 14, 0, 30),
-        timeZone: 'America/Chicago',
-        createdBy: 'a',
-        rsvpFor: RsvpFor.players,
+    test('everyone on an event: active players, and apart the members who '
+        'answer for themselves (SCHED-4, Q14)', () {
+      Membership m(String uid, {MemberRole role = MemberRole.member}) =>
+          Membership(
+            groupId: const GroupId('g'),
+            uid: UserId(uid),
+            role: role,
+            displayName: uid,
+          );
+      const players = [
+        Player(id: PlayerId('p1'), groupId: GroupId('g'), displayName: 'Emma'),
+        Player(
+          id: PlayerId('p2'),
+          groupId: GroupId('g'),
+          displayName: 'Noah',
+          status: PlayerStatus.pending,
+        ),
+      ];
+      const links = [
+        GuardianLink(
+          playerId: PlayerId('p1'),
+          groupId: GroupId('g'),
+          uid: UserId('maria'),
+        ),
+        GuardianLink(
+          playerId: PlayerId('p1'),
+          groupId: GroupId('g'),
+          uid: UserId('coach'),
+        ),
+      ];
+      final roster = [
+        m('coach', role: MemberRole.admin),
+        m('maria'),
+        m('sam'),
+        m('luis'),
+      ];
+      final everyone = eventParticipants(
+        roster,
+        players,
+        links: links,
+        rsvps: const [
+          Rsvp(
+            eventId: EventId('e'),
+            groupId: GroupId('g'),
+            participantType: ParticipantType.member,
+            participantId: 'maria',
+            participantName: 'maria',
+            status: RsvpStatus.going,
+          ),
+        ],
       );
-      const me = UserId('a');
-      const self = Participant(
-        type: ParticipantType.member,
-        id: 'a',
-        name: 'Coach A',
-      );
-      const otherCoach = Participant(
-        type: ParticipantType.member,
-        id: 'b',
-        name: 'Coach B',
-      );
-      const player = Participant(
-        type: ParticipantType.player,
-        id: 'p1',
-        name: 'Emma',
-      );
-      expect(canSetRsvpFor(youth, self, me), isTrue);
-      expect(canSetRsvpFor(youth, player, me), isTrue);
-      expect(canSetRsvpFor(youth, otherCoach, me), isFalse);
-      final adult = youth.copyWith(rsvpFor: RsvpFor.members);
-      expect(canSetRsvpFor(adult, otherCoach, me), isTrue);
+      // Pending players can't be answered for (PLAYER-4).
+      expect(everyone.main.map((p) => p.id), ['p1']);
+      // Admins and unlinked members answer for themselves; a linked member
+      // shows here only with an answer of their own, as on old events.
+      expect(everyone.staff.map((p) => p.id), [
+        'coach',
+        'maria',
+        'sam',
+        'luis',
+      ]);
+      final none = eventParticipants(roster, players, links: links);
+      expect(none.staff.map((p) => p.id), ['coach', 'sam', 'luis']);
+      // A team without players: everyone answers for themselves.
+      expect(eventParticipants(roster, const []).staff.length, roster.length);
     });
 
     const group = Group(
       id: GroupId('a'),
       name: 'Thunder',
       sport: Sport.soccer,
-      teamType: TeamType.youth,
       memberCount: 3,
     );
     Membership member(String uid, {MemberRole role = MemberRole.member}) =>
@@ -518,7 +618,8 @@ void main() {
       );
     });
 
-    test('guardians answer for their players; admins also for themselves', () {
+    test('linked members answer for their players; admins and unlinked '
+        'members also for themselves (PLAYER-6)', () {
       const players = [
         Player(
           id: PlayerId('p1'),
@@ -531,6 +632,18 @@ void main() {
           groupId: GroupId('a'),
           displayName: 'Liam R',
         ),
+        Player(
+          id: PlayerId('p3'),
+          groupId: GroupId('a'),
+          displayName: 'Jared F',
+          jerseyNumber: '12',
+        ),
+        Player(
+          id: PlayerId('p4'),
+          groupId: GroupId('a'),
+          displayName: 'Ava R',
+          status: PlayerStatus.pending,
+        ),
       ];
       const links = [
         GuardianLink(
@@ -538,16 +651,33 @@ void main() {
           groupId: GroupId('a'),
           uid: UserId('maria'),
         ),
+        GuardianLink(
+          playerId: PlayerId('p3'),
+          groupId: GroupId('a'),
+          uid: UserId('jared'),
+          relation: PlayerRelation.self,
+        ),
+        GuardianLink(
+          playerId: PlayerId('p2'),
+          groupId: GroupId('a'),
+          uid: UserId('jared'),
+        ),
+        GuardianLink(
+          playerId: PlayerId('p4'),
+          groupId: GroupId('a'),
+          uid: UserId('maria'),
+        ),
       ];
+      // A guardian answers only for their (active) players.
       final parent = participantsFor(
-        group: group,
         me: member('maria'),
         players: players,
         links: links,
       );
       expect(parent.map((p) => p.shownName), ['Emma #7']);
+      expect(parent.single.isMe, isFalse);
+      // An admin guardian also gets a Me row.
       final coach = participantsFor(
-        group: group,
         me: member('maria', role: MemberRole.admin),
         players: players,
         links: links,
@@ -556,11 +686,20 @@ void main() {
         ParticipantType.member,
         ParticipantType.player,
       ]);
-      final adult = participantsFor(
-        group: group.copyWith(teamType: TeamType.adult),
-        me: member('sam'),
+      // A member who is a player answers on their own player's row, first,
+      // then for the players they're here for; no Me row.
+      final player = participantsFor(
+        me: member('jared'),
+        players: players,
+        links: links,
       );
+      expect(player.map((p) => p.id), ['p3', 'p2']);
+      expect(player.first.isMe, isTrue);
+      expect(player.last.isMe, isFalse);
+      // A member linked to nobody answers for themselves.
+      final adult = participantsFor(me: member('sam'), players: players);
       expect(adult.single.id, 'sam');
+      expect(participantsFor(me: member('sam')).single.isPlayer, isFalse);
     });
   });
 

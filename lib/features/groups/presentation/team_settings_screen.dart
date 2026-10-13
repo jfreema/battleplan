@@ -28,7 +28,7 @@ import 'package:material_ui/material_ui.dart';
 const reminderChoices = [15, 60, 120, 1440, 2880, 10080];
 
 /// TEAM-5 at `/g/:groupId/settings` (admins): name, sport, logo, color,
-/// description, time zone, team type (TEAM-1), member permissions, default
+/// description, time zone, member permissions, default
 /// reminders, the invite link (managed on the invite screen), the chat look,
 /// and storage used with Media.
 class TeamSettingsScreen extends ConsumerStatefulWidget {
@@ -85,24 +85,6 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     );
     if (picked == null || picked == group.timeZone || !mounted) return;
     await _save(() => repo.update(group.id, timeZone: picked));
-  }
-
-  /// Switches between adult and youth (TEAM-1). Events already on the
-  /// schedule keep the RSVPs they have.
-  Future<void> _changeType(Group group, TeamEditor repo, TeamType to) async {
-    final l10n = AppLocalizations.of(context);
-    if (to == group.teamType) return;
-    final ok = await showConfirmDialog(
-      context,
-      title: to == TeamType.youth
-          ? l10n.changeToYouthTeam
-          : l10n.changeToAdultTeam,
-      message: l10n.changeTeamTypeBody,
-      confirmLabel: l10n.changeTeamType,
-      cancelLabel: l10n.cancel,
-    );
-    if (!ok) return;
-    await _save(() => repo.changeTeamType(group.id, to));
   }
 
   Future<void> _transfer(Group group) async {
@@ -354,25 +336,6 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                 trailing: const Icon(AppIcons.edit),
                 onTap: () => unawaited(_changeTimeZone(group, repo)),
               ),
-              if (repo.canChangeType) ...[
-                section(l10n.teamTypeLabel),
-                SegmentedButton<TeamType>(
-                  segments: [
-                    ButtonSegment(
-                      value: TeamType.adult,
-                      label: Text(l10n.teamTypeAdult),
-                    ),
-                    ButtonSegment(
-                      value: TeamType.youth,
-                      label: Text(l10n.teamTypeYouth),
-                    ),
-                  ],
-                  selected: {group.teamType},
-                  showSelectedIcon: false,
-                  onSelectionChanged: (t) =>
-                      unawaited(_changeType(group, repo, t.first)),
-                ),
-              ],
               // The invite link: expiry, uses, reset, and turn off (INV-2).
               section(l10n.linkSettings),
               ListTile(

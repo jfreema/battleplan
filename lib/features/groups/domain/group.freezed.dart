@@ -575,7 +575,9 @@ as String?,
 /// @nodoc
 mixin _$Group {
 
- GroupId get id; String get name; Sport get sport; TeamType get teamType; int get memberCount; String? get description;/// ARGB team color (one of `teamColorValues`).
+ GroupId get id; String get name; Sport get sport; int get memberCount;/// One kind of team (TEAM-1); a missing kind reads as a team, so a
+/// basic group can be added later (TEAM-14).
+ GroupKind get kind; String? get description;/// ARGB team color (one of `teamColorValues`).
  int? get color; DateTime? get lastMessageAt; String? get lastMessagePreview; DateTime? get archivedAt; DateTime? get suspendedAt; String? get ownerId; String? get photoPath; String get timeZone; GroupSettings get settings;/// Bytes stored under `groups/{id}/`, kept by the Storage triggers.
  int get storageBytes;/// The team's limit: 500 MB unless a super admin changed it (STORE-1,
 /// STORE-6). The data layer fills in the default when it's missing.
@@ -591,20 +593,20 @@ $GroupCopyWith<Group> get copyWith => _$GroupCopyWithImpl<Group>(this as Group, 
 @override
 bool operator ==(Object other) {
   final _this = this as Group;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Group&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.teamType, _this.teamType) || other.teamType == _this.teamType)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.lastMessagePreview, _this.lastMessagePreview) || other.lastMessagePreview == _this.lastMessagePreview)&&(identical(other.archivedAt, _this.archivedAt) || other.archivedAt == _this.archivedAt)&&(identical(other.suspendedAt, _this.suspendedAt) || other.suspendedAt == _this.suspendedAt)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.timeZone, _this.timeZone) || other.timeZone == _this.timeZone)&&(identical(other.settings, _this.settings) || other.settings == _this.settings)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes)&&(identical(other.chatTheme, _this.chatTheme) || other.chatTheme == _this.chatTheme));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Group&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.lastMessagePreview, _this.lastMessagePreview) || other.lastMessagePreview == _this.lastMessagePreview)&&(identical(other.archivedAt, _this.archivedAt) || other.archivedAt == _this.archivedAt)&&(identical(other.suspendedAt, _this.suspendedAt) || other.suspendedAt == _this.suspendedAt)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.timeZone, _this.timeZone) || other.timeZone == _this.timeZone)&&(identical(other.settings, _this.settings) || other.settings == _this.settings)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes)&&(identical(other.chatTheme, _this.chatTheme) || other.chatTheme == _this.chatTheme));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Group;
-  return Object.hash(runtimeType,_this.id,_this.name,_this.sport,_this.teamType,_this.memberCount,_this.description,_this.color,_this.lastMessageAt,_this.lastMessagePreview,_this.archivedAt,_this.suspendedAt,_this.ownerId,_this.photoPath,_this.timeZone,_this.settings,_this.storageBytes,_this.storageQuotaBytes,_this.chatTheme);
+  return Object.hash(runtimeType,_this.id,_this.name,_this.sport,_this.memberCount,_this.kind,_this.description,_this.color,_this.lastMessageAt,_this.lastMessagePreview,_this.archivedAt,_this.suspendedAt,_this.ownerId,_this.photoPath,_this.timeZone,_this.settings,_this.storageBytes,_this.storageQuotaBytes,_this.chatTheme);
 }
 
 @override
 String toString() {
   final _this = this as Group;
-  return 'Group(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, teamType: ${_this.teamType}, memberCount: ${_this.memberCount}, description: ${_this.description}, color: ${_this.color}, lastMessageAt: ${_this.lastMessageAt}, lastMessagePreview: ${_this.lastMessagePreview}, archivedAt: ${_this.archivedAt}, suspendedAt: ${_this.suspendedAt}, ownerId: ${_this.ownerId}, photoPath: ${_this.photoPath}, timeZone: ${_this.timeZone}, settings: ${_this.settings}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes}, chatTheme: ${_this.chatTheme})';
+  return 'Group(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, memberCount: ${_this.memberCount}, kind: ${_this.kind}, description: ${_this.description}, color: ${_this.color}, lastMessageAt: ${_this.lastMessageAt}, lastMessagePreview: ${_this.lastMessagePreview}, archivedAt: ${_this.archivedAt}, suspendedAt: ${_this.suspendedAt}, ownerId: ${_this.ownerId}, photoPath: ${_this.photoPath}, timeZone: ${_this.timeZone}, settings: ${_this.settings}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes}, chatTheme: ${_this.chatTheme})';
 }
 
 
@@ -615,7 +617,7 @@ abstract mixin class $GroupCopyWith<$Res>  {
   factory $GroupCopyWith(Group value, $Res Function(Group) _then) = _$GroupCopyWithImpl;
 @useResult
 $Res call({
- GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, ChatTheme? chatTheme
+ GroupId id, String name, Sport sport, int memberCount, GroupKind kind, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, ChatTheme? chatTheme
 });
 
 
@@ -632,14 +634,14 @@ class _$GroupCopyWithImpl<$Res>
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? chatTheme = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? memberCount = null,Object? kind = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? chatTheme = freezed,}) {
   return _then(Group(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,sport: null == sport ? _self.sport : sport // ignore: cast_nullable_to_non_nullable
-as Sport,teamType: null == teamType ? _self.teamType : teamType // ignore: cast_nullable_to_non_nullable
-as TeamType,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
-as int,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as Sport,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
+as int,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as GroupKind,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as int?,lastMessageAt: freezed == lastMessageAt ? _self.lastMessageAt : lastMessageAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,lastMessagePreview: freezed == lastMessagePreview ? _self.lastMessagePreview : lastMessagePreview // ignore: cast_nullable_to_non_nullable
@@ -758,10 +760,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  ChatTheme? chatTheme)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  int memberCount,  GroupKind kind,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  ChatTheme? chatTheme)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.chatTheme);case _:
+return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.chatTheme);case _:
   return orElse();
 
 }
@@ -779,10 +781,10 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  ChatTheme? chatTheme)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  int memberCount,  GroupKind kind,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  ChatTheme? chatTheme)  $default,) {final _that = this;
 switch (_that) {
 case _Group():
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.chatTheme);case _:
+return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.chatTheme);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -799,10 +801,10 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  TeamType teamType,  int memberCount,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  ChatTheme? chatTheme)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  int memberCount,  GroupKind kind,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  ChatTheme? chatTheme)?  $default,) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.chatTheme);case _:
+return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.chatTheme);case _:
   return null;
 
 }
@@ -814,14 +816,16 @@ return $default(_that.id,_that.name,_that.sport,_that.teamType,_that.memberCount
 
 
 class _Group extends Group {
-  const _Group({required this.id, required this.name, required this.sport, required this.teamType, required this.memberCount, this.description, this.color, this.lastMessageAt, this.lastMessagePreview, this.archivedAt, this.suspendedAt, this.ownerId, this.photoPath, this.timeZone = 'America/Chicago', this.settings = const GroupSettings(), this.storageBytes = 0, this.storageQuotaBytes = 0, this.chatTheme}): super._();
+  const _Group({required this.id, required this.name, required this.sport, required this.memberCount, this.kind = GroupKind.team, this.description, this.color, this.lastMessageAt, this.lastMessagePreview, this.archivedAt, this.suspendedAt, this.ownerId, this.photoPath, this.timeZone = 'America/Chicago', this.settings = const GroupSettings(), this.storageBytes = 0, this.storageQuotaBytes = 0, this.chatTheme}): super._();
   
 
 @override final  GroupId id;
 @override final  String name;
 @override final  Sport sport;
-@override final  TeamType teamType;
 @override final  int memberCount;
+/// One kind of team (TEAM-1); a missing kind reads as a team, so a
+/// basic group can be added later (TEAM-14).
+@override@JsonKey() final  GroupKind kind;
 @override final  String? description;
 /// ARGB team color (one of `teamColorValues`).
 @override final  int? color;
@@ -850,18 +854,18 @@ _$GroupCopyWith<_Group> get copyWith => __$GroupCopyWithImpl<_Group>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Group&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.teamType, teamType) || other.teamType == teamType)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.description, description) || other.description == description)&&(identical(other.color, color) || other.color == color)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastMessagePreview, lastMessagePreview) || other.lastMessagePreview == lastMessagePreview)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.suspendedAt, suspendedAt) || other.suspendedAt == suspendedAt)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.timeZone, timeZone) || other.timeZone == timeZone)&&(identical(other.settings, settings) || other.settings == settings)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes)&&(identical(other.chatTheme, chatTheme) || other.chatTheme == chatTheme));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Group&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.description, description) || other.description == description)&&(identical(other.color, color) || other.color == color)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastMessagePreview, lastMessagePreview) || other.lastMessagePreview == lastMessagePreview)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.suspendedAt, suspendedAt) || other.suspendedAt == suspendedAt)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.timeZone, timeZone) || other.timeZone == timeZone)&&(identical(other.settings, settings) || other.settings == settings)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes)&&(identical(other.chatTheme, chatTheme) || other.chatTheme == chatTheme));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,name,sport,teamType,memberCount,description,color,lastMessageAt,lastMessagePreview,archivedAt,suspendedAt,ownerId,photoPath,timeZone,settings,storageBytes,storageQuotaBytes,chatTheme);
+    return Object.hash(runtimeType,id,name,sport,memberCount,kind,description,color,lastMessageAt,lastMessagePreview,archivedAt,suspendedAt,ownerId,photoPath,timeZone,settings,storageBytes,storageQuotaBytes,chatTheme);
 }
 
 @override
 String toString() {
-    return 'Group(id: $id, name: $name, sport: $sport, teamType: $teamType, memberCount: $memberCount, description: $description, color: $color, lastMessageAt: $lastMessageAt, lastMessagePreview: $lastMessagePreview, archivedAt: $archivedAt, suspendedAt: $suspendedAt, ownerId: $ownerId, photoPath: $photoPath, timeZone: $timeZone, settings: $settings, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes, chatTheme: $chatTheme)';
+    return 'Group(id: $id, name: $name, sport: $sport, memberCount: $memberCount, kind: $kind, description: $description, color: $color, lastMessageAt: $lastMessageAt, lastMessagePreview: $lastMessagePreview, archivedAt: $archivedAt, suspendedAt: $suspendedAt, ownerId: $ownerId, photoPath: $photoPath, timeZone: $timeZone, settings: $settings, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes, chatTheme: $chatTheme)';
 }
 
 
@@ -872,7 +876,7 @@ abstract mixin class _$GroupCopyWith<$Res> implements $GroupCopyWith<$Res> {
   factory _$GroupCopyWith(_Group value, $Res Function(_Group) _then) = __$GroupCopyWithImpl;
 @override @useResult
 $Res call({
- GroupId id, String name, Sport sport, TeamType teamType, int memberCount, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, ChatTheme? chatTheme
+ GroupId id, String name, Sport sport, int memberCount, GroupKind kind, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, ChatTheme? chatTheme
 });
 
 
@@ -889,14 +893,14 @@ class __$GroupCopyWithImpl<$Res>
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? teamType = null,Object? memberCount = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? chatTheme = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? memberCount = null,Object? kind = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? chatTheme = freezed,}) {
   return _then(_Group(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,sport: null == sport ? _self.sport : sport // ignore: cast_nullable_to_non_nullable
-as Sport,teamType: null == teamType ? _self.teamType : teamType // ignore: cast_nullable_to_non_nullable
-as TeamType,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
-as int,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as Sport,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
+as int,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as GroupKind,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as int?,lastMessageAt: freezed == lastMessageAt ? _self.lastMessageAt : lastMessageAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,lastMessagePreview: freezed == lastMessagePreview ? _self.lastMessagePreview : lastMessagePreview // ignore: cast_nullable_to_non_nullable

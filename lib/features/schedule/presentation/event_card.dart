@@ -164,9 +164,7 @@ class _CardRsvps extends ConsumerWidget {
                   .watch(myRsvpsProvider(groupId, from: startOfDay(zone, now)))
                   .value?[event.id.value] ??
               const <String, Rsvp>{};
-    final players = event.forPlayers
-        ? ref.watch(playersProvider(groupId)).value?.length ?? 0
-        : 0;
+    final players = ref.watch(playersProvider(groupId)).value?.length ?? 0;
     final allowMaybe = group.settings.allowMaybe;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,9 +177,7 @@ class _CardRsvps extends ConsumerWidget {
               event: event,
               participant: p,
               answer: answers[p.id],
-              label: mine.length > 1 || p.isPlayer
-                  ? (p.isPlayer ? p.shownName : l10n.eventYou)
-                  : null,
+              label: rsvpRowLabel(l10n, p, mine.length),
               enabled: true,
               allowMaybe: allowMaybe,
               compact: true,
@@ -190,9 +186,12 @@ class _CardRsvps extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.only(top: Space.xs),
           child: Text(
-            event.forPlayers
-                ? playerCountsText(l10n, event, players: players)
-                : countsText(l10n, event.rsvpCounts, allowMaybe: allowMaybe),
+            eventCountsText(
+              l10n,
+              event,
+              players: players,
+              allowMaybe: allowMaybe,
+            ),
             style: theme.textTheme.labelMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

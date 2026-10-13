@@ -74,7 +74,7 @@ class AdminTeamScreen extends ConsumerWidget {
                         detail: value,
                         onChanged: () => _refresh(ref),
                       ),
-                      if (g.teamType == TeamType.youth) _Players(detail: value),
+                      _Players(detail: value),
                       _Invites(
                         group: g,
                         detail: value,
@@ -116,7 +116,7 @@ class _Summary extends ConsumerWidget {
         ? null
         : ref.watch(teamPhotoUrlProvider(group.photoPath!)).value;
     final facts = [
-      '${sportName(l10n, group.sport)} · ${group.teamType == TeamType.youth ? l10n.teamTypeYouth : l10n.teamTypeAdult}',
+      sportName(l10n, group.sport),
       if (detail?.ownerName.isNotEmpty ?? false)
         l10n.adminOwnedBy(detail!.ownerName),
       l10n.membersCount(group.memberCount),
@@ -433,11 +433,7 @@ class _People extends ConsumerWidget {
               onPressed: () =>
                   unawaited(context.push('/g/${group.id.value}/roster')),
               icon: const Icon(AppIcons.roster),
-              label: Text(
-                group.teamType == TeamType.youth
-                    ? l10n.adminRosterPlayers
-                    : l10n.rosterMenu,
-              ),
+              label: Text(l10n.adminRosterPlayers),
             ),
           ],
         ),
@@ -491,8 +487,9 @@ String _memberActionLabel(AppLocalizations l10n, _MemberAction a) =>
       _MemberAction.remove => l10n.removeFromTeam,
     };
 
-/// Youth teams: each player and who guards them (ADMIN-3). Changes go
-/// through the roster.
+/// Each player, pending ones marked, and who's linked to them: the member
+/// who is the player and their guardians (ADMIN-3). Changes go through the
+/// roster.
 class _Players extends StatelessWidget {
   const new({required this.detail});
 
@@ -510,12 +507,17 @@ class _Players extends StatelessWidget {
         for (final p in detail.players)
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(p.label),
+            title: Text(
+              p.isPending ? '${p.label} · ${l10n.playerPending}' : p.label,
+            ),
             subtitle: Text(switch ([
               for (final g in detail.guardians)
-                if (g.playerId == p.id) names[g.uid] ?? g.uid.value,
+                if (g.playerId == p.id && g.isSelf)
+                  l10n.playerLinkSelfName(names[g.uid] ?? g.uid.value)
+                else if (g.playerId == p.id)
+                  names[g.uid] ?? g.uid.value,
             ]) {
-              final List<String> gs when gs.isEmpty => l10n.noGuardians,
+              final List<String> gs when gs.isEmpty => l10n.noPlayerLinks,
               final gs => gs.join(', '),
             }),
           ),

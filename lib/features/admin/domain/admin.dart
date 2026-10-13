@@ -69,7 +69,6 @@ abstract class AdminTeamRow with _$AdminTeamRow {
     required GroupId id,
     required String name,
     @Default(Sport.other) Sport sport,
-    @Default(TeamType.adult) TeamType teamType,
     String? ownerId,
     @Default('') String ownerName,
     @Default(0) int memberCount,
@@ -124,7 +123,8 @@ abstract class AdminTeamDetail with _$AdminTeamDetail {
     /// Everyone on the team, with their roles.
     @Default(<Membership>[]) List<Membership> members,
 
-    /// Youth teams: the players and who guards them.
+    /// The players (active and pending) and their links, as the player or
+    /// a guardian.
     @Default(<Player>[]) List<Player> players,
     @Default(<GuardianLink>[]) List<GuardianLink> guardians,
     @Default(<AdminInvite>[]) List<AdminInvite> invites,

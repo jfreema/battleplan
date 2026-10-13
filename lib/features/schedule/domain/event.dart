@@ -35,8 +35,6 @@ abstract class Event with _$Event {
     HomeAway? homeAway,
     @Default(true) bool rsvpEnabled,
 
-    /// 'players' on youth teams: guardians answer per player (PLAYER-6).
-    @Default(RsvpFor.members) RsvpFor rsvpFor,
     DateTime? rsvpDeadline,
 
     /// Minutes before the start, from [reminderOffsetsMinutes] (SCHED-8).
@@ -53,8 +51,10 @@ abstract class Event with _$Event {
     /// Fields edited with "This event"; later series edits leave them be.
     @Default(<String>[]) List<String> seriesOverrides,
 
-    /// Kept by the server from the RSVPs. On 'players' events these count
-    /// players only; [staffCounts] counts the admins' own answers (D34).
+    /// Kept by the server from the RSVPs: [rsvpCounts] counts players, and
+    /// [staffCounts] everyone answering for themselves, coaches and others
+    /// (PLAYER-6, D34). Events made before one team type may still count
+    /// members in [rsvpCounts].
     @Default(RsvpCounts()) RsvpCounts rsvpCounts,
     @Default(RsvpCounts()) RsvpCounts staffCounts,
 
@@ -72,9 +72,6 @@ abstract class Event with _$Event {
   bool get isGame => type == EventType.game;
 
   bool get inSeries => seriesId != null;
-
-  /// Youth events: guardians answer per player (PLAYER-6).
-  bool get forPlayers => rsvpFor == RsvpFor.players;
 
   /// Whether the deadline has passed at [now]; after it only admins can
   /// change answers (SCHED-5).
@@ -117,6 +114,13 @@ abstract class RsvpCounts with _$RsvpCounts {
   const new _();
 
   int get answered => going + maybe + notGoing;
+
+  /// Both counts together, for a team without players.
+  RsvpCounts operator +(RsvpCounts other) => RsvpCounts(
+    going: going + other.going,
+    maybe: maybe + other.maybe,
+    notGoing: notGoing + other.notGoing,
+  );
 
   int of(RsvpStatus status) => switch (status) {
     RsvpStatus.going => going,

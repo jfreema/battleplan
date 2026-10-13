@@ -63,7 +63,6 @@ void main() {
       const AdminTeamQuery(query: ' thu ', status: TeamStatus.suspended),
     );
     expect(page.items.first.ownerName, 'Jordan');
-    expect(page.items.first.teamType, TeamType.youth);
     expect(page.items.first.status, TeamStatus.suspended);
     expect(
       page.items.first.lastMessageAt?.toUtc(),
@@ -103,9 +102,11 @@ void main() {
       ],
       'players': [
         {'id': 'emma', 'displayName': 'Emma', 'jerseyNumber': '7'},
+        {'id': 'jared', 'displayName': 'Jared', 'status': 'pending'},
       ],
       'guardians': [
         {'playerId': 'emma', 'uid': 'maria'},
+        {'playerId': 'emma', 'uid': 'emma1', 'relation': 'self'},
       ],
       'invites': [
         {'id': 'K7XP', 'type': 'link', 'useCount': 3, 'maxUses': 10},
@@ -123,8 +124,14 @@ void main() {
     expect(detail.status, TeamStatus.archived);
     expect(detail.members.first.role, MemberRole.owner);
     expect(detail.members.last.pending, isTrue);
-    expect(detail.players.single.jerseyNumber, '7');
-    expect(detail.guardians.single.uid, const UserId('maria'));
+    expect(detail.players.first.jerseyNumber, '7');
+    // Players without a status are active; links without a relation are
+    // guardians (one team type).
+    expect(detail.players.first.status, PlayerStatus.active);
+    expect(detail.players.last.isPending, isTrue);
+    expect(detail.guardians.first.uid, const UserId('maria'));
+    expect(detail.guardians.first.relation, PlayerRelation.guardian);
+    expect(detail.guardians.last.isSelf, isTrue);
     expect(detail.invites.first.isLink, isTrue);
     expect(detail.invites.first.code, 'K7XP');
     expect(detail.invites.last.email, 'a@example.com');

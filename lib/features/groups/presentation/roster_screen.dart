@@ -23,11 +23,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// TEAM-3 at `/g/:groupId/roster`: Admins, then Members, searchable by name,
-/// each with their photo or initials. Tapping a person opens their card with
-/// only the actions you're allowed. Youth teams add a Players section, each
-/// player with their guardians; admins see guardian requests at the top
-/// (PLAYER-4), and parents not linked yet get "Who are you here for?".
+/// TEAM-3 at `/g/:groupId/roster`: Players, then Admins and Members,
+/// searchable by name, each person with their photo or initials. Every team
+/// has players, each with who's linked: the member who is the player and
+/// their guardians. Admins see pending players and claims at the top with
+/// Approve and Decline (PLAYER-4); anyone can add a player (pending until
+/// an admin approves, unless they're an admin), and members not linked yet
+/// get "Who are you here for?" (PLAYER-3). Tapping a person opens their
+/// card with only the actions you're allowed.
 class RosterScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -46,33 +49,45 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
     final roster = ref.watch(rosterProvider(widget.groupId));
     final me = ref.watch(myMembershipProvider(widget.groupId));
     final group = ref.watch(groupProvider(widget.groupId)).value;
-    final youth = group?.teamType == TeamType.youth;
-    final players = youth
-        ? ref.watch(playersProvider(widget.groupId)).value ?? const <Player>[]
-        : const <Player>[];
+    final players =
+        ref.watch(playersProvider(widget.groupId)).value ?? const <Player>[];
     // Super admins act as the owner here, from the admin panel (ADMIN-3).
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final isAdmin = (me?.isAdmin ?? false) || superAdmin;
-    // Guardian requests sit at the top for admins (PLAYER-4).
-    final requests = youth && isAdmin
+    // Pending players: all of them for admins, and the ones I added for
+    // everyone else (PLAYER-4).
+    final pending =
+        (isAdmin
+                ? ref.watch(pendingPlayersProvider(widget.groupId))
+                : ref.watch(myPendingPlayersProvider(widget.groupId)))
+            .value ??
+        const <Player>[];
+    // Claims sit at the top for admins (PLAYER-4).
+    final requests = isAdmin
         ? ref.watch(pendingGuardianRequestsProvider(widget.groupId)).value ??
               const <GuardianRequest>[]
         : const <GuardianRequest>[];
     final myUid = ref.watch(authUserProvider).value?.uid;
-    final links = youth
-        ? ref.watch(guardianLinksProvider(widget.groupId)).value ??
-              const <GuardianLink>[]
-        : const <GuardianLink>[];
+    final links =
+        ref.watch(guardianLinksProvider(widget.groupId)).value ??
+        const <GuardianLink>[];
     final linked = links.any((l) => l.uid.value == myUid);
+    final waiting =
+        pending.any((p) => p.proposedBy == myUid) ||
+        (ref.watch(myGuardianRequestsProvider(widget.groupId)).value ??
+                const <GuardianRequest>[])
+            .any((r) => r.status == GuardianRequestStatus.pending);
+    final canAdd = superAdmin || (me != null && !(group?.isArchived ?? false));
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.rosterMenu),
         actions: [
-          if (youth && isAdmin)
+          // Anyone can add a player; a member's waits for an admin (PLAYER-4).
+          if (canAdd)
             TextButton(
               onPressed: () =>
                   context.push('/g/${widget.groupId.value}/players/add'),
-              child: Text(l10n.addPlayers),
+              child: Text(isAdmin ? l10n.addPlayers : l10n.addPlayer),
             ),
         ],
       ),
@@ -89,11 +104,20 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
           final admins = shown.where((m) => m.isAdmin).toList()
             ..sort((a, b) => a.role == MemberRole.owner ? -1 : 0);
           final others = shown.where((m) => !m.isAdmin).toList();
-          final shownPlayers = q.isEmpty
-              ? players
-              : players
-                    .where((p) => p.displayName.toLowerCase().contains(q))
-                    .toList();
+          bool matches(Player p) =>
+              q.isEmpty || p.displayName.toLowerCase().contains(q);
+          final shownPlayers = players.where(matches).toList();
+          String? nameOf(String? uid) =>
+              members.where((m) => m.uid.value == uid).firstOrNull?.displayName;
+          // A claim from someone no longer on the team isn't shown (TEAM-8):
+          // the server drops it when they leave.
+          final claims = requests
+              .where((r) => members.any((m) => m.uid == r.uid))
+              .toList();
+          final toDecide = isAdmin ? pending : const <Player>[];
+          final mine = isAdmin
+              ? const <Player>[]
+              : pending.where(matches).toList();
           return ListView(
             children: [
               Padding(
@@ -106,60 +130,68 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
-              if (requests.isNotEmpty) ...[
-                _Section(title: l10n.guardianRequestsTitle),
-                // A request from someone no longer on the team isn't shown
-                // (TEAM-8): the server drops it when they leave.
-                for (final r in requests.where(
-                  (r) => members.any((m) => m.uid == r.uid),
-                ))
+              if (toDecide.isNotEmpty || claims.isNotEmpty) ...[
+                _Section(title: l10n.playerRequestsTitle),
+                for (final p in toDecide)
+                  _PendingPlayerRow(player: p, who: nameOf(p.proposedBy)),
+                for (final r in claims)
                   _RequestRow(
                     request: r,
-                    who: members
-                        .where((m) => m.uid == r.uid)
-                        .firstOrNull
-                        ?.displayName,
+                    who: nameOf(r.uid.value),
                     player: players
                         .where((p) => p.id == r.playerId)
                         .firstOrNull
                         ?.label,
                   ),
               ],
-              if (youth && !isAdmin && !linked && players.isNotEmpty)
+              if (!isAdmin && me != null && !linked && !waiting)
                 ListTile(
                   leading: const Icon(AppIcons.invite),
                   title: Text(l10n.whoAreYouHereFor),
                   subtitle: Text(l10n.whoAreYouHereForRosterHint),
                   onTap: () => context.push('/g/${widget.groupId.value}/who'),
                 ),
-              if (youth) ...[
-                _Section(title: l10n.rosterPlayers),
-                for (final p in shownPlayers)
-                  _PlayerRow(
-                    player: p,
-                    // TEAM-3: number, name, position, and guardians.
-                    guardians: [
-                      for (final l in links)
-                        if (l.playerId == p.id)
-                          ?members
-                              .where((m) => m.uid == l.uid)
-                              .firstOrNull
-                              ?.displayName,
-                    ],
+              _Section(title: l10n.rosterPlayers),
+              if (players.isEmpty && mine.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Space.lg,
+                    vertical: Space.sm,
                   ),
-                _Section(title: l10n.rosterParentsStaff),
-                for (final m in [...admins, ...others])
-                  _MemberRow(
-                    member: m,
-                    me: me,
-                    players: _playersOf(m.uid, links, players),
-                  ),
-              ] else ...[
-                if (admins.isNotEmpty) _Section(title: l10n.rosterAdmins),
-                for (final m in admins) _MemberRow(member: m, me: me),
-                if (others.isNotEmpty) _Section(title: l10n.rosterMembers),
-                for (final m in others) _MemberRow(member: m, me: me),
-              ],
+                  child: Text(l10n.adminNoPlayers),
+                ),
+              // My own players waiting for an admin (PLAYER-4).
+              for (final p in mine)
+                ListTile(
+                  leading: CircleAvatar(child: Text(p.jerseyNumber ?? '')),
+                  title: Text(p.displayName),
+                  subtitle: Text(l10n.playerPending),
+                ),
+              for (final p in shownPlayers)
+                _PlayerRow(
+                  player: p,
+                  // TEAM-3: number, name, position, and who's linked.
+                  linked: [
+                    for (final l in links)
+                      if (l.playerId == p.id)
+                        if (nameOf(l.uid.value) case final name?)
+                          if (l.isSelf) l10n.playerLinkSelfName(name) else name,
+                  ],
+                ),
+              if (admins.isNotEmpty) _Section(title: l10n.rosterAdmins),
+              for (final m in admins)
+                _MemberRow(
+                  member: m,
+                  me: me,
+                  who: whoLabel(l10n, m.uid, links, players),
+                ),
+              if (others.isNotEmpty) _Section(title: l10n.rosterMembers),
+              for (final m in others)
+                _MemberRow(
+                  member: m,
+                  me: me,
+                  who: whoLabel(l10n, m.uid, links, players),
+                ),
             ],
           );
         },
@@ -168,29 +200,45 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
   }
 }
 
-/// The players [uid] is a guardian of, as "Emma #7" (TEAM-3).
-List<String> _playersOf(
+/// Who's who on the roster (PLAYER-8): "Player #12" for a member who is a
+/// player, and "Parent of Emma #7, Liam #23" for a guardian, both when
+/// they're both. Null when they aren't linked.
+String? whoLabel(
+  AppLocalizations l10n,
   UserId uid,
   List<GuardianLink> links,
   List<Player> players,
-) => [
-  for (final l in links)
-    if (l.uid == uid)
-      ?players.where((p) => p.id == l.playerId).firstOrNull?.label,
-];
+) {
+  Player? playerOf(GuardianLink l) =>
+      players.where((p) => p.id == l.playerId).firstOrNull;
+  final mine = linksOf(uid, links);
+  final self = mine.where((l) => l.isSelf).map(playerOf).nonNulls.firstOrNull;
+  final guarded = [
+    for (final l in mine)
+      if (!l.isSelf) ?playerOf(l)?.label,
+  ];
+  final parts = [
+    if (self?.jerseyNumber case final number? when number.isNotEmpty)
+      l10n.rosterPlayerNumber(number)
+    else if (self != null)
+      l10n.rosterPlayerLabel,
+    if (guarded.isNotEmpty) l10n.parentOf(guarded.join(', ')),
+  ];
+  return parts.isEmpty ? null : parts.join(' · ');
+}
 
-/// A player: number, name, position, and guardians (TEAM-3).
+/// A player: number, name, position, and who's linked (TEAM-3).
 class _PlayerRow extends StatelessWidget {
-  const new({required this.player, required this.guardians});
+  const new({required this.player, required this.linked});
 
   final Player player;
-  final List<String> guardians;
+  final List<String> linked;
 
   @override
   Widget build(BuildContext context) {
     final details = [
       if (player.position?.isNotEmpty ?? false) player.position!,
-      if (guardians.isNotEmpty) guardians.join(', '),
+      if (linked.isNotEmpty) linked.join(', '),
     ];
     return ListTile(
       leading: CircleAvatar(child: Text(player.jerseyNumber ?? '')),
@@ -225,7 +273,90 @@ class _MemberAvatar extends ConsumerWidget {
   }
 }
 
-/// "Maria Rodriguez for Emma #7" with Approve and Decline (PLAYER-4).
+/// Approve and Decline, with what went wrong said in a snackbar.
+class _Decision extends StatelessWidget {
+  const new({required this.decide});
+
+  final Future<void> Function({required bool approve}) decide;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Wrap(
+      children: [
+        TextButton(
+          onPressed: () => unawaited(decide(approve: false)),
+          child: Text(l10n.decline),
+        ),
+        FilledButton(
+          onPressed: () => unawaited(decide(approve: true)),
+          child: Text(l10n.approve),
+        ),
+      ],
+    );
+  }
+}
+
+/// Runs an admin's decision, saying so when it fails (PLAYER-4).
+Future<void> _decide(
+  BuildContext context,
+  Future<void> Function() action,
+) async {
+  final l10n = AppLocalizations.of(context);
+  try {
+    await action();
+  } on AppFailure catch (e) {
+    if (context.mounted) {
+      showAppSnackBar(
+        context,
+        e is InvalidInput ? l10n.claimLimitReached : l10n.errorGuardianRequest,
+      );
+    }
+  }
+}
+
+/// A member's new player waiting for approval: "Emma Rodriguez #7", "Added
+/// by Maria Rodriguez as their parent or guardian", with Approve and
+/// Decline (PLAYER-4). Declining deletes it.
+class _PendingPlayerRow extends ConsumerWidget {
+  const new({required this.player, this.who});
+
+  final Player player;
+  final String? who;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final name = who ?? l10n.formerMember;
+    return ListTile(
+      title: Text(
+        player.jerseyNumber?.isNotEmpty ?? false
+            ? '${player.displayName} #${player.jerseyNumber}'
+            : player.displayName,
+      ),
+      subtitle: Text(
+        player.proposedRelation == PlayerRelation.self
+            ? l10n.pendingPlayerSelf(name)
+            : l10n.pendingPlayerGuardian(name),
+      ),
+      trailing: _Decision(
+        decide: ({required approve}) => _decide(
+          context,
+          () => ref
+              .read(playerRepositoryProvider)
+              .resolvePendingPlayer(
+                player.groupId,
+                player.id,
+                approve: approve,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A claim: "Maria Rodriguez: parent or guardian of Emma #7", or "Jared
+/// Freeman says they're Jared #12", with Approve and Decline (PLAYER-4).
 class _RequestRow extends ConsumerWidget {
   const new({required this.request, this.who, this.player});
 
@@ -236,36 +367,24 @@ class _RequestRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    Future<void> decide({required bool approve}) async {
-      try {
-        await ref
-            .read(playerRepositoryProvider)
-            .resolveGuardianRequest(
-              request.groupId,
-              request.playerId,
-              request.uid,
-              approve: approve,
-            );
-      } on AppFailure {
-        if (context.mounted) {
-          showAppSnackBar(context, l10n.errorGuardianRequest);
-        }
-      }
-    }
-
     return ListTile(
-      title: Text(l10n.guardianRequestFor(who ?? '…', player ?? '…')),
-      trailing: Wrap(
-        children: [
-          TextButton(
-            onPressed: () => unawaited(decide(approve: false)),
-            child: Text(l10n.decline),
-          ),
-          FilledButton(
-            onPressed: () => unawaited(decide(approve: true)),
-            child: Text(l10n.approve),
-          ),
-        ],
+      title: Text(
+        request.relation == PlayerRelation.self
+            ? l10n.claimSelfFor(who ?? '…', player ?? '…')
+            : l10n.claimGuardianFor(who ?? '…', player ?? '…'),
+      ),
+      trailing: _Decision(
+        decide: ({required approve}) => _decide(
+          context,
+          () => ref
+              .read(playerRepositoryProvider)
+              .resolvePlayerClaim(
+                request.groupId,
+                request.playerId,
+                request.uid,
+                approve: approve,
+              ),
+        ),
       ),
     );
   }
@@ -291,13 +410,14 @@ String? roleBadge(AppLocalizations l10n, MemberRole role) => switch (role) {
 };
 
 class _MemberRow extends StatelessWidget {
-  const new({required this.member, required this.me, this.players = const []});
+  const new({required this.member, required this.me, this.who});
 
   final Membership member;
   final Membership? me;
 
-  /// The players they're a guardian of, for their card (TEAM-3).
-  final List<String> players;
+  /// Who's who from their player links ([whoLabel]), for their row and
+  /// card (TEAM-3, PLAYER-8).
+  final String? who;
 
   @override
   Widget build(BuildContext context) {
@@ -305,9 +425,8 @@ class _MemberRow extends StatelessWidget {
     final badge = roleBadge(l10n, member.role);
     final details = [
       if (member.title?.isNotEmpty ?? false) member.title!,
-      // PLAYER-8: "Parent of Emma #7".
-      if (member.playerSummary?.isNotEmpty ?? false)
-        l10n.parentOf(member.playerSummary!),
+      // PLAYER-8: "Player #12", "Parent of Emma #7".
+      ?who,
       if (member.pending) l10n.notJoinedYet,
     ];
     return ListTile(
@@ -317,27 +436,22 @@ class _MemberRow extends StatelessWidget {
       trailing: badge == null ? null : Chip(label: Text(badge)),
       onTap: () => showAdaptiveSheet<void>(
         context,
-        builder: (_) => MemberCard(member: member, me: me, players: players),
+        builder: (_) => MemberCard(member: member, me: me, who: who),
       ),
     );
   }
 }
 
-/// A person's card (TEAM-3): photo, name, title, role, their players, and
+/// A person's card (TEAM-3): photo, name, title, role, who's who, and
 /// the actions the viewer is allowed (SPEC §3), Report and Block included.
 class MemberCard extends ConsumerWidget {
-  const new({
-    required this.member,
-    required this.me,
-    this.players = const [],
-    super.key,
-  });
+  const new({required this.member, required this.me, this.who, super.key});
 
   final Membership member;
   final Membership? me;
 
-  /// The players they're a guardian of, "Emma #7" (youth teams).
-  final List<String> players;
+  /// "Player #12", "Parent of Emma #7" ([whoLabel]), or null.
+  final String? who;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -393,9 +507,9 @@ class MemberCard extends ConsumerWidget {
               const SizedBox(height: Space.sm),
               Chip(label: Text(badge)),
             ],
-            if (players.isNotEmpty) ...[
+            if (who case final label?) ...[
               const SizedBox(height: Space.sm),
-              Text(l10n.parentOf(players.join(', '))),
+              Text(label),
             ],
             const SizedBox(height: Space.lg),
             if (canPromote)

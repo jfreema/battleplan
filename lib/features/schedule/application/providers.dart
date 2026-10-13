@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zones.dart';
@@ -75,19 +74,14 @@ Stream<EventSeries?> eventSeries(Ref ref, String seriesId) =>
 Stream<List<Rsvp>> eventRsvps(Ref ref, GroupId groupId, EventId eventId) =>
     ref.watch(rsvpRepositoryProvider).watchForEvent(groupId, eventId);
 
-/// The people the signed-in person answers for on a team (PLAYER-6):
-/// themselves, or on youth teams their players (and themselves when an
-/// admin, Q14).
+/// The people the signed-in person answers for on a team (PLAYER-6): the
+/// players they're linked to, and themselves when they're an admin or
+/// aren't linked to any player ([participantsFor]).
 @riverpod
 List<Participant> myParticipants(Ref ref, GroupId groupId) {
-  final group = ref.watch(groupProvider(groupId)).value;
   final me = ref.watch(myMembershipProvider(groupId));
-  if (group == null || me == null) return const [];
-  if (group.teamType != TeamType.youth) {
-    return participantsFor(group: group, me: me);
-  }
+  if (me == null) return const [];
   return participantsFor(
-    group: group,
     me: me,
     players: ref.watch(playersProvider(groupId)).value ?? const [],
     links: ref.watch(guardianLinksProvider(groupId)).value ?? const [],

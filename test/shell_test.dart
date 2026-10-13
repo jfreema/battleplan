@@ -59,7 +59,6 @@ void main() {
     String title = 'Practice',
     bool rsvpEnabled = true,
     DateTime? canceledAt,
-    RsvpFor rsvpFor = RsvpFor.members,
   }) {
     final start = DateTime.now().add(Duration(days: days, hours: 1));
     return Event(
@@ -73,7 +72,6 @@ void main() {
       createdBy: 'coach',
       rsvpEnabled: rsvpEnabled,
       canceledAt: canceledAt,
-      rsvpFor: rsvpFor,
     );
   }
 

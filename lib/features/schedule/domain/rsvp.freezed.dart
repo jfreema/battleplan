@@ -317,7 +317,8 @@ mixin _$Participant {
 
  ParticipantType get type; String get id;/// The member's display name, or the player's.
  String get name;/// "Emma #7" for a player (PLAYER-8).
- String? get label;
+ String? get label;/// The signed-in member is this player ("I am this player").
+ bool get isMe;
 /// Create a copy of Participant
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -329,20 +330,20 @@ $ParticipantCopyWith<Participant> get copyWith => _$ParticipantCopyWithImpl<Part
 @override
 bool operator ==(Object other) {
   final _this = this as Participant;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Participant&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.label, _this.label) || other.label == _this.label));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Participant&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.label, _this.label) || other.label == _this.label)&&(identical(other.isMe, _this.isMe) || other.isMe == _this.isMe));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Participant;
-  return Object.hash(runtimeType,_this.type,_this.id,_this.name,_this.label);
+  return Object.hash(runtimeType,_this.type,_this.id,_this.name,_this.label,_this.isMe);
 }
 
 @override
 String toString() {
   final _this = this as Participant;
-  return 'Participant(type: ${_this.type}, id: ${_this.id}, name: ${_this.name}, label: ${_this.label})';
+  return 'Participant(type: ${_this.type}, id: ${_this.id}, name: ${_this.name}, label: ${_this.label}, isMe: ${_this.isMe})';
 }
 
 
@@ -353,7 +354,7 @@ abstract mixin class $ParticipantCopyWith<$Res>  {
   factory $ParticipantCopyWith(Participant value, $Res Function(Participant) _then) = _$ParticipantCopyWithImpl;
 @useResult
 $Res call({
- ParticipantType type, String id, String name, String? label
+ ParticipantType type, String id, String name, String? label, bool isMe
 });
 
 
@@ -370,13 +371,14 @@ class _$ParticipantCopyWithImpl<$Res>
 
 /// Create a copy of Participant
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? type = null,Object? id = null,Object? name = null,Object? label = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? type = null,Object? id = null,Object? name = null,Object? label = freezed,Object? isMe = null,}) {
   return _then(Participant(
 type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as ParticipantType,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,label: freezed == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isMe: null == isMe ? _self.isMe : isMe // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -461,10 +463,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ParticipantType type,  String id,  String name,  String? label)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ParticipantType type,  String id,  String name,  String? label,  bool isMe)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Participant() when $default != null:
-return $default(_that.type,_that.id,_that.name,_that.label);case _:
+return $default(_that.type,_that.id,_that.name,_that.label,_that.isMe);case _:
   return orElse();
 
 }
@@ -482,10 +484,10 @@ return $default(_that.type,_that.id,_that.name,_that.label);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ParticipantType type,  String id,  String name,  String? label)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ParticipantType type,  String id,  String name,  String? label,  bool isMe)  $default,) {final _that = this;
 switch (_that) {
 case _Participant():
-return $default(_that.type,_that.id,_that.name,_that.label);case _:
+return $default(_that.type,_that.id,_that.name,_that.label,_that.isMe);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -502,10 +504,10 @@ return $default(_that.type,_that.id,_that.name,_that.label);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ParticipantType type,  String id,  String name,  String? label)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ParticipantType type,  String id,  String name,  String? label,  bool isMe)?  $default,) {final _that = this;
 switch (_that) {
 case _Participant() when $default != null:
-return $default(_that.type,_that.id,_that.name,_that.label);case _:
+return $default(_that.type,_that.id,_that.name,_that.label,_that.isMe);case _:
   return null;
 
 }
@@ -517,7 +519,7 @@ return $default(_that.type,_that.id,_that.name,_that.label);case _:
 
 
 class _Participant extends Participant {
-  const _Participant({required this.type, required this.id, required this.name, this.label}): super._();
+  const _Participant({required this.type, required this.id, required this.name, this.label, this.isMe = false}): super._();
   
 
 @override final  ParticipantType type;
@@ -526,6 +528,8 @@ class _Participant extends Participant {
 @override final  String name;
 /// "Emma #7" for a player (PLAYER-8).
 @override final  String? label;
+/// The signed-in member is this player ("I am this player").
+@override@JsonKey() final  bool isMe;
 
 /// Create a copy of Participant
 /// with the given fields replaced by the non-null parameter values.
@@ -537,18 +541,18 @@ _$ParticipantCopyWith<_Participant> get copyWith => __$ParticipantCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Participant&&(identical(other.type, type) || other.type == type)&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.label, label) || other.label == label));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Participant&&(identical(other.type, type) || other.type == type)&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.label, label) || other.label == label)&&(identical(other.isMe, isMe) || other.isMe == isMe));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,type,id,name,label);
+    return Object.hash(runtimeType,type,id,name,label,isMe);
 }
 
 @override
 String toString() {
-    return 'Participant(type: $type, id: $id, name: $name, label: $label)';
+    return 'Participant(type: $type, id: $id, name: $name, label: $label, isMe: $isMe)';
 }
 
 
@@ -559,7 +563,7 @@ abstract mixin class _$ParticipantCopyWith<$Res> implements $ParticipantCopyWith
   factory _$ParticipantCopyWith(_Participant value, $Res Function(_Participant) _then) = __$ParticipantCopyWithImpl;
 @override @useResult
 $Res call({
- ParticipantType type, String id, String name, String? label
+ ParticipantType type, String id, String name, String? label, bool isMe
 });
 
 
@@ -576,13 +580,14 @@ class __$ParticipantCopyWithImpl<$Res>
 
 /// Create a copy of Participant
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? type = null,Object? id = null,Object? name = null,Object? label = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? type = null,Object? id = null,Object? name = null,Object? label = freezed,Object? isMe = null,}) {
   return _then(_Participant(
 type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as ParticipantType,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,label: freezed == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isMe: null == isMe ? _self.isMe : isMe // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

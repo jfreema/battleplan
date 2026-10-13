@@ -1,10 +1,13 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'player.freezed.dart';
 
-/// A kid on a youth team's roster (PLAYER-1). Players never have accounts,
-/// and their record holds only a name, number, and position (PLAYER-10).
+/// Someone on a team's roster (PLAYER-1). Every team has players. A member
+/// can be a player themselves (a `self` link), and players others answer
+/// for, such as kids, never have accounts. The record holds only a name,
+/// number, and position (PLAYER-10).
 @freezed
 abstract class Player with _$Player {
   const factory({
@@ -13,9 +16,19 @@ abstract class Player with _$Player {
     required String displayName,
     String? jerseyNumber,
     String? position,
+
+    /// Pending until a team admin approves a member's new player
+    /// (PLAYER-4). Players without a status are active.
+    @Default(PlayerStatus.active) PlayerStatus status,
+
+    /// Who added it, and how they said they're linked (PLAYER-4).
+    String? proposedBy,
+    PlayerRelation? proposedRelation,
   }) = _Player;
 
   const new _();
+
+  bool get isPending => status == PlayerStatus.pending;
 
   /// "Emma #7", or "Emma" without a number (PLAYER-8).
   String get label {
@@ -26,15 +39,39 @@ abstract class Player with _$Player {
   }
 }
 
-/// A guardian linked to a player (`playerGuardians`).
+/// A member linked to a player (`playerGuardians`, "player links"): as the
+/// player (`self`) or as a parent or guardian. Old links without a
+/// relation are guardians.
 @freezed
 abstract class GuardianLink with _$GuardianLink {
   const factory({
     required PlayerId playerId,
     required GroupId groupId,
     required UserId uid,
+    @Default(PlayerRelation.guardian) PlayerRelation relation,
   }) = _GuardianLink;
+
+  const new _();
+
+  /// The member is this player ("I am this player").
+  bool get isSelf => relation == PlayerRelation.self;
 }
+
+/// [uid]'s links on a team, as the player or a guardian.
+List<GuardianLink> linksOf(UserId uid, Iterable<GuardianLink> links) => [
+  for (final l in links)
+    if (l.uid == uid) l,
+];
+
+/// The member who is [playerId], if anyone claimed it (PLAYER-3: at most
+/// one per player).
+GuardianLink? selfLinkOf(PlayerId playerId, Iterable<GuardianLink> links) =>
+    links.where((l) => l.playerId == playerId && l.isSelf).firstOrNull;
+
+/// How many guardians [playerId] has; the player's own link doesn't count
+/// toward the 4 (PLAYER-3).
+int guardianCountOf(PlayerId playerId, Iterable<GuardianLink> links) =>
+    links.where((l) => l.playerId == playerId && !l.isSelf).length;
 
 /// One guardian when adding players.
 @freezed
@@ -71,10 +108,11 @@ abstract class AddPlayersResult with _$AddPlayersResult {
   }) = _AddPlayersResult;
 }
 
-/// Where a guardian request stands (PLAYER-4).
+/// Where a claim stands (PLAYER-4).
 enum GuardianRequestStatus { pending, approved, declined }
 
-/// A parent asking to be linked to a player (`guardianRequests`, PLAYER-3).
+/// A member claiming a player (`guardianRequests`, "player claims",
+/// PLAYER-3): as the player or as a parent or guardian.
 @freezed
 abstract class GuardianRequest with _$GuardianRequest {
   const factory({
@@ -82,5 +120,10 @@ abstract class GuardianRequest with _$GuardianRequest {
     required GroupId groupId,
     required UserId uid,
     required GuardianRequestStatus status,
+    @Default(PlayerRelation.guardian) PlayerRelation relation,
   }) = _GuardianRequest;
 }
+
+/// What a claim did (PLAYER-3): linked at once (an admin's), or sent to
+/// the admins.
+enum ClaimOutcome { linked, requested }

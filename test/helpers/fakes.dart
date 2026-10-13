@@ -309,18 +309,15 @@ class FakeGroupRepository implements GroupRepository {
     String? color,
     String? description,
     String? timeZone,
-    TeamType? teamType,
     GroupSettings? settings,
   }) async {
     final g = groups[id.value]!;
     groups[id.value] = g.copyWith(
       name: name ?? g.name,
       timeZone: timeZone ?? g.timeZone,
-      teamType: teamType ?? g.teamType,
       settings: settings ?? g.settings,
     );
     if (timeZone != null) updates.add('timeZone $timeZone');
-    if (teamType != null) updates.add('teamType ${teamType.value}');
     updates.add(
       settings != null ? 'settings' : (name != null ? 'name $name' : 'other'),
     );
@@ -379,7 +376,6 @@ class FakeGroupRepository implements GroupRepository {
   Future<GroupId> createGroup({
     required String name,
     required Sport sport,
-    required TeamType teamType,
     required String timeZone,
     String? color,
     String? description,
@@ -551,7 +547,6 @@ Group testGroup(String id, String name, {DateTime? lastMessageAt}) => Group(
   id: GroupId(id),
   name: name,
   sport: Sport.soccer,
-  teamType: TeamType.adult,
   memberCount: 3,
   lastMessageAt: lastMessageAt,
 );
@@ -900,12 +895,14 @@ class FakeInviteRepository implements InviteRepository {
     groupId: 'a',
     name: 'Thunder',
     sport: Sport.softball,
-    teamType: TeamType.adult,
     memberCount: 12,
     invitedBy: 'Alex Kim',
   );
 
   final List<String> redeemed = [];
+
+  /// What [redeem] says about already being on the team.
+  bool joinedAlready = false;
 
   @override
   Future<InvitePreview> preview(String code) async {
@@ -916,11 +913,7 @@ class FakeInviteRepository implements InviteRepository {
   @override
   Future<JoinResult> redeem(String code) async {
     redeemed.add(code);
-    return const JoinResult(
-      groupId: 'a',
-      teamType: TeamType.adult,
-      alreadyMember: false,
-    );
+    return JoinResult(groupId: 'a', alreadyMember: joinedAlready);
   }
 
   @override
@@ -976,12 +969,32 @@ class FakeInviteRepository implements InviteRepository {
 class FakePlayerRepository implements PlayerRepository {
   new([List<Player>? players]) : players = players ?? [];
 
+  /// Every player, active and pending; the watches split them.
   final List<Player> players;
   final List<List<NewPlayer>> added = [];
 
   @override
-  Stream<List<Player>> watchPlayers(GroupId groupId) =>
-      Stream.value(players.where((p) => p.groupId == groupId).toList());
+  Stream<List<Player>> watchPlayers(GroupId groupId) => Stream.value(
+    players.where((p) => p.groupId == groupId && !p.isPending).toList(),
+  );
+
+  @override
+  Stream<List<Player>> watchPendingPlayers(GroupId groupId) => Stream.value(
+    players.where((p) => p.groupId == groupId && p.isPending).toList(),
+  );
+
+  @override
+  Stream<List<Player>> watchMyPendingPlayers(GroupId groupId, UserId uid) =>
+      Stream.value(
+        players
+            .where(
+              (p) =>
+                  p.groupId == groupId &&
+                  p.isPending &&
+                  p.proposedBy == uid.value,
+            )
+            .toList(),
+      );
 
   @override
   Stream<List<GuardianLink>> watchGuardianLinks(GroupId groupId) =>
@@ -1034,14 +1047,21 @@ class FakePlayerRepository implements PlayerRepository {
         requests.where((r) => r.groupId == groupId && r.uid == uid).toList(),
       );
 
-  @override
-  Future<void> requestGuardianLink(
-    GroupId groupId,
-    List<PlayerId> players,
-  ) async => calls.add('request ${players.map((p) => p.value).join(',')}');
+  /// What [claimPlayer] answers: linked at once, as for an admin.
+  ClaimOutcome claimOutcome = ClaimOutcome.requested;
 
   @override
-  Future<void> resolveGuardianRequest(
+  Future<ClaimOutcome> claimPlayer(
+    GroupId groupId,
+    PlayerId playerId,
+    PlayerRelation relation,
+  ) async {
+    calls.add('claim ${playerId.value} ${relation.value}');
+    return claimOutcome;
+  }
+
+  @override
+  Future<void> resolvePlayerClaim(
     GroupId groupId,
     PlayerId playerId,
     UserId uid, {
@@ -1050,12 +1070,32 @@ class FakePlayerRepository implements PlayerRepository {
     '${approve ? 'approve' : 'decline'} ${playerId.value} ${uid.value}',
   );
 
+  /// What [proposePlayer] answers.
+  PlayerStatus proposedStatus = PlayerStatus.pending;
+
   @override
-  Future<void> addMyPlayer(
+  Future<PlayerStatus> proposePlayer(
     GroupId groupId, {
     required String name,
+    required PlayerRelation relation,
     String? jerseyNumber,
-  }) async => calls.add('addMine $name #$jerseyNumber');
+    String? position,
+  }) async {
+    calls.add(
+      'propose $name #${jerseyNumber ?? ''} ${position ?? ''} '
+      '${relation.value}',
+    );
+    return proposedStatus;
+  }
+
+  @override
+  Future<void> resolvePendingPlayer(
+    GroupId groupId,
+    PlayerId playerId, {
+    required bool approve,
+  }) async => calls.add(
+    '${approve ? 'approvePlayer' : 'declinePlayer'} ${playerId.value}',
+  );
 
   @override
   Future<bool> inviteGuardian(
@@ -1709,7 +1749,6 @@ class FakeEventRepository implements EventRepository {
     GroupId groupId,
     EventDraft d, {
     required String createdBy,
-    required bool youth,
   }) {
     final t = d.template;
     return Event(
@@ -1729,7 +1768,6 @@ class FakeEventRepository implements EventRepository {
       opponent: t.opponent,
       homeAway: t.homeAway,
       rsvpEnabled: t.rsvpEnabled,
-      rsvpFor: youth ? RsvpFor.players : RsvpFor.members,
       rsvpDeadline: d.deadline,
       reminderOffsets: t.reminderOffsets,
       notifyTeam: t.notifyTeam,
@@ -1743,13 +1781,10 @@ class FakeEventRepository implements EventRepository {
     GroupId groupId,
     EventDraft draft, {
     required UserId createdBy,
-    required bool youth,
   }) async {
     final id = 'new${_next++}';
     calls.add('create');
-    put(
-      _fromDraft(id, groupId, draft, createdBy: createdBy.value, youth: youth),
-    );
+    put(_fromDraft(id, groupId, draft, createdBy: createdBy.value));
     return EventId(id);
   }
 
@@ -1762,7 +1797,6 @@ class FakeEventRepository implements EventRepository {
         event.groupId,
         draft,
         createdBy: event.createdBy,
-        youth: event.forPlayers,
       ).copyWith(rsvpCounts: event.rsvpCounts),
     );
   }
@@ -1967,9 +2001,10 @@ class FakeRsvpRepository implements RsvpRepository {
       RsvpCounts count({required bool staff}) {
         final list = [
           for (final x in rsvps)
+            // Players apart from everyone answering for themselves
+            // (PLAYER-6), as the server counts them.
             if (x.eventId == e.id &&
-                (!e.forPlayers ||
-                    (x.participantType == ParticipantType.member) == staff))
+                (x.participantType == ParticipantType.member) == staff)
               x,
         ];
         int n(RsvpStatus s) => list.where((x) => x.status == s).length;
@@ -1983,7 +2018,7 @@ class FakeRsvpRepository implements RsvpRepository {
       events.put(
         e.copyWith(
           rsvpCounts: count(staff: false),
-          staffCounts: e.forPlayers ? count(staff: true) : const RsvpCounts(),
+          staffCounts: count(staff: true),
         ),
       );
     }
@@ -2751,6 +2786,30 @@ class RefusingPlayerRepository extends FakePlayerRepository {
     PlayerId playerId, {
     required String email,
     String? name,
+  }) async => throw failure;
+
+  @override
+  Future<ClaimOutcome> claimPlayer(
+    GroupId groupId,
+    PlayerId playerId,
+    PlayerRelation relation,
+  ) async => throw failure;
+
+  @override
+  Future<PlayerStatus> proposePlayer(
+    GroupId groupId, {
+    required String name,
+    required PlayerRelation relation,
+    String? jerseyNumber,
+    String? position,
+  }) async => throw failure;
+
+  @override
+  Future<void> resolvePlayerClaim(
+    GroupId groupId,
+    PlayerId playerId,
+    UserId uid, {
+    required bool approve,
   }) async => throw failure;
 }
 

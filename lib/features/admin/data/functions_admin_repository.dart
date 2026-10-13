@@ -121,6 +121,9 @@ class FunctionsAdminRepository implements AdminRepository {
             displayName: _str(_map(p)['displayName']),
             jerseyNumber: _map(p)['jerseyNumber'] as String?,
             position: _map(p)['position'] as String?,
+            status:
+                PlayerStatus.tryParse(_map(p)['status'] as String?) ??
+                PlayerStatus.active,
           ),
       ],
       guardians: [
@@ -129,6 +132,9 @@ class FunctionsAdminRepository implements AdminRepository {
             playerId: PlayerId(_str(_map(g)['playerId'])),
             groupId: id,
             uid: UserId(_str(_map(g)['uid'])),
+            relation:
+                PlayerRelation.tryParse(_map(g)['relation'] as String?) ??
+                PlayerRelation.guardian,
           ),
       ],
       invites: [
@@ -460,7 +466,6 @@ AdminTeamRow _teamRow(Map<String, dynamic> r) {
     id: GroupId(_str(r['id'])),
     name: _str(r['name']),
     sport: Sport.tryParse(r['sport'] as String?) ?? Sport.other,
-    teamType: TeamType.tryParse(r['teamType'] as String?) ?? TeamType.adult,
     ownerId: (owner['uid'] ?? r['ownerId']) as String?,
     ownerName: _str(owner['name'] ?? r['ownerName']),
     memberCount: _int(r['memberCount']),

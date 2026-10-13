@@ -13,34 +13,54 @@ part 'providers.g.dart';
 PlayerRepository playerRepository(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
 
-/// A youth team's players, by jersey number then name (TEAM-3).
+/// Players by jersey number, then name (TEAM-3).
+List<Player> sortPlayers(Iterable<Player> list) {
+  int number(Player p) => int.tryParse(p.jerseyNumber ?? '') ?? 1 << 20;
+  return [...list]..sort((a, b) {
+    final byNumber = number(a).compareTo(number(b));
+    return byNumber != 0
+        ? byNumber
+        : a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+  });
+}
+
+/// A team's active players, by jersey number then name (TEAM-3). Every
+/// team has them.
 @riverpod
 Stream<List<Player>> players(Ref ref, GroupId groupId) =>
-    ref.watch(playerRepositoryProvider).watchPlayers(groupId).map((list) {
-      int number(Player p) => int.tryParse(p.jerseyNumber ?? '') ?? 1 << 20;
-      return [...list]..sort((a, b) {
-        final byNumber = number(a).compareTo(number(b));
-        return byNumber != 0
-            ? byNumber
-            : a.displayName.toLowerCase().compareTo(
-                b.displayName.toLowerCase(),
-              );
-      });
-    });
+    ref.watch(playerRepositoryProvider).watchPlayers(groupId).map(sortPlayers);
 
-/// A youth team's guardian links.
+/// A team's pending players (PLAYER-4). Only admins can read them all.
+@riverpod
+Stream<List<Player>> pendingPlayers(Ref ref, GroupId groupId) => ref
+    .watch(playerRepositoryProvider)
+    .watchPendingPlayers(groupId)
+    .map(sortPlayers);
+
+/// The pending players the signed-in person added (PLAYER-4).
+@riverpod
+Stream<List<Player>> myPendingPlayers(Ref ref, GroupId groupId) {
+  final uid = ref.watch(authUserProvider).value?.uid;
+  if (uid == null) return Stream.value(const []);
+  return ref
+      .watch(playerRepositoryProvider)
+      .watchMyPendingPlayers(groupId, UserId(uid))
+      .map(sortPlayers);
+}
+
+/// A team's player links, as the player or a guardian.
 @riverpod
 Stream<List<GuardianLink>> guardianLinks(Ref ref, GroupId groupId) =>
     ref.watch(playerRepositoryProvider).watchGuardianLinks(groupId);
 
-/// A team's pending guardian requests (PLAYER-4). Only admins can read them.
+/// A team's pending claims (PLAYER-4). Only admins can read them.
 @riverpod
 Stream<List<GuardianRequest>> pendingGuardianRequests(
   Ref ref,
   GroupId groupId,
 ) => ref.watch(playerRepositoryProvider).watchPendingRequests(groupId);
 
-/// The signed-in person's own guardian requests on a team (PLAYER-3).
+/// The signed-in person's own claims on a team (PLAYER-3).
 @riverpod
 Stream<List<GuardianRequest>> myGuardianRequests(Ref ref, GroupId groupId) {
   final uid = ref.watch(authUserProvider).value?.uid;

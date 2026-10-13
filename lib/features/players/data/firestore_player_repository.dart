@@ -7,26 +7,40 @@ import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
-/// Players from Firestore; adding and removing through callables.
+/// Players, player links, and claims from Firestore; adding, claiming,
+/// deciding, and removing through callables.
 class FirestorePlayerRepository implements PlayerRepository {
   new(this._db, this._functions);
 
   final FirebaseFirestore _db;
   final FirebaseFunctions _functions;
 
+  /// Members see active players only, so they ask for them by status
+  /// (the rules hide pending ones, PLAYER-4).
   @override
   Stream<List<Player>> watchPlayers(GroupId groupId) => _allPages(
-    _db
-        .collection(Collections.players)
-        .where('groupId', isEqualTo: groupId.value),
-    (d) => Player(
-      id: PlayerId(d.id),
-      groupId: groupId,
-      displayName: d.data()['displayName'] as String? ?? '',
-      jerseyNumber: d.data()['jerseyNumber'] as String?,
-      position: d.data()['position'] as String?,
-    ),
+    _players(groupId).where('status', isEqualTo: PlayerStatus.active.value),
+    (d) => playerFromFirestore(d.id, groupId, d.data()),
   );
+
+  @override
+  Stream<List<Player>> watchPendingPlayers(GroupId groupId) => _allPages(
+    _players(groupId).where('status', isEqualTo: PlayerStatus.pending.value),
+    (d) => playerFromFirestore(d.id, groupId, d.data()),
+  );
+
+  @override
+  Stream<List<Player>> watchMyPendingPlayers(GroupId groupId, UserId uid) =>
+      _allPages(
+        _players(groupId)
+            .where('status', isEqualTo: PlayerStatus.pending.value)
+            .where('proposedBy', isEqualTo: uid.value),
+        (d) => playerFromFirestore(d.id, groupId, d.data()),
+      );
+
+  Query<Map<String, dynamic>> _players(GroupId groupId) => _db
+      .collection(Collections.players)
+      .where('groupId', isEqualTo: groupId.value);
 
   @override
   Stream<List<GuardianLink>> watchGuardianLinks(GroupId groupId) => _allPages(
@@ -37,6 +51,7 @@ class FirestorePlayerRepository implements PlayerRepository {
       playerId: PlayerId(d.data()['playerId'] as String),
       groupId: groupId,
       uid: UserId(d.data()['uid'] as String),
+      relation: relationFromFirestore(d.data()['relation']),
     ),
   );
 
@@ -160,24 +175,34 @@ class FirestorePlayerRepository implements PlayerRepository {
                       GuardianRequestStatus.values.asNameMap()[d
                           .data()['status']] ??
                       GuardianRequestStatus.pending,
+                  relation: relationFromFirestore(d.data()['relation']),
                 ),
             ],
           );
 
   @override
-  Future<void> requestGuardianLink(GroupId groupId, List<PlayerId> players) =>
-      _call('requestGuardianLink', {
-        'groupId': groupId.value,
-        'playerIds': [for (final p in players) p.value],
-      });
+  Future<ClaimOutcome> claimPlayer(
+    GroupId groupId,
+    PlayerId playerId,
+    PlayerRelation relation,
+  ) async {
+    final d = await _call('claimPlayer', {
+      'groupId': groupId.value,
+      'playerId': playerId.value,
+      'relation': relation.value,
+    });
+    return d['status'] == 'linked'
+        ? ClaimOutcome.linked
+        : ClaimOutcome.requested;
+  }
 
   @override
-  Future<void> resolveGuardianRequest(
+  Future<void> resolvePlayerClaim(
     GroupId groupId,
     PlayerId playerId,
     UserId uid, {
     required bool approve,
-  }) => _call('resolveGuardianLink', {
+  }) => _call('resolvePlayerClaim', {
     'groupId': groupId.value,
     'playerId': playerId.value,
     'uid': uid.value,
@@ -185,14 +210,35 @@ class FirestorePlayerRepository implements PlayerRepository {
   });
 
   @override
-  Future<void> addMyPlayer(
+  Future<PlayerStatus> proposePlayer(
     GroupId groupId, {
     required String name,
+    required PlayerRelation relation,
     String? jerseyNumber,
-  }) => _call('addMyPlayer', {
+    String? position,
+  }) async {
+    String? blankToNull(String? v) =>
+        (v?.trim().isEmpty ?? true) ? null : v!.trim();
+    final d = await _call('proposePlayer', {
+      'groupId': groupId.value,
+      'displayName': name.trim(),
+      'jerseyNumber': blankToNull(jerseyNumber),
+      'position': blankToNull(position),
+      'relation': relation.value,
+    });
+    return PlayerStatus.tryParse(d['status'] as String?) ??
+        PlayerStatus.pending;
+  }
+
+  @override
+  Future<void> resolvePendingPlayer(
+    GroupId groupId,
+    PlayerId playerId, {
+    required bool approve,
+  }) => _call('resolvePendingPlayer', {
     'groupId': groupId.value,
-    'name': name,
-    'jerseyNumber': jerseyNumber,
+    'playerId': playerId.value,
+    'approve': approve,
   });
 
   @override
@@ -230,15 +276,23 @@ class FirestorePlayerRepository implements PlayerRepository {
       return result.data;
     } on FirebaseFunctionsException catch (e) {
       throw switch ((e.code, e.message)) {
-        ('failed-precondition', 'too-many-players' || 'too-many-guardians') =>
+        (
+          'failed-precondition',
+          'too-many-players' ||
+              'too-many-guardians' ||
+              'player-already-claimed' ||
+              'already-a-player' ||
+              'already-linked',
+        ) =>
           InvalidInput(e.message),
         ('failed-precondition', 'too-many-teams') => TooManyTeams(e.message),
         ('failed-precondition', 'email-not-verified') => EmailNotVerified(
           e.message,
         ),
-        // The team became an adult team (TEAM-1), or was archived.
-        ('failed-precondition', 'not-youth-team' || 'team-archived') =>
-          PermissionDenied(e.message),
+        // The team was archived (TEAM-9).
+        ('failed-precondition', 'team-archived') => PermissionDenied(e.message),
+        // The player was removed, or a pending one was decided (PLAYER-4).
+        ('not-found', _) => NotFound(e.message),
         ('resource-exhausted', _) => RateLimited(e.message),
         ('permission-denied', _) => PermissionDenied(e.message),
         ('invalid-argument', _) => InvalidInput(e.message),
@@ -248,3 +302,23 @@ class FirestorePlayerRepository implements PlayerRepository {
     }
   }
 }
+
+/// A player from its Firestore fields (ARCH §6.2 `players`).
+Player playerFromFirestore(
+  String id,
+  GroupId groupId,
+  Map<String, dynamic> d,
+) => Player(
+  id: PlayerId(id),
+  groupId: groupId,
+  displayName: d['displayName'] as String? ?? '',
+  jerseyNumber: d['jerseyNumber'] as String?,
+  position: d['position'] as String?,
+  status: PlayerStatus.tryParse(d['status'] as String?) ?? PlayerStatus.active,
+  proposedBy: d['proposedBy'] as String?,
+  proposedRelation: PlayerRelation.tryParse(d['proposedRelation'] as String?),
+);
+
+/// A link's or claim's relation; old ones without it are guardians.
+PlayerRelation relationFromFirestore(Object? value) =>
+    PlayerRelation.tryParse(value as String?) ?? PlayerRelation.guardian;

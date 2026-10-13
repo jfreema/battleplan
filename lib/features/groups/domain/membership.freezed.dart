@@ -17,7 +17,9 @@ mixin _$Membership {
 
  GroupId get groupId; UserId get uid; MemberRole get role; String get displayName; NotificationLevel get notificationLevel; DateTime? get mutedUntil; DateTime? get lastReadAt; String? get title;/// Their profile photo's Storage path, copied onto the membership, for
 /// the roster (TEAM-3).
- String? get photoPath;/// Youth teams: "Emma #7, Liam #23" for a guardian (PLAYER-8).
+ String? get photoPath;/// Who's who from their player links (PLAYER-8): "Emma #7, Liam #23"
+/// for a guardian, "#12" for a member who is a player (number first
+/// when both), or null.
  String? get playerSummary;/// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
  bool get pending;
 /// Create a copy of Membership
@@ -240,7 +242,9 @@ class _Membership extends Membership {
 /// Their profile photo's Storage path, copied onto the membership, for
 /// the roster (TEAM-3).
 @override final  String? photoPath;
-/// Youth teams: "Emma #7, Liam #23" for a guardian (PLAYER-8).
+/// Who's who from their player links (PLAYER-8): "Emma #7, Liam #23"
+/// for a guardian, "#12" for a member who is a player (number first
+/// when both), or null.
 @override final  String? playerSummary;
 /// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
 @override@JsonKey() final  bool pending;

@@ -21,7 +21,9 @@ abstract class Membership with _$Membership {
     /// the roster (TEAM-3).
     String? photoPath,
 
-    /// Youth teams: "Emma #7, Liam #23" for a guardian (PLAYER-8).
+    /// Who's who from their player links (PLAYER-8): "Emma #7, Liam #23"
+    /// for a guardian, "#12" for a member who is a player (number first
+    /// when both), or null.
     String? playerSummary,
 
     /// Added by email and hasn't signed in yet: "Not joined yet" (AUTH-6).
@@ -33,9 +35,9 @@ abstract class Membership with _$Membership {
   /// "Maria R." from "Maria Rodriguez": first name and last initial.
   String get shortName => shortNameOf(displayName);
 
-  /// Who's who on youth teams (PLAYER-8): "Maria R. · Emma #7", or just the
-  /// name when they guard no players. The roster shows the full name with
-  /// "Parent of …" instead.
+  /// Who's who (PLAYER-8): "Maria R. · Emma #7" for a guardian, "Jared F.
+  /// #12" for a member who is a player, or just the name. The roster shows
+  /// the full name with "Parent of …" instead.
   String get nameWithPlayers => nameWithPlayersOf(displayName, playerSummary);
 
   /// Owners and admins manage the team (SPEC §3).
@@ -62,9 +64,17 @@ String shortNameOf(String displayName) {
   return '${parts.first} ${String.fromCharCode(parts.last.runes.first).toUpperCase()}.';
 }
 
-/// "Maria R. · Emma #7" for a guardian (PLAYER-8); otherwise the name. Chat
-/// uses it with the author snapshot on each message.
-String nameWithPlayersOf(String displayName, String? playerSummary) =>
-    (playerSummary?.isNotEmpty ?? false)
-    ? '${shortNameOf(displayName)} · $playerSummary'
-    : displayName;
+/// "Maria R. · Emma #7" for a guardian, "Jared F. #12" for a member who is
+/// a player, and "Jared F. #12 · Emma #7" for both (PLAYER-8); otherwise
+/// the name. [playerSummary] lists the member's own number first ("#12,
+/// Emma #7"). Chat uses it with the author snapshot on each message.
+String nameWithPlayersOf(String displayName, String? playerSummary) {
+  final summary = playerSummary?.trim() ?? '';
+  if (summary.isEmpty) return displayName;
+  final short = shortNameOf(displayName);
+  if (!summary.startsWith('#')) return '$short · $summary';
+  final comma = summary.indexOf(', ');
+  if (comma < 0) return '$short $summary';
+  return '$short ${summary.substring(0, comma)} · '
+      '${summary.substring(comma + 2)}';
+}

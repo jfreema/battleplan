@@ -8,6 +8,7 @@ import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart';
+import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
@@ -246,6 +247,7 @@ class ScheduleEventRow extends ConsumerWidget {
     final g = event.groupId;
     final group = ref.watch(groupProvider(g)).value;
     final participants = ref.watch(myParticipantsProvider(g));
+    final players = ref.watch(playersProvider(g)).value?.length ?? 0;
     final answers =
         ref
             .watch(
@@ -265,6 +267,7 @@ class ScheduleEventRow extends ConsumerWidget {
       participants: participants,
       answers: answers,
       showTeam: showTeam,
+      playerCount: players,
       onTap: () => openEvent(context, event),
     );
   }

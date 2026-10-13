@@ -271,21 +271,18 @@ void main() {
         'groupId': 'g1',
         'name': 'Thunder',
         'sport': 'softball',
-        'teamType': 'youth',
         'memberCount': 12,
         'color': '#2F5BEA',
         'invitedBy': 'Jordan',
       };
       functions.handlers['redeemInvite'] = (_) => {
         'groupId': 'g1',
-        'teamType': 'adult',
         'alreadyMember': true,
       };
       final repo = FunctionsInviteRepository(functions);
       final preview = await repo.preview('K7XPM2QR');
       expect(preview.name, 'Thunder');
       expect(preview.sport, Sport.softball);
-      expect(preview.teamType, TeamType.youth);
       expect(preview.color, 0xFF2F5BEA);
       functions.handlers['getInvitePreview'] = (_) => {
         'groupId': 'g1',
@@ -298,7 +295,6 @@ void main() {
       expect(sparse.memberCount, 0);
       final joined = await repo.redeem('K7XPM2QR');
       expect(joined.alreadyMember, isTrue);
-      expect(joined.teamType, TeamType.adult);
     });
 
     test('sends, lists, resends, and revokes email invites', () async {

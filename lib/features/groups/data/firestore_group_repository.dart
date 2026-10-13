@@ -36,7 +36,6 @@ class FirestoreGroupRepository implements GroupRepository {
   Future<GroupId> createGroup({
     required String name,
     required Sport sport,
-    required TeamType teamType,
     required String timeZone,
     String? color,
     String? description,
@@ -47,7 +46,6 @@ class FirestoreGroupRepository implements GroupRepository {
           .call<Map<String, dynamic>>({
             'name': name,
             'sport': sport.value,
-            'teamType': teamType.value,
             'timeZone': timeZone,
             'color': ?color,
             if (description != null && description.isNotEmpty)
@@ -77,7 +75,6 @@ class FirestoreGroupRepository implements GroupRepository {
     String? color,
     String? description,
     String? timeZone,
-    TeamType? teamType,
     GroupSettings? settings,
   }) async {
     final trimmed = name?.trim();
@@ -91,7 +88,6 @@ class FirestoreGroupRepository implements GroupRepository {
         'color': ?color,
         'description': ?description?.trim(),
         'timeZone': ?timeZone,
-        'teamType': ?teamType?.value,
         if (settings != null) 'settings': settingsToFirestore(settings),
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -408,7 +404,7 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
     id: GroupId(id),
     name: d['name'] as String? ?? '',
     sport: Sport.tryParse(d['sport'] as String?) ?? Sport.other,
-    teamType: TeamType.tryParse(d['teamType'] as String?) ?? TeamType.adult,
+    kind: GroupKind.tryParse(d['kind'] as String?) ?? GroupKind.team,
     memberCount: (d['memberCount'] as num?)?.toInt() ?? 0,
     description: d['description'] as String?,
     color: _parseColor(d['color'] as String?),

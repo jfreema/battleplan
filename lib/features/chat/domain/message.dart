@@ -19,7 +19,8 @@ abstract class Message with _$Message {
     @Default('') String text,
     String? authorPhotoPath,
 
-    /// "Emma #7, Liam #23" for a guardian on a youth team (PLAYER-8).
+    /// "Emma #7, Liam #23" for a guardian, "#12" for a member who is a
+    /// player (PLAYER-8).
     String? authorPlayerSummary,
     String? replyToId,
 

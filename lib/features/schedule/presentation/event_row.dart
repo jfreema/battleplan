@@ -10,9 +10,9 @@ import 'package:material_ui/material_ui.dart';
 
 /// One event in a schedule list (SCHED-1): the date block on the day's
 /// first row, the type's color and icon, the title, time, and place, my
-/// answer (one per player on youth teams), and the counts. In "All my
-/// teams" it also names the team and, for parents, their players (SCHED-2,
-/// PLAYER-9). Canceled events are struck through with a badge (SCHED-7).
+/// answer (one per player I answer for), and the counts. In "All my
+/// teams" it also names the team and, for guardians, their players
+/// (SCHED-2, PLAYER-9). Canceled events are struck through with a badge (SCHED-7).
 class EventRow extends StatelessWidget {
   const new({
     required this.event,
@@ -23,6 +23,7 @@ class EventRow extends StatelessWidget {
     this.participants = const [],
     this.answers = const {},
     this.showTeam = false,
+    this.playerCount = 0,
     super.key,
   });
 
@@ -41,6 +42,9 @@ class EventRow extends StatelessWidget {
   final Map<String, Rsvp> answers;
   final bool showTeam;
 
+  /// The team's active players, for "12 of 15 players going" (PLAYER-6).
+  final int playerCount;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -52,9 +56,10 @@ class EventRow extends StatelessWidget {
       color: scheme.onSurfaceVariant,
     );
     final allowMaybe = group?.settings.allowMaybe ?? true;
+    // The players I'm here for; my own player needs no name (PLAYER-9).
     final players = [
       for (final p in participants)
-        if (p.isPlayer) p,
+        if (p.isPlayer && !p.isMe) p,
     ];
 
     return InkWell(
@@ -166,7 +171,7 @@ class EventRow extends StatelessWidget {
                             for (final p in participants)
                               _MyAnswer(
                                 label: participants.length > 1 || p.isPlayer
-                                    ? (p.isPlayer
+                                    ? (p.isPlayer && !p.isMe
                                           ? p.name.split(' ').first
                                           : l10n.eventYou)
                                     : null,
@@ -178,9 +183,10 @@ class EventRow extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: Space.xs),
                       child: Text(
-                        countsText(
+                        eventCountsText(
                           l10n,
-                          event.rsvpCounts,
+                          event,
+                          players: playerCount,
                           allowMaybe: allowMaybe,
                         ),
                         style: theme.textTheme.labelMedium?.copyWith(

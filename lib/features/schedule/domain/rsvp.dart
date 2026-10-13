@@ -5,9 +5,9 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'rsvp.freezed.dart';
 
 /// One answer to an event (`rsvps/{eventId}_{participantId}`, SCHED-5).
-/// There's exactly one per event and participant: on youth teams both
-/// parents write the same player's record, and the latest answer counts
-/// (PLAYER-6). No record means "No response".
+/// There's exactly one per event and participant: two guardians, or a
+/// player and their guardian, write the same player's record, and the
+/// latest answer counts (PLAYER-6). No record means "No response".
 @freezed
 abstract class Rsvp with _$Rsvp {
   const factory({
@@ -31,8 +31,8 @@ abstract class Rsvp with _$Rsvp {
   }) = _Rsvp;
 }
 
-/// Someone an RSVP can be given for: a member, or a player on a youth
-/// team (PLAYER-6).
+/// Someone an RSVP can be given for: a member answering for themselves,
+/// or a player (PLAYER-6).
 @freezed
 abstract class Participant with _$Participant {
   const factory({
@@ -44,6 +44,9 @@ abstract class Participant with _$Participant {
 
     /// "Emma #7" for a player (PLAYER-8).
     String? label,
+
+    /// The signed-in member is this player ("I am this player").
+    @Default(false) bool isMe,
   }) = _Participant;
 
   const new _();

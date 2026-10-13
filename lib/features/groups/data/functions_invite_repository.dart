@@ -23,7 +23,6 @@ class FunctionsInviteRepository implements InviteRepository {
       groupId: d['groupId'] as String,
       name: d['name'] as String,
       sport: Sport.tryParse(d['sport'] as String?) ?? Sport.other,
-      teamType: TeamType.tryParse(d['teamType'] as String?) ?? TeamType.adult,
       memberCount: (d['memberCount'] as num?)?.toInt() ?? 0,
       color: _color(d['color'] as String?),
       logoUrl: d['logoUrl'] as String?,
@@ -36,7 +35,6 @@ class FunctionsInviteRepository implements InviteRepository {
     final d = await _raw('redeemInvite', {'code': code});
     return JoinResult(
       groupId: d['groupId'] as String,
-      teamType: TeamType.tryParse(d['teamType'] as String?) ?? TeamType.adult,
       alreadyMember: d['alreadyMember'] as bool? ?? false,
     );
   }

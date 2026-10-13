@@ -4,19 +4,25 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/roster_parser.dart';
+import 'package:battleplan/features/players/presentation/player_dialogs.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// PLAYER-1 at `/g/:groupId/players/add` (admins): add one player with up
-/// to 4 guardians, or paste a list with one line per guardian. Guardians
-/// with accounts are linked now; new emails get an account and a setup
-/// email. A results screen follows.
+/// PLAYER-1 and PLAYER-4 at `/g/:groupId/players/add`. Admins add one
+/// player with up to 4 guardians, or paste a list with one line per
+/// guardian; guardians with accounts are linked now, new emails get an
+/// account and a setup email, and a results screen follows. Members add a
+/// player with how they're linked ("I am this player" or their parent or
+/// guardian), pending until an admin approves it.
 class AddPlayersScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -133,7 +139,6 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
             InvalidInput() => l10n.tooManyRosterLines(
               Limits.pastedRosterLinesMax,
             ),
-            PermissionDenied(message: 'not-youth-team') => l10n.notYouthTeam,
             PermissionDenied(message: 'team-archived') => l10n.teamArchived,
             PermissionDenied() => l10n.notAllowed,
             Offline() => l10n.signInOffline,
@@ -146,9 +151,70 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
     }
   }
 
+  /// A member's player, pending until an admin approves (PLAYER-4).
+  Future<void> _propose(ProposedPlayer p) async {
+    final l10n = AppLocalizations.of(context);
+    setState(() => _saving = true);
+    try {
+      final status = await ref
+          .read(playerRepositoryProvider)
+          .proposePlayer(
+            widget.groupId,
+            name: p.name,
+            relation: p.relation,
+            jerseyNumber: p.jerseyNumber,
+            position: p.position,
+          );
+      if (!mounted) return;
+      showAppSnackBar(
+        context,
+        status == PlayerStatus.pending ? l10n.playerProposed : l10n.playerAdded,
+      );
+      context.pop();
+    } on AppFailure catch (e) {
+      if (mounted) showAppSnackBar(context, playerRequestFailure(l10n, e));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final teamAdmin =
+        ref.watch(myMembershipProvider(widget.groupId))?.isAdmin ?? false;
+    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    if (!teamAdmin && !superAdmin) {
+      final me = ref.watch(authUserProvider).value?.uid;
+      final links = ref.watch(guardianLinksProvider(widget.groupId)).value;
+      final pending = ref.watch(myPendingPlayersProvider(widget.groupId)).value;
+      // A member is a player at most once per team (PLAYER-3).
+      final canBeSelf =
+          !(links ?? const <GuardianLink>[]).any(
+            (l) => l.uid.value == me && l.isSelf,
+          ) &&
+          !(pending ?? const <Player>[]).any(
+            (p) => p.proposedRelation == PlayerRelation.self,
+          );
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.addPlayer)),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: ListView(
+              padding: const EdgeInsets.all(Space.xl),
+              children: [
+                ProposePlayerForm(
+                  canBeSelf: canBeSelf,
+                  saving: _saving,
+                  onSubmit: (p) => unawaited(_propose(p)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     final parsed = parsePastedRoster(_paste.text);
     // Up to 200 lines (PLAYER-1).
     final tooManyLines = parsed.lines > Limits.pastedRosterLinesMax;

@@ -30,18 +30,43 @@ void main() {
   });
 
   group('FirestorePlayerRepository', () {
-    test('watches players, guardian links, and requests', () async {
+    test('watches active and pending players, links, and claims', () async {
       await db.doc('players/emma').set({
         'groupId': 'g1',
         'displayName': 'Emma',
         'jerseyNumber': '7',
         'position': 'Forward',
+        'status': 'active',
       });
-      await db.doc('players/x').set({'groupId': 'g2', 'displayName': 'Other'});
+      await db.doc('players/noah').set({
+        'groupId': 'g1',
+        'displayName': 'Noah',
+        'status': 'pending',
+        'proposedBy': 'luis',
+        'proposedRelation': 'guardian',
+      });
+      await db.doc('players/sam').set({
+        'groupId': 'g1',
+        'displayName': 'Sam',
+        'status': 'pending',
+        'proposedBy': 'sam',
+        'proposedRelation': 'self',
+      });
+      await db.doc('players/x').set({
+        'groupId': 'g2',
+        'displayName': 'Other',
+        'status': 'active',
+      });
       await db.doc('playerGuardians/emma_maria').set({
         'groupId': 'g1',
         'playerId': 'emma',
         'uid': 'maria',
+      });
+      await db.doc('playerGuardians/emma_emma1').set({
+        'groupId': 'g1',
+        'playerId': 'emma',
+        'uid': 'emma1',
+        'relation': 'self',
       });
       await db.doc('guardianRequests/emma_luis').set({
         'groupId': 'g1',
@@ -54,22 +79,45 @@ void main() {
         'playerId': 'emma',
         'uid': 'sam',
         'status': 'declined',
+        'relation': 'self',
       });
       final repo = FirestorePlayerRepository(db, functions);
 
+      // Members ask for active players only (the rules hide pending ones).
       final players = await repo.watchPlayers(_g).first;
       expect(players.single.displayName, 'Emma');
       expect(players.single.jerseyNumber, '7');
+      expect(players.single.status, PlayerStatus.active);
+      final pending = await repo.watchPendingPlayers(_g).first;
+      expect(pending.map((p) => p.displayName), ['Noah', 'Sam']);
+      expect(pending.first.isPending, isTrue);
+      expect(pending.first.proposedBy, 'luis');
+      expect(pending.first.proposedRelation, PlayerRelation.guardian);
+      final mine = await repo
+          .watchMyPendingPlayers(_g, const UserId('sam'))
+          .first;
+      expect(mine.single.proposedRelation, PlayerRelation.self);
+
+      // Old links without a relation are guardians.
+      final links = await repo.watchGuardianLinks(_g).first;
       expect(
-        (await repo.watchGuardianLinks(_g).first).single.uid,
-        const UserId('maria'),
+        {for (final l in links) l.uid.value: l.relation},
+        {'maria': PlayerRelation.guardian, 'emma1': PlayerRelation.self},
       );
-      expect(
-        (await repo.watchPendingRequests(_g).first).single.uid,
-        const UserId('luis'),
-      );
-      final mine = await repo.watchMyRequests(_g, const UserId('sam')).first;
-      expect(mine.single.status, GuardianRequestStatus.declined);
+      final open = (await repo.watchPendingRequests(_g).first).single;
+      expect(open.uid, const UserId('luis'));
+      expect(open.relation, PlayerRelation.guardian);
+      final asked = await repo.watchMyRequests(_g, const UserId('sam')).first;
+      expect(asked.single.status, GuardianRequestStatus.declined);
+      expect(asked.single.relation, PlayerRelation.self);
+    });
+
+    test('reads a player without a status as active', () {
+      final p = playerFromFirestore('old', _g, const {'displayName': 'Old'});
+      expect(p.status, PlayerStatus.active);
+      expect(p.proposedRelation, isNull);
+      expect(relationFromFirestore(null), PlayerRelation.guardian);
+      expect(relationFromFirestore('self'), PlayerRelation.self);
     });
 
     test('edits a player, blanking empty number and position', () async {
@@ -137,14 +185,68 @@ void main() {
       });
 
       await repo.removePlayer(_g, const PlayerId('emma'));
-      await repo.requestGuardianLink(_g, const [PlayerId('emma')]);
-      await repo.resolveGuardianRequest(
+      functions.handlers['claimPlayer'] = (_) => {'status': 'requested'};
+      expect(
+        await repo.claimPlayer(
+          _g,
+          const PlayerId('emma'),
+          PlayerRelation.guardian,
+        ),
+        ClaimOutcome.requested,
+      );
+      expect(functions.lastData('claimPlayer'), {
+        'groupId': 'g1',
+        'playerId': 'emma',
+        'relation': 'guardian',
+      });
+      // An admin's claim is approved at once (PLAYER-3).
+      functions.handlers['claimPlayer'] = (_) => {'status': 'linked'};
+      expect(
+        await repo.claimPlayer(_g, const PlayerId('emma'), PlayerRelation.self),
+        ClaimOutcome.linked,
+      );
+      await repo.resolvePlayerClaim(
         _g,
         const PlayerId('emma'),
         const UserId('luis'),
         approve: true,
       );
-      await repo.addMyPlayer(_g, name: 'Noah', jerseyNumber: '4');
+      functions.handlers['proposePlayer'] = (_) => {
+        'playerId': 'p9',
+        'status': 'pending',
+      };
+      expect(
+        await repo.proposePlayer(
+          _g,
+          name: ' Noah ',
+          relation: PlayerRelation.guardian,
+          jerseyNumber: '4',
+          position: ' ',
+        ),
+        PlayerStatus.pending,
+      );
+      expect(functions.lastData('proposePlayer'), {
+        'groupId': 'g1',
+        'displayName': 'Noah',
+        'jerseyNumber': '4',
+        'position': null,
+        'relation': 'guardian',
+      });
+      functions.handlers['proposePlayer'] = (_) => {'status': 'active'};
+      expect(
+        await repo.proposePlayer(
+          _g,
+          name: 'Jared',
+          relation: PlayerRelation.self,
+        ),
+        PlayerStatus.active,
+      );
+      await repo.resolvePendingPlayer(_g, const PlayerId('p9'), approve: false);
+      expect(functions.lastData('resolvePendingPlayer'), {
+        'groupId': 'g1',
+        'playerId': 'p9',
+        'approve': false,
+      });
       expect(
         await repo.inviteGuardian(
           _g,
@@ -158,11 +260,7 @@ void main() {
         const PlayerId('emma'),
         const UserId('luis'),
       );
-      expect(functions.lastData('requestGuardianLink'), {
-        'groupId': 'g1',
-        'playerIds': ['emma'],
-      });
-      expect(functions.lastData('resolveGuardianLink'), {
+      expect(functions.lastData('resolvePlayerClaim'), {
         'groupId': 'g1',
         'playerId': 'emma',
         'uid': 'luis',
@@ -170,7 +268,7 @@ void main() {
       });
       expect(
         functions.calls.map((c) => c.$1),
-        containsAll(['removePlayer', 'addMyPlayer', 'removeGuardian']),
+        containsAll(['removePlayer', 'removeGuardian']),
       );
       functions.handlers['inviteGuardian'] = (_) => <String, dynamic>{};
       expect(
@@ -188,6 +286,11 @@ void main() {
       for (final (code, message, type) in [
         ('failed-precondition', 'too-many-players', isA<InvalidInput>()),
         ('failed-precondition', 'too-many-guardians', isA<InvalidInput>()),
+        ('failed-precondition', 'player-already-claimed', isA<InvalidInput>()),
+        ('failed-precondition', 'already-a-player', isA<InvalidInput>()),
+        ('failed-precondition', 'already-linked', isA<InvalidInput>()),
+        ('failed-precondition', 'team-archived', isA<PermissionDenied>()),
+        ('not-found', 'no-player', isA<NotFound>()),
         ('failed-precondition', 'other', isA<UnknownFailure>()),
         ('resource-exhausted', 'slow', isA<RateLimited>()),
         ('permission-denied', 'no', isA<PermissionDenied>()),
@@ -225,10 +328,11 @@ void main() {
         _g,
         draft(),
         createdBy: const UserId('coach'),
-        youth: true,
       );
       final d = (await db.doc('events/${id.value}').get()).data()!;
-      expect(d['rsvpFor'], 'players');
+      // One team type: every event takes per-player RSVPs, so it's not
+      // written any more.
+      expect(d.containsKey('rsvpFor'), isFalse);
       expect(d['rsvpCounts'], {'going': 0, 'maybe': 0, 'notGoing': 0});
       expect(d['startDate'], isNull);
       expect(d['location'], {'name': 'Field 3', 'address': '1 Main St'});
@@ -236,7 +340,6 @@ void main() {
       final e = (await repo.watchEvent(id).first)!;
       expect(e.type, EventType.game);
       expect(e.title, 'vs. Hawks');
-      expect(e.rsvpFor, RsvpFor.players);
       expect(e.location!.name, 'Field 3');
       expect(e.homeAway, HomeAway.home);
       expect(e.reminderOffsets, [60]);

@@ -29,7 +29,8 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// An event's page (SCHED-4): every field, big Going / Maybe / Not going
-/// buttons (one set per player for guardians, PLAYER-6), who's coming,
+/// buttons (one set per player I'm linked to, and Me, PLAYER-6), who's
+/// coming,
 /// Add to calendar, Share, Directions, and for admins Edit, Duplicate,
 /// Cancel, Delete, and Set RSVP for someone.
 class EventDetailsScreen extends ConsumerWidget {
@@ -333,21 +334,22 @@ class _RsvpSection extends ConsumerWidget {
     final rsvps =
         ref.watch(eventRsvpsProvider(group.id, event.id)).value ?? const [];
     final roster = ref.watch(rosterProvider(group.id)).value ?? const [];
-    final players = event.forPlayers
-        ? ref.watch(playersProvider(group.id)).value ?? const []
-        : const <Never>[];
+    final players = ref.watch(playersProvider(group.id)).value ?? const [];
+    final links = ref.watch(guardianLinksProvider(group.id)).value ?? const [];
     final mine = ref.watch(myParticipantsProvider(group.id));
     final open = canAnswerNow(event, group, me, now);
     final isAdmin = me?.isAdmin ?? false;
     final allowMaybe = group.settings.allowMaybe;
-    final everyone = eventParticipants(event, roster, players);
+    final everyone = eventParticipants(
+      roster,
+      players,
+      links: links,
+      rsvps: rsvps,
+    );
 
-    final myUid = UserId(ref.watch(authUserProvider).value?.uid ?? '');
-    // Admins set answers, but on youth events only their own among the
-    // coaches (Q14).
+    // Admins set anyone's answer (SCHED-4).
     final canSet = isAdmin && event.takesRsvps && !group.isArchived;
-    VoidCallback? setFor(Participant p) =>
-        canSet && canSetRsvpFor(event, p, myUid)
+    VoidCallback? setFor(Participant p) => canSet
         ? () => unawaited(_setRsvpFor(context, ref, event, group, p))
         : null;
 
@@ -381,18 +383,19 @@ class _RsvpSection extends ConsumerWidget {
                 event: event,
                 participant: p,
                 answer: answerOf(rsvps, p.id),
-                label: mine.length > 1 || p.isPlayer
-                    ? (p.isPlayer ? p.shownName : l10n.eventYou)
-                    : null,
+                label: rsvpRowLabel(l10n, p, mine.length),
                 enabled: open,
                 allowMaybe: allowMaybe,
               ),
             ),
         padded(
           Text(
-            event.forPlayers
-                ? playerCountsText(l10n, event, players: players.length)
-                : countsText(l10n, event.rsvpCounts, allowMaybe: allowMaybe),
+            eventCountsText(
+              l10n,
+              event,
+              players: players.length,
+              allowMaybe: allowMaybe,
+            ),
             style: theme.textTheme.labelLarge,
           ),
         ),
@@ -403,8 +406,11 @@ class _RsvpSection extends ConsumerWidget {
           nameOf: nameOf,
           onTap: setFor,
         ),
+        // Everyone answering for themselves, apart from the players (Q14).
+        // A team without players lists them on their own.
         if (everyone.staff.isNotEmpty) ...[
-          padded(Text(l10n.eventCoaches, style: theme.textTheme.titleSmall)),
+          if (everyone.main.isNotEmpty)
+            padded(Text(l10n.eventOthers, style: theme.textTheme.titleSmall)),
           _AttendeeGroups(
             people: everyone.staff,
             rsvps: rsvps,
@@ -670,11 +676,19 @@ Future<void> _setRsvpForSomeone(
 ) async {
   final l10n = AppLocalizations.of(context);
   final roster = ref.read(rosterProvider(group.id)).value ?? const [];
-  final players = event.forPlayers
-      ? ref.read(playersProvider(group.id)).value ?? const []
-      : const <Never>[];
-  final everyone = eventParticipants(event, roster, players);
-  final me = UserId(ref.read(authUserProvider).value?.uid ?? '');
+  final players = ref.read(playersProvider(group.id)).value ?? const [];
+  // Admins set anyone's answer, members included (SCHED-4).
+  final everyone = (
+    main: [for (final p in players) playerParticipant(p)],
+    staff: [
+      for (final m in roster)
+        Participant(
+          type: ParticipantType.member,
+          id: m.uid.value,
+          name: m.displayName,
+        ),
+    ],
+  );
   final picked = await showAdaptiveSheet<Participant>(
     context,
     builder: (context) => ListView(
@@ -687,11 +701,10 @@ Future<void> _setRsvpForSomeone(
           ),
         ),
         for (final p in [...everyone.main, ...everyone.staff])
-          if (canSetRsvpFor(event, p, me))
-            ListTile(
-              title: Text(p.shownName),
-              onTap: () => Navigator.of(context).pop(p),
-            ),
+          ListTile(
+            title: Text(p.shownName),
+            onTap: () => Navigator.of(context).pop(p),
+          ),
       ],
     ),
   );

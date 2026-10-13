@@ -6,7 +6,7 @@ typedef LivePage<T, C> = ({List<T> items, C? next});
 
 /// A whole list read live a page at a time (queries are capped at 100,
 /// ARCH §10.2), for lists that can be longer: a big team's roster, players,
-/// and guardian links (TEAM-3, PLAYER-2, PLAYER-6).
+/// and player links (TEAM-3, PLAYER-2, PLAYER-6).
 ///
 /// [watchPage] watches the page after a cursor (null for the first). Every
 /// page stays live. When a page's end moves (someone added or removed), the

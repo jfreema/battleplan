@@ -64,6 +64,8 @@ void main() {
       expect(g.storageQuotaBytes, Limits.defaultStorageQuotaMb * bytesPerMb);
       expect(g.chatTheme!.background, ChatBackground.pattern);
       expect(g.chatTheme!.bubbleColor, 0xFF0F8A5F);
+      // An old team's teamType is ignored; a missing kind is a team.
+      expect(g.kind, GroupKind.team);
       expect(await repo.watchGroup(const GroupId('none')).first, isNull);
       final sparse = groupFromFirestore('x', const {
         'color': 'blue',
@@ -80,7 +82,6 @@ void main() {
       final id = await repo.createGroup(
         name: 'Hawks',
         sport: Sport.basketball,
-        teamType: TeamType.youth,
         timeZone: 'America/Chicago',
         color: '#C2410C',
         description: '',
@@ -89,14 +90,12 @@ void main() {
       expect(functions.lastData('createGroup'), {
         'name': 'Hawks',
         'sport': 'basketball',
-        'teamType': 'youth',
         'timeZone': 'America/Chicago',
         'color': '#C2410C',
       });
       await repo.createGroup(
         name: 'H',
         sport: Sport.other,
-        teamType: TeamType.adult,
         timeZone: 'UTC',
         description: 'Rec league',
       );
@@ -115,12 +114,7 @@ void main() {
       ]) {
         functions.fail('createGroup', code, message);
         await expectLater(
-          repo.createGroup(
-            name: 'X',
-            sport: Sport.other,
-            teamType: TeamType.adult,
-            timeZone: 'UTC',
-          ),
+          repo.createGroup(name: 'X', sport: Sport.other, timeZone: 'UTC'),
           throwsA(type),
         );
       }

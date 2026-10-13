@@ -14,6 +14,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/presentation/player_dialogs.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,11 +22,13 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// PLAYER-2 at `/g/:groupId/roster/players/:playerId`: name, number,
-/// position, and guardians. Guardians and admins can edit the details and
-/// add a guardian (PLAYER-5); admins remove guardians and the player, and a
-/// guardian can remove themself. Upcoming RSVPs list the player's answer
-/// on each of the next events that take player RSVPs, each opening its
-/// event.
+/// position, and who's linked, each marked Player or Guardian. Linked
+/// members and admins edit the details; guardians and admins add a
+/// guardian (PLAYER-5); admins remove links and the player, and a linked
+/// member can remove their own link. A member who isn't linked can claim
+/// the player, as the player or a parent or guardian (PLAYER-3). Upcoming
+/// RSVPs list the player's answer on each of the next events that take
+/// RSVPs, each opening its event.
 class PlayerCardScreen extends ConsumerWidget {
   const new({required this.groupId, required this.playerId, super.key});
 
@@ -43,10 +46,10 @@ class PlayerCardScreen extends ConsumerWidget {
     final links = ref.watch(guardianLinksProvider(groupId)).value ?? const [];
     final roster = ref.watch(rosterProvider(groupId)).value ?? const [];
     final me = ref.watch(authUserProvider).value?.uid;
-    // Super admins manage players and guardians from the admin panel too
+    final membership = ref.watch(myMembershipProvider(groupId));
+    // Super admins manage players and links from the admin panel too
     // (ADMIN-3).
-    final teamAdmin =
-        ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false;
+    final teamAdmin = membership?.isAdmin ?? false;
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final isAdmin = teamAdmin || superAdmin;
     if (player == null) {
@@ -65,16 +68,18 @@ class PlayerCardScreen extends ConsumerWidget {
               ),
       );
     }
-    final guardianIds = {
+    final playerLinks = [
       for (final l in links)
-        if (l.playerId == playerId) l.uid,
-    };
-    final guardians = roster.where((m) => guardianIds.contains(m.uid)).toList();
-    final isGuardian = me != null && guardianIds.contains(UserId(me));
-    final canEdit = isAdmin || isGuardian;
-    // The rules let only guardians and the team's admins write a player, so
-    // a super admin who is neither saves through the audited admin callable.
-    final viaAdmin = superAdmin && !teamAdmin && !isGuardian;
+        if (l.playerId == playerId) l,
+    ]..sort((a, b) => a.isSelf == b.isSelf ? 0 : (a.isSelf ? -1 : 1));
+    final myLink = playerLinks.where((l) => l.uid.value == me).firstOrNull;
+    final isGuardian = myLink != null && !myLink.isSelf;
+    final canEdit = isAdmin || myLink != null;
+    final canAddGuardian = isAdmin || isGuardian;
+    // The rules let only linked members and the team's admins write a
+    // player, so a super admin who is neither saves through the audited
+    // admin callable.
+    final viaAdmin = superAdmin && !teamAdmin && myLink == null;
 
     return Scaffold(
       appBar: AppBar(
@@ -104,34 +109,53 @@ class PlayerCardScreen extends ConsumerWidget {
           ),
           const SizedBox(height: Space.lg),
           Text(
-            l10n.guardiansLabel,
+            l10n.playerLinksLabel,
             style: Theme.of(context).textTheme.titleSmall,
           ),
-          if (guardians.isEmpty)
+          if (playerLinks.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: Space.sm),
-              child: Text(l10n.noGuardians),
+              child: Text(l10n.noPlayerLinks),
             ),
-          for (final g in guardians)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Avatar(name: g.displayName, colorKey: g.uid.value),
-              title: Text(g.displayName),
-              subtitle: g.pending ? Text(l10n.notJoinedYet) : null,
-              // Admins remove any guardian; a guardian can remove themself.
-              trailing: isAdmin || g.uid.value == me
-                  ? IconButton(
-                      tooltip: l10n.removeGuardian,
-                      icon: const Icon(AppIcons.close),
-                      onPressed: () => unawaited(
-                        _removeGuardian(context, ref, g.uid, g.displayName),
-                      ),
-                    )
-                  : null,
-            ),
+          for (final l in playerLinks)
+            if (roster.where((m) => m.uid == l.uid).firstOrNull case final m?)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Avatar(name: m.displayName, colorKey: m.uid.value),
+                title: Text(m.displayName),
+                subtitle: Text(
+                  [
+                    if (l.isSelf)
+                      l10n.playerLinkPlayer
+                    else
+                      l10n.playerLinkGuardian,
+                    if (m.pending) l10n.notJoinedYet,
+                  ].join(' · '),
+                ),
+                // Admins remove any link; a member can remove their own.
+                trailing: isAdmin || m.uid.value == me
+                    ? IconButton(
+                        tooltip: l.isSelf
+                            ? l10n.removePlayerLink
+                            : l10n.removeGuardian,
+                        icon: const Icon(AppIcons.close),
+                        onPressed: () => unawaited(
+                          _removeGuardian(
+                            context,
+                            ref,
+                            m.uid,
+                            m.displayName,
+                            self: l.isSelf,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
           // A guardian vouches for a co-parent; admins can add anyone
-          // (PLAYER-5, PLAYER-2).
-          if (canEdit && guardians.length < Limits.guardiansPerPlayerMax)
+          // (PLAYER-5, PLAYER-2). The player's own link doesn't count
+          // toward the 4.
+          if (canAddGuardian &&
+              guardianCountOf(playerId, links) < Limits.guardiansPerPlayerMax)
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
@@ -139,6 +163,14 @@ class PlayerCardScreen extends ConsumerWidget {
                 icon: const Icon(AppIcons.invite),
                 label: Text(l10n.addGuardian),
               ),
+            ),
+          // PLAYER-3: a member who isn't linked can claim the player.
+          if (membership != null && myLink == null)
+            _Claim(
+              player: player,
+              canBeSelf:
+                  selfLinkOf(playerId, links) == null &&
+                  !links.any((l) => l.uid.value == me && l.isSelf),
             ),
           const SizedBox(height: Space.lg),
           _UpcomingRsvps(groupId: groupId, playerId: playerId),
@@ -246,13 +278,16 @@ class PlayerCardScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     UserId uid,
-    String name,
-  ) async {
+    String name, {
+    required bool self,
+  }) async {
     final l10n = AppLocalizations.of(context);
     final ok = await showConfirmDialog(
       context,
-      title: l10n.removeGuardianTitle(name),
-      confirmLabel: l10n.removeGuardian,
+      title: self
+          ? l10n.removePlayerLinkTitle(name)
+          : l10n.removeGuardianTitle(name),
+      confirmLabel: self ? l10n.removePlayerLink : l10n.removeGuardian,
       cancelLabel: l10n.cancel,
       destructive: true,
     );
@@ -340,9 +375,9 @@ class PlayerCardScreen extends ConsumerWidget {
 /// How many upcoming events the player card lists (PLAYER-2).
 const playerCardEventsShown = 5;
 
-/// The player's answers on the next events that take player RSVPs
-/// (PLAYER-2), "No answer" where nobody has answered yet. Each opens its
-/// event, where guardians and admins answer.
+/// The player's answers on the next events that take RSVPs (PLAYER-2),
+/// "No answer" where nobody has answered yet. Each opens its event, where
+/// linked members and admins answer.
 class _UpcomingRsvps extends ConsumerWidget {
   const new({required this.groupId, required this.playerId});
 
@@ -357,7 +392,7 @@ class _UpcomingRsvps extends ConsumerWidget {
     final answers =
         ref.watch(playerRsvpsProvider(groupId, playerId)).value ?? const {};
     final events = list.events
-        .where((e) => e.forPlayers && e.takesRsvps)
+        .where((e) => e.takesRsvps)
         .take(playerCardEventsShown)
         .toList();
     final dates = MaterialLocalizations.of(context);
@@ -395,6 +430,77 @@ class _UpcomingRsvps extends ConsumerWidget {
                 context.push('/g/${groupId.value}/schedule/e/${e.id.value}'),
           ),
       ],
+    );
+  }
+}
+
+/// "Claim this player" for a member who isn't linked (PLAYER-3), or that
+/// their claim is waiting for an admin.
+class _Claim extends ConsumerStatefulWidget {
+  const new({required this.player, required this.canBeSelf});
+
+  final Player player;
+  final bool canBeSelf;
+
+  @override
+  ConsumerState<_Claim> createState() => _ClaimState();
+}
+
+class _ClaimState extends ConsumerState<_Claim> {
+  bool _saving = false;
+
+  Future<void> _claim() async {
+    final l10n = AppLocalizations.of(context);
+    final relation = await askClaimRelation(
+      context,
+      playerName: widget.player.displayName,
+      canBeSelf: widget.canBeSelf,
+    );
+    if (relation == null || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      final outcome = await ref
+          .read(playerRepositoryProvider)
+          .claimPlayer(widget.player.groupId, widget.player.id, relation);
+      if (mounted) {
+        showAppSnackBar(
+          context,
+          outcome == ClaimOutcome.linked
+              ? l10n.claimLinked
+              : l10n.guardianRequestSent,
+        );
+      }
+    } on AppFailure catch (e) {
+      if (mounted) showAppSnackBar(context, playerRequestFailure(l10n, e));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final waiting =
+        (ref.watch(myGuardianRequestsProvider(widget.player.groupId)).value ??
+                const <GuardianRequest>[])
+            .any(
+              (r) =>
+                  r.playerId == widget.player.id &&
+                  r.status == GuardianRequestStatus.pending,
+            );
+    if (waiting) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: Space.sm),
+        child: Text(l10n.claimWaiting),
+      );
+    }
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: _saving ? null : () => unawaited(_claim()),
+        icon: const Icon(AppIcons.family),
+        label: Text(l10n.claimPlayer),
+      ),
     );
   }
 }

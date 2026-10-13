@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
+import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
@@ -67,7 +68,7 @@ IconData statusIcon(RsvpStatus s) => switch (s) {
 };
 
 /// "12 going · 3 maybe · 2 no" (SCHED-1), leaving out what's zero, and
-/// Maybe when the team turned it off. On youth events these count players.
+/// Maybe when the team turned it off.
 String countsText(
   AppLocalizations l10n,
   RsvpCounts counts, {
@@ -81,15 +82,35 @@ String countsText(
   return parts.isEmpty ? l10n.rsvpNoAnswers : parts.join(' · ');
 }
 
-/// "12 of 15 players going · 2 coaches" on youth events (PLAYER-6).
-String playerCountsText(
+/// An event's counts (PLAYER-6): "12 of 15 players going · 2 others",
+/// players first and everyone answering for themselves apart. A team with
+/// no players counts everyone together: "12 going · 3 maybe".
+String eventCountsText(
   AppLocalizations l10n,
   Event event, {
   required int players,
-}) => [
-  l10n.rsvpPlayersGoing(event.rsvpCounts.going, players),
-  if (event.staffCounts.going > 0) l10n.rsvpCoaches(event.staffCounts.going),
-].join(' · ');
+  bool allowMaybe = true,
+}) {
+  if (players == 0) {
+    return countsText(
+      l10n,
+      event.rsvpCounts + event.staffCounts,
+      allowMaybe: allowMaybe,
+    );
+  }
+  return [
+    l10n.rsvpPlayersGoing(event.rsvpCounts.going, players),
+    if (event.staffCounts.going > 0) l10n.rsvpOthers(event.staffCounts.going),
+  ].join(' · ');
+}
+
+/// The label over one set of answer buttons (PLAYER-6): "Emma #7" for a
+/// player, "Jared #12 (you)" for the member's own player, and "You" beside
+/// players; null when it's only me ([count] rows in all).
+String? rsvpRowLabel(AppLocalizations l10n, Participant p, int count) {
+  if (!p.isPlayer) return count > 1 ? l10n.eventYou : null;
+  return p.isMe ? l10n.eventYouAsPlayer(p.shownName) : p.shownName;
+}
 
 /// "6:00 PM" in [zone].
 String timeIn(AppLocalizations l10n, DateTime instant, String zone) =>

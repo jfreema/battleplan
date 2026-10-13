@@ -42,7 +42,6 @@ void main() {
     String? seriesId,
     DateTime? canceledAt,
     DateTime? rsvpDeadline,
-    RsvpFor rsvpFor = RsvpFor.members,
     RsvpCounts counts = const RsvpCounts(),
   }) {
     final start = ZonedTime.instantOf(zone, addDays(today(), days), hour * 60);
@@ -63,7 +62,6 @@ void main() {
       seriesDate: seriesId == null ? null : dateKey(addDays(today(), days)),
       canceledAt: canceledAt,
       rsvpDeadline: rsvpDeadline,
-      rsvpFor: rsvpFor,
       rsvpCounts: counts,
       reminderOffsets: const [1440],
     );
@@ -74,7 +72,6 @@ void main() {
     List<Event> events = const [],
     MemberRole role = MemberRole.member,
     GroupSettings settings = const GroupSettings(),
-    TeamType teamType = TeamType.adult,
     bool storageFull = false,
     FakePlayerRepository? players,
     Map<String, Group> extraGroups = const {},
@@ -90,7 +87,6 @@ void main() {
       auth: FakeAuthRepository(user: coach),
       groups: {
         'a': testGroup('a', 'Thunder').copyWith(
-          teamType: teamType,
           settings: settings,
           storageBytes: storageFull ? 500 * bytesPerMb : 0,
           storageQuotaBytes: 500 * bytesPerMb,
@@ -541,9 +537,8 @@ void main() {
             ]);
       final rsvps = await openSchedule(
         tester,
-        teamType: TeamType.youth,
         players: players,
-        events: [event('e1', rsvpFor: RsvpFor.players)],
+        events: [event('e1')],
       );
       // The list shows an answer per player.
       expect(find.text('Emma: No response'), findsOneWidget);
@@ -557,6 +552,50 @@ void main() {
       expect(rsvps.rsvps.single.participantType, ParticipantType.player);
       expect(find.text('1 of 3 players going'), findsOneWidget);
       expect(find.text('Answered by Coach L.'), findsOneWidget);
+    });
+
+    testWidgets('a member who is a player answers on their own row, with no '
+        'Me row (PLAYER-6)', (tester) async {
+      final players =
+          FakePlayerRepository(const [
+              Player(
+                id: PlayerId('p1'),
+                groupId: GroupId('a'),
+                displayName: 'Coach Lee',
+                jerseyNumber: '12',
+              ),
+              Player(
+                id: PlayerId('p2'),
+                groupId: GroupId('a'),
+                displayName: 'Noah Park',
+                status: PlayerStatus.pending,
+                proposedBy: 'coach',
+              ),
+            ])
+            ..links.add(
+              const GuardianLink(
+                playerId: PlayerId('p1'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+                relation: PlayerRelation.self,
+              ),
+            );
+      final rsvps = await openSchedule(
+        tester,
+        players: players,
+        events: [event('e1')],
+      );
+      expect(find.text('You: No response'), findsOneWidget);
+      await openDetails(tester, 'Practice');
+      // One set of buttons: their player's. The pending player isn't there.
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      expect(find.text('Coach #12 (you)'), findsOneWidget);
+      expect(find.textContaining('Noah'), findsNothing);
+      await tester.tap(find.text('Going').first);
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.participantId, 'p1');
+      expect(rsvps.rsvps.single.participantType, ParticipantType.player);
+      expect(find.text('1 of 1 players going'), findsOneWidget);
     });
 
     testWidgets('admins set an answer for someone else', (tester) async {
@@ -761,18 +800,10 @@ void main() {
     await openSchedule(
       tester,
       players: players,
-      extraGroups: {
-        'b': testGroup('b', 'Lightning U10').copyWith(teamType: TeamType.youth),
-      },
+      extraGroups: {'b': testGroup('b', 'Lightning U10')},
       events: [
         event('a1', title: 'Thunder practice'),
-        event(
-          'b1',
-          days: 2,
-          title: 'Lightning game',
-          groupId: 'b',
-          rsvpFor: RsvpFor.players,
-        ),
+        event('b1', days: 2, title: 'Lightning game', groupId: 'b'),
       ],
     );
     expect(find.text('Lightning game'), findsNothing);
@@ -867,9 +898,8 @@ void main() {
       final rsvps = await openSchedule(
         tester,
         tapSchedule: false,
-        teamType: TeamType.youth,
         players: players,
-        events: [event('e1', rsvpFor: RsvpFor.players)],
+        events: [event('e1')],
         messages: FakeMessageRepository([card('e1')]),
       );
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
@@ -992,8 +1022,8 @@ void main() {
   });
 
   group('review fixes', () {
-    testWidgets('on youth events admins set answers for players and '
-        'themselves, not other coaches (Q14)', (tester) async {
+    testWidgets('admins set answers for players and for any member; '
+        'coaches and others are listed apart (SCHED-4, Q14)', (tester) async {
       final players = FakePlayerRepository(const [
         Player(
           id: PlayerId('p1'),
@@ -1004,35 +1034,35 @@ void main() {
       final rsvps = await openSchedule(
         tester,
         role: MemberRole.admin,
-        teamType: TeamType.youth,
         players: players,
         extraMembers: [
           testMembership('a', 'pat', role: MemberRole.admin, name: 'Pat Kim'),
         ],
-        events: [event('e1', rsvpFor: RsvpFor.players)],
+        events: [event('e1')],
       );
       await openDetails(tester, 'Practice');
-      expect(find.text('Coaches'), findsOneWidget);
-      // Another coach's row does nothing.
+      expect(find.text('Coaches and others'), findsOneWidget);
+      expect(find.text('0 of 1 players going'), findsOneWidget);
+      // Another coach's row sets their answer, as the rules allow admins.
       await tester.ensureVisible(find.text('Pat Kim'));
       await tester.tap(find.text('Pat Kim'));
       await tester.pumpAndSettle();
-      expect(find.text('RSVP for Pat Kim'), findsNothing);
-      // Nor is Pat in the "Set RSVP for someone" list.
-      await menu(tester, 'Set RSVP for someone');
-      expect(find.textContaining('Emma'), findsWidgets);
-      expect(
-        find.descendant(
-          of: find.byType(ListView).last,
-          matching: find.text('Pat Kim'),
-        ),
-        findsNothing,
-      );
-      await tester.tap(find.text('Coach Lee').last);
-      await tester.pumpAndSettle();
+      expect(find.text('RSVP for Pat Kim'), findsOneWidget);
       await tester.tap(find.text('Going').last);
       await tester.pumpAndSettle();
-      expect(rsvps.rsvps.single.participantId, 'coach');
+      expect(rsvps.rsvps.single.participantId, 'pat');
+      expect(find.text('0 of 1 players going · 1 other'), findsOneWidget);
+      // "Set RSVP for someone" lists the players and every member.
+      await menu(tester, 'Set RSVP for someone');
+      expect(find.textContaining('Emma'), findsWidgets);
+      await tester.tap(find.text('Emma').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Not going').last);
+      await tester.pumpAndSettle();
+      expect(
+        rsvps.rsvps.where((r) => r.participantId == 'p1').single.status,
+        RsvpStatus.notGoing,
+      );
     });
 
     Event allDay(
