@@ -60,17 +60,20 @@ final class PhotoPickerProvider
 
 String _$photoPickerHash() => r'067730d189463d1d8099f2ef8519fcc7b39c9562';
 
-/// Photos pasted or dropped onto the web page (SPEC §4.2); none on phones.
+/// Photos pasted or dropped onto the web page (CHAT-2, SPEC §4.2); none on
+/// phones.
 
 @ProviderFor(photoDrops)
 final photoDropsProvider = PhotoDropsProvider._();
 
-/// Photos pasted or dropped onto the web page (SPEC §4.2); none on phones.
+/// Photos pasted or dropped onto the web page (CHAT-2, SPEC §4.2); none on
+/// phones.
 
 final class PhotoDropsProvider
     extends $FunctionalProvider<PhotoDrops, PhotoDrops, PhotoDrops>
     with $Provider<PhotoDrops> {
-  /// Photos pasted or dropped onto the web page (SPEC §4.2); none on phones.
+  /// Photos pasted or dropped onto the web page (CHAT-2, SPEC §4.2); none on
+  /// phones.
   PhotoDropsProvider._()
     : super(
         from: null,
@@ -432,52 +435,6 @@ final class LinkServiceProvider
 }
 
 String _$linkServiceHash() => r'733247de94a799b422e82325a15227b0e3e56e1e';
-
-/// Photos pasted or dragged into the chat on the web (CHAT-2).
-
-@ProviderFor(photoDrops)
-final photoDropsProvider = PhotoDropsProvider._();
-
-/// Photos pasted or dragged into the chat on the web (CHAT-2).
-
-final class PhotoDropsProvider
-    extends $FunctionalProvider<PhotoDrops, PhotoDrops, PhotoDrops>
-    with $Provider<PhotoDrops> {
-  /// Photos pasted or dragged into the chat on the web (CHAT-2).
-  PhotoDropsProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'photoDropsProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$photoDropsHash();
-
-  @$internal
-  @override
-  $ProviderElement<PhotoDrops> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  PhotoDrops create(Ref ref) {
-    return photoDrops(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(PhotoDrops value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<PhotoDrops>(value),
-    );
-  }
-}
-
-String _$photoDropsHash() => r'48fb963c30e4aed3cdbded44a7d93a5a7b40737f';
 
 /// Saves chat photos to the phone's photo library (CHAT-3).
 

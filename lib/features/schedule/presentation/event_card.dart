@@ -152,7 +152,8 @@ class _CardRsvps extends ConsumerWidget {
     if (group == null) return const SizedBox.shrink();
     final me = ref.watch(myMembershipProvider(groupId));
     final now = DateTime.now();
-    final open = !event.startedBefore(now) && canAnswerNow(event, group, me, now);
+    final open =
+        !event.startedBefore(now) && canAnswerNow(event, group, me, now);
     final mine = open
         ? ref.watch(myParticipantsProvider(groupId))
         : const <Participant>[];
