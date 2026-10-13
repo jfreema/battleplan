@@ -25,7 +25,8 @@ void main() {
   );
   const zone = 'America/Chicago';
 
-  /// Today in the team's zone, which is also the viewer's in tests.
+  /// Today in the team's zone. The viewer's zone is the machine's, so on a
+  /// UTC machine (CI) the two days differ in Chicago's evening.
   DateTime today() {
     final w = ZonedTime.wallClock(zone, DateTime.now());
     return DateTime.utc(w.year, w.month, w.day);
@@ -428,9 +429,13 @@ void main() {
       );
       expect(saved.title, 'vs. Hawks');
       expect(saved.opponent, 'Hawks');
+      // The picker opens on the device's today, which differs from
+      // Chicago's in the evening on a UTC machine (CI).
+      final now = DateTime.now();
+      final picked = DateTime.utc(now.year, now.month, now.day);
       expect(
         saved.rsvpDeadline,
-        ZonedTime.instantOf(zone, addDays(today(), -1), 20 * 60),
+        ZonedTime.instantOf(zone, addDays(picked, -1), 20 * 60),
       );
     });
   });
