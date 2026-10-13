@@ -694,15 +694,20 @@ List<String> pinnedMessageIds(Ref ref, GroupId groupId) => [
       ?.reversed,
 ];
 
+/// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+@riverpod
+Map<String, String> memberNames(Ref ref, GroupId groupId) => {
+  for (final m in ref.watch(rosterProvider(groupId)).value ?? const [])
+    if (m.displayName.trim().isNotEmpty) m.uid.value: m.displayName.trim(),
+};
+
 /// Who can be named with @ in a team's chat (CHAT-14): everyone on the
 /// team but me, by name.
 @riverpod
 List<MentionCandidate> mentionCandidates(Ref ref, GroupId groupId) {
   final me = ref.watch(authUserProvider).value?.uid;
-  final roster = ref.watch(rosterProvider(groupId)).value ?? const [];
   return [
-    for (final m in roster)
-      if (m.uid.value != me && m.displayName.trim().isNotEmpty)
-        (uid: m.uid.value, name: m.displayName.trim()),
+    for (final e in ref.watch(memberNamesProvider(groupId)).entries)
+      if (e.key != me) (uid: e.key, name: e.value),
   ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 }

@@ -14,6 +14,7 @@ import 'package:battleplan/core/widgets/linkified_text.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
+import 'package:battleplan/features/chat/domain/mentions.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
 import 'package:battleplan/features/chat/presentation/photo_viewer.dart';
@@ -386,11 +387,17 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ),
       );
     }
-    final custom = mine ? widget.bubbleColor : null;
-    final background =
-        custom ?? (mine ? scheme.primary : scheme.surfaceContainerHighest);
+    final deleted = m.deletedAt != null;
+    // An admin's announcement (CHAT-15) looks the same from everyone.
+    final announcement = m.announcement && !deleted;
+    final custom = mine && !announcement ? widget.bubbleColor : null;
+    final background = announcement
+        ? scheme.secondaryContainer
+        : custom ?? (mine ? scheme.primary : scheme.surfaceContainerHighest);
     // Text on a custom color is white or black, whichever reads better.
-    final foreground = custom != null
+    final foreground = announcement
+        ? scheme.onSecondaryContainer
+        : custom != null
         ? (ThemeData.estimateBrightnessForColor(custom) == Brightness.dark
               ? Colors.white
               : Colors.black)
@@ -399,7 +406,38 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ? null
         : MaterialLocalizations.of(context)
               .formatTimeOfDay(TimeOfDay.fromDateTime(m.createdAt!.toLocal()));
-    final deleted = m.deletedAt != null;
+    // @mentions (CHAT-14) in bold, and the ones naming me (or everyone)
+    // stand out, by the mentioned people's current names.
+    final names = m.mentions.isEmpty
+        ? const <String, String>{}
+        : ref.watch(memberNamesProvider(m.groupId));
+    final highlights = <TextHighlight>[
+      for (final r in mentionRanges(
+        m.text,
+        names: {
+          for (final uid in m.mentions)
+            if (names[uid] case final name?) uid: name,
+        },
+        everyone: m.mentionsEveryone,
+        me: ref.watch(authUserProvider).value?.uid,
+      ))
+        (
+          start: r.start,
+          end: r.end,
+          style: r.isMe
+              ? TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onTertiaryContainer,
+                  backgroundColor: scheme.tertiaryContainer,
+                )
+              : const TextStyle(fontWeight: FontWeight.w700),
+        ),
+    ];
+    // "edited" and "Pinned" (CHAT-15) beside the time.
+    final marks = [
+      if (m.editedAt != null && !deleted) l10n.edited,
+      if (widget.pinned && !deleted) l10n.pinnedBadge,
+    ].join(' · ');
 
     final hasText = m.text.trim().isNotEmpty;
     // A reply's quote (CHAT-13): the server's copy, or the loaded original
@@ -432,7 +470,11 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       ),
       decoration: BoxDecoration(
         color: deleted ? Colors.transparent : background,
-        border: deleted ? Border.all(color: scheme.outlineVariant) : null,
+        border: deleted
+            ? Border.all(color: scheme.outlineVariant)
+            : announcement
+            ? Border.all(color: scheme.secondary)
+            : null,
         borderRadius: BorderRadius.circular(Corners.bubble),
       ),
       child: deleted
@@ -452,6 +494,27 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (announcement)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: Space.xs),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          AppIcons.announcement,
+                          size: 18,
+                          color: foreground,
+                        ),
+                        const SizedBox(width: Space.xs),
+                        Text(
+                          l10n.announcementLabel,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: foreground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ?quote,
                 if (hasText)
                   LinkifiedText(
@@ -461,6 +524,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                       color: foreground,
                     ),
                     linkColor: foreground,
+                    highlights: highlights,
                     onOpen: (uri) =>
                         unawaited(ref.read(linkOpenerProvider).open(uri)),
                   ),
@@ -544,8 +608,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     ),
                   ),
                   if (time != null) TextSpan(text: '  $time'),
-                  if (m.editedAt != null && !deleted)
-                    TextSpan(text: ' · ${l10n.edited}'),
+                  if (marks.isNotEmpty) TextSpan(text: ' · $marks'),
                 ],
               ),
               style: theme.textTheme.labelSmall?.copyWith(
@@ -557,13 +620,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ? Padding(
             padding: const EdgeInsets.only(right: Space.md, bottom: Space.xs),
             child: Text(
-              m.editedAt != null && !deleted ? '$time · ${l10n.edited}' : time,
+              marks.isNotEmpty ? '$time · $marks' : time,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
             ),
           )
-        : m.editedAt != null && !deleted
+        : marks.isNotEmpty
         ? Padding(
             padding: EdgeInsets.only(
               left: mine ? 0 : Space.md,
@@ -571,7 +634,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               bottom: 2,
             ),
             child: Text(
-              l10n.edited,
+              marks,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
