@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/chat/data/prefs_chat_queue_store.dart';
+import 'package:battleplan/features/chat/domain/chat_queue_store.dart';
 import 'package:battleplan/features/groups/data/functions_invite_repository.dart';
 import 'package:battleplan/features/groups/data/functions_media_repository.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
@@ -703,16 +704,31 @@ void main() {
         final store = await open();
         expect(store.load(_g), isEmpty);
         await store.save(_g, [
-          (id: 'm1', text: 'On my way', replyToId: null),
-          (id: 'm2', text: 'Yes', replyToId: 'm0'),
+          const SavedText(id: 'm1', text: 'On my way'),
+          const SavedText(
+            id: 'm2',
+            text: 'Yes',
+            replyToId: 'm0',
+            mentions: ['sam'],
+            mentionsEveryone: true,
+            announcement: true,
+          ),
         ]);
         await store.save(const GroupId('g2'), [
-          (id: 'm3', text: 'Hi', replyToId: null),
+          const SavedText(id: 'm3', text: 'Hi'),
         ]);
         final again = await open();
+        // Mentions and announcements stay with the text (CHAT-14, CHAT-15).
         expect(again.load(_g), [
-          (id: 'm1', text: 'On my way', replyToId: null),
-          (id: 'm2', text: 'Yes', replyToId: 'm0'),
+          const SavedText(id: 'm1', text: 'On my way'),
+          const SavedText(
+            id: 'm2',
+            text: 'Yes',
+            replyToId: 'm0',
+            mentions: ['sam'],
+            mentionsEveryone: true,
+            announcement: true,
+          ),
         ]);
         await again.save(_g, const []);
         expect(again.load(_g), isEmpty);

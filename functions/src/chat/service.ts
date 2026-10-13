@@ -1,9 +1,10 @@
-// Chat domain service: owns messages.
+// Chat domain service: owns messages, and the team's pinned messages.
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { isDeepStrictEqual } from 'node:util';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
-import { Collections } from '../shared/constants.js';
+import { Collections, Limits } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
 import { removeTargetNotifications, trySend } from '../notify/service.js';
 import { deletePoll, pollCreatedBody } from '../polls/service.js';
@@ -221,8 +222,38 @@ async function afterErase(messageId: string, groupId: string): Promise<void> {
     (batch, reply) =>
       batch.update(reply.ref, { replyPreview: { authorName: '', text: '', type: 'text', deleted: true } }),
   );
+  // A deleted message leaves the pinned bar (CHAT-15).
+  await setPinned(groupId, messageId, false);
   // The team switcher's preview may be this message's first line.
   await rebuildLastMessagePreview(groupId);
+}
+
+/** A team's pinned message IDs, oldest pin first (ARCH §6.2 `pinnedMessageIds`). */
+export function pinnedIdsOf(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [];
+}
+
+/**
+ * Pins or unpins a message on its team's bar at the top of the chat
+ * (CHAT-15). The bar is `groups.pinnedMessageIds`, oldest pin first, with
+ * at most Limits.pinnedMessagesMax; pinning one more is refused with
+ * `too-many-pins`, so an admin unpins one first. Runs in a transaction, so
+ * two admins pinning at once can't pass the limit. Returns whether
+ * anything changed; a team that's gone changes nothing.
+ */
+export async function setPinned(groupId: string, messageId: string, pinned: boolean): Promise<boolean> {
+  const ref = db().collection(Collections.groups).doc(groupId);
+  return db().runTransaction(async (tx) => {
+    const group = await tx.get(ref);
+    if (!group.exists) return false;
+    const pins = pinnedIdsOf(group.get('pinnedMessageIds'));
+    if (pins.includes(messageId) === pinned) return false;
+    if (pinned && pins.length >= Limits.pinnedMessagesMax) {
+      throw new HttpsError('failed-precondition', 'too-many-pins');
+    }
+    tx.update(ref, { pinnedMessageIds: pinned ? [...pins, messageId] : pins.filter((id) => id !== messageId) });
+    return true;
+  });
 }
 
 /**
@@ -450,13 +481,56 @@ export function replyPushBody(m: Record<string, unknown>): string {
 }
 
 /**
+ * A mention's push (CHAT-14, NOTIF-5): "Alex mentioned you: Can you bring
+ * the balls?", or "Alex mentioned everyone: …" for an admin's @everyone.
+ */
+export function mentionPushBody(m: Record<string, unknown>): string {
+  const { name, text, photos } = pushWording(m);
+  const who = m.mentionsEveryone === true ? 'everyone' : 'you';
+  if (text) return `${name} mentioned ${who}: ${text}`;
+  return `${name} mentioned ${who} with ${photosPhrase(Math.max(photos, 1))}`;
+}
+
+/** An announcement's push (CHAT-15, NOTIF-5): "Announcement from Alex: Practice moves to 5:00". */
+export function announcementPushBody(m: Record<string, unknown>): string {
+  const { name, text } = pushWording(m);
+  return `Announcement from ${name}: ${text}`;
+}
+
+/**
+ * Whether a message is an admin's announcement (CHAT-15): a text message
+ * marked `announcement`, which the rules allow only team admins to post.
+ */
+export function isAnnouncement(m: Record<string, unknown>): boolean {
+  return m.type === 'text' && m.announcement === true;
+}
+
+/**
+ * Who a message names with @ (CHAT-14): the IDs in `mentions`, at most
+ * Limits.mentionsMax, never the author. Anything that can't be a user ID is
+ * dropped; notify.send() drops people who aren't on the team.
+ */
+export function mentionedUids(m: Record<string, unknown>): string[] {
+  const author = String(m.authorId ?? '');
+  const list = Array.isArray(m.mentions) ? m.mentions : [];
+  const uids = list.filter(
+    (u): u is string => typeof u === 'string' && u.length > 0 && u.length <= 128 && !/[/_]/.test(u) && u !== author,
+  );
+  return [...new Set(uids)].slice(0, Limits.mentionsMax);
+}
+
+/**
  * Notifies a new message (NOTIF-2): the person replied to gets "replied to
- * you" (it pushes even at Important only and lands in their notification
- * center), and everyone else but the author gets the plain message push.
- * They're left out of the plain push only when the reply push was for
- * them: with Replies switched off (NOTIF-4) but Messages on, a reply still
- * reaches them like any other message. Both dedupe on the message ID,
- * since the trigger can run twice.
+ * you", the people it mentions get "mentioned you" (CHAT-14; everyone, for
+ * an admin's @everyone), and everyone else but the author gets the plain
+ * message push. Replies and mentions push even at Important only and land
+ * in the notification center; someone both replied to and mentioned gets
+ * only the reply. People are left out of the plain push only when a reply
+ * or mention push was for them: with Replies or Mentions switched off
+ * (NOTIF-4) but Messages on, the message still reaches them like any
+ * other. An admin's announcement (CHAT-15) is one push to everyone
+ * instead, even at Important only. Each dedupes on the message ID, since
+ * the trigger can run twice.
  */
 export async function notifyNewMessage(
   messageId: string,
@@ -487,6 +561,18 @@ export async function notifyNewMessage(
     });
     return;
   }
+  if (isAnnouncement(message)) {
+    // Everyone who hasn't turned the team off or muted it, with a center
+    // item each; it stands in for the reply, mention, and message pushes.
+    await trySend({
+      ...common,
+      kind: 'announcement',
+      recipients: { members: true },
+      body: announcementPushBody(message),
+      dedupeKey: `${messageId}_announcement`,
+    });
+    return;
+  }
   const repliedPushed = repliedTo
     ? await trySend({
         ...common,
@@ -496,11 +582,26 @@ export async function notifyNewMessage(
         dedupeKey: `${messageId}_reply`,
       })
     : [];
+  // The rules let only admins mention everyone. The person replied to
+  // already has this message in their notification center.
+  const everyone = message.mentionsEveryone === true;
+  const mentioned = everyone ? [] : mentionedUids(message).filter((uid) => uid !== repliedTo);
+  const mentionPushed =
+    everyone || mentioned.length
+      ? await trySend({
+          ...common,
+          kind: 'mention',
+          recipients: everyone ? { members: true } : { uids: mentioned },
+          exclude: repliedTo ? [repliedTo] : [],
+          body: mentionPushBody(message),
+          dedupeKey: `${messageId}_mention`,
+        })
+      : [];
   await trySend({
     ...common,
     kind: 'message',
     recipients: { members: true },
-    exclude: repliedPushed,
+    exclude: [...repliedPushed, ...mentionPushed],
     body: messagePushBody(message),
     dedupeKey: messageId,
   });

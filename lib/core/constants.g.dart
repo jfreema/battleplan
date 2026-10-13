@@ -480,7 +480,9 @@ enum NotifyKind {
   eventCreated('eventCreated'),
   eventChanged('eventChanged'),
   eventReminder('eventReminder'),
-  documentAdded('documentAdded');
+  documentAdded('documentAdded'),
+  mention('mention'),
+  announcement('announcement');
 
   const NotifyKind(this.value);
 
@@ -649,5 +651,17 @@ const Map<NotifyKind, NotifyKindInfo> notifyKindInfo = {
     pref: NotificationPref.documents,
     center: true,
     channel: NotifyChannel.documents,
+  ),
+  NotifyKind.mention: NotifyKindInfo(
+    important: true,
+    pref: NotificationPref.mentions,
+    center: true,
+    channel: NotifyChannel.replies,
+  ),
+  NotifyKind.announcement: NotifyKindInfo(
+    important: true,
+    pref: null,
+    center: true,
+    channel: NotifyChannel.team,
   ),
 };

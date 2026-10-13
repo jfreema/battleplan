@@ -38,14 +38,28 @@ abstract interface class MessageRepository {
   /// Sends a text message as the signed-in person (CHAT-2). It appears in
   /// [watchNewest] at once as pending; the future completes when the server
   /// has it (offline, when the connection returns) and throws if the server
-  /// refuses it.
+  /// refuses it. [mentions] are the people it names with @, and
+  /// [mentionsEveryone] an admin's @everyone (CHAT-14); [announcement]
+  /// makes it an admin's announcement (CHAT-15).
   Future<void> sendText(
     GroupId groupId,
     UserId uid,
     String text, {
     String? id,
     String? replyToId,
+    List<String> mentions = const [],
+    bool mentionsEveryone = false,
+    bool announcement = false,
   });
+
+  /// One message, live, for the pinned bar (CHAT-15). Null once it's gone
+  /// or can't be read.
+  Stream<Message?> watchMessage(GroupId groupId, String messageId);
+
+  /// Pins or unpins a message through the `pinMessage` callable (CHAT-15):
+  /// team admins and super admins. Throws `InvalidInput('too-many-pins')`
+  /// when the bar is full.
+  Future<void> setPinned(String messageId, {required bool pinned});
 
   /// Uploads up to 10 photos for a new message (CHAT-3). [onProgress] gets
   /// 0 to 1 as bytes upload. Needs a connection; photos don't queue offline

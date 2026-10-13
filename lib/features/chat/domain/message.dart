@@ -39,6 +39,15 @@ abstract class Message with _$Message {
 
     /// Photos, up to 10 (CHAT-3).
     @Default(<Attachment>[]) List<Attachment> attachments,
+
+    /// The people it names with @, by ID, up to 20 (CHAT-14).
+    @Default(<String>[]) List<String> mentions,
+
+    /// An admin's @everyone (CHAT-14).
+    @Default(false) bool mentionsEveryone,
+
+    /// An admin's announcement, which notifies everyone (CHAT-15).
+    @Default(false) bool announcement,
     @Default(<String, Reaction>{}) Map<String, Reaction> reactions,
     DateTime? deletedAt,
 
@@ -59,6 +68,10 @@ abstract class Message with _$Message {
   const new _();
 
   bool get isSystem => type == MessageType.system;
+
+  /// Whether it names [uid] with @, or everyone (CHAT-14).
+  bool mentionsMe(String? uid) =>
+      mentionsEveryone || (uid != null && mentions.contains(uid));
 }
 
 /// Where a page of messages ends, for loading the next one (ARCH §5.3).

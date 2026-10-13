@@ -337,7 +337,7 @@ final class ChatMessagesProvider
   }
 }
 
-String _$chatMessagesHash() => r'58b61af6748661354892da17044ec320a6f642e5';
+String _$chatMessagesHash() => r'83b2e6fb933e5e204191c9075094a3a97e924826';
 
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out
@@ -398,4 +398,266 @@ abstract class _$ChatMessages extends $Notifier<ChatState> {
             >;
     return element.handleCreate(ref, () => build(_$args));
   }
+}
+
+/// A pinned message, live, for the bar at the top of the chat (CHAT-15).
+
+@ProviderFor(pinnedMessage)
+final pinnedMessageProvider = PinnedMessageFamily._();
+
+/// A pinned message, live, for the bar at the top of the chat (CHAT-15).
+
+final class PinnedMessageProvider
+    extends
+        $FunctionalProvider<AsyncValue<Message?>, Message?, Stream<Message?>>
+    with $FutureModifier<Message?>, $StreamProvider<Message?> {
+  /// A pinned message, live, for the bar at the top of the chat (CHAT-15).
+  PinnedMessageProvider._({
+    required PinnedMessageFamily super.from,
+    required (GroupId, String) super.argument,
+  }) : super(
+         retry: null,
+         name: r'pinnedMessageProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pinnedMessageHash();
+
+  @override
+  String toString() {
+    return r'pinnedMessageProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Message?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Message?> create(Ref ref) {
+    final argument = this.argument as (GroupId, String);
+    return pinnedMessage(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PinnedMessageProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pinnedMessageHash() => r'e606988eacda71e8d28bbaf51d4ef76e9dbcd807';
+
+/// A pinned message, live, for the bar at the top of the chat (CHAT-15).
+
+final class PinnedMessageFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Message?>, (GroupId, String)> {
+  PinnedMessageFamily._()
+    : super(
+        retry: null,
+        name: r'pinnedMessageProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A pinned message, live, for the bar at the top of the chat (CHAT-15).
+
+  PinnedMessageProvider call(GroupId groupId, String messageId) =>
+      PinnedMessageProvider._(argument: (groupId, messageId), from: this);
+
+  @override
+  String toString() => r'pinnedMessageProvider';
+}
+
+/// The team's pinned messages, newest pin first (CHAT-15).
+
+@ProviderFor(pinnedMessageIds)
+final pinnedMessageIdsProvider = PinnedMessageIdsFamily._();
+
+/// The team's pinned messages, newest pin first (CHAT-15).
+
+final class PinnedMessageIdsProvider
+    extends $FunctionalProvider<List<String>, List<String>, List<String>>
+    with $Provider<List<String>> {
+  /// The team's pinned messages, newest pin first (CHAT-15).
+  PinnedMessageIdsProvider._({
+    required PinnedMessageIdsFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'pinnedMessageIdsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$pinnedMessageIdsHash();
+
+  @override
+  String toString() {
+    return r'pinnedMessageIdsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<List<String>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<String> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return pinnedMessageIds(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<String>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PinnedMessageIdsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$pinnedMessageIdsHash() => r'f7b31153b34edb712c0116222f874617f000b775';
+
+/// The team's pinned messages, newest pin first (CHAT-15).
+
+final class PinnedMessageIdsFamily extends $Family
+    with $FunctionalFamilyOverride<List<String>, GroupId> {
+  PinnedMessageIdsFamily._()
+    : super(
+        retry: null,
+        name: r'pinnedMessageIdsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// The team's pinned messages, newest pin first (CHAT-15).
+
+  PinnedMessageIdsProvider call(GroupId groupId) =>
+      PinnedMessageIdsProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'pinnedMessageIdsProvider';
+}
+
+/// Who can be named with @ in a team's chat (CHAT-14): everyone on the
+/// team but me, by name.
+
+@ProviderFor(mentionCandidates)
+final mentionCandidatesProvider = MentionCandidatesFamily._();
+
+/// Who can be named with @ in a team's chat (CHAT-14): everyone on the
+/// team but me, by name.
+
+final class MentionCandidatesProvider
+    extends
+        $FunctionalProvider<
+          List<MentionCandidate>,
+          List<MentionCandidate>,
+          List<MentionCandidate>
+        >
+    with $Provider<List<MentionCandidate>> {
+  /// Who can be named with @ in a team's chat (CHAT-14): everyone on the
+  /// team but me, by name.
+  MentionCandidatesProvider._({
+    required MentionCandidatesFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'mentionCandidatesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$mentionCandidatesHash();
+
+  @override
+  String toString() {
+    return r'mentionCandidatesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<List<MentionCandidate>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  List<MentionCandidate> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return mentionCandidates(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<MentionCandidate> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<MentionCandidate>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MentionCandidatesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$mentionCandidatesHash() => r'f69e18d4542449e1829fc54e883a9d9e0ce320b4';
+
+/// Who can be named with @ in a team's chat (CHAT-14): everyone on the
+/// team but me, by name.
+
+final class MentionCandidatesFamily extends $Family
+    with $FunctionalFamilyOverride<List<MentionCandidate>, GroupId> {
+  MentionCandidatesFamily._()
+    : super(
+        retry: null,
+        name: r'mentionCandidatesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Who can be named with @ in a team's chat (CHAT-14): everyone on the
+  /// team but me, by name.
+
+  MentionCandidatesProvider call(GroupId groupId) =>
+      MentionCandidatesProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'mentionCandidatesProvider';
 }

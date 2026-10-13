@@ -31,10 +31,16 @@ class PrefsChatQueueStore implements ChatQueueStore {
     return [
       for (final e in list)
         if (e is Map && e['id'] is String && e['text'] is String)
-          (
+          SavedText(
             id: e['id'] as String,
             text: e['text'] as String,
             replyToId: e['replyToId'] as String?,
+            mentions: [
+              for (final uid in (e['mentions'] as List?) ?? const [])
+                if (uid is String) uid,
+            ],
+            mentionsEveryone: e['mentionsEveryone'] == true,
+            announcement: e['announcement'] == true,
           ),
     ];
   }
@@ -47,7 +53,14 @@ class PrefsChatQueueStore implements ChatQueueStore {
     } else {
       all[groupId.value] = [
         for (final i in items)
-          {'id': i.id, 'text': i.text, 'replyToId': i.replyToId},
+          {
+            'id': i.id,
+            'text': i.text,
+            'replyToId': i.replyToId,
+            if (i.mentions.isNotEmpty) 'mentions': i.mentions,
+            if (i.mentionsEveryone) 'mentionsEveryone': true,
+            if (i.announcement) 'announcement': true,
+          },
       ];
     }
     return all.isEmpty

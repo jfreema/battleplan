@@ -259,9 +259,9 @@ void main() {
         'when it opens the chat again', (tester) async {
       final store = MemoryChatQueueStore();
       await store.save(const GroupId('a'), [
-        (id: 'q1', text: 'Running late', replyToId: null),
+        const SavedText(id: 'q1', text: 'Running late'),
         // Already in the chat (the offline cache kept it): not sent twice.
-        (id: 'm1', text: 'Message 1', replyToId: null),
+        const SavedText(id: 'm1', text: 'Message 1'),
       ]);
       final repo = FakeMessageRepository([msg(1)]);
       await openChat(

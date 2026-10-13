@@ -655,7 +655,9 @@ $NewPollCopyWith<$Res> get poll {
 mixin _$OutgoingText {
 
 /// The message ID it will have on the server.
- String get id; String get text; String? get replyToId; bool get failed;
+ String get id; String get text; String? get replyToId;/// Who it names with @, and an admin's @everyone (CHAT-14).
+ List<String> get mentions; bool get mentionsEveryone;/// An admin's announcement (CHAT-15).
+ bool get announcement; bool get failed;
 /// Create a copy of OutgoingText
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -667,20 +669,20 @@ $OutgoingTextCopyWith<OutgoingText> get copyWith => _$OutgoingTextCopyWithImpl<O
 @override
 bool operator ==(Object other) {
   final _this = this as OutgoingText;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OutgoingText&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.replyToId, _this.replyToId) || other.replyToId == _this.replyToId)&&(identical(other.failed, _this.failed) || other.failed == _this.failed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OutgoingText&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.replyToId, _this.replyToId) || other.replyToId == _this.replyToId)&&const DeepCollectionEquality().equals(other.mentions, _this.mentions)&&(identical(other.mentionsEveryone, _this.mentionsEveryone) || other.mentionsEveryone == _this.mentionsEveryone)&&(identical(other.announcement, _this.announcement) || other.announcement == _this.announcement)&&(identical(other.failed, _this.failed) || other.failed == _this.failed));
 }
 
 
 @override
 int get hashCode {
   final _this = this as OutgoingText;
-  return Object.hash(runtimeType,_this.id,_this.text,_this.replyToId,_this.failed);
+  return Object.hash(runtimeType,_this.id,_this.text,_this.replyToId,const DeepCollectionEquality().hash(_this.mentions),_this.mentionsEveryone,_this.announcement,_this.failed);
 }
 
 @override
 String toString() {
   final _this = this as OutgoingText;
-  return 'OutgoingText(id: ${_this.id}, text: ${_this.text}, replyToId: ${_this.replyToId}, failed: ${_this.failed})';
+  return 'OutgoingText(id: ${_this.id}, text: ${_this.text}, replyToId: ${_this.replyToId}, mentions: ${_this.mentions}, mentionsEveryone: ${_this.mentionsEveryone}, announcement: ${_this.announcement}, failed: ${_this.failed})';
 }
 
 
@@ -691,7 +693,7 @@ abstract mixin class $OutgoingTextCopyWith<$Res>  {
   factory $OutgoingTextCopyWith(OutgoingText value, $Res Function(OutgoingText) _then) = _$OutgoingTextCopyWithImpl;
 @useResult
 $Res call({
- String id, String text, String? replyToId, bool failed
+ String id, String text, String? replyToId, List<String> mentions, bool mentionsEveryone, bool announcement, bool failed
 });
 
 
@@ -708,12 +710,15 @@ class _$OutgoingTextCopyWithImpl<$Res>
 
 /// Create a copy of OutgoingText
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? text = null,Object? replyToId = freezed,Object? failed = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? text = null,Object? replyToId = freezed,Object? mentions = null,Object? mentionsEveryone = null,Object? announcement = null,Object? failed = null,}) {
   return _then(OutgoingText(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,replyToId: freezed == replyToId ? _self.replyToId : replyToId // ignore: cast_nullable_to_non_nullable
-as String?,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as String?,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_nullable_to_non_nullable
+as List<String>,mentionsEveryone: null == mentionsEveryone ? _self.mentionsEveryone : mentionsEveryone // ignore: cast_nullable_to_non_nullable
+as bool,announcement: null == announcement ? _self.announcement : announcement // ignore: cast_nullable_to_non_nullable
+as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -799,10 +804,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String text,  String? replyToId,  bool failed)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String text,  String? replyToId,  List<String> mentions,  bool mentionsEveryone,  bool announcement,  bool failed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OutgoingText() when $default != null:
-return $default(_that.id,_that.text,_that.replyToId,_that.failed);case _:
+return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mentionsEveryone,_that.announcement,_that.failed);case _:
   return orElse();
 
 }
@@ -820,10 +825,10 @@ return $default(_that.id,_that.text,_that.replyToId,_that.failed);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String text,  String? replyToId,  bool failed)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String text,  String? replyToId,  List<String> mentions,  bool mentionsEveryone,  bool announcement,  bool failed)  $default,) {final _that = this;
 switch (_that) {
 case _OutgoingText():
-return $default(_that.id,_that.text,_that.replyToId,_that.failed);case _:
+return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mentionsEveryone,_that.announcement,_that.failed);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -840,10 +845,10 @@ return $default(_that.id,_that.text,_that.replyToId,_that.failed);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String text,  String? replyToId,  bool failed)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String text,  String? replyToId,  List<String> mentions,  bool mentionsEveryone,  bool announcement,  bool failed)?  $default,) {final _that = this;
 switch (_that) {
 case _OutgoingText() when $default != null:
-return $default(_that.id,_that.text,_that.replyToId,_that.failed);case _:
+return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mentionsEveryone,_that.announcement,_that.failed);case _:
   return null;
 
 }
@@ -855,13 +860,25 @@ return $default(_that.id,_that.text,_that.replyToId,_that.failed);case _:
 
 
 class _OutgoingText implements OutgoingText {
-  const _OutgoingText({required this.id, required this.text, this.replyToId, this.failed = false});
+  const _OutgoingText({required this.id, required this.text, this.replyToId,  List<String> mentions = const <String>[], this.mentionsEveryone = false, this.announcement = false, this.failed = false}): _mentions = mentions;
   
 
 /// The message ID it will have on the server.
 @override final  String id;
 @override final  String text;
 @override final  String? replyToId;
+/// Who it names with @, and an admin's @everyone (CHAT-14).
+ final  List<String> _mentions;
+/// Who it names with @, and an admin's @everyone (CHAT-14).
+@override@JsonKey() List<String> get mentions {
+  if (_mentions is EqualUnmodifiableListView) return _mentions;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_mentions);
+}
+
+@override@JsonKey() final  bool mentionsEveryone;
+/// An admin's announcement (CHAT-15).
+@override@JsonKey() final  bool announcement;
 @override@JsonKey() final  bool failed;
 
 /// Create a copy of OutgoingText
@@ -874,18 +891,18 @@ _$OutgoingTextCopyWith<_OutgoingText> get copyWith => __$OutgoingTextCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _OutgoingText&&(identical(other.id, id) || other.id == id)&&(identical(other.text, text) || other.text == text)&&(identical(other.replyToId, replyToId) || other.replyToId == replyToId)&&(identical(other.failed, failed) || other.failed == failed));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _OutgoingText&&(identical(other.id, id) || other.id == id)&&(identical(other.text, text) || other.text == text)&&(identical(other.replyToId, replyToId) || other.replyToId == replyToId)&&const DeepCollectionEquality().equals(other.mentions, _mentions)&&(identical(other.mentionsEveryone, mentionsEveryone) || other.mentionsEveryone == mentionsEveryone)&&(identical(other.announcement, announcement) || other.announcement == announcement)&&(identical(other.failed, failed) || other.failed == failed));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,text,replyToId,failed);
+    return Object.hash(runtimeType,id,text,replyToId,const DeepCollectionEquality().hash(_mentions),mentionsEveryone,announcement,failed);
 }
 
 @override
 String toString() {
-    return 'OutgoingText(id: $id, text: $text, replyToId: $replyToId, failed: $failed)';
+    return 'OutgoingText(id: $id, text: $text, replyToId: $replyToId, mentions: $mentions, mentionsEveryone: $mentionsEveryone, announcement: $announcement, failed: $failed)';
 }
 
 
@@ -896,7 +913,7 @@ abstract mixin class _$OutgoingTextCopyWith<$Res> implements $OutgoingTextCopyWi
   factory _$OutgoingTextCopyWith(_OutgoingText value, $Res Function(_OutgoingText) _then) = __$OutgoingTextCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String text, String? replyToId, bool failed
+ String id, String text, String? replyToId, List<String> mentions, bool mentionsEveryone, bool announcement, bool failed
 });
 
 
@@ -913,12 +930,15 @@ class __$OutgoingTextCopyWithImpl<$Res>
 
 /// Create a copy of OutgoingText
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? text = null,Object? replyToId = freezed,Object? failed = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? text = null,Object? replyToId = freezed,Object? mentions = null,Object? mentionsEveryone = null,Object? announcement = null,Object? failed = null,}) {
   return _then(_OutgoingText(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,replyToId: freezed == replyToId ? _self.replyToId : replyToId // ignore: cast_nullable_to_non_nullable
-as String?,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as String?,mentions: null == mentions ? _self._mentions : mentions // ignore: cast_nullable_to_non_nullable
+as List<String>,mentionsEveryone: null == mentionsEveryone ? _self.mentionsEveryone : mentionsEveryone // ignore: cast_nullable_to_non_nullable
+as bool,announcement: null == announcement ? _self.announcement : announcement // ignore: cast_nullable_to_non_nullable
+as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

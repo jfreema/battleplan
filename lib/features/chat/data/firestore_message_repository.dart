@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -109,6 +110,12 @@ class FirestoreMessageRepository implements MessageRepository {
         ),
         _ => null,
       },
+      mentions: [
+        for (final uid in (x['mentions'] as List?) ?? const [])
+          if (uid is String) uid,
+      ],
+      mentionsEveryone: x['mentionsEveryone'] == true,
+      announcement: x['announcement'] == true,
       attachments: [
         for (final a in (x['attachments'] as List?) ?? const [])
           if (a is Map && a['path'] is String)
@@ -145,6 +152,9 @@ class FirestoreMessageRepository implements MessageRepository {
     String text, {
     String? id,
     String? replyToId,
+    List<String> mentions = const [],
+    bool mentionsEveryone = false,
+    bool announcement = false,
   }) => _post(
     groupId,
     uid,
@@ -152,7 +162,52 @@ class FirestoreMessageRepository implements MessageRepository {
     type: MessageType.text,
     text: text,
     replyToId: replyToId,
+    extra: {
+      // Only when set, as the rules allow them (CHAT-14, CHAT-15).
+      if (mentions.isNotEmpty)
+        'mentions': mentions.take(Limits.mentionsMax).toList(),
+      if (mentionsEveryone) 'mentionsEveryone': true,
+      if (announcement) 'announcement': true,
+    },
   );
+
+  @override
+  Stream<Message?> watchMessage(GroupId groupId, String messageId) => _db
+      .collection(Collections.messages)
+      .doc(messageId)
+      .snapshots()
+      .map(
+        (d) => d.exists && d.data()?['groupId'] == groupId.value
+            ? _message(d, groupId)
+            : null,
+      )
+      // A message I can no longer read (I left, the team was suspended)
+      // reads as gone.
+      .transform(
+        StreamTransformer.fromHandlers(
+          handleError: (error, stack, sink) => error is FirebaseException
+              ? sink.add(null)
+              : sink.addError(error, stack),
+        ),
+      );
+
+  @override
+  Future<void> setPinned(String messageId, {required bool pinned}) async {
+    try {
+      await _functions.httpsCallable('pinMessage').call<Object?>({
+        'messageId': messageId,
+        'pinned': pinned,
+      });
+    } on FirebaseFunctionsException catch (e) {
+      throw switch ((e.code, e.message)) {
+        ('failed-precondition', final m?) => InvalidInput(m),
+        ('permission-denied', _) => PermissionDenied(e.message),
+        ('not-found', _) => NotFound(e.message),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
+        _ => UnknownFailure('${e.code}: ${e.message}'),
+      };
+    }
+  }
 
   @override
   Future<UploadedPhotos> uploadPhotos(
@@ -298,6 +353,7 @@ class FirestoreMessageRepository implements MessageRepository {
     List<Map<String, Object?>> attachments = const [],
     String? replyToId,
     String? pollId,
+    Map<String, Object> extra = const {},
     void Function(WriteBatch batch)? also,
   }) async {
     final memberRef = _db
@@ -320,6 +376,7 @@ class FirestoreMessageRepository implements MessageRepository {
           'attachments': attachments,
           'replyToId': ?replyToId,
           'pollId': ?pollId,
+          ...extra,
           'createdAt': FieldValue.serverTimestamp(),
         })
         // The message rate limit (ARCH §6.3): the same batch stamps the

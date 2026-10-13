@@ -5,11 +5,13 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The global switches shown in Settings (NOTIF-4). Mentions arrive in
-/// v1.1 (NOTIF-12), so their switch stays hidden until then.
+/// The global switches shown in Settings (NOTIF-4), Mentions included
+/// (CHAT-14, NOTIF-12). Announcements have no switch: they reach everyone
+/// who hasn't turned the team off (CHAT-15).
 const List<NotificationPref> shownNotificationPrefs = [
   NotificationPref.messages,
   NotificationPref.replies,
+  NotificationPref.mentions,
   NotificationPref.polls,
   NotificationPref.eventsNew,
   NotificationPref.eventsChanged,
@@ -76,6 +78,8 @@ IconData notificationIcon(NotifyKind? kind) => switch (kind) {
   NotifyKind.eventCreated || NotifyKind.eventChanged => AppIcons.event,
   NotifyKind.eventReminder => AppIcons.reminder,
   NotifyKind.documentAdded => AppIcons.document,
+  NotifyKind.mention => AppIcons.mention,
+  NotifyKind.announcement => AppIcons.announcement,
 };
 
 /// "now", "5m", "3h", "2d", then the date: short, for a list row.

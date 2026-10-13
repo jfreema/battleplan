@@ -2,6 +2,8 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/haptics.dart';
+import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/features/chat/domain/mentions.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -10,7 +12,9 @@ import 'package:material_ui/material_ui.dart';
 
 /// The message box (CHAT-2): several lines up to 4,000 characters, a counter
 /// near the limit, and Send. On a keyboard, Enter sends and Shift+Enter adds
-/// a line.
+/// a line. Typing @ suggests team members (CHAT-14): tap one, or pick with
+/// the arrow keys and Enter or Tab; Escape closes the list. Admins can
+/// write an announcement from the + menu (CHAT-15).
 class Composer extends StatefulWidget {
   const new({
     required this.onSend,
@@ -21,6 +25,11 @@ class Composer extends StatefulWidget {
     this.replyingTo,
     this.onCancelReply,
     this.teamName = '',
+    this.mentionCandidates = const [],
+    this.canMentionEveryone = false,
+    this.onAnnounce,
+    this.announcing = false,
+    this.onCancelAnnouncement,
     super.key,
   });
 
@@ -45,6 +54,18 @@ class Composer extends StatefulWidget {
   /// says why straight away.
   final VoidCallback? onAttachBlocked;
 
+  /// Who typing @ suggests (CHAT-14), and whether @everyone is among them
+  /// (admins).
+  final List<MentionCandidate> mentionCandidates;
+  final bool canMentionEveryone;
+
+  /// Admins: the + menu's Announcement (CHAT-15). While [announcing], a
+  /// banner says the next message notifies everyone, with ✕
+  /// ([onCancelAnnouncement]).
+  final VoidCallback? onAnnounce;
+  final bool announcing;
+  final VoidCallback? onCancelAnnouncement;
+
   @override
   State<Composer> createState() => _ComposerState();
 }
@@ -53,6 +74,22 @@ class _ComposerState extends State<Composer> {
   final _text = TextEditingController();
   late final _focus = FocusNode(onKeyEvent: _onKey);
 
+  /// The members matching the @ being typed, and the one Enter would pick.
+  List<MentionCandidate> _suggestions = const [];
+  int _selected = 0;
+
+  /// Where the @ being typed starts.
+  int _mentionStart = 0;
+
+  /// Closed with Escape until the @ word changes.
+  String? _dismissed;
+
+  @override
+  void initState() {
+    super.initState();
+    _text.addListener(_suggest);
+  }
+
   @override
   void dispose() {
     _text.dispose();
@@ -60,10 +97,79 @@ class _ComposerState extends State<Composer> {
     super.dispose();
   }
 
+  /// Looks for an @ being typed at the cursor and lists who it could be.
+  void _suggest() {
+    final sel = _text.selection;
+    final q = sel.isValid && sel.isCollapsed
+        ? mentionQueryAt(_text.text, sel.baseOffset)
+        : null;
+    final key = q == null ? null : '${q.start}:${q.query}';
+    final found = q == null || key == _dismissed
+        ? const <MentionCandidate>[]
+        : mentionSuggestions(
+            q.query,
+            widget.mentionCandidates,
+            everyone: widget.canMentionEveryone,
+          );
+    if (found.isEmpty && _suggestions.isEmpty) return;
+    setState(() {
+      _suggestions = found;
+      _selected = 0;
+      if (q != null) _mentionStart = q.start;
+    });
+  }
+
+  /// Puts "@Name " in place of the @ being typed.
+  void _pick(MentionCandidate c) {
+    final cursor = _text.selection.baseOffset;
+    final insert = mentionText(c);
+    final text = _text.text.replaceRange(_mentionStart, cursor, insert);
+    // A longer name starting the same way ("Mary Ann Lee" after "Mary
+    // Ann") isn't offered again until something more is typed.
+    _dismissed = '$_mentionStart:${insert.substring(1)}';
+    _text.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: _mentionStart + insert.length),
+    );
+    Haptics.selection();
+    setState(() => _suggestions = const []);
+    _focus.requestFocus();
+  }
+
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final key = event.logicalKey;
     final enter =
-        event.logicalKey == LogicalKeyboardKey.enter ||
-        event.logicalKey == LogicalKeyboardKey.numpadEnter;
+        key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.numpadEnter;
+    // While suggestions show, the arrows, Enter, and Tab pick one, and
+    // Escape closes the list (CHAT-14).
+    if (_suggestions.isNotEmpty) {
+      if (key == LogicalKeyboardKey.arrowDown ||
+          key == LogicalKeyboardKey.arrowUp) {
+        final step = key == LogicalKeyboardKey.arrowDown ? 1 : -1;
+        setState(
+          () => _selected = (_selected + step) % _suggestions.length,
+        );
+        return KeyEventResult.handled;
+      }
+      if ((enter || key == LogicalKeyboardKey.tab) &&
+          event is KeyDownEvent &&
+          !HardwareKeyboard.instance.isShiftPressed) {
+        _pick(_suggestions[_selected]);
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.escape) {
+        final sel = _text.selection;
+        final q = mentionQueryAt(_text.text, sel.baseOffset);
+        setState(() {
+          _dismissed = q == null ? null : '${q.start}:${q.query}';
+          _suggestions = const [];
+        });
+        return KeyEventResult.handled;
+      }
+    }
     // Enter while an input method is still composing a word picks the
     // word, not sends.
     if (event is KeyDownEvent &&
@@ -82,7 +188,10 @@ class _ComposerState extends State<Composer> {
     Haptics.light();
     widget.onSend(text);
     _text.clear();
-    setState(() {});
+    setState(() {
+      _suggestions = const [];
+      _dismissed = null;
+    });
   }
 
   @override
@@ -92,6 +201,11 @@ class _ComposerState extends State<Composer> {
     final canSend =
         _text.text.trim().isNotEmpty && length <= Limits.messageTextMax;
     final replying = widget.replyingTo;
+    final hint = widget.announcing
+        ? l10n.announcementHint
+        : widget.teamName.trim().isEmpty
+        ? l10n.messageHint
+        : l10n.messageTeamHint(widget.teamName.trim());
     final box = SafeArea(
       top: false,
       child: Padding(
@@ -105,7 +219,7 @@ class _ComposerState extends State<Composer> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (widget.onAttachBlocked case final blocked?
-                when widget.onCreatePoll == null)
+                when widget.onCreatePoll == null && widget.onAnnounce == null)
               IconButton(
                 tooltip: l10n.addToMessage,
                 onPressed: blocked,
@@ -143,6 +257,18 @@ class _ComposerState extends State<Composer> {
                         title: Text(l10n.createPoll),
                       ),
                     ),
+                  // Admins (CHAT-15). Full storage doesn't stop it.
+                  if (widget.onAnnounce case final announce?)
+                    PopupMenuItem(
+                      value: () {
+                        announce();
+                        _focus.requestFocus();
+                      },
+                      child: ListTile(
+                        leading: const Icon(AppIcons.announcement),
+                        title: Text(l10n.announceAction),
+                      ),
+                    ),
                 ],
               ),
             Expanded(
@@ -155,9 +281,7 @@ class _ComposerState extends State<Composer> {
                 keyboardType: TextInputType.multiline,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: widget.teamName.trim().isEmpty
-                      ? l10n.messageHint
-                      : l10n.messageTeamHint(widget.teamName.trim()),
+                  hintText: hint,
                   isDense: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(Corners.bubble),
@@ -178,30 +302,129 @@ class _ComposerState extends State<Composer> {
         ),
       ),
     );
-    if (replying == null) return box;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(Space.lg, Space.xs, Space.xs, 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: QuoteBlock(
-                  authorName: replying.authorName,
-                  text: quoteText(l10n, replying.type, replying.text),
-                ),
-              ),
-              IconButton(
-                tooltip: l10n.cancelReply,
-                icon: const Icon(AppIcons.close),
-                onPressed: widget.onCancelReply,
-              ),
-            ],
+        if (_suggestions.isNotEmpty)
+          _MentionList(
+            suggestions: _suggestions,
+            selected: _selected,
+            onPick: _pick,
           ),
-        ),
+        if (widget.announcing)
+          _AnnouncementBanner(onCancel: widget.onCancelAnnouncement),
+        if (replying != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Space.lg,
+              Space.xs,
+              Space.xs,
+              0,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: QuoteBlock(
+                    authorName: replying.authorName,
+                    text: quoteText(l10n, replying.type, replying.text),
+                  ),
+                ),
+                IconButton(
+                  tooltip: l10n.cancelReply,
+                  icon: const Icon(AppIcons.close),
+                  onPressed: widget.onCancelReply,
+                ),
+              ],
+            ),
+          ),
         box,
       ],
+    );
+  }
+}
+
+/// The members matching the @ being typed (CHAT-14), above the box.
+class _MentionList extends StatelessWidget {
+  const new({
+    required this.suggestions,
+    required this.selected,
+    required this.onPick,
+  });
+
+  final List<MentionCandidate> suggestions;
+  final int selected;
+  final void Function(MentionCandidate) onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      container: true,
+      label: l10n.mentionSuggestions,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(Space.md, Space.xs, Space.md, 0),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerHigh,
+          border: Border.all(color: scheme.outlineVariant),
+          borderRadius: BorderRadius.circular(Corners.bubble),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (i, c) in suggestions.indexed)
+              ListTile(
+                dense: true,
+                selected: i == selected,
+                leading: c.uid.isEmpty
+                    ? const Icon(AppIcons.group)
+                    : Avatar(name: c.name, colorKey: c.uid, size: 28),
+                title: Text(c.uid.isEmpty ? l10n.mentionEveryoneName : c.name),
+                subtitle: c.uid.isEmpty ? Text(l10n.mentionEveryoneHelp) : null,
+                onTap: () => onPick(c),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Announcement: notifies everyone…" above the box while an admin writes
+/// one (CHAT-15), with ✕ to send a plain message instead.
+class _AnnouncementBanner extends StatelessWidget {
+  const new({this.onCancel});
+
+  final VoidCallback? onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(Space.md, Space.xs, Space.md, 0),
+      padding: const EdgeInsets.only(left: Space.md),
+      decoration: BoxDecoration(
+        color: scheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(Corners.bubble),
+      ),
+      child: Row(
+        children: [
+          Icon(AppIcons.announcement, color: scheme.onSecondaryContainer),
+          const SizedBox(width: Space.sm),
+          Expanded(
+            child: Text(
+              l10n.announcementBanner,
+              style: TextStyle(color: scheme.onSecondaryContainer),
+            ),
+          ),
+          IconButton(
+            tooltip: l10n.cancelAnnouncement,
+            icon: Icon(AppIcons.close, color: scheme.onSecondaryContainer),
+            onPressed: onCancel,
+          ),
+        ],
+      ),
     );
   }
 }

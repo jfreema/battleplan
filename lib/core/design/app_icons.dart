@@ -92,6 +92,11 @@ abstract final class AppIcons {
   static const IconData chevronLeft = Symbols.chevron_left_rounded;
   static const IconData chevronRight = Symbols.chevron_right_rounded;
 
+  /// Mentions and announcements (CHAT-14, CHAT-15).
+  static const IconData mention = Symbols.alternate_email_rounded;
+  static const IconData announcement = Symbols.campaign_rounded;
+  static const IconData unpin = Symbols.keep_off_rounded;
+
   /// Player details (PLAYER-12).
   static const IconData birthday = Symbols.cake_rounded;
   static const IconData call = Symbols.call_rounded;

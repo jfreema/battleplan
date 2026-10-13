@@ -91,6 +91,10 @@ abstract class Group with _$Group {
     /// STORE-6). The data layer fills in the default when it's missing.
     @Default(0) int storageQuotaBytes,
     ChatTheme? chatTheme,
+
+    /// The chat's pinned messages, oldest pin first, at most
+    /// [Limits.pinnedMessagesMax] (CHAT-15). Only the server changes them.
+    @Default(<String>[]) List<String> pinnedMessageIds,
   }) = _Group;
 
   const new _();

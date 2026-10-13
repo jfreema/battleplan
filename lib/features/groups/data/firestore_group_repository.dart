@@ -435,6 +435,10 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
       ),
       _ => null,
     },
+    pinnedMessageIds: [
+      for (final id in (d['pinnedMessageIds'] as List?) ?? const [])
+        if (id is String) id,
+    ],
   );
 }
 

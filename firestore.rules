@@ -352,10 +352,12 @@ service cloud.firestore {
         && attachmentsOk(incoming(), messageId)
         && (incoming().get('replyToId', null) == null
             || (incoming().replyToId is string && incoming().replyToId.size() <= 64))
+        && mentionsOk(incoming())
+        && announcementOk(incoming())
         && incoming().createdAt == request.time
         && incoming().keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
             'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',
-            'createdAt'])
+            'mentions', 'mentionsEveryone', 'announcement', 'createdAt'])
         && rateLimitOk(incoming().groupId, messageId);
 
       // Reactions: a member may set or clear only their own, any of the 16,
@@ -401,6 +403,24 @@ service cloud.firestore {
         && (a.size() < 8 || a[7].path.matches(folder))
         && (a.size() < 9 || a[8].path.matches(folder))
         && (a.size() < 10 || a[9].path.matches(folder));
+    }
+
+    // @mentions (CHAT-14): up to 20 people, named by ID on a text or photo
+    // message (the trigger notifies only those on the team), and @everyone
+    // only from the team's admins. The member doc is already fetched, so
+    // the admin check costs nothing extra.
+    function mentionsOk(m) {
+      return (!('mentions' in m)
+              || (m.mentions is list && m.mentions.size() <= 20 && m.type in ['text', 'image']))
+        && (m.get('mentionsEveryone', false) == false
+            || (m.mentionsEveryone == true && m.type in ['text', 'image'] && isAdmin(m.groupId)));
+    }
+
+    // Announcements (CHAT-15): text messages from the team's admins, which
+    // notify everyone who hasn't turned the team off.
+    function announcementOk(m) {
+      return m.get('announcement', false) == false
+        || (m.announcement == true && m.type == 'text' && isAdmin(m.groupId));
     }
 
     // The author fields must equal the sender's own membership snapshot.

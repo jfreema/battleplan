@@ -63,7 +63,11 @@ Future<FakeLocalPrefs> pumpApp(
   // Posting a poll goes through the message repository, which puts it where
   // the poll repository reads it, as one batch does on the server.
   final polls = pollRepo ?? FakePollRepository();
-  final messages = (messageRepo ?? FakeMessageRepository())..polls = polls;
+  // Pinning a message lands on its team, as pinMessage writes it (CHAT-15).
+  final teams = groupRepo ?? FakeGroupRepository(groups.cast());
+  final messages = (messageRepo ?? FakeMessageRepository())
+    ..polls = polls
+    ..groups ??= teams;
   final events = eventRepo ?? rsvpRepo?.events ?? FakeEventRepository();
   await tester.pumpWidget(
     ProviderScope(
@@ -77,9 +81,7 @@ Future<FakeLocalPrefs> pumpApp(
         appVersionProvider.overrideWithValue('1.0.0'),
         authRepositoryProvider.overrideWithValue(auth),
         userRepositoryProvider.overrideWithValue(users ?? FakeUserRepository()),
-        groupRepositoryProvider.overrideWithValue(
-          groupRepo ?? FakeGroupRepository(groups.cast()),
-        ),
+        groupRepositoryProvider.overrideWithValue(teams),
         memberRepositoryProvider.overrideWithValue(
           memberRepo ?? FakeMemberRepository(memberships.cast()),
         ),

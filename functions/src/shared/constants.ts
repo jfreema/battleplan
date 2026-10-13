@@ -173,7 +173,7 @@ export type ReportStatus = (typeof reportStatusValues)[number];
 export const devicePlatformValues = ['ios', 'android', 'web'] as const;
 export type DevicePlatform = (typeof devicePlatformValues)[number];
 
-export const notifyKindValues = ['message', 'reply', 'addedToTeam', 'madeAdmin', 'guardianRequest', 'guardianApproved', 'playerAdded', 'contentReported', 'storageWarning', 'pollCreated', 'pollClosed', 'eventCreated', 'eventChanged', 'eventReminder', 'documentAdded'] as const;
+export const notifyKindValues = ['message', 'reply', 'addedToTeam', 'madeAdmin', 'guardianRequest', 'guardianApproved', 'playerAdded', 'contentReported', 'storageWarning', 'pollCreated', 'pollClosed', 'eventCreated', 'eventChanged', 'eventReminder', 'documentAdded', 'mention', 'announcement'] as const;
 export type NotifyKind = (typeof notifyKindValues)[number];
 
 export const notificationPrefValues = ['messages', 'replies', 'mentions', 'polls', 'eventsNew', 'eventsChanged', 'reminders', 'documents'] as const;
@@ -199,4 +199,6 @@ export const NOTIFY_KINDS = {
   eventChanged: { important: true, pref: 'eventsChanged' as NotificationPref | null, center: true, channel: 'events' as NotifyChannel },
   eventReminder: { important: true, pref: 'reminders' as NotificationPref | null, center: true, channel: 'events' as NotifyChannel },
   documentAdded: { important: false, pref: 'documents' as NotificationPref | null, center: true, channel: 'documents' as NotifyChannel },
+  mention: { important: true, pref: 'mentions' as NotificationPref | null, center: true, channel: 'replies' as NotifyChannel },
+  announcement: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
 } as const;

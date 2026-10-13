@@ -4,6 +4,10 @@ import 'package:material_ui/material_ui.dart';
 /// A piece of message text: plain, or a link with where it goes.
 typedef TextPiece = ({String text, Uri? link});
 
+/// A stretch of text from `start` to `end`, shown in `style`: an @mention
+/// (CHAT-14).
+typedef TextHighlight = ({int start, int end, TextStyle style});
+
 final _linkPattern = RegExp(
   // Web addresses, email addresses, then phone numbers (CHAT-5).
   '((?:https?://|www\\.)[^\\s<>]+[^\\s<>.,;:!?)\\]}"\'])'
@@ -41,7 +45,8 @@ List<TextPiece> linkify(String text, {bool phones = true}) {
   return pieces;
 }
 
-/// Text with tappable links (CHAT-5).
+/// Text with tappable links (CHAT-5), and [highlights] such as @mentions
+/// (CHAT-14) styled apart.
 class LinkifiedText extends StatefulWidget {
   const new(
     this.text, {
@@ -49,6 +54,7 @@ class LinkifiedText extends StatefulWidget {
     this.style,
     this.linkColor,
     this.phones = true,
+    this.highlights = const [],
     super.key,
   });
 
@@ -57,6 +63,10 @@ class LinkifiedText extends StatefulWidget {
   final Color? linkColor;
   final bool phones;
   final void Function(Uri link) onOpen;
+
+  /// Stretches of the text to style apart, in order and not overlapping.
+  /// Links inside them stay plain links.
+  final List<TextHighlight> highlights;
 
   @override
   State<LinkifiedText> createState() => _LinkifiedTextState();
@@ -78,17 +88,48 @@ class _LinkifiedTextState extends State<LinkifiedText> {
     _recognizers.clear();
   }
 
+  /// [text], which starts at [from] in the whole text, split where
+  /// [LinkifiedText.highlights] begin and end.
+  List<TextSpan> _plain(String text, int from) {
+    final spans = <TextSpan>[];
+    var at = from;
+    final end = from + text.length;
+    for (final h in widget.highlights) {
+      if (h.end <= at || h.start >= end) continue;
+      final start = h.start < at ? at : h.start;
+      final stop = h.end > end ? end : h.end;
+      if (start > at) {
+        spans.add(TextSpan(text: text.substring(at - from, start - from)));
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(start - from, stop - from),
+          style: h.style,
+        ),
+      );
+      at = stop;
+    }
+    if (at < end) spans.add(TextSpan(text: text.substring(at - from)));
+    return spans;
+  }
+
   @override
   Widget build(BuildContext context) {
     _dropRecognizers();
     final pieces = linkify(widget.text, phones: widget.phones);
+    final starts = <int>[];
+    var offset = 0;
+    for (final p in pieces) {
+      starts.add(offset);
+      offset += p.text.length;
+    }
     return Text.rich(
       TextSpan(
         style: widget.style,
         children: [
-          for (final p in pieces)
+          for (final (i, p) in pieces.indexed)
             if (p.link == null)
-              TextSpan(text: p.text)
+              ..._plain(p.text, starts[i])
             else
               TextSpan(
                 text: p.text,

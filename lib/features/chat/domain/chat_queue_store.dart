@@ -1,7 +1,21 @@
 import 'package:battleplan/core/ids.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-/// A text message waiting in the send queue (CHAT-4).
-typedef SavedText = ({String id, String text, String? replyToId});
+part 'chat_queue_store.freezed.dart';
+
+/// A text message waiting in the send queue (CHAT-4), with whom it names
+/// (CHAT-14) and whether it's an announcement (CHAT-15).
+@freezed
+abstract class SavedText with _$SavedText {
+  const factory({
+    required String id,
+    required String text,
+    String? replyToId,
+    @Default(<String>[]) List<String> mentions,
+    @Default(false) bool mentionsEveryone,
+    @Default(false) bool announcement,
+  }) = _SavedText;
+}
 
 /// Keeps the send queue on the device, so text messages typed offline
 /// survive the app being closed and go out when it next opens the chat

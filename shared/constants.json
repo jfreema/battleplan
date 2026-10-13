@@ -149,7 +149,9 @@
       "eventCreated",
       "eventChanged",
       "eventReminder",
-      "documentAdded"
+      "documentAdded",
+      "mention",
+      "announcement"
     ],
     "notificationPref": [
       "messages",
@@ -349,6 +351,18 @@
       "pref": "documents",
       "center": true,
       "channel": "documents"
+    },
+    "mention": {
+      "important": true,
+      "pref": "mentions",
+      "center": true,
+      "channel": "replies"
+    },
+    "announcement": {
+      "important": true,
+      "pref": null,
+      "center": true,
+      "channel": "team"
     }
   }
 }

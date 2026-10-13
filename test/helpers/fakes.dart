@@ -292,6 +292,16 @@ class FakeGroupRepository implements GroupRepository {
     _changes.add(group.id.value);
   }
 
+  /// Pins or unpins a message as `pinMessage` would (CHAT-15).
+  void setPinned(GroupId id, String messageId, {required bool pinned}) {
+    final g = groups[id.value];
+    if (g == null) return;
+    final pins = [...g.pinnedMessageIds]..remove(messageId);
+    setGroup(
+      g.copyWith(pinnedMessageIds: pinned ? [...pins, messageId] : pins),
+    );
+  }
+
   @override
   Stream<Group?> watchGroup(GroupId id) async* {
     yield groups[id.value];
@@ -1459,6 +1469,11 @@ class FakeMessageRepository implements MessageRepository {
   /// When set, sends fail with this, as a server refusal would.
   AppFailure? failSends;
 
+  /// What each sent text named with @, and whether it was an
+  /// announcement (CHAT-14, CHAT-15), in the order sent.
+  final List<({List<String> mentions, bool everyone, bool announcement})>
+  sentDetails = [];
+
   @override
   Future<void> sendText(
     GroupId groupId,
@@ -1466,9 +1481,17 @@ class FakeMessageRepository implements MessageRepository {
     String text, {
     String? id,
     String? replyToId,
+    List<String> mentions = const [],
+    bool mentionsEveryone = false,
+    bool announcement = false,
   }) async {
     if (failSends case final error?) throw error;
     sent.add(text);
+    sentDetails.add((
+      mentions: mentions,
+      everyone: mentionsEveryone,
+      announcement: announcement,
+    ));
     messages.insert(
       0,
       Message(
@@ -1480,10 +1503,41 @@ class FakeMessageRepository implements MessageRepository {
         text: text,
         replyToId: replyToId,
         replyPreview: replyToId == null ? null : _previewOf(replyToId),
+        mentions: mentions,
+        mentionsEveryone: mentionsEveryone,
+        announcement: announcement,
         createdAt: DateTime.now(),
       ),
     );
     _changes.add(null);
+  }
+
+  @override
+  Stream<Message?> watchMessage(GroupId groupId, String messageId) async* {
+    Message? find() => messages
+        .where((m) => m.id == messageId && m.groupId == groupId)
+        .firstOrNull;
+    yield find();
+    await for (final _ in _changes.stream) {
+      yield find();
+    }
+  }
+
+  /// Every pin and unpin asked for, as "id pinned" or "id unpinned".
+  final List<String> pins = [];
+
+  /// Where pins land, as the server's would: the group's pinned IDs.
+  FakeGroupRepository? groups;
+
+  /// When set, pinning fails with this, as a full bar would.
+  AppFailure? failPins;
+
+  @override
+  Future<void> setPinned(String messageId, {required bool pinned}) async {
+    if (failPins case final error?) throw error;
+    pins.add('$messageId ${pinned ? 'pinned' : 'unpinned'}');
+    final m = messages.where((m) => m.id == messageId).firstOrNull;
+    if (m != null) groups?.setPinned(m.groupId, messageId, pinned: pinned);
   }
 
   /// What the server's trigger would write.

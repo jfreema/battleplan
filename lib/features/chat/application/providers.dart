@@ -5,11 +5,14 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/domain/chat_queue_store.dart';
+import 'package:battleplan/features/chat/domain/mentions.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ProviderListenableSelect;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -84,6 +87,13 @@ abstract class OutgoingText with _$OutgoingText {
     required String id,
     required String text,
     String? replyToId,
+
+    /// Who it names with @, and an admin's @everyone (CHAT-14).
+    @Default(<String>[]) List<String> mentions,
+    @Default(false) bool mentionsEveryone,
+
+    /// An admin's announcement (CHAT-15).
+    @Default(false) bool announcement,
     @Default(false) bool failed,
   }) = _OutgoingText;
 }
@@ -214,7 +224,14 @@ class ChatMessages extends _$ChatMessages {
     final items = [
       for (final s in saved)
         if (!_known.containsKey(s.id) && !state.queued.any((q) => q.id == s.id))
-          OutgoingText(id: s.id, text: s.text, replyToId: s.replyToId),
+          OutgoingText(
+            id: s.id,
+            text: s.text,
+            replyToId: s.replyToId,
+            mentions: s.mentions,
+            mentionsEveryone: s.mentionsEveryone,
+            announcement: s.announcement,
+          ),
     ];
     state = state.copyWith(queued: [...state.queued, ...items]);
     _saveQueue();
@@ -230,7 +247,14 @@ class ChatMessages extends _$ChatMessages {
         .read(chatQueueStoreProvider)
         .save(groupId, [
           for (final q in state.queued)
-            (id: q.id, text: q.text, replyToId: q.replyToId),
+            SavedText(
+              id: q.id,
+              text: q.text,
+              replyToId: q.replyToId,
+              mentions: q.mentions,
+              mentionsEveryone: q.mentionsEveryone,
+              announcement: q.announcement,
+            ),
         ])
         .catchError((Object _) {}),
   );
@@ -440,14 +464,25 @@ class ChatMessages extends _$ChatMessages {
 
   /// Sends a text message, spaced from the previous one (CHAT-2, CHAT-4).
   /// It shows as "sending" at once; offline, it waits in the queue and goes
-  /// out when the connection returns.
-  Future<void> send(String text, {String? replyToId}) {
+  /// out when the connection returns. [mentions] and [mentionsEveryone] are
+  /// who it names with @ (CHAT-14), and [announcement] makes it an admin's
+  /// announcement (CHAT-15).
+  Future<void> send(
+    String text, {
+    String? replyToId,
+    List<String> mentions = const [],
+    bool mentionsEveryone = false,
+    bool announcement = false,
+  }) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return Future.value();
     final item = OutgoingText(
       id: ref.read(messageRepositoryProvider).newMessageId(),
       text: trimmed,
       replyToId: replyToId,
+      mentions: mentions,
+      mentionsEveryone: mentionsEveryone,
+      announcement: announcement,
     );
     state = state.copyWith(queued: [...state.queued, item]);
     _saveQueue();
@@ -536,6 +571,9 @@ class ChatMessages extends _$ChatMessages {
           item.text,
           id: item.id,
           replyToId: item.replyToId,
+          mentions: item.mentions,
+          mentionsEveryone: item.mentionsEveryone,
+          announcement: item.announcement,
         ),
       );
       discardText(item.id);
@@ -636,4 +674,35 @@ class ChatMessages extends _$ChatMessages {
   /// Edits my message's text (CHAT-15). Rules allow only the author.
   Future<void> edit(Message message, String text) =>
       ref.read(messageRepositoryProvider).editText(message.id, text.trim());
+
+  /// Pins or unpins a message on the bar at the top (CHAT-15). Admins.
+  Future<void> setPinned(Message message, {required bool pinned}) => ref
+      .read(messageRepositoryProvider)
+      .setPinned(message.id, pinned: pinned);
+}
+
+/// A pinned message, live, for the bar at the top of the chat (CHAT-15).
+@riverpod
+Stream<Message?> pinnedMessage(Ref ref, GroupId groupId, String messageId) =>
+    ref.watch(messageRepositoryProvider).watchMessage(groupId, messageId);
+
+/// The team's pinned messages, newest pin first (CHAT-15).
+@riverpod
+List<String> pinnedMessageIds(Ref ref, GroupId groupId) => [
+  ...?ref
+      .watch(groupProvider(groupId).select((g) => g.value?.pinnedMessageIds))
+      ?.reversed,
+];
+
+/// Who can be named with @ in a team's chat (CHAT-14): everyone on the
+/// team but me, by name.
+@riverpod
+List<MentionCandidate> mentionCandidates(Ref ref, GroupId groupId) {
+  final me = ref.watch(authUserProvider).value?.uid;
+  final roster = ref.watch(rosterProvider(groupId)).value ?? const [];
+  return [
+    for (final m in roster)
+      if (m.uid.value != me && m.displayName.trim().isNotEmpty)
+        (uid: m.uid.value, name: m.displayName.trim()),
+  ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 }
