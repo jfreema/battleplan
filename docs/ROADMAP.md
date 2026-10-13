@@ -222,7 +222,7 @@ Decided 2026-10-12, at the owner's request (SPEC §9, ARCH D60). The first go-li
 
 In SPEC §9's priority order. These are web build work, so they're built before go-live (task 134). Parts that need the native apps wait for Phases 4 and 5.
 
-135. @mentions, edits, pins, and announcements (CHAT-14, CHAT-15).
+135. ✅ @mentions, edits, pins, and announcements (CHAT-14, CHAT-15). *Typing @ suggests team members, and a message names whoever's full name follows an @; mentions are bold, yours highlighted, and push even at Important only, with a Mentions switch in Settings. Admins can mention @everyone, pin up to 3 messages to a bar at the top (the `pinMessage` callable, audited), and send announcements that notify everyone who hasn't turned the team off. Editing was built in the MVP.*
 136. Roster details and contact sharing (TEAM-10).
 137. "Same answer for all my players" and per-player RSVP history (PLAYER-11).
 138. Calendar subscription links (SCHED-11).
