@@ -133,7 +133,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 |---|---|
 | **Member** | Anyone on the team |
 | **Guardian** | A member linked to one or more players as their parent or guardian, who answers RSVPs for them |
-| **Player (member)** | A member linked to a player as themselves ("I am this player"), who answers RSVPs on that player's row |
+| **Player (member)** | A member linked to a player as themselves ("I am this player"), who answers RSVPs on that player's row, never as themselves (admins included) |
 | **Team admin** | Manages the team: coaches, managers, team parents |
 | **Owner** | The admin who created the team, or was given it. Exactly one per team. |
 | **Super admin** | Runs the platform. Can see and manage every team and user. |
@@ -153,10 +153,10 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Edit, cancel, or delete events | own only | ✓ | ✓ | ✓ |
 | RSVP for your linked players (as the player or a guardian) | approved links | ✓ | ✓ | ✓ |
 | RSVP for any member or player | — | ✓ | ✓ | ✓ |
-| Claim a player ("I am this player" or parent/guardian) | needs admin approval | ✓ at once | ✓ at once | ✓ at once |
+| Claim a player ("I am this player" or parent/guardian) | needs admin approval | ✓ at once | ✓ at once | at once, in teams they've joined |
 | Add players | pending until an admin approves | ✓ | ✓ | ✓ |
-| Add a guardian to a player | own players | ✓ | ✓ | ✓ |
-| Remove player links; approve or decline claims and pending players | — | ✓ | ✓ | ✓ |
+| Add a guardian to a player | players they're linked to (as the player or a guardian) | ✓ | ✓ | ✓ |
+| Remove player links; approve or decline claims and pending players | their own link only | ✓ | ✓ | ✓ |
 | Upload documents and add links | setting (on) | ✓ | ✓ | ✓ |
 | Delete any document; pin documents | — | ✓ | ✓ | ✓ |
 | Share the invite link, QR, or code; send email invites | setting (on) | ✓ | ✓ | ✓ |
@@ -356,7 +356,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **AUTH-10 · MVP · Delete account.**
   - Settings → Account → Delete account explains what will happen, asks the user to sign in again, then deletes everything.
   - Owners pick a new owner for each team they own. If they skip it, ownership goes to the longest-serving admin, otherwise the longest-serving member. Teams with nobody else are archived.
-  - Their player links end (as a player or a guardian). A player left with no links stays on the roster for admins to manage.
+  - Their player links end (as a player or a guardian). A player left with no links stays on the roster for admins to manage. Their player claims, and the players they added that no admin approved yet, are deleted.
   - Their past messages stay, shown from "Deleted user".
   - Required by the App Store and Google Play. A web page also explains how to request deletion (LEGAL-3).
 - **AUTH-11 · MVP · Disabled accounts.** Signing in shows only "This account has been disabled. Contact support@…".
@@ -446,18 +446,18 @@ Every team has a roster of players. There's one kind of team, so this works the 
 Players that others answer for never get accounts, and every account belongs to an adult (18+).
 
 - **PLAYER-1 · MVP · Add players (admins).**
-  - Add one at a time: name (required), jersey number, position, the player's own email (optional), and up to 4 guardians (name and email, both optional).
-  - Or paste a list with one line per guardian: "Player name, Guardian name, Guardian email". Lines with the same player name become one player with several guardians. Up to 200 lines.
-  - Players that admins add are active right away. People who already have accounts are linked right away. New emails get an added account and a setup email (AUTH-6), and the person is linked once they finish setup.
-  - A results screen shows the players added, people linked, people invited, and any problems.
+  - Add one at a time: name (required), jersey number, position, the player's own email (optional), and up to 4 guardians (name and email, both optional). The player's own email is for an adult player: that person is linked as the player, not as a guardian.
+  - Or paste a list with one line per guardian: "Player name, Guardian name, Guardian email". For an adult player, a line with just the player's name and their own email ("Player name, Player's email") links them as the player. Lines with the same player name become one player with several guardians and at most one email of their own. Up to 200 lines.
+  - Players that admins add are active right away. People who already have accounts are linked right away. New emails get an added account and a setup email (AUTH-6), and the person is linked once they finish setup. A player's own email is linked within the PLAYER-3 limits: someone who is already a player on the team is listed as a problem instead.
+  - A results screen shows the players added, guardians linked and invited, players linked or invited by their own email, guardians given without an email, and any problems.
 - **PLAYER-2 · MVP · Player card.**
   - Shows the name, jersey number, position, who's linked, each marked "Player" or "Guardian" ("Not joined yet" where it applies), and upcoming RSVPs.
   - The player's linked members can edit the name, number, and position.
   - A member who isn't linked sees **Claim this player** (PLAYER-3).
-  - Admins can also add or remove links and remove the player.
+  - Linked members and admins can add a guardian (PLAYER-5). Admins can also remove links and remove the player, and a linked member can remove their own link.
 - **PLAYER-3 · MVP · Claim a player.** Any member can claim an active player and say how they're linked: **"I am this player"** or **"I'm their parent or guardian"**.
   - A claim needs a team admin's approval (Q15). Until then, the member can chat but can't answer RSVPs for that player.
-  - When an admin claims a player, it's approved at once.
+  - When an admin claims a player, it's approved at once, and so is a claim by a super admin who's on the team. A super admin who isn't on the team can't claim a player.
   - A player has at most one `self` link, and a member is `self` for at most one player per team. A player can have up to 4 guardians; the `self` link doesn't count toward the 4.
   - **Who are you here for?** After joining any team, a member sees three choices:
     - **I'm a player.** Pick yourself from the roster (a claim as yourself), or add yourself if you're not listed (a pending player linked to you as yourself, PLAYER-4).
@@ -469,14 +469,17 @@ Players that others answer for never get accounts, and every account belongs to 
   - A member's new player is **pending** until a team admin approves or declines it. A player an admin adds is active at once (PLAYER-1).
   - Pending players are shown only to admins and to the person who added them. They're not on the roster for everyone else, and can't get RSVPs or be claimed.
   - Claims and pending players appear at the top of the roster's Players section with **Approve** and **Decline**, and admins get a notification for each one (NOTIF-2). The person is notified when it's approved.
+  - Admins can correct a pending player's name, number, and position before deciding.
   - Approving a pending player makes it active with its link. Declining deletes the pending player and its link. A declined member can ask again.
-- **PLAYER-5 · MVP · Add another guardian.** From the player card, a linked member can add a guardian by email. An existing link is vouching for them, so no admin approval is needed. New emails get an added account and a setup email.
+  - Approving checks the PLAYER-3 limits again when the link is made. If they no longer allow it (say the member became a player meanwhile, or someone else is already this player), a claim isn't approved and the app says why, so the admin can decline it. A pending player is still added, without the link, and the app says so.
+- **PLAYER-5 · MVP · Add another guardian.** From the player card, a linked member (the player themselves or a guardian) or an admin can add a guardian by email. An existing link is vouching for them, so no admin approval is needed. New emails get an added account and a setup email. A player has up to 4 guardians, and the player can't also be their own guardian.
 - **PLAYER-6 · MVP · RSVPs per player, on every event.**
   - **Exactly one RSVP per event and participant.** A participant is an active player or a member answering for themselves.
   - A player's RSVP can be answered by the member who is that player, by its guardians, or by admins. When two people answer, they update the same record instead of creating two. The latest answer counts and shows who gave it ("Answered by Maria"), so attendance never conflicts or double-counts.
   - Linked members see one RSVP row per player: "Emma: Going · Liam: Not going". A member who is a player answers on their player's row.
-  - A **Me** row is offered to admins and to members who aren't linked to any player, such as coaches and other adults.
-  - Counts show players, with everyone else counted apart: "12 of 15 players going · 2 others" (Q14).
+  - A **Me** row is offered to admins and to members who aren't linked to any player, such as coaches and other adults. A member who is a player, admins included, has no Me row: they answer only on their player's row, so they never have two answers of their own.
+  - When a member becomes linked as the player, their own answers to upcoming events move to the player's row. Where the player already has an answer, the player's answer stays and theirs is dropped.
+  - Counts show players going, with everyone else counted apart: "12 of 15 players going · 2 others" (Q14). A team with no players counts everyone together: "12 going · 3 maybe · 2 no".
   - Events made before the one-type change count as per-player too. Members' own answers on them stay valid and count as others.
 - **PLAYER-7 · MVP · Reminders and changes.** Event reminders and event changes go to the member who is the player and to the guardians of the affected players, as one notification per person naming their players: "Emma, Liam: Practice today at 6:00 PM". For a member's own player, there's no name prefix.
 - **PLAYER-8 · MVP · Who's who.** In chat and on the roster, each member's name shows their players. A guardian shows "Maria R. · Emma #7". A member who is a player shows their number when it's set: "Jared F. #12".
@@ -652,7 +655,7 @@ Players that others answer for never get accounts, and every account belongs to 
 ### 6.7 Schedule and RSVPs (SCHED)
 
 - **SCHED-1 · MVP · Schedule tab.** Three views:
-  - **Upcoming** (default): a list grouped by day. Each row has a date block, an event-type color and icon, the title ("vs. Eagles"), time, location, your RSVP (one per linked player, plus a Me row for admins and members not linked to a player), and counts of players, with others counted apart ("12 going · 3 maybe · 2 no · 2 others", PLAYER-6).
+  - **Upcoming** (default): a list grouped by day. Each row has a date block, an event-type color and icon, the title ("vs. Eagles"), time, location, your RSVP (one per linked player, plus a Me row for admins and members not linked to a player, but never for a member who is a player), and the counts: players going, with others counted apart ("12 of 15 players going · 2 others"), or everyone together on a team with no players ("12 going · 3 maybe · 2 no", PLAYER-6).
   - **Past**: the same list, newest first.
   - **Calendar**: a month grid with a dot for each event; tap a day to see its events.
 - **SCHED-2 · MVP · All my teams.**
@@ -684,7 +687,7 @@ Players that others answer for never get accounts, and every account belongs to 
     - Works on past and canceled events too, which covers "same game as last season".
 - **SCHED-4 · MVP · Event details.**
   - Every field from creation.
-  - Large **Going / Maybe / Not going** buttons, with an optional note ("Leaving at halftime"). Members linked to players get one set per player, and admins and members not linked to a player get a Me set (PLAYER-6).
+  - Large **Going / Maybe / Not going** buttons, with an optional note ("Leaving at halftime"). Members linked to players get one set per player, and admins and members not linked to a player get a Me set, unless they're a player themselves (PLAYER-6).
   - Attendee lists grouped by Going, Maybe, Not going, and No response, with notes. The lists show players and who answered for them, with coaches and others listed apart.
   - Actions for everyone: Add to calendar, Share, Directions.
   - Admin actions: Edit, Cancel event, Delete, Set RSVP for a member or player.
@@ -1393,7 +1396,7 @@ Each question has a default. The build follows the default until someone decides
 | Q11 | ~~Where are most teams located?~~ **Decided 2026-10-12:** the US, so prod's database is in `us-central1` (permanent). | — |
 | Q12 | ~~Can members create events by default?~~ **Decided 2026-10-12:** only admins create events by default; each team can let members create them in Team settings (TEAM-5). | — |
 | Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
-| Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). **2026-10-12:** on every team, admins and members not linked to a player answer for themselves, counted apart as "others". | — |
+| Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). **2026-10-12:** on every team, admins and members not linked to a player answer for themselves, counted apart as "others". A member who is a player answers on their player's row instead, admins included. | — |
 | Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). **2026-10-12:** this covers every claim, as the player or a guardian; an admin's own claim is approved at once. | — |
 | Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email. **2026-10-12:** Facebook sign-in was removed from the plan. **Later on 2026-10-12:** it returns as go-live Phase 6, with single sign-on (§9, ARCH D60). | — |
 | Q17 | ~~Should there be separate adult and youth team types?~~ **Decided 2026-10-12 (the owner's request):** no. There's one team type. Every team has players; any member can claim a player as "I am this player" or as a parent or guardian, and any member can add a player. Team admins approve or decline claims and members' new players (§6.3). | — |

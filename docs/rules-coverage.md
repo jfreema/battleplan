@@ -2,11 +2,11 @@
 
 The roadmap task 104 review of `firestore.rules` and `storage.rules` against the rules tests in `functions/test/rules/` (run with `npm --prefix functions run emulators:test`). ARCH §9 asks for every collection and role to be tested. The Functions tests in `functions/test/emulator/` run as the Admin SDK, which skips rules, so they don't count here. There's no `test/emulator` in the Flutter app.
 
-Reviewed 2026-10-12. Update this page whenever a rule or a rules test changes.
+Reviewed 2026-10-12, and updated the same day for one team type: pending players, `self` links, and super admins' RSVPs and events. Update this page whenever a rule or a rules test changes.
 
 **Legend:** ✓ tested and allowed · ✗ tested and refused · ✓\* / ✗\* added in this review (`coverage.test.ts`) · `=` the rule can't tell this role from the column to its left, so that test covers it · `·` doesn't apply · **gap** not tested.
 
-**Roles:** *Signed out* has no auth. *Other team* is an admin or member of another team. *Member* is on the team. *Guardian* is a member linked to the player. *Admin* has the team's `admin` role. *Owner* has `owner`; the rules treat it like admin everywhere (checked in `coverage.test.ts`). *Super admin* has the `superAdmin` claim and isn't on the team.
+**Roles:** *Signed out* has no auth. *Other team* is an admin or member of another team. *Member* is on the team. *Guardian* is a member linked to the player, as a parent or guardian or as the player themselves (`self`); the rules treat both relations alike (`isGuardian`). A *proposer* is the member who added a pending player. *Admin* has the team's `admin` role. *Owner* has `owner`; the rules treat it like admin everywhere (checked in `coverage.test.ts`). *Super admin* has the `superAdmin` claim and isn't on the team.
 
 **Test files:** F `firestore.test.ts`, T `teams.test.ts`, A `admin.test.ts`, P `polls.test.ts`, S `schedule.test.ts`, D `documents.test.ts`, N `notifications.test.ts`, U `users.test.ts`, St `storage.test.ts`, C `coverage.test.ts`.
 
@@ -32,9 +32,11 @@ Only those three tests fail against the old rules; they pass against the new one
 | | create, delete | ✗\* | ✗ | ✗ | · | · | ✗ | ✗ | T, A |
 | | update own prefs and read marks | · | · | ✓ | = | = | = | · | F, N |
 | | update role or another's doc | ✗\* | · | ✗ | · | · | ✗ | ✗ | F, T, A |
-| `players` | get, list | ✗\* | ✗ | ✓ | ✓\* | = | = | ✓ | T, A, C |
-| | create, delete | ✗\* | · | · | · | ✗ (✗\* delete) | · | · | F, C |
-| | update (name, number, position) | ✗\* | ✗ | ✗ | ✓ | ✓ | ✓\* | ✗ | F, A, C |
+| `players` | get, list (active) | ✗\* | ✗ | ✓ | ✓\* | = | = | ✓ | T, A, C |
+| | get, list (pending) | · | ✗ | ✗ / ✓ (proposer) | · | ✓ | = | ✓ | T |
+| | create, delete | ✗\* | · | ✗ (create) | · | ✗ (✗\* delete) | · | · | F, T, C |
+| | update (name, number, position) | ✗\* | ✗ | ✗ (proposer too) | ✓ (`self` too) | ✓ (pending too) | ✓\* | ✗ | F, T, A, C |
+| | update `status`, `proposedBy`, decisions | · | · | ✗ (proposer) | · | ✗ | = | · | T |
 | `playerGuardians` | get, list | ✗\* | ✗ | ✓ | ✓\* | = | = | ✓ | T, A, C |
 | | create, update, delete | ✗\* | · | ✗ | ✗ | ✗ (✗\* update) | · | · | T, C |
 | `guardianRequests` | get, list | ✗\* | ✗ | ✗ (others'), ✓ (own) | = | ✓ | = | ✓ | T, A |
@@ -54,11 +56,12 @@ Only those three tests fail against the old rules; they pass against the new one
 | `eventSeries` | get, list | ✗\* | ✗ | ✓ | = | = | = | ✓ | S, A |
 | | create, update, delete | ✗\* | · | · | · | · | ✗ | ✗\* | S, C |
 | `events` | get, list | ✗\* | ✗ | ✓ | = | = | = | ✓ | S, A |
-| | create | ✗\* | ✗ | ✓ / ✗ (setting) | = | ✓ | ✓\* | ✗\* | S, C |
+| | create | ✗\* | ✗ | ✓ / ✗ (setting) | = | ✓ | ✓\* | ✓\* | S, C |
 | | update, cancel | ✗\* | ✗\* | ✓ creator / ✗ | = | = | ✓ | ✓ | S, C |
 | | delete | ✗\* | ✗ | ✓ creator / ✗ | = | ✓ | ✓ | ✓ | S |
 | `rsvps` | get, list | ✗\* | ✗ | ✓\* | = | = | = | ✓ | A, C |
-| | create, update | ✗\* | ✗ | ✓ self / ✗ others | ✓ player / ✗ non-guardian | ✓ anyone | ✓ | ✗ | F, S, A |
+| | create, update | ✗\* | ✗ | ✓ self / ✗ others | ✓ their player (guardian or `self`) / ✗ unlinked | ✓ anyone | ✓ | ✓ anyone / ✗ self | F, S, A |
+| | create, update for a pending player | · | · | ✗ (proposer) | · | ✗ | = | ✗ | S |
 | | delete | ✗\* | · | ✗ | · | · | · | · | S |
 | `groupDocuments` | get, list | ✗\* | ✗ | ✓ | = | = | = | ✓ | D, A |
 | | create | ✗\* | ✗ | ✓ / ✗ (setting) | = | ✓ | ✓ | ✗ | D, A |
@@ -68,6 +71,8 @@ Only those three tests fail against the old rules; they pass against the new one
 | | create, update, delete | ✗\* | · | ✗ | · | ✗ | · | ✗ | T, A |
 
 Team states, for every collection above: **archived** teams refuse every member and admin write (F, P, S, D, St, C), keep reads, and still take each person's own mute and read marks (C, on purpose). **Suspended** teams refuse members' reads and writes in every collection (F, C) while super admins still read (A); people still see their own membership and notifications (C).
+
+Players and RSVPs under one team type: members list players with `status == 'active'`, and proposers with `proposedBy` equal to themselves; an unfiltered list is refused, because a query can't prove that a missing status means active (T). A get still treats a player with no status as active (T). A member linked as the player (`self`) edits the player and answers on its row, like a guardian, but can't change the link (T, S). Nobody answers for a pending player, admins and super admins included (S). `groupMembers.playerSummary` and `linksUpdatedAt`, and `players.linksUpdatedAt`, are Functions only: neither update rule's field list includes them.
 
 ¹ A super admin can't create a poll because the paired message needs membership, which A tests; the poll rule's own `isMember` isn't tested alone.
 ² `docEditorOk` lets super admins update documents too (for SAFE-4 they delete); nothing tests a super admin's rename.
@@ -122,5 +127,6 @@ Every upload under `groups/{g}/` is refused on a full team (St, D, A), an archiv
 None of these is a known bug; each is a case the rules already refuse or allow through a path another test covers.
 
 - A super admin creating a poll (¹) and renaming a document (²).
+- A client writing `playerSummary` or `linksUpdatedAt` by name: the field lists refuse it, but no test tries. A super admin editing a pending player directly is refused the same way as an active one (A tests an active one).
 - Size, type, and quota checks on the logo and background are tested for owners and super admins, not for a plain `admin` role (the rules don't distinguish them).
 - `devices` update lets any signed-in person take over a device doc whose random ID they know (NOTIF-10, on purpose); the takeover itself isn't tested beyond the owner's refresh.

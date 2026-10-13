@@ -22,14 +22,15 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
    npm --prefix tools/seed run seed
    ```
 
-   It creates three teams (one adult, two youth), parents with players on two teams, events, RSVPs, and messages. Every password is `password`:
+   It creates three teams (Thunder, of adult players, and two kids' teams), parents with players on two teams, adults linked to their own players, a pending player to approve, events, RSVPs, and messages. Every password is `password`:
 
    | Email | Who |
    |---|---|
-   | `coach@example.com` | Owner of Thunder (adult) and Lightning U10 (youth) |
-   | `maria@example.com` | Parent on three teams, with players on two |
+   | `coach@example.com` | Owner of Thunder (adult players) and Lightning U10 (kids) |
+   | `maria@example.com` | Parent on three teams, with players on two; asked to join Thunder's roster as a player (pending) |
    | `priya@example.com` | Owner of Hawks U14, parent on Lightning U10 |
-   | `alex@example.com`, `sam@example.com`, `luis@example.com` | Members |
+   | `alex@example.com`, `sam@example.com` | Players on Thunder, linked to their own players (Alex is also an admin) |
+   | `luis@example.com` | Parent on Lightning U10 |
    | `admin@example.com` | Super admin |
 
 3. **Run the app** with the emulator flag. In VS Code pick **Dev (emulators)** or **Web (Chrome, emulators)**, or:
@@ -136,7 +137,7 @@ DEMO_PASSWORD='<at least 12 characters>' npm --prefix tools/seed run demo -- \
   --project battleplan-dev-ecce4 --write-to-dev
 ```
 
-It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which owns the adult team *Riverside Thunder* and is a parent on the youth team *Lightning U10*, with messages, events, RSVPs, and a pinned link. Running it again resets the password and rewrites the same `demo-` documents. Put the email and password in the App Review notes, never in the repo. To try it locally, start the emulators and run `npm --prefix tools/seed run demo:emulators`. A prod demo account, at launch, is made by hand.
+It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which owns *Riverside Thunder*, a team of adult players with one player linked to its own member and a pending player to approve, and is a parent on the kids' team *Lightning U10*, with messages, events, RSVPs, and a pinned link. Running it again resets the password and rewrites the same `demo-` documents. Put the email and password in the App Review notes, never in the repo. To try it locally, start the emulators and run `npm --prefix tools/seed run demo:emulators`. A prod demo account, at launch, is made by hand.
 
 ## App icons and splash screens
 
