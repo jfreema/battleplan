@@ -16,6 +16,7 @@ import 'package:battleplan/features/schedule/domain/event_draft.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
+import 'package:battleplan/features/schedule/presentation/event_row.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/l10n/gen/app_localizations_en.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -428,6 +429,12 @@ void main() {
       expect(rsvpRowLabel(l10n, me, 2), 'You');
       expect(rsvpRowLabel(l10n, emma, 1), 'Emma #7');
       expect(rsvpRowLabel(l10n, self, 1), 'Jared #12 (you)');
+      // A schedule row's answers never read the same twice (PLAYER-9).
+      expect(answerLabel(l10n, me, [me]), isNull);
+      expect(answerLabel(l10n, self, [self]), 'You');
+      expect(answerLabel(l10n, emma, [self, emma]), 'Emma');
+      expect(answerLabel(l10n, me, [me, self]), 'You');
+      expect(answerLabel(l10n, self, [me, self]), 'Jared #12 (you)');
     });
 
     test('the series summary and repeat line (SCHED-3, SCHED-4)', () {
@@ -536,6 +543,59 @@ void main() {
       ]);
       final none = eventParticipants(roster, players, links: links);
       expect(none.staff.map((p) => p.id), ['coach', 'sam', 'luis']);
+      // An admin who is a player answers on their player, so isn't waiting
+      // under "coaches and others"; an answer of their own still shows.
+      const selfLinks = [
+        GuardianLink(
+          playerId: PlayerId('p1'),
+          groupId: GroupId('g'),
+          uid: UserId('coach'),
+          relation: PlayerRelation.self,
+        ),
+      ];
+      expect(
+        eventParticipants(
+          roster,
+          players,
+          links: selfLinks,
+        ).staff.map((p) => p.id),
+        ['maria', 'sam', 'luis'],
+      );
+      const ownAnswer = Rsvp(
+        eventId: EventId('e'),
+        groupId: GroupId('g'),
+        participantType: ParticipantType.member,
+        participantId: 'coach',
+        participantName: 'coach',
+        status: RsvpStatus.going,
+      );
+      expect(
+        eventParticipants(
+          roster,
+          players,
+          links: selfLinks,
+          rsvps: const [ownAnswer],
+        ).staff.map((p) => p.id),
+        ['coach', 'maria', 'sam', 'luis'],
+      );
+      // ...and they get a row to change it on the event (withOwnAnswer).
+      final admin = m('coach', role: MemberRole.admin);
+      final mine = participantsFor(
+        me: admin,
+        players: players,
+        links: selfLinks,
+      );
+      expect(mine.map((p) => p.id), ['p1']);
+      expect(withOwnAnswer(mine, admin, const [ownAnswer]).map((p) => p.id), [
+        'coach',
+        'p1',
+      ]);
+      expect(withOwnAnswer(mine, admin, const []), same(mine));
+      final adminMine = participantsFor(me: admin, players: players);
+      expect(
+        withOwnAnswer(adminMine, admin, const [ownAnswer]),
+        same(adminMine),
+      );
       // A team without players: everyone answers for themselves.
       expect(eventParticipants(roster, const []).staff.length, roster.length);
     });
@@ -696,6 +756,14 @@ void main() {
       expect(player.map((p) => p.id), ['p3', 'p2']);
       expect(player.first.isMe, isTrue);
       expect(player.last.isMe, isFalse);
+      // An admin who is a player too: their player's row only, never a Me
+      // row beside it (two answers of their own).
+      final playingCoach = participantsFor(
+        me: member('jared', role: MemberRole.owner),
+        players: players,
+        links: links,
+      );
+      expect(playingCoach.map((p) => p.id), ['p3', 'p2']);
       // A member linked to nobody answers for themselves.
       final adult = participantsFor(me: member('sam'), players: players);
       expect(adult.single.id, 'sam');

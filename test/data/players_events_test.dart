@@ -160,6 +160,7 @@ void main() {
         'playersAdded': 2,
         'guardiansLinked': 1,
         'guardiansInvited': 1,
+        'selfLinked': 1,
         'problems': ['Line 3: no name'],
       };
       functions.handlers['inviteGuardian'] = (_) => {'invited': true};
@@ -170,18 +171,29 @@ void main() {
           jerseyNumber: '7',
           guardians: [NewGuardian(name: 'Maria', email: 'm@example.com')],
         ),
-        NewPlayer(name: 'Arjun'),
+        // An adult player's own email (PLAYER-1).
+        NewPlayer(name: 'Arjun', email: 'arjun@example.com'),
       ]);
       expect(result.playersAdded, 2);
+      expect(result.playersLinked, 1);
+      expect(result.playersInvited, 0);
       expect(result.problems, ['Line 3: no name']);
       final sent = functions.lastData('addPlayers')! as Map;
       expect((sent['players'] as List).first, {
         'name': 'Emma',
         'jerseyNumber': '7',
         'position': null,
+        'email': null,
         'guardians': [
           {'name': 'Maria', 'email': 'm@example.com'},
         ],
+      });
+      expect((sent['players'] as List).last, {
+        'name': 'Arjun',
+        'jerseyNumber': null,
+        'position': null,
+        'email': 'arjun@example.com',
+        'guardians': <Object>[],
       });
 
       await repo.removePlayer(_g, const PlayerId('emma'));
@@ -240,6 +252,31 @@ void main() {
           relation: PlayerRelation.self,
         ),
         PlayerStatus.active,
+      );
+      // Whether the member who added it got linked (PLAYER-4).
+      functions.handlers['resolvePendingPlayer'] = (_) => {
+        'ok': true,
+        'linked': false,
+      };
+      expect(
+        await repo.resolvePendingPlayer(
+          _g,
+          const PlayerId('p9'),
+          approve: true,
+        ),
+        isFalse,
+      );
+      functions.handlers['resolvePendingPlayer'] = (_) => {
+        'ok': true,
+        'linked': true,
+      };
+      expect(
+        await repo.resolvePendingPlayer(
+          _g,
+          const PlayerId('p9'),
+          approve: true,
+        ),
+        isTrue,
       );
       await repo.resolvePendingPlayer(_g, const PlayerId('p9'), approve: false);
       expect(functions.lastData('resolvePendingPlayer'), {

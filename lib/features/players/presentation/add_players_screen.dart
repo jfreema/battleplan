@@ -18,8 +18,9 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// PLAYER-1 and PLAYER-4 at `/g/:groupId/players/add`. Admins add one
-/// player with up to 4 guardians, or paste a list with one line per
-/// guardian; guardians with accounts are linked now, new emails get an
+/// player with the player's own email (optional, for an adult player) and
+/// up to 4 guardians, or paste a list with one line per guardian or
+/// player's email; people with accounts are linked now, new emails get an
 /// account and a setup email, and a results screen follows. Members add a
 /// player with how they're linked ("I am this player" or their parent or
 /// guardian), pending until an admin approves it.
@@ -36,6 +37,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
   final _name = TextEditingController();
   final _number = TextEditingController();
   final _position = TextEditingController();
+  final _email = TextEditingController();
   final List<TextEditingController> _guardianNames = List.generate(
     4,
     (_) => TextEditingController(),
@@ -55,6 +57,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
       _name,
       _number,
       _position,
+      _email,
       _paste,
       ..._guardianNames,
       ..._guardianEmails,
@@ -69,6 +72,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
       name: _name.text.trim(),
       jerseyNumber: _number.text.trim(),
       position: _position.text.trim(),
+      email: _email.text.trim().isEmpty ? null : _email.text.trim(),
       // Name and email are both optional (PLAYER-1); a name alone is kept,
       // and the results say it couldn't be linked.
       guardians: [
@@ -115,6 +119,11 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
             l10n.playersAddedCount(result.playersAdded),
             l10n.guardiansLinkedCount(result.guardiansLinked),
             l10n.guardiansInvitedCount(result.guardiansInvited),
+            // Players' own emails (PLAYER-1), when any were given.
+            if (result.playersLinked > 0)
+              l10n.playersLinkedCount(result.playersLinked),
+            if (result.playersInvited > 0)
+              l10n.playersInvitedCount(result.playersInvited),
           ], counted: false),
           ResultSection(l10n.guardiansWithoutEmailHeading, [
             ...result.guardiansWithoutEmail,
@@ -186,15 +195,21 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     if (!teamAdmin && !superAdmin) {
       final me = ref.watch(authUserProvider).value?.uid;
-      final links = ref.watch(guardianLinksProvider(widget.groupId)).value;
-      final pending = ref.watch(myPendingPlayersProvider(widget.groupId)).value;
-      // A member is a player at most once per team (PLAYER-3).
+      // A member is a player at most once per team, counting a claim or
+      // player of their own still waiting for an admin (PLAYER-3).
       final canBeSelf =
-          !(links ?? const <GuardianLink>[]).any(
-            (l) => l.uid.value == me && l.isSelf,
-          ) &&
-          !(pending ?? const <Player>[]).any(
-            (p) => p.proposedRelation == PlayerRelation.self,
+          me != null &&
+          canStillBeAPlayer(
+            UserId(me),
+            links:
+                ref.watch(guardianLinksProvider(widget.groupId)).value ??
+                const [],
+            requests:
+                ref.watch(myGuardianRequestsProvider(widget.groupId)).value ??
+                const [],
+            pendingPlayers:
+                ref.watch(myPendingPlayersProvider(widget.groupId)).value ??
+                const [],
           );
       return Scaffold(
         appBar: AppBar(title: Text(l10n.addPlayer)),
@@ -267,6 +282,18 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: Space.md),
+                // An adult player's own email links them as the player
+                // (PLAYER-1), not as their own guardian.
+                TextField(
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: l10n.playerEmailLabel,
+                    helperText: l10n.playerEmailHelp,
+                    helperMaxLines: 2,
+                  ),
+                ),
                 const SizedBox(height: Space.xl),
                 Text(
                   l10n.guardiansLabel,
@@ -315,7 +342,8 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                     hintText:
                         'Emma Rodriguez, Maria Rodriguez, maria@example.com\n'
                         'Emma Rodriguez, Luis Rodriguez, luis@example.com\n'
-                        'Arjun Shah, Priya Shah, priya@example.com',
+                        'Arjun Shah, Priya Shah, priya@example.com\n'
+                        'Jared Freeman, jared@example.com',
                   ),
                 ),
                 const SizedBox(height: Space.md),

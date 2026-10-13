@@ -15,6 +15,7 @@ import type { Email } from '../../src/email/service.js';
 import * as invites from '../../src/invites/handlers.js';
 import { previewInvite } from '../../src/invites/service.js';
 import * as players from '../../src/players/handlers.js';
+import * as service from '../../src/players/service.js';
 import { resolveReport } from '../../src/safety/handlers.js';
 import { auth, db, storage } from '../../src/shared/admin.js';
 import { Collections, Limits } from '../../src/shared/constants.js';
@@ -443,10 +444,298 @@ describe('claims and pending players (PLAYER-3, PLAYER-4)', () => {
     await db().collection(Collections.playerGuardians).doc('open-p1_lee').set({ groupId: 'open', playerId: 'open-p1', uid: 'lee', relation: 'self' });
     await expect(run(players.inviteGuardian, 'pat', { groupId: 'open', playerId: 'open-p1', email: 'lee@example.com' }))
       .rejects.toMatchObject({ message: 'already-linked' });
-    // The player themselves doesn't add guardians either.
+  });
+
+  it('lets the member who is the player add a guardian, as any linked member can (PLAYER-5)', async () => {
     await members().doc('open_lee').set({ groupId: 'open', uid: 'lee', role: 'member', displayName: 'Lee' });
-    await expect(run(players.inviteGuardian, 'lee', { groupId: 'open', playerId: 'open-p1', email: 'x@example.com' }))
-      .rejects.toMatchObject({ code: 'permission-denied' });
+    await db().collection(Collections.playerGuardians).doc('open-p1_lee').set({ groupId: 'open', playerId: 'open-p1', uid: 'lee', relation: 'self' });
+    expect(await run(players.inviteGuardian, 'lee', { groupId: 'open', playerId: 'open-p1', email: 'sam@example.com' }))
+      .toEqual({ uid: 'sam', invited: false });
+    expect(await link('open-p1', 'sam')).toMatchObject({ relation: 'guardian', via: 'guardian', addedBy: 'lee' });
+  });
+});
+
+describe('more claims and player emails (PLAYER-1, PLAYER-3, PLAYER-4, PLAYER-6, PLAYER-8)', () => {
+  const links = () => db().collection(Collections.playerGuardians);
+  const link = async (playerId: string, uid: string) => (await links().doc(`${playerId}_${uid}`).get()).data();
+  const linksOf = async (playerId: string) =>
+    (await links().where('playerId', '==', playerId).get()).docs.map((d) => `${d.get('uid')}:${d.get('relation') ?? 'guardian'}`).sort();
+  const summary = async (uid: string) => (await members().doc(`open_${uid}`).get()).get('playerSummary');
+  const addPlayer = (id: string, extra: object = {}) =>
+    db().collection(Collections.players).doc(id).set({ groupId: 'open', displayName: id, status: 'active', ...extra });
+  const claim = (playerId: string, uid: string, relation: string) =>
+    db().collection(Collections.guardianRequests).doc(`${playerId}_${uid}`).set({ groupId: 'open', playerId, uid, relation, status: 'pending' });
+  const join = (uid: string, role = 'member') => members().doc(`open_${uid}`).set({ groupId: 'open', uid, role, displayName: uid });
+  /** Runs [calls] at the same time; how many went through, and the refusals' messages. */
+  const together = async (calls: Promise<unknown>[]) => {
+    const settled = await Promise.allSettled(calls);
+    return {
+      ok: settled.filter((r) => r.status === 'fulfilled').length,
+      refused: settled.flatMap((r) => (r.status === 'rejected' ? [(r.reason as Error).message] : [])),
+    };
+  };
+
+  // Two transactions that read and write the same player or membership
+  // deadlock on the emulator, which aborts both after a few seconds and
+  // retries them; production Firestore settles this at once.
+  describe('keeps the limits when approvals run at the same time (PLAYER-3)', { timeout: 45_000 }, () => {
+    it('two "I am this player" claims on one player: one link', async () => {
+      await join('lee');
+      await claim('open-p1', 'sam', 'self');
+      await claim('open-p1', 'lee', 'self');
+      const result = await together([
+        run(players.resolvePlayerClaim, 'pat', { playerId: 'open-p1', uid: 'sam', approve: true }),
+        run(players.resolvePlayerClaim, 'ada', { playerId: 'open-p1', uid: 'lee', approve: true }),
+      ]);
+      expect(result).toEqual({ ok: 1, refused: ['player-already-claimed'] });
+      expect((await linksOf('open-p1')).filter((l) => l.endsWith(':self'))).toHaveLength(1);
+    });
+
+    it("one member's self claims on two players: self for one", async () => {
+      await addPlayer('open-p2');
+      await claim('open-p1', 'sam', 'self');
+      await claim('open-p2', 'sam', 'self');
+      const result = await together([
+        run(players.resolvePlayerClaim, 'pat', { playerId: 'open-p1', uid: 'sam', approve: true }),
+        run(players.resolvePlayerClaim, 'ada', { playerId: 'open-p2', uid: 'sam', approve: true }),
+      ]);
+      expect(result).toEqual({ ok: 1, refused: ['already-a-player'] });
+      expect((await links().where('uid', '==', 'sam').get()).size).toBe(1);
+    });
+
+    it('two guardian claims on a player with 3 guardians: 4 guardians, not 5', async () => {
+      for (const uid of ['g1', 'g2', 'g3']) await guardian('open', 'open-p1', uid);
+      await join('lee');
+      await claim('open-p1', 'sam', 'guardian');
+      await claim('open-p1', 'lee', 'guardian');
+      const result = await together([
+        run(players.resolvePlayerClaim, 'pat', { playerId: 'open-p1', uid: 'sam', approve: true }),
+        run(players.resolvePlayerClaim, 'ada', { playerId: 'open-p1', uid: 'lee', approve: true }),
+      ]);
+      expect(result).toEqual({ ok: 1, refused: ['too-many-guardians'] });
+      expect(await linksOf('open-p1')).toHaveLength(4);
+    });
+
+    it("two admins' own claims at once (approved at once): one self link", async () => {
+      const result = await together([
+        run(players.claimPlayer, 'pat', { playerId: 'open-p1', relation: 'self' }),
+        run(players.claimPlayer, 'ada', { playerId: 'open-p1', relation: 'self' }),
+      ]);
+      expect(result).toEqual({ ok: 1, refused: ['player-already-claimed'] });
+      expect(await linksOf('open-p1')).toHaveLength(1);
+    });
+
+    it("an admin adding themselves twice at once: one player, no unlinked duplicate", async () => {
+      const result = await together([
+        run(players.proposePlayer, 'ada', { groupId: 'open', displayName: 'Ada Admin', relation: 'self' }),
+        run(players.proposePlayer, 'ada', { groupId: 'open', displayName: 'Ada A', relation: 'self' }),
+      ]);
+      expect(result).toEqual({ ok: 1, refused: ['already-a-player'] });
+      expect((await db().collection(Collections.players).where('proposedBy', '==', 'ada').get()).size).toBe(1);
+      expect((await links().where('uid', '==', 'ada').get()).size).toBe(1);
+    });
+
+    it("never puts someone who left back on the team, checked in the link's transaction", async () => {
+      await expect(
+        service.linkGuardian('open', 'open-p1', { uid: 'lee', displayName: 'Lee', photoPath: null }, 'pat', 'request', 'guardian', {
+          requireMember: true,
+        }),
+      ).rejects.toMatchObject({ message: 'left-team' });
+      expect(await isMember('open', 'lee')).toBe(false);
+      expect(await link('open-p1', 'lee')).toBeUndefined();
+    });
+  });
+
+  describe("adding players with the player's own email (PLAYER-1)", () => {
+    it('links an existing account as the player, and gives a new email an added account linked as the player', async () => {
+      const result = await run(players.addPlayers, 'pat', {
+        groupId: 'open',
+        players: [
+          { name: 'Lee Kim', jerseyNumber: '12', email: 'lee@example.com', guardians: [] },
+          { name: 'Nia Park', jerseyNumber: '4', email: 'nia@example.com', guardians: [{ name: 'Ola Park', email: 'ola@example.com' }] },
+        ],
+      });
+      expect(result).toMatchObject({ playersAdded: 2, selfLinked: 1, selfInvited: 1, guardiansInvited: 1, problems: [] });
+      expect(result.invitedEmails).toEqual(['nia@example.com', 'ola@example.com']);
+      const lee = (await links().where('uid', '==', 'lee').get()).docs[0];
+      expect(lee.data()).toMatchObject({ relation: 'self', via: 'admin' });
+      expect(await summary('lee')).toBe('#12');
+      const nia = await auth().getUserByEmail('nia@example.com');
+      const niaLink = (await links().where('uid', '==', nia.uid).get()).docs[0];
+      expect(niaLink.get('relation')).toBe('self');
+      expect(niaLink.get('playerId')).not.toBe(lee.get('playerId'));
+      expect((await members().doc(`open_${nia.uid}`).get()).data()).toMatchObject({ pending: true, playerSummary: '#4' });
+      // Setup emails go to both new people (AUTH-6).
+      expect(mail.sent.map((m) => m.to).sort()).toEqual(['nia@example.com', 'ola@example.com']);
+    });
+
+    it("keeps the self limits, and won't take the player's email as their guardian's too", async () => {
+      await join('lee');
+      await db().collection(Collections.playerGuardians).doc('open-p1_lee').set({ groupId: 'open', playerId: 'open-p1', uid: 'lee', relation: 'self' });
+      const result = await run(players.addPlayers, 'pat', {
+        groupId: 'open',
+        players: [
+          { name: 'Leo', email: 'lee@example.com', guardians: [] },
+          { name: 'Sam Rivera', email: 'sam@example.com', guardians: [{ email: 'sam@example.com' }] },
+        ],
+      });
+      expect(result.problems).toEqual(['Leo: lee@example.com (already-a-player)', 'Sam Rivera: sam@example.com (already-linked)']);
+      expect(result).toMatchObject({ playersAdded: 2, selfLinked: 1, guardiansLinked: 0 });
+      expect((await links().where('uid', '==', 'sam').get()).docs.map((d) => d.get('relation'))).toEqual(['self']);
+    });
+
+    it("needs a verified email for a player's own email too (AUTH-3)", async () => {
+      const data = { groupId: 'open', players: [{ name: 'Lee', email: 'lee@example.com', guardians: [] }] };
+      await expect(run(players.addPlayers, 'pat', data, {})).rejects.toMatchObject({ message: 'email-not-verified' });
+    });
+
+    it("saves every added player as active, one or several, so the roster's status query finds them", async () => {
+      await run(players.addPlayers, 'pat', { groupId: 'open', players: [{ name: 'Leo', guardians: [] }] });
+      await run(players.addPlayers, 'pat', {
+        groupId: 'open',
+        players: [{ name: 'Mia', guardians: [{ name: 'Ana', email: 'ana@example.com' }] }, { name: 'Noah', guardians: [] }],
+      });
+      const added = await db().collection(Collections.players).where('groupId', '==', 'open').where('status', '==', 'active').get();
+      expect(added.docs.map((d) => d.get('displayName')).sort()).toEqual(['Leo', 'Mia', 'Noah']);
+    });
+  });
+
+  describe("a member's own answers when they become the player (PLAYER-6)", () => {
+    const rsvps = () => db().collection(Collections.rsvps);
+    const soon = Timestamp.fromMillis(Date.now() + 86_400_000);
+    async function event(id: string, startAt: Timestamp): Promise<void> {
+      await db().collection(Collections.events).doc(id).set({
+        groupId: 'open', title: id, startAt, rsvpEnabled: true,
+        rsvpCounts: { going: 0, maybe: 0, notGoing: 0 }, staffCounts: { going: 1, maybe: 0, notGoing: 0 },
+      });
+    }
+    const answer = (eventId: string, participantId: string, participantType: string, status: string, startAt = soon) =>
+      rsvps().doc(`${eventId}_${participantId}`).set({
+        eventId, groupId: 'open', participantId, participantType, participantName: participantId, status,
+        note: '', guests: 0, respondedBy: participantId === 'open-p1' ? 'pat' : participantId, eventStartAt: startAt,
+      });
+
+    it("moves each upcoming answer to the player's empty row, drops it where the player has one, and recounts", async () => {
+      const past = Timestamp.fromMillis(Date.now() - 86_400_000);
+      await event('e1', soon);
+      await event('e2', soon);
+      await event('e0', past);
+      await answer('e1', 'sam', 'member', 'going');
+      await answer('e2', 'sam', 'member', 'going');
+      await answer('e2', 'open-p1', 'player', 'not_going');
+      await answer('e0', 'sam', 'member', 'going', past);
+      await claim('open-p1', 'sam', 'self');
+      await run(players.resolvePlayerClaim, 'pat', { playerId: 'open-p1', uid: 'sam', approve: true });
+
+      expect((await rsvps().doc('e1_sam').get()).exists).toBe(false);
+      expect((await rsvps().doc('e1_open-p1').get()).data()).toMatchObject({
+        participantType: 'player', participantId: 'open-p1', participantName: 'Emma', status: 'going', respondedBy: 'sam',
+      });
+      expect((await rsvps().doc('e2_sam').get()).exists).toBe(false);
+      expect((await rsvps().doc('e2_open-p1').get()).get('status')).toBe('not_going');
+      // Past answers stay.
+      expect((await rsvps().doc('e0_sam').get()).exists).toBe(true);
+      const counts = async (id: string) => {
+        const e = await db().collection(Collections.events).doc(id).get();
+        return { players: e.get('rsvpCounts'), others: e.get('staffCounts') };
+      };
+      expect(await counts('e1')).toEqual({ players: { going: 1, maybe: 0, notGoing: 0 }, others: { going: 0, maybe: 0, notGoing: 0 } });
+      expect(await counts('e2')).toEqual({ players: { going: 0, maybe: 0, notGoing: 1 }, others: { going: 0, maybe: 0, notGoing: 0 } });
+    });
+
+    it("moves an admin's own answer too: an admin who is the player answers on the player's row", async () => {
+      await event('e1', soon);
+      await answer('e1', 'ada', 'member', 'going');
+      await run(players.claimPlayer, 'ada', { playerId: 'open-p1', relation: 'self' });
+      expect((await rsvps().doc('e1_ada').get()).exists).toBe(false);
+      expect((await rsvps().doc('e1_open-p1').get()).data()).toMatchObject({ participantType: 'player', status: 'going' });
+    });
+
+    it("leaves a guardian's own answer", async () => {
+      await event('e1', soon);
+      await answer('e1', 'sam', 'member', 'going');
+      await claim('open-p1', 'sam', 'guardian');
+      await run(players.resolvePlayerClaim, 'pat', { playerId: 'open-p1', uid: 'sam', approve: true });
+      expect((await rsvps().doc('e1_sam').get()).exists).toBe(true);
+    });
+  });
+
+  describe('super admins on the team act as admins (§3)', () => {
+    it('claims are linked at once, and new players are active at once', async () => {
+      await join('root');
+      expect(await run(players.claimPlayer, 'root', { playerId: 'open-p1', relation: 'guardian' }, ROOT)).toEqual({ status: 'linked' });
+      expect(await link('open-p1', 'root')).toMatchObject({ relation: 'guardian', via: 'claim' });
+      expect(await db().collection(Collections.guardianRequests).where('uid', '==', 'root').get()).toHaveProperty('size', 0);
+      const added = await run<{ playerId: string; status: string }>(players.proposePlayer, 'root', {
+        groupId: 'open', displayName: 'Rae Root', relation: 'self',
+      }, ROOT);
+      expect(added.status).toBe('active');
+      expect(await link(added.playerId, 'root')).toMatchObject({ relation: 'self' });
+    });
+
+    it("still can't claim on a team they're not on: a claim links the caller", async () => {
+      await expect(run(players.claimPlayer, 'root', { playerId: 'open-p1', relation: 'guardian' }, ROOT))
+        .rejects.toMatchObject({ code: 'permission-denied' });
+    });
+  });
+
+  describe("players updated → labels follow the name and number (PLAYER-8, ARCH §6.4)", () => {
+    it("refreshes linked members' Who's who and upcoming RSVP names", async () => {
+      await join('lee');
+      await db().collection(Collections.players).doc('open-p1').update({ displayName: 'Sam Rivera', jerseyNumber: '12', status: 'active' });
+      await claim('open-p1', 'sam', 'self');
+      await run(players.resolvePlayerClaim, 'pat', { playerId: 'open-p1', uid: 'sam', approve: true });
+      await run(players.inviteGuardian, 'pat', { groupId: 'open', playerId: 'open-p1', email: 'lee@example.com' });
+      expect([await summary('sam'), await summary('lee')]).toEqual(['#12', 'Sam #12']);
+      const soon = Timestamp.fromMillis(Date.now() + 86_400_000);
+      const past = Timestamp.fromMillis(Date.now() - 86_400_000);
+      await db().collection(Collections.rsvps).doc('e1_open-p1').set({ eventId: 'e1', participantId: 'open-p1', participantName: 'Sam Rivera', eventStartAt: soon });
+      await db().collection(Collections.rsvps).doc('e0_open-p1').set({ eventId: 'e0', participantId: 'open-p1', participantName: 'Sam Rivera', eventStartAt: past });
+
+      const ref = db().collection(Collections.players).doc('open-p1');
+      const before = (await ref.get()).data();
+      await ref.update({ displayName: 'Samuel Rivera', displayNameLower: 'samuel rivera', jerseyNumber: '21' });
+      await service.followUpPlayerUpdate('open-p1', before, (await ref.get()).data());
+      expect([await summary('sam'), await summary('lee')]).toEqual(['#21', 'Samuel #21']);
+      expect((await db().collection(Collections.rsvps).doc('e1_open-p1').get()).get('participantName')).toBe('Samuel Rivera');
+      expect((await db().collection(Collections.rsvps).doc('e0_open-p1').get()).get('participantName')).toBe('Sam Rivera');
+    });
+
+    it('exits early when neither the name nor the number changed, and for a pending player', async () => {
+      await guardian('open', 'open-p1', 'sam');
+      await members().doc('open_sam').update({ playerSummary: 'stale' });
+      const before = { groupId: 'open', displayName: 'Emma', jerseyNumber: '7', status: 'active' };
+      await service.followUpPlayerUpdate('open-p1', before, { ...before, position: 'Keeper', linksUpdatedAt: Timestamp.now() });
+      await service.followUpPlayerUpdate('open-p1', before, { ...before, jerseyNumber: '8', status: 'pending' });
+      expect(await summary('sam')).toBe('stale');
+      await service.followUpPlayerUpdate('open-p1', before, { ...before, jerseyNumber: '8' });
+      expect(await summary('sam')).toBe('Emma');
+    });
+  });
+
+  describe('proposals linked as the player (PLAYER-3, PLAYER-4)', () => {
+    it("approving a member's \"add me\" links them as the player", async () => {
+      const res = await run<{ playerId: string }>(players.proposePlayer, 'sam', {
+        groupId: 'open', displayName: 'Sam Rivera', jerseyNumber: '12', relation: 'self',
+      });
+      expect(await run(players.resolvePendingPlayer, 'pat', { playerId: res.playerId, approve: true })).toEqual({ ok: true, linked: true });
+      expect(await link(res.playerId, 'sam')).toMatchObject({ relation: 'self', via: 'proposal', addedBy: 'pat' });
+      expect(await summary('sam')).toBe('#12');
+      expect((await groups().doc('open').get()).get('playerCount')).toBe(2);
+      const approved = await db().collection(Collections.notifications).where('type', '==', 'guardianApproved').get();
+      expect(approved.docs.map((d) => `${d.get('uid')}: ${d.get('body')}`)).toEqual(["sam: You're now on the roster as Sam Rivera"]);
+    });
+
+    it('refuses "add me" from an admin or a member who is already a player, adding no player', async () => {
+      await addPlayer('open-p2');
+      await db().collection(Collections.playerGuardians).doc('open-p1_ada').set({ groupId: 'open', playerId: 'open-p1', uid: 'ada', relation: 'self' });
+      await db().collection(Collections.playerGuardians).doc('open-p2_sam').set({ groupId: 'open', playerId: 'open-p2', uid: 'sam', relation: 'self' });
+      for (const uid of ['ada', 'sam']) {
+        await expect(run(players.proposePlayer, uid, { groupId: 'open', displayName: 'Me Again', relation: 'self' }))
+          .rejects.toMatchObject({ message: 'already-a-player' });
+      }
+      expect((await db().collection(Collections.players).where('displayName', '==', 'Me Again').get()).size).toBe(0);
+    });
   });
 });
 

@@ -408,7 +408,7 @@
   "addAnotherGuardian": "Add another guardian",
   "addPlayer": "Add player",
   "playerNameRequired": "Enter the player's name.",
-  "pasteRosterHelp": "One line per parent or guardian: player name, guardian name, guardian email. Lines with the same player name become one player.",
+  "pasteRosterHelp": "One line per parent or guardian: player name, guardian name, guardian email. For an adult player, add a line with the player's name and their own email. Lines with the same player name become one player.",
   "pastePreview": "{count, plural, =0{No players yet} =1{1 player to add} other{{count} players to add}}",
   "@pastePreview": {
     "placeholders": {
@@ -1403,5 +1403,26 @@
   "claimSelfFor": "{who} says they're {player}",
   "@claimSelfFor": {"placeholders": {"who": {"type": "String"}, "player": {"type": "String"}}},
   "claimGuardianFor": "{who}: parent or guardian of {player}",
-  "@claimGuardianFor": {"placeholders": {"who": {"type": "String"}, "player": {"type": "String"}}}
+  "@claimGuardianFor": {"placeholders": {"who": {"type": "String"}, "player": {"type": "String"}}},
+  "playerEmailLabel": "Player's own email (optional)",
+  "playerEmailHelp": "For an adult player: they're linked as the player, not as a guardian.",
+  "approveAlreadyAPlayer": "Can't approve this: {who} is already a player on this team. Decline it.",
+  "@approveAlreadyAPlayer": {"placeholders": {"who": {"type": "String"}}},
+  "approvePlayerAlreadyClaimed": "Can't approve this: someone is already this player. Decline it, or remove their link first.",
+  "pendingPlayerNotLinked": "{player} was added without a link to {who}.",
+  "@pendingPlayerNotLinked": {"placeholders": {"player": {"type": "String"}, "who": {"type": "String"}}},
+  "guardianAlreadyLinked": "They're already linked to this player.",
+  "whoAlreadyAskedAsPlayer": "You've already asked to be a player on this team. A team admin will decide.",
+  "playersLinkedCount": "{count, plural, =1{1 player linked by their own email} other{{count} players linked by their own email}}",
+  "@playersLinkedCount": {"placeholders": {"count": {"type": "int"}}},
+  "playersInvitedCount": "{count, plural, =1{1 player invited by their own email} other{{count} players invited by their own email}}",
+  "@playersInvitedCount": {"placeholders": {"count": {"type": "int"}}},
+  "problemAlreadyAPlayer": "{email}: already a player on this team",
+  "@problemAlreadyAPlayer": {"placeholders": {"email": {"type": "String"}}},
+  "problemPlayerAlreadyClaimed": "{email}: someone is already this player",
+  "@problemPlayerAlreadyClaimed": {"placeholders": {"email": {"type": "String"}}},
+  "problemTooManyGuardians": "{email}: the player has 4 guardians already",
+  "@problemTooManyGuardians": {"placeholders": {"email": {"type": "String"}}},
+  "problemAlreadyLinked": "{email}: given as both the player's and a guardian's email",
+  "@problemAlreadyLinked": {"placeholders": {"email": {"type": "String"}}}
 }

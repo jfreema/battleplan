@@ -23,7 +23,6 @@ import {
   addPlayers as add,
   claimPlayer as claim,
   guardianCount,
-  isGuardian,
   linkGuardian,
   linkOf,
   playersOnTeam,
@@ -44,6 +43,8 @@ const Player = z.object({
   name: z.string().trim().min(1).max(60),
   jerseyNumber: z.string().trim().max(4).nullable().optional(),
   position: z.string().trim().max(30).nullable().optional(),
+  // The player's own email (PLAYER-1, optional): linked as the player.
+  email: z.string().trim().email().max(200).nullable().optional(),
   guardians: z.array(Guardian).max(Limits.guardiansPerPlayerMax).default([]),
 });
 
@@ -62,7 +63,12 @@ const AddPlayersInput = z.object({
     .refine((players) => rosterLines(players) <= Limits.pastedRosterLinesMax, 'too-many-lines'),
 });
 
-/** Adds players with their guardians to a team (PLAYER-1), active at once. Admins only. */
+/**
+ * Adds players to a team (PLAYER-1), active at once. Admins only. Input
+ * { groupId, players: [{ name, jerseyNumber?, position?, email?,
+ * guardians: [{ name?, email? }] }] }: `email` is the player's own, linked
+ * as the player ('self'). Returns AddPlayersResult.
+ */
 export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(AddPlayersInput, request.data);
@@ -72,16 +78,10 @@ export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) =>
   if (players + input.players.length > Limits.playersPerGroupMax) {
     throw new HttpsError('failed-precondition', 'too-many-players');
   }
-  const guardianEmails = input.players.flatMap((p) => p.guardians.filter((g) => g.email)).length;
-  // Guardians' emails add people by email: a verified email first (AUTH-3).
-  if (guardianEmails > 0) requireVerifiedEmail(request);
-  await consumeRateLimit(
-    input.groupId,
-    'addByEmail',
-    Limits.addByEmailPerGroupPerDay,
-    'day',
-    Math.max(guardianEmails, 1),
-  );
+  const emails = input.players.flatMap((p) => [p.email, ...p.guardians.map((g) => g.email)].filter((e) => e)).length;
+  // Players' and guardians' emails add people by email: a verified email first (AUTH-3).
+  if (emails > 0) requireVerifiedEmail(request);
+  await consumeRateLimit(input.groupId, 'addByEmail', Limits.addByEmailPerGroupPerDay, 'day', Math.max(emails, 1));
   const { result, newMembers } = await add(input.groupId, uid, input.players);
   await audit({
     actorId: uid,
@@ -93,10 +93,10 @@ export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) =>
   });
   const actor = await db().collection(Collections.users).doc(uid).get();
   const actorName = (actor.get('displayName') as string | undefined) ?? 'A team admin';
-  // NOTIF-2: guardians who weren't on the team are told they were added.
+  // NOTIF-2: people who weren't on the team are told they were added.
   // First, since it never throws and a failed email below must not skip it.
   await notifyAddedToTeam(input.groupId, group.get('name') as string, { uid, name: actorName }, newMembers);
-  // AUTH-6: new guardians get a setup email. One failure doesn't stop the
+  // AUTH-6: new people get a setup email. One failure doesn't stop the
   // rest; the admin can resend from the roster.
   for (const email of result.invitedEmails) {
     await sendSetupEmail(email, group.get('name') as string, actorName).catch((e: unknown) =>
@@ -126,23 +126,26 @@ export const removePlayer = onCall(async (request) => {
 });
 
 /**
- * Throws unless [groupId] is an open team (requireOpenTeam) the caller
- * belongs to. A super admin who isn't on it acts as an admin when
- * [superAdmin] is passed (§3: adding a guardian); calls that link the
- * caller themselves leave it false.
+ * Throws unless [groupId] is an open team (requireOpenTeam, which lets a
+ * super admin act on a suspended one) the caller belongs to. A super admin
+ * who isn't on it acts as an admin (role 'superAdmin', §3: adding a
+ * guardian) unless [onTeam]: calls that link the caller themselves (claims,
+ * adding yourself) need them on the team.
  */
 async function requireTeamMember(
   groupId: string,
   uid: string,
   superAdmin = false,
+  onTeam = false,
 ): Promise<{ role: string; teamName: string }> {
-  const role = (await roleOf(groupId, uid)) ?? (superAdmin ? 'superAdmin' : null);
+  const role = (await roleOf(groupId, uid)) ?? (superAdmin && !onTeam ? 'superAdmin' : null);
   if (!role) throw new HttpsError('permission-denied', 'Not a member.');
   const group = await requireOpenTeam(groupId, superAdmin);
   return { role, teamName: group.get('name') as string };
 }
 
-const isTeamAdmin = (role: string) => role === 'owner' || role === 'admin';
+/** Team admins and owners, and super admins acting on the team (§3: claims and new players at once). */
+const actsAsAdmin = (role: string, superAdmin: boolean) => superAdmin || role === 'owner' || role === 'admin';
 
 const RelationInput = z.enum(['self', 'guardian']);
 
@@ -236,8 +239,8 @@ async function tellApproved(input: {
 
 /**
  * Claim a player (PLAYER-3): "I am this player" ('self') or "I'm their
- * parent or guardian". Admins' claims are approved at once; others wait for
- * an admin (PLAYER-4). Input { playerId, relation, groupId? }; returns
+ * parent or guardian". Claims by admins, and by super admins on the team,
+ * are approved at once; others wait for an admin (PLAYER-4). Input { playerId, relation, groupId? }; returns
  * { status: 'linked' | 'requested' }.
  */
 export const claimPlayer = onCall(async (request) => {
@@ -247,8 +250,9 @@ export const claimPlayer = onCall(async (request) => {
     request.data,
   );
   const groupId = await teamOfPlayer(input.playerId, input.groupId);
-  const { role, teamName } = await requireTeamMember(groupId, uid);
-  const admin = isTeamAdmin(role);
+  const superAdmin = request.auth?.token.superAdmin === true;
+  const { role, teamName } = await requireTeamMember(groupId, uid, superAdmin, true);
+  const admin = actsAsAdmin(role, superAdmin);
   if (!admin) await consumeRateLimit(uid, 'guardianRequest', Limits.guardianRequestsPerUserPerDay);
   const result = await claim(groupId, uid, input.playerId, input.relation, admin);
   await audit({
@@ -319,7 +323,7 @@ export const resolvePlayerClaim = onCall(async (request) => {
 /**
  * Add a player who isn't on the roster (PLAYER-3), saying how you're
  * linked. A member's player is pending until an admin approves it; an
- * admin's is active at once. Input { groupId, displayName, jerseyNumber?,
+ * admin's (or a super admin's on the team) is active at once. Input { groupId, displayName, jerseyNumber?,
  * position?, relation }; returns { playerId, status: 'active' | 'pending' }.
  */
 export const proposePlayer = onCall(async (request) => {
@@ -334,8 +338,9 @@ export const proposePlayer = onCall(async (request) => {
     }),
     request.data,
   );
-  const { role, teamName } = await requireTeamMember(input.groupId, uid);
-  const admin = isTeamAdmin(role);
+  const superAdmin = request.auth?.token.superAdmin === true;
+  const { role, teamName } = await requireTeamMember(input.groupId, uid, superAdmin, true);
+  const admin = actsAsAdmin(role, superAdmin);
   if (!admin) await consumeRateLimit(uid, 'guardianRequest', Limits.guardianRequestsPerUserPerDay);
   if ((await playersOnTeam(input.groupId)) >= Limits.playersPerGroupMax) {
     throw new HttpsError('failed-precondition', 'too-many-players');
@@ -400,8 +405,9 @@ export const resolvePendingPlayer = onCall(async (request) => {
 });
 
 /**
- * A guardian (or an admin) adds a co-parent by email (PLAYER-5). The
- * guardian vouches for them, so no approval is needed. New emails get an
+ * A linked member (the player or a guardian) or an admin adds a guardian
+ * by email (PLAYER-5). The existing link vouches for them, so no approval
+ * is needed. New emails get an
  * added account and a setup email; people already on Battleplan get an
  * "added to the team" email if they weren't on it.
  */
@@ -424,9 +430,9 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   if (!player.exists || player.get('groupId') !== input.groupId || player.get('status') === 'pending') {
     throw new HttpsError('not-found', 'no-player');
   }
-  // A guardian vouches for a co-parent; the player themselves ('self') doesn't add guardians.
-  if (role === 'member' && !superAdmin && !(await isGuardian(input.playerId, actor))) {
-    throw new HttpsError('permission-denied', 'Only guardians and admins can add guardians.');
+  // Any link vouches, the player's own included (PLAYER-5).
+  if (role === 'member' && !superAdmin && !(await linkOf(input.playerId, actor))) {
+    throw new HttpsError('permission-denied', 'Only linked members and admins can add guardians.');
   }
   if ((await guardianCount(input.playerId)) >= Limits.guardiansPerPlayerMax) {
     throw new HttpsError('failed-precondition', 'too-many-guardians');

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   joinNames,
+  linkLimitProblem,
   parsePastedRoster,
   playerLabel,
+  playerLabelChanged,
   playerStatusOf,
   playerSummaryOf,
   relationOf,
@@ -29,6 +31,20 @@ describe('parsePastedRoster (PLAYER-1)', () => {
     const { players, problems } = parsePastedRoster(lines.join('\n'));
     expect(players[0].guardians).toHaveLength(4);
     expect(problems).toEqual(['Kid, E, e@x.com', 'Other, F, not-an-email']);
+  });
+
+  it("reads 'Name, email' as the player's own email, one per player (like the app)", () => {
+    const { players, problems } = parsePastedRoster(
+      'Jared Freeman, jared@example.com\n' +
+        'Jared Freeman, Pat Freeman, pat@example.com\n' +
+        'jared freeman, other@example.com\n' +
+        'Sam Lee, Coach Kim\n',
+    );
+    expect(players[0]).toMatchObject({ name: 'Jared Freeman', email: 'jared@example.com' });
+    expect(players[0].guardians).toEqual([{ name: 'Pat Freeman', email: 'pat@example.com' }]);
+    expect(players[1]).toMatchObject({ name: 'Sam Lee', guardians: [{ name: 'Coach Kim', email: null }] });
+    expect(players[1].email).toBeUndefined();
+    expect(problems).toEqual(['jared freeman, other@example.com']);
   });
 
   it('labels players by first name and number', () => {
@@ -83,5 +99,41 @@ describe('player links and pending players (PLAYER-3, PLAYER-4)', () => {
     expect(approvedBody('Emma', 'guardian', true)).toBe('Emma was added to the roster');
     expect(approvedBody('Jared Freeman', 'self', true)).toBe("You're now on the roster as Jared Freeman");
     expect(approvedBody('Jared Freeman', 'self', false)).toBe("You're now on the roster as Jared Freeman");
+  });
+});
+
+describe('the link limits, checked where the link is written (PLAYER-3)', () => {
+  const g = (uid: string) => ({ uid, relation: 'guardian' as const });
+  const self = (uid: string) => ({ uid, relation: 'self' as const });
+
+  it('allows one self link per player and one player per member per team', () => {
+    expect(linkLimitProblem('sam', 'p1', 'self', [g('ana')], [], 4)).toBeNull();
+    expect(linkLimitProblem('sam', 'p1', 'self', [self('lee')], [], 4)).toBe('player-already-claimed');
+    expect(linkLimitProblem('sam', 'p1', 'self', [], ['p2'], 4)).toBe('already-a-player');
+    // Their own link on this player isn't someone else's.
+    expect(linkLimitProblem('sam', 'p1', 'self', [self('sam')], ['p1'], 4)).toBeNull();
+  });
+
+  it("allows 4 guardians, not counting the player's own link", () => {
+    const three = [g('a'), g('b'), g('c'), self('d')];
+    expect(linkLimitProblem('sam', 'p1', 'guardian', three, [], 4)).toBeNull();
+    expect(linkLimitProblem('sam', 'p1', 'guardian', [...three, g('e')], [], 4)).toBe('too-many-guardians');
+    // Being a player elsewhere on the team doesn't stop being a guardian here.
+    expect(linkLimitProblem('sam', 'p1', 'guardian', [], ['p2'], 4)).toBeNull();
+  });
+});
+
+describe('players trigger early exit (PLAYER-8)', () => {
+  it("runs only when an active player's name or number changed", () => {
+    const base = { displayName: 'Emma', jerseyNumber: '7', position: null, status: 'active' };
+    expect(playerLabelChanged(base, { ...base, position: 'Keeper' })).toBe(false);
+    expect(playerLabelChanged(base, { ...base, linksUpdatedAt: 1 })).toBe(false);
+    expect(playerLabelChanged({ ...base, jerseyNumber: undefined }, { ...base, jerseyNumber: null })).toBe(false);
+    expect(playerLabelChanged(base, { ...base, jerseyNumber: '21' })).toBe(true);
+    expect(playerLabelChanged(base, { ...base, displayName: 'Emmy' })).toBe(true);
+    expect(playerLabelChanged({ ...base, status: 'pending' }, { ...base, displayName: 'Emmy', status: 'pending' })).toBe(false);
+    expect(playerLabelChanged(undefined, base)).toBe(false);
+    // Players from before approvals have no status, and are active.
+    expect(playerLabelChanged({ displayName: 'Emma' }, { displayName: 'Emmy' })).toBe(true);
   });
 });

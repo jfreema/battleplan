@@ -92,13 +92,21 @@ class AddResultsScreen extends StatelessWidget {
 }
 
 /// A server problem line in words: "lee@example.com (too-many-teams)"
-/// becomes "lee@example.com: already on 100 teams" (TEAM-2).
+/// becomes "lee@example.com: already on 100 teams" (TEAM-2), and a link
+/// the PLAYER-3 limits refused says which one.
 String describeAddProblem(AppLocalizations l10n, String problem) {
-  const tooMany = ' (too-many-teams)';
-  if (problem.endsWith(tooMany)) {
-    return l10n.problemOnTooManyTeams(
-      problem.substring(0, problem.length - tooMany.length),
-    );
+  final reasons = <String, String Function(String)>{
+    'too-many-teams': l10n.problemOnTooManyTeams,
+    'already-a-player': l10n.problemAlreadyAPlayer,
+    'player-already-claimed': l10n.problemPlayerAlreadyClaimed,
+    'too-many-guardians': l10n.problemTooManyGuardians,
+    'already-linked': l10n.problemAlreadyLinked,
+  };
+  for (final MapEntry(key: code, value: say) in reasons.entries) {
+    final suffix = ' ($code)';
+    if (problem.endsWith(suffix)) {
+      return say(problem.substring(0, problem.length - suffix.length));
+    }
   }
   return problem;
 }

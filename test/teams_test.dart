@@ -11,6 +11,7 @@ import 'package:battleplan/features/groups/application/providers.dart'
     show inviteRepositoryProvider;
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
+import 'package:battleplan/features/groups/presentation/results_screen.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/roster_parser.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
@@ -285,13 +286,59 @@ void main() {
     testWidgets('a guardian with a name and no email is kept', (tester) async {
       final playerRepo = await openAdd(tester);
       await tester.enterText(find.byType(TextField).at(0), 'Leo Park');
-      await tester.enterText(find.byType(TextField).at(3), 'Maria Park');
+      await tester.enterText(find.byType(TextField).at(4), 'Maria Park');
       await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
       await tester.pumpAndSettle();
       expect(playerRepo.added.single.single.guardians, [
         const NewGuardian(name: 'Maria Park'),
       ]);
       expect(find.text('Players added'), findsOneWidget);
+    });
+
+    testWidgets("an adult player's own email links them as the player, and "
+        'a refused link says why (PLAYER-1)', (tester) async {
+      final playerRepo = await openAdd(tester);
+      playerRepo.addProblems = [
+        'Jared Freeman: jared@example.com (already-a-player)',
+      ];
+      await tester.enterText(find.byType(TextField).at(0), 'Jared Freeman');
+      expect(find.text("Player's own email (optional)"), findsOneWidget);
+      await tester.enterText(find.byType(TextField).at(3), 'jared@example.com');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
+      await tester.pumpAndSettle();
+      final added = playerRepo.added.single.single;
+      expect(added.email, 'jared@example.com');
+      expect(added.guardians, isEmpty);
+      expect(find.text('1 player linked by their own email'), findsOneWidget);
+      expect(
+        find.text(
+          'Jared Freeman: jared@example.com: already a player on this team',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    test('problem lines name each refused link', () {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      expect(
+        [
+          for (final code in [
+            'too-many-teams',
+            'player-already-claimed',
+            'too-many-guardians',
+            'already-linked',
+            'other',
+          ])
+            describeAddProblem(l10n, 'E: e@x.com ($code)'),
+        ],
+        [
+          'E: e@x.com: already on 100 teams',
+          'E: e@x.com: someone is already this player',
+          'E: e@x.com: the player has 4 guardians already',
+          "E: e@x.com: given as both the player's and a guardian's email",
+          'E: e@x.com (other)',
+        ],
+      );
     });
 
     testWidgets('the results list lines that could not be read', (

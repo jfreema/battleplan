@@ -102,10 +102,11 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
     final me = ref.watch(authUserProvider).value?.uid;
     final players = ref.watch(playersProvider(widget.groupId));
     final links = ref.watch(guardianLinksProvider(widget.groupId));
+    final myRequests =
+        ref.watch(myGuardianRequestsProvider(widget.groupId)).value ??
+        const <GuardianRequest>[];
     final requested = {
-      for (final r
-          in ref.watch(myGuardianRequestsProvider(widget.groupId)).value ??
-              const <GuardianRequest>[])
+      for (final r in myRequests)
         if (r.status == GuardianRequestStatus.pending) r.playerId,
     };
     final allLinks = links.value ?? const <GuardianLink>[];
@@ -168,10 +169,27 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
       );
     } else {
       final self = as == PlayerRelation.self;
+      // One player at most (PLAYER-3): with a claim as the player or a
+      // player of their own already waiting, they can't ask again.
+      final selfTaken =
+          self &&
+          (me == null ||
+              !canStillBeAPlayer(
+                UserId(me),
+                links: allLinks,
+                requests: myRequests,
+                pendingPlayers:
+                    ref.watch(myPendingPlayersProvider(widget.groupId)).value ??
+                    const [],
+              ));
       body = Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(self ? l10n.whoPickYourself : l10n.whoAreYouHereForHelp),
+          if (selfTaken) ...[
+            const SizedBox(height: Space.sm),
+            Text(l10n.whoAlreadyAskedAsPlayer),
+          ],
           const SizedBox(height: Space.md),
           if (!players.hasValue) const LinearProgressIndicator(),
           if (players.hasValue && list.isEmpty)
@@ -183,7 +201,7 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: requested.contains(p.id) || _picked.contains(p.id),
-              onChanged: requested.contains(p.id)
+              onChanged: requested.contains(p.id) || selfTaken
                   ? null
                   : (v) => setState(() {
                       // You're one player at most (PLAYER-3).
@@ -211,7 +229,9 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
           ),
           const SizedBox(height: Space.sm),
           OutlinedButton(
-            onPressed: _saving ? null : () => setState(() => _adding = true),
+            onPressed: _saving || selfTaken
+                ? null
+                : () => setState(() => _adding = true),
             child: Text(self ? l10n.addMyself : l10n.addMyPlayer),
           ),
         ],

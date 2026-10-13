@@ -846,7 +846,7 @@ as String?,
 /// @nodoc
 mixin _$NewPlayer {
 
- String get name; String? get jerseyNumber; String? get position; List<NewGuardian> get guardians;
+ String get name; String? get jerseyNumber; String? get position; String? get email; List<NewGuardian> get guardians;
 /// Create a copy of NewPlayer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -858,20 +858,20 @@ $NewPlayerCopyWith<NewPlayer> get copyWith => _$NewPlayerCopyWithImpl<NewPlayer>
 @override
 bool operator ==(Object other) {
   final _this = this as NewPlayer;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewPlayer&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.jerseyNumber, _this.jerseyNumber) || other.jerseyNumber == _this.jerseyNumber)&&(identical(other.position, _this.position) || other.position == _this.position)&&const DeepCollectionEquality().equals(other.guardians, _this.guardians));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewPlayer&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.jerseyNumber, _this.jerseyNumber) || other.jerseyNumber == _this.jerseyNumber)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.email, _this.email) || other.email == _this.email)&&const DeepCollectionEquality().equals(other.guardians, _this.guardians));
 }
 
 
 @override
 int get hashCode {
   final _this = this as NewPlayer;
-  return Object.hash(runtimeType,_this.name,_this.jerseyNumber,_this.position,const DeepCollectionEquality().hash(_this.guardians));
+  return Object.hash(runtimeType,_this.name,_this.jerseyNumber,_this.position,_this.email,const DeepCollectionEquality().hash(_this.guardians));
 }
 
 @override
 String toString() {
   final _this = this as NewPlayer;
-  return 'NewPlayer(name: ${_this.name}, jerseyNumber: ${_this.jerseyNumber}, position: ${_this.position}, guardians: ${_this.guardians})';
+  return 'NewPlayer(name: ${_this.name}, jerseyNumber: ${_this.jerseyNumber}, position: ${_this.position}, email: ${_this.email}, guardians: ${_this.guardians})';
 }
 
 
@@ -882,7 +882,7 @@ abstract mixin class $NewPlayerCopyWith<$Res>  {
   factory $NewPlayerCopyWith(NewPlayer value, $Res Function(NewPlayer) _then) = _$NewPlayerCopyWithImpl;
 @useResult
 $Res call({
- String name, String? jerseyNumber, String? position, List<NewGuardian> guardians
+ String name, String? jerseyNumber, String? position, String? email, List<NewGuardian> guardians
 });
 
 
@@ -899,11 +899,12 @@ class _$NewPlayerCopyWithImpl<$Res>
 
 /// Create a copy of NewPlayer
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? guardians = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? email = freezed,Object? guardians = null,}) {
   return _then(NewPlayer(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,jerseyNumber: freezed == jerseyNumber ? _self.jerseyNumber : jerseyNumber // ignore: cast_nullable_to_non_nullable
 as String?,position: freezed == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
+as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,guardians: null == guardians ? _self.guardians : guardians // ignore: cast_nullable_to_non_nullable
 as List<NewGuardian>,
   ));
@@ -990,10 +991,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? jerseyNumber,  String? position,  List<NewGuardian> guardians)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? jerseyNumber,  String? position,  String? email,  List<NewGuardian> guardians)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NewPlayer() when $default != null:
-return $default(_that.name,_that.jerseyNumber,_that.position,_that.guardians);case _:
+return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.guardians);case _:
   return orElse();
 
 }
@@ -1011,10 +1012,10 @@ return $default(_that.name,_that.jerseyNumber,_that.position,_that.guardians);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? jerseyNumber,  String? position,  List<NewGuardian> guardians)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? jerseyNumber,  String? position,  String? email,  List<NewGuardian> guardians)  $default,) {final _that = this;
 switch (_that) {
 case _NewPlayer():
-return $default(_that.name,_that.jerseyNumber,_that.position,_that.guardians);case _:
+return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.guardians);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1031,10 +1032,10 @@ return $default(_that.name,_that.jerseyNumber,_that.position,_that.guardians);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? jerseyNumber,  String? position,  List<NewGuardian> guardians)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? jerseyNumber,  String? position,  String? email,  List<NewGuardian> guardians)?  $default,) {final _that = this;
 switch (_that) {
 case _NewPlayer() when $default != null:
-return $default(_that.name,_that.jerseyNumber,_that.position,_that.guardians);case _:
+return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.guardians);case _:
   return null;
 
 }
@@ -1046,12 +1047,13 @@ return $default(_that.name,_that.jerseyNumber,_that.position,_that.guardians);ca
 
 
 class _NewPlayer implements NewPlayer {
-  const _NewPlayer({required this.name, this.jerseyNumber, this.position,  List<NewGuardian> guardians = const <NewGuardian>[]}): _guardians = guardians;
+  const _NewPlayer({required this.name, this.jerseyNumber, this.position, this.email,  List<NewGuardian> guardians = const <NewGuardian>[]}): _guardians = guardians;
   
 
 @override final  String name;
 @override final  String? jerseyNumber;
 @override final  String? position;
+@override final  String? email;
  final  List<NewGuardian> _guardians;
 @override@JsonKey() List<NewGuardian> get guardians {
   if (_guardians is EqualUnmodifiableListView) return _guardians;
@@ -1070,18 +1072,18 @@ _$NewPlayerCopyWith<_NewPlayer> get copyWith => __$NewPlayerCopyWithImpl<_NewPla
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewPlayer&&(identical(other.name, name) || other.name == name)&&(identical(other.jerseyNumber, jerseyNumber) || other.jerseyNumber == jerseyNumber)&&(identical(other.position, position) || other.position == position)&&const DeepCollectionEquality().equals(other.guardians, _guardians));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewPlayer&&(identical(other.name, name) || other.name == name)&&(identical(other.jerseyNumber, jerseyNumber) || other.jerseyNumber == jerseyNumber)&&(identical(other.position, position) || other.position == position)&&(identical(other.email, email) || other.email == email)&&const DeepCollectionEquality().equals(other.guardians, _guardians));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,name,jerseyNumber,position,const DeepCollectionEquality().hash(_guardians));
+    return Object.hash(runtimeType,name,jerseyNumber,position,email,const DeepCollectionEquality().hash(_guardians));
 }
 
 @override
 String toString() {
-    return 'NewPlayer(name: $name, jerseyNumber: $jerseyNumber, position: $position, guardians: $guardians)';
+    return 'NewPlayer(name: $name, jerseyNumber: $jerseyNumber, position: $position, email: $email, guardians: $guardians)';
 }
 
 
@@ -1092,7 +1094,7 @@ abstract mixin class _$NewPlayerCopyWith<$Res> implements $NewPlayerCopyWith<$Re
   factory _$NewPlayerCopyWith(_NewPlayer value, $Res Function(_NewPlayer) _then) = __$NewPlayerCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? jerseyNumber, String? position, List<NewGuardian> guardians
+ String name, String? jerseyNumber, String? position, String? email, List<NewGuardian> guardians
 });
 
 
@@ -1109,11 +1111,12 @@ class __$NewPlayerCopyWithImpl<$Res>
 
 /// Create a copy of NewPlayer
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? guardians = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? email = freezed,Object? guardians = null,}) {
   return _then(_NewPlayer(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,jerseyNumber: freezed == jerseyNumber ? _self.jerseyNumber : jerseyNumber // ignore: cast_nullable_to_non_nullable
 as String?,position: freezed == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
+as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String?,guardians: null == guardians ? _self._guardians : guardians // ignore: cast_nullable_to_non_nullable
 as List<NewGuardian>,
   ));
@@ -1125,10 +1128,13 @@ as List<NewGuardian>,
 /// @nodoc
 mixin _$AddPlayersResult {
 
- int get playersAdded; int get guardiansLinked; int get guardiansInvited;/// Guardians given a name and no email, "Emma: Maria R.": nobody can be
+ int get playersAdded; int get guardiansLinked; int get guardiansInvited;/// Players linked as themselves by their own email: to an account they
+/// had, or a new one that got a setup email (PLAYER-1).
+ int get playersLinked; int get playersInvited;/// Guardians given a name and no email, "Emma: Maria R.": nobody can be
 /// linked without an email, so they're listed instead (PLAYER-1).
- List<String> get guardiansWithoutEmail;/// "Emma: maria@example.com", with " (too-many-teams)" for someone on
-/// 100 teams already (TEAM-2).
+ List<String> get guardiansWithoutEmail;/// "Emma: maria@example.com", with the reason when there is one, such
+/// as " (too-many-teams)" for someone on 100 teams already (TEAM-2) or
+/// " (already-a-player)" (PLAYER-3); see describeAddProblem.
  List<String> get problems;
 /// Create a copy of AddPlayersResult
 /// with the given fields replaced by the non-null parameter values.
@@ -1141,20 +1147,20 @@ $AddPlayersResultCopyWith<AddPlayersResult> get copyWith => _$AddPlayersResultCo
 @override
 bool operator ==(Object other) {
   final _this = this as AddPlayersResult;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddPlayersResult&&(identical(other.playersAdded, _this.playersAdded) || other.playersAdded == _this.playersAdded)&&(identical(other.guardiansLinked, _this.guardiansLinked) || other.guardiansLinked == _this.guardiansLinked)&&(identical(other.guardiansInvited, _this.guardiansInvited) || other.guardiansInvited == _this.guardiansInvited)&&const DeepCollectionEquality().equals(other.guardiansWithoutEmail, _this.guardiansWithoutEmail)&&const DeepCollectionEquality().equals(other.problems, _this.problems));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AddPlayersResult&&(identical(other.playersAdded, _this.playersAdded) || other.playersAdded == _this.playersAdded)&&(identical(other.guardiansLinked, _this.guardiansLinked) || other.guardiansLinked == _this.guardiansLinked)&&(identical(other.guardiansInvited, _this.guardiansInvited) || other.guardiansInvited == _this.guardiansInvited)&&(identical(other.playersLinked, _this.playersLinked) || other.playersLinked == _this.playersLinked)&&(identical(other.playersInvited, _this.playersInvited) || other.playersInvited == _this.playersInvited)&&const DeepCollectionEquality().equals(other.guardiansWithoutEmail, _this.guardiansWithoutEmail)&&const DeepCollectionEquality().equals(other.problems, _this.problems));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AddPlayersResult;
-  return Object.hash(runtimeType,_this.playersAdded,_this.guardiansLinked,_this.guardiansInvited,const DeepCollectionEquality().hash(_this.guardiansWithoutEmail),const DeepCollectionEquality().hash(_this.problems));
+  return Object.hash(runtimeType,_this.playersAdded,_this.guardiansLinked,_this.guardiansInvited,_this.playersLinked,_this.playersInvited,const DeepCollectionEquality().hash(_this.guardiansWithoutEmail),const DeepCollectionEquality().hash(_this.problems));
 }
 
 @override
 String toString() {
   final _this = this as AddPlayersResult;
-  return 'AddPlayersResult(playersAdded: ${_this.playersAdded}, guardiansLinked: ${_this.guardiansLinked}, guardiansInvited: ${_this.guardiansInvited}, guardiansWithoutEmail: ${_this.guardiansWithoutEmail}, problems: ${_this.problems})';
+  return 'AddPlayersResult(playersAdded: ${_this.playersAdded}, guardiansLinked: ${_this.guardiansLinked}, guardiansInvited: ${_this.guardiansInvited}, playersLinked: ${_this.playersLinked}, playersInvited: ${_this.playersInvited}, guardiansWithoutEmail: ${_this.guardiansWithoutEmail}, problems: ${_this.problems})';
 }
 
 
@@ -1165,7 +1171,7 @@ abstract mixin class $AddPlayersResultCopyWith<$Res>  {
   factory $AddPlayersResultCopyWith(AddPlayersResult value, $Res Function(AddPlayersResult) _then) = _$AddPlayersResultCopyWithImpl;
 @useResult
 $Res call({
- int playersAdded, int guardiansLinked, int guardiansInvited, List<String> guardiansWithoutEmail, List<String> problems
+ int playersAdded, int guardiansLinked, int guardiansInvited, int playersLinked, int playersInvited, List<String> guardiansWithoutEmail, List<String> problems
 });
 
 
@@ -1182,11 +1188,13 @@ class _$AddPlayersResultCopyWithImpl<$Res>
 
 /// Create a copy of AddPlayersResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? playersAdded = null,Object? guardiansLinked = null,Object? guardiansInvited = null,Object? guardiansWithoutEmail = null,Object? problems = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? playersAdded = null,Object? guardiansLinked = null,Object? guardiansInvited = null,Object? playersLinked = null,Object? playersInvited = null,Object? guardiansWithoutEmail = null,Object? problems = null,}) {
   return _then(AddPlayersResult(
 playersAdded: null == playersAdded ? _self.playersAdded : playersAdded // ignore: cast_nullable_to_non_nullable
 as int,guardiansLinked: null == guardiansLinked ? _self.guardiansLinked : guardiansLinked // ignore: cast_nullable_to_non_nullable
 as int,guardiansInvited: null == guardiansInvited ? _self.guardiansInvited : guardiansInvited // ignore: cast_nullable_to_non_nullable
+as int,playersLinked: null == playersLinked ? _self.playersLinked : playersLinked // ignore: cast_nullable_to_non_nullable
+as int,playersInvited: null == playersInvited ? _self.playersInvited : playersInvited // ignore: cast_nullable_to_non_nullable
 as int,guardiansWithoutEmail: null == guardiansWithoutEmail ? _self.guardiansWithoutEmail : guardiansWithoutEmail // ignore: cast_nullable_to_non_nullable
 as List<String>,problems: null == problems ? _self.problems : problems // ignore: cast_nullable_to_non_nullable
 as List<String>,
@@ -1274,10 +1282,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int playersAdded,  int guardiansLinked,  int guardiansInvited,  List<String> guardiansWithoutEmail,  List<String> problems)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int playersAdded,  int guardiansLinked,  int guardiansInvited,  int playersLinked,  int playersInvited,  List<String> guardiansWithoutEmail,  List<String> problems)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AddPlayersResult() when $default != null:
-return $default(_that.playersAdded,_that.guardiansLinked,_that.guardiansInvited,_that.guardiansWithoutEmail,_that.problems);case _:
+return $default(_that.playersAdded,_that.guardiansLinked,_that.guardiansInvited,_that.playersLinked,_that.playersInvited,_that.guardiansWithoutEmail,_that.problems);case _:
   return orElse();
 
 }
@@ -1295,10 +1303,10 @@ return $default(_that.playersAdded,_that.guardiansLinked,_that.guardiansInvited,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int playersAdded,  int guardiansLinked,  int guardiansInvited,  List<String> guardiansWithoutEmail,  List<String> problems)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int playersAdded,  int guardiansLinked,  int guardiansInvited,  int playersLinked,  int playersInvited,  List<String> guardiansWithoutEmail,  List<String> problems)  $default,) {final _that = this;
 switch (_that) {
 case _AddPlayersResult():
-return $default(_that.playersAdded,_that.guardiansLinked,_that.guardiansInvited,_that.guardiansWithoutEmail,_that.problems);case _:
+return $default(_that.playersAdded,_that.guardiansLinked,_that.guardiansInvited,_that.playersLinked,_that.playersInvited,_that.guardiansWithoutEmail,_that.problems);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1315,10 +1323,10 @@ return $default(_that.playersAdded,_that.guardiansLinked,_that.guardiansInvited,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int playersAdded,  int guardiansLinked,  int guardiansInvited,  List<String> guardiansWithoutEmail,  List<String> problems)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int playersAdded,  int guardiansLinked,  int guardiansInvited,  int playersLinked,  int playersInvited,  List<String> guardiansWithoutEmail,  List<String> problems)?  $default,) {final _that = this;
 switch (_that) {
 case _AddPlayersResult() when $default != null:
-return $default(_that.playersAdded,_that.guardiansLinked,_that.guardiansInvited,_that.guardiansWithoutEmail,_that.problems);case _:
+return $default(_that.playersAdded,_that.guardiansLinked,_that.guardiansInvited,_that.playersLinked,_that.playersInvited,_that.guardiansWithoutEmail,_that.problems);case _:
   return null;
 
 }
@@ -1330,12 +1338,16 @@ return $default(_that.playersAdded,_that.guardiansLinked,_that.guardiansInvited,
 
 
 class _AddPlayersResult implements AddPlayersResult {
-  const _AddPlayersResult({required this.playersAdded, required this.guardiansLinked, required this.guardiansInvited,  List<String> guardiansWithoutEmail = const <String>[],  List<String> problems = const <String>[]}): _guardiansWithoutEmail = guardiansWithoutEmail,_problems = problems;
+  const _AddPlayersResult({required this.playersAdded, required this.guardiansLinked, required this.guardiansInvited, this.playersLinked = 0, this.playersInvited = 0,  List<String> guardiansWithoutEmail = const <String>[],  List<String> problems = const <String>[]}): _guardiansWithoutEmail = guardiansWithoutEmail,_problems = problems;
   
 
 @override final  int playersAdded;
 @override final  int guardiansLinked;
 @override final  int guardiansInvited;
+/// Players linked as themselves by their own email: to an account they
+/// had, or a new one that got a setup email (PLAYER-1).
+@override@JsonKey() final  int playersLinked;
+@override@JsonKey() final  int playersInvited;
 /// Guardians given a name and no email, "Emma: Maria R.": nobody can be
 /// linked without an email, so they're listed instead (PLAYER-1).
  final  List<String> _guardiansWithoutEmail;
@@ -1347,11 +1359,13 @@ class _AddPlayersResult implements AddPlayersResult {
   return EqualUnmodifiableListView(_guardiansWithoutEmail);
 }
 
-/// "Emma: maria@example.com", with " (too-many-teams)" for someone on
-/// 100 teams already (TEAM-2).
+/// "Emma: maria@example.com", with the reason when there is one, such
+/// as " (too-many-teams)" for someone on 100 teams already (TEAM-2) or
+/// " (already-a-player)" (PLAYER-3); see describeAddProblem.
  final  List<String> _problems;
-/// "Emma: maria@example.com", with " (too-many-teams)" for someone on
-/// 100 teams already (TEAM-2).
+/// "Emma: maria@example.com", with the reason when there is one, such
+/// as " (too-many-teams)" for someone on 100 teams already (TEAM-2) or
+/// " (already-a-player)" (PLAYER-3); see describeAddProblem.
 @override@JsonKey() List<String> get problems {
   if (_problems is EqualUnmodifiableListView) return _problems;
   // ignore: implicit_dynamic_type
@@ -1369,18 +1383,18 @@ _$AddPlayersResultCopyWith<_AddPlayersResult> get copyWith => __$AddPlayersResul
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AddPlayersResult&&(identical(other.playersAdded, playersAdded) || other.playersAdded == playersAdded)&&(identical(other.guardiansLinked, guardiansLinked) || other.guardiansLinked == guardiansLinked)&&(identical(other.guardiansInvited, guardiansInvited) || other.guardiansInvited == guardiansInvited)&&const DeepCollectionEquality().equals(other.guardiansWithoutEmail, _guardiansWithoutEmail)&&const DeepCollectionEquality().equals(other.problems, _problems));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AddPlayersResult&&(identical(other.playersAdded, playersAdded) || other.playersAdded == playersAdded)&&(identical(other.guardiansLinked, guardiansLinked) || other.guardiansLinked == guardiansLinked)&&(identical(other.guardiansInvited, guardiansInvited) || other.guardiansInvited == guardiansInvited)&&(identical(other.playersLinked, playersLinked) || other.playersLinked == playersLinked)&&(identical(other.playersInvited, playersInvited) || other.playersInvited == playersInvited)&&const DeepCollectionEquality().equals(other.guardiansWithoutEmail, _guardiansWithoutEmail)&&const DeepCollectionEquality().equals(other.problems, _problems));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,playersAdded,guardiansLinked,guardiansInvited,const DeepCollectionEquality().hash(_guardiansWithoutEmail),const DeepCollectionEquality().hash(_problems));
+    return Object.hash(runtimeType,playersAdded,guardiansLinked,guardiansInvited,playersLinked,playersInvited,const DeepCollectionEquality().hash(_guardiansWithoutEmail),const DeepCollectionEquality().hash(_problems));
 }
 
 @override
 String toString() {
-    return 'AddPlayersResult(playersAdded: $playersAdded, guardiansLinked: $guardiansLinked, guardiansInvited: $guardiansInvited, guardiansWithoutEmail: $guardiansWithoutEmail, problems: $problems)';
+    return 'AddPlayersResult(playersAdded: $playersAdded, guardiansLinked: $guardiansLinked, guardiansInvited: $guardiansInvited, playersLinked: $playersLinked, playersInvited: $playersInvited, guardiansWithoutEmail: $guardiansWithoutEmail, problems: $problems)';
 }
 
 
@@ -1391,7 +1405,7 @@ abstract mixin class _$AddPlayersResultCopyWith<$Res> implements $AddPlayersResu
   factory _$AddPlayersResultCopyWith(_AddPlayersResult value, $Res Function(_AddPlayersResult) _then) = __$AddPlayersResultCopyWithImpl;
 @override @useResult
 $Res call({
- int playersAdded, int guardiansLinked, int guardiansInvited, List<String> guardiansWithoutEmail, List<String> problems
+ int playersAdded, int guardiansLinked, int guardiansInvited, int playersLinked, int playersInvited, List<String> guardiansWithoutEmail, List<String> problems
 });
 
 
@@ -1408,11 +1422,13 @@ class __$AddPlayersResultCopyWithImpl<$Res>
 
 /// Create a copy of AddPlayersResult
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? playersAdded = null,Object? guardiansLinked = null,Object? guardiansInvited = null,Object? guardiansWithoutEmail = null,Object? problems = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? playersAdded = null,Object? guardiansLinked = null,Object? guardiansInvited = null,Object? playersLinked = null,Object? playersInvited = null,Object? guardiansWithoutEmail = null,Object? problems = null,}) {
   return _then(_AddPlayersResult(
 playersAdded: null == playersAdded ? _self.playersAdded : playersAdded // ignore: cast_nullable_to_non_nullable
 as int,guardiansLinked: null == guardiansLinked ? _self.guardiansLinked : guardiansLinked // ignore: cast_nullable_to_non_nullable
 as int,guardiansInvited: null == guardiansInvited ? _self.guardiansInvited : guardiansInvited // ignore: cast_nullable_to_non_nullable
+as int,playersLinked: null == playersLinked ? _self.playersLinked : playersLinked // ignore: cast_nullable_to_non_nullable
+as int,playersInvited: null == playersInvited ? _self.playersInvited : playersInvited // ignore: cast_nullable_to_non_nullable
 as int,guardiansWithoutEmail: null == guardiansWithoutEmail ? _self._guardiansWithoutEmail : guardiansWithoutEmail // ignore: cast_nullable_to_non_nullable
 as List<String>,problems: null == problems ? _self._problems : problems // ignore: cast_nullable_to_non_nullable
 as List<String>,

@@ -23,9 +23,9 @@ import 'package:material_ui/material_ui.dart';
 
 /// PLAYER-2 at `/g/:groupId/roster/players/:playerId`: name, number,
 /// position, and who's linked, each marked Player or Guardian. Linked
-/// members and admins edit the details; guardians and admins add a
-/// guardian (PLAYER-5); admins remove links and the player, and a linked
-/// member can remove their own link. A member who isn't linked can claim
+/// members (the player themselves included) and admins edit the details
+/// and add a guardian (PLAYER-5); admins remove links and the player, and
+/// a linked member can remove their own link. A member who isn't linked can claim
 /// the player, as the player or a parent or guardian (PLAYER-3). Upcoming
 /// RSVPs list the player's answer on each of the next events that take
 /// RSVPs, each opening its event.
@@ -73,9 +73,10 @@ class PlayerCardScreen extends ConsumerWidget {
         if (l.playerId == playerId) l,
     ]..sort((a, b) => a.isSelf == b.isSelf ? 0 : (a.isSelf ? -1 : 1));
     final myLink = playerLinks.where((l) => l.uid.value == me).firstOrNull;
-    final isGuardian = myLink != null && !myLink.isSelf;
     final canEdit = isAdmin || myLink != null;
-    final canAddGuardian = isAdmin || isGuardian;
+    // Any linked member vouches for a guardian, the player themselves
+    // included (PLAYER-5).
+    final canAddGuardian = isAdmin || myLink != null;
     // The rules let only linked members and the team's admins write a
     // player, so a super admin who is neither saves through the audited
     // admin callable.
@@ -151,7 +152,7 @@ class PlayerCardScreen extends ConsumerWidget {
                       )
                     : null,
               ),
-          // A guardian vouches for a co-parent; admins can add anyone
+          // A linked member vouches for a guardian; admins can add anyone
           // (PLAYER-5, PLAYER-2). The player's own link doesn't count
           // toward the 4.
           if (canAddGuardian &&
@@ -168,9 +169,21 @@ class PlayerCardScreen extends ConsumerWidget {
           if (membership != null && myLink == null)
             _Claim(
               player: player,
+              // Nobody is this player yet, and I'm not a player here and
+              // haven't asked to be one (PLAYER-3).
               canBeSelf:
                   selfLinkOf(playerId, links) == null &&
-                  !links.any((l) => l.uid.value == me && l.isSelf),
+                  me != null &&
+                  canStillBeAPlayer(
+                    UserId(me),
+                    links: links,
+                    requests:
+                        ref.watch(myGuardianRequestsProvider(groupId)).value ??
+                        const [],
+                    pendingPlayers:
+                        ref.watch(myPendingPlayersProvider(groupId)).value ??
+                        const [],
+                  ),
             ),
           const SizedBox(height: Space.lg),
           _UpcomingRsvps(groupId: groupId, playerId: playerId),
@@ -265,7 +278,9 @@ class PlayerCardScreen extends ConsumerWidget {
     } on AppFailure catch (e) {
       if (context.mounted) {
         showAppSnackBar(context, switch (e) {
-          InvalidInput() => l10n.tooManyGuardians,
+          InvalidInput(message: 'too-many-guardians') => l10n.tooManyGuardians,
+          // The email is the member who is this player (PLAYER-3).
+          InvalidInput(message: 'already-linked') => l10n.guardianAlreadyLinked,
           RateLimited() => l10n.signInRateLimited,
           EmailNotVerified() => l10n.addByEmailNeedsVerified,
           _ => l10n.errorAddGuardian,

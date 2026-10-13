@@ -41,8 +41,9 @@ bool canAnswerNow(Event event, Group group, Membership? me, DateTime now) =>
 
 /// The people the signed-in person answers for on a team (PLAYER-6, Q14):
 /// the active players they're linked to, as the player or a guardian, and
-/// themselves ("Me") when they're an admin or aren't linked to any player.
-/// A member who is a player answers on their player's row.
+/// themselves ("Me", [hasMeRow]) when they're an admin or aren't linked to
+/// any player. A member who is a player, admins included, answers on their
+/// player's row only, so they never have two answers of their own.
 List<Participant> participantsFor({
   required Membership me,
   List<Player> players = const [],
@@ -66,11 +67,19 @@ List<Participant> participantsFor({
       if (l.isSelf) l.playerId,
   };
   return [
-    if (me.isAdmin || mine.isEmpty) self,
+    if (hasMeRow(me, links)) self,
     for (final p in myPlayers)
       if (!p.isPending)
         playerParticipant(p).copyWith(isMe: mySelf.contains(p.id)),
   ];
+}
+
+/// Whether [me] answers for themselves as a member ("Me", Q14): an admin
+/// or someone not linked to any player, but never a member who is a
+/// player (PLAYER-6).
+bool hasMeRow(Membership me, Iterable<GuardianLink> links) {
+  final mine = linksOf(me.uid, links);
+  return !mine.any((l) => l.isSelf) && (me.isAdmin || mine.isEmpty);
 }
 
 /// A player as someone to answer for (PLAYER-6).
@@ -83,16 +92,16 @@ Participant playerParticipant(Player p) => Participant(
 
 /// Everyone who can be answered for on an event (SCHED-4, PLAYER-6): the
 /// active players, and apart, the members who answer for themselves
-/// ("coaches and others", Q14): admins, members not linked to any player,
-/// and anyone who already answered for themselves, as on events made
-/// before one team type. "No response" lists those without an answer.
+/// ("coaches and others", Q14): those with a Me row ([hasMeRow]), and
+/// anyone who already answered for themselves, as on events made before
+/// one team type ([withOwnAnswer] lets them change it). "No response"
+/// lists those without an answer.
 ({List<Participant> main, List<Participant> staff}) eventParticipants(
   List<Membership> roster,
   List<Player> players, {
   List<GuardianLink> links = const [],
   List<Rsvp> rsvps = const [],
 }) {
-  final linked = {for (final l in links) l.uid};
   final answeredForSelf = {
     for (final r in rsvps)
       if (r.participantType == ParticipantType.member) r.participantId,
@@ -104,9 +113,7 @@ Participant playerParticipant(Player p) => Participant(
     ],
     staff: [
       for (final m in roster)
-        if (m.isAdmin ||
-            !linked.contains(m.uid) ||
-            answeredForSelf.contains(m.uid.value))
+        if (hasMeRow(m, links) || answeredForSelf.contains(m.uid.value))
           Participant(
             type: ParticipantType.member,
             id: m.uid.value,
@@ -114,6 +121,31 @@ Participant playerParticipant(Player p) => Participant(
           ),
     ],
   );
+}
+
+/// [mine] ([participantsFor]) with "Me" added when [me] has no Me row but
+/// already answered for themselves on this event, as before they were
+/// linked to a player: an answer listed under "coaches and others" can
+/// always be changed (PLAYER-6).
+List<Participant> withOwnAnswer(
+  List<Participant> mine,
+  Membership me,
+  Iterable<Rsvp> rsvps,
+) {
+  final answered = rsvps.any(
+    (r) =>
+        r.participantType == ParticipantType.member &&
+        r.participantId == me.uid.value,
+  );
+  if (!answered || mine.any((p) => isSelf(p, me.uid))) return mine;
+  return [
+    Participant(
+      type: ParticipantType.member,
+      id: me.uid.value,
+      name: me.displayName,
+    ),
+    ...mine,
+  ];
 }
 
 /// The answer [participantId] gave, if any.

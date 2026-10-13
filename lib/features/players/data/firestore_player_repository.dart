@@ -92,6 +92,8 @@ class FirestorePlayerRepository implements PlayerRepository {
             'name': p.name,
             'jerseyNumber': p.jerseyNumber,
             'position': p.position,
+            // The player's own email, for an adult player (PLAYER-1).
+            'email': p.email,
             'guardians': [
               for (final g in p.guardians) {'name': g.name, 'email': g.email},
             ],
@@ -102,6 +104,8 @@ class FirestorePlayerRepository implements PlayerRepository {
       playersAdded: (data['playersAdded'] as num).toInt(),
       guardiansLinked: (data['guardiansLinked'] as num).toInt(),
       guardiansInvited: (data['guardiansInvited'] as num).toInt(),
+      playersLinked: (data['selfLinked'] as num?)?.toInt() ?? 0,
+      playersInvited: (data['selfInvited'] as num?)?.toInt() ?? 0,
       guardiansWithoutEmail: [
         for (final p in (data['guardiansWithoutEmail'] as List?) ?? const [])
           '$p',
@@ -231,15 +235,18 @@ class FirestorePlayerRepository implements PlayerRepository {
   }
 
   @override
-  Future<void> resolvePendingPlayer(
+  Future<bool> resolvePendingPlayer(
     GroupId groupId,
     PlayerId playerId, {
     required bool approve,
-  }) => _call('resolvePendingPlayer', {
-    'groupId': groupId.value,
-    'playerId': playerId.value,
-    'approve': approve,
-  });
+  }) async {
+    final d = await _call('resolvePendingPlayer', {
+      'groupId': groupId.value,
+      'playerId': playerId.value,
+      'approve': approve,
+    });
+    return d['linked'] as bool? ?? false;
+  }
 
   @override
   Future<bool> inviteGuardian(

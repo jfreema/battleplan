@@ -4,7 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { db } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
-import { groupMemberId } from '../shared/ids.js';
+import { groupMemberId, rsvpId } from '../shared/ids.js';
 import { chunk, trySend } from '../notify/service.js';
 import { addDays, dateInZone, type Recurrence } from './recurrence.js';
 
@@ -755,5 +755,62 @@ export async function removeUpcomingRsvps(participantId: string): Promise<void> 
       .where('participantId', '==', participantId)
       .where('eventStartAt', '>=', Timestamp.now()),
     (b, d) => b.delete(d.ref),
+  );
+}
+
+/**
+ * A member who becomes linked as a player answers on their player's row
+ * from then on (PLAYER-6: the app stops offering them a Me row). Each of
+ * their own answers ('member') to upcoming events on [groupId] moves to the
+ * player's row when that row is empty, and is dropped when the player
+ * already has an answer. Each changed event is recounted at once (the RSVP
+ * trigger does it too). Returns how many answers were moved or dropped.
+ */
+export async function moveMemberRsvpsToPlayer(
+  groupId: string,
+  uid: string,
+  player: { id: string; name: string },
+): Promise<number> {
+  const own = await db()
+    .collection(Collections.rsvps)
+    .where('groupId', '==', groupId)
+    .where('participantId', '==', uid)
+    .where('eventStartAt', '>=', Timestamp.now())
+    .get();
+  const events = new Set<string>();
+  for (const answer of own.docs) {
+    if (answer.get('participantType') !== 'member') continue;
+    const eventId = String(answer.get('eventId'));
+    const playerRef = db().collection(Collections.rsvps).doc(rsvpId(eventId, player.id));
+    await db().runTransaction(async (tx) => {
+      const [mine, theirs] = await Promise.all([tx.get(answer.ref), tx.get(playerRef)]);
+      if (!mine.exists) return;
+      if (!theirs.exists) {
+        tx.set(playerRef, {
+          ...mine.data(),
+          participantType: 'player',
+          participantId: player.id,
+          participantName: player.name,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+      tx.delete(answer.ref);
+    });
+    events.add(eventId);
+  }
+  for (const eventId of events) await recountEventRsvps(eventId);
+  return events.size;
+}
+
+/** Keeps rsvps.participantName (cache ← players) in step with a renamed player, on upcoming events. */
+export async function renameUpcomingRsvps(participantId: string, name: string): Promise<void> {
+  await forEachPage(
+    db()
+      .collection(Collections.rsvps)
+      .where('participantId', '==', participantId)
+      .where('eventStartAt', '>=', Timestamp.now()),
+    (b, d) => {
+      if (d.get('participantName') !== name) b.update(d.ref, { participantName: name });
+    },
   );
 }

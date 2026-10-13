@@ -973,6 +973,9 @@ class FakePlayerRepository implements PlayerRepository {
   final List<Player> players;
   final List<List<NewPlayer>> added = [];
 
+  /// The problems [addPlayers] reports, as the server words them.
+  List<String> addProblems = const [];
+
   @override
   Stream<List<Player>> watchPlayers(GroupId groupId) => Stream.value(
     players.where((p) => p.groupId == groupId && !p.isPending).toList(),
@@ -1012,6 +1015,8 @@ class FakePlayerRepository implements PlayerRepository {
       playersAdded: players.length,
       guardiansLinked: 0,
       guardiansInvited: players.fold(0, (n, p) => n + p.guardians.length),
+      playersLinked: players.where((p) => p.email != null).length,
+      problems: addProblems,
     );
   }
 
@@ -1088,14 +1093,20 @@ class FakePlayerRepository implements PlayerRepository {
     return proposedStatus;
   }
 
+  /// Whether an approved player's proposer gets linked (PLAYER-4).
+  bool proposerLinked = true;
+
   @override
-  Future<void> resolvePendingPlayer(
+  Future<bool> resolvePendingPlayer(
     GroupId groupId,
     PlayerId playerId, {
     required bool approve,
-  }) async => calls.add(
-    '${approve ? 'approvePlayer' : 'declinePlayer'} ${playerId.value}',
-  );
+  }) async {
+    calls.add(
+      '${approve ? 'approvePlayer' : 'declinePlayer'} ${playerId.value}',
+    );
+    return approve && proposerLinked;
+  }
 
   @override
   Future<bool> inviteGuardian(
@@ -2809,6 +2820,13 @@ class RefusingPlayerRepository extends FakePlayerRepository {
     GroupId groupId,
     PlayerId playerId,
     UserId uid, {
+    required bool approve,
+  }) async => throw failure;
+
+  @override
+  Future<bool> resolvePendingPlayer(
+    GroupId groupId,
+    PlayerId playerId, {
     required bool approve,
   }) async => throw failure;
 }

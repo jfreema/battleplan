@@ -598,6 +598,116 @@ void main() {
       expect(find.text('1 of 1 players going'), findsOneWidget);
     });
 
+    testWidgets('an admin who is a player has one answer of their own, on '
+        'their player, on the list, the chat card, and the event (PLAYER-6)', (
+      tester,
+    ) async {
+      final players =
+          FakePlayerRepository(const [
+              Player(
+                id: PlayerId('p1'),
+                groupId: GroupId('a'),
+                displayName: 'Pat Lee',
+                jerseyNumber: '12',
+              ),
+            ])
+            ..links.add(
+              const GuardianLink(
+                playerId: PlayerId('p1'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+                relation: PlayerRelation.self,
+              ),
+            );
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.owner,
+        players: players,
+        events: [event('e1')],
+        tapSchedule: false,
+        messages: FakeMessageRepository([
+          Message(
+            id: 'm-e1',
+            groupId: const GroupId('a'),
+            authorId: 'coach',
+            authorName: 'Coach Lee',
+            type: MessageType.event,
+            text: 'Practice',
+            eventId: 'e1',
+            createdAt: DateTime.now().subtract(const Duration(minutes: 1)),
+          ),
+        ]),
+      );
+      // The chat card: one set of buttons, the player's.
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      expect(find.text('Pat #12 (you)'), findsOneWidget);
+      await tester.tap(find.text('Schedule'));
+      await tester.pumpAndSettle();
+      // Never "You: No response" twice.
+      expect(find.text('You: No response'), findsOneWidget);
+      await openDetails(tester, 'Practice');
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      expect(find.text('Pat #12 (you)'), findsOneWidget);
+      // Not also listed under "coaches and others" with no way to answer.
+      expect(find.text('Coaches and others'), findsOneWidget);
+      expect(find.text('Coach Lee'), findsNothing);
+      await tester.tap(find.text('Going').first);
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.participantId, 'p1');
+    });
+
+    testWidgets('an answer of my own from before I was a player is listed '
+        'and still mine to change (PLAYER-6)', (tester) async {
+      final players =
+          FakePlayerRepository(const [
+              Player(
+                id: PlayerId('p1'),
+                groupId: GroupId('a'),
+                displayName: 'Coach Lee',
+                jerseyNumber: '12',
+              ),
+            ])
+            ..links.add(
+              const GuardianLink(
+                playerId: PlayerId('p1'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+                relation: PlayerRelation.self,
+              ),
+            );
+      final rsvps = await openSchedule(
+        tester,
+        players: players,
+        events: [event('e1')],
+        tapSchedule: false,
+      );
+      rsvps.rsvps.add(
+        const Rsvp(
+          eventId: EventId('e1'),
+          groupId: GroupId('a'),
+          participantType: ParticipantType.member,
+          participantId: 'coach',
+          participantName: 'Coach Lee',
+          status: RsvpStatus.going,
+        ),
+      );
+      await tester.tap(find.text('Schedule'));
+      await tester.pumpAndSettle();
+      await openDetails(tester, 'Practice');
+      // The old answer has its own row, apart from the player's.
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
+      expect(find.text('You'), findsOneWidget);
+      expect(find.text('Coach #12 (you)'), findsOneWidget);
+      await tester.tap(find.text('Not going').first);
+      await tester.pumpAndSettle();
+      expect(
+        rsvps.rsvps
+            .singleWhere((r) => r.participantType == ParticipantType.member)
+            .status,
+        RsvpStatus.notGoing,
+      );
+    });
+
     testWidgets('admins set an answer for someone else', (tester) async {
       final rsvps = await openSchedule(
         tester,

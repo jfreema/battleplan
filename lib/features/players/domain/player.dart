@@ -68,6 +68,31 @@ List<GuardianLink> linksOf(UserId uid, Iterable<GuardianLink> links) => [
 GuardianLink? selfLinkOf(PlayerId playerId, Iterable<GuardianLink> links) =>
     links.where((l) => l.playerId == playerId && l.isSelf).firstOrNull;
 
+/// Whether [uid] may still say "I am this player" on a team (PLAYER-3).
+/// A member is one player at most, so not when they're linked as a player
+/// already, have a claim as the player waiting, or added themselves as a
+/// player who is still waiting for approval: approving both would leave
+/// one of the two players without them.
+bool canStillBeAPlayer(
+  UserId uid, {
+  Iterable<GuardianLink> links = const [],
+  Iterable<GuardianRequest> requests = const [],
+  Iterable<Player> pendingPlayers = const [],
+}) =>
+    !links.any((l) => l.uid == uid && l.isSelf) &&
+    !requests.any(
+      (r) =>
+          r.uid == uid &&
+          r.relation == PlayerRelation.self &&
+          r.status == GuardianRequestStatus.pending,
+    ) &&
+    !pendingPlayers.any(
+      (p) =>
+          p.isPending &&
+          p.proposedBy == uid.value &&
+          p.proposedRelation == PlayerRelation.self,
+    );
+
 /// How many guardians [playerId] has; the player's own link doesn't count
 /// toward the 4 (PLAYER-3).
 int guardianCountOf(PlayerId playerId, Iterable<GuardianLink> links) =>
@@ -79,13 +104,15 @@ abstract class NewGuardian with _$NewGuardian {
   const factory({String? name, String? email}) = _NewGuardian;
 }
 
-/// One player to add (PLAYER-1).
+/// One player to add (PLAYER-1). [email] is the player's own, for an
+/// adult player: that account is linked as the player, not a guardian.
 @freezed
 abstract class NewPlayer with _$NewPlayer {
   const factory({
     required String name,
     String? jerseyNumber,
     String? position,
+    String? email,
     @Default(<NewGuardian>[]) List<NewGuardian> guardians,
   }) = _NewPlayer;
 }
@@ -98,12 +125,18 @@ abstract class AddPlayersResult with _$AddPlayersResult {
     required int guardiansLinked,
     required int guardiansInvited,
 
+    /// Players linked as themselves by their own email: to an account they
+    /// had, or a new one that got a setup email (PLAYER-1).
+    @Default(0) int playersLinked,
+    @Default(0) int playersInvited,
+
     /// Guardians given a name and no email, "Emma: Maria R.": nobody can be
     /// linked without an email, so they're listed instead (PLAYER-1).
     @Default(<String>[]) List<String> guardiansWithoutEmail,
 
-    /// "Emma: maria@example.com", with " (too-many-teams)" for someone on
-    /// 100 teams already (TEAM-2).
+    /// "Emma: maria@example.com", with the reason when there is one, such
+    /// as " (too-many-teams)" for someone on 100 teams already (TEAM-2) or
+    /// " (already-a-player)" (PLAYER-3); see describeAddProblem.
     @Default(<String>[]) List<String> problems,
   }) = _AddPlayersResult;
 }

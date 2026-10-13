@@ -297,23 +297,43 @@ class _Decision extends StatelessWidget {
   }
 }
 
-/// Runs an admin's decision, saying so when it fails (PLAYER-4).
+/// Runs an admin's decision on [who]'s request (PLAYER-4), saying what
+/// [action] returns, or why it failed. The row is gone once decided, so
+/// the snackbar goes through the screen's messenger.
 Future<void> _decide(
   BuildContext context,
-  Future<void> Function() action,
-) async {
+  Future<String?> Function() action, {
+  required String who,
+}) async {
   final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  void say(String message) => messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(message)));
   try {
-    await action();
+    if (await action() case final note?) say(note);
   } on AppFailure catch (e) {
-    if (context.mounted) {
-      showAppSnackBar(
-        context,
-        e is InvalidInput ? l10n.claimLimitReached : l10n.errorGuardianRequest,
-      );
-    }
+    say(decisionFailure(l10n, e, who: who));
   }
 }
+
+/// Why an admin's approval failed (PLAYER-3, PLAYER-4): [who] is a player
+/// on the team already, someone already is this player, the player's
+/// guardians are full, or the roster is.
+String decisionFailure(
+  AppLocalizations l10n,
+  AppFailure e, {
+  required String who,
+}) => switch (e) {
+  InvalidInput(message: 'already-a-player') => l10n.approveAlreadyAPlayer(who),
+  InvalidInput(message: 'player-already-claimed') =>
+    l10n.approvePlayerAlreadyClaimed,
+  InvalidInput(message: 'too-many-guardians') => l10n.claimLimitReached,
+  InvalidInput(message: 'too-many-players') => l10n.tooManyPlayers(
+    Limits.playersPerGroupMax,
+  ),
+  _ => l10n.errorGuardianRequest,
+};
 
 /// A member's new player waiting for approval: "Emma Rodriguez #7", "Added
 /// by Maria Rodriguez as their parent or guardian", with Approve and
@@ -340,16 +360,20 @@ class _PendingPlayerRow extends ConsumerWidget {
             : l10n.pendingPlayerGuardian(name),
       ),
       trailing: _Decision(
-        decide: ({required approve}) => _decide(
-          context,
-          () => ref
+        decide: ({required approve}) => _decide(context, () async {
+          final linked = await ref
               .read(playerRepositoryProvider)
               .resolvePendingPlayer(
                 player.groupId,
                 player.id,
                 approve: approve,
-              ),
-        ),
+              );
+          // Added, but its member couldn't be linked to it: say so, so
+          // nobody thinks they're on it (PLAYER-4).
+          return approve && !linked && player.proposedBy != null
+              ? l10n.pendingPlayerNotLinked(player.displayName, name)
+              : null;
+        }, who: name),
       ),
     );
   }
@@ -374,17 +398,17 @@ class _RequestRow extends ConsumerWidget {
             : l10n.claimGuardianFor(who ?? '…', player ?? '…'),
       ),
       trailing: _Decision(
-        decide: ({required approve}) => _decide(
-          context,
-          () => ref
+        decide: ({required approve}) => _decide(context, () async {
+          await ref
               .read(playerRepositoryProvider)
               .resolvePlayerClaim(
                 request.groupId,
                 request.playerId,
                 request.uid,
                 approve: approve,
-              ),
-        ),
+              );
+          return null;
+        }, who: who ?? l10n.formerMember),
       ),
     );
   }

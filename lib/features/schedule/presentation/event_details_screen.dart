@@ -336,7 +336,11 @@ class _RsvpSection extends ConsumerWidget {
     final roster = ref.watch(rosterProvider(group.id)).value ?? const [];
     final players = ref.watch(playersProvider(group.id)).value ?? const [];
     final links = ref.watch(guardianLinksProvider(group.id)).value ?? const [];
-    final mine = ref.watch(myParticipantsProvider(group.id));
+    final viewer = me;
+    final answering = ref.watch(myParticipantsProvider(group.id));
+    final mine = viewer == null
+        ? answering
+        : withOwnAnswer(answering, viewer, rsvps);
     final open = canAnswerNow(event, group, me, now);
     final isAdmin = me?.isAdmin ?? false;
     final allowMaybe = group.settings.allowMaybe;

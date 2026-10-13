@@ -16,8 +16,8 @@ abstract interface class PlayerRepository {
 
   Stream<List<GuardianLink>> watchGuardianLinks(GroupId groupId);
 
-  /// Adds players with their guardians (PLAYER-1), active at once. Admins
-  /// only.
+  /// Adds players with their own emails and their guardians (PLAYER-1),
+  /// active at once. Admins only.
   Future<AddPlayersResult> addPlayers(GroupId groupId, List<NewPlayer> players);
 
   /// Edits a player's name, number, or position (PLAYER-2). Linked members
@@ -39,7 +39,8 @@ abstract interface class PlayerRepository {
   Stream<List<GuardianRequest>> watchMyRequests(GroupId groupId, UserId uid);
 
   /// Claims a player as [relation] (PLAYER-3): approved at once for
-  /// admins, otherwise sent to the admins.
+  /// admins (super admins on the team included), otherwise sent to the
+  /// admins.
   Future<ClaimOutcome> claimPlayer(
     GroupId groupId,
     PlayerId playerId,
@@ -66,14 +67,17 @@ abstract interface class PlayerRepository {
   });
 
   /// Approves or declines a pending player (PLAYER-4); declining deletes
-  /// it. Admins only.
-  Future<void> resolvePendingPlayer(
+  /// it. Admins only. Returns whether the member who added it is now
+  /// linked to it: false after declining, or when they couldn't be (they
+  /// left, or are a player on the team already).
+  Future<bool> resolvePendingPlayer(
     GroupId groupId,
     PlayerId playerId, {
     required bool approve,
   });
 
-  /// Adds a co-parent by email (PLAYER-5). Guardians and admins. Returns
+  /// Adds a guardian by email (PLAYER-5). Linked members (the player
+  /// themselves included) and admins. Returns
   /// true if they got a setup email for a new account.
   Future<bool> inviteGuardian(
     GroupId groupId,

@@ -196,6 +196,33 @@ describe('deleting an account hands each team to the owner\'s pick (AUTH-10)', (
   });
 });
 
+describe("deleting an account takes its player links, claims, and unapproved players (AUTH-10, PLAYER-10)", () => {
+  it('keeps the players already on the roster', async () => {
+    await person('pat');
+    await person('max');
+    await db().collection(Collections.groups).doc('cubs').set({ name: 'Cubs', ownerId: 'pat', memberCount: 2, archivedAt: null });
+    await member('cubs', 'pat', 'owner', 30);
+    await member('cubs', 'max', 'member', 10);
+    const players = db().collection(Collections.players);
+    await players.doc('kept').set({ groupId: 'cubs', displayName: 'Emma', status: 'active', proposedBy: 'max' });
+    await players.doc('pending').set({ groupId: 'cubs', displayName: 'Liam', status: 'pending', proposedBy: 'max' });
+    await players.doc('others').set({ groupId: 'cubs', displayName: 'Ava', status: 'pending', proposedBy: 'pat' });
+    await db().collection(Collections.playerGuardians).doc('kept_max').set({ groupId: 'cubs', playerId: 'kept', uid: 'max', relation: 'guardian' });
+    await db().collection(Collections.playerGuardians).doc('kept_pat').set({ groupId: 'cubs', playerId: 'kept', uid: 'pat', relation: 'self' });
+    await db().collection(Collections.guardianRequests).doc('others_max').set({ groupId: 'cubs', playerId: 'others', uid: 'max', status: 'pending' });
+
+    await deleteAccount('max', {});
+
+    const exists = async (collection: string, id: string) => (await db().collection(collection).doc(id).get()).exists;
+    expect(await exists(Collections.players, 'pending')).toBe(false);
+    expect(await exists(Collections.players, 'kept')).toBe(true);
+    expect(await exists(Collections.players, 'others')).toBe(true);
+    expect(await exists(Collections.playerGuardians, 'kept_max')).toBe(false);
+    expect(await exists(Collections.guardianRequests, 'others_max')).toBe(false);
+    expect(await exists(Collections.playerGuardians, 'kept_pat')).toBe(true);
+  });
+});
+
 describe('adding guardians by email needs a verified email (AUTH-3)', () => {
   beforeEach(async () => {
     await person('pat');

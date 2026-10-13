@@ -882,6 +882,123 @@ void main() {
       );
     });
 
+    for (final (code, said) in [
+      (
+        'already-a-player',
+        "Can't approve this: Pat Lee is already a player on this team. "
+            'Decline it.',
+      ),
+      (
+        'player-already-claimed',
+        "Can't approve this: someone is already this player. Decline it, "
+            'or remove their link first.',
+      ),
+    ]) {
+      testWidgets('an approval refused with $code says why', (tester) async {
+        final playerRepo =
+            RefusingPlayerRepository(InvalidInput(code), [
+                const Player(
+                  id: PlayerId('emma'),
+                  groupId: GroupId('y'),
+                  displayName: 'Emma Rodriguez',
+                ),
+              ])
+              ..requests.add(
+                const GuardianRequest(
+                  playerId: PlayerId('emma'),
+                  groupId: GroupId('y'),
+                  uid: UserId('pat'),
+                  status: GuardianRequestStatus.pending,
+                  relation: PlayerRelation.self,
+                ),
+              );
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: team,
+          memberships: [
+            testMembership('y', 'coach', role: MemberRole.owner),
+            testMembership('y', 'pat', name: 'Pat Lee'),
+          ],
+          playerRepo: playerRepo,
+        );
+        await openRoster(tester);
+        await tester.tap(find.widgetWithText(FilledButton, 'Approve'));
+        await tester.pumpAndSettle();
+        expect(find.text(said), findsOneWidget);
+        expect(find.textContaining('links are full'), findsNothing);
+      });
+    }
+
+    testWidgets('approving a pending player from someone who is already a '
+        'player says so', (tester) async {
+      final playerRepo = RefusingPlayerRepository(
+        const InvalidInput('already-a-player'),
+        [
+          const Player(
+            id: PlayerId('sam2'),
+            groupId: GroupId('y'),
+            displayName: 'Sam Ortiz',
+            status: PlayerStatus.pending,
+            proposedBy: 'sam',
+            proposedRelation: PlayerRelation.self,
+          ),
+        ],
+      );
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [
+          testMembership('y', 'coach', role: MemberRole.owner),
+          testMembership('y', 'sam', name: 'Sam Ortiz'),
+        ],
+        playerRepo: playerRepo,
+      );
+      await openRoster(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Approve'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          "Can't approve this: Sam Ortiz is already a player on this team. "
+          'Decline it.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('an approved player whose member could not be linked says '
+        'so (PLAYER-4)', (tester) async {
+      final playerRepo = FakePlayerRepository([
+        const Player(
+          id: PlayerId('sam2'),
+          groupId: GroupId('y'),
+          displayName: 'Sam Ortiz',
+          status: PlayerStatus.pending,
+          proposedBy: 'sam',
+          proposedRelation: PlayerRelation.self,
+        ),
+      ])..proposerLinked = false;
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [
+          testMembership('y', 'coach', role: MemberRole.owner),
+          testMembership('y', 'sam', name: 'Sam Ortiz'),
+        ],
+        playerRepo: playerRepo,
+      );
+      await openRoster(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Approve'));
+      await tester.pumpAndSettle();
+      expect(playerRepo.calls, ['approvePlayer sam2']);
+      expect(
+        find.text('Sam Ortiz was added without a link to Sam Ortiz.'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('members add a player, pending, and see it as theirs', (
       tester,
     ) async {
@@ -1001,6 +1118,113 @@ void main() {
       expect(find.text("You're linked to this player"), findsOneWidget);
     });
 
+    group('"I am this player" waits on a claim or player of my own', () {
+      // Two players named alike; I asked to be one of them, or added
+      // myself, and the other must not offer "I am this player" too.
+      FakePlayerRepository twoJareds({required bool claimed}) {
+        final repo = FakePlayerRepository([
+          const Player(
+            id: PlayerId('jared'),
+            groupId: GroupId('y'),
+            displayName: 'Jared Freeman',
+            jerseyNumber: '12',
+          ),
+          if (claimed)
+            const Player(
+              id: PlayerId('jared2'),
+              groupId: GroupId('y'),
+              displayName: 'Jared Freeman',
+            )
+          else
+            const Player(
+              id: PlayerId('mine'),
+              groupId: GroupId('y'),
+              displayName: 'Jared Freeman',
+              status: PlayerStatus.pending,
+              proposedBy: 'coach',
+              proposedRelation: PlayerRelation.self,
+            ),
+        ]);
+        if (claimed) {
+          repo.requests.add(
+            const GuardianRequest(
+              playerId: PlayerId('jared2'),
+              groupId: GroupId('y'),
+              uid: UserId('coach'),
+              status: GuardianRequestStatus.pending,
+              relation: PlayerRelation.self,
+            ),
+          );
+        }
+        return repo;
+      }
+
+      for (final claimed in [true, false]) {
+        final why = claimed ? 'a claim' : 'a player of my own';
+        testWidgets('on the player card, with $why waiting', (tester) async {
+          await pumpApp(
+            tester,
+            auth: FakeAuthRepository(user: coach),
+            groups: team,
+            memberships: [testMembership('y', 'coach')],
+            playerRepo: twoJareds(claimed: claimed),
+          );
+          await go(tester, '/g/y/roster/players/jared');
+          await tester.tap(find.text('Claim this player'));
+          await tester.pumpAndSettle();
+          expect(find.text('I am this player'), findsNothing);
+          expect(find.text("I'm their parent or guardian"), findsOneWidget);
+        });
+
+        testWidgets('when adding a player, with $why waiting', (tester) async {
+          await pumpApp(
+            tester,
+            auth: FakeAuthRepository(user: coach),
+            groups: team,
+            memberships: [testMembership('y', 'coach')],
+            playerRepo: twoJareds(claimed: claimed),
+          );
+          await go(tester, '/g/y/players/add');
+          expect(find.text('I am this player'), findsNothing);
+          expect(find.text("I'm their parent or guardian"), findsOneWidget);
+        });
+
+        testWidgets('on "Who are you here for?", with $why waiting', (
+          tester,
+        ) async {
+          await pumpApp(
+            tester,
+            auth: FakeAuthRepository(user: coach),
+            groups: team,
+            memberships: [testMembership('y', 'coach')],
+            playerRepo: twoJareds(claimed: claimed),
+          );
+          await go(tester, '/g/y/who');
+          await tester.tap(find.text("I'm a player"));
+          await tester.pumpAndSettle();
+          expect(
+            find.text(
+              "You've already asked to be a player on this team. A team "
+              'admin will decide.',
+            ),
+            findsOneWidget,
+          );
+          final add = find.widgetWithText(
+            OutlinedButton,
+            "I'm not listed: add me",
+          );
+          expect(tester.widget<OutlinedButton>(add).onPressed, isNull);
+          await tester.tap(find.text('Jared Freeman').first);
+          await tester.pump();
+          final ask = find.widgetWithText(
+            FilledButton,
+            'Ask to be linked as this player',
+          );
+          expect(tester.widget<FilledButton>(ask).onPressed, isNull);
+        });
+      }
+    });
+
     testWidgets('a claim waiting for an admin shows on the card', (
       tester,
     ) async {
@@ -1059,8 +1283,8 @@ void main() {
       expect(playerRepo.calls, ['inviteGuardian emma leo@example.com']);
     });
 
-    testWidgets('the member who is the player edits it and unlinks '
-        'themselves, but adds no guardians', (tester) async {
+    testWidgets('the member who is the player edits it, adds a guardian, '
+        'and unlinks themselves (PLAYER-5)', (tester) async {
       final playerRepo = emmaTeam()
         ..links.add(
           const GuardianLink(
@@ -1079,7 +1303,12 @@ void main() {
       );
       await go(tester, '/g/y/roster/players/emma');
       expect(find.byTooltip('Edit player'), findsOneWidget);
-      expect(find.text('Add a guardian'), findsNothing);
+      // Any linked member vouches for a guardian, the player included.
+      await tester.tap(find.text('Add a guardian'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'mom@example.com');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Remove link'));
       await tester.pumpAndSettle();
       expect(
@@ -1088,7 +1317,51 @@ void main() {
       );
       await tester.tap(find.widgetWithText(FilledButton, 'Remove link'));
       await tester.pumpAndSettle();
-      expect(playerRepo.calls, ['removeGuardian emma coach']);
+      expect(playerRepo.calls, [
+        'inviteGuardian emma mom@example.com',
+        'removeGuardian emma coach',
+      ]);
+    });
+
+    testWidgets("adding the player's own member as a guardian says they're "
+        'linked already, not that guardians are full', (tester) async {
+      final playerRepo =
+          RefusingPlayerRepository(const InvalidInput('already-linked'), [
+              const Player(
+                id: PlayerId('emma'),
+                groupId: GroupId('y'),
+                displayName: 'Emma Rodriguez',
+              ),
+            ])
+            ..links.add(
+              const GuardianLink(
+                playerId: PlayerId('emma'),
+                groupId: GroupId('y'),
+                uid: UserId('emma1'),
+                relation: PlayerRelation.self,
+              ),
+            );
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [
+          testMembership('y', 'coach', role: MemberRole.owner),
+          testMembership('y', 'emma1', name: 'Emma Rodriguez'),
+        ],
+        playerRepo: playerRepo,
+      );
+      await go(tester, '/g/y/roster/players/emma');
+      await tester.tap(find.text('Add a guardian'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'emma@example.com');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text("They're already linked to this player."),
+        findsOneWidget,
+      );
+      expect(find.text('A player can have up to 4 guardians.'), findsNothing);
     });
   });
 

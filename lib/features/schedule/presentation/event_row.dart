@@ -170,11 +170,7 @@ class EventRow extends StatelessWidget {
                           children: [
                             for (final p in participants)
                               _MyAnswer(
-                                label: participants.length > 1 || p.isPlayer
-                                    ? (p.isPlayer && !p.isMe
-                                          ? p.name.split(' ').first
-                                          : l10n.eventYou)
-                                    : null,
+                                label: answerLabel(l10n, p, participants),
                                 status: answers[p.id]?.status,
                               ),
                           ],
@@ -203,6 +199,22 @@ class EventRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The label on one of my answers in a schedule row (PLAYER-9): "Emma"
+/// for a player I'm here for, "You" for me or my own player, and "Jared #12
+/// (you)" for my own player beside an answer of my own as a member, so the
+/// two never read the same. Null when it's only me as a member.
+String? answerLabel(
+  AppLocalizations l10n,
+  Participant p,
+  List<Participant> participants,
+) {
+  if (!p.isPlayer) return participants.length > 1 ? l10n.eventYou : null;
+  if (!p.isMe) return p.name.split(' ').first;
+  return participants.any((o) => !o.isPlayer)
+      ? l10n.eventYouAsPlayer(p.shownName)
+      : l10n.eventYou;
 }
 
 /// "OCT" over "13".
