@@ -20,7 +20,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 - **Every account belongs to an adult (18+).** Every team has a roster of **players**. A member can be a player themselves, or a parent or guardian who answers for a player who doesn't use the app, such as a kid (§6.3).
 - Platform **super admins** ("God admins") oversee every team.
 
-**Rollout.** Our own team uses it first. Then sign-up opens to any team, and every team is **invite-only**.
+**Rollout.** Go-live happens in phases, web first (§9). Phase 1 is the website and the web app in desktop and phone browsers. The iPhone and iPad app follows in Phase 4 and the Android app in Phase 5. Our own team uses it first. Then sign-up opens to any team, and every team is **invite-only**.
 
 ### Glossary
 
@@ -41,8 +41,8 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 
 | Tag | Meaning |
 |---|---|
-| **MVP** | Needed to launch |
-| **v1.1** | Next, soon after launch |
+| **MVP** | Needed to launch (on the web at Phase 1; in the native apps at Phases 4 and 5) |
+| **v1.1** | Next, after the MVP. The web parts are built before the Phase 1 go-live (ROADMAP). |
 | **Later** | Backlog |
 
 ### MVP success criteria
@@ -50,7 +50,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 - Our team moves completely off GroupMe and TeamReach.
 - A new coach can sign up, create a team, and have members chatting **within 10 minutes**, without help.
 - A coach can paste in a roster of players with their emails or their parents' emails, then see per-player RSVP counts for the next practice.
-- Every MVP feature works the same on iOS, Android, and web (§4).
+- Every MVP feature works in desktop and phone browsers at Phase 1, and the same on iOS and Android once they ship in Phases 4 and 5 (§4).
 - Push notifications typically arrive **within 5 seconds**.
 - The monthly bill stays within the cost model (ARCH §10).
 
@@ -66,12 +66,12 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | 2 | Built in Flutter and Dart in VS Code | ARCH §4, §5, §8 |
 | 3 | Deployed to Firebase | ARCH §4 ("Deployed to Firebase, precisely"), §9 |
 | 4 | Firebase NoSQL now; Cloud SQL later if usage justifies it | ARCH §6.2, §10, §12 |
-| 5 | iOS, Android, and web, fully functional and consistent | §4 |
+| 5 | iOS, Android, and web, fully functional and consistent | §4; web in Phase 1, iOS in Phase 4, Android in Phase 5 (§9) |
 | 6 | Group messaging | §6.5 (CHAT) |
 | 7 | Push notifications | §6.9 (NOTIF); ARCH §6.5 |
 | 8 | Polls in group messaging | §6.6 (POLL) |
 | 9 | Scheduling events with going / not going | §6.7 (SCHED-3 to SCHED-5); PLAYER-6 |
-| 10 | Sign in with Google, Apple, or email, on top of local accounts that admins can add | AUTH-1, AUTH-6 to AUTH-8, AUTH-12; ARCH §6.1 |
+| 10 | Sign in with Google, Apple, or email, on top of local accounts that admins can add | AUTH-1 (Apple in Phase 3), AUTH-6 to AUTH-8, AUTH-12; ARCH §6.1 |
 | 11 | Password reset by email | AUTH-4 |
 | 12 | Email invites | INV-4 |
 | 13 | Shareable invite links and QR codes | INV-1 to INV-3, INV-6, INV-7 |
@@ -183,11 +183,13 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 
 ### 4.1 Supported platforms
 
-| Platform | Minimum | Distribution |
-|---|---|---|
-| iPhone and iPad | iOS 15 | App Store |
-| Android phones and tablets | Android 8.0 (API 26) | Google Play |
-| Web, desktop and mobile | Latest two versions of Chrome, Edge, Firefox, Safari | Firebase Hosting at **`getbattleplan.app/app`**, linked from the website (§4.3). Installable as a home-screen app (PWA). |
+| Platform | Minimum | Distribution | Goes live |
+|---|---|---|---|
+| Web, desktop and mobile | Latest two versions of Chrome, Edge, Firefox, Safari | Firebase Hosting at **`getbattleplan.app/app`**, linked from the website (§4.3). Installable as a home-screen app (PWA). | Phase 1 |
+| iPhone and iPad | iOS 15 | App Store | Phase 4 |
+| Android phones and tablets | Android 8.0 (API 26) | Google Play | Phase 5 |
+
+**Phase 1 ships the web only.** The iOS and Android apps keep building and passing their tests in CI, but they reach the stores only in Phases 4 and 5 (§9). Until then, iPhone and Android users use the web app in their phone's browser or from their home screen.
 
 ### 4.3 The website (WEB)
 
@@ -201,18 +203,18 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 
 ### 4.2 The parity rule
 
-- Every feature ships on all three platforms **in the same release**, with the same behavior, layout, and wording.
+- **From Phase 4 on**, every feature ships on every live platform **in the same release**, with the same behavior, layout, and wording: iOS and the web from Phase 4, and Android too from Phase 5.
 - A feature is done only after it's been tested on:
-  - an iPhone;
-  - an Android phone;
+  - an iPhone (from Phase 4);
+  - an Android phone (from Phase 5);
   - a desktop browser;
-  - a phone browser, for the join flow.
+  - a phone browser: Safari on an iPhone and Chrome on an Android phone. Until Phase 4 this is the only phone test, so it covers every flow, not just joining.
 - Differences are allowed only where the platform forces them:
 
 | Capability | iOS | Android | Web |
 |---|---|---|---|
 | Push notifications | Yes | Yes | Yes, after browser permission. On iPhone/iPad, only once added to the Home Screen. |
-| Sign in with Apple | Native sheet | Web sign-in flow | Popup |
+| Sign in with Apple (from Phase 3) | Native sheet | Web sign-in flow | Popup |
 | Scan a QR code | Camera | Camera | Camera, with browser permission |
 | Add photos | Library or camera | Library or camera | File picker, drag and drop, or paste |
 | Add to calendar | Calendar sheet | Calendar app | Downloads an .ics file |
@@ -314,6 +316,8 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Logo and a one-line tagline above them.
   - Footer: "By continuing you agree to the Terms and Privacy Policy", with links.
   - The screen is identical on every platform. The Apple button follows Apple's design rules.
+  - **Continue with Apple is hidden until Phase 3**, when Sign in with Apple is turned on (§9). Until then the screen shows Google and email only, and Sign-in methods (AUTH-8) doesn't offer Apple.
+  - Continue with Facebook joins in Phase 6, with single sign-on (Q16).
 - **AUTH-2 · MVP · Email and password.**
   - Sign in, or create an account with name, email, and password.
   - Passwords need 8+ characters, enforced by Firebase's password policy.
@@ -332,7 +336,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **AUTH-6 · MVP · Accounts added by admins.**
   - Team admins and super admins add people with just a **name and email** (TEAM-7, PLAYER-1, ADMIN-4).
   - **Admins never set, see, or know anyone's password.** No screen or tool lets them. They can only send setup and password-reset emails.
-  - The person gets a **setup email**. Its link signs them in, verifies their email, and asks how they want to sign in from now on: Google, Apple, or a password they create.
+  - The person gets a **setup email**. Its link signs them in, verifies their email, and asks how they want to sign in from now on: Google, Apple (from Phase 3), or a password they create.
   - Setup links expire, and admins can resend a fresh one.
   - Until setup, the person appears on the roster as "Not joined yet", and admins can RSVP for them.
 - **AUTH-7 · MVP · Safe account linking.**
@@ -524,7 +528,7 @@ Players that others answer for never get accounts, and every account belongs to 
   People who are already members just go to the team.
 - **INV-6 · MVP · Join without a link.** "Join a team" (on the welcome screen and in the team switcher) offers **Enter code** and **Scan QR code**, using the camera on phones and in the browser.
 - **INV-7 · MVP · Web join page.**
-  - `/join/<code>` (served by the web app under `/app`, WEB-4) shows the team preview, **Open in app**, App Store and Google Play badges, and **Continue in browser**.
+  - `/join/<code>` (served by the web app under `/app`, WEB-4) shows the team preview, **Open in app**, App Store and Google Play badges once the apps are listed (Phases 4 and 5), and **Continue in browser**.
   - The invite code is shown large, so people can type it in after installing the app.
 - **INV-8 · MVP · Problems.**
   - Expired, revoked, used-up, or unknown codes get a plain explanation and "Ask a team admin for a new link."
@@ -802,7 +806,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **NOTIF-8 · MVP · Grouping.** The phone's notification list groups Battleplan notifications by team.
 - **NOTIF-9 · MVP · Web.**
   - Browser notifications work after permission is granted, even with the tab closed.
-  - On iPhone and iPad they work only after "Add to Home Screen". iOS Safari users see a tip saying so, with a link to the App Store.
+  - On iPhone and iPad they work only after "Add to Home Screen". iOS Safari users see a tip saying so. Once the iPhone app is listed (Phase 4), the tip also links to the App Store.
 - **NOTIF-10 · MVP · Multiple devices.** Every signed-in device gets notifications. Signing out stops them on that device.
 - **NOTIF-11 · MVP · Notification center.**
   - A **bell** in the header, on every platform, with a count of unread items (up to 99+).
@@ -950,11 +954,17 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - No ads, no selling data, no cross-app tracking, so no App Tracking Transparency prompt.
   - Analytics runs without advertising IDs.
 - **LEGAL-3 · MVP · Deletion.** In-app account deletion (AUTH-10), plus a public `/delete-account` page explaining how to request deletion (required by Google Play).
-- **LEGAL-4 · MVP · Store disclosures.** The App Store privacy labels and the Google Play Data safety form match LEGAL-1.
-- **LEGAL-5 · Removed.** Facebook's data-deletion URL moved to the ROADMAP backlog with Facebook sign-in (Q16).
+- **LEGAL-4 · MVP · Store disclosures.** The App Store privacy labels (Phase 4) and the Google Play Data safety form (Phase 5) match LEGAL-1.
+- **LEGAL-5 · Phase 6 · Facebook data deletion.** Facebook's data-deletion URL comes back with Facebook sign-in in Phase 6 (Q16).
 - **LEGAL-6 · MVP · Retention.**
   - Content stays until its author, an admin, or the team's deletion removes it.
-  - Deleted content is erased from the database immediately and from backups within 7 days.
+  - Deleted content is erased from the database immediately and from backups within 7 days. No backup, in Google Cloud or off-site, is kept longer than 7 days (ARCH §6.12).
+- **LEGAL-7 · Phase 2 · GDPR and EU.** Done in Phase 2, after the web go-live (§9):
+  - the Privacy Policy's EU sections: who the controller is, the lawful basis for each use, people's rights (access, correction, erasure, portability, objection), how to complain to a data protection authority, and transfers to the US under each provider's data processing terms;
+  - **Download my data** in Settings → Account, a file with the person's profile, memberships, messages, RSVPs, and player links;
+  - no cookie banner needed: the website sets no cookies, the web app stores only what sign-in and the offline cache need, and Google Analytics on the web is off for EU visitors or asks first;
+  - the EU Digital Services Act basics: a point of contact, Report as the way to flag content, and a reason given when content is removed;
+  - a data breach plan, with notice to the authority within 72 hours.
 
 ### 6.14 Free for everyone, and team storage (STORE)
 
@@ -1054,7 +1064,7 @@ Build these once in `core/` and reuse them everywhere:
 - Logical focus order, a visible focus ring, and full keyboard navigation on web.
 - Touch targets at least 48 × 48.
 - Color is never the only signal: RSVP states also use icons and words.
-- Test with VoiceOver and TalkBack before launch.
+- Test with VoiceOver and TalkBack: in phone browsers before Phase 1, and in the native apps before Phases 4 and 5.
 
 ### 7.7 Writing
 
@@ -1072,8 +1082,8 @@ Build these once in `core/` and reuse them everywhere:
 | Area | Requirement |
 |---|---|
 | **Speed** | Signed-in launch to content in **< 2 s** on a mid-range phone. Web first load **< 4 s** on broadband; repeat visits **< 2 s**. A cached chat opens in **< 0.5 s**. Scrolling stays at 60 fps with photos. Messages reach open devices in **~1 s**; push notifications in **≤ 5 s** typically. |
-| **Reliability** | Nothing is lost on flaky connections (offline queue). Server functions are safe to retry. Daily backups are kept for 7 days. |
-| **Security** | Deny-by-default rules, tested for every collection and role. App Check enforced. Secrets in Secret Manager. HTTPS only. No message content or personal data in logs or analytics. |
+| **Reliability** | Nothing is lost on flaky connections (offline queue). Server functions are safe to retry. Point-in-time recovery, daily backups, and an encrypted off-site copy, none kept longer than 7 days (ARCH §6.12). |
+| **Security** | Deny-by-default rules, tested for every collection and role. App Check enforced (from Phase 2). Secrets in Secret Manager. HTTPS only. No message content or personal data in logs or analytics. |
 | **Team isolation** | A member of one team can **never** read or change another team's data. Covered by automated rules tests. |
 | **Scale** | Meets the ARCH §2 targets without design changes. |
 | **Cost** | Stays within the ARCH §10.1 model, with budget alerts. Every query follows the cost rules (ENG-5). |
@@ -1122,11 +1132,11 @@ These are requirements on how Battleplan is built. Pull requests that break them
 
 ## 9. Delivery plan
 
-Every milestone ends with its features working on **iOS, Android, and web**, and with rules tests updated.
+Milestones M0 to M8 each ended with their features working on **iOS, Android, and web**, and with rules tests updated. Go-live then happens in six phases, web first (below). The task-level order is in [ROADMAP.md](ROADMAP.md).
 
 ### M0 · Foundation
 
-- [ ] Create the Firebase projects on the free plan (done 2026-10-10: dev `battleplan-dev-ecce4`, prod `battleplan-prod`) and build against the Emulator Suite. Paid plans and purchases wait until a phase needs them ([TODO.md](../TODO.md)): dev moves to Blaze when we first deploy Functions or Storage, and prod gets Blaze and its database, in its permanent region (ARCH §6.10), for the team beta.
+- [ ] Create the Firebase projects on the free plan (done 2026-10-10: dev `battleplan-dev-ecce4`, prod `battleplan-prod`) and build against the Emulator Suite. Paid plans and purchases wait until a phase needs them ([TODO.md](../TODO.md)): dev moves to Blaze when we first deploy Functions or Storage, and prod gets Blaze and its database, in its permanent region (ARCH §6.10), in Phase 1.
 - [x] `flutter create` with the org ID; dev and prod flavors. `flutterfire configure` for each waits on `firebase login`.
 - [x] Repo layout, lints, CI, and VS Code launch configs.
 - [x] Emulator Suite with seed data: several teams, with some people on more than one.
@@ -1141,7 +1151,7 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
   4. A WASM web build with our plugins.
   5. Security rules on the flat collections: membership checks from a query's `groupId` filter, one RSVP per event and player, and the message rate limit.
 
-  Apple sign-in and iOS Universal Links need the paid Apple Developer membership. They join the matrix when it's bought, just before the team beta.
+  Apple sign-in and iOS Universal Links need the paid Apple Developer membership. Apple sign-in joins the matrix in Phase 3, and Universal Links in Phase 4.
 
 **Done when:** the empty app, with tabs and a theme switch, runs on iOS (Simulator or your iPhone), an Android phone, and Chrome, and every PR gets a web preview link.
 
@@ -1153,7 +1163,7 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
 - [ ] The super-admin bootstrap script.
 - [ ] Rules and tests for `users`.
 
-**Done when:** the M0 sign-in matrix passes on all three platforms. Apple sign-in is verified once the Apple Developer membership is active, before the team beta.
+**Done when:** the M0 sign-in matrix passes on all three platforms. Apple sign-in is verified in Phase 3, once the Apple Developer membership is active.
 
 ### M2 · Teams and invites
 
@@ -1216,17 +1226,49 @@ From here on, each feature ships with its own notifications.
 
 - [ ] ADMIN-1 to ADMIN-8.
 
-### M9 · Hardening and launch
+### Go-live phases
 
-- [ ] Enforce App Check and review rules-test coverage.
-- [ ] Accessibility, performance (§8), and golden-test passes.
-- [ ] The website at `getbattleplan.app` with the legal and support pages, and the web app moved to `/app` (§4.3); store listings, privacy forms.
-- [ ] An App Review demo account with a seeded team.
-- [ ] Beta with our team: TestFlight (iOS), Firebase App Distribution (Android), and the web; a bug bash; the production deploy.
-- [ ] Google Play: open the Play Console account (a personal one, Q13) and run the 14-day closed test with 12+ testers before the public Android release.
-- [ ] Move our team over (below), then open sign-up to other teams.
+Decided 2026-10-12, at the owner's request (ARCH D60). The first go-live is the website and the web app only. Each phase finishes before the next starts.
 
-### Moving our team over
+### Phase 1 · Website and web app
+
+- [ ] The website at `getbattleplan.app` and the web app at `/app` (§4.3) on the prod project, working well in desktop and phone browsers (§4.2).
+- [ ] Accessibility, performance (§8), and golden-test passes, and a web proof pass of every MVP flow.
+- [ ] Prod on Blaze with budget alerts, and two weeks of measured bills that match the cost model (ARCH §10.1).
+- [ ] Signup and account emails sent by Firebase Auth from `noreply@getbattleplan.app`; setup links, invites, and notices by Resend; `support@` and `privacy@` received through Cloudflare Email Routing (ARCH §6.7).
+- [ ] The legal and support pages (LEGAL-1 to LEGAL-3).
+- [ ] Continue with Apple hidden (AUTH-1), and no store badges yet.
+- [ ] Beta with our team on the web; move our team over (below); then the production deploy and open sign-up on the web.
+
+**Done when:** our team runs on the web app on prod in desktop and phone browsers, signup emails arrive from our domain, and the bills match the cost model.
+
+### Phase 2 · GDPR and EU, backup and restore, security hardening
+
+- [ ] GDPR and EU readiness (LEGAL-7).
+- [ ] Backup and restore (ARCH §6.12), with a restore drill from the off-site copy.
+- [ ] App Check enforced on the web; a security review; security headers; prod locked down; DMARC enforced.
+
+### Phase 3 · Sign in with Apple
+
+- [ ] The Apple Developer Program (individual, Q13); Sign in with Apple on the web; Continue with Apple shown again; Apple's private email relay set up.
+
+### Phase 4 · iPhone and iPad on the App Store
+
+- [ ] iOS push, Universal Links, iPad layouts, a TestFlight beta, the App Store listing and privacy labels (LEGAL-4), and an App Review demo account; then submit.
+
+**Done when:** the app is on the App Store. The parity rule (§4.2) covers iOS and the web from here on.
+
+### Phase 5 · Android on Google Play
+
+- [ ] The Play Console (a personal account, Q13), the 14-day closed test with 12+ testers, App Links on prod, and the Data safety form (LEGAL-4); then submit.
+
+**Done when:** the app is on Google Play. The parity rule covers all three platforms from here on.
+
+### Phase 6 · Facebook sign-in and SSO
+
+- [ ] Continue with Facebook (Q16), Meta App Review, the data-deletion URL (LEGAL-5), and single sign-on for the providers teams ask for.
+
+### Moving our team over (Phase 1)
 
 1. Create our team and paste in the roster (TEAM-7, or players with their own or their parents' emails, PLAYER-1).
 2. Recreate upcoming events, using repeating events for practices.
@@ -1235,6 +1277,9 @@ From here on, each feature ships with its own notifications.
 5. GroupMe and TeamReach history isn't imported (§11).
 
 ### v1.1 backlog, in priority order
+
+The web parts are built before the Phase 1 go-live (ROADMAP). Native-only parts, such as app icon badges, come with Phases 4 and 5.
+
 
 1. @mentions, pins, announcements (CHAT-14, CHAT-15)
 2. Roster details and contact sharing (TEAM-10); "Same answer for all my players" and RSVP history (PLAYER-11)
@@ -1254,43 +1299,52 @@ From here on, each feature ships with its own notifications.
 
 ## 10. Launch checklist
 
-When to buy or set up each item is in [TODO.md](../TODO.md). Purchases happen just in time, not up front.
+When to buy or set up each item is in [TODO.md](../TODO.md). Purchases happen just in time, not up front. Items are grouped by the go-live phase that needs them (§9).
 
-**Accounts and fees**
+**Phase 1 · Website and web app**
+
+- [x] A domain name: `getbattleplan.app` (Q8).
+- [x] An email provider account: Resend (Q10).
+- [ ] Prod on Blaze, with budget alerts, point-in-time recovery, and daily backups on.
+- [ ] `getbattleplan.app` connected to prod's Hosting, with DNS-only records.
+- [ ] Firebase Auth email templates branded and sent from `noreply@getbattleplan.app`; SPF, DKIM, and a DMARC record for the domain.
+- [ ] Web push VAPID key on prod; the reCAPTCHA Enterprise key registered for App Check, in monitor mode.
+- [ ] Rules and indexes deployed; Remote Config minimum version set; first super admin bootstrapped.
+- [ ] Privacy Policy, Terms of Use, `/delete-account` page, support email.
+
+**Phase 2 · GDPR, backups, security**
+
+- [ ] The Privacy Policy's EU sections, Download my data, and the providers' data processing terms (LEGAL-7).
+- [ ] The off-site backup copy in Cloudflare R2 and a restore drill that worked (ARCH §6.12).
+- [ ] App Check enforced on the web; DMARC at `p=reject`.
+
+**Phase 3 · Sign in with Apple**
 
 - [ ] Apple Developer Program, $99/year, as an individual (Q13). The App Store shows your legal name as the seller; no D-U-N-S number or company website is needed.
-- [ ] Google Play Console, $25 once, as a personal account (Q13). Google Play shows your legal name, and production access needs a 14-day closed test with 12+ testers.
-- [x] A domain name: `getbattleplan.app` (Q8).
-- [ ] A Meta developer app and an email provider account.
+- [ ] Sign in with Apple capability, and a Services ID for the web and Android.
+- [ ] The sending domains registered with Apple's private email relay.
 
-**Platform setup**
+**Phase 4 · App Store**
 
 - [ ] APNs key uploaded to Firebase.
-- [ ] Android SHA-1 and SHA-256 fingerprints (debug, upload, and Play App Signing) in Firebase, for Google sign-in and App Links.
-- [ ] Sign in with Apple capability, and a Services ID for Android and web.
-- [ ] reCAPTCHA Enterprise key and web push VAPID key.
-- [ ] `apple-app-site-association` and `assetlinks.json` served from Hosting; the Associated Domains entitlement; Android intent filters with `autoVerify`.
-- [ ] Sending domain with SPF, DKIM, and DMARC, registered with Apple's private email relay. Firebase Auth email templates branded.
-
-**Backend**
-
-- [ ] App Check enforced; rules and indexes deployed.
-- [ ] Budget alerts and daily backups on.
-- [ ] Remote Config minimum version set.
-- [ ] First super admin bootstrapped.
-
-**Stores**
-
-- [ ] App icons, splash screens, and screenshots for each required device size.
-- [ ] Descriptions, keywords, support URL, privacy URL.
-- [ ] Age-rating questionnaires (chat and user-generated content).
+- [ ] `apple-app-site-association` served from Hosting, and the Associated Domains entitlement.
+- [ ] App icons, splash screens, and screenshots for each required iPhone and iPad size.
+- [ ] Description, keywords, support URL, privacy URL.
+- [ ] Age-rating questionnaire (chat and user-generated content).
 - [ ] App Review notes: a demo account with a seeded team, and an explanation that teams are invite-only.
-- [ ] Privacy labels (Apple) and Data safety form (Google).
-- [ ] EU trader status declared in both stores.
+- [ ] Privacy labels (LEGAL-4).
+- [ ] EU trader status declared in App Store Connect.
 
-**Legal**
+**Phase 5 · Google Play**
 
-- [ ] Privacy Policy, Terms of Use, `/delete-account` page, support email.
+- [ ] Google Play Console, $25 once, as a personal account (Q13). Google Play shows your legal name, and production access needs a 14-day closed test with 12+ testers.
+- [ ] Android SHA-1 and SHA-256 fingerprints (debug, upload, and Play App Signing) in Firebase, for Google sign-in and App Links.
+- [ ] `assetlinks.json` with the prod fingerprints, and Android intent filters with `autoVerify`.
+- [ ] Screenshots, description, content rating, the Data safety form (LEGAL-4), and EU trader status in the Play Console.
+
+**Phase 6 · Facebook sign-in and SSO**
+
+- [ ] A Meta developer app through Meta App Review, with the data-deletion URL (LEGAL-5).
 
 ---
 
@@ -1335,11 +1389,11 @@ Each question has a default. The build follows the default until someone decides
 | Q7 | ~~On wide screens, bottom tabs or a side rail?~~ **Decided 2026-10-12 (the recommended default):** a side rail at 840 px and wider. | — |
 | Q8 | ~~What domain name for invite links and email?~~ **Decided:** `getbattleplan.app`, registered at Cloudflare ($8.20 the first year, then $14.20/year). battleplan.com, .app, and .io are taken. App ID `app.getbattleplan` (`.dev` for dev builds). | — |
 | Q9 | ~~Logo and primary color?~~ **Decided 2026-10-12:** the placeholder mark and blue `#2F5BEA` for now. | — |
-| Q10 | ~~Which email provider?~~ **Decided 2026-10-12:** Resend. | — |
+| Q10 | ~~Which email provider?~~ **Decided 2026-10-12:** Resend, for the emails Functions send. Firebase Auth sends signup and account emails itself, for free (ARCH §6.7, D61). | — |
 | Q11 | ~~Where are most teams located?~~ **Decided 2026-10-12:** the US, so prod's database is in `us-central1` (permanent). | — |
 | Q12 | ~~Can members create events by default?~~ **Decided 2026-10-12:** only admins create events by default; each team can let members create them in Team settings (TEAM-5). | — |
 | Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
 | Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). **2026-10-12:** on every team, admins and members not linked to a player answer for themselves, counted apart as "others". | — |
 | Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). **2026-10-12:** this covers every claim, as the player or a guardian; an admin's own claim is approved at once. | — |
-| Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email. **2026-10-12:** Facebook sign-in was removed from the plan. It may be added later as a backlog item (ROADMAP, Later · Backlog). | — |
+| Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email. **2026-10-12:** Facebook sign-in was removed from the plan. **Later on 2026-10-12:** it returns as go-live Phase 6, with single sign-on (§9, ARCH D60). | — |
 | Q17 | ~~Should there be separate adult and youth team types?~~ **Decided 2026-10-12 (the owner's request):** no. There's one team type. Every team has players; any member can claim a player as "I am this player" or as a parent or guardian, and any member can add a player. Team admins approve or decline claims and members' new players (§6.3). | — |

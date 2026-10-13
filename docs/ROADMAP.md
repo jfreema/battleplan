@@ -7,9 +7,9 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Numbers run continuously from the first task to the last, so "task 14" always means the same thing. Order follows dependencies: a task never needs something further down the list.
 - ✅ done · 👤 **Jared** (only you can do it: accounts, payments, decisions) · everything else is build work.
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
-- Each milestone ends working on iOS, Android, and web, with rules tests updated (SPEC §9).
+- Milestones M0 to M8 each ended working on iOS, Android, and web, with rules tests updated (SPEC §9). Go-live then runs in six phases, web first (below). Until Phase 4 the native apps keep building and passing tests, but don't ship.
 
-Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. Teams are now one type with players on every team, claims, and admin approval (tasks 181 to 186). Facebook sign-in was removed from the plan; it is a backlog item now.
+Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. Teams are now one type with players on every team, claims, and admin approval (tasks 181 to 186). The old M9 and Launch sections are replaced by six go-live phases: the website and web app first, then GDPR, backups, and security, then Sign in with Apple, the App Store, Google Play, and Facebook sign-in, each in its own phase (D60).
 
 ---
 
@@ -26,8 +26,9 @@ Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God
 9. ✅ 👤 **Jared:** Choose the app ID `app.getbattleplan` (`.dev` for dev builds).
 10. ✅ 👤 **Jared:** Verify the domain's contact email if Cloudflare asks. **Deadline 2026-10-25**, or the domain goes on hold. (no verification email came; the Cloudflare account signs in with Google, so its email is already verified, checked 2026-10-11)
 11. ✅ 👤 **Jared:** Make a Battleplan vault in 1Password for every login, key file, and recovery code. *Done 2026-10-11: the "Battle" vault (it holds the Resend API key).*
-12. 👤 **Jared:** Check your legal name and address on your Apple Account and Google payments profile (the stores read them in tasks 106 and 125).
 13. ✅ 👤 **Jared:** Log in from the terminal: `firebase login`, then `gcloud auth login` and `gcloud auth application-default login`. **This blocks task 23 and spikes 1 to 3 (tasks 26 to 28).**
+
+Task 12, checking your legal name for the stores, moved to Phase 3.
 
 ## M0 · Foundation
 
@@ -172,7 +173,7 @@ SPEC §6.14 (STORE), ARCH §6.11, [PLANS.md](PLANS.md).
 99. ✅ Report queue (ADMIN-5) and audit log (ADMIN-6).
 100. ✅ Platform settings and the announcement banner (ADMIN-7); safeguards (ADMIN-8).
 
-## Website and the web app at /app · before M9
+## Website and the web app at /app · after M8
 
 SPEC §4.3 (WEB-1 to WEB-5), ARCH §6.6 and D40. The website is the `website/` folder: static HTML and CSS with no framework or build step. The Flutter web app moves from the root to `/app`.
 
@@ -182,7 +183,7 @@ SPEC §4.3 (WEB-1 to WEB-5), ARCH §6.6 and D40. The website is the `website/` f
 178. ✅ Links follow the move: the app's `LinkService` and the Functions `links` module build `/app/...` links for content and email setup, keep invite links short (`/join/<CODE>`), and push notifications open `https://<host>/app<route>`; the Auth `url` becomes `/app/activate`; Universal Links and App Links also match `/app/*`, and the native apps ignore the `/app` prefix; the web app's service worker, manifest, and push service worker work under `/app/`. Tested on dev: an invite link, a setup email, and a notification click in the browser, and an invite link on the Android emulator (WEB-4).
 179. ✅ Website polish (store badges in place but off until the apps are listed, task 130): favicon, Open Graph image and tags, `robots.txt` and a sitemap (the site indexed, `/app` not), and App Store and Google Play badges once the apps are listed (task 130).
 
-## One team type · before M9
+## One team type · after M8
 
 SPEC Q17, §6.3 (PLAYER-1 to PLAYER-11), ARCH §6.2 and D59. The owner asked for one kind of team instead of adult and youth types. Every team has players; any member can claim a player as "I am this player" or as a parent or guardian, and can add players that team admins approve or decline.
 
@@ -193,48 +194,25 @@ SPEC Q17, §6.3 (PLAYER-1 to PLAYER-11), ARCH §6.2 and D59. The owner asked for
 185. ✅ Labels and notifications: "Jared F. #12" for a member who is a player, "Maria R. · Emma #7" for a guardian; youth-team wording removed (PLAYER-7, PLAYER-8).
 186. ✅ Docs and website: SPEC, ARCH, and the landing and support pages describe one team type ("Players and parents").
 
-## M9 · Hardening and team beta
+## Go-live in six phases
 
-104. Enforce App Check; review rules-test coverage.
-105. Accessibility, performance (SPEC §8), and golden-test passes in both themes.
-106. 👤 **Jared:** Enroll in the Apple Developer Program as an individual ($99/year). **Start about a week before the beta.**
-107. 👤 **Jared:** Create the APNs key, the Sign in with Apple key, and the Services ID. Each key file downloads only once, so save it to 1Password right away.
-108. Upload the APNs key to Firebase and turn on iOS push.
-109. Turn on Sign in with Apple on iOS, Android, and web, and finish the sign-in matrix (spike 1).
-110. Turn on iOS Universal Links with the Associated Domains entitlement (spike 2).
-111. 👤 **Jared:** Turn on Cloudflare Email Routing and forward `support@` and `privacy@getbattleplan.app` to your Gmail.
-112. 👤 **Jared:** Customize Firebase's email domain (`noreply@getbattleplan.app`, sender "Battleplan") and register both sending addresses with Apple's private email relay.
-113. ✅ 👤 **Jared:** Confirm Q11 (where most teams are; default US, `us-central1`). **The prod database's region is permanent.**
-114. 👤 **Jared:** Upgrade `battleplan-prod` to Blaze and set its budget alerts.
-115. Create prod's database in that region; deploy rules, indexes, TTL policies, and functions; turn on daily backups; set the Remote Config minimum version.
-116. 👤 **Jared:** Connect `getbattleplan.app` to prod's Hosting, with the Cloudflare records set to **DNS only** (grey cloud). It serves the website and the web app at `/app` (tasks 175 to 179).
-117. Set up the manual prod release workflow, and decide where iOS builds run (macOS minutes on GitHub are 10×).
-118. Bootstrap the first super admin on prod.
-119. ✅ 👤 **Jared:** Confirm Q9 (logo and primary color; default placeholder mark and blue `#2F5BEA`).
-120. App icons and splash screens.
-121. Legal pages: Privacy Policy, Terms of Use, `/delete-account` (LEGAL-1, LEGAL-3), as pages on the website (task 176); no-tracking setup checked (LEGAL-2).
-122. Beta with our team: TestFlight on iOS, Firebase App Distribution on Android, and the web; a bug bash.
-123. Move our team over: paste the roster, recreate upcoming events as repeating practices, post the invite link in GroupMe and show the QR at practice, and run both apps for about two weeks.
+Decided 2026-10-12, at the owner's request (SPEC §9, ARCH D60). The first go-live is the website and the web app only. Sign in with Apple, the App Store, Google Play, and Facebook each get a later phase of their own, in this order:
 
-## Launch · Open sign-up
+| Phase | What goes live | New fixed cost |
+|---|---|---|
+| **1** | The website and the web app at `getbattleplan.app`, in desktop and phone browsers, on a prod project proven to run cheaply; signup emails from Firebase | None. Firebase ≈ $0–3/month for a few teams; email $0 |
+| **2** | GDPR and EU readiness; backup and restore; security hardening | Backups under $1/month |
+| **3** | Sign in with Apple, on the web first | Apple Developer Program, $99/year |
+| **4** | The iPhone and iPad app on the App Store | None (the same Apple membership) |
+| **5** | The Android app on Google Play | $25 once |
+| **6** | Facebook sign-in and single sign-on (SSO) | None for Facebook |
 
-124. 👤 **Jared:** Decide Q4 (how the platform is paid for) before there are hundreds of teams. The default is free with a 5 GB quota per team.
-125. 👤 **Jared:** Open the Google Play Console as a personal account ($25 once). **Start 3 to 4 weeks before** you want to be on Google Play.
-126. Generate the Android upload key at the first Play upload. 👤 **Jared:** store the keystore and its passwords in 1Password, plus an offline backup.
-127. Add the Android SHA-1 and SHA-256 fingerprints (debug, upload, Play App Signing) to Firebase.
-128. 👤 **Jared:** Run the Google Play closed test: 12+ testers opted in for 14 days in a row, then request production access.
-129. Store listings: screenshots, descriptions, keywords, support and privacy URLs.
-130. Store disclosures: App Store privacy labels and the Play Data safety form (LEGAL-4); age-rating questionnaires.
-131. 👤 **Jared:** Declare EU trader status in both stores.
-132. App Review demo account with a seeded team, and review notes explaining that teams are invite-only.
-133. Submit to the App Store and Google Play.
-134. Production deploy, and open sign-up to other teams.
+- Every Apple, App Store, Google Play, and Facebook task moved out of M9 and Launch into its phase. Task numbers stay the same, and each moved task says where it came from. New tasks start at 187.
+- Until Phase 4, the iOS and Android builds keep compiling and passing their tests in CI, but they don't ship. The parity rule (SPEC §4.2) applies again from Phase 4.
 
----
+## v1.1 features · before Phase 1 go-live
 
-## v1.1 · Soon after launch
-
-In SPEC §9's priority order.
+In SPEC §9's priority order. These are web build work, so they're built before go-live (task 134). Parts that need the native apps wait for Phases 4 and 5.
 
 135. @mentions, edits, pins, and announcements (CHAT-14, CHAT-15).
 136. Roster details and contact sharing (TEAM-10).
@@ -245,9 +223,132 @@ In SPEC §9's priority order.
 141. Document folders and the chat photo gallery (DOC-7).
 142. Announcement-only mode (TEAM-12).
 143. Polls list, reminders to non-voters, member-added options, hidden results (POLL-6).
-144. App icon badges, mention notifications, hidden message text (NOTIF-12).
+144. App icon badges, mention notifications, hidden message text (NOTIF-12). *The web gets mention notifications and hidden text now; icon badges on iPhone and Android come with Phases 4 and 5.*
 145. Files in chat (CHAT-16).
 146. Persistent team list on very wide screens (§5.5).
+
+## Phase 1 · Website and web app go-live
+
+The website and the web app at `getbattleplan.app/app`, working well in desktop and phone browsers, on a prod project that costs close to nothing. No Apple sign-in, App Store, or Google Play yet.
+
+**Email choice (ARCH §6.7, D61).** Firebase Auth sends every signup and account email: verification, password reset, email-link sign-in, and change of email. It costs $0, and Blaze allows 100,000 verification and 10,000 password-reset emails a day. Cloudflare Email Sending would cost at least $5/month (it needs Workers Paid) and is still in beta, so Firebase is the cheaper choice. Resend Free ($0, up to 100 emails a day and 3,000 a month) keeps sending setup links, invites, and security notices from Functions. Cloudflare Email Routing (free) receives mail to `support@` and `privacy@`.
+
+**Build quality**
+
+105. Accessibility, performance (SPEC §8), and golden-test passes in both themes. *Moved from M9. A first pass is in the code (commit e1eab87); check it against the web proof pass (task 188).*
+187. Hide Continue with Apple on the sign-in screen and in Sign-in methods until Phase 3 (AUTH-1). Today it shows, disabled, with "Coming soon".
+120. App icons and splash screens. *Moved from M9. The web's favicon and home-screen icons ship now; the store icon sizes come with Phases 4 and 5.*
+188. Web proof pass: every MVP flow in desktop Chrome, Edge, Firefox, and Safari, and in phone browsers (Safari on iPhone, Chrome on Android), including web push from the iPhone home-screen web app. Web first load under 4 s (SPEC §8.1). Fix what it finds before go-live.
+
+**Prod project**
+
+113. ✅ 👤 **Jared:** Confirm Q11 (where most teams are; default US, `us-central1`). **The prod database's region is permanent.** *Moved from M9.*
+114. 👤 **Jared:** Upgrade `battleplan-prod` to Blaze and set its budget alerts at $5, $25, $50, and $100. *Moved from M9.*
+115. Create prod's database in that region; deploy rules, indexes, TTL policies, and functions; turn on point-in-time recovery and daily backups kept 7 days (the full backup design is Phase 2); register the web app with App Check in monitor mode; set the function-image cleanup policy; set the Remote Config minimum version. *Moved from M9.*
+116. 👤 **Jared:** Connect `getbattleplan.app` to prod's Hosting, with the Cloudflare records set to **DNS only** (grey cloud). It serves the website and the web app at `/app` (tasks 175 to 179). *Moved from M9.*
+189. Production web push: create prod's VAPID key and check the service worker under `/app/` on the domain (tasks 28 and 73).
+117. Set up the manual prod release workflow for the backend and the web. *Moved from M9. Deciding where iOS builds run moved to task 209 (Phase 4).*
+118. Bootstrap the first super admin on prod. *Moved from M9.*
+119. ✅ 👤 **Jared:** Confirm Q9 (logo and primary color; default placeholder mark and blue `#2F5BEA`). *Moved from M9.*
+121. Legal pages: Privacy Policy, Terms of Use, `/delete-account` (LEGAL-1, LEGAL-3), as pages on the website (task 176); no-tracking setup checked (LEGAL-2). *Moved from M9. Draft wording is in (commit ff20178), with placeholders for 👤 **Jared** to fill. The GDPR and EU additions come in Phase 2 (task 193).*
+
+**Email**
+
+111. 👤 **Jared:** Turn on Cloudflare Email Routing and forward `support@` and `privacy@getbattleplan.app` to your Gmail. It also adds the apex MX records and SPF. *Moved from M9.*
+112. 👤 **Jared:** Customize Firebase's email domain on prod, after task 116: *Authentication → Templates → Customize domain*, add the TXT and CNAME records (CNAMEs DNS only), and merge Firebase's SPF entry into the one apex `v=spf1` record. Sender "Battleplan" `<noreply@getbattleplan.app>`, reply-to `support@getbattleplan.app`. Then send yourself an email-link sign-in to check it comes from the domain too. *Moved from M9. Registering the addresses with Apple's private email relay moved to task 207 (Phase 3).*
+190. 👤 **Jared:** Add a DMARC record, `v=DMARC1; p=none; rua=...`, and turn on Cloudflare DMARC Management to read the reports. Keep one `_dmarc` record. Task 44 left this out. Tightening it is task 206.
+191. Add a log-based alert on `email_send_failed`. Resend Free stops at 100 emails a day, and one large roster import (up to 200 adds a day per team) can reach that. When the cap starts to bind, move the Functions mail to Cloudflare Email Sending ($5/month for 3,000, then $0.35 per 1,000), which is cheaper than Resend Pro ($20/month) below about 46,000 emails a month. Only `sendEmail()` changes (ARCH §6.7).
+
+**Go-live and cost proof**
+
+124. ✅ 👤 **Jared:** Decide Q4 (how the platform is paid for). *Decided 2026-10-12: free for everyone, with no ads (SPEC Q4). Moved from Launch.*
+122. Beta with our team on the web: desktop and phone browsers, with the iPhone home-screen web app for push; a bug bash. *Moved from M9. TestFlight moved to task 211 (Phase 4); Android testing is part of Phase 5.*
+123. Move our team over: paste the roster, recreate upcoming events as repeating practices, post the invite link in GroupMe and show the QR at practice, and run both apps for about two weeks. *Moved from M9.*
+192. Prove the hosting is cheap: after two weeks of our team on prod, read the bill per service in Cloud Billing reports and compare it with ARCH §10.1, and check Firestore reads per screen against the read budgets (ARCH §10.2). Write the measured numbers into ARCH §10.1.
+134. Production deploy of the web app, and open sign-up to other teams on the web. *Moved from Launch.*
+
+**Phase 1 is done when** our team runs on the web app on prod in desktop and phone browsers, signup emails arrive from `noreply@getbattleplan.app`, and two weeks of bills match the cost model.
+
+## Phase 2 · GDPR and EU, backup and restore, security hardening
+
+**GDPR and EU (LEGAL-7)**
+
+193. GDPR review of what Battleplan collects: a lawful basis for each use, how long each kind of data is kept, and a short record of processing. Add the EU sections to the Privacy Policy: who the controller is, people's rights (access, correction, erasure, portability, objection), how to complain to a data protection authority, and transfers to the US under Google's, Cloudflare's, and Resend's data processing terms.
+194. 👤 **Jared:** Accept Google's data processing terms for both Firebase projects, and keep copies of Resend's and Cloudflare's. Decide whether Battleplan serves EU teams on purpose; if so, GDPR Art. 27 asks for a representative in the EU.
+195. Download my data: Settings → Account → **Download my data** gives a person a file with their profile, memberships, messages, RSVPs, and player links (GDPR access and portability).
+196. Cookies and consent: the website sets no cookies (WEB-5), and the web app stores only what sign-in and the offline cache need. Turn off Google Analytics on the web for EU visitors, or ask first, so no cookie banner is needed.
+197. EU Digital Services Act basics for a service that hosts people's posts: `support@` as the point of contact, Report as the way to flag content (SAFE-1), and a reason given when content is removed.
+198. A data breach plan: who checks, who is told, and how to notify the authority within 72 hours.
+
+**Backup and restore (ARCH §6.12, D62)**
+
+The choice: Google's own protection inside the prod project for everyday mistakes, plus one small encrypted copy in Cloudflare R2 in case the project itself is lost. Nothing is kept longer than 7 days, because LEGAL-6 promises deleted content leaves backups within 7 days. At our size this costs under $1/month: point-in-time recovery about the database's size at $0.15/GiB-month, daily backups $0.03/GiB-month each, and R2 free up to 10 GB ($0.015/GB-month after, with no download fees). Wasabi (about $7/month minimum, with a 90-day minimum charge per file) and Azure Blob ($0.0208/GB-month, plus download fees for a restore) both cost more at this size.
+
+199. Turn on the in-project protection on prod, if task 115 didn't: point-in-time recovery (7 days), daily Firestore backups kept 7 days, and 7-day soft delete on the Storage bucket.
+200. 👤 **Jared:** Create a Cloudflare R2 bucket for backups with an API token that can reach only that bucket, and save the token and the backup encryption key in 1Password, with an offline copy of the key.
+201. The nightly off-site copy: a scheduled job exports Firestore, encrypts the export, and uploads it to R2; it also mirrors new and deleted Storage files, encrypted, so a file deleted in the app leaves R2 the next night. An R2 lifecycle rule deletes each export after 6 days. Copying only what changed keeps Google's download charges near $0.
+202. A restore runbook and drills, run in dev: restore a daily backup to a new database, recover one deleted document with point-in-time recovery, and rebuild a fresh project from the R2 copy, timing each. Repeat the drills every 3 months.
+
+**Security hardening**
+
+104. Enforce App Check on Firestore, Storage, and Functions for the web (reCAPTCHA Enterprise), after a week of monitor-mode numbers from prod; review rules-test coverage. *Moved from M9. Monitor mode and the rules-coverage review are done (commit 53043eb, docs/rules-coverage.md). App Attest and Play Integrity are enforced in Phases 4 and 5.*
+203. A security review of rules, callables, and Storage paths, and a dependency audit, with Dependabot alerts on for npm and pub.
+204. Security headers on the website and `/app` through Hosting: HSTS, a Content Security Policy, `X-Content-Type-Options`, `Referrer-Policy`, and `frame-ancestors` so pages can't be framed.
+205. Lock down prod: restrict the web API key to `getbattleplan.app`, trim Auth's authorized domains, give the deploy service account only the roles it needs, and add Cloud Monitoring alerts for Functions errors and sign-in spikes.
+206. 👤 **Jared:** Turn on 2-Step Verification on every Battleplan account (Google, Cloudflare, GitHub, Resend, 1Password) and DNSSEC in Cloudflare. Move DMARC to `p=quarantine`, then `p=reject`, after 2 to 4 weeks of reports showing Firebase and Resend passing (task 190).
+
+**Phase 2 is done when** an EU visitor can read how their data is handled and download it, a restore drill from R2 has worked, and App Check is enforced on the web.
+
+## Phase 3 · Sign in with Apple
+
+Apple sign-in on the web first (a popup). The iPhone's native sheet is checked in Phase 4 and Android's web flow in Phase 5. New fixed cost: the Apple Developer Program, $99/year.
+
+12. 👤 **Jared:** Check your legal name and address on your Apple Account and Google payments profile (the stores read them in tasks 106 and 125). *Moved from Phase 0.*
+106. 👤 **Jared:** Enroll in the Apple Developer Program as an individual ($99/year). **Start about a week before this phase.** *Moved from M9.*
+107. 👤 **Jared:** Create the Sign in with Apple key and the Services ID. The key file downloads only once, so save it to 1Password right away. *Moved from M9. The APNs key moved to task 208 (Phase 4).*
+207. 👤 **Jared:** Register `getbattleplan.app` and `send.getbattleplan.app` as email sources with Apple's private email relay, so email reaches people who use Hide My Email. Add `cf-bounce.getbattleplan.app` if Cloudflare sending comes later. *Split from task 112.*
+109. Turn on Sign in with Apple on the web, show Continue with Apple again (task 187), and finish the sign-in matrix (spike 1) for the web. *Moved from M9. iOS joins in Phase 4 and Android in Phase 5.*
+
+## Phase 4 · iPhone and iPad on the App Store
+
+208. 👤 **Jared:** Create the APNs key. The key file downloads only once, so save it to 1Password right away. *Split from task 107.*
+108. Upload the APNs key to Firebase and turn on iOS push. *Moved from M9.*
+110. Turn on iOS Universal Links with the Associated Domains entitlement (spike 2). *Moved from M9.*
+209. Decide where iOS builds run (macOS minutes on GitHub count 10×) and add the iOS build to the prod release workflow. *Split from task 117.*
+210. iPad pass: every screen on iPad sizes, in portrait, landscape, and Split View, with the side rail at 840 px and up (SPEC §5.5).
+211. TestFlight beta with our team's iPhone and iPad users; Sign in with Apple's native sheet and App Attest join the sign-in matrix and App Check enforcement.
+129. App Store listing: screenshots for iPhone and iPad, description, keywords, support and privacy URLs. *Moved from Launch. The Google Play listing moved to task 213.*
+130. App Store privacy labels and the age-rating questionnaire (LEGAL-4). *Moved from Launch. The Play Data safety form moved to task 213.*
+131. 👤 **Jared:** Declare EU trader status in App Store Connect. *Moved from Launch. Google Play's is part of task 213.*
+132. App Review demo account with a seeded team, made by hand on prod (D54), and review notes explaining that teams are invite-only. *Moved from Launch.*
+133. Submit to the App Store. Once it's listed, turn on the App Store badge on the website and the `/join` page (task 179) and the App Store link in the iOS Safari tip (task 73). *Moved from Launch. The Google Play submission moved to task 214.*
+
+**Phase 4 is done when** the app is on the App Store for iPhone and iPad. From here on, every feature ships on iOS and the web in the same release.
+
+## Phase 5 · Android on Google Play
+
+New fixed cost: the Google Play Console, $25 once.
+
+125. 👤 **Jared:** Open the Google Play Console as a personal account ($25 once). **Start 3 to 4 weeks before** you want to be on Google Play. *Moved from Launch.*
+126. Generate the Android upload key at the first Play upload. 👤 **Jared:** store the keystore and its passwords in 1Password, plus an offline backup. *Moved from Launch.*
+127. Add the Android SHA-1 and SHA-256 fingerprints (debug, upload, Play App Signing) to Firebase. *Moved from Launch.*
+212. Verify App Links on prod: `assetlinks.json` on `getbattleplan.app` with the upload and Play App Signing fingerprints, then check `/join/`, `/activate`, `/g/`, and `/app/` open the app on a phone (task 50).
+128. 👤 **Jared:** Run the Google Play closed test: 12+ testers opted in for 14 days in a row, then request production access. *Moved from Launch.*
+213. Google Play listing: phone and tablet screenshots, description, the Data safety form (LEGAL-4), the content rating, the target audience (adults), the review demo account, and 👤 **Jared:** EU trader status in the Play Console. *Split from tasks 129 to 132.*
+214. Add the Android build to the prod release workflow, submit to Google Play, enforce Play Integrity in App Check, and turn on the Google Play badge on the website and the `/join` page. *Split from task 133.*
+
+**Phase 5 is done when** the app is on Google Play. From here on, the parity rule covers all three platforms.
+
+## Phase 6 · Facebook sign-in and SSO
+
+Brought back from the backlog (tasks 101 to 103, SPEC Q16).
+
+101. 👤 **Jared:** Create a Meta developer account and app, with business verification if Meta asks. *Moved from Later · Backlog.*
+102. Continue with Facebook on the web, iOS (Limited Login), and Android, with the same safe-linking rules as the other providers (AUTH-7). *Moved from Later · Backlog.*
+103. Meta App Review, and the data-deletion URL (LEGAL-5). *Moved from Later · Backlog.*
+215. Single sign-on: decide which other sign-ins teams ask for, such as Microsoft accounts or a club's own SAML or OIDC login. SAML and OIDC need Firebase's Identity Platform upgrade, which bills per monthly active user past its free tier (ARCH §6.1), so check the price first.
+
+---
 
 ## Later · Backlog
 
@@ -263,7 +364,5 @@ In SPEC §9's priority order.
 156. Cloud SQL, if usage meets the ARCH §12.1 triggers.
 180. **Group types beyond Team** (TEAM-14): keep the standard **Team** and add a more basic **Group** for general use (for example, no roster, players, or RSVP counts by default), chosen when it's created. The one-type model stores `groups.kind: 'team'` so this needs no migration.
 174. **Ads, once adoption justifies them** (SPEC STORE-7, [PLANS.md](PLANS.md)). Parents and guardians manage youth players' records in the app, on any team, so the plan must address children's privacy rules first: COPPA in the US (no behavioral ads to children, verifiable parental consent for any data from under-13s), and Google Play's Families policy (certified ad SDKs only, no personalized ads, if the app targets children or joins the Families program). Likely shape: contextual, non-personalized ads only, and none on teams with players that guardians manage, with the Privacy Policy, store privacy labels, and the Data safety form updated first.
-
-- Facebook sign-in, if needed later (was tasks 101 to 103): Meta app, Continue with Facebook, Limited Login on iOS, App Review, and the data-deletion URL (LEGAL-5).
 
 Things that are out of scope for v1 entirely are listed in SPEC §11.

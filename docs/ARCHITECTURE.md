@@ -117,7 +117,7 @@ flowchart LR
 | Abuse protection | **Firebase App Check** | Play Integrity (Android), App Attest (iOS), reCAPTCHA Enterprise (web). |
 | Config and flags | **Firebase Remote Config** | Feature flags and minimum supported app version (forced update). |
 | Crashes and analytics | **Crashlytics** (iOS/Android), **Google Analytics for Firebase** | Crashlytics doesn't support web; web errors are handled in §9. |
-| Email | Transactional provider (Postmark, SendGrid, Resend, or similar) called from Functions | Firebase Auth sends password-reset and verification emails itself. |
+| Email | **Firebase Auth** for signup and account emails; **Resend** (Q10) from Functions for setup links, invites, and notices; **Cloudflare Email Routing** for inbound mail | All free at Phase 1 (§6.7, D61). |
 | CI/CD | **GitHub Actions**, Firebase Hosting preview channels, **Fastlane** (or Codemagic) for store builds | Includes the import-boundary check (§5.2). |
 | Local development | **Firebase Local Emulator Suite** | Emulates Auth, Firestore, Storage, Functions, and Hosting. |
 
@@ -128,7 +128,7 @@ flowchart LR
 **"Deployed to Firebase", precisely:**
 
 - The **web app** and the **backend** (rules, functions, indexes) deploy to Firebase.
-- The **iOS and Android apps** reach users through the **App Store and Google Play** and talk to the same Firebase backend.
+- The **iOS and Android apps** reach users through the **App Store (Phase 4) and Google Play (Phase 5)** and talk to the same Firebase backend. Phase 1 goes live on the web only (D60).
 - **Firebase App Distribution** delivers internal test builds.
 
 ---
@@ -334,9 +334,10 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 
 - Email/Password, including **Email link** (passwordless) sign-in
 - Google (any Google account, Gmail or Workspace)
-- Apple
+- Apple, turned on in Phase 3. Continue with Apple is hidden until then (D60).
+- Facebook, in Phase 6 (D33, D60).
 
-Leave the default **"One account per email address"** setting on. We don't need Firebase Auth's **Identity Platform upgrade**: email and social sign-in stay free without it, while the upgrade adds per-user pricing above 50k monthly active users.
+Leave the default **"One account per email address"** setting on. We don't need Firebase Auth's **Identity Platform upgrade**: email and social sign-in stay free without it, while the upgrade adds per-user pricing above 50k monthly active users. SAML or OIDC single sign-on (Phase 6), if teams want it, would need the upgrade and its per-user pricing past the free tier, so check the price first.
 
 #### Battleplan profiles are separate from sign-in identities
 
@@ -411,7 +412,7 @@ App Store and Google Play both require in-app account deletion. The callable `de
 #### Provider setup gotchas (do these in the M0/M1 spike)
 
 - **Apple**
-  - App Store guideline 4.8 requires a privacy-focused login option whenever Google login is offered. Sign in with Apple satisfies it.
+  - App Store guideline 4.8 requires a privacy-focused login option whenever Google login is offered. Sign in with Apple satisfies it, and it's on from Phase 3, before the App Store in Phase 4.
   - On Android and web, Apple sign-in runs as a web flow. It needs a Services ID and return URL.
   - Register our email sending domain with Apple's **private email relay** so emails reach `@privaterelay.appleid.com` addresses.
 - **Google on web.** Use Firebase Auth's `signInWithPopup(GoogleAuthProvider())`. The `google_sign_in` plugin's web support is button-based and doesn't fit our sign-in screen.
@@ -930,8 +931,8 @@ Plain chat messages don't create center items; unread counts cover them. Replies
 
 **How the links open the app**
 
-- **iOS: Universal Links.** `/.well-known/apple-app-site-association` lists `/join/*`, `/activate*`, `/g/*`, and `/app/*`, plus the Associated Domains entitlement in the app. The website's own pages aren't listed, so they open in the browser.
-- **Android: App Links.** `/.well-known/assetlinks.json` plus intent filters with `autoVerify` for the same paths. The app strips a leading `/app` before routing.
+- **iOS: Universal Links.** `/.well-known/apple-app-site-association` lists `/join/*`, `/activate*`, `/g/*`, and `/app/*`, plus the Associated Domains entitlement in the app (Phase 4). The website's own pages aren't listed, so they open in the browser.
+- **Android: App Links.** `/.well-known/assetlinks.json` plus intent filters with `autoVerify` for the same paths. The app strips a leading `/app` before routing. Verified on dev; prod's fingerprints come in Phase 5.
 - **Hosting.** Firebase Hosting hosts the domain and serves both files from the website as `application/json`, with no redirects. The domain is registered at Cloudflare, which also runs its DNS and email forwarding; the records pointing at Hosting are DNS-only, not proxied (D29).
 - **Web fallback.** When the app isn't installed, the same URL opens the **web app** under `/app`, which is fully functional. Someone can join and start using Battleplan in the browser right away.
 - **Email links from Firebase Auth** (setup and sign-in links) use `ActionCodeSettings` with:
@@ -970,9 +971,32 @@ sequenceDiagram
 
 ### 6.7 Email
 
-- **Sent by Firebase Auth:** email verification and password reset. Customize the templates and sender name ("Battleplan") in the console.
-- **Sent by our Functions:** setup links, invites, security notices, and later digests. They go through a transactional email provider, or the Firebase **Trigger Email from Firestore** extension with the provider's SMTP.
-- **Deliverability.** Use a custom sending domain with **SPF, DKIM, and DMARC**. Register that domain with Apple's private email relay.
+Phase 1 sends email three ways, each the cheapest for its job (D61).
+
+| Email | Sent by |
+|---|---|
+| Verify the email after a password sign-up (AUTH-3, `sendEmailVerification`) | Firebase Auth |
+| Forgot password (AUTH-4, `sendPasswordResetEmail`) | Firebase Auth |
+| Email-link sign-in, including the proof step before linking a provider (AUTH-7, `sendSignInLinkToEmail`) | Firebase Auth |
+| Change of email: a link to the new address and a notice to the old one (AUTH-8, `verifyBeforeUpdateEmail`) | Firebase Auth |
+| Setup link for someone an admin added (AUTH-6, ADMIN-4; the link comes from the Admin SDK's `generateSignInWithEmailLink`) | Functions, through Resend |
+| Super-admin password reset (ADMIN-4, `generatePasswordResetLink`) | Functions, through Resend |
+| Email invites (INV-4), added to a team (TEAM-7), security notices (AUTH-7, AUTH-8) | Functions, through Resend |
+| Mail to `support@` and `privacy@` | Cloudflare Email Routing, forwarded to the owner's Gmail |
+
+- **Firebase Auth** costs $0, with no base fee. On Blaze its daily limits are 100,000 verification, 10,000 password-reset, 25,000 sign-in-link, and 10,000 address-change emails. The app already calls it (`lib/features/auth/data/firebase_auth_repository.dart`); Phase 1 adds the custom sender domain. Only the password-reset body can be edited; the other templates take a sender name, address, reply-to, and subject.
+- **Why not Cloudflare for signup emails.** Cloudflare Email Sending doesn't work on the free Workers plan. It starts at the $5/month Workers Paid minimum, which includes 3,000 emails, and it's still in public beta. Firebase is cheaper at any size Battleplan will reach.
+- **The setup link stays off Firebase on purpose.** Firebase has no editable template for the sign-in-link email, so a Firebase-sent setup email couldn't say who added the person or to which team. It would read like a sign-in nobody asked for. Firebase can't send invites or notices at all.
+- **Resend Free** sends from `noreply@getbattleplan.app` through `sendEmail()` in `functions/src/email/service.ts`. It's $0 for up to 100 emails a day (counted per recipient, reset at midnight UTC) and 3,000 a month, and dev and prod share that quota while they share the account. One big roster import can reach the cap, since §6.9 allows 200 adds and 200 email invites a day per team. A failed send logs `email_send_failed` and returns false, with no retry, so a log-based alert watches for that event.
+- **When the cap starts to bind**, move the Functions mail to Cloudflare Email Sending ($5/month for 3,000, then $0.35 per 1,000) rather than Resend Pro ($20/month). Cloudflare is cheaper below about 46,000 emails a month. Only `sendEmail()` changes: it calls `POST /accounts/{account_id}/email/sending/send` with a bearer token, the from, to, subject, html, and text fields carry over, and reply-to becomes `replyTo`. Firebase Auth's emails could also go through Cloudflare's SMTP (`smtp.mx.cloudflare.net:465`) with no app change, but that costs the same $5/month, so it isn't the cheap option.
+
+**Deliverability on `getbattleplan.app`.** Public DNS (checked 2026-10-12) has only Resend's records: the `send` CNAME (its SPF and bounce MX) and `resend._domainkey`. There's no apex SPF, MX, or `_dmarc` record yet.
+
+1. **Email Routing** (Phase 1) adds the apex MX records and `v=spf1 include:_spf.mx.cloudflare.net ~all`.
+2. **Firebase's custom domain** (Phase 1, after `getbattleplan.app` is on prod Hosting, because the action links use it): *Authentication → Templates → Customize domain*. Add the TXT and CNAME records (CNAMEs DNS only), and merge Firebase's SPF entry into the single apex `v=spf1` record; a domain can have only one, with at most 10 DNS lookups. Verification can take 24 hours. Sender `Battleplan <noreply@getbattleplan.app>`, reply-to `support@getbattleplan.app`. Send an email-link sign-in to check it also comes from the domain, since Firebase's docs name only verification, address change, and password reset.
+3. **DMARC** (Phase 1): start with `v=DMARC1; p=none; rua=...` and read the reports in Cloudflare DMARC Management. After 2 to 4 weeks of Firebase and Resend passing with aligned DKIM, move to `p=quarantine`, then `p=reject` (Phase 2). Keep a single `_dmarc` record.
+4. **Apple's private email relay** (Phase 3): register `getbattleplan.app` and `send.getbattleplan.app` as email sources, plus `cf-bounce.getbattleplan.app` if Cloudflare sending comes later. Apple checks that the envelope sender's domain matches a registered domain exactly and that DKIM's `d=` equals the From domain. Individual accounts get 32 sources.
+5. **Replying as `support@`.** Once DMARC is enforcing, don't send as `support@` through Gmail's servers: they aren't in SPF and don't sign DKIM for the domain.
 
 ### 6.8 Storage and media
 
@@ -994,7 +1018,7 @@ groups/{groupId}/documents/{docId}/{originalFileName}
 **App Check**
 
 - Providers: Play Integrity (Android), App Attest with DeviceCheck fallback (iOS), and reCAPTCHA Enterprise (web). The debug provider covers emulators and CI.
-- Run in **monitor mode** first, then **enforce** on Firestore, Storage, and Functions before public launch.
+- Run in **monitor mode** first (from Phase 1), then **enforce** on Firestore, Storage, and Functions for the web in Phase 2. App Attest and Play Integrity are enforced when the iOS and Android apps ship (Phases 4 and 5).
 
 **Rate limits.** All limits live in `shared/constants.json`.
 
@@ -1047,6 +1071,44 @@ Every feature is free for every team (SPEC §6.14, [PLANS.md](PLANS.md)); storag
 **Warnings (STORE-3).** After each Storage trigger and the daily recount, `teams.updateStorageAlert(g)` compares usage with 90% (`Limits.storageWarnPercent`) and 100%. When the level rises (none → warn → full), it records `groups.storageAlert` and notifies the team's admins once (`storageWarning` kind, a center item and a push). When usage falls back, the level drops without a notification, so the next rise notifies again.
 
 **Media (STORE-5).** `listTeamMedia(g)` (admins) lists every file under `groups/{g}/` from the bucket (path, size, content type, created), matched to what uses it: a chat photo (message ID and author), the team logo, the chat background, a document (its name and uploader, read with one `getAll` per 100 files), or nothing (an orphan). A document file is in use only when its document points at that exact file; a leftover upload in the same folder, or a file with no document, is not. `deleteTeamMedia(g, path)` deletes one file and fixes what pointed at it: a chat photo is removed from its message's `attachments` (a message left with no text or photos becomes "Photo removed by a team admin"), the logo or background is cleared, a document's file takes its document with it (only when the document points at that file; the response's `fixed` is `deletedDocument`), and an orphan is just deleted. The Storage trigger then lowers `storageBytes`. Admin deletions are audited.
+
+### 6.12 Backup and restore
+
+Built in Phase 2 (D62). The cheapest sound design is Google's own protection inside the prod project for everyday mistakes, plus one small encrypted copy in Cloudflare R2 in case the project itself is lost. **Nothing is kept longer than 7 days**, because LEGAL-6 promises that deleted content leaves backups within 7 days.
+
+| Layer | What it covers | Kept | Cost at our size |
+|---|---|---|---|
+| Firestore point-in-time recovery | Any document as it was at any minute in the last 7 days; read it back, or clone the database | 7 days | About the database's size at $0.15/GiB-month |
+| Firestore daily scheduled backups | The whole database, restored into a new database. A backup survives deleting the database. | 7 days | $0.03/GiB-month for each backup; a restore is $0.20/GiB |
+| Cloud Storage soft delete | Deleted photos and files, restored with `gcloud storage restore` | 7 days | Deleted files are billed for up to 7 more days |
+| Off-site copy in Cloudflare R2 | Losing the prod project, the billing account, or the Google account | Exports 6 days; files until deleted in the app, plus a night | $0 up to 10 GB, then $0.015/GB-month, with no download fees |
+
+The in-project layers go on when prod's database is created in Phase 1 (they cost pennies); Phase 2 adds the off-site copy, the runbook, and the drills. At our size the whole design costs **under $1/month**.
+
+**The off-site copy.** A nightly scheduled job in prod:
+
+1. runs a Firestore managed export into a staging bucket in prod, which a lifecycle rule empties after 1 day (an export bills one read per document);
+2. encrypts the export and uploads it to the R2 bucket, where a lifecycle rule deletes each export after 6 days, so none lasts past 7;
+3. mirrors Storage into R2: new files are encrypted and copied, and files deleted in the app are deleted from R2 the same night. Only what changed is copied, so Google's download charges stay near $0.
+
+The R2 API token can reach only that bucket. The encryption key lives in Secret Manager and in 1Password, with an offline copy, so Cloudflare holds only encrypted data.
+
+**Restoring**
+
+- **One document or a few:** read them at a past minute with point-in-time recovery, and write them back with a script.
+- **A bad deploy or a bulk mistake:** restore the latest good daily backup, or a point-in-time clone, into a new database; check it; then switch to it.
+- **A lost project:** create a new project, copy the latest R2 export back to a bucket, decrypt it, import it with `gcloud firestore import`, copy the files back into Storage, and redeploy (§9).
+
+**Drills.** Every 3 months, in dev: restore a backup to a new database, recover one deleted document with point-in-time recovery, and rebuild a fresh project from the R2 copy, timing each. The runbook and the results live in `docs/`.
+
+**Why R2.** Every option is cheap at our size, so minimum charges and the 7-day promise decide it.
+
+| Option | Price | Fit |
+|---|---|---|
+| **Cloudflare R2** | $0 up to 10 GB, then $0.015/GB-month; no download fees | Free at our size; lifecycle rules delete on time; Cloudflare already runs our DNS |
+| Wasabi | About $7 per TB-month, with a 1 TB minimum (about $7/month at any size) | Each file is billed for at least 90 days, so copies deleted after 7 days still cost 90 |
+| Azure Blob (Hot, LRS) | $0.0208/GB-month, plus download fees for a restore | No free tier after the trial; the cooler tiers bill at least 30 or 90 days |
+| A second Google Cloud project | Cloud Storage prices | Same Google account and billing, so it doesn't cover losing the account |
 
 ---
 
@@ -1109,7 +1171,7 @@ Repo conventions:
   Teams created and teams active per week are the platform's core health metrics.
 - **Functions** use structured logging, with a Cloud Monitoring alert on error rate.
 - **Budget alerts** at $5, $25, $50, and $100/month (GCP Billing), emailed to the owner.
-- **Backups.** Firestore **scheduled backups** run daily with 7-day retention. Enable them at launch; storage cost is minimal.
+- **Backups.** Point-in-time recovery, daily scheduled backups, Storage soft delete, and a nightly encrypted copy in Cloudflare R2, none kept longer than 7 days (§6.12). The in-project parts go on with prod's database in Phase 1; the off-site copy comes in Phase 2.
 - **Remote Config.** `min_supported_version` triggers a "please update" screen, so old clients can be retired. This matters for schema changes and the SQL migration.
 
 **Testing**
@@ -1137,9 +1199,9 @@ Integration flows:
   - Rules tests on the emulator
   - `flutter build web --base-href /app/`, assembled with `website/` into `build/hosting/`, and a deploy to a **Hosting preview channel**, with the URL posted on the PR
 - **On merge to `main`:** deploy rules, indexes, TTL policies, functions, and hosting to **dev**.
-- **On a release**, started by hand: deploy to **prod**. A private repo on GitHub Free has no approval gates (environments and required reviewers), so starting the workflow is the approval. Google accepts prod deploys only from this workflow, through a condition on its Workload Identity Federation provider. Fastlane or Codemagic builds and uploads to **TestFlight** and the **Play Console internal track**.
+- **On a release**, started by hand: deploy to **prod**. A private repo on GitHub Free has no approval gates (environments and required reviewers), so starting the workflow is the approval. Google accepts prod deploys only from this workflow, through a condition on its Workload Identity Federation provider. Fastlane or Codemagic builds and uploads to **TestFlight** (from Phase 4) and the **Play Console internal track** (from Phase 5).
 - **Deploy access** is keyless: Workload Identity Federation, with one deploy service account per project and no key files in GitHub.
-- **Minutes.** A private repo on GitHub Free gets 2,000 Actions minutes a month. Linux jobs (checks, web builds, Firebase deploys) take a few minutes each and fit easily. macOS jobs count 10×, so where iOS builds run (GitHub, Fastlane on the Mac, Codemagic, or Xcode Cloud) is decided before the team beta.
+- **Minutes.** A private repo on GitHub Free gets 2,000 Actions minutes a month. Linux jobs (checks, web builds, Firebase deploys) take a few minutes each and fit easily. macOS jobs count 10×, so where iOS builds run (GitHub, Fastlane on the Mac, Codemagic, or Xcode Cloud) is decided in Phase 4.
 - **Versioning.** One semantic version for all platforms, plus a monotonically increasing build number.
 
 ---
@@ -1188,6 +1250,22 @@ Assumptions for one active team: 25 members; 50 messages and 10 photos a day; ea
   - On Blaze, Firestore and Hosting have free quotas per project, so testing in dev doesn't use prod's.
   - The Functions, Cloud Scheduler (3 jobs), and Secret Manager free tiers are shared across the billing account. `tick` and `dailyCleanup` in both projects make 4 jobs, so the fourth costs about $0.10/month.
   - Set the function-image cleanup policy (`firebase functions:artifacts:setpolicy`) in both projects, so deploy images don't pile up in Artifact Registry.
+- **Phase 1 proves it.** After two weeks of our team on prod, the real bill per service goes here, next to the estimates above (ROADMAP task 192).
+
+**Fixed costs and services by phase (D60)**
+
+| Item | Phase | Cost |
+|---|---|---|
+| Domain, `getbattleplan.app` | 0 | $14.20/year after the first year ($8.20) |
+| Firebase on Blaze, prod and dev | 1 | ≈ $0–3/month for a few teams (above) |
+| Signup and account emails, Firebase Auth | 1 | $0 (§6.7) |
+| Functions emails, Resend Free | 1 | $0 up to 100 a day and 3,000 a month. Past that, Cloudflare Email Sending at $5/month for 3,000, then $0.35 per 1,000 |
+| Inbound mail and DMARC reports, Cloudflare | 1 | $0 |
+| Backups: point-in-time recovery, daily backups, R2 | 2 | Under $1/month (§6.12) |
+| Apple Developer Program | 3 | $99/year |
+| Google Play Console | 5 | $25 once |
+| Facebook sign-in | 6 | $0 |
+| SAML or OIDC single sign-on, if used | 6 | Identity Platform's per-user pricing past its free tier |
 
 ### 10.2 Cost-efficiency rules
 
@@ -1334,9 +1412,11 @@ Each phase is incremental and reversible.
 | Links without Dynamic Links, including email-link sign-in | Universal Links, App Links, and Auth `linkDomain` on our Hosting domain, with the web app as fallback. **Spike in M0.** |
 | Rules on flat collections depend on queries filtering by `groupId` | **Spike in M0.** Prove the membership checks, the RSVP rule, and the message rate limit in the rules emulator before building features. |
 | Layering erodes as the codebase grows | CI import-boundary check, collection ownership, the trigger map, and decision-log entries for new patterns (§5.2, §6.4, §14). |
-| Web push limits on iOS | The native iOS app is the primary iPhone path; the limit is explained in-app. |
+| Web push limits on iOS: until Phase 4, iPhone users get push only from the home-screen web app | The app explains Add to Home Screen (NOTIF-9), the Phase 1 proof pass tests it, and the native iOS app becomes the main iPhone path in Phase 4. |
+| Resend Free's 100-a-day cap stops setup and invite emails during a big roster import | A log-based alert on `email_send_failed`; move the Functions mail to Cloudflare Email Sending when the cap binds (§6.7). |
+| Losing the prod project, the billing account, or the Google account | The encrypted nightly copy in Cloudflare R2, and restore drills every 3 months (§6.12). |
 | Flutter web first-load size and chat scroll performance with images | WASM build, deferred loading, thumbnails, a performance budget (SPEC §8). |
-| App Store rejection under the user-generated-content rules (guideline 1.2) | Report, block, terms acceptance, and admin removal are all in the MVP. Provide a demo account with a seeded team for reviewers. |
+| App Store rejection under the user-generated-content rules (guideline 1.2), in Phase 4 | Report, block, terms acceptance, and admin removal are all in the MVP. Provide a demo account with a seeded team for reviewers. |
 | Spam or abusive teams once sign-up is public | Verified email to create teams, rate limits (§6.9), App Check, report queue, team suspension and user disabling by super admins. |
 | Costs grow with active teams (~$0.25–0.40 each per month) | Cost rules and read budgets (§10.2), per-team storage quota, budget alerts. Decide a funding model before reaching hundreds of teams (SPEC §12, Q4). |
 | Children's data in player records | Any player record that others manage may be a child's, on any team. Players never get accounts or sign in. Adults enter only a player's name, plus an optional jersey number and position: no photos, birthdates, or contact details. The Privacy Policy says so. |
@@ -1382,7 +1462,7 @@ Each phase is incremental and reversible.
 | D30 | Widgets import Flutter's standalone `material_ui` package, not `package:flutter/material.dart` | Material moved out of the Flutter framework (Flutter 3.44+), and go_router 18 already uses it; one Material library avoids mismatched `ThemeData` types | — |
 | D31 | Local development uses the emulators under a `demo-` project ID with placeholder app options, selected by `--dart-define=USE_EMULATORS=true` | Runs with no Firebase login or config, and a `demo-` project can't reach any cloud resource | — |
 | D32 | Each feature's repository providers are declared in its `application/providers.dart` and overridden with Firebase implementations in `app/providers.dart` | Presentation never imports `data/` or `app/`, and tests swap in fakes with the same overrides | — |
-| D33 | Facebook sign-in is removed from the plan (SPEC Q16, 2026-10-12). It can return as a backlog item | Not needed for our team; skips the Meta app, App Review, and Limited Login work. Google, Apple, and email cover sign-in, and Apple satisfies App Store guideline 4.8 | When teams ask for it |
+| D33 | Facebook sign-in is removed from the plan (SPEC Q16, 2026-10-12). It can return as a backlog item. **Later on 2026-10-12:** it returns as go-live Phase 6, with single sign-on (D60) | Not needed for our team; skips the Meta app, App Review, and Limited Login work. Google, Apple, and email cover sign-in, and Apple satisfies App Store guideline 4.8 | When teams ask for it |
 | D34 | On youth teams, team admins (coaches, staff) RSVP for themselves as `participantType: 'member'` on `rsvpFor: 'players'` events; counts keep players and adults apart (SPEC Q14). **2026-10-12 (D59):** every team works this way, and any member not linked to a player answers for themselves, counted as "others" | Coaches need to know which coaches are coming too, and parents answer only for their kids, so their own RSVPs would be noise | If parents ask to RSVP for themselves |
 | D35 | ~~Plus is per team, through licenses held by a person and movable between teams they admin; `groups.plan` caches the active license (SPEC §6.14, PLANS.md)~~ Superseded by D39 (2026-10-12) | Matches how coaches pay (one person buys for a team) and lets a license follow a coach to next season's team; one cached field keeps every check cheap | — |
 | D36 | ~~Plus features are enforced by rules and Functions from `groups.plan`, with `endsAt` checked at request time~~ Superseded by D39 (2026-10-12) | A Free team can't use Plus by calling the database directly, and Plus ends on time without waiting for a job | — |
@@ -1409,6 +1489,9 @@ Each phase is incremental and reversible.
 | D57 | The profile photo crop step (`CropPhotoScreen`, SET-1) is written in the app with Flutter's own widgets and `dart:ui` (drag and zoom in a circle, rendered again as a 512 px PNG), not a cropping package | A few hundred lines with no native code or web setup, the same on every platform; rendering again drops the photo's metadata | Crops need rotation or free aspect ratios |
 | D58 | Browser-only code (Web Share, pasted and dropped photos, the .ics download, browser details) uses the `web` package through conditional imports, never `dart:html` | `web` is the Dart team's JS-interop API, works under the `--wasm` build, and `dart:html` is deprecated | — |
 | D59 | One team type (SPEC Q17, 2026-10-12): `groups.teamType` and `events.rsvpFor` are gone and teams store `kind: 'team'`. Every team has players (`status: 'active' \| 'pending'`); `playerGuardians` holds "player links" and `guardianRequests` "player claims", each with `relation: 'self' \| 'guardian'`. Any member claims a player or adds one, and admins approve or decline (admins' own claims and players are approved at once). Every event takes one RSVP per player and per member answering for themselves, counted apart. Collections keep their names, and a missing `status`, `relation`, or `kind` reads as `active`, `guardian`, or `team`, so old docs need no rewrite beyond a dev-only migration | The owner asked for one kind of team that works for adults and kids alike; keeping the collection names and reading old docs safely limits churn, and `kind` lets a basic group type come later (TEAM-14) without another migration | A basic `group` kind is added (TEAM-14) |
+| D60 | Go-live in six phases (SPEC §9, 2026-10-12, the owner's request): 1, the website and the web app on Firebase Hosting, proven to run cheaply, with signup emails from Firebase; 2, GDPR and EU, backup and restore, and security hardening; 3, Sign in with Apple; 4, the App Store for iPhone and iPad; 5, Google Play; 6, Facebook sign-in and SSO. Continue with Apple is hidden until Phase 3, and the native apps keep building and passing tests in CI until they ship | The web app is complete and costs nothing extra to ship; store fees, reviews, and the 14-day Play test can wait until the web version has proven itself and the privacy, backup, and security work is done | Teams ask for the native apps sooner, such as for iPhone push |
+| D61 | Phase 1 email (§6.7): Firebase Auth sends every signup and account email; Resend Free sends the Functions mail (setup links, invites, notices); Cloudflare Email Routing receives mail to `support@` and `privacy@` | Firebase is $0 with high daily limits. Cloudflare Email Sending needs Workers Paid ($5/month minimum) and is in beta. Firebase has no editable sign-in-link template and can't send invites, so setup links stay on Resend | Resend's 100-a-day cap binds: move the Functions mail to Cloudflare Email Sending ($5/month for 3,000, then $0.35 per 1,000), cheaper than Resend Pro ($20/month) below about 46,000 a month |
+| D62 | Backups (§6.12): point-in-time recovery, daily Firestore backups, and Storage soft delete in the prod project, plus a nightly encrypted copy in Cloudflare R2; nothing kept longer than 7 days | Under $1/month at our size. Google's layers cover everyday mistakes, and the off-site copy covers losing the project or the account. It keeps LEGAL-6's 7-day promise. Wasabi bills a 1 TB and 90-day minimum, and Azure Blob has no free tier and charges for downloads | The R2 copy passes 10 GB, or teams need backups kept longer, which needs LEGAL-6 changed first |
 
 ---
 
