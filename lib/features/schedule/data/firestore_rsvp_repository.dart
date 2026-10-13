@@ -99,18 +99,20 @@ class FirestoreRsvpRepository implements RsvpRepository {
   }
 
   @override
-  Future<void> setRsvp(
+  Future<void> setRsvp(Event event, RsvpAnswer answer, {required UserId by}) =>
+      setRsvps(event, [answer], by: by);
+
+  @override
+  Future<void> setRsvps(
     Event event,
-    RsvpAnswer answer, {
+    List<RsvpAnswer> answers, {
     required UserId by,
   }) async {
-    final p = answer.participant;
-    final ref = _rsvps.doc(CompositeIds.rsvp(event.id, p.id));
-    // The local write shows at once (offline too); this completes when the
-    // server has it, and throws if the rules refuse it, for example after
-    // the deadline.
-    try {
-      await ref.set({
+    if (answers.isEmpty) return;
+    final batch = _db.batch();
+    for (final answer in answers) {
+      final p = answer.participant;
+      batch.set(_rsvps.doc(CompositeIds.rsvp(event.id, p.id)), {
         'eventId': event.id.value,
         'groupId': event.groupId.value,
         'participantType': p.type.value,
@@ -123,6 +125,12 @@ class FirestoreRsvpRepository implements RsvpRepository {
         'respondedBy': by.value,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+    }
+    // The local writes show at once (offline too); this completes when
+    // the server has them, and throws if the rules refuse any, for example
+    // after the deadline. One batch: all of them or none (PLAYER-11).
+    try {
+      await batch.commit();
     } on FirebaseException catch (e) {
       throw switch (e.code) {
         'permission-denied' => PermissionDenied(e.code),

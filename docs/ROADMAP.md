@@ -9,7 +9,7 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
 - Milestones M0 to M8 each ended working on iOS, Android, and web, with rules tests updated (SPEC §9). Go-live then runs in six phases, web first (below). Until Phase 4 the native apps keep building and passing tests, but don't ship.
 
-Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. Teams are now one type with players on every team, claims, and admin approval (tasks 181 to 186), and coaches can keep player details such as date of birth (tasks 216 to 218). The old M9 and Launch sections are replaced by six go-live phases: the website and web app first, then GDPR, backups, and security, then Sign in with Apple, the App Store, Google Play, and Facebook sign-in, each in its own phase (D60).
+Last updated: 2026-10-13. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. The first three v1.1 tasks are built: mentions, pins, and announcements; roster details and contact sharing; and answering for all my players with each player's RSVP history (tasks 135 to 137). Teams are now one type with players on every team, claims, and admin approval (tasks 181 to 186), and coaches can keep player details such as date of birth (tasks 216 to 218). The old M9 and Launch sections are replaced by six go-live phases: the website and web app first, then GDPR, backups, and security, then Sign in with Apple, the App Store, Google Play, and Facebook sign-in, each in its own phase (D60).
 
 ---
 
@@ -224,7 +224,7 @@ In SPEC §9's priority order. These are web build work, so they're built before 
 
 135. ✅ @mentions, edits, pins, and announcements (CHAT-14, CHAT-15). *Typing @ suggests team members, and a message names whoever's full name follows an @; mentions are bold, yours highlighted, and push even at Important only, with a Mentions switch in Settings. Admins can mention @everyone, pin up to 3 messages to a bar at the top (the `pinMessage` callable, audited), and send announcements that notify everyone who hasn't turned the team off. Editing was built in the MVP.*
 136. ✅ Roster details and contact sharing (TEAM-10). *Players sort by number or by name, and people by name with the owner first. Members share a phone number and email with each team from their own card, shown to the team with call, text, and email buttons; stopping always works, and leaving the team removes them.*
-137. "Same answer for all my players" and per-player RSVP history (PLAYER-11).
+137. ✅ "Same answer for all my players" and per-player RSVP history (PLAYER-11). *With two or more players to answer for, an "All my players" row on the event and its chat card answers for all of them in one batch, each keeping its note. The player card opens the player's RSVP history (last 3, 6, or 12 months, with totals) for the player's linked members and the team's admins.*
 138. Calendar subscription links (SCHED-11).
 139. RSVP nudges and guest counts (SCHED-12).
 140. Team-specific link previews for invites (ARCH §6.6).

@@ -18,7 +18,9 @@ mixin _$Player {
  PlayerId get id; GroupId get groupId; String get displayName; String? get jerseyNumber; String? get position;/// Pending until a team admin approves a member's new player
 /// (PLAYER-4). Players without a status are active.
  PlayerStatus get status;/// Who added it, and how they said they're linked (PLAYER-4).
- String? get proposedBy; PlayerRelation? get proposedRelation;
+ String? get proposedBy; PlayerRelation? get proposedRelation;/// When it was added to the roster, so its RSVP history starts there
+/// (PLAYER-11). Null on records read without it.
+ DateTime? get addedAt;
 /// Create a copy of Player
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +32,20 @@ $PlayerCopyWith<Player> get copyWith => _$PlayerCopyWithImpl<Player>(this as Pla
 @override
 bool operator ==(Object other) {
   final _this = this as Player;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Player&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.jerseyNumber, _this.jerseyNumber) || other.jerseyNumber == _this.jerseyNumber)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.proposedBy, _this.proposedBy) || other.proposedBy == _this.proposedBy)&&(identical(other.proposedRelation, _this.proposedRelation) || other.proposedRelation == _this.proposedRelation));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Player&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.jerseyNumber, _this.jerseyNumber) || other.jerseyNumber == _this.jerseyNumber)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.proposedBy, _this.proposedBy) || other.proposedBy == _this.proposedBy)&&(identical(other.proposedRelation, _this.proposedRelation) || other.proposedRelation == _this.proposedRelation)&&(identical(other.addedAt, _this.addedAt) || other.addedAt == _this.addedAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Player;
-  return Object.hash(runtimeType,_this.id,_this.groupId,_this.displayName,_this.jerseyNumber,_this.position,_this.status,_this.proposedBy,_this.proposedRelation);
+  return Object.hash(runtimeType,_this.id,_this.groupId,_this.displayName,_this.jerseyNumber,_this.position,_this.status,_this.proposedBy,_this.proposedRelation,_this.addedAt);
 }
 
 @override
 String toString() {
   final _this = this as Player;
-  return 'Player(id: ${_this.id}, groupId: ${_this.groupId}, displayName: ${_this.displayName}, jerseyNumber: ${_this.jerseyNumber}, position: ${_this.position}, status: ${_this.status}, proposedBy: ${_this.proposedBy}, proposedRelation: ${_this.proposedRelation})';
+  return 'Player(id: ${_this.id}, groupId: ${_this.groupId}, displayName: ${_this.displayName}, jerseyNumber: ${_this.jerseyNumber}, position: ${_this.position}, status: ${_this.status}, proposedBy: ${_this.proposedBy}, proposedRelation: ${_this.proposedRelation}, addedAt: ${_this.addedAt})';
 }
 
 
@@ -54,7 +56,7 @@ abstract mixin class $PlayerCopyWith<$Res>  {
   factory $PlayerCopyWith(Player value, $Res Function(Player) _then) = _$PlayerCopyWithImpl;
 @useResult
 $Res call({
- PlayerId id, GroupId groupId, String displayName, String? jerseyNumber, String? position, PlayerStatus status, String? proposedBy, PlayerRelation? proposedRelation
+ PlayerId id, GroupId groupId, String displayName, String? jerseyNumber, String? position, PlayerStatus status, String? proposedBy, PlayerRelation? proposedRelation, DateTime? addedAt
 });
 
 
@@ -71,7 +73,7 @@ class _$PlayerCopyWithImpl<$Res>
 
 /// Create a copy of Player
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? displayName = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? status = null,Object? proposedBy = freezed,Object? proposedRelation = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? displayName = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? status = null,Object? proposedBy = freezed,Object? proposedRelation = freezed,Object? addedAt = freezed,}) {
   return _then(Player(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as PlayerId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -81,7 +83,8 @@ as String?,position: freezed == position ? _self.position : position // ignore: 
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as PlayerStatus,proposedBy: freezed == proposedBy ? _self.proposedBy : proposedBy // ignore: cast_nullable_to_non_nullable
 as String?,proposedRelation: freezed == proposedRelation ? _self.proposedRelation : proposedRelation // ignore: cast_nullable_to_non_nullable
-as PlayerRelation?,
+as PlayerRelation?,addedAt: freezed == addedAt ? _self.addedAt : addedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -166,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerId id,  GroupId groupId,  String displayName,  String? jerseyNumber,  String? position,  PlayerStatus status,  String? proposedBy,  PlayerRelation? proposedRelation)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerId id,  GroupId groupId,  String displayName,  String? jerseyNumber,  String? position,  PlayerStatus status,  String? proposedBy,  PlayerRelation? proposedRelation,  DateTime? addedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Player() when $default != null:
-return $default(_that.id,_that.groupId,_that.displayName,_that.jerseyNumber,_that.position,_that.status,_that.proposedBy,_that.proposedRelation);case _:
+return $default(_that.id,_that.groupId,_that.displayName,_that.jerseyNumber,_that.position,_that.status,_that.proposedBy,_that.proposedRelation,_that.addedAt);case _:
   return orElse();
 
 }
@@ -187,10 +190,10 @@ return $default(_that.id,_that.groupId,_that.displayName,_that.jerseyNumber,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerId id,  GroupId groupId,  String displayName,  String? jerseyNumber,  String? position,  PlayerStatus status,  String? proposedBy,  PlayerRelation? proposedRelation)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerId id,  GroupId groupId,  String displayName,  String? jerseyNumber,  String? position,  PlayerStatus status,  String? proposedBy,  PlayerRelation? proposedRelation,  DateTime? addedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Player():
-return $default(_that.id,_that.groupId,_that.displayName,_that.jerseyNumber,_that.position,_that.status,_that.proposedBy,_that.proposedRelation);case _:
+return $default(_that.id,_that.groupId,_that.displayName,_that.jerseyNumber,_that.position,_that.status,_that.proposedBy,_that.proposedRelation,_that.addedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +210,10 @@ return $default(_that.id,_that.groupId,_that.displayName,_that.jerseyNumber,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerId id,  GroupId groupId,  String displayName,  String? jerseyNumber,  String? position,  PlayerStatus status,  String? proposedBy,  PlayerRelation? proposedRelation)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerId id,  GroupId groupId,  String displayName,  String? jerseyNumber,  String? position,  PlayerStatus status,  String? proposedBy,  PlayerRelation? proposedRelation,  DateTime? addedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Player() when $default != null:
-return $default(_that.id,_that.groupId,_that.displayName,_that.jerseyNumber,_that.position,_that.status,_that.proposedBy,_that.proposedRelation);case _:
+return $default(_that.id,_that.groupId,_that.displayName,_that.jerseyNumber,_that.position,_that.status,_that.proposedBy,_that.proposedRelation,_that.addedAt);case _:
   return null;
 
 }
@@ -222,7 +225,7 @@ return $default(_that.id,_that.groupId,_that.displayName,_that.jerseyNumber,_tha
 
 
 class _Player extends Player {
-  const _Player({required this.id, required this.groupId, required this.displayName, this.jerseyNumber, this.position, this.status = PlayerStatus.active, this.proposedBy, this.proposedRelation}): super._();
+  const _Player({required this.id, required this.groupId, required this.displayName, this.jerseyNumber, this.position, this.status = PlayerStatus.active, this.proposedBy, this.proposedRelation, this.addedAt}): super._();
   
 
 @override final  PlayerId id;
@@ -236,6 +239,9 @@ class _Player extends Player {
 /// Who added it, and how they said they're linked (PLAYER-4).
 @override final  String? proposedBy;
 @override final  PlayerRelation? proposedRelation;
+/// When it was added to the roster, so its RSVP history starts there
+/// (PLAYER-11). Null on records read without it.
+@override final  DateTime? addedAt;
 
 /// Create a copy of Player
 /// with the given fields replaced by the non-null parameter values.
@@ -247,18 +253,18 @@ _$PlayerCopyWith<_Player> get copyWith => __$PlayerCopyWithImpl<_Player>(this, _
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Player&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.jerseyNumber, jerseyNumber) || other.jerseyNumber == jerseyNumber)&&(identical(other.position, position) || other.position == position)&&(identical(other.status, status) || other.status == status)&&(identical(other.proposedBy, proposedBy) || other.proposedBy == proposedBy)&&(identical(other.proposedRelation, proposedRelation) || other.proposedRelation == proposedRelation));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Player&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.jerseyNumber, jerseyNumber) || other.jerseyNumber == jerseyNumber)&&(identical(other.position, position) || other.position == position)&&(identical(other.status, status) || other.status == status)&&(identical(other.proposedBy, proposedBy) || other.proposedBy == proposedBy)&&(identical(other.proposedRelation, proposedRelation) || other.proposedRelation == proposedRelation)&&(identical(other.addedAt, addedAt) || other.addedAt == addedAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,groupId,displayName,jerseyNumber,position,status,proposedBy,proposedRelation);
+    return Object.hash(runtimeType,id,groupId,displayName,jerseyNumber,position,status,proposedBy,proposedRelation,addedAt);
 }
 
 @override
 String toString() {
-    return 'Player(id: $id, groupId: $groupId, displayName: $displayName, jerseyNumber: $jerseyNumber, position: $position, status: $status, proposedBy: $proposedBy, proposedRelation: $proposedRelation)';
+    return 'Player(id: $id, groupId: $groupId, displayName: $displayName, jerseyNumber: $jerseyNumber, position: $position, status: $status, proposedBy: $proposedBy, proposedRelation: $proposedRelation, addedAt: $addedAt)';
 }
 
 
@@ -269,7 +275,7 @@ abstract mixin class _$PlayerCopyWith<$Res> implements $PlayerCopyWith<$Res> {
   factory _$PlayerCopyWith(_Player value, $Res Function(_Player) _then) = __$PlayerCopyWithImpl;
 @override @useResult
 $Res call({
- PlayerId id, GroupId groupId, String displayName, String? jerseyNumber, String? position, PlayerStatus status, String? proposedBy, PlayerRelation? proposedRelation
+ PlayerId id, GroupId groupId, String displayName, String? jerseyNumber, String? position, PlayerStatus status, String? proposedBy, PlayerRelation? proposedRelation, DateTime? addedAt
 });
 
 
@@ -286,7 +292,7 @@ class __$PlayerCopyWithImpl<$Res>
 
 /// Create a copy of Player
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? displayName = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? status = null,Object? proposedBy = freezed,Object? proposedRelation = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? displayName = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? status = null,Object? proposedBy = freezed,Object? proposedRelation = freezed,Object? addedAt = freezed,}) {
   return _then(_Player(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as PlayerId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -296,7 +302,8 @@ as String?,position: freezed == position ? _self.position : position // ignore: 
 as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as PlayerStatus,proposedBy: freezed == proposedBy ? _self.proposedBy : proposedBy // ignore: cast_nullable_to_non_nullable
 as String?,proposedRelation: freezed == proposedRelation ? _self.proposedRelation : proposedRelation // ignore: cast_nullable_to_non_nullable
-as PlayerRelation?,
+as PlayerRelation?,addedAt: freezed == addedAt ? _self.addedAt : addedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

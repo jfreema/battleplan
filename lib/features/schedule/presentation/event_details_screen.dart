@@ -379,7 +379,21 @@ class _RsvpSection extends ConsumerWidget {
               style: muted,
             ),
           ),
-        // Canceled events take no answers (SCHED-7).
+        // Canceled events take no answers (SCHED-7). Two or more players
+        // get one answer for all of them first (PLAYER-11).
+        if (!event.isCanceled && mine.where((p) => p.isPlayer).length > 1)
+          padded(
+            SameAnswerButtons(
+              event: event,
+              players: [
+                for (final p in mine)
+                  if (p.isPlayer) p,
+              ],
+              answerOf: (id) => answerOf(rsvps, id),
+              enabled: open,
+              allowMaybe: allowMaybe,
+            ),
+          ),
         if (!event.isCanceled)
           for (final p in mine)
             padded(
@@ -563,20 +577,127 @@ class RsvpButtons extends ConsumerWidget {
   }
 }
 
+/// "All my players" (PLAYER-11): one tap gives every player I answer for
+/// the same answer, written in one batch, each keeping its note. It shows
+/// that answer while they all have it. My own answer as a member (Me)
+/// stays apart.
+class SameAnswerButtons extends ConsumerWidget {
+  const new({
+    required this.event,
+    required this.players,
+    required this.answerOf,
+    required this.enabled,
+    this.allowMaybe = true,
+    this.compact = false,
+    super.key,
+  });
+
+  final Event event;
+
+  /// Two or more players I answer for.
+  final List<Participant> players;
+  final Rsvp? Function(String participantId) answerOf;
+  final bool enabled;
+  final bool allowMaybe;
+
+  /// The chat card's smaller buttons, without icons, as [RsvpButtons].
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final statuses = {for (final p in players) answerOf(p.id)?.status};
+    final shared = statuses.length == 1 ? statuses.single : null;
+    final options = [
+      RsvpStatus.going,
+      if (allowMaybe || shared == RsvpStatus.maybe) RsvpStatus.maybe,
+      RsvpStatus.notGoing,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(
+            top: compact ? Space.xs : Space.sm,
+            bottom: Space.xs,
+          ),
+          child: Text(l10n.rsvpAllMyPlayers, style: theme.textTheme.titleSmall),
+        ),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<RsvpStatus>(
+            emptySelectionAllowed: true,
+            showSelectedIcon: false,
+            segments: [
+              for (final s in options)
+                ButtonSegment(
+                  value: s,
+                  icon: compact ? null : Icon(statusIcon(s)),
+                  label: Text(statusLabel(l10n, s)),
+                ),
+            ],
+            selected: {?shared},
+            style: SegmentedButton.styleFrom(
+              minimumSize: Size(0, compact ? 48 : 52),
+              selectedBackgroundColor: shared == null
+                  ? null
+                  : statusColor(context, shared).withValues(alpha: 0.18),
+            ),
+            onSelectionChanged: enabled
+                ? (s) {
+                    if (s.isEmpty) return;
+                    Haptics.selection();
+                    unawaited(_answerAll(context, ref, s.first));
+                  }
+                : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Answers every player that doesn't have [status] yet.
+  Future<void> _answerAll(
+    BuildContext context,
+    WidgetRef ref,
+    RsvpStatus status,
+  ) => setRsvpsWithFeedback(context, ref, event, [
+    for (final p in players)
+      if (answerOf(p.id)?.status != status)
+        RsvpAnswer(
+          participant: p,
+          status: status,
+          note: answerOf(p.id)?.note ?? '',
+        ),
+  ]);
+}
+
 /// Writes an answer and says so if it's refused or fails.
 Future<void> setRsvpWithFeedback(
   BuildContext context,
   WidgetRef ref,
   Event event,
   RsvpAnswer answer,
+) => setRsvpsWithFeedback(context, ref, event, [answer]);
+
+/// Writes answers together (PLAYER-11) and says so if they're refused or
+/// fail: all of them save, or none.
+Future<void> setRsvpsWithFeedback(
+  BuildContext context,
+  WidgetRef ref,
+  Event event,
+  List<RsvpAnswer> answers,
 ) async {
+  if (answers.isEmpty) return;
   final l10n = AppLocalizations.of(context);
   final uid = ref.read(authUserProvider).value?.uid;
   if (uid == null) return;
+  final repo = ref.read(rsvpRepositoryProvider);
   try {
-    await ref
-        .read(rsvpRepositoryProvider)
-        .setRsvp(event, answer, by: UserId(uid));
+    await (answers.length == 1
+        ? repo.setRsvp(event, answers.single, by: UserId(uid))
+        : repo.setRsvps(event, answers, by: UserId(uid)));
   } on AppFailure catch (e) {
     if (!context.mounted) return;
     showAppSnackBar(

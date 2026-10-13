@@ -34,6 +34,14 @@ abstract interface class EventRepository {
     DateTime until,
   );
 
+  /// Every event starting in [from, until), soonest first, read once in
+  /// pages of 100: a player's RSVP history over a season (PLAYER-11).
+  Future<List<Event>> eventsBetween(
+    GroupId groupId,
+    DateTime from,
+    DateTime until,
+  );
+
   /// One event, live; null once it's deleted.
   Stream<Event?> watchEvent(EventId id);
 

@@ -43,6 +43,7 @@ import 'package:battleplan/features/notifications/presentation/team_notification
 import 'package:battleplan/features/players/presentation/add_players_screen.dart';
 import 'package:battleplan/features/players/presentation/player_card_screen.dart';
 import 'package:battleplan/features/players/presentation/player_details_screen.dart';
+import 'package:battleplan/features/players/presentation/player_rsvp_history_screen.dart';
 import 'package:battleplan/features/players/presentation/who_are_you_screen.dart';
 import 'package:battleplan/features/safety/presentation/blocked_people_screen.dart';
 import 'package:battleplan/features/safety/presentation/reports_screen.dart';
@@ -435,6 +436,17 @@ GoRouter router(Ref ref) {
                   ),
                 ),
                 routes: [
+                  // The player's RSVP history (PLAYER-11).
+                  GoRoute(
+                    path: 'history',
+                    pageBuilder: (_, state) => PanelPage(
+                      key: state.pageKey,
+                      child: PlayerRsvpHistoryScreen(
+                        groupId: GroupId(state.pathParameters['groupId']!),
+                        playerId: PlayerId(state.pathParameters['playerId']!),
+                      ),
+                    ),
+                  ),
                   // The player's details form (PLAYER-12).
                   GoRoute(
                     path: 'details',

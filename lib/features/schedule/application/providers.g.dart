@@ -1022,6 +1022,94 @@ final class EventsInRangeFamily extends $Family
   String toString() => r'eventsInRangeProvider';
 }
 
+/// Every event of a team starting in [from, until), read once (PLAYER-11).
+
+@ProviderFor(eventsBetween)
+final eventsBetweenProvider = EventsBetweenFamily._();
+
+/// Every event of a team starting in [from, until), read once (PLAYER-11).
+
+final class EventsBetweenProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Event>>,
+          List<Event>,
+          FutureOr<List<Event>>
+        >
+    with $FutureModifier<List<Event>>, $FutureProvider<List<Event>> {
+  /// Every event of a team starting in [from, until), read once (PLAYER-11).
+  EventsBetweenProvider._({
+    required EventsBetweenFamily super.from,
+    required (GroupId, DateTime, DateTime) super.argument,
+  }) : super(
+         retry: null,
+         name: r'eventsBetweenProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$eventsBetweenHash();
+
+  @override
+  String toString() {
+    return r'eventsBetweenProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Event>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Event>> create(Ref ref) {
+    final argument = this.argument as (GroupId, DateTime, DateTime);
+    return eventsBetween(ref, argument.$1, argument.$2, argument.$3);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EventsBetweenProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$eventsBetweenHash() => r'f0b827a74a9215848f9b9777e3716ed1fa36cdb3';
+
+/// Every event of a team starting in [from, until), read once (PLAYER-11).
+
+final class EventsBetweenFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<Event>>,
+          (GroupId, DateTime, DateTime)
+        > {
+  EventsBetweenFamily._()
+    : super(
+        retry: null,
+        name: r'eventsBetweenProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Every event of a team starting in [from, until), read once (PLAYER-11).
+
+  EventsBetweenProvider call(GroupId groupId, DateTime from, DateTime until) =>
+      EventsBetweenProvider._(argument: (groupId, from, until), from: this);
+
+  @override
+  String toString() => r'eventsBetweenProvider';
+}
+
 /// A team's latest 50 events starting before [before], live.
 
 @ProviderFor(eventsBefore)

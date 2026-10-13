@@ -356,6 +356,15 @@ Stream<List<Event>> eventsInRange(
   DateTime until,
 ) => ref.watch(eventRepositoryProvider).watchRange(groupId, from, until);
 
+/// Every event of a team starting in [from, until), read once (PLAYER-11).
+@riverpod
+Future<List<Event>> eventsBetween(
+  Ref ref,
+  GroupId groupId,
+  DateTime from,
+  DateTime until,
+) => ref.watch(eventRepositoryProvider).eventsBetween(groupId, from, until);
+
 /// A team's latest 50 events starting before [before], live.
 @riverpod
 Stream<List<Event>> eventsBefore(Ref ref, GroupId groupId, DateTime before) =>

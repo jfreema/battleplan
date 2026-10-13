@@ -226,6 +226,23 @@ void main() {
       },
     );
 
+    test('writes several answers in one batch (PLAYER-11)', () async {
+      final e = event('e1', DateTime.utc(2026, 10, 20, 18));
+      await repo.setRsvps(e, [
+        answer('p1', RsvpStatus.going, note: ' late '),
+        answer('p2', RsvpStatus.going),
+      ], by: const UserId('maria'));
+      final p1 = (await db.doc('rsvps/e1_p1').get()).data()!;
+      final p2 = (await db.doc('rsvps/e1_p2').get()).data()!;
+      expect(p1['status'], 'going');
+      expect(p1['note'], 'late');
+      expect(p2['respondedBy'], 'maria');
+      expect(p2['eventStartAt'], Timestamp.fromDate(e.startAt));
+      // Nothing to write is nothing done.
+      await repo.setRsvps(e, const [], by: const UserId('maria'));
+      expect((await repo.watchForEvent(g, e.id).first).length, 2);
+    });
+
     test('reads past the first 100 of my answers', () async {
       for (var i = 0; i < 105; i++) {
         await repo.setRsvp(

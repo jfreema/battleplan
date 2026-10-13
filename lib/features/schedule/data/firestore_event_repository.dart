@@ -85,6 +85,38 @@ class FirestoreEventRepository implements EventRepository {
       .map((q) => [for (final d in q.docs) eventFromFirestore(d.id, d.data())]);
 
   @override
+  Future<List<Event>> eventsBetween(
+    GroupId groupId,
+    DateTime from,
+    DateTime until,
+  ) async {
+    final q = _team(groupId)
+        .where('startAt', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
+        .where('startAt', isLessThan: Timestamp.fromDate(until))
+        .orderBy('startAt');
+    final out = <Event>[];
+    DocumentSnapshot<Object?>? last;
+    try {
+      for (;;) {
+        final page = await (last == null ? q : q.startAfterDocument(last))
+            .limit(Limits.queryLimitMax)
+            .get();
+        out.addAll([
+          for (final d in page.docs) eventFromFirestore(d.id, d.data()),
+        ]);
+        if (page.docs.length < Limits.queryLimitMax) return out;
+        last = page.docs.last;
+      }
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        'unavailable' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
   Stream<Event?> watchEvent(EventId id) => _events
       .doc(id.value)
       .snapshots()

@@ -412,6 +412,10 @@ Player playerFromFirestore(
   status: PlayerStatus.tryParse(d['status'] as String?) ?? PlayerStatus.active,
   proposedBy: d['proposedBy'] as String?,
   proposedRelation: PlayerRelation.tryParse(d['proposedRelation'] as String?),
+  addedAt: switch (d['createdAt']) {
+    final Timestamp t => t.toDate(),
+    _ => null,
+  },
 );
 
 /// A link's or claim's relation; old ones without it are guardians.

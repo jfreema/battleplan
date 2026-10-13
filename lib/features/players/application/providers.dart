@@ -5,6 +5,7 @@ import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
+import 'package:battleplan/features/schedule/domain/rsvp_history.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
@@ -83,6 +84,54 @@ Stream<Map<String, Rsvp>> playerRsvps(
     .watchMine(groupId, [
       playerId.value,
     ], from: DateTime.now().subtract(const Duration(days: 1)))
+    .map((list) => {for (final r in list) r.eventId.value: r});
+
+/// A player's RSVP history (PLAYER-11): the team's events that took RSVPs
+/// and started in [from, until), since the player was added, newest first,
+/// with the player's answers (live), for the player's linked members and
+/// the team's admins.
+@riverpod
+AsyncValue<RsvpHistory> playerRsvpHistory(
+  Ref ref,
+  GroupId groupId,
+  PlayerId playerId,
+  DateTime from,
+  DateTime until,
+) {
+  final events = ref.watch(eventsBetweenProvider(groupId, from, until));
+  final answers = ref.watch(
+    _playerAnswersProvider(groupId, playerId, from, until),
+  );
+  if (events.hasError) {
+    return AsyncError(events.error!, events.stackTrace ?? StackTrace.current);
+  }
+  if (!events.hasValue || !answers.hasValue) return const AsyncLoading();
+  final player = ref
+      .watch(playersProvider(groupId))
+      .value
+      ?.where((p) => p.id == playerId)
+      .firstOrNull;
+  return AsyncData(
+    rsvpHistoryOf(
+      events: events.requireValue,
+      answers: answers.requireValue,
+      now: until,
+      since: player?.addedAt,
+    ),
+  );
+}
+
+/// A player's answers on events starting in [from, until), by event ID.
+@riverpod
+Stream<Map<String, Rsvp>> _playerAnswers(
+  Ref ref,
+  GroupId groupId,
+  PlayerId playerId,
+  DateTime from,
+  DateTime until,
+) => ref
+    .watch(rsvpRepositoryProvider)
+    .watchMine(groupId, [playerId.value], from: from, until: until)
     .map((list) => {for (final r in list) r.eventId.value: r});
 
 /// A player's details (PLAYER-12). Watched only for the team's admins and

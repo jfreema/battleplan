@@ -1890,6 +1890,22 @@ class FakeEventRepository implements EventRepository {
     ]..sort((a, b) => a.startAt.compareTo(b.startAt)),
   );
 
+  /// Every range a player's RSVP history read (PLAYER-11).
+  final List<({DateTime from, DateTime until})> ranges = [];
+
+  @override
+  Future<List<Event>> eventsBetween(
+    GroupId groupId,
+    DateTime from,
+    DateTime until,
+  ) async {
+    ranges.add((from: from, until: until));
+    return [
+      for (final e in _team(groupId))
+        if (!e.startAt.isBefore(from) && e.startAt.isBefore(until)) e,
+    ]..sort((a, b) => a.startAt.compareTo(b.startAt));
+  }
+
   @override
   Stream<Event?> watchEvent(EventId id) => _live(() => events[id.value]);
 
@@ -2213,6 +2229,29 @@ class FakeRsvpRepository implements RsvpRepository {
         eventStartAt: event.startAt,
       ),
     );
+  }
+
+  /// Every batch of answers written together (PLAYER-11), as
+  /// "participant:status" lists.
+  final List<List<String>> batches = [];
+
+  @override
+  Future<void> setRsvps(
+    Event event,
+    List<RsvpAnswer> answers, {
+    required UserId by,
+  }) async {
+    final current = events.events[event.id.value];
+    // All or none, as one batch is.
+    if (refuse || current == null || current.isCanceled) {
+      throw const PermissionDenied('closed');
+    }
+    batches.add([
+      for (final a in answers) '${a.participant.id}:${a.status.value}',
+    ]);
+    for (final a in answers) {
+      await setRsvp(event, a, by: by);
+    }
   }
 }
 

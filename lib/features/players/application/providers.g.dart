@@ -672,6 +672,233 @@ final class PlayerRsvpsFamily extends $Family
   String toString() => r'playerRsvpsProvider';
 }
 
+/// A player's RSVP history (PLAYER-11): the team's events that took RSVPs
+/// and started in [from, until), since the player was added, newest first,
+/// with the player's answers (live), for the player's linked members and
+/// the team's admins.
+
+@ProviderFor(playerRsvpHistory)
+final playerRsvpHistoryProvider = PlayerRsvpHistoryFamily._();
+
+/// A player's RSVP history (PLAYER-11): the team's events that took RSVPs
+/// and started in [from, until), since the player was added, newest first,
+/// with the player's answers (live), for the player's linked members and
+/// the team's admins.
+
+final class PlayerRsvpHistoryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<RsvpHistory>,
+          AsyncValue<RsvpHistory>,
+          AsyncValue<RsvpHistory>
+        >
+    with $Provider<AsyncValue<RsvpHistory>> {
+  /// A player's RSVP history (PLAYER-11): the team's events that took RSVPs
+  /// and started in [from, until), since the player was added, newest first,
+  /// with the player's answers (live), for the player's linked members and
+  /// the team's admins.
+  PlayerRsvpHistoryProvider._({
+    required PlayerRsvpHistoryFamily super.from,
+    required (GroupId, PlayerId, DateTime, DateTime) super.argument,
+  }) : super(
+         retry: null,
+         name: r'playerRsvpHistoryProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$playerRsvpHistoryHash();
+
+  @override
+  String toString() {
+    return r'playerRsvpHistoryProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<AsyncValue<RsvpHistory>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AsyncValue<RsvpHistory> create(Ref ref) {
+    final argument = this.argument as (GroupId, PlayerId, DateTime, DateTime);
+    return playerRsvpHistory(
+      ref,
+      argument.$1,
+      argument.$2,
+      argument.$3,
+      argument.$4,
+    );
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AsyncValue<RsvpHistory> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AsyncValue<RsvpHistory>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PlayerRsvpHistoryProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$playerRsvpHistoryHash() => r'44fdd933b5cb62216d616c03a9111bd1de9b7401';
+
+/// A player's RSVP history (PLAYER-11): the team's events that took RSVPs
+/// and started in [from, until), since the player was added, newest first,
+/// with the player's answers (live), for the player's linked members and
+/// the team's admins.
+
+final class PlayerRsvpHistoryFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          AsyncValue<RsvpHistory>,
+          (GroupId, PlayerId, DateTime, DateTime)
+        > {
+  PlayerRsvpHistoryFamily._()
+    : super(
+        retry: null,
+        name: r'playerRsvpHistoryProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A player's RSVP history (PLAYER-11): the team's events that took RSVPs
+  /// and started in [from, until), since the player was added, newest first,
+  /// with the player's answers (live), for the player's linked members and
+  /// the team's admins.
+
+  PlayerRsvpHistoryProvider call(
+    GroupId groupId,
+    PlayerId playerId,
+    DateTime from,
+    DateTime until,
+  ) => PlayerRsvpHistoryProvider._(
+    argument: (groupId, playerId, from, until),
+    from: this,
+  );
+
+  @override
+  String toString() => r'playerRsvpHistoryProvider';
+}
+
+/// A player's answers on events starting in [from, until), by event ID.
+
+@ProviderFor(_playerAnswers)
+final _playerAnswersProvider = _PlayerAnswersFamily._();
+
+/// A player's answers on events starting in [from, until), by event ID.
+
+final class _PlayerAnswersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, Rsvp>>,
+          Map<String, Rsvp>,
+          Stream<Map<String, Rsvp>>
+        >
+    with
+        $FutureModifier<Map<String, Rsvp>>,
+        $StreamProvider<Map<String, Rsvp>> {
+  /// A player's answers on events starting in [from, until), by event ID.
+  _PlayerAnswersProvider._({
+    required _PlayerAnswersFamily super.from,
+    required (GroupId, PlayerId, DateTime, DateTime) super.argument,
+  }) : super(
+         retry: null,
+         name: r'_playerAnswersProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$_playerAnswersHash();
+
+  @override
+  String toString() {
+    return r'_playerAnswersProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Map<String, Rsvp>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Map<String, Rsvp>> create(Ref ref) {
+    final argument = this.argument as (GroupId, PlayerId, DateTime, DateTime);
+    return _playerAnswers(
+      ref,
+      argument.$1,
+      argument.$2,
+      argument.$3,
+      argument.$4,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is _PlayerAnswersProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$_playerAnswersHash() => r'8b3fba309e2ab74444a69318a1ab5f297cf0dbf0';
+
+/// A player's answers on events starting in [from, until), by event ID.
+
+final class _PlayerAnswersFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          Stream<Map<String, Rsvp>>,
+          (GroupId, PlayerId, DateTime, DateTime)
+        > {
+  _PlayerAnswersFamily._()
+    : super(
+        retry: null,
+        name: r'_playerAnswersProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A player's answers on events starting in [from, until), by event ID.
+
+  _PlayerAnswersProvider call(
+    GroupId groupId,
+    PlayerId playerId,
+    DateTime from,
+    DateTime until,
+  ) => _PlayerAnswersProvider._(
+    argument: (groupId, playerId, from, until),
+    from: this,
+  );
+
+  @override
+  String toString() => r'_playerAnswersProvider';
+}
+
 /// A player's details (PLAYER-12). Watched only for the team's admins and
 /// the members linked to the player ([seesPlayerDetails]): nobody else's
 /// app asks for them.

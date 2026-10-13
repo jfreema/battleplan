@@ -22,4 +22,12 @@ abstract interface class RsvpRepository {
   /// Writes an answer (SCHED-5). It shows at once, offline too, and goes
   /// out when the connection allows; throws if the rules refuse it.
   Future<void> setRsvp(Event event, RsvpAnswer answer, {required UserId by});
+
+  /// Writes several answers on one event in one batch, so they all save or
+  /// none do: "Same answer for all my players" (PLAYER-11).
+  Future<void> setRsvps(
+    Event event,
+    List<RsvpAnswer> answers, {
+    required UserId by,
+  });
 }

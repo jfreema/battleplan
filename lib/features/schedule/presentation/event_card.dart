@@ -170,6 +170,22 @@ class _CardRsvps extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // One answer for all my players first (PLAYER-11).
+        if (mine.where((p) => p.isPlayer).length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: Space.sm),
+            child: SameAnswerButtons(
+              event: event,
+              players: [
+                for (final p in mine)
+                  if (p.isPlayer) p,
+              ],
+              answerOf: (id) => answers[id],
+              enabled: true,
+              allowMaybe: allowMaybe,
+              compact: true,
+            ),
+          ),
         for (final p in mine)
           Padding(
             padding: const EdgeInsets.only(top: Space.sm),

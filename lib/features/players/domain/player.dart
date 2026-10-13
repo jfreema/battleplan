@@ -24,6 +24,10 @@ abstract class Player with _$Player {
     /// Who added it, and how they said they're linked (PLAYER-4).
     String? proposedBy,
     PlayerRelation? proposedRelation,
+
+    /// When it was added to the roster, so its RSVP history starts there
+    /// (PLAYER-11). Null on records read without it.
+    DateTime? addedAt,
   }) = _Player;
 
   const new _();

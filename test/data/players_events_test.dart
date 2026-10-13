@@ -117,6 +117,15 @@ void main() {
       final p = playerFromFirestore('old', _g, const {'displayName': 'Old'});
       expect(p.status, PlayerStatus.active);
       expect(p.proposedRelation, isNull);
+      // When it joined the roster, for its RSVP history (PLAYER-11).
+      expect(p.addedAt, isNull);
+      expect(
+        playerFromFirestore('new', _g, {
+          'displayName': 'New',
+          'createdAt': Timestamp.fromDate(DateTime.utc(2026, 9)),
+        }).addedAt?.toUtc(),
+        DateTime.utc(2026, 9),
+      );
       expect(relationFromFirestore(null), PlayerRelation.guardian);
       expect(relationFromFirestore('self'), PlayerRelation.self);
     });
@@ -658,6 +667,42 @@ void main() {
       expect(next!.id.value, 'e3');
       expect(await repo.watchNextInSeries(_g, 'none', now).first, isNull);
     });
+
+    test(
+      'reads every event in a range, past the first 100 (PLAYER-11)',
+      () async {
+        for (var i = 0; i < 105; i++) {
+          await db.doc('events/r${i.toString().padLeft(3, '0')}').set({
+            'groupId': 'g1',
+            'type': 'practice',
+            'title': 'Practice $i',
+            'startAt': Timestamp.fromDate(
+              DateTime.utc(2026, 6).add(Duration(hours: i)),
+            ),
+            'endAt': Timestamp.fromDate(
+              DateTime.utc(2026, 6).add(Duration(hours: i + 1)),
+            ),
+          });
+        }
+        final repo = FirestoreEventRepository(db, functions);
+        final all = await repo.eventsBetween(
+          _g,
+          DateTime.utc(2026, 6),
+          DateTime.utc(2026, 7),
+        );
+        expect(all.length, 105);
+        expect(all.first.title, 'Practice 0');
+        expect(all.last.title, 'Practice 104');
+        expect(
+          await repo.eventsBetween(
+            const GroupId('other'),
+            DateTime.utc(2026, 6),
+            DateTime.utc(2026, 7),
+          ),
+          isEmpty,
+        );
+      },
+    );
 
     test('reads a series', () async {
       await db.doc('eventSeries/s1').set({

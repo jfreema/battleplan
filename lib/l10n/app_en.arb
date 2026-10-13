@@ -1501,5 +1501,16 @@
   "contactSaved": "Shared with the team",
   "contactStopped": "No longer shared",
   "contactSaveFailed": "Couldn't save. Check your connection and try again.",
-  "linkOpenFailed": "Couldn't open that on this device."
+  "linkOpenFailed": "Couldn't open that on this device.",
+  "rsvpAllMyPlayers": "All my players",
+  "rsvpHistoryTitle": "RSVP history",
+  "rsvpHistoryEntry": "RSVP history",
+  "rsvpHistoryEntryHelp": "Past events and how this player answered",
+  "rsvpHistoryNotYours": "Only this player, their parents or guardians, and the team's admins see their RSVP history.",
+  "rsvpHistoryMonths": "{months} months",
+  "@rsvpHistoryMonths": {"placeholders": {"months": {"type": "int"}}},
+  "rsvpHistoryEmpty": "No past events took RSVPs in the last {months} months.",
+  "@rsvpHistoryEmpty": {"placeholders": {"months": {"type": "int"}}},
+  "rsvpHistoryOf": "{count, plural, =1{1 past event} other{{count} past events}}",
+  "@rsvpHistoryOf": {"placeholders": {"count": {"type": "int"}}}
 }

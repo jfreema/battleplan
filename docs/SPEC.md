@@ -455,7 +455,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Players that admins add are active right away. People who already have accounts are linked right away. New emails get an added account and a setup email (AUTH-6), and the person is linked once they finish setup. A player's own email is linked within the PLAYER-3 limits: someone who is already a player on the team is listed as a problem instead.
   - A results screen shows the players added, guardians linked and invited, players linked or invited by their own email, guardians given without an email, and any problems.
 - **PLAYER-2 · MVP · Player card.**
-  - Shows the name, jersey number, position, who's linked, each marked "Player" or "Guardian" ("Not joined yet" where it applies), and upcoming RSVPs.
+  - Shows the name, jersey number, position, who's linked, each marked "Player" or "Guardian" ("Not joined yet" where it applies), and upcoming RSVPs. The player's linked members and the team's admins also open its RSVP history (PLAYER-11).
   - The player's linked members can edit the name, number, and position.
   - A member who isn't linked sees **Claim this player** (PLAYER-3).
   - Linked members and admins can add a guardian (PLAYER-5). Admins can also remove links and remove the player, and a linked member can remove their own link.
@@ -501,7 +501,9 @@ Players that others answer for never get accounts, and every account belongs to 
   - On the player card, the Details section shows the age and date of birth, the emergency contacts with tap to call, and the notes, with Edit. On the roster, admins see each player's age.
   - Details are deleted with the player or the team. Removing a guardian or deleting a linked account doesn't delete them, since they belong to the player. They never appear in notifications, chat, search, logs, or analytics.
   - Archived teams are read-only.
-- **PLAYER-11 · v1.1.** "Same answer for all my players" in one tap, and each player's season RSVP history for linked members and admins.
+- **PLAYER-11 · v1.1 · Answering for several players, and RSVP history.** Built (task 137).
+  - **Same answer for all my players.** A member who answers for two or more players gets an "All my players" row above the per-player rows, on the event's page and its chat card: one tap gives each of those players that answer, saved together (all or none), each keeping their note. It shows that answer while every one of them has it. Their own answer as a member (Me) stays apart.
+  - **RSVP history.** From the player card, the player's linked members (the player and their parents or guardians), the team's admins, and super admins open the player's RSVP history: the team's past events that took RSVPs in the last 3 months (or 6, or 12), newest first, each with the player's answer (Going, Maybe, Not going, or No answer) and opening its event, under totals for those events ("12 past events: Going · 9, Not going · 2, No answer · 1"). Canceled events are listed but not counted, and events from before the player was added to the roster aren't shown. Other members don't see it.
 
 **Acceptance (MVP)**
 

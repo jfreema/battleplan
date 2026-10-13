@@ -32,7 +32,8 @@ import 'package:material_ui/material_ui.dart';
 /// team's admins and linked members also see the player's Details, and
 /// edit them unless the team is archived (PLAYER-12); nobody else sees
 /// the section. Upcoming RSVPs list the player's answer on each of the
-/// next events that take RSVPs, each opening its event.
+/// next events that take RSVPs, each opening its event, and the same
+/// people (and super admins) open the player's RSVP history (PLAYER-11).
 class PlayerCardScreen extends ConsumerWidget {
   const new({required this.groupId, required this.playerId, super.key});
 
@@ -211,6 +212,18 @@ class PlayerCardScreen extends ConsumerWidget {
             ),
           const SizedBox(height: Space.lg),
           _UpcomingRsvps(groupId: groupId, playerId: playerId),
+          // Past answers, for the player's people and admins (PLAYER-11).
+          if (seesDetails || superAdmin)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(AppIcons.history),
+              title: Text(l10n.rsvpHistoryEntry),
+              subtitle: Text(l10n.rsvpHistoryEntryHelp),
+              trailing: const Icon(AppIcons.chevronRight),
+              onTap: () => context.push(
+                '/g/${groupId.value}/roster/players/${playerId.value}/history',
+              ),
+            ),
           if (isAdmin) ...[
             const SizedBox(height: Space.xl),
             OutlinedButton(

@@ -289,12 +289,16 @@ async function main() {
   }
 
   // Upcoming events with a few RSVPs: per player on every team, and
-  // members answering for themselves (coaches and others, SCHED-5).
+  // members answering for themselves (coaches and others, SCHED-5). A few
+  // past ones fill in each player's RSVP history (PLAYER-11).
   const events: { id: string; groupId: string; type: string; title: string; day: number; hour: number; opponent?: string; homeAway?: string }[] = [
     { id: 'thunder-practice', groupId: 'thunder', type: 'practice', title: 'Practice', day: 2, hour: 18 },
     { id: 'thunder-game', groupId: 'thunder', type: 'game', title: 'vs. Eagles', day: 5, hour: 10, opponent: 'Eagles', homeAway: 'home' },
     { id: 'lightning-practice', groupId: 'lightning', type: 'practice', title: 'Practice', day: 1, hour: 17 },
     { id: 'hawks-game', groupId: 'hawks', type: 'game', title: '@ Bulls', day: 3, hour: 19, opponent: 'Bulls', homeAway: 'away' },
+    { id: 'thunder-past-practice', groupId: 'thunder', type: 'practice', title: 'Practice', day: -6, hour: 18 },
+    { id: 'lightning-past-practice', groupId: 'lightning', type: 'practice', title: 'Practice', day: -12, hour: 17 },
+    { id: 'lightning-past-game', groupId: 'lightning', type: 'game', title: 'vs. Comets', day: -5, hour: 10, opponent: 'Comets', homeAway: 'home' },
   ];
   for (const e of events) {
     const startAt = daysFromNow(e.day, e.hour);
@@ -326,6 +330,10 @@ async function main() {
     ['thunder-practice', 'member', 'coach', 'going', 'coach'],
     ['lightning-practice', 'player', 'emma', 'going', 'luis'],
     ['lightning-practice', 'player', 'arjun', 'not_going', 'priya'],
+    ['thunder-past-practice', 'player', 'alex-kim', 'going', 'alex'],
+    ['lightning-past-practice', 'player', 'emma', 'going', 'luis'],
+    ['lightning-past-practice', 'player', 'arjun', 'going', 'priya'],
+    ['lightning-past-game', 'player', 'emma', 'not_going', 'maria'],
   ];
   for (const [eventId, participantType, participantId, status, respondedBy] of rsvps) {
     const e = events.find((x) => x.id === eventId)!;
