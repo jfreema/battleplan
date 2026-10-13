@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft v0.3 |
 | **Owner** | Jared Freeman |
-| **Last updated** | 2026-10-10 |
+| **Last updated** | 2026-10-12 |
 | **Companion doc** | [ARCHITECTURE.md](ARCHITECTURE.md): how it's built ("ARCH §n" below) |
 
 ---
@@ -17,7 +17,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 
 - Any coach or manager can create a **team**. Each team has its own members, admins, chat, schedule, and documents.
 - People can belong to many teams and switch between them.
-- **Every account belongs to an adult (18+).** On **youth teams**, the players are kids who don't use the app. Their parents and guardians are the members, and they answer RSVPs for their players (§6.3).
+- **Every account belongs to an adult (18+).** Every team has a roster of **players**. A member can be a player themselves, or a parent or guardian who answers for a player who doesn't use the app, such as a kid (§6.3).
 - Platform **super admins** ("God admins") oversee every team.
 
 **Rollout.** Our own team uses it first. Then sign-up opens to any team, and every team is **invite-only**.
@@ -32,9 +32,9 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | **Owner** | The one admin per team who created it, or was given it |
 | **Super admin** | A platform operator who can see and manage every team and user (the "God admin") |
 | **Added account** | An account created by an admin before the person first signs in (the "local account") |
-| **Team type** | **Adult**: the members are the players and answer RSVPs for themselves. **Youth**: the players are kids without accounts, and their guardians answer for them. |
-| **Player** | On a youth team, a kid on the roster. Players never have accounts. |
-| **Guardian** | A member linked to a player on a youth team, usually a parent, who answers RSVPs for that player |
+| **Player** | Someone on a team's roster, with a name, jersey number, and position. A member can be a player ("I am this player"). Players that others answer for, such as kids, never have accounts. |
+| **Guardian** | A member linked to a player as their parent or guardian, who answers RSVPs for that player |
+| **Player link** | How a member is linked to a player: as the player (`self`) or as a guardian. A member claims a player, and a team admin approves (§6.3). |
 | **Storage limit** | How much a team can store in photos and files: 500 MB unless a super admin raises it (STORE-1) |
 
 ### Release tags
@@ -49,7 +49,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 
 - Our team moves completely off GroupMe and TeamReach.
 - A new coach can sign up, create a team, and have members chatting **within 10 minutes**, without help.
-- A youth coach can paste in a roster of players with their parents' emails, then see per-player RSVP counts for the next practice.
+- A coach can paste in a roster of players with their emails or their parents' emails, then see per-player RSVP counts for the next practice.
 - Every MVP feature works the same on iOS, Android, and web (§4).
 - Push notifications typically arrive **within 5 seconds**.
 - The monthly bill stays within the cost model (ARCH §10).
@@ -70,7 +70,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | 6 | Group messaging | §6.5 (CHAT) |
 | 7 | Push notifications | §6.9 (NOTIF); ARCH §6.5 |
 | 8 | Polls in group messaging | §6.6 (POLL) |
-| 9 | Scheduling events with going / not going | §6.7 (SCHED-3 to SCHED-5); PLAYER-6 on youth teams |
+| 9 | Scheduling events with going / not going | §6.7 (SCHED-3 to SCHED-5); PLAYER-6 |
 | 10 | Sign in with Google, Apple, or email, on top of local accounts that admins can add | AUTH-1, AUTH-6 to AUTH-8, AUTH-12; ARCH §6.1 |
 | 11 | Password reset by email | AUTH-4 |
 | 12 | Email invites | INV-4 |
@@ -83,8 +83,8 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | 19 | Modern, clean UI | §7 |
 | 20 | Bottom tabs: Chat, Schedule, Documents | §5.3 |
 | 21 | Many sports teams, each with its own members, chat, and schedule | TEAM-1, TEAM-2, SCHED-2, §5.2; ARCH §1, §3 |
-| 22 | Youth players don't use the app; their adult parents and guardians do | AUTH-5, §6.3 (PLAYER), SAFE-6; ARCH §1 |
-| 23 | Parent/guardian → player relationships, so parents RSVP for their child, not themselves | §6.3 (PLAYER-1 to PLAYER-6); ARCH §6.2 |
+| 22 | Youth players don't use the app; their adult parents and guardians do (adult players can be members themselves) | AUTH-5, §6.3 (PLAYER), SAFE-6; ARCH §1 |
+| 23 | Parent/guardian → player relationships, so parents RSVP for their child, not themselves | §6.3 (PLAYER-1 to PLAYER-6), on every team; ARCH §6.2 |
 | 24 | One RSVP per event and player, so two parents can't create conflicting records | PLAYER-6; ARCH §6.2 |
 | 25 | Multiple teams per person | TEAM-2 |
 | 26 | Switching between teams | §5.2, TEAM-2 |
@@ -114,7 +114,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Unread indicators and offline support (CHAT-4, CHAT-9) | Expected in any chat app |
 | Report, block, and Terms acceptance (SAFE) | **Required** by the App Store for apps with user content |
 | In-app account deletion (AUTH-10) | **Required** by the App Store and Google Play |
-| Youth teams: players without accounts, linked to their parents and guardians, with per-player RSVPs (§6.3) | Kids don't use the app, but coaches still need to know which *players* are coming, not which parents answered |
+| One team type with players on every team: members claim a player as themselves or as a guardian, members propose players, and admins approve (§6.3) | Kids don't use the app, but coaches still need to know which *players* are coming, not which parents answered. Adult teams work the same way, with each player answering for themselves. |
 | Adults-only accounts, 18+ (AUTH-5) | Matches who actually uses the app, and keeps us from collecting data from children |
 | Pasted rosters with setup emails (TEAM-7) | Turns "admins can add local accounts" into a fast way for coaches to load a team |
 | Spam controls, storage quotas, team suspension (SAFE-5, ADMIN-3) | Needed once anyone can create a team |
@@ -132,7 +132,8 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Role | Who |
 |---|---|
 | **Member** | Anyone on the team |
-| **Guardian** | On youth teams, a member linked to one or more players, who answers RSVPs for them |
+| **Guardian** | A member linked to one or more players as their parent or guardian, who answers RSVPs for them |
+| **Player (member)** | A member linked to a player as themselves ("I am this player"), who answers RSVPs on that player's row |
 | **Team admin** | Manages the team: coaches, managers, team parents |
 | **Owner** | The admin who created the team, or was given it. Exactly one per team. |
 | **Super admin** | Runs the platform. Can see and manage every team and user. |
@@ -143,18 +144,19 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Action | Member | Team admin | Owner | Super admin |
 |---|:-:|:-:|:-:|:-:|
 | Read the team's chat, schedule, documents, members | ✓ | ✓ | ✓ | ✓ any team |
-| Send messages and photos, react, vote; RSVP for self (adult teams) | ✓ | ✓ | ✓ | in teams they've joined |
+| Send messages and photos, react, vote; RSVP for self | ✓ | ✓ | ✓ | in teams they've joined |
 | Delete own messages | ✓ | ✓ | ✓ | ✓ |
 | **Delete anyone's message** | — | ✓ | ✓ | ✓ |
 | Create polls | setting (on) | ✓ | ✓ | ✓ |
 | Close any poll | — | ✓ | ✓ | ✓ |
 | Create events | setting (off) | ✓ | ✓ | ✓ |
 | Edit, cancel, or delete events | own only | ✓ | ✓ | ✓ |
-| RSVP for your own players (youth teams) | guardians | ✓ | ✓ | ✓ |
+| RSVP for your linked players (as the player or a guardian) | approved links | ✓ | ✓ | ✓ |
 | RSVP for any member or player | — | ✓ | ✓ | ✓ |
-| Add players (youth teams) | as their guardian | ✓ | ✓ | ✓ |
+| Claim a player ("I am this player" or parent/guardian) | needs admin approval | ✓ at once | ✓ at once | ✓ at once |
+| Add players | pending until an admin approves | ✓ | ✓ | ✓ |
 | Add a guardian to a player | own players | ✓ | ✓ | ✓ |
-| Remove guardians; approve guardian requests | — | ✓ | ✓ | ✓ |
+| Remove player links; approve or decline claims and pending players | — | ✓ | ✓ | ✓ |
 | Upload documents and add links | setting (on) | ✓ | ✓ | ✓ |
 | Delete any document; pin documents | — | ✓ | ✓ | ✓ |
 | Share the invite link, QR, or code; send email invites | setting (on) | ✓ | ✓ | ✓ |
@@ -191,7 +193,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 
 `getbattleplan.app` is a small explainer website; the web app lives under it at **`getbattleplan.app/app`**. The site's source is the `website/` folder in the repo (ARCH §5.1, §6.6).
 
-- **WEB-1 · MVP · Landing page.** What Battleplan is (team chat, schedule and RSVPs, polls, documents, youth teams with parents and guardians), that it's free with no ads, screenshots, and clear ways in: **Open Battleplan** (the web app at `/app`), and App Store and Google Play badges once the apps are listed.
+- **WEB-1 · MVP · Landing page.** What Battleplan is (team chat, schedule and RSVPs, polls, documents, players and parents for adult and youth teams), that it's free with no ads, screenshots, and clear ways in: **Open Battleplan** (the web app at `/app`), and App Store and Google Play badges once the apps are listed.
 - **WEB-2 · MVP · Support and legal pages.** `/privacy`, `/terms`, and `/delete-account` (LEGAL-1, LEGAL-3), and `/support` with the support email. These are the URLs the store listings and Firebase settings use.
 - **WEB-3 · MVP · The web app at `/app`.** The Flutter web app is served under `/app/` and linked from every page of the site. Signed-in people who open `/app` go straight to their teams.
 - **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app.
@@ -325,7 +327,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - The screen notes that people who use Google or Apple don't have a Battleplan password.
 - **AUTH-5 · MVP · First-run setup.**
   - Name and photo, prefilled once from the sign-in provider (AUTH-12), and Terms acceptance.
-  - Confirm "I'm 18 or older". Accounts are for adults only: youth players never sign in, and their parents and guardians use the app for them (§6.3).
+  - Confirm "I'm 18 or older". Accounts are for adults only. Adult players use the app themselves, and youth players never sign in: their parents and guardians use the app for them (§6.3).
   - Only the confirmation and its date are stored.
 - **AUTH-6 · MVP · Accounts added by admins.**
   - Team admins and super admins add people with just a **name and email** (TEAM-7, PLAYER-1, ADMIN-4).
@@ -350,7 +352,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **AUTH-10 · MVP · Delete account.**
   - Settings → Account → Delete account explains what will happen, asks the user to sign in again, then deletes everything.
   - Owners pick a new owner for each team they own. If they skip it, ownership goes to the longest-serving admin, otherwise the longest-serving member. Teams with nobody else are archived.
-  - They stop being a guardian of any players. A player left with no guardian stays on the roster for admins to manage.
+  - Their player links end (as a player or a guardian). A player left with no links stays on the roster for admins to manage.
   - Their past messages stay, shown from "Deleted user".
   - Required by the App Store and Google Play. A web page also explains how to request deletion (LEGAL-3).
 - **AUTH-11 · MVP · Disabled accounts.** Signing in shows only "This account has been disabled. Contact support@…".
@@ -372,7 +374,6 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **TEAM-1 · MVP · Create a team.**
   - **Who:** any signed-in user with a verified email. Super admins can turn this off, and each person can create up to 5 teams a day (super admins can change the limit, ADMIN-7).
   - **Fields:**
-    - **Team type:** Adult team (the members are the players) or Youth team (kids are the players; parents and guardians use the app). Admins can change it later; events already on the schedule keep the RSVPs they have.
     - Name (required, ≤ 50 characters).
     - Sport: Baseball, Basketball, Football, Hockey, Lacrosse, Soccer, Softball, Volleyball, or Other.
     - Logo or photo (optional).
@@ -380,14 +381,15 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Time zone (defaults to the device's).
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).
+  - There's one kind of team, with no team type to pick. Every team has a roster of players, and works for adult and youth teams alike (§6.3). Teams are stored with kind `team`, so a basic group without players can be added later (TEAM-14).
   - **Goal:** create a team and share an invite in under 2 minutes.
 - **TEAM-2 · MVP · Many teams per person.**
   - A person can be on up to 100 teams and switches between them with the team switcher (§5.2).
   - Each team has its own chat, schedule, documents, members, admins, settings, and notification level.
   - Teams are walled off from each other. Nothing shows which other teams a member belongs to.
 - **TEAM-3 · MVP · Roster screen.**
-  - **Adult teams:** sections for Admins and Members.
-  - **Youth teams:** a **Players** section (jersey number, name, position, guardians) and a **Parents & staff** section, where each parent shows their players ("Parent of Emma #7").
+  - A **Players** section on every team (jersey number, name, position, and who's linked: "Player" or "Guardian"), then sections for Admins and Members. Each member shows their players: a guardian shows "Emma #7", and a member who is a player shows their number (PLAYER-8).
+  - Admins see pending players and claims at the top, with Approve and Decline (PLAYER-4).
   - Each person row shows a photo or initials, name, title, role badge (Owner/Admin), and "Not joined yet" for added accounts.
   - Search by name.
   - Tap a person to open their card: photo, name, title, role, their players, and only the actions you're allowed. Actions: Make admin / Remove admin, Edit title, Remove from team, Resend setup email, Report, Block.
@@ -412,7 +414,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Add one person at a time, or paste a list of "Name, email" lines (up to 100).
   - People who already have accounts are added and notified. New emails get an account and a setup email (AUTH-6).
   - A results screen lists who was added, who was invited, and any problems.
-  - On youth teams, admins usually add players with their parents' emails instead (PLAYER-1).
+  - To fill the Players section, admins add players with the player's or their parents' emails instead (PLAYER-1).
 - **TEAM-8 · MVP · Leave a team.**
   - Anyone can leave.
   - The owner must transfer ownership first. If they're the only member, they archive or delete the team instead.
@@ -420,9 +422,9 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - **Archive** makes the team read-only and moves it to "Archived" in the switcher. It can be restored.
   - **Delete** requires typing the team name. It permanently removes all messages, events, documents, and files.
 - **TEAM-10 · v1.1 · Roster details.**
-  - Adult teams: jersey number and position for each member, and the roster can be sorted by number. (Youth teams already have these on players, PLAYER-1.)
+  - Sort the roster by jersey number. (Number and position live on players, PLAYER-1, and a member who is a player shows theirs.)
   - Optional contact sharing: members can share a phone number and email with a team. These appear on their card with call, text, and email buttons.
-- **TEAM-11 · MVP · Youth teams.** Players and guardians are specified in §6.3 (PLAYER).
+- **TEAM-11 · MVP · Players on every team.** Players, guardians, and claims are specified in §6.3 (PLAYER).
 - **TEAM-12 · v1.1 · Announcement-only mode.** Only admins can post in chat. Everyone can still react, vote, and RSVP.
 - **TEAM-13 · Later.**
   - Join requests that need admin approval.
@@ -430,46 +432,65 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Organizations and leagues with club admins.
   - Sub-chats within a team ("Parents", "Coaches").
 
-### 6.3 Players and guardians on youth teams (PLAYER)
+### 6.3 Players, guardians, and claims (PLAYER)
 
-On youth teams, the kids are the players, but they never use the app. Their parents and guardians are the members: they chat, get notifications, and answer RSVPs for their players. This section applies only to teams whose type is **Youth**.
+Every team has a roster of players. There's one kind of team, so this works the same for adult and youth teams. A member can be linked to a player in one of two ways:
+
+- **As the player** ("I am this player", relation `self`). An adult player answers RSVPs for themselves on their player's row.
+- **As a parent or guardian** (relation `guardian`). They answer RSVPs for a player who doesn't use the app, such as a kid.
+
+Players that others answer for never get accounts, and every account belongs to an adult (18+).
 
 - **PLAYER-1 · MVP · Add players (admins).**
-  - Add one at a time: name (required), jersey number, position, and up to 4 guardians (name and email, both optional).
+  - Add one at a time: name (required), jersey number, position, the player's own email (optional), and up to 4 guardians (name and email, both optional).
   - Or paste a list with one line per guardian: "Player name, Guardian name, Guardian email". Lines with the same player name become one player with several guardians. Up to 200 lines.
-  - Guardians who already have accounts are linked right away. New emails get an added account and a setup email (AUTH-6), and the guardian is linked once they finish setup.
-  - A results screen shows the players added, guardians linked, guardians invited, and any problems.
+  - Players that admins add are active right away. People who already have accounts are linked right away. New emails get an added account and a setup email (AUTH-6), and the person is linked once they finish setup.
+  - A results screen shows the players added, people linked, people invited, and any problems.
 - **PLAYER-2 · MVP · Player card.**
-  - Shows the name, jersey number, position, guardians ("Not joined yet" where it applies), and upcoming RSVPs.
-  - Guardians can edit the name, number, and position.
-  - Admins can also add or remove guardians and remove the player.
-- **PLAYER-3 · MVP · Parents joining by link or QR.** After joining a youth team, a parent sees "Who are you here for?":
-  - **Pick your player** from the roster, or several. This sends a request to the team's admins (Q15). Until an admin approves, the parent can chat but can't answer RSVPs for that player.
-  - **Add a player who isn't listed.** This creates the player with the parent as guardian. Admins are notified and can edit or remove it.
-  - **I'm a coach or another adult.** Skips this step.
-  - Parents whose email an admin already entered for a player (PLAYER-1) are linked automatically and never see this step.
-- **PLAYER-4 · MVP · Guardian requests (admins).** Requests appear at the top of the roster with Approve and Decline, and admins get a notification. A declined parent can ask again.
-- **PLAYER-5 · MVP · Add another guardian.** From the player card, a guardian can add a co-parent by email. An existing guardian is vouching for them, so no admin approval is needed. New emails get an added account and a setup email.
-- **PLAYER-6 · MVP · RSVPs per player.**
-  - On each event, guardians see one RSVP row per player: "Emma: Going · Liam: Not going".
-  - **Exactly one RSVP per event and player.** When both parents answer, they update the same record instead of creating two. The latest answer counts and shows who gave it ("Answered by Maria"), so attendance never conflicts or double-counts.
-  - Counts are about players: "12 of 15 players going".
-  - Admins can answer for any player.
-  - Coaches and staff (the team's admins) also RSVP for themselves on youth teams, and their answers are counted separately: "12 of 15 players going · 2 coaches". Parents answer only for their players (Q14).
-- **PLAYER-7 · MVP · Notifications for guardians.** Event reminders and event changes go to the guardians of the affected players, as one notification per guardian naming their players: "Emma, Liam: Practice today at 6:00 PM".
-- **PLAYER-8 · MVP · Who's who.** In chat and on the roster, each parent's name shows their players ("Maria R. · Emma #7"), so coaches and other parents know who's who.
-- **PLAYER-9 · MVP · Kids on several teams.** A child on two teams is a separate player on each team. In "All my teams" (SCHED-2), each event shows which of a parent's players it's for.
-- **PLAYER-10 · MVP · Kids' privacy.**
-  - Players never get accounts.
+  - Shows the name, jersey number, position, who's linked, each marked "Player" or "Guardian" ("Not joined yet" where it applies), and upcoming RSVPs.
+  - The player's linked members can edit the name, number, and position.
+  - A member who isn't linked sees **Claim this player** (PLAYER-3).
+  - Admins can also add or remove links and remove the player.
+- **PLAYER-3 · MVP · Claim a player.** Any member can claim an active player and say how they're linked: **"I am this player"** or **"I'm their parent or guardian"**.
+  - A claim needs a team admin's approval (Q15). Until then, the member can chat but can't answer RSVPs for that player.
+  - When an admin claims a player, it's approved at once.
+  - A player has at most one `self` link, and a member is `self` for at most one player per team. A player can have up to 4 guardians; the `self` link doesn't count toward the 4.
+  - **Who are you here for?** After joining any team, a member sees three choices:
+    - **I'm a player.** Pick yourself from the roster (a claim as yourself), or add yourself if you're not listed (a pending player linked to you as yourself, PLAYER-4).
+    - **I'm here for a player.** Pick your player from the roster, or several (a claim as guardian), or add a player who isn't listed (a pending player with you as guardian).
+    - **I'm a coach or another adult.** Skips this step.
+  - People whose email an admin already entered for a player (PLAYER-1) are linked automatically and never see this step.
+- **PLAYER-4 · MVP · Add a player (members), and admin approval.**
+  - Any member can add a player: name, jersey number, position, and how they're linked (the player or a guardian).
+  - A member's new player is **pending** until a team admin approves or declines it. A player an admin adds is active at once (PLAYER-1).
+  - Pending players are shown only to admins and to the person who added them. They're not on the roster for everyone else, and can't get RSVPs or be claimed.
+  - Claims and pending players appear at the top of the roster's Players section with **Approve** and **Decline**, and admins get a notification for each one (NOTIF-2). The person is notified when it's approved.
+  - Approving a pending player makes it active with its link. Declining deletes the pending player and its link. A declined member can ask again.
+- **PLAYER-5 · MVP · Add another guardian.** From the player card, a linked member can add a guardian by email. An existing link is vouching for them, so no admin approval is needed. New emails get an added account and a setup email.
+- **PLAYER-6 · MVP · RSVPs per player, on every event.**
+  - **Exactly one RSVP per event and participant.** A participant is an active player or a member answering for themselves.
+  - A player's RSVP can be answered by the member who is that player, by its guardians, or by admins. When two people answer, they update the same record instead of creating two. The latest answer counts and shows who gave it ("Answered by Maria"), so attendance never conflicts or double-counts.
+  - Linked members see one RSVP row per player: "Emma: Going · Liam: Not going". A member who is a player answers on their player's row.
+  - A **Me** row is offered to admins and to members who aren't linked to any player, such as coaches and other adults.
+  - Counts show players, with everyone else counted apart: "12 of 15 players going · 2 others" (Q14).
+  - Events made before the one-type change count as per-player too. Members' own answers on them stay valid and count as others.
+- **PLAYER-7 · MVP · Reminders and changes.** Event reminders and event changes go to the member who is the player and to the guardians of the affected players, as one notification per person naming their players: "Emma, Liam: Practice today at 6:00 PM". For a member's own player, there's no name prefix.
+- **PLAYER-8 · MVP · Who's who.** In chat and on the roster, each member's name shows their players. A guardian shows "Maria R. · Emma #7". A member who is a player shows their number when it's set: "Jared F. #12".
+- **PLAYER-9 · MVP · Players on several teams.** A person on two teams is a separate player on each team. In "All my teams" (SCHED-2), each event shows which of a member's players it's for.
+- **PLAYER-10 · MVP · Players' privacy.** This applies to every player record.
   - A player's record holds only a name, jersey number, and position: no photos, birthdates, or contact details.
+  - Players never get accounts of their own. Accounts are for adults only (18+), and a `self` link just means that member is the player.
+  - Player records that others manage may be children's, so we treat every record this way (LEGAL-1).
   - Photos shared in team chat may still show kids. They're visible only to the team's members, and anyone can report one.
-- **PLAYER-11 · v1.1.** "Same answer for all my players" in one tap, and each player's season RSVP history for guardians and admins.
+- **PLAYER-11 · v1.1.** "Same answer for all my players" in one tap, and each player's season RSVP history for linked members and admins.
 
 **Acceptance (MVP)**
 
-- A youth coach pastes a roster of 15 players and their parents' emails, and every parent who finishes setup is linked to the right player.
-- A parent who scans the team's QR code at practice can request their player, and is linked once an admin approves.
-- A parent with two players on the team answers for each one separately, and the coach sees accurate player counts.
+- A coach pastes a roster of 15 players and their parents' emails, and every parent who finishes setup is linked to the right player.
+- An adult player who joins by link picks "I'm a player", claims themselves on the roster, and answers RSVPs for themselves once an admin approves.
+- A parent who scans the team's QR code at practice can claim their player, and is linked once an admin approves.
+- A member who adds a missing player sees it as pending; it shows on the roster for everyone only after an admin approves, and a decline removes it.
+- A parent with two players on the team answers for each one separately, and the coach sees accurate player counts with coaches counted apart.
 
 ### 6.4 Invites and joining (INV)
 
@@ -497,7 +518,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   1. Open a link. It opens the app if installed, otherwise the web app (WEB-4).
   2. Sign in or create an account if needed; the app continues automatically afterward.
   3. See the team preview: logo, name, sport, member count, "Invited by Alex".
-  4. Tap **Join team**. On youth teams, answer "Who are you here for?" (PLAYER-3).
+  4. Tap **Join team**, then answer "Who are you here for?" (PLAYER-3): I'm a player, I'm here for a player, or I'm a coach or another adult. People an admin already linked to a player skip it.
   5. Land in the team's chat, where "Sam joined" appears.
 
   People who are already members just go to the team.
@@ -527,7 +548,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - **Paging.** The chat loads the newest 50 messages and keeps them live. Scrolling up loads 50 older messages at a time, so a chat with years of history opens as fast as a new one.
   - With unread messages, the chat opens at the first unread message and loads newer ones as you scroll down.
   - Date separators: Today, Yesterday, Mon Oct 6.
-  - Consecutive messages from one person are grouped, with their name and photo shown once. On youth teams, a parent's name shows their players ("Maria R. · Emma #7", PLAYER-8).
+  - Consecutive messages from one person are grouped, with their name and photo shown once. A member's name shows their players ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8).
   - Your messages sit on the right in the brand color; others' sit on the left on a neutral background.
   - Times appear on tap (phones), on hover (web), and at the start of each group.
 - **CHAT-2 · MVP · Composer.**
@@ -565,7 +586,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
 - **CHAT-10 · MVP · System messages.** Small, centered lines for: joined, left, removed, made admin, team renamed.
 - **CHAT-11 · MVP · Cards in chat.**
   - New polls appear as interactive poll cards (POLL-2).
-  - New events appear as event cards when "Post to chat" is on. They show date, time, location, Going / Maybe / Not going buttons, and live counts. On youth teams, guardians answer for each of their players right on the card.
+  - New events appear as event cards when "Post to chat" is on. They show date, time, location, Going / Maybe / Not going buttons, and live counts. Members linked to players answer for each of their players right on the card (PLAYER-6).
 - **CHAT-12 · MVP · Blocked people.** Their messages are collapsed ("Message from someone you blocked · Show"), and they don't notify you.
 - **CHAT-13 · MVP · Reply to a message.**
   - Reply from the message menu, or swipe right on a message (phones).
@@ -627,11 +648,11 @@ On youth teams, the kids are the players, but they never use the app. Their pare
 ### 6.7 Schedule and RSVPs (SCHED)
 
 - **SCHED-1 · MVP · Schedule tab.** Three views:
-  - **Upcoming** (default): a list grouped by day. Each row has a date block, an event-type color and icon, the title ("vs. Eagles"), time, location, your RSVP (one per player on youth teams), and counts ("12 going · 3 maybe · 2 no"; on youth teams these count players).
+  - **Upcoming** (default): a list grouped by day. Each row has a date block, an event-type color and icon, the title ("vs. Eagles"), time, location, your RSVP (one per linked player, plus a Me row for admins and members not linked to a player), and counts of players, with others counted apart ("12 going · 3 maybe · 2 no · 2 others", PLAYER-6).
   - **Past**: the same list, newest first.
   - **Calendar**: a month grid with a dot for each event; tap a day to see its events.
 - **SCHED-2 · MVP · All my teams.**
-  - A toggle that merges every team's events into one schedule, each labeled with its team's name and color. For parents, each event also names their player (PLAYER-9).
+  - A toggle that merges every team's events into one schedule, each labeled with its team's name and color. For members linked to players on several teams, each event also names their player (PLAYER-9).
   - Built for parents with kids on several teams, and for players on several teams.
   - Filter by type: Games, Practices, Other.
 - **SCHED-3 · MVP · Create an event.** The **+** button, if you're allowed.
@@ -659,8 +680,8 @@ On youth teams, the kids are the players, but they never use the app. Their pare
     - Works on past and canceled events too, which covers "same game as last season".
 - **SCHED-4 · MVP · Event details.**
   - Every field from creation.
-  - Large **Going / Maybe / Not going** buttons, with an optional note ("Leaving at halftime"). On youth teams, guardians get one set per player (PLAYER-6).
-  - Attendee lists grouped by Going, Maybe, Not going, and No response, with notes. On youth teams the lists show players and who answered for them.
+  - Large **Going / Maybe / Not going** buttons, with an optional note ("Leaving at halftime"). Members linked to players get one set per player, and admins and members not linked to a player get a Me set (PLAYER-6).
+  - Attendee lists grouped by Going, Maybe, Not going, and No response, with notes. The lists show players and who answered for them, with coaches and others listed apart.
   - Actions for everyone: Add to calendar, Share, Directions.
   - Admin actions: Edit, Cancel event, Delete, Set RSVP for a member or player.
   - **Duplicate**, for anyone who can create events (SCHED-3).
@@ -670,7 +691,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - Change your answer any time before the deadline; after it, only admins can change answers.
   - The requirement was Going / Not going. **Maybe** is a recommended addition: on by default, and each team can turn it off (TEAM-5).
   - Not answering shows as "No response".
-  - On youth teams, RSVPs are per player and answered by guardians (PLAYER-6).
+  - On every team, there's one RSVP per event and participant: each active player, answered by the member who is the player, its guardians, or admins, and members answering for themselves (PLAYER-6).
 - **SCHED-6 · MVP · Editing.**
   - Changing the date, time, or location notifies everyone except people who said Not going ("Practice moved to 6:30 PM").
   - For repeating events, admins choose "This event" or "This and following events".
@@ -683,7 +704,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - **Cancel** keeps the event on the schedule, struck through with a "Canceled" badge, closes RSVPs, and notifies the team.
   - **Delete** removes the event without notifying anyone. Its confirmation suggests canceling instead if the event is within 7 days.
   - For repeating events, both ask "This event" or "This and following events". Canceling or deleting the rest of a series notifies the team once.
-- **SCHED-8 · MVP · Reminders.** A push at each reminder time to people who said Going or Maybe or haven't answered, but not Not going: "Reminder: Practice today at 6:00 PM · Riverside Park". On youth teams, reminders go to those players' guardians (PLAYER-7).
+- **SCHED-8 · MVP · Reminders.** A push at each reminder time to people who said Going or Maybe or haven't answered, but not Not going: "Reminder: Practice today at 6:00 PM · Riverside Park". For players, reminders go to the member who is the player and to the player's guardians (PLAYER-7).
 - **SCHED-9 · MVP · Time zones.**
   - Times show in the viewer's local time.
   - If the event's time zone is different, both appear: "6:00 PM CDT · 7:00 PM your time".
@@ -753,14 +774,14 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   | Event reminder | Going, Maybe, No response\* | **Yes** | ✓ | MVP |
   | New document | Everyone except the uploader | No | ✓ | MVP |
   | Added to a team; made an admin | That person | **Yes** | ✓ | MVP |
-  | Guardian request (youth teams) | Team admins | **Yes** | ✓ | MVP |
-  | Guardian request approved | The parent | **Yes** | ✓ | MVP |
+  | Player request: a claim or a pending player (PLAYER-3, PLAYER-4) | Team admins | **Yes** | ✓ | MVP |
+  | Player request approved | The member who asked | **Yes** | ✓ | MVP |
   | Content reported | Team admins | **Yes** | ✓ | MVP |
   | Storage 90% full, or full (STORE-3, STORE-4) | Team admins | **Yes** | ✓ | MVP |
   | @mention; announcement | The person mentioned; everyone | **Yes** | ✓ | v1.1 |
   | RSVP nudge | People who haven't answered\* | **Yes** | ✓ | v1.1 |
 
-  \* On youth teams, these go to the guardians of the matching players (PLAYER-7).
+  \* For players, these go to the member who is the player and to the guardians of the matching players, plus members who answered for themselves (PLAYER-7).
 
   Plain chat messages don't appear in the notification center; unread counts cover them (CHAT-9).
 - **NOTIF-3 · MVP · Notification settings for each team.**
@@ -775,7 +796,7 @@ On youth teams, the kids are the players, but they never use the app. Their pare
   - "Alex sent a photo"
   - "Alex created a poll: Pizza after the game?"
   - "New game: vs. Eagles · Sat Oct 18, 10:00 AM"
-  - "Emma, Liam: Practice today at 6:00 PM" (youth teams)
+  - "Emma, Liam: Practice today at 6:00 PM" (to a guardian; no names for a member's own player)
 - **NOTIF-6 · MVP · Tap to open.** Tapping a notification opens the exact message, poll, event, or document, switching teams if needed.
 - **NOTIF-7 · MVP · While the app is open.** A small in-app banner appears instead of a system notification. Nothing appears if you're already in that team's chat.
 - **NOTIF-8 · MVP · Grouping.** The phone's notification list groups Battleplan notifications by team.
@@ -901,7 +922,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
     | Email invites | 50 per person and 200 per team per day |
     | Adding people or players by email | 200 per team per day |
     | Invite code attempts | 20 per person per hour |
-    | Guardian requests | 10 per person per day |
+    | Player claims and added players | 10 per person per day |
     | Reports | 20 per person per day |
 
   - Real people shouldn't notice them. The app spaces messages automatically, and anyone who hits a limit sees "Slow down, try again in a minute" without losing what they typed.
@@ -911,7 +932,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Super admins can disable people and suspend teams (ADMIN-3, ADMIN-4).
 - **SAFE-6 · MVP · Adults only.**
   - Accounts are for adults 18 and older (AUTH-5, Terms of Use).
-  - Youth players never sign in or get accounts, and adults enter only minimal details about them (PLAYER-10).
+  - Players never get accounts of their own. Youth players never sign in, and adults enter only minimal details about any player (PLAYER-10).
 - **SAFE-7 · Later.** An optional per-team profanity filter. Do it sooner if App Review asks.
 
 ### 6.13 Privacy and legal (LEGAL)
@@ -920,7 +941,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Privacy Policy at `/privacy` and Terms of Use at `/terms`, on the website (WEB-2).
   - Linked from sign-in, Settings, the store listings, and the Apple developer settings.
   - The Privacy Policy covers:
-    - what we collect: name, email, photo, messages, files, device tokens, usage analytics, crash reports, and, on youth teams, the player details adults enter (name, jersey number, position);
+    - what we collect: name, email, photo, messages, files, device tokens, usage analytics, crash reports, and the player details members enter on any team (name, jersey number, position only). Some player records are managed by parents and may be children's;
     - that super admins can access content for moderation and support;
     - how long data is kept;
     - how to delete it.
@@ -937,7 +958,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
 
 ### 6.14 Free for everyone, and team storage (STORE)
 
-**Everything is free, with no ads.** Every team gets every feature. Ads may come later, once enough teams use Battleplan to justify the work; any ads plan has to respect children's privacy rules, because youth teams' guardians use the app (ROADMAP "Ads, later"). [PLANS.md](PLANS.md) summarizes this.
+**Everything is free, with no ads.** Every team gets every feature. Ads may come later, once enough teams use Battleplan to justify the work; any ads plan has to respect children's privacy rules, because parents and guardians manage youth players' records in the app (ROADMAP "Ads, later"). [PLANS.md](PLANS.md) summarizes this.
 
 What does cost money as teams grow is storage, so each team has a limit, and admins can see and free their space.
 
@@ -1140,11 +1161,11 @@ Every milestone ends with its features working on **iOS, Android, and web**, and
 - [ ] Roster screen, roles, team settings; transfer, leave, archive, delete.
 - [ ] Add by email, with account creation and setup emails. Set up the email provider and sending domain.
 - [ ] Invite link, QR, and code; email invites; the `/join` page; `getInvitePreview` and `redeemInvite`; Universal Links and App Links.
-- [ ] Youth teams: team type, players, pasted rosters, guardian linking and requests, parent labels (PLAYER-1 to PLAYER-5, PLAYER-8).
+- [ ] Players on every team: pasted rosters, claims (as the player or a guardian), member-added players with admin approval, who's-who labels (PLAYER-1 to PLAYER-5, PLAYER-8).
 - [ ] Storage quota accounting.
 - [ ] Rules and tests, including **cross-team isolation**.
 
-**Done when:** a new coach can create a team and get three people in by link, QR, and email; a person on two teams can switch between them; and on a youth team, a pasted roster links each parent to the right player.
+**Done when:** a new coach can create a team and get three people in by link, QR, and email; a person on two teams can switch between them; and a pasted roster links each player or parent to the right player.
 
 ### M3 · Chat
 
@@ -1179,7 +1200,7 @@ From here on, each feature ships with its own notifications.
 ### M6 · Schedule
 
 - [ ] Events with types and game fields.
-- [ ] RSVPs, including Maybe and admins answering for members; per-player RSVPs and guardian notifications on youth teams (PLAYER-6, PLAYER-7, PLAYER-9).
+- [ ] RSVPs, including Maybe and admins answering for members; per-player RSVPs with others counted apart, and notifications to players and guardians (PLAYER-6, PLAYER-7, PLAYER-9).
 - [ ] Upcoming, Past, and Calendar views; All my teams.
 - [ ] Repeating events (daily and weekly, skip dates, this-and-following edits, cancel, and delete) and Duplicate.
 - [ ] Reminders; event cards in chat.
@@ -1207,7 +1228,7 @@ From here on, each feature ships with its own notifications.
 
 ### Moving our team over
 
-1. Create our team and paste in the roster (TEAM-7; on a youth team, players with their parents' emails, PLAYER-1).
+1. Create our team and paste in the roster (TEAM-7, or players with their own or their parents' emails, PLAYER-1).
 2. Recreate upcoming events, using repeating events for practices.
 3. Post the invite link in the old GroupMe and show the QR code at practice.
 4. Run both apps for about two weeks, then announce the switch.
@@ -1306,7 +1327,7 @@ Each question has a default. The build follows the default until someone decides
 | # | Question | Default until decided |
 |---|---|---|
 | Q1 | ~~Should the app say "Team" or "Group"?~~ **Decided 2026-10-11:** "Team". | — |
-| Q2 | ~~Will youth players use Battleplan?~~ **Decided:** no. Accounts are for adults (18+), and parents and guardians answer for youth players (§6.3). | — |
+| Q2 | ~~Will youth players use Battleplan?~~ **Decided:** no. Accounts are for adults (18+), and parents and guardians answer for youth players (§6.3). **2026-10-12:** adult players can be members and claim their own player ("I am this player"). | — |
 | Q3 | ~~Who can create teams?~~ **Decided 2026-10-11:** anyone with a verified email; super admins can turn it off. | — |
 | Q4 | ~~How will the platform be paid for once there are hundreds of teams?~~ **Decided 2026-10-12:** everything is free with no ads for now; ads may come once adoption justifies them (ROADMAP "Ads, later"). Each team has a 500 MB storage limit that a super admin can raise (§6.14). A paid plan was planned on 2026-10-11 and dropped. | — |
 | Q5 | ~~Are direct messages needed at launch?~~ **Decided 2026-10-12 (the recommended default):** later, not at launch. | — |
@@ -1318,6 +1339,7 @@ Each question has a default. The build follows the default until someone decides
 | Q11 | ~~Where are most teams located?~~ **Decided 2026-10-12:** the US, so prod's database is in `us-central1` (permanent). | — |
 | Q12 | ~~Can members create events by default?~~ **Decided 2026-10-12:** only admins create events by default; each team can let members create them in Team settings (TEAM-5). | — |
 | Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
-| Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). | — |
-| Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). | — |
+| Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). **2026-10-12:** on every team, admins and members not linked to a player answer for themselves, counted apart as "others". | — |
+| Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). **2026-10-12:** this covers every claim, as the player or a guardian; an admin's own claim is approved at once. | — |
 | Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email. **2026-10-12:** Facebook sign-in was removed from the plan. It may be added later as a backlog item (ROADMAP, Later · Backlog). | — |
+| Q17 | ~~Should there be separate adult and youth team types?~~ **Decided 2026-10-12 (the owner's request):** no. There's one team type. Every team has players; any member can claim a player as "I am this player" or as a parent or guardian, and any member can add a player. Team admins approve or decline claims and members' new players (§6.3). | — |

@@ -6,7 +6,7 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 
 | Path | What |
 |---|---|
-| `index.html` | `/`: the landing page (features, youth teams, free with no ads, screenshots, FAQ) |
+| `index.html` | `/`: the landing page (features, players and parents, free with no ads, screenshots, FAQ) |
 | `support.html` | `/support`: support email, common questions, deleting your account |
 | `privacy.html`, `terms.html` | `/privacy`, `/terms`: draft structure; final wording is ROADMAP task 121 |
 | `delete-account.html` | `/delete-account`: deletion in the app and by email (LEGAL-3) |

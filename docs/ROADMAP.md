@@ -9,7 +9,7 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
 - Each milestone ends working on iOS, Android, and web, with rules tests updated (SPEC §9).
 
-Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. Facebook sign-in was removed from the plan; it is a backlog item now.
+Last updated: 2026-10-12. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. Teams are now one type with players on every team, claims, and admin approval (tasks 181 to 186). Facebook sign-in was removed from the plan; it is a backlog item now.
 
 ---
 
@@ -182,6 +182,17 @@ SPEC §4.3 (WEB-1 to WEB-5), ARCH §6.6 and D40. The website is the `website/` f
 178. ✅ Links follow the move: the app's `LinkService` and the Functions `links` module build `/app/...` links for content and email setup, keep invite links short (`/join/<CODE>`), and push notifications open `https://<host>/app<route>`; the Auth `url` becomes `/app/activate`; Universal Links and App Links also match `/app/*`, and the native apps ignore the `/app` prefix; the web app's service worker, manifest, and push service worker work under `/app/`. Tested on dev: an invite link, a setup email, and a notification click in the browser, and an invite link on the Android emulator (WEB-4).
 179. ✅ Website polish (store badges in place but off until the apps are listed, task 130): favicon, Open Graph image and tags, `robots.txt` and a sitemap (the site indexed, `/app` not), and App Store and Google Play badges once the apps are listed (task 130).
 
+## One team type · before M9
+
+SPEC Q17, §6.3 (PLAYER-1 to PLAYER-11), ARCH §6.2 and D59. The owner asked for one kind of team instead of adult and youth types. Every team has players; any member can claim a player as "I am this player" or as a parent or guardian, and can add players that team admins approve or decline.
+
+181. ✅ Data and migration: `groups.teamType` and `events.rsvpFor` removed, `groups.kind: 'team'`, `players.status` (active or pending) with `proposedBy`, and `relation` (`self` or `guardian`) on player links and claims; a dev-only, idempotent migration fills in old docs.
+182. ✅ Server: `createGroup` with no type; `proposePlayer`, `claimPlayer`, `resolvePlayerClaim`, and `resolvePendingPlayer` replace the old guardian callables; player requests notify admins; RSVP recounts keep players and others apart; reminders and changes go to each player's own member and guardians.
+183. ✅ Rules: pending players hidden from other members; RSVPs for players by their linked members or admins, and any member for themselves; rules tests for each case.
+184. ✅ App: no type step when creating a team; a Players section on every roster with Add player (pending for members), Claim this player, and Approve and Decline for admins; "Who are you here for?" on every team; RSVP rows per player plus a Me row, with "12 players going · 2 others" (PLAYER-3, PLAYER-4, PLAYER-6).
+185. ✅ Labels and notifications: "Jared F. #12" for a member who is a player, "Maria R. · Emma #7" for a guardian; youth-team wording removed (PLAYER-7, PLAYER-8).
+186. ✅ Docs and website: SPEC, ARCH, and the landing and support pages describe one team type ("Players and parents").
+
 ## M9 · Hardening and team beta
 
 104. Enforce App Check; review rules-test coverage.
@@ -251,7 +262,7 @@ In SPEC §9's priority order.
 155. Per-team profanity filter (SAFE-7), sooner if App Review asks.
 156. Cloud SQL, if usage meets the ARCH §12.1 triggers.
 180. **Group types beyond Team** (TEAM-14): keep the standard **Team** and add a more basic **Group** for general use (for example, no roster, players, or RSVP counts by default), chosen when it's created. The one-type model stores `groups.kind: 'team'` so this needs no migration.
-174. **Ads, once adoption justifies them** (SPEC STORE-7, [PLANS.md](PLANS.md)). Youth teams mean parents and guardians use the app for children, so the plan must address children's privacy rules first: COPPA in the US (no behavioral ads to children, verifiable parental consent for any data from under-13s), and Google Play's Families policy (certified ad SDKs only, no personalized ads, if the app targets children or joins the Families program). Likely shape: contextual, non-personalized ads on adult teams only, with the Privacy Policy, store privacy labels, and the Data safety form updated first.
+174. **Ads, once adoption justifies them** (SPEC STORE-7, [PLANS.md](PLANS.md)). Parents and guardians manage youth players' records in the app, on any team, so the plan must address children's privacy rules first: COPPA in the US (no behavioral ads to children, verifiable parental consent for any data from under-13s), and Google Play's Families policy (certified ad SDKs only, no personalized ads, if the app targets children or joins the Families program). Likely shape: contextual, non-personalized ads only, and none on teams with players that guardians manage, with the Privacy Policy, store privacy labels, and the Data safety form updated first.
 
 - Facebook sign-in, if needed later (was tasks 101 to 103): Meta app, Continue with Facebook, Limited Login on iOS, App Review, and the data-deletion URL (LEGAL-5).
 
