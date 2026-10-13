@@ -358,6 +358,22 @@ Brought back from the backlog (tasks 101 to 103, SPEC Q16).
 
 ---
 
+## Import and migration · planned, GroupMe first
+
+Decided 2026-10-13, at the owner's request. SPEC §6.15 (IMPORT), ARCH §6.13. This is future feature work, separate from the go-live phases; no importer is built yet. Support GroupMe first, then TeamReach, GameChanger, and TeamSnap. Each source needs its own capability check before promising what can be moved.
+
+219. GroupMe discovery: inspect a representative, anonymized export and the official API; record which messages, documents, and events/calendar data can actually be read, what permissions are needed, and what cannot be preserved. Start with the official JSON export; evaluate an API connection only if needed. See [Microsoft's export instructions](https://support.microsoft.com/en-us/groupme/how-do-i-export-my-groupme-data) and [GroupMe's public API](https://dev.groupme.com/docs/v3). Message access is documented; document and calendar import remain unverified until this task proves them.
+220. Shared import flow: team admins choose the source and destination team, then choose **Messages**, **Documents**, and **Events/calendar** independently. Offer each choice only when the adapter supports it and the selected export or connection supplies usable data. Explain unavailable categories; never require messages to import documents or events. Preview counts, sample items, date ranges, storage use, and skipped items before confirmation.
+221. Shared import jobs: server-side admin authorization, validation and storage limits, progress and cancellation, retries without duplicates, source IDs and attribution, and a completion report. Preserve existing team content; historical imports must not send chat pushes, mention alerts, emails, or past-event reminders. Imported authors do not automatically become accounts or members.
+222. GroupMe messages: implement the verified export format first, preserving original author names, timestamps, order, and source IDs. Report unsupported attachments and metadata; treat photos separately from Documents so deselecting Documents cannot silently drop message text. Add the API path only if task 219 establishes a need and a supported authentication flow.
+223. GroupMe documents and events/calendar: implement each only if task 219 verifies a usable source. Documents can import without messages; events can import without either. Copy accessible supported files within Battleplan's limits; preserve event times and time zones; preview unsupported recurrence, RSVP, and attachment data rather than guessing. Keep unavailable choices disabled with an explanation.
+224. GroupMe verification: test every available category combination, unavailable categories, malformed exports, duplicate imports, interrupted jobs, team isolation, quota limits, authors without Battleplan accounts, and notification suppression. Document the export steps, limits, and final supported categories before marking GroupMe complete.
+225. TeamReach discovery and adapter: verify its export/API capabilities, then implement supported categories through the same independent-choice flow and checks. No assumed support for message, document, or calendar export.
+226. GameChanger discovery and adapter: verify its export/API capabilities, then implement supported categories through the same flow and checks.
+227. TeamSnap discovery and adapter: verify its export/API capabilities, then implement supported categories through the same flow and checks.
+
+**Done when** a team admin can preview and import only the categories they selected, unsupported choices cannot run, retries do not duplicate content, and the report clearly identifies anything skipped. GroupMe ships first; each later adapter meets the same criteria.
+
 ## Later · Backlog
 
 147. Join requests that need admin approval; copying a team for a new season (TEAM-13).

@@ -1017,6 +1017,25 @@ What does cost money as teams grow is storage, so each team has a limit, and adm
 
 ---
 
+### 6.15 Import and migration (IMPORT) · Planned
+
+Requested 2026-10-13. Future work in ROADMAP tasks 219–227; implementation has not started. GroupMe is first, followed by TeamReach, GameChanger, and TeamSnap. This does not block the initial go-live.
+
+- **IMPORT-1 · Source and destination.** Team admins choose a supported source and a Battleplan team they administer. Each adapter documents the verified export format or API, required permissions, supported categories, and known losses. Importing history does not create accounts, memberships, or invitations automatically.
+- **IMPORT-2 · Independent choices.** Messages, Documents, and Events/calendar have separate selections. A category is selectable only when both the adapter and the supplied export or connection can provide usable data. Unavailable categories explain why. Documents and events do not depend on selecting messages; message photos are identified separately from documents.
+- **IMPORT-3 · Preview.** Before importing, show available categories, counts, sample content, date ranges, destination, storage estimate, and skipped or unsupported data. Require at least one available category and explicit confirmation. Do not infer structured events from ordinary message text.
+- **IMPORT-4 · Preserve history.** Keep source IDs, original timestamps, and author names where available; distinguish imported authors from signed-in Battleplan users. Preserve event time zones. Copy supported accessible files into team storage within existing limits. Explain any loss of reactions, replies, recurrence, RSVPs, or attachments. Never overwrite unrelated existing content.
+- **IMPORT-5 · Jobs and results.** Show progress, cancellation, and a completion report with imported, skipped, and failed counts per category. Retries and repeat imports must not duplicate previously imported source items. Imports enforce team permissions and storage limits and suppress historical chat, mention, email, and reminder notifications; future imported events use normal reminder behavior after completion.
+- **IMPORT-6 · GroupMe first.** Start by verifying an actual export against [Microsoft's JSON export instructions](https://support.microsoft.com/en-us/groupme/how-do-i-export-my-groupme-data). The [official API](https://dev.groupme.com/docs/v3) documents paginated message retrieval. Document and calendar import are unverified, so enable them only after discovery proves a supported path. The other three sources receive the same discovery before implementation.
+
+**Acceptance (when implemented)**
+
+- Every available category can be selected alone or in combination; unavailable categories cannot be submitted.
+- A preview makes unsupported and missing data clear before any team content is written.
+- Importing twice or resuming after interruption creates no duplicate content and sends no historical notifications.
+- A non-admin cannot import; a job cannot write to another team or exceed storage limits.
+- Original author names and event times are preserved, and imported history grants nobody account access.
+
 ## 7. Design system and UI
 
 ### 7.1 Brand
@@ -1293,7 +1312,7 @@ Decided 2026-10-12, at the owner's request (ARCH D60). The first go-live is the 
 2. Recreate upcoming events, using repeating events for practices.
 3. Post the invite link in the old GroupMe and show the QR code at practice.
 4. Run both apps for about two weeks, then announce the switch.
-5. GroupMe and TeamReach history isn't imported (§11).
+5. Initially move without importing history. A future import and migration feature starts with GroupMe, then TeamReach, GameChanger, and TeamSnap (§6.15; ROADMAP tasks 219–227).
 
 ### v1.1 backlog, in priority order
 
@@ -1385,7 +1404,7 @@ Not in v1; some may come later:
 - Payments and team dues
 - Volunteer and snack sign-ups
 - Carpools
-- Importing GroupMe or TeamReach history
+- Import and migration from GroupMe, TeamReach, GameChanger, and TeamSnap is planned after the initial go-live (§6.15; ROADMAP tasks 219–227).
 - Languages other than English
 - Native desktop apps (the web app covers desktop)
 - Widgets and watch apps

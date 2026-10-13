@@ -1133,6 +1133,18 @@ The R2 API token can reach only that bucket. The encryption key lives in Secret 
 
 ---
 
+### 6.13 Import and migration · Planned
+
+SPEC §6.15, ROADMAP tasks 219–227. No importer exists yet. Build GroupMe first, then adapters for TeamReach, GameChanger, and TeamSnap. Verify each source's supported exports or official API before implementation; do not assume document or calendar access from the presence of those features in the source app.
+
+- Each adapter normalizes source records and reports capabilities for messages, documents, and events/calendar. The preview intersects adapter support with the data actually available in the supplied export or connection. The client exposes three independent choices; the server validates them again. Documents and events can be imported without messages.
+- Start GroupMe discovery with the official JSON export and representative anonymized fixtures. Its public API documents message pagination; document and calendar access remain unverified. Record a supported-format contract and known losses before writing the adapter.
+- Run writes through a server-side import job authorized for the destination team's admin. Stage and validate input before confirmation, with bounded archive extraction, supported file types and sizes, and the team's normal storage quota. Any remote file retrieval must validate hosts and redirects. Source credentials, if needed, stay out of client bundles and logs; remove temporary input and credentials after the job finishes or expires.
+- Persist job status, selected categories, progress, per-category results, and source-to-destination IDs. Deduplicate by destination team, source, source group, category, and original item ID so retries and repeat imports are safe. Handle cancellation between batches and report partial completion without overwriting unrelated content.
+- Keep imported author attribution separate from Firebase Auth identities; names alone never link an imported author to an account. Preserve original content times separately from import time. Imported source system messages must not impersonate Battleplan's trusted system actions. Member and player migration is a separate scope decision.
+- Imported records need an explicit path through triggers that suppresses historical pushes, mentions, emails, and past-event reminders while maintaining normal storage accounting and team visibility. Future events enter the normal reminder pipeline after completion. Do not route historical records through ordinary create handlers without accounting for their side effects.
+- Add job and provenance schema, indexes, cleanup retention, trigger behavior, and rollback policy to the detailed design before implementation. Tests cover independent choices, partial data, malformed input, authorization, quotas, retry deduplication, and notification suppression.
+
 ## 7. Key flow: sending a message
 
 ```mermaid
