@@ -90,7 +90,9 @@ jobs:
         run: npx --yes firebase-tools@15 emulators:exec --only auth,firestore,storage --project demo-battleplan 'npm run test:coverage'
       - name: Demo seed tests (SPEC §10)
         working-directory: tools/seed
-        run: npm ci && npm test
+        # The emulator runs the migration and demo-seed tests that need a
+        # database; without it those tests skip.
+        run: npm ci && npx --yes firebase-tools@15 emulators:exec --only firestore --project demo-battleplan 'npm test'
 
   # Deploys use keyless Workload Identity Federation (ARCH §9). They turn on
   # once the repository variables FIREBASE_DEPLOYS=true, WIF_PROVIDER, and
