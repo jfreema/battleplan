@@ -175,9 +175,15 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final user = ref.read(authUserProvider).value;
     final me = user?.uid;
     final viewing = ref.read(viewingAsSuperAdminProvider(m.groupId));
+    final superAdmin = user?.isSuperAdmin ?? false;
     final canModerate =
-        (user?.isSuperAdmin ?? false) ||
+        superAdmin ||
         (ref.read(myMembershipProvider(m.groupId))?.isAdmin ?? false);
+    // An archived team is read-only (TEAM-9): deleteMessage refuses
+    // everyone there but a super admin.
+    final archived =
+        ref.read(groupProvider(m.groupId)).value?.isArchived ?? false;
+    final canDelete = (widget.mine || canModerate) && (!archived || superAdmin);
     await showAdaptiveSheet<void>(
       context,
       builder: (sheet) => SafeArea(
@@ -266,7 +272,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                   ),
               ],
               // Your own messages; admins and super admins can delete any.
-              if (widget.mine || canModerate)
+              if (canDelete)
                 ListTile(
                   leading: Icon(
                     AppIcons.delete,

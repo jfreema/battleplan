@@ -473,6 +473,51 @@ void main() {
       );
     });
 
+    test('a super admin makes events on a team they are not on (§3)', () {
+      expect(canCreateEvents(group, null), isFalse);
+      expect(canCreateEvents(group, null, superAdmin: true), isTrue);
+      expect(
+        canCreateEvents(
+          group.copyWith(archivedAt: DateTime(2026)),
+          null,
+          superAdmin: true,
+        ),
+        isFalse,
+      );
+    });
+
+    test('members manage their own events, even once members may no longer '
+        'make them (§3 "own only")', () {
+      final event = Event(
+        id: const EventId('e1'),
+        groupId: const GroupId('a'),
+        type: EventType.practice,
+        title: 'Practice',
+        startAt: DateTime.utc(2026, 10, 20, 17),
+        endAt: DateTime.utc(2026, 10, 20, 18),
+        timeZone: 'America/New_York',
+        createdBy: 'sam',
+      );
+      // The team doesn't let members make events (any more).
+      expect(group.settings.membersCanCreateEvents, isFalse);
+      expect(canManageEvent(event, group, member('sam')), isTrue);
+      expect(canManageEvent(event, group, member('kim')), isFalse);
+      expect(
+        canManageEvent(event, group, member('lee', role: MemberRole.admin)),
+        isTrue,
+      );
+      expect(canManageEvent(event, group, null, superAdmin: true), isTrue);
+      expect(canManageEvent(event, group, null), isFalse);
+      expect(
+        canManageEvent(
+          event,
+          group.copyWith(archivedAt: DateTime(2026)),
+          member('sam'),
+        ),
+        isFalse,
+      );
+    });
+
     test('guardians answer for their players; admins also for themselves', () {
       const players = [
         Player(

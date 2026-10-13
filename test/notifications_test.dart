@@ -290,7 +290,10 @@ void main() {
     ) async {
       final devices = FakeDeviceRepository();
       final auth = FakeAuthRepository(
-        user: coach.copyWith(providerIds: ['password']),
+        user: coach.copyWith(
+          providerIds: ['password'],
+          signInProvider: 'password',
+        ),
       )..needsRecentLogin = true;
       await pumpApp(tester, auth: auth, devices: devices);
       await tester.tap(find.byTooltip('Settings'));

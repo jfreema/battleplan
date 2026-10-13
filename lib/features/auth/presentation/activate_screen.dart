@@ -10,7 +10,8 @@ import 'package:material_ui/material_ui.dart';
 /// Finishes sign-in from an emailed link (ARCH §6.6). The link opens the app
 /// through App Links (`/__/auth/links`) or the web app (`/activate`). If the
 /// address it was sent to isn't remembered on this device, it asks for it.
-/// Once signed in, the router moves on by itself.
+/// Once signed in, it goes on to the app. Signed in already, the link is a
+/// fresh sign-in for changing sign-in methods (AUTH-7).
 class ActivateScreen extends ConsumerStatefulWidget {
   const new({required this.link, super.key});
 
@@ -56,6 +57,9 @@ class _ActivateScreenState extends ConsumerState<ActivateScreen> {
           .read(authRepositoryProvider)
           .signInWithLink(email: email.trim(), link: widget.link);
       await ref.read(localPrefsRepositoryProvider).setPendingSignInEmail(null);
+      // Already signed in, this was a fresh sign-in (AUTH-7): the router
+      // has nothing new to move on for, so go on from here.
+      if (mounted) context.go('/');
     } on PermissionDenied {
       // A disabled account sees only the disabled screen (AUTH-11).
       if (mounted) context.go('/disabled');

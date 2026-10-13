@@ -652,6 +652,17 @@ void main() {
       expect((await open()).themePreference, ThemePreference.dark);
     });
 
+    test('remembers which accounts set a password here (AUTH-7)', () async {
+      final repo = await open();
+      expect(repo.passwordSet('u1'), isFalse);
+      await repo.setPasswordSet('u1', value: true);
+      await repo.setPasswordSet('u2', value: true);
+      expect((await open()).passwordSet('u1'), isTrue);
+      await repo.setPasswordSet('u1', value: false);
+      expect(repo.passwordSet('u1'), isFalse);
+      expect(repo.passwordSet('u2'), isTrue);
+    });
+
     test('makes one stable 24-character install ID', () async {
       final repo = await open();
       final id = repo.installId;

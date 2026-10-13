@@ -76,6 +76,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   /// True once the chat has opened at the first unread message.
   bool _positioned = false;
 
+  /// The chat opened on a page from the offline cache with nothing unread
+  /// in it: the server's first page may still bring unread messages, and
+  /// then it opens at the first of them after all (CHAT-1).
+  bool _openedFromCache = false;
+
   /// Whether the newest messages are on screen.
   bool _atBottom = true;
 
@@ -251,8 +256,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _open(ChatState chat, String? me) {
     _positioned = true;
     final read = _openedReadAt;
-    final unread =
-        read != null &&
+    final unread = _hasUnread(chat, me);
+    if (unread) {
+      _split = read;
+    } else {
+      _split =
+          chat.messages.where((m) => !m.pending).firstOrNull?.createdAt ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      _openedFromCache = !chat.online;
+    }
+    final target = widget.initialMessageId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (unread) _toFirstUnread(scroll: target == null);
+      if (target != null) unawaited(_jumpTo(target));
+    });
+  }
+
+  /// Whether [chat] has messages from others after the read marker the
+  /// chat opened with.
+  bool _hasUnread(ChatState chat, String? me) {
+    final read = _openedReadAt;
+    return read != null &&
         chat.messages.any(
           (m) =>
               m.authorId != me &&
@@ -260,34 +285,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               !m.isSystem &&
               (m.createdAt?.isAfter(read) ?? false),
         );
-    final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
-    if (unread) {
-      // Unread messages go below the center, the first of them at it. More
-      // than the newest page holds load from the read marker on.
-      _split = read;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(controller.openAt(read).catchError((_) {}));
-      });
-    } else {
-      _split =
-          chat.messages.where((m) => !m.pending).firstOrNull?.createdAt ??
-          DateTime.fromMillisecondsSinceEpoch(0);
-    }
-    final target = widget.initialMessageId;
+  }
+
+  /// The chat opened on the offline cache with nothing unread (bootstrap
+  /// keeps a cache, so a reopened chat's first page is the one seen last
+  /// time). Once the server's first page is in, open at the first unread
+  /// message after all, unless the person has scrolled or a notification
+  /// named a message.
+  void _reopenFromServer(ChatState chat, String? me) {
+    _openedFromCache = false;
+    final read = _openedReadAt;
+    if (read == null || !_stick || widget.initialMessageId != null) return;
+    if (!_hasUnread(chat, me)) return;
+    _split = read;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (target != null) {
-        unawaited(_jumpTo(target));
-      } else if (unread && _scroll.hasClients) {
-        _stick = false;
-        // The first unread message near the top, or the bottom if all of
-        // them fit on screen.
-        final p = _scroll.position;
-        _scroll.jumpTo(
-          math.max(p.minScrollExtent, -p.viewportDimension * 0.85),
-        );
-      }
+      if (mounted) _toFirstUnread();
     });
+  }
+
+  /// Unread messages go below the center, the first of them at it. More
+  /// than the newest page holds load from the read marker on (openAt).
+  /// With [scroll], the first of them is brought on screen.
+  void _toFirstUnread({bool scroll = true}) {
+    final read = _openedReadAt;
+    if (read == null) return;
+    final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
+    unawaited(controller.openAt(read).catchError((_) {}));
+    if (!scroll || !_scroll.hasClients) return;
+    _stick = false;
+    // The first unread message near the top, or the bottom if all of
+    // them fit on screen.
+    final p = _scroll.position;
+    _scroll.jumpTo(math.max(p.minScrollExtent, -p.viewportDimension * 0.85));
   }
 
   void _loadOlder() => unawaited(
@@ -362,6 +391,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _openedMarkerTaken = true;
       _openedReadAt = membership?.lastReadAt;
       _open(chat, me);
+    } else if (_openedFromCache && chat.online) {
+      _reopenFromServer(chat, me);
     }
     // The oldest loaded message from someone else after the marker gets
     // the "New messages" divider.

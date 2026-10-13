@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/presentation/email_sign_in_screen.dart';
 import 'package:battleplan/features/auth/presentation/fresh_sign_in.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
@@ -25,7 +26,12 @@ String _failureText(AppLocalizations l10n, AppFailure e) => switch (e) {
 /// AUTH-6 at `/choose-sign-in`: someone an admin added signed in with the
 /// link in their setup email. Before anything else, they choose how to sign
 /// in from now on: Google, Apple, or a password they create. The router
-/// sends them here until they've chosen.
+/// sends them here until they've chosen, or they sign out.
+///
+/// Their only sign-in was the setup link, perhaps long ago, and they have no
+/// password to confirm it's them with, so these skip the app's own recent
+/// sign-in check (AUTH-7). Firebase still asks where it must, and the fresh
+/// sign-in then goes by an emailed link.
 class ChooseSignInScreen extends ConsumerStatefulWidget {
   const new({this.appleEnabled = false, super.key});
 
@@ -76,7 +82,10 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
       return;
     }
     await _choose(() async {
-      await ref.read(authRepositoryProvider).setPassword(password);
+      await ref
+          .read(authRepositoryProvider)
+          .setPassword(password, checkRecent: false);
+      await markPasswordSet(ref);
       return true;
     });
   }
@@ -113,7 +122,9 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
                   OutlinedButton(
                     onPressed: _busy
                         ? null
-                        : () => unawaited(_choose(auth.linkGoogle)),
+                        : () => unawaited(
+                            _choose(() => auth.linkGoogle(checkRecent: false)),
+                          ),
                     child: Text(l10n.continueWithGoogle),
                   ),
                   const SizedBox(height: Space.md),
@@ -127,6 +138,17 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
                         ? null
                         : () => unawaited(_createPassword()),
                     child: Text(l10n.createPassword),
+                  ),
+                  const SizedBox(height: Space.lg),
+                  // The router keeps them here until they choose, so this
+                  // is the way out.
+                  TextButton(
+                    onPressed: _busy
+                        ? null
+                        : () => unawaited(
+                            ref.read(sessionServiceProvider).signOut(),
+                          ),
+                    child: Text(l10n.signOut),
                   ),
                 ],
               ),

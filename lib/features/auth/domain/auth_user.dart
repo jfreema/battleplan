@@ -13,8 +13,15 @@ abstract class AuthUser with _$AuthUser {
     String? displayName,
     @Default(false) bool isSuperAdmin,
 
-    /// Linked sign-in methods: `password`, `google.com`, `apple.com`.
+    /// Linked sign-in methods: `password`, `google.com`, `apple.com`. An
+    /// emailed sign-in link also adds `password`, with no password behind
+    /// it (AUTH-6).
     @Default(<String>[]) List<String> providerIds,
+
+    /// How this session signed in, from the ID token: `password`,
+    /// `emailLink`, `google.com`, or `apple.com`. `password` means the
+    /// account really has a password (AUTH-7).
+    String? signInProvider,
 
     /// When this device's session signed in (the ID token's auth_time).
     /// "Sign out of all devices" ends sessions older than that (AUTH-9),

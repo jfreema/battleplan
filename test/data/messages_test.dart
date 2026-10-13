@@ -167,6 +167,29 @@ void main() {
     },
   );
 
+  test('unread counts leave out a blocked person even past the cap '
+      '(CHAT-9, CHAT-12)', () async {
+    final since = DateTime.utc(2026, 10, 2);
+    final batch = db.batch();
+    // 300 since the marker: every other one from Pat, whom I blocked.
+    for (var i = 0; i < 300; i++) {
+      batch.set(db.doc('messages/m$i'), {
+        'groupId': 'g1',
+        'type': 'text',
+        'authorId': i.isEven ? 'pat' : 'sam',
+        'text': 'Message $i',
+        'createdAt': Timestamp.fromDate(since.add(Duration(minutes: i + 1))),
+      });
+    }
+    await batch.commit();
+    // 150 from Sam: still the 99+ the cap shows, never 0.
+    expect(await repo.countUnread(_g, since, skipAuthors: {'pat'}), 100);
+    // With fewer than the cap left once Pat's are out.
+    final late = since.add(const Duration(minutes: 200));
+    expect(await repo.countUnread(_g, late, skipAuthors: {'pat'}), 50);
+    expect(await repo.countUnread(_g, late), 100);
+  });
+
   test('edits, reacts, and deletes', () async {
     await db.doc('messages/m1').set({
       'groupId': 'g1',

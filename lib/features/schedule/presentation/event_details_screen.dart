@@ -56,7 +56,7 @@ class EventDetailsScreen extends ConsumerWidget {
     final me = ref.watch(myMembershipProvider(groupId));
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final canManage = canManageEvent(event, group, me, superAdmin: superAdmin);
-    final canCreate = canCreateEvents(group, me);
+    final canCreate = canCreateEvents(group, me, superAdmin: superAdmin);
 
     Future<void> onMenu(_Action a) async {
       switch (a) {

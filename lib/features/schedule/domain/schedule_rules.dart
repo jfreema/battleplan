@@ -10,15 +10,17 @@ import 'package:battleplan/features/schedule/domain/rsvp.dart';
 /// The screens show only what these allow; the server checks again.
 
 /// Making events (SCHED-3, Q12): admins, and members when the team turns
-/// on `membersCanCreateEvents`. Never on an archived team (TEAM-9). Full
+/// on `membersCanCreateEvents`; super admins on any team, as the rules and
+/// saveEventSeries let them (§3). Never on an archived team (TEAM-9). Full
 /// storage blocks it too, but the + button stays to say why (STORE-4).
-bool canCreateEvents(Group group, Membership? me) =>
-    me != null &&
+bool canCreateEvents(Group group, Membership? me, {bool superAdmin = false}) =>
     !group.isArchived &&
-    (me.isAdmin || group.settings.membersCanCreateEvents);
+    (superAdmin ||
+        (me != null && (me.isAdmin || group.settings.membersCanCreateEvents)));
 
-/// Editing, canceling, and deleting [event]: admins, or its creator while
-/// members may make events.
+/// Editing, canceling, and deleting [event]: admins and super admins, or
+/// its creator, even after the team stops letting members make events
+/// (§3 "own only", as the rules and saveEventSeries decide it).
 bool canManageEvent(
   Event event,
   Group group,
@@ -27,10 +29,7 @@ bool canManageEvent(
 }) =>
     !group.isArchived &&
     (superAdmin ||
-        (me != null &&
-            (me.isAdmin ||
-                (group.settings.membersCanCreateEvents &&
-                    event.createdBy == me.uid.value))));
+        (me != null && (me.isAdmin || event.createdBy == me.uid.value)));
 
 /// Whether [me] may answer on [event] at [now]: RSVPs on, not canceled,
 /// an active team, and before the deadline unless an admin (SCHED-5).

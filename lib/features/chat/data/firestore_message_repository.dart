@@ -373,24 +373,25 @@ class FirestoreMessageRepository implements MessageRepository {
         .where('groupId', isEqualTo: groupId.value)
         .where('createdAt', isGreaterThan: Timestamp.fromDate(since));
     // People's messages only: system lines like "Sam joined" don't count.
-    final all = await after
-        .where('type', whereIn: countedTypes)
-        .limit(cap)
-        .count()
-        .get();
-    var count = all.count ?? 0;
+    final counted = after.where('type', whereIn: countedTypes);
+    var count = (await counted.limit(cap).count().get()).count ?? 0;
     // Nor do messages from people I blocked (CHAT-12), which are collapsed.
     // Rarely anyone, so usually no second read. `in` takes up to 30.
     final skip = skipAuthors.take(30).toList();
     if (count > 0 && skip.isNotEmpty) {
-      final blocked = await after
-          .where('authorId', whereIn: skip)
-          .limit(cap)
-          .count()
-          .get();
-      count -= blocked.count ?? 0;
+      // All of theirs, not just those among the first [cap]: a count
+      // aggregation costs one read per 1,000 messages.
+      final blocked =
+          (await after.where('authorId', whereIn: skip).count().get()).count ??
+          0;
+      if (blocked > 0 && count >= cap) {
+        // The first count stopped at the cap, so it holds an unknown share
+        // of the blocked messages. Count again with room for all of them.
+        count = (await counted.limit(cap + blocked).count().get()).count ?? 0;
+      }
+      count -= blocked;
     }
-    return count < 0 ? 0 : count;
+    return count.clamp(0, cap);
   }
 
   /// The message types an unread count includes (CHAT-9).

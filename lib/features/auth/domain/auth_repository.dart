@@ -56,16 +56,20 @@ abstract interface class AuthRepository {
   // Sign-in methods (AUTH-7, AUTH-8). Each throws RequiresRecentLogin when
   // the last sign-in is more than 5 minutes old; reauthenticate, then retry.
   // Each change emails the account a security notice.
+  //
+  // With checkRecent false, linkGoogle and setPassword skip the app's own
+  // 5-minute check, leaving only Firebase's: for an added account still
+  // choosing how to sign in (AUTH-6), whose only way in was its setup link.
 
   /// Links Google to the signed-in account by completing Google's sign-in.
   /// Returns false if the person closed Google's sheet.
-  Future<bool> linkGoogle();
+  Future<bool> linkGoogle({bool checkRecent = true});
 
   /// Removes a sign-in method. The last one can't be removed.
   Future<void> unlink(String providerId);
 
   /// Sets a password (adding the password method) or changes it.
-  Future<void> setPassword(String newPassword);
+  Future<void> setPassword(String newPassword, {bool checkRecent = true});
 
   /// Changes the account email once the new address confirms a link; the
   /// profile's contact email follows, and both addresses get a notice

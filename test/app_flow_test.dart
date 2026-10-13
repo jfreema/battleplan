@@ -905,6 +905,31 @@ void main() {
       expect(find.text('This message was deleted.'), findsOneWidget);
     });
 
+    testWidgets('an archived team offers no Delete, as deleteMessage refuses '
+        'it there (TEAM-9)', (tester) async {
+      final repo = FakeMessageRepository([
+        msg(2, author: 'coach', name: 'Coach'),
+        msg(1),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder').copyWith(archivedAt: DateTime(2026)),
+        },
+        memberships: [
+          testMembership('a', 'coach', role: MemberRole.owner),
+          testMembership('a', 'sam', name: 'Sam Rivera'),
+        ],
+        messageRepo: repo,
+      );
+      // My own message, and as the team's owner.
+      await tester.longPress(find.text('Message 2'));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy text'), findsOneWidget);
+      expect(find.text('Delete'), findsNothing);
+    });
+
     testWidgets("members can't delete other people's messages", (tester) async {
       await pumpApp(
         tester,
@@ -1371,7 +1396,10 @@ void main() {
     tester,
   ) async {
     final auth = FakeAuthRepository(
-      user: coach.copyWith(providerIds: ['password']),
+      user: coach.copyWith(
+        providerIds: ['password'],
+        signInProvider: 'password',
+      ),
     )..needsRecentLogin = true;
     await pumpApp(tester, auth: auth);
     await tester.tap(find.byTooltip('Settings'));
@@ -1388,6 +1416,86 @@ void main() {
     expect(auth.reauthedWith, 'password');
     expect(auth.currentUser!.providerIds, contains('google.com'));
     expect(find.text('Google linked.'), findsOneWidget);
+  });
+
+  testWidgets('a fresh sign-in uses Google when linked, even beside the '
+      "setup link's password method (AUTH-6, AUTH-7)", (tester) async {
+    // An added account that chose Google: no password behind `password`.
+    final auth = FakeAuthRepository(
+      user: coach.copyWith(
+        providerIds: ['password', 'google.com'],
+        signInProvider: 'emailLink',
+      ),
+    )..needsRecentLogin = true;
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign-in methods'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Change email'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'new@example.com');
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text("Confirm it's you"), findsNothing);
+    expect(auth.reauthedWith, 'google.com');
+    expect(auth.emailChangeTo, 'new@example.com');
+  });
+
+  testWidgets('with no password and no Google, a fresh sign-in goes by an '
+      'emailed link (AUTH-7)', (tester) async {
+    final auth = FakeAuthRepository(
+      user: coach.copyWith(
+        providerIds: ['password'],
+        signInProvider: 'emailLink',
+      ),
+    )..needsRecentLogin = true;
+    final prefs = await pumpApp(tester, auth: auth);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign-in methods'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Link'));
+    await tester.pumpAndSettle();
+    expect(find.text("Confirm it's you"), findsNothing);
+    expect(auth.sentLinks, ['coach@example.com']);
+    expect(prefs.pendingSignInEmail, 'coach@example.com');
+    expect(find.textContaining('we emailed a sign-in link'), findsOneWidget);
+    expect(auth.currentUser!.providerIds, isNot(contains('google.com')));
+
+    // Opening the link while signed in is the fresh sign-in.
+    GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .go('/activate?mode=signIn');
+    await tester.pumpAndSettle();
+    expect(prefs.pendingSignInEmail, isNull);
+    expect(auth.needsRecentLogin, isFalse);
+    expect(find.text('Signing you in…'), findsNothing);
+  });
+
+  testWidgets('a password set on this device is asked for again (AUTH-7)', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository(
+      user: coach.copyWith(
+        providerIds: ['password'],
+        signInProvider: 'emailLink',
+      ),
+    );
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign-in methods'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Change password'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'password');
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await tester.pumpAndSettle();
+    auth.needsRecentLogin = true;
+    await tester.tap(find.text('Link'));
+    await tester.pumpAndSettle();
+    expect(find.text("Confirm it's you"), findsOneWidget);
+    expect(auth.sentLinks, isEmpty);
   });
 
   testWidgets('deleting the account confirms, signs in again, then deletes', (

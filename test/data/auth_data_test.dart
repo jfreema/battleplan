@@ -16,14 +16,20 @@ MockUser _user({
   bool verified = true,
   Map<String, dynamic>? claims,
   DateTime? signedInAt,
+  DateTime? issuedAt,
 }) => MockUser(
   uid: 'u1',
   email: 'alex@example.com',
   displayName: 'Alex',
   isEmailVerified: verified,
   customClaim: claims,
-  // AUTH-7: changing sign-in methods needs a sign-in in the last 5 minutes.
-  idTokenResult: _Token(signedInAt ?? DateTime.now(), claims),
+  // AUTH-7: changing sign-in methods needs a sign-in in the last 5 minutes,
+  // by the server's clock: auth_time against the fresh token's issue time.
+  idTokenResult: _Token(
+    signedInAt ?? DateTime.now(),
+    claims,
+    issuedAtTime: issuedAt ?? DateTime.now(),
+  ),
   providerData: [for (final p in providers) _Info(p)],
 );
 
@@ -38,10 +44,13 @@ class _Info implements UserInfo {
 }
 
 class _Token implements IdTokenResult {
-  new(this.authTime, this.claims);
+  new(this.authTime, this.claims, {required this.issuedAtTime});
 
   @override
   final DateTime authTime;
+
+  @override
+  final DateTime issuedAtTime;
 
   @override
   final Map<String, dynamic>? claims;
@@ -97,6 +106,7 @@ void main() {
     expect(user.uid, 'u1');
     expect(user.isSuperAdmin, isTrue);
     expect(user.providerIds, ['password']);
+    expect(user.signInProvider, 'password');
     expect(repo.currentUser, user);
   });
 
@@ -325,6 +335,31 @@ void main() {
       throwsA(isA<RequiresRecentLogin>()),
     );
     expect(functions.calls, isEmpty);
+
+    // An added account choosing how to sign in skips the app's own check
+    // (AUTH-6); Firebase still asks where it must.
+    await stale.linkGoogle(checkRecent: false);
+    await stale.setPassword('newpassword', checkRecent: false);
+    expect(functions.calls, hasLength(2));
+  });
+
+  test('the recent sign-in check uses the server clock, not the device '
+      'clock (AUTH-7)', () async {
+    // Signed in a minute before the server issued a fresh token; this
+    // device's clock runs 9 minutes fast, so by it the sign-in is 10
+    // minutes old.
+    final now = DateTime.now();
+    final repo = repoFor(
+      MockFirebaseAuth(
+        signedIn: true,
+        mockUser: _user(
+          signedInAt: now.subtract(const Duration(minutes: 10)),
+          issuedAt: now.subtract(const Duration(minutes: 9)),
+        ),
+      ),
+    );
+    expect(await repo.linkGoogle(), isTrue);
+    await repo.changeEmail('new@example.com');
   });
 
   test('maps sign-in method errors', () async {

@@ -1019,6 +1019,27 @@ void main() {
         expect(find.text('Downloaded.'), findsOneWidget);
       });
 
+      testWidgets('without Web Share, sharing a link copies it', (
+        tester,
+      ) async {
+        String? copied;
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied = (call.arguments as Map)['text'] as String?;
+            }
+            return null;
+          },
+        );
+        final r = await openDocuments(tester);
+        r.sharer.linksShare = false;
+        await menu(tester, 'League site', 'Share');
+        expect(copied, 'https://league.example.com/fall');
+        expect(find.text('Link copied.'), findsOneWidget);
+        expect(find.textContaining("Couldn't share"), findsNothing);
+      });
+
       testWidgets('Share and Download from the menu', (tester) async {
         final r = await openDocuments(
           tester,

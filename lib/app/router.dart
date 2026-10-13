@@ -128,7 +128,15 @@ GoRouter router(Ref ref) {
       if (path.startsWith('/sign-in')) {
         return state.uri.queryParameters['from'] ?? '/';
       }
-      if (path == '/activate' || path == '/__/auth/links') return '/';
+      if (path == '/activate' || path == '/__/auth/links') {
+        // A fresh sign-in by emailed link (AUTH-7) finishes there while
+        // signed in: the app sent it to this account's address.
+        final pending = ref.read(localPrefsRepositoryProvider);
+        final reauth =
+            pending.pendingSignInEmail?.toLowerCase() ==
+            user.email?.toLowerCase();
+        return reauth ? null : '/';
+      }
       // Disabled accounts see only the disabled screen (AUTH-11).
       final disabled =
           ref.read(myProfileProvider).value?.status == UserStatus.disabled;

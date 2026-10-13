@@ -35,7 +35,9 @@ class ScheduleScreen extends ConsumerWidget {
     final me = ref.watch(myMembershipProvider(groupId));
     final options = ref.watch(scheduleViewProvider);
     final teamCount = ref.watch(scheduleTeamsProvider).length;
-    final canCreate = group != null && canCreateEvents(group, me);
+    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    final canCreate =
+        group != null && canCreateEvents(group, me, superAdmin: superAdmin);
     final full = group?.storageFull ?? false;
 
     return DefaultTabController(

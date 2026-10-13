@@ -158,9 +158,17 @@ class FakeAuthRepository implements AuthRepository {
   /// When true, linking Google behaves as if the person closed the sheet.
   bool linkCancels = false;
 
+  /// The method changes made without the app's own recent sign-in check
+  /// (AUTH-6).
+  final List<String> uncheckedChanges = [];
+
   @override
-  Future<bool> linkGoogle() async {
-    _requireRecent();
+  Future<bool> linkGoogle({bool checkRecent = true}) async {
+    if (checkRecent) {
+      _requireRecent();
+    } else {
+      uncheckedChanges.add('google.com');
+    }
     if (linkCancels) return false;
     _setProviders([..._user!.providerIds, 'google.com']);
     return true;
@@ -173,8 +181,15 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> setPassword(String newPassword) async {
-    _requireRecent();
+  Future<void> setPassword(
+    String newPassword, {
+    bool checkRecent = true,
+  }) async {
+    if (checkRecent) {
+      _requireRecent();
+    } else {
+      uncheckedChanges.add('password');
+    }
     if (!_user!.providerIds.contains('password')) {
       _setProviders([..._user!.providerIds, 'password']);
     }
@@ -238,6 +253,8 @@ class FakeAuthRepository implements AuthRepository {
     required Uri link,
   }) async {
     _user = AuthUser(uid: 'coach', email: email, emailVerified: true);
+    // Opening the link is a fresh sign-in (AUTH-7).
+    needsRecentLogin = false;
     _controller.add(_user);
   }
 
@@ -503,6 +520,15 @@ class FakeLocalPrefs implements LocalPrefsRepository {
   @override
   Future<void> setThemePreference(ThemePreference value) async =>
       themePreference = value;
+
+  final Set<String> passwordSetUids = {};
+
+  @override
+  bool passwordSet(String uid) => passwordSetUids.contains(uid);
+
+  @override
+  Future<void> setPasswordSet(String uid, {required bool value}) async =>
+      value ? passwordSetUids.add(uid) : passwordSetUids.remove(uid);
 
   @override
   String installId = 'test-install-0000000000000';
@@ -1219,6 +1245,9 @@ class FakeMessageRepository implements MessageRepository {
   /// Every newer page read, by its `after` time or cursor (CHAT-1).
   final List<Object?> newerReads = [];
 
+  /// While set, newer pages wait for it, as a slow connection would.
+  Completer<void>? holdNewer;
+
   @override
   Future<MessagePage> loadNewer(
     GroupId groupId, {
@@ -1227,6 +1256,7 @@ class FakeMessageRepository implements MessageRepository {
     int limit = 50,
   }) async {
     newerReads.add(cursor?.handle ?? after);
+    if (holdNewer case final hold?) await hold.future;
     final all = messages.where((m) => m.groupId == groupId).toList();
     // Indexes into the newest-first list: [start, end) are the page.
     final end = cursor != null
@@ -2280,8 +2310,13 @@ PickedFile pickedFile(String name, int size) =>
 class FakeSharer implements Sharer {
   final List<String> shared = [];
 
+  /// False for a browser without Web Share: links aren't shared, so the
+  /// caller copies them (SPEC §4.2).
+  bool linksShare = true;
+
   @override
   Future<bool> shareLink(Uri uri, {String? subject}) async {
+    if (!linksShare) return false;
     shared.add('link $uri');
     return true;
   }

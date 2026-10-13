@@ -591,8 +591,13 @@ void main() {
       );
     });
 
-    testWidgets("members can't edit, cancel, or delete", (tester) async {
-      await openSchedule(tester, events: [event('e1')]);
+    testWidgets("members can't edit, cancel, or delete someone else's", (
+      tester,
+    ) async {
+      await openSchedule(
+        tester,
+        events: [event('e1').copyWith(createdBy: 'sam')],
+      );
       await openDetails(tester, 'Practice');
       expect(find.byTooltip('More actions'), findsNothing);
     });

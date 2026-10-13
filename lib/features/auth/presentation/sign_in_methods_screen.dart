@@ -62,10 +62,10 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
       destructive: true,
     );
     if (!ok || !mounted) return;
-    await _run(
-      () => ref.read(authRepositoryProvider).unlink(providerId),
-      done: l10n.methodRemoved(name),
-    );
+    await _run(() async {
+      await ref.read(authRepositoryProvider).unlink(providerId);
+      if (providerId == 'password') await markPasswordSet(ref, value: false);
+    }, done: l10n.methodRemoved(name));
   }
 
   Future<void> _setPassword(bool hasPassword) async {
@@ -82,10 +82,10 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
       showAppSnackBar(context, l10n.passwordTooShort);
       return;
     }
-    await _run(
-      () => ref.read(authRepositoryProvider).setPassword(password),
-      done: l10n.passwordSaved,
-    );
+    await _run(() async {
+      await ref.read(authRepositoryProvider).setPassword(password);
+      await markPasswordSet(ref);
+    }, done: l10n.passwordSaved);
   }
 
   Future<void> _changeEmail() async {

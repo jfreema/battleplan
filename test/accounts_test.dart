@@ -140,17 +140,19 @@ void main() {
       expect(find.text('Welcome to Battleplan'), findsOneWidget);
     });
 
-    test('changes need a sign-in within the last 5 minutes', () {
-      final now = DateTime(2026, 10, 12, 12);
+    test('changes need a sign-in within the last 5 minutes, by the time the '
+        'server issued a fresh token', () {
+      final issued = DateTime.utc(2026, 10, 12, 12);
       expect(
-        isRecentSignIn(now.subtract(const Duration(minutes: 4)), now),
+        isRecentSignIn(issued.subtract(const Duration(minutes: 4)), issued),
         isTrue,
       );
       expect(
-        isRecentSignIn(now.subtract(const Duration(minutes: 6)), now),
+        isRecentSignIn(issued.subtract(const Duration(minutes: 6)), issued),
         isFalse,
       );
-      expect(isRecentSignIn(null, now), isFalse);
+      expect(isRecentSignIn(null, issued), isFalse);
+      expect(isRecentSignIn(issued, null), isFalse);
     });
   });
 
@@ -160,7 +162,7 @@ void main() {
       final auth = FakeAuthRepository(
         user: coach.copyWith(providerIds: ['password']),
       );
-      await pumpApp(tester, auth: auth, users: users);
+      final prefs = await pumpApp(tester, auth: auth, users: users);
       expect(
         find.text('How do you want to sign in from now on?'),
         findsOneWidget,
@@ -172,7 +174,43 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
       expect(users.chooseSignIn, isFalse);
+      expect(auth.uncheckedChanges, ['password']);
+      // A fresh sign-in on this device may ask for it from now on.
+      expect(prefs.passwordSetUids, {'coach'});
       expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    });
+
+    testWidgets('long after the setup link, Google still links without '
+        'asking for a password they never had (AUTH-7)', (tester) async {
+      final users = FakeUserRepository()..chooseSignIn = true;
+      final auth = FakeAuthRepository(
+        user: coach.copyWith(
+          providerIds: ['password'],
+          signInProvider: 'emailLink',
+        ),
+      )..needsRecentLogin = true;
+      await pumpApp(tester, auth: auth, users: users);
+      await tester.tap(find.text('Continue with Google'));
+      await tester.pumpAndSettle();
+      expect(find.text("Confirm it's you"), findsNothing);
+      expect(auth.uncheckedChanges, ['google.com']);
+      expect(users.chooseSignIn, isFalse);
+      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    });
+
+    testWidgets('they can sign out instead of choosing', (tester) async {
+      final users = FakeUserRepository()..chooseSignIn = true;
+      final auth = FakeAuthRepository(
+        user: coach.copyWith(providerIds: ['password']),
+      );
+      await pumpApp(tester, auth: auth, users: users);
+      await tester.tap(find.widgetWithText(TextButton, 'Sign out'));
+      await tester.pumpAndSettle();
+      expect(auth.currentUser, isNull);
+      expect(
+        find.text('How do you want to sign in from now on?'),
+        findsNothing,
+      );
     });
 
     testWidgets('closing the Google sheet keeps asking', (tester) async {

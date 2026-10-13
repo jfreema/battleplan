@@ -44,6 +44,7 @@ class FirebaseAuthRepository implements AuthRepository {
       isSuperAdmin: token.claims?['superAdmin'] == true,
       providerIds: [for (final p in user.providerData) p.providerId],
       authTime: token.authTime,
+      signInProvider: token.signInProvider,
     );
   }
 
@@ -294,14 +295,16 @@ class FirebaseAuthRepository implements AuthRepository {
 
   /// AUTH-7: a fresh sign-in first. Firebase asks for one only for some
   /// changes (not linking or unlinking), so the app checks every time.
+  /// A fresh token's issue time is the server's clock, like its auth_time,
+  /// so a device clock that's off never blocks the change.
   Future<void> _requireRecentSignIn() async {
-    final DateTime? at;
+    final IdTokenResult token;
     try {
-      at = (await _user.getIdTokenResult()).authTime;
+      token = await _user.getIdTokenResult(true);
     } on FirebaseAuthException catch (e) {
       _throwMethodError(e);
     }
-    if (!isRecentSignIn(at, DateTime.now())) {
+    if (!isRecentSignIn(token.authTime, token.issuedAtTime)) {
       throw const RequiresRecentLogin('requires-recent-login');
     }
   }
@@ -322,10 +325,10 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<bool> linkGoogle() async {
+  Future<bool> linkGoogle({bool checkRecent = true}) async {
     final provider = GoogleAuthProvider()
       ..setCustomParameters({'prompt': 'select_account'});
-    await _requireRecentSignIn();
+    if (checkRecent) await _requireRecentSignIn();
     try {
       if (kIsWeb) {
         await _user.linkWithPopup(provider);
@@ -356,12 +359,15 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> setPassword(String newPassword) async {
+  Future<void> setPassword(
+    String newPassword, {
+    bool checkRecent = true,
+  }) async {
     final user = _user;
     final hasPassword = user.providerData.any(
       (p) => p.providerId == 'password',
     );
-    await _requireRecentSignIn();
+    if (checkRecent) await _requireRecentSignIn();
     try {
       if (hasPassword) {
         await user.updatePassword(newPassword);
@@ -460,9 +466,12 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 }
 
-/// Whether a sign-in at [authTime] is recent enough at [now] to change
-/// sign-in methods, the email, or the password (AUTH-7).
+/// Whether a sign-in at [authTime] is recent enough to change sign-in
+/// methods, the email, or the password (AUTH-7), judged at [issuedAt], when
+/// the server issued a fresh token. Both come from the server, so the
+/// device clock plays no part.
 @visibleForTesting
-bool isRecentSignIn(DateTime? authTime, DateTime now) =>
+bool isRecentSignIn(DateTime? authTime, DateTime? issuedAt) =>
     authTime != null &&
-    now.difference(authTime) <= FirebaseAuthRepository._recentSignIn;
+    issuedAt != null &&
+    issuedAt.difference(authTime) <= FirebaseAuthRepository._recentSignIn;

@@ -184,6 +184,14 @@
     }
   },
   "reauthTitle": "Confirm it's you",
+  "reauthLinkSent": "To confirm it's you, we emailed a sign-in link to {email}. Open it on this device, then try again.",
+  "@reauthLinkSent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "lastMethodNote": "Your only sign-in method can't be removed. Link another one first.",
   "deleteAccount": "Delete account",
   "deleteAccountTitle": "Delete your account?",

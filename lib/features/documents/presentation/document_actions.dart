@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
@@ -17,6 +16,7 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -100,7 +100,8 @@ Future<void> openDocument(
 }
 
 /// Shares a document (DOC-4): the file itself through the share sheet, or
-/// a link's address.
+/// a link's address. Where the browser has no Web Share, a link's address
+/// is copied instead (SPEC §4.2), as shareEvent does.
 Future<void> shareDocument(
   BuildContext context,
   WidgetRef ref,
@@ -112,6 +113,11 @@ Future<void> shareDocument(
   if (doc.isLink) {
     final uri = Uri.tryParse(doc.url ?? '');
     shared = uri != null && await sharer.shareLink(uri, subject: doc.name);
+    if (!shared && uri != null) {
+      await Clipboard.setData(ClipboardData(text: uri.toString()));
+      if (context.mounted) showAppSnackBar(context, l10n.linkCopied);
+      return;
+    }
   } else {
     final bytes = await _bytes(ref, doc);
     shared =

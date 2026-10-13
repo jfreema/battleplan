@@ -1,5 +1,7 @@
 // The chat's paging, read position, delivery, and photo input (SPEC CHAT-1,
 // CHAT-2, CHAT-4, CHAT-9, CHAT-12, CHAT-18, CHAT acceptance, §8.1).
+import 'dart:async';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -118,6 +120,25 @@ void main() {
       );
     });
 
+    testWidgets('a stale offline page first still opens at the first unread '
+        'once the server page arrives', (tester) async {
+      // The cache has only what was seen last time, up to the marker.
+      final repo = FakeMessageRepository(chat(30))..offline = true;
+      await openChat(tester, repo, readAt: msg(30).createdAt);
+      await tester.pumpAndSettle();
+      expect(repo.newerReads, isEmpty);
+      // The server has 120 more since.
+      repo
+        ..messages.insertAll(0, [for (var i = 150; i > 30; i--) msg(i)])
+        ..offline = false
+        ..refresh();
+      await tester.pumpAndSettle();
+      expect(repo.newerReads, [msg(30).createdAt]);
+      expect(find.text('New messages'), findsOneWidget);
+      expect(onScreen(tester, 'Message 31'), isTrue);
+      expect(onScreen(tester, 'Message 150'), isFalse);
+    });
+
     testWidgets('scrolling up from the first unread loads older messages', (
       tester,
     ) async {
@@ -154,6 +175,29 @@ void main() {
       final shown = upTo.difference(start).inMinutes;
       expect(onScreen(tester, 'Message $shown'), isTrue);
     });
+  });
+
+  testWidgets('jumping to a quote waits for a gap page already loading, '
+      'then still reaches older messages (CHAT-13)', (tester) async {
+    final repo = FakeMessageRepository(chat(500));
+    await openChat(tester, repo, readAt: msg(300).createdAt);
+    await tester.pumpAndSettle();
+    expect(chatState(tester).gapAfter, isNotNull);
+    expect(chatState(tester).messages.map((m) => m.id), isNot(contains('m5')));
+    final controller = ProviderScope.containerOf(
+      tester.element(find.byType(CustomScrollView)),
+    ).read(chatMessagesProvider(const GroupId('a')).notifier);
+    // Scrolling down started loading the gap; then a quote is tapped.
+    final hold = repo.holdNewer = Completer<void>();
+    unawaited(controller.loadNewer());
+    var found = false;
+    unawaited(controller.loadUntil('m5').then((f) => found = f));
+    await tester.pump();
+    repo.holdNewer = null;
+    hold.complete();
+    await tester.pumpAndSettle();
+    expect(found, isTrue);
+    expect(chatState(tester).gapAfter, isNull);
   });
 
   testWidgets('a chat with 10,000 messages opens with one page (CHAT '

@@ -34,6 +34,13 @@ abstract interface class LocalPrefsRepository {
 
   Future<void> setPendingLink(PendingLink? value);
 
+  /// Whether account [uid] set a password on this device (AUTH-7). Its
+  /// `password` method may otherwise be only an emailed sign-in link, so
+  /// a fresh sign-in can't simply ask for a password.
+  bool passwordSet(String uid);
+
+  Future<void> setPasswordSet(String uid, {required bool value});
+
   /// A random ID for this app install, made on first use and kept: the
   /// install's `devices` doc ID (ARCH §6.5). Never tied to a person.
   String get installId;

@@ -19,6 +19,7 @@ class SharedPrefsRepository implements LocalPrefsRepository {
   static const _installIdKey = 'installId';
   static const _prePromptKey = 'pushPrePromptShown';
   static const _deviceKey = 'deviceRegistration';
+  static const _passwordSetKey = 'passwordSetUids';
 
   /// Every key this repository uses. The cache in bootstrap only loads
   /// these, so stray keys from other code are never read.
@@ -30,6 +31,7 @@ class SharedPrefsRepository implements LocalPrefsRepository {
     _installIdKey,
     _prePromptKey,
     _deviceKey,
+    _passwordSetKey,
   };
 
   static const _idAlphabet =
@@ -71,6 +73,21 @@ class SharedPrefsRepository implements LocalPrefsRepository {
   Future<void> setPendingLink(PendingLink? value) => value == null
       ? _prefs.remove(_pendingLinkKey)
       : _prefs.setString(_pendingLinkKey, '${value.providerId} ${value.email}');
+
+  @override
+  bool passwordSet(String uid) =>
+      _prefs.getStringList(_passwordSetKey)?.contains(uid) ?? false;
+
+  @override
+  Future<void> setPasswordSet(String uid, {required bool value}) {
+    final uids = {...?_prefs.getStringList(_passwordSetKey)};
+    if (value) {
+      uids.add(uid);
+    } else {
+      uids.remove(uid);
+    }
+    return _prefs.setStringList(_passwordSetKey, uids.toList());
+  }
 
   @override
   String get installId {

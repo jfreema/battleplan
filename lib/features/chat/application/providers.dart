@@ -264,11 +264,22 @@ class ChatMessages extends _$ChatMessages {
     }
   }
 
+  /// The newer page loading now, so a second caller waits for it instead
+  /// of returning before it's in ([loadUntil]).
+  Future<void>? _newerLoad;
+
   /// Loads the next 50 newer messages into the gap below the first unread
-  /// ones (scrolling down, CHAT-1), until it meets the newest page.
-  Future<void> loadNewer() async {
+  /// ones (scrolling down, CHAT-1), until it meets the newest page. While
+  /// one is already loading, waits for that one.
+  Future<void> loadNewer() {
+    if (_newerLoad case final load?) return load;
     final cursor = _newerCursor;
-    if (cursor == null || state.loadingNewer) return;
+    if (cursor == null || state.loadingNewer) return Future.value();
+    return _newerLoad = _loadNewer(cursor)
+        .whenComplete(() => _newerLoad = null);
+  }
+
+  Future<void> _loadNewer(PageCursor cursor) async {
     state = state.copyWith(loadingNewer: true);
     try {
       final page = await ref
@@ -568,15 +579,15 @@ class ChatMessages extends _$ChatMessages {
   /// Loads pages until [messageId] is loaded or the chat's start is
   /// reached, for jumping to a quoted message (CHAT-13): first the gap
   /// below the first unread messages, if any, then older pages. Gives up
-  /// after [maxPages] pages (2,000 messages).
+  /// after [maxPages] pages (2,000 messages) each way, so a long gap never
+  /// uses up the older pages a quote usually needs. A gap page already
+  /// loading is waited for rather than skipped.
   Future<bool> loadUntil(String messageId, {int maxPages = 40}) async {
-    var pages = 0;
-    while (state.gapAfter != null &&
-        !_known.containsKey(messageId) &&
-        pages++ < maxPages) {
+    for (var i = 0; i < maxPages; i++) {
+      if (state.gapAfter == null || _known.containsKey(messageId)) break;
       await loadNewer();
     }
-    for (var i = pages; i < maxPages; i++) {
+    for (var i = 0; i < maxPages; i++) {
       if (_known.containsKey(messageId)) return true;
       if (state.reachedStart) return false;
       await loadOlder();
