@@ -246,11 +246,15 @@ class _DayCell extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              // A dot for each event (SCHED-1), wrapping onto more lines on
+              // a busy day.
+              Wrap(
+                alignment: WrapAlignment.center,
+                runSpacing: 2,
                 children: [
-                  for (final e in events.take(3))
+                  for (final e in events)
                     Container(
+                      key: ValueKey('dot-${e.id.value}'),
                       width: 6,
                       height: 6,
                       margin: const EdgeInsets.symmetric(horizontal: 1),

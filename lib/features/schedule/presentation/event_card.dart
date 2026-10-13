@@ -17,10 +17,10 @@ import 'package:material_ui/material_ui.dart';
 /// An event in the chat (CHAT-11): its type, title, day and time, and
 /// place, kept live, so a canceled event shows struck through and a
 /// deleted one says so. A series' card whose event is gone shows the
-/// series' next event, or, with none left, the series as posted. It has
-/// Going / Maybe / Not going buttons and live counts; guardians answer for
-/// each of their players right on the card. Tapping elsewhere opens the
-/// event (SCHED-4).
+/// series' next event, or, with none left, the series as posted. While it
+/// takes answers, it has Going / Maybe / Not going buttons (one set per
+/// player for guardians) and the live counts, as in the chat mockup (SPEC
+/// §5.4). Tapping elsewhere opens the event (SCHED-4).
 class EventCard extends ConsumerWidget {
   const new({
     required this.eventId,
@@ -120,8 +120,10 @@ class EventCard extends ConsumerWidget {
                 ),
               ),
               Text(timeRange(l10n, event, zone, withDay: true), style: muted),
+              if (otherZoneLine(l10n, event, zone) case final z?)
+                Text(z, style: muted),
               if (event.location case final loc?) Text(loc.label, style: muted),
-              if (event.rsvpEnabled) _CardRsvps(event: event, groupId: groupId),
+              _CardRsvps(event: event, groupId: groupId),
             ],
           ),
         ),
@@ -131,7 +133,8 @@ class EventCard extends ConsumerWidget {
 }
 
 /// The card's answer buttons, one set per person I answer for (PLAYER-6),
-/// and the live counts (CHAT-11). Canceled events take no answers.
+/// and the live counts (CHAT-11, SPEC §5.4, SCHED-5): the same answers as
+/// the event's page, without the notes. Canceled events take no answers.
 class _CardRsvps extends ConsumerWidget {
   const new({required this.event, required this.groupId});
 
@@ -140,6 +143,7 @@ class _CardRsvps extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!event.rsvpEnabled) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final group = ref.watch(groupProvider(groupId)).value;
@@ -156,33 +160,35 @@ class _CardRsvps extends ConsumerWidget {
         ? ref.watch(playersProvider(groupId)).value?.length ?? 0
         : 0;
     final open = canAnswerNow(event, group, me, DateTime.now());
+    final allowMaybe = group.settings.allowMaybe;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final p in mine)
-          RsvpButtons(
-            event: event,
-            participant: p,
-            answer: answerOf(rsvps, p.id),
-            label: mine.length > 1 || p.isPlayer
-                ? (p.isPlayer ? p.shownName : l10n.eventYou)
-                : null,
-            enabled: open,
-            allowMaybe: group.settings.allowMaybe,
-            notes: false,
+          Padding(
+            padding: const EdgeInsets.only(top: Space.sm),
+            child: RsvpButtons(
+              event: event,
+              participant: p,
+              answer: answerOf(rsvps, p.id),
+              label: mine.length > 1 || p.isPlayer
+                  ? (p.isPlayer ? p.shownName : l10n.eventYou)
+                  : null,
+              enabled: open,
+              allowMaybe: allowMaybe,
+              compact: true,
+            ),
           ),
         Padding(
           padding: const EdgeInsets.only(top: Space.xs),
           child: Text(
             event.forPlayers
                 ? playerCountsText(l10n, event, players: players)
-                : countsText(
-                    l10n,
-                    event.rsvpCounts,
-                    allowMaybe: group.settings.allowMaybe,
-                  ),
-            style: theme.textTheme.labelLarge,
+                : countsText(l10n, event.rsvpCounts, allowMaybe: allowMaybe),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],

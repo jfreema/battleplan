@@ -1316,5 +1316,12 @@
   "@pollSeeWhoChose": {"placeholders": {"option": {"type": "String"}}},
   "photoSave": "Save photo",
   "photoSaved": "Photo saved.",
-  "photoSaveFailed": "Couldn't save the photo. Check that Battleplan may add photos in your phone's settings."
+  "photoSaveFailed": "Couldn't save the photo. Check that Battleplan may add photos in your phone's settings.",
+  "eventDeadlineAfterDate": "Set from the date you pick",
+  "messageTeamHint": "Message {team}…",
+  "@messageTeamHint": {
+    "placeholders": {
+      "team": {"type": "String"}
+    }
+  }
 }

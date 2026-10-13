@@ -319,8 +319,33 @@ void main() {
       expect(copy.reminderOffsets, [60]);
       expect(copy.rsvpDeadline, isNull);
       expect(copy.repeat, isNull);
+      // The automatic title stays automatic: a new opponent retitles it.
+      expect(copy.title, '');
+      expect(copy.effectiveTitle, 'vs. Eagles');
+      expect(copy.copyWith(opponent: 'Hawks').effectiveTitle, 'vs. Hawks');
+      // The deadline (Sun 7:00 PM, two days before) waits for a date...
+      expect(copy.deadline, isNull);
+      // ...and keeps its place before the new one, across the DST change.
+      final dated = copy.copyWith(date: DateTime.utc(2026, 11, 10));
+      expect(dated.deadline, DateTime.utc(2026, 11, 9, 1));
+      expect(dated.problemAt(DateTime.utc(2026, 11)), isNull);
+      // Picking or clearing a deadline replaces it.
+      expect(
+        dated
+            .copyWith(deadlineDaysBefore: null, deadlineMinutes: null)
+            .deadline,
+        isNull,
+      );
       final edit = EventDraft.fromEvent(e);
       expect(edit.date, DateTime.utc(2026, 10, 13));
+      expect(edit.deadline, DateTime.utc(2026, 10, 12));
+      expect(edit.effectiveTitle, 'vs. Eagles');
+      // A title typed by hand stays as typed.
+      final named = EventDraft.fromEvent(
+        e.copyWith(title: 'Homecoming'),
+        duplicate: true,
+      );
+      expect(named.copyWith(opponent: 'Hawks').effectiveTitle, 'Homecoming');
     });
   });
 

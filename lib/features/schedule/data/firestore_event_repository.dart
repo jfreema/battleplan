@@ -138,8 +138,8 @@ class FirestoreEventRepository implements EventRepository {
       'opponent': t.opponent,
       'homeAway': t.homeAway?.value,
       'rsvpEnabled': t.rsvpEnabled,
-      'rsvpDeadline': t.rsvpEnabled && draft.rsvpDeadline != null
-          ? Timestamp.fromDate(draft.rsvpDeadline!)
+      'rsvpDeadline': t.rsvpEnabled && draft.deadline != null
+          ? Timestamp.fromDate(draft.deadline!)
           : null,
       'reminderOffsets': t.reminderOffsets,
       'updatedAt': FieldValue.serverTimestamp(),

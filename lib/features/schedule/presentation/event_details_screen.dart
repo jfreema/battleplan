@@ -427,7 +427,7 @@ class RsvpButtons extends ConsumerWidget {
     required this.enabled,
     this.label,
     this.allowMaybe = true,
-    this.notes = true,
+    this.compact = false,
     super.key,
   });
 
@@ -436,13 +436,13 @@ class RsvpButtons extends ConsumerWidget {
   final Rsvp? answer;
   final bool enabled;
 
-  /// Shows the note and Add a note; off on the compact chat card (CHAT-11),
-  /// where the event's page has them.
-  final bool notes;
-
   /// "Emma #7" for a player, "You" beside players; null when it's only me.
   final String? label;
   final bool allowMaybe;
+
+  /// The chat card's smaller buttons (SPEC §5.4): no icons and no note,
+  /// which the event's page has.
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -459,7 +459,10 @@ class RsvpButtons extends ConsumerWidget {
       children: [
         if (label != null)
           Padding(
-            padding: const EdgeInsets.only(top: Space.sm, bottom: Space.xs),
+            padding: EdgeInsets.only(
+              top: compact ? Space.xs : Space.sm,
+              bottom: Space.xs,
+            ),
             child: Text(label!, style: theme.textTheme.titleSmall),
           ),
         SizedBox(
@@ -471,13 +474,14 @@ class RsvpButtons extends ConsumerWidget {
               for (final s in statuses)
                 ButtonSegment(
                   value: s,
-                  icon: Icon(statusIcon(s)),
+                  icon: compact ? null : Icon(statusIcon(s)),
                   label: Text(statusLabel(l10n, s)),
                 ),
             ],
             selected: {?current},
             style: SegmentedButton.styleFrom(
-              minimumSize: const Size(0, 52),
+              // Still a full 48 px tap target on the card.
+              minimumSize: Size(0, compact ? 48 : 52),
               selectedBackgroundColor: current == null
                   ? null
                   : statusColor(context, current).withValues(alpha: 0.18),
@@ -492,7 +496,7 @@ class RsvpButtons extends ConsumerWidget {
                 : null,
           ),
         ),
-        if (notes)
+        if (!compact)
           Row(
             children: [
               if (answer?.note.isNotEmpty ?? false)

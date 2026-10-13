@@ -35,7 +35,15 @@ abstract class EventDraft with _$EventDraft {
     HomeAway? homeAway,
     int? arriveMinutesBefore,
     @Default(true) bool rsvpEnabled,
+
+    /// A deadline picked as a day and time. See [deadline].
     DateTime? rsvpDeadline,
+
+    /// On a duplicate, the original's deadline as days before the start
+    /// at a time of day in [timeZone]: it lands as far before the copy's
+    /// date once one is picked (SCHED-3 copies the RSVP settings).
+    int? deadlineDaysBefore,
+    int? deadlineMinutes,
     @Default(<int>[]) List<int> reminderOffsets,
     @Default(true) bool notifyTeam,
     @Default(true) bool postToChat,
@@ -68,10 +76,23 @@ abstract class EventDraft with _$EventDraft {
     final lastDay = event.allDay && event.endDate != null
         ? parseDateKey(event.endDate!)
         : null;
+    final deadline = event.rsvpDeadline == null
+        ? null
+        : ZonedTime.wallClock(event.timeZone, event.rsvpDeadline!);
+    final deadlineDay = deadline == null
+        ? null
+        : DateTime.utc(deadline.year, deadline.month, deadline.day);
+    // A game titled as it would title itself stays automatic, so changing
+    // the opponent changes the title ("duplicate last week's game, change
+    // the date and opponent", SCHED-3 acceptance).
+    final autoTitle =
+        event.isGame &&
+        event.title.trim() ==
+            autoGameTitle(event.opponent ?? '', event.homeAway);
     return EventDraft(
       timeZone: event.timeZone,
       type: event.type,
-      title: event.title,
+      title: autoTitle ? '' : event.title,
       description: event.description,
       locationName: event.location?.name ?? '',
       locationAddress: event.location?.address ?? '',
@@ -84,8 +105,14 @@ abstract class EventDraft with _$EventDraft {
       homeAway: event.homeAway,
       arriveMinutesBefore: event.arriveMinutesBefore,
       rsvpEnabled: event.rsvpEnabled,
-      // The deadline belongs to the original's date.
+      // A copy's deadline follows its own date, as far before it.
       rsvpDeadline: duplicate ? null : event.rsvpDeadline,
+      deadlineDaysBefore: duplicate && deadlineDay != null
+          ? firstDay.difference(deadlineDay).inDays
+          : null,
+      deadlineMinutes: duplicate && deadline != null
+          ? deadline.hour * 60 + deadline.minute
+          : null,
       reminderOffsets: event.reminderOffsets,
       notifyTeam: event.notifyTeam,
       postToChat: event.postToChat,
@@ -100,6 +127,16 @@ abstract class EventDraft with _$EventDraft {
     final typed = title.trim();
     if (typed.isNotEmpty || !isGame) return typed;
     return autoGameTitle(opponent, homeAway);
+  }
+
+  /// The RSVP deadline as saved: the one picked, or on a duplicate the
+  /// original's, as far before this date. Null without either.
+  DateTime? get deadline {
+    if (rsvpDeadline != null) return rsvpDeadline;
+    final days = deadlineDaysBefore;
+    final minutes = deadlineMinutes;
+    if (days == null || minutes == null || date == null) return null;
+    return ZonedTime.instantOf(timeZone, addDays(date!, -days), minutes);
   }
 
   /// The location, or null when both parts are empty.
@@ -217,8 +254,8 @@ abstract class EventDraft with _$EventDraft {
     if (reminderOffsets.length > Limits.eventRemindersMax) {
       return DraftProblem.reminders;
     }
-    if (rsvpEnabled && repeat == null && rsvpDeadline != null) {
-      if (!rsvpDeadline!.isBefore(startAt!)) return DraftProblem.deadline;
+    if (rsvpEnabled && repeat == null && deadline != null) {
+      if (!deadline!.isBefore(startAt!)) return DraftProblem.deadline;
     }
     if (repeat != null) {
       final rule = savedRecurrence!;

@@ -40,6 +40,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     super.dispose();
   }
 
+  /// Set when loading the rest for a filter failed, so it isn't retried
+  /// on every rebuild; typing again tries again.
+  bool _searchFailed = false;
+
   Future<void> _loadMore(DocumentSort sort) async {
     try {
       await ref
@@ -47,9 +51,21 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           .loadMore();
     } on Object {
       if (mounted) {
+        setState(() => _searchFailed = true);
         showAppSnackBar(context, AppLocalizations.of(context).loadError);
       }
     }
+  }
+
+  /// A filter looks through every document, not just the pages loaded so
+  /// far (DOC-1): while one is typed, the rest load page by page.
+  void _searchRest(DocumentsView view, DocumentListState state) {
+    if (view.filter.trim().isEmpty || _searchFailed) return;
+    if (state.reachedEnd || state.loading || state.loadingMore) return;
+    if (state.failed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_loadMore(view.sort));
+    });
   }
 
   @override
@@ -62,6 +78,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     final state = ref.watch(teamDocumentsProvider(groupId, view.sort));
     final canAdd = group != null && canAddDocuments(group, me);
     final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
+    _searchRest(view, state);
 
     final Widget body;
     if (group == null || (state.loading && state.documents.isEmpty)) {
@@ -81,7 +98,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         sort: view.sort,
         filter: view.filter,
       );
-      final noMatches = shown.isEmpty;
+      // While a filter loads the rest, "No documents match" waits for it.
+      final searching =
+          view.filter.trim().isNotEmpty && !state.reachedEnd && !_searchFailed;
+      final noMatches = shown.isEmpty && !searching;
       final more = !state.reachedEnd;
       // Rows are built as they scroll into view, so image thumbnails below
       // the fold don't all look up their files at once (SPEC §8.1).
@@ -102,7 +122,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             return Padding(
               padding: const EdgeInsets.all(Space.md),
               child: Center(
-                child: state.loadingMore
+                child: state.loadingMore || searching
                     ? const CircularProgressIndicator()
                     : TextButton(
                         onPressed: () => unawaited(_loadMore(view.sort)),
@@ -164,9 +184,10 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                           },
                         ),
                 ),
-                onChanged: (v) => ref
-                    .read(documentsViewOptionsProvider.notifier)
-                    .setFilter(v),
+                onChanged: (v) {
+                  _searchFailed = false;
+                  ref.read(documentsViewOptionsProvider.notifier).setFilter(v);
+                },
               ),
               sort: SegmentedButton<DocumentSort>(
                 showSelectedIcon: false,
