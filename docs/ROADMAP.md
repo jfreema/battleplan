@@ -9,7 +9,7 @@ Every task and feature for Battleplan, in one numbered list, in the order they s
 - Feature IDs (AUTH-1, CHAT-6, …) point to SPEC §6. The details live there; this file is the order.
 - Milestones M0 to M8 each ended working on iOS, Android, and web, with rules tests updated (SPEC §9). Go-live then runs in six phases, web first (below). Until Phase 4 the native apps keep building and passing tests, but don't ship.
 
-Last updated: 2026-10-13. M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. The first three v1.1 tasks are built: mentions, pins, and announcements; roster details and contact sharing; and answering for all my players with each player's RSVP history (tasks 135 to 137). Teams are now one type with players on every team, claims, and admin approval (tasks 181 to 186), and coaches can keep player details such as date of birth (tasks 216 to 218). The old M9 and Launch sections are replaced by six go-live phases: the website and web app first, then GDPR, backups, and security, then Sign in with Apple, the App Store, Google Play, and Facebook sign-in, each in its own phase (D60).
+Last updated: 2026-10-13. The website and web app are live on prod at https://getbattleplan.app (Phase 1 tasks 111, 114 to 118, 121, 134, 187). M5 (Polls), M6 (Schedule), M7 (Documents), and M8 (God admin panel) are built, and the website is live on dev with the web app at /app. The first three v1.1 tasks are built: mentions, pins, and announcements; roster details and contact sharing; and answering for all my players with each player's RSVP history (tasks 135 to 137). Teams are now one type with players on every team, claims, and admin approval (tasks 181 to 186), and coaches can keep player details such as date of birth (tasks 216 to 218). The old M9 and Launch sections are replaced by six go-live phases: the website and web app first, then GDPR, backups, and security, then Sign in with Apple, the App Store, Google Play, and Facebook sign-in, each in its own phase (D60).
 
 ---
 
@@ -251,18 +251,18 @@ The website and the web app at `getbattleplan.app/app`, working well in desktop 
 **Prod project**
 
 113. ✅ 👤 **Jared:** Confirm Q11 (where most teams are; default US, `us-central1`). **The prod database's region is permanent.** *Moved from M9.*
-114. 👤 **Jared:** Upgrade `battleplan-prod` to Blaze and set its budget alerts at $5, $25, $50, and $100. *Moved from M9.*
-115. Create prod's database in that region; deploy rules, indexes, TTL policies, and functions; turn on point-in-time recovery and daily backups kept 7 days (the full backup design is Phase 2); register the web app with App Check in monitor mode; set the function-image cleanup policy; set the Remote Config minimum version. *Moved from M9.*
-116. 👤 **Jared:** Connect `getbattleplan.app` to prod's Hosting, with the Cloudflare records set to **DNS only** (grey cloud). It serves the website and the web app at `/app` (tasks 175 to 179). *Moved from M9.*
+114. ✅ 👤 **Jared:** Upgrade `battleplan-prod` to Blaze and set its budget alerts at $5, $25, $50, and $100. *Moved from M9.*
+115. ✅ Create prod's database in that region; deploy rules, indexes, TTL policies, and functions; turn on point-in-time recovery and daily backups kept 7 days (the full backup design is Phase 2); register the web app with App Check in monitor mode; set the function-image cleanup policy; set the Remote Config minimum version. *Moved from M9. Done 2026-10-13 with `tools/setup_prod.sh`, except App Check (no reCAPTCHA key yet, so it's off on the web) and the Remote Config minimum version (the app's default applies).*
+116. ✅ 👤 **Jared:** Connect `getbattleplan.app` to prod's Hosting, with the Cloudflare records set to **DNS only** (grey cloud). It serves the website and the web app at `/app` (tasks 175 to 179). *Moved from M9. Live 2026-10-13: `A @ 199.36.158.100`, the `hosting-site` TXT record, and `www` as a CNAME to `battleplan-prod.web.app`, which redirects to the apex.*
 189. Production web push: create prod's VAPID key and check the service worker under `/app/` on the domain (tasks 28 and 73).
 117. ✅ Set up the manual prod release workflow for the backend and the web. *Moved from M9. Deciding where iOS builds run moved to task 209 (Phase 4). `tools/release_prod.sh` releases GitHub's main once CI has passed on it, and `tools/setup_prod.sh` does task 115's one-time setup and prints task 116's DNS records (docs/DEVELOPMENT.md, "Releasing to prod").*
-118. Bootstrap the first super admin on prod. *Moved from M9.*
+118. ✅ Bootstrap the first super admin on prod. *Moved from M9.*
 119. ✅ 👤 **Jared:** Confirm Q9 (logo and primary color; default placeholder mark and blue `#2F5BEA`). *Moved from M9.*
-121. Legal pages: Privacy Policy, Terms of Use, `/delete-account` (LEGAL-1, LEGAL-3), as pages on the website (task 176); no-tracking setup checked (LEGAL-2). *Moved from M9. Draft wording is in (commit ff20178), with placeholders for 👤 **Jared** to fill. The GDPR and EU additions come in Phase 2 (task 193).*
+121. ✅ Legal pages: Privacy Policy, Terms of Use, `/delete-account` (LEGAL-1, LEGAL-3), as pages on the website (task 176); no-tracking setup checked (LEGAL-2). *Moved from M9. Draft wording is in (commit ff20178), with placeholders for 👤 **Jared** to fill. The GDPR and EU additions come in Phase 2 (task 193). In effect 2026-10-13: operated by Jared Freeman, of Louisiana, under Louisiana law; no DMCA agent registered yet.*
 
 **Email**
 
-111. 👤 **Jared:** Turn on Cloudflare Email Routing and forward `support@` and `privacy@getbattleplan.app` to your Gmail. It also adds the apex MX records and SPF. *Moved from M9.*
+111. ✅ 👤 **Jared:** Turn on Cloudflare Email Routing and forward `support@` and `privacy@getbattleplan.app` to your Gmail. It also adds the apex MX records and SPF. *Moved from M9.*
 112. 👤 **Jared:** Customize Firebase's email domain on prod, after task 116: *Authentication → Templates → Customize domain*, add the TXT and CNAME records (CNAMEs DNS only), and merge Firebase's SPF entry into the one apex `v=spf1` record. Sender "Battleplan" `<noreply@getbattleplan.app>`, reply-to `support@getbattleplan.app`. Then send yourself an email-link sign-in to check it comes from the domain too. *Moved from M9. Registering the addresses with Apple's private email relay moved to task 207 (Phase 3).*
 190. 👤 **Jared:** Add a DMARC record, `v=DMARC1; p=none; rua=...`, and turn on Cloudflare DMARC Management to read the reports. Keep one `_dmarc` record. Task 44 left this out. Tightening it is task 206.
 191. Add a log-based alert on `email_send_failed`. Resend Free stops at 100 emails a day, and one large roster import (up to 200 adds a day per team) can reach that. When the cap starts to bind, move the Functions mail to Cloudflare Email Sending ($5/month for 3,000, then $0.35 per 1,000), which is cheaper than Resend Pro ($20/month) below about 46,000 emails a month. Only `sendEmail()` changes (ARCH §6.7).
@@ -273,7 +273,7 @@ The website and the web app at `getbattleplan.app/app`, working well in desktop 
 122. Beta with our team on the web: desktop and phone browsers, with the iPhone home-screen web app for push; a bug bash. *Moved from M9. TestFlight moved to task 211 (Phase 4); Android testing is part of Phase 5.*
 123. Move our team over: paste the roster, recreate upcoming events as repeating practices, post the invite link in GroupMe and show the QR at practice, and run both apps for about two weeks. *Moved from M9.*
 192. Prove the hosting is cheap: after two weeks of our team on prod, read the bill per service in Cloud Billing reports and compare it with ARCH §10.1, and check Firestore reads per screen against the read budgets (ARCH §10.2). Write the measured numbers into ARCH §10.1.
-134. Production deploy of the web app, and open sign-up to other teams on the web. *Moved from Launch.*
+134. ✅ Production deploy of the web app, and open sign-up to other teams on the web. *Moved from Launch. Live at https://getbattleplan.app on 2026-10-13, at the owner's request, ahead of the beta and the two-week cost proof (tasks 122, 123, 192), which now run on the live site. The first Functions deploy hit Google's per-minute limit and was finished in two batches.*
 
 **Phase 1 is done when** our team runs on the web app on prod in desktop and phone browsers, signup emails arrive from `noreply@getbattleplan.app`, and two weeks of bills match the cost model.
 
