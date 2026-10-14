@@ -128,11 +128,11 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
                     child: Text(l10n.continueWithGoogle),
                   ),
                   const SizedBox(height: Space.md),
-                  Tooltip(
-                    message: widget.appleEnabled ? '' : l10n.comingSoon,
-                    child: AppleSignInButton(label: l10n.continueWithApple),
-                  ),
-                  const SizedBox(height: Space.md),
+                  // Hidden until Sign in with Apple is on (task 187).
+                  if (widget.appleEnabled) ...[
+                    AppleSignInButton(label: l10n.continueWithApple),
+                    const SizedBox(height: Space.md),
+                  ],
                   FilledButton(
                     onPressed: _busy
                         ? null

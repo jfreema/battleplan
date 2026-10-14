@@ -9,12 +9,13 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// AUTH-1: Continue with Google, Apple, or email, in that order, with the
-/// Terms footer. The same screen on every platform.
+/// Terms footer. The same screen on every platform. Apple shows only once
+/// it's turned on (Phase 3, roadmap tasks 187 and 109).
 class SignInScreen extends ConsumerWidget {
   const new({this.appleEnabled = false, super.key});
 
   /// Sign in with Apple needs the Apple Developer membership (roadmap task
-  /// 109). Until then the button shows but is disabled.
+  /// 109). Until then the button is hidden (task 187).
   final bool appleEnabled;
 
   @override
@@ -58,16 +59,13 @@ class SignInScreen extends ConsumerWidget {
                     child: Text(l10n.continueWithGoogle),
                   ),
                   const SizedBox(height: Space.md),
-                  Tooltip(
-                    message: appleEnabled ? '' : l10n.comingSoon,
-                    child: AppleSignInButton(
+                  if (appleEnabled) ...[
+                    AppleSignInButton(
                       label: l10n.continueWithApple,
-                      onPressed: appleEnabled && !loading
-                          ? controller.signInWithApple
-                          : null,
+                      onPressed: loading ? null : controller.signInWithApple,
                     ),
-                  ),
-                  const SizedBox(height: Space.md),
+                    const SizedBox(height: Space.md),
+                  ],
                   FilledButton.icon(
                     onPressed: loading
                         ? null

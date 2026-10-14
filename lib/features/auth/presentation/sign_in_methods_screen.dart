@@ -146,12 +146,13 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
                     child: Text(l10n.linkMethod),
                   ),
           ),
-          ListTile(
-            title: const Text('Apple'),
-            subtitle: Text(
-              ids.contains('apple.com') ? l10n.methodLinked : l10n.comingSoon,
+          // Apple shows only on an account that already has it, until
+          // Sign in with Apple is turned on (task 187).
+          if (ids.contains('apple.com'))
+            ListTile(
+              title: const Text('Apple'),
+              subtitle: Text(l10n.methodLinked),
             ),
-          ),
           ListTile(
             title: Text(l10n.passwordLabel),
             subtitle: Text(

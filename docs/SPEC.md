@@ -1278,7 +1278,7 @@ Decided 2026-10-12, at the owner's request (ARCH D60). The first go-live is the 
 - [ ] Prod on Blaze with budget alerts, and two weeks of measured bills that match the cost model (ARCH §10.1).
 - [ ] Signup and account emails sent by Firebase Auth from `noreply@getbattleplan.app`; setup links, invites, and notices by Resend; `support@` and `privacy@` received through Cloudflare Email Routing (ARCH §6.7).
 - [ ] The legal and support pages (LEGAL-1 to LEGAL-3).
-- [ ] Continue with Apple hidden (AUTH-1), and no store badges yet.
+- [x] Continue with Apple hidden (AUTH-1), and no store badges yet.
 - [ ] Beta with our team on the web; move our team over (below); then the production deploy and open sign-up on the web.
 
 **Done when:** our team runs on the web app on prod in desktop and phone browsers, signup emails arrive from our domain, and the bills match the cost model.

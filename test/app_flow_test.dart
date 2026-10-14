@@ -26,12 +26,11 @@ void main() {
     emailVerified: true,
   );
 
-  testWidgets('signed out lands on sign-in with Google, Apple, and email', (
-    tester,
-  ) async {
+  testWidgets('signed out lands on sign-in with Google and email; Apple stays '
+      'hidden until Phase 3 (task 187)', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
     expect(find.text('Continue with Google'), findsOneWidget);
-    expect(find.text('Continue with Apple'), findsOneWidget);
+    expect(find.text('Continue with Apple'), findsNothing);
     expect(find.text('Continue with email'), findsOneWidget);
   });
 

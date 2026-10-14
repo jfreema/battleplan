@@ -244,7 +244,7 @@ The website and the web app at `getbattleplan.app/app`, working well in desktop 
 **Build quality**
 
 105. Accessibility, performance (SPEC §8), and golden-test passes in both themes. *Moved from M9. A first pass is in the code (commit e1eab87); check it against the web proof pass (task 188).*
-187. Hide Continue with Apple on the sign-in screen and in Sign-in methods until Phase 3 (AUTH-1). Today it shows, disabled, with "Coming soon".
+187. ✅ Hide Continue with Apple on the sign-in screen and in Sign-in methods until Phase 3 (AUTH-1). *The sign-in and "How do you want to sign in?" screens show Google and email only, and Sign-in methods lists Apple only on an account that already has it.*
 120. App icons and splash screens. *Moved from M9. The web's favicon and home-screen icons ship now; the store icon sizes come with Phases 4 and 5.*
 188. Web proof pass: every MVP flow in desktop Chrome, Edge, Firefox, and Safari, and in phone browsers (Safari on iPhone, Chrome on Android), including web push from the iPhone home-screen web app. Web first load under 4 s (SPEC §8.1). Fix what it finds before go-live.
 

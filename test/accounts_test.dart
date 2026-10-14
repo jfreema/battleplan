@@ -35,8 +35,20 @@ void main() {
       expect(links.opened.map((u) => u.path), ['/terms', '/privacy']);
     });
 
-    testWidgets("the Apple button follows Apple's style", (tester) async {
+    testWidgets("the Apple button follows Apple's style once it's on, and "
+        'is hidden until then (task 187)', (tester) async {
       await pumpApp(tester, auth: FakeAuthRepository());
+      expect(find.byType(AppleSignInButton), findsNothing);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AppleSignInButton(
+              label: 'Continue with Apple',
+              onPressed: () {},
+            ),
+          ),
+        ),
+      );
       final apple = find.byType(AppleSignInButton);
       expect(apple, findsOneWidget);
       expect(
@@ -167,7 +179,8 @@ void main() {
         find.text('How do you want to sign in from now on?'),
         findsOneWidget,
       );
-      expect(find.byType(AppleSignInButton), findsOneWidget);
+      // Not offered until Sign in with Apple is on (task 187).
+      expect(find.byType(AppleSignInButton), findsNothing);
       await tester.tap(find.widgetWithText(FilledButton, 'Create a password'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'longenough');
