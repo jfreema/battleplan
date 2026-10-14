@@ -255,7 +255,7 @@ The website and the web app at `getbattleplan.app/app`, working well in desktop 
 115. Create prod's database in that region; deploy rules, indexes, TTL policies, and functions; turn on point-in-time recovery and daily backups kept 7 days (the full backup design is Phase 2); register the web app with App Check in monitor mode; set the function-image cleanup policy; set the Remote Config minimum version. *Moved from M9.*
 116. 👤 **Jared:** Connect `getbattleplan.app` to prod's Hosting, with the Cloudflare records set to **DNS only** (grey cloud). It serves the website and the web app at `/app` (tasks 175 to 179). *Moved from M9.*
 189. Production web push: create prod's VAPID key and check the service worker under `/app/` on the domain (tasks 28 and 73).
-117. Set up the manual prod release workflow for the backend and the web. *Moved from M9. Deciding where iOS builds run moved to task 209 (Phase 4).*
+117. ✅ Set up the manual prod release workflow for the backend and the web. *Moved from M9. Deciding where iOS builds run moved to task 209 (Phase 4). `tools/release_prod.sh` releases GitHub's main once CI has passed on it, and `tools/setup_prod.sh` does task 115's one-time setup and prints task 116's DNS records (docs/DEVELOPMENT.md, "Releasing to prod").*
 118. Bootstrap the first super admin on prod. *Moved from M9.*
 119. ✅ 👤 **Jared:** Confirm Q9 (logo and primary color; default placeholder mark and blue `#2F5BEA`). *Moved from M9.*
 121. Legal pages: Privacy Policy, Terms of Use, `/delete-account` (LEGAL-1, LEGAL-3), as pages on the website (task 176); no-tracking setup checked (LEGAL-2). *Moved from M9. Draft wording is in (commit ff20178), with placeholders for 👤 **Jared** to fill. The GDPR and EU additions come in Phase 2 (task 193).*

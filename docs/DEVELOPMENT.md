@@ -84,6 +84,14 @@ npm --prefix functions run build
 firebase deploy --only functions,storage --project battleplan-dev-ecce4
 ```
 
+## Releasing to prod
+
+Prod (`battleplan-prod`) serves the website and the web app at `getbattleplan.app` (Phase 1). Nothing deploys there automatically.
+
+1. **Once:** after the project is on Blaze, run `tools/setup_prod.sh`. It creates the Firestore database in `us-central1` with point-in-time recovery and daily backups kept 7 days, the TTL policies, the Storage bucket, the Resend key (copied from dev's Secret Manager), the function-image cleanup policy, the sign-in providers and authorized domains, and the custom domains, and prints the DNS records to add in Cloudflare (DNS only).
+2. **Each release:** push main, wait for CI, then run `tools/release_prod.sh`. It refuses anything that isn't GitHub's main with CI passed, builds the site and the app for prod, and deploys rules, indexes, Storage rules, Functions, and Hosting.
+3. **Once, after your first sign-in on prod:** `npm --prefix tools/seed run super-admin -- battleplan-prod <your email>`.
+
 ## App Check
 
 App Check proves requests come from the real apps (ARCH §6.9). It runs in **monitor mode** until the console shows nearly all traffic verified, then it's enforced on Functions, Firestore, and Storage.
