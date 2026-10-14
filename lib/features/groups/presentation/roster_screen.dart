@@ -82,10 +82,11 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
         (ref.watch(myGuardianRequestsProvider(widget.groupId)).value ??
                 const <GuardianRequest>[])
             .any((r) => r.status == GuardianRequestStatus.pending);
-    final canAdd = superAdmin || (me != null && !(group?.isArchived ?? false));
-    // Ages for the team's admins, from one list of the team's player
-    // details (PLAYER-12); nobody else's app asks for it.
-    final details = (me?.isAdmin ?? false)
+    // Not on an archived team, which is read-only for everyone (TEAM-9).
+    final canAdd = (superAdmin || me != null) && !(group?.isArchived ?? false);
+    // Ages for the team's admins and super admins, from one list of the
+    // team's player details (PLAYER-12); nobody else's app asks for it.
+    final details = isAdmin
         ? ref.watch(teamPlayerDetailsProvider(widget.groupId)).value ??
               const <PlayerId, PlayerDetails>{}
         : const <PlayerId, PlayerDetails>{};

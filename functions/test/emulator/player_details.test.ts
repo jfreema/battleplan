@@ -236,6 +236,21 @@ describe('a date of birth given when a player is added (PLAYER-12)', () => {
     expect(await hasDetails(playerId)).toBe(false);
   });
 
+  it("a super admin adds players but not their details, except on a team they're an admin of", async () => {
+    const zoe = { groupId: 'open', players: [{ name: 'Zoe', dateOfBirth: '2015-06-02', guardians: [] }] };
+    await expect(run(players.addPlayers, 'root', zoe, ROOT)).rejects.toMatchObject({
+      code: 'permission-denied',
+      message: 'details-read-only',
+    });
+    expect(await playersOf('Zoe')).toHaveLength(0);
+    await run(players.addPlayers, 'root', { groupId: 'open', players: [{ name: 'Zoe', guardians: [] }] }, ROOT);
+    expect(await playersOf('Zoe')).toHaveLength(1);
+    // Pat, the team's admin, with the claim too.
+    await run(players.addPlayers, 'pat', { ...zoe, players: [{ ...zoe.players[0], name: 'Zia' }] }, ROOT);
+    const [zia] = await playersOf('Zia');
+    expect((await details().doc(zia.id).get()).get('dateOfBirth')).toBe('2015-06-02');
+  });
+
   it('refuses a day that is not real, today or later, or over 100 years ago', async () => {
     const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);

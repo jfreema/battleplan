@@ -290,12 +290,15 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                   ],
                 ),
                 // Kept in the player's details, not on the roster
-                // (PLAYER-12).
-                DateOfBirthField(
-                  value: _dob,
-                  onChanged: (d) => setState(() => _dob = d),
-                ),
-                const DateOfBirthPrivacyNote(),
+                // (PLAYER-12). Super admins see details but don't set
+                // them, so only the team's admins get it.
+                if (teamAdmin) ...[
+                  DateOfBirthField(
+                    value: _dob,
+                    onChanged: (d) => setState(() => _dob = d),
+                  ),
+                  const DateOfBirthPrivacyNote(),
+                ],
                 const SizedBox(height: Space.md),
                 // An adult player's own email links them as the player
                 // (PLAYER-1), not as their own guardian.

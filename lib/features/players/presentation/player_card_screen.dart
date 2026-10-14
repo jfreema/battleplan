@@ -88,14 +88,16 @@ class PlayerCardScreen extends ConsumerWidget {
     // admin callable.
     final viaAdmin = superAdmin && !teamAdmin && myLink == null;
     // Details only for the team's admins and members linked to this player
-    // (PLAYER-12); for anyone else they're never asked for. Read-only on an
-    // archived team, as the rules refuse writes there.
-    final seesDetails = seesPlayerDetails(
+    // (PLAYER-12), who also edit them, and super admins, who only read
+    // them for support; for anyone else they're never asked for. Read-only
+    // on an archived team, as the rules refuse writes there.
+    final writesDetails = seesPlayerDetails(
       me,
       playerId,
       teamAdmin: teamAdmin,
       links: links,
     );
+    final seesDetails = writesDetails || superAdmin;
     final group = ref.watch(groupProvider(groupId)).value;
     final detailsEditable =
         group != null && !group.isArchived && group.suspendedAt == null;
@@ -116,7 +118,7 @@ class PlayerCardScreen extends ConsumerWidget {
                   viaAdmin: viaAdmin,
                   // Admins and the player's own people, as on Details
                   // (PLAYER-12); never through the admin callable.
-                  withDateOfBirth: seesDetails && detailsEditable && !viaAdmin,
+                  withDateOfBirth: writesDetails && detailsEditable,
                 ),
               ),
             ),
@@ -140,7 +142,7 @@ class PlayerCardScreen extends ConsumerWidget {
             PlayerDetailsSection(
               groupId: groupId,
               playerId: playerId,
-              canEdit: detailsEditable,
+              canEdit: writesDetails && detailsEditable,
             ),
           ],
           const SizedBox(height: Space.lg),

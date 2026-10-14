@@ -142,6 +142,14 @@ describe('adding documents (DOC-2, DOC-3, TEAM-5)', () => {
     await assertSucceeds(create('alice', file('alice', 'Alice')));
   });
 
+  it('lets super admins on the team add when membersCanUploadDocs is off (§3)', async () => {
+    await seed({ membersCanUploadDocs: false });
+    const bobRoot = env.authenticatedContext('bob', { superAdmin: true }).firestore();
+    await assertSucceeds(bobRoot.doc('groupDocuments/new').set(file('bob', 'Bob')));
+    // Not on the team: adding needs membership.
+    await assertFails(root().doc('groupDocuments/l1').set(link('root', 'Root')));
+  });
+
   it("treats a team that never set membersCanUploadDocs as on (TEAM-5's default)", async () => {
     await env.withSecurityRulesDisabled((ctx) =>
       ctx.firestore().doc('groups/teamA').update({ 'settings.membersCanUploadDocs': firebase.firestore.FieldValue.delete() }),
@@ -253,10 +261,11 @@ describe('managing documents (DOC-5)', () => {
     await assertSucceeds(edit('alice', 'dBob', { pinned: false }));
   });
 
-  it('lets super admins pin on any team (§3), not only admins on theirs', async () => {
+  it('lets super admins pin, rename, and edit on any team (§3), not only admins on theirs', async () => {
     const root = env.authenticatedContext('root', { superAdmin: true }).firestore();
     await assertSucceeds(edit('root', 'dBob', { pinned: true }, root));
     await assertSucceeds(edit('root', 'dBob', { pinned: false }, root));
+    await assertSucceeds(edit('root', 'dBob', { name: 'Spring.pdf', nameLower: 'spring.pdf', description: 'Fixed' }, root));
   });
 
   it('keeps everything else fixed, and checks the new values', async () => {
@@ -331,6 +340,13 @@ describe('document files in Storage (DOC-2, STORE-1, STORE-4)', () => {
     await seed({ membersCanUploadDocs: false });
     await assertFails(put('bob', 'groups/teamA/documents/d5/e.pdf'));
     await assertSucceeds(put('alice', 'groups/teamA/documents/d6/f.pdf'));
+    // Super admins on the team, whatever the switch (§3); not off it.
+    const upload = (uid: string, path: string) =>
+      env.authenticatedContext(uid, { superAdmin: true }).storage().ref(path)
+        .put(new Uint8Array([1, 2, 3, 4]), { contentType: 'application/pdf' })
+        .then(() => undefined);
+    await assertSucceeds(upload('bob', 'groups/teamA/documents/d7/g.pdf'));
+    await assertFails(upload('root', 'groups/teamA/documents/d8/h.pdf'));
   });
 
   it("follows TEAM-5's default when the team never set the switch", async () => {

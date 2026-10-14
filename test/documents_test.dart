@@ -248,11 +248,20 @@ void main() {
       expect(canAddDocuments(closed, admin), isTrue);
       expect(canAddDocuments(archived, admin), isFalse);
       expect(canAddDocuments(team, null), isFalse);
+      // Super admins add on teams they've joined, whatever the setting (§3).
+      expect(canAddDocuments(closed, member, superAdmin: true), isTrue);
+      expect(canAddDocuments(team, null, superAdmin: true), isFalse);
 
       expect(canManageDocument(mine, team, member), isTrue);
       expect(canManageDocument(theirs, team, member), isFalse);
       expect(canManageDocument(theirs, team, admin), isTrue);
       expect(canManageDocument(mine, archived, member), isFalse);
+      // Super admins manage any team's documents, joined or not (§3).
+      expect(canManageDocument(theirs, team, null, superAdmin: true), isTrue);
+      expect(
+        canManageDocument(theirs, archived, null, superAdmin: true),
+        isFalse,
+      );
       expect(canDeleteDocument(theirs, team, member, superAdmin: true), isTrue);
       expect(
         canDeleteDocument(theirs, archived, admin, superAdmin: true),
@@ -262,6 +271,8 @@ void main() {
       expect(canPinDocument(team, admin), isTrue);
       expect(canPinDocument(team, member), isFalse);
       expect(canPinDocument(archived, admin), isFalse);
+      expect(canPinDocument(team, null, superAdmin: true), isTrue);
+      expect(canPinDocument(archived, null, superAdmin: true), isFalse);
 
       expect(canReportDocument(theirs, member), isTrue);
       expect(canReportDocument(mine, member), isFalse);
@@ -279,6 +290,16 @@ void main() {
         DocumentAction.download,
         DocumentAction.details,
         DocumentAction.edit,
+        DocumentAction.delete,
+      ]);
+      // A super admin viewing a team they're not on.
+      expect(documentActions(theirs, team, null, superAdmin: true), [
+        DocumentAction.open,
+        DocumentAction.share,
+        DocumentAction.download,
+        DocumentAction.details,
+        DocumentAction.edit,
+        DocumentAction.pin,
         DocumentAction.delete,
       ]);
       expect(

@@ -44,8 +44,8 @@ service cloud.firestore {
     // team, joined or not ("View team", ADMIN-3; SPEC §3). Super admins
     // can't post, vote, or RSVP for themselves in a team they haven't
     // joined; the admin actions §3 gives them (create, edit, and delete
-    // events; RSVP for anyone; delete and pin documents) are in the rules
-    // that name them, and moderation goes through callables
+    // events; RSVP for anyone; edit, delete, and pin documents) are in the
+    // rules that name them, and moderation goes through callables
     // (deleteMessage). superAdmin() is checked first; it costs no lookup.
     function canRead(g) { return superAdmin() || isMember(g); }
     // Archived teams are read-only (TEAM-9).
@@ -423,20 +423,23 @@ service cloud.firestore {
 
     // @mentions (CHAT-14): up to 20 people, named by ID on a text or photo
     // message (the trigger notifies only those on the team), and @everyone
-    // only from the team's admins. The member doc is already fetched, so
-    // the admin check costs nothing extra.
+    // only from the team's admins (and super admins who are on the team:
+    // the create rule needs membership). The member doc is already fetched,
+    // so the admin check costs nothing extra.
     function mentionsOk(m) {
       return (!('mentions' in m)
               || (m.mentions is list && m.mentions.size() <= 20 && m.type in ['text', 'image']))
         && (m.get('mentionsEveryone', false) == false
-            || (m.mentionsEveryone == true && m.type in ['text', 'image'] && isAdmin(m.groupId)));
+            || (m.mentionsEveryone == true && m.type in ['text', 'image']
+                && (isAdmin(m.groupId) || superAdmin())));
     }
 
     // Announcements (CHAT-15): text messages from the team's admins, which
     // notify everyone who hasn't turned the team off.
     function announcementOk(m) {
       return m.get('announcement', false) == false
-        || (m.announcement == true && m.type == 'text' && isAdmin(m.groupId));
+        || (m.announcement == true && m.type == 'text'
+            && (isAdmin(m.groupId) || superAdmin()));
     }
 
     // The author fields must equal the sender's own membership snapshot.
@@ -469,7 +472,8 @@ service cloud.firestore {
       // batch as its poll message, which has the same ID. Counts start at
       // zero. Tallies, closing, and deleting go through Functions.
       allow create: if isMember(incoming().groupId) && active(incoming().groupId)
-        && (settings(incoming().groupId).membersCanCreatePolls || isAdmin(incoming().groupId))
+        && (settings(incoming().groupId).membersCanCreatePolls || isAdmin(incoming().groupId)
+            || superAdmin())
         && incoming().createdBy == uid()
         && incoming().messageId == pollId
         && pollMessageOk(pollId)
@@ -792,9 +796,11 @@ service cloud.firestore {
       return (mb is int && mb >= 1 && mb <= 10 ? mb : 10) * 1024 * 1024;
     }
 
+    // Members of the team: admins, super admins (§3), or anyone while the
+    // team lets members add documents.
     function docCreatorOk(g) {
       return isMember(g) && active(g)
-        && (isAdmin(g) || settings(g).get('membersCanUploadDocs', true) == true);
+        && (superAdmin() || isAdmin(g) || settings(g).get('membersCanUploadDocs', true) == true);
     }
     // Archived teams are read-only (TEAM-9), for super admins too.
     function docEditorOk(d) {

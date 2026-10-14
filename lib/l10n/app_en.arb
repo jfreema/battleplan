@@ -1030,7 +1030,7 @@
   "reportDeleteDocument": "Delete document",
   "mediaKindDocumentNamed": "{document} · {name}",
   "@mediaKindDocumentNamed": {"placeholders": {"document": {"type": "String"}, "name": {"type": "String"}}},
-  "viewingAsSuperAdmin": "Viewing as super admin. Read-only, with moderation.",
+  "viewingAsSuperAdmin": "Viewing as super admin. You can manage the team, but not post.",
   "backToAdminPanel": "Back to admin panel",
   "chatViewingReadOnly": "You're viewing this team as a super admin. You can delete messages, but not post.",
   "announcementLabel": "Announcement, {severity}",

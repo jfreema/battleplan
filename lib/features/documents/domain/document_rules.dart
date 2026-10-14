@@ -6,18 +6,24 @@ import 'package:battleplan/features/groups/domain/membership.dart';
 /// TEAM-5, TEAM-9). Archived teams are read-only for everyone.
 
 /// Adding files or links (+): admins, or members when the team lets them
-/// (`membersCanUploadDocs`, on by default).
-bool canAddDocuments(Group group, Membership? me) =>
+/// (`membersCanUploadDocs`, on by default). Super admins add them on teams
+/// they've joined, whatever the setting (§3).
+bool canAddDocuments(Group group, Membership? me, {bool superAdmin = false}) =>
     me != null &&
     !group.isArchived &&
-    (me.isAdmin || group.settings.membersCanUploadDocs);
+    (superAdmin || me.isAdmin || group.settings.membersCanUploadDocs);
 
-/// Renaming, editing the description, and deleting: the uploader or an
-/// admin. Super admins may delete too.
-bool canManageDocument(Document doc, Group group, Membership? me) =>
-    me != null &&
+/// Renaming, editing the description, and deleting: the uploader, an
+/// admin, or a super admin on any team (§3).
+bool canManageDocument(
+  Document doc,
+  Group group,
+  Membership? me, {
+  bool superAdmin = false,
+}) =>
     !group.isArchived &&
-    (me.isAdmin || doc.uploadedBy == me.uid.value);
+    (superAdmin ||
+        (me != null && (me.isAdmin || doc.uploadedBy == me.uid.value)));
 
 /// Deleting: anyone who can manage it, or a super admin (ARCH §6.3).
 bool canDeleteDocument(
@@ -25,11 +31,11 @@ bool canDeleteDocument(
   Group group,
   Membership? me, {
   bool superAdmin = false,
-}) => canManageDocument(doc, group, me) || (superAdmin && !group.isArchived);
+}) => canManageDocument(doc, group, me, superAdmin: superAdmin);
 
-/// Pinning and unpinning: admins only (DOC-5).
-bool canPinDocument(Group group, Membership? me) =>
-    me != null && !group.isArchived && me.isAdmin;
+/// Pinning and unpinning: admins (DOC-5), and super admins on any team (§3).
+bool canPinDocument(Group group, Membership? me, {bool superAdmin = false}) =>
+    !group.isArchived && (superAdmin || (me?.isAdmin ?? false));
 
 /// Reporting (SAFE-1): anything someone else added.
 bool canReportDocument(Document doc, Membership? me) =>

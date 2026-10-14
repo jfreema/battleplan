@@ -16,6 +16,7 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
+import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -83,6 +84,7 @@ void main() {
     FakeDocumentRepository? documentRepo,
     FakePlayerRepository? playerRepo,
     FakeInviteRepository? invites,
+    FakeEventRepository? eventRepo,
     Size size = wide,
   }) async {
     await pumpApp(
@@ -105,6 +107,7 @@ void main() {
       documentRepo: documentRepo,
       playerRepo: playerRepo,
       invites: invites,
+      eventRepo: eventRepo,
       size: size,
     );
     GoRouter.of(tester.element(find.byType(Scaffold).first)).go(path);
@@ -534,6 +537,45 @@ void main() {
       await tester.tap(find.text('Make admin'));
       await tester.pumpAndSettle();
       expect(members.calls, ['update sam admin']);
+    });
+
+    testWidgets('Event: Set RSVP for someone; Team settings: owner actions', (
+      tester,
+    ) async {
+      final start = now.add(const Duration(days: 1));
+      await open(
+        tester,
+        '/g/t1/schedule/e/e1',
+        groupRepo: youthTeam(),
+        memberRepo: thunderPeople(),
+        playerRepo: emma(),
+        eventRepo: FakeEventRepository([
+          Event(
+            id: const EventId('e1'),
+            groupId: const GroupId('t1'),
+            type: EventType.practice,
+            title: 'Practice',
+            startAt: start,
+            endAt: start.add(const Duration(minutes: 90)),
+            timeZone: 'America/Chicago',
+            createdBy: 'olive',
+          ),
+        ]),
+        size: tall,
+      );
+      await tester.tap(find.byTooltip('More actions'));
+      await tester.pumpAndSettle();
+      expect(find.text('Set RSVP for someone'), findsOneWidget);
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
+
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/t1/settings');
+      await tester.pumpAndSettle();
+      final transfer = find.text('Transfer ownership');
+      await tester.ensureVisible(transfer);
+      expect(find.text('Owner actions'), findsOneWidget);
+      expect(transfer, findsOneWidget);
     });
 
     testWidgets('Invite: reset the link', (tester) async {
@@ -1323,7 +1365,7 @@ void main() {
       createdAt: now.subtract(const Duration(minutes: 5)),
     );
 
-    testWidgets('read-only with the banner, moderation, and an audit entry', (
+    testWidgets('the banner, moderation, the team menu, and an audit entry', (
       tester,
     ) async {
       final admin = FakeAdminRepository();
@@ -1341,7 +1383,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Viewing as super admin. Read-only, with moderation.'),
+        find.text(
+          'Viewing as super admin. You can manage the team, but not post.',
+        ),
         findsOneWidget,
       );
       expect(admin.opened, ['t1']);
@@ -1354,8 +1398,17 @@ void main() {
         ),
         findsOneWidget,
       );
-      // No switcher or team menu: this isn't one of their teams.
-      expect(find.byTooltip('Team menu'), findsNothing);
+      // The team menu manages it, without Notifications or Leave: this
+      // isn't one of their teams.
+      await tester.tap(find.byTooltip('Team menu'));
+      await tester.pumpAndSettle();
+      for (final item in ['Roster', 'Invite', 'Team settings', 'Media']) {
+        expect(find.text(item), findsOneWidget, reason: item);
+      }
+      expect(find.text('Notifications'), findsNothing);
+      expect(find.text('Leave team'), findsNothing);
+      await tester.tapAt(Offset.zero);
+      await tester.pumpAndSettle();
 
       // The menu offers moderation only.
       await tester.longPress(find.text('Buy cheap pills'));
@@ -1433,7 +1486,9 @@ void main() {
       expect(polls.votes, isEmpty);
     });
 
-    testWidgets('documents can be deleted, not added', (tester) async {
+    testWidgets('documents can be edited, pinned, and deleted, not added', (
+      tester,
+    ) async {
       final docs = FakeDocumentRepository([
         Document(
           id: const DocumentId('d1'),
@@ -1453,7 +1508,12 @@ void main() {
       await tester.tap(find.byTooltip('Document actions'));
       await tester.pumpAndSettle();
       expect(find.text('Report'), findsNothing);
-      expect(find.text('Pin'), findsNothing);
+      expect(find.text('Rename or edit description'), findsOneWidget);
+      await tester.tap(find.text('Pin'));
+      await tester.pumpAndSettle();
+      expect(docs.docs['d1']!.pinned, isTrue);
+      await tester.tap(find.byTooltip('Document actions'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Delete document'));

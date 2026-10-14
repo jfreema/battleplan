@@ -81,7 +81,15 @@ const AddPlayersInput = z.object({
 export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(AddPlayersInput, request.data);
-  await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
+  const role = await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
+  // Super admins see player details but never change them (PLAYER-12),
+  // unless they're an admin of this team themselves.
+  if (role === 'superAdmin' && input.players.some((p) => p.dateOfBirth)) {
+    const own = await roleOf(input.groupId, uid);
+    if (own !== 'owner' && own !== 'admin') {
+      throw new HttpsError('permission-denied', 'details-read-only');
+    }
+  }
   const group = await db().collection(Collections.groups).doc(input.groupId).get();
   const players = await playersOnTeam(input.groupId);
   if (players + input.players.length > Limits.playersPerGroupMax) {

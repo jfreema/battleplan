@@ -372,7 +372,7 @@ class _TeamHeader extends StatelessWidget {
 }
 
 /// The header while viewing as a super admin (ADMIN-3): the team's badge
-/// and name, without the switcher or the team menu.
+/// and name, without the switcher, and the team menu to manage it.
 class _ViewingHeader extends StatelessWidget {
   const new({required this.group});
 
@@ -397,6 +397,12 @@ class _ViewingHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium,
             ),
+          ),
+          _TeamMenu(
+            groupId: group?.id,
+            isAdmin: true,
+            viewing: true,
+            onLeave: () async {},
           ),
           if (width < Breakpoints.wide) const _AccountButton(),
         ],
@@ -474,30 +480,39 @@ class _StorageBanner extends ConsumerWidget {
   }
 }
 
-class _TeamMenu extends StatelessWidget {
+/// The team menu: Roster, Invite, and Notifications, the admin items
+/// (Team settings, Media, Reports) for the team's admins and super
+/// admins (§3), and Leave. A super admin viewing a team they're not on
+/// ([viewing], ADMIN-3) gets the roster, invite, and admin items only.
+class _TeamMenu extends ConsumerWidget {
   const new({
     required this.groupId,
     required this.isAdmin,
     required this.onLeave,
+    this.viewing = false,
   });
 
   final GroupId? groupId;
   final bool isAdmin;
   final Future<void> Function() onLeave;
+  final bool viewing;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final admin =
+        isAdmin || (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
     // (route under /g/<id>/, icon, label). Items without a screen yet say
     // "Coming soon".
     final items = [
       ('roster', AppIcons.roster, l10n.rosterMenu),
       ('invite', AppIcons.invite, l10n.inviteMenu),
-      ('notifications', AppIcons.notifications, l10n.teamNotificationsMenu),
-      if (isAdmin) ('settings', AppIcons.settings, l10n.teamSettingsMenu),
-      if (isAdmin) ('media', AppIcons.media, l10n.mediaMenu),
-      if (isAdmin) ('reports', AppIcons.report, l10n.reportsMenu),
-      ('leave', AppIcons.leave, l10n.leaveTeamMenu),
+      if (!viewing)
+        ('notifications', AppIcons.notifications, l10n.teamNotificationsMenu),
+      if (admin) ('settings', AppIcons.settings, l10n.teamSettingsMenu),
+      if (admin) ('media', AppIcons.media, l10n.mediaMenu),
+      if (admin) ('reports', AppIcons.report, l10n.reportsMenu),
+      if (!viewing) ('leave', AppIcons.leave, l10n.leaveTeamMenu),
     ];
     const built = {
       'roster',

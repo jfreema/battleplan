@@ -98,9 +98,9 @@ describe('creating a poll (POLL-1)', () => {
     name: string,
     poll: object = {},
     message: object = {},
-    { g = 'teamA', withPoll = true, withMessage = true } = {},
+    { g = 'teamA', withPoll = true, withMessage = true, superAdmin = false } = {},
   ) => {
-    const db = as(uid);
+    const db = superAdmin ? env.authenticatedContext(uid, { superAdmin: true }).firestore() : as(uid);
     const batch = db.batch();
     const p = { ...goodPoll(uid, g), ...poll } as Record<string, unknown>;
     if (withPoll) batch.set(db.doc('polls/new'), p);
@@ -148,6 +148,14 @@ describe('creating a poll (POLL-1)', () => {
     await seed(false);
     await assertFails(create('bob', 'Bob'));
     await assertSucceeds(create('alice', 'Alice'));
+  });
+
+  it('lets a super admin on the team post polls when members may not (§3)', async () => {
+    await env.clearFirestore();
+    await seed(false);
+    await assertSucceeds(create('bob', 'Bob', {}, {}, { superAdmin: true }));
+    // Not on the team: polls are messages, which need membership.
+    await assertFails(create('carol', 'Carol', {}, {}, { superAdmin: true }));
   });
 
   it('needs the poll and its message together', async () => {

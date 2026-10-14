@@ -149,7 +149,7 @@ void main() {
       expect(repo.detailsReads, isEmpty);
     });
 
-    testWidgets("a super admin who isn't on the team doesn't either", (
+    testWidgets("a super admin who isn't on the team sees them, read-only", (
       tester,
     ) async {
       final repo = emmaTeam(details: full);
@@ -165,10 +165,15 @@ void main() {
       );
       await go(tester, '/g/y/roster/players/emma');
       expect(find.text('Remove player'), findsOneWidget);
-      expect(find.text('Details'), findsNothing);
+      // For support (§3): shown, but never changed.
+      expect(find.text('Details'), findsOneWidget);
+      expect(find.text('Peanut allergy'), findsOneWidget);
+      expect(find.text('Edit details'), findsNothing);
+      await go(tester, '/g/y/roster/players/emma/details');
+      expect(find.text("You can't do that on this team."), findsOneWidget);
       await go(tester, '/g/y/roster');
-      expect(find.textContaining('Age 12'), findsNothing);
-      expect(repo.detailsReads, isEmpty);
+      expect(find.textContaining('Age 12'), findsOneWidget);
+      expect(repo.detailsReads, unorderedEquals(['player emma', 'team y']));
     });
 
     testWidgets('admins see age, contacts that call, and notes', (

@@ -391,7 +391,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final candidates = ref.watch(mentionCandidatesProvider(widget.groupId));
     final byId = {for (final m in messages) m.id: m};
     final membership = ref.watch(myMembershipProvider(widget.groupId));
-    final isAdmin = membership?.isAdmin ?? false;
+    // Team admins, and super admins on the team (§3): @everyone,
+    // announcements, and polls.
+    final isAdmin =
+        (membership?.isAdmin ?? false) ||
+        (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
     // The bar at the top, newest pin first (CHAT-15).
     final pinnedIds = ref.watch(pinnedMessageIdsProvider(widget.groupId));
     if (!_openedMarkerTaken &&

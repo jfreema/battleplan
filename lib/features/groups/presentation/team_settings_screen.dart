@@ -432,7 +432,8 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                     ),
                 ],
               ),
-              if (isOwner) ...[
+              // The owner's, and a super admin's on any team (§3).
+              if (isOwner || superAdmin) ...[
                 section(l10n.ownerActions),
                 ListTile(
                   contentPadding: EdgeInsets.zero,

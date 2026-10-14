@@ -261,8 +261,9 @@ List<DocumentAction> documentActions(
   if (!inViewer) DocumentAction.share,
   if (!inViewer && !doc.isLink) DocumentAction.download,
   if (!inViewer) DocumentAction.details,
-  if (canManageDocument(doc, group, me)) DocumentAction.edit,
-  if (canPinDocument(group, me)) DocumentAction.pin,
+  if (canManageDocument(doc, group, me, superAdmin: superAdmin))
+    DocumentAction.edit,
+  if (canPinDocument(group, me, superAdmin: superAdmin)) DocumentAction.pin,
   if (canDeleteDocument(doc, group, me, superAdmin: superAdmin))
     DocumentAction.delete,
   if (canReportDocument(doc, me)) DocumentAction.report,

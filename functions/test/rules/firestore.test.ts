@@ -242,11 +242,10 @@ describe('message rate limit and create rule', () => {
 
 describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
   /** Posts as [uid], a while after their last message, so only [extra] decides. */
-  const send = async (uid: string, name: string, id: string, extra: object) => {
+  const send = async (uid: string, name: string, id: string, extra: object, db: Db = as(uid)) => {
     await env.withSecurityRulesDisabled((ctx) =>
       ctx.firestore().doc(`groupMembers/teamA_${uid}`).update({ lastPostedAt: ts('2026-01-01T00:00:00Z') }),
     );
-    const db = as(uid);
     const batch = db.batch();
     batch.set(db.doc(`messages/${id}`), {
       groupId: 'teamA', authorId: uid, authorName: name, authorPhotoPath: null,
@@ -281,6 +280,12 @@ describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
     const photo = { path: 'groups/teamA/messages/a3/0.jpg', width: 10, height: 10 };
     await assertFails(send('alice', 'Alice', 'a3', { announcement: true, type: 'image', attachments: [photo] }));
     await assertFails(send('alice', 'Alice', 'a4', { announcement: 1 }));
+  });
+
+  it('lets a super admin on the team use @everyone and announcements (§3)', async () => {
+    const root = env.authenticatedContext('bob', { superAdmin: true }).firestore();
+    await assertSucceeds(send('bob', 'Bob', 's1', { mentionsEveryone: true }, root));
+    await assertSucceeds(send('bob', 'Bob', 's2', { announcement: true }, root));
   });
 
   it("leaves a team's pins to pinMessage: not even admins write them", async () => {

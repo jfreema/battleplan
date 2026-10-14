@@ -6,6 +6,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/domain/document_rules.dart';
@@ -76,7 +77,13 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     final me = ref.watch(myMembershipProvider(groupId));
     final view = ref.watch(documentsViewOptionsProvider);
     final state = ref.watch(teamDocumentsProvider(groupId, view.sort));
-    final canAdd = group != null && canAddDocuments(group, me);
+    final canAdd =
+        group != null &&
+        canAddDocuments(
+          group,
+          me,
+          superAdmin: ref.watch(authUserProvider).value?.isSuperAdmin ?? false,
+        );
     final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
     _searchRest(view, state);
 

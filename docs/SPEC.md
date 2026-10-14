@@ -150,7 +150,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | **Delete anyone's message** | — | ✓ | ✓ | ✓ |
 | Mention people with @ (CHAT-14) | ✓ | ✓ | ✓ | in teams they've joined |
 | Mention @everyone; send announcements; pin messages (CHAT-14, CHAT-15) | — | ✓ | ✓ | pin any team; others in teams they've joined |
-| Create polls | setting (on) | ✓ | ✓ | ✓ |
+| Create polls | setting (on) | ✓ | ✓ | in teams they've joined |
 | Close any poll | — | ✓ | ✓ | ✓ |
 | Create events | setting (off) | ✓ | ✓ | ✓ |
 | Edit, cancel, or delete events | own only | ✓ | ✓ | ✓ |
@@ -161,7 +161,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Add a guardian to a player | players they're linked to (as the player or a guardian) | ✓ | ✓ | ✓ |
 | Remove player links; approve or decline claims and pending players | their own link only | ✓ | ✓ | ✓ |
 | See and edit a player's details: date of birth, emergency contacts, medical notes (PLAYER-12) | players they're linked to | ✓ | ✓ | see only |
-| Upload documents and add links | setting (on) | ✓ | ✓ | ✓ |
+| Upload documents and add links | setting (on) | ✓ | ✓ | in teams they've joined |
 | Delete any document; pin documents | — | ✓ | ✓ | ✓ |
 | Share the invite link, QR, or code; send email invites | setting (on) | ✓ | ✓ | ✓ |
 | Add people by email (creates accounts) | — | ✓ | ✓ | ✓ |
@@ -888,7 +888,7 @@ This is for platform operators (super admins) to manage every team and user.
   - **Content:** revoke invite links; review recent messages (delete any), events, and documents.
   - **Storage:** see usage, open the team's Media, and raise or lower its limit (STORE-6).
   - **Actions:**
-    - **View team**: opens its tabs without joining, read-only plus moderation, with a "Viewing as super admin" banner, and recorded in the audit log.
+    - **View team**: opens its tabs without joining, with a "Viewing as super admin" banner, and recorded in the audit log. The team menu, roster, schedule, documents, and Team settings work as §3 gives super admins; posting, voting, and RSVPing for themselves need them to join.
     - Archive or Restore.
     - Suspend or Unsuspend (members see "This team has been suspended").
     - Delete (type the name to confirm).

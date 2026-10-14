@@ -128,7 +128,10 @@ class EventDetailsScreen extends ConsumerWidget {
                     value: _Action.duplicate,
                     child: Text(l10n.eventDuplicate),
                   ),
-                if (canManage && event.takesRsvps && me != null && me.isAdmin)
+                // Team admins and super admins answer for anyone (§3).
+                if (canManage &&
+                    event.takesRsvps &&
+                    (superAdmin || (me?.isAdmin ?? false)))
                   PopupMenuItem(
                     value: _Action.setRsvp,
                     child: Text(l10n.eventSetRsvpFor),
@@ -342,7 +345,10 @@ class _RsvpSection extends ConsumerWidget {
         ? answering
         : withOwnAnswer(answering, viewer, rsvps);
     final open = canAnswerNow(event, group, me, now);
-    final isAdmin = me?.isAdmin ?? false;
+    // Super admins answer for anyone too, on any team (§3).
+    final isAdmin =
+        (me?.isAdmin ?? false) ||
+        (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
     final allowMaybe = group.settings.allowMaybe;
     final everyone = eventParticipants(
       roster,
