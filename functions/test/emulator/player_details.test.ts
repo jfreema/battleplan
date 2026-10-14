@@ -207,3 +207,43 @@ describe('player details are never copied elsewhere (PLAYER-12)', () => {
     expect(mail.sent.map((m) => m.text).join('\n')).not.toContain('Peanut');
   });
 });
+
+describe('a date of birth given when a player is added (PLAYER-12)', () => {
+  const playersOf = async (name: string) =>
+    (await db().collection(Collections.players).where('groupId', '==', 'open').where('displayName', '==', name).get()).docs;
+
+  it("an admin's new player starts its details with it, and only it", async () => {
+    await run(players.addPlayers, 'pat', {
+      groupId: 'open',
+      players: [{ name: 'Mia', dateOfBirth: '2015-06-02', guardians: [] }, { name: 'Noah', guardians: [] }],
+    });
+    const [mia] = await playersOf('Mia');
+    const d = (await details().doc(mia.id).get()).data();
+    expect(d).toMatchObject({ groupId: 'open', dateOfBirth: '2015-06-02', updatedBy: 'pat' });
+    expect(Object.keys(d ?? {}).sort()).toEqual(['dateOfBirth', 'groupId', 'updatedAt', 'updatedBy']);
+    // Never on the roster record everyone sees (PLAYER-10).
+    expect(mia.get('dateOfBirth')).toBeUndefined();
+    const [noah] = await playersOf('Noah');
+    expect(await hasDetails(noah.id)).toBe(false);
+  });
+
+  it("a member's pending player keeps it, and a decline takes it away", async () => {
+    const { playerId } = await run<{ playerId: string }>(players.proposePlayer, 'sam', {
+      groupId: 'open', displayName: 'Ava', relation: 'guardian', dateOfBirth: '2017-01-31',
+    });
+    expect((await details().doc(playerId).get()).get('dateOfBirth')).toBe('2017-01-31');
+    await run(players.resolvePendingPlayer, 'pat', { groupId: 'open', playerId, approve: false });
+    expect(await hasDetails(playerId)).toBe(false);
+  });
+
+  it('refuses a day that is not real, today or later, or over 100 years ago', async () => {
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
+    for (const dateOfBirth of ['2016-02-30', '2016-4-1', tomorrow, today, '1900-01-01']) {
+      await expect(
+        run(players.addPlayers, 'pat', { groupId: 'open', players: [{ name: 'Zed', dateOfBirth, guardians: [] }] }),
+      ).rejects.toMatchObject({ code: 'invalid-argument' });
+    }
+    expect(await playersOf('Zed')).toHaveLength(0);
+  });
+});

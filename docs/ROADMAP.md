@@ -202,6 +202,10 @@ SPEC PLAYER-12 and Q18, ARCH §6.2, §6.3, and D63. The owner asked to keep play
 217. ✅ App: a Details section on the player card for admins and linked members (age and date of birth, emergency contacts with tap to call, medical notes, notes) with an Edit form and the consent tick for medical notes; ages on the roster for admins.
 218. ✅ Docs and website: SPEC PLAYER-10 and PLAYER-12, §3, LEGAL-1 and LEGAL-7; ARCH data model, rules, and D63; the privacy, terms, and delete-account pages and the landing page.
 
+## Date of birth on the player forms · after go-live
+
+228. ✅ Date of birth when adding a player (admins' form and members' "Add a player") and in the card's Edit player dialog, at the owner's request (2026-10-13, SPEC PLAYER-1, PLAYER-2, PLAYER-4, PLAYER-12). *It's stored only in the player's details, which only admins and the player's own people see: `addPlayers` and `proposePlayer` write it with the new player, and Edit player saves it with the rest of the details. Pasted rosters don't take it.*
+
 ## Go-live in six phases
 
 Decided 2026-10-12, at the owner's request (SPEC §9, ARCH D60). The first go-live is the website and the web app only. Sign in with Apple, the App Store, Google Play, and Facebook each get a later phase of their own, in this order:

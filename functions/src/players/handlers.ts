@@ -18,7 +18,7 @@ import { teamUrl } from '../links/service.js';
 import { trySend } from '../notify/service.js';
 import { notifyAddedToTeam } from '../teams/service.js';
 import { groupMemberId } from '../shared/ids.js';
-import type { Relation } from './roster.js';
+import { validDateOfBirth, type Relation } from './roster.js';
 import {
   addPlayers as add,
   claimPlayer as claim,
@@ -39,8 +39,17 @@ const Guardian = z.object({
   email: z.string().trim().email().max(200).nullable().optional(),
 });
 
+/** An optional date of birth (PLAYER-12), as the rules take it. */
+const DateOfBirth = z
+  .string()
+  .trim()
+  .refine((v) => validDateOfBirth(v, new Date(), Limits.playerAgeMaxYears), 'bad-date-of-birth')
+  .nullable()
+  .optional();
+
 const Player = z.object({
   name: z.string().trim().min(1).max(60),
+  dateOfBirth: DateOfBirth,
   jerseyNumber: z.string().trim().max(4).nullable().optional(),
   position: z.string().trim().max(30).nullable().optional(),
   // The player's own email (PLAYER-1, optional): linked as the player.
@@ -334,6 +343,7 @@ export const proposePlayer = onCall(async (request) => {
       displayName: z.string().trim().min(1).max(60),
       jerseyNumber: z.string().trim().max(4).nullable().optional(),
       position: z.string().trim().max(30).nullable().optional(),
+      dateOfBirth: DateOfBirth,
       relation: RelationInput,
     }),
     request.data,

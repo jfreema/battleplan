@@ -1,6 +1,8 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/features/players/domain/player_details.dart';
+import 'package:battleplan/features/players/presentation/date_of_birth_field.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -50,6 +52,9 @@ typedef ProposedPlayer = ({
   String name,
   String? jerseyNumber,
   String? position,
+
+  /// 'YYYY-MM-DD', or null (PLAYER-12).
+  String? dateOfBirth,
   PlayerRelation relation,
 });
 
@@ -85,6 +90,7 @@ class _ProposePlayerFormState extends State<ProposePlayerForm> {
   final _position = TextEditingController();
   late PlayerRelation? _relation =
       widget.relation ?? (widget.canBeSelf ? null : PlayerRelation.guardian);
+  DateTime? _dob;
   bool _tried = false;
 
   @override
@@ -106,6 +112,7 @@ class _ProposePlayerFormState extends State<ProposePlayerForm> {
       name: _name.text.trim(),
       jerseyNumber: _blank(_number),
       position: _blank(_position),
+      dateOfBirth: _dob == null ? null : formatDateOfBirth(_dob!),
       relation: relation,
     ));
   }
@@ -157,6 +164,11 @@ class _ProposePlayerFormState extends State<ProposePlayerForm> {
             ),
           ],
         ),
+        DateOfBirthField(
+          value: _dob,
+          onChanged: (d) => setState(() => _dob = d),
+        ),
+        const DateOfBirthPrivacyNote(),
         if (widget.relation == null) ...[
           const SizedBox(height: Space.lg),
           Text(

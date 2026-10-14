@@ -450,13 +450,13 @@ Every team has a roster of players. There's one kind of team, so this works the 
 Players that others answer for never get accounts, and every account belongs to an adult (18+).
 
 - **PLAYER-1 · MVP · Add players (admins).**
-  - Add one at a time: name (required), jersey number, position, the player's own email (optional), and up to 4 guardians (name and email, both optional). The player's own email is for an adult player: that person is linked as the player, not as a guardian.
+  - Add one at a time: name (required), jersey number, position, date of birth (optional, kept in the player's details, PLAYER-12), the player's own email (optional), and up to 4 guardians (name and email, both optional). The player's own email is for an adult player: that person is linked as the player, not as a guardian.
   - Or paste a list with one line per guardian: "Player name, Guardian name, Guardian email". For an adult player, a line with just the player's name and their own email ("Player name, Player's email") links them as the player. Lines with the same player name become one player with several guardians and at most one email of their own. Up to 200 lines.
   - Players that admins add are active right away. People who already have accounts are linked right away. New emails get an added account and a setup email (AUTH-6), and the person is linked once they finish setup. A player's own email is linked within the PLAYER-3 limits: someone who is already a player on the team is listed as a problem instead.
   - A results screen shows the players added, guardians linked and invited, players linked or invited by their own email, guardians given without an email, and any problems.
 - **PLAYER-2 · MVP · Player card.**
   - Shows the name, jersey number, position, who's linked, each marked "Player" or "Guardian" ("Not joined yet" where it applies), and upcoming RSVPs. The player's linked members and the team's admins also open its RSVP history (PLAYER-11).
-  - The player's linked members can edit the name, number, and position.
+  - The player's linked members can edit the name, number, and position, and, with admins, the date of birth in the same Edit player dialog (PLAYER-12).
   - A member who isn't linked sees **Claim this player** (PLAYER-3).
   - Linked members and admins can add a guardian (PLAYER-5). Admins can also remove links and remove the player, and a linked member can remove their own link.
 - **PLAYER-3 · MVP · Claim a player.** Any member can claim an active player and say how they're linked: **"I am this player"** or **"I'm their parent or guardian"**.
@@ -469,7 +469,7 @@ Players that others answer for never get accounts, and every account belongs to 
     - **I'm a coach or another adult.** Skips this step.
   - People whose email an admin already entered for a player (PLAYER-1) are linked automatically and never see this step.
 - **PLAYER-4 · MVP · Add a player (members), and admin approval.**
-  - Any member can add a player: name, jersey number, position, and how they're linked (the player or a guardian).
+  - Any member can add a player: name, jersey number, position, date of birth (optional, PLAYER-12), and how they're linked (the player or a guardian).
   - A member's new player is **pending** until a team admin approves or declines it. A player an admin adds is active at once (PLAYER-1).
   - Pending players are shown only to admins and to the person who added them. They're not on the roster for everyone else, and can't get RSVPs or be claimed.
   - Claims and pending players appear at the top of the roster's Players section with **Approve** and **Decline**, and admins get a notification for each one (NOTIF-2). The person is notified when it's approved.
@@ -498,6 +498,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Each player can have optional details: date of birth, up to 2 emergency contacts (name, phone, relationship), medical notes (allergies, conditions, medications; up to 500 characters), and other notes for coaches (up to 500 characters).
   - Who sees and edits them: the team's admins and the members linked to that player (the player themselves or a parent or guardian). Other members never see them, not even that they exist. Super admins can see them for support but can't change them.
   - Medical notes need consent. Saving new or changed medical notes needs a tick on "I'm this player or their parent or guardian (or a team admin with the family's permission), and I agree to share this with the team's admins." The app records who agreed and when.
+  - The date of birth can also be given when a player is added (PLAYER-1, PLAYER-4) and changed in Edit player on the card; it's still stored only in the details. A member's pending player keeps it, and a decline deletes it with the player.
   - On the player card, the Details section shows the age and date of birth, the emergency contacts with tap to call, and the notes, with Edit. On the roster, admins see each player's age.
   - Details are deleted with the player or the team. Removing a guardian or deleting a linked account doesn't delete them, since they belong to the player. They never appear in notifications, chat, search, logs, or analytics.
   - Archived teams are read-only.

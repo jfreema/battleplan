@@ -15,6 +15,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
+import 'package:battleplan/features/players/presentation/date_of_birth_field.dart';
 import 'package:battleplan/features/players/presentation/player_details_section.dart';
 import 'package:battleplan/features/players/presentation/player_dialogs.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
@@ -107,8 +108,17 @@ class PlayerCardScreen extends ConsumerWidget {
             IconButton(
               tooltip: l10n.editPlayer,
               icon: const Icon(AppIcons.edit),
-              onPressed: () =>
-                  unawaited(_edit(context, ref, player, viaAdmin: viaAdmin)),
+              onPressed: () => unawaited(
+                _edit(
+                  context,
+                  ref,
+                  player,
+                  viaAdmin: viaAdmin,
+                  // Admins and the player's own people, as on Details
+                  // (PLAYER-12); never through the admin callable.
+                  withDateOfBirth: seesDetails && detailsEditable && !viaAdmin,
+                ),
+              ),
             ),
         ],
       ),
@@ -353,51 +363,80 @@ class PlayerCardScreen extends ConsumerWidget {
     }
   }
 
+  /// Edits the name, number, and position (PLAYER-2), and with
+  /// [withDateOfBirth] the date of birth, which is saved in the player's
+  /// details (PLAYER-12).
   Future<void> _edit(
     BuildContext context,
     WidgetRef ref,
     Player player, {
     required bool viaAdmin,
+    required bool withDateOfBirth,
   }) async {
     final l10n = AppLocalizations.of(context);
     final name = TextEditingController(text: player.displayName);
     final number = TextEditingController(text: player.jerseyNumber);
     final position = TextEditingController(text: player.position);
+    // Only once the details have loaded, so saving keeps the rest of them.
+    final stored = withDateOfBirth
+        ? ref.read(playerDetailsProvider(playerId))
+        : null;
+    final withDob = stored != null && stored.hasValue;
+    final before = stored?.value;
+    var dob = switch (before?.dateOfBirth) {
+      final d? => parseDateOfBirth(d),
+      null => null,
+    };
     final save = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.editPlayer),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: name,
-              decoration: InputDecoration(labelText: l10n.playerNameLabel),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(l10n.editPlayer),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: name,
+                decoration: InputDecoration(labelText: l10n.playerNameLabel),
+              ),
+              TextField(
+                controller: number,
+                maxLength: 4,
+                decoration: InputDecoration(labelText: l10n.jerseyNumberLabel),
+              ),
+              TextField(
+                controller: position,
+                decoration: InputDecoration(labelText: l10n.positionLabel),
+              ),
+              if (withDob) ...[
+                DateOfBirthField(
+                  value: dob,
+                  onChanged: (d) => setState(() => dob = d),
+                ),
+                const DateOfBirthPrivacyNote(),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.cancel),
             ),
-            TextField(
-              controller: number,
-              maxLength: 4,
-              decoration: InputDecoration(labelText: l10n.jerseyNumberLabel),
-            ),
-            TextField(
-              controller: position,
-              decoration: InputDecoration(labelText: l10n.positionLabel),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.save),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.save),
-          ),
-        ],
       ),
     );
     if (save != true || name.text.trim().isEmpty) return;
+    if (withDob && context.mounted) {
+      final newDob = dob == null ? null : formatDateOfBirth(dob!);
+      if (newDob != before?.dateOfBirth) {
+        await _saveDateOfBirth(context, ref, player, before, newDob);
+      }
+    }
     try {
       if (viaAdmin) {
         await ref
@@ -420,6 +459,36 @@ class PlayerCardScreen extends ConsumerWidget {
       }
     } on AppFailure {
       if (context.mounted) showAppSnackBar(context, l10n.profileSaveFailed);
+    }
+  }
+
+  /// Saves a new or cleared date of birth in the player's details
+  /// (PLAYER-12), keeping the rest of them; details left empty go.
+  Future<void> _saveDateOfBirth(
+    BuildContext context,
+    WidgetRef ref,
+    Player player,
+    PlayerDetails? before,
+    String? dateOfBirth,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final uid = ref.read(authUserProvider).value?.uid;
+    if (uid == null) return;
+    final repo = ref.read(playerRepositoryProvider);
+    final details =
+        (before ?? PlayerDetails(playerId: player.id, groupId: player.groupId))
+            .copyWith(dateOfBirth: dateOfBirth)
+            .cleaned;
+    try {
+      if (details.isEmpty) {
+        if (before != null) await repo.deletePlayerDetails(player.id);
+      } else {
+        await repo.savePlayerDetails(details, by: UserId(uid), stored: before);
+      }
+    } on AppFailure {
+      if (context.mounted) {
+        showAppSnackBar(context, l10n.playerDetailsSaveFailed);
+      }
     }
   }
 }

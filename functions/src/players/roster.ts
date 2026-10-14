@@ -11,7 +11,25 @@ export interface PlayerInput {
   position?: string | null;
   /** The player's own email (PLAYER-1, optional): they're linked as the player ('self'). */
   email?: string | null;
+  /** 'YYYY-MM-DD' (optional), kept in the player's details, not on the roster (PLAYER-12). */
+  dateOfBirth?: string | null;
   guardians: GuardianInput[];
+}
+
+/**
+ * Whether [value] is a date of birth the rules take (PLAYER-12): a real
+ * 'YYYY-MM-DD' day before today (UTC) and no more than
+ * [maxYears] years before [now].
+ */
+export function validDateOfBirth(value: string, now: Date, maxYears: number): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!m) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const day = new Date(Date.UTC(y, mo - 1, d));
+  if (day.getUTCFullYear() !== y || day.getUTCMonth() !== mo - 1 || day.getUTCDate() !== d) return false;
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const earliest = Date.UTC(now.getUTCFullYear() - maxYears, now.getUTCMonth(), now.getUTCDate());
+  return day.getTime() < today && day.getTime() >= earliest;
 }
 
 const EMAIL = /^\S+@\S+\.\S+$/;

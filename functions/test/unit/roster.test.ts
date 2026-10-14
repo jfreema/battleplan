@@ -8,6 +8,7 @@ import {
   playerStatusOf,
   playerSummaryOf,
   relationOf,
+  validDateOfBirth,
 } from '../../src/players/roster.js';
 import { approvedBody, claimBody, pendingPlayerBody } from '../../src/players/handlers.js';
 
@@ -135,5 +136,19 @@ describe('players trigger early exit (PLAYER-8)', () => {
     expect(playerLabelChanged(undefined, base)).toBe(false);
     // Players from before approvals have no status, and are active.
     expect(playerLabelChanged({ displayName: 'Emma' }, { displayName: 'Emmy' })).toBe(true);
+  });
+});
+
+describe('validDateOfBirth (PLAYER-12)', () => {
+  const now = new Date('2026-10-13T12:00:00Z');
+  it('takes a real day before today, up to 100 years back', () => {
+    expect(validDateOfBirth('2016-02-29', now, 100)).toBe(true);
+    expect(validDateOfBirth('2026-10-12', now, 100)).toBe(true);
+    expect(validDateOfBirth('1926-10-13', now, 100)).toBe(true);
+  });
+  it('refuses today, later days, unreal days, other shapes, and older than 100 years', () => {
+    for (const v of ['2026-10-13', '2027-01-01', '2015-02-29', '2016-13-01', '2016-4-1', '04/01/2016', '1926-10-12', '']) {
+      expect(validDateOfBirth(v, now, 100)).toBe(false);
+    }
   });
 });

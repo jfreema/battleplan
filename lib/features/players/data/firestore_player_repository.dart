@@ -96,6 +96,7 @@ class FirestorePlayerRepository implements PlayerRepository {
             'position': p.position,
             // The player's own email, for an adult player (PLAYER-1).
             'email': p.email,
+            'dateOfBirth': ?p.dateOfBirth,
             'guardians': [
               for (final g in p.guardians) {'name': g.name, 'email': g.email},
             ],
@@ -222,6 +223,7 @@ class FirestorePlayerRepository implements PlayerRepository {
     required PlayerRelation relation,
     String? jerseyNumber,
     String? position,
+    String? dateOfBirth,
   }) async {
     String? blankToNull(String? v) =>
         (v?.trim().isEmpty ?? true) ? null : v!.trim();
@@ -230,6 +232,7 @@ class FirestorePlayerRepository implements PlayerRepository {
       'displayName': name.trim(),
       'jerseyNumber': blankToNull(jerseyNumber),
       'position': blankToNull(position),
+      'dateOfBirth': ?blankToNull(dateOfBirth),
       'relation': relation.value,
     });
     return PlayerStatus.tryParse(d['status'] as String?) ??

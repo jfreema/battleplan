@@ -10,7 +10,9 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/players/domain/roster_parser.dart';
+import 'package:battleplan/features/players/presentation/date_of_birth_field.dart';
 import 'package:battleplan/features/players/presentation/player_dialogs.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +51,9 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
   final _paste = TextEditingController();
   bool _pasting = false;
   bool _saving = false;
+
+  /// The single player's date of birth (PLAYER-12), or null.
+  DateTime? _dob;
   int _guardianRows = 1;
 
   @override
@@ -73,6 +78,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
       jerseyNumber: _number.text.trim(),
       position: _position.text.trim(),
       email: _email.text.trim().isEmpty ? null : _email.text.trim(),
+      dateOfBirth: _dob == null ? null : formatDateOfBirth(_dob!),
       // Name and email are both optional (PLAYER-1); a name alone is kept,
       // and the results say it couldn't be linked.
       guardians: [
@@ -173,6 +179,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
             relation: p.relation,
             jerseyNumber: p.jerseyNumber,
             position: p.position,
+            dateOfBirth: p.dateOfBirth,
           );
       if (!mounted) return;
       showAppSnackBar(
@@ -282,6 +289,13 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                     ),
                   ],
                 ),
+                // Kept in the player's details, not on the roster
+                // (PLAYER-12).
+                DateOfBirthField(
+                  value: _dob,
+                  onChanged: (d) => setState(() => _dob = d),
+                ),
+                const DateOfBirthPrivacyNote(),
                 const SizedBox(height: Space.md),
                 // An adult player's own email links them as the player
                 // (PLAYER-1), not as their own guardian.

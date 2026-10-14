@@ -318,6 +318,57 @@ void main() {
       );
     });
 
+    /// Picks the 15th of this month in 2015 from the date-of-birth picker.
+    Future<void> pickBirthday(WidgetTester tester) async {
+      await tester.tap(find.text('Date of birth').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('2015'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('15'));
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets("a player's date of birth is kept privately (PLAYER-12)", (
+      tester,
+    ) async {
+      final playerRepo = await openAdd(tester);
+      await tester.enterText(find.byType(TextField).at(0), 'Mia Park');
+      expect(find.textContaining("player's own people see it"), findsOneWidget);
+      await pickBirthday(tester);
+      expect(find.textContaining('2015'), findsWidgets);
+      await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
+      await tester.pumpAndSettle();
+      expect(
+        playerRepo.added.single.single.dateOfBirth,
+        matches(RegExp(r'^2015-\d{2}-15$')),
+      );
+    });
+
+    testWidgets(
+      "a member's new player can have one too (PLAYER-4, PLAYER-12)",
+      (tester) async {
+        final playerRepo = FakePlayerRepository();
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: youth,
+          memberships: [testMembership('y', 'coach')],
+          playerRepo: playerRepo,
+        );
+        await push(tester, '/g/y/players/add');
+        await tester.enterText(find.byType(TextField).at(0), 'Ava Park');
+        await pickBirthday(tester);
+        await tester.tap(find.text("I'm their parent or guardian"));
+        await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
+        await tester.pumpAndSettle();
+        expect(
+          playerRepo.calls.single,
+          matches(RegExp(r'^propose Ava Park .* born 2015-\d{2}-15$')),
+        );
+      },
+    );
+
     test('problem lines name each refused link', () {
       final l10n = lookupAppLocalizations(const Locale('en'));
       expect(
@@ -515,6 +566,42 @@ void main() {
             .toString(),
         '/g/y/schedule/e/e1',
       );
+    });
+
+    testWidgets('Edit player sets the date of birth in the details '
+        '(PLAYER-12)', (tester) async {
+      final repo = withEmma();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberships: people,
+        playerRepo: repo,
+      );
+      await go(tester, '/g/y/roster/players/emma');
+      await tester.tap(find.byTooltip('Edit player'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Date of birth').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('2015'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('15'));
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(
+        repo.details[emma.id]?.dateOfBirth,
+        matches(RegExp(r'^2015-\d{2}-15$')),
+      );
+      // Clearing it leaves no details behind.
+      await tester.tap(find.byTooltip('Edit player'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Clear date of birth').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(repo.details[emma.id], isNull);
     });
 
     testWidgets("a player who isn't there says so", (tester) async {

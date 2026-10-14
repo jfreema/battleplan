@@ -89,6 +89,7 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
             relation: p.relation,
             jerseyNumber: p.jerseyNumber,
             position: p.position,
+            dateOfBirth: p.dateOfBirth,
           );
       return status == PlayerStatus.pending
           ? l10n.playerProposed

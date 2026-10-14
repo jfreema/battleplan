@@ -117,6 +117,10 @@ abstract class NewPlayer with _$NewPlayer {
     String? jerseyNumber,
     String? position,
     String? email,
+
+    /// 'YYYY-MM-DD' (optional): saved in the player's details, never on
+    /// the roster (PLAYER-10, PLAYER-12).
+    String? dateOfBirth,
     @Default(<NewGuardian>[]) List<NewGuardian> guardians,
   }) = _NewPlayer;
 }

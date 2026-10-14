@@ -853,7 +853,9 @@ as String?,
 /// @nodoc
 mixin _$NewPlayer {
 
- String get name; String? get jerseyNumber; String? get position; String? get email; List<NewGuardian> get guardians;
+ String get name; String? get jerseyNumber; String? get position; String? get email;/// 'YYYY-MM-DD' (optional): saved in the player's details, never on
+/// the roster (PLAYER-10, PLAYER-12).
+ String? get dateOfBirth; List<NewGuardian> get guardians;
 /// Create a copy of NewPlayer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -865,20 +867,20 @@ $NewPlayerCopyWith<NewPlayer> get copyWith => _$NewPlayerCopyWithImpl<NewPlayer>
 @override
 bool operator ==(Object other) {
   final _this = this as NewPlayer;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewPlayer&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.jerseyNumber, _this.jerseyNumber) || other.jerseyNumber == _this.jerseyNumber)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.email, _this.email) || other.email == _this.email)&&const DeepCollectionEquality().equals(other.guardians, _this.guardians));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NewPlayer&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.jerseyNumber, _this.jerseyNumber) || other.jerseyNumber == _this.jerseyNumber)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.dateOfBirth, _this.dateOfBirth) || other.dateOfBirth == _this.dateOfBirth)&&const DeepCollectionEquality().equals(other.guardians, _this.guardians));
 }
 
 
 @override
 int get hashCode {
   final _this = this as NewPlayer;
-  return Object.hash(runtimeType,_this.name,_this.jerseyNumber,_this.position,_this.email,const DeepCollectionEquality().hash(_this.guardians));
+  return Object.hash(runtimeType,_this.name,_this.jerseyNumber,_this.position,_this.email,_this.dateOfBirth,const DeepCollectionEquality().hash(_this.guardians));
 }
 
 @override
 String toString() {
   final _this = this as NewPlayer;
-  return 'NewPlayer(name: ${_this.name}, jerseyNumber: ${_this.jerseyNumber}, position: ${_this.position}, email: ${_this.email}, guardians: ${_this.guardians})';
+  return 'NewPlayer(name: ${_this.name}, jerseyNumber: ${_this.jerseyNumber}, position: ${_this.position}, email: ${_this.email}, dateOfBirth: ${_this.dateOfBirth}, guardians: ${_this.guardians})';
 }
 
 
@@ -889,7 +891,7 @@ abstract mixin class $NewPlayerCopyWith<$Res>  {
   factory $NewPlayerCopyWith(NewPlayer value, $Res Function(NewPlayer) _then) = _$NewPlayerCopyWithImpl;
 @useResult
 $Res call({
- String name, String? jerseyNumber, String? position, String? email, List<NewGuardian> guardians
+ String name, String? jerseyNumber, String? position, String? email, String? dateOfBirth, List<NewGuardian> guardians
 });
 
 
@@ -906,12 +908,13 @@ class _$NewPlayerCopyWithImpl<$Res>
 
 /// Create a copy of NewPlayer
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? email = freezed,Object? guardians = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? email = freezed,Object? dateOfBirth = freezed,Object? guardians = null,}) {
   return _then(NewPlayer(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,jerseyNumber: freezed == jerseyNumber ? _self.jerseyNumber : jerseyNumber // ignore: cast_nullable_to_non_nullable
 as String?,position: freezed == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
 as String?,guardians: null == guardians ? _self.guardians : guardians // ignore: cast_nullable_to_non_nullable
 as List<NewGuardian>,
   ));
@@ -998,10 +1001,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? jerseyNumber,  String? position,  String? email,  List<NewGuardian> guardians)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? jerseyNumber,  String? position,  String? email,  String? dateOfBirth,  List<NewGuardian> guardians)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NewPlayer() when $default != null:
-return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.guardians);case _:
+return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.dateOfBirth,_that.guardians);case _:
   return orElse();
 
 }
@@ -1019,10 +1022,10 @@ return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.g
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? jerseyNumber,  String? position,  String? email,  List<NewGuardian> guardians)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? jerseyNumber,  String? position,  String? email,  String? dateOfBirth,  List<NewGuardian> guardians)  $default,) {final _that = this;
 switch (_that) {
 case _NewPlayer():
-return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.guardians);case _:
+return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.dateOfBirth,_that.guardians);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1039,10 +1042,10 @@ return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.g
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? jerseyNumber,  String? position,  String? email,  List<NewGuardian> guardians)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? jerseyNumber,  String? position,  String? email,  String? dateOfBirth,  List<NewGuardian> guardians)?  $default,) {final _that = this;
 switch (_that) {
 case _NewPlayer() when $default != null:
-return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.guardians);case _:
+return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.dateOfBirth,_that.guardians);case _:
   return null;
 
 }
@@ -1054,13 +1057,16 @@ return $default(_that.name,_that.jerseyNumber,_that.position,_that.email,_that.g
 
 
 class _NewPlayer implements NewPlayer {
-  const _NewPlayer({required this.name, this.jerseyNumber, this.position, this.email,  List<NewGuardian> guardians = const <NewGuardian>[]}): _guardians = guardians;
+  const _NewPlayer({required this.name, this.jerseyNumber, this.position, this.email, this.dateOfBirth,  List<NewGuardian> guardians = const <NewGuardian>[]}): _guardians = guardians;
   
 
 @override final  String name;
 @override final  String? jerseyNumber;
 @override final  String? position;
 @override final  String? email;
+/// 'YYYY-MM-DD' (optional): saved in the player's details, never on
+/// the roster (PLAYER-10, PLAYER-12).
+@override final  String? dateOfBirth;
  final  List<NewGuardian> _guardians;
 @override@JsonKey() List<NewGuardian> get guardians {
   if (_guardians is EqualUnmodifiableListView) return _guardians;
@@ -1079,18 +1085,18 @@ _$NewPlayerCopyWith<_NewPlayer> get copyWith => __$NewPlayerCopyWithImpl<_NewPla
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewPlayer&&(identical(other.name, name) || other.name == name)&&(identical(other.jerseyNumber, jerseyNumber) || other.jerseyNumber == jerseyNumber)&&(identical(other.position, position) || other.position == position)&&(identical(other.email, email) || other.email == email)&&const DeepCollectionEquality().equals(other.guardians, _guardians));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _NewPlayer&&(identical(other.name, name) || other.name == name)&&(identical(other.jerseyNumber, jerseyNumber) || other.jerseyNumber == jerseyNumber)&&(identical(other.position, position) || other.position == position)&&(identical(other.email, email) || other.email == email)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&const DeepCollectionEquality().equals(other.guardians, _guardians));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,name,jerseyNumber,position,email,const DeepCollectionEquality().hash(_guardians));
+    return Object.hash(runtimeType,name,jerseyNumber,position,email,dateOfBirth,const DeepCollectionEquality().hash(_guardians));
 }
 
 @override
 String toString() {
-    return 'NewPlayer(name: $name, jerseyNumber: $jerseyNumber, position: $position, email: $email, guardians: $guardians)';
+    return 'NewPlayer(name: $name, jerseyNumber: $jerseyNumber, position: $position, email: $email, dateOfBirth: $dateOfBirth, guardians: $guardians)';
 }
 
 
@@ -1101,7 +1107,7 @@ abstract mixin class _$NewPlayerCopyWith<$Res> implements $NewPlayerCopyWith<$Re
   factory _$NewPlayerCopyWith(_NewPlayer value, $Res Function(_NewPlayer) _then) = __$NewPlayerCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? jerseyNumber, String? position, String? email, List<NewGuardian> guardians
+ String name, String? jerseyNumber, String? position, String? email, String? dateOfBirth, List<NewGuardian> guardians
 });
 
 
@@ -1118,12 +1124,13 @@ class __$NewPlayerCopyWithImpl<$Res>
 
 /// Create a copy of NewPlayer
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? email = freezed,Object? guardians = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? jerseyNumber = freezed,Object? position = freezed,Object? email = freezed,Object? dateOfBirth = freezed,Object? guardians = null,}) {
   return _then(_NewPlayer(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,jerseyNumber: freezed == jerseyNumber ? _self.jerseyNumber : jerseyNumber // ignore: cast_nullable_to_non_nullable
 as String?,position: freezed == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as String?,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
 as String?,guardians: null == guardians ? _self._guardians : guardians // ignore: cast_nullable_to_non_nullable
 as List<NewGuardian>,
   ));

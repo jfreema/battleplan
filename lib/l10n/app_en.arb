@@ -1512,5 +1512,6 @@
   "rsvpHistoryEmpty": "No past events took RSVPs in the last {months} months.",
   "@rsvpHistoryEmpty": {"placeholders": {"months": {"type": "int"}}},
   "rsvpHistoryOf": "{count, plural, =1{1 past event} other{{count} past events}}",
-  "@rsvpHistoryOf": {"placeholders": {"count": {"type": "int"}}}
+  "@rsvpHistoryOf": {"placeholders": {"count": {"type": "int"}}},
+  "dateOfBirthPrivate": "Optional. Only the team's admins and the player's own people see it."
 }

@@ -1122,10 +1122,11 @@ class FakePlayerRepository implements PlayerRepository {
     required PlayerRelation relation,
     String? jerseyNumber,
     String? position,
+    String? dateOfBirth,
   }) async {
     calls.add(
       'propose $name #${jerseyNumber ?? ''} ${position ?? ''} '
-      '${relation.value}',
+      '${relation.value}${dateOfBirth == null ? '' : ' born $dateOfBirth'}',
     );
     return proposedStatus;
   }
@@ -3006,6 +3007,7 @@ class RefusingPlayerRepository extends FakePlayerRepository {
     required PlayerRelation relation,
     String? jerseyNumber,
     String? position,
+    String? dateOfBirth,
   }) async => throw failure;
 
   @override

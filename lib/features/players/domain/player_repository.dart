@@ -65,6 +65,7 @@ abstract interface class PlayerRepository {
     required PlayerRelation relation,
     String? jerseyNumber,
     String? position,
+    String? dateOfBirth,
   });
 
   /// Approves or declines a pending player (PLAYER-4); declining deletes

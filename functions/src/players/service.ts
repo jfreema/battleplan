@@ -144,7 +144,8 @@ export async function addPlayers(
   for (const input of players) {
     const playerRef = db().collection(Collections.players).doc();
     const name = input.name.trim().slice(0, 60);
-    await playerRef.set({
+    const batch = db().batch();
+    batch.set(playerRef, {
       groupId,
       displayName: name,
       displayNameLower: name.toLowerCase(),
@@ -155,6 +156,8 @@ export async function addPlayers(
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+    setDateOfBirth(batch, playerRef.id, groupId, input.dateOfBirth, actorUid);
+    await batch.commit();
     result.playersAdded++;
     // The player first, so their own email is never taken as a guardian's.
     const people: { email: string; name: string | null; relation: Relation }[] = [];
@@ -590,7 +593,31 @@ export interface NewPlayerInput {
   displayName: string;
   jerseyNumber?: string | null;
   position?: string | null;
+  /** 'YYYY-MM-DD' (optional), checked by the handler (PLAYER-12). */
+  dateOfBirth?: string | null;
   relation: Relation;
+}
+
+/**
+ * Starts a new player's details with their date of birth (PLAYER-12), in
+ * the batch that creates the player, when one was given. The details stay
+ * apart from the roster record (PLAYER-10), so only the team's admins and
+ * the player's linked members see it.
+ */
+function setDateOfBirth(
+  batch: FirebaseFirestore.WriteBatch,
+  playerId: string,
+  groupId: string,
+  dateOfBirth: string | null | undefined,
+  by: string,
+): void {
+  if (!dateOfBirth) return;
+  batch.set(detailsRef(playerId), {
+    groupId,
+    dateOfBirth,
+    updatedBy: by,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
 }
 
 /**
@@ -623,7 +650,8 @@ export async function proposePlayer(
   const name = input.displayName.trim().slice(0, 60);
   const status = admin ? 'active' : 'pending';
   const now = FieldValue.serverTimestamp();
-  await ref.set({
+  const batch = db().batch();
+  batch.set(ref, {
     groupId,
     displayName: name,
     displayNameLower: name.toLowerCase(),
@@ -638,6 +666,9 @@ export async function proposePlayer(
     createdAt: now,
     updatedAt: now,
   });
+  // Kept with a pending player too: declining deletes them with it.
+  setDateOfBirth(batch, ref.id, groupId, input.dateOfBirth, uid);
+  await batch.commit();
   if (admin) {
     try {
       await linkGuardian(groupId, ref.id, await profileOf(uid, 'Member'), uid, 'proposal', input.relation, {
