@@ -341,13 +341,66 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Roster'));
     await tester.pumpAndSettle();
-    expect(find.text('Admins'), findsOneWidget);
+    // The owner coaches unless the team says otherwise (TEAM-3).
+    expect(find.text('Coaches'), findsOneWidget);
     expect(find.text('Members'), findsOneWidget);
     await tester.tap(find.text('Sam Rivera'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Make admin'));
     await tester.pumpAndSettle();
     expect(members.calls, ['update sam admin']);
+  });
+
+  testWidgets('roster: an admin makes a parent a coach, and they join the '
+      'coaches (TEAM-3)', (tester) async {
+    final members = FakeMemberRepository([
+      testMembership('a', 'coach', role: MemberRole.owner, name: 'Jordan'),
+      testMembership('a', 'maria', name: 'Maria Rodriguez'),
+    ]);
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberRepo: members,
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Roster'));
+    await tester.pumpAndSettle();
+    expect(find.text('Members'), findsOneWidget);
+    await tester.tap(find.text('Maria Rodriguez'));
+    await tester.pumpAndSettle();
+    final coachSwitch = find.widgetWithText(SwitchListTile, 'Coach');
+    await tester.ensureVisible(coachSwitch);
+    expect(tester.widget<SwitchListTile>(coachSwitch).value, isFalse);
+    await tester.tap(coachSwitch);
+    await tester.pumpAndSettle();
+    expect(members.calls, ['coach maria true']);
+    expect(tester.widget<SwitchListTile>(coachSwitch).value, isTrue);
+    // Closed, the roster lists her with the coaches.
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
+    expect(find.text('Members'), findsNothing);
+    expect(find.text('Coaches'), findsOneWidget);
+  });
+
+  testWidgets("roster: members don't make coaches", (tester) async {
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberRepo: FakeMemberRepository([
+        testMembership('a', 'coach', name: 'Jordan'),
+        testMembership('a', 'maria', name: 'Maria Rodriguez'),
+      ]),
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Roster'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Maria Rodriguez'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SwitchListTile), findsNothing);
   });
 
   testWidgets('roster: an admin cannot remove another admin', (tester) async {

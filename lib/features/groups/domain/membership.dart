@@ -33,6 +33,11 @@ abstract class Membership with _$Membership {
     /// on their card with call, text, and email buttons (TEAM-10).
     String? contactPhone,
     String? contactEmail,
+
+    /// A coach of the team (TEAM-3), set by its admins: on the roster's
+    /// Coaches, and answering for themselves on events (PLAYER-6). Unset,
+    /// the owner counts as one ([isCoach]).
+    bool? coach,
   }) = _Membership;
 
   const new _();
@@ -47,6 +52,10 @@ abstract class Membership with _$Membership {
 
   /// Owners and admins manage the team (SPEC §3).
   bool get isAdmin => role == MemberRole.owner || role == MemberRole.admin;
+
+  /// A coach (TEAM-3): as the admins set it, else the owner, who usually
+  /// started the team to coach it.
+  bool get isCoach => coach ?? role == MemberRole.owner;
 
   /// Whether they share a phone number or email with the team (TEAM-10).
   bool get sharesContact => contactPhone != null || contactEmail != null;

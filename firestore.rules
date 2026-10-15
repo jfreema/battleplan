@@ -692,6 +692,21 @@ service cloud.firestore {
       allow create, update: if rsvpWriteOk(rsvpId)
         && (request.method == 'create' || onlyChanges(['status', 'note', 'guests',
             'respondedBy', 'updatedAt', 'participantName', 'eventStartAt']));
+      // Clearing an answer (SCHED-5) back to "No response", which is no
+      // document: whoever may give the answer, while the event takes them.
+      allow delete: if rsvpClearOk(resource.data);
+    }
+
+    function rsvpClearOk(r) {
+      let g = r.groupId;
+      let event = get(/databases/$(database)/documents/events/$(r.eventId)).data;
+      return (isMember(g) || superAdmin()) && active(g)
+        && event.groupId == g
+        && event.rsvpEnabled == true
+        && event.get('canceledAt', null) == null
+        && rsvpWriterOk(g, r)
+        && (rsvpAdmin(g) || event.get('rsvpDeadline', null) == null
+            || request.time < event.rsvpDeadline);
     }
 
     function rsvpWriteOk(rsvpId) {

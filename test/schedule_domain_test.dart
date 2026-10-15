@@ -511,7 +511,7 @@ void main() {
         ),
       ];
       final roster = [
-        m('coach', role: MemberRole.admin),
+        m('coach', role: MemberRole.admin).copyWith(coach: true),
         m('maria'),
         m('sam'),
         m('luis'),
@@ -533,7 +533,7 @@ void main() {
       );
       // Pending players can't be answered for (PLAYER-4).
       expect(everyone.main.map((p) => p.id), ['p1']);
-      // Admins and unlinked members answer for themselves; a linked member
+      // Coaches and unlinked members answer for themselves; a linked member
       // shows here only with an answer of their own, as on old events.
       expect(everyone.staff.map((p) => p.id), [
         'coach',
@@ -543,6 +543,16 @@ void main() {
       ]);
       final none = eventParticipants(roster, players, links: links);
       expect(none.staff.map((p) => p.id), ['coach', 'sam', 'luis']);
+      // An admin parent who isn't a coach answers only for their players.
+      final notCoach = [m('coach', role: MemberRole.admin), ...roster.skip(1)];
+      expect(
+        eventParticipants(
+          notCoach,
+          players,
+          links: links,
+        ).staff.map((p) => p.id),
+        ['sam', 'luis'],
+      );
       // An admin who is a player answers on their player, so isn't waiting
       // under "coaches and others"; an answer of their own still shows.
       const selfLinks = [
@@ -586,9 +596,10 @@ void main() {
         links: selfLinks,
       );
       expect(mine.map((p) => p.id), ['p1']);
+      // After the players, as Me always is.
       expect(withOwnAnswer(mine, admin, const [ownAnswer]).map((p) => p.id), [
-        'coach',
         'p1',
+        'coach',
       ]);
       expect(withOwnAnswer(mine, admin, const []), same(mine));
       final adminMine = participantsFor(me: admin, players: players);
@@ -678,8 +689,8 @@ void main() {
       );
     });
 
-    test('linked members answer for their players; admins and unlinked '
-        'members also for themselves (PLAYER-6)', () {
+    test('linked members answer for their players first; coaches and '
+        'unlinked members also for themselves, after them (PLAYER-6)', () {
       const players = [
         Player(
           id: PlayerId('p1'),
@@ -736,16 +747,36 @@ void main() {
       );
       expect(parent.map((p) => p.shownName), ['Emma #7']);
       expect(parent.single.isMe, isFalse);
-      // An admin guardian also gets a Me row.
-      final coach = participantsFor(
+      // An admin guardian who isn't a coach answers only for their players.
+      final adminParent = participantsFor(
         me: member('maria', role: MemberRole.admin),
         players: players,
         links: links,
       );
+      expect(adminParent.map((p) => p.shownName), ['Emma #7']);
+      // A coach guardian also gets a Me row, below their players.
+      final coach = participantsFor(
+        me: member('maria').copyWith(coach: true),
+        players: players,
+        links: links,
+      );
       expect(coach.map((p) => p.type), [
-        ParticipantType.member,
         ParticipantType.player,
+        ParticipantType.member,
       ]);
+      // The owner coaches unless the team says otherwise (TEAM-3).
+      List<ParticipantType> typesOf(Membership me) => [
+        for (final p in participantsFor(me: me, players: players, links: links))
+          p.type,
+      ];
+      expect(typesOf(member('maria', role: MemberRole.owner)), [
+        ParticipantType.player,
+        ParticipantType.member,
+      ]);
+      expect(
+        typesOf(member('maria', role: MemberRole.owner).copyWith(coach: false)),
+        [ParticipantType.player],
+      );
       // A member who is a player answers on their own player's row, first,
       // then for the players they're here for; no Me row.
       final player = participantsFor(

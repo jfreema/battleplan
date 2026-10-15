@@ -379,10 +379,10 @@ describe('events trigger early exit (ARCH §6.4)', () => {
 
 describe('who hears about an event (SCHED-6, SCHED-8, PLAYER-7, Q14)', () => {
   const members = [
-    { uid: 'coach', admin: true },
-    { uid: 'maria', admin: false },
-    { uid: 'dan', admin: false },
-    { uid: 'aunt', admin: false },
+    { uid: 'coach', coach: true },
+    { uid: 'maria', coach: false },
+    { uid: 'dan', coach: false },
+    { uid: 'aunt', coach: false },
   ];
   const links = [
     { uid: 'maria', playerId: 'emma' },
@@ -403,7 +403,7 @@ describe('who hears about an event (SCHED-6, SCHED-8, PLAYER-7, Q14)', () => {
     }
   });
 
-  it('guardians named per player still coming; admins and unlinked members by their own answer', () => {
+  it('guardians named per player still coming; coaches and unlinked members by their own answer', () => {
     const statuses = new Map([['liam', 'not_going'], ['ava', 'not_going'], ['coach', 'going']]);
     for (const mode of ['change', 'reminder'] as const) {
       // Dan's only player said Not going; the aunt isn't linked and didn't say Not going.
@@ -443,11 +443,21 @@ describe('who hears about an event (SCHED-6, SCHED-8, PLAYER-7, Q14)', () => {
     expect(audienceOf({ members, links: pending, playerNames, statuses: new Map(), mode: 'reminder' }).get('aunt')).toEqual([]);
   });
 
-  it('leaves out an admin who said Not going, unless they guard a player who is coming', () => {
+  it('leaves out a coach who said Not going, unless they guard a player who is coming', () => {
     const statuses = new Map([['coach', 'not_going']]);
     const asGuardian = [...links, { uid: 'coach', playerId: 'ava' }];
     expect(audienceOf({ members, links, playerNames, statuses, mode: 'change' }).has('coach')).toBe(false);
     expect(audienceOf({ members, links: asGuardian, playerNames, statuses, mode: 'reminder' }).get('coach')).toEqual(['Ava']);
+  });
+
+  it("a parent who isn't a coach goes by their players only, even an admin (PLAYER-6)", () => {
+    // Maria's players both said Not going: she hears nothing, whatever her
+    // role, as she has no answer of her own to give.
+    const statuses = new Map([['emma', 'not_going'], ['liam', 'not_going']]);
+    expect(audienceOf({ members, links, playerNames, statuses, mode: 'reminder' }).has('maria')).toBe(false);
+    // Made a coach, she goes by her own answer too.
+    const asCoach = members.map((m) => (m.uid === 'maria' ? { ...m, coach: true } : m));
+    expect(audienceOf({ members: asCoach, links, playerNames, statuses, mode: 'reminder' }).get('maria')).toEqual([]);
   });
 
   it('names both players with no answers yet, alphabetically', () => {

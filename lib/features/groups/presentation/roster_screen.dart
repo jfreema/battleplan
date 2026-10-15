@@ -135,12 +135,17 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               : members
                     .where((m) => m.displayName.toLowerCase().contains(q))
                     .toList();
-          // By name (the roster comes that way), the owner first.
-          final admins = [
-            ...shown.where((m) => m.role == MemberRole.owner),
-            ...shown.where((m) => m.role == MemberRole.admin),
+          // By name (the roster comes that way), the owner first. Coaches
+          // have their own section (TEAM-3), their role on its chip.
+          final coaches = [
+            ...shown.where((m) => m.isCoach && m.role == MemberRole.owner),
+            ...shown.where((m) => m.isCoach && m.role != MemberRole.owner),
           ];
-          final others = shown.where((m) => !m.isAdmin).toList();
+          final admins = [
+            ...shown.where((m) => !m.isCoach && m.role == MemberRole.owner),
+            ...shown.where((m) => !m.isCoach && m.role == MemberRole.admin),
+          ];
+          final others = shown.where((m) => !m.isAdmin && !m.isCoach).toList();
           bool matches(Player p) =>
               q.isEmpty || p.displayName.toLowerCase().contains(q);
           // Players come by number (sortPlayers); by name on request.
@@ -223,6 +228,13 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                         if (nameOf(l.uid.value) case final name?)
                           if (l.isSelf) l10n.playerLinkSelfName(name) else name,
                   ],
+                ),
+              if (coaches.isNotEmpty) _Section(title: l10n.rosterCoaches),
+              for (final m in coaches)
+                _MemberRow(
+                  member: m,
+                  me: me,
+                  who: whoLabel(l10n, m.uid, links, players),
                 ),
               if (admins.isNotEmpty) _Section(title: l10n.rosterAdmins),
               for (final m in admins)
@@ -589,9 +601,15 @@ class MemberCard extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             if (member.title?.isNotEmpty ?? false) Text(member.title!),
-            if (badge != null) ...[
+            if (badge != null || member.isCoach) ...[
               const SizedBox(height: Space.sm),
-              Chip(label: Text(badge)),
+              Wrap(
+                spacing: Space.sm,
+                children: [
+                  if (member.isCoach) Chip(label: Text(l10n.memberCoach)),
+                  if (badge != null) Chip(label: Text(badge)),
+                ],
+              ),
             ],
             if (who case final label?) ...[
               const SizedBox(height: Space.sm),
@@ -643,6 +661,31 @@ class MemberCard extends ConsumerWidget {
                     ),
                     l10n.profileSaved,
                   );
+                },
+              ),
+            // A parent who also coaches (TEAM-3): with the coaches on the
+            // roster, and answering for themselves on events (PLAYER-6).
+            if (canEditTitle)
+              SwitchListTile(
+                title: Text(l10n.memberCoach),
+                subtitle: Text(l10n.memberCoachHelp),
+                value: member.isCoach,
+                onChanged: (coach) async {
+                  try {
+                    await repo.updateMember(
+                      member.groupId,
+                      member.uid,
+                      coach: coach,
+                    );
+                  } on AppFailure catch (e) {
+                    if (!context.mounted) return;
+                    showAppSnackBar(
+                      context,
+                      e is PermissionDenied
+                          ? l10n.notAllowed
+                          : l10n.errorMemberAction,
+                    );
+                  }
                 },
               ),
             if (viewerIsAdmin && member.pending)

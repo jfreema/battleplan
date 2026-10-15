@@ -484,7 +484,15 @@ class FakeMemberRepository implements MemberRepository {
     MemberRole? role,
     String? title,
     bool clearTitle = false,
-  }) async => calls.add('update ${uid.value} ${role?.value ?? ''}'.trim());
+    bool? coach,
+  }) async {
+    if (coach != null) {
+      calls.add('coach ${uid.value} $coach');
+      _updateMine(groupId, uid, (m) => m.copyWith(coach: coach));
+      return;
+    }
+    calls.add('update ${uid.value} ${role?.value ?? ''}'.trim());
+  }
 
   @override
   Future<void> removeMember(GroupId groupId, UserId uid) async =>
@@ -2181,7 +2189,14 @@ class FakeRsvpRepository implements RsvpRepository {
         (x) => x.eventId == r.eventId && x.participantId == r.participantId,
       )
       ..add(r);
-    final e = events.events[r.eventId.value];
+    _recount(r.eventId);
+    _changes.add(null);
+  }
+
+  /// The event's counts from its answers, as the server's trigger keeps
+  /// them.
+  void _recount(EventId eventId) {
+    final e = events.events[eventId.value];
     if (e != null) {
       RsvpCounts count({required bool staff}) {
         final list = [
@@ -2207,6 +2222,22 @@ class FakeRsvpRepository implements RsvpRepository {
         ),
       );
     }
+  }
+
+  /// Participants whose answers were cleared, in order.
+  final List<String> cleared = [];
+
+  @override
+  Future<void> clearRsvp(Event event, Participant participant) async {
+    final current = events.events[event.id.value];
+    if (refuse || current == null || current.isCanceled) {
+      throw const PermissionDenied('closed');
+    }
+    cleared.add(participant.id);
+    rsvps.removeWhere(
+      (x) => x.eventId == event.id && x.participantId == participant.id,
+    );
+    _recount(event.id);
     _changes.add(null);
   }
 

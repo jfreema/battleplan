@@ -521,6 +521,7 @@ groups/{groupId}
 
 groupMembers/{groupId}_{uid}
   groupId, uid, role: 'owner' | 'admin' | 'member', title?
+  coach?                                                # TEAM-3: set by admins (updateGroupMember); unset, the owner counts as a coach (Membership.isCoach). Coaches have a Me row (hasMeRow) and go by their own answer for reminders (audienceOf)
   jerseyNumber?, position?                              # unused; number and position live on the member's `self` player
   displayName, photoPath                                # cache ← users
   playerSummary?                                        # cache ← players + links: guardian "Emma #7, Liam #23"; self "#12" or empty
@@ -668,7 +669,7 @@ config/superAdmins                                      # Functions only: a leas
   lockToken, lockedBy, lockedUntil                      # lapses after 30 s if a call crashes
 ```
 
-**Why `rsvps/{eventId}_{participantId}` matters.** There is exactly one RSVP document per event and participant. For a player the participant is the player, so when Mom and Dad both answer for Emma, they write **the same document**, and an adult player answering on their own row writes it too. The latest answer wins, `respondedBy` shows who gave it, and attendance can never conflict or double-count. No answer means no document ("No response").
+**Why `rsvps/{eventId}_{participantId}` matters.** There is exactly one RSVP document per event and participant. For a player the participant is the player, so when Mom and Dad both answer for Emma, they write **the same document**, and an adult player answering on their own row writes it too. The latest answer wins, `respondedBy` shows who gave it, and attendance can never conflict or double-count. No answer means no document ("No response"), so **Clear** deletes it (`clearRsvp`): the rules let whoever may give the answer delete it, under the same open, not-canceled, and deadline checks, and `onRsvpWritten` recounts.
 
 #### Key queries and indexes
 

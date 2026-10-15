@@ -174,7 +174,9 @@ async function main() {
       groupId,
       uid,
       role,
-      title: role === 'owner' ? 'Coach' : null,
+      title: role === 'owner' ? 'Coach' : groupId === 'cyclone' && uid === 'luis' ? 'Assistant coach' : null,
+      // A parent who coaches too (TEAM-3); owners coach unless set.
+      ...(groupId === 'cyclone' && uid === 'luis' ? { coach: true } : {}),
       displayName: nameOf(uid),
       photoPath: null,
       playerSummary: playerSummary ?? null,

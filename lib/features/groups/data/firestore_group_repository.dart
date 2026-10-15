@@ -271,11 +271,13 @@ class FirestoreMemberRepository implements MemberRepository {
     MemberRole? role,
     String? title,
     bool clearTitle = false,
+    bool? coach,
   }) => _call('updateGroupMember', {
     'groupId': groupId.value,
     'uid': uid.value,
     if (role != null) 'role': role.value,
     if (clearTitle) 'title': null else 'title': ?title,
+    'coach': ?coach,
   });
 
   @override
@@ -473,6 +475,7 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   pending: d['pending'] as bool? ?? false,
   contactPhone: _shared(d['contactPhone']),
   contactEmail: _shared(d['contactEmail']),
+  coach: d['coach'] as bool?,
 );
 
 /// A shared contact field (TEAM-10): its text, or null when it's missing

@@ -40,10 +40,11 @@ bool canAnswerNow(Event event, Group group, Membership? me, DateTime now) =>
     (!event.deadlinePassedAt(now) || me.isAdmin);
 
 /// The people the signed-in person answers for on a team (PLAYER-6, Q14):
-/// the active players they're linked to, as the player or a guardian, and
-/// themselves ("Me", [hasMeRow]) when they're an admin or aren't linked to
-/// any player. A member who is a player, admins included, answers on their
-/// player's row only, so they never have two answers of their own.
+/// the active players they're linked to, as the player or a guardian,
+/// first, then themselves ("Me", [hasMeRow]) when they're a coach or
+/// aren't linked to any player. A member who is a player, coaches
+/// included, answers on their player's row only, so they never have two
+/// answers of their own.
 List<Participant> participantsFor({
   required Membership me,
   List<Player> players = const [],
@@ -67,19 +68,20 @@ List<Participant> participantsFor({
       if (l.isSelf) l.playerId,
   };
   return [
-    if (hasMeRow(me, links)) self,
     for (final p in myPlayers)
       if (!p.isPending)
         playerParticipant(p).copyWith(isMe: mySelf.contains(p.id)),
+    if (hasMeRow(me, links)) self,
   ];
 }
 
-/// Whether [me] answers for themselves as a member ("Me", Q14): an admin
-/// or someone not linked to any player, but never a member who is a
-/// player (PLAYER-6).
+/// Whether [me] answers for themselves as a member ("Me", Q14): a coach
+/// ([Membership.isCoach]) or someone not linked to any player, but never a
+/// member who is a player (PLAYER-6). A parent who isn't a coach answers
+/// only for their players, admin or not.
 bool hasMeRow(Membership me, Iterable<GuardianLink> links) {
   final mine = linksOf(me.uid, links);
-  return !mine.any((l) => l.isSelf) && (me.isAdmin || mine.isEmpty);
+  return !mine.any((l) => l.isSelf) && (me.isCoach || mine.isEmpty);
 }
 
 /// A player as someone to answer for (PLAYER-6).
@@ -123,10 +125,10 @@ Participant playerParticipant(Player p) => Participant(
   );
 }
 
-/// [mine] ([participantsFor]) with "Me" added when [me] has no Me row but
-/// already answered for themselves on this event, as before they were
-/// linked to a player: an answer listed under "coaches and others" can
-/// always be changed (PLAYER-6).
+/// [mine] ([participantsFor]) with "Me" added, after the players, when
+/// [me] has no Me row but already answered for themselves on this event,
+/// as before they were linked to a player: an answer listed under "coaches
+/// and others" can always be changed or cleared (PLAYER-6).
 List<Participant> withOwnAnswer(
   List<Participant> mine,
   Membership me,
@@ -139,12 +141,12 @@ List<Participant> withOwnAnswer(
   );
   if (!answered || mine.any((p) => isSelf(p, me.uid))) return mine;
   return [
+    ...mine,
     Participant(
       type: ParticipantType.member,
       id: me.uid.value,
       name: me.displayName,
     ),
-    ...mine,
   ];
 }
 

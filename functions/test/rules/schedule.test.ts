@@ -474,8 +474,31 @@ describe('RSVPs (SCHED-5, PLAYER-6, Q14)', () => {
     await assertFails(answer('bob', 'eA', 'member', 'bob', { status: 'maybe' }));
   });
 
-  it('never lets clients delete answers', async () => {
+  it('lets whoever may give an answer clear it, and nobody else (SCHED-5)', async () => {
     await assertSucceeds(answer('bob', 'eA', 'member', 'bob'));
+    await assertSucceeds(answer('dan', 'eY', 'player', 'emma'));
+    // Not from another team, nor a player you don't answer for.
+    await assertFails(as('gina').doc('rsvps/eA_bob').delete());
+    await assertFails(as('frank').doc('rsvps/eY_emma').delete());
+    await assertSucceeds(as('bob').doc('rsvps/eA_bob').delete());
+    await assertSucceeds(as('dan').doc('rsvps/eY_emma').delete());
+    // Admins clear anyone's.
+    await assertSucceeds(answer('dan', 'eY', 'player', 'emma'));
+    await assertSucceeds(as('carol').doc('rsvps/eY_emma').delete());
+  });
+
+  it('keeps answers after the deadline except for admins, and on canceled events', async () => {
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob'));
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('events/eA').update({ rsvpDeadline: ts('2026-01-01T00:00:00Z') });
+      await ctx.firestore().doc('rsvps/eGone_alice').set({
+        eventId: 'eGone', groupId: 'teamA', participantType: 'member', participantId: 'alice',
+        participantName: 'alice', eventStartAt: ts(START), status: 'going', note: '', guests: 0,
+        respondedBy: 'alice', updatedAt: ts('2026-10-01T00:00:00Z'),
+      });
+    });
     await assertFails(as('bob').doc('rsvps/eA_bob').delete());
+    await assertFails(as('alice').doc('rsvps/eGone_alice').delete());
+    await assertSucceeds(as('alice').doc('rsvps/eA_bob').delete());
   });
 });

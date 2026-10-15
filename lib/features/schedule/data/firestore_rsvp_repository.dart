@@ -140,6 +140,19 @@ class FirestoreRsvpRepository implements RsvpRepository {
     }
   }
 
+  @override
+  Future<void> clearRsvp(Event event, Participant participant) async {
+    try {
+      await _rsvps.doc(CompositeIds.rsvp(event.id, participant.id)).delete();
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        'unavailable' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
   Rsvp _rsvp(DocumentSnapshot<Map<String, dynamic>> d) =>
       rsvpFromFirestore(d.data()!, pending: d.metadata.hasPendingWrites);
 }

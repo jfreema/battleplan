@@ -401,11 +401,12 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Each team has its own chat, schedule, documents, members, admins, settings, and notification level.
   - Teams are walled off from each other. Nothing shows which other teams a member belongs to.
 - **TEAM-3 · MVP · Roster screen.**
-  - A **Players** section on every team (jersey number, name, and who's linked: "Player" or "Guardian"), then sections for Admins and Members. Each member shows their players: a guardian shows "Emma #7", and a member who is a player shows their number (PLAYER-8).
+  - A **Players** section on every team (jersey number, name, and who's linked: "Player" or "Guardian"), then sections for **Coaches**, Admins, and Members. Each member shows their players: a guardian shows "Emma #7", and a member who is a player shows their number (PLAYER-8).
+  - **Coaches:** team admins turn on **Coach** on a person's card, for a parent who coaches too, for example. Coaches are listed together, their Owner or Admin badge kept, and answer for themselves on events (PLAYER-6). Until someone sets it, the owner counts as a coach.
   - Admins see pending players and claims at the top, with Approve and Decline (PLAYER-4).
   - Each person row shows a photo or initials, name, title, role badge (Owner/Admin), and "Not joined yet" for added accounts.
   - Search by name.
-  - Tap a person to open their card: photo, name, title, role, their players, and only the actions you're allowed. Actions: Make admin / Remove admin, Edit title, Remove from team, Resend setup email, Report, Block.
+  - Tap a person to open their card: photo, name, title, role, Coach, their players, and only the actions you're allowed. Actions: Make admin / Remove admin, Edit title, Coach (on or off), Remove from team, Resend setup email, Report, Block.
   - Tap a player to open the player card (PLAYER-2).
 - **TEAM-4 · MVP · Team admins.**
   - The owner and admins run the team (§3).
@@ -485,12 +486,12 @@ Players that others answer for never get accounts, and every account belongs to 
 - **PLAYER-6 · MVP · RSVPs per player, on every event.**
   - **Exactly one RSVP per event and participant.** A participant is an active player or a member answering for themselves.
   - A player's RSVP can be answered by the member who is that player, by its guardians, or by admins. When two people answer, they update the same record instead of creating two. The latest answer counts and shows who gave it ("Answered by Maria"), so attendance never conflicts or double-counts.
-  - Linked members see one RSVP row per player: "Emma: Going · Liam: Not going". A member who is a player answers on their player's row.
-  - A **Me** row is offered to admins and to members who aren't linked to any player, such as coaches and other adults. A member who is a player, admins included, has no Me row: they answer only on their player's row, so they never have two answers of their own.
+  - Linked members see one RSVP row per player, first: "Emma: Going · Liam: Not going". A member who is a player answers on their player's row.
+  - A **Me** row, below the players, is offered to coaches (TEAM-3) and to members who aren't linked to any player, such as other adults. A parent who isn't a coach answers only for their players, admin or not. A member who is a player, coaches included, has no Me row: they answer only on their player's row, so they never have two answers of their own.
   - When a member becomes linked as the player, their own answers to upcoming events move to the player's row. Where the player already has an answer, the player's answer stays and theirs is dropped.
   - Counts show players going, with everyone else counted apart: "12 of 15 players going · 2 others" (Q14). A team with no players counts everyone together: "12 going · 3 maybe · 2 no".
   - Events made before the one-type change count as per-player too. Members' own answers on them stay valid and count as others.
-- **PLAYER-7 · MVP · Reminders and changes.** Event reminders and event changes go to the member who is the player and to the guardians of the affected players, as one notification per person naming their players: "Emma, Liam: Practice today at 6:00 PM". For a member's own player, there's no name prefix.
+- **PLAYER-7 · MVP · Reminders and changes.** Event reminders and event changes go to the member who is the player and to the guardians of the affected players, as one notification per person naming their players: "Emma, Liam: Practice today at 6:00 PM". For a member's own player, there's no name prefix. Coaches and members not linked to any player go by their own answer.
 - **PLAYER-8 · MVP · Who's who.** In chat and on the roster, each member's name shows their players. A guardian shows "Maria R. · Emma #7". A member who is a player shows their number when it's set: "Jared F. #12".
 - **PLAYER-9 · MVP · Players on several teams.** A person on two teams is a separate player on each team. In "All my teams" (SCHED-2), each event shows which of a member's players it's for.
 - **PLAYER-10 · MVP · Players' privacy.** This applies to every player record.
@@ -719,7 +720,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - One tap, instant, and it works offline.
   - Change your answer any time before the deadline; after it, only admins can change answers.
   - The requirement was Going / Not going. **Maybe** is a recommended addition: on by default, and each team can turn it off (TEAM-5).
-  - Not answering shows as "No response".
+  - Not answering shows as "No response". **Clear**, beside the note, takes an answer back to No response; whoever may give the answer may clear it, under the same deadline.
   - On every team, there's one RSVP per event and participant: each active player, answered by the member who is the player, its guardians, or admins, and members answering for themselves (PLAYER-6).
 - **SCHED-6 · MVP · Editing.**
   - Changing the date, time, or location notifies everyone except people who said Not going ("Practice moved to 6:30 PM").

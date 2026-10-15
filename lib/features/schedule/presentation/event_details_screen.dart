@@ -449,7 +449,8 @@ class _RsvpSection extends ConsumerWidget {
 }
 
 /// Big Going / Maybe / Not going buttons for one person, with an optional
-/// note ("Leaving at halftime"). Tapping the chosen answer again keeps it.
+/// note ("Leaving at halftime") and Clear, back to "No response" (SCHED-5).
+/// Tapping the chosen answer again keeps it.
 class RsvpButtons extends ConsumerWidget {
   const new({
     required this.event,
@@ -531,24 +532,45 @@ class RsvpButtons extends ConsumerWidget {
         if (!compact)
           Row(
             children: [
-              if (answer?.note.isNotEmpty ?? false)
-                Expanded(
-                  child: Text(
-                    answer!.note,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                )
-              else
-                const Spacer(),
+              Expanded(
+                child: (answer?.note.isNotEmpty ?? false)
+                    ? Text(
+                        answer!.note,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontStyle: FontStyle.italic,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              // Clear and the note, wrapping under each other when the
+              // text is large (SPEC §7.6).
               if (enabled && current != null)
-                TextButton(
-                  onPressed: () => unawaited(_editNote(context, ref, current)),
-                  child: Text(
-                    answer?.note.isNotEmpty ?? false
-                        ? l10n.eventEditNote
-                        : l10n.eventAddNote,
+                Flexible(
+                  flex: 2,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => unawaited(
+                          clearRsvpWithFeedback(
+                            context,
+                            ref,
+                            event,
+                            participant,
+                          ),
+                        ),
+                        child: Text(l10n.eventClearAnswer),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            unawaited(_editNote(context, ref, current)),
+                        child: Text(
+                          answer?.note.isNotEmpty ?? false
+                              ? l10n.eventEditNote
+                              : l10n.eventAddNote,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -704,6 +726,27 @@ Future<void> setRsvpsWithFeedback(
     await (answers.length == 1
         ? repo.setRsvp(event, answers.single, by: UserId(uid))
         : repo.setRsvps(event, answers, by: UserId(uid)));
+  } on AppFailure catch (e) {
+    if (!context.mounted) return;
+    showAppSnackBar(
+      context,
+      e is PermissionDenied ? l10n.eventRsvpRefused : l10n.eventRsvpFailed,
+    );
+  }
+}
+
+/// Clears [participant]'s answer (SCHED-5) and says so if it's refused or
+/// fails.
+Future<void> clearRsvpWithFeedback(
+  BuildContext context,
+  WidgetRef ref,
+  Event event,
+  Participant participant,
+) async {
+  final l10n = AppLocalizations.of(context);
+  Haptics.selection();
+  try {
+    await ref.read(rsvpRepositoryProvider).clearRsvp(event, participant);
   } on AppFailure catch (e) {
     if (!context.mounted) return;
     showAppSnackBar(

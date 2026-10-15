@@ -90,9 +90,11 @@ const UpdateMemberInput = z.object({
   uid: z.string().min(1),
   role: z.enum(['admin', 'member']).optional(),
   title: z.string().trim().max(40).nullable().optional(),
+  // A coach of the team (TEAM-3); unset, the owner counts as one.
+  coach: z.boolean().optional(),
 });
 
-/** Changes a member's role or title (TEAM-3, TEAM-4). */
+/** Changes a member's role, title, or whether they coach (TEAM-3, TEAM-4). */
 export const updateGroupMember = onCall(async (request) => {
   const actorUid = requireAuth(request);
   const input = parse(UpdateMemberInput, request.data);
@@ -109,6 +111,7 @@ export const updateGroupMember = onCall(async (request) => {
     update.role = input.role;
   }
   if (input.title !== undefined) update.title = input.title || null;
+  if (input.coach !== undefined) update.coach = input.coach;
   if (Object.keys(update).length === 0) return { ok: true };
   await ref.update(update);
   await audit({
@@ -117,7 +120,7 @@ export const updateGroupMember = onCall(async (request) => {
     groupId: input.groupId,
     targetType: 'user',
     targetId: input.uid,
-    before: { role: targetRole, title: target.get('title') ?? null },
+    before: { role: targetRole, title: target.get('title') ?? null, coach: target.get('coach') ?? null },
     after: update,
   });
   if (update.role === 'admin') {

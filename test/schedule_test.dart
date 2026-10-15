@@ -601,10 +601,11 @@ void main() {
                 uid: UserId('coach'),
               ),
             ]);
-      // An admin: a Me row too, which "All my players" leaves alone.
+      // The owner, who coaches: a Me row too, which "All my players" leaves
+      // alone.
       final rsvps = await openSchedule(
         tester,
-        role: MemberRole.admin,
+        role: MemberRole.owner,
         players: players,
         events: [event('e1')],
       );
@@ -622,7 +623,7 @@ void main() {
       );
       await openDetails(tester, 'Practice');
       expect(find.text('All my players'), findsOneWidget);
-      // Me, then All my players, then each player.
+      // All my players, then each player, then Me.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(4));
       Finder allButtons() => find.descendant(
         of: find.ancestor(
@@ -649,8 +650,8 @@ void main() {
       expect(find.text('2 of 2 players going'), findsOneWidget);
 
       // One player changed alone: the shared answer clears, and the next
-      // tap writes only the player who needs it.
-      await tester.tap(find.text('Not going').last);
+      // tap writes only the player who needs it. Liam's is the third row.
+      await tester.tap(find.text('Not going').at(2));
       await tester.pumpAndSettle();
       expect(allSelected(), isEmpty);
       await tester.tap(
@@ -664,6 +665,91 @@ void main() {
         RsvpStatus.going,
       );
       expect(allSelected(), {RsvpStatus.going});
+    });
+
+    testWidgets('an admin who is a parent but not a coach answers only for '
+        'their player (PLAYER-6, TEAM-3)', (tester) async {
+      FakePlayerRepository emma() =>
+          FakePlayerRepository(const [
+              Player(
+                id: PlayerId('p1'),
+                groupId: GroupId('a'),
+                displayName: 'Emma Rivera',
+                jerseyNumber: '7',
+              ),
+            ])
+            ..links.add(
+              const GuardianLink(
+                playerId: PlayerId('p1'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+              ),
+            );
+      // An admin who is a parent, not a coach: just their player.
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        players: emma(),
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      expect(find.text('You'), findsNothing);
+    });
+
+    testWidgets('a coach who is a parent answers for their player, then for '
+        'themselves (PLAYER-6)', (tester) async {
+      final players =
+          FakePlayerRepository(const [
+              Player(
+                id: PlayerId('p1'),
+                groupId: GroupId('a'),
+                displayName: 'Emma Rivera',
+                jerseyNumber: '7',
+              ),
+            ])
+            ..links.add(
+              const GuardianLink(
+                playerId: PlayerId('p1'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+              ),
+            );
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.owner,
+        players: players,
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
+      // Emma's row first, then mine.
+      final emmaRow = tester.getTopLeft(find.text('Emma #7').first);
+      final myRow = tester.getTopLeft(find.text('You'));
+      expect(emmaRow.dy, lessThan(myRow.dy));
+      await tester.tap(find.text('Going').last);
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.participantId, 'coach');
+    });
+
+    testWidgets('Clear takes an answer back to No response (SCHED-5)', (
+      tester,
+    ) async {
+      final rsvps = await openSchedule(tester, events: [event('e1')]);
+      await openDetails(tester, 'Practice');
+      expect(find.text('Clear'), findsNothing);
+      await tester.tap(find.text('Going').first);
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps, hasLength(1));
+      await tester.tap(find.text('Clear'));
+      await tester.pumpAndSettle();
+      expect(rsvps.cleared, ['coach']);
+      expect(rsvps.rsvps, isEmpty);
+      expect(find.text('Clear'), findsNothing);
+      final buttons = tester.widget<SegmentedButton<RsvpStatus>>(
+        find.byType(SegmentedButton<RsvpStatus>),
+      );
+      expect(buttons.selected, isEmpty);
     });
 
     testWidgets('one player gets no "All my players" (PLAYER-11)', (
@@ -829,11 +915,11 @@ void main() {
       await tester.tap(find.text('Schedule'));
       await tester.pumpAndSettle();
       await openDetails(tester, 'Practice');
-      // The old answer has its own row, apart from the player's.
+      // The old answer has its own row, after the player's.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
       expect(find.text('You'), findsOneWidget);
       expect(find.text('Coach #12 (you)'), findsOneWidget);
-      await tester.tap(find.text('Not going').first);
+      await tester.tap(find.text('Not going').last);
       await tester.pumpAndSettle();
       expect(
         rsvps.rsvps

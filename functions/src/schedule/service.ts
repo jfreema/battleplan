@@ -364,7 +364,8 @@ export function reminderDedupeKey(eventId: string, offset: number, startMs: numb
 
 /** What choosing an event's audience reads. */
 export interface AudienceInput {
-  members: { uid: string; admin: boolean }[];
+  /** [coach]: a coach of the team, as the app's Membership.isCoach decides it. */
+  members: { uid: string; coach: boolean }[];
   /** Player links; a missing relation is a guardian's. */
   links: { uid: string; playerId: string; relation?: string }[];
   /** Active players on the team, by ID (pending ones aren't on the roster). */
@@ -379,10 +380,11 @@ export interface AudienceInput {
  * Who hears about an event, each with the players to name (PLAYER-7), the
  * same on every team. A member linked to players hears for the ones who
  * didn't say Not going: a guardian named per player, the player themselves
- * plainly ("You" when they're also a guardian there). Admins and members
- * not linked to any player go by their own answer (no answer counts).
+ * plainly ("You" when they're also a guardian there). Coaches and members
+ * not linked to any player go by their own answer (no answer counts), as
+ * they're the ones with an answer of their own (the app's hasMeRow).
  * Linked members all of whose players said Not going hear nothing, unless
- * they're admins who didn't say Not going themselves. [mode] is kept for
+ * they're coaches who didn't say Not going themselves. [mode] is kept for
  * callers; both modes pick the same people now that everyone has an
  * answer of their own or their players'.
  */
@@ -404,7 +406,7 @@ export function audienceOf(a: AudienceInput): Map<string, string[]> {
       .sort((x, y) => x.localeCompare(y));
     if (names.length) out.set(m.uid, self ? ['You', ...names] : names);
     else if (self) out.set(m.uid, []);
-    else if ((m.admin || !links.length) && live(m.uid)) out.set(m.uid, []);
+    else if ((m.coach || !links.length) && live(m.uid)) out.set(m.uid, []);
   }
   return out;
 }
@@ -421,7 +423,7 @@ export async function eventAudience(
   mode: AudienceInput['mode'],
 ): Promise<Map<string, string[]>> {
   const [members, rsvps, links, players] = await Promise.all([
-    db().collection(Collections.groupMembers).where('groupId', '==', groupId).select('uid', 'role').get(),
+    db().collection(Collections.groupMembers).where('groupId', '==', groupId).select('uid', 'role', 'coach').get(),
     db().collection(Collections.rsvps).where('eventId', '==', eventId).select('participantId', 'status').get(),
     db().collection(Collections.playerGuardians).where('groupId', '==', groupId).select('uid', 'playerId', 'relation').get(),
     db().collection(Collections.players).where('groupId', '==', groupId).select('displayName', 'status').get(),
@@ -430,7 +432,8 @@ export async function eventAudience(
     mode,
     members: members.docs.map((d) => ({
       uid: String(d.get('uid')),
-      admin: ['owner', 'admin'].includes(String(d.get('role'))),
+      // Set by the team's admins; unset, the owner coaches (TEAM-3).
+      coach: typeof d.get('coach') === 'boolean' ? d.get('coach') === true : d.get('role') === 'owner',
     })),
     statuses: new Map(rsvps.docs.map((d) => [String(d.get('participantId')), String(d.get('status'))])),
     links: links.docs.map((d) => ({
