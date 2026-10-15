@@ -9,6 +9,7 @@ import {
   importDocuments as runDocumentImport,
   importMessages as runMessageImport,
   MESSAGES_PER_CALL,
+  messageSources,
 } from './messages.js';
 import { importEvents as runImport, importSources } from './service.js';
 
@@ -75,7 +76,7 @@ const StoragePath = z.string().min(1).max(500);
 
 const ImportMessagesInput = z.object({
   groupId: z.string().min(1),
-  source: z.enum(chatSources),
+  source: z.enum(messageSources),
   messages: z
     .array(
       z.object({
@@ -129,11 +130,11 @@ const ImportDocumentsInput = z.object({
 });
 
 /**
- * Adds files shared in another app as the team's documents (SPEC
- * IMPORT-9): { groupId, source: 'groupme', documents: [{ sourceId, name,
- * path, sharedByName, sharedAtMs }], dryRun? }, each file already in its
- * document's folder. Team admins only. A dry run lists the ones already
- * there.
+ * Adds files from another app as the team's documents (SPEC IMPORT-9,
+ * IMPORT-11): { groupId, source: 'groupme' or 'teamsnap', documents:
+ * [{ sourceId, name, path, sharedByName, sharedAtMs }], dryRun? }, each
+ * file already in its document's folder. Team admins only. A dry run
+ * lists the ones already there.
  */
 export const importDocuments = onCall({ timeoutSeconds: 120 }, async (request) => {
   const uid = requireAuth(request);

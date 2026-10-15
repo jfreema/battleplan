@@ -8,6 +8,7 @@ import 'package:battleplan/features/imports/domain/event_import.dart';
 import 'package:battleplan/features/imports/presentation/calendar_import.dart';
 import 'package:battleplan/features/imports/presentation/groupme_import.dart';
 import 'package:battleplan/features/imports/presentation/import_parts.dart';
+import 'package:battleplan/features/imports/presentation/teamsnap_import.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,7 +16,9 @@ import 'package:material_ui/material_ui.dart';
 
 /// Import at `/g/:groupId/import` (SPEC §6.15): the team's admins bring
 /// their team over from another app. GroupMe's messages, documents, and
-/// events come from its data export (IMPORT-9); TeamReach's,
+/// events come from its data export (IMPORT-9); TeamSnap's schedule,
+/// players, and documents from its calendar link, roster export, and
+/// files (IMPORT-11); TeamReach's,
 /// GameChanger's, and Google Calendar's events from their calendar links
 /// (IMPORT-7, IMPORT-8, IMPORT-10).
 /// Choose the app, then what to bring, preview it, and import. Importing
@@ -71,6 +74,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                     title: Text(s.label),
                     subtitle: Text(switch (s) {
                       ImportSource.groupme => l10n.importGroupMeHelp,
+                      ImportSource.teamsnap => l10n.importTeamSnapHelp,
                       ImportSource.teamreach => l10n.importTeamReachHelp,
                       ImportSource.gamechanger => l10n.importGameChangerHelp,
                       ImportSource.google => l10n.importGoogleHelp,
@@ -79,17 +83,18 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               ],
             ),
           ),
-          Text(
-            l10n.importComingSoon,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
           const SizedBox(height: Space.lg),
           // A fresh form for each app, so nothing carries over.
           if (source == ImportSource.groupme)
             GroupMeImportForm(
               key: const ValueKey(ImportSource.groupme),
+              groupId: widget.groupId,
+              onBusy: (b) => setState(() => _busy = b),
+              onDone: done,
+            )
+          else if (source == ImportSource.teamsnap)
+            TeamSnapImportForm(
+              key: const ValueKey(ImportSource.teamsnap),
               groupId: widget.groupId,
               onBusy: (b) => setState(() => _busy = b),
               onDone: done,

@@ -1,5 +1,9 @@
+import 'dart:convert';
+
+import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/services/file_chooser.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/imports/domain/event_import.dart';
 import 'package:battleplan/features/schedule/schedule.dart';
@@ -121,6 +125,91 @@ class EventPreview extends StatelessWidget {
               }),
             ),
         ],
+      ],
+    );
+  }
+}
+
+/// The largest calendar file an import takes (the callable's limit).
+const int maxCalendarFileBytes = 1000000;
+
+/// A calendar file saved from a calendar app: its name and text.
+typedef CalendarFile = ({String name, String text});
+
+/// Lets the person pick a calendar file (.ics): the file, or null when
+/// they cancelled. Says why through [onError] when it's too large.
+Future<CalendarFile?> pickCalendarFile(
+  FileChooser chooser,
+  AppLocalizations l10n, {
+  required void Function(String error) onError,
+}) async {
+  final picked = await chooser.pickFile(extensions: const ['ics']);
+  if (picked == null) return null;
+  if (picked.size > maxCalendarFileBytes) {
+    onError(l10n.importFileTooLarge);
+    return null;
+  }
+  final text = utf8.decode(await picked.readBytes(), allowMalformed: true);
+  return (name: picked.name, text: text);
+}
+
+/// A calendar app's link, or a calendar file saved from it instead
+/// (IMPORT-7): the link field, or the chosen file and a way to take it
+/// off.
+class CalendarLinkInput extends StatelessWidget {
+  const new({
+    required this.link,
+    required this.file,
+    required this.enabled,
+    required this.onChanged,
+    required this.onChooseFile,
+    required this.onRemoveFile,
+    super.key,
+  });
+
+  final TextEditingController link;
+  final CalendarFile? file;
+  final bool enabled;
+  final VoidCallback onChanged;
+  final VoidCallback onChooseFile;
+  final VoidCallback onRemoveFile;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (file case final f?) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(AppIcons.schedule),
+        title: Text(f.name),
+        trailing: IconButton(
+          tooltip: l10n.importRemoveFile,
+          icon: const Icon(AppIcons.close),
+          onPressed: enabled ? onRemoveFile : null,
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: link,
+          enabled: enabled,
+          keyboardType: TextInputType.url,
+          autocorrect: false,
+          onChanged: (_) => onChanged(),
+          decoration: InputDecoration(
+            labelText: l10n.importLinkLabel,
+            hintText: 'webcal://…',
+          ),
+        ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton(
+            onPressed: enabled ? onChooseFile : null,
+            child: Text(l10n.importUseFile),
+          ),
+        ),
       ],
     );
   }

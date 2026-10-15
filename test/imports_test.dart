@@ -16,6 +16,8 @@ import 'package:battleplan/features/imports/data/functions_import_repository.dar
 import 'package:battleplan/features/imports/domain/chat_import.dart';
 import 'package:battleplan/features/imports/domain/event_import.dart';
 import 'package:battleplan/features/imports/domain/groupme_export.dart';
+import 'package:battleplan/features/imports/domain/roster_file.dart';
+import 'package:battleplan/features/players/domain/player.dart';
 import 'package:firebase_storage_mocks/firebase_storage_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -91,6 +93,7 @@ void main() {
         await tester.pumpAndSettle();
         for (final app in [
           'GroupMe',
+          'TeamSnap',
           'TeamReach',
           'GameChanger',
           'Google Calendar',
@@ -437,6 +440,181 @@ void main() {
       const link = 'https://teamreach.example/ical/abc.ics';
       expect(repo.calls, ['teamreach preview link $link past=false']);
       expect(find.text('Canceled in TeamReach'), findsOneWidget);
+    });
+  });
+
+  group('TeamSnap (IMPORT-11)', () {
+    final today = DateTime.utc(2026, 10, 15);
+
+    test('reads a roster: players only, with numbers and birthdates', () {
+      final csv = [
+        '\uFEFF${[
+          'First Name', 'Last Name', 'Jersey Number', 'Position', //
+          'Non-Player', 'Birthdate', 'Email Address 1',
+        ].join(',')}',
+        'Emma,Ortiz,7,SS,No,03/09/2014,emma.parent@example.com',
+        '"Liam ""LJ""",Brooks,23,,No,2014-11-30,',
+        'Pat,Coach,,,Yes,,coach@example.com',
+        'Noah,Kim,4,,,02/30/2014,',
+        'Emma,Ortiz,7,SS,No,03/09/2014,',
+        ',,,,,,',
+        '"Mia, Jr.",Lee,12345,,No,March 3 2015,',
+      ].join('\r\n');
+      final r = readRosterCsv(csv, today: today);
+      expect(
+        [
+          for (final p in r.players)
+            '${p.name}|${p.jerseyNumber}|${p.dateOfBirth}',
+        ],
+        [
+          'Emma Ortiz|7|2014-03-09',
+          'Liam "LJ" Brooks|23|2014-11-30',
+          // Not a real date: the player comes without one.
+          'Noah Kim|4|null',
+          // Five digits isn't a jersey number the roster takes.
+          'Mia, Jr. Lee|null|2015-03-03',
+        ],
+      );
+      expect(r.nonPlayers, 1);
+      expect(r.datesUnreadable, 1);
+    });
+
+    test("reads TeamSnap's own columns and member types", () {
+      // TeamSnap's team roster template, and its club export's Member Type
+      // (P, C, M, V: player, coach, manager, volunteer).
+      final team = readRosterCsv(
+        [
+          [
+            'First Name', 'Last Name', 'Email Address 1', 'Gender', //
+            'Birthday', 'Jersey Number', 'Position', 'Non-Player (Y/N)',
+          ].join(','),
+          'Emma,Ortiz,,F,03/09/2014,7,SS,N',
+          'Pat,Coach,pat@example.com,,,,,Y',
+        ].join('\n'),
+        today: today,
+      );
+      expect(team.players.single.dateOfBirth, '2014-03-09');
+      expect(team.nonPlayers, 1);
+      final club = readRosterCsv(
+        'first,last,Member Type,birthdate,Jersey Number\n'
+        'Liam,Brooks,P,11/30/2014,23\n'
+        'Jo,Diaz,M,,\n'
+        'Ann,Lee,V,,\n',
+        today: today,
+      );
+      expect(club.players.single.name, 'Liam Brooks');
+      expect(club.nonPlayers, 2);
+    });
+
+    test("takes other rosters too, and refuses what isn't one", () {
+      final r = readRosterCsv(
+        'Name;#;DOB;Role\nSam Rivera;12;12/1/13;Player\nJo Diaz;;;Manager\n',
+        today: today,
+      );
+      expect(r.players.single.name, 'Sam Rivera');
+      expect(r.players.single.jerseyNumber, '12');
+      expect(r.players.single.dateOfBirth, '2013-12-01');
+      expect(r.nonPlayers, 1);
+      expect(
+        () => readRosterCsv('Date,Opponent\n10/1,Eagles\n', today: today),
+        throwsA(isA<NotRosterFile>()),
+      );
+    });
+
+    testWidgets('schedule, players, and files, each on its own; chat '
+        'stays behind', (tester) async {
+      const csv =
+          'First Name,Last Name,Jersey Number,Non-Player,Birthdate\n'
+          'Emma,Ortiz,7,No,03/09/2014\n'
+          'Sam,Rivera,12,No,\n'
+          'Pat,Coach,,Yes,\n';
+      final pdf = Uint8List.fromList(List.filled(20, 1));
+      final files =
+          FakeFileChooser(
+              next: (
+                name: 'roster.csv',
+                size: csv.length,
+                readBytes: () async => Uint8List.fromList(utf8.encode(csv)),
+              ),
+            )
+            ..nextMany = [
+              (name: 'rules.pdf', size: pdf.length, readBytes: () async => pdf),
+            ];
+      final players = FakePlayerRepository([
+        const Player(
+          id: PlayerId('p1'),
+          groupId: GroupId('a'),
+          displayName: 'Sam Rivera',
+          jerseyNumber: '12',
+        ),
+      ]);
+      final repo = FakeImportRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        importRepo: repo,
+        fileChooser: files,
+        playerRepo: players,
+        size: const Size(500, 3000),
+      );
+      unawaited(
+        GoRouter.of(tester.element(find.byType(Scaffold).first))
+            .push('/g/a/import'),
+      );
+      await tester.pumpAndSettle();
+      await tapText(tester, 'TeamSnap');
+      final chat = tester.widget<CheckboxListTile>(
+        find.widgetWithText(CheckboxListTile, 'Chat'),
+      );
+      expect(chat.onChanged, isNull);
+      expect(
+        find.text("TeamSnap doesn't let teams export their chat."),
+        findsOneWidget,
+      );
+      const link = 'webcal://ical.teamsnap.example/team.ics';
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Calendar link'),
+        link,
+      );
+      await tapText(tester, 'Choose the roster file (.csv)');
+      expect(files.extensions, ['csv']);
+      expect(find.text('2 players'), findsOneWidget);
+      await tapText(tester, 'Choose the files');
+      expect(find.text('rules.pdf'), findsOneWidget);
+
+      await tapText(tester, 'Preview');
+      expect(repo.calls, [
+        'teamsnap preview link $link past=false',
+        'check documents 1',
+      ]);
+      expect(find.text('1 player to add'), findsOneWidget);
+      expect(find.text('1 is already on the roster.'), findsOneWidget);
+      expect(
+        find.text('1 coach or other non-player left out.'),
+        findsOneWidget,
+      );
+      expect(find.text('1 document to add'), findsOneWidget);
+
+      final run = find.widgetWithText(FilledButton, 'Import');
+      await tester.ensureVisible(run);
+      await tester.pumpAndSettle();
+      await tester.tap(run);
+      await tester.pumpAndSettle();
+      expect(
+        players.added.single.single,
+        const NewPlayer(
+          name: 'Emma Ortiz',
+          jerseyNumber: '7',
+          dateOfBirth: '2014-03-09',
+        ),
+      );
+      expect(repo.uploads.keys.single, endsWith('/rules.pdf'));
+      expect(find.text('3 events added to the schedule.'), findsOneWidget);
+      expect(find.text('1 player added to the roster.'), findsOneWidget);
+      expect(find.text('1 document added.'), findsOneWidget);
+      expect(find.text('Open the roster'), findsOneWidget);
     });
   });
 

@@ -161,28 +161,6 @@ String _ext(String path) {
   return dot < 0 ? '' : name.substring(dot + 1).toLowerCase();
 }
 
-/// The largest file Documents takes (STORE-1, storage.rules isDocument).
-const int _maxDocumentBytes = 10 * 1024 * 1024;
-
-/// Documents' file types by extension (storage.rules isDocument).
-const _documentTypes = {
-  'pdf': 'application/pdf',
-  'txt': 'text/plain',
-  'csv': 'text/csv',
-  'doc': 'application/msword',
-  'docx':
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'xls': 'application/vnd.ms-excel',
-  'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'ppt': 'application/vnd.ms-powerpoint',
-  'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'jpg': 'image/jpeg',
-  'jpeg': 'image/jpeg',
-  'png': 'image/png',
-  'gif': 'image/gif',
-  'webp': 'image/webp',
-};
-
 const _imageExtensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'};
 const _videoExtensions = {'mp4', 'mov', 'm4v', 'webm', '3gp'};
 
@@ -362,11 +340,11 @@ GroupMeGroup? _group(
           }
           used.add(entry);
           final fileName = _base(entry).substring(id.length + 1);
-          final type = _documentTypes[_ext(fileName)];
+          final type = documentTypeOf(fileName);
           final size = entries[entry]!.size;
           if (type == null) {
             unsupported++;
-          } else if (size > _maxDocumentBytes) {
+          } else if (size > maxDocumentBytes) {
             tooLarge++;
           } else {
             files.add(

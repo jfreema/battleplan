@@ -4,11 +4,13 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/imports/domain/chat_import.dart';
 
-/// The apps a team's chat, documents, and events can come from (SPEC
-/// IMPORT-1, IMPORT-7 to IMPORT-10): GroupMe's data export, and TeamReach's,
+/// The apps a team's chat, documents, events, and players can come from
+/// (SPEC IMPORT-1, IMPORT-7 to IMPORT-11): GroupMe's data export;
+/// TeamSnap's calendar link, roster export, and files; and TeamReach's,
 /// GameChanger's, and Google Calendar's calendar links.
 enum ImportSource {
   groupme('groupme', 'GroupMe'),
+  teamsnap('teamsnap', 'TeamSnap'),
   teamreach('teamreach', 'TeamReach'),
   gamechanger('gamechanger', 'GameChanger'),
   google('google', 'Google Calendar');
@@ -20,10 +22,6 @@ enum ImportSource {
 
   /// The app's name, which isn't translated.
   final String label;
-
-  /// Whether the events come from a calendar link (or a calendar file),
-  /// and only events can be imported. GroupMe's come from its export.
-  bool get fromCalendarLink => this != groupme;
 }
 
 /// Why an entry in the calendar wasn't imported (IMPORT-4).

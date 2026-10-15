@@ -18,9 +18,15 @@ import { requireTeamAdmin } from '../shared/roles.js';
 import { quotaBytesOf } from '../teams/storage.js';
 import type { Caller } from './service.js';
 
-/** Apps a team's chat and files can come from. */
-export const chatSources = ['groupme'] as const;
+/**
+ * Apps a team's chat and files can come from: GroupMe's chat and files
+ * (IMPORT-9), and files downloaded from TeamSnap (IMPORT-11, documents
+ * only).
+ */
+export const chatSources = ['groupme', 'teamsnap'] as const;
 export type ChatSource = (typeof chatSources)[number];
+/** Apps whose chat history comes along: only GroupMe exports it. */
+export const messageSources = ['groupme'] as const;
 
 /** Messages, or documents, in one call. */
 export const MESSAGES_PER_CALL = 500;
@@ -200,7 +206,7 @@ export async function importMessages(input: MessageImportInput, caller: Caller, 
     docs.set(id, {
       groupId: g,
       authorId: importedAuthorId(input.source, m.authorSourceId),
-      authorName: m.authorName.trim().slice(0, 60) || 'GroupMe member',
+      authorName: m.authorName.trim().slice(0, 60) || 'Imported member',
       authorPhotoPath: null,
       type: photos.length ? 'image' : 'text',
       text,
@@ -298,7 +304,7 @@ export async function importDocuments(input: DocumentImportInput, caller: Caller
       contentType: info.contentType,
       size: info.size,
       uploadedBy: caller.uid,
-      uploaderName: d.sharedByName.trim().slice(0, 60) || 'GroupMe member',
+      uploaderName: d.sharedByName.trim().slice(0, 60) || 'Team admin',
       notifyTeam: false,
       createdAt: at,
       updatedAt: at,

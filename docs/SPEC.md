@@ -1026,9 +1026,9 @@ What does cost money as teams grow is storage, so each team has a limit, and adm
 
 ---
 
-### 6.15 Import and migration (IMPORT) · GroupMe, TeamReach, GameChanger, and Google Calendar built
+### 6.15 Import and migration (IMPORT) · GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar built
 
-Requested 2026-10-13. Built at the owner's request: GameChanger's events (2026-10-15, IMPORT-7, ROADMAP task 241), then GroupMe's messages, documents, and events, TeamReach's events, and Google Calendar's events (2026-10-15, IMPORT-8 to IMPORT-10, tasks 249, 250, and 252). TeamSnap is future work (task 227). This does not block the initial go-live. The website's Questions explain each app's steps (task 253).
+Requested 2026-10-13. Built at the owner's request: GameChanger's events (2026-10-15, IMPORT-7, ROADMAP task 241), then GroupMe's messages, documents, and events, TeamReach's events, Google Calendar's events, and TeamSnap's events, players, and documents (2026-10-15, IMPORT-8 to IMPORT-11, tasks 249, 250, 252, and 254). This does not block the initial go-live. The website's Questions explain each app's steps (task 253).
 
 - **IMPORT-1 · Source and destination.** Team admins choose a supported source and a Battleplan team they administer. Each adapter documents the verified export format or API, required permissions, supported categories, and known losses. Importing history does not create accounts, memberships, or invitations automatically.
 - **IMPORT-2 · Independent choices.** Messages, Documents, and Events/calendar have separate selections. A category is selectable only when both the adapter and the supplied export or connection can provide usable data. Unavailable categories explain why. Documents and events do not depend on selecting messages; message photos are identified separately from documents.
@@ -1050,6 +1050,10 @@ Requested 2026-10-13. Built at the owner's request: GameChanger's events (2026-1
   - **Events** come from the export's calendar data, as IMPORT-7 imports them. GroupMe's chat names events but doesn't say when they are, so an export without calendar data offers no events, and says why.
   - The preview shows the counts, the dates, the latest messages, the files, the events, the photos' and files' size against the team's free space, and what's left out. Importing shows its progress and can be stopped between batches; what's done stays. A team whose storage fills partway keeps getting messages, without the photos and files that didn't fit.
   - Nothing imported notifies anyone. Importing again adds only what's new, and leaves what came before as it is.
+- **IMPORT-11 · TeamSnap events, players, and documents (built).** Checked 2026-10-15 against TeamSnap's help center, real feeds, and its API (live, but its docs are offline and new apps may not be able to register, so it isn't used). **Events**, **Players**, and **Documents** are chosen separately; **Chat** shows as unavailable, because TeamSnap has no way to export chat. One preview covers all of them, then one import.
+  - **Events** come from the schedule's calendar link (on the web: Schedule, **Settings**, **Sync Calendar / Export**; on an iPhone: Schedule, the share button, **Subscribe**), up to 6 months back, imported as IMPORT-7. TeamSnap puts the team's name before every title: "Thunder at Eagles" is an away game (@ Eagles), "Thunder vs Hawks" a home one, and "Thunder - Practice" is "Practice". The place's name comes from the notes' "Location:" line, its address from the feed.
+  - **Players** come from the roster's **Export**, **Export CSV File** (on the web). The admin chooses the file; names, jersey numbers, and birthdates (MM/DD/YYYY) come along, as the Add players form takes them (PLAYER-1, PLAYER-12). Coaches, managers, volunteers, and other non-players (TeamSnap's Non-Player or Member Type columns) stay behind, and so do contact details: parents and adult players link themselves by claiming players (PLAYER-3). A player already on the roster, by name, is left as it is; the preview counts them.
+  - **Documents** are files the admin downloads from TeamSnap's **Media**, **Files** (TeamSnap has no download-all) and chooses together, of the kinds and sizes Documents takes. "Added by" names the admin, and choosing the same file again adds nothing.
 - **IMPORT-10 · Google Calendar events (built).** A team that keeps its schedule in Google Calendar imports it from the calendar's **Secret address in iCal format** (Google Calendar **Settings**, the calendar under **Settings for my calendars**, **Integrate calendar**), or from a calendar file from **Import & export**. It imports exactly as IMPORT-7, under Google Calendar's name, with Google's repeats (daily and weekly) and time zones. Messages and Documents show as unavailable.
 
 **Acceptance**
@@ -1361,7 +1365,7 @@ Decided 2026-10-12, at the owner's request (ARCH D60). The first go-live is the 
 2. Recreate upcoming events, using repeating events for practices.
 3. Post the invite link in the old GroupMe and show the QR code at practice.
 4. Run both apps for about two weeks, then announce the switch.
-5. Bring the chat, files, and events over from GroupMe, and the schedule from TeamReach, GameChanger, or Google Calendar, with **Import** (IMPORT-7 to IMPORT-10).
+5. Bring the chat, files, and events over from GroupMe; the schedule, players, and files from TeamSnap; and the schedule from TeamReach, GameChanger, or Google Calendar, with **Import** (IMPORT-7 to IMPORT-11).
 
 ### v1.1 backlog, in priority order
 
@@ -1453,7 +1457,7 @@ Not in v1; some may come later:
 - Payments and team dues
 - Volunteer and snack sign-ups
 - Carpools
-- Import from TeamSnap is planned; GroupMe, TeamReach, GameChanger, and Google Calendar imports are built (§6.15; ROADMAP tasks 227, 241, 249, 250, 252).
+- Importing chat from TeamSnap, which doesn't export it. GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar imports are built (§6.15; ROADMAP tasks 241, 249, 250, 252, 254).
 - Whiteboards for drawing plays (baseball, basketball, soccer, and football X's and O's) are planned (§6.16; ROADMAP tasks 242–248).
 - Languages other than English
 - Native desktop apps (the web app covers desktop)

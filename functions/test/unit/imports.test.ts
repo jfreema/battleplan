@@ -10,6 +10,7 @@ import {
   parseRule,
   ruleDates,
   splitLocation,
+  teamTitle,
   withoutCalendarName,
   type ListedEvent,
 } from '../../src/imports/events.js';
@@ -469,5 +470,67 @@ describe("GameChanger's real feeds (checked 2026-10-15)", () => {
     expect(withoutCalendarName('Thunderbirds game', 'Thunder')).toBe('Thunderbirds game');
     expect(withoutCalendarName('Thunder - Team dinner', 'Thunder')).toBe('Team dinner');
     expect(withoutCalendarName('Practice', null)).toBe('Practice');
+  });
+});
+
+describe("TeamSnap's feeds (IMPORT-11)", () => {
+  // As TeamSnap serves them (ical-cdn.teamsnap.com): the team's name first,
+  // "at" and "vs" for games, a dash before other events, the address in
+  // LOCATION, and the place's name and the uniform in the notes.
+  const feed = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'X-WR-CALNAME:Thunder 12U',
+    'X-WR-CALDESC:The event schedule for the Thunder 12U Baseball team',
+    'BEGIN:VEVENT',
+    'UID:900001-1',
+    'DTSTART;TZID=America/Chicago:20301015T180000',
+    'DTEND;TZID=America/Chicago:20301015T193000',
+    'SUMMARY:Thunder 12U - Practice',
+    'LOCATION:100 River Rd\\, Austin\\, TX 78701',
+    'DESCRIPTION:Location: Riverside Park\\n Bring water \\n Uniform: Blue (Arrival Time: 5:30 PM (Central Time (US & Canada)))',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'UID:900001-2',
+    'DTSTART;TZID=America/Chicago:20301017T100000',
+    'SUMMARY:Thunder 12U at Eagles 12U',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'UID:900001-3',
+    'DTSTART;TZID=America/Chicago:20301018T100000',
+    'SUMMARY:Thunder 12U vs Hawks',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'UID:900001-4',
+    'DTSTART;TZID=America/Chicago:20301019T100000',
+    'SUMMARY:Thunder 12U - Team dinner at Joe\'s',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'UID:900001-5',
+    'DTSTART;TZID=America/Chicago:20301020T100000',
+    'SUMMARY:Thunder 12U Playoff Game #1 at SAC #1',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  it('read games, events, and places as TeamSnap means them', () => {
+    const r = eventsFromIcs(parseIcs(feed), { teamTimeZone: CHI, nowMs: NOW, includePast: false, titles: 'teamsnap' });
+    expect(r.events.map((e) => [e.type, e.title, e.opponent, e.homeAway])).toEqual([
+      ['practice', 'Practice', null, null],
+      ['game', '@ Eagles 12U', 'Eagles 12U', 'away'],
+      ['game', 'vs. Hawks', 'Hawks', 'home'],
+      // "at" in an event's own name is just a word.
+      ['social', "Team dinner at Joe's", null, null],
+      ['game', '@ SAC #1', 'SAC #1', 'away'],
+    ]);
+    // The place's name comes from the notes, its address from LOCATION.
+    expect(r.events[0].location).toEqual({ name: 'Riverside Park', address: '100 River Rd, Austin, TX 78701' });
+    expect(r.events[0].description).toBe('Bring water \n Uniform: Blue (Arrival Time: 5:30 PM (Central Time (US & Canada)))');
+  });
+
+  it("leave other calendars' titles alone", () => {
+    expect(teamTitle('Thunder 12U at Eagles', 'Thunder 12U', 'gamechanger')).toBe('at Eagles');
+    const r = eventsFromIcs(parseIcs(feed), { teamTimeZone: CHI, nowMs: NOW, includePast: false });
+    expect(r.events[1].title).toBe('Thunder 12U at Eagles 12U');
   });
 });

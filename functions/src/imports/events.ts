@@ -31,6 +31,9 @@ export interface ImportedEvent {
 
 export type SkipReason = 'canceled' | 'repeat' | 'unreadable';
 
+/** Calendars whose titles start with the team's name. */
+export type TitleStyle = 'gamechanger' | 'teamsnap';
+
 export interface SkippedEntry {
   title: string;
   startMs: number | null;
@@ -40,6 +43,13 @@ export interface SkippedEntry {
 export interface ConvertOptions {
   /** For times with no zone of their own: the team's. */
   teamTimeZone: string;
+  /**
+   * Whose titles these are, when they start with the team's name (the
+   * calendar's): GameChanger's ("Thunder Practice", "Thunder @ Eagles")
+   * or TeamSnap's ("Thunder - Practice", "Thunder at Eagles"). Otherwise
+   * read from the feed's PRODID.
+   */
+  titles?: TitleStyle;
   nowMs: number;
   /** False leaves out events that ended before [nowMs]. */
   includePast: boolean;
@@ -110,6 +120,33 @@ export function withoutCalendarName(summary: string, calendarName: string | null
   if (!/^[\s:\-–—|]/.test(rest)) return summary;
   const trimmed = rest.replace(/^[\s:\-–—|]+/, '').trim();
   return trimmed || summary;
+}
+
+/**
+ * A title from a calendar that puts the team's name first, without it.
+ * TeamSnap writes games as "Thunder at Eagles" (or "Thunder Playoff Game
+ * #1 at Eagles"), which are away games ("@ Eagles"), and other events as
+ * "Thunder - Team dinner at Joe's", whose "at" is just a word.
+ */
+export function teamTitle(summary: string, calendarName: string | null, style: TitleStyle): string {
+  const rest = withoutCalendarName(summary, calendarName);
+  if (rest === summary || style !== 'teamsnap') return rest;
+  const name = (calendarName ?? '').replace(/\s+/g, ' ').trim();
+  const dashed = /^\s*[:\-–—|]/.test(summary.replace(/\s+/g, ' ').trim().slice(name.length));
+  if (dashed) return rest;
+  const at = /^(.*?)\s*\bat\s+(.+)$/i.exec(rest);
+  return at ? `${at[1]} @ ${at[2]}`.trim() : rest;
+}
+
+/**
+ * The place's name from notes that start with it, as TeamSnap's do
+ * ("Location: Riverside Park"), and the notes without that line.
+ */
+export function placeFromNotes(notes: string): { name: string | null; notes: string } {
+  const lines = notes.split(/\r?\n/);
+  const first = /^\s*Location:\s*(.+?)\s*$/i.exec(lines[0] ?? '');
+  if (!first) return { name: null, notes };
+  return { name: first[1].slice(0, Limits.locationNameMax).trim(), notes: lines.slice(1).join('\n').trim() };
 }
 
 /**
@@ -297,11 +334,18 @@ function lengthMs(e: IcsEvent, zone: string, startMs: number): number {
 /** One occurrence, on [date] for a repeat or as written for a one-off. */
 function occurrence(e: IcsEvent, zone: string, date: string | null, sourceId: string): ImportedEvent {
   const what = classify(e.summary);
+  // TeamSnap names the place in the notes and puts its address in LOCATION.
+  const fromNotes = placeFromNotes(e.description);
+  const place = splitLocation(e.location);
+  const location =
+    fromNotes.name && (!place || !place.name)
+      ? { name: fromNotes.name, address: place?.address ?? '' }
+      : place;
   const base = {
     sourceId,
     ...what,
-    description: e.description.slice(0, Limits.eventNotesMax).trim(),
-    location: splitLocation(e.location),
+    description: (fromNotes.name ? fromNotes.notes : e.description).slice(0, Limits.eventNotesMax).trim(),
+    location,
     timeZone: zone,
   };
   const firstStart = instant(e.start, zone);
@@ -333,15 +377,17 @@ function occurrence(e: IcsEvent, zone: string, date: string | null, sourceId: st
  * unreadable entries are skipped with the reason.
  */
 export function eventsFromIcs(feed: IcsCalendar, opts: ConvertOptions): Converted {
-  // GameChanger puts the team's name on every title; other calendars'
-  // titles are people's own. The fallback ID stays the original title's.
-  const gameChanger = /gamechanger/i.test(feed.producer ?? '');
+  // GameChanger and TeamSnap put the team's name on every title; other
+  // calendars' titles are people's own. The fallback ID stays the
+  // original title's.
+  const producer = feed.producer ?? '';
+  const style = opts.titles ?? (/gamechanger/i.test(producer) ? 'gamechanger' : /teamsnap/i.test(producer) ? 'teamsnap' : null);
   const cal = {
     ...feed,
     events: feed.events.map((e) => ({
       ...e,
       uid: e.uid || fallbackUid(e),
-      summary: gameChanger ? withoutCalendarName(e.summary, feed.name) : e.summary,
+      summary: style ? teamTitle(e.summary, feed.name, style) : e.summary,
     })),
   };
   const events: ImportedEvent[] = [];

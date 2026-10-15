@@ -14,16 +14,16 @@ import { requireTeamAdmin } from '../shared/roles.js';
 import { isTimeZone } from '../schedule/recurrence.js';
 import { REMINDER_GRACE_MS, ZERO_COUNTS, eventView, nextReminderAtMs } from '../schedule/service.js';
 import { quotaBytesOf } from '../teams/storage.js';
-import { eventsFromIcs, eventsFromList, type ImportedEvent, type ListedEvent, type SkippedEntry } from './events.js';
-import { fetchCalendar } from './fetch.js';
+import { eventsFromIcs, eventsFromList, type ImportedEvent, type ListedEvent, type SkippedEntry, type TitleStyle } from './events.js';
+import { calendarUrl, fetchCalendar } from './fetch.js';
 import { parseIcs } from './ics.js';
 
 /**
  * The apps events can come from: calendar links (IMPORT-7, IMPORT-8,
- * IMPORT-10), and GroupMe's export, which the app reads and sends as a
- * list (IMPORT-9).
+ * IMPORT-10, IMPORT-11), and GroupMe's export, which the app reads and
+ * sends as a list (IMPORT-9).
  */
-export const importSources = ['gamechanger', 'teamreach', 'google', 'groupme'] as const;
+export const importSources = ['gamechanger', 'teamreach', 'google', 'teamsnap', 'groupme'] as const;
 export type ImportSource = (typeof importSources)[number];
 
 /** At most this many new events in one import. */
@@ -157,7 +157,15 @@ export async function importEvents(
   await consumeRateLimits([{ key: input.groupId, action: 'importEvents', max: IMPORTS_PER_TEAM_PER_DAY }]);
 
   const teamZone = typeof team?.timeZone === 'string' && isTimeZone(team.timeZone) ? team.timeZone : 'America/Chicago';
-  const options = { teamTimeZone: teamZone, nowMs, includePast: input.includePast };
+  // GameChanger's and TeamSnap's titles start with the team's name.
+  const host = input.url ? calendarUrl(input.url).hostname : '';
+  const titles: TitleStyle | undefined =
+    input.source === 'teamsnap' || /(^|\.)teamsnap\.com$/i.test(host)
+      ? 'teamsnap'
+      : input.source === 'gamechanger' || /(^|\.)gc\.com$/i.test(host)
+        ? 'gamechanger'
+        : undefined;
+  const options = { teamTimeZone: teamZone, nowMs, includePast: input.includePast, titles };
   let converted;
   if (input.events !== undefined) {
     converted = eventsFromList(input.events, options);

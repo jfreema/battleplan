@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -12,9 +10,6 @@ import 'package:battleplan/features/imports/presentation/import_parts.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// The largest calendar file the import takes (the callable's limit).
-const _maxFileBytes = 1000000;
 
 /// Importing a team's events from a calendar link (SPEC IMPORT-7,
 /// IMPORT-8, IMPORT-10): GameChanger's, TeamReach's, or a Google
@@ -42,8 +37,8 @@ class CalendarImportForm extends ConsumerStatefulWidget {
 class _CalendarImportState extends ConsumerState<CalendarImportForm> {
   final _link = TextEditingController();
 
-  /// A calendar file chosen instead of the link: its name and text.
-  ({String name, String text})? _file;
+  /// A calendar file chosen instead of the link.
+  CalendarFile? _file;
   bool _events = true;
   bool _includePast = false;
   bool _busy = false;
@@ -69,18 +64,14 @@ class _CalendarImportState extends ConsumerState<CalendarImportForm> {
 
   Future<void> _chooseFile() async {
     final l10n = AppLocalizations.of(context);
-    final picked = await ref
-        .read(fileChooserProvider)
-        .pickFile(extensions: const ['ics']);
-    if (picked == null || !mounted) return;
-    if (picked.size > _maxFileBytes) {
-      setState(() => _error = l10n.importFileTooLarge);
-      return;
-    }
-    final text = utf8.decode(await picked.readBytes(), allowMalformed: true);
-    if (!mounted) return;
+    final file = await pickCalendarFile(
+      ref.read(fileChooserProvider),
+      l10n,
+      onError: (e) => setState(() => _error = e),
+    );
+    if (file == null || !mounted) return;
     setState(() {
-      _file = (name: picked.name, text: text);
+      _file = file;
       _preview = null;
       _error = null;
     });
@@ -194,42 +185,17 @@ class _CalendarImportState extends ConsumerState<CalendarImportForm> {
           _ => l10n.importGameChangerSteps,
         }),
         const SizedBox(height: Space.md),
-        if (_file case final file?)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(AppIcons.schedule),
-            title: Text(file.name),
-            trailing: IconButton(
-              tooltip: l10n.importRemoveFile,
-              icon: const Icon(AppIcons.close),
-              onPressed: _busy
-                  ? null
-                  : () {
-                      _file = null;
-                      _changed();
-                    },
-            ),
-          )
-        else ...[
-          TextField(
-            controller: _link,
-            enabled: !_busy,
-            keyboardType: TextInputType.url,
-            autocorrect: false,
-            onChanged: (_) => _changed(),
-            decoration: InputDecoration(
-              labelText: l10n.importLinkLabel,
-              hintText: 'webcal://…',
-            ),
-          ),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TextButton(
-              onPressed: _busy ? null : () => unawaited(_chooseFile()),
-              child: Text(l10n.importUseFile),
-            ),
-          ),
-        ],
+        CalendarLinkInput(
+          link: _link,
+          file: _file,
+          enabled: !_busy,
+          onChanged: _changed,
+          onChooseFile: () => unawaited(_chooseFile()),
+          onRemoveFile: () {
+            _file = null;
+            _changed();
+          },
+        ),
         CheckboxListTile(
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,

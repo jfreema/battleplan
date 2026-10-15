@@ -186,7 +186,7 @@ describe('who may import (IMPORT-1)', () => {
     await expect(call('alex', { groupId: G, source: 'gamechanger', url: 'https://example.com/a.ics', ics: feed() })).rejects.toMatchObject({
       code: 'invalid-argument',
     });
-    await expect(call('alex', { groupId: G, source: 'teamsnap', ics: feed() })).rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(call('alex', { groupId: G, source: 'spond', ics: feed() })).rejects.toMatchObject({ code: 'invalid-argument' });
     await expect(call('alex', { groupId: G, source: 'gamechanger', url: 'http://example.com/a.ics' })).rejects.toMatchObject({
       message: 'bad-link',
     });

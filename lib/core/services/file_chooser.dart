@@ -15,6 +15,10 @@ abstract interface class FileChooser {
   /// cancelled.
   Future<PickedFile?> pickFile({required List<String> extensions});
 
+  /// Any number of files with one of [extensions]; empty if the person
+  /// cancelled.
+  Future<List<PickedFile>> pickFiles({required List<String> extensions});
+
   /// Saves [bytes] as [name]: the browser's download on the web, the
   /// system's save dialog on phones (DOC-4). False if it didn't save.
   Future<bool> saveFile(
@@ -43,6 +47,11 @@ class NoopFileChooser implements FileChooser {
   @override
   Future<PickedFile?> pickFile({required List<String> extensions}) async =>
       null;
+
+  @override
+  Future<List<PickedFile>> pickFiles({
+    required List<String> extensions,
+  }) async => const [];
 
   @override
   Future<bool> saveFile(

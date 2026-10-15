@@ -24,6 +24,22 @@ class FilePickerChooser implements FileChooser {
   }
 
   @override
+  Future<List<PickedFile>> pickFiles({required List<String> extensions}) async {
+    final files = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: extensions,
+    );
+    return [
+      for (final f in files)
+        (
+          name: f.name,
+          size: f.lengthSync() ?? await f.length() ?? 0,
+          readBytes: f.readAsBytes,
+        ),
+    ];
+  }
+
+  @override
   Future<bool> saveFile(
     Uint8List bytes, {
     required String name,

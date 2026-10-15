@@ -120,3 +120,42 @@ final class ListedEvent {
   final String? timeZone;
   final bool canceled;
 }
+
+/// The largest file Documents takes (STORE-1, storage.rules isDocument).
+const int maxDocumentBytes = 10 * 1024 * 1024;
+
+/// The type Documents stores a file as, by its extension, or null for a
+/// kind it doesn't take (storage.rules isDocument).
+String? documentTypeOf(String fileName) {
+  final dot = fileName.lastIndexOf('.');
+  if (dot < 0) return null;
+  return switch (fileName.substring(dot + 1).toLowerCase()) {
+    'pdf' => 'application/pdf',
+    'txt' => 'text/plain',
+    'csv' => 'text/csv',
+    'doc' => 'application/msword',
+    'docx' =>
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls' => 'application/vnd.ms-excel',
+    'xlsx' =>
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'ppt' => 'application/vnd.ms-powerpoint',
+    'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'jpg' || 'jpeg' => 'image/jpeg',
+    'png' => 'image/png',
+    'gif' => 'image/gif',
+    'webp' => 'image/webp',
+    _ => null,
+  };
+}
+
+/// The extensions Documents takes, for a file picker.
+const documentExtensions = [
+  'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', //
+  'jpg', 'jpeg', 'png', 'gif', 'webp',
+];
+
+/// A file's ID in its source when the source has none: the same file (by
+/// name and size) is the same document, so choosing it again adds nothing.
+String fileSourceId(String name, int size) =>
+    sha256.convert(utf8.encode('$name\n$size')).toString().substring(0, 32);

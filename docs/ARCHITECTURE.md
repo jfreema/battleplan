@@ -1137,9 +1137,9 @@ The R2 API token can reach only that bucket. The encryption key lives in Secret 
 
 ---
 
-### 6.13 Import and migration · GroupMe, TeamReach, GameChanger, and Google Calendar built
+### 6.13 Import and migration · GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar built
 
-SPEC §6.15, ROADMAP tasks 219–227, 241, 249, 250, and 252. Built: GameChanger's, TeamReach's, and Google Calendar's events from their calendar links, and GroupMe's messages, documents, and events from its data export (below). TeamSnap is next. Verify each source's supported exports or official API before implementation; do not assume document or calendar access from the presence of those features in the source app.
+SPEC §6.15, ROADMAP tasks 219–227, 241, 249, 250, 252, and 254. Built: GameChanger's, TeamReach's, and Google Calendar's events from their calendar links; GroupMe's messages, documents, and events from its data export; and TeamSnap's events, players, and documents (below). Verify each source's supported exports or official API before implementation; do not assume document or calendar access from the presence of those features in the source app.
 
 **Built: GameChanger events (SPEC IMPORT-7, 2026-10-15).** The `importEvents` callable (`functions/src/imports/`) and the Import screen (`lib/features/imports/`, team menu → Import, admins only).
 
@@ -1156,6 +1156,11 @@ SPEC §6.15, ROADMAP tasks 219–227, 241, 249, 250, and 252. Built: GameChanger
 - **Errors on the web.** The web SDK appends the HTTP status to a callable's message (`not-a-calendar [400]`), and native SDKs don't. Every repository reads messages through `serverMessage` (`core/failure.dart`) before matching them.
 
 **Built: TeamReach and Google Calendar events (SPEC IMPORT-8, IMPORT-10).** `importEvents` with `source: 'teamreach'` or `'google'`: the same link checks, reading, IDs, and quiet writes as GameChanger's. The app names the source in its steps and messages. Google's secret iCal address is an ordinary https feed on `calendar.google.com`.
+
+**Built: TeamSnap (SPEC IMPORT-11, 2026-10-15).** No API: TeamSnap's v3 API answers (`apiv3.teamsnap.com`, Collection+JSON, OAuth at `auth.teamsnap.com`), but its docs are offline and app registration is uncertain, and it has no chat messages (chat lives outside it). The app's `TeamSnapImportForm` takes three files or links and uses existing paths for each:
+- **Events:** `importEvents` with `source: 'teamsnap'` and the feed link (`ical-cdn.teamsnap.com/team_schedule/<uuid>.ics`). `titles: 'teamsnap'` (set for the source or a `teamsnap.com` link) drops the team's name (`X-WR-CALNAME`) from titles; with no dash after the name, "at" makes an away game ("Thunder Playoff Game #1 at SAC #1" is "@ SAC #1"), and after a dash ("Thunder - Team dinner at Joe's") it's just a word. Notes starting "Location: <name>" give the place's name (`placeFromNotes`), LOCATION its address.
+- **Players:** `readRosterCsv` (`lib/features/imports/domain/roster_file.dart`, RFC 4180, headers matched by alias: First/Last Name or Name, Jersey Number, Birthday or Birthdate, Non-Player (Y/N), Member Type P/C/M/V) gives names, numbers, and dates of birth, then the players' own `addPlayers` callable adds them, 200 a call: the same checks, limits, and audit as the Add players form, with no emails, so nobody gets an account or a setup email. Players already on the roster (active or pending, by name, case-insensitive) are skipped.
+- **Documents:** chosen with `FileChooser.pickFiles`, uploaded to `groups/{g}/documents/{id}/{name}` and written by `importDocuments` with `source: 'teamsnap'`, where the source ID is a hash of the file's name and size (`fileSourceId`) and `sharedByName` is the importing admin. `importMessages` still takes only GroupMe.
 
 **Built: GroupMe (SPEC IMPORT-9, 2026-10-15).** The app reads GroupMe's export on the admin's device and drives the import in batches; the server checks and writes each batch. There's no server job or provenance collection: deterministic IDs make every batch safe to retry, and stopping between batches leaves a consistent, partial import that a later run finishes.
 

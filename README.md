@@ -6,7 +6,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 - **Schedule and RSVPs:** games, practices, and events with opponents, places, and reminders; Going, Maybe, or Not going in one tap.
 - **Polls** and **Documents** for each team.
 - **Players and parents:** adult players answer for themselves; parents and guardians answer for their kids, who don't need accounts.
-- **Import:** bring a team over from GroupMe (messages, photos, files, and events), and schedules from TeamReach, GameChanger, or Google Calendar.
+- **Import:** bring a team over from GroupMe (messages, photos, files, and events) or TeamSnap (schedule, players, and files), and schedules from TeamReach, GameChanger, or Google Calendar.
 
 ## Sites
 

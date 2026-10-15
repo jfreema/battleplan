@@ -2500,6 +2500,15 @@ class FakeFileChooser implements FileChooser {
     return next;
   }
 
+  /// What the next multiple pick returns.
+  List<PickedFile> nextMany = const [];
+
+  @override
+  Future<List<PickedFile>> pickFiles({required List<String> extensions}) async {
+    this.extensions = extensions;
+    return nextMany;
+  }
+
   @override
   Future<bool> saveFile(
     Uint8List bytes, {
@@ -3072,7 +3081,9 @@ class FakeImportRepository implements ImportRepository {
         : 'groupme events ${events!.length}';
     // Calendar apps other than GameChanger say which they are.
     final app = switch (source) {
-      ImportSource.teamreach || ImportSource.google => '${source.value} ',
+      ImportSource.teamreach ||
+      ImportSource.google ||
+      ImportSource.teamsnap => '${source.value} ',
       _ => '',
     };
     calls.add('$app${dryRun ? 'preview' : 'import'} $from past=$includePast');
