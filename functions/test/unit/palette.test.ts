@@ -15,6 +15,6 @@ describe('team palette', () => {
     );
     expect(lists).toHaveLength(2);
     for (const list of lists) expect(list).toEqual([...TEAM_COLORS].sort());
-    expect(TEAM_COLORS).toHaveLength(13);
+    expect(TEAM_COLORS).toHaveLength(15);
   });
 });

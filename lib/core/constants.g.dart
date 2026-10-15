@@ -130,6 +130,8 @@ const List<int> teamColorValues = [
   0xFF1D4ED8,
   0xFF9333EA,
   0xFF334155,
+  0xFF1E3A5F,
+  0xFFD4A017,
 ];
 
 /// The reminder times an event can have, in minutes before (SCHED-3).

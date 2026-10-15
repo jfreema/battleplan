@@ -126,6 +126,8 @@ export const TEAM_COLORS = [
   '#1D4ED8',
   '#9333EA',
   '#334155',
+  '#1E3A5F',
+  '#D4A017',
 ] as const;
 
 export const REMINDER_OFFSETS_MINUTES = [15, 60, 120, 1440, 2880, 10080] as const;

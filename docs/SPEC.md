@@ -390,7 +390,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Name (required, ≤ 50 characters).
     - Sport: Baseball, Basketball, Football, Hockey, Lacrosse, Soccer, Softball, Volleyball, or Other.
     - Logo or photo (optional).
-    - Team color (optional). Chosen from 13 colors that pass contrast checks in both themes.
+    - Team color (optional). Chosen from 15 colors, navy and gold among them, that pass contrast checks in both themes; badges and bubbles show white or black text on them, whichever reads better.
     - Time zone (defaults to the device's).
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).

@@ -276,7 +276,9 @@
     "#4D7C0F",
     "#1D4ED8",
     "#9333EA",
-    "#334155"
+    "#334155",
+    "#1E3A5F",
+    "#D4A017"
   ],
   "$notifyKindsComment": "Each notification kind (NOTIF-2): whether it pushes at 'Important only', which global switch (notificationPref) turns it off, whether it lands in the notification center, and its Android channel.",
   "notifyKinds": {

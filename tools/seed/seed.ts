@@ -34,15 +34,17 @@ const daysFromNow = (d: number, hour: number) => {
 
 interface Person { uid: string; name: string; email: string; superAdmin?: boolean }
 
+// The sample people are common American names and TV characters (they're
+// on the website's screenshots too).
 const people: Person[] = [
-  { uid: 'coach', name: 'Jordan Coach', email: 'coach@example.com' },
-  { uid: 'alex', name: 'Alex Kim', email: 'alex@example.com' },
-  { uid: 'sam', name: 'Sam Rivera', email: 'sam@example.com' },
-  { uid: 'maria', name: 'Maria Rodriguez', email: 'maria@example.com' },
-  { uid: 'luis', name: 'Luis Rodriguez', email: 'luis@example.com' },
-  { uid: 'priya', name: 'Priya Shah', email: 'priya@example.com' },
-  { uid: 'tasha', name: 'Tasha Brooks', email: 'tasha@example.com' },
-  { uid: 'ben', name: 'Ben Carter', email: 'ben@example.com' },
+  { uid: 'coach', name: 'Eric Taylor', email: 'coach@example.com' },
+  { uid: 'jim', name: 'Jim Halpert', email: 'jim@example.com' },
+  { uid: 'andy', name: 'Andy Dwyer', email: 'andy@example.com' },
+  { uid: 'claire', name: 'Claire Dunphy', email: 'claire@example.com' },
+  { uid: 'phil', name: 'Phil Dunphy', email: 'phil@example.com' },
+  { uid: 'rachel', name: 'Rachel Green', email: 'rachel@example.com' },
+  { uid: 'monica', name: 'Monica Geller', email: 'monica@example.com' },
+  { uid: 'chandler', name: 'Chandler Bing', email: 'chandler@example.com' },
   { uid: 'admin', name: 'Platform Admin', email: 'admin@example.com', superAdmin: true },
 ];
 
@@ -56,32 +58,35 @@ const settings = {
 };
 
 // One team type (TEAM-1): every team has players.
+// Each team's color and its chat bubbles' (CHAT-18): navy and orange,
+// Carolina blue and gray, purple and gold.
 const teams = [
-  { id: 'thunder', name: 'Thunder', sport: 'softball', color: '#2F5BEA' },
-  { id: 'cyclone', name: 'Cyclone', sport: 'soccer', color: '#0F8A5F' },
-  { id: 'possums', name: 'Rally Possums', sport: 'basketball', color: '#C2410C' },
+  { id: 'thunder', name: 'Thunder', sport: 'softball', color: '#1E3A5F', bubbleColor: '#C2410C' },
+  { id: 'cyclone', name: 'Cyclone', sport: 'soccer', color: '#7BAFD4', bubbleColor: '#334155' },
+  { id: 'possums', name: 'Rally Possums', sport: 'basketball', color: '#7C3AED', bubbleColor: '#D4A017' },
 ] as const;
 
-// [team, uid, role, playerSummary?]. Coach and Maria are on more than one team.
+// [team, uid, role, playerSummary?]. Coach, Claire, and Rachel are on more
+// than one team.
 const memberships: [string, string, string, string?][] = [
   ['thunder', 'coach', 'owner'],
-  ['thunder', 'alex', 'admin', '#3'],
-  ['thunder', 'sam', 'member', '#12'],
-  ['thunder', 'maria', 'member'],
+  ['thunder', 'jim', 'admin', '#3'],
+  ['thunder', 'andy', 'member', '#12'],
+  ['thunder', 'claire', 'member'],
   ['cyclone', 'coach', 'owner'],
-  ['cyclone', 'maria', 'member', 'Emma #7, Mia #9'],
-  ['cyclone', 'luis', 'member', 'Emma #7'],
-  ['cyclone', 'priya', 'member', 'Arjun #11'],
-  ['possums', 'priya', 'owner'],
-  ['possums', 'maria', 'member', 'Liam #23'],
-  ['possums', 'tasha', 'member', 'Dee #4'],
-  ['possums', 'ben', 'member', 'Owen #12'],
+  ['cyclone', 'claire', 'member', 'Luke #7, Alex #9'],
+  ['cyclone', 'phil', 'member', 'Luke #7'],
+  ['cyclone', 'rachel', 'member', 'Emma #11'],
+  ['possums', 'rachel', 'owner'],
+  ['possums', 'claire', 'member', 'Haley #23'],
+  ['possums', 'monica', 'member', 'Erica #4'],
+  ['possums', 'chandler', 'member', 'Jack #12'],
 ];
 
 // A parent with players on two teams and two on one (for "All my
 // players", PLAYER-11), two guardians for one player, a
 // player whose guardian hasn't joined yet, adults who are players
-// themselves ('self'), an unclaimed player, and a pending player Maria
+// themselves ('self'), an unclaimed player, and a pending player Claire
 // asked to add to Thunder (PLAYER-3, PLAYER-4).
 const players: {
   id: string;
@@ -93,17 +98,17 @@ const players: {
   self?: string;
   pendingBy?: string;
 }[] = [
-  { id: 'emma', groupId: 'cyclone', name: 'Emma Rodriguez', number: '7', position: 'Forward', guardians: ['maria', 'luis'] },
-  { id: 'mia', groupId: 'cyclone', name: 'Mia Rodriguez', number: '9', position: 'Midfield', guardians: ['maria'] },
-  { id: 'arjun', groupId: 'cyclone', name: 'Arjun Shah', number: '11', position: 'Keeper', guardians: ['priya'] },
-  { id: 'noah', groupId: 'cyclone', name: 'Noah Bennett', number: '4', position: 'Defense', guardians: [] },
-  { id: 'liam', groupId: 'possums', name: 'Liam Rodriguez', number: '23', position: 'Guard', guardians: ['maria'] },
-  { id: 'dee', groupId: 'possums', name: 'Dee Brooks', number: '4', position: 'Forward', guardians: ['tasha'] },
-  { id: 'owen', groupId: 'possums', name: 'Owen Carter', number: '12', position: 'Center', guardians: ['ben'] },
-  { id: 'alex-kim', groupId: 'thunder', name: 'Alex Kim', number: '3', position: 'Pitcher', guardians: [], self: 'alex' },
-  { id: 'sam-rivera', groupId: 'thunder', name: 'Sam Rivera', number: '12', position: 'Shortstop', guardians: [], self: 'sam' },
-  { id: 'casey-park', groupId: 'thunder', name: 'Casey Park', number: '5', position: 'Outfield', guardians: [] },
-  { id: 'maria-rodriguez', groupId: 'thunder', name: 'Maria Rodriguez', number: null, position: null, guardians: [], pendingBy: 'maria' },
+  { id: 'luke-dunphy', groupId: 'cyclone', name: 'Luke Dunphy', number: '7', position: 'Forward', guardians: ['claire', 'phil'] },
+  { id: 'alex-dunphy', groupId: 'cyclone', name: 'Alex Dunphy', number: '9', position: 'Midfield', guardians: ['claire'] },
+  { id: 'emma-green', groupId: 'cyclone', name: 'Emma Green', number: '11', position: 'Keeper', guardians: ['rachel'] },
+  { id: 'noah-bennett', groupId: 'cyclone', name: 'Noah Bennett', number: '4', position: 'Defense', guardians: [] },
+  { id: 'haley-dunphy', groupId: 'possums', name: 'Haley Dunphy', number: '23', position: 'Guard', guardians: ['claire'] },
+  { id: 'erica-bing', groupId: 'possums', name: 'Erica Bing', number: '4', position: 'Forward', guardians: ['monica'] },
+  { id: 'jack-bing', groupId: 'possums', name: 'Jack Bing', number: '12', position: 'Center', guardians: ['chandler'] },
+  { id: 'jim-halpert', groupId: 'thunder', name: 'Jim Halpert', number: '3', position: 'Pitcher', guardians: [], self: 'jim' },
+  { id: 'andy-dwyer', groupId: 'thunder', name: 'Andy Dwyer', number: '12', position: 'Shortstop', guardians: [], self: 'andy' },
+  { id: 'pam-beesly', groupId: 'thunder', name: 'Pam Beesly', number: '5', position: 'Outfield', guardians: [] },
+  { id: 'claire-dunphy', groupId: 'thunder', name: 'Claire Dunphy', number: null, position: null, guardians: [], pendingBy: 'claire' },
 ];
 
 async function main() {
@@ -150,6 +155,7 @@ async function main() {
       description: '',
       photoPath: null,
       color: t.color,
+      chatTheme: { bubbleColor: t.bubbleColor, background: 'plain', backgroundPath: null },
       sport: t.sport,
       kind: 'team',
       ownerId: owner,
@@ -174,15 +180,15 @@ async function main() {
       groupId,
       uid,
       role,
-      title: role === 'owner' ? 'Coach' : groupId === 'cyclone' && uid === 'luis' ? 'Assistant coach' : null,
+      title: role === 'owner' ? 'Coach' : groupId === 'cyclone' && uid === 'phil' ? 'Assistant coach' : null,
       // A parent who coaches too (TEAM-3); owners coach unless set.
-      ...(groupId === 'cyclone' && uid === 'luis' ? { coach: true } : {}),
+      ...(groupId === 'cyclone' && uid === 'phil' ? { coach: true } : {}),
       displayName: nameOf(uid),
       photoPath: null,
       playerSummary: playerSummary ?? null,
       notificationLevel: 'all',
       mutedUntil: null,
-      // The coach last read Thunder before Alex's message, so its chat
+      // The coach last read Thunder before Jim's message, so its chat
       // opens there: the mention, the game's card, and the dinner poll.
       lastReadAt: minutesAgo(groupId === 'thunder' && uid === 'coach' ? 270 : 90),
       lastPostedAt: null,
@@ -220,38 +226,38 @@ async function main() {
       });
     }
   }
-  // Details for coaches (PLAYER-12), sample values only: Emma's from her
-  // guardian Maria, with the medical consent the app asks for, and Alex's
+  // Details for coaches (PLAYER-12), sample values only: Luke's from his
+  // guardian Claire, with the medical consent the app asks for, and Jim's
   // own. The coach sees both, and their ages on the rosters.
   const year = new Date(now).getFullYear();
-  batch.set(db.doc('playerDetails/emma'), {
+  batch.set(db.doc('playerDetails/luke-dunphy'), {
     groupId: 'cyclone',
     dateOfBirth: `${year - 9}-05-14`,
     emergencyContacts: [
-      { name: 'Maria Rodriguez', phone: '555-0100', relationship: 'Mom' },
-      { name: 'Luis Rodriguez', phone: '555-0101', relationship: 'Dad' },
+      { name: 'Claire Dunphy', phone: '555-0100', relationship: 'Mom' },
+      { name: 'Phil Dunphy', phone: '555-0101', relationship: 'Dad' },
     ],
     medicalNotes: 'Peanut allergy',
     medicalConsentAt: minutesAgo(60 * 24 * 10),
-    medicalConsentBy: 'maria',
+    medicalConsentBy: 'claire',
     notes: 'Wears glasses for games.',
-    updatedBy: 'maria',
+    updatedBy: 'claire',
     updatedAt: minutesAgo(60 * 24 * 10),
   });
-  batch.set(db.doc('playerDetails/alex-kim'), {
+  batch.set(db.doc('playerDetails/jim-halpert'), {
     groupId: 'thunder',
     dateOfBirth: `${year - 31}-02-20`,
-    emergencyContacts: [{ name: 'Jamie Kim', phone: '555-0142', relationship: 'Partner' }],
+    emergencyContacts: [{ name: 'Pam Beesly', phone: '555-0142', relationship: 'Partner' }],
     medicalNotes: null,
     notes: null,
-    updatedBy: 'alex',
+    updatedBy: 'jim',
     updatedAt: minutesAgo(60 * 24 * 10),
   });
-  // Luis claims Noah as a guardian, waiting for the coach (PLAYER-3).
-  batch.set(db.doc('guardianRequests/noah_luis'), {
-    playerId: 'noah',
+  // Phil claims Noah as a guardian, waiting for the coach (PLAYER-3).
+  batch.set(db.doc('guardianRequests/noah-bennett_phil'), {
+    playerId: 'noah-bennett',
     groupId: 'cyclone',
-    uid: 'luis',
+    uid: 'phil',
     relation: 'guardian',
     status: 'pending',
     decidedBy: null,
@@ -307,22 +313,22 @@ async function main() {
     });
   }
   const rsvps: [string, 'member' | 'player', string, string, string][] = [
-    ['thunder-practice', 'player', 'alex-kim', 'going', 'alex'],
-    ['thunder-practice', 'player', 'sam-rivera', 'maybe', 'sam'],
+    ['thunder-practice', 'player', 'jim-halpert', 'going', 'jim'],
+    ['thunder-practice', 'player', 'andy-dwyer', 'maybe', 'andy'],
     ['thunder-practice', 'member', 'coach', 'going', 'coach'],
-    ['thunder-game', 'player', 'alex-kim', 'going', 'alex'],
-    ['thunder-game', 'player', 'sam-rivera', 'going', 'sam'],
-    ['thunder-game', 'player', 'casey-park', 'maybe', 'coach'],
+    ['thunder-game', 'player', 'jim-halpert', 'going', 'jim'],
+    ['thunder-game', 'player', 'andy-dwyer', 'going', 'andy'],
+    ['thunder-game', 'player', 'pam-beesly', 'maybe', 'coach'],
     ['thunder-game', 'member', 'coach', 'going', 'coach'],
-    ['cyclone-practice', 'player', 'emma', 'going', 'luis'],
-    ['cyclone-practice', 'player', 'arjun', 'not_going', 'priya'],
+    ['cyclone-practice', 'player', 'luke-dunphy', 'going', 'phil'],
+    ['cyclone-practice', 'player', 'emma-green', 'not_going', 'rachel'],
     ['cyclone-practice', 'member', 'coach', 'going', 'coach'],
-    ['possums-game', 'player', 'liam', 'going', 'maria'],
-    ['possums-game', 'player', 'dee', 'going', 'tasha'],
-    ['thunder-past-practice', 'player', 'alex-kim', 'going', 'alex'],
-    ['cyclone-past-practice', 'player', 'emma', 'going', 'luis'],
-    ['cyclone-past-practice', 'player', 'arjun', 'going', 'priya'],
-    ['cyclone-past-game', 'player', 'emma', 'not_going', 'maria'],
+    ['possums-game', 'player', 'haley-dunphy', 'going', 'claire'],
+    ['possums-game', 'player', 'erica-bing', 'going', 'monica'],
+    ['thunder-past-practice', 'player', 'jim-halpert', 'going', 'jim'],
+    ['cyclone-past-practice', 'player', 'luke-dunphy', 'going', 'phil'],
+    ['cyclone-past-practice', 'player', 'emma-green', 'going', 'rachel'],
+    ['cyclone-past-game', 'player', 'luke-dunphy', 'not_going', 'claire'],
   ];
   for (const [eventId, participantType, participantId, status, respondedBy] of rsvps) {
     const e = events.find((x) => x.id === eventId)!;
@@ -359,11 +365,11 @@ async function main() {
   const polls: { id: string; groupId: string; by: string; question: string; options: string[]; votes: Record<string, number[]>; allowMultiple?: true; ago: number }[] = [
     {
       id: 'thunder-dinner', groupId: 'thunder', by: 'coach', question: 'Team dinner after the game?',
-      options: ['Tacos', 'Pizza', 'Burgers'], votes: { alex: [0], sam: [0], maria: [0], coach: [1] }, ago: 150,
+      options: ['Tacos', 'Pizza', 'Burgers'], votes: { jim: [0], andy: [0], claire: [0], coach: [1] }, ago: 150,
     },
     {
-      id: 'possums-tournament', groupId: 'possums', by: 'priya', question: 'Which tournament weekend works for your family?',
-      options: ['Nov 7–8', 'Nov 14–15', 'Dec 5–6'], votes: { priya: [0, 1], maria: [0], tasha: [1], ben: [0] }, allowMultiple: true, ago: 120,
+      id: 'possums-tournament', groupId: 'possums', by: 'rachel', question: 'Which tournament weekend works for your family?',
+      options: ['Nov 7–8', 'Nov 14–15', 'Dec 5–6'], votes: { rachel: [0, 1], claire: [0], monica: [1], chandler: [0] }, allowMultiple: true, ago: 120,
     },
   ];
   for (const p of polls) {
@@ -391,7 +397,7 @@ async function main() {
   }
 
   // Messages, with the team preview the messages trigger would write (M3).
-  // Thunder's first is the coach's announcement, pinned to the top; Alex
+  // Thunder's first is the coach's announcement, pinned to the top; Jim
   // mentions the coach; the game's card and the dinner poll sit between
   // (CHAT-11, CHAT-14, CHAT-15). Cyclone's has a reply and a mention.
   type Line = { uid: string; text: string; ago: number; extra?: Record<string, unknown>; id?: string };
@@ -402,32 +408,33 @@ async function main() {
   const game = events.find((e) => e.id === 'thunder-game')!;
   const chats: Record<string, Line[]> = {
     thunder: [
-      { uid: 'coach', text: 'Field 3 is open tonight. See everyone at 6!', ago: 300, extra: { announcement: true, reactions: { alex: 'like', sam: 'love', maria: 'like' } } },
-      { uid: 'alex', text: `@${nameOf('coach')} I can bring the extra bats.`, ago: 260, extra: { mentions: ['coach'] } },
+      { uid: 'coach', text: 'Field 3 is open tonight. See everyone at 6!', ago: 300, extra: { announcement: true, reactions: { jim: 'like', andy: 'love', claire: 'like' } } },
+      { uid: 'jim', text: `@${nameOf('coach')} I can bring the extra bats.`, ago: 260, extra: { mentions: ['coach'] } },
       { uid: 'coach', id: game.id, text: `${game.title} · ${when(game)} · ${place.name}`, ago: 200, extra: { type: 'event', eventId: game.id, seriesId: null } },
       { uid: 'coach', id: 'thunder-dinner', text: 'Team dinner after the game?', ago: 150, extra: { type: 'poll', pollId: 'thunder-dinner' } },
-      { uid: 'sam', text: 'Tacos, every time.', ago: 45, extra: { reactions: { alex: 'laugh' } } },
-      { uid: 'sam', text: 'On my way!', ago: 10 },
+      { uid: 'andy', text: 'Tacos, every time.', ago: 45, extra: { reactions: { jim: 'laugh' } } },
+      { uid: 'andy', text: 'On my way!', ago: 10 },
     ],
     cyclone: [
-      { uid: 'coach', text: 'Reminder: shin guards for everyone on Saturday.', ago: 600, extra: { reactions: { maria: 'like', luis: 'like', priya: 'love' } } },
-      { uid: 'maria', text: 'Emma and Mia will be there. Can someone carpool from the school?', ago: 140 },
+      { uid: 'coach', text: 'Reminder: shin guards for everyone on Saturday.', ago: 600, extra: { reactions: { claire: 'like', phil: 'like', rachel: 'love' } } },
+      { uid: 'claire', text: 'Luke and Alex will be there. Can someone carpool from the school?', ago: 140 },
       {
-        uid: 'priya', text: "We can take two! Arjun's leaving at 8:30.", ago: 120,
+        uid: 'rachel', text: "We can take two! Emma's leaving at 8:30.", ago: 120,
         extra: {
           replyToId: 'cyclone-seed-1',
-          replyPreview: { authorName: nameOf('maria'), text: 'Emma and Mia will be there. Can someone carpool from the school?', type: 'text', deleted: false },
-          reactions: { maria: 'love' },
+          replyPreview: { authorName: nameOf('claire'), text: 'Luke and Alex will be there. Can someone carpool from the school?', type: 'text', deleted: false },
+          reactions: { claire: 'love' },
         },
       },
-      { uid: 'coach', text: `@${nameOf('priya')} thank you! Kickoff is at 9:30, warmups at 9.`, ago: 95, extra: { mentions: ['priya'] } },
-      { uid: 'luis', text: "Emma's cleats are in my car. I'll bring them.", ago: 30, extra: { reactions: { maria: 'love' } } },
+      { uid: 'coach', text: `@${nameOf('rachel')} thank you! Kickoff is at 9:30, warmups at 9.`, ago: 95, extra: { mentions: ['rachel'] } },
+      { uid: 'phil', text: "Luke's cleats are in my car. I'll bring them.", ago: 30, extra: { reactions: { claire: 'love' } } },
     ],
     possums: [
-      { uid: 'priya', text: 'Great hustle at practice today, team.', ago: 300, extra: { reactions: { maria: 'love', tasha: 'like' } } },
-      { uid: 'priya', id: 'possums-tournament', text: 'Which tournament weekend works for your family?', ago: 120, extra: { type: 'poll', pollId: 'possums-tournament' } },
-      { uid: 'tasha', text: 'Either November weekend works for us!', ago: 60 },
-      { uid: 'ben', text: "Owen's in for both. 🏀", ago: 20 },
+      { uid: 'rachel', text: 'Great hustle at practice today, team.', ago: 300, extra: { reactions: { claire: 'love', monica: 'like' } } },
+      { uid: 'rachel', id: 'possums-tournament', text: 'Which tournament weekend works for your family?', ago: 120, extra: { type: 'poll', pollId: 'possums-tournament' } },
+      { uid: 'monica', text: 'Either weekend works for us!', ago: 60 },
+      { uid: 'chandler', text: "Jack's in for both. 🏀", ago: 20 },
+      { uid: 'rachel', text: "Nov 7–8 it is! I'll send the bracket.", ago: 8 },
     ],
   };
   for (const [groupId, list] of Object.entries(chats)) {
@@ -460,8 +467,8 @@ async function main() {
   const docs: { id: string; name: string; kind: 'file' | 'link'; by: string; days: number; pinned?: true; type?: string; size?: number; url?: string }[] = [
     { id: 'thunder-lineup', name: 'Saturday lineup.pdf', kind: 'file', by: 'coach', days: 1, pinned: true, type: 'application/pdf', size: 86_000 },
     { id: 'thunder-rules', name: 'League rules 2026.pdf', kind: 'file', by: 'coach', days: 10, pinned: true, type: 'application/pdf', size: 1_240_000 },
-    { id: 'thunder-directions', name: 'Field directions', kind: 'link', by: 'alex', days: 5, url: 'https://maps.example.com/riverside-park' },
-    { id: 'thunder-plan', name: 'Practice plan.docx', kind: 'file', by: 'alex', days: 2, type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: 46_000 },
+    { id: 'thunder-directions', name: 'Field directions', kind: 'link', by: 'jim', days: 5, url: 'https://maps.example.com/riverside-park' },
+    { id: 'thunder-plan', name: 'Practice plan.docx', kind: 'file', by: 'jim', days: 2, type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: 46_000 },
     { id: 'thunder-waiver', name: 'Player waiver.pdf', kind: 'file', by: 'coach', days: 20, type: 'application/pdf', size: 220_000 },
   ];
   for (const d of docs) {
@@ -534,7 +541,7 @@ async function main() {
   });
 
   console.log(`Seeded ${people.length} people, ${teams.length} teams, ${players.length} players.`);
-  console.log('Sign in as coach@example.com (Thunder and Cyclone) or maria@example.com (all three teams); password "password".');
+  console.log('Sign in as coach@example.com (Thunder and Cyclone) or claire@example.com (all three teams); password "password".');
 }
 
 main().catch((e) => {

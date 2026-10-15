@@ -148,7 +148,7 @@ service cloud.firestore {
       return t is map && t.keys().hasOnly(['bubbleColor', 'background', 'backgroundPath'])
         && (t.get('bubbleColor', null) == null || t.bubbleColor in ['#2F5BEA', '#7BAFD4',
             '#0F8A5F', '#C2410C', '#B91C1C', '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F',
-            '#1D4ED8', '#9333EA', '#334155'])
+            '#1D4ED8', '#9333EA', '#334155', '#1E3A5F', '#D4A017'])
         && t.get('background', 'plain') in ['plain', 'pattern', 'photo']
         && (t.get('backgroundPath', null) == null
             || t.backgroundPath.matches('groups/' + g + '/theme/[^/]+'));
@@ -162,7 +162,7 @@ service cloud.firestore {
                        'soccer', 'softball', 'volleyball', 'other']
         && (t.color == null || t.color in ['#2F5BEA', '#7BAFD4', '#0F8A5F', '#C2410C', '#B91C1C',
             '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F', '#1D4ED8',
-            '#9333EA', '#334155'])
+            '#9333EA', '#334155', '#1E3A5F', '#D4A017'])
         && t.get('description', '').size() <= 500
         && (t.photoPath == null || t.photoPath.matches('groups/' + g + '/avatar/[^/]+'))
         && t.settings.keys().hasOnly(['membersCanCreateEvents', 'membersCanCreatePolls',

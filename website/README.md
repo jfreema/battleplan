@@ -37,17 +37,17 @@ The App Store and Google Play badges wait for the listings (ROADMAP tasks 130 an
 
 ## Screenshots
 
-The screenshots are real captures of the web app with the seeded sample teams (Thunder, Cyclone, and Rally Possums), taken locally against the Firebase emulators (never dev or prod). Each one shows a different screen:
+The screenshots are real captures of the web app with the seeded sample teams (Thunder, Cyclone, and Rally Possums, in navy and orange, Carolina blue and gray, and purple and gold) and people (common American names and TV characters), taken locally against the Firebase emulators (never dev or prod). Each one shows a different screen:
 
 | Image | Signed in as | Screen |
 |---|---|---|
-| `chat` (hero) | `coach@example.com` | Thunder's chat, opened at the first unread message: the announcement, Alex's mention, the game card, the dinner poll |
-| `teams` (hero, behind) | `maria@example.com` | The team switcher over Rally Possums' chat |
+| `chat` (hero) | `coach@example.com` | Thunder's chat, opened at the first unread message: the announcement, Jim's mention, the game card, the dinner poll |
+| `teams` (hero, behind) | `claire@example.com` | The team switcher over Rally Possums' chat |
 | `conversation` | `coach@example.com` | Cyclone's chat: a reply, a mention, reactions |
 | `event`, `schedule` | `coach@example.com` | Thunder's game against the Eagles, and Thunder's schedule |
-| `poll` | `priya@example.com` | Rally Possums' tournament poll |
+| `poll` | `rachel@example.com` | Rally Possums' tournament poll |
 | `documents` | `coach@example.com` | Thunder's documents |
-| `youth` | `maria@example.com` | Cyclone's practice, answering for Emma and Mia |
+| `youth` | `claire@example.com` | Cyclone's practice, answering for Luke and Alex |
 | `whiteboard` | `coach@example.com` | Team menu → **Whiteboard** → More → **Saved plays** → **Bunt defense** → More → **Put on the whiteboard** |
 
 1. Start the emulators **without functions** (`firebase emulators:start --only auth,firestore,storage`), so the seeded events don't post cards to the chats or send notifications. Then seed them (DEVELOPMENT.md, `npm --prefix tools/seed run seed`). Seed again before each run: opening a chat marks it read.

@@ -233,6 +233,7 @@ SPEC PLAYER-12 and Q18, ARCH §6.2, §6.3, and D63. The owner asked to keep play
 259. ✅ Coaches on the roster, at the owner's request (2026-10-15, SPEC TEAM-3). *Admins turn on **Coach** on a person's card (a parent who coaches too); the roster lists Coaches after the players, with their Owner or Admin badge. Until it's set, the owner counts as a coach.*
 260. ✅ RSVPs put players first, at the owner's request (2026-10-15, SPEC PLAYER-6, SCHED-5). *Linked players come first; a Me row, below them, is for coaches and members not linked to any player, so a parent who isn't a coach no longer sees their own answer above their kids'. Reminders follow the same rule. **Clear** takes an answer back to No response.*
 261. ✅ The GroupMe steps say to export only the team's group if GroupMe asks, and that an export of every chat is fine: only the picked group is imported (2026-10-15, SPEC IMPORT-9).
+262. ✅ The sample teams in their colors and the sample people renamed, at the owner's request (2026-10-15). *Thunder is navy and orange, Cyclone Carolina blue and gray, Rally Possums purple and gold (team color, then chat bubbles); navy and gold join the team palette, now 15 colors, and team badges show white or black initials, whichever reads better. The seed's and the App Review demo's people are common American names and TV characters (Eric Taylor, Jim Halpert, the Dunphys, Rachel Green, and more); the landing page's screenshots and link preview show them.*
 
 ## Go-live in six phases
 

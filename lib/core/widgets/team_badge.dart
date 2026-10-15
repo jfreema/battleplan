@@ -49,17 +49,24 @@ class TeamBadge extends StatelessWidget {
     );
   }
 
-  Widget _initials() => ColoredBox(
-    color: color ?? AppTokens.brand,
-    child: Center(
-      child: Text(
-        Avatar.initialsOf(name),
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-          fontSize: size * 0.38,
+  Widget _initials() {
+    final fill = color ?? AppTokens.brand;
+    return ColoredBox(
+      color: fill,
+      child: Center(
+        child: Text(
+          Avatar.initialsOf(name),
+          style: TextStyle(
+            // White or black, whichever reads better on the team's color
+            // (Carolina blue and gold are light), as chat bubbles do.
+            color: ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
+                ? Colors.white
+                : Colors.black,
+            fontWeight: FontWeight.w700,
+            fontSize: size * 0.38,
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -22,16 +22,16 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
    npm --prefix tools/seed run seed
    ```
 
-   It creates three teams (Thunder, adult softball players; Cyclone, kids' soccer; and Rally Possums, kids' basketball), parents with players on two teams, adults linked to their own players, a pending player to approve, events, RSVPs, polls, documents, a saved play, and messages. These are also the landing page's screenshots (`website/README.md`). Every password is `password`:
+   It creates three teams (Thunder, adult softball players; Cyclone, kids' soccer; and Rally Possums, kids' basketball), with common American names and TV characters for people, parents with players on two teams, adults linked to their own players, a pending player to approve, events, RSVPs, polls, documents, a saved play, and messages. These are also the landing page's screenshots (`website/README.md`). Every password is `password`:
 
    | Email | Who |
    |---|---|
-   | `coach@example.com` | Owner of Thunder (adult players) and Cyclone (kids) |
-   | `maria@example.com` | Parent on all three teams, with players on two (Emma and Mia on Cyclone, Liam on Rally Possums); asked to join Thunder's roster as a player (pending) |
-   | `priya@example.com` | Owner of Rally Possums, parent on Cyclone |
-   | `alex@example.com`, `sam@example.com` | Players on Thunder, linked to their own players (Alex is also an admin) |
-   | `luis@example.com` | Parent on Cyclone |
-   | `tasha@example.com`, `ben@example.com` | Parents on Rally Possums |
+   | `coach@example.com` | Eric Taylor, owner of Thunder (adult players) and Cyclone (kids) |
+   | `claire@example.com` | Claire Dunphy, parent on all three teams, with players on two (Luke and Alex on Cyclone, Haley on Rally Possums); asked to join Thunder's roster as a player (pending) |
+   | `rachel@example.com` | Rachel Green, owner of Rally Possums, parent on Cyclone |
+   | `jim@example.com`, `andy@example.com` | Jim Halpert and Andy Dwyer, players on Thunder, linked to their own players (Jim is also an admin) |
+   | `phil@example.com` | Phil Dunphy, parent and assistant coach on Cyclone |
+   | `monica@example.com`, `chandler@example.com` | Monica Geller and Chandler Bing, parents on Rally Possums |
    | `admin@example.com` | Super admin |
 
 3. **Run the app** with the emulator flag. In VS Code pick **Dev (emulators)** or **Web (Chrome, emulators)**, or:
@@ -151,7 +151,7 @@ DEMO_PASSWORD='<at least 12 characters>' npm --prefix tools/seed run demo -- \
   --project battleplan-dev-ecce4 --write-to-dev
 ```
 
-It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which owns *Riverside Thunder*, a team of adult players with one player linked to its own member and a pending player to approve, and is a parent on the kids' team *Lightning U10*, with messages, events, RSVPs, and a pinned link. Running it again resets the password and rewrites the same `demo-` documents. Put the email and password in the App Review notes, never in the repo. To try it locally, start the emulators and run `npm --prefix tools/seed run demo:emulators`. A prod demo account, at launch, is made by hand.
+It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which owns *Thunder*, a team of adult players with one player linked to its own member and a pending player to approve, and is a parent on the kids' team *Cyclone*, with messages, events, RSVPs, and a pinned link. Running it again resets the password and rewrites the same `demo-` documents. Put the email and password in the App Review notes, never in the repo. To try it locally, start the emulators and run `npm --prefix tools/seed run demo:emulators`. A prod demo account, at launch, is made by hand.
 
 ## App icons and splash screens
 

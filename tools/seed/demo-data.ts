@@ -14,12 +14,17 @@ export interface DemoDoc {
   data: Record<string, unknown>;
 }
 
-/** Sample teammates: profiles and memberships only, no sign-in accounts. */
+/**
+ * Sample teammates: profiles and memberships only, no sign-in accounts.
+ * Common American names and TV characters, as in the emulator seed. The
+ * IDs stay as they were, so running it again renames the same people
+ * instead of leaving the old ones on the teams.
+ */
 export const DEMO_PEOPLE = [
-  { uid: 'demo-jordan', name: 'Jordan Lee' },
-  { uid: 'demo-sam', name: 'Sam Rivera' },
-  { uid: 'demo-maria', name: 'Maria Rodriguez' },
-  { uid: 'demo-priya', name: 'Priya Shah' },
+  { uid: 'demo-jordan', name: 'Jim Halpert' },
+  { uid: 'demo-sam', name: 'Andy Dwyer' },
+  { uid: 'demo-maria', name: 'Claire Dunphy' },
+  { uid: 'demo-priya', name: 'Rachel Green' },
 ] as const;
 
 const SETTINGS = {
@@ -91,9 +96,9 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
     [DEMO_TEAM, 'demo-maria', 'member', null, null],
     [DEMO_YOUTH_TEAM, 'demo-priya', 'owner', 'Coach', null],
     [DEMO_YOUTH_TEAM, demo.uid, 'member', null, 'Riley #9'],
-    [DEMO_YOUTH_TEAM, 'demo-maria', 'member', null, 'Emma #7'],
+    [DEMO_YOUTH_TEAM, 'demo-maria', 'member', null, 'Luke #7'],
   ];
-  // Sam is a player on Thunder ('self'); Casey isn't claimed yet; Maria
+  // Andy is a player on Thunder ('self'); Pam isn't claimed yet; Claire
   // asked to join Thunder's roster, waiting for the demo account to approve.
   const players: {
     id: string;
@@ -105,10 +110,10 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
     pendingBy?: string;
   }[] = [
     { id: 'demo-riley', groupId: DEMO_YOUTH_TEAM, name: 'Riley Review', number: '9', position: 'Midfield', link: { uid: demo.uid, relation: 'guardian' } },
-    { id: 'demo-emma', groupId: DEMO_YOUTH_TEAM, name: 'Emma Rodriguez', number: '7', position: 'Forward', link: { uid: 'demo-maria', relation: 'guardian' } },
-    { id: 'demo-sam-rivera', groupId: DEMO_TEAM, name: 'Sam Rivera', number: '12', position: 'Shortstop', link: { uid: 'demo-sam', relation: 'self' } },
-    { id: 'demo-casey', groupId: DEMO_TEAM, name: 'Casey Park', number: '5', position: 'Outfield', link: null },
-    { id: 'demo-maria-rodriguez', groupId: DEMO_TEAM, name: 'Maria Rodriguez', number: '', position: '', link: null, pendingBy: 'demo-maria' },
+    { id: 'demo-emma', groupId: DEMO_YOUTH_TEAM, name: 'Luke Dunphy', number: '7', position: 'Forward', link: { uid: 'demo-maria', relation: 'guardian' } },
+    { id: 'demo-sam-rivera', groupId: DEMO_TEAM, name: 'Andy Dwyer', number: '12', position: 'Shortstop', link: { uid: 'demo-sam', relation: 'self' } },
+    { id: 'demo-casey', groupId: DEMO_TEAM, name: 'Pam Beesly', number: '5', position: 'Outfield', link: null },
+    { id: 'demo-maria-rodriguez', groupId: DEMO_TEAM, name: 'Claire Dunphy', number: '', position: '', link: null, pendingBy: 'demo-maria' },
   ];
   const chats: Record<string, [string, string, number][]> = {
     [DEMO_TEAM]: [
@@ -118,13 +123,13 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
     ],
     [DEMO_YOUTH_TEAM]: [
       ['demo-priya', 'Reminder: shin guards for everyone on Saturday.', 600],
-      ['demo-maria', 'Emma will be there. Can someone carpool?', 120],
+      ['demo-maria', 'Luke will be there. Can someone carpool?', 120],
     ],
   };
 
   const teams = [
-    { id: DEMO_TEAM, name: 'Riverside Thunder', sport: 'softball', color: '#2F5BEA' },
-    { id: DEMO_YOUTH_TEAM, name: 'Lightning U10', sport: 'soccer', color: '#0F8A5F' },
+    { id: DEMO_TEAM, name: 'Thunder', sport: 'softball', color: '#1E3A5F' },
+    { id: DEMO_YOUTH_TEAM, name: 'Cyclone', sport: 'soccer', color: '#7BAFD4' },
   ];
   for (const t of teams) {
     const members = memberships.filter((m) => m[0] === t.id);
@@ -218,7 +223,7 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
   add('playerDetails/demo-sam-rivera', {
     groupId: DEMO_TEAM,
     dateOfBirth: `${year - 27}-08-03`,
-    emergencyContacts: [{ name: 'Alex Rivera', phone: '555-0142', relationship: 'Partner' }],
+    emergencyContacts: [{ name: 'April Ludgate', phone: '555-0142', relationship: 'Partner' }],
     medicalNotes: null,
     notes: null,
     updatedBy: 'demo-sam',
