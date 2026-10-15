@@ -6,6 +6,11 @@
 # It releases only a commit CI passed on, waiting for CI if it's still
 # running, unless skip_ci_check is set. Deploy access is keyless (Workload
 # Identity Federation, set up by tools/setup_github_deploys.sh).
+#
+# Only the deploy job can get into Google, so only it may ask GitHub for a
+# login token (id-token: write). It runs nothing but GitHub's and Google's
+# own actions, pinned to commits, and the Firebase CLI at an exact version;
+# the Flutter build, with its third-party action, runs in a job that can't.
 name: Release
 
 on:
@@ -60,9 +65,39 @@ jobs:
           echo "::error::CI didn't finish within an hour."
           exit 1
 
+  build:
+    name: Build the site for ${{ inputs.flavor }}
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Hosting build (website + web app under /app)
+        env:
+          # Not secrets: the reCAPTCHA site key for App Check once there is
+          # one, and the Apple team for apple-app-site-association.
+          APP_CHECK_WEB_KEY: ${{ inputs.flavor == 'prod' && vars.APP_CHECK_WEB_KEY_PROD || vars.APP_CHECK_WEB_KEY_DEV }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        run: tools/build_hosting.sh "${{ inputs.flavor }}" ${APP_CHECK_WEB_KEY:+--dart-define=APP_CHECK_WEB_KEY=$APP_CHECK_WEB_KEY}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hosting-${{ inputs.flavor }}
+          path: build/hosting
+          include-hidden-files: true
+          retention-days: 3
+
   release:
     name: Release to ${{ inputs.flavor }}
-    needs: checks
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -76,32 +111,28 @@ jobs:
     env:
       PROJECT: ${{ inputs.flavor == 'prod' && 'battleplan-prod' || 'battleplan-dev-ecce4' }}
       SITE: ${{ inputs.flavor == 'prod' && 'https://getbattleplan.app' || 'https://battleplan-dev-ecce4.web.app' }}
-      FIREBASE: npx --yes firebase-tools@15
+      FIREBASE: npx --yes firebase-tools@15.33.0
+      # No package's install scripts run here, the Firebase CLI's included:
+      # none is needed to deploy (a dry run checks it), and none gets the
+      # chance to ask for a login token. `npm run` scripts still run.
+      npm_config_ignore_scripts: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: functions/package-lock.json
-
-      - name: Hosting build (website + web app under /app)
-        env:
-          # Not secrets: the reCAPTCHA site key for App Check once there is
-          # one, and the Apple team for apple-app-site-association.
-          APP_CHECK_WEB_KEY: ${{ inputs.flavor == 'prod' && vars.APP_CHECK_WEB_KEY_PROD || vars.APP_CHECK_WEB_KEY_DEV }}
-          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
-        run: tools/build_hosting.sh "${{ inputs.flavor }}" ${APP_CHECK_WEB_KEY:+--dart-define=APP_CHECK_WEB_KEY=$APP_CHECK_WEB_KEY}
-
+      # From the lockfile. Functions don't need @firebase/util's and
+      # protobufjs's install scripts.
       - name: Functions dependencies
         run: npm ci --prefix functions
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hosting-${{ inputs.flavor }}
+          path: build/hosting
 
-      - uses: google-github-actions/auth@v2
+      - uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           workload_identity_provider: ${{ inputs.flavor == 'prod' && vars.WIF_PROVIDER_PROD || vars.WIF_PROVIDER }}
           service_account: ${{ inputs.flavor == 'prod' && vars.WIF_SERVICE_ACCOUNT_PROD || vars.WIF_SERVICE_ACCOUNT }}
