@@ -1556,7 +1556,7 @@
   "importFailed": "Couldn't import. Try again.",
   "importFileTooLarge": "That file is over 1 MB, too large for a calendar.",
   "importGroupMeTitle": "Your GroupMe data export",
-  "importGroupMeSteps": "On a computer, go to web.groupme.com and sign in. Open your profile, choose Export Data, then Create Export. GroupMe emails you when it's ready. Download it, then choose it here. A large export can come in parts: import each one.",
+  "importGroupMeSteps": "On a computer, go to web.groupme.com and sign in. Click your profile picture, choose Export my data, then Create export. If GroupMe asks which chats to include, choose only your team's group. When it's ready, download it from Export my data and choose it here. If it has all your chats, you'll pick your team's group next: only that group is imported, and the rest never leaves this device. A large export can come in parts: import each one.",
   "importChooseExport": "Choose the export (.zip)",
   "importReadingExport": "Reading the export…",
   "importNotExport": "That isn't a GroupMe export. Choose the .zip file GroupMe made.",
