@@ -424,24 +424,29 @@ export const resolvePendingPlayer = onCall(async (request) => {
 
 /**
  * A linked member (the player or a guardian) or an admin adds a guardian
- * by email (PLAYER-5). The existing link vouches for them, so no approval
- * is needed. New emails get an
- * added account and a setup email; people already on Battleplan get an
- * "added to the team" email if they weren't on it.
+ * (PLAYER-5), by email or by picking someone already on the team (uid).
+ * The existing link vouches for them, so no approval is needed. New
+ * emails get an added account and a setup email; people already on
+ * Battleplan get an "added to the team" email if they weren't on it. A
+ * member picked from the team gets no email, only a "You're now Emma's
+ * guardian" notification.
  */
 export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request) => {
   const actor = requireAuth(request);
   const input = parse(
-    z.object({
-      groupId: z.string().min(1),
-      playerId: z.string().min(1),
-      name: z.string().trim().max(60).nullable().optional(),
-      email: z.string().trim().email().max(200),
-    }),
+    z
+      .object({
+        groupId: z.string().min(1),
+        playerId: z.string().min(1),
+        name: z.string().trim().max(60).nullable().optional(),
+        email: z.string().trim().email().max(200).optional(),
+        uid: z.string().min(1).max(128).optional(),
+      })
+      .refine((d) => (d.email === undefined) !== (d.uid === undefined), 'Give an email or a uid.'),
     request.data,
   );
   // Adding someone by email needs a verified email (AUTH-3).
-  requireVerifiedEmail(request);
+  if (input.email !== undefined) requireVerifiedEmail(request);
   const superAdmin = request.auth?.token.superAdmin === true;
   const { role, teamName } = await requireTeamMember(input.groupId, actor, superAdmin);
   const player = await db().collection(Collections.players).doc(input.playerId).get();
@@ -455,8 +460,12 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   if ((await guardianCount(input.playerId)) >= Limits.guardiansPerPlayerMax) {
     throw new HttpsError('failed-precondition', 'too-many-guardians');
   }
+  if (input.uid !== undefined) {
+    return linkTeamMemberAsGuardian(input.groupId, input.playerId, input.uid, actor, String(player.get('displayName') ?? ''));
+  }
+  const email = input.email ?? '';
   await consumeRateLimit(input.groupId, 'addByEmail', Limits.addByEmailPerGroupPerDay);
-  const user = await findOrProvisionUser(input.email, input.name ?? null);
+  const user = await findOrProvisionUser(email, input.name ?? null);
   const wasMember = (
     await db().collection(Collections.groupMembers).doc(groupMemberId(input.groupId, user.uid)).get()
   ).exists;
@@ -473,9 +482,9 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   if (!wasMember) await notifyAddedToTeam(input.groupId, teamName, { uid: actor, name: actorName }, [user.uid]);
   try {
     if (user.provisioned) {
-      await sendSetupEmail(input.email, teamName, actorName);
+      await sendSetupEmail(email, teamName, actorName);
     } else if (!wasMember) {
-      await sendEmail(addedToTeamEmail(input.email.trim().toLowerCase(), teamName, actorName, teamUrl(input.groupId)));
+      await sendEmail(addedToTeamEmail(email.trim().toLowerCase(), teamName, actorName, teamUrl(input.groupId)));
     }
   } catch (e) {
     logger.error('guardian_email_failed', { groupId: input.groupId, error: String(e) });
@@ -490,6 +499,45 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   });
   return { uid: user.uid, invited: user.provisioned };
 });
+
+/**
+ * inviteGuardian for someone already on the team (PLAYER-5): links them,
+ * tells them, and sends no email. Someone not on the team is refused
+ * ('no-member'), as is the member who is the player ('already-linked').
+ * Already their guardian changes nothing.
+ */
+async function linkTeamMemberAsGuardian(
+  groupId: string,
+  playerId: string,
+  uid: string,
+  actor: string,
+  playerName: string,
+): Promise<{ uid: string; invited: boolean }> {
+  const member = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, uid)).get();
+  if (!member.exists) throw new HttpsError('not-found', 'no-member');
+  const existing = await linkOf(playerId, uid);
+  if (existing === 'self') throw new HttpsError('failed-precondition', 'already-linked');
+  if (existing === 'guardian') return { uid, invited: false };
+  const user = {
+    uid,
+    displayName: String(member.get('displayName') ?? ''),
+    photoPath: (member.get('photoPath') as string | null | undefined) ?? null,
+  };
+  await linkGuardian(groupId, playerId, user, actor, 'guardian', 'guardian', { requireMember: true });
+  await refreshPlayerSummary(groupId, uid);
+  if (uid !== actor) {
+    await tellApproved({ groupId, uid, actor, playerId, playerName, relation: 'guardian', proposal: false });
+  }
+  await audit({
+    actorId: actor,
+    action: 'inviteGuardian',
+    groupId,
+    targetType: 'player',
+    targetId: playerId,
+    after: { uid },
+  });
+  return { uid, invited: false };
+}
 
 /** Removes a link from a player (PLAYER-2): admins, or the linked member themselves. */
 export const removeGuardian = onCall(async (request) => {

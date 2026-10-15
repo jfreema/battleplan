@@ -1169,6 +1169,15 @@ class FakePlayerRepository implements PlayerRepository {
   }
 
   @override
+  Future<void> addTeamMemberAsGuardian(
+    GroupId groupId,
+    PlayerId playerId,
+    UserId uid,
+  ) async {
+    calls.add('addTeamMemberAsGuardian ${playerId.value} ${uid.value}');
+  }
+
+  @override
   Future<void> removeGuardian(
     GroupId groupId,
     PlayerId playerId,
@@ -3040,6 +3049,13 @@ class RefusingPlayerRepository extends FakePlayerRepository {
     required String email,
     String? name,
   }) async => throw failure;
+
+  @override
+  Future<void> addTeamMemberAsGuardian(
+    GroupId groupId,
+    PlayerId playerId,
+    UserId uid,
+  ) async => throw failure;
 
   @override
   Future<ClaimOutcome> claimPlayer(

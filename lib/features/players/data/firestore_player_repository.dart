@@ -244,6 +244,17 @@ class FirestorePlayerRepository implements PlayerRepository {
   }
 
   @override
+  Future<void> addTeamMemberAsGuardian(
+    GroupId groupId,
+    PlayerId playerId,
+    UserId uid,
+  ) => _call('inviteGuardian', {
+    'groupId': groupId.value,
+    'playerId': playerId.value,
+    'uid': uid.value,
+  });
+
+  @override
   Future<void> removeGuardian(GroupId groupId, PlayerId playerId, UserId uid) =>
       _call('removeGuardian', {
         'groupId': groupId.value,

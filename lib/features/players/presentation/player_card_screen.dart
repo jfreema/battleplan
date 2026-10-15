@@ -12,10 +12,12 @@ import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/players/presentation/date_of_birth_field.dart';
+import 'package:battleplan/features/players/presentation/guardian_picker.dart';
 import 'package:battleplan/features/players/presentation/player_details_section.dart';
 import 'package:battleplan/features/players/presentation/player_dialogs.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
@@ -28,7 +30,7 @@ import 'package:material_ui/material_ui.dart';
 /// of birth (for those who see the Details), and who's linked, each marked
 /// Player or Guardian. Linked
 /// members (the player themselves included) and admins edit the details
-/// and add a guardian (PLAYER-5); admins remove links and the player, and
+/// and add a guardian, picked from the team or by email (PLAYER-5); admins remove links and the player, and
 /// a linked member can remove their own link. A member who isn't linked can claim
 /// the player, as the player or a parent or guardian (PLAYER-3). The
 /// team's admins and linked members also see the player's Details, and
@@ -194,7 +196,20 @@ class PlayerCardScreen extends ConsumerWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                onPressed: () => unawaited(_addGuardian(context, ref)),
+                onPressed: () => unawaited(
+                  _addGuardian(
+                    context,
+                    ref,
+                    guardianCandidates(
+                      roster,
+                      linked: {for (final l in playerLinks) l.uid.value},
+                      me: me,
+                      isAdmin: isAdmin,
+                      membersCanSeePeople:
+                          group?.settings.membersCanSeePeople ?? true,
+                    ),
+                  ),
+                ),
                 icon: const Icon(AppIcons.invite),
                 label: Text(l10n.addGuardian),
               ),
@@ -267,7 +282,48 @@ class PlayerCardScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _addGuardian(BuildContext context, WidgetRef ref) async {
+  /// "Add a guardian" (PLAYER-5): someone on the team from [candidates],
+  /// or by email. With no one to pick, straight to the email.
+  Future<void> _addGuardian(
+    BuildContext context,
+    WidgetRef ref,
+    List<Membership> candidates,
+  ) async {
+    if (candidates.isEmpty) return await _inviteGuardian(context, ref);
+    final picked = await pickGuardian(context, candidates: candidates);
+    if (!context.mounted) return;
+    switch (picked) {
+      case null:
+        return;
+      case GuardianByEmail():
+        return await _inviteGuardian(context, ref);
+      case GuardianFromTeam(:final member):
+        final l10n = AppLocalizations.of(context);
+        try {
+          await ref
+              .read(playerRepositoryProvider)
+              .addTeamMemberAsGuardian(groupId, playerId, member.uid);
+          if (context.mounted) showAppSnackBar(context, l10n.guardianAdded);
+        } on AppFailure catch (e) {
+          if (context.mounted) {
+            showAppSnackBar(context, _addGuardianFailure(l10n, e));
+          }
+        }
+    }
+  }
+
+  String _addGuardianFailure(AppLocalizations l10n, AppFailure e) =>
+      switch (e) {
+        InvalidInput(message: 'too-many-guardians') => l10n.tooManyGuardians,
+        // They're the member who is this player (PLAYER-3).
+        InvalidInput(message: 'already-linked') => l10n.guardianAlreadyLinked,
+        RateLimited() => l10n.signInRateLimited,
+        EmailNotVerified() => l10n.addByEmailNeedsVerified,
+        _ => l10n.errorAddGuardian,
+      };
+
+  /// Adds a guardian by email (PLAYER-5).
+  Future<void> _inviteGuardian(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final email = TextEditingController();
     final name = TextEditingController();
@@ -323,14 +379,7 @@ class PlayerCardScreen extends ConsumerWidget {
       }
     } on AppFailure catch (e) {
       if (context.mounted) {
-        showAppSnackBar(context, switch (e) {
-          InvalidInput(message: 'too-many-guardians') => l10n.tooManyGuardians,
-          // The email is the member who is this player (PLAYER-3).
-          InvalidInput(message: 'already-linked') => l10n.guardianAlreadyLinked,
-          RateLimited() => l10n.signInRateLimited,
-          EmailNotVerified() => l10n.addByEmailNeedsVerified,
-          _ => l10n.errorAddGuardian,
-        });
+        showAppSnackBar(context, _addGuardianFailure(l10n, e));
       }
     }
   }

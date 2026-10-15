@@ -455,6 +455,50 @@ describe('claims and pending players (PLAYER-3, PLAYER-4)', () => {
   });
 });
 
+describe('adding someone already on the team as a guardian (PLAYER-5)', () => {
+  const link = async (uid: string) => (await db().collection(Collections.playerGuardians).doc(`open-p1_${uid}`).get()).data();
+  const approvals = async () =>
+    (await db().collection(Collections.notifications).where('type', '==', 'guardianApproved').get()).docs.map(
+      (d) => `${d.get('uid')}: ${d.get('body')}`,
+    );
+  const byUid = (uid: string) => ({ groupId: 'open', playerId: 'open-p1', uid });
+  const join = (uid: string) => members().doc(`open_${uid}`).set({ groupId: 'open', uid, role: 'member', displayName: uid });
+
+  it('links them with no email and no verified email needed, and tells them', async () => {
+    expect(await run(players.inviteGuardian, 'pat', byUid('sam'), {})).toEqual({ uid: 'sam', invited: false });
+    expect(await link('sam')).toMatchObject({ relation: 'guardian', via: 'guardian', addedBy: 'pat' });
+    expect((await members().doc('open_sam').get()).get('playerSummary')).toBeTruthy();
+    expect(await approvals()).toEqual(["sam: You're now Emma's guardian"]);
+    expect(mail.sent).toEqual([]);
+    // Again changes nothing and tells no one twice.
+    await run(players.inviteGuardian, 'pat', byUid('sam'));
+    expect(await approvals()).toHaveLength(1);
+  });
+
+  it('lets a linked member pick, and keeps other members to their own players', async () => {
+    await join('lee');
+    await expect(run(players.inviteGuardian, 'lee', byUid('sam'))).rejects.toMatchObject({ code: 'permission-denied' });
+    await guardian('open', 'open-p1', 'sam');
+    await run(players.inviteGuardian, 'sam', byUid('lee'));
+    expect(await link('lee')).toMatchObject({ relation: 'guardian', addedBy: 'sam' });
+  });
+
+  it("refuses someone who isn't on the team, and the member who is the player", async () => {
+    await expect(run(players.inviteGuardian, 'pat', byUid('lee'))).rejects.toMatchObject({ code: 'not-found', message: 'no-member' });
+    expect(await isMember('open', 'lee')).toBe(false);
+    await join('lee');
+    await db().collection(Collections.playerGuardians).doc('open-p1_lee').set({ groupId: 'open', playerId: 'open-p1', uid: 'lee', relation: 'self' });
+    await expect(run(players.inviteGuardian, 'pat', byUid('lee'))).rejects.toMatchObject({ message: 'already-linked' });
+  });
+
+  it('takes an email or a uid, not both or neither', async () => {
+    await expect(run(players.inviteGuardian, 'pat', { ...byUid('sam'), email: 'sam@example.com' }))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(run(players.inviteGuardian, 'pat', { groupId: 'open', playerId: 'open-p1' }))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+});
+
 describe('more claims and player emails (PLAYER-1, PLAYER-3, PLAYER-4, PLAYER-6, PLAYER-8)', () => {
   const links = () => db().collection(Collections.playerGuardians);
   const link = async (playerId: string, uid: string) => (await links().doc(`${playerId}_${uid}`).get()).data();

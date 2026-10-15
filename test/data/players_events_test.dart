@@ -310,6 +310,17 @@ void main() {
         ),
         isFalse,
       );
+      // Someone already on the team: by uid, with no email (PLAYER-5).
+      await repo.addTeamMemberAsGuardian(
+        _g,
+        const PlayerId('emma'),
+        const UserId('luis'),
+      );
+      expect(functions.lastData('inviteGuardian'), {
+        'groupId': 'g1',
+        'playerId': 'emma',
+        'uid': 'luis',
+      });
     });
 
     test('maps refusals to failures', () async {

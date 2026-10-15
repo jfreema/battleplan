@@ -1417,6 +1417,51 @@ void main() {
       expect(playerRepo.calls, ['inviteGuardian emma leo@example.com']);
     });
 
+    testWidgets('a guardian picks a co-parent already on the team, or invites '
+        'one by email (PLAYER-5)', (tester) async {
+      final playerRepo = emmaTeam()
+        ..links.add(
+          const GuardianLink(
+            playerId: PlayerId('emma'),
+            groupId: GroupId('y'),
+            uid: UserId('coach'),
+          ),
+        );
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [
+          testMembership('y', 'coach', name: 'Maria'),
+          testMembership('y', 'carlos', name: 'Carlos Rodriguez'),
+        ],
+        playerRepo: playerRepo,
+      );
+      await go(tester, '/g/y/roster/players/emma');
+      await tester.tap(find.text('Add a guardian'));
+      await tester.pumpAndSettle();
+      final picker = find.byType(AlertDialog);
+      // Not me: I'm linked already.
+      expect(
+        find.descendant(of: picker, matching: find.text('Maria')),
+        findsNothing,
+      );
+      await tester.tap(find.text('Invite by email'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'leo@example.com');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add a guardian'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Carlos Rodriguez'));
+      await tester.pumpAndSettle();
+      expect(playerRepo.calls, [
+        'inviteGuardian emma leo@example.com',
+        'addTeamMemberAsGuardian emma carlos',
+      ]);
+      expect(find.text('Guardian added'), findsOneWidget);
+    });
+
     testWidgets('the member who is the player edits it, adds a guardian, '
         'and unlinks themselves (PLAYER-5)', (tester) async {
       final playerRepo = emmaTeam()

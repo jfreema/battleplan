@@ -551,6 +551,8 @@
   "add": "Add",
   "addGuardian": "Add a guardian",
   "addGuardianHelp": "They'll be linked to this player and added to the team. If they're new to Battleplan, they'll get an email to set up their account.",
+  "addGuardianPickHelp": "Pick someone on the team, or invite someone new by email.",
+  "inviteGuardianByEmail": "Invite by email",
   "guardianAdded": "Guardian added",
   "guardianInvited": "Guardian added. They'll get an email to set up their account.",
   "removeGuardian": "Remove guardian",

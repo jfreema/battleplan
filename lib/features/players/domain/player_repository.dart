@@ -87,6 +87,14 @@ abstract interface class PlayerRepository {
     String? name,
   });
 
+  /// Makes someone already on the team a guardian (PLAYER-5), with no
+  /// email. Linked members (the player themselves included) and admins.
+  Future<void> addTeamMemberAsGuardian(
+    GroupId groupId,
+    PlayerId playerId,
+    UserId uid,
+  );
+
   /// Removes a link from a player (PLAYER-2). Admins, or the linked
   /// member themselves.
   Future<void> removeGuardian(GroupId groupId, PlayerId playerId, UserId uid);
