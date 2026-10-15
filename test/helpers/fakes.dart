@@ -1010,9 +1010,6 @@ class FakePlayerRepository implements PlayerRepository {
   final List<Player> players;
   final List<List<NewPlayer>> added = [];
 
-  /// The problems [addPlayers] reports, as the server words them.
-  List<String> addProblems = const [];
-
   @override
   Stream<List<Player>> watchPlayers(GroupId groupId) => Stream.value(
     players.where((p) => p.groupId == groupId && !p.isPending).toList(),
@@ -1043,18 +1040,9 @@ class FakePlayerRepository implements PlayerRepository {
   final List<GuardianLink> links = [];
 
   @override
-  Future<AddPlayersResult> addPlayers(
-    GroupId groupId,
-    List<NewPlayer> players,
-  ) async {
+  Future<int> addPlayers(GroupId groupId, List<NewPlayer> players) async {
     added.add(players);
-    return AddPlayersResult(
-      playersAdded: players.length,
-      guardiansLinked: 0,
-      guardiansInvited: players.fold(0, (n, p) => n + p.guardians.length),
-      playersLinked: players.where((p) => p.email != null).length,
-      problems: addProblems,
-    );
+    return players.length;
   }
 
   @override
@@ -1062,7 +1050,6 @@ class FakePlayerRepository implements PlayerRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
-    String? position,
   }) async => calls.add('update ${id.value} $name');
 
   @override
@@ -1121,11 +1108,10 @@ class FakePlayerRepository implements PlayerRepository {
     required String name,
     required PlayerRelation relation,
     String? jerseyNumber,
-    String? position,
     String? dateOfBirth,
   }) async {
     calls.add(
-      'propose $name #${jerseyNumber ?? ''} ${position ?? ''} '
+      'propose $name #${jerseyNumber ?? ''} '
       '${relation.value}${dateOfBirth == null ? '' : ' born $dateOfBirth'}',
     );
     return proposedStatus;
@@ -2754,9 +2740,7 @@ class FakeAdminRepository implements AdminRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
-    String? position,
-  }) =>
-      _act('player ${id.value} $name #${jerseyNumber ?? ''} ${position ?? ''}');
+  }) => _act('player ${id.value} $name #${jerseyNumber ?? ''}');
 
   @override
   Future<AdminPage<AdminUserRow>> listUsers(
@@ -2980,10 +2964,8 @@ class RefusingPlayerRepository extends FakePlayerRepository {
   final AppFailure failure;
 
   @override
-  Future<AddPlayersResult> addPlayers(
-    GroupId groupId,
-    List<NewPlayer> players,
-  ) async => throw failure;
+  Future<int> addPlayers(GroupId groupId, List<NewPlayer> players) async =>
+      throw failure;
 
   @override
   Future<bool> inviteGuardian(
@@ -3006,7 +2988,6 @@ class RefusingPlayerRepository extends FakePlayerRepository {
     required String name,
     required PlayerRelation relation,
     String? jerseyNumber,
-    String? position,
     String? dateOfBirth,
   }) async => throw failure;
 

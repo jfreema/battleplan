@@ -120,7 +120,6 @@ class FunctionsAdminRepository implements AdminRepository {
             groupId: id,
             displayName: _str(_map(p)['displayName']),
             jerseyNumber: _map(p)['jerseyNumber'] as String?,
-            position: _map(p)['position'] as String?,
             status:
                 PlayerStatus.tryParse(_map(p)['status'] as String?) ??
                 PlayerStatus.active,
@@ -231,12 +230,10 @@ class FunctionsAdminRepository implements AdminRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
-    String? position,
   }) => _call('adminUpdatePlayer', {
     'playerId': id.value,
     'displayName': name.trim(),
     'jerseyNumber': jerseyNumber?.trim() ?? '',
-    'position': position?.trim() ?? '',
   });
 
   @override

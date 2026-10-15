@@ -82,10 +82,7 @@ class FirestorePlayerRepository implements PlayerRepository {
   }
 
   @override
-  Future<AddPlayersResult> addPlayers(
-    GroupId groupId,
-    List<NewPlayer> players,
-  ) async {
+  Future<int> addPlayers(GroupId groupId, List<NewPlayer> players) async {
     final data = await _call('addPlayers', {
       'groupId': groupId.value,
       'players': [
@@ -93,28 +90,11 @@ class FirestorePlayerRepository implements PlayerRepository {
           {
             'name': p.name,
             'jerseyNumber': p.jerseyNumber,
-            'position': p.position,
-            // The player's own email, for an adult player (PLAYER-1).
-            'email': p.email,
             'dateOfBirth': ?p.dateOfBirth,
-            'guardians': [
-              for (final g in p.guardians) {'name': g.name, 'email': g.email},
-            ],
           },
       ],
     });
-    return AddPlayersResult(
-      playersAdded: (data['playersAdded'] as num).toInt(),
-      guardiansLinked: (data['guardiansLinked'] as num).toInt(),
-      guardiansInvited: (data['guardiansInvited'] as num).toInt(),
-      playersLinked: (data['selfLinked'] as num?)?.toInt() ?? 0,
-      playersInvited: (data['selfInvited'] as num?)?.toInt() ?? 0,
-      guardiansWithoutEmail: [
-        for (final p in (data['guardiansWithoutEmail'] as List?) ?? const [])
-          '$p',
-      ],
-      problems: [for (final p in (data['problems'] as List?) ?? const []) '$p'],
-    );
+    return (data['playersAdded'] as num).toInt();
   }
 
   @override
@@ -122,7 +102,6 @@ class FirestorePlayerRepository implements PlayerRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
-    String? position,
   }) async {
     final trimmed = name.trim();
     try {
@@ -132,9 +111,6 @@ class FirestorePlayerRepository implements PlayerRepository {
         'jerseyNumber': (jerseyNumber?.trim().isEmpty ?? true)
             ? null
             : jerseyNumber!.trim(),
-        'position': (position?.trim().isEmpty ?? true)
-            ? null
-            : position!.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
@@ -222,7 +198,6 @@ class FirestorePlayerRepository implements PlayerRepository {
     required String name,
     required PlayerRelation relation,
     String? jerseyNumber,
-    String? position,
     String? dateOfBirth,
   }) async {
     String? blankToNull(String? v) =>
@@ -231,7 +206,6 @@ class FirestorePlayerRepository implements PlayerRepository {
       'groupId': groupId.value,
       'displayName': name.trim(),
       'jerseyNumber': blankToNull(jerseyNumber),
-      'position': blankToNull(position),
       'dateOfBirth': ?blankToNull(dateOfBirth),
       'relation': relation.value,
     });
@@ -411,7 +385,6 @@ Player playerFromFirestore(
   groupId: groupId,
   displayName: d['displayName'] as String? ?? '',
   jerseyNumber: d['jerseyNumber'] as String?,
-  position: d['position'] as String?,
   status: PlayerStatus.tryParse(d['status'] as String?) ?? PlayerStatus.active,
   proposedBy: d['proposedBy'] as String?,
   proposedRelation: PlayerRelation.tryParse(d['proposedRelation'] as String?),

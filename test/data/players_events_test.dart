@@ -130,23 +130,28 @@ void main() {
       expect(relationFromFirestore('self'), PlayerRelation.self);
     });
 
-    test('edits a player, blanking empty number and position', () async {
+    test('edits a player, blanking an empty number', () async {
       await db.doc('players/emma').set({
         'groupId': 'g1',
         'displayName': 'Emma',
+        'jerseyNumber': '7',
+        // From before positions left the roster: kept, never shown.
+        'position': 'Keeper',
       });
       final repo = FirestorePlayerRepository(db, functions);
       await repo.updatePlayer(
         const PlayerId('emma'),
         name: ' Emma R ',
         jerseyNumber: ' 9 ',
-        position: ' ',
       );
-      final d = (await db.doc('players/emma').get()).data()!;
+      var d = (await db.doc('players/emma').get()).data()!;
       expect(d['displayName'], 'Emma R');
       expect(d['displayNameLower'], 'emma r');
       expect(d['jerseyNumber'], '9');
-      expect(d['position'], isNull);
+      expect(d['position'], 'Keeper');
+      await repo.updatePlayer(const PlayerId('emma'), name: 'Emma R');
+      d = (await db.doc('players/emma').get()).data()!;
+      expect(d['jerseyNumber'], isNull);
       for (final (code, type) in [
         ('permission-denied', isA<PermissionDenied>()),
         ('aborted', isA<UnknownFailure>()),
@@ -168,43 +173,24 @@ void main() {
     test('adds players and guardians through the callables', () async {
       functions.handlers['addPlayers'] = (_) => {
         'playersAdded': 2,
-        'guardiansLinked': 1,
-        'guardiansInvited': 1,
-        'selfLinked': 1,
-        'problems': ['Line 3: no name'],
+        'guardiansLinked': 0,
+        'guardiansInvited': 0,
+        'problems': <String>[],
       };
       functions.handlers['inviteGuardian'] = (_) => {'invited': true};
       final repo = FirestorePlayerRepository(db, functions);
-      final result = await repo.addPlayers(_g, const [
-        NewPlayer(
-          name: 'Emma',
-          jerseyNumber: '7',
-          guardians: [NewGuardian(name: 'Maria', email: 'm@example.com')],
-        ),
-        // An adult player's own email (PLAYER-1).
-        NewPlayer(name: 'Arjun', email: 'arjun@example.com'),
+      final added = await repo.addPlayers(_g, const [
+        NewPlayer(name: 'Emma', jerseyNumber: '7', dateOfBirth: '2016-04-01'),
+        NewPlayer(name: 'Arjun'),
       ]);
-      expect(result.playersAdded, 2);
-      expect(result.playersLinked, 1);
-      expect(result.playersInvited, 0);
-      expect(result.problems, ['Line 3: no name']);
+      expect(added, 2);
+      // A name, number, and date of birth only: who's linked comes from
+      // claims (PLAYER-3).
       final sent = functions.lastData('addPlayers')! as Map;
-      expect((sent['players'] as List).first, {
-        'name': 'Emma',
-        'jerseyNumber': '7',
-        'position': null,
-        'email': null,
-        'guardians': [
-          {'name': 'Maria', 'email': 'm@example.com'},
-        ],
-      });
-      expect((sent['players'] as List).last, {
-        'name': 'Arjun',
-        'jerseyNumber': null,
-        'position': null,
-        'email': 'arjun@example.com',
-        'guardians': <Object>[],
-      });
+      expect(sent['players'], [
+        {'name': 'Emma', 'jerseyNumber': '7', 'dateOfBirth': '2016-04-01'},
+        {'name': 'Arjun', 'jerseyNumber': null},
+      ]);
 
       await repo.removePlayer(_g, const PlayerId('emma'));
       functions.handlers['claimPlayer'] = (_) => {'status': 'requested'};
@@ -243,7 +229,6 @@ void main() {
           name: ' Noah ',
           relation: PlayerRelation.guardian,
           jerseyNumber: '4',
-          position: ' ',
         ),
         PlayerStatus.pending,
       );
@@ -251,7 +236,6 @@ void main() {
         'groupId': 'g1',
         'displayName': 'Noah',
         'jerseyNumber': '4',
-        'position': null,
         'relation': 'guardian',
       });
       functions.handlers['proposePlayer'] = (_) => {'status': 'active'};

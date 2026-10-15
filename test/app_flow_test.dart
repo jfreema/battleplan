@@ -542,43 +542,46 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byType(TextField),
-      'Arjun Shah, Priya Shah, priya@example.com\n'
-      'Noah Bennett, Ann Bennett, ann@example.com\n'
-      'Noah Bennett, Bo Bennett, bo@example.com',
+      'Arjun Shah, 12\n'
+      'Noah Bennett',
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add 2 players'));
     await tester.pumpAndSettle();
-    expect(playerRepo.added.single.map((p) => p.name), [
-      'Arjun Shah',
-      'Noah Bennett',
+    expect(playerRepo.added.single, const [
+      NewPlayer(name: 'Arjun Shah', jerseyNumber: '12'),
+      NewPlayer(name: 'Noah Bennett'),
     ]);
-    expect(find.text('Players added'), findsOneWidget);
+    // Every line was read, so no results screen: back on the roster.
+    expect(find.text('2 players added'), findsOneWidget);
+    expect(find.text('Players added'), findsNothing);
   });
 
-  testWidgets('adding guardians by email asks for a verified email first '
-      '(SAFE-5)', (tester) async {
+  testWidgets("adding a guardian by email from the player's card asks for a "
+      'verified email first (SAFE-5)', (tester) async {
     await pumpApp(
       tester,
       auth: FakeAuthRepository(user: coach),
       groups: {'y': testGroup('y', 'Lightning U10')},
       memberships: [testMembership('y', 'coach', role: MemberRole.owner)],
-      playerRepo: RefusingPlayerRepository(const EmailNotVerified()),
+      playerRepo: RefusingPlayerRepository(const EmailNotVerified(), [
+        const Player(
+          id: PlayerId('emma'),
+          groupId: GroupId('y'),
+          displayName: 'Emma Rodriguez',
+        ),
+      ]),
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .go('/g/y/roster/players/emma');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Roster'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Add players'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Paste a list'));
+    await tester.tap(find.text('Add a guardian'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byType(TextField),
-      'Arjun Shah, Priya Shah, priya@example.com',
+      find.widgetWithText(TextField, 'Guardian email'),
+      'priya@example.com',
     );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Add 1 player'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Add'));
     await tester.pumpAndSettle();
     expect(
       find.text('Verify your email first, then you can add people by email.'),
@@ -695,7 +698,7 @@ void main() {
       await tester.enterText(find.byType(TextField).at(1), '12');
       await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
       await tester.pumpAndSettle();
-      expect(playerRepo.calls, ['propose Coach Lee #12  self']);
+      expect(playerRepo.calls, ['propose Coach Lee #12 self']);
       expect(find.text('Sent to the team admins to approve'), findsOneWidget);
     });
 
@@ -719,10 +722,11 @@ void main() {
       expect(find.text("Enter the player's name."), findsOneWidget);
       await tester.enterText(find.byType(TextField).at(0), 'Liam Rodriguez');
       await tester.enterText(find.byType(TextField).at(1), '23');
-      await tester.enterText(find.byType(TextField).at(2), 'Keeper');
+      // No position: the roster keeps a name and a number (PLAYER-10).
+      expect(find.byType(TextField), findsNWidgets(2));
       await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
       await tester.pumpAndSettle();
-      expect(playerRepo.calls, ['propose Liam Rodriguez #23 Keeper guardian']);
+      expect(playerRepo.calls, ['propose Liam Rodriguez #23 guardian']);
     });
 
     testWidgets('back from a choice, and coaches skip it', (tester) async {
@@ -1041,7 +1045,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
       await tester.pumpAndSettle();
-      expect(playerRepo.calls, ['propose Mia Rodriguez #  guardian']);
+      expect(playerRepo.calls, ['propose Mia Rodriguez # guardian']);
       expect(find.text('Sent to the team admins to approve'), findsOneWidget);
     });
 

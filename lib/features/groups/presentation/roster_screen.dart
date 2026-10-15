@@ -215,7 +215,7 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                 _PlayerRow(
                   player: p,
                   age: details[p.id]?.ageAt(today),
-                  // TEAM-3: number, name, position, and who's linked.
+                  // TEAM-3: number, name, and who's linked.
                   linked: [
                     for (final l in links)
                       if (l.playerId == p.id)
@@ -272,8 +272,8 @@ String? whoLabel(
   return parts.isEmpty ? null : parts.join(' · ');
 }
 
-/// A player: number, name, position, age for admins (PLAYER-12), and
-/// who's linked (TEAM-3).
+/// A player: number, name, age for admins (PLAYER-12), and who's linked
+/// (TEAM-3).
 class _PlayerRow extends StatelessWidget {
   const new({required this.player, required this.linked, this.age});
 
@@ -287,7 +287,6 @@ class _PlayerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final details = [
-      if (player.position?.isNotEmpty ?? false) player.position!,
       if (age case final age?) l10n.playerAge(age),
       if (linked.isNotEmpty) linked.join(', '),
     ];

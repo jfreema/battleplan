@@ -213,7 +213,13 @@ SPEC PLAYER-12 and Q18, ARCH §6.2, §6.3, and D63. The owner asked to keep play
 ## Release workflows · after go-live
 
 230. ✅ Release to dev and Release to prod as GitHub Actions workflows, started by hand, at the owner's request (2026-10-14, ARCH §9). *`release.yml` waits for CI on the commit, then deploys rules, indexes, Storage rules, Functions (retrying on quota), and Hosting, keyless. Prod takes only `release-prod.yml` on `main`, by a condition on its Workload Identity Federation provider. `tools/release_prod.sh` stays as the Mac fallback.*
-231. Run `tools/setup_github_deploys.sh dev` and `prod` once from the owner's Mac (Claude, with the owner's OK: they change who may deploy), then the first Release to dev and Release to prod. *No scripts for the owner: the one-time trust between Google and GitHub can't be a workflow, and every release after it is a button.*
+231. Run `tools/setup_github_deploys.sh dev` and `prod` once from the owner's Mac (Claude, with the owner's OK: they change who may deploy), then the first Release to dev and Release to prod. *No scripts for the owner: the one-time trust between Google and GitHub can't be a workflow, and every release after it is a button. Setup ran on both projects 2026-10-14; the first Release to dev showed the deploy account also needs to act as the App Engine default account, which the script now grants.*
+
+## Owner's changes from trying the app · after go-live
+
+232. ✅ Reactions: tapping a chip under a message adds that reaction, or takes yours back; who reacted moves to a long-press or right-click on the chip, and See who reacted in the message menu. ❤️ is red everywhere, on the web's plain-heart font too (2026-10-14, SPEC CHAT-6).
+233. ✅ The event form's Ask for RSVPs, Notify team, and Post to chat are checkboxes (2026-10-14). *Events still post their card in the chat: the owner first asked to take scheduling out of the chat, then kept it.*
+234. ✅ Players have no position, and the admins' Add players form takes only a name, jersey number, and date of birth: parents, guardians, and adult players link themselves by claiming the player (2026-10-14, SPEC PLAYER-1, PLAYER-2, PLAYER-10). *Pasting a list takes one player per line ("Name, number"). The date of birth shows with the number at the top of the player card, for the people who see the player's details. Older players keep a stored position the app no longer shows; `addPlayers` still accepts emails, guardians, and a position, which the app no longer sends. The website's privacy, terms, and delete-account pages still mention positions: the owner decides on legal wording.*
 
 ## Go-live in six phases
 

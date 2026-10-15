@@ -616,10 +616,10 @@ void main() {
         matching: find.byType(TextField),
       );
       await tester.enterText(fields.at(0), 'Emma Rodríguez');
-      await tester.enterText(fields.at(2), 'Keeper');
+      await tester.enterText(fields.at(1), '8');
       await tester.tap(find.widgetWithText(FilledButton, 'Save'));
       await tester.pumpAndSettle();
-      expect(admin.calls, ['player emma Emma Rodríguez #7 Keeper']);
+      expect(admin.calls, ['player emma Emma Rodríguez #8']);
       expect(players.calls, isEmpty);
 
       // A team admin still writes the player directly.

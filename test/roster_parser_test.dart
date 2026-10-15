@@ -5,39 +5,47 @@ import 'package:battleplan/features/players/domain/roster_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('pasted roster lines merge by player name, up to 4 guardians', () {
+  test('one player per line: a name, and a number if there is one', () {
     final r = parsePastedRoster(
-      'Emma R, Maria R, maria@example.com\n'
-      'emma r, Luis R, luis@example.com\n'
-      'Bad, Name, nope\n'
-      'Solo',
+      'Emma Rodriguez, 7\n'
+      '\n'
+      'Arjun Shah\t#12\n'
+      'Mia Chen,\n'
+      '  Noah Kim , # 4  ',
     );
-    expect(r.players.map((p) => p.name), ['Emma R', 'Solo']);
-    expect(r.players.first.guardians.map((g) => g.email), [
-      'maria@example.com',
-      'luis@example.com',
+    expect(r.players, const [
+      NewPlayer(name: 'Emma Rodriguez', jerseyNumber: '7'),
+      NewPlayer(name: 'Arjun Shah', jerseyNumber: '12'),
+      NewPlayer(name: 'Mia Chen'),
+      NewPlayer(name: 'Noah Kim', jerseyNumber: '4'),
     ]);
-    expect(r.problems, ['Bad, Name, nope']);
+    expect(r.problems, isEmpty);
+    // Blank lines don't count.
+    expect(r.lines, 4);
   });
 
-  test("a name and an email is an adult player's own email (PLAYER-1)", () {
+  test('lines it cannot read, and repeated names, are listed (PLAYER-1)', () {
     final r = parsePastedRoster(
+      // The old "player, guardian, email" lines: who's linked comes from
+      // claims now (PLAYER-3).
+      'Emma Rodriguez, Maria Rodriguez, maria@example.com\n'
       'Jared Freeman, jared@example.com\n'
-      'Jared Freeman, Ann Freeman, ann@example.com\n'
-      'jared freeman, other@example.com\n'
-      'Emma R, Maria R',
+      ', 9\n'
+      '${'x' * 61}\n'
+      'Arjun Shah, 12\n'
+      'arjun shah, 13',
     );
-    expect(r.players.map((p) => p.name), ['Jared Freeman', 'Emma R']);
-    final jared = r.players.first;
-    expect(jared.email, 'jared@example.com');
-    // Not taken as a guardian of themselves.
-    expect(jared.guardians.map((g) => g.email), ['ann@example.com']);
-    // One email of their own per player.
-    expect(r.problems, ['jared freeman, other@example.com']);
-    // A guardian's name alone stays a guardian.
-    expect(r.players.last.email, isNull);
-    expect(r.players.last.guardians.single.name, 'Maria R');
-    expect(r.lines, 4);
+    expect(r.players, const [
+      NewPlayer(name: 'Arjun Shah', jerseyNumber: '12'),
+    ]);
+    expect(r.problems, [
+      'Emma Rodriguez, Maria Rodriguez, maria@example.com',
+      'Jared Freeman, jared@example.com',
+      ', 9',
+      'x' * 61,
+      'arjun shah, 13',
+    ]);
+    expect(r.lines, 6);
   });
 
   test('a member is one player at most, counting what waits (PLAYER-3)', () {

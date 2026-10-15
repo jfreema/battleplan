@@ -283,39 +283,30 @@ void main() {
       return playerRepo;
     }
 
-    testWidgets('a guardian with a name and no email is kept', (tester) async {
+    testWidgets('a name and a number; parents link themselves later', (
+      tester,
+    ) async {
       final playerRepo = await openAdd(tester);
-      await tester.enterText(find.byType(TextField).at(0), 'Leo Park');
-      await tester.enterText(find.byType(TextField).at(4), 'Maria Park');
-      await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
-      await tester.pumpAndSettle();
-      expect(playerRepo.added.single.single.guardians, [
-        const NewGuardian(name: 'Maria Park'),
-      ]);
-      expect(find.text('Players added'), findsOneWidget);
-    });
-
-    testWidgets("an adult player's own email links them as the player, and "
-        'a refused link says why (PLAYER-1)', (tester) async {
-      final playerRepo = await openAdd(tester);
-      playerRepo.addProblems = [
-        'Jared Freeman: jared@example.com (already-a-player)',
-      ];
-      await tester.enterText(find.byType(TextField).at(0), 'Jared Freeman');
-      expect(find.text("Player's own email (optional)"), findsOneWidget);
-      await tester.enterText(find.byType(TextField).at(3), 'jared@example.com');
-      await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
-      await tester.pumpAndSettle();
-      final added = playerRepo.added.single.single;
-      expect(added.email, 'jared@example.com');
-      expect(added.guardians, isEmpty);
-      expect(find.text('1 player linked by their own email'), findsOneWidget);
+      // No position, player email, or parents and guardians: who's linked
+      // comes from claims (PLAYER-3).
+      expect(find.byType(TextField), findsNWidgets(2));
       expect(
         find.text(
-          'Jared Freeman: jared@example.com: already a player on this team',
+          'Parents, guardians, and adult players link themselves when they '
+          'join the team and claim the player.',
         ),
         findsOneWidget,
       );
+      await tester.enterText(find.byType(TextField).at(0), 'Leo Park');
+      await tester.enterText(find.byType(TextField).at(1), '9');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
+      await tester.pumpAndSettle();
+      expect(playerRepo.added.single, const [
+        NewPlayer(name: 'Leo Park', jerseyNumber: '9'),
+      ]);
+      expect(find.text('1 player added'), findsOneWidget);
+      // Back on the roster.
+      expect(find.text('Add players'), findsNothing);
     });
 
     /// Picks the 15th of this month in 2015 from the date-of-birth picker.
@@ -400,11 +391,12 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byType(TextField),
-        'Arjun Shah, Priya Shah, priya@example.com\nBad, Name, nope',
+        'Arjun Shah, 12\nBad, Name, nope',
       );
       await tester.pump();
       await tester.tap(find.text('Add 1 player'));
       await tester.pumpAndSettle();
+      expect(find.text('1 player added'), findsOneWidget);
       expect(find.text("Lines that couldn't be read (1)"), findsOneWidget);
       expect(find.text('Bad, Name, nope'), findsWidgets);
     });
@@ -415,22 +407,17 @@ void main() {
       final playerRepo = await openAdd(tester);
       await tester.tap(find.text('Paste a list'));
       await tester.pumpAndSettle();
-      final lines = [
-        for (var i = 0; i < 101; i++) ...[
-          'P$i, A, a$i@example.com',
-          'P$i, B, b$i@example.com',
-        ],
-      ];
+      final lines = [for (var i = 0; i < 201; i++) 'Player $i, $i'];
       await tester.enterText(find.byType(TextField), lines.join('\n'));
       await tester.pump();
       expect(find.text('Paste up to 200 lines at a time.'), findsOneWidget);
-      final add = find.widgetWithText(FilledButton, 'Add 101 players');
+      final add = find.widgetWithText(FilledButton, 'Add 201 players');
       expect(tester.widget<FilledButton>(add).onPressed, isNull);
       expect(playerRepo.added, isEmpty);
     });
 
     test('the parser counts lines', () {
-      expect(parsePastedRoster('A, B, b@x.com\n\nA, C, c@x.com').lines, 2);
+      expect(parsePastedRoster('A, 1\n\nB, 2').lines, 2);
     });
   });
 
@@ -471,7 +458,6 @@ void main() {
                 groupId: GroupId('y'),
                 displayName: 'Jared Freeman',
                 jerseyNumber: '12',
-                position: 'Pitcher',
               ),
               const Player(
                 id: PlayerId('lee'),
@@ -505,7 +491,7 @@ void main() {
       expect(find.text('Player #12 · Parent of Emma #7'), findsOneWidget);
       // Maria is the player Lee, who has no number.
       expect(find.text('Player'), findsOneWidget);
-      expect(find.text('Pitcher · Jordan (player)'), findsOneWidget);
+      expect(find.text('Jordan (player)'), findsOneWidget);
     });
 
     testWidgets('the player card lists upcoming RSVPs', (tester) async {

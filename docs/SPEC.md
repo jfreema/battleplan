@@ -32,7 +32,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | **Owner** | The one admin per team who created it, or was given it |
 | **Super admin** | A platform operator who can see and manage every team and user (the "God admin") |
 | **Added account** | An account created by an admin before the person first signs in (the "local account") |
-| **Player** | Someone on a team's roster, with a name, jersey number, and position. A member can be a player ("I am this player"). Players that others answer for, such as kids, never have accounts. |
+| **Player** | Someone on a team's roster, with a name and jersey number. A member can be a player ("I am this player"). Players that others answer for, such as kids, never have accounts. |
 | **Guardian** | A member linked to a player as their parent or guardian, who answers RSVPs for that player |
 | **Player link** | How a member is linked to a player: as the player (`self`) or as a guardian. A member claims a player, and a team admin approves (§6.3). |
 | **Storage limit** | How much a team can store in photos and files: 500 MB unless a super admin raises it (STORE-1) |
@@ -396,7 +396,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Each team has its own chat, schedule, documents, members, admins, settings, and notification level.
   - Teams are walled off from each other. Nothing shows which other teams a member belongs to.
 - **TEAM-3 · MVP · Roster screen.**
-  - A **Players** section on every team (jersey number, name, position, and who's linked: "Player" or "Guardian"), then sections for Admins and Members. Each member shows their players: a guardian shows "Emma #7", and a member who is a player shows their number (PLAYER-8).
+  - A **Players** section on every team (jersey number, name, and who's linked: "Player" or "Guardian"), then sections for Admins and Members. Each member shows their players: a guardian shows "Emma #7", and a member who is a player shows their number (PLAYER-8).
   - Admins see pending players and claims at the top, with Approve and Decline (PLAYER-4).
   - Each person row shows a photo or initials, name, title, role badge (Owner/Admin), and "Not joined yet" for added accounts.
   - Search by name.
@@ -430,7 +430,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - **Archive** makes the team read-only and moves it to "Archived" in the switcher. It can be restored.
   - **Delete** requires typing the team name. It permanently removes all messages, events, documents, and files.
 - **TEAM-10 · v1.1 · Roster details.** Built (task 136).
-  - Sort the roster's players by jersey number (the default; players without one come last) or by name, from the sort button. (Number and position live on players, PLAYER-1, and a member who is a player shows theirs.) Admins and members are listed by name, the owner first.
+  - Sort the roster's players by jersey number (the default; players without one come last) or by name, from the sort button. (Numbers live on players, PLAYER-1, and a member who is a player shows theirs.) Admins and members are listed by name, the owner first.
   - Optional contact sharing: on their own card, members share a phone number and email with that team ("Share my phone and email"; the account's email is offered), and change them or stop sharing at any time. They appear on their card for everyone on the team with call, text, and email buttons. Each team is separate. Sharing needs an open team; stopping works even on an archived or suspended one. Leaving the team or deleting the account removes them.
 - **TEAM-11 · MVP · Players on every team.** Players, guardians, and claims are specified in §6.3 (PLAYER).
 - **TEAM-12 · v1.1 · Announcement-only mode.** Only admins can post in chat. Everyone can still react, vote, and RSVP.
@@ -450,13 +450,13 @@ Every team has a roster of players. There's one kind of team, so this works the 
 Players that others answer for never get accounts, and every account belongs to an adult (18+).
 
 - **PLAYER-1 · MVP · Add players (admins).**
-  - Add one at a time: name (required), jersey number, position, date of birth (optional, kept in the player's details, PLAYER-12), the player's own email (optional), and up to 4 guardians (name and email, both optional). The player's own email is for an adult player: that person is linked as the player, not as a guardian.
-  - Or paste a list with one line per guardian: "Player name, Guardian name, Guardian email". For an adult player, a line with just the player's name and their own email ("Player name, Player's email") links them as the player. Lines with the same player name become one player with several guardians and at most one email of their own. Up to 200 lines.
-  - Players that admins add are active right away. People who already have accounts are linked right away. New emails get an added account and a setup email (AUTH-6), and the person is linked once they finish setup. A player's own email is linked within the PLAYER-3 limits: someone who is already a player on the team is listed as a problem instead.
-  - A results screen shows the players added, guardians linked and invited, players linked or invited by their own email, guardians given without an email, and any problems.
+  - Add one at a time: name (required), jersey number, and date of birth (optional, kept in the player's details, PLAYER-12).
+  - Or paste a list with one player per line: "Player name, jersey number", the number optional. Lines that can't be read, such as ones with more than a name and a number, and names given twice are listed afterward. Up to 200 lines.
+  - Players that admins add are active right away. Nobody is linked to them here: parents, guardians, and adult players link themselves when they join the team and claim the player (PLAYER-3), and admins can still add a guardian by email from the player card (PLAYER-5). The form says so.
+  - Afterward the app says how many players were added; a pasted list with lines it couldn't read shows them on a results screen.
 - **PLAYER-2 · MVP · Player card.**
-  - Shows the name, jersey number, position, who's linked, each marked "Player" or "Guardian" ("Not joined yet" where it applies), and upcoming RSVPs. The player's linked members and the team's admins also open its RSVP history (PLAYER-11).
-  - The player's linked members can edit the name, number, and position, and, with admins, the date of birth in the same Edit player dialog (PLAYER-12).
+  - Shows the name, jersey number, date of birth and age (for the people who see the player's details, PLAYER-12), who's linked, each marked "Player" or "Guardian" ("Not joined yet" where it applies), and upcoming RSVPs. The player's linked members and the team's admins also open its RSVP history (PLAYER-11).
+  - The player's linked members can edit the name and number, and, with admins, the date of birth in the same Edit player dialog (PLAYER-12).
   - A member who isn't linked sees **Claim this player** (PLAYER-3).
   - Linked members and admins can add a guardian (PLAYER-5). Admins can also remove links and remove the player, and a linked member can remove their own link.
 - **PLAYER-3 · MVP · Claim a player.** Any member can claim an active player and say how they're linked: **"I am this player"** or **"I'm their parent or guardian"**.
@@ -469,11 +469,11 @@ Players that others answer for never get accounts, and every account belongs to 
     - **I'm a coach or another adult.** Skips this step.
   - People whose email an admin already entered for a player (PLAYER-1) are linked automatically and never see this step.
 - **PLAYER-4 · MVP · Add a player (members), and admin approval.**
-  - Any member can add a player: name, jersey number, position, date of birth (optional, PLAYER-12), and how they're linked (the player or a guardian).
+  - Any member can add a player: name, jersey number, date of birth (optional, PLAYER-12), and how they're linked (the player or a guardian).
   - A member's new player is **pending** until a team admin approves or declines it. A player an admin adds is active at once (PLAYER-1).
   - Pending players are shown only to admins and to the person who added them. They're not on the roster for everyone else, and can't get RSVPs or be claimed.
   - Claims and pending players appear at the top of the roster's Players section with **Approve** and **Decline**, and admins get a notification for each one (NOTIF-2). The person is notified when it's approved.
-  - Admins can correct a pending player's name, number, and position before deciding.
+  - Admins can correct a pending player's name and number before deciding.
   - Approving a pending player makes it active with its link. Declining deletes the pending player and its link. A declined member can ask again.
   - Approving checks the PLAYER-3 limits again when the link is made. If they no longer allow it (say the member became a player meanwhile, or someone else is already this player), a claim isn't approved and the app says why, so the admin can decline it. A pending player is still added, without the link, and the app says so.
 - **PLAYER-5 · MVP · Add another guardian.** From the player card, a linked member (the player themselves or a guardian) or an admin can add a guardian by email. An existing link is vouching for them, so no admin approval is needed. New emails get an added account and a setup email. A player has up to 4 guardians, and the player can't also be their own guardian.
@@ -489,7 +489,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **PLAYER-8 · MVP · Who's who.** In chat and on the roster, each member's name shows their players. A guardian shows "Maria R. · Emma #7". A member who is a player shows their number when it's set: "Jared F. #12".
 - **PLAYER-9 · MVP · Players on several teams.** A person on two teams is a separate player on each team. In "All my teams" (SCHED-2), each event shows which of a member's players it's for.
 - **PLAYER-10 · MVP · Players' privacy.** This applies to every player record.
-  - The roster record everyone on the team sees holds only a name, jersey number, and position: no photos, birthdates, or contact details.
+  - The roster record everyone on the team sees holds only a name and jersey number: no photos, birthdates, or contact details. (Players added before positions left the roster may still carry one, which the app no longer shows.)
   - Optional details for running the team (PLAYER-12) are kept apart from the roster record and seen only by the team's admins and the people linked to that player.
   - Players never get accounts of their own. Accounts are for adults only (18+), and a `self` link just means that member is the player.
   - Player records that others manage may be children's, so we treat every record this way (LEGAL-1).
@@ -959,7 +959,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Super admins can disable people and suspend teams (ADMIN-3, ADMIN-4).
 - **SAFE-6 · MVP · Adults only.**
   - Accounts are for adults 18 and older (AUTH-5, Terms of Use).
-  - Players never get accounts of their own. Youth players never sign in. The roster shows only a name, number, and position, and optional details are seen only by admins and the player's linked people (PLAYER-10, PLAYER-12).
+  - Players never get accounts of their own. Youth players never sign in. The roster shows only a name and number, and optional details are seen only by admins and the player's linked people (PLAYER-10, PLAYER-12).
 - **SAFE-7 · Later.** An optional per-team profanity filter. Do it sooner if App Review asks.
 
 ### 6.13 Privacy and legal (LEGAL)

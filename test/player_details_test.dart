@@ -37,7 +37,6 @@ void main() {
     groupId: team,
     displayName: 'Emma Rodriguez',
     jerseyNumber: '7',
-    position: 'Forward',
   );
   final youth = {'y': testGroup('y', 'Lightning U10')};
   final people = [
@@ -139,6 +138,7 @@ void main() {
       await openCard(tester, 'sam', repo);
       expect(find.text('Emma Rodriguez'), findsWidgets);
       expect(find.text('Details'), findsNothing);
+      expect(find.text('Date of birth'), findsNothing);
       expect(find.text('Peanut allergy'), findsNothing);
       expect(find.text('Edit details'), findsNothing);
       // Not on the roster either, nor by going to the form.
@@ -230,6 +230,48 @@ void main() {
       await openCard(tester, 'coach', emmaTeam());
       expect(find.text('No details yet.'), findsOneWidget);
       expect(find.text('Edit details'), findsOneWidget);
+      // The date of birth row is there, with a dash.
+      expect(find.widgetWithText(ListTile, 'Date of birth'), findsOneWidget);
+    });
+
+    testWidgets('the date of birth is with the number, not in Details', (
+      tester,
+    ) async {
+      await openCard(
+        tester,
+        'coach',
+        emmaTeam(
+          details: const PlayerDetails(
+            playerId: emmaId,
+            groupId: team,
+            dateOfBirth: '2014-03-03',
+          ),
+        ),
+      );
+      final dates = MaterialLocalizations.of(
+        tester.element(find.text('Details')),
+      );
+      final born = DateTime.utc(2014, 3, 3);
+      final row = find.widgetWithText(ListTile, 'Date of birth');
+      expect(row, findsOneWidget);
+      expect(
+        find.descendant(
+          of: row,
+          matching: find.textContaining(dates.formatShortDate(born)),
+        ),
+        findsOneWidget,
+      );
+      // It sits right under the number, above Details.
+      expect(
+        tester.getTopLeft(row).dy,
+        greaterThan(tester.getTopLeft(find.text('Number')).dy),
+      );
+      expect(
+        tester.getTopLeft(row).dy,
+        lessThan(tester.getTopLeft(find.text('Details')).dy),
+      );
+      // Nothing else is filled in yet.
+      expect(find.text('No details yet.'), findsOneWidget);
     });
   });
 
@@ -462,7 +504,7 @@ void main() {
       );
       await go(tester, '/g/y/roster');
       expect(
-        find.text('Forward · Age 12 · Maria Rodriguez, Emma R (player)'),
+        find.text('Age 12 · Maria Rodriguez, Emma R (player)'),
         findsOneWidget,
       );
       expect(repo.detailsReads, ['team y']);
@@ -478,10 +520,7 @@ void main() {
         playerRepo: repo,
       );
       await go(tester, '/g/y/roster');
-      expect(
-        find.text('Forward · Maria Rodriguez, Emma R (player)'),
-        findsOneWidget,
-      );
+      expect(find.text('Maria Rodriguez, Emma R (player)'), findsOneWidget);
       expect(find.textContaining('Age 12'), findsNothing);
       expect(repo.detailsReads, isEmpty);
     });

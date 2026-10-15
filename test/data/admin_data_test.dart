@@ -194,7 +194,6 @@ void main() {
         'playerId': 'emma',
         'displayName': 'Emma',
         'jerseyNumber': '7',
-        'position': '',
       });
       expect(
         functions.calls.map((c) => c.$1),

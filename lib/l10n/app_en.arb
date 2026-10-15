@@ -401,14 +401,12 @@
   "pasteAList": "Paste a list",
   "playerNameLabel": "Player name",
   "jerseyNumberLabel": "Number",
-  "positionLabel": "Position",
-  "guardiansLabel": "Parents and guardians",
   "guardianNameLabel": "Guardian name",
   "guardianEmailLabel": "Guardian email",
-  "addAnotherGuardian": "Add another guardian",
   "addPlayer": "Add player",
   "playerNameRequired": "Enter the player's name.",
-  "pasteRosterHelp": "One line per parent or guardian: player name, guardian name, guardian email. For an adult player, add a line with the player's name and their own email. Lines with the same player name become one player.",
+  "pasteRosterHelp": "One player per line: their name, then a comma and their jersey number if they have one.",
+  "addPlayerLinksLater": "Parents, guardians, and adult players link themselves when they join the team and claim the player.",
   "pastePreview": "{count, plural, =0{No players yet} =1{1 player to add} other{{count} players to add}}",
   "@pastePreview": {
     "placeholders": {
@@ -428,22 +426,6 @@
   "playersAddedTitle": "Players added",
   "playersAddedCount": "{count, plural, =1{1 player added} other{{count} players added}}",
   "@playersAddedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "guardiansLinkedCount": "{count, plural, =1{1 guardian linked} other{{count} guardians linked}}",
-  "@guardiansLinkedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "guardiansInvitedCount": "{count, plural, =1{1 guardian invited} other{{count} guardians invited}}",
-  "@guardiansInvitedCount": {
     "placeholders": {
       "count": {
         "type": "int"
@@ -1291,7 +1273,6 @@
   "problemOnTooManyTeams": "{email}: already on 100 teams",
   "@problemOnTooManyTeams": {"placeholders": {"email": {"type": "String"}}},
   "resultsSummary": "Summary",
-  "guardiansWithoutEmailHeading": "Guardians without an email (not linked)",
   "linesSkipped": "Lines that couldn't be read",
   "tooManyPlayers": "A team can have up to {max} players.",
   "@tooManyPlayers": {"placeholders": {"max": {"type": "int"}}},
@@ -1407,8 +1388,6 @@
   "@claimSelfFor": {"placeholders": {"who": {"type": "String"}, "player": {"type": "String"}}},
   "claimGuardianFor": "{who}: parent or guardian of {player}",
   "@claimGuardianFor": {"placeholders": {"who": {"type": "String"}, "player": {"type": "String"}}},
-  "playerEmailLabel": "Player's own email (optional)",
-  "playerEmailHelp": "For an adult player: they're linked as the player, not as a guardian.",
   "approveAlreadyAPlayer": "Can't approve this: {who} is already a player on this team. Decline it.",
   "@approveAlreadyAPlayer": {"placeholders": {"who": {"type": "String"}}},
   "approvePlayerAlreadyClaimed": "Can't approve this: someone is already this player. Decline it, or remove their link first.",
@@ -1416,10 +1395,6 @@
   "@pendingPlayerNotLinked": {"placeholders": {"player": {"type": "String"}, "who": {"type": "String"}}},
   "guardianAlreadyLinked": "They're already linked to this player.",
   "whoAlreadyAskedAsPlayer": "You've already asked to be a player on this team. A team admin will decide.",
-  "playersLinkedCount": "{count, plural, =1{1 player linked by their own email} other{{count} players linked by their own email}}",
-  "@playersLinkedCount": {"placeholders": {"count": {"type": "int"}}},
-  "playersInvitedCount": "{count, plural, =1{1 player invited by their own email} other{{count} players invited by their own email}}",
-  "@playersInvitedCount": {"placeholders": {"count": {"type": "int"}}},
   "problemAlreadyAPlayer": "{email}: already a player on this team",
   "@problemAlreadyAPlayer": {"placeholders": {"email": {"type": "String"}}},
   "problemPlayerAlreadyClaimed": "{email}: someone is already this player",

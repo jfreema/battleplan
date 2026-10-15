@@ -6,8 +6,9 @@ part 'player.freezed.dart';
 
 /// Someone on a team's roster (PLAYER-1). Every team has players. A member
 /// can be a player themselves (a `self` link), and players others answer
-/// for, such as kids, never have accounts. The record holds only a name,
-/// number, and position (PLAYER-10).
+/// for, such as kids, never have accounts. The record holds only a name
+/// and number (PLAYER-10); older records may still carry a position, which
+/// the app no longer shows.
 @freezed
 abstract class Player with _$Player {
   const factory({
@@ -15,7 +16,6 @@ abstract class Player with _$Player {
     required GroupId groupId,
     required String displayName,
     String? jerseyNumber,
-    String? position,
 
     /// Pending until a team admin approves a member's new player
     /// (PLAYER-4). Players without a status are active.
@@ -102,51 +102,19 @@ bool canStillBeAPlayer(
 int guardianCountOf(PlayerId playerId, Iterable<GuardianLink> links) =>
     links.where((l) => l.playerId == playerId && !l.isSelf).length;
 
-/// One guardian when adding players.
-@freezed
-abstract class NewGuardian with _$NewGuardian {
-  const factory({String? name, String? email}) = _NewGuardian;
-}
-
-/// One player to add (PLAYER-1). [email] is the player's own, for an
-/// adult player: that account is linked as the player, not a guardian.
+/// One player to add (PLAYER-1): a name, and optionally a number and a
+/// date of birth. Who's linked to the player comes later, from claims
+/// (PLAYER-3).
 @freezed
 abstract class NewPlayer with _$NewPlayer {
   const factory({
     required String name,
     String? jerseyNumber,
-    String? position,
-    String? email,
 
     /// 'YYYY-MM-DD' (optional): saved in the player's details, never on
     /// the roster (PLAYER-10, PLAYER-12).
     String? dateOfBirth,
-    @Default(<NewGuardian>[]) List<NewGuardian> guardians,
   }) = _NewPlayer;
-}
-
-/// What happened when adding players (PLAYER-1 results screen).
-@freezed
-abstract class AddPlayersResult with _$AddPlayersResult {
-  const factory({
-    required int playersAdded,
-    required int guardiansLinked,
-    required int guardiansInvited,
-
-    /// Players linked as themselves by their own email: to an account they
-    /// had, or a new one that got a setup email (PLAYER-1).
-    @Default(0) int playersLinked,
-    @Default(0) int playersInvited,
-
-    /// Guardians given a name and no email, "Emma: Maria R.": nobody can be
-    /// linked without an email, so they're listed instead (PLAYER-1).
-    @Default(<String>[]) List<String> guardiansWithoutEmail,
-
-    /// "Emma: maria@example.com", with the reason when there is one, such
-    /// as " (too-many-teams)" for someone on 100 teams already (TEAM-2) or
-    /// " (already-a-player)" (PLAYER-3); see describeAddProblem.
-    @Default(<String>[]) List<String> problems,
-  }) = _AddPlayersResult;
 }
 
 /// Where a claim stands (PLAYER-4).

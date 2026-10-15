@@ -17,17 +17,17 @@ abstract interface class PlayerRepository {
 
   Stream<List<GuardianLink>> watchGuardianLinks(GroupId groupId);
 
-  /// Adds players with their own emails and their guardians (PLAYER-1),
-  /// active at once. Admins only.
-  Future<AddPlayersResult> addPlayers(GroupId groupId, List<NewPlayer> players);
+  /// Adds players (PLAYER-1), active at once, and returns how many were
+  /// added. Admins only. Parents, guardians, and adult players link
+  /// themselves by claiming them (PLAYER-3).
+  Future<int> addPlayers(GroupId groupId, List<NewPlayer> players);
 
-  /// Edits a player's name, number, or position (PLAYER-2). Linked members
-  /// and admins.
+  /// Edits a player's name or number (PLAYER-2). Linked members and
+  /// admins.
   Future<void> updatePlayer(
     PlayerId id, {
     required String name,
     String? jerseyNumber,
-    String? position,
   });
 
   /// Removes a player (PLAYER-2). Admins only.
@@ -64,7 +64,6 @@ abstract interface class PlayerRepository {
     required String name,
     required PlayerRelation relation,
     String? jerseyNumber,
-    String? position,
     String? dateOfBirth,
   });
 

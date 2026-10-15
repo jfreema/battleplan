@@ -11,8 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The player card's Details (PLAYER-12): age and date of birth, emergency
-/// contacts with tap-to-call, medical notes, and notes, and Edit, which
+/// The player card's Details (PLAYER-12): emergency contacts with
+/// tap-to-call, medical notes, and notes, and Edit, which
 /// opens the form at `/g/:groupId/roster/players/:playerId/details`. The
 /// card shows it only to the team's admins and the members linked to the
 /// player ([seesPlayerDetails]), so nobody else's app asks for the details;
@@ -76,7 +76,8 @@ class PlayerDetailsSection extends ConsumerWidget {
             padding: EdgeInsets.all(Space.md),
             child: Center(child: CircularProgressIndicator()),
           )
-        else if (d == null || d.isEmpty)
+        // The date of birth is with the number above ([DateOfBirthTile]).
+        else if (d == null || d.copyWith(dateOfBirth: null).isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: Space.sm),
             child: Text(l10n.playerDetailsEmpty),
@@ -99,28 +100,9 @@ class _DetailsList extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final d = details;
-    final born = switch (d.dateOfBirth) {
-      final dob? => parseDateOfBirth(dob),
-      null => null,
-    };
-    final age = d.ageAt(DateTime.now());
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(AppIcons.birthday),
-          title: Text(l10n.dateOfBirthLabel),
-          // "Mar 3, 2014 · Age 12", with the year (a medium date has none).
-          subtitle: Text(
-            born == null
-                ? '—'
-                : [
-                    MaterialLocalizations.of(context).formatShortDate(born),
-                    if (age != null) l10n.playerAge(age),
-                  ].join(' · '),
-          ),
-        ),
         if (d.emergencyContacts.isEmpty)
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -168,6 +150,40 @@ class _DetailsList extends ConsumerWidget {
           subtitle: Text(d.notes ?? '—'),
         ),
       ],
+    );
+  }
+}
+
+/// The player's date of birth and age with their number on the card
+/// (PLAYER-12), for the same people as [PlayerDetailsSection]: "Mar 3,
+/// 2014 · Age 12", with the year (a medium date has none), or a dash.
+class DateOfBirthTile extends ConsumerWidget {
+  const new({required this.playerId, super.key});
+
+  final PlayerId playerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final details = ref.watch(playerDetailsProvider(playerId));
+    final born = switch (details.value?.dateOfBirth) {
+      final dob? => parseDateOfBirth(dob),
+      null => null,
+    };
+    final age = details.value?.ageAt(DateTime.now());
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(l10n.dateOfBirthLabel),
+      subtitle: Text(
+        !details.hasValue
+            ? ''
+            : born == null
+            ? '—'
+            : [
+                MaterialLocalizations.of(context).formatShortDate(born),
+                if (age != null) l10n.playerAge(age),
+              ].join(' · '),
+      ),
     );
   }
 }

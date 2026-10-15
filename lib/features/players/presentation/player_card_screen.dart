@@ -24,8 +24,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// PLAYER-2 at `/g/:groupId/roster/players/:playerId`: name, number,
-/// position, and who's linked, each marked Player or Guardian. Linked
+/// PLAYER-2 at `/g/:groupId/roster/players/:playerId`: name, number, date
+/// of birth (for those who see the Details), and who's linked, each marked
+/// Player or Guardian. Linked
 /// members (the player themselves included) and admins edit the details
 /// and add a guardian (PLAYER-5); admins remove links and the player, and
 /// a linked member can remove their own link. A member who isn't linked can claim
@@ -132,11 +133,7 @@ class PlayerCardScreen extends ConsumerWidget {
             title: Text(l10n.jerseyNumberLabel),
             subtitle: Text(player.jerseyNumber ?? '—'),
           ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.positionLabel),
-            subtitle: Text(player.position ?? '—'),
-          ),
+          if (seesDetails) DateOfBirthTile(playerId: playerId),
           if (seesDetails) ...[
             const SizedBox(height: Space.lg),
             PlayerDetailsSection(
@@ -365,7 +362,7 @@ class PlayerCardScreen extends ConsumerWidget {
     }
   }
 
-  /// Edits the name, number, and position (PLAYER-2), and with
+  /// Edits the name and number (PLAYER-2), and with
   /// [withDateOfBirth] the date of birth, which is saved in the player's
   /// details (PLAYER-12).
   Future<void> _edit(
@@ -378,7 +375,6 @@ class PlayerCardScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final name = TextEditingController(text: player.displayName);
     final number = TextEditingController(text: player.jerseyNumber);
-    final position = TextEditingController(text: player.position);
     // Only once the details have loaded, so saving keeps the rest of them.
     final stored = withDateOfBirth
         ? ref.read(playerDetailsProvider(playerId))
@@ -405,10 +401,6 @@ class PlayerCardScreen extends ConsumerWidget {
                 controller: number,
                 maxLength: 4,
                 decoration: InputDecoration(labelText: l10n.jerseyNumberLabel),
-              ),
-              TextField(
-                controller: position,
-                decoration: InputDecoration(labelText: l10n.positionLabel),
               ),
               if (withDob) ...[
                 DateOfBirthField(
@@ -447,7 +439,6 @@ class PlayerCardScreen extends ConsumerWidget {
               player.id,
               name: name.text,
               jerseyNumber: number.text,
-              position: position.text,
             );
       } else {
         await ref
@@ -456,7 +447,6 @@ class PlayerCardScreen extends ConsumerWidget {
               player.id,
               name: name.text,
               jerseyNumber: number.text,
-              position: position.text,
             );
       }
     } on AppFailure {

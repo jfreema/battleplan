@@ -51,15 +51,14 @@ Future<PlayerRelation?> askClaimRelation(
 typedef ProposedPlayer = ({
   String name,
   String? jerseyNumber,
-  String? position,
 
   /// 'YYYY-MM-DD', or null (PLAYER-12).
   String? dateOfBirth,
   PlayerRelation relation,
 });
 
-/// The form for a player who isn't listed (PLAYER-4): name, number,
-/// position, and how the member is linked. [relation] fixes the link (as
+/// The form for a player who isn't listed (PLAYER-4): name, number, date
+/// of birth, and how the member is linked. [relation] fixes the link (as
 /// "Who are you here for?" does) instead of asking; [name] prefills the
 /// name, such as the member's own when they add themselves.
 class ProposePlayerForm extends StatefulWidget {
@@ -87,7 +86,6 @@ class ProposePlayerForm extends StatefulWidget {
 class _ProposePlayerFormState extends State<ProposePlayerForm> {
   late final _name = TextEditingController(text: widget.name);
   final _number = TextEditingController();
-  final _position = TextEditingController();
   late PlayerRelation? _relation =
       widget.relation ?? (widget.canBeSelf ? null : PlayerRelation.guardian);
   DateTime? _dob;
@@ -97,7 +95,6 @@ class _ProposePlayerFormState extends State<ProposePlayerForm> {
   void dispose() {
     _name.dispose();
     _number.dispose();
-    _position.dispose();
     super.dispose();
   }
 
@@ -111,7 +108,6 @@ class _ProposePlayerFormState extends State<ProposePlayerForm> {
     widget.onSubmit((
       name: _name.text.trim(),
       jerseyNumber: _blank(_number),
-      position: _blank(_position),
       dateOfBirth: _dob == null ? null : formatDateOfBirth(_dob!),
       relation: relation,
     ));
@@ -138,31 +134,19 @@ class _ProposePlayerFormState extends State<ProposePlayerForm> {
           ),
         ),
         const SizedBox(height: Space.md),
-        Row(
-          children: [
-            SizedBox(
-              width: 110,
-              child: TextField(
-                controller: _number,
-                maxLength: 4,
-                decoration: InputDecoration(
-                  labelText: l10n.jerseyNumberLabel,
-                  counterText: '',
-                ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: SizedBox(
+            width: 110,
+            child: TextField(
+              controller: _number,
+              maxLength: 4,
+              decoration: InputDecoration(
+                labelText: l10n.jerseyNumberLabel,
+                counterText: '',
               ),
             ),
-            const SizedBox(width: Space.md),
-            Expanded(
-              child: TextField(
-                controller: _position,
-                maxLength: 30,
-                decoration: InputDecoration(
-                  labelText: l10n.positionLabel,
-                  counterText: '',
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
         DateOfBirthField(
           value: _dob,

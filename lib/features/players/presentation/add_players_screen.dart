@@ -20,12 +20,11 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// PLAYER-1 and PLAYER-4 at `/g/:groupId/players/add`. Admins add one
-/// player with the player's own email (optional, for an adult player) and
-/// up to 4 guardians, or paste a list with one line per guardian or
-/// player's email; people with accounts are linked now, new emails get an
-/// account and a setup email, and a results screen follows. Members add a
-/// player with how they're linked ("I am this player" or their parent or
-/// guardian), pending until an admin approves it.
+/// player (name, number, and date of birth) or paste a list with one
+/// player per line. Parents, guardians, and adult players link themselves
+/// later by claiming the player (PLAYER-3). Members add a player with how
+/// they're linked ("I am this player" or their parent or guardian),
+/// pending until an admin approves it.
 class AddPlayersScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -38,35 +37,16 @@ class AddPlayersScreen extends ConsumerStatefulWidget {
 class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
   final _name = TextEditingController();
   final _number = TextEditingController();
-  final _position = TextEditingController();
-  final _email = TextEditingController();
-  final List<TextEditingController> _guardianNames = List.generate(
-    4,
-    (_) => TextEditingController(),
-  );
-  final List<TextEditingController> _guardianEmails = List.generate(
-    4,
-    (_) => TextEditingController(),
-  );
   final _paste = TextEditingController();
   bool _pasting = false;
   bool _saving = false;
 
   /// The single player's date of birth (PLAYER-12), or null.
   DateTime? _dob;
-  int _guardianRows = 1;
 
   @override
   void dispose() {
-    for (final c in [
-      _name,
-      _number,
-      _position,
-      _email,
-      _paste,
-      ..._guardianNames,
-      ..._guardianEmails,
-    ]) {
+    for (final c in [_name, _number, _paste]) {
       c.dispose();
     }
     super.dispose();
@@ -75,30 +55,13 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
   List<NewPlayer> _single() => [
     NewPlayer(
       name: _name.text.trim(),
-      jerseyNumber: _number.text.trim(),
-      position: _position.text.trim(),
-      email: _email.text.trim().isEmpty ? null : _email.text.trim(),
+      jerseyNumber: _number.text.trim().isEmpty ? null : _number.text.trim(),
       dateOfBirth: _dob == null ? null : formatDateOfBirth(_dob!),
-      // Name and email are both optional (PLAYER-1); a name alone is kept,
-      // and the results say it couldn't be linked.
-      guardians: [
-        for (var i = 0; i < _guardianRows; i++)
-          if (_guardianEmails[i].text.trim().isNotEmpty ||
-              _guardianNames[i].text.trim().isNotEmpty)
-            NewGuardian(
-              name: _guardianNames[i].text.trim().isEmpty
-                  ? null
-                  : _guardianNames[i].text.trim(),
-              email: _guardianEmails[i].text.trim().isEmpty
-                  ? null
-                  : _guardianEmails[i].text.trim(),
-            ),
-      ],
     ),
   ];
 
   /// Adds [players]; [skipped] are pasted lines that couldn't be read,
-  /// listed with the results (PLAYER-1).
+  /// listed with how many were added (PLAYER-1).
   Future<void> _add(
     List<NewPlayer> players, {
     List<String> skipped = const [],
@@ -111,35 +74,24 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
     }
     setState(() => _saving = true);
     try {
-      final result = await ref
+      final added = await ref
           .read(playerRepositoryProvider)
           .addPlayers(widget.groupId, players);
       if (!mounted) return;
-      // PLAYER-1: a results screen with the players added, guardians linked
-      // and invited, and any problems.
-      await AddResultsScreen.show(
-        context,
-        title: l10n.playersAddedTitle,
-        sections: [
-          ResultSection(l10n.resultsSummary, [
-            l10n.playersAddedCount(result.playersAdded),
-            l10n.guardiansLinkedCount(result.guardiansLinked),
-            l10n.guardiansInvitedCount(result.guardiansInvited),
-            // Players' own emails (PLAYER-1), when any were given.
-            if (result.playersLinked > 0)
-              l10n.playersLinkedCount(result.playersLinked),
-            if (result.playersInvited > 0)
-              l10n.playersInvitedCount(result.playersInvited),
-          ], counted: false),
-          ResultSection(l10n.guardiansWithoutEmailHeading, [
-            ...result.guardiansWithoutEmail,
-          ], problem: true),
-          ResultSection(l10n.resultsProblems, [
-            for (final p in result.problems) describeAddProblem(l10n, p),
-          ], problem: true),
-          ResultSection(l10n.linesSkipped, skipped, problem: true),
-        ],
-      );
+      if (skipped.isEmpty) {
+        showAppSnackBar(context, l10n.playersAddedCount(added));
+      } else {
+        await AddResultsScreen.show(
+          context,
+          title: l10n.playersAddedTitle,
+          sections: [
+            ResultSection(l10n.resultsSummary, [
+              l10n.playersAddedCount(added),
+            ], counted: false),
+            ResultSection(l10n.linesSkipped, skipped, problem: true),
+          ],
+        );
+      }
       if (mounted) context.pop();
     } on AppFailure catch (e) {
       if (!mounted) return;
@@ -147,7 +99,6 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
         SnackBar(
           content: Text(switch (e) {
             RateLimited() => l10n.signInRateLimited,
-            EmailNotVerified() => l10n.addByEmailNeedsVerified,
             InvalidInput(message: 'too-many-players') => l10n.tooManyPlayers(
               Limits.playersPerGroupMax,
             ),
@@ -178,7 +129,6 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
             name: p.name,
             relation: p.relation,
             jerseyNumber: p.jerseyNumber,
-            position: p.position,
             dateOfBirth: p.dateOfBirth,
           );
       if (!mounted) return;
@@ -261,33 +211,27 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
               if (!_pasting) ...[
                 TextField(
                   controller: _name,
+                  maxLength: 60,
                   textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(labelText: l10n.playerNameLabel),
+                  decoration: InputDecoration(
+                    labelText: l10n.playerNameLabel,
+                    counterText: '',
+                  ),
                 ),
                 const SizedBox(height: Space.md),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 110,
-                      child: TextField(
-                        controller: _number,
-                        maxLength: 4,
-                        decoration: InputDecoration(
-                          labelText: l10n.jerseyNumberLabel,
-                          counterText: '',
-                        ),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: SizedBox(
+                    width: 110,
+                    child: TextField(
+                      controller: _number,
+                      maxLength: 4,
+                      decoration: InputDecoration(
+                        labelText: l10n.jerseyNumberLabel,
+                        counterText: '',
                       ),
                     ),
-                    const SizedBox(width: Space.md),
-                    Expanded(
-                      child: TextField(
-                        controller: _position,
-                        decoration: InputDecoration(
-                          labelText: l10n.positionLabel,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 // Kept in the player's details, not on the roster
                 // (PLAYER-12). Super admins see details but don't set
@@ -299,49 +243,12 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                   ),
                   const DateOfBirthPrivacyNote(),
                 ],
-                const SizedBox(height: Space.md),
-                // An adult player's own email links them as the player
-                // (PLAYER-1), not as their own guardian.
-                TextField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: l10n.playerEmailLabel,
-                    helperText: l10n.playerEmailHelp,
-                    helperMaxLines: 2,
-                  ),
-                ),
-                const SizedBox(height: Space.xl),
+                const SizedBox(height: Space.lg),
+                // Who's linked comes from claims (PLAYER-3), not this form.
                 Text(
-                  l10n.guardiansLabel,
-                  style: Theme.of(context).textTheme.titleSmall,
+                  l10n.addPlayerLinksLater,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-                for (var i = 0; i < _guardianRows; i++) ...[
-                  const SizedBox(height: Space.sm),
-                  TextField(
-                    controller: _guardianNames[i],
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      labelText: l10n.guardianNameLabel,
-                    ),
-                  ),
-                  const SizedBox(height: Space.sm),
-                  TextField(
-                    controller: _guardianEmails[i],
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: l10n.guardianEmailLabel,
-                    ),
-                  ),
-                ],
-                if (_guardianRows < 4)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () => setState(() => _guardianRows++),
-                      child: Text(l10n.addAnotherGuardian),
-                    ),
-                  ),
                 const SizedBox(height: Space.xl),
                 FilledButton(
                   onPressed: _saving ? null : () => unawaited(_add(_single())),
@@ -356,11 +263,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                   maxLines: 14,
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
-                    hintText:
-                        'Emma Rodriguez, Maria Rodriguez, maria@example.com\n'
-                        'Emma Rodriguez, Luis Rodriguez, luis@example.com\n'
-                        'Arjun Shah, Priya Shah, priya@example.com\n'
-                        'Jared Freeman, jared@example.com',
+                    hintText: 'Emma Rodriguez, 7\nArjun Shah, 12\nMia Chen',
                   ),
                 ),
                 const SizedBox(height: Space.md),
@@ -379,6 +282,11 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                       color: Theme.of(context).colorScheme.error,
                     ),
                   ),
+                const SizedBox(height: Space.md),
+                Text(
+                  l10n.addPlayerLinksLater,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 const SizedBox(height: Space.lg),
                 FilledButton(
                   onPressed: _saving || parsed.players.isEmpty || tooManyLines

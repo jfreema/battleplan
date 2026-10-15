@@ -56,14 +56,12 @@ abstract interface class AdminRepository {
     String? photoPath,
   });
 
-  /// Edits a player's name, number, and position on a team the super admin
-  /// isn't an admin of (ADMIN-3, PLAYER-2), audited. A blank number or
-  /// position clears it.
+  /// Edits a player's name and number on a team the super admin isn't an
+  /// admin of (ADMIN-3, PLAYER-2), audited. A blank number clears it.
   Future<void> updatePlayer(
     PlayerId id, {
     required String name,
     String? jerseyNumber,
-    String? position,
   });
 
   /// A page of people (ADMIN-4), after [after] when given.
