@@ -481,7 +481,7 @@ class _StorageBanner extends ConsumerWidget {
 }
 
 /// The team menu: Roster, Invite, and Notifications, the admin items
-/// (Team settings, Media, Reports) for the team's admins and super
+/// (Team settings, Media, Reports, Import) for the team's admins and super
 /// admins (§3), and Leave. A super admin viewing a team they're not on
 /// ([viewing], ADMIN-3) gets the roster, invite, and admin items only.
 class _TeamMenu extends ConsumerWidget {
@@ -512,6 +512,8 @@ class _TeamMenu extends ConsumerWidget {
       if (admin) ('settings', AppIcons.settings, l10n.teamSettingsMenu),
       if (admin) ('media', AppIcons.media, l10n.mediaMenu),
       if (admin) ('reports', AppIcons.report, l10n.reportsMenu),
+      // Bringing the schedule over from another app (SPEC §6.15).
+      if (admin) ('import', AppIcons.download, l10n.importMenu),
       if (!viewing) ('leave', AppIcons.leave, l10n.leaveTeamMenu),
     ];
     const built = {
@@ -521,6 +523,7 @@ class _TeamMenu extends ConsumerWidget {
       'invite',
       'reports',
       'notifications',
+      'import',
     };
     return PopupMenuButton<String>(
       tooltip: l10n.teamMenuTooltip,

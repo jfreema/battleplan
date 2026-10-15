@@ -29,6 +29,7 @@ import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
 import 'package:battleplan/features/groups/domain/media_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/imports/domain/event_import.dart';
 import 'package:battleplan/features/notifications/domain/device_repository.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
 import 'package:battleplan/features/notifications/domain/notification_repository.dart';
@@ -3025,3 +3026,76 @@ class FakePhotoDrops implements PhotoDrops {
   /// Files start or stop being dragged over the page.
   void drag({required bool on}) => _dragging.add(on);
 }
+
+/// Imports in memory (SPEC §6.15): answers previews with [preview] and
+/// imports with [imported], or fails with [failure]; records each call.
+class FakeImportRepository implements ImportRepository {
+  new({EventImportResult? preview, EventImportResult? imported, this.failure})
+    : preview = preview ?? sampleImport,
+      imported = imported ?? (preview ?? sampleImport);
+
+  EventImportResult preview;
+  EventImportResult imported;
+  AppFailure? failure;
+
+  /// "preview link webcal://x past=false", "import file 120 chars past=true".
+  final List<String> calls = [];
+
+  @override
+  Future<EventImportResult> importEvents(
+    GroupId groupId, {
+    required ImportSource source,
+    required bool includePast,
+    required bool dryRun,
+    String? url,
+    String? ics,
+  }) async {
+    calls.add(
+      '${dryRun ? 'preview' : 'import'} '
+      '${url != null ? 'link $url' : 'file ${ics!.length} chars'} '
+      'past=$includePast',
+    );
+    if (failure case final f?) throw f;
+    return dryRun ? preview : imported;
+  }
+}
+
+/// A preview of a short GameChanger season.
+final sampleImport = EventImportResult(
+  added: 3,
+  alreadyImported: 1,
+  past: 2,
+  skippedCount: 1,
+  first: DateTime.utc(2030, 10, 14, 23),
+  last: DateTime.utc(2030, 10, 24, 16),
+  skipped: const [
+    SkippedImport(title: 'vs. Hawks', reason: ImportSkipReason.canceled),
+  ],
+  sample: [
+    ImportedEventSample(
+      title: 'Practice',
+      type: EventType.practice,
+      allDay: false,
+      start: DateTime.utc(2030, 10, 14, 23),
+      timeZone: 'America/Chicago',
+      place: '123 Main St',
+    ),
+    ImportedEventSample(
+      title: 'vs. Eagles',
+      type: EventType.game,
+      allDay: false,
+      start: DateTime.utc(2030, 10, 17, 15),
+      timeZone: 'America/Chicago',
+      place: 'Riverside Park, 100 River Rd',
+    ),
+    ImportedEventSample(
+      title: 'Season kickoff BBQ',
+      type: EventType.social,
+      allDay: true,
+      start: DateTime.utc(2030, 10, 26, 5),
+      startDate: '2030-10-26',
+      timeZone: 'America/Chicago',
+      place: '',
+    ),
+  ],
+);

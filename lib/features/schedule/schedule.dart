@@ -3,6 +3,7 @@
 library;
 
 export 'presentation/event_card.dart' show EventCard;
-// How answers and times read, for a player's RSVP history (PLAYER-11).
+// How answers, times, and event types read, for a player's RSVP history
+// (PLAYER-11) and an import's preview (IMPORT-3).
 export 'presentation/schedule_format.dart'
-    show statusColor, statusIcon, statusLabel, timeRange;
+    show statusColor, statusIcon, statusLabel, timeRange, typeColor, typeIcon;

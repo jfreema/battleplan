@@ -36,6 +36,7 @@ import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_settings_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
+import 'package:battleplan/features/imports/presentation/import_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notification_settings_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notifications_screen.dart';
 import 'package:battleplan/features/notifications/presentation/push_test_screen.dart';
@@ -479,6 +480,13 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: 'reports',
             builder: (_, state) => ReportsScreen(
+              groupId: GroupId(state.pathParameters['groupId']!),
+            ),
+          ),
+          // Bringing events over from another app (SPEC §6.15).
+          GoRoute(
+            path: 'import',
+            builder: (_, state) => ImportScreen(
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
           ),

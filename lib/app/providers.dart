@@ -32,6 +32,8 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/data/firestore_group_repository.dart';
 import 'package:battleplan/features/groups/data/functions_invite_repository.dart';
 import 'package:battleplan/features/groups/data/functions_media_repository.dart';
+import 'package:battleplan/features/imports/application/providers.dart';
+import 'package:battleplan/features/imports/data/functions_import_repository.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/data/fcm_push_repository.dart';
 import 'package:battleplan/features/notifications/data/firestore_device_repository.dart';
@@ -87,6 +89,9 @@ List<Override> buildOverrides({
   sharerProvider.overrideWithValue(const SharePlusSharer()),
   calendarAdderProvider.overrideWithValue(const DeviceCalendarAdder()),
   fileChooserProvider.overrideWithValue(const FilePickerChooser()),
+  importRepositoryProvider.overrideWithValue(
+    FunctionsImportRepository(functions),
+  ),
   linkServiceProvider.overrideWithValue(LinkService.forEnv(isProd: env.isProd)),
   browserInfoProvider.overrideWithValue(
     kIsWeb ? WebBrowserInfo() : const PlainBrowserInfo(),

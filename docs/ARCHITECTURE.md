@@ -1135,9 +1135,22 @@ The R2 API token can reach only that bucket. The encryption key lives in Secret 
 
 ---
 
-### 6.13 Import and migration · Planned
+### 6.13 Import and migration · GameChanger events built
 
-SPEC §6.15, ROADMAP tasks 219–227. No importer exists yet. Build GroupMe first, then adapters for TeamReach, GameChanger, and TeamSnap. Verify each source's supported exports or official API before implementation; do not assume document or calendar access from the presence of those features in the source app.
+SPEC §6.15, ROADMAP tasks 219–227 and 241. GameChanger's events are built (below). GroupMe's messages come next, then adapters for TeamReach and TeamSnap. Verify each source's supported exports or official API before implementation; do not assume document or calendar access from the presence of those features in the source app.
+
+**Built: GameChanger events (SPEC IMPORT-7, 2026-10-15).** The `importEvents` callable (`functions/src/imports/`) and the Import screen (`lib/features/imports/`, team menu → Import, admins only).
+
+- **Input.** `{groupId, source: 'gamechanger', url | ics, includePast, dryRun}`: exactly one of a link (up to 2,000 characters) or a file's text (up to 1,000,000), checked by zod. `dryRun` defaults to true, so a call that forgets it only previews. `requireTeamAdmin` authorizes the call (super admins too) and refuses archived and suspended teams. Each team gets 30 calls a day, previews included.
+- **Fetching a link** (`fetch.ts`). The link is something a team admin pasted, so it's treated as hostile. It must be `https` or `webcal` (read as https) on port 443. Literal private, loopback, and link-local addresses are refused. DNS answers are checked at connect time through the socket's `lookup`, so a name can't point at an internal address, the metadata server included. Up to 3 redirects are each checked the same way. The body is capped at 2 MB and the request at 10 s. Refusals: `bad-link`, `calendar-unreachable`, `not-a-calendar`, `calendar-too-large`.
+- **Reading the calendar** (`ics.ts`, `events.ts`). RFC 5545 line unfolding and text unescaping; `TZID`, `VALUE=DATE`, and UTC times; `DURATION`; `EXDATE`; changed occurrences (`RECURRENCE-ID`); `STATUS:CANCELLED` left out.
+  - `RRULE` is expanded only for `DAILY` and `WEEKLY` (`INTERVAL`, plain `BYDAY`, `COUNT`, `UNTIL`), from a year back to a year ahead. Anything else is skipped as `repeat`, rather than guessed.
+  - Windows zone names map to IANA. A calendar zone of UTC or GMT (Google's default) gives way to the team's zone.
+- **IDs are the provenance.** An event's ID is `imp-` plus the first 28 hex digits of sha256 of the team, source, and source ID (`UID`, or `UID#date` for one occurrence of a repeat). A repeat import reads those IDs with `getAll` and writes only missing ones, in batches of 400. Earlier imports, and anything changed on them in the app, are never overwritten. There's no job or provenance collection, so nothing needs cleaning up.
+  - 500 new events at most per call (`too-many-events`). That keeps an import to one request of a few seconds, with a 2-minute function timeout.
+- **Quiet writes.** Events are written with `notifyTeam: false` and `postToChat: false`, so `followUpEventWrite` posts no card and sends no notification. `nextReminderAt` comes from the team's default reminders, so future events remind as usual and past ones never fire. A team at its storage quota gets `storage-full` (STORE-4); previews still run.
+- **Audit.** Each import adds an `auditLogs` entry, `importEvents`, with the source, link or file, and the counts.
+- **Errors on the web.** The web SDK appends the HTTP status to a callable's message (`not-a-calendar [400]`), and native SDKs don't. Every repository reads messages through `serverMessage` (`core/failure.dart`) before matching them.
 
 - Each adapter normalizes source records and reports capabilities for messages, documents, and events/calendar. The preview intersects adapter support with the data actually available in the supplied export or connection. The client exposes three independent choices; the server validates them again. Documents and events can be imported without messages.
 - Start GroupMe discovery with the official JSON export and representative anonymized fixtures. Its public API documents message pagination; document and calendar access remain unverified. Record a supported-format contract and known losses before writing the adapter.

@@ -34,6 +34,7 @@ export {
   adminUpdatePlayer,
   adminUpdateUser,
 } from './admin/handlers.js';
+export { importEvents } from './imports/handlers.js';
 export {
   addMemberByEmail,
   adminSetGroupQuota,
