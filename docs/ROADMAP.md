@@ -408,9 +408,9 @@ Decided 2026-10-13, at the owner's request. SPEC §6.15 (IMPORT), ARCH §6.13. T
 
 **Done when** a team admin can preview and import only the categories they selected, unsupported choices cannot run, retries do not duplicate content, and the report clearly identifies anything skipped. GroupMe ships first; each later adapter meets the same criteria.
 
-## Plays · built
+## Whiteboard · built
 
-Decided 2026-10-15, at the owner's request, and built the same day. SPEC §6.16 (BOARD), ARCH §6.14. A whiteboard for coaches, iPad-first and good with a mouse: plays are mostly drawn, shown, and erased, and saving one is optional.
+Decided 2026-10-15, at the owner's request, and built the same day. SPEC §6.16 (BOARD), ARCH §6.14. The team menu's **Whiteboard**, "Coach's whiteboard": iPad-first and good with a mouse; plays are mostly drawn, shown, and erased, and saving one is optional.
 
 242. ✅ The whiteboard: drag players, opponents, and the ball by finger, pencil, or mouse; add and label them; run, pass, and block arrows, freehand lines, text, erase, undo and redo, keyboard shortcuts; tools beside the board on a tablet or laptop, below it on a phone (BOARD-2). *Kept on the device until cleared; New board asks before erasing.*
 243. ✅ The baseball board, also softball's: the field itself, with the nine at their positions, a batter or bases loaded, and the ball in the pitcher's hand (BOARD-1).

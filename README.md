@@ -5,7 +5,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 - **Team chat:** photos, reactions, replies, @mentions, pinned messages, and announcements.
 - **Schedule and RSVPs:** games, practices, and events with opponents, places, and reminders; Going, Maybe, or Not going in one tap.
 - **Polls** and **Documents** for each team.
-- **Plays:** a whiteboard for coaches, made for an iPad and good with a mouse, with real baseball, basketball, soccer, and football fields: drag players and the ball to show how a play unfolds, draw routes, play the steps back, and save the plays worth keeping for the team.
+- **Whiteboard:** the coach's whiteboard, made for an iPad and good with a mouse, with real baseball, basketball, soccer, and football fields: drag players and the ball to show how a play unfolds, draw routes, play the steps back, and save the plays worth keeping for the team.
 - **Players and parents:** adult players answer for themselves; parents and guardians answer for their kids, who don't need accounts.
 - **Import:** bring a team over from GroupMe (messages, photos, files, and events) or TeamSnap (schedule, players, and files), and schedules from TeamReach, GameChanger, or Google Calendar.
 

@@ -471,7 +471,7 @@ class _TeamMenu extends ConsumerWidget {
     // "Coming soon".
     final items = [
       ('roster', AppIcons.roster, l10n.rosterMenu),
-      // Everyone views the team's plays; admins draw them (SPEC §6.16).
+      // The coach's whiteboard; everyone views its saved plays (SPEC §6.16).
       ('plays', AppIcons.plays, l10n.playsMenu),
       ('invite', AppIcons.invite, l10n.inviteMenu),
       if (!viewing)
@@ -514,6 +514,7 @@ class _TeamMenu extends ConsumerWidget {
               contentPadding: EdgeInsets.zero,
               leading: Icon(icon),
               title: Text(label),
+              subtitle: route == 'plays' ? Text(l10n.playsMenuHelp) : null,
             ),
           ),
       ],

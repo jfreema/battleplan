@@ -242,7 +242,7 @@ Sign in
  └─ Team view (opens the last team you used)
       ├─ Header:     team switcher ▾ · notification bell · team menu ⋯ · your avatar
       ├─ Tabs:       Chat | Schedule | Documents
-      ├─ Team menu:  Roster · Plays · Invite · Notifications for this team ·
+      ├─ Team menu:  Roster · Whiteboard · Invite · Notifications for this team ·
       │              Team settings* · Media* · Reports* · Import*    (* admins)
       │              (Leave team is on your own card in the Roster, TEAM-8)
       └─ Your avatar: Settings · Admin panel** · Sign out           (** super admins)
@@ -1066,9 +1066,9 @@ Requested 2026-10-13. Built at the owner's request: GameChanger's events (2026-1
 
 ---
 
-### 6.16 Plays (BOARD) · Built
+### 6.16 Whiteboard (BOARD) · Built
 
-Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). A whiteboard for coaches, made for an iPad's touch and a laptop's mouse alike: plays are mostly drawn, shown to the team, and erased, like a real whiteboard. Saving one is optional. Plays are visual aids only; they aren't attached to events or posted in the chat. This does not block any go-live phase.
+Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's whiteboard (the team menu's **Whiteboard**, "Coach's whiteboard"), made for an iPad's touch and a laptop's mouse alike: plays are mostly drawn, shown to the team, and erased, like a real whiteboard. Saving one is optional. Plays are visual aids only; they aren't attached to events or posted in the chat. This does not block any go-live phase.
 
 - **BOARD-1 · Four boards.** Each is drawn from a real field's measurements, with its own starting positions:
   - **Baseball** (also softball's): the field itself, with striped outfield grass, the warning track and fence, the infield dirt and grass, base paths, bases, home plate, the mound and rubber, batter's boxes, and foul lines. The nine stand at P, C, 1B, 2B, 3B, SS, LF, CF, and RF; the other side can start with a batter, or the bases loaded.
@@ -1076,9 +1076,9 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). A whiteboard
   - **Soccer**: a full or half pitch with its boxes, arcs, and goals; 4-4-2, 4-3-3, 3-5-2, 9v9, and 7v7, for either side.
   - **Football (American), X's and O's**: yard lines, hash marks, the line of scrimmage, and the line to gain; the offense as O's in the I formation or shotgun, the defense as X's in a 4-3 or 3-4.
   - Every board starts with the ball in play: in the pitcher's hand, with the point guard, on the center spot, on the line of scrimmage. Teams of other sports get a blank board, and any board can be picked.
-- **BOARD-2 · The whiteboard.** Plays in the team menu opens it for the team's admins: the team's sport's board, ready to draw. Drag players, opponents, and the ball with a finger, a pencil, or a mouse to show how a play unfolds; add more; label one with a number, a position, or a roster player; draw run (solid), pass (dashed), and block or screen (T) arrows, freehand lines, and text; erase; undo and redo (and ⌘/Ctrl+Z, Delete, and Escape on a keyboard). The tools sit beside the board on a tablet or laptop and below it on a phone, each big enough for a finger. The drawing stays on that device until it's cleared, so leaving never loses it; **New board** starts over (asking first) on any board.
+- **BOARD-2 · The whiteboard.** **Whiteboard** in the team menu opens it for the team's admins: the team's sport's board, ready to draw. Drag players, opponents, and the ball with a finger, a pencil, or a mouse to show how a play unfolds; add more; label one with a number, a position, or a roster player; draw run (solid), pass (dashed), and block or screen (T) arrows, freehand lines, and text; erase; undo and redo (and ⌘/Ctrl+Z, Delete, and Escape on a keyboard). The tools sit beside the board on a tablet or laptop and below it on a phone, each big enough for a finger. The drawing stays on that device until it's cleared, so leaving never loses it; **New board** starts over (asking first) on any board.
 - **BOARD-3 · Steps.** A play can have up to 10 steps. A new step starts where everyone stands; **Play** moves the players and the ball smoothly from each step to the next.
-- **BOARD-4 · Saved plays.** **Save to plays** keeps a copy, named, for the team: everyone on the team opens Plays to see them (their Plays shows the saved list), step by step. Admins edit, duplicate, delete, or put a saved play back on the whiteboard. Positions are only labels on the drawing; nothing is saved on a player (players have no position field, ROADMAP task 234).
+- **BOARD-4 · Saved plays.** **Save to plays** keeps a copy, named, for the team: everyone on the team opens the Whiteboard to see them (for them it shows the saved plays), step by step. Admins edit, duplicate, delete, or put a saved play back on the whiteboard. Positions are only labels on the drawing; nothing is saved on a player (players have no position field, ROADMAP task 234).
 
 **Acceptance**
 

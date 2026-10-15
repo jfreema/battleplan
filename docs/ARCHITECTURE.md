@@ -1176,9 +1176,9 @@ SPEC §6.15, ROADMAP tasks 219–227, 241, 249, 250, 252, and 254. Built: GameCh
 - **Limits.** 1,000 import calls (checks included) per team per day, about 250,000 messages; each call has a 2-minute timeout. Each call that adds something writes an audit entry (`importMessages`, `importDocuments`) with its counts.
 - **In the app.** `Message.importedFrom` (from `imported.source`) shows "from GroupMe" with the author's name, once per run, and hides **Block** (there's no account); **Report** stays.
 
-### 6.14 Plays · Built
+### 6.14 Whiteboard · Built
 
-SPEC §6.16 (BOARD), ROADMAP tasks 242–248. A coach's whiteboard first; saved plays second. `lib/features/plays/`.
+SPEC §6.16 (BOARD), ROADMAP tasks 242–248. The coach's whiteboard first (the team menu's **Whiteboard**); saved plays second. The code says plays: `lib/features/plays/`, the `plays` collection, `/g/:groupId/plays`.
 
 - **Data.** `plays/{playId}`: `groupId`, `board` (`baseball`, `basketball`, `soccer`, `football`, `blank`), `variant` (`full`, `half`), `title` (1–80), `note` (≤ 1000), `steps: [{ elements: [...] }]` (1–10 steps of ≤ 150 elements), `createdBy`, `createdAt`, `updatedAt`. Elements are compact maps: `k` is `m` (marker: `x`, `y`, `s` side `team`/`opponent`/`ball`, `l` label ≤ 12, `p` roster player), `a` (arrow: `t` `run`/`pass`/`block`, `pts`), `l` (freehand line: `pts`), or `n` (note: `x`, `y`, `text` ≤ 200). Points are 0–1 across the board and down it, rounded to 4 places, `pts` one flat list of x, y pairs (≤ 64 points, simplified as drawn). A play is a few kilobytes and doesn't count toward storage. One index: `groupId` with `updatedAt` descending. Team deletion deletes them (`TEAM_COLLECTIONS`).
 - **Rules.** Members and super admins read (lists bounded); admins and super admins create, update, and delete on active teams (`playEditorOk`); `validPlay` checks the keys, board, variant, title, note, and each step's element count; `createdBy` is the writer, and `groupId`, `createdBy`, and `createdAt` never change.

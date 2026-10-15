@@ -328,7 +328,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('everyone finds Plays in the team menu', (tester) async {
+    testWidgets('everyone finds the Whiteboard in the team menu', (
+      tester,
+    ) async {
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
@@ -337,7 +339,8 @@ void main() {
       );
       await tester.tap(find.byTooltip('Team menu'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Plays'));
+      expect(find.text("Coach's whiteboard"), findsOneWidget);
+      await tester.tap(find.text('Whiteboard'));
       await tester.pumpAndSettle();
       expect(
         find.text("No plays yet. Your coaches' plays will show up here."),

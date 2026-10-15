@@ -1667,8 +1667,8 @@
   "@importRun": {"placeholders": {"count": {"type": "int"}}},
   "importDone": "{count, plural, =1{1 event added to the schedule.} other{{count} events added to the schedule.}}",
   "@importDone": {"placeholders": {"count": {"type": "int"}}},
-  "playsMenu": "Plays",
-  "playsTitle": "Plays",
+  "playsMenu": "Whiteboard",
+  "playsTitle": "Whiteboard",
   "playsEmpty": "No plays yet. Your coaches' plays will show up here.",
   "playsEmptyAdmin": "No saved plays yet. Draw on the whiteboard and tap Save to plays to keep one.",
   "playNew": "New play",
@@ -1755,5 +1755,6 @@
   "@playSaved": {"placeholders": {"title": {"type": "String"}}},
   "playPlaySteps": "Play the steps",
   "playStopPlaying": "Stop",
-  "playToWhiteboard": "Put on the whiteboard"
+  "playToWhiteboard": "Put on the whiteboard",
+  "playsMenuHelp": "Coach's whiteboard"
 }
