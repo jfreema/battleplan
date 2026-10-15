@@ -17,6 +17,7 @@ import 'package:battleplan/core/services/photo_drops.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/remote_config.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/version.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/data/functions_admin_repository.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -58,7 +59,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// The one place repositories and services are constructed (ARCH §5.2 rule 4).
 List<Override> buildOverrides({
   required AppEnv env,
-  required String version,
+  required AppBuild build,
   required FirebaseAuth auth,
   required FirebaseFirestore firestore,
   required FirebaseFunctions functions,
@@ -70,7 +71,8 @@ List<Override> buildOverrides({
   required RemoteConfig remoteConfig,
 }) => [
   appEnvProvider.overrideWithValue(env),
-  appVersionProvider.overrideWithValue(version),
+  appVersionProvider.overrideWithValue(build.version),
+  appBuildProvider.overrideWithValue(build),
   analyticsProvider.overrideWithValue(analytics),
   crashReporterProvider.overrideWithValue(crashReporter),
   remoteConfigProvider.overrideWithValue(remoteConfig),
@@ -151,6 +153,6 @@ List<Override> buildOverrides({
   notificationRepositoryProvider.overrideWithValue(
     FirestoreNotificationRepository(firestore),
   ),
-  deviceAppVersionProvider.overrideWithValue(version),
+  deviceAppVersionProvider.overrideWithValue(build.full),
   localPrefsRepositoryProvider.overrideWithValue(SharedPrefsRepository(prefs)),
 ];

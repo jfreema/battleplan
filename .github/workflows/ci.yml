@@ -52,7 +52,10 @@ jobs:
     name: Web build
     runs-on: ubuntu-latest
     steps:
+      # The whole history: the build number counts the commits (ARCH §9).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}

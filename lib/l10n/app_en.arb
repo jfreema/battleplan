@@ -62,6 +62,8 @@
   "themeDark": "Dark",
   "about": "About",
   "versionLabel": "Version {version}",
+  "versionBuildLabel": "Version {version} (build {build})",
+  "@versionBuildLabel": {"placeholders": {"version": {"type": "String"}, "build": {"type": "String"}}},
   "@versionLabel": {
     "placeholders": {
       "version": {

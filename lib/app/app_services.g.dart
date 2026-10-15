@@ -57,19 +57,19 @@ final class AppEnvProvider extends $FunctionalProvider<AppEnv, AppEnv, AppEnv>
 String _$appEnvHash() => r'8cabd7ff805917d2eb9ee00272a3a8d482d125be';
 
 /// The app's version from the platform (pubspec `version`), for the
-/// forced-update check and the About screen.
+/// forced-update check.
 
 @ProviderFor(appVersion)
 final appVersionProvider = AppVersionProvider._();
 
 /// The app's version from the platform (pubspec `version`), for the
-/// forced-update check and the About screen.
+/// forced-update check.
 
 final class AppVersionProvider
     extends $FunctionalProvider<String, String, String>
     with $Provider<String> {
   /// The app's version from the platform (pubspec `version`), for the
-  /// forced-update check and the About screen.
+  /// forced-update check.
   AppVersionProvider._()
     : super(
         from: null,
@@ -104,6 +104,52 @@ final class AppVersionProvider
 }
 
 String _$appVersionHash() => r'6751976461937ee18ad2436ed8daa4541b9c7442';
+
+/// The version, build number, and commit, for Settings → About.
+
+@ProviderFor(appBuild)
+final appBuildProvider = AppBuildProvider._();
+
+/// The version, build number, and commit, for Settings → About.
+
+final class AppBuildProvider
+    extends $FunctionalProvider<AppBuild, AppBuild, AppBuild>
+    with $Provider<AppBuild> {
+  /// The version, build number, and commit, for Settings → About.
+  AppBuildProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appBuildProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$appBuildHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppBuild> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AppBuild create(Ref ref) {
+    return appBuild(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppBuild value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppBuild>(value),
+    );
+  }
+}
+
+String _$appBuildHash() => r'3ac5982fc238a6c401783146496fc997f57d5045';
 
 /// No-op until bootstrap supplies Firebase Analytics (never in emulator runs).
 

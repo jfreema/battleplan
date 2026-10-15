@@ -65,8 +65,21 @@ if [ ! -f "$out/index.html" ]; then
 HTML
 fi
 
-# 2. The web app under /app/ (WASM, with the JS fallback, like CI).
-flutter build web --wasm -t "lib/main_$flavor.dart" --base-href /app/ -o "$PWD/$app" "$@"
+# 2. The web app under /app/ (WASM, with the JS fallback, like CI), numbered
+# (ARCH §9): the build number is the count of commits in the checked-out
+# history, so every build of a commit has the same number and each push to
+# main a higher one, and the commit's short ID goes in too. Settings → About
+# shows both. A shallow clone would count wrong, so it needs the full history
+# (CI checks out with fetch-depth: 0).
+if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+  echo "This is a shallow clone, so the build number would be wrong: fetch the full history." >&2
+  exit 1
+fi
+build_number=$(git rev-list --count HEAD)
+commit=$(git rev-parse --short=7 HEAD)
+echo "Building $flavor build $build_number ($commit)."
+flutter build web --wasm -t "lib/main_$flavor.dart" --base-href /app/ -o "$PWD/$app" \
+  --build-number="$build_number" --dart-define=APP_COMMIT="$commit" "$@"
 
 rm -f "$app/.last_build_id"
 grep -q '<base href="/app/">' "$app/index.html" || {

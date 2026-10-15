@@ -291,7 +291,7 @@ GoRouter router(Ref ref) {
         pageBuilder: (_, state) => PanelPage(
           key: state.pageKey,
           child: SettingsScreen(
-            appVersion: ref.read(appVersionProvider),
+            appBuild: ref.read(appBuildProvider),
             showDevTools: !env.isProd,
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:battleplan/app/app.dart';
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/version.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
@@ -51,6 +52,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeSharer? sharer,
   FakeLinkOpener? linkOpener,
   FakeAdminRepository? admin,
+  AppBuild build = const AppBuild(version: '1.0.0', number: '1', commit: ''),
   Size size = const Size(400, 1600),
   List<Override> overrides = const [],
 }) async {
@@ -79,6 +81,7 @@ Future<FakeLocalPrefs> pumpApp(
           const AppEnv(flavor: AppFlavor.dev, useEmulators: true),
         ),
         appVersionProvider.overrideWithValue('1.0.0'),
+        appBuildProvider.overrideWithValue(build),
         authRepositoryProvider.overrideWithValue(auth),
         userRepositoryProvider.overrideWithValue(users ?? FakeUserRepository()),
         groupRepositoryProvider.overrideWithValue(teams),

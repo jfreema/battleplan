@@ -15,6 +15,7 @@ import 'package:battleplan/core/services/analytics.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
 import 'package:battleplan/core/services/remote_config.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/version.dart';
 import 'package:battleplan/features/chat/data/prefs_chat_queue_store.dart';
 import 'package:battleplan/features/settings/data/shared_prefs_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -81,6 +82,12 @@ Future<void> bootstrap({
 
   final info = await PackageInfo.fromPlatform();
   final version = info.version;
+  // The build number and commit tools/build_hosting.sh stamps in (ARCH §9).
+  final build = AppBuild(
+    version: version,
+    number: info.buildNumber,
+    commit: const String.fromEnvironment('APP_COMMIT'),
+  );
   final prefs = await SharedPreferencesWithCache.create(
     cacheOptions: const SharedPreferencesWithCacheOptions(
       allowList: {...SharedPrefsRepository.keys, PrefsChatQueueStore.key},
@@ -93,13 +100,13 @@ Future<void> bootstrap({
   if (env.useEmulators) {
     analytics = const NoopAnalytics();
     crashReporter = kIsWeb
-        ? WebErrorReporter(functions, appVersion: version, sampleRate: 1)
+        ? WebErrorReporter(functions, appVersion: build.full, sampleRate: 1)
         : const NoopCrashReporter();
     remoteConfig = const DefaultRemoteConfig();
   } else {
     analytics = FirebaseAnalyticsService(FirebaseAnalytics.instance);
     crashReporter = kIsWeb
-        ? WebErrorReporter(functions, appVersion: version)
+        ? WebErrorReporter(functions, appVersion: build.full)
         : CrashlyticsReporter(FirebaseCrashlytics.instance);
     remoteConfig = FirebaseRemoteConfigService(FirebaseRemoteConfig.instance);
   }
@@ -120,7 +127,7 @@ Future<void> bootstrap({
     ProviderScope(
       overrides: buildOverrides(
         env: env,
-        version: version,
+        build: build,
         auth: auth,
         firestore: firestore,
         functions: functions,

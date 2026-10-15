@@ -3,6 +3,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -21,9 +22,10 @@ import 'package:material_ui/material_ui.dart';
 /// Settings (SPEC §6.10): profile, appearance, notifications, sign-in
 /// methods, about, and the account actions.
 class SettingsScreen extends ConsumerWidget {
-  const new({required this.appVersion, this.showDevTools = false, super.key});
+  const new({required this.appBuild, this.showDevTools = false, super.key});
 
-  final String appVersion;
+  /// Shown under About: the version, build number, and commit (ARCH §9).
+  final AppBuild appBuild;
 
   /// Shows developer-only tools (dev builds only).
   final bool showDevTools;
@@ -127,7 +129,15 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push('/settings/push-test'),
             ),
           section(l10n.about),
-          ListTile(title: Text(l10n.versionLabel(appVersion))),
+          ListTile(
+            title: Text(
+              appBuild.number.isEmpty
+                  ? l10n.versionLabel(appBuild.version)
+                  : l10n.versionBuildLabel(appBuild.version, appBuild.number),
+            ),
+            // The commit it was built from, to match it with GitHub.
+            subtitle: appBuild.commit.isEmpty ? null : Text(appBuild.commit),
+          ),
           ListTile(
             title: Text(l10n.termsOfUse),
             onTap: () => links.open(site.site('/terms')),
@@ -141,7 +151,7 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => showLicensePage(
               context: context,
               applicationName: l10n.appName,
-              applicationVersion: appVersion,
+              applicationVersion: appBuild.full,
             ),
           ),
           // The address from platform settings (ADMIN-7).

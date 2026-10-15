@@ -1237,7 +1237,7 @@ Integration flows:
 - **On a release**, started by hand: deploy to **prod**. A private repo on GitHub Free has no approval gates (environments and required reviewers), so starting the workflow is the approval. Google accepts prod deploys only from this workflow, through a condition on its Workload Identity Federation provider. Fastlane or Codemagic builds and uploads to **TestFlight** (from Phase 4) and the **Play Console internal track** (from Phase 5).
 - **Deploy access** is keyless: Workload Identity Federation, with one deploy service account per project and no key files in GitHub.
 - **Minutes.** A private repo on GitHub Free gets 2,000 Actions minutes a month. Linux jobs (checks, web builds, Firebase deploys) take a few minutes each and fit easily. macOS jobs count 10×, so where iOS builds run (GitHub, Fastlane on the Mac, Codemagic, or Xcode Cloud) is decided in Phase 4.
-- **Versioning.** One semantic version for all platforms, plus a monotonically increasing build number.
+- **Versioning.** One semantic version for all platforms (pubspec's `version`, which the forced-update check compares), plus a build number that only goes up: the number of commits on `main` at the commit being built, which `tools/build_hosting.sh` passes as `--build-number`, with the short commit ID as `APP_COMMIT`. Every build of a commit (CI, Release to dev, Release to prod) gets the same number, and each push a higher one. Settings → About shows "Version 0.1.0 (build 312)" and the commit; error reports and device records carry `0.1.0+312.806de75`. Checkouts that build need the full history (`fetch-depth: 0`); the script refuses a shallow clone. The native builds (Phases 4 and 5) take the same number.
 
 ---
 

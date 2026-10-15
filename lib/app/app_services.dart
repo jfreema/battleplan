@@ -2,6 +2,7 @@ import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/services/analytics.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
 import 'package:battleplan/core/services/remote_config.dart';
+import 'package:battleplan/core/version.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_services.g.dart';
@@ -12,9 +13,13 @@ part 'app_services.g.dart';
 AppEnv appEnv(Ref ref) => throw UnimplementedError();
 
 /// The app's version from the platform (pubspec `version`), for the
-/// forced-update check and the About screen.
+/// forced-update check.
 @Riverpod(keepAlive: true)
 String appVersion(Ref ref) => throw UnimplementedError();
+
+/// The version, build number, and commit, for Settings → About.
+@Riverpod(keepAlive: true)
+AppBuild appBuild(Ref ref) => throw UnimplementedError();
 
 /// No-op until bootstrap supplies Firebase Analytics (never in emulator runs).
 @Riverpod(keepAlive: true)
