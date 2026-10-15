@@ -1,0 +1,135 @@
+# Releases one commit to dev or prod: Firestore rules and indexes, Storage
+# rules, Functions, and the Hosting site (the website, and the web app at
+# /app). Release to dev (release-dev.yml) and Release to prod
+# (release-prod.yml) call it; it isn't started on its own.
+#
+# It releases only a commit CI passed on, waiting for CI if it's still
+# running, unless skip_ci_check is set. Deploy access is keyless (Workload
+# Identity Federation, set up by tools/setup_github_deploys.sh).
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      flavor:
+        description: dev or prod
+        required: true
+        type: string
+      skip_ci_check:
+        description: Release without waiting for CI to pass on this commit
+        required: false
+        type: boolean
+        default: false
+
+env:
+  # The same Flutter as ci.yml.
+  FLUTTER_VERSION: 3.47.6
+
+jobs:
+  # Its own job, outside the deploy lock: CI's deploy to dev takes that lock
+  # too, and waiting for CI while holding it would wait forever.
+  checks:
+    name: Ready to release
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    permissions:
+      actions: read
+    steps:
+      - name: Release from main
+        if: inputs.flavor == 'prod' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Prod releases come from main (this is ${GITHUB_REF_NAME})."
+          exit 1
+
+      - name: CI passed on this commit
+        if: ${{ !inputs.skip_ci_check }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The latest CI run on this commit, waiting while it runs.
+          for _ in $(seq 1 120); do
+            ci=$(gh run list --repo "$GITHUB_REPOSITORY" --commit "$GITHUB_SHA" --workflow ci.yml \
+              --limit 1 --json status,conclusion -q '.[0] | "\(.status) \(.conclusion)"')
+            case "$ci" in
+              "completed success") echo "CI passed on ${GITHUB_SHA:0:7}."; exit 0 ;;
+              completed*) echo "::error::CI didn't pass on ${GITHUB_SHA:0:7} ($ci)."; exit 1 ;;
+              "") echo "::error::CI hasn't run on ${GITHUB_SHA:0:7}. Push it to main, or run with skip_ci_check."; exit 1 ;;
+              *) echo "CI is ${ci%% *} on ${GITHUB_SHA:0:7}; waiting."; sleep 30 ;;
+            esac
+          done
+          echo "::error::CI didn't finish within an hour."
+          exit 1
+
+  release:
+    name: Release to ${{ inputs.flavor }}
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    # One deploy at a time per project, CI's deploy to dev included; a
+    # release waits for the one before it rather than canceling it.
+    concurrency:
+      group: deploy-${{ inputs.flavor }}
+      cancel-in-progress: false
+    env:
+      PROJECT: ${{ inputs.flavor == 'prod' && 'battleplan-prod' || 'battleplan-dev-ecce4' }}
+      SITE: ${{ inputs.flavor == 'prod' && 'https://getbattleplan.app' || 'https://battleplan-dev-ecce4.web.app' }}
+      FIREBASE: npx --yes firebase-tools@15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Hosting build (website + web app under /app)
+        env:
+          # Not secrets: the reCAPTCHA site key for App Check once there is
+          # one, and the Apple team for apple-app-site-association.
+          APP_CHECK_WEB_KEY: ${{ inputs.flavor == 'prod' && vars.APP_CHECK_WEB_KEY_PROD || vars.APP_CHECK_WEB_KEY_DEV }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        run: tools/build_hosting.sh "${{ inputs.flavor }}" ${APP_CHECK_WEB_KEY:+--dart-define=APP_CHECK_WEB_KEY=$APP_CHECK_WEB_KEY}
+
+      - name: Functions dependencies
+        run: npm ci --prefix functions
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ inputs.flavor == 'prod' && vars.WIF_PROVIDER_PROD || vars.WIF_PROVIDER }}
+          service_account: ${{ inputs.flavor == 'prod' && vars.WIF_SERVICE_ACCOUNT_PROD || vars.WIF_SERVICE_ACCOUNT }}
+
+      # Rules first, then Functions, then the app, so the new app never
+      # calls a function that isn't there yet.
+      - name: Deploy Firestore rules and indexes, and Storage rules
+        run: $FIREBASE deploy --only firestore:rules,firestore:indexes,storage --project "$PROJECT" --non-interactive
+
+      - name: Deploy Functions
+        run: |
+          # Deploying many functions at once can hit Google's quota for a
+          # minute; unchanged functions are skipped on the next try.
+          for attempt in 1 2 3; do
+            if $FIREBASE deploy --only functions --project "$PROJECT" --non-interactive \
+              --message "Release ${GITHUB_SHA:0:7}"; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Functions deploy failed (try $attempt of 3); trying again in 90 seconds."
+              sleep 90
+            fi
+          done
+          exit 1
+
+      - name: Deploy Hosting
+        run: $FIREBASE deploy --only hosting --project "$PROJECT" --non-interactive --message "Release ${GITHUB_SHA:0:7}"
+
+      - name: Summary
+        run: |
+          echo "Released \`${GITHUB_SHA:0:7}\` to **$PROJECT**: $SITE (app at $SITE/app/)." >> "$GITHUB_STEP_SUMMARY"

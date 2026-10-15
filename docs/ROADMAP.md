@@ -210,6 +210,11 @@ SPEC PLAYER-12 and Q18, ARCH §6.2, §6.3, and D63. The owner asked to keep play
 
 229. ✅ Super admins manage any team as SPEC §3 says, joined or not, at the owner's request (2026-10-13, SPEC §3, ADMIN-3, PLAYER-12). *While viewing a team they're not on, the team menu (Roster, Invite, Team settings, Media, Reports), Team settings' owner actions, Set RSVP for someone, and editing and pinning documents now show; player details show read-only, with ages on the roster. On a team they've joined, they also send @everyone and announcements, post polls, and add documents whatever the team's switches (Firestore and Storage rules). `addPlayers` refuses a date of birth from a super admin who isn't an admin of the team. The owner's account (jared.d.freeman@gmail.com) has the claim on prod.*
 
+## Release workflows · after go-live
+
+230. ✅ Release to dev and Release to prod as GitHub Actions workflows, started by hand, at the owner's request (2026-10-14, ARCH §9). *`release.yml` waits for CI on the commit, then deploys rules, indexes, Storage rules, Functions (retrying on quota), and Hosting, keyless. Prod takes only `release-prod.yml` on `main`, by a condition on its Workload Identity Federation provider. `tools/release_prod.sh` stays as the Mac fallback.*
+231. 👤 **Jared:** run `tools/setup_github_deploys.sh dev` and `tools/setup_github_deploys.sh prod` once (they grant the deploy accounts their roles), push, then run Release to dev and Release to prod once each from the Actions tab.
+
 ## Go-live in six phases
 
 Decided 2026-10-12, at the owner's request (SPEC §9, ARCH D60). The first go-live is the website and the web app only. Sign in with Apple, the App Store, Google Play, and Facebook each get a later phase of their own, in this order:

@@ -1,0 +1,24 @@
+# Release to dev: everything (Firestore rules and indexes, Storage rules,
+# Functions, and the Hosting site) to battleplan-dev-ecce4. Start it from
+# the Actions tab, on main or another branch. CI's deploy on every push to
+# main covers only rules, indexes, and Hosting.
+name: Release to dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_ci_check:
+        description: Release without waiting for CI to pass on this commit
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    uses: ./.github/workflows/release.yml
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    with:
+      flavor: dev
+      skip_ci_check: ${{ inputs.skip_ci_check }}

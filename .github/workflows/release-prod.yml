@@ -1,0 +1,25 @@
+# Release to prod: everything (Firestore rules and indexes, Storage rules,
+# Functions, and the Hosting site) to battleplan-prod, live at
+# getbattleplan.app. Start it from the Actions tab, on main; starting it is
+# the approval (ARCH §9). Google accepts prod deploys only from this file
+# on main, started by hand (tools/setup_github_deploys.sh prod).
+name: Release to prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_ci_check:
+        description: Release without waiting for CI to pass on this commit
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    uses: ./.github/workflows/release.yml
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    with:
+      flavor: prod
+      skip_ci_check: ${{ inputs.skip_ci_check }}

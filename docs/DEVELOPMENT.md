@@ -77,7 +77,9 @@ gcloud storage buckets update gs://battleplan-dev-ecce4.firebasestorage.app --co
 
 ## Deploying to dev
 
-Every push to `main` deploys Firestore rules, indexes, and the web app to `battleplan-dev-ecce4` through GitHub Actions. Functions and Storage rules deploy from your Mac for now, because the GitHub deploy account would need more permissions for them:
+Every push to `main` deploys Firestore rules, indexes, and the web app to `battleplan-dev-ecce4` through GitHub Actions. For everything, Functions and Storage rules included, run **Release to dev** from the Actions tab (`.github/workflows/release-dev.yml`). It waits for CI to pass on the commit (or skips that with `skip_ci_check`), builds the site and the app for dev, and deploys rules, indexes, Storage rules, Functions, and Hosting, in that order. It can run on a branch too.
+
+From your Mac instead:
 
 ```sh
 npm --prefix functions run build
@@ -89,8 +91,11 @@ firebase deploy --only functions,storage --project battleplan-dev-ecce4
 Prod (`battleplan-prod`) serves the website and the web app at `getbattleplan.app` (Phase 1). Nothing deploys there automatically.
 
 1. **Once:** after the project is on Blaze, run `tools/setup_prod.sh`. It creates the Firestore database in `us-central1` with point-in-time recovery and daily backups kept 7 days, the TTL policies, the Storage bucket, the Resend key (copied from dev's Secret Manager), the function-image cleanup policy, the sign-in providers and authorized domains, and the custom domains, and prints the DNS records to add in Cloudflare (DNS only).
-2. **Each release:** push main, wait for CI, then run `tools/release_prod.sh`. It refuses anything that isn't GitHub's main with CI passed, builds the site and the app for prod, and deploys rules, indexes, Storage rules, Functions, and Hosting.
-3. **Once, after your first sign-in on prod:** `npm --prefix tools/seed run super-admin -- battleplan-prod <your email>`.
+2. **Once:** run `tools/setup_github_deploys.sh dev` and `tools/setup_github_deploys.sh prod`. They give each project's `github-deployer` service account what a release needs and let GitHub Actions use it without a key (Workload Identity Federation). Prod accepts only **Release to prod**, started by hand on `main`.
+3. **Each release:** push main, then run **Release to prod** from the Actions tab (`.github/workflows/release-prod.yml`). Starting it is the approval. It waits for CI to pass on the commit (`skip_ci_check` skips that, say for a fix during an outage), refuses anything but `main`, builds the site and the app for prod, and deploys rules, indexes, Storage rules, Functions (retrying if Google's quota trips), and Hosting, in that order. Once App Check has a reCAPTCHA site key, set it as the repository variable `APP_CHECK_WEB_KEY_PROD` (and `APP_CHECK_WEB_KEY_DEV` for dev).
+
+   From your Mac instead, `tools/release_prod.sh` does the same checks and deploys.
+4. **Once, after your first sign-in on prod:** `npm --prefix tools/seed run super-admin -- battleplan-prod <your email>`.
 
 ## App Check
 
