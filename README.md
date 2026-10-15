@@ -28,3 +28,4 @@ Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, 
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md): how it's built.
 - [ROADMAP.md](docs/ROADMAP.md): what's done and what's next.
 - [DEVELOPMENT.md](docs/DEVELOPMENT.md): running it locally with the Firebase emulators, testing, and releasing.
+- [STORE-CHECKLIST.md](docs/STORE-CHECKLIST.md): what has to be done before the App Store and Google Play will approve the apps.
