@@ -196,6 +196,7 @@ section { padding: 56px 0; }
 }
 
 .switch-note { margin: 14px 0 0; color: var(--muted); }
+.switch-more { margin: 20px 0 0; font-weight: 600; }
 .fineprint { margin: 20px 0 0; color: var(--muted); font-size: 0.875rem; }
 
 /* Cards */
@@ -220,9 +221,16 @@ section { padding: 56px 0; }
   content: "+"; position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
   font-size: 1.4rem; font-weight: 400; color: var(--muted);
 }
-.faq details[open] summary::after { content: "\2212"; }
+.faq details[open] > summary::after { content: "\2212"; }
 .faq details > :not(summary) { color: var(--muted); }
 .faq details > p:last-child { padding-bottom: 6px; }
+/* Steps for each app, folded inside an answer. */
+.faq details details {
+  border: 0; border-top: 1px solid var(--border); border-radius: 0; background: transparent; padding: 0;
+}
+.faq details details:last-child { margin-bottom: 8px; }
+.faq details details summary { padding: 12px 28px 12px 0; }
+.faq details details .steps { margin: 0 0 10px; }
 
 /* CTA band */
 .cta {
