@@ -55,6 +55,7 @@ const settings = {
   membersCanInvite: true,
   allowMaybe: true,
   membersCanSeePeople: true,
+  filterLanguage: true,
   defaultReminderOffsets: [1440],
 };
 

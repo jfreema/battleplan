@@ -99,6 +99,14 @@ describe('messages (IMPORT-9)', () => {
     expect((await db().collection(Collections.groups).doc(G).get()).get('lastMessagePreview.text')).toBe('Newer');
   });
 
+  it("mask strong language when the team filters it (SAFE-7), and not when it doesn't", async () => {
+    await importMessages({ groupId: G, source: 'groupme', messages: [gm('1', { text: 'Shit, we lost' })] }, caller('alex'));
+    expect((await db().collection(Collections.messages).doc(mid('1')).get()).get('text')).toBe('S***, we lost');
+    await db().collection(Collections.groups).doc(G).update({ 'settings.filterLanguage': false });
+    await importMessages({ groupId: G, source: 'groupme', messages: [gm('2', { text: 'Shit, we lost' })] }, caller('alex'));
+    expect((await db().collection(Collections.messages).doc(mid('2')).get()).get('text')).toBe('Shit, we lost');
+  });
+
   it('quote the message they reply to, from the same batch or an earlier one', async () => {
     await importMessages({ groupId: G, source: 'groupme', messages: [gm('1', { text: 'Field 3?\nOr 4' })] }, caller('alex'));
     await importMessages({ groupId: G, source: 'groupme', messages: [gm('2', { text: 'Yes', replyToSourceId: '1' }), gm('3', { text: 'Ok', replyToSourceId: '2' }), gm('4', { replyToSourceId: '99' })] }, caller('alex'));

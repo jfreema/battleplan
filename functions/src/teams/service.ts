@@ -124,6 +124,7 @@ export const DEFAULT_SETTINGS = {
   membersCanInvite: true,
   allowMaybe: true,
   membersCanSeePeople: true,
+  filterLanguage: true,
   defaultReminderOffsets: [1440],
 };
 

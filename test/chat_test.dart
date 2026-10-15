@@ -583,6 +583,29 @@ void main() {
       expect(repo.sent, isEmpty);
     });
 
+    testWidgets('strong language goes out masked unless the team turned '
+        'the filter off (SAFE-7)', (tester) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(tester, repo, readAt: msg(1).createdAt);
+      await tester.enterText(composer(), 'What the fuck, ref');
+      await send(tester);
+      expect(repo.sent, ['What the f***, ref']);
+
+      final unfiltered = FakeMessageRepository([msg(1)]);
+      await openChat(
+        tester,
+        unfiltered,
+        readAt: msg(1).createdAt,
+        group: testGroup(
+          'a',
+          'Thunder',
+        ).copyWith(settings: const GroupSettings(filterLanguage: false)),
+      );
+      await tester.enterText(composer(), 'What the fuck, ref');
+      await send(tester);
+      expect(unfiltered.sent, ['What the fuck, ref']);
+    });
+
     testWidgets('@everyone is for admins', (tester) async {
       final repo = FakeMessageRepository([msg(1)]);
       await openChat(tester, repo, readAt: msg(1).createdAt);

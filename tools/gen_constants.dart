@@ -1,5 +1,6 @@
-// Generates the Dart and TypeScript copies of shared/constants.json
-// (SPEC ENG-8), so the app and Functions can't drift.
+// Generates the Dart and TypeScript copies of shared/constants.json and
+// the words in shared/strong_language.json (SPEC ENG-8, SAFE-7), so the app
+// and Functions can't drift.
 //
 //   dart run tools/gen_constants.dart          # write both files
 //   dart run tools/gen_constants.dart --check  # exit 1 if either is stale (CI)
@@ -9,6 +10,7 @@ import 'dart:convert';
 import 'dart:io';
 
 const _source = 'shared/constants.json';
+const _languageSource = 'shared/strong_language.json';
 const _dartOut = 'lib/core/constants.g.dart';
 const _tsOut = 'functions/src/shared/constants.ts';
 const _header =
@@ -19,6 +21,11 @@ void main(List<String> args) {
   final check = args.contains('--check');
   final json =
       jsonDecode(File(_source).readAsStringSync()) as Map<String, dynamic>;
+  // The language filter's words (SAFE-7) live in their own file.
+  final language = jsonDecode(
+    File(_languageSource).readAsStringSync(),
+  ) as Map<String, dynamic>;
+  json['strongLanguage'] = language['words'];
   final outputs = {_dartOut: _formatDart(_dart(json)), _tsOut: _ts(json)};
 
   var stale = false;
@@ -133,6 +140,17 @@ String _dart(Map<String, dynamic> json) {
       ..writeln('}');
   });
   _dartNotifyKinds(b, json);
+  b
+    ..writeln()
+    ..writeln(
+      "/// The words a team's language filter masks (SAFE-7), from "
+      'shared/strong_language.json.',
+    )
+    ..writeln('const List<String> strongLanguage = [');
+  for (final w in (json['strongLanguage'] as List).cast<String>()) {
+    b.writeln("  '$w',");
+  }
+  b.writeln('];');
   return b.toString();
 }
 
@@ -243,5 +261,15 @@ String _ts(Map<String, dynamic> json) {
     });
     b.writeln('} as const;');
   }
+  b
+    ..writeln()
+    ..writeln(
+      "/** The words a team's language filter masks (SAFE-7), from shared/strong_language.json. */",
+    )
+    ..writeln('export const STRONG_LANGUAGE: readonly string[] = [');
+  for (final w in (json['strongLanguage'] as List).cast<String>()) {
+    b.writeln("  '$w',");
+  }
+  b.writeln('];');
   return b.toString();
 }

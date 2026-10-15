@@ -18,7 +18,9 @@ mixin _$GroupSettings {
  bool get membersCanCreateEvents; bool get membersCanCreatePolls; bool get membersCanUploadDocs; bool get membersCanInvite; bool get allowMaybe;/// Everyone sees who's on the team in the roster (TEAM-3). Off, only
 /// admins see all the people; members still see the players, the
 /// coaches, and themselves.
- bool get membersCanSeePeople;/// Minutes before an event (1440 = 1 day).
+ bool get membersCanSeePeople;/// Swear words and slurs in new chat messages, captions, and polls are
+/// masked, "f***" (SAFE-7).
+ bool get filterLanguage;/// Minutes before an event (1440 = 1 day).
  List<int> get defaultReminderOffsets;
 /// Create a copy of GroupSettings
 /// with the given fields replaced by the non-null parameter values.
@@ -31,20 +33,20 @@ $GroupSettingsCopyWith<GroupSettings> get copyWith => _$GroupSettingsCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as GroupSettings;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GroupSettings&&(identical(other.membersCanCreateEvents, _this.membersCanCreateEvents) || other.membersCanCreateEvents == _this.membersCanCreateEvents)&&(identical(other.membersCanCreatePolls, _this.membersCanCreatePolls) || other.membersCanCreatePolls == _this.membersCanCreatePolls)&&(identical(other.membersCanUploadDocs, _this.membersCanUploadDocs) || other.membersCanUploadDocs == _this.membersCanUploadDocs)&&(identical(other.membersCanInvite, _this.membersCanInvite) || other.membersCanInvite == _this.membersCanInvite)&&(identical(other.allowMaybe, _this.allowMaybe) || other.allowMaybe == _this.allowMaybe)&&(identical(other.membersCanSeePeople, _this.membersCanSeePeople) || other.membersCanSeePeople == _this.membersCanSeePeople)&&const DeepCollectionEquality().equals(other.defaultReminderOffsets, _this.defaultReminderOffsets));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GroupSettings&&(identical(other.membersCanCreateEvents, _this.membersCanCreateEvents) || other.membersCanCreateEvents == _this.membersCanCreateEvents)&&(identical(other.membersCanCreatePolls, _this.membersCanCreatePolls) || other.membersCanCreatePolls == _this.membersCanCreatePolls)&&(identical(other.membersCanUploadDocs, _this.membersCanUploadDocs) || other.membersCanUploadDocs == _this.membersCanUploadDocs)&&(identical(other.membersCanInvite, _this.membersCanInvite) || other.membersCanInvite == _this.membersCanInvite)&&(identical(other.allowMaybe, _this.allowMaybe) || other.allowMaybe == _this.allowMaybe)&&(identical(other.membersCanSeePeople, _this.membersCanSeePeople) || other.membersCanSeePeople == _this.membersCanSeePeople)&&(identical(other.filterLanguage, _this.filterLanguage) || other.filterLanguage == _this.filterLanguage)&&const DeepCollectionEquality().equals(other.defaultReminderOffsets, _this.defaultReminderOffsets));
 }
 
 
 @override
 int get hashCode {
   final _this = this as GroupSettings;
-  return Object.hash(runtimeType,_this.membersCanCreateEvents,_this.membersCanCreatePolls,_this.membersCanUploadDocs,_this.membersCanInvite,_this.allowMaybe,_this.membersCanSeePeople,const DeepCollectionEquality().hash(_this.defaultReminderOffsets));
+  return Object.hash(runtimeType,_this.membersCanCreateEvents,_this.membersCanCreatePolls,_this.membersCanUploadDocs,_this.membersCanInvite,_this.allowMaybe,_this.membersCanSeePeople,_this.filterLanguage,const DeepCollectionEquality().hash(_this.defaultReminderOffsets));
 }
 
 @override
 String toString() {
   final _this = this as GroupSettings;
-  return 'GroupSettings(membersCanCreateEvents: ${_this.membersCanCreateEvents}, membersCanCreatePolls: ${_this.membersCanCreatePolls}, membersCanUploadDocs: ${_this.membersCanUploadDocs}, membersCanInvite: ${_this.membersCanInvite}, allowMaybe: ${_this.allowMaybe}, membersCanSeePeople: ${_this.membersCanSeePeople}, defaultReminderOffsets: ${_this.defaultReminderOffsets})';
+  return 'GroupSettings(membersCanCreateEvents: ${_this.membersCanCreateEvents}, membersCanCreatePolls: ${_this.membersCanCreatePolls}, membersCanUploadDocs: ${_this.membersCanUploadDocs}, membersCanInvite: ${_this.membersCanInvite}, allowMaybe: ${_this.allowMaybe}, membersCanSeePeople: ${_this.membersCanSeePeople}, filterLanguage: ${_this.filterLanguage}, defaultReminderOffsets: ${_this.defaultReminderOffsets})';
 }
 
 
@@ -55,7 +57,7 @@ abstract mixin class $GroupSettingsCopyWith<$Res>  {
   factory $GroupSettingsCopyWith(GroupSettings value, $Res Function(GroupSettings) _then) = _$GroupSettingsCopyWithImpl;
 @useResult
 $Res call({
- bool membersCanCreateEvents, bool membersCanCreatePolls, bool membersCanUploadDocs, bool membersCanInvite, bool allowMaybe, bool membersCanSeePeople, List<int> defaultReminderOffsets
+ bool membersCanCreateEvents, bool membersCanCreatePolls, bool membersCanUploadDocs, bool membersCanInvite, bool allowMaybe, bool membersCanSeePeople, bool filterLanguage, List<int> defaultReminderOffsets
 });
 
 
@@ -72,7 +74,7 @@ class _$GroupSettingsCopyWithImpl<$Res>
 
 /// Create a copy of GroupSettings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? membersCanCreateEvents = null,Object? membersCanCreatePolls = null,Object? membersCanUploadDocs = null,Object? membersCanInvite = null,Object? allowMaybe = null,Object? membersCanSeePeople = null,Object? defaultReminderOffsets = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? membersCanCreateEvents = null,Object? membersCanCreatePolls = null,Object? membersCanUploadDocs = null,Object? membersCanInvite = null,Object? allowMaybe = null,Object? membersCanSeePeople = null,Object? filterLanguage = null,Object? defaultReminderOffsets = null,}) {
   return _then(GroupSettings(
 membersCanCreateEvents: null == membersCanCreateEvents ? _self.membersCanCreateEvents : membersCanCreateEvents // ignore: cast_nullable_to_non_nullable
 as bool,membersCanCreatePolls: null == membersCanCreatePolls ? _self.membersCanCreatePolls : membersCanCreatePolls // ignore: cast_nullable_to_non_nullable
@@ -80,6 +82,7 @@ as bool,membersCanUploadDocs: null == membersCanUploadDocs ? _self.membersCanUpl
 as bool,membersCanInvite: null == membersCanInvite ? _self.membersCanInvite : membersCanInvite // ignore: cast_nullable_to_non_nullable
 as bool,allowMaybe: null == allowMaybe ? _self.allowMaybe : allowMaybe // ignore: cast_nullable_to_non_nullable
 as bool,membersCanSeePeople: null == membersCanSeePeople ? _self.membersCanSeePeople : membersCanSeePeople // ignore: cast_nullable_to_non_nullable
+as bool,filterLanguage: null == filterLanguage ? _self.filterLanguage : filterLanguage // ignore: cast_nullable_to_non_nullable
 as bool,defaultReminderOffsets: null == defaultReminderOffsets ? _self.defaultReminderOffsets : defaultReminderOffsets // ignore: cast_nullable_to_non_nullable
 as List<int>,
   ));
@@ -166,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool membersCanCreateEvents,  bool membersCanCreatePolls,  bool membersCanUploadDocs,  bool membersCanInvite,  bool allowMaybe,  bool membersCanSeePeople,  List<int> defaultReminderOffsets)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool membersCanCreateEvents,  bool membersCanCreatePolls,  bool membersCanUploadDocs,  bool membersCanInvite,  bool allowMaybe,  bool membersCanSeePeople,  bool filterLanguage,  List<int> defaultReminderOffsets)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GroupSettings() when $default != null:
-return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.membersCanUploadDocs,_that.membersCanInvite,_that.allowMaybe,_that.membersCanSeePeople,_that.defaultReminderOffsets);case _:
+return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.membersCanUploadDocs,_that.membersCanInvite,_that.allowMaybe,_that.membersCanSeePeople,_that.filterLanguage,_that.defaultReminderOffsets);case _:
   return orElse();
 
 }
@@ -187,10 +190,10 @@ return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.m
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool membersCanCreateEvents,  bool membersCanCreatePolls,  bool membersCanUploadDocs,  bool membersCanInvite,  bool allowMaybe,  bool membersCanSeePeople,  List<int> defaultReminderOffsets)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool membersCanCreateEvents,  bool membersCanCreatePolls,  bool membersCanUploadDocs,  bool membersCanInvite,  bool allowMaybe,  bool membersCanSeePeople,  bool filterLanguage,  List<int> defaultReminderOffsets)  $default,) {final _that = this;
 switch (_that) {
 case _GroupSettings():
-return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.membersCanUploadDocs,_that.membersCanInvite,_that.allowMaybe,_that.membersCanSeePeople,_that.defaultReminderOffsets);case _:
+return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.membersCanUploadDocs,_that.membersCanInvite,_that.allowMaybe,_that.membersCanSeePeople,_that.filterLanguage,_that.defaultReminderOffsets);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +210,10 @@ return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.m
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool membersCanCreateEvents,  bool membersCanCreatePolls,  bool membersCanUploadDocs,  bool membersCanInvite,  bool allowMaybe,  bool membersCanSeePeople,  List<int> defaultReminderOffsets)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool membersCanCreateEvents,  bool membersCanCreatePolls,  bool membersCanUploadDocs,  bool membersCanInvite,  bool allowMaybe,  bool membersCanSeePeople,  bool filterLanguage,  List<int> defaultReminderOffsets)?  $default,) {final _that = this;
 switch (_that) {
 case _GroupSettings() when $default != null:
-return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.membersCanUploadDocs,_that.membersCanInvite,_that.allowMaybe,_that.membersCanSeePeople,_that.defaultReminderOffsets);case _:
+return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.membersCanUploadDocs,_that.membersCanInvite,_that.allowMaybe,_that.membersCanSeePeople,_that.filterLanguage,_that.defaultReminderOffsets);case _:
   return null;
 
 }
@@ -222,7 +225,7 @@ return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.m
 
 
 class _GroupSettings implements GroupSettings {
-  const _GroupSettings({this.membersCanCreateEvents = false, this.membersCanCreatePolls = true, this.membersCanUploadDocs = true, this.membersCanInvite = true, this.allowMaybe = true, this.membersCanSeePeople = true,  List<int> defaultReminderOffsets = const <int>[1440]}): _defaultReminderOffsets = defaultReminderOffsets;
+  const _GroupSettings({this.membersCanCreateEvents = false, this.membersCanCreatePolls = true, this.membersCanUploadDocs = true, this.membersCanInvite = true, this.allowMaybe = true, this.membersCanSeePeople = true, this.filterLanguage = true,  List<int> defaultReminderOffsets = const <int>[1440]}): _defaultReminderOffsets = defaultReminderOffsets;
   
 
 @override@JsonKey() final  bool membersCanCreateEvents;
@@ -234,6 +237,9 @@ class _GroupSettings implements GroupSettings {
 /// admins see all the people; members still see the players, the
 /// coaches, and themselves.
 @override@JsonKey() final  bool membersCanSeePeople;
+/// Swear words and slurs in new chat messages, captions, and polls are
+/// masked, "f***" (SAFE-7).
+@override@JsonKey() final  bool filterLanguage;
 /// Minutes before an event (1440 = 1 day).
  final  List<int> _defaultReminderOffsets;
 /// Minutes before an event (1440 = 1 day).
@@ -254,18 +260,18 @@ _$GroupSettingsCopyWith<_GroupSettings> get copyWith => __$GroupSettingsCopyWith
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GroupSettings&&(identical(other.membersCanCreateEvents, membersCanCreateEvents) || other.membersCanCreateEvents == membersCanCreateEvents)&&(identical(other.membersCanCreatePolls, membersCanCreatePolls) || other.membersCanCreatePolls == membersCanCreatePolls)&&(identical(other.membersCanUploadDocs, membersCanUploadDocs) || other.membersCanUploadDocs == membersCanUploadDocs)&&(identical(other.membersCanInvite, membersCanInvite) || other.membersCanInvite == membersCanInvite)&&(identical(other.allowMaybe, allowMaybe) || other.allowMaybe == allowMaybe)&&(identical(other.membersCanSeePeople, membersCanSeePeople) || other.membersCanSeePeople == membersCanSeePeople)&&const DeepCollectionEquality().equals(other.defaultReminderOffsets, _defaultReminderOffsets));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GroupSettings&&(identical(other.membersCanCreateEvents, membersCanCreateEvents) || other.membersCanCreateEvents == membersCanCreateEvents)&&(identical(other.membersCanCreatePolls, membersCanCreatePolls) || other.membersCanCreatePolls == membersCanCreatePolls)&&(identical(other.membersCanUploadDocs, membersCanUploadDocs) || other.membersCanUploadDocs == membersCanUploadDocs)&&(identical(other.membersCanInvite, membersCanInvite) || other.membersCanInvite == membersCanInvite)&&(identical(other.allowMaybe, allowMaybe) || other.allowMaybe == allowMaybe)&&(identical(other.membersCanSeePeople, membersCanSeePeople) || other.membersCanSeePeople == membersCanSeePeople)&&(identical(other.filterLanguage, filterLanguage) || other.filterLanguage == filterLanguage)&&const DeepCollectionEquality().equals(other.defaultReminderOffsets, _defaultReminderOffsets));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,membersCanCreateEvents,membersCanCreatePolls,membersCanUploadDocs,membersCanInvite,allowMaybe,membersCanSeePeople,const DeepCollectionEquality().hash(_defaultReminderOffsets));
+    return Object.hash(runtimeType,membersCanCreateEvents,membersCanCreatePolls,membersCanUploadDocs,membersCanInvite,allowMaybe,membersCanSeePeople,filterLanguage,const DeepCollectionEquality().hash(_defaultReminderOffsets));
 }
 
 @override
 String toString() {
-    return 'GroupSettings(membersCanCreateEvents: $membersCanCreateEvents, membersCanCreatePolls: $membersCanCreatePolls, membersCanUploadDocs: $membersCanUploadDocs, membersCanInvite: $membersCanInvite, allowMaybe: $allowMaybe, membersCanSeePeople: $membersCanSeePeople, defaultReminderOffsets: $defaultReminderOffsets)';
+    return 'GroupSettings(membersCanCreateEvents: $membersCanCreateEvents, membersCanCreatePolls: $membersCanCreatePolls, membersCanUploadDocs: $membersCanUploadDocs, membersCanInvite: $membersCanInvite, allowMaybe: $allowMaybe, membersCanSeePeople: $membersCanSeePeople, filterLanguage: $filterLanguage, defaultReminderOffsets: $defaultReminderOffsets)';
 }
 
 
@@ -276,7 +282,7 @@ abstract mixin class _$GroupSettingsCopyWith<$Res> implements $GroupSettingsCopy
   factory _$GroupSettingsCopyWith(_GroupSettings value, $Res Function(_GroupSettings) _then) = __$GroupSettingsCopyWithImpl;
 @override @useResult
 $Res call({
- bool membersCanCreateEvents, bool membersCanCreatePolls, bool membersCanUploadDocs, bool membersCanInvite, bool allowMaybe, bool membersCanSeePeople, List<int> defaultReminderOffsets
+ bool membersCanCreateEvents, bool membersCanCreatePolls, bool membersCanUploadDocs, bool membersCanInvite, bool allowMaybe, bool membersCanSeePeople, bool filterLanguage, List<int> defaultReminderOffsets
 });
 
 
@@ -293,7 +299,7 @@ class __$GroupSettingsCopyWithImpl<$Res>
 
 /// Create a copy of GroupSettings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? membersCanCreateEvents = null,Object? membersCanCreatePolls = null,Object? membersCanUploadDocs = null,Object? membersCanInvite = null,Object? allowMaybe = null,Object? membersCanSeePeople = null,Object? defaultReminderOffsets = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? membersCanCreateEvents = null,Object? membersCanCreatePolls = null,Object? membersCanUploadDocs = null,Object? membersCanInvite = null,Object? allowMaybe = null,Object? membersCanSeePeople = null,Object? filterLanguage = null,Object? defaultReminderOffsets = null,}) {
   return _then(_GroupSettings(
 membersCanCreateEvents: null == membersCanCreateEvents ? _self.membersCanCreateEvents : membersCanCreateEvents // ignore: cast_nullable_to_non_nullable
 as bool,membersCanCreatePolls: null == membersCanCreatePolls ? _self.membersCanCreatePolls : membersCanCreatePolls // ignore: cast_nullable_to_non_nullable
@@ -301,6 +307,7 @@ as bool,membersCanUploadDocs: null == membersCanUploadDocs ? _self.membersCanUpl
 as bool,membersCanInvite: null == membersCanInvite ? _self.membersCanInvite : membersCanInvite // ignore: cast_nullable_to_non_nullable
 as bool,allowMaybe: null == allowMaybe ? _self.allowMaybe : allowMaybe // ignore: cast_nullable_to_non_nullable
 as bool,membersCanSeePeople: null == membersCanSeePeople ? _self.membersCanSeePeople : membersCanSeePeople // ignore: cast_nullable_to_non_nullable
+as bool,filterLanguage: null == filterLanguage ? _self.filterLanguage : filterLanguage // ignore: cast_nullable_to_non_nullable
 as bool,defaultReminderOffsets: null == defaultReminderOffsets ? _self._defaultReminderOffsets : defaultReminderOffsets // ignore: cast_nullable_to_non_nullable
 as List<int>,
   ));

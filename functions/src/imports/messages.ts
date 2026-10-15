@@ -10,7 +10,8 @@ import { createHash } from 'node:crypto';
 import { Timestamp, type DocumentData } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { audit } from '../audit/service.js';
-import { replyPreviewOf, touchLastMessage } from '../chat/service.js';
+import { filtersLanguage, replyPreviewOf, touchLastMessage } from '../chat/service.js';
+import { maskStrongLanguage } from '../safety/strong_language.js';
 import { db, storage } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { consumeRateLimits } from '../shared/rate_limit.js';
@@ -197,11 +198,14 @@ export async function importMessages(input: MessageImportInput, caller: Caller, 
     }
   }
 
+  // The team's language filter covers imported history too (SAFE-7).
+  const filter = await filtersLanguage(g);
   const docs = new Map<string, DocumentData>();
   for (const id of fresh) {
     const m = byId.get(id)!;
     const photos = attachments.get(id) ?? [];
-    const text = m.text.slice(0, Limits.messageTextMax);
+    const raw = m.text.slice(0, Limits.messageTextMax);
+    const text = filter ? maskStrongLanguage(raw) : raw;
     if (!text.trim() && photos.length === 0) continue;
     docs.set(id, {
       groupId: g,

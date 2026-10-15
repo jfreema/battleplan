@@ -167,8 +167,9 @@ service cloud.firestore {
         && (t.photoPath == null || t.photoPath.matches('groups/' + g + '/avatar/[^/]+'))
         && t.settings.keys().hasOnly(['membersCanCreateEvents', 'membersCanCreatePolls',
             'membersCanUploadDocs', 'membersCanInvite', 'allowMaybe',
-            'membersCanSeePeople', 'defaultReminderOffsets'])
+            'membersCanSeePeople', 'filterLanguage', 'defaultReminderOffsets'])
         && t.settings.get('membersCanSeePeople', true) is bool
+        && t.settings.get('filterLanguage', true) is bool
         && t.settings.defaultReminderOffsets.size() <= 6;
     }
 

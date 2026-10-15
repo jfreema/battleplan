@@ -498,6 +498,10 @@ describe('cache and server-only fields', () => {
     await assertSucceeds(db.doc('groups/teamA').update({ 'settings.membersCanSeePeople': false }));
     await assertFails(db.doc('groups/teamA').update({ 'settings.membersCanSeePeople': 'admins' }));
     await assertFails(as('bob').doc('groups/teamA').update({ 'settings.membersCanSeePeople': true }));
+    // The language filter (SAFE-7): a yes or no, from admins.
+    await assertSucceeds(db.doc('groups/teamA').update({ 'settings.filterLanguage': false }));
+    await assertFails(db.doc('groups/teamA').update({ 'settings.filterLanguage': 'strict' }));
+    await assertFails(as('bob').doc('groups/teamA').update({ 'settings.filterLanguage': true }));
     await assertSucceeds(db.doc('groups/teamA').update({ photoPath: 'groups/teamA/avatar/1.jpg' }));
     await assertFails(db.doc('groups/teamA').update({ name: 'Thunder FC', nameLower: 'other' }));
     await assertFails(db.doc('groups/teamA').update({ color: '#123456' }));

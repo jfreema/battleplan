@@ -490,6 +490,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(groupRepo.updates, ['settings']);
     expect(groupRepo.groups['a']!.settings.membersCanCreateEvents, isTrue);
+    // The language filter (SAFE-7): on until an admin turns it off.
+    final filter = find.widgetWithText(
+      SwitchListTile,
+      'Filter strong language',
+    );
+    await tester.ensureVisible(filter);
+    expect(tester.widget<SwitchListTile>(filter).value, isTrue);
+    await tester.tap(filter);
+    await tester.pumpAndSettle();
+    expect(groupRepo.groups['a']!.settings.filterLanguage, isFalse);
   });
 
   /// Opens my own card on the roster, where Leave team is (TEAM-8).

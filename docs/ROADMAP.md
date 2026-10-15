@@ -442,7 +442,7 @@ Decided 2026-10-15, at the owner's request, and built the same day. SPEC §6.16 
 152. Volunteer and snack sign-ups, carpools, season availability surveys (SCHED-13).
 153. Document version history, comments, and e-signatures (DOC-8).
 154. Quiet hours, email digests, SMS (NOTIF-13).
-155. Per-team profanity filter (SAFE-7), sooner if App Review asks.
+155. ✅ A language filter, ahead of App Review (2026-10-15, SPEC SAFE-7, store checklist 1.7). *Swear words and slurs in chat messages, captions, and polls are masked as they're posted ("f***"), from one shared list; on for every team, and admins can turn it off in team settings. The app masks before sending, and the server catches what an older app sends and imported chat history.*
 156. Cloud SQL, if usage meets the ARCH §12.1 triggers.
 180. **Group types beyond Team** (TEAM-14): keep the standard **Team** and add a more basic **Group** for general use (for example, no roster, players, or RSVP counts by default), chosen when it's created. The one-type model stores `groups.kind: 'team'` so this needs no migration.
 174. **Ads, once adoption justifies them** (SPEC STORE-7, [PLANS.md](PLANS.md)). Parents and guardians manage youth players' records in the app, on any team, so the plan must address children's privacy rules first: COPPA in the US (no behavioral ads to children, verifiable parental consent for any data from under-13s), and Google Play's Families policy (certified ad SDKs only, no personalized ads, if the app targets children or joins the Families program). Likely shape: contextual, non-personalized ads only, and none on teams with players that guardians manage, with the Privacy Policy, store privacy labels, and the Data safety form updated first.

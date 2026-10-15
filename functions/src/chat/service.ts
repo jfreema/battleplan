@@ -8,6 +8,7 @@ import { Collections, Limits } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
 import { removeTargetNotifications, trySend } from '../notify/service.js';
 import { deletePoll, pollCreatedBody } from '../polls/service.js';
+import { maskStrongLanguage } from '../safety/strong_language.js';
 
 export const DELETED_USER_NAME = 'Deleted user';
 
@@ -418,6 +419,42 @@ export async function rebuildLastMessagePreview(groupId: string, anonymizedUid?:
  * of order or twice. Returns the team's name (null if the team is gone),
  * so the message's notification needn't read the team again.
  */
+/** Whether the team masks strong language (SAFE-7); on unless turned off. */
+export async function filtersLanguage(groupId: string): Promise<boolean> {
+  const group = await db().collection(Collections.groups).doc(groupId).get();
+  return group.get('settings.filterLanguage') !== false;
+}
+
+/**
+ * The team's language filter (SAFE-7) for a new or edited message: the
+ * app masks strong language before it sends, so this catches what gets
+ * past an older app. Masks the text (a caption, or a poll's question) and
+ * a poll's question and options, when the team filters and anything
+ * changes. Returns the message as it now reads.
+ */
+export async function filterMessageLanguage(
+  messageId: string,
+  message: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const text = typeof message.text === 'string' ? message.text : '';
+  const masked = maskStrongLanguage(text);
+  const pollRef =
+    message.type === 'poll' && typeof message.pollId === 'string' && message.pollId
+      ? db().collection(Collections.polls).doc(message.pollId)
+      : null;
+  const poll = pollRef ? await pollRef.get() : null;
+  const options = (poll?.get('options') as { id: string; text: string }[] | undefined) ?? [];
+  const question = String(poll?.get('question') ?? '');
+  const maskedOptions = options.map((o) => ({ ...o, text: maskStrongLanguage(String(o.text ?? '')) }));
+  const pollChanged =
+    poll?.exists === true && (maskStrongLanguage(question) !== question || maskedOptions.some((o, i) => o.text !== options[i].text));
+  if (masked === text && !pollChanged) return message;
+  if (!(await filtersLanguage(String(message.groupId)))) return message;
+  if (masked !== text) await db().collection(Collections.messages).doc(messageId).update({ text: masked });
+  if (pollChanged && pollRef) await pollRef.update({ question: maskStrongLanguage(question), options: maskedOptions });
+  return { ...message, text: masked };
+}
+
 export async function touchLastMessage(groupId: string, message: Record<string, unknown>): Promise<string | null> {
   const at = message.createdAt as Timestamp | undefined;
   if (!at) return null;

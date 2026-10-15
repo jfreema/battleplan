@@ -423,6 +423,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - invite others [on]
     - allow "Maybe" RSVPs [on]
     - everyone can see who's on the team [on]: off, only admins see all the people on the roster (TEAM-3)
+  - **Language:** filter strong language [on] (SAFE-7).
   - Default event reminders: 1 day before.
   - Manage the invite link.
   - See storage used, e.g. "212 MB of 500 MB", and open Media to free space (STORE-2, STORE-5).
@@ -970,7 +971,12 @@ The App Store requires these for apps with user-generated content (guideline 1.2
 - **SAFE-6 · MVP · Adults only.**
   - Accounts are for adults 18 and older (AUTH-5, Terms of Use).
   - Players never get accounts of their own. Youth players never sign in. The roster shows only a name and number, and optional details are seen only by admins and the player's linked people (PLAYER-10, PLAYER-12).
-- **SAFE-7 · Later.** An optional per-team profanity filter. Do it sooner if App Review asks.
+- **SAFE-7 · MVP · Language filter.** Apple asks apps where people post content for a way to filter objectionable material (guideline 1.2).
+  - Swear words and slurs in chat messages, photo captions, and polls are masked when they're posted, keeping the first letter: "What the f***".
+  - Whole words only, ignoring case, so "Scunthorpe" and "cockpit" stay as they are; links are left alone.
+  - The words are listed once, in `shared/strong_language.json`, for the app and the server.
+  - On for every team; admins can turn it off in team settings (TEAM-5). It applies to what's posted, or edited, while it's on.
+  - The app masks before it sends, so the sender sees the masked text at once. The server masks anything that gets past an older app before the chat preview and the push are written, and masks imported chat history (IMPORT-9) too.
 
 ### 6.13 Privacy and legal (LEGAL)
 

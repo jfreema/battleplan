@@ -14,7 +14,7 @@ Required, and doable now.
 - ✅ 1.4 **iPhone permission prompts** give a clear reason each: camera, photo library, saving photos, calendar, contacts.
 - ✅ 1.5 **Android permissions:** photos come through the system picker, with no broad photo, video, or storage access and no advertising ID.
 - ✅ 1.6 **Android target API level 36**, required since August 31, 2026: Flutter's current default.
-- ⬜ 1.7 **A filter for objectionable words** in messages (SAFE-7, task 155). Apple's guideline 1.2 asks apps where people post content for "a method for filtering objectionable material," and it's the one 1.2 item Battleplan doesn't have yet.
+- ✅ 1.7 **A filter for objectionable words** (SAFE-7, task 155), for Apple's guideline 1.2, which asks apps where people post content for "a method for filtering objectionable material." Swear words and slurs in chat messages, captions, and polls show as "f***"; it's on for every team, and admins can turn it off under Team settings → Language.
 - ⬜ 1.8 **Act on every report within 24 hours.** Reviewers ask for this, and the Terms promise it. Today super admins get no push or email for a new report, and a report about a team's admin notifies no one. Add an alert to super admins.
 - ⬜ 1.9 **A privacy manifest** (`PrivacyInfo.xcprivacy`) for the iPhone app, declaring why it uses APIs Apple lists, such as stored preferences. Apple refuses uploads without the declarations (ITMS-91053).
 - ⬜ 1.10 **Encryption:** `ITSAppUsesNonExemptEncryption` set to NO in Info.plist. Battleplan uses only standard HTTPS, and this stops export compliance from holding up each build.
@@ -45,7 +45,7 @@ Required, and doable now.
 - ⬜ 1.17 **App Review notes:**
   - what Battleplan is, and the demo login;
   - that teams are invite-only and the demo account already has one;
-  - where Report, Block, and Delete account are;
+  - where Report, Block, and Delete account are, and that the language filter is on for every team;
   - that kids don't have accounts.
 
 ## Phase 2 · After Sign in with Apple is set up

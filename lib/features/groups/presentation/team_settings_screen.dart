@@ -389,6 +389,15 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                 onChanged: (v) =>
                     setSettings(s.copyWith(membersCanSeePeople: v)),
               ),
+              // The language filter for chat and polls (SAFE-7).
+              section(l10n.languageSection),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.filterLanguage),
+                subtitle: Text(l10n.filterLanguageHelp),
+                value: s.filterLanguage,
+                onChanged: (v) => setSettings(s.copyWith(filterLanguage: v)),
+              ),
               section(l10n.defaultReminders),
               Wrap(
                 spacing: Space.sm,

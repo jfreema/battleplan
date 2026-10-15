@@ -7,7 +7,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import type { TokenMessage } from 'firebase-admin/messaging';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eraseMessage, notifyNewMessage } from '../../src/chat/service.js';
-import { onMessageCreated } from '../../src/chat/triggers.js';
+import { onMessageCreated, onMessageUpdated } from '../../src/chat/triggers.js';
 import { reportContent } from '../../src/safety/handlers.js';
 import { removeMember, updateGroupMember } from '../../src/teams/handlers.js';
 import {
@@ -460,6 +460,57 @@ describe('hooks (task 74)', () => {
     expect(await centerFor('adm1')).toEqual(['sam']);
     await removeMember.run(call('alex', { groupId: G, uid: 'sam' }));
     expect(await centerFor('adm1')).toEqual([]);
+  });
+});
+
+describe('the language filter (SAFE-7)', () => {
+  const messages = () => db().collection(Collections.messages);
+  const message = (id: string, fields: object) =>
+    messages().doc(id).set({ groupId: G, attachments: [], reactions: {}, createdAt: Timestamp.now(), ...fields });
+  const created = async (id: string) =>
+    onMessageCreated.run({ data: await messages().doc(id).get(), params: { messageId: id } } as unknown as Parameters<
+      typeof onMessageCreated.run
+    >[0]);
+  const edited = async (id: string, before: object) =>
+    onMessageUpdated.run({
+      data: { before: { data: () => before }, after: await messages().doc(id).get() },
+      params: { messageId: id },
+    } as unknown as Parameters<typeof onMessageUpdated.run>[0]);
+  const textOf = async (id: string) => (await messages().doc(id).get()).get('text');
+
+  it('masks what an older app sent, before the preview and the push', async () => {
+    await person('sam');
+    await message('m1', { authorId: 'alex', authorName: 'Alex', type: 'text', text: 'What the fuck, ref' });
+    await created('m1');
+    expect(await textOf('m1')).toBe('What the f***, ref');
+    expect(JSON.stringify((await db().collection(Collections.groups).doc(G).get()).data())).toContain('What the f***, ref');
+    expect(pushedTokens()).toEqual(['tok-sam']);
+    expect(JSON.stringify(pushed())).not.toContain('fuck');
+  });
+
+  it("masks a poll's question and options", async () => {
+    await message('m2', { authorId: 'alex', authorName: 'Alex', type: 'poll', pollId: 'm2', text: 'Shit or bust?' });
+    await db().collection(Collections.polls).doc('m2').set({
+      groupId: G, messageId: 'm2', question: 'Shit or bust?', options: [{ id: '0', text: 'Fuck yes' }, { id: '1', text: 'No' }],
+    });
+    await created('m2');
+    expect(await textOf('m2')).toBe('S*** or bust?');
+    const poll = (await db().collection(Collections.polls).doc('m2').get()).data();
+    expect(poll).toMatchObject({ question: 'S*** or bust?', options: [{ id: '0', text: 'F*** yes' }, { id: '1', text: 'No' }] });
+  });
+
+  it('masks an edit', async () => {
+    await message('m3', { authorId: 'alex', authorName: 'Alex', type: 'text', text: 'Bullshit call' });
+    await edited('m3', { groupId: G, type: 'text', text: 'Bad call' });
+    expect(await textOf('m3')).toBe('B******* call');
+  });
+
+  it('leaves a team that turned it off alone', async () => {
+    await db().collection(Collections.groups).doc(G).update({ 'settings.filterLanguage': false });
+    await message('m4', { authorId: 'alex', authorName: 'Alex', type: 'text', text: 'What the fuck, ref' });
+    await created('m4');
+    await edited('m4', { groupId: G, type: 'text', text: 'Bad call' });
+    expect(await textOf('m4')).toBe('What the fuck, ref');
   });
 });
 

@@ -12,6 +12,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
+import 'package:battleplan/features/safety/domain/strong_language.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderListenableSelect;
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -381,7 +382,7 @@ class ChatMessages extends _$ChatMessages {
     final item = OutgoingPhotos(
       id: _nextOutgoing++,
       photos: photos.take(10).toList(),
-      caption: caption.trim(),
+      caption: _filtered(caption.trim()),
     );
     state = state.copyWith(outgoing: [...state.outgoing, item]);
     return _upload(item);
@@ -479,7 +480,7 @@ class ChatMessages extends _$ChatMessages {
     if (trimmed.isEmpty) return Future.value();
     final item = OutgoingText(
       id: ref.read(messageRepositoryProvider).newMessageId(),
-      text: trimmed,
+      text: _filtered(trimmed),
       replyToId: replyToId,
       mentions: mentions,
       mentionsEveryone: mentionsEveryone,
@@ -496,7 +497,10 @@ class ChatMessages extends _$ChatMessages {
   Future<void> sendPoll(NewPoll poll) {
     final item = OutgoingPoll(
       id: ref.read(messageRepositoryProvider).newMessageId(),
-      poll: poll,
+      poll: poll.copyWith(
+        question: _filtered(poll.question),
+        options: [for (final o in poll.options) _filtered(o)],
+      ),
     );
     state = state.copyWith(polls: [...state.polls, item]);
     return _sendPoll(item);
@@ -673,8 +677,17 @@ class ChatMessages extends _$ChatMessages {
   }
 
   /// Edits my message's text (CHAT-15). Rules allow only the author.
-  Future<void> edit(Message message, String text) =>
-      ref.read(messageRepositoryProvider).editText(message.id, text.trim());
+  Future<void> edit(Message message, String text) => ref
+      .read(messageRepositoryProvider)
+      .editText(message.id, _filtered(text.trim()));
+
+  /// [text] with strong language masked when the team filters it (SAFE-7),
+  /// as the sender sees it at once; the server masks anything that gets
+  /// past an older app.
+  String _filtered(String text) =>
+      ref.read(groupProvider(groupId)).value?.settings.filterLanguage ?? true
+      ? maskStrongLanguage(text)
+      : text;
 
   /// Pins or unpins a message on the bar at the top (CHAT-15). Admins.
   Future<void> setPinned(Message message, {required bool pinned}) =>

@@ -19,6 +19,10 @@ abstract class GroupSettings with _$GroupSettings {
     /// coaches, and themselves.
     @Default(true) bool membersCanSeePeople,
 
+    /// Swear words and slurs in new chat messages, captions, and polls are
+    /// masked, "f***" (SAFE-7).
+    @Default(true) bool filterLanguage,
+
     /// Minutes before an event (1440 = 1 day).
     @Default(<int>[1440]) List<int> defaultReminderOffsets,
   }) = _GroupSettings;
