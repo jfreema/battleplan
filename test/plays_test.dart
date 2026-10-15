@@ -313,6 +313,7 @@ void main() {
       required MemberRole role,
       required FakePlayRepository plays,
       String path = '/g/a/plays',
+      Size size = const Size(1024, 1366),
     }) async {
       await pumpApp(
         tester,
@@ -320,7 +321,7 @@ void main() {
         groups: team,
         memberships: [testMembership('a', 'coach', role: role)],
         playRepo: plays,
-        size: const Size(1024, 1366),
+        size: size,
       );
       unawaited(
         GoRouter.of(tester.element(find.byType(Scaffold).first)).push(path),
@@ -436,6 +437,57 @@ void main() {
       await tester.tap(find.text('Start drawing'));
       await tester.pumpAndSettle();
       expect(find.text('Start a new board?'), findsOneWidget);
+    });
+
+    testWidgets('a saved play goes up on the whiteboard underneath', (
+      tester,
+    ) async {
+      final plays = FakePlayRepository([saved]);
+      await open(tester, role: MemberRole.admin, plays: plays);
+      expect(find.text('Step 1 of 1'), findsOneWidget);
+      await tester.tap(find.byTooltip('Saved plays'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bunt defense'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Put on the whiteboard'));
+      await tester.pumpAndSettle();
+      // Back on the whiteboard, now with the play's two steps, and still
+      // with the way back to the team.
+      expect(find.text('Whiteboard'), findsOneWidget);
+      expect(find.text('Step 1 of 2'), findsOneWidget);
+      expect(find.byType(BackButton), findsOneWidget);
+    });
+
+    testWidgets("a phone's whiteboard keeps a new board and the saved plays "
+        'in More', (tester) async {
+      await open(
+        tester,
+        role: MemberRole.admin,
+        plays: FakePlayRepository([saved]),
+        size: const Size(390, 844),
+      );
+      expect(find.byTooltip('Saved plays'), findsNothing);
+      expect(find.byTooltip('Undo'), findsOneWidget);
+      expect(
+        find.widgetWithText(FilledButton, 'Save to plays'),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('New board'), findsOneWidget);
+      await tester.tap(find.text('Saved plays'));
+      await tester.pumpAndSettle();
+      // A play's steps, with playing and adding them, fit a phone too.
+      await tester.tap(find.text('Bunt defense'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Put on the whiteboard'));
+      await tester.pumpAndSettle();
+      expect(find.text('Step 1 of 2'), findsOneWidget);
+      expect(find.byTooltip('Play the steps'), findsOneWidget);
     });
 
     testWidgets('playing the steps glides everyone to the last one', (

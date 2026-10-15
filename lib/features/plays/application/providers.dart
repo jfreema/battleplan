@@ -23,3 +23,13 @@ Stream<Play?> play(Ref ref, PlayId id) =>
 /// The whiteboard on this device (BOARD-2): kept until it's cleared.
 @Riverpod(keepAlive: true)
 WhiteboardStore whiteboardStore(Ref ref) => MemoryWhiteboardStore();
+
+/// Counts the plays put on the whiteboard from elsewhere, so an open
+/// whiteboard starts over with what's now kept.
+@Riverpod(keepAlive: true)
+class WhiteboardRevision extends _$WhiteboardRevision {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}

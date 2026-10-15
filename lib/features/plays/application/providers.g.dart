@@ -256,3 +256,66 @@ final class WhiteboardStoreProvider
 }
 
 String _$whiteboardStoreHash() => r'8f424a4533a426562656799e362b0d41e2cbb874';
+
+/// Counts the plays put on the whiteboard from elsewhere, so an open
+/// whiteboard starts over with what's now kept.
+
+@ProviderFor(WhiteboardRevision)
+final whiteboardRevisionProvider = WhiteboardRevisionProvider._();
+
+/// Counts the plays put on the whiteboard from elsewhere, so an open
+/// whiteboard starts over with what's now kept.
+final class WhiteboardRevisionProvider
+    extends $NotifierProvider<WhiteboardRevision, int> {
+  /// Counts the plays put on the whiteboard from elsewhere, so an open
+  /// whiteboard starts over with what's now kept.
+  WhiteboardRevisionProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'whiteboardRevisionProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$whiteboardRevisionHash();
+
+  @$internal
+  @override
+  WhiteboardRevision create() => WhiteboardRevision();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$whiteboardRevisionHash() =>
+    r'5e144a3e543018666ed241c2afa548828438e43f';
+
+/// Counts the plays put on the whiteboard from elsewhere, so an open
+/// whiteboard starts over with what's now kept.
+
+abstract class _$WhiteboardRevision extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}

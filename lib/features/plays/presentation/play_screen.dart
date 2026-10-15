@@ -58,7 +58,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
     if (mounted) setState(() {});
   }
 
-  /// Puts the play on the coach's whiteboard to show or change it there.
+  /// Puts the play on the coach's whiteboard to show or change it there:
+  /// back to the whiteboard if it's underneath, else onto it.
   Future<void> _toWhiteboard(Play play) async {
     await ref.read(whiteboardStoreProvider).save(widget.groupId, (
       board: play.board,
@@ -67,7 +68,14 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
       note: play.note,
       steps: play.steps,
     ));
-    if (mounted) context.go('/g/${widget.groupId.value}/plays');
+    ref.read(whiteboardRevisionProvider.notifier).bump();
+    if (!mounted) return;
+    final router = GoRouter.of(context);
+    final whiteboard = '/g/${widget.groupId.value}/plays';
+    while (router.state.uri.path != whiteboard && router.canPop()) {
+      router.pop();
+    }
+    if (router.state.uri.path != whiteboard) router.go(whiteboard);
   }
 
   Future<void> _duplicate(Play play) async {

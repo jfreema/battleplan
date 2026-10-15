@@ -412,6 +412,9 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
     }
   }
 
+  void _openSaved() =>
+      unawaited(context.push('/g/${widget.groupId.value}/plays/saved'));
+
   /// A different board, or a fresh one (the whiteboard's eraser for
   /// everything): asks first when there's drawing to lose.
   Future<void> _newBoard() async {
@@ -497,6 +500,9 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
       const SingleActivator(LogicalKeyboardKey.escape): () =>
           setState(() => _selected = null),
     };
+    // A phone's whiteboard keeps a new board and the saved plays in More,
+    // and goes without its title, so undo, redo, and saving fit.
+    final roomy = MediaQuery.sizeOf(context).width >= 600;
 
     return PopScope(
       canPop: widget.whiteboard || !_dirty,
@@ -513,17 +519,19 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
           autofocus: true,
           child: Scaffold(
             appBar: AppBar(
-              title: widget.whiteboard
-                  ? Text(l10n.whiteboardTitle)
-                  : InkWell(
+              title: !widget.whiteboard
+                  ? InkWell(
                       onTap: () => unawaited(_rename()),
                       child: Text(
                         _title.isEmpty ? l10n.playUntitled : _title,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
+                    )
+                  : roomy
+                  ? Text(l10n.whiteboardTitle)
+                  : null,
               actions: [
-                if (widget.whiteboard) ...[
+                if (widget.whiteboard && roomy) ...[
                   IconButton(
                     tooltip: l10n.playNewBoard,
                     icon: const Icon(AppIcons.plays),
@@ -532,9 +540,7 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                   IconButton(
                     tooltip: l10n.playsSaved,
                     icon: const Icon(AppIcons.savedPlays),
-                    onPressed: () => unawaited(
-                      context.push('/g/${widget.groupId.value}/plays/saved'),
-                    ),
+                    onPressed: _openSaved,
                   ),
                 ],
                 IconButton(
@@ -550,11 +556,23 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                 PopupMenuButton<String>(
                   tooltip: l10n.playMore,
                   onSelected: (v) => switch (v) {
+                    'new' => unawaited(_newBoard()),
+                    'saved' => _openSaved(),
                     'rename' => unawaited(_rename()),
                     'note' => unawaited(_editNote()),
                     _ => _set(_edit.clear()),
                   },
                   itemBuilder: (_) => [
+                    if (widget.whiteboard && !roomy) ...[
+                      PopupMenuItem(
+                        value: 'new',
+                        child: Text(l10n.playNewBoard),
+                      ),
+                      PopupMenuItem(
+                        value: 'saved',
+                        child: Text(l10n.playsSaved),
+                      ),
+                    ],
                     if (!widget.whiteboard)
                       PopupMenuItem(
                         value: 'rename',
@@ -807,6 +825,7 @@ class _StepsBar extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: Space.md,
         children: [
+          // The steps, then what to do with them: a line each on a phone.
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -823,6 +842,11 @@ class _StepsBar extends StatelessWidget {
                     ? () => onShow(edit.step + 1)
                     : null,
               ),
+            ],
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               if (edit.steps.length > 1)
                 IconButton.filledTonal(
                   tooltip: playing ? l10n.playStopPlaying : l10n.playPlaySteps,
