@@ -995,7 +995,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - No ads, no selling data, no cross-app tracking, so no App Tracking Transparency prompt.
   - Analytics runs without advertising IDs.
 - **LEGAL-3 · MVP · Deletion.** In-app account deletion (AUTH-10), plus a public `/delete-account` page explaining how to request deletion (required by Google Play).
-- **LEGAL-4 · MVP · Store disclosures.** The App Store privacy labels (Phase 4) and the Google Play Data safety form (Phase 5) match LEGAL-1.
+- **LEGAL-4 · MVP · Store disclosures.** The App Store privacy labels (Phase 4) and the Google Play Data safety form (Phase 5) match LEGAL-1, and so does the iPhone app's privacy manifest (`ios/Runner/PrivacyInfo.xcprivacy`): no tracking, the data types the policy lists, and the reasons for the APIs Apple asks about (stored preferences, file timestamps in the app's own container, and elapsed time).
 - **LEGAL-5 · Phase 6 · Facebook data deletion.** Facebook's data-deletion URL comes back with Facebook sign-in in Phase 6 (Q16).
 - **LEGAL-6 · MVP · Retention.**
   - Content stays until its author, an admin, or the team's deletion removes it.
