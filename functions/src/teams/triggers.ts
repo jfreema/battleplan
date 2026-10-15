@@ -7,6 +7,8 @@ import { postRenamedLine, renamedLine } from '../chat/service.js';
 import { addStorageBytes, enforceUploadLimit, groupIdFromPath, reconcileAllStorage, updateStorageAlert } from './storage.js';
 import { removeAllOrphanDocumentFiles } from '../documents/service.js';
 import { pruneDevices } from '../notify/service.js';
+import { resendApiKey } from '../email/service.js';
+import { remindOpenReports } from '../safety/alerts.js';
 
 /**
  * A file landed under `groups/{g}/`: count it toward the team's limit, and
@@ -39,9 +41,10 @@ export const onGroupFileRemoved = onObjectDeleted(async (event) => {
  * Daily housekeeping (ARCH §6.4 scheduled jobs): prunes devices that
  * stopped checking in, removes document uploads whose document was never
  * created, then recomputes every team's storage total from the bucket and
- * updates its warning. Expiring invites joins it with its feature.
+ * updates its warning, and last reminds super admins of reports open more
+ * than 12 hours (SAFE-4). Expiring invites joins it with its feature.
  */
-export const dailyCleanup = onSchedule({ schedule: 'every day 04:00', timeZone: 'America/Chicago' }, async () => {
+export const dailyCleanup = onSchedule({ schedule: 'every day 04:00', timeZone: 'America/Chicago', secrets: [resendApiKey] }, async () => {
   // NOTIF-10: the app rewrites its device at least daily, so one untouched
   // for 60 days is abandoned. Pruned first, so today's pushes skip it.
   const devicesPruned = await pruneDevices().catch((e) => {
@@ -55,7 +58,13 @@ export const dailyCleanup = onSchedule({ schedule: 'every day 04:00', timeZone: 
     return 0;
   });
   const teams = await reconcileAllStorage();
-  logger.info('daily_cleanup', { devicesPruned, orphanDocumentFiles, teamsReconciled: teams });
+  // SAFE-4: super admins get one email while any report has been open more
+  // than 12 hours, so none passes 24 hours unseen.
+  const reportsWaiting = await remindOpenReports().catch((e) => {
+    logger.error('report_reminder_failed', { error: String(e) });
+    return 0;
+  });
+  logger.info('daily_cleanup', { devicesPruned, orphanDocumentFiles, teamsReconciled: teams, reportsWaiting });
 });
 
 /**

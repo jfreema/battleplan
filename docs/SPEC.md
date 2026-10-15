@@ -950,6 +950,8 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Team admins act in their own team: delete content, remove members.
   - Super admins act anywhere: disable accounts, suspend teams.
   - Goal: act on every report within 24 hours.
+  - Every super admin gets an email for each new report, about any team: the team, what was reported (a message, a person, or a document), and the reason, never who reported it or what was said, with a link to the reports queue. A report about one of the team's admins says only super admins see it.
+  - While any report has been open more than 12 hours, super admins get one reminder email a day saying how many are waiting and how old the oldest is.
 - **SAFE-5 · MVP · Rate limits and abuse controls.**
   - **Limits**, defined in one place (full table in ARCH §6.9):
 

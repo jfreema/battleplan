@@ -507,6 +507,24 @@ export async function wouldLeaveNoSuperAdmin(uid: string): Promise<boolean> {
   });
 }
 
+/**
+ * The super admins who hold the claim in Auth now and aren't disabled, with
+ * their sign-in email (SAFE-4's alerts). users.superAdmin only finds the
+ * candidates, as in wouldLeaveNoSuperAdmin.
+ */
+export async function currentSuperAdminEmails(): Promise<string[]> {
+  const flagged = await db()
+    .collection(Collections.users)
+    .where('superAdmin', '==', true)
+    .select()
+    .limit(Limits.queryLimitMax)
+    .get();
+  const users = await authUsers(flagged.docs.map((d) => d.id));
+  return [...users.values()]
+    .filter((u) => u.customClaims?.superAdmin === true && !u.disabled && u.email)
+    .map((u) => u.email!);
+}
+
 // ---- Reports (ADMIN-5) -------------------------------------------------------
 
 /** One report in the super-admin queue (ADMIN-5). Dates are ISO 8601. */

@@ -237,6 +237,7 @@ SPEC PLAYER-12 and Q18, ARCH §6.2, §6.3, and D63. The owner asked to keep play
 264. ✅ Post a reminder in chat from an event's menu, at the owner's request (2026-10-15, SPEC SCHED-8). *Admins and the event's creator post the event in the chat again, marked Reminder, with its live RSVPs and how many players haven't answered; everyone but Not going gets the reminder push. Once an hour per event.*
 265. ✅ A team setting for who sees the people on the roster, at the owner's request (2026-10-15, SPEC TEAM-3, TEAM-5). *"Everyone can see who's on the team" (on by default). Off, members see the players, the coaches, and their own card; admins see everyone.*
 266. ✅ Add a guardian from the team, at the owner's request (2026-10-15, SPEC PLAYER-5). *"Add a guardian" on a player's card lists the people already on the team to pick from, with Invite by email for anyone else. Someone picked gets a notification, not an email.*
+267. ✅ Super admins hear about every report, ahead of App Review (2026-10-15, SPEC SAFE-4, store checklist 1.8). *Each new report emails every super admin (the team, what, and why, never who reported or what was said), reports about a team's admins included; `dailyCleanup` sends one reminder a day while any report has been open more than 12 hours.*
 
 ## Go-live in six phases
 

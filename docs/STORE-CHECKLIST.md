@@ -15,7 +15,7 @@ Required, and doable now.
 - ✅ 1.5 **Android permissions:** photos come through the system picker, with no broad photo, video, or storage access and no advertising ID.
 - ✅ 1.6 **Android target API level 36**, required since August 31, 2026: Flutter's current default.
 - ✅ 1.7 **A filter for objectionable words** (SAFE-7, task 155), for Apple's guideline 1.2, which asks apps where people post content for "a method for filtering objectionable material." Swear words and slurs in chat messages, captions, and polls show as "f***"; it's on for every team, and admins can turn it off under Team settings → Language.
-- ⬜ 1.8 **Act on every report within 24 hours.** Reviewers ask for this, and the Terms promise it. Today super admins get no push or email for a new report, and a report about a team's admin notifies no one. Add an alert to super admins.
+- ✅ 1.8 **Act on every report within 24 hours.** Reviewers ask for this, and the Terms promise it. Every new report emails each super admin, reports about a team's admins included, and a daily email lists any report open more than 12 hours.
 - ⬜ 1.9 **A privacy manifest** (`PrivacyInfo.xcprivacy`) for the iPhone app, declaring why it uses APIs Apple lists, such as stored preferences. Apple refuses uploads without the declarations (ITMS-91053).
 - ⬜ 1.10 **Encryption:** `ITSAppUsesNonExemptEncryption` set to NO in Info.plist. Battleplan uses only standard HTTPS, and this stops export compliance from holding up each build.
 - ⬜ 1.11 **Android release builds in GitHub Actions** (tasks 126, 214): an upload key, and an Android App Bundle signed with it. Nothing runs on your Mac. Today the release build is set up with the debug key.

@@ -83,6 +83,47 @@ export function securityNoticeEmail(to: string, change: string): Email {
   };
 }
 
+/**
+ * SAFE-4: someone filed a report, for every super admin. It names the team,
+ * what was reported, and why, but never who reported it or what was said.
+ */
+export function reportAlertEmail(
+  to: string,
+  report: { teamName: string; what: string; reason: string; teamVisible: boolean },
+  url: string,
+): Email {
+  return {
+    to,
+    subject: `New report on ${report.teamName}: ${report.what}`,
+    ...layout(
+      [
+        `Someone on ${report.teamName} reported ${report.what} (${report.reason}).`,
+        report.teamVisible
+          ? "The team's admins can act on it too."
+          : "It's about one of the team's admins, so only super admins see it.",
+        'Battleplan promises to act on every report within 24 hours.',
+      ],
+      { label: 'Open reports', url },
+    ),
+  };
+}
+
+/** SAFE-4: the daily reminder of reports still open after 12 hours. */
+export function openReportsEmail(to: string, count: number, oldestHours: number, url: string): Email {
+  const reports = count === 1 ? '1 report is' : `${count} reports are`;
+  return {
+    to,
+    subject: `${reports} waiting on Battleplan`,
+    ...layout(
+      [
+        `${reports} still open; the oldest was filed ${oldestHours} hours ago.`,
+        'Battleplan promises to act on every report within 24 hours.',
+      ],
+      { label: 'Open reports', url },
+    ),
+  };
+}
+
 /** Readable names for sign-in methods. */
 export function methodName(id: string): string {
   return ({ 'google.com': 'Google', 'apple.com': 'Apple', password: 'Password' } as Record<string, string>)[id] ?? id;

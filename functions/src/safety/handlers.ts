@@ -10,7 +10,9 @@ import { requireAuth } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireOpenTeam, requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
+import { resendApiKey } from '../email/service.js';
 import { trySend } from '../notify/service.js';
+import { alertSuperAdmins } from './alerts.js';
 import { fileReport, reportedBody, reportSnapshot, teamSeesReport } from './service.js';
 
 const ReportInput = z.object({
@@ -23,10 +25,11 @@ const ReportInput = z.object({
 
 /**
  * Reports a message, document, or person to the team's admins and the
- * super-admin queue (SAFE-1). Members only; 20 a day. The reported person
- * is never told, and admins aren't shown who reported.
+ * super-admin queue (SAFE-1), and emails every super admin (SAFE-4).
+ * Members only; 20 a day. The reported person is never told, and admins
+ * aren't shown who reported.
  */
-export const reportContent = onCall(async (request) => {
+export const reportContent = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(ReportInput, request.data);
   if (!(await roleOf(input.groupId, uid))) throw new HttpsError('permission-denied', 'Not a member.');
@@ -55,6 +58,8 @@ export const reportContent = onCall(async (request) => {
     body: reportedBody(input.targetType),
     dedupeKey: reportId,
   });
+  // Super admins hear about every report, by email (SAFE-4).
+  await alertSuperAdmins({ groupId: input.groupId, targetType: input.targetType, reason: input.reason, teamVisible });
   return { reportId };
 });
 
