@@ -53,8 +53,11 @@ gcloud services enable iam.googleapis.com iamcredentials.googleapis.com \
   sts.googleapis.com firebasehosting.googleapis.com firebaserules.googleapis.com \
   --project "$PROJECT"
 
-gcloud iam service-accounts describe "$SA" --project "$PROJECT" >/dev/null 2>&1 ||
+if ! gcloud iam service-accounts describe "$SA" --project "$PROJECT" >/dev/null 2>&1; then
   gcloud iam service-accounts create "$SA_NAME" --display-name="GitHub Actions deploys" --project "$PROJECT"
+  # A new account takes a few seconds to be grantable.
+  sleep 20
+fi
 
 # What a release needs: Hosting; Firestore and Storage rules; indexes;
 # Functions (Cloud Functions Admin covers their Cloud Run services and
