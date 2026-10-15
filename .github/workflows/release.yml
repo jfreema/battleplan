@@ -11,7 +11,7 @@
 # login token (id-token: write). It runs nothing but GitHub's and Google's
 # own actions, pinned to commits, and the Firebase CLI at an exact version;
 # the Flutter build, with its third-party action, runs in a job that can't.
-name: Release
+name: Release (shared steps, not run on its own)
 
 on:
   workflow_call:
