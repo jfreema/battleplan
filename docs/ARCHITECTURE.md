@@ -1215,7 +1215,7 @@ Repo conventions:
 |---|---|---|
 | Unit | Domain logic, controllers (with fake repositories), DTO mappers, composite IDs | `test/` |
 | Data | Each repository implementation against an in-memory Firestore and fake Auth, Storage, and Functions; CI fails below 80% line coverage of the domain and data layers (D52) | `test/data/` |
-| Widget + golden | Key screens and components in **light and dark** | `test/` |
+| Widget + golden | Key screens and components; accessibility checks in **light and dark**; golden images with real fonts, compared on macOS only, for review | `test/` |
 | Integration | The team and players flows below | `integration_test/`, against emulators |
 | Functions | Services, handlers, and every trigger's early-exit conditions | `functions/test/` |
 | Rules | Every collection and role, cross-team isolation, one RSVP per event and player, the message rate limit | `functions/test/rules/` |

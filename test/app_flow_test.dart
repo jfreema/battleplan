@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
-import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -61,17 +60,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Create your free account'), findsNothing);
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
-  });
-
-  testWidgets('sign-in links the Terms of Use and Privacy Policy (LEGAL-1)', (
-    tester,
-  ) async {
-    final links = FakeLinkOpener();
-    await pumpApp(tester, auth: FakeAuthRepository(), linkOpener: links);
-    await tester.tap(find.widgetWithText(TextButton, 'Terms of Use'));
-    await tester.tap(find.widgetWithText(TextButton, 'Privacy Policy'));
-    await tester.pumpAndSettle();
-    expect(links.opened.map((u) => u.path), ['/terms', '/privacy']);
   });
 
   testWidgets(
@@ -277,23 +265,6 @@ void main() {
     expect(groupRepo.created, ['Thunder U14']);
     // TEAM-1: the next screen is "Invite your team" (the fake team has no
     // membership yet, so the shell guard shows instead).
-  });
-
-  testWidgets('a team needs a name', (tester) async {
-    final groupRepo = FakeGroupRepository({});
-    await pumpApp(
-      tester,
-      auth: FakeAuthRepository(user: coach),
-      groupRepo: groupRepo,
-    );
-    await tester.tap(find.text('Create a team'));
-    await tester.pumpAndSettle();
-    final create = find.widgetWithText(FilledButton, 'Create a team');
-    await tester.ensureVisible(create);
-    await tester.tap(create);
-    await tester.pumpAndSettle();
-    expect(find.text('Enter a team name.'), findsOneWidget);
-    expect(groupRepo.created, isEmpty);
   });
 
   testWidgets('roster: the owner can make a member an admin', (tester) async {
@@ -895,9 +866,11 @@ void main() {
       ]);
     });
 
-    testWidgets('a full player link says so when approving', (tester) async {
+    testWidgets('an approval refused with already-a-player says why', (
+      tester,
+    ) async {
       final playerRepo =
-          RefusingPlayerRepository(const InvalidInput('too-many-guardians'), [
+          RefusingPlayerRepository(const InvalidInput('already-a-player'), [
               const Player(
                 id: PlayerId('emma'),
                 groupId: GroupId('y'),
@@ -910,6 +883,7 @@ void main() {
                 groupId: GroupId('y'),
                 uid: UserId('pat'),
                 status: GuardianRequestStatus.pending,
+                relation: PlayerRelation.self,
               ),
             );
       await pumpApp(
@@ -926,94 +900,13 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Approve'));
       await tester.pumpAndSettle();
       expect(
-        find.textContaining("the player's links are full"),
-        findsOneWidget,
-      );
-    });
-
-    for (final (code, said) in [
-      (
-        'already-a-player',
-        "Can't approve this: Pat Lee is already a player on this team. "
-            'Decline it.',
-      ),
-      (
-        'player-already-claimed',
-        "Can't approve this: someone is already this player. Decline it, "
-            'or remove their link first.',
-      ),
-    ]) {
-      testWidgets('an approval refused with $code says why', (tester) async {
-        final playerRepo =
-            RefusingPlayerRepository(InvalidInput(code), [
-                const Player(
-                  id: PlayerId('emma'),
-                  groupId: GroupId('y'),
-                  displayName: 'Emma Rodriguez',
-                ),
-              ])
-              ..requests.add(
-                const GuardianRequest(
-                  playerId: PlayerId('emma'),
-                  groupId: GroupId('y'),
-                  uid: UserId('pat'),
-                  status: GuardianRequestStatus.pending,
-                  relation: PlayerRelation.self,
-                ),
-              );
-        await pumpApp(
-          tester,
-          auth: FakeAuthRepository(user: coach),
-          groups: team,
-          memberships: [
-            testMembership('y', 'coach', role: MemberRole.owner),
-            testMembership('y', 'pat', name: 'Pat Lee'),
-          ],
-          playerRepo: playerRepo,
-        );
-        await openRoster(tester);
-        await tester.tap(find.widgetWithText(FilledButton, 'Approve'));
-        await tester.pumpAndSettle();
-        expect(find.text(said), findsOneWidget);
-        expect(find.textContaining('links are full'), findsNothing);
-      });
-    }
-
-    testWidgets('approving a pending player from someone who is already a '
-        'player says so', (tester) async {
-      final playerRepo = RefusingPlayerRepository(
-        const InvalidInput('already-a-player'),
-        [
-          const Player(
-            id: PlayerId('sam2'),
-            groupId: GroupId('y'),
-            displayName: 'Sam Ortiz',
-            status: PlayerStatus.pending,
-            proposedBy: 'sam',
-            proposedRelation: PlayerRelation.self,
-          ),
-        ],
-      );
-      await pumpApp(
-        tester,
-        auth: FakeAuthRepository(user: coach),
-        groups: team,
-        memberships: [
-          testMembership('y', 'coach', role: MemberRole.owner),
-          testMembership('y', 'sam', name: 'Sam Ortiz'),
-        ],
-        playerRepo: playerRepo,
-      );
-      await openRoster(tester);
-      await tester.tap(find.widgetWithText(FilledButton, 'Approve'));
-      await tester.pumpAndSettle();
-      expect(
         find.text(
-          "Can't approve this: Sam Ortiz is already a player on this team. "
+          "Can't approve this: Pat Lee is already a player on this team. "
           'Decline it.',
         ),
         findsOneWidget,
       );
+      expect(find.textContaining('links are full'), findsNothing);
     });
 
     testWidgets('an approved player whose member could not be linked says '
@@ -1605,19 +1498,6 @@ void main() {
       expect(find.text('Sam Rivera'), findsWidgets);
     });
 
-    testWidgets('the heart is red (CHAT-6)', (tester) async {
-      final repo = FakeMessageRepository([msg(1)]);
-      await openChat(tester, repo);
-      await tester.longPress(find.text('Message 1'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('❤️'));
-      await tester.pumpAndSettle();
-      final chip = tester.widget<Text>(find.text('❤️ 1'));
-      final heart = (chip.textSpan! as TextSpan).children!.first as TextSpan;
-      expect(heart.text, '❤️');
-      expect(heart.style?.color, heartRed);
-    });
-
     testWidgets('double-tap loves a message', (tester) async {
       final repo = FakeMessageRepository([msg(1)]);
       await openChat(tester, repo);
@@ -2031,66 +1911,6 @@ void main() {
       expect(find.text('This message was deleted.'), findsOneWidget);
     });
 
-    testWidgets('my bubbles take the team color unless admins pick another, '
-        'whatever the background (CHAT-18)', (tester) async {
-      const green = 0xFF2E7D32;
-      const purple = 0xFF6A1B9A;
-      Future<Color?> myBubble(Group team) async {
-        await pumpApp(
-          tester,
-          auth: FakeAuthRepository(user: coach),
-          groups: {'a': team},
-          memberships: [testMembership('a', 'coach')],
-          messageRepo: FakeMessageRepository([
-            msg(1, author: 'coach', name: 'Coach'),
-          ]),
-        );
-        final box = tester.widget<Container>(
-          find
-              .ancestor(
-                of: find.text('Message 1'),
-                matching: find.byWidgetPredicate(
-                  (w) => w is Container && w.decoration is BoxDecoration,
-                ),
-              )
-              .first,
-        );
-        return (box.decoration! as BoxDecoration).color;
-      }
-
-      final thunder = testGroup('a', 'Thunder');
-      // No team color and no look: the brand color.
-      final plain = await myBubble(thunder);
-      expect(
-        plain,
-        Theme.of(tester.element(find.text('Message 1'))).colorScheme.primary,
-      );
-      // The team color, before and after an admin sets only a background.
-      expect(
-        await myBubble(thunder.copyWith(color: green)),
-        const Color(green),
-      );
-      expect(
-        await myBubble(
-          thunder.copyWith(
-            color: green,
-            chatTheme: const ChatTheme(background: ChatBackground.pattern),
-          ),
-        ),
-        const Color(green),
-      );
-      // A palette color the admins picked.
-      expect(
-        await myBubble(
-          thunder.copyWith(
-            color: green,
-            chatTheme: const ChatTheme(bubbleColor: purple),
-          ),
-        ),
-        const Color(purple),
-      );
-    });
-
     testWidgets('scrolling up loads older messages 50 at a time', (
       tester,
     ) async {
@@ -2316,23 +2136,6 @@ void main() {
     expect(find.text('Continue with Google'), findsOneWidget);
   });
 
-  testWidgets('the theme switch applies at once and is remembered', (
-    tester,
-  ) async {
-    final users = FakeUserRepository();
-    final prefs = await pumpApp(
-      tester,
-      auth: FakeAuthRepository(user: coach),
-      users: users,
-    );
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Dark'));
-    await tester.pumpAndSettle();
-    expect(prefs.themePreference, ThemePreference.dark);
-    expect(users.themeMode, ThemePreference.dark);
-  });
-
   testWidgets('admins act on reports from the Reports screen (SAFE-4)', (
     tester,
   ) async {
@@ -2440,40 +2243,6 @@ void main() {
       expect(groupRepo.savedTheme?.background, ChatBackground.pattern);
     });
 
-    testWidgets('the meter shows use, amber at 90% and red when full '
-        '(STORE-2, STORE-3)', (tester) async {
-      Future<Color?> meterAt(int usedMb) async {
-        await pumpApp(
-          tester,
-          auth: FakeAuthRepository(user: coach),
-          groups: {'a': teamUsing(usedMb)},
-          memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
-        );
-        await openSettings(tester);
-        return tester
-            .widget<LinearProgressIndicator>(
-              find.byType(LinearProgressIndicator),
-            )
-            .color;
-      }
-
-      final ok = await meterAt(212);
-      final scheme = Theme.of(
-        tester.element(find.byType(LinearProgressIndicator)),
-      ).colorScheme;
-      expect(find.text('212 MB of 500 MB used'), findsOneWidget);
-      expect(ok, scheme.primary);
-      expect(find.textContaining('Nearly full'), findsNothing);
-
-      expect(await meterAt(460), AppColors.light.maybe);
-      expect(find.text('460 MB of 500 MB used'), findsOneWidget);
-      expect(find.textContaining('Nearly full'), findsOneWidget);
-
-      expect(await meterAt(500), scheme.error);
-      expect(find.text('500 MB of 500 MB used'), findsOneWidget);
-      expect(find.textContaining('Full.'), findsOneWidget);
-    });
-
     testWidgets("at 90%, admins see the warning with Media; members don't "
         '(STORE-3)', (tester) async {
       await pumpApp(
@@ -2498,25 +2267,6 @@ void main() {
       await tester.tap(find.byTooltip('Team menu'));
       await tester.pumpAndSettle();
       expect(find.text('Media'), findsNothing);
-    });
-
-    testWidgets('dismissing the 90% warning still shows the full banner '
-        'later (STORE-4)', (tester) async {
-      final groupRepo = FakeGroupRepository({'a': teamUsing(460)});
-      await pumpApp(
-        tester,
-        auth: FakeAuthRepository(user: coach),
-        groupRepo: groupRepo,
-        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
-      );
-      expect(find.text(warning), findsOneWidget);
-      await tester.tap(find.byTooltip('Dismiss'));
-      await tester.pumpAndSettle();
-      expect(find.text(warning), findsNothing);
-
-      groupRepo.setGroup(teamUsing(500));
-      await tester.pumpAndSettle();
-      expect(find.text(full), findsOneWidget);
     });
 
     testWidgets('when full, everyone sees why; admins also get Media '

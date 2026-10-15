@@ -6,13 +6,12 @@ What the M9 pass checked and changed against SPEC §7.6 and §8.1, how it's test
 
 | File | What it checks |
 |---|---|
-| `test/accessibility_test.dart` | Flutter's `androidTapTargetGuideline`, `iOSTapTargetGuideline`, `labeledTapTargetGuideline`, and `textContrastGuideline` on the main screens (sign-in, chat, schedule, event details, documents, admin dashboard) and on the team switcher, message menu, roster, settings, notifications, and calendar, in light and dark. The same screens at 200% text, with no overflow. Screen-reader labels ("Photo from Alex Kim", "Like, 2", the team switcher). RSVP answers shown with words and icons. Keyboard: Ctrl/⌘+K opens the team switcher from any tab, Esc closes sheets, dialogs, and menus, Enter sends and Shift+Enter doesn't, and Tab goes through the header, the chat, the composer, and then the tabs, with focus highlighting on. |
-| `test/goldens/screens_golden_test.dart` | Golden images of the key screens (`goldenScreens`: the six main ones plus welcome, team switcher, roster, settings, invite, and the wide rail at 1280 × 800) in light and dark at 390 × 844, drawn with the test font (text shows as boxes). Even boxes antialias differently on each OS (1.5% to 5.5% of pixels between macOS and Linux), so these compare only on Linux, where CI runs, and are skipped elsewhere. |
-| `test/goldens/screens_readable_golden_test.dart` | The same screens with real fonts at 2x, with real shadows, for reviewing by eye. Fonts rasterize differently on each OS, so these compare only on macOS, where they were made, and are skipped elsewhere. |
+| `test/accessibility_test.dart` | Flutter's `androidTapTargetGuideline`, `iOSTapTargetGuideline`, `labeledTapTargetGuideline`, and `textContrastGuideline` on the main screens (sign-in, chat, schedule, event details, documents, admin dashboard) and on the team switcher, message menu, roster, settings, notifications, and calendar, in light, and in dark on the screens with colors of their own (chat, schedule, event details, documents). The same screens at 200% text, with no overflow. Screen-reader labels ("Photo from Alex Kim", "Like, 2", the team switcher). RSVP answers shown with words and icons. Keyboard: Ctrl+K opens the team switcher, Esc closes sheets, dialogs, and menus, Enter sends and Shift+Enter doesn't, and Tab goes through the header, the chat, the composer, and then the tabs, with focus highlighting on. |
+| `test/goldens/screens_readable_golden_test.dart` | Golden images of the key screens (`goldenScreens`: the six main ones plus welcome, team switcher, roster, settings, invite, and the wide rail at 1280 × 800) in light and dark, with real fonts at 2x and real shadows, for reviewing a change by eye. Fonts rasterize differently on each OS, so these compare only on macOS, where they were made, and are skipped elsewhere, CI included. |
 | `test/helpers/scenes.dart` | Fake data for those screens, shared by the goldens and the accessibility tests. Dates are fixed: the chat is in March 2025 and the schedule in October 2030, so the images don't change from day to day. |
 | `test/helpers/golden.dart` | `loadAppFonts()` loads the fonts in the app's font manifest (Inter, Material Symbols, MaterialIcons) and Roboto from the Flutter SDK. `useTolerantGoldens()` allows 0.5% of pixels to differ, for small antialiasing differences between machines. |
 
-The goldens are tagged `golden`, a tag declared in `dart_test.yaml`. A plain `flutter test` runs them, which is how CI runs them.
+The goldens are tagged `golden`, a tag declared in `dart_test.yaml`. A plain `flutter test` on macOS runs them; CI (Linux) skips them. CI used to compare a second set drawn with the test font on Linux; it was removed on 2026-10-15 (ROADMAP task 239), because a screenshot difference is rarely a bug, and every intended UI change turned CI red until the set was recorded again.
 
 ```sh
 flutter test --tags golden                   # only the goldens
@@ -20,12 +19,7 @@ flutter test --exclude-tags golden           # everything else
 flutter test --tags golden --update-goldens  # after an intended UI change, on macOS: the readable set
 ```
 
-Each set is recorded on the system that compares it:
-
-- **Readable** (`test/goldens/readable/`): run `--update-goldens` on macOS and check the PNGs in the diff.
-- **CI** (`test/goldens/ci/`): run the **Update goldens** workflow from the Actions tab on GitHub (`.github/workflows/update-goldens.yml`). It runs on `ubuntu-latest` with the same Flutter as `ci.yml`, records the set with `--update-goldens`, and commits the PNGs to the branch it ran on (main by default) as "Goldens: record the CI baselines on Linux". A push made by the workflow doesn't start CI by itself, so the workflow then starts CI on the new commit (and on main that run deploys to dev), which the release workflows need to have passed. Don't raise the tolerance in `useTolerantGoldens` to get past a difference between systems; it would stop catching real layout changes.
-
-When a CI golden fails, CI keeps its diff images as the `golden-failures` artifact. Locally, `flutter test` writes them to `test/goldens/failures/`, which is gitignored. Emoji show as empty boxes in both sets because the tests have no emoji font.
+After an intended UI change, run `--update-goldens` on macOS (`test/goldens/readable/`) and look at the PNGs in the diff. A failing golden writes its diff images to `test/goldens/failures/`, which is gitignored. Emoji show as empty boxes because the tests have no emoji font.
 
 ## Accessibility fixes
 

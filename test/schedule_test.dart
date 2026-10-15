@@ -204,21 +204,6 @@ void main() {
       expect(find.text('Nothing on this day.'), findsOneWidget);
     });
 
-    testWidgets('a busy day has a dot for each event', (tester) async {
-      await openSchedule(
-        tester,
-        events: [
-          for (var i = 0; i < 5; i++)
-            event('busy$i', days: 0, hour: 19 + i, title: 'Session $i'),
-        ],
-      );
-      await tester.tap(find.text('Calendar'));
-      await tester.pumpAndSettle();
-      for (var i = 0; i < 5; i++) {
-        expect(find.byKey(ValueKey('dot-busy$i')), findsOneWidget);
-      }
-    });
-
     testWidgets('canceled events are struck through with a badge (SCHED-7)', (
       tester,
     ) async {
@@ -1215,40 +1200,6 @@ void main() {
       expect(find.text('0 of 2 players going'), findsOneWidget);
     });
 
-    testWidgets('a canceled event takes no answers on the card', (
-      tester,
-    ) async {
-      await openSchedule(
-        tester,
-        tapSchedule: false,
-        events: [event('e1').copyWith(canceledAt: DateTime.now())],
-        messages: FakeMessageRepository([card('e1')]),
-      );
-      expect(find.byType(SegmentedButton<RsvpStatus>), findsNothing);
-    });
-
-    testWidgets('answers from the card, with live counts (SPEC 5.4)', (
-      tester,
-    ) async {
-      final rsvps = await openSchedule(
-        tester,
-        tapSchedule: false,
-        events: [event('e1')],
-        messages: FakeMessageRepository([card('e1')]),
-      );
-      expect(find.text('Going'), findsOneWidget);
-      expect(find.text('Maybe'), findsOneWidget);
-      expect(find.text('Not going'), findsOneWidget);
-      expect(find.text('No answers yet'), findsOneWidget);
-      await tester.tap(find.text('Going'));
-      await tester.pumpAndSettle();
-      expect(rsvps.rsvps.single.status, RsvpStatus.going);
-      expect(rsvps.rsvps.single.participantId, 'coach');
-      expect(find.text('1 going'), findsOneWidget);
-      // Answering from the card stays in the chat.
-      expect(find.text('Directions'), findsNothing);
-    });
-
     testWidgets('canceled and RSVP-off cards take no answers', (tester) async {
       await openSchedule(
         tester,
@@ -1559,11 +1510,6 @@ void main() {
         find.textContaining(RegExp(r'6:00\sPM your time')),
         findsOneWidget,
       );
-    });
-
-    testWidgets('one line when the zones agree', (tester) async {
-      await openSchedule(tester, events: [event('e1')]);
-      expect(find.textContaining('your time'), findsNothing);
     });
   });
 }

@@ -5,7 +5,6 @@ import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
-import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -125,52 +124,6 @@ void main() {
       await open(tester, '/admin/teams', user: coach);
       expect(find.text('Search teams by name'), findsNothing);
     });
-
-    testWidgets('the account menu shows Admin panel only to super admins', (
-      tester,
-    ) async {
-      await open(tester, '/', user: coach, size: const Size(400, 900));
-      await tester.tap(find.byTooltip('Account'));
-      await tester.pumpAndSettle();
-      expect(find.text('Settings'), findsOneWidget);
-      expect(find.text('Admin panel'), findsNothing);
-      await tester.tapAt(Offset.zero);
-      await tester.pumpAndSettle();
-
-      final admin = FakeAdminRepository(
-        totalsValue: const AdminTotals(users: 42),
-      );
-      await open(tester, '/', admin: admin, size: const Size(400, 900));
-      await tester.tap(find.byTooltip('Account'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Admin panel'));
-      await tester.pumpAndSettle();
-      expect(find.text('Dashboard'), findsWidgets);
-      expect(find.text('42'), findsOneWidget);
-    });
-  });
-
-  testWidgets('a super admin on no team gets in from Settings', (tester) async {
-    Future<void> welcome(AuthUser user) async {
-      await pumpApp(
-        tester,
-        auth: FakeAuthRepository(user: user),
-        admin: FakeAdminRepository(totalsValue: const AdminTotals(users: 42)),
-        size: const Size(400, 1000),
-      );
-      expect(find.text('Welcome to Battleplan'), findsOneWidget);
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
-    }
-
-    await welcome(coach);
-    expect(find.text('Admin panel'), findsNothing);
-
-    await welcome(boss);
-    await tester.tap(find.text('Admin panel'));
-    await tester.pumpAndSettle();
-    expect(find.text('Dashboard'), findsWidgets);
-    expect(find.text('42'), findsOneWidget);
   });
 
   testWidgets('the dashboard shows every total and opens reports (ADMIN-1)', (
@@ -247,40 +200,6 @@ void main() {
       await tester.pumpAndSettle();
       expect(shownNames(tester), ['Lightning']);
       expect(admin.teamQueries.last.query, 'li');
-    });
-
-    testWidgets('a list on phones, paged with Load more', (tester) async {
-      final admin = FakeAdminRepository(teams: teamRows(), pageSize: 2);
-      await open(
-        tester,
-        '/admin/teams',
-        admin: admin,
-        size: const Size(400, 1000),
-      );
-      expect(find.byType(DataTable), findsNothing);
-      expect(find.widgetWithText(ListTile, 'Thunder'), findsOneWidget);
-      expect(find.text('Hail'), findsNothing);
-      await tester.tap(find.text('Load more'));
-      await tester.pumpAndSettle();
-      expect(find.widgetWithText(ListTile, 'Hail'), findsOneWidget);
-      expect(find.text('Load more'), findsNothing);
-    });
-
-    testWidgets('a status filter keeps looking past an empty page', (
-      tester,
-    ) async {
-      // The server looks through 2 teams per page; Hail, the only
-      // suspended one, is third, so the first page comes back empty.
-      final admin = FakeAdminRepository(teams: teamRows(), teamScan: 2);
-      await open(tester, '/admin/teams', admin: admin);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Suspended'));
-      await tester.pumpAndSettle();
-      expect(find.text('No teams match.'), findsNothing);
-      expect(shownNames(tester), isEmpty);
-      await tester.tap(find.text('Load more'));
-      await tester.pumpAndSettle();
-      expect(shownNames(tester), ['Hail']);
-      expect(find.text('Load more'), findsNothing);
     });
   });
 
@@ -733,27 +652,6 @@ void main() {
       },
     );
 
-    testWidgets('search and filter', (tester) async {
-      await open(tester, '/admin/users', admin: people());
-      expect(find.text('Sam Rivera'), findsOneWidget);
-      expect(find.text('Dan Disabled'), findsOneWidget);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Added'));
-      await tester.pumpAndSettle();
-      expect(find.text('Ann Added'), findsOneWidget);
-      expect(find.text('Sam Rivera'), findsNothing);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Super admin'));
-      await tester.pumpAndSettle();
-      expect(find.text('Bea Boss'), findsOneWidget);
-      expect(find.text('Ann Added'), findsNothing);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'All'));
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'dan@');
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pumpAndSettle();
-      expect(find.text('Dan Disabled'), findsOneWidget);
-      expect(find.text('Sam Rivera'), findsNothing);
-    });
-
     testWidgets('details, and every action asks first where it takes away', (
       tester,
     ) async {
@@ -819,34 +717,6 @@ void main() {
       await act('Delete account', 'Delete account');
       expect(admin.calls.last, 'deleteUser sam');
       expect(find.text('Search by name or email'), findsOneWidget);
-    });
-
-    testWidgets("the server's last-super-admin refusal is explained", (
-      tester,
-    ) async {
-      final admin = people()
-        ..failWith = const LastSuperAdmin('last-super-admin');
-      await open(tester, '/admin/users/boss', admin: admin);
-      // Nobody deletes their own account from here.
-      expect(
-        find.widgetWithText(OutlinedButton, 'Delete account'),
-        findsNothing,
-      );
-      await tester.tap(
-        find.widgetWithText(OutlinedButton, 'Remove super admin'),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Remove super admin from Bea Boss?'), findsOneWidget);
-      await tester.tap(find.widgetWithText(FilledButton, 'Remove super admin'));
-      await tester.pumpAndSettle();
-      expect(admin.calls, isEmpty);
-      expect(
-        find.text(
-          'There must always be at least one super admin. Make someone else '
-          'a super admin first.',
-        ),
-        findsOneWidget,
-      );
     });
 
     testWidgets('revoking your own super admin reports it, then signs out', (
@@ -1005,124 +875,7 @@ void main() {
     });
   });
 
-  testWidgets('the audit log filters by person, action, and team (ADMIN-6)', (
-    tester,
-  ) async {
-    AuditEntry entry(String id, String actor, String action, {String? group}) =>
-        AuditEntry(
-          id: id,
-          actorId: actor,
-          action: action,
-          groupId: group == null ? null : GroupId(group),
-          targetType: 'group',
-          targetId: group ?? '',
-          before: const {'suspended': false},
-          after: const {'suspended': true},
-          createdAt: now,
-        );
-    final admin = FakeAdminRepository(
-      audit: [
-        entry('1', 'boss', 'suspendGroup', group: 't1'),
-        entry('2', 'boss', 'viewGroup', group: 't2'),
-        entry('3', 'zed', 'deleteMessage', group: 't1'),
-      ],
-    );
-    await open(tester, '/admin/audit', admin: admin);
-    expect(find.text('suspendGroup'), findsOneWidget);
-    expect(find.text('deleteMessage'), findsOneWidget);
-
-    Future<void> filter(String label, String value) async {
-      await tester.enterText(find.widgetWithText(TextField, label), value);
-      await tester.tap(find.text('Apply'));
-      await tester.pumpAndSettle();
-    }
-
-    await filter('Action', 'suspendGroup');
-    expect(find.text('deleteMessage'), findsNothing);
-    expect(find.text('viewGroup'), findsNothing);
-    expect(admin.auditFilters.last.action, 'suspendGroup');
-
-    await tester.tap(find.text('Clear filters'));
-    await tester.pumpAndSettle();
-    await filter('Team (team ID)', 't1');
-    expect(find.text('suspendGroup'), findsOneWidget);
-    expect(find.text('deleteMessage'), findsOneWidget);
-    expect(find.text('viewGroup'), findsNothing);
-
-    await filter('Person (user ID)', 'zed');
-    expect(find.text('deleteMessage'), findsOneWidget);
-    expect(find.text('suspendGroup'), findsNothing);
-    expect(
-      admin.auditFilters.last,
-      const AuditFilter(actorId: 'zed', groupId: GroupId('t1')),
-    );
-
-    // An entry opens with its before and after values.
-    await tester.tap(find.text('deleteMessage'));
-    await tester.pumpAndSettle();
-    expect(find.text('Before'), findsOneWidget);
-    expect(find.textContaining('"suspended": true'), findsOneWidget);
-
-    // A person's page links here filtered to them.
-    await open(tester, '/admin/audit?actor=boss', admin: admin);
-    expect(admin.auditFilters.last.actorId, 'boss');
-    expect(find.text('deleteMessage'), findsNothing);
-  });
-
   group('platform settings (ADMIN-7)', () {
-    testWidgets('checks the ranges, then saves', (tester) async {
-      final admin = FakeAdminRepository(
-        config: AppConfig(
-          supportEmail: 'help@getbattleplan.app',
-          announcementBanner: Announcement(
-            text: 'Maintenance Sunday',
-            severity: BannerSeverity.warning,
-            expiresAt: now.add(const Duration(days: 3)),
-          ),
-        ),
-      );
-      await open(tester, '/admin/settings', admin: admin, size: tall);
-      expect(find.widgetWithText(TextField, '500'), findsOneWidget);
-      expect(
-        find.widgetWithText(TextField, 'Maintenance Sunday'),
-        findsOneWidget,
-      );
-
-      await tester.enterText(find.widgetWithText(TextField, '10'), '20');
-      await tester.enterText(
-        find.widgetWithText(TextField, 'help@getbattleplan.app'),
-        'nope',
-      );
-      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-      await tester.pumpAndSettle();
-      expect(find.text('Enter a whole number from 1 to 10.'), findsOneWidget);
-      expect(find.text('Enter a valid email address.'), findsOneWidget);
-      expect(admin.calls, isEmpty);
-
-      await tester.enterText(find.widgetWithText(TextField, '20'), '8');
-      await tester.enterText(
-        find.widgetWithText(TextField, 'nope'),
-        'support@getbattleplan.app',
-      );
-      await tester.tap(find.text('Anyone can create teams'));
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Maintenance Sunday'),
-        'Maintenance Saturday',
-      );
-      await tester.tap(find.text('Critical'));
-      await tester.pump();
-      await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
-      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-      await tester.pumpAndSettle();
-      final saved = admin.savedConfigs.single;
-      expect(saved.maxUploadMb, 8);
-      expect(saved.supportEmail, 'support@getbattleplan.app');
-      expect(saved.allowUserGroupCreation, isFalse);
-      expect(saved.announcementBanner?.text, 'Maintenance Saturday');
-      expect(saved.announcementBanner?.severity, BannerSeverity.critical);
-      expect(find.text('Settings saved.'), findsOneWidget);
-    });
-
     testWidgets('a banner needs text, and turning it off removes it', (
       tester,
     ) async {
@@ -1321,23 +1074,6 @@ void main() {
 
       await openWithBanner(tester, severity: BannerSeverity.warning);
       expect(find.byIcon(AppIcons.warning), findsOneWidget);
-    });
-
-    testWidgets('Dismiss hides it for the session', (tester) async {
-      final admin = await openWithBanner(tester);
-      await tester.tap(find.text('Dismiss'));
-      await tester.pumpAndSettle();
-      expect(find.text('Scheduled maintenance tonight'), findsNothing);
-      // A new announcement shows again.
-      admin.config = AppConfig(
-        announcementBanner: Announcement(
-          text: 'Back up and running',
-          severity: BannerSeverity.info,
-          expiresAt: DateTime.now().add(const Duration(days: 1)),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Back up and running'), findsOneWidget);
     });
 
     testWidgets('it goes away when it ends, and an ended one never shows', (

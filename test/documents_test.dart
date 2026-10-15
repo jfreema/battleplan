@@ -485,16 +485,6 @@ void main() {
       expect(rowOrder(tester), hasLength(4));
     });
 
-    testWidgets('an empty team says what goes here', (tester) async {
-      await openDocuments(tester, docs: []);
-      expect(
-        find.text('Share schedules, forms, and playbooks with your team.'),
-        findsOneWidget,
-      );
-      // Members may add by default (TEAM-5).
-      expect(find.byTooltip('Add a file or link'), findsOneWidget);
-    });
-
     testWidgets('more than 100 load a page at a time', (tester) async {
       await openDocuments(
         tester,

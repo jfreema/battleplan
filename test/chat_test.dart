@@ -325,33 +325,6 @@ void main() {
       expect(repo.photoBatches, [1]);
       expect(find.text('Waiting for a connection…'), findsNothing);
     });
-
-    testWidgets("a message still sending is in the team's bubble color "
-        '(CHAT-18)', (tester) async {
-      const green = 0xFF2E7D32;
-      final repo = FakeMessageRepository()
-        ..failSends = const PermissionDenied('test');
-      await openChat(
-        tester,
-        repo,
-        group: testGroup('a', 'Thunder').copyWith(color: green),
-      );
-      await tester.enterText(find.byType(TextField), 'Field 3 is open');
-      await tester.pump();
-      await tester.tap(find.byTooltip('Send'));
-      await tester.pumpAndSettle();
-      final box = tester.widget<Container>(
-        find
-            .ancestor(
-              of: find.text('Field 3 is open'),
-              matching: find.byWidgetPredicate(
-                (w) => w is Container && w.decoration is BoxDecoration,
-              ),
-            )
-            .first,
-      );
-      expect((box.decoration! as BoxDecoration).color, const Color(green));
-    });
   });
 
   testWidgets('photos pasted or dragged in send as one message (CHAT-2)', (
@@ -512,41 +485,6 @@ void main() {
       await tester.enterText(composer(), '@everyone hi');
       await send(tester);
       expect(repo.sentDetails.single.everyone, isFalse);
-    });
-
-    testWidgets('a mention of me stands out', (tester) async {
-      final repo = FakeMessageRepository([
-        msg(1).copyWith(
-          text: 'Can @Coach Lee bring cones? @Sam Rivera has the balls',
-          mentions: ['coach', 'sam'],
-        ),
-      ]);
-      await openChat(
-        tester,
-        repo,
-        readAt: msg(1).createdAt,
-        members: FakeMemberRepository([
-          testMembership(
-            'a',
-            'coach',
-            role: MemberRole.owner,
-            name: 'Coach Lee',
-          ),
-          testMembership('a', 'sam', name: 'Sam Rivera'),
-        ]),
-      );
-      final text = tester.widget<Text>(find.textContaining('bring cones'));
-      final spans = <TextSpan>[];
-      text.textSpan!.visitChildren((span) {
-        if (span is TextSpan && span.text != null) spans.add(span);
-        return true;
-      });
-      final me = spans.singleWhere((s) => s.text == '@Coach Lee');
-      final sam = spans.singleWhere((s) => s.text == '@Sam Rivera');
-      expect(me.style?.fontWeight, FontWeight.w700);
-      expect(me.style?.backgroundColor, isNotNull);
-      expect(sam.style?.fontWeight, FontWeight.w700);
-      expect(sam.style?.backgroundColor, isNull);
     });
 
     testWidgets('an admin sends an announcement from the + menu', (

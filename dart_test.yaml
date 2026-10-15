@@ -2,8 +2,8 @@
 #   flutter test --tags golden                  # only the goldens
 #   flutter test --exclude-tags golden          # everything else
 #   flutter test --tags golden --update-goldens # after an intended change, on
-#     macOS for the readable set; the CI set is recorded on Linux by the
-#     Update goldens workflow (docs/a11y-perf.md)
+#     macOS, where the readable goldens compare; CI skips them
+#     (docs/a11y-perf.md)
 tags:
   golden:
     description: Golden image tests of the main screens in light and dark.

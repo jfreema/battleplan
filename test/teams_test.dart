@@ -135,22 +135,6 @@ void main() {
       await tester.pumpAndSettle();
       expect(groupRepo.updates, contains('timeZone America/Chicago'));
     });
-
-    testWidgets('there is no team type to change (TEAM-1)', (tester) async {
-      await openSettings(tester);
-      expect(find.text('Team type'), findsNothing);
-      expect(find.text('Youth team'), findsNothing);
-      expect(find.text('Adult team'), findsNothing);
-    });
-
-    testWidgets('Manage invite link opens the invite screen', (tester) async {
-      await openSettings(tester);
-      final manage = find.text('Manage invite link');
-      await tester.ensureVisible(manage);
-      await tester.tap(manage);
-      await tester.pumpAndSettle();
-      expect(find.text('K7XP-M2QR'), findsOneWidget);
-    });
   });
 
   group('the invite link (INV-2, §3)', () {

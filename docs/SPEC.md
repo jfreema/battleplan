@@ -1082,7 +1082,7 @@ The content carries the visual weight: messages, photos, and event cards. The ta
 
 - Dark mode uses near-black tonal surfaces (not pure black), with accents lightened for contrast. Photos are never dimmed.
 - Both themes meet **WCAG AA contrast** (4.5:1 for body text).
-- Every key screen has golden tests in both themes.
+- Every key screen has golden images in both themes, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in light and, where a screen has colors of its own, dark.
 
 ### 7.5 Components
 

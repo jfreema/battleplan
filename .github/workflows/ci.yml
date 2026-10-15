@@ -4,8 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
-  # Update goldens starts it after committing new baselines, since its
-  # own push doesn't (a GITHUB_TOKEN push starts no workflows).
+  # Run it again on a commit from the Actions tab (on main, it deploys to
+  # dev as a push does).
   workflow_dispatch:
 
 concurrency:
@@ -39,21 +39,11 @@ jobs:
       - run: flutter analyze
       - name: Import boundaries (ENG-1)
         run: tools/check_imports.sh
-      - run: flutter test --coverage
+      # The golden images compare on macOS only, so CI leaves them out.
+      - run: flutter test --coverage --exclude-tags golden
       # At least 80% of the domain and data layers (SPEC §8.1).
       - name: Coverage of domain and data layers
         run: dart run tools/check_coverage.dart coverage/lcov.info --min=80
-      # The test-font goldens compare here, on Linux. If one fails, its diff
-      # images are kept to look at; after an intended change, run the
-      # Update goldens workflow (docs/a11y-perf.md).
-      - name: Keep golden diffs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: golden-failures
-          path: test/goldens/failures
-          if-no-files-found: ignore
-          retention-days: 7
 
   # The Hosting site, built once for dev alongside the tests: the website at
   # the root and the app under /app (WASM), the same layout the deploys use

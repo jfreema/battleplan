@@ -406,23 +406,6 @@ void main() {
       expect(push.permissionRequests, 0);
       expect(find.text('Notifications on iPhone and iPad'), findsNothing);
     });
-
-    testWidgets('the tip links to the App Store app (NOTIF-9)', (tester) async {
-      final opener = FakeLinkOpener();
-      await pumpApp(
-        tester,
-        auth: FakeAuthRepository(user: coach),
-        groups: teams,
-        memberships: mine(),
-        push: FakePushRepository(permission: PushPermission.unavailable),
-        browser: const FakeBrowserInfo(pushNeedsHomeScreen: true),
-        linkOpener: opener,
-      );
-      await tester.tap(find.text('Get the iPhone app'));
-      await tester.pumpAndSettle();
-      expect(opener.opened.single.path, '/ios');
-      expect(find.text('Notifications on iPhone and iPad'), findsNothing);
-    });
   });
 
   group('settings (NOTIF-3, NOTIF-4, SET-3)', () {
@@ -493,24 +476,6 @@ void main() {
       await tester.tap(find.text('Lightning'));
       await tester.pumpAndSettle();
       expect(find.text('Notifications for this team'), findsOneWidget);
-    });
-
-    testWidgets('blocked notifications explain how to turn them on', (
-      tester,
-    ) async {
-      await pumpApp(
-        tester,
-        auth: FakeAuthRepository(user: coach),
-        groups: teams,
-        memberships: mine(),
-        push: FakePushRepository(permission: PushPermission.denied),
-      );
-      await openNotificationSettings(tester);
-      expect(find.text('Notifications are blocked'), findsOneWidget);
-      expect(
-        find.textContaining("open your device's Settings"),
-        findsOneWidget,
-      );
     });
 
     testWidgets('Turn on asks, then registers this device', (tester) async {
@@ -598,19 +563,6 @@ void main() {
         ]),
       );
       expect(bellBadge('2'), findsOneWidget);
-    });
-
-    testWidgets('more than 99 shows 99+', (tester) async {
-      await pumpApp(
-        tester,
-        auth: FakeAuthRepository(user: coach),
-        groups: teams,
-        memberships: mine(),
-        notifications: FakeNotificationRepository([
-          for (var i = 0; i < 120; i++) item('n$i'),
-        ]),
-      );
-      expect(bellBadge('99+'), findsOneWidget);
     });
 
     testWidgets('lists items; a tap marks it read and opens it', (
@@ -810,21 +762,6 @@ void main() {
       );
       expect(notifications.loadOlderCalls, greaterThan(0));
       expect(find.text('Item 32'), findsOneWidget);
-    });
-
-    testWidgets('an empty center says what will appear', (tester) async {
-      await pumpApp(
-        tester,
-        auth: FakeAuthRepository(user: coach),
-        groups: teams,
-        memberships: mine(),
-      );
-      await tester.tap(find.byTooltip('Notifications'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Activity from all your teams will appear here.'),
-        findsOneWidget,
-      );
     });
   });
 

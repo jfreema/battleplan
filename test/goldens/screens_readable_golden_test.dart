@@ -2,7 +2,8 @@
 // icons) in light and dark at a phone size (one at a wide size), at 2x, to look at in review
 // (ARCH §9). Fonts rasterize a little differently on each operating
 // system, so these compare only on the one that made them
-// ([readableGoldensOs]); screens_golden_test.dart covers CI's.
+// ([readableGoldensOs]), and CI (Linux) skips them: they're for looking at
+// a change, not for catching one.
 //
 // Update after an intended change (on that system):
 //   flutter test --tags golden --update-goldens

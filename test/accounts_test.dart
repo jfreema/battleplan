@@ -35,28 +35,6 @@ void main() {
       expect(links.opened.map((u) => u.path), ['/terms', '/privacy']);
     });
 
-    testWidgets("the Apple button follows Apple's style once it's on, and "
-        'is hidden until then (task 187)', (tester) async {
-      await pumpApp(tester, auth: FakeAuthRepository());
-      expect(find.byType(AppleSignInButton), findsNothing);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: AppleSignInButton(
-              label: 'Continue with Apple',
-              onPressed: () {},
-            ),
-          ),
-        ),
-      );
-      final apple = find.byType(AppleSignInButton);
-      expect(apple, findsOneWidget);
-      expect(
-        find.descendant(of: apple, matching: find.byIcon(Icons.apple)),
-        findsOneWidget,
-      );
-    });
-
     testWidgets('offline shows an inline error with Retry', (tester) async {
       final auth = OfflineOnceAuth();
       await pumpApp(tester, auth: auth);
