@@ -6,7 +6,7 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 
 | Path | What |
 |---|---|
-| `index.html` | `/`: the landing page (features, players and parents, free with no ads, screenshots, FAQ) |
+| `index.html` | `/`: the landing page (features, players and parents, the coach's whiteboard, switching from other apps, free with no ads, screenshots, FAQ) |
 | `support.html` | `/support`: support email, common questions, deleting your account |
 | `privacy.html`, `terms.html` | `/privacy`, `/terms`: draft structure; final wording is ROADMAP task 121 |
 | `delete-account.html` | `/delete-account`: deletion in the app and by email (LEGAL-3) |
@@ -17,7 +17,7 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 | `images/og.png` | Open Graph and Twitter card image, 1200 × 630 |
 | `robots.txt`, `sitemap.xml` | The site is indexed; `/app/` is not |
 
-Hosting serves `support.html` at `/support` because `firebase.json` sets `cleanUrls`. Links between pages use the clean paths (`/support`, not `/support.html`). Every page links to `/app/` (**Log in to Battleplan**, just **Log in** on phones) in the header and footer; the landing page's hero and closing section link to `/app/sign-up` (**Sign up, it's free!**). The site must not have an `app/` folder: `tools/build_hosting.sh` copies this folder into `build/hosting/` and builds Flutter into `build/hosting/app/`.
+Hosting serves `support.html` at `/support` because `firebase.json` sets `cleanUrls`. Links between pages use the clean paths (`/support`, not `/support.html`). Every page links to `/app/` (**Login**) in the header and footer; the landing page's hero and closing section link to `/app/sign-up` (**Get Started**). The site must not have an `app/` folder: `tools/build_hosting.sh` copies this folder into `build/hosting/` and builds Flutter into `build/hosting/app/`.
 
 ## Editing
 
@@ -37,14 +37,25 @@ The App Store and Google Play badges wait for the listings (ROADMAP tasks 130 an
 
 ## Screenshots
 
-The screenshots are real captures of the web app with sample data, taken locally against the Firebase emulators (never dev or prod):
+The screenshots are real captures of the web app with the seeded sample teams (Thunder, Cyclone, and Rally Possums), taken locally against the Firebase emulators (never dev or prod). Each one shows a different screen:
 
-1. Start the emulators and seed them (DEVELOPMENT.md, `tools/seed`), and add any extra sample messages, polls, events, and documents you want shown.
-2. `flutter build web --wasm -t lib/main_dev.dart --dart-define=USE_EMULATORS=true -o <a folder outside the repo>` and serve that folder on a local port.
-3. Sign in as a seeded user in headless Chrome at 390 × 844 (device scale 2) and capture each screen with `prefers-color-scheme` set to light and then dark. Hide the "Running in emulator mode" banner, and the "EMU" corner ribbon (build from a scratch copy of the repo with `bannerLabel` in `lib/core/env.dart` returning null; never commit that change).
-4. Resize to 600 px wide and save as WebP (quality about 80) under `images/` with the same names, so the pages don't change.
+| Image | Signed in as | Screen |
+|---|---|---|
+| `chat` (hero) | `coach@example.com` | Thunder's chat, opened at the first unread message: the announcement, Alex's mention, the game card, the dinner poll |
+| `teams` (hero, behind) | `maria@example.com` | The team switcher over Rally Possums' chat |
+| `conversation` | `coach@example.com` | Cyclone's chat: a reply, a mention, reactions |
+| `event`, `schedule` | `coach@example.com` | Thunder's game against the Eagles, and Thunder's schedule |
+| `poll` | `priya@example.com` | Rally Possums' tournament poll |
+| `documents` | `coach@example.com` | Thunder's documents |
+| `youth` | `maria@example.com` | Cyclone's practice, answering for Emma and Mia |
+| `whiteboard` | `coach@example.com` | Team menu → **Whiteboard** → More → **Saved plays** → **Bunt defense** → More → **Put on the whiteboard** |
 
-Regenerate `images/og.png` from the new screenshots at 1200 × 630.
+1. Start the emulators **without functions** (`firebase emulators:start --only auth,firestore,storage`), so the seeded events don't post cards to the chats or send notifications. Then seed them (DEVELOPMENT.md, `npm --prefix tools/seed run seed`). Seed again before each run: opening a chat marks it read.
+2. Build from a scratch copy of the repo with `bannerLabel` in `lib/core/env.dart` returning null, so there's no "EMU" corner ribbon (never commit that change): `flutter build web --wasm -t lib/main_dev.dart --dart-define=USE_EMULATORS=true -o <a folder outside the repo>`. Serve that folder on a local port.
+3. In headless Chrome at 390 × 844 with a device scale of 600 / 390 (so captures come out 600 px wide), hide the "Running in emulator mode" banner (`.firebase-emulator-warning`), sign in, and open each screen. Move the mouse off the page and blur the focused field before each capture, so no row shows a hover or focus.
+4. Capture each screen with `prefers-color-scheme` set to light and then dark, and save as WebP (quality about 80) under `images/` as `<name>-light.webp` and `<name>-dark.webp`.
+
+Regenerate `images/og.png` at 1200 × 630 from the new `chat` and `schedule` shots, keeping its layout: the brand mark and copy on the left, the chat in front of the schedule on the right.
 
 ## Checking it
 

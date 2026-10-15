@@ -22,15 +22,16 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
    npm --prefix tools/seed run seed
    ```
 
-   It creates three teams (Thunder, of adult players, and two kids' teams), parents with players on two teams, adults linked to their own players, a pending player to approve, events, RSVPs, and messages. Every password is `password`:
+   It creates three teams (Thunder, adult softball players; Cyclone, kids' soccer; and Rally Possums, kids' basketball), parents with players on two teams, adults linked to their own players, a pending player to approve, events, RSVPs, polls, documents, a saved play, and messages. These are also the landing page's screenshots (`website/README.md`). Every password is `password`:
 
    | Email | Who |
    |---|---|
-   | `coach@example.com` | Owner of Thunder (adult players) and Lightning U10 (kids) |
-   | `maria@example.com` | Parent on three teams, with players on two (two kids on Lightning U10); asked to join Thunder's roster as a player (pending) |
-   | `priya@example.com` | Owner of Hawks U14, parent on Lightning U10 |
+   | `coach@example.com` | Owner of Thunder (adult players) and Cyclone (kids) |
+   | `maria@example.com` | Parent on all three teams, with players on two (Emma and Mia on Cyclone, Liam on Rally Possums); asked to join Thunder's roster as a player (pending) |
+   | `priya@example.com` | Owner of Rally Possums, parent on Cyclone |
    | `alex@example.com`, `sam@example.com` | Players on Thunder, linked to their own players (Alex is also an admin) |
-   | `luis@example.com` | Parent on Lightning U10 |
+   | `luis@example.com` | Parent on Cyclone |
+   | `tasha@example.com`, `ben@example.com` | Parents on Rally Possums |
    | `admin@example.com` | Super admin |
 
 3. **Run the app** with the emulator flag. In VS Code pick **Dev (emulators)** or **Web (Chrome, emulators)**, or:
