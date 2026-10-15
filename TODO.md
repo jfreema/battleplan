@@ -106,16 +106,16 @@ The website and the web app at `getbattleplan.app/app`, in desktop and phone bro
 
 **Email, the cheapest way** (ARCH §6.7, D61): Firebase Auth sends every signup and account email for $0 (Cloudflare's sending would cost at least $5/month). Resend Free keeps sending invites and setup emails for $0, up to 100 a day. Cloudflare Email Routing receives `support@` and `privacy@` for free.
 
-- [ ] **Set up the production project, `battleplan-prod`** (created 2026-10-10).
+- [x] **Set up the production project, `battleplan-prod`** (created 2026-10-10). *Done 2026-10-13: Blaze with budget alerts, and `getbattleplan.app` live on its Hosting (ROADMAP tasks 114 to 116).*
   - Its region is decided: `us-central1` (SPEC Q11). The database's region is permanent.
   - Upgrade it to Blaze and set budget alerts the same day, at $5, $25, $50, and $100.
   - Connect `getbattleplan.app` on its Hosting page (*Add custom domain*). In Cloudflare, add the records Firebase shows and set each to **DNS only** (grey cloud). A proxied (orange) record points the domain at Cloudflare instead of Firebase, so Firebase can't verify it or issue the certificate.
   - Our team's data on prod carries straight into every later phase.
-- [ ] **Support address.** In Cloudflare, turn on Email Routing for `getbattleplan.app` (*Compute → Email Service → Email Routing*), verify your Gmail as the destination, and forward `support@getbattleplan.app` and `privacy@getbattleplan.app` to it.
-- [ ] **Firebase's built-in emails from your domain**, after the domain is connected to prod Hosting. In prod, go to *Authentication → Templates → Customize domain* and add the records it lists, with the CNAMEs set to DNS only. Merge Firebase's SPF entry into the one apex `v=spf1` record; a domain can have only one. Set the sender to "Battleplan" `<noreply@getbattleplan.app>` and the reply-to to `support@getbattleplan.app`. Verification can take up to 24 hours.
-- [ ] **DMARC record.** Add `_dmarc` with `v=DMARC1; p=none; rua=...` and turn on Cloudflare DMARC Management to read the reports. It gets stricter in Phase 2.
-- [ ] **Bootstrap yourself as prod's first super admin.** I'll give you the one command to run.
-- [ ] **Fill in the legal pages.** The Privacy Policy, Terms of Use, and delete-account drafts have bracketed placeholders for your legal name, governing law, and effective date.
+- [x] **Support address.** In Cloudflare, turn on Email Routing for `getbattleplan.app` (*Compute → Email Service → Email Routing*), verify your Gmail as the destination, and forward `support@getbattleplan.app` and `privacy@getbattleplan.app` to it. *Done (ROADMAP task 111).*
+- [ ] **Firebase's built-in emails from your domain**, after the domain is connected to prod Hosting. In prod, go to *Authentication → Templates → Customize domain* and add the records it lists, with the CNAMEs set to DNS only. Merge Firebase's SPF entry into the one apex `v=spf1` record; a domain can have only one. Set the sender to "Battleplan" `<noreply@getbattleplan.app>` and the reply-to to `support@getbattleplan.app`. Verification can take up to 24 hours. *Deferred 2026-10-13 at your choice: Firebase's own sender is fine while it's our team; do it before inviting other teams (ROADMAP task 112). Not set up yet as of 2026-10-15.*
+- [x] **DMARC record.** Add `_dmarc` with `v=DMARC1; p=none; rua=...` and turn on Cloudflare DMARC Management to read the reports. It gets stricter in Phase 2. *Done 2026-10-13 (ROADMAP task 190).*
+- [x] **Bootstrap yourself as prod's first super admin.** I'll give you the one command to run. *Done 2026-10-13 (ROADMAP task 118).*
+- [x] **Fill in the legal pages.** The Privacy Policy, Terms of Use, and delete-account drafts have bracketed placeholders for your legal name, governing law, and effective date. *Done 2026-10-13 (ROADMAP task 121).*
 - [ ] **Move our team over:** beta on the web with our team, then post the invite link in GroupMe and show the QR code at practice. Run both apps for about two weeks.
 - [ ] **Check the bill** after those two weeks: Cloud Billing → *Reports*, by service. I'll compare it with the cost model.
 
