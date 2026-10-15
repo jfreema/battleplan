@@ -28,7 +28,7 @@ on:
 
 env:
   # The same Flutter as ci.yml.
-  FLUTTER_VERSION: 3.47.6
+  FLUTTER_VERSION: 3.47.7
 
 jobs:
   # Its own job, outside the deploy lock: CI's deploy to dev takes that lock
