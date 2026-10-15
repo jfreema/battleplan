@@ -2,7 +2,8 @@
 // iCalendar, turning entries into events, and which links may be fetched.
 import { describe, expect, it } from 'vitest';
 import { calendarUrl, fetchCalendar, isPublicAddress } from '../../src/imports/fetch.js';
-import { classify, eventsFromIcs, ianaZone, parseRule, ruleDates, splitLocation } from '../../src/imports/events.js';
+import { classify, eventsFromIcs, eventsFromList, ianaZone, parseRule, ruleDates, splitLocation, type ListedEvent } from '../../src/imports/events.js';
+import { importedItemId } from '../../src/imports/messages.js';
 import { parseDuration, parseIcs, parseIcsTime, unescapeText } from '../../src/imports/ics.js';
 import { addDays } from '../../src/schedule/recurrence.js';
 
@@ -352,5 +353,44 @@ describe('which calendar links may be fetched (ARCH §6.13)', () => {
 
   it('refuses a name that resolves to a private address, before connecting', async () => {
     await expect(fetchCalendar('https://localhost/a.ics')).rejects.toMatchObject({ message: 'bad-link' });
+  });
+});
+
+describe("events another app lists (GroupMe's, IMPORT-9)", () => {
+  const e = (extra: Partial<ListedEvent> = {}): ListedEvent => ({
+    sourceId: 'e1', title: 'Practice', description: '', location: '', allDay: false,
+    startMs: NOW + 86_400_000, endMs: null, timeZone: null, canceled: false, ...extra,
+  });
+  const opts = { teamTimeZone: CHI, nowMs: NOW, includePast: false };
+
+  it('take the team zone when theirs is missing or unknown, and an hour with no end', () => {
+    const [a, b] = eventsFromList([e(), e({ sourceId: 'e2', timeZone: 'Mars/Base', startMs: NOW + 2 * 86_400_000 })], opts).events;
+    expect(a).toMatchObject({ type: 'practice', timeZone: CHI, endMs: a.startMs + 3_600_000, location: null });
+    expect(b.timeZone).toBe(CHI);
+  });
+
+  it('keep all-day dates in the zone, one day when there is no end', () => {
+    const start = Date.parse('2030-11-01T05:00:00Z'); // midnight in Chicago
+    const [one] = eventsFromList([e({ allDay: true, startMs: start })], opts).events;
+    expect(one).toMatchObject({ allDay: true, startDate: '2030-11-01', endDate: '2030-11-01' });
+    const [two] = eventsFromList([e({ allDay: true, startMs: start, endMs: start + 2 * 86_400_000 })], opts).events;
+    expect(two).toMatchObject({ startDate: '2030-11-01', endDate: '2030-11-02' });
+  });
+
+  it('skip canceled ones and count past ones, oldest first', () => {
+    const r = eventsFromList(
+      [e({ sourceId: 'late', startMs: NOW + 5 * 86_400_000 }), e({ canceled: true }), e({ sourceId: 'old', startMs: NOW - 86_400_000 })],
+      opts,
+    );
+    expect(r.events.map((x) => x.sourceId)).toEqual(['late']);
+    expect(r.skipped).toMatchObject([{ reason: 'canceled' }]);
+    expect(r.past).toBe(1);
+  });
+});
+
+describe('imported IDs', () => {
+  it('match what the app works out (test/imports_test.dart)', () => {
+    expect(importedItemId('teamA', 'groupme', 'message', '154321')).toBe('imp-602ca240b0e48726ba5ed6d556f7');
+    expect(importedItemId('teamA', 'groupme', 'document', 'f1')).toBe('imp-0ac814c2f6001d68b54bfe9b6bba');
   });
 });

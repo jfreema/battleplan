@@ -7,6 +7,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/chat/domain/message.dart' show PageCursor;
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/domain/document_repository.dart';
+import 'package:battleplan/features/documents/domain/document_rules.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
@@ -283,19 +284,6 @@ class _StorageUpload implements DocumentUpload {
   Future<void> cancel() async {
     await _task.cancel();
   }
-}
-
-/// [fileName] safe as one Storage path segment: no slashes or control
-/// characters, at most 100 characters, keeping the extension.
-String storageFileName(String fileName) {
-  var name = fileName.replaceAll(RegExp(r'[/\\\x00-\x1f#\[\]*?]'), '_').trim();
-  if (name.isEmpty || name == '.' || name == '..') name = 'file';
-  if (name.length > 100) {
-    final dot = name.lastIndexOf('.');
-    final ext = dot > 0 && name.length - dot <= 10 ? name.substring(dot) : '';
-    name = name.substring(0, 100 - ext.length) + ext;
-  }
-  return name;
 }
 
 /// Reads a `groupDocuments` document (ARCH §6.2). A local write has no

@@ -59,7 +59,12 @@ abstract class Message with _$Message {
     String? deletedReason,
 
     /// When the server stamped it. Null while a sent message is still local.
+    /// An imported message keeps the time it was sent in the other app.
     DateTime? createdAt,
+
+    /// The app it was imported from ('groupme'), with its author's name
+    /// there; no Battleplan account wrote it (SPEC IMPORT-9).
+    String? importedFrom,
 
     /// True until the server has the message (CHAT-4 "sending").
     @Default(false) bool pending,

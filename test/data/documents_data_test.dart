@@ -6,6 +6,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/documents/data/firestore_document_repository.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
+import 'package:battleplan/features/documents/domain/document_rules.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_storage_mocks/firebase_storage_mocks.dart';

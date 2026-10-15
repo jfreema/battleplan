@@ -29,6 +29,7 @@ import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
 import 'package:battleplan/features/groups/domain/media_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/imports/domain/chat_import.dart';
 import 'package:battleplan/features/imports/domain/event_import.dart';
 import 'package:battleplan/features/notifications/domain/device_repository.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
@@ -3038,8 +3039,20 @@ class FakeImportRepository implements ImportRepository {
   EventImportResult imported;
   AppFailure? failure;
 
-  /// "preview link webcal://x past=false", "import file 120 chars past=true".
+  /// "preview link webcal://x past=false", "import file 120 chars
+  /// past=true", "teamreach preview link …", "import groupme events 3
+  /// past=false", "check messages 250", "import documents 2".
   final List<String> calls = [];
+
+  /// What the server holds, by source ID: messages and documents imported.
+  final Map<String, ChatImportMessage> messages = {};
+  final Map<String, ChatImportDocument> documents = {};
+
+  /// Files uploaded: path → size.
+  final Map<String, int> uploads = {};
+
+  /// The team's free space for uploads; null for plenty.
+  int? roomBytes;
 
   @override
   Future<EventImportResult> importEvents(
@@ -3049,15 +3062,106 @@ class FakeImportRepository implements ImportRepository {
     required bool dryRun,
     String? url,
     String? ics,
+    List<ListedEvent>? events,
   }) async {
+    final from = url != null
+        ? 'link $url'
+        : ics != null
+        ? 'file ${ics.length} chars'
+        : 'groupme events ${events!.length}';
     calls.add(
-      '${dryRun ? 'preview' : 'import'} '
-      '${url != null ? 'link $url' : 'file ${ics!.length} chars'} '
-      'past=$includePast',
+      '${source == ImportSource.teamreach ? 'teamreach ' : ''}'
+      '${dryRun ? 'preview' : 'import'} $from past=$includePast',
     );
     if (failure case final f?) throw f;
     return dryRun ? preview : imported;
   }
+
+  @override
+  Future<ChatImportResult> importMessages(
+    GroupId groupId, {
+    required ImportSource source,
+    required List<ChatImportMessage> messages,
+    bool check = false,
+  }) async {
+    calls.add('${check ? 'check' : 'import'} messages ${messages.length}');
+    if (failure case final f?) throw f;
+    final existing = {
+      for (final m in messages)
+        if (this.messages.containsKey(m.sourceId)) m.sourceId,
+    };
+    if (check) {
+      return ChatImportResult(
+        added: messages.length - existing.length,
+        alreadyImported: existing.length,
+        existing: existing,
+      );
+    }
+    var added = 0;
+    var missing = 0;
+    for (final m in messages) {
+      if (existing.contains(m.sourceId)) continue;
+      missing += m.photos.where((p) => !uploads.containsKey(p.path)).length;
+      this.messages[m.sourceId] = m;
+      added++;
+    }
+    return ChatImportResult(
+      added: added,
+      alreadyImported: existing.length,
+      missing: missing,
+    );
+  }
+
+  @override
+  Future<ChatImportResult> importDocuments(
+    GroupId groupId, {
+    required ImportSource source,
+    required List<ChatImportDocument> documents,
+    bool check = false,
+  }) async {
+    calls.add('${check ? 'check' : 'import'} documents ${documents.length}');
+    if (failure case final f?) throw f;
+    final existing = {
+      for (final d in documents)
+        if (this.documents.containsKey(d.sourceId)) d.sourceId,
+    };
+    if (check) {
+      return ChatImportResult(
+        added: documents.length - existing.length,
+        alreadyImported: existing.length,
+        existing: existing,
+      );
+    }
+    var added = 0;
+    var missing = 0;
+    for (final d in documents) {
+      if (existing.contains(d.sourceId)) continue;
+      if (!uploads.containsKey(d.path)) {
+        missing++;
+        continue;
+      }
+      this.documents[d.sourceId] = d;
+      added++;
+    }
+    return ChatImportResult(
+      added: added,
+      alreadyImported: existing.length,
+      missing: missing,
+    );
+  }
+
+  @override
+  Future<void> upload(String path, Uint8List bytes, String contentType) async {
+    final used = uploads.values.fold(0, (a, b) => a + b);
+    if (roomBytes case final room? when used + bytes.length > room) {
+      throw const StorageFull('upload-refused');
+    }
+    uploads[path] = bytes.length;
+  }
+
+  @override
+  Future<({int width, int height})> imageSize(Uint8List bytes) async =>
+      (width: 4, height: 3);
 }
 
 /// A preview of a short GameChanger season.

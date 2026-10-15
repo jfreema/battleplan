@@ -14,12 +14,15 @@ import { requireTeamAdmin } from '../shared/roles.js';
 import { isTimeZone } from '../schedule/recurrence.js';
 import { REMINDER_GRACE_MS, ZERO_COUNTS, eventView, nextReminderAtMs } from '../schedule/service.js';
 import { quotaBytesOf } from '../teams/storage.js';
-import { eventsFromIcs, type ImportedEvent, type SkippedEntry } from './events.js';
+import { eventsFromIcs, eventsFromList, type ImportedEvent, type ListedEvent, type SkippedEntry } from './events.js';
 import { fetchCalendar } from './fetch.js';
 import { parseIcs } from './ics.js';
 
-/** The apps events can come from. */
-export const importSources = ['gamechanger'] as const;
+/**
+ * The apps events can come from: calendar links (IMPORT-7, IMPORT-8), and
+ * GroupMe's export, which the app reads and sends as a list (IMPORT-9).
+ */
+export const importSources = ['gamechanger', 'teamreach', 'groupme'] as const;
 export type ImportSource = (typeof importSources)[number];
 
 /** At most this many new events in one import. */
@@ -33,9 +36,10 @@ const SKIPPED_LISTED = 20;
 export interface EventImportInput {
   groupId: string;
   source: ImportSource;
-  /** The calendar link, or [ics]: the calendar file's text. */
+  /** The calendar link, or [ics]: the calendar file's text, or [events]. */
   url?: string;
   ics?: string;
+  events?: ListedEvent[];
   includePast: boolean;
   /** Counts and samples, writing nothing (IMPORT-3). */
   dryRun: boolean;
@@ -151,14 +155,17 @@ export async function importEvents(
   const team = (await teamRef.get()).data();
   await consumeRateLimits([{ key: input.groupId, action: 'importEvents', max: IMPORTS_PER_TEAM_PER_DAY }]);
 
-  const text = input.url !== undefined ? await fetchText(input.url) : (input.ics ?? '');
-  if (!/BEGIN:VCALENDAR/i.test(text)) throw new HttpsError('failed-precondition', 'not-a-calendar');
   const teamZone = typeof team?.timeZone === 'string' && isTimeZone(team.timeZone) ? team.timeZone : 'America/Chicago';
-  const { events, skipped, past } = eventsFromIcs(parseIcs(text), {
-    teamTimeZone: teamZone,
-    nowMs,
-    includePast: input.includePast,
-  });
+  const options = { teamTimeZone: teamZone, nowMs, includePast: input.includePast };
+  let converted;
+  if (input.events !== undefined) {
+    converted = eventsFromList(input.events, options);
+  } else {
+    const text = input.url !== undefined ? await fetchText(input.url) : (input.ics ?? '');
+    if (!/BEGIN:VCALENDAR/i.test(text)) throw new HttpsError('failed-precondition', 'not-a-calendar');
+    converted = eventsFromIcs(parseIcs(text), options);
+  }
+  const { events, skipped, past } = converted;
 
   // Already here from an earlier import: by ID, so a repeat adds nothing twice.
   const refs = events.map((e) => db().collection(Collections.events).doc(importedEventId(input.groupId, input.source, e.sourceId)));
@@ -209,7 +216,7 @@ export async function importEvents(
     targetId: input.groupId,
     after: {
       source: input.source,
-      from: input.url !== undefined ? 'link' : 'file',
+      from: input.url !== undefined ? 'link' : input.events !== undefined ? 'export' : 'file',
       added: result.added,
       alreadyImported: result.alreadyImported,
       past: result.past,

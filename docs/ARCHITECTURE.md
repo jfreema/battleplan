@@ -573,7 +573,8 @@ messages/{messageId}
   pollId?, eventId?, seriesId?, systemEvent?: { kind, actorId, targetId }   # event cards: eventId, and seriesId for a series' card
   reactions: { <uid>: <one of the 16 reactions> }       # one per person (CHAT-6)
   editedAt?, deletedAt?, deletedBy?, deletedReason?: 'author' | 'admin'
-  createdAt
+  createdAt                                             # an imported message keeps its original time
+  imported?: { source: 'groupme', sourceId, importedBy, importedAt }   # §6.13: authorId is 'groupme:<id>', not an account; Functions only
 
 polls/{pollId}                                          # same ID as its poll message
   groupId, messageId, createdBy, question               # the message's text is the question
@@ -632,6 +633,7 @@ groupDocuments/{docId}
   uploadedBy, uploaderName                              # uploaderName: the uploader's groupMembers displayName (cache), "Deleted user" after account deletion
   notifyTeam                                            # read on create only (DOC-6); can't change afterwards
   createdAt, updatedAt
+  imported?: { source, sourceId, importedBy, importedAt }   # §6.13: uploaderName is who shared it there, createdAt when; Functions only
 
 notifications/{dedupeKey}_{uid}                         # notification-center items
   uid, groupId, type: notifyKind, params: { … }, title, body, route
@@ -863,7 +865,7 @@ These are the only triggers, and they react only to writes clients make directly
 
 | Trigger | Writes | Exits early when |
 |---|---|---|
-| `messages` created | `groups.lastMessageAt`/`lastMessagePreview`; `replyPreview` on the new message; `notify` for text, image, and poll messages (event cards and system messages notify through their own domain): `reply` to the person quoted, `mention` to the people named (everyone for an admin's @everyone; not the person replied to), and `message` to everyone else whose reply or mention push didn't go out; an announcement is one `announcement` to everyone instead (CHAT-14, CHAT-15) | — |
+| `messages` created | Nothing for imported messages (§6.13). Otherwise `groups.lastMessageAt`/`lastMessagePreview`; `replyPreview` on the new message; `notify` for text, image, and poll messages (event cards and system messages notify through their own domain): `reply` to the person quoted, `mention` to the people named (everyone for an admin's @everyone; not the person replied to), and `message` to everyone else whose reply or mention push didn't go out; an announcement is one `announcement` to everyone instead (CHAT-14, CHAT-15) | — |
 | `messages` updated | `replyPreview` on replies to an edited message (CHAT-15) | `text` unchanged |
 | `pollVotes` written | `polls.voteCounts`, `voterCount` | — |
 | `rsvps` written | `events.rsvpCounts` (players) and `staffCounts` (everyone else), recounted in a transaction (which fires the `events` trigger, which exits early) | the answer didn't change (a moved event's `eventStartAt`, a renamed player) |
@@ -1135,9 +1137,9 @@ The R2 API token can reach only that bucket. The encryption key lives in Secret 
 
 ---
 
-### 6.13 Import and migration · GameChanger events built
+### 6.13 Import and migration · GroupMe, TeamReach, and GameChanger built
 
-SPEC §6.15, ROADMAP tasks 219–227 and 241. GameChanger's events are built (below). GroupMe's messages come next, then adapters for TeamReach and TeamSnap. Verify each source's supported exports or official API before implementation; do not assume document or calendar access from the presence of those features in the source app.
+SPEC §6.15, ROADMAP tasks 219–227, 241, 249, and 250. Built: GameChanger's and TeamReach's events from their calendar links, and GroupMe's messages, documents, and events from its data export (below). TeamSnap is next. Verify each source's supported exports or official API before implementation; do not assume document or calendar access from the presence of those features in the source app.
 
 **Built: GameChanger events (SPEC IMPORT-7, 2026-10-15).** The `importEvents` callable (`functions/src/imports/`) and the Import screen (`lib/features/imports/`, team menu → Import, admins only).
 
@@ -1152,13 +1154,20 @@ SPEC §6.15, ROADMAP tasks 219–227 and 241. GameChanger's events are built (be
 - **Audit.** Each import adds an `auditLogs` entry, `importEvents`, with the source, link or file, and the counts.
 - **Errors on the web.** The web SDK appends the HTTP status to a callable's message (`not-a-calendar [400]`), and native SDKs don't. Every repository reads messages through `serverMessage` (`core/failure.dart`) before matching them.
 
-- Each adapter normalizes source records and reports capabilities for messages, documents, and events/calendar. The preview intersects adapter support with the data actually available in the supplied export or connection. The client exposes three independent choices; the server validates them again. Documents and events can be imported without messages.
-- Start GroupMe discovery with the official JSON export and representative anonymized fixtures. Its public API documents message pagination; document and calendar access remain unverified. Record a supported-format contract and known losses before writing the adapter.
-- Run writes through a server-side import job authorized for the destination team's admin. Stage and validate input before confirmation, with bounded archive extraction, supported file types and sizes, and the team's normal storage quota. Any remote file retrieval must validate hosts and redirects. Source credentials, if needed, stay out of client bundles and logs; remove temporary input and credentials after the job finishes or expires.
-- Persist job status, selected categories, progress, per-category results, and source-to-destination IDs. Deduplicate by destination team, source, source group, category, and original item ID so retries and repeat imports are safe. Handle cancellation between batches and report partial completion without overwriting unrelated content.
-- Keep imported author attribution separate from Firebase Auth identities; names alone never link an imported author to an account. Preserve original content times separately from import time. Imported source system messages must not impersonate Battleplan's trusted system actions. Member and player migration is a separate scope decision.
-- Imported records need an explicit path through triggers that suppresses historical pushes, mentions, emails, and past-event reminders while maintaining normal storage accounting and team visibility. Future events enter the normal reminder pipeline after completion. Do not route historical records through ordinary create handlers without accounting for their side effects.
-- Add job and provenance schema, indexes, cleanup retention, trigger behavior, and rollback policy to the detailed design before implementation. Tests cover independent choices, partial data, malformed input, authorization, quotas, retry deduplication, and notification suppression.
+**Built: TeamReach events (SPEC IMPORT-8).** `importEvents` with `source: 'teamreach'`: the same link checks, reading, IDs, and quiet writes as GameChanger's. The app names the source in its steps and messages.
+
+**Built: GroupMe (SPEC IMPORT-9, 2026-10-15).** The app reads GroupMe's export on the admin's device and drives the import in batches; the server checks and writes each batch. There's no server job or provenance collection: deterministic IDs make every batch safe to retry, and stopping between batches leaves a consistent, partial import that a later run finishes.
+
+- **The export** (checked against a real one on GitHub, and GroupMe's web app, 2026-10-15): a zip with a folder per chat named for the group's ID. `conversation.json` is the group (its `name`); `message.json` is its messages, newest first, as GroupMe's v3 API gives them (`id`, `created_at` in seconds, `sender_id`, `sender_type`, `name`, `text`, `system`, `attachments`, `deleted_at`). `gallery/` holds the media and files, each named for its message: `<messageId>_<WxH>.<hash>.<ext>` for the photo at `https://i.groupme.com/<WxH>.<ext>.<hash>`, and `<messageId>_<file name>` for a shared file (a `file` attachment carries only its ID). Direct messages' folders are `<id>+<id>` and are skipped.
+- **Events.** Chat messages about events (`event.type` `calendar.event.*`) carry only the event's ID and name, so events come only from the export's calendar data. Its file name and shape weren't confirmed, so the reader searches the export's other JSON for objects with GroupMe's event fields (`event_id`, `name`, `start_at`, `end_at`, `is_all_day`, `timezone`, `location`, `deleted_at`), grouped by `conversation_id` or folder. They go to `importEvents` as a list (`events`), with `source: 'groupme'`, and are converted as calendar events are (`eventsFromList`).
+- **Reading** (`lib/features/imports/domain/groupme_export.dart`, pure Dart with `package:archive`). Messages sort oldest first. System lines (`system`, or `sender_type` `system` or `service`), deleted messages, videos, polls' options, GroupMe's emoji placeholders, and likes stay behind and are counted. A `reply` attachment becomes the reply; a `location` keeps its name in the text. Shared files must be a type `storage.rules` takes as a document, up to 10 MB.
+- **IDs.** `imp-` plus 28 hex digits of sha256 of the team, source, kind (`message` or `document`), and the source's ID. The app works out the same ID (`chat_import.dart`, checked against the server in tests) so a photo can go to its message's folder (`groups/{g}/messages/{id}/{n}.{ext}`) and a file to its document's (`groups/{g}/documents/{id}/{name}`) before the batch is written. Uploads go through the usual Storage rules: members only, images or document types, 10 MB, and the team's room.
+- **The batches** (`GroupMeImporter`, `lib/features/imports/application/`). Events first, in one call; then documents, 50 a call; then messages, 250 a call. Each batch is checked first (`dryRun`, which lists the source IDs already imported), so photos and files go up only for new items; then the batch is written. A refused upload (the team filled up) stops further photos and files and the import carries on without them.
+- **`importMessages`** (`{groupId, source: 'groupme', messages ≤ 500, dryRun}`; team admins, open teams). Keeps only photos inside the message's own folder that exist in Storage as images (`getMetadata`). Builds replies' `replyToId` and `replyPreview` from the batch or messages imported before. Writes each with `batch.create`: `authorId` `groupme:<senderId>`, the GroupMe name, the original `createdAt`, and `imported: {source, sourceId, importedBy, importedAt}`. Moves the team's `lastMessageAt` forward to the newest, never back (`touchLastMessage`).
+- **`importDocuments`** (`{groupId, source, documents ≤ 50, dryRun}`). Takes a file only from its document's folder, and refuses a full team (`storage-full`). `uploadedBy` is the importing admin (who may edit or delete it); `uploaderName` is who shared it in GroupMe; `createdAt` is when; `notifyTeam: false`; plus `imported`.
+- **Quiet.** The messages trigger returns at once for `imported` messages: no reply quote rewrite, no last-message transaction per message, no pushes or mentions. Documents notify only when `notifyTeam` is on.
+- **Limits.** 1,000 import calls (checks included) per team per day, about 250,000 messages; each call has a 2-minute timeout. Each call that adds something writes an audit entry (`importMessages`, `importDocuments`) with its counts.
+- **In the app.** `Message.importedFrom` (from `imported.source`) shows "from GroupMe" with the author's name, once per run, and hides **Block** (there's no account); **Report** stays.
 
 ### 6.14 Whiteboards for plays · Planned
 

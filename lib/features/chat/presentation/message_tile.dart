@@ -310,7 +310,9 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     );
                   },
                 ),
-                if (!ref.read(blockedIdsProvider).contains(m.authorId))
+                // An imported author has no account to block.
+                if (m.importedFrom == null &&
+                    !ref.read(blockedIdsProvider).contains(m.authorId))
                   ListTile(
                     leading: const Icon(AppIcons.block),
                     title: Text(l10n.blockPerson(m.authorName)),
@@ -444,10 +446,15 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               : const TextStyle(fontWeight: FontWeight.w700),
         ),
     ];
-    // "edited" and "Pinned" (CHAT-15) beside the time.
+    // "edited" and "Pinned" (CHAT-15) beside the time. Where an imported
+    // message came from (IMPORT-9) goes with the name, once per run.
     final marks = [
       if (m.editedAt != null && !deleted) l10n.edited,
       if (widget.pinned && !deleted) l10n.pinnedBadge,
+    ].join(' · ');
+    final headerMarks = [
+      if (m.importedFrom case final from?) l10n.importedMark(_appName(from)),
+      if (marks.isNotEmpty) marks,
     ].join(' · ');
 
     final hasText = m.text.trim().isNotEmpty;
@@ -619,7 +626,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     ),
                   ),
                   if (time != null) TextSpan(text: '  $time'),
-                  if (marks.isNotEmpty) TextSpan(text: ' · $marks'),
+                  if (headerMarks.isNotEmpty) TextSpan(text: ' · $headerMarks'),
                 ],
               ),
               style: theme.textTheme.labelSmall?.copyWith(
@@ -631,7 +638,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ? Padding(
             padding: const EdgeInsets.only(right: Space.md, bottom: Space.xs),
             child: Text(
-              marks.isNotEmpty ? '$time · $marks' : time,
+              headerMarks.isNotEmpty ? '$time · $headerMarks' : time,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -1039,3 +1046,9 @@ class OutgoingTextTile extends StatelessWidget {
     );
   }
 }
+
+/// The app an imported message came from, by name (IMPORT-9).
+String _appName(String source) => switch (source) {
+  'groupme' => 'GroupMe',
+  _ => source,
+};

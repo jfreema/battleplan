@@ -17,7 +17,9 @@ import {
  */
 export const onMessageCreated = onDocumentCreated('messages/{messageId}', async (event) => {
   const data = event.data?.data();
-  if (!data) return;
+  // Imported history (IMPORT-9) carries its own quotes and notifies no one;
+  // importMessages moves the team's last message itself.
+  if (!data || data.imported) return;
   const messageId = event.params.messageId;
   const teamName = await touchLastMessage(data.groupId as string, data);
   let repliedTo: string | null = null;

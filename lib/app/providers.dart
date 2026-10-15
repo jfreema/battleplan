@@ -90,7 +90,7 @@ List<Override> buildOverrides({
   calendarAdderProvider.overrideWithValue(const DeviceCalendarAdder()),
   fileChooserProvider.overrideWithValue(const FilePickerChooser()),
   importRepositoryProvider.overrideWithValue(
-    FunctionsImportRepository(functions),
+    FunctionsImportRepository(functions, storage),
   ),
   linkServiceProvider.overrideWithValue(LinkService.forEnv(isProd: env.isProd)),
   browserInfoProvider.overrideWithValue(

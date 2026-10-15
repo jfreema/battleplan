@@ -134,6 +134,10 @@ class FirestoreMessageRepository implements MessageRepository {
       deletedAt: deleted is Timestamp ? deleted.toDate() : null,
       deletedReason: x['deletedReason'] as String?,
       editedAt: (x['editedAt'] as Timestamp?)?.toDate(),
+      importedFrom: switch (x['imported']) {
+        {'source': final String source} => source,
+        _ => null,
+      },
       // A local write has no server time yet; estimate it so it sorts last.
       createdAt: created is Timestamp
           ? created.toDate()

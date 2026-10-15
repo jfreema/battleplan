@@ -1,16 +1,22 @@
-// Importing a team's events from another app (SPEC §6.15, IMPORT-1 to
-// IMPORT-5): GameChanger's schedule, by its calendar link or a calendar
-// file, previewed before anything is added.
+// Importing a team from another app (SPEC §6.15, IMPORT-1 to IMPORT-9):
+// GameChanger's and TeamReach's schedules by their calendar links, and a
+// GroupMe group's messages, files, and events from its data export, each
+// previewed before anything is added.
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/imports/application/groupme_import.dart';
 import 'package:battleplan/features/imports/data/functions_import_repository.dart';
+import 'package:battleplan/features/imports/domain/chat_import.dart';
 import 'package:battleplan/features/imports/domain/event_import.dart';
+import 'package:battleplan/features/imports/domain/groupme_export.dart';
+import 'package:firebase_storage_mocks/firebase_storage_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -27,11 +33,13 @@ void main() {
   );
   final team = {'a': testGroup('a', 'Thunder')};
 
+  /// Import, as [role], with [source] chosen.
   Future<FakeImportRepository> openImport(
     WidgetTester tester, {
     MemberRole role = MemberRole.owner,
     FakeImportRepository? repo,
     FakeFileChooser? files,
+    String source = 'GameChanger',
   }) async {
     final imports = repo ?? FakeImportRepository();
     await pumpApp(
@@ -48,6 +56,10 @@ void main() {
           .push('/g/a/import'),
     );
     await tester.pumpAndSettle();
+    if (find.text(source).evaluate().isNotEmpty) {
+      await tester.tap(find.text(source));
+      await tester.pumpAndSettle();
+    }
     return imports;
   }
 
@@ -77,7 +89,9 @@ void main() {
         if (!shown) return;
         await tester.tap(find.text('Import'));
         await tester.pumpAndSettle();
-        expect(find.text('GameChanger'), findsOneWidget);
+        for (final app in ['GroupMe', 'TeamReach', 'GameChanger']) {
+          expect(find.text(app), findsOneWidget);
+        }
       });
     }
   });
@@ -247,7 +261,7 @@ void main() {
       ),
       (
         const InvalidInput('not-a-calendar'),
-        "That isn't a calendar. In GameChanger, use Copy Calendar Link.",
+        "That isn't a calendar. Copy the calendar link from GameChanger again.",
       ),
       (
         const InvalidInput('calendar-unreachable'),
@@ -308,7 +322,7 @@ void main() {
           ],
         },
       });
-      final repo = FunctionsImportRepository(functions);
+      final repo = FunctionsImportRepository(functions, MockFirebaseStorage());
       final r = await repo.importEvents(
         const GroupId('a'),
         source: ImportSource.gamechanger,
@@ -352,7 +366,10 @@ void main() {
         ..web = true
         ..fail('importEvents', 'failed-precondition', 'not-a-calendar');
       await expectLater(
-        FunctionsImportRepository(functions).importEvents(
+        FunctionsImportRepository(
+          functions,
+          MockFirebaseStorage(),
+        ).importEvents(
           const GroupId('a'),
           source: ImportSource.gamechanger,
           includePast: false,
@@ -396,4 +413,551 @@ void main() {
       expect(failureOf('internal', 'x'), isA<UnknownFailure>());
     });
   });
+
+  group('TeamReach (IMPORT-8)', () {
+    testWidgets('takes its calendar link, and says what stays behind', (
+      tester,
+    ) async {
+      final repo = await openImport(tester, source: 'TeamReach');
+      expect(find.text('Your TeamReach schedule link'), findsOneWidget);
+      expect(
+        find.text("TeamReach doesn't export team messages."),
+        findsOneWidget,
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Calendar link'),
+        'https://teamreach.example/ical/abc.ics',
+      );
+      await tapText(tester, 'Preview');
+      const link = 'https://teamreach.example/ical/abc.ics';
+      expect(repo.calls, ['teamreach preview link $link past=false']);
+      expect(find.text('Canceled in TeamReach'), findsOneWidget);
+    });
+  });
+
+  group("GroupMe's export (IMPORT-9)", () {
+    test('is read: messages oldest first, photos and files from the '
+        'gallery, events from the calendar, and what stays behind', () {
+      final export = readGroupMeExport(groupMeZip());
+      final g = export.groups.single;
+      expect(g.name, 'Thunder Softball');
+      expect(g.messages.map((m) => m.id), [
+        '101',
+        '102',
+        '103',
+        '104',
+        '105',
+        '107',
+      ]);
+      final byId = {for (final m in g.messages) m.id: m};
+      expect(byId['102']!.text, 'Meet here\n📍 Riverside Park');
+      expect(
+        byId['103']!.photos.single.entry,
+        '53526472/gallery/103_1200x900.aaaabbbb.jpeg',
+      );
+      expect(byId['103']!.photos.single.contentType, 'image/jpeg');
+      expect(export.bytesOf(byId['103']!.photos.single.entry), hasLength(10));
+      // A reply, and GroupMe's own emoji, which only its apps draw.
+      expect(byId['104']!.replyToId, '101');
+      expect(byId['104']!.text, 'Yes');
+      expect(byId['104']!.authorName, 'Sam');
+      final file = g.files.single;
+      expect(
+        [file.name, file.contentType, file.size, file.sharedByName],
+        ['league rules.pdf', 'application/pdf', 20, 'Riley'],
+      );
+      final left = g.leftOut;
+      expect(
+        [
+          left.systemMessages,
+          left.videos,
+          left.photosNotInExport,
+          left.filesUnsupported,
+        ],
+        [1, 1, 1, 1],
+      );
+      expect(g.events.map((e) => e.sourceId), ['ev1', 'ev2', 'ev3']);
+      final game = g.events.first;
+      expect(game.title, 'Thunder vs. Eagles');
+      expect(game.location, 'Riverside Park, 100 River Rd');
+      expect(game.timeZone, 'America/Chicago');
+      expect(game.start, DateTime.utc(2031, 5, 2, 23));
+      expect(g.events[1].allDay, isTrue);
+      expect(g.events[2].canceled, isTrue);
+    });
+
+    test("isn't anything else", () {
+      expect(
+        () => readGroupMeExport(Uint8List.fromList(utf8.encode('hello'))),
+        throwsA(isA<NotGroupMeExport>()),
+      );
+      final photos = Archive()..addFile(ArchiveFile.string('a.jpg', 'x'));
+      expect(
+        () => readGroupMeExport(ZipEncoder().encodeBytes(photos)),
+        throwsA(
+          isA<NotGroupMeExport>().having(
+            (e) => e.reason,
+            'reason',
+            'not-an-export',
+          ),
+        ),
+      );
+      final dmOnly = Archive()
+        ..addFile(ArchiveFile.string('11+22/message.json', '[]'));
+      expect(
+        () => readGroupMeExport(ZipEncoder().encodeBytes(dmOnly)),
+        throwsA(
+          isA<NotGroupMeExport>().having(
+            (e) => e.reason,
+            'reason',
+            'no-groups',
+          ),
+        ),
+      );
+    });
+
+    test("gives each item the server's ID", () {
+      const team = GroupId('teamA');
+      expect(
+        importedItemId(
+          team,
+          ImportSource.groupme,
+          ImportItemKind.message,
+          '154321',
+        ),
+        'imp-602ca240b0e48726ba5ed6d556f7',
+      );
+      expect(
+        importedItemId(
+          team,
+          ImportSource.groupme,
+          ImportItemKind.document,
+          'f1',
+        ),
+        'imp-0ac814c2f6001d68b54bfe9b6bba',
+      );
+    });
+
+    test('imports events, then files, then messages, each just once', () async {
+      final export = readGroupMeExport(groupMeZip());
+      final repo = FakeImportRepository();
+      Future<GroupMeTotals> run() =>
+          GroupMeImporter(repo, const GroupId('a'), export).run(
+            export.groups.single,
+            messages: true,
+            photos: true,
+            documents: true,
+            events: true,
+            includePast: false,
+          );
+      final totals = await run();
+      expect(repo.calls, [
+        'import groupme events 3 past=false',
+        'check documents 1',
+        'import documents 1',
+        'check messages 6',
+        'import messages 6',
+      ]);
+      expect(
+        [totals.eventsAdded, totals.documentsAdded, totals.messagesAdded],
+        [3, 1, 6],
+      );
+      // Each file in its item's own folder.
+      final docId = importedItemId(
+        const GroupId('a'),
+        ImportSource.groupme,
+        ImportItemKind.document,
+        '107_0',
+      );
+      final photoFolder = importedItemId(
+        const GroupId('a'),
+        ImportSource.groupme,
+        ImportItemKind.message,
+        '103',
+      );
+      expect(repo.uploads, {
+        'groups/a/documents/$docId/league rules.pdf': 20,
+        'groups/a/messages/$photoFolder/0.jpg': 10,
+      });
+      expect(repo.messages['103']!.photos.single.width, 4);
+      expect(repo.messages['104']!.replyToSourceId, '101');
+
+      // Again: everything's there, and nothing goes up twice.
+      repo.uploads.clear();
+      final again = await run();
+      expect(
+        [again.messagesAdded, again.messagesAlready, again.documentsAlready],
+        [0, 6, 1],
+      );
+      expect(repo.uploads, isEmpty);
+    });
+
+    test('keeps bringing messages when storage fills up', () async {
+      final export = readGroupMeExport(groupMeZip());
+      final repo = FakeImportRepository()..roomBytes = 15;
+      final totals = await GroupMeImporter(repo, const GroupId('a'), export)
+          .run(
+            export.groups.single,
+            messages: true,
+            photos: true,
+            documents: true,
+            events: false,
+            includePast: false,
+          );
+      expect(totals.storageFull, isTrue);
+      expect([totals.documentsLeftOut, totals.photosLeftOut], [1, 1]);
+      // The photo-only message has nothing left to show.
+      expect(totals.messagesAdded, 5);
+    });
+
+    test('stops between batches, keeping what was added', () async {
+      final group = GroupMeGroup(
+        id: '1',
+        name: 'Big group',
+        messages: [
+          for (var i = 0; i < 600; i++)
+            GroupMeMessage(
+              id: '$i',
+              authorId: '9',
+              authorName: 'Sam',
+              text: 'Message $i',
+              createdAt: DateTime.utc(2025).add(Duration(minutes: i)),
+            ),
+        ],
+        files: const [],
+        events: const [],
+        leftOut: const GroupMeLeftOut(),
+      );
+      final repo = FakeImportRepository();
+      final importer = GroupMeImporter(
+        repo,
+        const GroupId('a'),
+        GroupMeExport(groups: [group], read: (_) => null),
+      );
+      final totals = await importer.run(
+        group,
+        messages: true,
+        photos: true,
+        documents: true,
+        events: true,
+        includePast: false,
+        onProgress: (p) {
+          if (p.done > 0) importer.cancel();
+        },
+      );
+      expect(totals.canceled, isTrue);
+      expect(totals.messagesAdded, groupMeMessageBatch);
+    });
+
+    testWidgets('choose the export, see what it holds, then import', (
+      tester,
+    ) async {
+      final zip = groupMeZip();
+      final files = FakeFileChooser(
+        next: (
+          name: 'groupme-export.zip',
+          size: zip.length,
+          readBytes: () async => zip,
+        ),
+      );
+      final repo = await openImport(tester, source: 'GroupMe', files: files);
+      expect(
+        find.textContaining('web.groupme.com', findRichText: true),
+        findsOneWidget,
+      );
+      await tapText(tester, 'Choose the export (.zip)');
+      expect(files.extensions, ['zip']);
+      expect(find.text('groupme-export.zip'), findsOneWidget);
+      expect(find.textContaining('6 messages'), findsOneWidget);
+      expect(find.text('1 photo, 10 B'), findsOneWidget);
+      expect(find.text('1 file shared in the group'), findsOneWidget);
+      expect(find.text("3 events from the group's calendar"), findsOneWidget);
+
+      await tapText(tester, 'Preview');
+      expect(repo.calls, ['preview groupme events 3 past=false']);
+      expect(find.text('6 messages to add'), findsOneWidget);
+      expect(find.text('1 document to add'), findsOneWidget);
+      expect(find.text('league rules.pdf'), findsOneWidget);
+      expect(find.text('· 1 video'), findsOneWidget);
+      expect(find.text('3 events to add'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Import'));
+      await tester.pumpAndSettle();
+      expect(find.text('6 messages added to the chat.'), findsOneWidget);
+      expect(find.text('1 document added.'), findsOneWidget);
+      expect(find.text('3 events added to the schedule.'), findsOneWidget);
+      await tapText(tester, 'Open the chat');
+      expect(find.byTooltip('Team menu'), findsOneWidget);
+    });
+
+    testWidgets("says when a file isn't an export", (tester) async {
+      final files = FakeFileChooser(
+        next: (
+          name: 'photos.zip',
+          size: 5,
+          readBytes: () async => Uint8List.fromList(utf8.encode('hello')),
+        ),
+      );
+      await openImport(tester, source: 'GroupMe', files: files);
+      await tapText(tester, 'Choose the export (.zip)');
+      expect(
+        find.text(
+          "That isn't a GroupMe export. Choose the .zip file GroupMe made.",
+        ),
+        findsOneWidget,
+      );
+    });
+
+    test(
+      'the callables get the batches, and checks list what is there',
+      () async {
+        final functions = FakeFunctions({
+          'importMessages': (_) => {
+            'added': 1,
+            'alreadyImported': 1,
+            'photosMissing': 0,
+            'existing': ['6'],
+          },
+          'importDocuments': (_) => {
+            'added': 0,
+            'alreadyImported': 0,
+            'missing': 1,
+          },
+        });
+        final repo = FunctionsImportRepository(
+          functions,
+          MockFirebaseStorage(),
+        );
+        final check = await repo.importMessages(
+          const GroupId('a'),
+          source: ImportSource.groupme,
+          check: true,
+          messages: [
+            ChatImportMessage(
+              sourceId: '7',
+              authorSourceId: '22',
+              authorName: 'Riley',
+              text: 'Yes',
+              createdAt: DateTime.utc(2025, 3, 3),
+              replyToSourceId: '6',
+              photos: const [
+                ChatImportPhoto(
+                  path: 'groups/a/messages/x/0.jpg',
+                  width: 4,
+                  height: 3,
+                ),
+              ],
+            ),
+          ],
+        );
+        expect(functions.lastData('importMessages'), {
+          'groupId': 'a',
+          'source': 'groupme',
+          'messages': [
+            {
+              'sourceId': '7',
+              'authorSourceId': '22',
+              'authorName': 'Riley',
+              'text': 'Yes',
+              'createdAtMs': DateTime.utc(2025, 3, 3).millisecondsSinceEpoch,
+              'replyToSourceId': '6',
+              'photos': [
+                {'path': 'groups/a/messages/x/0.jpg', 'width': 4, 'height': 3},
+              ],
+            },
+          ],
+          'dryRun': true,
+        });
+        expect(check.existing, {'6'});
+        final docs = await repo.importDocuments(
+          const GroupId('a'),
+          source: ImportSource.groupme,
+          documents: [
+            ChatImportDocument(
+              sourceId: 'f1',
+              name: 'rules.pdf',
+              path: 'groups/a/documents/d/rules.pdf',
+              sharedByName: 'Riley',
+              sharedAt: DateTime.utc(2025),
+            ),
+          ],
+        );
+        expect(docs.missing, 1);
+        expect(
+          (functions.lastData('importDocuments')! as Map)['dryRun'],
+          isFalse,
+        );
+      },
+    );
+  });
+}
+
+/// A GroupMe export like a real one (a group's folder, its messages newest
+/// first, a gallery, likes, and a direct message), with a calendar file.
+Uint8List groupMeZip() {
+  const t = 1700000000;
+  Map<String, Object?> m(
+    String id,
+    int at,
+    String name,
+    String text, [
+    List<Object?> attachments = const [],
+    Map<String, Object?> extra = const {},
+  ]) => {
+    'id': id,
+    'created_at': t + at,
+    'sender_id': name == 'Sam' ? '11' : '22',
+    'user_id': name == 'Sam' ? '11' : '22',
+    'sender_type': 'user',
+    'name': name,
+    'text': text,
+    'system': false,
+    'favorited_by': <String>[],
+    'attachments': attachments,
+    ...extra,
+  };
+  final messages = [
+    m('108', 800, 'GroupMe', 'Riley added Sam to the group.', const [], {
+      'system': true,
+      'sender_type': 'system',
+      'sender_id': 'system',
+    }),
+    m('107', 700, 'Riley', 'Shared a document: https://s.groupme.com/x', [
+      {'type': 'file', 'file_id': 'uuid-1'},
+    ]),
+    m('106', 600, 'Riley', '', [
+      {'type': 'file', 'file_id': 'uuid-2'},
+    ]),
+    m(
+      '105',
+      500,
+      'Sam',
+      'Game film https://v.groupme.com/1/abc.1280x720r0.mp4',
+      [
+        {'type': 'video', 'url': 'https://v.groupme.com/1/abc.1280x720r0.mp4'},
+      ],
+    ),
+    m('104', 400, 'Sam', 'Yes �', [
+      {'type': 'reply', 'reply_id': '101', 'base_reply_id': '101'},
+      {
+        'type': 'emoji',
+        'placeholder': '�',
+        'charmap': [
+          [1, 8],
+        ],
+      },
+    ]),
+    m('103', 300, 'Riley', '', [
+      {'type': 'image', 'url': 'https://i.groupme.com/1200x900.jpeg.aaaabbbb'},
+    ]),
+    m('102', 200, 'Riley', 'Meet here', [
+      {'type': 'location', 'name': 'Riverside Park', 'lat': '1', 'lng': '2'},
+    ]),
+    m('101', 100, 'Sam', 'Field 3?'),
+    m('100', 50, 'Sam', 'Gone', const [], {'deleted_at': t + 60}),
+    m('099', 0, 'Riley', '', [
+      {'type': 'image', 'url': 'https://i.groupme.com/800x600.png.cccc'},
+    ]),
+  ];
+  Map<String, Object?> event(
+    String id,
+    String name,
+    String start,
+    String end, {
+    bool allDay = false,
+    bool gone = false,
+  }) => {
+    'event_id': id,
+    'conversation_id': '53526472',
+    'name': name,
+    'description': 'Bring water',
+    'start_at': start,
+    'end_at': end,
+    'is_all_day': allDay,
+    'timezone': 'America/Chicago',
+    'location': {'name': 'Riverside Park', 'address': '100 River Rd'},
+    'deleted_at': gone ? '2031-04-01T00:00:00Z' : null,
+  };
+  final archive = Archive()
+    ..addFile(
+      ArchiveFile.string(
+        '53526472/conversation.json',
+        jsonEncode({'id': '53526472', 'name': 'Thunder Softball'}),
+      ),
+    )
+    ..addFile(ArchiveFile.string('53526472/message.json', jsonEncode(messages)))
+    ..addFile(
+      ArchiveFile.string(
+        '53526472/likes/mine.json',
+        jsonEncode({
+          'meta': <String, Object?>{},
+          'response': {'count': 0, 'messages': <Object?>[]},
+        }),
+      ),
+    )
+    ..addFile(
+      ArchiveFile.bytes(
+        '53526472/gallery/103_1200x900.aaaabbbb.jpeg',
+        List.filled(10, 1),
+      ),
+    )
+    ..addFile(
+      ArchiveFile.bytes(
+        '53526472/gallery/107_league rules.pdf',
+        List.filled(20, 2),
+      ),
+    )
+    ..addFile(
+      ArchiveFile.bytes('53526472/gallery/106_playbook.zip', List.filled(5, 3)),
+    )
+    ..addFile(
+      ArchiveFile.bytes(
+        '53526472/gallery/105_abc.1280x720r0.mp4',
+        List.filled(30, 4),
+      ),
+    )
+    ..addFile(
+      ArchiveFile.string(
+        '11+22/conversation.json',
+        jsonEncode({'id': '11+22'}),
+      ),
+    )
+    ..addFile(
+      ArchiveFile.string(
+        '11+22/message.json',
+        jsonEncode([m('900', 0, 'Sam', 'A direct message')]),
+      ),
+    )
+    ..addFile(
+      ArchiveFile.string(
+        'calendar.json',
+        jsonEncode({
+          'response': {
+            'events': [
+              event(
+                'ev3',
+                'Canceled practice',
+                '2031-07-01T18:00:00-05:00',
+                '2031-07-01T19:00:00-05:00',
+                gone: true,
+              ),
+              event(
+                'ev1',
+                'Thunder vs. Eagles',
+                '2031-05-02T18:00:00-05:00',
+                '2031-05-02T20:00:00-05:00',
+              ),
+              event(
+                'ev2',
+                'Picnic',
+                '2031-06-06T00:00:00-05:00',
+                '2031-06-07T00:00:00-05:00',
+                allDay: true,
+              ),
+            ],
+          },
+        }),
+      ),
+    );
+  return ZipEncoder().encodeBytes(archive);
 }

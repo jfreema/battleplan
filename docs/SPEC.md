@@ -1026,16 +1026,16 @@ What does cost money as teams grow is storage, so each team has a limit, and adm
 
 ---
 
-### 6.15 Import and migration (IMPORT) · GameChanger events built
+### 6.15 Import and migration (IMPORT) · GroupMe, TeamReach, and GameChanger built
 
-Requested 2026-10-13. GameChanger's events came first, at the owner's request (2026-10-15, IMPORT-7, ROADMAP task 241). Messages, documents, and the other sources are future work in ROADMAP tasks 219–227: GroupMe next, then TeamReach and TeamSnap. This does not block the initial go-live.
+Requested 2026-10-13. Built at the owner's request: GameChanger's events (2026-10-15, IMPORT-7, ROADMAP task 241), then GroupMe's messages, documents, and events and TeamReach's events (2026-10-15, IMPORT-8, IMPORT-9, tasks 249 and 250). TeamSnap is future work (task 227). This does not block the initial go-live.
 
 - **IMPORT-1 · Source and destination.** Team admins choose a supported source and a Battleplan team they administer. Each adapter documents the verified export format or API, required permissions, supported categories, and known losses. Importing history does not create accounts, memberships, or invitations automatically.
 - **IMPORT-2 · Independent choices.** Messages, Documents, and Events/calendar have separate selections. A category is selectable only when both the adapter and the supplied export or connection can provide usable data. Unavailable categories explain why. Documents and events do not depend on selecting messages; message photos are identified separately from documents.
 - **IMPORT-3 · Preview.** Before importing, show available categories, counts, sample content, date ranges, destination, storage estimate, and skipped or unsupported data. Require at least one available category and explicit confirmation. Do not infer structured events from ordinary message text.
 - **IMPORT-4 · Preserve history.** Keep source IDs, original timestamps, and author names where available; distinguish imported authors from signed-in Battleplan users. Preserve event time zones. Copy supported accessible files into team storage within existing limits. Explain any loss of reactions, replies, recurrence, RSVPs, or attachments. Never overwrite unrelated existing content.
 - **IMPORT-5 · Jobs and results.** Show progress, cancellation, and a completion report with imported, skipped, and failed counts per category. Retries and repeat imports must not duplicate previously imported source items. Imports enforce team permissions and storage limits and suppress historical chat, mention, email, and reminder notifications; future imported events use normal reminder behavior after completion.
-- **IMPORT-6 · GroupMe first.** Start by verifying an actual export against [Microsoft's JSON export instructions](https://support.microsoft.com/en-us/groupme/how-do-i-export-my-groupme-data). The [official API](https://dev.groupme.com/docs/v3) documents paginated message retrieval. Document and calendar import are unverified, so enable them only after discovery proves a supported path. The other three sources receive the same discovery before implementation.
+- **IMPORT-6 · Discovery first.** Each source's export or API is checked before it's built: what it holds, what it needs, and what can't come along. GroupMe's [data export](https://support.microsoft.com/en-us/groupme/how-do-i-export-my-groupme-data) was checked against a real export published on GitHub and GroupMe's own web app (IMPORT-9); its [API](https://dev.groupme.com/docs/v3) isn't used, since its terms limit exports to a person's own content.
 - **IMPORT-7 · GameChanger events (built).** GameChanger has no export file or public API. Its supported path is the team's calendar link, an iCalendar feed: in the GameChanger app, open the team, tap the gear, then **Schedule Sync**, **Sync Schedule to Your Calendar**, and **Copy Calendar Link**. Coaches, players, and parents get every event from it; followers get only games. Team admins open **Import** from the team menu, paste the link or choose a downloaded `.ics` file (up to 1 MB), and preview before anything is added. Only **Events** can be chosen: GameChanger exports no chat and has no team documents, and RSVPs and attendance aren't imported.
   - Each event keeps its title, notes, place and address, start and end or all-day dates, and time zone: the event's own, then the calendar's, then the team's.
   - Games are found by "vs." (home) or "@" (away), and the opponent comes from the title. Practices, meetings, and social events are found by keywords; anything else is Other.
@@ -1043,8 +1043,15 @@ Requested 2026-10-13. GameChanger's events came first, at the owner's request (2
   - Imported events don't post to the chat or send a new-event notification. They have RSVPs on and the team's default reminders, so future ones remind as usual.
   - Importing again adds only events that are new. Events imported before stay as they are, including any changes made in Battleplan.
   - One import adds up to 500 events and runs while the screen waits, so it needs no job, progress, or cancellation (IMPORT-5's jobs are for message imports). A team can import or preview 30 times a day. A full team can preview but not add.
+- **IMPORT-8 · TeamReach events (built).** TeamReach has no public API or export file. Its terms forbid copying "roster data, contact information, schedules, message history" without its written permission (checked 2026-10-13, ROADMAP task 225); the owner chose to offer the schedule anyway, read from the calendar (iCal) link TeamReach gives its users for calendar apps, and nothing else. It imports exactly as IMPORT-7, under TeamReach's name: canceled events say "Canceled in TeamReach". Messages and Documents show as unavailable, with why. The menu path to TeamReach's link hasn't been checked against a real team yet, so the app's steps describe it generally.
+- **IMPORT-9 · GroupMe messages, documents, and events (built).** From GroupMe's data export: on a computer, at web.groupme.com, **Profile**, **Export Data**, then **Create Export**. GroupMe emails when it's ready; a large export comes in parts, each imported on its own. The admin chooses the export's `.zip` in Import; the app reads it on their device (up to 2 GB), lists its group chats (direct messages are left out), and the admin picks the group. Messages, Documents, and Events are chosen separately, each available only when the export has some.
+  - **Messages** keep their writer's GroupMe name and their original time, in order, and show "from GroupMe" beside the name; no Battleplan account wrote them, so they can be reported but their writers can't be blocked. Replies keep their quote. Photos come too (a choice of their own), into the team's storage. A shared place keeps its name. GroupMe's notices (who joined, who renamed the group), likes, polls' options and votes, videos, deleted messages, and GroupMe's own emoji are left out, and the preview counts what's left out.
+  - **Documents** are the files shared in the group, of the kinds and sizes Documents takes (PDF, Office files, text, CSV, and pictures, up to 10 MB each). "Added by" names who shared it in GroupMe, and each keeps the date it was shared.
+  - **Events** come from the export's calendar data, as IMPORT-7 imports them. GroupMe's chat names events but doesn't say when they are, so an export without calendar data offers no events, and says why.
+  - The preview shows the counts, the dates, the latest messages, the files, the events, the photos' and files' size against the team's free space, and what's left out. Importing shows its progress and can be stopped between batches; what's done stays. A team whose storage fills partway keeps getting messages, without the photos and files that didn't fit.
+  - Nothing imported notifies anyone. Importing again adds only what's new, and leaves what came before as it is.
 
-**Acceptance (when implemented)**
+**Acceptance**
 
 - Every available category can be selected alone or in combination; unavailable categories cannot be submitted.
 - A preview makes unsupported and missing data clear before any team content is written.
@@ -1353,7 +1360,7 @@ Decided 2026-10-12, at the owner's request (ARCH D60). The first go-live is the 
 2. Recreate upcoming events, using repeating events for practices.
 3. Post the invite link in the old GroupMe and show the QR code at practice.
 4. Run both apps for about two weeks, then announce the switch.
-5. Bring the schedule over from GameChanger with **Import** (IMPORT-7). Move without chat history for now: importing messages from GroupMe, then TeamReach and TeamSnap, is future work (§6.15; ROADMAP tasks 219–227).
+5. Bring the chat, files, and events over from GroupMe, and the schedule from TeamReach or GameChanger, with **Import** (IMPORT-7 to IMPORT-9).
 
 ### v1.1 backlog, in priority order
 
@@ -1445,7 +1452,7 @@ Not in v1; some may come later:
 - Payments and team dues
 - Volunteer and snack sign-ups
 - Carpools
-- Import and migration from GroupMe, TeamReach, and TeamSnap is planned after the initial go-live; GameChanger's events are built (§6.15; ROADMAP tasks 219–227, 241).
+- Import from TeamSnap is planned; GroupMe, TeamReach, and GameChanger imports are built (§6.15; ROADMAP tasks 227, 241, 249, 250).
 - Whiteboards for drawing plays (baseball, basketball, soccer, and football X's and O's) are planned (§6.16; ROADMAP tasks 242–248).
 - Languages other than English
 - Native desktop apps (the web app covers desktop)

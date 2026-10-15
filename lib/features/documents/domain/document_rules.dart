@@ -40,3 +40,16 @@ bool canPinDocument(Group group, Membership? me, {bool superAdmin = false}) =>
 /// Reporting (SAFE-1): anything someone else added.
 bool canReportDocument(Document doc, Membership? me) =>
     me != null && doc.uploadedBy != me.uid.value;
+
+/// [fileName] safe as one Storage path segment: no slashes or control
+/// characters, at most 100 characters, keeping the extension.
+String storageFileName(String fileName) {
+  var name = fileName.replaceAll(RegExp(r'[/\\\x00-\x1f#\[\]*?]'), '_').trim();
+  if (name.isEmpty || name == '.' || name == '..') name = 'file';
+  if (name.length > 100) {
+    final dot = name.lastIndexOf('.');
+    final ext = dot > 0 && name.length - dot <= 10 ? name.substring(dot) : '';
+    name = name.substring(0, 100 - ext.length) + ext;
+  }
+  return name;
+}

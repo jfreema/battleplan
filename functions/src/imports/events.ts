@@ -372,3 +372,66 @@ export function eventsFromIcs(cal: IcsCalendar, opts: ConvertOptions): Converted
   events.sort((a, b) => a.startMs - b.startMs);
   return { events, skipped, past };
 }
+
+// ---- Events another app listed -----------------------------------------------
+
+/** An event as an app's own data has it, not a calendar (GroupMe's). */
+export interface ListedEvent {
+  sourceId: string;
+  title: string;
+  description: string;
+  /** A place as one line: a name, then the street address. */
+  location: string;
+  allDay: boolean;
+  startMs: number;
+  /** Null when it has no end. */
+  endMs: number | null;
+  /** IANA; null for the team's. */
+  timeZone: string | null;
+  canceled: boolean;
+}
+
+/**
+ * The events an app listed, oldest first, as eventsFromIcs gives them: the
+ * same titles, types, and places, in the event's zone or else the team's.
+ * All-day events keep their dates in that zone. Canceled ones are skipped,
+ * and past ones counted and left out unless asked for.
+ */
+export function eventsFromList(list: ListedEvent[], opts: ConvertOptions): Converted {
+  const events: ImportedEvent[] = [];
+  const skipped: SkippedEntry[] = [];
+  let past = 0;
+  for (const e of list) {
+    const zone = e.timeZone && isTimeZone(e.timeZone) ? e.timeZone : opts.teamTimeZone;
+    const what = classify(e.title);
+    const base = {
+      sourceId: e.sourceId,
+      ...what,
+      description: e.description.slice(0, Limits.eventNotesMax).trim(),
+      location: splitLocation(e.location),
+      timeZone: zone,
+    };
+    const ends = e.endMs !== null && e.endMs > e.startMs;
+    let ev: ImportedEvent;
+    if (e.allDay) {
+      const startDate = dateInZone(e.startMs, zone);
+      // An end at midnight is the day before's end.
+      const endDate = ends ? dateInZone(e.endMs! - 1, zone) : startDate;
+      ev = {
+        ...base,
+        allDay: true,
+        startMs: wallTimeToMs(startDate, '00:00', zone),
+        endMs: wallTimeToMs(addDays(endDate < startDate ? startDate : endDate, 1), '00:00', zone),
+        startDate,
+        endDate: endDate < startDate ? startDate : endDate,
+      };
+    } else {
+      ev = { ...base, allDay: false, startMs: e.startMs, endMs: ends ? e.endMs! : e.startMs + HOUR_MS, startDate: null, endDate: null };
+    }
+    if (e.canceled) skipped.push({ title: ev.title, startMs: ev.startMs, reason: 'canceled' });
+    else if (!opts.includePast && ev.endMs <= opts.nowMs) past++;
+    else events.push(ev);
+  }
+  events.sort((a, b) => a.startMs - b.startMs);
+  return { events, skipped, past };
+}

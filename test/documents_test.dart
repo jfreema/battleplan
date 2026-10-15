@@ -8,7 +8,6 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/file_chooser.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
-import 'package:battleplan/features/documents/data/firestore_document_repository.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/domain/document_rules.dart';
 import 'package:battleplan/features/documents/presentation/add_document.dart';

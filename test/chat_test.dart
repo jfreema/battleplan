@@ -555,6 +555,27 @@ void main() {
       expect(find.text('Pinned message'), findsNothing);
     });
 
+    testWidgets('an imported message says where it came from; it can be '
+        'reported, but its author has no account to block (IMPORT-9)', (
+      tester,
+    ) async {
+      final imported = msg(
+        1,
+        author: 'groupme:22',
+        name: 'Riley',
+      ).copyWith(importedFrom: 'groupme');
+      final repo = FakeMessageRepository([msg(2), imported]);
+      await openChat(tester, repo, readAt: msg(2).createdAt);
+      expect(
+        find.textContaining('from GroupMe', findRichText: true),
+        findsOneWidget,
+      );
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Report'), findsOneWidget);
+      expect(find.text('Block Riley'), findsNothing);
+    });
+
     testWidgets('the bar shows the newest pin first and steps through them', (
       tester,
     ) async {
