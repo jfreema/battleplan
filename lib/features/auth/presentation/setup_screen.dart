@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/presentation/legal_links.dart';
 import 'package:battleplan/features/auth/presentation/profile_photo.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -11,8 +12,11 @@ import 'package:material_ui/material_ui.dart';
 
 /// First-run setup (AUTH-5, SAFE-3, SAFE-6) at `/setup`: confirm the name
 /// and photo prefilled from the sign-in provider (or pick one), confirm
-/// being 18 or older, and accept the Terms (linked). Only the confirmations and their dates are stored. The
-/// router sends people here until it's done, then on to their teams.
+/// being 18 or older, and accept the Terms (linked). Only the
+/// confirmations and their dates are stored. The router sends people here
+/// until it's done, then on to their teams. It says which account this is,
+/// with Use a different account to sign out and pick another (a Google
+/// account the browser chose that wasn't the one meant).
 class SetupScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -73,6 +77,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     }
     final canContinue =
         _adult && _terms && _name.text.trim().isNotEmpty && !_saving;
+    final email = ref.watch(authUserProvider).value?.email;
 
     return Scaffold(
       body: SafeArea(
@@ -89,6 +94,16 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineMedium,
                   ),
+                  if (email != null && email.isNotEmpty) ...[
+                    const SizedBox(height: Space.sm),
+                    Text(
+                      l10n.setupSignedInAs(email),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: Space.xl),
                   Center(
                     child: Stack(
@@ -160,6 +175,16 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                         ? () => unawaited(_continue())
                         : null,
                     child: Text(l10n.activateContinue),
+                  ),
+                  const SizedBox(height: Space.sm),
+                  // Back to the sign-in choices, for another account.
+                  TextButton(
+                    onPressed: _saving
+                        ? null
+                        : () => unawaited(
+                            ref.read(sessionServiceProvider).signOut(),
+                          ),
+                    child: Text(l10n.useDifferentAccount),
                   ),
                 ],
               ),

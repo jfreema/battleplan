@@ -199,7 +199,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 
 `getbattleplan.app` is a small explainer website; the web app lives under it at **`getbattleplan.app/app`**. The site's source is the `website/` folder in the repo (ARCH §5.1, §6.6).
 
-- **WEB-1 · MVP · Landing page.** What Battleplan is (team chat, schedule and RSVPs, polls, documents, players and parents for adult and youth teams), that it's free with no ads, screenshots, and clear ways in: **Open Battleplan** (the web app at `/app`), and App Store and Google Play badges once the apps are listed.
+- **WEB-1 · MVP · Landing page.** What Battleplan is (team chat, schedule and RSVPs, polls, documents, players and parents for adult and youth teams), that it's free with no ads, screenshots, and clear ways in: **Sign up, it's free!** (the web app's sign-up page, `/app/sign-up`) and **Log in to Battleplan** (`/app`; just **Log in** in the header on phones), and App Store and Google Play badges once the apps are listed.
 - **WEB-2 · MVP · Support and legal pages.** `/privacy`, `/terms`, and `/delete-account` (LEGAL-1, LEGAL-3), and `/support` with the support email. These are the URLs the store listings and Firebase settings use.
 - **WEB-3 · MVP · The web app at `/app`.** The Flutter web app is served under `/app/` and linked from every page of the site. Signed-in people who open `/app` go straight to their teams.
 - **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app.
@@ -319,6 +319,8 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Buttons in this order: Continue with Google, Continue with Apple, Continue with email.
   - Logo and a one-line tagline above them.
   - Footer: "By continuing you agree to the Terms and Privacy Policy", with links.
+  - A link to the sign-up page: "New here? Sign up, it's free". The sign-up page (`/sign-up`, where the website's Sign up button goes) is the same screen saying "Create your free account", with Sign up with Google and Sign up with email, which opens on Create account, and "Already have an account? Sign in". Google and Apple make the account the first time either way.
+  - Google always asks which Google account to use (its account chooser), so a browser signed in to one Google account never picks it silently.
   - The screen is identical on every platform. The Apple button follows Apple's design rules.
   - **Continue with Apple is hidden until Phase 3**, when Sign in with Apple is turned on (§9). Until then the screen shows Google and email only, and Sign-in methods (AUTH-8) doesn't offer Apple.
   - Continue with Facebook joins in Phase 6, with single sign-on (Q16).
@@ -337,6 +339,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Name and photo, prefilled once from the sign-in provider (AUTH-12), and Terms acceptance.
   - Confirm "I'm 18 or older". Accounts are for adults only. Adult players use the app themselves, and youth players never sign in: their parents and guardians use the app for them (§6.3).
   - Only the confirmation and its date are stored.
+  - It says which account is signed in ("Signed in as …"), with **Use a different account**, which signs out and goes back to the sign-in choices: for a Google account picked by mistake.
 - **AUTH-6 · MVP · Accounts added by admins.**
   - Team admins and super admins add people with just a **name and email** (TEAM-7, PLAYER-1, ADMIN-4).
   - **Admins never set, see, or know anyone's password.** No screen or tool lets them. They can only send setup and password-reset emails.

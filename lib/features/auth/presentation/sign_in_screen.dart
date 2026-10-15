@@ -10,13 +10,20 @@ import 'package:material_ui/material_ui.dart';
 
 /// AUTH-1: Continue with Google, Apple, or email, in that order, with the
 /// Terms footer. The same screen on every platform. Apple shows only once
-/// it's turned on (Phase 3, roadmap tasks 187 and 109).
+/// it's turned on (Phase 3, roadmap tasks 187 and 109). At `/sign-up`
+/// ([signUp], the website's "Sign up, it's free!") it says "Create your
+/// free account", and email opens on Create account. Each links to the
+/// other.
 class SignInScreen extends ConsumerWidget {
-  const new({this.appleEnabled = false, super.key});
+  const new({this.appleEnabled = false, this.signUp = false, super.key});
 
   /// Sign in with Apple needs the Apple Developer membership (roadmap task
   /// 109). Until then the button is hidden (task 187).
   final bool appleEnabled;
+
+  /// The sign-up page. Google and Apple make an account the first time
+  /// either way, so only the words and email's first tab differ.
+  final bool signUp;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,15 +60,27 @@ class SignInScreen extends ConsumerWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  if (signUp) ...[
+                    const SizedBox(height: Space.xl),
+                    Text(
+                      l10n.signUpTitle,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleLarge,
+                    ),
+                  ],
                   const SizedBox(height: Space.xxl),
                   OutlinedButton(
                     onPressed: loading ? null : controller.signInWithGoogle,
-                    child: Text(l10n.continueWithGoogle),
+                    child: Text(
+                      signUp ? l10n.signUpWithGoogle : l10n.continueWithGoogle,
+                    ),
                   ),
                   const SizedBox(height: Space.md),
                   if (appleEnabled) ...[
                     AppleSignInButton(
-                      label: l10n.continueWithApple,
+                      label: signUp
+                          ? l10n.signUpWithApple
+                          : l10n.continueWithApple,
                       onPressed: loading ? null : controller.signInWithApple,
                     ),
                     const SizedBox(height: Space.md),
@@ -74,17 +93,37 @@ class SignInScreen extends ConsumerWidget {
                         : () => context.push(
                             Uri(
                               path: '/sign-in/email',
-                              queryParameters: _from(context),
+                              queryParameters: {
+                                ...?_from(context),
+                                if (signUp) 'mode': 'create',
+                              },
                             ).toString(),
                           ),
                     icon: const Icon(AppIcons.email),
-                    label: Text(l10n.continueWithEmail),
+                    label: Text(
+                      signUp ? l10n.signUpWithEmail : l10n.continueWithEmail,
+                    ),
                   ),
                   if (error != null) ...[
                     const SizedBox(height: Space.lg),
                     SignInErrorText(error: error, onRetry: controller.retry),
                   ],
-                  const SizedBox(height: Space.xxl),
+                  const SizedBox(height: Space.lg),
+                  // The other page, keeping where to go back to.
+                  TextButton(
+                    onPressed: loading
+                        ? null
+                        : () => context.go(
+                            Uri(
+                              path: signUp ? '/sign-in' : '/sign-up',
+                              queryParameters: _from(context),
+                            ).toString(),
+                          ),
+                    child: Text(
+                      signUp ? l10n.haveAccountSignIn : l10n.newHereSignUp,
+                    ),
+                  ),
+                  const SizedBox(height: Space.xl),
                   Text(
                     l10n.signInTermsFooter,
                     textAlign: TextAlign.center,
@@ -135,7 +174,8 @@ class AppleSignInButton extends StatelessWidget {
   }
 }
 
-/// The `from` the router put on `/sign-in`, to carry on to email sign-in.
+/// The `from` the router put on `/sign-in`, to carry on to email sign-in
+/// and between sign-in and sign-up.
 Map<String, String>? _from(BuildContext context) {
   final from = GoRouterState.of(context).uri.queryParameters['from'];
   return from == null ? null : {'from': from};

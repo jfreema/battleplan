@@ -18,9 +18,16 @@ enum _Mode { signIn, create }
 /// email, and password, with a show/hide toggle. Also offers an emailed
 /// sign-in link instead of a password.
 class EmailSignInScreen extends ConsumerStatefulWidget {
-  const new({this.showEmulatorHint = false, super.key});
+  const new({
+    this.showEmulatorHint = false,
+    this.createAccount = false,
+    super.key,
+  });
 
   final bool showEmulatorHint;
+
+  /// Opens on Create account, as from the sign-up page (`?mode=create`).
+  final bool createAccount;
 
   @override
   ConsumerState<EmailSignInScreen> createState() => _EmailSignInScreenState();
@@ -31,7 +38,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  _Mode _mode = _Mode.signIn;
+  late _Mode _mode = widget.createAccount ? _Mode.create : _Mode.signIn;
   bool _obscure = true;
 
   @override

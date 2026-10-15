@@ -64,6 +64,8 @@ part 'router.g.dart';
 const _publicPaths = {
   '/sign-in',
   '/sign-in/email',
+  // The website's "Sign up, it's free!" (WEB-1).
+  '/sign-up',
   '/reset-password',
   '/update-required',
   '/activate',
@@ -127,7 +129,7 @@ GoRouter router(Ref ref) {
             : '/sign-in?from=${Uri.encodeComponent(from)}';
       }
 
-      if (path.startsWith('/sign-in')) {
+      if (path.startsWith('/sign-in') || path == '/sign-up') {
         return state.uri.queryParameters['from'] ?? '/';
       }
       if (path == '/activate' || path == '/__/auth/links') {
@@ -229,10 +231,16 @@ GoRouter router(Ref ref) {
         routes: [
           GoRoute(
             path: 'email',
-            builder: (_, _) =>
-                EmailSignInScreen(showEmulatorHint: env.useEmulators),
+            builder: (_, state) => EmailSignInScreen(
+              showEmulatorHint: env.useEmulators,
+              createAccount: state.uri.queryParameters['mode'] == 'create',
+            ),
           ),
         ],
+      ),
+      GoRoute(
+        path: '/sign-up',
+        builder: (_, _) => const SignInScreen(signUp: true),
       ),
       GoRoute(path: '/setup', builder: (_, _) => const SetupScreen()),
       GoRoute(path: '/disabled', builder: (_, _) => const DisabledScreen()),

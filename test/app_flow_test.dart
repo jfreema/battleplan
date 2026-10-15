@@ -35,6 +35,34 @@ void main() {
     expect(find.text('Continue with email'), findsOneWidget);
   });
 
+  testWidgets("the website's sign-up page: Google or email, and email opens "
+      'on Create account', (tester) async {
+    await pumpApp(tester, auth: FakeAuthRepository());
+    // Sign-in links to it, and the website links straight to /sign-up.
+    await tester.tap(find.text("New here? Sign up, it's free"));
+    await tester.pumpAndSettle();
+    expect(find.text('Create your free account'), findsOneWidget);
+    expect(find.text('Sign up with Google'), findsOneWidget);
+    expect(find.text('Sign up with Apple'), findsNothing);
+    await tester.tap(find.text('Sign up with email'));
+    await tester.pumpAndSettle();
+    // Create account is chosen: it asks for a name.
+    expect(find.widgetWithText(TextFormField, 'Your name'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Already have an account? Sign in'));
+    await tester.pumpAndSettle();
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.text('Create your free account'), findsNothing);
+    // Signed in, /sign-up goes on into the app.
+    await tester.tap(find.text('Continue with Google'));
+    await tester.pumpAndSettle();
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/sign-up');
+    await tester.pumpAndSettle();
+    expect(find.text('Create your free account'), findsNothing);
+    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+  });
+
   testWidgets('sign-in links the Terms of Use and Privacy Policy (LEGAL-1)', (
     tester,
   ) async {
@@ -184,6 +212,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(users.savedName, 'Jordan Coach');
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
+  });
+
+  testWidgets('setup says which account this is, and Use a different '
+      'account goes back to the sign-in choices', (tester) async {
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      users: FakeUserRepository(needsSetup: true),
+    );
+    expect(find.text('Signed in as coach@example.com'), findsOneWidget);
+    final other = find.text('Use a different account');
+    await tester.ensureVisible(other);
+    await tester.tap(other);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('set up your profile'), findsNothing);
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.text('Continue with email'), findsOneWidget);
   });
 
   testWidgets('after creating a team, Continue leads from the invite screen '
