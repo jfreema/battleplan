@@ -81,7 +81,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | 17 | Admins can delete messages | CHAT-8 |
 | 18 | 👍 ❤️ 👎 😂 reactions on messages | CHAT-6 |
 | 19 | Modern, clean UI | §7 |
-| 20 | Bottom tabs: Chat, Schedule, Documents | §5.3 |
+| 20 | Bottom tabs: Chat, Schedule, Documents, Coach's whiteboard | §5.3 |
 | 21 | Many sports teams, each with its own members, chat, and schedule | TEAM-1, TEAM-2, SCHED-2, §5.2; ARCH §1, §3 |
 | 22 | Youth players don't use the app; their adult parents and guardians do (adult players can be members themselves) | AUTH-5, §6.3 (PLAYER), SAFE-6; ARCH §1 |
 | 23 | Parent/guardian → player relationships, so parents RSVP for their child, not themselves | §6.3 (PLAYER-1 to PLAYER-6), on every team; ARCH §6.2 |
@@ -241,8 +241,8 @@ Sign in
  │     └─ No teams yet → Welcome: [Join a team]  [Create a team]
  └─ Team view (opens the last team you used)
       ├─ Header:     team switcher ▾ · notification bell · team menu ⋯ · your avatar
-      ├─ Tabs:       Chat | Schedule | Documents
-      ├─ Team menu:  Roster · Whiteboard · Invite · Notifications for this team ·
+      ├─ Tabs:       Chat | Schedule | Documents | Coach's whiteboard
+      ├─ Team menu:  Roster · Invite · Notifications for this team ·
       │              Team settings* · Media* · Reports* · Import*    (* admins)
       │              (Leave team is on your own card in the Roster, TEAM-8)
       └─ Your avatar: Settings · Admin panel** · Sign out           (** super admins)
@@ -267,8 +267,9 @@ Sign in
 | **Chat** | Speech bubble | Unread message count for this team (CHAT-9) |
 | **Schedule** | Calendar | Number of events in the next 14 days still waiting for your RSVP (or your players') |
 | **Documents** | Folder | — |
+| **Coach's whiteboard** | Play diagram | — |
 
-- Labels are always visible. The tabs, order, and icons are the same everywhere.
+- Labels are always visible. The tabs, order, and icons are the same everywhere. On wide screens, Coach's whiteboard sits directly below Documents in the left navigation rail.
 - Each tab keeps its scroll position when you switch away and back.
 
 ### 5.4 Phone layout (Chat tab)
@@ -297,13 +298,13 @@ Sign in
 ├────────────────────────────────────┤
 │ (+)  Message Thunder U14...    (>) │
 ├────────────────────────────────────┤
-│  [Chat]     Schedule    Documents  │
+│ [Chat] Schedule Documents Whiteboard│
 └────────────────────────────────────┘
 ```
 
 ### 5.5 Wide screens (web and tablets, 840 px and up)
 
-- **Navigation.** The tabs move to a **left rail**: the team switcher at the top, then Chat, Schedule, and Documents, with your avatar at the bottom. The order, icons, and labels match phones.
+- **Navigation.** The tabs move to a **left rail**: the team switcher at the top, then Chat, Schedule, Documents, and Coach's whiteboard, with your avatar at the bottom. The order, icons, and labels match phones.
 - **Chat** is centered at a readable width (about 840 px).
 - **Panels.** Event details, member cards, and settings open as side panels or dialogs instead of full screens.
 - **v1.1.** On very wide screens (1200 px and up), a persistent team list column, like Slack's.
@@ -1070,7 +1071,7 @@ Requested 2026-10-13. Built at the owner's request: GameChanger's events (2026-1
 
 ### 6.16 Whiteboard (BOARD) · Built
 
-Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's whiteboard (the team menu's **Whiteboard**, "Coach's whiteboard"), made for an iPad's touch and a laptop's mouse alike: plays are mostly drawn, shown to the team, and erased, like a real whiteboard. Saving one is optional. Plays are visual aids only; they aren't attached to events or posted in the chat. This does not block any go-live phase.
+Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's whiteboard (**Coach's whiteboard**, directly after Documents in the main navigation), made for an iPad's touch and a laptop's mouse alike: plays are mostly drawn, shown to the team, and erased, like a real whiteboard. Saving one is optional. Plays are visual aids only; they aren't attached to events or posted in the chat. This does not block any go-live phase.
 
 - **BOARD-1 · Four boards.** Each is drawn from a real field's measurements, with its own starting positions:
   - **Baseball** (also softball's): the field itself, with striped outfield grass, the warning track and fence, the infield dirt and grass, base paths, bases, home plate, the mound and rubber, batter's boxes, and foul lines. The nine stand at P, C, 1B, 2B, 3B, SS, LF, CF, and RF; the other side can start with a batter, or the bases loaded.

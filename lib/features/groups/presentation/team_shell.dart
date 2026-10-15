@@ -28,9 +28,9 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The tab names in route order: `/g/:groupId/<tab>` (ARCH §5.4).
-const teamTabs = ['chat', 'schedule', 'documents'];
+const teamTabs = ['chat', 'schedule', 'documents', 'plays'];
 
-/// The team view: header with the switcher, then Chat · Schedule · Documents
+/// The team view: header with the switcher, then Chat · Schedule · Documents · Whiteboard
 /// as a bottom bar on phones or a left rail at 840 px and up (SPEC §5).
 ///
 /// A super admin who isn't on the team sees it read-only instead, under
@@ -144,6 +144,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
       (AppIcons.chat, l10n.tabChat),
       (AppIcons.schedule, l10n.tabSchedule),
       (AppIcons.documents, l10n.tabDocuments),
+      (AppIcons.plays, l10n.playsMenuHelp),
     ];
     // The Chat tab shows this team's unread count (CHAT-9).
     final unread = viewing
@@ -471,8 +472,6 @@ class _TeamMenu extends ConsumerWidget {
     // "Coming soon".
     final items = [
       ('roster', AppIcons.roster, l10n.rosterMenu),
-      // The coach's whiteboard; everyone views its saved plays (SPEC §6.16).
-      ('plays', AppIcons.plays, l10n.playsMenu),
       ('invite', AppIcons.invite, l10n.inviteMenu),
       if (!viewing)
         ('notifications', AppIcons.notifications, l10n.teamNotificationsMenu),
@@ -486,7 +485,6 @@ class _TeamMenu extends ConsumerWidget {
     ];
     const built = {
       'roster',
-      'plays',
       'settings',
       'media',
       'invite',
@@ -514,7 +512,6 @@ class _TeamMenu extends ConsumerWidget {
               contentPadding: EdgeInsets.zero,
               leading: Icon(icon),
               title: Text(label),
-              subtitle: route == 'plays' ? Text(l10n.playsMenuHelp) : null,
             ),
           ),
       ],

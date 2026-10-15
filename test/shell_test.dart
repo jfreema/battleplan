@@ -239,6 +239,43 @@ void main() {
   });
 
   group('wide screens (SPEC §5.5)', () {
+    testWidgets('whiteboard opens below Documents and keeps the rail visible', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [testMembership('a', 'coach')],
+        size: wide,
+      );
+      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.destinations[2].label, isA<Text>());
+      expect((rail.destinations[2].label as Text).data, 'Documents');
+      expect((rail.destinations[3].label as Text).data, "Coach's whiteboard");
+      await tester.tap(find.text("Coach's whiteboard"));
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(
+        tester
+            .widget<NavigationRail>(find.byType(NavigationRail))
+            .selectedIndex,
+        3,
+      );
+      expect(
+        find.text("No plays yet. Your coaches' plays will show up here."),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Documents'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<NavigationRail>(find.byType(NavigationRail))
+            .selectedIndex,
+        2,
+      );
+    });
+
     testWidgets('event details open as a dialog over the tabs, and a tap '
         'outside closes it', (tester) async {
       await pumpApp(

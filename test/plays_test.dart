@@ -329,7 +329,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('everyone finds the Whiteboard in the team menu', (
+    testWidgets('everyone finds the Whiteboard after Documents in navigation', (
       tester,
     ) async {
       await pumpApp(
@@ -338,10 +338,16 @@ void main() {
         groups: team,
         memberships: [testMembership('a', 'coach')],
       );
-      await tester.tap(find.byTooltip('Team menu'));
-      await tester.pumpAndSettle();
-      expect(find.text("Coach's whiteboard"), findsOneWidget);
-      await tester.tap(find.text('Whiteboard'));
+      final navigation = tester.widget<NavigationBar>(
+        find.byType(NavigationBar),
+      );
+      expect(
+        navigation.destinations.cast<NavigationDestination>().map(
+          (d) => d.label,
+        ),
+        ['Chat', 'Schedule', 'Documents', "Coach's whiteboard"],
+      );
+      await tester.tap(find.text("Coach's whiteboard"));
       await tester.pumpAndSettle();
       expect(
         find.text("No plays yet. Your coaches' plays will show up here."),

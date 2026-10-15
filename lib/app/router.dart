@@ -486,37 +486,6 @@ GoRouter router(Ref ref) {
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
           ),
-          // The team's plays (SPEC §6.16).
-          GoRoute(
-            path: 'plays',
-            builder: (_, state) =>
-                PlaysRoute(groupId: GroupId(state.pathParameters['groupId']!)),
-            routes: [
-              // Before :playId, so it isn't read as one.
-              GoRoute(
-                path: 'saved',
-                builder: (_, state) => SavedPlaysScreen(
-                  groupId: GroupId(state.pathParameters['groupId']!),
-                ),
-              ),
-              GoRoute(
-                path: ':playId',
-                builder: (_, state) => PlayScreen(
-                  groupId: GroupId(state.pathParameters['groupId']!),
-                  playId: PlayId(state.pathParameters['playId']!),
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'edit',
-                    builder: (_, state) => EditPlayRoute(
-                      groupId: GroupId(state.pathParameters['groupId']!),
-                      playId: PlayId(state.pathParameters['playId']!),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
           // Bringing events over from another app (SPEC §6.15).
           GoRoute(
             path: 'import',
@@ -567,7 +536,8 @@ GoRouter router(Ref ref) {
                             groupId: id,
                           ),
                           'schedule' => ScheduleScreen(groupId: id),
-                          _ => DocumentsScreen(groupId: id),
+                          'documents' => DocumentsScreen(groupId: id),
+                          _ => PlaysRoute(groupId: id),
                         };
                       },
                       // New event (`?from=<id>` duplicates, SCHED-3), an
@@ -628,6 +598,38 @@ GoRouter router(Ref ref) {
                                       'this' => SeriesScope.thisEvent,
                                       _ => null,
                                     },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (tab == 'plays') ...[
+                          GoRoute(
+                            path: 'saved',
+                            builder: (_, state) => SavedPlaysScreen(
+                              groupId: GroupId(
+                                state.pathParameters['groupId']!,
+                              ),
+                            ),
+                          ),
+                          GoRoute(
+                            path: ':playId',
+                            builder: (_, state) => PlayScreen(
+                              groupId: GroupId(
+                                state.pathParameters['groupId']!,
+                              ),
+                              playId: PlayId(state.pathParameters['playId']!),
+                            ),
+                            routes: [
+                              GoRoute(
+                                path: 'edit',
+                                builder: (_, state) => EditPlayRoute(
+                                  groupId: GroupId(
+                                    state.pathParameters['groupId']!,
+                                  ),
+                                  playId: PlayId(
+                                    state.pathParameters['playId']!,
                                   ),
                                 ),
                               ),
