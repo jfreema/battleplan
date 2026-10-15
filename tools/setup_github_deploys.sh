@@ -16,8 +16,10 @@
 #   prod  only Release to prod (release-prod.yml), started by hand on main;
 #         Google refuses a token from any other workflow, branch, or event
 #
-# Then it saves where to authenticate as repository variables (WIF_PROVIDER
-# and WIF_SERVICE_ACCOUNT for dev, the same with _PROD for prod). Safe to
+# The release workflows (release.yml) name the provider and the account
+# themselves; for dev it also saves them as the repository variables CI's
+# deploy on every push reads. It has to run outside GitHub, as the
+# project's owner: GitHub can't give itself access to Google. Safe to
 # re-run.
 set -euo pipefail
 
@@ -29,12 +31,10 @@ PROVIDER=github
 case "${1:-}" in
   dev)
     PROJECT=battleplan-dev-ecce4
-    VAR_SUFFIX=
     CONDITION="assertion.repository == '$REPO'"
     ;;
   prod)
     PROJECT=battleplan-prod
-    VAR_SUFFIX=_PROD
     CONDITION="assertion.repository == '$REPO' && assertion.event_name == 'workflow_dispatch' && assertion.ref == 'refs/heads/main' && assertion.workflow_ref == '$REPO/.github/workflows/release-prod.yml@refs/heads/main'"
     ;;
   *)
@@ -95,11 +95,12 @@ gcloud iam service-accounts add-iam-policy-binding "$SA" --project "$PROJECT" \
   --member="principalSet://iam.googleapis.com/projects/$NUMBER/locations/global/workloadIdentityPools/$POOL/attribute.repository/$REPO" >/dev/null
 echo "GitHub Actions in $REPO can now deploy to $PROJECT as $SA"
 
-# Tell the workflows where to authenticate.
-gh variable set "WIF_PROVIDER$VAR_SUFFIX" --repo "$REPO" \
-  --body "projects/$NUMBER/locations/global/workloadIdentityPools/$POOL/providers/$PROVIDER"
-gh variable set "WIF_SERVICE_ACCOUNT$VAR_SUFFIX" --repo "$REPO" --body "$SA"
+# CI's deploy to dev on every push reads where to authenticate from
+# repository variables.
 if [ "$1" = dev ]; then
+  gh variable set WIF_PROVIDER --repo "$REPO" \
+    --body "projects/$NUMBER/locations/global/workloadIdentityPools/$POOL/providers/$PROVIDER"
+  gh variable set WIF_SERVICE_ACCOUNT --repo "$REPO" --body "$SA"
   gh variable set FIREBASE_DEPLOYS --repo "$REPO" --body true
 fi
 echo "Done: run Release to ${1} from the Actions tab."

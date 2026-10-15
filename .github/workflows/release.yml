@@ -132,10 +132,12 @@ jobs:
           name: hosting-${{ inputs.flavor }}
           path: build/hosting
 
+      # Where to log in: each project's GitHub trust and deploy account, made
+      # once by tools/setup_github_deploys.sh. Not secrets.
       - uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
-          workload_identity_provider: ${{ inputs.flavor == 'prod' && vars.WIF_PROVIDER_PROD || vars.WIF_PROVIDER }}
-          service_account: ${{ inputs.flavor == 'prod' && vars.WIF_SERVICE_ACCOUNT_PROD || vars.WIF_SERVICE_ACCOUNT }}
+          workload_identity_provider: projects/${{ inputs.flavor == 'prod' && '628123687470' || '814215990622' }}/locations/global/workloadIdentityPools/github/providers/github
+          service_account: github-deployer@${{ env.PROJECT }}.iam.gserviceaccount.com
 
       # Rules first, then Functions, then the app, so the new app never
       # calls a function that isn't there yet.

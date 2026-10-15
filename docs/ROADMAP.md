@@ -213,7 +213,7 @@ SPEC PLAYER-12 and Q18, ARCH §6.2, §6.3, and D63. The owner asked to keep play
 ## Release workflows · after go-live
 
 230. ✅ Release to dev and Release to prod as GitHub Actions workflows, started by hand, at the owner's request (2026-10-14, ARCH §9). *`release.yml` waits for CI on the commit, then deploys rules, indexes, Storage rules, Functions (retrying on quota), and Hosting, keyless. Prod takes only `release-prod.yml` on `main`, by a condition on its Workload Identity Federation provider. `tools/release_prod.sh` stays as the Mac fallback.*
-231. 👤 **Jared:** run `tools/setup_github_deploys.sh dev` and `tools/setup_github_deploys.sh prod` once (they grant the deploy accounts their roles), push, then run Release to dev and Release to prod once each from the Actions tab.
+231. Run `tools/setup_github_deploys.sh dev` and `prod` once from the owner's Mac (Claude, with the owner's OK: they change who may deploy), then the first Release to dev and Release to prod. *No scripts for the owner: the one-time trust between Google and GitHub can't be a workflow, and every release after it is a button.*
 
 ## Go-live in six phases
 
