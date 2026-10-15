@@ -17,7 +17,7 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 | `images/og.png` | Open Graph and Twitter card image, 1200 × 630 |
 | `robots.txt`, `sitemap.xml` | The site is indexed; `/app/` is not |
 
-Hosting serves `support.html` at `/support` because `firebase.json` sets `cleanUrls`. Links between pages use the clean paths (`/support`, not `/support.html`). Every page links to `/app/` (**Open Battleplan**) in the header. The site must not have an `app/` folder: `tools/build_hosting.sh` copies this folder into `build/hosting/` and builds Flutter into `build/hosting/app/`.
+Hosting serves `support.html` at `/support` because `firebase.json` sets `cleanUrls`. Links between pages use the clean paths (`/support`, not `/support.html`). Every page links to `/app/` (**Log in to Battleplan**, just **Log in** on phones) in the header and footer; the landing page's hero and closing section link to `/app/sign-up` (**Sign up, it's free!**). The site must not have an `app/` folder: `tools/build_hosting.sh` copies this folder into `build/hosting/` and builds Flutter into `build/hosting/app/`.
 
 ## Editing
 
