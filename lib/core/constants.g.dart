@@ -29,6 +29,7 @@ abstract final class Collections {
   static const String rateLimits = 'rateLimits';
   static const String config = 'config';
   static const String notifyLog = 'notifyLog';
+  static const String plays = 'plays';
 }
 
 /// Limits shared with the server and security rules.
@@ -53,6 +54,14 @@ abstract final class Limits {
   static const int documentNameMax = 100;
   static const int documentDescriptionMax = 500;
   static const int documentUrlMax = 2000;
+  static const int playTitleMax = 80;
+  static const int playNoteMax = 1000;
+  static const int playStepsMax = 10;
+  static const int playElementsMax = 150;
+  static const int playPointsMax = 64;
+  static const int playLabelMax = 12;
+  static const int playTextMax = 200;
+  static const int playsPerEventMax = 5;
   static const int announcementBannerMax = 280;
   static const int reportNoteMax = 500;
   static const int seriesIntervalMax = 8;
@@ -405,6 +414,26 @@ enum DocumentKind {
   final String value;
 
   static DocumentKind? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum PlayBoard {
+  baseball('baseball'),
+  basketball('basketball'),
+  soccer('soccer'),
+  football('football'),
+  blank('blank');
+
+  const PlayBoard(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static PlayBoard? tryParse(String? value) {
     for (final e in values) {
       if (e.value == value) return e;
     }

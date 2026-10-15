@@ -17,6 +17,7 @@ import 'package:battleplan/core/services/remote_config.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/features/chat/data/prefs_chat_queue_store.dart';
+import 'package:battleplan/features/plays/data/prefs_whiteboard_store.dart';
 import 'package:battleplan/features/settings/data/shared_prefs_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -90,7 +91,11 @@ Future<void> bootstrap({
   );
   final prefs = await SharedPreferencesWithCache.create(
     cacheOptions: const SharedPreferencesWithCacheOptions(
-      allowList: {...SharedPrefsRepository.keys, PrefsChatQueueStore.key},
+      allowList: {
+        ...SharedPrefsRepository.keys,
+        PrefsChatQueueStore.key,
+        PrefsWhiteboardStore.key,
+      },
     ),
   );
 

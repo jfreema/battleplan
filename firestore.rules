@@ -747,6 +747,46 @@ service cloud.firestore {
       return p.groupId == g && p.get('status', 'active') == 'active';
     }
 
+    // ---- Plays (SPEC §6.16, ARCH §6.14) ------------------------------------
+
+    // Everyone on the team reads its plays; admins draw, change, and delete
+    // them (BOARD-4), and super admins (§3), on an open team (TEAM-9).
+    function playEditorOk(g) { return active(g) && (superAdmin() || isAdmin(g)); }
+    // A play's own fields: a known board, a title, a note, and 1 to 10 steps
+    // (Limits.playStepsMax) of at most 150 elements each (playElementsMax).
+    function playStepOk(steps, i) {
+      return i >= steps.size()
+        || (steps[i] is map && steps[i].keys().hasOnly(['elements'])
+            && steps[i].elements is list && steps[i].elements.size() <= 150);
+    }
+    function validPlay(p) {
+      return p.keys().hasOnly(['groupId', 'board', 'variant', 'title', 'note', 'steps',
+            'createdBy', 'createdAt', 'updatedAt'])
+        && p.board in ['baseball', 'basketball', 'soccer', 'football', 'blank']
+        && p.variant in ['full', 'half']
+        && p.title is string && p.title.trim().size() > 0 && p.title.size() <= 80
+        && p.note is string && p.note.size() <= 1000
+        && p.steps is list && p.steps.size() >= 1 && p.steps.size() <= 10
+        && playStepOk(p.steps, 0) && playStepOk(p.steps, 1) && playStepOk(p.steps, 2)
+        && playStepOk(p.steps, 3) && playStepOk(p.steps, 4) && playStepOk(p.steps, 5)
+        && playStepOk(p.steps, 6) && playStepOk(p.steps, 7) && playStepOk(p.steps, 8)
+        && playStepOk(p.steps, 9)
+        && p.updatedAt == request.time;
+    }
+
+    match /plays/{playId} {
+      allow get: if canRead(resource.data.groupId);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
+      allow create: if playEditorOk(incoming().groupId)
+        && incoming().createdBy == uid()
+        && incoming().createdAt == request.time
+        && validPlay(incoming());
+      allow update: if playEditorOk(resource.data.groupId)
+        && onlyChanges(['board', 'variant', 'title', 'note', 'steps', 'updatedAt'])
+        && validPlay(incoming());
+      allow delete: if playEditorOk(resource.data.groupId);
+    }
+
     // ---- Documents, notifications, safety, admin --------------------------
 
     match /groupDocuments/{docId} {

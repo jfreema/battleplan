@@ -49,6 +49,7 @@ const DOCS: [collection: string, id: string, field: string, value: string][] = [
   ['events', 'e1', 'groupId', 'teamA'],
   ['rsvps', 'e1_alice', 'groupId', 'teamA'],
   ['groupDocuments', 'd1', 'groupId', 'teamA'],
+  ['plays', 'pl1', 'groupId', 'teamA'],
   ['notifications', 'n1_alice', 'uid', 'alice'],
   ['reports', 'r1', 'groupId', 'teamA'],
   ['auditLogs', 'a1', 'groupId', 'teamA'],
@@ -59,7 +60,7 @@ const DOCS: [collection: string, id: string, field: string, value: string][] = [
 
 /** The team-owned collections a member reads. */
 const TEAM_COLLECTIONS = [
-  'groupMembers', 'players', 'playerGuardians', 'messages', 'polls', 'eventSeries', 'events', 'rsvps', 'groupDocuments',
+  'groupMembers', 'players', 'playerGuardians', 'messages', 'polls', 'eventSeries', 'events', 'rsvps', 'groupDocuments', 'plays',
 ];
 
 /** teamA's files, one in each Storage folder, plus alice's avatar. */
@@ -117,6 +118,7 @@ async function seed(group: object = {}) {
     });
     await db.doc('rsvps/e1_alice').set({ groupId: 'teamA', eventId: 'e1', participantType: 'member', participantId: 'alice', status: 'going' });
     await db.doc('groupDocuments/d1').set({ groupId: 'teamA', kind: 'link', name: 'Site', uploadedBy: 'bob' });
+    await db.doc('plays/pl1').set({ groupId: 'teamA', board: 'soccer', variant: 'full', title: 'Corner', note: '', steps: [{ elements: [] }], createdBy: 'alice' });
     await db.doc('notifications/n1_alice').set({ uid: 'alice', groupId: 'teamA', read: false });
     await db.doc('reports/r1').set({ groupId: 'teamA', status: 'open', teamVisible: true, reporterId: 'bob' });
     await db.doc('auditLogs/a1').set({ groupId: 'teamA', action: 'viewGroup' });

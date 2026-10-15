@@ -46,6 +46,9 @@ import 'package:battleplan/features/players/presentation/player_card_screen.dart
 import 'package:battleplan/features/players/presentation/player_details_screen.dart';
 import 'package:battleplan/features/players/presentation/player_rsvp_history_screen.dart';
 import 'package:battleplan/features/players/presentation/who_are_you_screen.dart';
+import 'package:battleplan/features/plays/presentation/play_routes.dart';
+import 'package:battleplan/features/plays/presentation/play_screen.dart';
+import 'package:battleplan/features/plays/presentation/plays_screen.dart';
 import 'package:battleplan/features/safety/presentation/blocked_people_screen.dart';
 import 'package:battleplan/features/safety/presentation/reports_screen.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
@@ -482,6 +485,37 @@ GoRouter router(Ref ref) {
             builder: (_, state) => ReportsScreen(
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
+          ),
+          // The team's plays (SPEC §6.16).
+          GoRoute(
+            path: 'plays',
+            builder: (_, state) =>
+                PlaysRoute(groupId: GroupId(state.pathParameters['groupId']!)),
+            routes: [
+              // Before :playId, so it isn't read as one.
+              GoRoute(
+                path: 'saved',
+                builder: (_, state) => SavedPlaysScreen(
+                  groupId: GroupId(state.pathParameters['groupId']!),
+                ),
+              ),
+              GoRoute(
+                path: ':playId',
+                builder: (_, state) => PlayScreen(
+                  groupId: GroupId(state.pathParameters['groupId']!),
+                  playId: PlayId(state.pathParameters['playId']!),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => EditPlayRoute(
+                      groupId: GroupId(state.pathParameters['groupId']!),
+                      playId: PlayId(state.pathParameters['playId']!),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           // Bringing events over from another app (SPEC §6.15).
           GoRoute(

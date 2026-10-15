@@ -24,7 +24,8 @@
     "auditLogs": "auditLogs",
     "rateLimits": "rateLimits",
     "config": "config",
-    "notifyLog": "notifyLog"
+    "notifyLog": "notifyLog",
+    "plays": "plays"
   },
   "enums": {
     "userStatus": [
@@ -118,6 +119,13 @@
       "file",
       "link"
     ],
+    "playBoard": [
+      "baseball",
+      "basketball",
+      "soccer",
+      "football",
+      "blank"
+    ],
     "reportReason": [
       "spam",
       "harassment",
@@ -193,6 +201,14 @@
     "documentNameMax": 100,
     "documentDescriptionMax": 500,
     "documentUrlMax": 2000,
+    "playTitleMax": 80,
+    "playNoteMax": 1000,
+    "playStepsMax": 10,
+    "playElementsMax": 150,
+    "playPointsMax": 64,
+    "playLabelMax": 12,
+    "playTextMax": 200,
+    "playsPerEventMax": 5,
     "announcementBannerMax": 280,
     "reportNoteMax": 500,
     "seriesIntervalMax": 8,

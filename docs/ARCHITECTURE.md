@@ -477,6 +477,7 @@ App Store and Google Play both require in-app account deletion. The callable `de
 | `events` | auto | event | `events` | admins and allowed members, Functions |
 | `rsvps` | `{eventId}_{participantId}` | event + participant | `event_rsvps` | the member; for a player, its `self` member, its guardians, or admins |
 | `groupDocuments` | auto | file or link | `documents` | members if allowed, Functions |
+| `plays` | auto | saved play (§6.14) | `plays` | admins |
 | `notifications` | `{dedupeKey}_{uid}` | notification-center item | `notifications` | Functions; the recipient marks read |
 | `notifyLog` | dedupe key | one notification send | — | Functions only (TTL 7 days) |
 | `reports` | auto | report | `reports` | Functions |
@@ -1175,16 +1176,16 @@ SPEC §6.15, ROADMAP tasks 219–227, 241, 249, 250, 252, and 254. Built: GameCh
 - **Limits.** 1,000 import calls (checks included) per team per day, about 250,000 messages; each call has a 2-minute timeout. Each call that adds something writes an audit entry (`importMessages`, `importDocuments`) with its counts.
 - **In the app.** `Message.importedFrom` (from `imported.source`) shows "from GroupMe" with the author's name, once per run, and hides **Block** (there's no account); **Report** stays.
 
-### 6.14 Whiteboards for plays · Planned
+### 6.14 Plays · Built
 
-SPEC §6.16 (BOARD), ROADMAP tasks 242–248. Nothing is built yet. A proposed design:
+SPEC §6.16 (BOARD), ROADMAP tasks 242–248. A coach's whiteboard first; saved plays second. `lib/features/plays/`.
 
-- **Data.** A new `plays/{playId}` collection: `groupId`, `board` (`baseball`, `basketball`, `soccer`, `football`, `blank`), `variant` (for example `halfCourt` or `9v9`), `title`, `note`, `steps` (each a list of elements), `createdBy`, `createdAt`, `updatedAt`. Elements are plain data: markers (side, label, optional player ID), arrows (kind: run, pass, block; points), freehand lines, and text, with coordinates normalized to 0–1 of the field, so a play draws the same at any size. Plays are vector data in Firestore, not images.
-- **Limits.** Caps on steps and elements per play (for example 10 steps and 200 elements) keep each document well under Firestore's 1 MB limit. Each play's size counts toward the team's storage (STORE, ARCH §6.11).
-- **Rules.** Team members read their team's plays; team admins (and super admins) create, update, and delete them; archived teams are read-only (the rules' `active()`), as for events and documents.
-- **Drawing.** A `CustomPainter` per board draws the field from code, with no field images to ship, and the same painter draws the plays, the chat card's thumbnail, and an event's attachment. The editor keeps an undo stack of element changes. No new package is needed; check accessibility (labels for markers, and a list view of a play's steps) before building.
-- **Sharing.** A chat card references the play by ID, like event cards, so edits show everywhere. A deleted play leaves cards saying it was removed. An event can list play IDs.
-- **Code.** A `lib/features/plays/` feature with `domain/` (boards, elements, formations), `data/` (Firestore repository), and `presentation/` (the list, viewer, and editor), within the import-boundary rules (ARCH §5.2).
+- **Data.** `plays/{playId}`: `groupId`, `board` (`baseball`, `basketball`, `soccer`, `football`, `blank`), `variant` (`full`, `half`), `title` (1–80), `note` (≤ 1000), `steps: [{ elements: [...] }]` (1–10 steps of ≤ 150 elements), `createdBy`, `createdAt`, `updatedAt`. Elements are compact maps: `k` is `m` (marker: `x`, `y`, `s` side `team`/`opponent`/`ball`, `l` label ≤ 12, `p` roster player), `a` (arrow: `t` `run`/`pass`/`block`, `pts`), `l` (freehand line: `pts`), or `n` (note: `x`, `y`, `text` ≤ 200). Points are 0–1 across the board and down it, rounded to 4 places, `pts` one flat list of x, y pairs (≤ 64 points, simplified as drawn). A play is a few kilobytes and doesn't count toward storage. One index: `groupId` with `updatedAt` descending. Team deletion deletes them (`TEAM_COLLECTIONS`).
+- **Rules.** Members and super admins read (lists bounded); admins and super admins create, update, and delete on active teams (`playEditorOk`); `validPlay` checks the keys, board, variant, title, note, and each step's element count; `createdBy` is the writer, and `groupId`, `createdBy`, and `createdAt` never change.
+- **The whiteboard** is `PlayEditorScreen(whiteboard: true)` at `/g/:groupId/plays` for anyone who can edit plays (`PlaysRoute`; everyone else gets `SavedPlaysScreen`). Its drawing lives on the device in `PrefsWhiteboardStore` (SharedPreferences, `playsWhiteboard`: team ID to the draft, in the play's own shape), saved on every change and on each drag's end, never sent. Save to plays writes a copy with the repository and leaves the whiteboard as it is. Saved plays edit at `/plays/:playId/edit` (Save writes, leaving with changes asks) and show at `/plays/:playId`; `/plays/saved` lists them.
+- **Drawing.** `PlayPainter` draws each field from `board_layout.dart`'s measurements (feet for baseball and basketball, meters for soccer, yards for football; the attacked end at the top), then the elements; the same painter draws the editor, the viewer, and the list's pictures. Formations' spots and the ball's start are in the same file, so positions sit where the field's lines are. Markers are 3% of the board's width (1.8% on football's, so a line of eleven fits).
+- **Editing** (`board_edit.dart`, pure Dart): `BoardEdit` holds the steps, the step on show, and up to 100 undos; a drag moves its element live and commits once at the end. Hit tests use a fingertip's reach (28 logical pixels) at the board's drawn size, markers before lines. Drawn paths are simplified (Ramer–Douglas–Peucker) to ≤ 64 points. The `GestureDetector` reports drags from where the finger went down, so arrows start under it.
+- **Playback** (`StepPlayer`): steps play in order, markers matched by ID gliding from one step's position to the next (`elementsBetween`, eased), the step's arrows on show until it ends. Touches are ignored while it plays.
 
 ## 7. Key flow: sending a message
 

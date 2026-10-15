@@ -38,6 +38,8 @@ import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
+import 'package:battleplan/features/plays/domain/play.dart';
+import 'package:battleplan/features/plays/domain/play_repository.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/polls/domain/poll_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
@@ -3217,3 +3219,80 @@ final sampleImport = EventImportResult(
     ),
   ],
 );
+
+/// Plays kept in memory, live, as Firestore keeps them (SPEC §6.16).
+class FakePlayRepository implements PlayRepository {
+  new([List<Play>? plays]) : plays = plays ?? [];
+
+  final List<Play> plays;
+  final _changes = StreamController<void>.broadcast();
+  int _next = 1;
+
+  /// "create Bunt defense", "update p1 Squeeze", "delete p1".
+  final List<String> calls = [];
+
+  AppFailure? failure;
+
+  Stream<T> _live<T>(T Function() read) async* {
+    yield read();
+    await for (final _ in _changes.stream) {
+      yield read();
+    }
+  }
+
+  @override
+  Stream<List<Play>> watchPlays(GroupId groupId) => _live(
+    () => plays.where((p) => p.groupId == groupId).toList()
+      ..sort(
+        (a, b) =>
+            (b.updatedAt ?? DateTime(0)).compareTo(a.updatedAt ?? DateTime(0)),
+      ),
+  );
+
+  @override
+  Stream<Play?> watchPlay(PlayId id) =>
+      _live(() => plays.where((p) => p.id == id).firstOrNull);
+
+  @override
+  Future<PlayId> create(GroupId groupId, UserId uid, PlayDraft draft) async {
+    calls.add('create ${draft.title}');
+    if (failure case final f?) throw f;
+    final id = PlayId('p${_next++}');
+    plays.add(
+      Play(
+        id: id,
+        groupId: groupId,
+        board: draft.board,
+        variant: draft.variant,
+        title: draft.title,
+        note: draft.note,
+        steps: draft.steps,
+        createdBy: uid.value,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    _changes.add(null);
+    return id;
+  }
+
+  @override
+  Future<void> update(PlayId id, PlayDraft draft) async {
+    calls.add('update ${id.value} ${draft.title}');
+    if (failure case final f?) throw f;
+    final i = plays.indexWhere((p) => p.id == id);
+    plays[i] = plays[i].copyWith(
+      title: draft.title,
+      note: draft.note,
+      steps: draft.steps,
+      updatedAt: DateTime.now(),
+    );
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> delete(PlayId id) async {
+    calls.add('delete ${id.value}');
+    plays.removeWhere((p) => p.id == id);
+    _changes.add(null);
+  }
+}

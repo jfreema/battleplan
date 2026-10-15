@@ -408,19 +408,19 @@ Decided 2026-10-13, at the owner's request. SPEC §6.15 (IMPORT), ARCH §6.13. T
 
 **Done when** a team admin can preview and import only the categories they selected, unsupported choices cannot run, retries do not duplicate content, and the report clearly identifies anything skipped. GroupMe ships first; each later adapter meets the same criteria.
 
-## Whiteboards for plays · planned
+## Plays · built
 
-Decided 2026-10-15, at the owner's request. SPEC §6.16 (BOARD), ARCH §6.14. Future feature work, separate from the go-live phases; nothing is built yet.
+Decided 2026-10-15, at the owner's request, and built the same day. SPEC §6.16 (BOARD), ARCH §6.14. A whiteboard for coaches, iPad-first and good with a mouse: plays are mostly drawn, shown, and erased, and saving one is optional.
 
-242. The whiteboard editor: markers, arrows (run, pass, block), freehand lines, text, undo and redo, on phones, tablets, and the web (BOARD-2).
-243. The baseball board, also for softball: the diamond and the nine positions (BOARD-1).
-244. The basketball board: half court and full court, with the five positions (BOARD-1).
-245. The soccer board: full and half pitch, with 4-4-2, 4-3-3, and 3-5-2, and 7v7 and 9v9 for youth sides (BOARD-1).
-246. The football board, X's and O's: yard lines and hash marks, offense as O's and defense as X's, with starting formations (BOARD-1).
-247. Plays for the team: save, name, copy, and delete; steps; the Plays section; rules (members view, admins edit) and storage accounting (BOARD-3, BOARD-4).
-248. Sharing plays: a chat card with a thumbnail, and plays attached to events (BOARD-5).
+242. ✅ The whiteboard: drag players, opponents, and the ball by finger, pencil, or mouse; add and label them; run, pass, and block arrows, freehand lines, text, erase, undo and redo, keyboard shortcuts; tools beside the board on a tablet or laptop, below it on a phone (BOARD-2). *Kept on the device until cleared; New board asks before erasing.*
+243. ✅ The baseball board, also softball's: the field itself, with the nine at their positions, a batter or bases loaded, and the ball in the pitcher's hand (BOARD-1).
+244. ✅ The basketball board: half and full court, the five, and man-to-man or a 2-3 zone (BOARD-1).
+245. ✅ The soccer board: full and half pitch, 4-4-2, 4-3-3, 3-5-2, 9v9, and 7v7, for either side (BOARD-1).
+246. ✅ The football board, X's and O's: yard lines, hash marks, the line of scrimmage and the line to gain, the I formation or shotgun, a 4-3 or 3-4 (BOARD-1).
+247. ✅ Saved plays: Save to plays from the whiteboard; everyone on the team views them, step by step; admins edit, duplicate, delete, or put one back on the whiteboard; steps with playback that moves everyone between them; rules (members read, admins write) (BOARD-3, BOARD-4).
+248. ~~Sharing plays: a chat card, and plays attached to events.~~ *Dropped at the owner's request (2026-10-15): plays are visual aids for showing the team what to do and where to go, not event attachments or chat posts.*
 
-**Done when** a coach can draw a play on each of the four boards on a phone and on the web, save it to the team, and share it in the chat, and members can view it but not change it.
+**Done when** a coach can drag players and the ball around each board on an iPad or a laptop to show how a play unfolds, and save the ones worth keeping for the team to view.
 
 ## Later · Backlog
 

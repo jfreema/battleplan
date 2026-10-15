@@ -40,6 +40,9 @@ import 'package:battleplan/features/notifications/data/firestore_device_reposito
 import 'package:battleplan/features/notifications/data/firestore_notification_repository.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/data/firestore_player_repository.dart';
+import 'package:battleplan/features/plays/application/providers.dart';
+import 'package:battleplan/features/plays/data/firestore_play_repository.dart';
+import 'package:battleplan/features/plays/data/prefs_whiteboard_store.dart';
 import 'package:battleplan/features/polls/application/providers.dart';
 import 'package:battleplan/features/polls/data/firestore_poll_repository.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
@@ -92,6 +95,8 @@ List<Override> buildOverrides({
   importRepositoryProvider.overrideWithValue(
     FunctionsImportRepository(functions, storage),
   ),
+  playRepositoryProvider.overrideWithValue(FirestorePlayRepository(firestore)),
+  whiteboardStoreProvider.overrideWithValue(PrefsWhiteboardStore(prefs)),
   linkServiceProvider.overrideWithValue(LinkService.forEnv(isProd: env.isProd)),
   browserInfoProvider.overrideWithValue(
     kIsWeb ? WebBrowserInfo() : const PlainBrowserInfo(),

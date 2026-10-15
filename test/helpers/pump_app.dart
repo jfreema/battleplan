@@ -12,6 +12,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/imports/application/providers.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
+import 'package:battleplan/features/plays/application/providers.dart';
 import 'package:battleplan/features/polls/application/providers.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
@@ -54,6 +55,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeLinkOpener? linkOpener,
   FakeAdminRepository? admin,
   FakeImportRepository? importRepo,
+  FakePlayRepository? playRepo,
   AppBuild build = const AppBuild(version: '1.0.0', number: '1', commit: ''),
   Size size = const Size(400, 1600),
   List<Override> overrides = const [],
@@ -84,6 +86,9 @@ Future<FakeLocalPrefs> pumpApp(
         ),
         appVersionProvider.overrideWithValue('1.0.0'),
         appBuildProvider.overrideWithValue(build),
+        playRepositoryProvider.overrideWithValue(
+          playRepo ?? FakePlayRepository(),
+        ),
         importRepositoryProvider.overrideWithValue(
           importRepo ?? FakeImportRepository(),
         ),

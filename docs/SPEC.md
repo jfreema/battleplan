@@ -242,7 +242,7 @@ Sign in
  └─ Team view (opens the last team you used)
       ├─ Header:     team switcher ▾ · notification bell · team menu ⋯ · your avatar
       ├─ Tabs:       Chat | Schedule | Documents
-      ├─ Team menu:  Roster · Invite · Notifications for this team ·
+      ├─ Team menu:  Roster · Plays · Invite · Notifications for this team ·
       │              Team settings* · Media* · Reports* · Import*    (* admins)
       │              (Leave team is on your own card in the Roster, TEAM-8)
       └─ Your avatar: Settings · Admin panel** · Sign out           (** super admins)
@@ -1066,28 +1066,25 @@ Requested 2026-10-13. Built at the owner's request: GameChanger's events (2026-1
 
 ---
 
-### 6.16 Whiteboards for plays (BOARD) · Planned
+### 6.16 Plays (BOARD) · Built
 
-Requested 2026-10-15. Future work in ROADMAP tasks 242–248; implementation has not started. This does not block any go-live phase.
+Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). A whiteboard for coaches, made for an iPad's touch and a laptop's mouse alike: plays are mostly drawn, shown to the team, and erased, like a real whiteboard. Saving one is optional. Plays are visual aids only; they aren't attached to events or posted in the chat. This does not block any go-live phase.
 
-A coach draws plays and lineups on a whiteboard made for the team's sport, saves them to the team, and shares them in the chat.
+- **BOARD-1 · Four boards.** Each is drawn from a real field's measurements, with its own starting positions:
+  - **Baseball** (also softball's): the field itself, with striped outfield grass, the warning track and fence, the infield dirt and grass, base paths, bases, home plate, the mound and rubber, batter's boxes, and foul lines. The nine stand at P, C, 1B, 2B, 3B, SS, LF, CF, and RF; the other side can start with a batter, or the bases loaded.
+  - **Basketball**: a half or full court, with the lane, free-throw circle, three-point line, and hoop; the five at PG, SG, SF, PF, and C, and the other side in man-to-man or a 2-3 zone.
+  - **Soccer**: a full or half pitch with its boxes, arcs, and goals; 4-4-2, 4-3-3, 3-5-2, 9v9, and 7v7, for either side.
+  - **Football (American), X's and O's**: yard lines, hash marks, the line of scrimmage, and the line to gain; the offense as O's in the I formation or shotgun, the defense as X's in a 4-3 or 3-4.
+  - Every board starts with the ball in play: in the pitcher's hand, with the point guard, on the center spot, on the line of scrimmage. Teams of other sports get a blank board, and any board can be picked.
+- **BOARD-2 · The whiteboard.** Plays in the team menu opens it for the team's admins: the team's sport's board, ready to draw. Drag players, opponents, and the ball with a finger, a pencil, or a mouse to show how a play unfolds; add more; label one with a number, a position, or a roster player; draw run (solid), pass (dashed), and block or screen (T) arrows, freehand lines, and text; erase; undo and redo (and ⌘/Ctrl+Z, Delete, and Escape on a keyboard). The tools sit beside the board on a tablet or laptop and below it on a phone, each big enough for a finger. The drawing stays on that device until it's cleared, so leaving never loses it; **New board** starts over (asking first) on any board.
+- **BOARD-3 · Steps.** A play can have up to 10 steps. A new step starts where everyone stands; **Play** moves the players and the ball smoothly from each step to the next.
+- **BOARD-4 · Saved plays.** **Save to plays** keeps a copy, named, for the team: everyone on the team opens Plays to see them (their Plays shows the saved list), step by step. Admins edit, duplicate, delete, or put a saved play back on the whiteboard. Positions are only labels on the drawing; nothing is saved on a player (players have no position field, ROADMAP task 234).
 
-- **BOARD-1 · Four boards.** Each has its own field drawing and starting positions:
-  - **Baseball** (also used by softball teams): a diamond with the infield, outfield, bases, and mound, and markers at the nine positions: P, C, 1B, 2B, 3B, SS, LF, CF, RF. Base runners and the batter can be added.
-  - **Basketball**: a half court and a full court, with the lane, the three-point line, and the five positions: PG, SG, SF, PF, C.
-  - **Soccer**: a full pitch and a half pitch, with formations to start from (4-4-2, 4-3-3, 3-5-2), and smaller youth sides (7v7, 9v9).
-  - **Football (American), X's and O's**: a field with yard lines and hash marks around the line of scrimmage. Offense is drawn as O's and defense as X's, starting from common formations (for example, I-formation and shotgun on offense, 4-3 on defense).
-  - Teams with another sport (hockey, lacrosse, volleyball, other) can open any of the four, or a blank board, until their sport gets a board of its own.
-- **BOARD-2 · Drawing.** Drag markers anywhere; add or remove players, opponents, and the ball; label a marker with a number, a position, or a player from the roster. Draw arrows: solid for a run or a cut, dashed for a pass, and a T-end for a block or screen. Also freehand lines and short text notes. Undo and redo, and clear. It works with a finger on phones and tablets and with a mouse on the web.
-- **BOARD-3 · Steps.** A play can have several steps (for example, the setup, then the first pass, then the shot), viewed one after another.
-- **BOARD-4 · The team's plays.** Saved plays live in a **Plays** section of the team with a name and an optional note, sorted into the four boards. Team admins create, edit, copy, and delete them; everyone on the team can view them. Nothing on a board is stored on a player's profile: positions here are only labels on the drawing (players have no position field, ROADMAP task 234).
-- **BOARD-5 · Sharing.** A play can be posted to the team chat as a card with a small picture of it; tapping the card opens the play. A play can also be attached to an event (for example, "Plays for Saturday"). Members who can't see a team can't see its plays.
+**Acceptance**
 
-**Acceptance (when implemented)**
-
-- Each of the four boards opens with its own field and starting positions, and a coach can draw, save, and reopen a play on a phone and on the web.
-- Members can view and open a shared play but not change it; non-members can't read it.
-- Saved plays stay small and count toward the team's storage like other team content.
+- Each board looks like its field or court, with its starting positions and the ball, on a tablet, a laptop, and a phone.
+- A coach drags players and the ball to show a play unfolding, draws arrows, adds steps, plays them back, and saves only when they want to keep one.
+- Members view saved plays but can't change them; people not on the team can't read them; archived teams' plays are read-only.
 
 ## 7. Design system and UI
 
@@ -1458,7 +1455,6 @@ Not in v1; some may come later:
 - Volunteer and snack sign-ups
 - Carpools
 - Importing chat from TeamSnap, which doesn't export it. GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar imports are built (§6.15; ROADMAP tasks 241, 249, 250, 252, 254).
-- Whiteboards for drawing plays (baseball, basketball, soccer, and football X's and O's) are planned (§6.16; ROADMAP tasks 242–248).
 - Languages other than English
 - Native desktop apps (the web app covers desktop)
 - Widgets and watch apps

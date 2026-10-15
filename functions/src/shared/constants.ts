@@ -27,6 +27,7 @@ export const Collections = {
   rateLimits: 'rateLimits',
   config: 'config',
   notifyLog: 'notifyLog',
+  plays: 'plays',
 } as const;
 
 export const Limits = {
@@ -50,6 +51,14 @@ export const Limits = {
   documentNameMax: 100,
   documentDescriptionMax: 500,
   documentUrlMax: 2000,
+  playTitleMax: 80,
+  playNoteMax: 1000,
+  playStepsMax: 10,
+  playElementsMax: 150,
+  playPointsMax: 64,
+  playLabelMax: 12,
+  playTextMax: 200,
+  playsPerEventMax: 5,
   announcementBannerMax: 280,
   reportNoteMax: 500,
   seriesIntervalMax: 8,
@@ -165,6 +174,9 @@ export type RsvpStatus = (typeof rsvpStatusValues)[number];
 
 export const documentKindValues = ['file', 'link'] as const;
 export type DocumentKind = (typeof documentKindValues)[number];
+
+export const playBoardValues = ['baseball', 'basketball', 'soccer', 'football', 'blank'] as const;
+export type PlayBoard = (typeof playBoardValues)[number];
 
 export const reportReasonValues = ['spam', 'harassment', 'inappropriate', 'other'] as const;
 export type ReportReason = (typeof reportReasonValues)[number];

@@ -129,4 +129,24 @@ abstract final class AppIcons {
     Sport.other => Symbols.sports_rounded,
   };
   static const IconData cloudOff = Symbols.cloud_off_rounded;
+
+  // Plays (BOARD-1 to BOARD-5): the team menu's item and the board's tools.
+  static const IconData plays = Symbols.sports_rounded;
+  static const IconData toolMove = Symbols.pan_tool_rounded;
+  static const IconData toolTeam = Symbols.person_rounded;
+  static const IconData toolOpponent = Symbols.close_rounded;
+  static const IconData toolBall = Symbols.sports_baseball_rounded;
+  static const IconData toolRun = Symbols.north_east_rounded;
+  static const IconData toolPass = Symbols.timeline_rounded;
+  static const IconData toolBlock = Symbols.vertical_align_top_rounded;
+  static const IconData toolDraw = Symbols.gesture_rounded;
+  static const IconData toolText = Symbols.text_fields_rounded;
+  static const IconData toolErase = Symbols.ink_eraser_rounded;
+  static const IconData undo = Symbols.undo_rounded;
+  static const IconData redo = Symbols.redo_rounded;
+  static const IconData stepBack = Symbols.skip_previous_rounded;
+  static const IconData stepNext = Symbols.skip_next_rounded;
+  static const IconData play = Symbols.play_arrow_rounded;
+  static const IconData stop = Symbols.stop_rounded;
+  static const IconData savedPlays = Symbols.folder_open_rounded;
 }
