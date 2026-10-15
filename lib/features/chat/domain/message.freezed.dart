@@ -21,7 +21,8 @@ mixin _$Message {
  String? get pollId;/// The event an event card shows (CHAT-11, SCHED-3).
  String? get eventId;/// A repeating series' card: its series, so the card can show the next
 /// event once [eventId] is gone (SCHED-3).
- String? get seriesId;/// The quote a reply shows, written by the server (CHAT-13, D25).
+ String? get seriesId;/// An event card posted again by hand as a reminder (SCHED-8).
+ bool get reminder;/// The quote a reply shows, written by the server (CHAT-13, D25).
  ReplyPreview? get replyPreview;/// Photos, up to 10 (CHAT-3).
  List<Attachment> get attachments;/// The people it names with @, by ID, up to 20 (CHAT-14).
  List<String> get mentions;/// An admin's @everyone (CHAT-14).
@@ -46,20 +47,20 @@ $MessageCopyWith<Message> get copyWith => _$MessageCopyWithImpl<Message>(this as
 @override
 bool operator ==(Object other) {
   final _this = this as Message;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Message&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.authorId, _this.authorId) || other.authorId == _this.authorId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.authorPhotoPath, _this.authorPhotoPath) || other.authorPhotoPath == _this.authorPhotoPath)&&(identical(other.authorPlayerSummary, _this.authorPlayerSummary) || other.authorPlayerSummary == _this.authorPlayerSummary)&&(identical(other.replyToId, _this.replyToId) || other.replyToId == _this.replyToId)&&(identical(other.pollId, _this.pollId) || other.pollId == _this.pollId)&&(identical(other.eventId, _this.eventId) || other.eventId == _this.eventId)&&(identical(other.seriesId, _this.seriesId) || other.seriesId == _this.seriesId)&&(identical(other.replyPreview, _this.replyPreview) || other.replyPreview == _this.replyPreview)&&const DeepCollectionEquality().equals(other.attachments, _this.attachments)&&const DeepCollectionEquality().equals(other.mentions, _this.mentions)&&(identical(other.mentionsEveryone, _this.mentionsEveryone) || other.mentionsEveryone == _this.mentionsEveryone)&&(identical(other.announcement, _this.announcement) || other.announcement == _this.announcement)&&const DeepCollectionEquality().equals(other.reactions, _this.reactions)&&(identical(other.deletedAt, _this.deletedAt) || other.deletedAt == _this.deletedAt)&&(identical(other.editedAt, _this.editedAt) || other.editedAt == _this.editedAt)&&(identical(other.deletedReason, _this.deletedReason) || other.deletedReason == _this.deletedReason)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.importedFrom, _this.importedFrom) || other.importedFrom == _this.importedFrom)&&(identical(other.pending, _this.pending) || other.pending == _this.pending));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Message&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.authorId, _this.authorId) || other.authorId == _this.authorId)&&(identical(other.authorName, _this.authorName) || other.authorName == _this.authorName)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.authorPhotoPath, _this.authorPhotoPath) || other.authorPhotoPath == _this.authorPhotoPath)&&(identical(other.authorPlayerSummary, _this.authorPlayerSummary) || other.authorPlayerSummary == _this.authorPlayerSummary)&&(identical(other.replyToId, _this.replyToId) || other.replyToId == _this.replyToId)&&(identical(other.pollId, _this.pollId) || other.pollId == _this.pollId)&&(identical(other.eventId, _this.eventId) || other.eventId == _this.eventId)&&(identical(other.seriesId, _this.seriesId) || other.seriesId == _this.seriesId)&&(identical(other.reminder, _this.reminder) || other.reminder == _this.reminder)&&(identical(other.replyPreview, _this.replyPreview) || other.replyPreview == _this.replyPreview)&&const DeepCollectionEquality().equals(other.attachments, _this.attachments)&&const DeepCollectionEquality().equals(other.mentions, _this.mentions)&&(identical(other.mentionsEveryone, _this.mentionsEveryone) || other.mentionsEveryone == _this.mentionsEveryone)&&(identical(other.announcement, _this.announcement) || other.announcement == _this.announcement)&&const DeepCollectionEquality().equals(other.reactions, _this.reactions)&&(identical(other.deletedAt, _this.deletedAt) || other.deletedAt == _this.deletedAt)&&(identical(other.editedAt, _this.editedAt) || other.editedAt == _this.editedAt)&&(identical(other.deletedReason, _this.deletedReason) || other.deletedReason == _this.deletedReason)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.importedFrom, _this.importedFrom) || other.importedFrom == _this.importedFrom)&&(identical(other.pending, _this.pending) || other.pending == _this.pending));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Message;
-  return Object.hashAll([runtimeType,_this.id,_this.groupId,_this.authorId,_this.authorName,_this.type,_this.text,_this.authorPhotoPath,_this.authorPlayerSummary,_this.replyToId,_this.pollId,_this.eventId,_this.seriesId,_this.replyPreview,const DeepCollectionEquality().hash(_this.attachments),const DeepCollectionEquality().hash(_this.mentions),_this.mentionsEveryone,_this.announcement,const DeepCollectionEquality().hash(_this.reactions),_this.deletedAt,_this.editedAt,_this.deletedReason,_this.createdAt,_this.importedFrom,_this.pending]);
+  return Object.hashAll([runtimeType,_this.id,_this.groupId,_this.authorId,_this.authorName,_this.type,_this.text,_this.authorPhotoPath,_this.authorPlayerSummary,_this.replyToId,_this.pollId,_this.eventId,_this.seriesId,_this.reminder,_this.replyPreview,const DeepCollectionEquality().hash(_this.attachments),const DeepCollectionEquality().hash(_this.mentions),_this.mentionsEveryone,_this.announcement,const DeepCollectionEquality().hash(_this.reactions),_this.deletedAt,_this.editedAt,_this.deletedReason,_this.createdAt,_this.importedFrom,_this.pending]);
 }
 
 @override
 String toString() {
   final _this = this as Message;
-  return 'Message(id: ${_this.id}, groupId: ${_this.groupId}, authorId: ${_this.authorId}, authorName: ${_this.authorName}, type: ${_this.type}, text: ${_this.text}, authorPhotoPath: ${_this.authorPhotoPath}, authorPlayerSummary: ${_this.authorPlayerSummary}, replyToId: ${_this.replyToId}, pollId: ${_this.pollId}, eventId: ${_this.eventId}, seriesId: ${_this.seriesId}, replyPreview: ${_this.replyPreview}, attachments: ${_this.attachments}, mentions: ${_this.mentions}, mentionsEveryone: ${_this.mentionsEveryone}, announcement: ${_this.announcement}, reactions: ${_this.reactions}, deletedAt: ${_this.deletedAt}, editedAt: ${_this.editedAt}, deletedReason: ${_this.deletedReason}, createdAt: ${_this.createdAt}, importedFrom: ${_this.importedFrom}, pending: ${_this.pending})';
+  return 'Message(id: ${_this.id}, groupId: ${_this.groupId}, authorId: ${_this.authorId}, authorName: ${_this.authorName}, type: ${_this.type}, text: ${_this.text}, authorPhotoPath: ${_this.authorPhotoPath}, authorPlayerSummary: ${_this.authorPlayerSummary}, replyToId: ${_this.replyToId}, pollId: ${_this.pollId}, eventId: ${_this.eventId}, seriesId: ${_this.seriesId}, reminder: ${_this.reminder}, replyPreview: ${_this.replyPreview}, attachments: ${_this.attachments}, mentions: ${_this.mentions}, mentionsEveryone: ${_this.mentionsEveryone}, announcement: ${_this.announcement}, reactions: ${_this.reactions}, deletedAt: ${_this.deletedAt}, editedAt: ${_this.editedAt}, deletedReason: ${_this.deletedReason}, createdAt: ${_this.createdAt}, importedFrom: ${_this.importedFrom}, pending: ${_this.pending})';
 }
 
 
@@ -70,7 +71,7 @@ abstract mixin class $MessageCopyWith<$Res>  {
   factory $MessageCopyWith(Message value, $Res Function(Message) _then) = _$MessageCopyWithImpl;
 @useResult
 $Res call({
- String id, GroupId groupId, String authorId, String authorName, MessageType type, String text, String? authorPhotoPath, String? authorPlayerSummary, String? replyToId, String? pollId, String? eventId, String? seriesId, ReplyPreview? replyPreview, List<Attachment> attachments, List<String> mentions, bool mentionsEveryone, bool announcement, Map<String, Reaction> reactions, DateTime? deletedAt, DateTime? editedAt, String? deletedReason, DateTime? createdAt, String? importedFrom, bool pending
+ String id, GroupId groupId, String authorId, String authorName, MessageType type, String text, String? authorPhotoPath, String? authorPlayerSummary, String? replyToId, String? pollId, String? eventId, String? seriesId, bool reminder, ReplyPreview? replyPreview, List<Attachment> attachments, List<String> mentions, bool mentionsEveryone, bool announcement, Map<String, Reaction> reactions, DateTime? deletedAt, DateTime? editedAt, String? deletedReason, DateTime? createdAt, String? importedFrom, bool pending
 });
 
 
@@ -87,7 +88,7 @@ class _$MessageCopyWithImpl<$Res>
 
 /// Create a copy of Message
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? authorId = null,Object? authorName = null,Object? type = null,Object? text = null,Object? authorPhotoPath = freezed,Object? authorPlayerSummary = freezed,Object? replyToId = freezed,Object? pollId = freezed,Object? eventId = freezed,Object? seriesId = freezed,Object? replyPreview = freezed,Object? attachments = null,Object? mentions = null,Object? mentionsEveryone = null,Object? announcement = null,Object? reactions = null,Object? deletedAt = freezed,Object? editedAt = freezed,Object? deletedReason = freezed,Object? createdAt = freezed,Object? importedFrom = freezed,Object? pending = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? authorId = null,Object? authorName = null,Object? type = null,Object? text = null,Object? authorPhotoPath = freezed,Object? authorPlayerSummary = freezed,Object? replyToId = freezed,Object? pollId = freezed,Object? eventId = freezed,Object? seriesId = freezed,Object? reminder = null,Object? replyPreview = freezed,Object? attachments = null,Object? mentions = null,Object? mentionsEveryone = null,Object? announcement = null,Object? reactions = null,Object? deletedAt = freezed,Object? editedAt = freezed,Object? deletedReason = freezed,Object? createdAt = freezed,Object? importedFrom = freezed,Object? pending = null,}) {
   return _then(Message(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -101,7 +102,8 @@ as String?,replyToId: freezed == replyToId ? _self.replyToId : replyToId // igno
 as String?,pollId: freezed == pollId ? _self.pollId : pollId // ignore: cast_nullable_to_non_nullable
 as String?,eventId: freezed == eventId ? _self.eventId : eventId // ignore: cast_nullable_to_non_nullable
 as String?,seriesId: freezed == seriesId ? _self.seriesId : seriesId // ignore: cast_nullable_to_non_nullable
-as String?,replyPreview: freezed == replyPreview ? _self.replyPreview : replyPreview // ignore: cast_nullable_to_non_nullable
+as String?,reminder: null == reminder ? _self.reminder : reminder // ignore: cast_nullable_to_non_nullable
+as bool,replyPreview: freezed == replyPreview ? _self.replyPreview : replyPreview // ignore: cast_nullable_to_non_nullable
 as ReplyPreview?,attachments: null == attachments ? _self.attachments : attachments // ignore: cast_nullable_to_non_nullable
 as List<Attachment>,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_nullable_to_non_nullable
 as List<String>,mentionsEveryone: null == mentionsEveryone ? _self.mentionsEveryone : mentionsEveryone // ignore: cast_nullable_to_non_nullable
@@ -210,10 +212,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  String? pollId,  String? eventId,  String? seriesId,  ReplyPreview? replyPreview,  List<Attachment> attachments,  List<String> mentions,  bool mentionsEveryone,  bool announcement,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? editedAt,  String? deletedReason,  DateTime? createdAt,  String? importedFrom,  bool pending)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  String? pollId,  String? eventId,  String? seriesId,  bool reminder,  ReplyPreview? replyPreview,  List<Attachment> attachments,  List<String> mentions,  bool mentionsEveryone,  bool announcement,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? editedAt,  String? deletedReason,  DateTime? createdAt,  String? importedFrom,  bool pending)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Message() when $default != null:
-return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.pollId,_that.eventId,_that.seriesId,_that.replyPreview,_that.attachments,_that.mentions,_that.mentionsEveryone,_that.announcement,_that.reactions,_that.deletedAt,_that.editedAt,_that.deletedReason,_that.createdAt,_that.importedFrom,_that.pending);case _:
+return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.pollId,_that.eventId,_that.seriesId,_that.reminder,_that.replyPreview,_that.attachments,_that.mentions,_that.mentionsEveryone,_that.announcement,_that.reactions,_that.deletedAt,_that.editedAt,_that.deletedReason,_that.createdAt,_that.importedFrom,_that.pending);case _:
   return orElse();
 
 }
@@ -231,10 +233,10 @@ return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.typ
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  String? pollId,  String? eventId,  String? seriesId,  ReplyPreview? replyPreview,  List<Attachment> attachments,  List<String> mentions,  bool mentionsEveryone,  bool announcement,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? editedAt,  String? deletedReason,  DateTime? createdAt,  String? importedFrom,  bool pending)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  String? pollId,  String? eventId,  String? seriesId,  bool reminder,  ReplyPreview? replyPreview,  List<Attachment> attachments,  List<String> mentions,  bool mentionsEveryone,  bool announcement,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? editedAt,  String? deletedReason,  DateTime? createdAt,  String? importedFrom,  bool pending)  $default,) {final _that = this;
 switch (_that) {
 case _Message():
-return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.pollId,_that.eventId,_that.seriesId,_that.replyPreview,_that.attachments,_that.mentions,_that.mentionsEveryone,_that.announcement,_that.reactions,_that.deletedAt,_that.editedAt,_that.deletedReason,_that.createdAt,_that.importedFrom,_that.pending);case _:
+return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.pollId,_that.eventId,_that.seriesId,_that.reminder,_that.replyPreview,_that.attachments,_that.mentions,_that.mentionsEveryone,_that.announcement,_that.reactions,_that.deletedAt,_that.editedAt,_that.deletedReason,_that.createdAt,_that.importedFrom,_that.pending);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -251,10 +253,10 @@ return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.typ
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  String? pollId,  String? eventId,  String? seriesId,  ReplyPreview? replyPreview,  List<Attachment> attachments,  List<String> mentions,  bool mentionsEveryone,  bool announcement,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? editedAt,  String? deletedReason,  DateTime? createdAt,  String? importedFrom,  bool pending)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String authorId,  String authorName,  MessageType type,  String text,  String? authorPhotoPath,  String? authorPlayerSummary,  String? replyToId,  String? pollId,  String? eventId,  String? seriesId,  bool reminder,  ReplyPreview? replyPreview,  List<Attachment> attachments,  List<String> mentions,  bool mentionsEveryone,  bool announcement,  Map<String, Reaction> reactions,  DateTime? deletedAt,  DateTime? editedAt,  String? deletedReason,  DateTime? createdAt,  String? importedFrom,  bool pending)?  $default,) {final _that = this;
 switch (_that) {
 case _Message() when $default != null:
-return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.pollId,_that.eventId,_that.seriesId,_that.replyPreview,_that.attachments,_that.mentions,_that.mentionsEveryone,_that.announcement,_that.reactions,_that.deletedAt,_that.editedAt,_that.deletedReason,_that.createdAt,_that.importedFrom,_that.pending);case _:
+return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.type,_that.text,_that.authorPhotoPath,_that.authorPlayerSummary,_that.replyToId,_that.pollId,_that.eventId,_that.seriesId,_that.reminder,_that.replyPreview,_that.attachments,_that.mentions,_that.mentionsEveryone,_that.announcement,_that.reactions,_that.deletedAt,_that.editedAt,_that.deletedReason,_that.createdAt,_that.importedFrom,_that.pending);case _:
   return null;
 
 }
@@ -266,7 +268,7 @@ return $default(_that.id,_that.groupId,_that.authorId,_that.authorName,_that.typ
 
 
 class _Message extends Message {
-  const _Message({required this.id, required this.groupId, required this.authorId, required this.authorName, required this.type, this.text = '', this.authorPhotoPath, this.authorPlayerSummary, this.replyToId, this.pollId, this.eventId, this.seriesId, this.replyPreview,  List<Attachment> attachments = const <Attachment>[],  List<String> mentions = const <String>[], this.mentionsEveryone = false, this.announcement = false,  Map<String, Reaction> reactions = const <String, Reaction>{}, this.deletedAt, this.editedAt, this.deletedReason, this.createdAt, this.importedFrom, this.pending = false}): _attachments = attachments,_mentions = mentions,_reactions = reactions,super._();
+  const _Message({required this.id, required this.groupId, required this.authorId, required this.authorName, required this.type, this.text = '', this.authorPhotoPath, this.authorPlayerSummary, this.replyToId, this.pollId, this.eventId, this.seriesId, this.reminder = false, this.replyPreview,  List<Attachment> attachments = const <Attachment>[],  List<String> mentions = const <String>[], this.mentionsEveryone = false, this.announcement = false,  Map<String, Reaction> reactions = const <String, Reaction>{}, this.deletedAt, this.editedAt, this.deletedReason, this.createdAt, this.importedFrom, this.pending = false}): _attachments = attachments,_mentions = mentions,_reactions = reactions,super._();
   
 
 @override final  String id;
@@ -287,6 +289,8 @@ class _Message extends Message {
 /// A repeating series' card: its series, so the card can show the next
 /// event once [eventId] is gone (SCHED-3).
 @override final  String? seriesId;
+/// An event card posted again by hand as a reminder (SCHED-8).
+@override@JsonKey() final  bool reminder;
 /// The quote a reply shows, written by the server (CHAT-13, D25).
 @override final  ReplyPreview? replyPreview;
 /// Photos, up to 10 (CHAT-3).
@@ -343,18 +347,18 @@ _$MessageCopyWith<_Message> get copyWith => __$MessageCopyWithImpl<_Message>(thi
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Message&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.authorPhotoPath, authorPhotoPath) || other.authorPhotoPath == authorPhotoPath)&&(identical(other.authorPlayerSummary, authorPlayerSummary) || other.authorPlayerSummary == authorPlayerSummary)&&(identical(other.replyToId, replyToId) || other.replyToId == replyToId)&&(identical(other.pollId, pollId) || other.pollId == pollId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.seriesId, seriesId) || other.seriesId == seriesId)&&(identical(other.replyPreview, replyPreview) || other.replyPreview == replyPreview)&&const DeepCollectionEquality().equals(other.attachments, _attachments)&&const DeepCollectionEquality().equals(other.mentions, _mentions)&&(identical(other.mentionsEveryone, mentionsEveryone) || other.mentionsEveryone == mentionsEveryone)&&(identical(other.announcement, announcement) || other.announcement == announcement)&&const DeepCollectionEquality().equals(other.reactions, _reactions)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt)&&(identical(other.editedAt, editedAt) || other.editedAt == editedAt)&&(identical(other.deletedReason, deletedReason) || other.deletedReason == deletedReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.importedFrom, importedFrom) || other.importedFrom == importedFrom)&&(identical(other.pending, pending) || other.pending == pending));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Message&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.authorName, authorName) || other.authorName == authorName)&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.authorPhotoPath, authorPhotoPath) || other.authorPhotoPath == authorPhotoPath)&&(identical(other.authorPlayerSummary, authorPlayerSummary) || other.authorPlayerSummary == authorPlayerSummary)&&(identical(other.replyToId, replyToId) || other.replyToId == replyToId)&&(identical(other.pollId, pollId) || other.pollId == pollId)&&(identical(other.eventId, eventId) || other.eventId == eventId)&&(identical(other.seriesId, seriesId) || other.seriesId == seriesId)&&(identical(other.reminder, reminder) || other.reminder == reminder)&&(identical(other.replyPreview, replyPreview) || other.replyPreview == replyPreview)&&const DeepCollectionEquality().equals(other.attachments, _attachments)&&const DeepCollectionEquality().equals(other.mentions, _mentions)&&(identical(other.mentionsEveryone, mentionsEveryone) || other.mentionsEveryone == mentionsEveryone)&&(identical(other.announcement, announcement) || other.announcement == announcement)&&const DeepCollectionEquality().equals(other.reactions, _reactions)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt)&&(identical(other.editedAt, editedAt) || other.editedAt == editedAt)&&(identical(other.deletedReason, deletedReason) || other.deletedReason == deletedReason)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.importedFrom, importedFrom) || other.importedFrom == importedFrom)&&(identical(other.pending, pending) || other.pending == pending));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,groupId,authorId,authorName,type,text,authorPhotoPath,authorPlayerSummary,replyToId,pollId,eventId,seriesId,replyPreview,const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_mentions),mentionsEveryone,announcement,const DeepCollectionEquality().hash(_reactions),deletedAt,editedAt,deletedReason,createdAt,importedFrom,pending]);
+    return Object.hashAll([runtimeType,id,groupId,authorId,authorName,type,text,authorPhotoPath,authorPlayerSummary,replyToId,pollId,eventId,seriesId,reminder,replyPreview,const DeepCollectionEquality().hash(_attachments),const DeepCollectionEquality().hash(_mentions),mentionsEveryone,announcement,const DeepCollectionEquality().hash(_reactions),deletedAt,editedAt,deletedReason,createdAt,importedFrom,pending]);
 }
 
 @override
 String toString() {
-    return 'Message(id: $id, groupId: $groupId, authorId: $authorId, authorName: $authorName, type: $type, text: $text, authorPhotoPath: $authorPhotoPath, authorPlayerSummary: $authorPlayerSummary, replyToId: $replyToId, pollId: $pollId, eventId: $eventId, seriesId: $seriesId, replyPreview: $replyPreview, attachments: $attachments, mentions: $mentions, mentionsEveryone: $mentionsEveryone, announcement: $announcement, reactions: $reactions, deletedAt: $deletedAt, editedAt: $editedAt, deletedReason: $deletedReason, createdAt: $createdAt, importedFrom: $importedFrom, pending: $pending)';
+    return 'Message(id: $id, groupId: $groupId, authorId: $authorId, authorName: $authorName, type: $type, text: $text, authorPhotoPath: $authorPhotoPath, authorPlayerSummary: $authorPlayerSummary, replyToId: $replyToId, pollId: $pollId, eventId: $eventId, seriesId: $seriesId, reminder: $reminder, replyPreview: $replyPreview, attachments: $attachments, mentions: $mentions, mentionsEveryone: $mentionsEveryone, announcement: $announcement, reactions: $reactions, deletedAt: $deletedAt, editedAt: $editedAt, deletedReason: $deletedReason, createdAt: $createdAt, importedFrom: $importedFrom, pending: $pending)';
 }
 
 
@@ -365,7 +369,7 @@ abstract mixin class _$MessageCopyWith<$Res> implements $MessageCopyWith<$Res> {
   factory _$MessageCopyWith(_Message value, $Res Function(_Message) _then) = __$MessageCopyWithImpl;
 @override @useResult
 $Res call({
- String id, GroupId groupId, String authorId, String authorName, MessageType type, String text, String? authorPhotoPath, String? authorPlayerSummary, String? replyToId, String? pollId, String? eventId, String? seriesId, ReplyPreview? replyPreview, List<Attachment> attachments, List<String> mentions, bool mentionsEveryone, bool announcement, Map<String, Reaction> reactions, DateTime? deletedAt, DateTime? editedAt, String? deletedReason, DateTime? createdAt, String? importedFrom, bool pending
+ String id, GroupId groupId, String authorId, String authorName, MessageType type, String text, String? authorPhotoPath, String? authorPlayerSummary, String? replyToId, String? pollId, String? eventId, String? seriesId, bool reminder, ReplyPreview? replyPreview, List<Attachment> attachments, List<String> mentions, bool mentionsEveryone, bool announcement, Map<String, Reaction> reactions, DateTime? deletedAt, DateTime? editedAt, String? deletedReason, DateTime? createdAt, String? importedFrom, bool pending
 });
 
 
@@ -382,7 +386,7 @@ class __$MessageCopyWithImpl<$Res>
 
 /// Create a copy of Message
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? authorId = null,Object? authorName = null,Object? type = null,Object? text = null,Object? authorPhotoPath = freezed,Object? authorPlayerSummary = freezed,Object? replyToId = freezed,Object? pollId = freezed,Object? eventId = freezed,Object? seriesId = freezed,Object? replyPreview = freezed,Object? attachments = null,Object? mentions = null,Object? mentionsEveryone = null,Object? announcement = null,Object? reactions = null,Object? deletedAt = freezed,Object? editedAt = freezed,Object? deletedReason = freezed,Object? createdAt = freezed,Object? importedFrom = freezed,Object? pending = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? authorId = null,Object? authorName = null,Object? type = null,Object? text = null,Object? authorPhotoPath = freezed,Object? authorPlayerSummary = freezed,Object? replyToId = freezed,Object? pollId = freezed,Object? eventId = freezed,Object? seriesId = freezed,Object? reminder = null,Object? replyPreview = freezed,Object? attachments = null,Object? mentions = null,Object? mentionsEveryone = null,Object? announcement = null,Object? reactions = null,Object? deletedAt = freezed,Object? editedAt = freezed,Object? deletedReason = freezed,Object? createdAt = freezed,Object? importedFrom = freezed,Object? pending = null,}) {
   return _then(_Message(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -396,7 +400,8 @@ as String?,replyToId: freezed == replyToId ? _self.replyToId : replyToId // igno
 as String?,pollId: freezed == pollId ? _self.pollId : pollId // ignore: cast_nullable_to_non_nullable
 as String?,eventId: freezed == eventId ? _self.eventId : eventId // ignore: cast_nullable_to_non_nullable
 as String?,seriesId: freezed == seriesId ? _self.seriesId : seriesId // ignore: cast_nullable_to_non_nullable
-as String?,replyPreview: freezed == replyPreview ? _self.replyPreview : replyPreview // ignore: cast_nullable_to_non_nullable
+as String?,reminder: null == reminder ? _self.reminder : reminder // ignore: cast_nullable_to_non_nullable
+as bool,replyPreview: freezed == replyPreview ? _self.replyPreview : replyPreview // ignore: cast_nullable_to_non_nullable
 as ReplyPreview?,attachments: null == attachments ? _self._attachments : attachments // ignore: cast_nullable_to_non_nullable
 as List<Attachment>,mentions: null == mentions ? _self._mentions : mentions // ignore: cast_nullable_to_non_nullable
 as List<String>,mentionsEveryone: null == mentionsEveryone ? _self.mentionsEveryone : mentionsEveryone // ignore: cast_nullable_to_non_nullable

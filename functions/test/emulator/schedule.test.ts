@@ -7,7 +7,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eraseMessage, notifyNewMessage } from '../../src/chat/service.js';
 import { tick } from '../../src/ops/jobs.js';
-import { saveEventSeries } from '../../src/schedule/handlers.js';
+import { repostEvent, saveEventSeries } from '../../src/schedule/handlers.js';
 import { removePlayer } from '../../src/players/service.js';
 import { dateInZone, wallTimeToMs } from '../../src/schedule/recurrence.js';
 import { SaveSeriesInput, saveSeries } from '../../src/schedule/series.js';
@@ -778,5 +778,46 @@ describe('event cards in chat (CHAT-11)', () => {
     await eraseMessage('e1', 'alex', 'author');
     expect((await db().collection(Collections.messages).doc('e1').get()).get('deletedAt')).toBeInstanceOf(Timestamp);
     expect(await eventData('e1')).toBeDefined();
+  });
+});
+
+describe('a reminder posted by hand (SCHED-8)', () => {
+  const repost = (uid: string, eventId: string, token: object = {}) =>
+    repostEvent.run(call(uid, { eventId }, token) as unknown as Parameters<typeof repostEvent.run>[0]);
+
+  it('posts the event again as a reminder card, and reminds everyone but Not going', async () => {
+    await writeEvent('e1', oneOff(3 * DAY));
+    await rsvp('e1', 'pat', 'not_going');
+    const { messageId } = await repost('alex', 'e1');
+    expect(messageId).not.toBe('e1');
+    const card = (await db().collection(Collections.messages).doc(messageId).get()).data();
+    expect(card).toMatchObject({ type: 'event', eventId: 'e1', seriesId: null, reminder: true, authorId: 'alex', authorName: 'Alex' });
+    expect(await eventCards()).toHaveLength(2);
+    // The one who posted it isn't reminded, nor Pat, who isn't going.
+    const key = `e1_repost_${messageId}`;
+    expect(await centerFor(key)).toEqual(['lee', 'sam']);
+    expect(await body(key, 'sam')).toMatch(/^Reminder: Practice on \w{3}, \w{3} \d+ at .+ · Riverside Park$/);
+  });
+
+  it('is for admins and the event\'s creator, once an hour per event', async () => {
+    await writeEvent('e1', oneOff(3 * DAY));
+    await writeEvent('e2', oneOff(3 * DAY, { createdBy: 'sam' }));
+    await expect(repost('pat', 'e1')).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(repost('maria', 'e1')).rejects.toMatchObject({ code: 'permission-denied' });
+    await repost('sam', 'e2');
+    await repost('alex', 'e1');
+    await expect(repost('alex', 'e1')).rejects.toMatchObject({ code: 'resource-exhausted' });
+  });
+
+  it('refuses canceled and finished events, missing ones, and archived teams (TEAM-9)', async () => {
+    await writeEvent('gone', oneOff(3 * DAY, { canceledAt: Timestamp.now(), canceledBy: 'alex' }));
+    await writeEvent('past', oneOff(-3 * DAY));
+    await writeEvent('e1', oneOff(3 * DAY));
+    await expect(repost('alex', 'gone')).rejects.toMatchObject({ code: 'failed-precondition' });
+    await expect(repost('alex', 'past')).rejects.toMatchObject({ code: 'failed-precondition' });
+    await expect(repost('alex', 'nope')).rejects.toMatchObject({ code: 'not-found' });
+    await db().collection(Collections.groups).doc(G).update({ archivedAt: Timestamp.now() });
+    await expect(repost('alex', 'e1')).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect((await eventCards()).filter((c) => c.get('reminder') === true)).toEqual([]);
   });
 });

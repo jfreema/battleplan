@@ -595,6 +595,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                   groupId: m.groupId,
                   seriesId: m.seriesId,
                   text: m.text,
+                  reminder: m.reminder,
                 ),
             ],
           )

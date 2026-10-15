@@ -2012,6 +2012,15 @@ class FakeEventRepository implements EventRepository {
     _changes.add(null);
   }
 
+  /// Makes a reminder fail as the hourly limit does.
+  bool repostLimited = false;
+
+  @override
+  Future<void> repostToChat(EventId eventId) async {
+    if (repostLimited) throw const RateLimited('Slow down, try again later.');
+    calls.add('repost ${eventId.value}');
+  }
+
   /// Set to make series calls fail as full storage does (STORE-4).
   bool storageFull = false;
 

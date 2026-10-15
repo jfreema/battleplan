@@ -1,11 +1,14 @@
 // Schedule domain service: owns eventSeries, events, rsvps (ARCH §6.2).
 import { FieldValue, Timestamp, type DocumentData } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
+import { HttpsError } from 'firebase-functions/v2/https';
 import { db } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
 import { groupMemberId, rsvpId } from '../shared/ids.js';
 import { chunk, trySend } from '../notify/service.js';
+import { consumeRateLimit } from '../shared/rate_limit.js';
+import { requireOpenTeam } from '../shared/roles.js';
 import { addDays, dateInZone, type Recurrence } from './recurrence.js';
 
 const MINUTE_MS = 60_000;
@@ -514,6 +517,8 @@ export async function postEventCard(card: {
   text: string;
   eventId: string;
   seriesId: string | null;
+  /** Posted again by hand as a reminder (SCHED-8). */
+  reminder?: boolean;
 }): Promise<boolean> {
   const author = await authorSnapshot(card.groupId, card.authorId);
   try {
@@ -528,6 +533,7 @@ export async function postEventCard(card: {
         text: card.text,
         eventId: card.eventId,
         seriesId: card.seriesId,
+        ...(card.reminder ? { reminder: true } : {}),
         attachments: [],
         reactions: {},
         createdAt: FieldValue.serverTimestamp(),
@@ -537,6 +543,58 @@ export async function postEventCard(card: {
     if ((e as { code?: unknown }).code === ALREADY_EXISTS) return false;
     throw e;
   }
+}
+
+/**
+ * Posts an event in the team's chat again, as a reminder by hand (SCHED-8):
+ * a new card, marked as a reminder, with the event's live RSVPs, from
+ * [caller]. Everyone but Not going hears about it, as with the scheduled
+ * reminders. Team admins (super admins too) and the event's creator, on an
+ * open team, for an event that isn't canceled or over; once an hour per
+ * event, so a team isn't flooded.
+ */
+export async function repostEventToChat(
+  eventId: string,
+  caller: { uid: string; superAdmin: boolean },
+  nowMs = Date.now(),
+): Promise<{ messageId: string }> {
+  const snap = await db().collection(Collections.events).doc(eventId).get();
+  if (!snap.exists) throw new HttpsError('not-found', 'event-not-found');
+  const data = snap.data()!;
+  const groupId = String(data.groupId);
+  await requireOpenTeam(groupId, caller.superAdmin);
+  const member = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, caller.uid)).get();
+  if (!member.exists) throw new HttpsError('permission-denied', 'Members only.');
+  const role = String(member.get('role'));
+  const isAdmin = caller.superAdmin || role === 'owner' || role === 'admin';
+  if (!isAdmin && data.createdBy !== caller.uid) {
+    throw new HttpsError('permission-denied', 'Only team admins can post a reminder.');
+  }
+  const view = eventView(data);
+  if (view.canceled) throw new HttpsError('failed-precondition', 'event-canceled');
+  if (view.endMs <= nowMs) throw new HttpsError('failed-precondition', 'event-over');
+  await consumeRateLimit(eventId, 'eventRepost', 1, 'hour');
+  const messageId = db().collection(Collections.messages).doc().id;
+  await postEventCard({
+    messageId,
+    groupId,
+    authorId: caller.uid,
+    text: eventCardText(view),
+    eventId,
+    seriesId: null,
+    reminder: true,
+  });
+  await notifyEventAudience({
+    kind: 'eventReminder',
+    groupId,
+    eventId,
+    event: view,
+    mode: 'reminder',
+    line: (names) => reminderBody(view, nowMs, names),
+    actor: { uid: caller.uid, name: String(member.get('displayName') ?? '') },
+    dedupeKey: `${eventId}_repost_${messageId}`,
+  });
+  return { messageId };
 }
 
 // ---- The events trigger ---------------------------------------------------

@@ -31,6 +31,21 @@ bool canManageEvent(
     (superAdmin ||
         (me != null && (me.isAdmin || event.createdBy == me.uid.value)));
 
+/// Posting [event] in the chat again as a reminder (SCHED-8): whoever
+/// manages it ([canManageEvent]), while it's on and not over, as
+/// repostEvent checks too.
+bool canRepost(
+  Event event,
+  Group group,
+  Membership? me, {
+  bool superAdmin = false,
+  DateTime? now,
+}) =>
+    me != null &&
+    canManageEvent(event, group, me, superAdmin: superAdmin) &&
+    !event.isCanceled &&
+    event.endAt.isAfter(now ?? DateTime.now());
+
 /// Whether [me] may answer on [event] at [now]: RSVPs on, not canceled,
 /// an active team, and before the deadline unless an admin (SCHED-5).
 bool canAnswerNow(Event event, Group group, Membership? me, DateTime now) =>

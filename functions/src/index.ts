@@ -70,7 +70,7 @@ export { logClientError } from './ops/handlers.js';
 export { tick } from './ops/jobs.js';
 export { closePoll } from './polls/handlers.js';
 export { onPollVoteWritten } from './polls/triggers.js';
-export { saveEventSeries } from './schedule/handlers.js';
+export { repostEvent, saveEventSeries } from './schedule/handlers.js';
 export { onEventWritten, onRsvpWritten } from './schedule/triggers.js';
 export {
   addPlayers,

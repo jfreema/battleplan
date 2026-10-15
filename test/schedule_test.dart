@@ -929,6 +929,46 @@ void main() {
       );
     });
 
+    testWidgets('an admin posts a reminder in chat from the event, once an '
+        'hour (SCHED-8)', (tester) async {
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      await menu(tester, 'Post a reminder in chat');
+      expect(find.text('Post a reminder in chat?'), findsOneWidget);
+      await tester.tap(find.text('Post reminder'));
+      await tester.pumpAndSettle();
+      expect(rsvps.events.calls, contains('repost e1'));
+      expect(find.text('Reminder posted in chat'), findsOneWidget);
+      // Again within the hour: it says so.
+      rsvps.events.repostLimited = true;
+      await menu(tester, 'Post a reminder in chat');
+      await tester.tap(find.text('Post reminder'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'A reminder for this event went out in the last hour. Try again '
+          'later.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('no reminder for a canceled event', (tester) async {
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [event('e1', canceledAt: DateTime.now())],
+      );
+      await openDetails(tester, 'Practice');
+      await tester.tap(find.byTooltip('More actions'));
+      await tester.pumpAndSettle();
+      expect(find.text('Post a reminder in chat'), findsNothing);
+    });
+
     testWidgets('admins set an answer for someone else', (tester) async {
       final rsvps = await openSchedule(
         tester,
@@ -1175,6 +1215,34 @@ void main() {
       await tester.tap(find.text('vs. Eagles'));
       await tester.pumpAndSettle();
       expect(find.text('Directions'), findsOneWidget);
+    });
+
+    testWidgets('a reminder posted by hand says so, and how many players '
+        "haven't answered (SCHED-8)", (tester) async {
+      await openSchedule(
+        tester,
+        tapSchedule: false,
+        events: [event('e1', counts: const RsvpCounts(going: 1))],
+        players: FakePlayerRepository(const [
+          Player(
+            id: PlayerId('p1'),
+            groupId: GroupId('a'),
+            displayName: 'Emma',
+          ),
+          Player(
+            id: PlayerId('p2'),
+            groupId: GroupId('a'),
+            displayName: 'Liam',
+          ),
+          Player(id: PlayerId('p3'), groupId: GroupId('a'), displayName: 'Ava'),
+        ]),
+        messages: FakeMessageRepository([card('e1').copyWith(reminder: true)]),
+      );
+      expect(find.text('Reminder'), findsOneWidget);
+      expect(
+        find.text("1 of 3 players going · 2 haven't answered"),
+        findsOneWidget,
+      );
     });
 
     testWidgets('answers Going right on the card, with live counts', (

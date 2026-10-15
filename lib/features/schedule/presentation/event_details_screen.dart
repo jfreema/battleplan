@@ -8,6 +8,7 @@ import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
+import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -97,6 +98,8 @@ class EventDetailsScreen extends ConsumerWidget {
           }
         case _Action.setRsvp:
           await _setRsvpForSomeone(context, ref, event, group);
+        case _Action.repost:
+          await _repostToChat(context, ref, event);
       }
     }
 
@@ -136,6 +139,12 @@ class EventDetailsScreen extends ConsumerWidget {
                     value: _Action.setRsvp,
                     child: Text(l10n.eventSetRsvpFor),
                   ),
+                // A reminder by hand, in the chat (SCHED-8).
+                if (canRepost(event, group, me, superAdmin: superAdmin))
+                  PopupMenuItem(
+                    value: _Action.repost,
+                    child: Text(l10n.eventRepost),
+                  ),
                 if (canManage && !event.isCanceled)
                   PopupMenuItem(
                     value: _Action.cancel,
@@ -160,7 +169,35 @@ class EventDetailsScreen extends ConsumerWidget {
   }
 }
 
-enum _Action { edit, duplicate, setRsvp, cancel, delete }
+enum _Action { edit, duplicate, setRsvp, repost, cancel, delete }
+
+/// Posts [event] in the chat again as a reminder, after asking (SCHED-8).
+Future<void> _repostToChat(
+  BuildContext context,
+  WidgetRef ref,
+  Event event,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final ok = await showConfirmDialog(
+    context,
+    title: l10n.eventRepostTitle,
+    message: l10n.eventRepostBody,
+    confirmLabel: l10n.eventRepostConfirm,
+    cancelLabel: l10n.cancel,
+  );
+  if (!ok || !context.mounted) return;
+  try {
+    await ref.read(eventRepositoryProvider).repostToChat(event.id);
+    if (context.mounted) showAppSnackBar(context, l10n.eventReposted);
+  } on AppFailure catch (e) {
+    if (!context.mounted) return;
+    showAppSnackBar(context, switch (e) {
+      RateLimited() => l10n.eventRepostTooSoon,
+      PermissionDenied() => l10n.notAllowed,
+      _ => l10n.eventRepostFailed,
+    });
+  }
+}
 
 class _Details extends ConsumerWidget {
   const new({

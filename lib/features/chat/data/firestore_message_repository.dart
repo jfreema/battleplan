@@ -101,6 +101,7 @@ class FirestoreMessageRepository implements MessageRepository {
       pollId: x['pollId'] as String?,
       eventId: x['eventId'] as String?,
       seriesId: x['seriesId'] as String?,
+      reminder: x['reminder'] == true,
       replyPreview: switch (x['replyPreview']) {
         final Map<String, dynamic> p => ReplyPreview(
           authorName: p['authorName'] as String? ?? '',

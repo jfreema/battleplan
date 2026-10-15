@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -20,13 +23,16 @@ import 'package:material_ui/material_ui.dart';
 /// series' next event, or, with none left, the series as posted. While it
 /// takes answers, it has Going / Maybe / Not going buttons (one set per
 /// player for guardians) and the live counts, as in the chat mockup (SPEC
-/// §5.4). Tapping elsewhere opens the event (SCHED-4).
+/// §5.4). Tapping elsewhere opens the event (SCHED-4). A card posted again
+/// by hand says it's a reminder and how many players haven't answered
+/// (SCHED-8).
 class EventCard extends ConsumerWidget {
   const new({
     required this.eventId,
     required this.groupId,
     this.seriesId,
     this.text = '',
+    this.reminder = false,
     super.key,
   });
 
@@ -38,6 +44,9 @@ class EventCard extends ConsumerWidget {
 
   /// The card's one-line summary, as the server wrote it.
   final String text;
+
+  /// Posted again by hand as a reminder (SCHED-8).
+  final bool reminder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -104,6 +113,21 @@ class EventCard extends ConsumerWidget {
                     typeLabel(l10n, event.type),
                     style: theme.textTheme.labelMedium?.copyWith(color: color),
                   ),
+                  if (reminder) ...[
+                    Text(' · ', style: theme.textTheme.labelMedium),
+                    Icon(
+                      AppIcons.notifications,
+                      size: 16,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: Space.xs),
+                    Text(
+                      l10n.eventCardReminder,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: scheme.primary,
+                      ),
+                    ),
+                  ],
                   if (event.isCanceled) ...[
                     const SizedBox(width: Space.sm),
                     const CanceledBadge(),
@@ -123,7 +147,12 @@ class EventCard extends ConsumerWidget {
               if (otherZoneLine(l10n, event, zone) case final z?)
                 Text(z, style: muted),
               if (event.location case final loc?) Text(loc.label, style: muted),
-              _CardRsvps(event: event, groupId: groupId, zone: zone),
+              _CardRsvps(
+                event: event,
+                groupId: groupId,
+                zone: zone,
+                reminder: reminder,
+              ),
             ],
           ),
         ),
@@ -137,11 +166,19 @@ class EventCard extends ConsumerWidget {
 /// §7.5, SCHED-5): the same answers as the event's page, without the
 /// notes. Canceled and started events take no answers.
 class _CardRsvps extends ConsumerWidget {
-  const new({required this.event, required this.groupId, required this.zone});
+  const new({
+    required this.event,
+    required this.groupId,
+    required this.zone,
+    this.reminder = false,
+  });
 
   final Event event;
   final GroupId groupId;
   final String zone;
+
+  /// A reminder's card also says how many players haven't answered.
+  final bool reminder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -166,6 +203,11 @@ class _CardRsvps extends ConsumerWidget {
               const <String, Rsvp>{};
     final players = ref.watch(playersProvider(groupId)).value?.length ?? 0;
     final allowMaybe = group.settings.allowMaybe;
+    final counts = event.rsvpCounts;
+    final unanswered = math.max(
+      0,
+      players - counts.going - counts.maybe - counts.notGoing,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -202,12 +244,15 @@ class _CardRsvps extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.only(top: Space.xs),
           child: Text(
-            eventCountsText(
-              l10n,
-              event,
-              players: players,
-              allowMaybe: allowMaybe,
-            ),
+            [
+              eventCountsText(
+                l10n,
+                event,
+                players: players,
+                allowMaybe: allowMaybe,
+              ),
+              if (reminder && unanswered > 0) l10n.rsvpNotAnswered(unanswered),
+            ].join(' · '),
             style: theme.textTheme.labelMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

@@ -74,6 +74,12 @@ abstract interface class EventRepository {
   /// Deletes a one-off event; the server removes its RSVPs.
   Future<void> deleteEvent(Event event);
 
+  /// Posts the event in the team's chat again as a reminder, with its
+  /// RSVPs, and reminds everyone but Not going (SCHED-8). Team admins and
+  /// the event's creator, once an hour per event (a rate-limit failure
+  /// sooner).
+  Future<void> repostToChat(EventId eventId);
+
   /// Creates a repeating series and its events (SCHED-3).
   Future<SeriesResult> createSeries(
     GroupId groupId,

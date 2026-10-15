@@ -736,6 +736,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - **Delete** removes the event without notifying anyone. Its confirmation suggests canceling instead if the event is within 7 days.
   - For repeating events, both ask "This event" or "This and following events". Canceling or deleting the rest of a series notifies the team once.
 - **SCHED-8 · MVP · Reminders.** A push at each reminder time to people who said Going or Maybe or haven't answered, but not Not going: "Reminder: Practice today at 6:00 PM · Riverside Park". For players, reminders go to the member who is the player and to the player's guardians (PLAYER-7).
+  - **A reminder by hand:** the event's menu has **Post a reminder in chat** for team admins and the event's creator, after asking. It posts the event in the chat again, marked Reminder, with its live RSVPs, the answer buttons, and how many players haven't answered, and the same people get the reminder push. Not on a canceled or finished event; once an hour per event.
 - **SCHED-9 · MVP · Time zones.**
   - Times show in the viewer's local time.
   - If the event's time zone is different, both appear: "6:00 PM CDT · 7:00 PM your time".

@@ -34,6 +34,9 @@ abstract class Message with _$Message {
     /// event once [eventId] is gone (SCHED-3).
     String? seriesId,
 
+    /// An event card posted again by hand as a reminder (SCHED-8).
+    @Default(false) bool reminder,
+
     /// The quote a reply shows, written by the server (CHAT-13, D25).
     ReplyPreview? replyPreview,
 

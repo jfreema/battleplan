@@ -657,6 +657,43 @@ void main() {
       );
     });
 
+    test('a reminder in chat: whoever manages the event, while it is on and '
+        'not over (SCHED-8)', () {
+      final now = DateTime.utc(2026, 10, 20, 12);
+      final event = Event(
+        id: const EventId('e1'),
+        groupId: const GroupId('a'),
+        type: EventType.practice,
+        title: 'Practice',
+        startAt: DateTime.utc(2026, 10, 20, 17),
+        endAt: DateTime.utc(2026, 10, 20, 18),
+        timeZone: 'America/New_York',
+        createdBy: 'sam',
+      );
+      bool can(Event e, Membership? me, {bool superAdmin = false}) =>
+          canRepost(e, group, me, superAdmin: superAdmin, now: now);
+      expect(can(event, member('lee', role: MemberRole.admin)), isTrue);
+      expect(can(event, member('sam')), isTrue);
+      expect(can(event, member('kim')), isFalse);
+      expect(can(event, null), isFalse);
+      expect(
+        can(
+          event.copyWith(canceledAt: now),
+          member('lee', role: MemberRole.admin),
+        ),
+        isFalse,
+      );
+      expect(
+        canRepost(
+          event,
+          group,
+          member('sam'),
+          now: DateTime.utc(2026, 10, 20, 19),
+        ),
+        isFalse,
+      );
+    });
+
     test('members manage their own events, even once members may no longer '
         'make them (§3 "own only")', () {
       final event = Event(

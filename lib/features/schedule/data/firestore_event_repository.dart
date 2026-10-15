@@ -228,6 +228,24 @@ class FirestoreEventRepository implements EventRepository {
   Future<void> deleteEvent(Event event) =>
       _write(() => _events.doc(event.id.value).delete());
 
+  @override
+  Future<void> repostToChat(EventId eventId) async {
+    try {
+      await _functions.httpsCallable('repostEvent').call<Object?>({
+        'eventId': eventId.value,
+      });
+    } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(message),
+        'not-found' => NotFound(message),
+        'resource-exhausted' => RateLimited(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
+      };
+    }
+  }
+
   Future<void> _write(Future<void> Function() write) async {
     try {
       await write();
