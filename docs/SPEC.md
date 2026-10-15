@@ -1052,6 +1052,31 @@ Requested 2026-10-13. GameChanger's events came first, at the owner's request (2
 - A non-admin cannot import; a job cannot write to another team or exceed storage limits.
 - Original author names and event times are preserved, and imported history grants nobody account access.
 
+---
+
+### 6.16 Whiteboards for plays (BOARD) · Planned
+
+Requested 2026-10-15. Future work in ROADMAP tasks 242–248; implementation has not started. This does not block any go-live phase.
+
+A coach draws plays and lineups on a whiteboard made for the team's sport, saves them to the team, and shares them in the chat.
+
+- **BOARD-1 · Four boards.** Each has its own field drawing and starting positions:
+  - **Baseball** (also used by softball teams): a diamond with the infield, outfield, bases, and mound, and markers at the nine positions: P, C, 1B, 2B, 3B, SS, LF, CF, RF. Base runners and the batter can be added.
+  - **Basketball**: a half court and a full court, with the lane, the three-point line, and the five positions: PG, SG, SF, PF, C.
+  - **Soccer**: a full pitch and a half pitch, with formations to start from (4-4-2, 4-3-3, 3-5-2), and smaller youth sides (7v7, 9v9).
+  - **Football (American), X's and O's**: a field with yard lines and hash marks around the line of scrimmage. Offense is drawn as O's and defense as X's, starting from common formations (for example, I-formation and shotgun on offense, 4-3 on defense).
+  - Teams with another sport (hockey, lacrosse, volleyball, other) can open any of the four, or a blank board, until their sport gets a board of its own.
+- **BOARD-2 · Drawing.** Drag markers anywhere; add or remove players, opponents, and the ball; label a marker with a number, a position, or a player from the roster. Draw arrows: solid for a run or a cut, dashed for a pass, and a T-end for a block or screen. Also freehand lines and short text notes. Undo and redo, and clear. It works with a finger on phones and tablets and with a mouse on the web.
+- **BOARD-3 · Steps.** A play can have several steps (for example, the setup, then the first pass, then the shot), viewed one after another.
+- **BOARD-4 · The team's plays.** Saved plays live in a **Plays** section of the team with a name and an optional note, sorted into the four boards. Team admins create, edit, copy, and delete them; everyone on the team can view them. Nothing on a board is stored on a player's profile: positions here are only labels on the drawing (players have no position field, ROADMAP task 234).
+- **BOARD-5 · Sharing.** A play can be posted to the team chat as a card with a small picture of it; tapping the card opens the play. A play can also be attached to an event (for example, "Plays for Saturday"). Members who can't see a team can't see its plays.
+
+**Acceptance (when implemented)**
+
+- Each of the four boards opens with its own field and starting positions, and a coach can draw, save, and reopen a play on a phone and on the web.
+- Members can view and open a shared play but not change it; non-members can't read it.
+- Saved plays stay small and count toward the team's storage like other team content.
+
 ## 7. Design system and UI
 
 ### 7.1 Brand
@@ -1421,6 +1446,7 @@ Not in v1; some may come later:
 - Volunteer and snack sign-ups
 - Carpools
 - Import and migration from GroupMe, TeamReach, and TeamSnap is planned after the initial go-live; GameChanger's events are built (§6.15; ROADMAP tasks 219–227, 241).
+- Whiteboards for drawing plays (baseball, basketball, soccer, and football X's and O's) are planned (§6.16; ROADMAP tasks 242–248).
 - Languages other than English
 - Native desktop apps (the web app covers desktop)
 - Widgets and watch apps

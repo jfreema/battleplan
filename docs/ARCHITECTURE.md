@@ -1160,6 +1160,17 @@ SPEC §6.15, ROADMAP tasks 219–227 and 241. GameChanger's events are built (be
 - Imported records need an explicit path through triggers that suppresses historical pushes, mentions, emails, and past-event reminders while maintaining normal storage accounting and team visibility. Future events enter the normal reminder pipeline after completion. Do not route historical records through ordinary create handlers without accounting for their side effects.
 - Add job and provenance schema, indexes, cleanup retention, trigger behavior, and rollback policy to the detailed design before implementation. Tests cover independent choices, partial data, malformed input, authorization, quotas, retry deduplication, and notification suppression.
 
+### 6.14 Whiteboards for plays · Planned
+
+SPEC §6.16 (BOARD), ROADMAP tasks 242–248. Nothing is built yet. A proposed design:
+
+- **Data.** A new `plays/{playId}` collection: `groupId`, `board` (`baseball`, `basketball`, `soccer`, `football`, `blank`), `variant` (for example `halfCourt` or `9v9`), `title`, `note`, `steps` (each a list of elements), `createdBy`, `createdAt`, `updatedAt`. Elements are plain data: markers (side, label, optional player ID), arrows (kind: run, pass, block; points), freehand lines, and text, with coordinates normalized to 0–1 of the field, so a play draws the same at any size. Plays are vector data in Firestore, not images.
+- **Limits.** Caps on steps and elements per play (for example 10 steps and 200 elements) keep each document well under Firestore's 1 MB limit. Each play's size counts toward the team's storage (STORE, ARCH §6.11).
+- **Rules.** Team members read their team's plays; team admins (and super admins) create, update, and delete them; archived teams are read-only (the rules' `active()`), as for events and documents.
+- **Drawing.** A `CustomPainter` per board draws the field from code, with no field images to ship, and the same painter draws the plays, the chat card's thumbnail, and an event's attachment. The editor keeps an undo stack of element changes. No new package is needed; check accessibility (labels for markers, and a list view of a play's steps) before building.
+- **Sharing.** A chat card references the play by ID, like event cards, so edits show everywhere. A deleted play leaves cards saying it was removed. An event can list play IDs.
+- **Code.** A `lib/features/plays/` feature with `domain/` (boards, elements, formations), `data/` (Firestore repository), and `presentation/` (the list, viewer, and editor), within the import-boundary rules (ARCH §5.2).
+
 ## 7. Key flow: sending a message
 
 ```mermaid

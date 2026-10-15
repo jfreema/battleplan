@@ -400,6 +400,20 @@ Decided 2026-10-13, at the owner's request. SPEC §6.15 (IMPORT), ARCH §6.13. T
 
 **Done when** a team admin can preview and import only the categories they selected, unsupported choices cannot run, retries do not duplicate content, and the report clearly identifies anything skipped. GroupMe ships first; each later adapter meets the same criteria.
 
+## Whiteboards for plays · planned
+
+Decided 2026-10-15, at the owner's request. SPEC §6.16 (BOARD), ARCH §6.14. Future feature work, separate from the go-live phases; nothing is built yet.
+
+242. The whiteboard editor: markers, arrows (run, pass, block), freehand lines, text, undo and redo, on phones, tablets, and the web (BOARD-2).
+243. The baseball board, also for softball: the diamond and the nine positions (BOARD-1).
+244. The basketball board: half court and full court, with the five positions (BOARD-1).
+245. The soccer board: full and half pitch, with 4-4-2, 4-3-3, and 3-5-2, and 7v7 and 9v9 for youth sides (BOARD-1).
+246. The football board, X's and O's: yard lines and hash marks, offense as O's and defense as X's, with starting formations (BOARD-1).
+247. Plays for the team: save, name, copy, and delete; steps; the Plays section; rules (members view, admins edit) and storage accounting (BOARD-3, BOARD-4).
+248. Sharing plays: a chat card with a thumbnail, and plays attached to events (BOARD-5).
+
+**Done when** a coach can draw a play on each of the four boards on a phone and on the web, save it to the team, and share it in the chat, and members can view it but not change it.
+
 ## Later · Backlog
 
 147. Join requests that need admin approval; copying a team for a new season (TEAM-13).
