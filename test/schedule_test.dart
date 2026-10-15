@@ -309,9 +309,36 @@ void main() {
       expect(saved.location?.name, 'Riverside Park');
       expect(saved.reminderOffsets, [1440]);
       expect(saved.seriesId, isNull);
+      expect(saved.rsvpEnabled, isTrue);
+      expect(saved.notifyTeam, isTrue);
+      expect(saved.postToChat, isTrue);
       // The event's page.
       expect(find.text('@ Eagles'), findsOneWidget);
       expect(find.text('Directions'), findsOneWidget);
+    });
+
+    testWidgets('RSVPs, Notify team, and Post to chat are checkboxes', (
+      tester,
+    ) async {
+      final rsvps = await openSchedule(tester, role: MemberRole.admin);
+      await tester.tap(find.byTooltip('New event'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Title'), 'Dinner');
+      for (final label in ['Ask for RSVPs', 'Notify team', 'Post to chat']) {
+        final box = find.widgetWithText(CheckboxListTile, label);
+        await tester.ensureVisible(box);
+        expect(tester.widget<CheckboxListTile>(box).value, isTrue);
+        await tester.tap(box);
+        await tester.pumpAndSettle();
+        expect(tester.widget<CheckboxListTile>(box).value, isFalse);
+      }
+      expect(find.byType(SwitchListTile), findsOneWidget); // All day
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      final saved = rsvps.events.events.values.single;
+      expect(saved.rsvpEnabled, isFalse);
+      expect(saved.notifyTeam, isFalse);
+      expect(saved.postToChat, isFalse);
     });
 
     testWidgets('weekly practices with a skipped date make one series', (

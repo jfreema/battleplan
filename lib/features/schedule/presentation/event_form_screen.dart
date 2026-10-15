@@ -643,11 +643,13 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                   onChanged: (_) => setState(() {}),
                 ),
                 section(l10n.eventRsvpTitle),
-                SwitchListTile(
+                CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
                   title: Text(l10n.eventTakeRsvps),
                   value: d.rsvpEnabled,
-                  onChanged: (v) => _set((d) => d.copyWith(rsvpEnabled: v)),
+                  onChanged: (v) =>
+                      _set((d) => d.copyWith(rsvpEnabled: v ?? false)),
                 ),
                 // Series events have no deadline (ARCH §6.2).
                 if (d.rsvpEnabled && d.repeat == null && !_seriesEdit)
@@ -716,17 +718,21 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                 // Read once, when the event is made (ARCH §6.4).
                 if (_isNew) ...[
                   const SizedBox(height: Space.md),
-                  SwitchListTile(
+                  CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
                     title: Text(l10n.eventNotifyTeam),
                     value: d.notifyTeam,
-                    onChanged: (v) => _set((d) => d.copyWith(notifyTeam: v)),
+                    onChanged: (v) =>
+                        _set((d) => d.copyWith(notifyTeam: v ?? false)),
                   ),
-                  SwitchListTile(
+                  CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
                     title: Text(l10n.eventPostToChat),
                     value: d.postToChat,
-                    onChanged: (v) => _set((d) => d.copyWith(postToChat: v)),
+                    onChanged: (v) =>
+                        _set((d) => d.copyWith(postToChat: v ?? false)),
                   ),
                 ],
               ],
