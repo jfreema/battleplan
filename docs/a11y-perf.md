@@ -23,7 +23,7 @@ flutter test --tags golden --update-goldens  # after an intended UI change, on m
 Each set is recorded on the system that compares it:
 
 - **Readable** (`test/goldens/readable/`): run `--update-goldens` on macOS and check the PNGs in the diff.
-- **CI** (`test/goldens/ci/`): run the **Update goldens** workflow from the Actions tab on GitHub (`.github/workflows/update-goldens.yml`). It runs on `ubuntu-latest` with the same Flutter as `ci.yml`, records the set with `--update-goldens`, and commits the PNGs to the branch it ran on (main by default) as "Goldens: record the CI baselines on Linux". A push made by the workflow doesn't start CI, so CI checks the new images on the next push. Don't raise the tolerance in `useTolerantGoldens` to get past a difference between systems; it would stop catching real layout changes.
+- **CI** (`test/goldens/ci/`): run the **Update goldens** workflow from the Actions tab on GitHub (`.github/workflows/update-goldens.yml`). It runs on `ubuntu-latest` with the same Flutter as `ci.yml`, records the set with `--update-goldens`, and commits the PNGs to the branch it ran on (main by default) as "Goldens: record the CI baselines on Linux". A push made by the workflow doesn't start CI by itself, so the workflow then starts CI on the new commit (and on main that run deploys to dev), which the release workflows need to have passed. Don't raise the tolerance in `useTolerantGoldens` to get past a difference between systems; it would stop catching real layout changes.
 
 When a CI golden fails, CI keeps its diff images as the `golden-failures` artifact. Locally, `flutter test` writes them to `test/goldens/failures/`, which is gitignored. Emoji show as empty boxes in both sets because the tests have no emoji font.
 

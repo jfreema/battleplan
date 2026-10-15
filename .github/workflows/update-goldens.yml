@@ -1,8 +1,9 @@
 # Records the test-font goldens (test/goldens/ci) on Linux, the system CI
 # compares them on, and commits them to the branch it runs on. Run it from
 # the Actions tab after an intended layout change (docs/a11y-perf.md).
-# Pushes made with the GITHUB_TOKEN don't start other workflows, so CI runs
-# again on the next push.
+# Pushes made with the GITHUB_TOKEN don't start other workflows, so it then
+# starts CI on the new commit itself, which the release workflows need to
+# have passed (and which deploys to dev, on main).
 name: Update goldens
 
 on:
@@ -22,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -47,3 +49,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Goldens: record the CI baselines on Linux"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Run CI on the new commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
