@@ -103,6 +103,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       .read(chatMessagesProvider(widget.message.groupId).notifier)
       .react(widget.message, r);
 
+  /// Who reacted, grouped by reaction (CHAT-6).
+  Future<void> _showWho() => showAdaptiveSheet<void>(
+    context,
+    builder: (_) => ReactionsSheet(message: widget.message),
+  );
+
   /// On the web, a small button beside a hovered bubble opens the menu.
   Widget _hoverButton() => IconButton(
     tooltip: AppLocalizations.of(context).messageMenu,
@@ -231,6 +237,16 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                 ),
                 const Divider(height: Space.xl),
               ],
+              // Also on a chip's long-press or right-click (CHAT-6).
+              if (m.reactions.isNotEmpty)
+                ListTile(
+                  leading: const Icon(AppIcons.roster),
+                  title: Text(l10n.whoReacted),
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    unawaited(_showWho());
+                  },
+                ),
               if (widget.onReply case final reply?)
                 ListTile(
                   leading: const Icon(AppIcons.reply),
@@ -731,12 +747,14 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           ReactionChips(
             message: m,
             me: ref.watch(authUserProvider).value?.uid,
-            onShowWho: () => unawaited(
-              showAdaptiveSheet<void>(
-                context,
-                builder: (_) => ReactionsSheet(message: m),
-              ),
-            ),
+            onShowWho: () => unawaited(_showWho()),
+            // As the picker: not while viewing as a super admin.
+            onReact: ref.watch(viewingAsSuperAdminProvider(m.groupId))
+                ? null
+                : (r) {
+                    Haptics.light();
+                    fireAndForget(_react(r));
+                  },
           ),
         // Delivery state (CHAT-4): sending until the server has it, then
         // "Sent" under my newest message, and with the time on the others.

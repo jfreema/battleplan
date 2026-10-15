@@ -588,7 +588,8 @@ Players that others answer for never get accounts, and every account belongs to 
 - **CHAT-6 · MVP · Reactions: 👍 Like · ❤️ Love · 👎 Dislike · 😂 LOL, plus 🔥 👏 🎉 💯 🙏 😮 😢 😡 ⚾ 🏀 ⚽ 🏆.**
   - Open the picker with a long-press (phones), the hover button, or a right-click (web). Double-tap a message to ❤️ it (phones).
   - **One reaction per person per message.** Picking another replaces yours; picking the same one removes it.
-  - Chips under the bubble show each reaction with its count, and yours is highlighted. Tap them to see who reacted.
+  - Chips under the bubble show each reaction with its count, and yours is highlighted. Tap a chip to add that reaction, or to take yours back if it's yours. Long-press or right-click a chip, or choose See who reacted in the message menu, to see who reacted.
+  - ❤️ is always red, on fonts that only have a plain heart too.
 - **CHAT-7 · MVP · Message menu** (long-press or right-click).
   - React, Reply, Edit (your own, CHAT-15), Copy text, Pin and Unpin (admins, CHAT-15), Delete (your own; admins can delete any), Report (other people's).
 - **CHAT-8 · MVP · Deleting messages.**

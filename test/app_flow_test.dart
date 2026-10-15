@@ -7,6 +7,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
@@ -1534,10 +1535,38 @@ void main() {
       await tester.tap(find.text('😂').last);
       await tester.pumpAndSettle();
       expect(find.text('😂 1'), findsNothing);
-      // Tapping a chip shows who reacted.
+      // Tapping someone else's chip adds mine to it; tapping it again
+      // takes mine back.
       await tester.tap(find.text('👍 1'));
       await tester.pumpAndSettle();
+      expect(find.text('👍 2'), findsOneWidget);
+      await tester.tap(find.text('👍 2'));
+      await tester.pumpAndSettle();
+      expect(find.text('👍 1'), findsOneWidget);
+      // A long-press on a chip, or See who reacted in the menu, shows who.
+      await tester.longPress(find.text('👍 1'));
+      await tester.pumpAndSettle();
       expect(find.text('Sam Rivera'), findsWidgets);
+      Navigator.of(tester.element(find.byType(ReactionsSheet))).pop();
+      await tester.pumpAndSettle();
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('See who reacted'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sam Rivera'), findsWidgets);
+    });
+
+    testWidgets('the heart is red (CHAT-6)', (tester) async {
+      final repo = FakeMessageRepository([msg(1)]);
+      await openChat(tester, repo);
+      await tester.longPress(find.text('Message 1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('❤️'));
+      await tester.pumpAndSettle();
+      final chip = tester.widget<Text>(find.text('❤️ 1'));
+      final heart = (chip.textSpan! as TextSpan).children!.first as TextSpan;
+      expect(heart.text, '❤️');
+      expect(heart.style?.color, heartRed);
     });
 
     testWidgets('double-tap loves a message', (tester) async {

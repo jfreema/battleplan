@@ -8,6 +8,7 @@ import 'package:battleplan/core/widgets/tap_target.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -50,6 +51,16 @@ String reactionEmoji(Reaction r) => switch (r) {
   Reaction.soccer => '⚽',
   Reaction.trophy => '🏆',
 };
+
+/// The heart's red, in both themes, as the emoji itself is.
+const heartRed = Color(0xFFE53935);
+
+/// [r]'s emoji, with ❤️ drawn red: some fonts, the web's among them, only
+/// have a plain black heart, which the color tints.
+TextSpan reactionSpan(Reaction r) => TextSpan(
+  text: reactionEmoji(r),
+  style: r == Reaction.love ? const TextStyle(color: heartRed) : null,
+);
 
 String reactionName(AppLocalizations l10n, Reaction r) => switch (r) {
   Reaction.like => l10n.reactionLike,
@@ -108,8 +119,8 @@ class ReactionPicker extends StatelessWidget {
           child: Center(
             widthFactor: 1,
             heightFactor: 1,
-            child: Text(
-              reactionEmoji(r),
+            child: Text.rich(
+              reactionSpan(r),
               style: const TextStyle(fontSize: 28),
               semanticsLabel: reactionName(l10n, r),
             ),
@@ -137,19 +148,25 @@ class ReactionPicker extends StatelessWidget {
   }
 }
 
-/// Chips under a bubble: each reaction with its count, mine highlighted.
-/// Tapping shows who reacted (CHAT-6).
+/// Chips under a bubble: each reaction with its count, mine highlighted
+/// (CHAT-6). Tapping one gives it my reaction, or takes mine back if it
+/// was mine already; a long-press or right-click shows who reacted.
 class ReactionChips extends StatelessWidget {
   const new({
     required this.message,
     required this.me,
     required this.onShowWho,
+    this.onReact,
     super.key,
   });
 
   final Message message;
   final String? me;
   final VoidCallback onShowWho;
+
+  /// Null where I can't react (viewing as a super admin): then a tap shows
+  /// who reacted.
+  final void Function(Reaction)? onReact;
 
   @override
   Widget build(BuildContext context) {
@@ -172,8 +189,17 @@ class ReactionChips extends StatelessWidget {
               button: true,
               selected: r == mine,
               label: l10n.reactionChipLabel(reactionName(l10n, r), n),
+              hint: onReact == null
+                  ? null
+                  : r == mine
+                  ? l10n.reactionChipRemoveHint
+                  : l10n.reactionChipAddHint,
               excludeSemantics: true,
-              onTap: onShowWho,
+              onTap: onReact == null ? onShowWho : () => onReact!(r),
+              onLongPress: onShowWho,
+              customSemanticsActions: {
+                CustomSemanticsAction(label: l10n.whoReacted): onShowWho,
+              },
               child: TapTargetPadding(
                 child: Material(
                   color: r == mine
@@ -186,13 +212,22 @@ class ReactionChips extends StatelessWidget {
                   ),
                   child: InkWell(
                     customBorder: const StadiumBorder(),
-                    onTap: onShowWho,
+                    onTap: onReact == null ? onShowWho : () => onReact!(r),
+                    onLongPress: onShowWho,
+                    onSecondaryTap: onShowWho,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: Space.sm,
                         vertical: 2,
                       ),
-                      child: Text('${reactionEmoji(r)} $n'),
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            reactionSpan(r),
+                            TextSpan(text: ' $n'),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -226,8 +261,8 @@ class ReactionsSheet extends ConsumerWidget {
               ListTile(
                 leading: Avatar(name: nameOf(e.key), colorKey: e.key, size: 32),
                 title: Text(nameOf(e.key)),
-                trailing: Text(
-                  reactionEmoji(r),
+                trailing: Text.rich(
+                  reactionSpan(r),
                   style: const TextStyle(fontSize: 20),
                 ),
               ),
