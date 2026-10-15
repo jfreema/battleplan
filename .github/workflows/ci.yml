@@ -17,7 +17,7 @@ env:
 
 jobs:
   app:
-    name: App (format, analyze, test, web build)
+    name: App (format, analyze, test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,10 +54,25 @@ jobs:
           path: test/goldens/failures
           if-no-files-found: ignore
           retention-days: 7
-      # The Hosting site: the website at the root and the app under /app
-      # (WASM), the same layout the deploys use (ARCH §6.6, D40).
+
+  # The Hosting site, built once for dev alongside the tests: the website at
+  # the root and the app under /app (WASM), the same layout the deploys use
+  # (ARCH §6.6, D40). The PR preview and the deploy to dev use this build.
+  web:
+    name: Web build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
       - name: Hosting build (website + web app under /app)
-        run: tools/build_hosting.sh dev --dart-define=USE_EMULATORS=true
+        run: tools/build_hosting.sh dev
+        env:
+          # Fills in apple-app-site-association once set (ROADMAP task 110).
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       - uses: actions/upload-artifact@v4
         with:
           name: hosting-build
@@ -105,7 +120,7 @@ jobs:
   preview:
     name: Web preview
     if: github.event_name == 'pull_request' && vars.FIREBASE_DEPLOYS == 'true'
-    needs: [app, functions]
+    needs: [app, functions, web]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -113,16 +128,11 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      # The Web build job's site, not a second build.
+      - uses: actions/download-artifact@v4
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-      - name: Hosting build (website + web app under /app)
-        run: tools/build_hosting.sh dev
-        env:
-          # Fills in apple-app-site-association once set (ROADMAP task 110).
-          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          name: hosting-build
+          path: build/hosting
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
@@ -146,7 +156,7 @@ jobs:
   deploy-dev:
     name: Deploy to dev
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && vars.FIREBASE_DEPLOYS == 'true'
-    needs: [app, functions]
+    needs: [app, functions, web]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -156,16 +166,11 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      # The Web build job's site, not a second build.
+      - uses: actions/download-artifact@v4
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-      - name: Hosting build (website + web app under /app)
-        run: tools/build_hosting.sh dev
-        env:
-          # Fills in apple-app-site-association once set (ROADMAP task 110).
-          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          name: hosting-build
+          path: build/hosting
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
