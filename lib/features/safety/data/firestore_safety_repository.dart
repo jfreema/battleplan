@@ -122,11 +122,12 @@ class FirestoreSafetyRepository implements SafetyRepository {
     try {
       await _functions.httpsCallable(name).call<Object?>(data);
     } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
       throw switch (e.code) {
-        'resource-exhausted' => RateLimited(e.message),
-        'permission-denied' => PermissionDenied(e.message),
-        'unavailable' || 'deadline-exceeded' => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        'resource-exhausted' => RateLimited(message),
+        'permission-denied' => PermissionDenied(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

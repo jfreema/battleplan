@@ -199,12 +199,13 @@ class FirestoreMessageRepository implements MessageRepository {
         'pinned': pinned,
       });
     } on FirebaseFunctionsException catch (e) {
-      throw switch ((e.code, e.message)) {
+      final message = serverMessage(e.message);
+      throw switch ((e.code, message)) {
         ('failed-precondition', final m?) => InvalidInput(m),
-        ('permission-denied', _) => PermissionDenied(e.message),
-        ('not-found', _) => NotFound(e.message),
-        ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        ('permission-denied', _) => PermissionDenied(message),
+        ('not-found', _) => NotFound(message),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }
@@ -464,10 +465,11 @@ class FirestoreMessageRepository implements MessageRepository {
         'messageId': messageId,
       });
     } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
       throw switch (e.code) {
-        'permission-denied' => PermissionDenied(e.message),
-        'unavailable' || 'deadline-exceeded' => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        'permission-denied' => PermissionDenied(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

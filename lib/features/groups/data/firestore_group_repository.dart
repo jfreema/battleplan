@@ -53,16 +53,17 @@ class FirestoreGroupRepository implements GroupRepository {
           });
       return GroupId(result.data['groupId'] as String);
     } on FirebaseFunctionsException catch (e) {
-      throw switch ((e.code, e.message)) {
+      final message = serverMessage(e.message);
+      throw switch ((e.code, message)) {
         ('failed-precondition', 'email-not-verified') => EmailNotVerified(
-          e.message,
+          message,
         ),
-        ('failed-precondition', 'too-many-teams') => TooManyTeams(e.message),
-        ('resource-exhausted', _) => RateLimited(e.message),
-        ('permission-denied', _) => PermissionDenied(e.message),
-        ('invalid-argument', _) => InvalidInput(e.message),
-        ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        ('failed-precondition', 'too-many-teams') => TooManyTeams(message),
+        ('resource-exhausted', _) => RateLimited(message),
+        ('permission-denied', _) => PermissionDenied(message),
+        ('invalid-argument', _) => InvalidInput(message),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }
@@ -191,15 +192,16 @@ class FirestoreGroupRepository implements GroupRepository {
     try {
       await _functions.httpsCallable(name).call<void>(data);
     } on FirebaseFunctionsException catch (e) {
-      throw switch ((e.code, e.message)) {
+      final message = serverMessage(e.message);
+      throw switch ((e.code, message)) {
         ('failed-precondition', 'owner-must-transfer') => OwnerMustTransfer(
-          e.message,
+          message,
         ),
-        ('invalid-argument', _) => InvalidInput(e.message),
-        ('permission-denied', _) => PermissionDenied(e.message),
-        ('not-found', _) => NotFound(e.message),
-        ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        ('invalid-argument', _) => InvalidInput(message),
+        ('permission-denied', _) => PermissionDenied(message),
+        ('not-found', _) => NotFound(message),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }
@@ -366,13 +368,14 @@ class FirestoreMemberRepository implements MemberRepository {
         problems: [for (final p in (d['problems'] as List?) ?? const []) '$p'],
       );
     } on FirebaseFunctionsException catch (e) {
-      throw switch ((e.code, e.message)) {
+      final message = serverMessage(e.message);
+      throw switch ((e.code, message)) {
         ('failed-precondition', 'email-not-verified') => EmailNotVerified(
-          e.message,
+          message,
         ),
-        ('resource-exhausted', _) => RateLimited(e.message),
-        ('permission-denied', _) => PermissionDenied(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        ('resource-exhausted', _) => RateLimited(message),
+        ('permission-denied', _) => PermissionDenied(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }
@@ -385,12 +388,13 @@ class FirestoreMemberRepository implements MemberRepository {
     try {
       await _functions.httpsCallable(name).call<void>(data);
     } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
       throw switch (e.code) {
-        'permission-denied' => PermissionDenied(e.message),
-        'not-found' => NotFound(e.message),
-        'invalid-argument' => InvalidInput(e.message),
-        'unavailable' || 'deadline-exceeded' => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        'permission-denied' => PermissionDenied(message),
+        'not-found' => NotFound(message),
+        'invalid-argument' => InvalidInput(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

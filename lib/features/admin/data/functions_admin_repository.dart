@@ -32,23 +32,22 @@ class FunctionsAdminRepository implements AdminRepository {
       final r = await _functions.httpsCallable(name).call<Object?>(data);
       return _map(r.data);
     } on FirebaseFunctionsException catch (e) {
-      throw switch ((e.code, e.message)) {
-        ('failed-precondition', 'last-super-admin') => LastSuperAdmin(
-          e.message,
-        ),
+      final message = serverMessage(e.message);
+      throw switch ((e.code, message)) {
+        ('failed-precondition', 'last-super-admin') => LastSuperAdmin(message),
         ('failed-precondition', 'owner-must-transfer') => OwnerMustTransfer(
-          e.message,
+          message,
         ),
         ('failed-precondition', final reason?) => ActionRefused(reason),
         ('invalid-argument' || 'failed-precondition', _) => InvalidInput(
-          e.message,
+          message,
         ),
-        ('permission-denied', _) => PermissionDenied(e.message),
-        ('not-found', _) => NotFound(e.message),
-        ('already-exists', _) => EmailAlreadyInUse(e.message),
-        ('resource-exhausted', _) => RateLimited(e.message),
-        ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        ('permission-denied', _) => PermissionDenied(message),
+        ('not-found', _) => NotFound(message),
+        ('already-exists', _) => EmailAlreadyInUse(message),
+        ('resource-exhausted', _) => RateLimited(message),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

@@ -108,20 +108,30 @@ void main() {
         (functions.lastData('createGroup')! as Map)['description'],
         'Rec league',
       );
-      for (final (code, message, type) in [
-        ('failed-precondition', 'email-not-verified', isA<EmailNotVerified>()),
-        ('failed-precondition', 'too-many-teams', isA<TooManyTeams>()),
-        ('resource-exhausted', 'slow', isA<RateLimited>()),
-        ('permission-denied', 'no', isA<PermissionDenied>()),
-        ('invalid-argument', 'bad', isA<InvalidInput>()),
-        ('unavailable', 'offline', isA<Offline>()),
-        ('internal', 'boom', isA<UnknownFailure>()),
-      ]) {
-        functions.fail('createGroup', code, message);
-        await expectLater(
-          repo.createGroup(name: 'X', sport: Sport.other, timeZone: 'UTC'),
-          throwsA(type),
-        );
+      // On the web too, where the message arrives with its status.
+      for (final web in [false, true]) {
+        functions.web = web;
+        for (final (code, message, type) in [
+          (
+            'failed-precondition',
+            'email-not-verified',
+            isA<EmailNotVerified>(),
+          ),
+          ('failed-precondition', 'too-many-teams', isA<TooManyTeams>()),
+          ('resource-exhausted', 'slow', isA<RateLimited>()),
+          ('permission-denied', 'no', isA<PermissionDenied>()),
+          ('invalid-argument', 'bad', isA<InvalidInput>()),
+          ('unavailable', 'offline', isA<Offline>()),
+          ('internal', 'boom', isA<UnknownFailure>()),
+        ]) {
+          functions.fail('createGroup', code, message);
+          await expectLater(
+            repo.createGroup(name: 'X', sport: Sport.other, timeZone: 'UTC'),
+            throwsA(
+              type.having((f) => f.message, 'message', isNot(contains('['))),
+            ),
+          );
+        }
       }
     });
 

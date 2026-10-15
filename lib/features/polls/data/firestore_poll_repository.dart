@@ -106,10 +106,11 @@ class FirestorePollRepository implements PollRepository {
         'pollId': pollId.value,
       });
     } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
       throw switch (e.code) {
-        'permission-denied' => PermissionDenied(e.message),
-        'unavailable' || 'deadline-exceeded' => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        'permission-denied' => PermissionDenied(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

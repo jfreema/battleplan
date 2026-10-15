@@ -11,6 +11,10 @@ class FakeFunctions implements FirebaseFunctions {
 
   final Map<String, CallableHandler> handlers;
 
+  /// Refuses the way the web SDK does, with the HTTP status after the
+  /// server's message ("too-many-pins [400]").
+  bool web = false;
+
   /// Every call, in order: the callable's name and the data sent.
   final calls = <(String, Object?)>[];
 
@@ -41,9 +45,19 @@ class _FakeCallable implements HttpsCallable {
     _functions.calls.add((_name, parameters));
     final handler = _functions.handlers[_name];
     // Unanswered: null, or an empty map where the caller needs one.
-    final data = handler != null
-        ? handler(parameters)
-        : (null is T ? null : <String, dynamic>{});
+    final Object? data;
+    try {
+      data = handler != null
+          ? handler(parameters)
+          : (null is T ? null : <String, dynamic>{});
+    } on FirebaseFunctionsException catch (e) {
+      if (!_functions.web) rethrow;
+      throw FirebaseFunctionsException(
+        code: e.code,
+        message: '${e.message} [400]',
+        details: e.details,
+      );
+    }
     return _FakeResult<T>(data as T);
   }
 

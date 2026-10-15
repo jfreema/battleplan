@@ -30,12 +30,13 @@ class FunctionsMediaRepository implements MediaRepository {
           .call<Map<String, dynamic>?>(data);
       return result.data ?? const {};
     } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
       throw switch (e.code) {
-        'permission-denied' => PermissionDenied(e.message),
-        'not-found' => NotFound(e.message),
-        'invalid-argument' => InvalidInput(e.message),
-        'unavailable' || 'deadline-exceeded' => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        'permission-denied' => PermissionDenied(message),
+        'not-found' => NotFound(message),
+        'invalid-argument' => InvalidInput(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

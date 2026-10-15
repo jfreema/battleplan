@@ -313,16 +313,17 @@ class FirestoreEventRepository implements EventRepository {
         canceled: n('canceled'),
       );
     } on FirebaseFunctionsException catch (e) {
-      final storage = (e.message ?? '').toLowerCase().contains('storage');
+      final message = serverMessage(e.message);
+      final storage = (message ?? '').toLowerCase().contains('storage');
       throw switch (e.code) {
-        'permission-denied' => PermissionDenied(e.message),
-        'not-found' => NotFound(e.message),
-        'invalid-argument' => InvalidInput(e.message),
+        'permission-denied' => PermissionDenied(message),
+        'not-found' => NotFound(message),
+        'invalid-argument' => InvalidInput(message),
         'failed-precondition' ||
-        'resource-exhausted' when storage => StorageFull(e.message),
-        'resource-exhausted' => RateLimited(e.message),
-        'unavailable' || 'deadline-exceeded' => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        'resource-exhausted' when storage => StorageFull(message),
+        'resource-exhausted' => RateLimited(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

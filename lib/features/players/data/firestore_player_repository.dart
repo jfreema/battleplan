@@ -347,7 +347,8 @@ class FirestorePlayerRepository implements PlayerRepository {
           .call<Map<String, dynamic>>(data);
       return result.data;
     } on FirebaseFunctionsException catch (e) {
-      throw switch ((e.code, e.message)) {
+      final message = serverMessage(e.message);
+      throw switch ((e.code, message)) {
         (
           'failed-precondition',
           'too-many-players' ||
@@ -356,20 +357,20 @@ class FirestorePlayerRepository implements PlayerRepository {
               'already-a-player' ||
               'already-linked',
         ) =>
-          InvalidInput(e.message),
-        ('failed-precondition', 'too-many-teams') => TooManyTeams(e.message),
+          InvalidInput(message),
+        ('failed-precondition', 'too-many-teams') => TooManyTeams(message),
         ('failed-precondition', 'email-not-verified') => EmailNotVerified(
-          e.message,
+          message,
         ),
         // The team was archived (TEAM-9).
-        ('failed-precondition', 'team-archived') => PermissionDenied(e.message),
+        ('failed-precondition', 'team-archived') => PermissionDenied(message),
         // The player was removed, or a pending one was decided (PLAYER-4).
-        ('not-found', _) => NotFound(e.message),
-        ('resource-exhausted', _) => RateLimited(e.message),
-        ('permission-denied', _) => PermissionDenied(e.message),
-        ('invalid-argument', _) => InvalidInput(e.message),
-        ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        ('not-found', _) => NotFound(message),
+        ('resource-exhausted', _) => RateLimited(message),
+        ('permission-denied', _) => PermissionDenied(message),
+        ('invalid-argument', _) => InvalidInput(message),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

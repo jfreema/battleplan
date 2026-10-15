@@ -45,11 +45,12 @@ class FirestoreUserRepository implements UserRepository {
           },
       });
     } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
       throw switch (e.code) {
-        'invalid-argument' => InvalidInput(e.message),
-        'unauthenticated' => Unauthenticated(e.message),
-        'unavailable' || 'deadline-exceeded' => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        'invalid-argument' => InvalidInput(message),
+        'unauthenticated' => Unauthenticated(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

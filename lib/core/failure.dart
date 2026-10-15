@@ -186,3 +186,9 @@ final class ActionRefused extends AppFailure {
   @override
   String get code => 'actionRefused';
 }
+
+/// A callable's refusal as the server wrote it ("too-many-players"). The
+/// web SDK adds the HTTP status (" [400]"), which would keep a message the
+/// app matches on from matching; native SDKs don't.
+String? serverMessage(String? message) =>
+    message?.replaceFirst(RegExp(r'\s*\[\d{3}\]\s*$'), '').trim();

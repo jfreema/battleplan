@@ -116,19 +116,20 @@ class FunctionsInviteRepository implements InviteRepository {
           .call<Map<String, dynamic>>(data);
       return result.data;
     } on FirebaseFunctionsException catch (e) {
-      throw switch ((e.code, e.message)) {
+      final message = serverMessage(e.message);
+      throw switch ((e.code, message)) {
         ('not-found', final reason?) => InviteUnusable(reason),
         // An admin turned the team's link off (§3).
         ('failed-precondition', 'link-off') => const InviteUnusable('link-off'),
-        ('failed-precondition', 'too-many-teams') => TooManyTeams(e.message),
+        ('failed-precondition', 'too-many-teams') => TooManyTeams(message),
         ('failed-precondition', 'email-not-verified') => EmailNotVerified(
-          e.message,
+          message,
         ),
-        ('resource-exhausted', _) => RateLimited(e.message),
-        ('permission-denied', _) => PermissionDenied(e.message),
+        ('resource-exhausted', _) => RateLimited(message),
+        ('permission-denied', _) => PermissionDenied(message),
         ('invalid-argument', _) => const InviteUnusable('unknown'),
-        ('unavailable' || 'deadline-exceeded', _) => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
   }

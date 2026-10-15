@@ -439,10 +439,11 @@ class FirebaseAuthRepository implements AuthRepository {
         if (newOwners.isNotEmpty) 'newOwners': newOwners,
       });
     } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
       throw switch (e.code) {
-        'failed-precondition' => RequiresRecentLogin(e.message),
-        'unavailable' || 'deadline-exceeded' => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        'failed-precondition' => RequiresRecentLogin(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
     // The Auth user is gone; clear the local session too.
@@ -457,9 +458,10 @@ class FirebaseAuthRepository implements AuthRepository {
     try {
       await _functions.httpsCallable('signOutEverywhere').call<void>();
     } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
       throw switch (e.code) {
-        'unavailable' || 'deadline-exceeded' => Offline(e.message),
-        _ => UnknownFailure('${e.code}: ${e.message}'),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
       };
     }
     await _auth.signOut();
