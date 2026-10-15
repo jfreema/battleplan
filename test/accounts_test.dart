@@ -51,8 +51,7 @@ void main() {
       tester,
     ) async {
       await pumpApp(tester, auth: DisabledAuth());
-      await tester.tap(find.text('Continue with email'));
-      await tester.pumpAndSettle();
+      await openEmailSignIn(tester);
       await tester.enterText(find.byType(TextField).at(0), 'coach@example.com');
       await tester.enterText(find.byType(TextField).at(1), 'password');
       await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
@@ -70,8 +69,7 @@ void main() {
       tester,
     ) async {
       await pumpApp(tester, auth: FakeAuthRepository());
-      await tester.tap(find.text('Continue with email'));
-      await tester.pumpAndSettle();
+      await openEmailSignIn(tester);
       await tester.tap(find.text('Create account').first);
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).at(0), 'Jordan');
@@ -159,8 +157,22 @@ void main() {
       );
       // Not offered until Sign in with Apple is on (task 187).
       expect(find.byType(AppleSignInButton), findsNothing);
-      await tester.tap(find.widgetWithText(FilledButton, 'Create a password'));
+      // Google is the main way in; a password is the quiet choice, and says
+      // where it works, since the sign-in screen has no email (AUTH-1).
+      expect(
+        find.widgetWithText(FilledButton, 'Continue with Google'),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.widgetWithText(TextButton, 'Use a password instead'),
+      );
       await tester.pumpAndSettle();
+      expect(
+        find.textContaining(
+          "You'll sign in with it at getbattleplan.app/emaillogin.",
+        ),
+        findsOneWidget,
+      );
       await tester.enterText(find.byType(TextField), 'longenough');
       await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();

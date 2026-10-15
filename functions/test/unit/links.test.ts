@@ -33,6 +33,6 @@ describe('links', () => {
     expect(appUrl('/g/a/chat/m/m1')).toBe('https://getbattleplan.app/app/g/a/chat/m/m1');
     expect(appUrl('g/a/roster')).toBe('https://getbattleplan.app/app/g/a/roster');
     expect(appUrl('/')).toBe('https://getbattleplan.app/app/');
-    expect(appUrl('/sign-in/email')).toBe('https://getbattleplan.app/app/sign-in/email');
+    expect(appUrl('/emaillogin')).toBe('https://getbattleplan.app/app/emaillogin');
   });
 });

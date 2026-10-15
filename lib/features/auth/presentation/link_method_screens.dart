@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
@@ -25,8 +26,10 @@ String _failureText(AppLocalizations l10n, AppFailure e) => switch (e) {
 
 /// AUTH-6 at `/choose-sign-in`: someone an admin added signed in with the
 /// link in their setup email. Before anything else, they choose how to sign
-/// in from now on: Google, Apple, or a password they create. The router
-/// sends them here until they've chosen, or they sign out.
+/// in from now on: Google, the main way in (AUTH-1), Apple, or a password
+/// they create for people without either, which they'll sign in with at
+/// `/emaillogin`, as the dialog says. The router sends them here until
+/// they've chosen, or they sign out.
 ///
 /// Their only sign-in was the setup link, perhaps long ago, and they have no
 /// password to confirm it's them with, so these skip the app's own recent
@@ -69,11 +72,12 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
 
   Future<void> _createPassword() async {
     final l10n = AppLocalizations.of(context);
+    final where = ref.read(linkServiceProvider).emailLoginText;
     final password = await askText(
       context,
       title: l10n.createPassword,
       label: l10n.newPasswordLabel,
-      helper: l10n.passwordRule,
+      helper: '${l10n.passwordRule} ${l10n.passwordSignInAt(where)}',
       obscure: true,
     );
     if (password == null || !mounted) return;
@@ -119,7 +123,7 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
                     ),
                   ),
                   const SizedBox(height: Space.xxl),
-                  OutlinedButton(
+                  FilledButton(
                     onPressed: _busy
                         ? null
                         : () => unawaited(
@@ -133,13 +137,14 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
                     AppleSignInButton(label: l10n.continueWithApple),
                     const SizedBox(height: Space.md),
                   ],
-                  FilledButton(
+                  // For people without Google (or Apple): the sign-in
+                  // screen doesn't offer passwords, so it's the quiet one.
+                  TextButton(
                     onPressed: _busy
                         ? null
                         : () => unawaited(_createPassword()),
-                    child: Text(l10n.createPassword),
+                    child: Text(l10n.usePasswordInstead),
                   ),
-                  const SizedBox(height: Space.lg),
                   // The router keeps them here until they choose, so this
                   // is the way out.
                   TextButton(

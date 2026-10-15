@@ -3,6 +3,7 @@
 // the screens draw the same every day: the chat is in 2025 (always shown
 // with its year), the schedule in 2030 (still upcoming).
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
@@ -269,11 +270,13 @@ FakeLocalPrefs _prefs({required bool dark}) => FakeLocalPrefs()
   // The notification pre-prompt is its own screen, not these.
   ..pushPrePromptShown = true;
 
-/// The sign-in screen, signed out.
+/// The sign-in screen, signed out, as people see it in prod: Google only
+/// until Apple is on (AUTH-1).
 Future<void> pumpSignIn(WidgetTester tester, {required bool dark}) async {
   await pumpApp(
     tester,
     auth: FakeAuthRepository(),
+    env: const AppEnv(flavor: AppFlavor.prod, useEmulators: false),
     prefs: _prefs(dark: dark),
     size: phoneSize,
   );

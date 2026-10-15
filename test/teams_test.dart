@@ -782,7 +782,7 @@ void main() {
       expect(invites.redeemed, isEmpty);
     });
 
-    testWidgets('a signed-out visitor signs in with email and joins', (
+    testWidgets('a signed-out visitor signs in with Google and joins', (
       tester,
     ) async {
       final invites = FakeInviteRepository();
@@ -795,8 +795,22 @@ void main() {
       await go(tester, '/join/K7XPM2QR');
       await tester.tap(find.text('Sign in to join'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Continue with email'));
+      await tester.tap(find.text('Continue with Google'));
       await tester.pumpAndSettle();
+      expect(invites.redeemed, ['K7XPM2QR']);
+    });
+
+    testWidgets("email sign-in's old address, /sign-in/email, goes to "
+        '/emaillogin and back to the invite after signing in', (tester) async {
+      final invites = FakeInviteRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(),
+        groups: {'a': testGroup('a', 'Thunder')},
+        invites: invites,
+      );
+      final back = Uri.encodeComponent('/join/K7XPM2QR?join=1');
+      await go(tester, '/sign-in/email?from=$back');
       await tester.enterText(find.byType(TextField).at(0), 'coach@example.com');
       await tester.enterText(find.byType(TextField).at(1), 'password');
       await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));

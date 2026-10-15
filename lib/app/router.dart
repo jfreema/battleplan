@@ -64,10 +64,18 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'router.g.dart';
 
+/// `/emaillogin`, keeping [uri]'s query (where to go back to, `mode`).
+String _emailLogin(Uri uri) => Uri(
+  path: '/emaillogin',
+  queryParameters: uri.queryParameters.isEmpty ? null : uri.queryParameters,
+).toString();
+
 /// Paths that don't need a signed-in user.
 const _publicPaths = {
   '/sign-in',
-  '/sign-in/email',
+  // Email and password, and emailed sign-in links (AUTH-2): not linked
+  // from the sign-in screen, for the people who need it.
+  '/emaillogin',
   // The website's "Sign up, it's free!" (WEB-1).
   '/sign-up',
   '/reset-password',
@@ -108,6 +116,8 @@ GoRouter router(Ref ref) {
       final unprefixed = stripAppPrefix(state.uri);
       if (unprefixed != null) return unprefixed.toString();
       final path = state.uri.path;
+      // Email sign-in's old address, from links already sent (AUTH-2).
+      if (path == '/sign-in/email') return _emailLogin(state.uri);
 
       final remote = ref.read(remoteConfigProvider);
       final tooOld =
@@ -133,7 +143,9 @@ GoRouter router(Ref ref) {
             : '/sign-in?from=${Uri.encodeComponent(from)}';
       }
 
-      if (path.startsWith('/sign-in') || path == '/sign-up') {
+      if (path.startsWith('/sign-in') ||
+          path == '/sign-up' ||
+          path == '/emaillogin') {
         return state.uri.queryParameters['from'] ?? '/';
       }
       if (path == '/activate' || path == '/__/auth/links') {
@@ -231,20 +243,26 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/sign-in',
-        builder: (_, _) => const SignInScreen(),
+        // Email only against the emulators, for the seeded accounts.
+        builder: (_, _) => SignInScreen(emailButton: env.useEmulators),
         routes: [
           GoRoute(
             path: 'email',
-            builder: (_, state) => EmailSignInScreen(
-              showEmulatorHint: env.useEmulators,
-              createAccount: state.uri.queryParameters['mode'] == 'create',
-            ),
+            redirect: (_, state) => _emailLogin(state.uri),
           ),
         ],
       ),
       GoRoute(
+        path: '/emaillogin',
+        builder: (_, state) => EmailSignInScreen(
+          showEmulatorHint: env.useEmulators,
+          createAccount: state.uri.queryParameters['mode'] == 'create',
+        ),
+      ),
+      GoRoute(
         path: '/sign-up',
-        builder: (_, _) => const SignInScreen(signUp: true),
+        builder: (_, _) =>
+            SignInScreen(signUp: true, emailButton: env.useEmulators),
       ),
       GoRoute(path: '/setup', builder: (_, _) => const SetupScreen()),
       GoRoute(path: '/disabled', builder: (_, _) => const DisabledScreen()),

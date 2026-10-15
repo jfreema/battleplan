@@ -3,9 +3,9 @@
 /// The website is served at the root of the domain and the web app under
 /// `/app`. Invite links stay short at `/join/<CODE>`; everything that opens
 /// the app (shared events, email sign-in, notification clicks) goes to
-/// `/app/...`. Hosting redirects `/join`, `/activate`, and `/g` into `/app`
-/// in browsers, and the native apps drop the `/app` prefix before routing
-/// ([stripAppPrefix]).
+/// `/app/...`. Hosting redirects `/join`, `/activate`, `/emaillogin`, and
+/// `/g` into `/app` in browsers, and the native apps drop the `/app` prefix
+/// before routing ([stripAppPrefix]).
 class LinkService {
   const new(this.host);
 
@@ -46,6 +46,14 @@ class LinkService {
   /// Where an emailed sign-in link lands (the Auth `ActionCodeSettings`
   /// url).
   Uri get activate => app('/activate');
+
+  /// Email sign-in (AUTH-2), short: `https://<host>/emaillogin`, which
+  /// Hosting redirects into the web app and the phone apps open. Nothing
+  /// links to it; the app shows it only to people who use a password.
+  Uri get emailLogin => site('/emaillogin');
+
+  /// [emailLogin] to read, without `https://`: `getbattleplan.app/emaillogin`.
+  String get emailLoginText => '$host${emailLogin.path}';
 
   /// A website page at the root of the domain, like `/privacy`.
   Uri site(String page) => Uri(

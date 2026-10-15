@@ -441,8 +441,9 @@ export async function sendPasswordReset(uid: string): Promise<void> {
   const user = await requireAccount(uid);
   const email = (profile.get('email') as string | null | undefined) ?? user.email;
   if (!email) throw new HttpsError('failed-precondition', 'no-email');
-  // After the new password is set, Continue goes back to sign-in in the app.
-  const link = await auth().generatePasswordResetLink(email, { url: appUrl('/sign-in/email') });
+  // After the new password is set, Continue goes to email sign-in in the
+  // app (AUTH-2), which the sign-in screen doesn't link to.
+  const link = await auth().generatePasswordResetLink(email, { url: appUrl('/emaillogin') });
   await sendEmail(passwordResetEmail(email, link));
 }
 

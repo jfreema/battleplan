@@ -34,6 +34,8 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
    | `monica@example.com`, `chandler@example.com` | Monica Geller and Chandler Bing, parents on Rally Possums |
    | `admin@example.com` | Super admin |
 
+   Against the emulators the sign-in screen also shows **Continue with email** for these. Dev and prod builds offer only Google and Apple there, and email sign-in is at `/emaillogin` (SPEC AUTH-1, AUTH-2).
+
 3. **Run the app** with the emulator flag. In VS Code pick **Dev (emulators)** or **Web (Chrome, emulators)**, or:
 
    ```sh
@@ -151,7 +153,7 @@ DEMO_PASSWORD='<at least 12 characters>' npm --prefix tools/seed run demo -- \
   --project battleplan-dev-ecce4 --write-to-dev
 ```
 
-It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which owns *Thunder*, a team of adult players with one player linked to its own member and a pending player to approve, and is a parent on the kids' team *Cyclone*, with messages, events, RSVPs, and a pinned link. Running it again resets the password and rewrites the same `demo-` documents. Put the email and password in the App Review notes, never in the repo. To try it locally, start the emulators and run `npm --prefix tools/seed run demo:emulators`. A prod demo account, at launch, is made by hand.
+It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which owns *Thunder*, a team of adult players with one player linked to its own member and a pending player to approve, and is a parent on the kids' team *Cyclone*, with messages, events, RSVPs, and a pinned link. Running it again resets the password and rewrites the same `demo-` documents. Put the email and password in the App Review notes, never in the repo, with where to sign in: the sign-in screen offers only Google and Apple (SPEC AUTH-1), so the demo account signs in at `getbattleplan.app/emaillogin` (on dev, `battleplan-dev-ecce4.web.app/emaillogin`). To try it locally, start the emulators and run `npm --prefix tools/seed run demo:emulators`. A prod demo account, at launch, is made by hand.
 
 ## App icons and splash screens
 

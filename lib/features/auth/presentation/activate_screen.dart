@@ -80,8 +80,10 @@ class _ActivateScreenState extends ConsumerState<ActivateScreen> {
         children: [
           Text(l10n.activateInvalid, textAlign: TextAlign.center),
           const SizedBox(height: Space.xl),
+          // Email sign-in, where "Email me a link" sends a new one: the
+          // sign-in screen offers only Google and Apple (AUTH-1).
           FilledButton(
-            onPressed: () => context.go('/sign-in'),
+            onPressed: () => context.go('/emaillogin'),
             child: Text(l10n.backToSignIn),
           ),
         ],

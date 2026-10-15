@@ -24,6 +24,15 @@ void main() {
       );
     });
 
+    test('email sign-in is short, at the root (AUTH-2)', () {
+      expect(
+        prod.emailLogin.toString(),
+        'https://getbattleplan.app/emaillogin',
+      );
+      expect(prod.emailLoginText, 'getbattleplan.app/emaillogin');
+      expect(dev.emailLoginText, 'battleplan-dev-ecce4.web.app/emaillogin');
+    });
+
     test('puts app routes under /app', () {
       expect(
         prod.app('/g/a/schedule/e/e1').toString(),

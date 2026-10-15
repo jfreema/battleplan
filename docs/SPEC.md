@@ -202,7 +202,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 - **WEB-1 · MVP · Landing page.** What Battleplan is (team chat, schedule and RSVPs, polls, documents, players and parents for adult and youth teams), that it's free with no ads, screenshots, and clear ways in: **Get Started** (the web app's sign-up page, `/app/sign-up`) and **Login** (`/app`), and App Store and Google Play badges once the apps are listed.
 - **WEB-2 · MVP · Support and legal pages.** `/privacy`, `/terms`, and `/delete-account` (LEGAL-1, LEGAL-3), and `/support` with the support email. These are the URLs the store listings and Firebase settings use.
 - **WEB-3 · MVP · The web app at `/app`.** The Flutter web app is served under `/app/` and linked from every page of the site. Signed-in people who open `/app` go straight to their teams.
-- **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app.
+- **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app. So does email sign-in's address, `getbattleplan.app/emaillogin` (AUTH-2).
 - **WEB-5 · MVP · Fast and plain.** Static pages with no ads, no tracking, and no cookie banner needed; light and dark mode; readable on phones; indexed by search engines, while `/app` isn't.
 
 ### 4.2 The parity rule
@@ -318,16 +318,20 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 ### 6.1 Accounts and sign-in (AUTH)
 
 - **AUTH-1 · MVP · Sign-in screen.**
-  - Buttons in this order: Continue with Google, Continue with Apple, Continue with email.
+  - Buttons in this order: Continue with Google, then Continue with Apple. Single sign-on is the way in, at the owner's request.
+  - **No email button.** Email sign-in (AUTH-2) is at `/emaillogin`, which nothing on the sign-in screens or the website links to. It's for special cases: someone without a Google or Apple account, App Review's demo account, and testing. Builds that run against the emulators also show Continue with email, so developers can sign in to the seeded accounts.
   - Logo and a one-line tagline above them.
   - Footer: "By continuing you agree to the Terms and Privacy Policy", with links.
-  - A link to the sign-up page: "New here? Sign up, it's free". The sign-up page (`/sign-up`, where the website's Sign up button goes) is the same screen saying "Create your free account", with Sign up with Google and Sign up with email, which opens on Create account, and "Already have an account? Sign in". Google and Apple make the account the first time either way.
+  - A link to the sign-up page: "New here? Sign up, it's free". The sign-up page (`/sign-up`, where the website's Sign up button goes) is the same screen saying "Create your free account", with Sign up with Google (and Apple once it's on), and "Already have an account? Sign in". Google and Apple make the account the first time either way.
+  - **The stores allow it.** Neither store asks for email sign-in. Apple's guideline 4.8 does ask an app that offers Google sign-in to offer one that can keep the email private beside it, which Sign in with Apple does, so the iPhone app ships with Apple on (store checklist 2.1). Reviewers sign in with Apple or Google and join the demo team with its code, or use the demo account at `/emaillogin`, which the review notes describe, as Apple's guideline 2.3.1 asks of anything not on screen (store checklist 1.14, 1.17).
   - Google always asks which Google account to use (its account chooser), so a browser signed in to one Google account never picks it silently.
   - The screen is identical on every platform. The Apple button follows Apple's design rules.
-  - **Continue with Apple is hidden until Phase 3**, when Sign in with Apple is turned on (§9). Until then the screen shows Google and email only, and Sign-in methods (AUTH-8) doesn't offer Apple.
+  - **Continue with Apple is hidden until Phase 3**, when Sign in with Apple is turned on (§9). Until then the screen shows Google only, and Sign-in methods (AUTH-8) doesn't offer Apple.
   - Continue with Facebook joins in Phase 6, with single sign-on (Q16).
 - **AUTH-2 · MVP · Email and password.**
-  - Sign in, or create an account with name, email, and password.
+  - At `/emaillogin`, not linked from the sign-in screen (AUTH-1). `getbattleplan.app/emaillogin` works too: Hosting redirects it into the web app, and the phone apps open it. `/sign-in/email`, its old address, redirects there, keeping where to go back to.
+  - Sign in, or create an account with name, email, and password, or have a sign-in link emailed.
+  - The app shows the address only to people who use a password: their password's row in Sign-in methods (AUTH-8) and the choose-how-to-sign-in screen (AUTH-6) say where it works. The support page asks people with a password to email support.
   - Passwords need 8+ characters, enforced by Firebase's password policy.
   - Show/hide password toggle.
 - **AUTH-3 · MVP · Email verification.**
@@ -335,7 +339,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - A verified email is required to create a team, send email invites, or add people by email.
 - **AUTH-4 · MVP · Password reset by email.**
   - "Forgot password?" → enter email → "If an account exists for that email, we've sent a reset link."
-  - The link opens the reset page; then the user signs in with the new password.
+  - The link opens the reset page; then the user signs in with the new password at `/emaillogin` (AUTH-2), where "Forgot password?" is. A reset a super admin sends continues there.
   - The screen notes that people who use Google or Apple don't have a Battleplan password.
 - **AUTH-5 · MVP · First-run setup.**
   - Name and photo, prefilled once from the sign-in provider (AUTH-12), and Terms acceptance.
@@ -346,7 +350,8 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **AUTH-6 · MVP · Accounts added by admins.**
   - Team admins and super admins add people with just a **name and email** (TEAM-7, PLAYER-1, ADMIN-4).
   - **Admins never set, see, or know anyone's password.** No screen or tool lets them. They can only send setup and password-reset emails.
-  - The person gets a **setup email**. Its link signs them in, verifies their email, and asks how they want to sign in from now on: Google, Apple (from Phase 3), or a password they create.
+  - The person gets a **setup email**. Its link signs them in, verifies their email, and asks how they want to sign in from now on: Google (the main button), Apple (from Phase 3), or **Use a password instead**, whose dialog says they'll sign in with it at `/emaillogin` (AUTH-2).
+  - A setup or sign-in link that's expired or broken says so, and **Back to sign-in** opens email sign-in, where "Email me a sign-in link instead" sends a new one.
   - Setup links expire, and admins can resend a fresh one.
   - Until setup, the person appears on the roster as "Not joined yet", and admins can RSVP for them.
 - **AUTH-7 · MVP · Safe account linking.**
@@ -356,7 +361,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - **A fresh sign-in is required** for linking, unlinking, changing the email or password, and deleting the account.
   - **Two separate accounts are never merged automatically.** Support can move memberships by hand.
 - **AUTH-8 · MVP · Sign-in methods screen.**
-  - Settings → Sign-in methods lists the linked methods (Google, Apple, password).
+  - Settings → Sign-in methods lists the linked methods (Google, Apple, password). A linked password says where it works: "Linked. Sign in with it at getbattleplan.app/emaillogin."
   - Link another, unlink one (never the last), or set or change a password.
   - Change the account email, confirmed through a link sent to the new address. The old address gets a notice.
 - **AUTH-9 · MVP · Sessions.**

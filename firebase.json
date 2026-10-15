@@ -55,6 +55,11 @@
         "type": 302
       },
       {
+        "source": "/emaillogin",
+        "destination": "/app/emaillogin",
+        "type": 302
+      },
+      {
         "source": "/g/:rest*",
         "destination": "/app/g/:rest*",
         "type": 302

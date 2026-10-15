@@ -21,6 +21,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 import 'fakes.dart';
 
@@ -28,6 +29,9 @@ import 'fakes.dart';
 Future<FakeLocalPrefs> pumpApp(
   WidgetTester tester, {
   required FakeAuthRepository auth,
+  // Against the emulators unless a test says otherwise; dev and prod
+  // builds offer only Google and Apple on the sign-in screen (AUTH-1).
+  AppEnv env = const AppEnv(flavor: AppFlavor.dev, useEmulators: true),
   Map<String, dynamic> groups = const {},
   List<dynamic> memberships = const [],
   FakeLocalPrefs? prefs,
@@ -81,9 +85,7 @@ Future<FakeLocalPrefs> pumpApp(
       // and then as a member) without keeping the first one's providers.
       key: UniqueKey(),
       overrides: [
-        appEnvProvider.overrideWithValue(
-          const AppEnv(flavor: AppFlavor.dev, useEmulators: true),
-        ),
+        appEnvProvider.overrideWithValue(env),
         appVersionProvider.overrideWithValue('1.0.0'),
         appBuildProvider.overrideWithValue(build),
         playRepositoryProvider.overrideWithValue(
@@ -152,4 +154,12 @@ Future<FakeLocalPrefs> pumpApp(
   );
   await tester.pumpAndSettle();
   return localPrefs;
+}
+
+/// Opens email sign-in at `/emaillogin` (AUTH-2), which the sign-in screen
+/// doesn't link to.
+Future<void> openEmailSignIn(WidgetTester tester, {String query = ''}) async {
+  GoRouter.of(tester.element(find.byType(Navigator).first))
+      .go('/emaillogin$query');
+  await tester.pumpAndSettle();
 }

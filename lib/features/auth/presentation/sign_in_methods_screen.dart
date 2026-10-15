@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -155,8 +156,14 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
             ),
           ListTile(
             title: Text(l10n.passwordLabel),
+            // The sign-in screen offers only Google and Apple (AUTH-1), so
+            // say where the password works.
             subtitle: Text(
-              hasPassword ? l10n.methodLinked : l10n.methodNotLinked,
+              hasPassword
+                  ? l10n.methodLinkedPassword(
+                      ref.read(linkServiceProvider).emailLoginText,
+                    )
+                  : l10n.methodNotLinked,
             ),
             trailing: Wrap(
               children: [

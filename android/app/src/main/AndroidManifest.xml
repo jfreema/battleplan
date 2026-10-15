@@ -58,8 +58,8 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- App Links (ARCH §6.6): invite, setup, and content links on our
-                 domain open the app. The host is set per flavor in
+            <!-- App Links (ARCH §6.6): invite, setup, email sign-in, and
+                 content links on our domain open the app. The host is set per flavor in
                  build.gradle.kts and verified by /.well-known/assetlinks.json.
                  The web app is under /app (D40); the router drops that prefix.
                  The website's own pages aren't listed, so they stay in the
@@ -71,6 +71,7 @@
                 <data android:scheme="https" android:host="${appLinkHost}"/>
                 <data android:pathPrefix="/join/"/>
                 <data android:pathPrefix="/activate"/>
+                <data android:pathPrefix="/emaillogin"/>
                 <data android:pathPrefix="/g/"/>
                 <data android:pathPrefix="/app/"/>
             </intent-filter>

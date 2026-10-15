@@ -21,15 +21,15 @@ Required, and doable now.
 - ⬜ 1.11 **Android release builds in GitHub Actions** (tasks 126, 214): an upload key, and an Android App Bundle signed with it. Nothing runs on your Mac. Today the release build is set up with the debug key.
 - ⬜ 1.12 **iPad.** The app is built for iPad too, so every screen has to work there, in both orientations and in Split View (task 210); review runs on iPads.
 - ⬜ 1.13 **It works end to end,** on the iPhone and iPad simulators and on Android with a build from GitHub Actions:
-  - sign up and finish setup (Jade's fix);
+  - sign up with Google and finish setup (Jade's fix);
   - join a team;
   - chat, post photos, and RSVP.
 
   No crashes, and no "beta," "coming soon," or placeholder text anywhere.
-- ⬜ 1.14 👤 **A demo account on prod** for the reviewers (task 132):
-  - a password, because reviewers can't get emails;
-  - an address you can read (forward appreview@getbattleplan.app; only support@ and privacy@ forward today);
-  - a team of its own with players, events, chat, a poll, and documents.
+- ⬜ 1.14 👤 **A way in for the reviewers on prod** (task 132). The sign-in screen offers only Google and Apple, so:
+  - a demo team with players, events, chat, a poll, and documents, and its invite code for the review notes: reviewers sign in with Apple (iPhone) or Google (Android) and join it with the code;
+  - a demo account that owns the team, with a password, because reviewers can't get emails; it signs in at `getbattleplan.app/emaillogin`, which the sign-in screen doesn't link to;
+  - an address you can read for it (forward appreview@getbattleplan.app; only support@ and privacy@ forward today).
 - ⬜ 1.15 **The privacy answers, written down once for both stores,** matching the Privacy Policy. Both stores ask about:
   - names, emails, and the phone numbers people share;
   - messages, photos, and files;
@@ -43,7 +43,8 @@ Required, and doable now.
   - screenshots of the app in use, not the sign-in screen: 6.9-inch iPhone, 13-inch iPad, and Android phone;
   - a 1024 × 500 feature graphic for Google; the 512 px icon is `assets/brand/icon.png`.
 - ⬜ 1.17 **App Review notes:**
-  - what Battleplan is, and the demo login;
+  - what Battleplan is, and how to get in: sign in with Apple or Google and join the demo team with its code, or the demo login at `getbattleplan.app/emaillogin`;
+  - that email sign-in is at that address and not on the sign-in screen, since guideline 2.3.1 asks for anything hidden to be described;
   - that teams are invite-only and the demo account already has one;
   - where Report, Block, and Delete account are, and that the language filter is on for every team;
   - that kids don't have accounts.
@@ -52,7 +53,7 @@ Required, and doable now.
 
 Setting it up (the key and Services ID, task 107) happens in your Apple Developer account, so it comes right after you enroll in phase 3. Sign in with Apple is required because Battleplan offers Google sign-in: guideline 4.8 then calls for a sign-in that lets people keep their email private.
 
-- ⬜ 2.1 **Continue with Apple** on the sign-in screen and in Sign-in methods, on iPhone, iPad, and the web, with Apple's standard button (task 109). It's in the app now, hidden.
+- ⬜ 2.1 **Continue with Apple** on the sign-in screen and in Sign-in methods, on iPhone, iPad, and the web, with Apple's standard button (task 109). It's in the app now, hidden. With email off the sign-in screen, it's the only choice there besides Google, which is what guideline 4.8 asks for: the iPhone app can't go to review without it.
 - ⬜ 2.2 **Email reaches people who hide their address:** register Battleplan's sending domain with Apple's private email relay (task 207).
 - ⬜ 2.3 **Delete account also revokes the person's Sign in with Apple token,** through Apple's REST API. Apple requires this of apps that offer Sign in with Apple.
 - ⬜ 2.4 **Test it end to end:** a new account with Apple, setup, signing out and back in, and deleting the account.
@@ -82,7 +83,7 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
   - content rating (IARC);
   - target audience: adults (18+);
   - ads: none;
-  - app access: the demo login;
+  - app access: sign in with Google and join the demo team with its code, or the demo login at `getbattleplan.app/emaillogin`;
   - the Health apps declaration, which every app files; Battleplan stores medical notes.
 - ⬜ 4.5 👤 **EU trader status** in the Play Console.
 - ⬜ 4.6 👤 **The listing** from phase 1 (task 213): the short and full descriptions, the Sports category, the contact email, the privacy URL, the icon, the feature graphic, and the phone screenshots. Then submit for production (task 214).

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -26,28 +27,46 @@ void main() {
     emailVerified: true,
   );
 
-  testWidgets('signed out lands on sign-in with Google and email; Apple stays '
-      'hidden until Phase 3 (task 187)', (tester) async {
-    await pumpApp(tester, auth: FakeAuthRepository());
-    expect(find.text('Continue with Google'), findsOneWidget);
+  // A dev build in the cloud, as people use it: not against the emulators.
+  const cloud = AppEnv(flavor: AppFlavor.dev, useEmulators: false);
+
+  testWidgets('signed out lands on sign-in with Google only: email is at '
+      '/emaillogin, and Apple stays hidden until Phase 3 (task 187)', (
+    tester,
+  ) async {
+    await pumpApp(tester, auth: FakeAuthRepository(), env: cloud);
+    expect(find.widgetWithText(FilledButton, 'Continue with Google'), findsOne);
     expect(find.text('Continue with Apple'), findsNothing);
-    expect(find.text('Continue with email'), findsOneWidget);
+    expect(find.text('Continue with email'), findsNothing);
+    // Nothing links to email sign-in, but it's there for who needs it.
+    await openEmailSignIn(tester);
+    expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
+    expect(find.text('Forgot password?'), findsOneWidget);
+    expect(find.text('Email me a sign-in link instead'), findsOneWidget);
   });
 
-  testWidgets("the website's sign-up page: Google or email, and email opens "
-      'on Create account', (tester) async {
+  testWidgets('against the emulators, sign-in also offers email, for the '
+      'seeded accounts', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
+    await tester.tap(find.text('Continue with email'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
+  });
+
+  testWidgets("the website's sign-up page: Google only, and /emaillogin can "
+      'open on Create account', (tester) async {
+    await pumpApp(tester, auth: FakeAuthRepository(), env: cloud);
     // Sign-in links to it, and the website links straight to /sign-up.
     await tester.tap(find.text("New here? Sign up, it's free"));
     await tester.pumpAndSettle();
     expect(find.text('Create your free account'), findsOneWidget);
     expect(find.text('Sign up with Google'), findsOneWidget);
     expect(find.text('Sign up with Apple'), findsNothing);
-    await tester.tap(find.text('Sign up with email'));
-    await tester.pumpAndSettle();
+    expect(find.text('Sign up with email'), findsNothing);
+    await openEmailSignIn(tester, query: '?mode=create');
     // Create account is chosen: it asks for a name.
     expect(find.widgetWithText(TextFormField, 'Your name'), findsOneWidget);
-    await tester.pageBack();
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/sign-up');
     await tester.pumpAndSettle();
     await tester.tap(find.text('Already have an account? Sign in'));
     await tester.pumpAndSettle();
@@ -62,12 +81,23 @@ void main() {
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
   });
 
+  testWidgets('a broken sign-in link goes back to email sign-in, where a '
+      'new link can be sent', (tester) async {
+    await pumpApp(tester, auth: FakeAuthRepository(), env: cloud);
+    GoRouter.of(tester.element(find.byType(Scaffold).first))
+        .go('/activate?mode=bad');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('invalid or has expired'), findsOneWidget);
+    await tester.tap(find.text('Back to sign-in'));
+    await tester.pumpAndSettle();
+    expect(find.text('Email me a sign-in link instead'), findsOneWidget);
+  });
+
   testWidgets(
     'email sign-in reaches the welcome screen when there are no teams',
     (tester) async {
       await pumpApp(tester, auth: FakeAuthRepository());
-      await tester.tap(find.text('Continue with email'));
-      await tester.pumpAndSettle();
+      await openEmailSignIn(tester);
       await tester.enterText(find.byType(TextField).at(0), 'coach@example.com');
       await tester.enterText(find.byType(TextField).at(1), 'password');
       await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
@@ -83,8 +113,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       memberships: [testMembership('a', 'coach')],
     );
-    await tester.tap(find.text('Continue with email'));
-    await tester.pumpAndSettle();
+    await openEmailSignIn(tester);
     await tester.enterText(find.byType(TextField).at(0), 'coach@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'password');
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
@@ -112,8 +141,7 @@ void main() {
 
   testWidgets('creating an account signs the person in', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
-    await tester.tap(find.text('Continue with email'));
-    await tester.pumpAndSettle();
+    await openEmailSignIn(tester);
     await tester.tap(find.text('Create account').first);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'Sam Rivera');
@@ -131,8 +159,7 @@ void main() {
   ) async {
     final auth = FakeAuthRepository();
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.text('Continue with email'));
-    await tester.pumpAndSettle();
+    await openEmailSignIn(tester);
     await tester.enterText(find.byType(TextField).at(0), 'nobody@example.com');
     await tester.tap(find.text('Forgot password?'));
     await tester.pumpAndSettle();
@@ -146,8 +173,7 @@ void main() {
   testWidgets('a short password is caught before sending', (tester) async {
     final auth = FakeAuthRepository();
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.text('Continue with email'));
-    await tester.pumpAndSettle();
+    await openEmailSignIn(tester);
     await tester.tap(find.text('Create account').first);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'Sam Rivera');
@@ -161,8 +187,7 @@ void main() {
 
   testWidgets('an email that already has an account says so', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
-    await tester.tap(find.text('Continue with email'));
-    await tester.pumpAndSettle();
+    await openEmailSignIn(tester);
     await tester.tap(find.text('Create account').first);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).at(0), 'Jordan');
@@ -275,7 +300,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('set up your profile'), findsNothing);
     expect(find.text('Continue with Google'), findsOneWidget);
-    expect(find.text('Continue with email'), findsOneWidget);
   });
 
   testWidgets('after creating a team, Continue leads from the invite screen '
@@ -1581,8 +1605,7 @@ void main() {
 
   testWidgets('wrong password shows an error and stays put', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository());
-    await tester.tap(find.text('Continue with email'));
-    await tester.pumpAndSettle();
+    await openEmailSignIn(tester);
     await tester.enterText(find.byType(TextField).at(0), 'coach@example.com');
     await tester.enterText(find.byType(TextField).at(1), 'nope');
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
@@ -2351,6 +2374,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sign-in methods'));
     await tester.pumpAndSettle();
+    // The sign-in screen has no email (AUTH-1), so it says where it works.
+    expect(
+      find.text('Linked. Sign in with it at getbattleplan.app/emaillogin.'),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Change password'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'password');

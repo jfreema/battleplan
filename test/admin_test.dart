@@ -747,7 +747,7 @@ void main() {
       expect(admin.calls, ['superAdmin boss false']);
       expect(find.text('Bea Boss is no longer a super admin.'), findsOneWidget);
       expect(tester.takeException(), isNull);
-      expect(find.text('Continue with email'), findsOneWidget);
+      expect(find.text('Continue with Google'), findsOneWidget);
     });
 
     testWidgets('create a user with a team and role', (tester) async {

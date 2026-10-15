@@ -14,9 +14,12 @@ const minPasswordLength = 8;
 
 enum _Mode { signIn, create }
 
-/// AUTH-2 at `/sign-in/email`: sign in, or create an account with name,
+/// AUTH-2 at `/emaillogin`: sign in, or create an account with name,
 /// email, and password, with a show/hide toggle. Also offers an emailed
-/// sign-in link instead of a password.
+/// sign-in link instead of a password. The sign-in screen doesn't link
+/// here (AUTH-1): it's for the people who need it, such as someone without
+/// a Google account, the App Review demo account, and a password-reset
+/// email's Continue. `/sign-in/email`, its old address, redirects here.
 class EmailSignInScreen extends ConsumerStatefulWidget {
   const new({
     this.showEmulatorHint = false,

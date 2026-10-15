@@ -6,6 +6,7 @@
         "components": [
           { "/": "/join/*" },
           { "/": "/activate*" },
+          { "/": "/emaillogin*" },
           { "/": "/g/*" },
           { "/": "/app/*" },
           { "/": "/__/auth/links*" }
