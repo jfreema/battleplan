@@ -46,6 +46,10 @@ jobs:
           echo "::error::Prod releases come from main (this is ${GITHUB_REF_NAME})."
           exit 1
 
+      - name: Skipping the CI check, as asked
+        if: ${{ inputs.skip_ci_check }}
+        run: echo "::warning::Releasing ${GITHUB_SHA:0:7} without checking CI (skip_ci_check)."
+
       - name: CI passed on this commit
         if: ${{ !inputs.skip_ci_check }}
         env:
@@ -147,14 +151,20 @@ jobs:
       - name: Deploy Functions
         run: |
           # Deploying many functions at once can hit Google's quota for a
-          # minute; unchanged functions are skipped on the next try.
+          # minute; then it tries again, and unchanged functions are skipped.
+          # Any other failure stops at once.
+          set -o pipefail
+          log=$(mktemp)
           for attempt in 1 2 3; do
             if $FIREBASE deploy --only functions --project "$PROJECT" --non-interactive \
-              --message "Release ${GITHUB_SHA:0:7}"; then
+              --message "Release ${GITHUB_SHA:0:7}" 2>&1 | tee "$log"; then
               exit 0
             fi
+            if ! grep -qiE 'quota|429|RESOURCE_EXHAUSTED|rate limit' "$log"; then
+              exit 1
+            fi
             if [ "$attempt" -lt 3 ]; then
-              echo "Functions deploy failed (try $attempt of 3); trying again in 90 seconds."
+              echo "Google's quota stopped the deploy (try $attempt of 3); trying again in 90 seconds."
               sleep 90
             fi
           done

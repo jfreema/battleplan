@@ -45,9 +45,10 @@ esac
 
 SA="$SA_NAME@$PROJECT.iam.gserviceaccount.com"
 NUMBER=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
-# Functions run as the default compute service account; deploying them acts
-# as it.
-RUNTIME_SA="$NUMBER-compute@developer.gserviceaccount.com"
+# Functions run as the default compute service account, and deploying them
+# acts as it. The Firebase CLI also checks for acting as the App Engine
+# default account (older functions ran as it), where the project has one.
+RUNTIME_SAS="$NUMBER-compute@developer.gserviceaccount.com $PROJECT@appspot.gserviceaccount.com"
 
 gcloud services enable iam.googleapis.com iamcredentials.googleapis.com \
   sts.googleapis.com firebasehosting.googleapis.com firebaserules.googleapis.com \
@@ -71,9 +72,12 @@ for role in roles/firebasehosting.admin roles/firebaserules.admin \
     --member="serviceAccount:$SA" --role="$role" --condition=None >/dev/null
   echo "Granted $role"
 done
-gcloud iam service-accounts add-iam-policy-binding "$RUNTIME_SA" --project "$PROJECT" \
-  --member="serviceAccount:$SA" --role=roles/iam.serviceAccountUser >/dev/null
-echo "Granted roles/iam.serviceAccountUser on $RUNTIME_SA"
+for runtime in $RUNTIME_SAS; do
+  gcloud iam service-accounts describe "$runtime" --project "$PROJECT" >/dev/null 2>&1 || continue
+  gcloud iam service-accounts add-iam-policy-binding "$runtime" --project "$PROJECT" \
+    --member="serviceAccount:$SA" --role=roles/iam.serviceAccountUser >/dev/null
+  echo "Granted roles/iam.serviceAccountUser on $runtime"
+done
 
 # Trust GitHub's OIDC tokens, but only those the condition allows.
 gcloud iam workload-identity-pools describe "$POOL" --location=global --project "$PROJECT" >/dev/null 2>&1 ||
