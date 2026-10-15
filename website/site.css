@@ -195,6 +195,9 @@ section { padding: 56px 0; }
   .feature-media.pair .phone { width: 250px; }
 }
 
+.switch-note { margin: 14px 0 0; color: var(--muted); }
+.fineprint { margin: 20px 0 0; color: var(--muted); font-size: 0.875rem; }
+
 /* Cards */
 .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
 .card {
