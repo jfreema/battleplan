@@ -494,6 +494,10 @@ describe('cache and server-only fields', () => {
     const db = as('alice');
     await assertSucceeds(db.doc('groups/teamA').update({ name: 'Thunder FC', nameLower: 'thunder fc' }));
     await assertSucceeds(db.doc('groups/teamA').update({ 'settings.membersCanCreateEvents': true }));
+    // Who sees the roster's people (TEAM-3): a yes or no, from admins.
+    await assertSucceeds(db.doc('groups/teamA').update({ 'settings.membersCanSeePeople': false }));
+    await assertFails(db.doc('groups/teamA').update({ 'settings.membersCanSeePeople': 'admins' }));
+    await assertFails(as('bob').doc('groups/teamA').update({ 'settings.membersCanSeePeople': true }));
     await assertSucceeds(db.doc('groups/teamA').update({ photoPath: 'groups/teamA/avatar/1.jpg' }));
     await assertFails(db.doc('groups/teamA').update({ name: 'Thunder FC', nameLower: 'other' }));
     await assertFails(db.doc('groups/teamA').update({ color: '#123456' }));

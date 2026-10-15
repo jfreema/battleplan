@@ -380,6 +380,15 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                 value: s.allowMaybe,
                 onChanged: (v) => setSettings(s.copyWith(allowMaybe: v)),
               ),
+              // Who sees the roster's people (TEAM-3).
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.permSeePeople),
+                subtitle: Text(l10n.permSeePeopleHelp),
+                value: s.membersCanSeePeople,
+                onChanged: (v) =>
+                    setSettings(s.copyWith(membersCanSeePeople: v)),
+              ),
               section(l10n.defaultReminders),
               Wrap(
                 spacing: Space.sm,

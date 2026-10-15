@@ -54,6 +54,7 @@ const settings = {
   membersCanUploadDocs: true,
   membersCanInvite: true,
   allowMaybe: true,
+  membersCanSeePeople: true,
   defaultReminderOffsets: [1440],
 };
 

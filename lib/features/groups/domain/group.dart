@@ -14,6 +14,11 @@ abstract class GroupSettings with _$GroupSettings {
     @Default(true) bool membersCanInvite,
     @Default(true) bool allowMaybe,
 
+    /// Everyone sees who's on the team in the roster (TEAM-3). Off, only
+    /// admins see all the people; members still see the players, the
+    /// coaches, and themselves.
+    @Default(true) bool membersCanSeePeople,
+
     /// Minutes before an event (1440 = 1 day).
     @Default(<int>[1440]) List<int> defaultReminderOffsets,
   }) = _GroupSettings;

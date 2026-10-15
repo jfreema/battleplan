@@ -384,6 +384,50 @@ void main() {
     expect(find.text('Coaches'), findsOneWidget);
   });
 
+  testWidgets('roster: a team can keep its people to its admins (TEAM-3)', (
+    tester,
+  ) async {
+    final private = testGroup(
+      'a',
+      'Thunder',
+    ).copyWith(settings: const GroupSettings(membersCanSeePeople: false));
+    final people = [
+      testMembership('a', 'owner', role: MemberRole.owner, name: 'Eric Taylor'),
+      testMembership('a', 'claire', name: 'Claire Dunphy'),
+    ];
+    Future<void> openRoster(MemberRole role) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': private},
+        memberRepo: FakeMemberRepository([
+          ...people,
+          testMembership('a', 'coach', role: role, name: 'Jordan'),
+        ]),
+      );
+      await tester.tap(find.byTooltip('Team menu'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Roster'));
+      await tester.pumpAndSettle();
+    }
+
+    // A member: the coaches and their own card, not the other parents.
+    await openRoster(MemberRole.member);
+    expect(find.text('Eric Taylor'), findsOneWidget);
+    expect(find.text('Jordan'), findsOneWidget);
+    expect(find.text('Claire Dunphy'), findsNothing);
+    expect(
+      find.text(
+        "Your team's admins keep the list of people on the team to "
+        'themselves.',
+      ),
+      findsOneWidget,
+    );
+    // An admin sees everyone.
+    await openRoster(MemberRole.admin);
+    expect(find.text('Claire Dunphy'), findsOneWidget);
+  });
+
   testWidgets("roster: members don't make coaches", (tester) async {
     await pumpApp(
       tester,

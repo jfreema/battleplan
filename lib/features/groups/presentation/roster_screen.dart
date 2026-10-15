@@ -146,6 +146,15 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
             ...shown.where((m) => !m.isCoach && m.role == MemberRole.admin),
           ];
           final others = shown.where((m) => !m.isAdmin && !m.isCoach).toList();
+          // A team can keep its people to its admins (TEAM-3): members
+          // still see the players, the coaches, and their own card, which
+          // has Leave team.
+          final seePeople =
+              isAdmin || (group?.settings.membersCanSeePeople ?? true);
+          if (!seePeople) {
+            admins.removeWhere((m) => m.uid != me?.uid);
+            others.removeWhere((m) => m.uid != me?.uid);
+          }
           bool matches(Player p) =>
               q.isEmpty || p.displayName.toLowerCase().contains(q);
           // Players come by number (sortPlayers); by name on request.
@@ -249,6 +258,16 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                   member: m,
                   me: me,
                   who: whoLabel(l10n, m.uid, links, players),
+                ),
+              if (!seePeople)
+                Padding(
+                  padding: const EdgeInsets.all(Space.lg),
+                  child: Text(
+                    l10n.rosterPeopleHidden,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ),
             ],
           );

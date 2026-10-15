@@ -510,7 +510,7 @@ groups/{groupId}
   kind: 'team'                                          # written by createGroup and the migration; a missing kind reads as 'team'; leaves room for a basic 'group' kind (TEAM-14). Old docs may still carry teamType, which readers ignore
   ownerId, createdBy, timeZone, orgId?                  # orgId reserved for leagues (later)
   settings: { membersCanCreateEvents, membersCanCreatePolls, membersCanUploadDocs,
-              membersCanInvite, allowMaybe, defaultReminderOffsets: [minutes] }
+              membersCanInvite, allowMaybe, membersCanSeePeople, defaultReminderOffsets: [minutes] }
   memberCount, playerCount                              # cache ← groupMembers, players
   lastMessageAt, lastMessagePreview: { authorName, text, type }   # cache ← messages
   storageBytes, storageQuotaBytes                       # cache ← Storage triggers; limit 500 MB unless a super admin changes it (§6.11)

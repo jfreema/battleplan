@@ -499,6 +499,7 @@ GroupSettings settingsFromFirestore(Map<String, dynamic>? d) {
     membersCanUploadDocs: flag('membersCanUploadDocs', fallback: true),
     membersCanInvite: flag('membersCanInvite', fallback: true),
     allowMaybe: flag('allowMaybe', fallback: true),
+    membersCanSeePeople: flag('membersCanSeePeople', fallback: true),
     defaultReminderOffsets: [
       for (final m in (d['defaultReminderOffsets'] as List?) ?? const [1440])
         (m as num).toInt(),
@@ -512,6 +513,7 @@ Map<String, Object> settingsToFirestore(GroupSettings s) => {
   'membersCanUploadDocs': s.membersCanUploadDocs,
   'membersCanInvite': s.membersCanInvite,
   'allowMaybe': s.allowMaybe,
+  'membersCanSeePeople': s.membersCanSeePeople,
   'defaultReminderOffsets': s.defaultReminderOffsets,
 };
 

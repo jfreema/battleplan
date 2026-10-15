@@ -403,6 +403,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Teams are walled off from each other. Nothing shows which other teams a member belongs to.
 - **TEAM-3 · MVP · Roster screen.**
   - A **Players** section on every team (jersey number, name, and who's linked: "Player" or "Guardian"), then sections for **Coaches**, Admins, and Members. Each member shows their players: a guardian shows "Emma #7", and a member who is a player shows their number (PLAYER-8).
+  - **Who sees the people:** with the team setting "Everyone can see who's on the team" off (TEAM-5), members see the players, the coaches, and their own card (which has Leave team), and a line saying the admins keep the rest private; admins see everyone. Names still show where people act, as authors in chat and on RSVPs.
   - **Coaches:** team admins turn on **Coach** on a person's card, for a parent who coaches too, for example. Coaches are listed together, their Owner or Admin badge kept, and answer for themselves on events (PLAYER-6). Until someone sets it, the owner counts as a coach.
   - Admins see pending players and claims at the top, with Approve and Decline (PLAYER-4).
   - Each person row shows a photo or initials, name, title, role badge (Owner/Admin), and "Not joined yet" for added accounts.
@@ -421,6 +422,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - upload documents [on]
     - invite others [on]
     - allow "Maybe" RSVPs [on]
+    - everyone can see who's on the team [on]: off, only admins see all the people on the roster (TEAM-3)
   - Default event reminders: 1 day before.
   - Manage the invite link.
   - See storage used, e.g. "212 MB of 500 MB", and open Media to free space (STORE-2, STORE-5).
