@@ -3040,8 +3040,9 @@ class FakeImportRepository implements ImportRepository {
   AppFailure? failure;
 
   /// "preview link webcal://x past=false", "import file 120 chars
-  /// past=true", "teamreach preview link …", "import groupme events 3
-  /// past=false", "check messages 250", "import documents 2".
+  /// past=true", "teamreach preview link …", "google preview link …",
+  /// "import groupme events 3 past=false", "check messages 250", "import
+  /// documents 2".
   final List<String> calls = [];
 
   /// What the server holds, by source ID: messages and documents imported.
@@ -3069,10 +3070,12 @@ class FakeImportRepository implements ImportRepository {
         : ics != null
         ? 'file ${ics.length} chars'
         : 'groupme events ${events!.length}';
-    calls.add(
-      '${source == ImportSource.teamreach ? 'teamreach ' : ''}'
-      '${dryRun ? 'preview' : 'import'} $from past=$includePast',
-    );
+    // Calendar apps other than GameChanger say which they are.
+    final app = switch (source) {
+      ImportSource.teamreach || ImportSource.google => '${source.value} ',
+      _ => '',
+    };
+    calls.add('$app${dryRun ? 'preview' : 'import'} $from past=$includePast');
     if (failure case final f?) throw f;
     return dryRun ? preview : imported;
   }

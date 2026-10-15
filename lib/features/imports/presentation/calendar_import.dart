@@ -17,8 +17,9 @@ import 'package:material_ui/material_ui.dart';
 const _maxFileBytes = 1000000;
 
 /// Importing a team's events from a calendar link (SPEC IMPORT-7,
-/// IMPORT-8): GameChanger's or TeamReach's, or a calendar file saved from
-/// either. Only events: those apps' chat and files aren't available.
+/// IMPORT-8, IMPORT-10): GameChanger's, TeamReach's, or a Google
+/// calendar's, or a calendar file saved from one. Only events: those apps'
+/// chat and files aren't available.
 /// Preview what's new, then import. RSVPs and attendance stay behind.
 class CalendarImportForm extends ConsumerStatefulWidget {
   const new({
@@ -164,6 +165,7 @@ class _CalendarImportState extends ConsumerState<CalendarImportForm> {
           title: Text(l10n.importMessages),
           subtitle: Text(switch (source) {
             ImportSource.teamreach => l10n.importMessagesUnavailableTeamReach,
+            ImportSource.google => l10n.importMessagesUnavailableGoogle,
             _ => l10n.importMessagesUnavailableGameChanger,
           }),
         ),
@@ -175,6 +177,7 @@ class _CalendarImportState extends ConsumerState<CalendarImportForm> {
           title: Text(l10n.importDocuments),
           subtitle: Text(switch (source) {
             ImportSource.teamreach => l10n.importDocumentsUnavailableTeamReach,
+            ImportSource.google => l10n.importDocumentsUnavailableGoogle,
             _ => l10n.importDocumentsUnavailableGameChanger,
           }),
         ),
@@ -187,6 +190,7 @@ class _CalendarImportState extends ConsumerState<CalendarImportForm> {
         const SizedBox(height: Space.sm),
         Text(switch (source) {
           ImportSource.teamreach => l10n.importTeamReachSteps,
+          ImportSource.google => l10n.importGoogleSteps,
           _ => l10n.importGameChangerSteps,
         }),
         const SizedBox(height: Space.md),

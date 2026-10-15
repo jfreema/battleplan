@@ -2,7 +2,17 @@
 // iCalendar, turning entries into events, and which links may be fetched.
 import { describe, expect, it } from 'vitest';
 import { calendarUrl, fetchCalendar, isPublicAddress } from '../../src/imports/fetch.js';
-import { classify, eventsFromIcs, eventsFromList, ianaZone, parseRule, ruleDates, splitLocation, type ListedEvent } from '../../src/imports/events.js';
+import {
+  classify,
+  eventsFromIcs,
+  eventsFromList,
+  ianaZone,
+  parseRule,
+  ruleDates,
+  splitLocation,
+  withoutCalendarName,
+  type ListedEvent,
+} from '../../src/imports/events.js';
 import { importedItemId } from '../../src/imports/messages.js';
 import { parseDuration, parseIcs, parseIcsTime, unescapeText } from '../../src/imports/ics.js';
 import { addDays } from '../../src/schedule/recurrence.js';
@@ -392,5 +402,72 @@ describe('imported IDs', () => {
   it('match what the app works out (test/imports_test.dart)', () => {
     expect(importedItemId('teamA', 'groupme', 'message', '154321')).toBe('imp-602ca240b0e48726ba5ed6d556f7');
     expect(importedItemId('teamA', 'groupme', 'document', 'f1')).toBe('imp-0ac814c2f6001d68b54bfe9b6bba');
+  });
+});
+
+describe("GameChanger's real feeds (checked 2026-10-15)", () => {
+  // As GameChanger serves them: the team's name on every title, UTC times,
+  // no time zone, and addresses on two lines.
+  const feed = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//com.gc/NONSGML GameChanger - Back End//EN',
+    'X-WR-CALNAME:Thunder 12U Black',
+    'X-PUBLISHED-TTL:PT18000S',
+    'BEGIN:VEVENT',
+    'UID:6a3e0d64-1c2b-4f7e-9d1a-0b2c3d4e5f60',
+    'DTSTAMP:20301009T133705Z',
+    'DTSTART:20301015T233000Z',
+    'DTEND:20301016T010000Z',
+    'SUMMARY:Thunder 12U Black Practice',
+    'GEO:30.56;-91.03',
+    'LOCATION:100 River Rd\\nCentral LA',
+    'DESCRIPTION:Arrive 30 mins early to warm up.',
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'UID:7b4f1e75-2d3c-4a8f-8e2b-1c2d3e4f5a61',
+    'DTSTART:20301017T210000Z',
+    'DTEND:20301017T223000Z',
+    'SUMMARY:Thunder 12U Black @ Eagles 12U',
+    'LOCATION:200 Park Ave\\n\\, LA 70726',
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'BEGIN:VEVENT',
+    'UID:8c5a2f86-3e4d-4b9a-9f3c-2d3e4f5a6b72',
+    'DTSTART:20301107T190000Z',
+    'DTEND:20301107T200000Z',
+    'SUMMARY:Fall Tourney 2 Placeholder',
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  it("drop the team's name from titles, and read the rest as usual", () => {
+    const cal = parseIcs(feed);
+    expect(cal.name).toBe('Thunder 12U Black');
+    const r = eventsFromIcs(cal, { teamTimeZone: CHI, nowMs: NOW, includePast: false });
+    expect(r.events.map((e) => [e.type, e.title, e.opponent, e.homeAway])).toEqual([
+      ['practice', 'Practice', null, null],
+      ['game', '@ Eagles 12U', 'Eagles 12U', 'away'],
+      ['game', 'Fall Tourney 2 Placeholder', null, null],
+    ]);
+    // UTC times, shown in the team's zone; a street address and no name.
+    expect(r.events[0]).toMatchObject({ timeZone: CHI, location: { name: '', address: '100 River Rd, Central LA' }, description: 'Arrive 30 mins early to warm up.' });
+    expect(r.events[0].endMs - r.events[0].startMs).toBe(90 * 60_000);
+    expect(r.events[1].location).toEqual({ name: '', address: '200 Park Ave, LA 70726' });
+  });
+
+  it("keep other calendars' titles as people wrote them", () => {
+    const google = feed.replace('PRODID:-//com.gc/NONSGML GameChanger - Back End//EN', 'PRODID:-//Google Inc//Google Calendar 70.9054//EN');
+    const r = eventsFromIcs(parseIcs(google), { teamTimeZone: CHI, nowMs: NOW, includePast: false });
+    expect(r.events[0].title).toBe('Thunder 12U Black Practice');
+  });
+
+  it('leave titles alone that only start like the name', () => {
+    expect(withoutCalendarName('Thunder 12U Black', 'Thunder 12U Black')).toBe('Thunder 12U Black');
+    expect(withoutCalendarName('Thunderbirds game', 'Thunder')).toBe('Thunderbirds game');
+    expect(withoutCalendarName('Thunder - Team dinner', 'Thunder')).toBe('Team dinner');
+    expect(withoutCalendarName('Practice', null)).toBe('Practice');
   });
 });

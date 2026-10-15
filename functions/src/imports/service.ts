@@ -19,10 +19,11 @@ import { fetchCalendar } from './fetch.js';
 import { parseIcs } from './ics.js';
 
 /**
- * The apps events can come from: calendar links (IMPORT-7, IMPORT-8), and
- * GroupMe's export, which the app reads and sends as a list (IMPORT-9).
+ * The apps events can come from: calendar links (IMPORT-7, IMPORT-8,
+ * IMPORT-10), and GroupMe's export, which the app reads and sends as a
+ * list (IMPORT-9).
  */
-export const importSources = ['gamechanger', 'teamreach', 'groupme'] as const;
+export const importSources = ['gamechanger', 'teamreach', 'google', 'groupme'] as const;
 export type ImportSource = (typeof importSources)[number];
 
 /** At most this many new events in one import. */

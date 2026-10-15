@@ -86,7 +86,7 @@ export function classify(summary: string): {
   const title = (s || 'Event').slice(0, Limits.eventTitleMax).trim();
   const type: EventType = /\b(practice|training|workout|clinic|tryouts?)\b/i.test(s)
     ? 'practice'
-    : /\b(game|scrimmage|match|tournament|doubleheader|playoffs?)\b/i.test(s)
+    : /\b(games?|scrimmage|match|tournaments?|tourneys?|doubleheader|double header|playoffs?)\b/i.test(s)
       ? 'game'
       : /\bmeeting\b/i.test(s)
         ? 'meeting'
@@ -94,6 +94,22 @@ export function classify(summary: string): {
           ? 'social'
           : 'other';
   return { type, title, opponent: null, homeAway: null };
+}
+
+/**
+ * [summary] without the calendar's own name in front, which GameChanger
+ * puts on every entry ("Thunder 12U Practice" in Thunder 12U's calendar is
+ * "Practice"). A title that's only the name stays as it is. Only for
+ * GameChanger's feeds (their PRODID says so).
+ */
+export function withoutCalendarName(summary: string, calendarName: string | null): string {
+  const name = (calendarName ?? '').replace(/\s+/g, ' ').trim();
+  const s = summary.replace(/\s+/g, ' ').trim();
+  if (name.length < 3 || !s.toLowerCase().startsWith(name.toLowerCase())) return summary;
+  const rest = s.slice(name.length);
+  if (!/^[\s:\-–—|]/.test(rest)) return summary;
+  const trimmed = rest.replace(/^[\s:\-–—|]+/, '').trim();
+  return trimmed || summary;
 }
 
 /**
@@ -316,7 +332,18 @@ function occurrence(e: IcsEvent, zone: string, date: string | null, sourceId: st
  * it names. Canceled entries, repeats other than daily or weekly, and
  * unreadable entries are skipped with the reason.
  */
-export function eventsFromIcs(cal: IcsCalendar, opts: ConvertOptions): Converted {
+export function eventsFromIcs(feed: IcsCalendar, opts: ConvertOptions): Converted {
+  // GameChanger puts the team's name on every title; other calendars'
+  // titles are people's own. The fallback ID stays the original title's.
+  const gameChanger = /gamechanger/i.test(feed.producer ?? '');
+  const cal = {
+    ...feed,
+    events: feed.events.map((e) => ({
+      ...e,
+      uid: e.uid || fallbackUid(e),
+      summary: gameChanger ? withoutCalendarName(e.summary, feed.name) : e.summary,
+    })),
+  };
   const events: ImportedEvent[] = [];
   const skipped: SkippedEntry[] = [];
   for (let i = 0; i < cal.unreadable; i++) skipped.push({ title: '', startMs: null, reason: 'unreadable' });

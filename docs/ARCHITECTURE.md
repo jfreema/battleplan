@@ -1137,9 +1137,9 @@ The R2 API token can reach only that bucket. The encryption key lives in Secret 
 
 ---
 
-### 6.13 Import and migration · GroupMe, TeamReach, and GameChanger built
+### 6.13 Import and migration · GroupMe, TeamReach, GameChanger, and Google Calendar built
 
-SPEC §6.15, ROADMAP tasks 219–227, 241, 249, and 250. Built: GameChanger's and TeamReach's events from their calendar links, and GroupMe's messages, documents, and events from its data export (below). TeamSnap is next. Verify each source's supported exports or official API before implementation; do not assume document or calendar access from the presence of those features in the source app.
+SPEC §6.15, ROADMAP tasks 219–227, 241, 249, 250, and 252. Built: GameChanger's, TeamReach's, and Google Calendar's events from their calendar links, and GroupMe's messages, documents, and events from its data export (below). TeamSnap is next. Verify each source's supported exports or official API before implementation; do not assume document or calendar access from the presence of those features in the source app.
 
 **Built: GameChanger events (SPEC IMPORT-7, 2026-10-15).** The `importEvents` callable (`functions/src/imports/`) and the Import screen (`lib/features/imports/`, team menu → Import, admins only).
 
@@ -1148,13 +1148,14 @@ SPEC §6.15, ROADMAP tasks 219–227, 241, 249, and 250. Built: GameChanger's an
 - **Reading the calendar** (`ics.ts`, `events.ts`). RFC 5545 line unfolding and text unescaping; `TZID`, `VALUE=DATE`, and UTC times; `DURATION`; `EXDATE`; changed occurrences (`RECURRENCE-ID`); `STATUS:CANCELLED` left out.
   - `RRULE` is expanded only for `DAILY` and `WEEKLY` (`INTERVAL`, plain `BYDAY`, `COUNT`, `UNTIL`), from a year back to a year ahead. Anything else is skipped as `repeat`, rather than guessed.
   - Windows zone names map to IANA. A calendar zone of UTC or GMT (Google's default) gives way to the team's zone.
+  - GameChanger's feeds (checked with a real team's link, 2026-10-15: `PRODID:-//com.gc/NONSGML GameChanger - Back End//EN` from `api.team-manager.gc.com`, UTC times, no `X-WR-TIMEZONE`, addresses on two lines, `X-WR-CALNAME` the team's name) put the team's name before every `SUMMARY`. When the `PRODID` says GameChanger, `withoutCalendarName` drops it, so "Thunder 12U Practice" is "Practice"; fallback IDs still come from the original title.
 - **IDs are the provenance.** An event's ID is `imp-` plus the first 28 hex digits of sha256 of the team, source, and source ID (`UID`, or `UID#date` for one occurrence of a repeat). A repeat import reads those IDs with `getAll` and writes only missing ones, in batches of 400. Earlier imports, and anything changed on them in the app, are never overwritten. There's no job or provenance collection, so nothing needs cleaning up.
   - 500 new events at most per call (`too-many-events`). That keeps an import to one request of a few seconds, with a 2-minute function timeout.
 - **Quiet writes.** Events are written with `notifyTeam: false` and `postToChat: false`, so `followUpEventWrite` posts no card and sends no notification. `nextReminderAt` comes from the team's default reminders, so future events remind as usual and past ones never fire. A team at its storage quota gets `storage-full` (STORE-4); previews still run.
 - **Audit.** Each import adds an `auditLogs` entry, `importEvents`, with the source, link or file, and the counts.
 - **Errors on the web.** The web SDK appends the HTTP status to a callable's message (`not-a-calendar [400]`), and native SDKs don't. Every repository reads messages through `serverMessage` (`core/failure.dart`) before matching them.
 
-**Built: TeamReach events (SPEC IMPORT-8).** `importEvents` with `source: 'teamreach'`: the same link checks, reading, IDs, and quiet writes as GameChanger's. The app names the source in its steps and messages.
+**Built: TeamReach and Google Calendar events (SPEC IMPORT-8, IMPORT-10).** `importEvents` with `source: 'teamreach'` or `'google'`: the same link checks, reading, IDs, and quiet writes as GameChanger's. The app names the source in its steps and messages. Google's secret iCal address is an ordinary https feed on `calendar.google.com`.
 
 **Built: GroupMe (SPEC IMPORT-9, 2026-10-15).** The app reads GroupMe's export on the admin's device and drives the import in batches; the server checks and writes each batch. There's no server job or provenance collection: deterministic IDs make every batch safe to retry, and stopping between batches leaves a consistent, partial import that a later run finishes.
 

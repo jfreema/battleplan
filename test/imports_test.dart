@@ -89,7 +89,12 @@ void main() {
         if (!shown) return;
         await tester.tap(find.text('Import'));
         await tester.pumpAndSettle();
-        for (final app in ['GroupMe', 'TeamReach', 'GameChanger']) {
+        for (final app in [
+          'GroupMe',
+          'TeamReach',
+          'GameChanger',
+          'Google Calendar',
+        ]) {
           expect(find.text(app), findsOneWidget);
         }
       });
@@ -435,6 +440,27 @@ void main() {
     });
   });
 
+  group('Google Calendar (IMPORT-10)', () {
+    testWidgets("takes a calendar's secret iCal address", (tester) async {
+      final repo = await openImport(tester, source: 'Google Calendar');
+      expect(find.text('Your Google Calendar schedule link'), findsOneWidget);
+      expect(
+        find.textContaining('Secret address in iCal format'),
+        findsOneWidget,
+      );
+      expect(find.text('Google Calendar has no team chat.'), findsOneWidget);
+      const link =
+          'https://calendar.google.com/calendar/ical/x/private-y/basic.ics';
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Calendar link'),
+        link,
+      );
+      await tapText(tester, 'Preview');
+      expect(repo.calls, ['google preview link $link past=false']);
+      expect(find.text('Canceled in Google Calendar'), findsOneWidget);
+    });
+  });
+
   group("GroupMe's export (IMPORT-9)", () {
     test('is read: messages oldest first, photos and files from the '
         'gallery, events from the calendar, and what stays behind', () {
@@ -681,7 +707,10 @@ void main() {
       expect(find.text('· 1 video'), findsOneWidget);
       expect(find.text('3 events to add'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Import'));
+      final run = find.widgetWithText(FilledButton, 'Import');
+      await tester.ensureVisible(run);
+      await tester.pumpAndSettle();
+      await tester.tap(run);
       await tester.pumpAndSettle();
       expect(find.text('6 messages added to the chat.'), findsOneWidget);
       expect(find.text('1 document added.'), findsOneWidget);

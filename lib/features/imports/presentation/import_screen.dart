@@ -15,8 +15,9 @@ import 'package:material_ui/material_ui.dart';
 
 /// Import at `/g/:groupId/import` (SPEC §6.15): the team's admins bring
 /// their team over from another app. GroupMe's messages, documents, and
-/// events come from its data export (IMPORT-9); TeamReach's and
-/// GameChanger's events from their calendar links (IMPORT-7, IMPORT-8).
+/// events come from its data export (IMPORT-9); TeamReach's,
+/// GameChanger's, and Google Calendar's events from their calendar links
+/// (IMPORT-7, IMPORT-8, IMPORT-10).
 /// Choose the app, then what to bring, preview it, and import. Importing
 /// again adds only what's new.
 class ImportScreen extends ConsumerStatefulWidget {
@@ -72,6 +73,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                       ImportSource.groupme => l10n.importGroupMeHelp,
                       ImportSource.teamreach => l10n.importTeamReachHelp,
                       ImportSource.gamechanger => l10n.importGameChangerHelp,
+                      ImportSource.google => l10n.importGoogleHelp,
                     }),
                   ),
               ],

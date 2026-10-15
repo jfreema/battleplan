@@ -33,6 +33,10 @@ export interface IcsEvent {
 export interface IcsCalendar {
   /** X-WR-TIMEZONE, the zone a feed's floating times are in, if it says. */
   timeZone: string | null;
+  /** X-WR-CALNAME, the calendar's name: GameChanger's is the team's. */
+  name: string | null;
+  /** PRODID, the app that made it ("-//com.gc/NONSGML GameChanger…"). */
+  producer: string | null;
   events: IcsEvent[];
   /** VEVENTs that couldn't be read (no start, or a start in no format). */
   unreadable: number;
@@ -119,6 +123,8 @@ export function parseIcs(text: string): IcsCalendar {
   const lines = text.replace(/\r?\n[ \t]/g, '').split(/\r?\n/);
   const events: IcsEvent[] = [];
   let timeZone: string | null = null;
+  let name: string | null = null;
+  let producer: string | null = null;
   let unreadable = 0;
   // The components we're inside, innermost last.
   const stack: string[] = [];
@@ -144,8 +150,10 @@ export function parseIcs(text: string): IcsCalendar {
     const inside = stack.at(-1);
     if (inside === 'VEVENT') props.push(p);
     else if (inside === 'VCALENDAR' && p.name === 'X-WR-TIMEZONE') timeZone = p.value.trim() || null;
+    else if (inside === 'VCALENDAR' && p.name === 'X-WR-CALNAME') name = unescapeText(p.value).trim() || null;
+    else if (inside === 'VCALENDAR' && p.name === 'PRODID') producer = p.value.trim() || null;
   }
-  return { timeZone, events, unreadable };
+  return { timeZone, name, producer, events, unreadable };
 }
 
 function toEvent(props: Property[]): IcsEvent | null {

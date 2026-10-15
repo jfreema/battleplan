@@ -190,8 +190,10 @@ describe('who may import (IMPORT-1)', () => {
     await expect(call('alex', { groupId: G, source: 'gamechanger', url: 'http://example.com/a.ics' })).rejects.toMatchObject({
       message: 'bad-link',
     });
-    // Previews are the default.
+    // Previews are the default; every calendar app reads the same way.
     expect(await call('alex', { groupId: G, source: 'gamechanger', ics: feed() })).toMatchObject({ added: 5 });
+    expect(await call('alex', { groupId: G, source: 'teamreach', ics: feed() })).toMatchObject({ added: 5 });
+    expect(await call('alex', { groupId: G, source: 'google', ics: feed() })).toMatchObject({ added: 5 });
     expect(await teamEvents()).toHaveLength(0);
   });
 });

@@ -5,12 +5,13 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/imports/domain/chat_import.dart';
 
 /// The apps a team's chat, documents, and events can come from (SPEC
-/// IMPORT-1, IMPORT-7 to IMPORT-9): GroupMe's data export, and TeamReach's
-/// and GameChanger's calendar links.
+/// IMPORT-1, IMPORT-7 to IMPORT-10): GroupMe's data export, and TeamReach's,
+/// GameChanger's, and Google Calendar's calendar links.
 enum ImportSource {
   groupme('groupme', 'GroupMe'),
   teamreach('teamreach', 'TeamReach'),
-  gamechanger('gamechanger', 'GameChanger');
+  gamechanger('gamechanger', 'GameChanger'),
+  google('google', 'Google Calendar');
 
   new(this.value, this.label);
 
