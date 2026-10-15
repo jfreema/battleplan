@@ -93,12 +93,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   /// messages arrive.
   bool _stick = true;
 
+  /// Where the list was put to open at the first unread message, until
+  /// anything else moves it. Game cards, polls, and photos fill in after
+  /// it opens, so it's put there again as they do (CHAT-1): with them in,
+  /// all the unread messages may no longer fit, and the bottom it opened
+  /// at is no place to stay.
+  double? _heldAt;
+
   /// The bottom of the list. Scroll offsets grow upward from where the two
   /// halves meet, so newer messages are at negative offsets.
   double get _bottom => _scroll.position.minScrollExtent;
 
+  /// The first unread message near the top, or the bottom if all of them
+  /// fit on screen.
+  double get _firstUnreadOffset {
+    final p = _scroll.position;
+    return math.max(p.minScrollExtent, -p.viewportDimension * 0.85);
+  }
+
+  /// Keeps the list at the first unread message while that holds, as
+  /// what's in it changes size.
+  void _keepHeld() {
+    if (_heldAt == null || !mounted || !_scroll.hasClients) return;
+    final at = _firstUnreadOffset;
+    if (_scroll.offset == at) return;
+    _heldAt = at;
+    _scroll.jumpTo(at);
+  }
+
   /// Scrolls to [messageId], loading older pages first if needed (CHAT-13).
   Future<void> _jumpTo(String messageId) async {
+    _heldAt = null;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final found = await controller.loadUntil(messageId);
     if (!found || !mounted) return;
@@ -210,7 +235,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _trackBottom() {
-    _stick = _scroll.position.pixels <= _bottom + 2;
+    // Moved by anything but keeping the first unread in place: the person
+    // scrolled, sent, or jumped, so the list's place is theirs again.
+    final held = _heldAt;
+    if (held != null && (_scroll.offset - held).abs() > 0.5) _heldAt = null;
+    _stick = _heldAt == null && _scroll.position.pixels <= _bottom + 2;
     final atBottom = _scroll.position.pixels < _bottom + 150;
     if (atBottom != _atBottom) setState(() => _atBottom = atBottom);
     _markRead();
@@ -318,10 +347,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     unawaited(controller.openAt(read).catchError((_) {}));
     if (!scroll || !_scroll.hasClients) return;
     _stick = false;
-    // The first unread message near the top, or the bottom if all of
-    // them fit on screen.
-    final p = _scroll.position;
-    _scroll.jumpTo(math.max(p.minScrollExtent, -p.viewportDimension * 0.85));
+    final at = _firstUnreadOffset;
+    _heldAt = at;
+    _scroll.jumpTo(at);
   }
 
   void _loadOlder() => unawaited(
@@ -339,10 +367,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   );
 
   /// After sending, show the bottom, where the new message is.
-  void _scrollToBottomSoon() =>
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _scroll.hasClients) _scroll.jumpTo(_bottom);
-      });
+  void _scrollToBottomSoon() {
+    _heldAt = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scroll.hasClients) _scroll.jumpTo(_bottom);
+    });
+  }
+
+  /// Down to the newest messages ("↓ 12 new").
+  void _toBottom() {
+    _heldAt = null;
+    if (Motion.reduced(context)) {
+      _scroll.jumpTo(_bottom);
+    } else {
+      _scroll.animateTo(_bottom, duration: Motion.slow, curve: Motion.curve);
+    }
+  }
 
   @override
   void dispose() {
@@ -436,10 +476,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ? 0
         : ref.watch(unreadCountProvider(widget.groupId)).value ?? 0;
     final newBelow = _atBottom ? 0 : (unread > loadedNew ? unread : loadedNew);
-    // Stay at the bottom as messages arrive, if that's where the person is.
+    // Stay at the first unread message while that holds, else at the
+    // bottom as messages arrive, if that's where the person is.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_scroll.hasClients) return;
-      if (_stick && _scroll.offset != _bottom) _scroll.jumpTo(_bottom);
+      if (_heldAt != null) {
+        _keepHeld();
+      } else if (_stick && _scroll.offset != _bottom) {
+        _scroll.jumpTo(_bottom);
+      }
       _markRead();
     });
     final shownIds = byId.keys.toSet();
@@ -551,7 +596,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } else if (messages.isEmpty && pending.isEmpty) {
       list = EmptyState(icon: AppIcons.chat, message: l10n.chatEmpty);
     } else {
-      list = CustomScrollView(
+      final scrollView = CustomScrollView(
         key: _listKey,
         controller: _scroll,
         reverse: true,
@@ -596,6 +641,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
         ],
       );
+      // Cards and photos filling in change the list's size, not where it's
+      // scrolled to: keep the first unread message in place. (This comes
+      // after scrolling too, which has let go of it by then.)
+      list = NotificationListener<ScrollMetricsNotification>(
+        onNotification: (_) {
+          _keepHeld();
+          return false;
+        },
+        child: scrollView,
+      );
     }
 
     return Column(
@@ -617,13 +672,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   bottom: Space.sm,
                   child: FloatingActionButton.extended(
                     heroTag: null,
-                    onPressed: () => Motion.reduced(context)
-                        ? _scroll.jumpTo(_bottom)
-                        : _scroll.animateTo(
-                            _bottom,
-                            duration: Motion.slow,
-                            curve: Motion.curve,
-                          ),
+                    onPressed: _toBottom,
                     icon: const Icon(AppIcons.arrowDown),
                     label: Text(l10n.newMessagesBelow(newBelow)),
                   ),

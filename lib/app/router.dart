@@ -559,7 +559,13 @@ GoRouter router(Ref ref) {
                       builder: (_, state) {
                         final id = GroupId(state.pathParameters['groupId']!);
                         return switch (tab) {
-                          'chat' => ChatScreen(groupId: id),
+                          // Keyed by team: the tab's page is the same for
+                          // every team, and a new team needs a fresh chat
+                          // state, opened at its own first unread message.
+                          'chat' => ChatScreen(
+                            key: ValueKey('chat-${id.value}'),
+                            groupId: id,
+                          ),
                           'schedule' => ScheduleScreen(groupId: id),
                           _ => DocumentsScreen(groupId: id),
                         };

@@ -12,11 +12,13 @@ import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/message_tile.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'helpers/fakes.dart';
@@ -118,6 +120,131 @@ void main() {
       expect(
         state.messages.map((m) => m.id),
         containsAll([for (var i = 21; i <= 120; i++) 'm$i']),
+      );
+    });
+
+    testWidgets('cards that fill in after it opens leave it at the first '
+        'unread, not stuck to the newest', (tester) async {
+      // The coach's polls after the marker, still on their way when the
+      // chat opens: everything unread fits, so it opens at the bottom.
+      Message poll(int i) => msg(
+        i,
+        author: 'coach',
+        name: 'Jordan Coach',
+        type: MessageType.poll,
+      ).copyWith(text: 'Poll $i', pollId: 'p$i');
+      final repo = FakeMessageRepository([
+        msg(5),
+        poll(4),
+        poll(3),
+        msg(2),
+        msg(1),
+      ]);
+      final polls = FakePollRepository();
+      final members = FakeMemberRepository([
+        testMembership(
+          'a',
+          'coach',
+          role: MemberRole.owner,
+        ).copyWith(lastReadAt: msg(1).createdAt),
+        testMembership('a', 'sam', name: 'Sam Rivera'),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberRepo: members,
+        messageRepo: repo,
+        pollRepo: polls,
+        size: const Size(390, 844),
+      );
+      await tester.pumpAndSettle();
+      expect(onScreen(tester, 'Message 2'), isTrue);
+      // They arrive, more than a screen of them, with the read marker the
+      // chat wrote: the first unread stays in view.
+      for (final i in [3, 4]) {
+        polls.put(
+          Poll(
+            id: PollId('p$i'),
+            groupId: const GroupId('a'),
+            createdBy: 'coach',
+            question: 'Poll $i',
+            options: [
+              for (var o = 0; o < 4; o++) PollOption(id: '$o', text: 'Day $o'),
+            ],
+          ),
+        );
+      }
+      members.echoRead(
+        const GroupId('a'),
+        const UserId('coach'),
+        msg(2).createdAt!,
+      );
+      await tester.pumpAndSettle();
+      expect(onScreen(tester, 'New messages'), isTrue);
+      expect(onScreen(tester, 'Message 2'), isTrue);
+      expect(onScreen(tester, 'Message 5'), isFalse);
+      // Scrolling down from there reaches the newest, and stays with it.
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -1500));
+      await tester.pumpAndSettle();
+      expect(onScreen(tester, 'Message 5'), isTrue);
+      repo
+        ..messages.insert(0, msg(6))
+        ..refresh();
+      await tester.pumpAndSettle();
+      expect(onScreen(tester, 'Message 6'), isTrue);
+    });
+
+    testWidgets("switching teams opens the other team's chat at its own "
+        'first unread', (tester) async {
+      Message inB(int i) => msg(i)
+          .copyWith(id: 'b$i', groupId: const GroupId('b'), text: 'Team B $i');
+      final repo = FakeMessageRepository([
+        inB(3),
+        msg(3),
+        inB(2),
+        msg(2),
+        inB(1),
+        msg(1),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder'),
+          'b': testGroup('b', 'Cyclone'),
+        },
+        memberRepo: FakeMemberRepository([
+          // All of Thunder's read; Cyclone's from its second message on.
+          testMembership(
+            'a',
+            'coach',
+            role: MemberRole.owner,
+          ).copyWith(lastReadAt: msg(3).createdAt),
+          testMembership(
+            'b',
+            'coach',
+            role: MemberRole.owner,
+          ).copyWith(lastReadAt: inB(1).createdAt),
+          testMembership('a', 'sam', name: 'Sam Rivera'),
+          testMembership('b', 'sam', name: 'Sam Rivera'),
+        ]),
+        messageRepo: repo,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Message 3'), findsOneWidget);
+      expect(find.text('New messages'), findsNothing);
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/b/chat');
+      await tester.pumpAndSettle();
+      expect(find.text('Team B 3'), findsOneWidget);
+      final divider = tester.getRect(find.text('New messages'));
+      expect(
+        tester.getRect(find.text('Team B 1')).bottom,
+        lessThan(divider.top),
+      );
+      expect(
+        tester.getRect(find.text('Team B 2')).top,
+        greaterThan(divider.bottom),
       );
     });
 

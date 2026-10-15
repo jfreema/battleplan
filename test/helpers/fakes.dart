@@ -529,6 +529,11 @@ class FakeMemberRepository implements MemberRepository {
     reads.add(groupId.value);
     if (upTo != null) readsUpTo.add(upTo);
   }
+
+  /// My read marker as the server writes it back after a read, which
+  /// everyone watching my membership sees.
+  void echoRead(GroupId groupId, UserId uid, DateTime at) =>
+      _updateMine(groupId, uid, (m) => m.copyWith(lastReadAt: at));
 }
 
 class FakeLocalPrefs implements LocalPrefsRepository {
