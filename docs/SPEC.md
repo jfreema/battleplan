@@ -199,7 +199,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 
 `getbattleplan.app` is a small explainer website; the web app lives under it at **`getbattleplan.app/app`**. The site's source is the `website/` folder in the repo (ARCH §5.1, §6.6).
 
-- **WEB-1 · MVP · Landing page.** What Battleplan is (team chat, schedule and RSVPs, polls, documents, players and parents for adult and youth teams), that it's free with no ads, screenshots, and clear ways in: **Sign up, it's free!** (the web app's sign-up page, `/app/sign-up`) and **Log in to Battleplan** (`/app`; just **Log in** in the header on phones), and App Store and Google Play badges once the apps are listed.
+- **WEB-1 · MVP · Landing page.** What Battleplan is (team chat, schedule and RSVPs, polls, documents, players and parents for adult and youth teams), that it's free with no ads, screenshots, and clear ways in: **Get Started** (the web app's sign-up page, `/app/sign-up`) and **Login** (`/app`), and App Store and Google Play badges once the apps are listed.
 - **WEB-2 · MVP · Support and legal pages.** `/privacy`, `/terms`, and `/delete-account` (LEGAL-1, LEGAL-3), and `/support` with the support email. These are the URLs the store listings and Firebase settings use.
 - **WEB-3 · MVP · The web app at `/app`.** The Flutter web app is served under `/app/` and linked from every page of the site. Signed-in people who open `/app` go straight to their teams.
 - **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app.
@@ -243,8 +243,8 @@ Sign in
       ├─ Header:     team switcher ▾ · notification bell · team menu ⋯ · your avatar
       ├─ Tabs:       Chat | Schedule | Documents
       ├─ Team menu:  Roster · Invite · Notifications for this team ·
-      │              Team settings* · Media* · Reports* · Import* ·
-      │              Leave team                                      (* admins)
+      │              Team settings* · Media* · Reports* · Import*    (* admins)
+      │              (Leave team is on your own card in the Roster, TEAM-8)
       └─ Your avatar: Settings · Admin panel** · Sign out           (** super admins)
 ```
 
@@ -428,7 +428,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - A results screen lists who was added, who was invited, and any problems.
   - To fill the Players section, admins add players with the player's or their parents' emails instead (PLAYER-1).
 - **TEAM-8 · MVP · Leave a team.**
-  - Anyone can leave.
+  - Anyone can leave, from their own card in the roster (team menu → **Roster** → their name → **Leave team**), after confirming. It isn't in the team menu, where it was too easy to tap by mistake (2026-10-15, at the owner's request).
   - The owner must transfer ownership first. If they're the only member, they archive or delete the team instead.
 - **TEAM-9 · MVP · Archive or delete (owner, super admins).**
   - **Archive** makes the team read-only and moves it to "Archived" in the switcher. It can be restored.

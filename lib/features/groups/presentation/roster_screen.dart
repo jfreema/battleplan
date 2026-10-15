@@ -15,6 +15,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/presentation/leave_team.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
@@ -673,6 +674,24 @@ class MemberCard extends ConsumerWidget {
                       l10n.removedDone(member.displayName),
                     ),
                   );
+                },
+              ),
+            // Leaving is here, on my own card, rather than in the team
+            // menu, where it was too easy to tap by mistake (TEAM-8).
+            if (isSelf)
+              ListTile(
+                leading: Icon(
+                  AppIcons.leave,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                title: Text(
+                  l10n.leaveTeamMenu,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+                // Asked over the card; leaving goes home, which closes it.
+                onTap: () async {
+                  final group = ref.read(groupProvider(member.groupId)).value;
+                  if (group != null) await leaveTeam(context, ref, group);
                 },
               ),
             // Report or block someone else (SAFE-1, SAFE-2).

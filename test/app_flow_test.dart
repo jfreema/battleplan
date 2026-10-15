@@ -336,6 +336,36 @@ void main() {
     expect(groupRepo.groups['a']!.settings.membersCanCreateEvents, isTrue);
   });
 
+  /// Opens my own card on the roster, where Leave team is (TEAM-8).
+  Future<void> openMyCard(WidgetTester tester) async {
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    // Not in the team menu, where a stray tap could leave the team.
+    expect(find.text('Leave team'), findsNothing);
+    await tester.tap(find.text('Roster'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Jordan Coach').first);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('a member leaves from their own card on the roster', (
+    tester,
+  ) async {
+    final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')});
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groupRepo: groupRepo,
+      memberships: [testMembership('a', 'coach', name: 'Jordan Coach')],
+    );
+    await openMyCard(tester);
+    await tester.tap(find.text('Leave team'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Leave team'));
+    await tester.pumpAndSettle();
+    expect(groupRepo.updates, ['leave a']);
+  });
+
   testWidgets('the owner is told to transfer before leaving', (tester) async {
     final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')})
       ..callerIsOwner = true;
@@ -343,10 +373,16 @@ void main() {
       tester,
       auth: FakeAuthRepository(user: coach),
       groupRepo: groupRepo,
-      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      memberships: [
+        testMembership(
+          'a',
+          'coach',
+          role: MemberRole.owner,
+          name: 'Jordan Coach',
+        ),
+      ],
     );
-    await tester.tap(find.byTooltip('Team menu'));
-    await tester.pumpAndSettle();
+    await openMyCard(tester);
     await tester.tap(find.text('Leave team'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Leave team'));

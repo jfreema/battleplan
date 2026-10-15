@@ -4,11 +4,9 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
-import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
-import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -165,28 +163,6 @@ class _TeamShellState extends ConsumerState<TeamShell> {
       _ => icon,
     };
 
-    Future<void> leave() async {
-      final current = team;
-      if (current == null) return;
-      final ok = await showConfirmDialog(
-        context,
-        title: l10n.leaveTeamTitle(current.group.name),
-        message: l10n.leaveTeamBody,
-        confirmLabel: l10n.leaveTeamMenu,
-        cancelLabel: l10n.cancel,
-        destructive: true,
-      );
-      if (!ok) return;
-      try {
-        await ref.read(groupRepositoryProvider).leave(current.group.id);
-        if (context.mounted) context.go('/');
-      } on OwnerMustTransfer {
-        if (context.mounted) showAppSnackBar(context, l10n.ownerMustTransfer);
-      } on AppFailure {
-        if (context.mounted) showAppSnackBar(context, l10n.errorLeaveTeam);
-      }
-    }
-
     final Widget header = viewing
         ? _ViewingHeader(group: viewed)
         : _TeamHeader(
@@ -194,7 +170,6 @@ class _TeamShellState extends ConsumerState<TeamShell> {
             switcherKey: _switcherKey,
             showOtherUnreadDot: otherUnread,
             onOpenSwitcher: (anchor) => _openSwitcher(context, anchor: anchor),
-            onLeave: leave,
           );
     // Under the header: "Viewing as super admin", or the storage warning.
     final Widget banner = viewing
@@ -321,7 +296,6 @@ class _TeamHeader extends StatelessWidget {
     required this.switcherKey,
     required this.showOtherUnreadDot,
     required this.onOpenSwitcher,
-    required this.onLeave,
   });
 
   final MyTeam? team;
@@ -330,7 +304,6 @@ class _TeamHeader extends StatelessWidget {
 
   /// Opens the switcher from the button given.
   final void Function(BuildContext anchor) onOpenSwitcher;
-  final Future<void> Function() onLeave;
 
   @override
   Widget build(BuildContext context) {
@@ -362,7 +335,6 @@ class _TeamHeader extends StatelessWidget {
           _TeamMenu(
             groupId: team?.group.id,
             isAdmin: team?.membership.isAdmin ?? false,
-            onLeave: onLeave,
           ),
           if (!wide) const _AccountButton(),
         ],
@@ -398,12 +370,7 @@ class _ViewingHeader extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
-          _TeamMenu(
-            groupId: group?.id,
-            isAdmin: true,
-            viewing: true,
-            onLeave: () async {},
-          ),
+          _TeamMenu(groupId: group?.id, isAdmin: true, viewing: true),
           if (width < Breakpoints.wide) const _AccountButton(),
         ],
       ),
@@ -482,19 +449,17 @@ class _StorageBanner extends ConsumerWidget {
 
 /// The team menu: Roster, Invite, and Notifications, the admin items
 /// (Team settings, Media, Reports, Import) for the team's admins and super
-/// admins (§3), and Leave. A super admin viewing a team they're not on
+/// admins (§3). A super admin viewing a team they're not on
 /// ([viewing], ADMIN-3) gets the roster, invite, and admin items only.
 class _TeamMenu extends ConsumerWidget {
   const new({
     required this.groupId,
     required this.isAdmin,
-    required this.onLeave,
     this.viewing = false,
   });
 
   final GroupId? groupId;
   final bool isAdmin;
-  final Future<void> Function() onLeave;
   final bool viewing;
 
   @override
@@ -514,7 +479,8 @@ class _TeamMenu extends ConsumerWidget {
       if (admin) ('reports', AppIcons.report, l10n.reportsMenu),
       // Bringing the schedule over from another app (SPEC §6.15).
       if (admin) ('import', AppIcons.download, l10n.importMenu),
-      if (!viewing) ('leave', AppIcons.leave, l10n.leaveTeamMenu),
+      // Leave team is on your own card in the roster, out of the way of a
+      // stray tap (TEAM-8).
     ];
     const built = {
       'roster',
@@ -531,9 +497,7 @@ class _TeamMenu extends ConsumerWidget {
       onSelected: (route) {
         final id = groupId;
         if (id == null) return;
-        if (route == 'leave') {
-          unawaited(onLeave());
-        } else if (built.contains(route)) {
+        if (built.contains(route)) {
           unawaited(context.push('/g/${id.value}/$route'));
         } else {
           showAppSnackBar(context, l10n.comingSoon);
