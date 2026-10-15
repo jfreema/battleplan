@@ -341,6 +341,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Confirm "I'm 18 or older". Accounts are for adults only. Adult players use the app themselves, and youth players never sign in: their parents and guardians use the app for them (§6.3).
   - Only the confirmation and its date are stored.
   - It says which account is signed in ("Signed in as …"), with **Use a different account**, which signs out and goes back to the sign-in choices: for a Google account picked by mistake.
+  - **Continue** shows a spinner while it saves. A save that fails, or gets no answer within 30 seconds, says so ("Couldn't save your profile. Check your connection and try again.") and Continue works again; the error is reported like other app errors.
 - **AUTH-6 · MVP · Accounts added by admins.**
   - Team admins and super admins add people with just a **name and email** (TEAM-7, PLAYER-1, ADMIN-4).
   - **Admins never set, see, or know anyone's password.** No screen or tool lets them. They can only send setup and password-reset emails.

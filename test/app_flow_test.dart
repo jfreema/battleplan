@@ -202,6 +202,65 @@ void main() {
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
   });
 
+  group('finishing setup when the save goes wrong', () {
+    Future<Finder> readyToContinue(
+      WidgetTester tester,
+      FakeUserRepository users,
+    ) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        users: users,
+      );
+      await tester.tap(find.text("I'm 18 or older"));
+      await tester.tap(find.textContaining('I agree to the Terms'));
+      await tester.pumpAndSettle();
+      final next = find.byType(FilledButton).last;
+      await tester.ensureVisible(next);
+      return next;
+    }
+
+    const failed =
+        "Couldn't save your profile. Check your connection and try again.";
+
+    testWidgets('a refused save says so, is reported, and can be tried '
+        'again', (tester) async {
+      final users = FakeUserRepository(needsSetup: true)
+        ..setupError = const Offline('unavailable');
+      final next = await readyToContinue(tester, users);
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+      expect(find.text(failed), findsOneWidget);
+      expect(tester.takeException(), isA<Offline>());
+      expect(tester.widget<FilledButton>(next).onPressed, isNotNull);
+      users.setupError = null;
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    });
+
+    testWidgets('a save that never answers shows it is working, then gives '
+        'up and says so', (tester) async {
+      final users = FakeUserRepository(needsSetup: true)..setupHangs = true;
+      final next = await readyToContinue(tester, users);
+      await tester.tap(next);
+      await tester.pump();
+      expect(
+        find.descendant(
+          of: next,
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.widget<FilledButton>(next).onPressed, isNull);
+      await tester.pump(const Duration(seconds: 31));
+      await tester.pump();
+      expect(find.text(failed), findsOneWidget);
+      expect(tester.takeException(), isA<TimeoutException>());
+      expect(tester.widget<FilledButton>(next).onPressed, isNotNull);
+    });
+  });
+
   testWidgets('setup says which account this is, and Use a different '
       'account goes back to the sign-in choices', (tester) async {
     await pumpApp(

@@ -633,6 +633,12 @@ class FakeUserRepository implements UserRepository {
   /// Shows a profile change made elsewhere (the server, another device).
   void changed() => _changes.add(null);
 
+  /// Finishing setup fails with this, as a refused or offline save would.
+  Exception? setupError;
+
+  /// Finishing setup never answers, as a request stuck on its way would.
+  bool setupHangs = false;
+
   UserProfile _profile(String uid) => UserProfile(
     uid: uid,
     displayName: savedName ?? 'Jordan Coach',
@@ -693,6 +699,8 @@ class FakeUserRepository implements UserRepository {
       _changes.add(null);
     }
     if (!finishSetup) return;
+    if (setupHangs) await Completer<void>().future;
+    if (setupError case final error?) throw error;
     savedName = displayName;
     needsSetup = false;
     _changes.add(null);

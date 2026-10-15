@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/button_spinner.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/presentation/legal_links.dart';
@@ -25,6 +26,11 @@ class SetupScreen extends ConsumerStatefulWidget {
 }
 
 class _SetupScreenState extends ConsumerState<SetupScreen> {
+  /// How long Continue waits for the server before saying it couldn't save.
+  /// A request can hang on a phone (stuck before it's sent, or on a weak
+  /// connection) and would otherwise leave Continue doing nothing.
+  static const _saveTimeout = Duration(seconds: 30);
+
   final _name = TextEditingController();
   bool _adult = false;
   bool _terms = false;
@@ -32,6 +38,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   bool _failed = false;
   bool _prefilled = false;
   bool _uploading = false;
+
+  /// After a save, gives Continue back if the app hasn't moved on.
+  Timer? _stalled;
 
   Future<void> _changePhoto(String uid) async {
     setState(() => _uploading = true);
@@ -44,11 +53,13 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   @override
   void dispose() {
+    _stalled?.cancel();
     _name.dispose();
     super.dispose();
   }
 
   Future<void> _continue() async {
+    _stalled?.cancel();
     setState(() {
       _saving = true;
       _failed = false;
@@ -56,12 +67,32 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     try {
       await ref
           .read(userRepositoryProvider)
-          .ensureProfile(displayName: _name.text.trim(), finishSetup: true);
-    } on Exception {
-      if (mounted) setState(() => _failed = true);
-    } finally {
-      if (mounted) setState(() => _saving = false);
+          .ensureProfile(displayName: _name.text.trim(), finishSetup: true)
+          .timeout(_saveTimeout);
+    } on Object catch (error, stack) {
+      // Whatever it was, say so, and report it: this keeps someone out of
+      // the app.
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'first-run setup',
+          context: ErrorDescription('while saving the profile'),
+        ),
+      );
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _failed = true;
+        });
+      }
+      return;
     }
+    // Saved: the router moves on once the profile shows it, with the
+    // spinner until then. Continue comes back if that stalls.
+    _stalled = Timer(_saveTimeout, () {
+      if (mounted) setState(() => _saving = false);
+    });
   }
 
   @override
@@ -174,7 +205,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                     onPressed: canContinue
                         ? () => unawaited(_continue())
                         : null,
-                    child: Text(l10n.activateContinue),
+                    child: _saving
+                        ? const ButtonSpinner()
+                        : Text(l10n.activateContinue),
                   ),
                   const SizedBox(height: Space.sm),
                   // Back to the sign-in choices, for another account.

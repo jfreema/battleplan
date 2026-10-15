@@ -20,17 +20,6 @@ class ImportReport {
   final List<({String label, String route})> actions;
 }
 
-/// A button's spinner while it works.
-class ButtonSpinner extends StatelessWidget {
-  const new({super.key});
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.square(
-    dimension: 20,
-    child: CircularProgressIndicator(strokeWidth: 2),
-  );
-}
-
 /// Why an import was refused, in words (IMPORT-1, IMPORT-5).
 String importFailureText(
   AppLocalizations l10n,
