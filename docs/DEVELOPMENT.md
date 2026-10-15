@@ -154,7 +154,7 @@ It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which own
 
 ## App icons and splash screens
 
-The icons and splash screens come from the placeholder mark in `assets/brand/` on `#2F5BEA` (SPEC Q9). After changing the mark, run `tools/brand_icons.sh` (it needs Google Chrome to render the SVGs) and commit what it writes under `android/`, `ios/`, and `web/`.
+The icons and splash screens come from the brand mark (SPEC §7.1) in `assets/brand/*.svg` and `website/favicon.svg`, on `#2F5BEA`; the sign-in screen draws the same shapes in `lib/core/widgets/brand_mark.dart`, and `web/index.html`'s loading screen inlines the favicon. After changing the mark, change all of them, run `tools/brand_icons.sh` (it needs Google Chrome to render the SVGs, and macOS's `sips` to size the web icons) and commit what it writes under `assets/brand/`, `android/`, `ios/`, `web/`, and `website/`.
 
 ## Everyday commands
 

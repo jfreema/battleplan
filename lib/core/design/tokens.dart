@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 /// Design tokens from SPEC §7.3. Screens use these, never raw numbers.
 abstract final class AppTokens {
-  /// Brand blue (SPEC §7.1, Q9 placeholder).
+  /// Brand blue (SPEC §7.1, Q9).
   static const Color brand = Color(0xFF2F5BEA);
 
   static const String fontFamily = 'Inter';

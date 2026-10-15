@@ -12,7 +12,7 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 | `delete-account.html` | `/delete-account`: deletion in the app and by email (LEGAL-3) |
 | `404.html` | Hosting's not-found page |
 | `site.css` | All styles; light and dark through `prefers-color-scheme`, brand colors from `lib/core/design` |
-| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | Icons (a stand-in mark until the app icon, task 120) |
+| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | Icons: the brand mark (SPEC §7.1). `favicon.svg` is also the header mark; `tools/brand_icons.sh` makes the PNGs from it and `assets/brand/icon.svg` |
 | `images/*.webp` | App screenshots, light and dark, 600 px wide |
 | `images/og.png` | Open Graph and Twitter card image, 1200 × 630 |
 | `robots.txt`, `sitemap.xml` | The site is indexed; `/app/` is not |

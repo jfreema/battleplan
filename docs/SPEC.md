@@ -1049,7 +1049,7 @@ Requested 2026-10-13. Future work in ROADMAP tasks 219–227; implementation has
 ### 7.1 Brand
 
 - **Name:** Battleplan.
-- **Logo:** to be designed (Q9). Until then, a simple placeholder mark plus the wordmark. The app icon has to read clearly at small sizes in both light and dark mode.
+- **Logo:** a white flag on a pole, waving, with an angular B cut out of it, on a rounded blue tile, plus the wordmark (2026-10-14, from the owner's sketch). The same mark is the website's favicon and header mark, the web app's tab icon and loading screen, the app icons, and the splash screens. The B drops out at 16 px, leaving the flag; at 32 px and up it reads. The app icon has to read clearly at small sizes in both light and dark mode.
 - **Primary color:** proposed deep blue `#2F5BEA` (Q9).
 - **Team colors** personalize each team without competing with the brand. They're used only for the team's logo or initials badge, the switcher, and calendar dots in the all-teams view. Chat bubbles always use the brand color.
 
@@ -1434,7 +1434,7 @@ Each question has a default. The build follows the default until someone decides
 | Q6 | ~~Reactions: one per person per message, or several?~~ **Decided 2026-10-12 (the recommended default):** one. | — |
 | Q7 | ~~On wide screens, bottom tabs or a side rail?~~ **Decided 2026-10-12 (the recommended default):** a side rail at 840 px and wider. | — |
 | Q8 | ~~What domain name for invite links and email?~~ **Decided:** `getbattleplan.app`, registered at Cloudflare ($8.20 the first year, then $14.20/year). battleplan.com, .app, and .io are taken. App ID `app.getbattleplan` (`.dev` for dev builds). | — |
-| Q9 | ~~Logo and primary color?~~ **Decided 2026-10-12:** the placeholder mark and blue `#2F5BEA` for now. | — |
+| Q9 | ~~Logo and primary color?~~ **Decided 2026-10-12:** blue `#2F5BEA`; **2026-10-14:** the flag-and-B mark (§7.1). | — |
 | Q10 | ~~Which email provider?~~ **Decided 2026-10-12:** Resend, for the emails Functions send. Firebase Auth sends signup and account emails itself, for free (ARCH §6.7, D61). | — |
 | Q11 | ~~Where are most teams located?~~ **Decided 2026-10-12:** the US, so prod's database is in `us-central1` (permanent). | — |
 | Q12 | ~~Can members create events by default?~~ **Decided 2026-10-12:** only admins create events by default; each team can let members create them in Team settings (TEAM-5). | — |

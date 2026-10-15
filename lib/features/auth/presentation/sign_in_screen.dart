@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/brand_mark.dart';
 import 'package:battleplan/features/auth/presentation/legal_links.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_controller.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_error_text.dart';
@@ -181,20 +182,10 @@ Map<String, String>? _from(BuildContext context) {
   return from == null ? null : {'from': from};
 }
 
-/// Placeholder mark until the logo is designed (SPEC Q9).
+/// The brand mark above the app's name (SPEC §7.1).
 class AppLogo extends StatelessWidget {
   const new({super.key});
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Container(
-      width: 72,
-      height: 72,
-      decoration: BoxDecoration(
-        color: AppTokens.brand,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Icon(AppIcons.group, color: Colors.white, size: 40),
-    ),
-  );
+  Widget build(BuildContext context) => const Center(child: BrandMark());
 }
