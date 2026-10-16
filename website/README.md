@@ -1,6 +1,6 @@
 # Website
 
-The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5, ARCH §6.6, D40; ROADMAP tasks 175, 176, 179). Plain HTML and CSS: no framework, no build step, no scripts, no cookies, no analytics or third-party requests. The Flutter web app is served next to it under `/app/`.
+The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5, ARCH §6.6, D40; ROADMAP tasks 175, 176, 179). Plain HTML and CSS: no framework, no build step, no cookies, no analytics or third-party requests. The one script, inline at the end of `index.html`, gives the Plays slider its dots; without it the slider still swipes. The Flutter web app is served next to it under `/app/`.
 
 ## Files
 
@@ -25,6 +25,7 @@ Hosting serves `support.html` at `/support` because `firebase.json` sets `cleanU
 - Keep the page `<title>`, `description`, `og:*`, and `twitter:*` tags in step when you change a page's purpose.
 - Images: give every `<img>` a `width`, `height`, and real `alt` text (or `alt=""` when decorative). Use `<picture>` with a `prefers-color-scheme: dark` source for screenshots. Keep `images/` under about 2 MB.
 - Text and UI paths should match the app's English strings (`lib/l10n/app_en.arb`), for example **Settings** → **Delete account**.
+- A pair of phones (`feature-media pair`) shows both side by side from 1100 px and only the first below that. Add `slider`, with the phones in a `slides` div and a `slider-dots` div after it, as the Plays pair has, to let narrower screens swipe between them.
 
 ## Store badges
 
@@ -48,7 +49,7 @@ The screenshots are real captures of the web app with the seeded sample teams (T
 | `poll` | `rachel@example.com` | Rally Possums' tournament poll |
 | `documents` | `coach@example.com` | Thunder's documents |
 | `youth` | `claire@example.com` | Cyclone's practice, answering for Luke and Alex |
-| `whiteboard` | `coach@example.com` | Cyclone: **Plays** → More → **Saved plays** → **Double cut to home** → More → **Put on the whiteboard** → **Next step** (step 2 of 2, the relay lined up) |
+| `whiteboard` | `coach@example.com` | Cyclone: **Plays** → More → **Saved plays** → **Relay home from right-center** → More → **Put on the whiteboard** → **Next step** (step 2 of 2, the throws: RF to 2B, the relay, to 1B, the cutoff) |
 | `whiteboard-basketball` | `coach@example.com` | Thunder: **Plays** → More → **Saved plays** → **Pick and roll** → More → **Put on the whiteboard**, in a new sign-in, so Cyclone's whiteboard doesn't carry over |
 
 1. Start the emulators **without functions** (`firebase emulators:start --only auth,firestore,storage`), so the seeded events don't post cards to the chats or send notifications. Then seed them (DEVELOPMENT.md, `npm --prefix tools/seed run seed`). Seed again before each run: opening a chat marks it read.

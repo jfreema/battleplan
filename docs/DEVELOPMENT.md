@@ -22,7 +22,7 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
    npm --prefix tools/seed run seed
    ```
 
-   It creates three teams (Thunder, adult softball players; Cyclone, kids' soccer; and Rally Possums, kids' basketball), with common American names and TV characters for people, parents with players on two teams, adults linked to their own players, a pending player to approve, events, RSVPs, polls, documents, two saved plays (Cyclone's double cut to home on the diamond, Thunder's pick and roll on the half court, for the landing page's two whiteboard screenshots), messages, and a direct conversation between Andy Bernard and Claire Dunphy (read by both, so Messages shows it with nothing unread). These are also the landing page's screenshots (`website/README.md`). Every password is `password`:
+   It creates three teams (Thunder, adult softball players; Cyclone, kids' soccer; and Rally Possums, kids' basketball), with common American names and TV characters for people, parents with players on two teams, adults linked to their own players, a pending player to approve, events, RSVPs, polls, documents, two saved plays (Cyclone's relay home from right-center on the diamond, Thunder's pick and roll on the half court, for the landing page's two whiteboard screenshots), messages, and a direct conversation between Andy Bernard and Claire Dunphy (read by both, so Messages shows it with nothing unread). These are also the landing page's screenshots (`website/README.md`). Every password is `password`:
 
    | Email | Who |
    |---|---|

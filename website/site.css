@@ -188,11 +188,48 @@ section { padding: 56px 0; }
   .feature:nth-child(even) .feature-media { order: -1; }
   .feature-list { gap: 96px; }
 }
-.feature-media { display: flex; justify-content: center; gap: 16px; }
+/* Top-aligned: a pair's second phone sits lower, and a stretched first
+   one would show a band of its frame below the screenshot. */
+.feature-media { display: flex; justify-content: center; align-items: flex-start; gap: 16px; }
 .feature-media .phone + .phone { display: none; }
 @media (min-width: 1100px) {
   .feature-media .phone + .phone { display: block; margin-top: 40px; }
   .feature-media.pair .phone { width: 250px; }
+}
+
+/* A pair that slides where only one phone fits (Plays): each phone snaps
+   to the middle with the other peeking in at the side, and a dot for each
+   below (the script at the end of index.html). Side by side from 1100px. */
+.feature-media.slider { flex-direction: column; align-items: stretch; gap: 0; min-width: 0; }
+.slides { display: flex; justify-content: center; align-items: flex-start; gap: 16px; }
+/* Over the slides' shadow room, so they take the taps there. */
+.slider-dots { position: relative; display: flex; justify-content: center; gap: 4px; margin-top: 4px; }
+.slider-dots[hidden] { display: none; }
+.slider-dots button {
+  width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
+  background: none; cursor: pointer; display: grid; place-items: center;
+}
+.slider-dots button::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border); transition: background-color 0.2s, transform 0.2s;
+}
+.slider-dots button[aria-current="true"]::before { background: var(--brand); transform: scale(1.25); }
+@media (max-width: 1099px) {
+  .feature-media.slider .phone + .phone { display: block; }
+  .slides {
+    position: relative; justify-content: flex-start;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
+    /* Room for the phones' shadows, which a scroller clips, taken back
+       from the space around it. */
+    padding: 24px calc(50% - min(130px, 36vw)) 44px;
+    margin: -20px 0 -32px;
+  }
+  .slides::-webkit-scrollbar { display: none; }
+  .slides .phone { margin: 0; scroll-snap-align: center; }
+}
+@media (min-width: 1100px) {
+  .slider-dots { display: none; }
 }
 
 .switch-note { margin: 14px 0 0; color: var(--muted); }

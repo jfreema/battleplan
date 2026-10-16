@@ -581,12 +581,13 @@ async function main() {
 
   // Saved plays (BOARD-4), one on each of the coach's teams for the landing
   // page's two whiteboard screenshots; a team's whiteboard draws any board.
-  // Cyclone's double cut to home: a ball in the left-center gap with a
-  // runner trying to score. Step 1, everyone heads for their spot; step 2,
-  // the relay: SS the lead, 2B trailing 30 feet behind, 1B the cutoff in
-  // front of the plate. Spots are feet from home along a direction (0° is
-  // dead center, negative toward left), as BaseballField.fromHome measures
-  // them in lib/features/plays/domain/board_layout.dart.
+  // Cyclone's relay home from right-center, as the owner drew it: a ball in
+  // the right-center gap with a runner on second. Step 1, everyone heads for
+  // their spot; step 2, the throws: RF to 2B, the relay, to 1B, the cutoff
+  // on the line to the plate, who lets it go home or cuts it and throws to
+  // second for the batter. Spots are feet from home along a direction (0°
+  // is dead center, negative toward left), as BaseballField.fromHome
+  // measures them in lib/features/plays/domain/board_layout.dart.
   const m = (id: string, x: number, y: number, s: string, l = '') => ({ k: 'm', id, x, y, s, ...(l ? { l } : {}) });
   const a = (id: string, t: string, pts: number[]) => ({ k: 'a', id, t, pts });
   const fh = (feet: number, degrees: number): [number, number] => {
@@ -595,44 +596,59 @@ async function main() {
   };
   const on = (id: string, spot: [number, number], s: string, l = '') => m(id, ...spot, s, l);
   const line = (...spots: [number, number][]) => spots.flat();
+  // From one spot to another, stopping short of each player by about a
+  // marker's width, so a throw runs from glove to glove.
+  const throwLine = (from: [number, number], to: [number, number], shortOfTo = 0.035) => {
+    const [dx, dy] = [to[0] - from[0], to[1] - from[1]];
+    const length = Math.hypot(dx, dy);
+    const [ux, uy] = [dx / length, dy / length];
+    return line([from[0] + ux * 0.035, from[1] + uy * 0.035], [to[0] - ux * shortOfTo, to[1] - uy * shortOfTo]);
+  };
   // Where the fielders stand at the pitch, as the whiteboard's defense puts them.
   const start: Record<string, [number, number]> = {
     P: [0.5, 0.7713], C: [0.5, 0.9255], '1B': [0.6474, 0.7196], '2B': [0.5777, 0.6412],
     SS: [0.4223, 0.6412], '3B': [0.3526, 0.7196], LF: [0.2303, 0.3928], CF: [0.5, 0.2617], RF: [0.7697, 0.3928],
   };
-  // Where the double cut puts them, on the line from the ball to the plate.
-  const cut: Record<string, [number, number]> = {
-    P: fh(-38, -40), C: fh(-2, 0), '1B': fh(58, -17), '2B': fh(165, -17),
-    SS: fh(200, -17), '3B': fh(90, -46), LF: fh(318, -27), CF: fh(335, -15), RF: fh(130, 4),
+  // Where they are when the throw comes in: RF at the ball with CF beside
+  // him, 2B out as the relay, 1B on the line from the relay to the plate,
+  // SS covering second, LF backing up third, P backing up home.
+  const relay: Record<string, [number, number]> = {
+    P: fh(-36, -9), C: fh(5, -64), '1B': fh(86, 20.5), '2B': fh(216, 20.5),
+    SS: fh(111, -11), '3B': fh(99, -41), LF: fh(122, -66), CF: fh(331, 15), RF: fh(341, 19),
   };
+  const second = fh(90 * Math.SQRT2, 0);
+  const batter: [number, number] = [0.465, 0.9];
   const fielders = (spots: Record<string, [number, number]>) =>
     Object.entries(spots).map(([l, spot]) => on(l.toLowerCase(), spot, 'team', l));
-  await db.doc('plays/cyclone-double-cut').set({
+  await db.doc('plays/cyclone-relay-home').set({
     groupId: 'cyclone',
     board: 'baseball',
     variant: 'full',
-    title: 'Double cut to home',
-    note: 'Ball in the left-center gap. SS is the lead relay, 2B trails 30 feet behind; 1B cuts in front of the plate. P backs up home, RF covers second.',
+    title: 'Relay home from right-center',
+    note: 'Ball in the right-center gap, runner on second. RF gets it with CF backing him up; 2B goes out as the relay. 1B is the cutoff: let it go home, or cut it and throw to second if the batter tries for it. SS covers second, 3B covers third with LF behind him, and P backs up home.',
     steps: [
       {
         elements: [
           ...fielders(start),
-          on('r', fh(127, 0), 'opponent', 'R'), on('b', [0.465, 0.9], 'opponent', 'B'),
-          on('ball', fh(345, -19), 'ball'),
-          a('hit', 'pass', line(fh(8, -10), fh(330, -19))),
-          ...['CF', 'LF', 'SS', '2B', '1B', 'RF', 'P'].map((l) => a(`to-${l}`, 'run', line(start[l], cut[l]))),
-          a('r-run', 'run', line(fh(127, 0), fh(90, -45), fh(40, -45))),
-          a('b-run', 'run', line([0.465, 0.9], fh(90, 45), fh(95, 40))),
+          on('r', second, 'opponent', 'R'), on('b', batter, 'opponent', 'B'),
+          on('ball', fh(356, 18), 'ball'),
+          a('hit', 'pass', line(fh(8, 14), fh(340, 18))),
+          ...['RF', 'CF', '2B', '1B', 'LF'].map((l) => a(`to-${l}`, 'run', line(start[l], relay[l]))),
+          // Around the batter and the catcher to back up the plate.
+          a('to-P', 'run', line(start.P, [0.55, 0.9], relay.P)),
+          a('r-run', 'run', line(second, fh(90, -45), fh(59, -45))),
+          a('b-run', 'run', line(batter, fh(90, 45), fh(126, 11))),
         ],
       },
       {
         elements: [
-          ...fielders(cut),
-          on('r', fh(40, -45), 'opponent', 'R'), on('b', fh(95, 40), 'opponent', 'B'),
-          on('ball', fh(326, -12), 'ball'),
-          a('relay', 'pass', line(fh(322, -14), fh(212, -17))),
-          a('home', 'pass', line(fh(188, -17), fh(10, -10))),
-          a('r-home', 'run', line(fh(40, -45), fh(12, -32))),
+          ...fielders(relay),
+          on('r', fh(59, -45), 'opponent', 'R'), on('b', fh(126, 11), 'opponent', 'B'),
+          on('ball', fh(356, 18), 'ball'),
+          a('relay', 'pass', throwLine(relay.RF, relay['2B'])),
+          a('cutoff', 'pass', throwLine(relay['2B'], relay['1B'])),
+          a('home', 'pass', throwLine(relay['1B'], relay.C)),
+          a('second', 'pass', throwLine(relay['1B'], second, 0.012)),
         ],
       },
     ],
