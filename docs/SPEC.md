@@ -778,12 +778,12 @@ Players that others answer for never get accounts, and every account belongs to 
   - If the event's time zone is different, both appear: "6:00 PM CDT · 7:00 PM your time".
   - All-day events never shift to another day.
 - **SCHED-10 · MVP · Add to calendar.** The native calendar sheet on iOS and Android; an .ics download on web.
-- **SCHED-11 · v1.1 · Calendar subscription.** A private link that keeps Google, Apple, or Outlook Calendar in sync with the schedule, so a time change or a rainout reaches the calendar a player or guardian already checks (ARCH §6.15).
-  - **Where:** **Subscribe in your calendar** in a team's Schedule menu makes a link for that team; in **All my teams** (SCHED-2), a link for every team you're on, including teams you join later.
-  - **Adding it:** buttons for Google Calendar, Apple Calendar, and Outlook, and **Copy link** for anything else. Google Calendar adds links on its website, not in its phone app: on a phone the button opens the website, and once it's added the calendar shows in the app too.
+- **SCHED-11 · v1.1 · Calendar subscription.** Built (task 138). A private link that keeps Google, Apple, or Outlook Calendar in sync with the schedule, so a time change or a rainout reaches the calendar a player or guardian already checks (ARCH §6.15).
+  - **Where:** **Calendar link** in the team menu: a link for that team, or, under **All my teams**, one for every team you're on, including teams you join later. A link is made only when asked (**Make my calendar link**).
+  - **Adding it:** buttons for Google Calendar, Apple Calendar (on an iPhone, iPad, or Mac, where its links open), and Outlook, and **Copy link** for anything else. Google Calendar adds links on its website, not in its phone app: on a phone the button opens the website, and once it's added the calendar shows in the app too.
   - **What's in it:** every event from 60 days back through the next 12 months, with its title (a canceled one starts "Canceled:"), time (all-day events stay on their dates, SCHED-9), place, notes, arrival time for games, and a link that opens it in Battleplan. A link for all your teams puts the team's name before each title. Nothing else: no names, answers, or roster.
-  - **Staying in sync:** each calendar app checks the link on its own schedule. Apple Calendar and Outlook check about every hour; Google Calendar can take up to a day. The sheet says so, and when a calendar last checked the link.
-  - **It's private:** anyone with the link sees that schedule, so the sheet says not to share it. **Reset link** turns off the old link (calendars using it stop updating) and makes a new one; **Turn off** stops it. Each person has at most one link per team and one for all teams.
+  - **Staying in sync:** each calendar app checks the link on its own schedule. Apple Calendar and Outlook check about every hour; Google Calendar can take up to a day. The screen says so, and when a calendar last checked the link.
+  - **It's private:** anyone with the link sees that schedule, so the screen says not to share it. **Reset link** turns off the old link (calendars using it stop updating) and makes a new one; **Turn off** stops it. Each person has at most one link per team and one for all teams.
   - **Leaving:** once you leave a team or are removed, its events drop out of your links. A disabled or deleted account's links stop working.
 - **SCHED-12 · v1.1 · Follow-ups.**
   - Admins can "Nudge" people who haven't answered; it also happens automatically 24 h before the RSVP deadline.
@@ -910,7 +910,7 @@ Players that others answer for never get accounts, and every account belongs to 
 
 - **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. Email is shown read-only.
 - **SET-2 · MVP · Appearance.** System (default), Light, or Dark. The change applies instantly, is remembered on the device, and syncs to the account.
-- **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). From v1.1, **Email reminders when I can't get notifications** (SCHED-14) and your calendar links, to copy, reset, or turn off (SCHED-11).
+- **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). From v1.1, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
 - **SET-6 · MVP · About and account.**

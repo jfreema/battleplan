@@ -8,6 +8,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { audit } from '../audit/service.js';
 import { chunk } from '../notify/service.js';
 import { db } from '../shared/admin.js';
+import { markTeamCalendarChanged } from '../calendar/service.js';
 import { Collections, REMINDER_OFFSETS_MINUTES } from '../shared/constants.js';
 import { consumeRateLimits } from '../shared/rate_limit.js';
 import { requireTeamAdmin } from '../shared/roles.js';
@@ -217,6 +218,8 @@ export async function importEvents(
     }
     await batch.commit();
   }
+  // Calendar links (SCHED-11): once for the whole import.
+  await markTeamCalendarChanged(input.groupId);
   await audit({
     actorId: caller.uid,
     action: 'importEvents',

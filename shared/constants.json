@@ -25,7 +25,9 @@
     "rateLimits": "rateLimits",
     "config": "config",
     "notifyLog": "notifyLog",
-    "plays": "plays"
+    "plays": "plays",
+    "calendarLinks": "calendarLinks",
+    "teamCalendars": "teamCalendars"
   },
   "enums": {
     "userStatus": [
@@ -270,7 +272,12 @@
     "notificationBodyMax": 140,
     "notifyLogTtlDays": 7,
     "pushTokensPerSend": 500,
-    "mutedForeverMs": 253402214400000
+    "mutedForeverMs": 253402214400000,
+    "calendarPastDays": 60,
+    "calendarFutureDays": 366,
+    "calendarEventsMax": 500,
+    "calendarCacheHours": 6,
+    "calendarFetchedEveryMinutes": 60
   },
   "reminderOffsetsMinutes": [15, 60, 120, 1440, 2880, 10080],
   "inviteCodeAlphabet": "23456789ABCDEFGHJKMNPQRSTUVWXYZ",

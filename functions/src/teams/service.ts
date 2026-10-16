@@ -4,6 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { randomUUID } from 'node:crypto';
 import { findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
+import { tryDeleteCalendarLinksOf } from '../calendar/service.js';
 import { joinedLine, postSystemMessage } from '../chat/service.js';
 import { sendEmail } from '../email/service.js';
 import { addedToTeamEmail } from '../email/templates.js';
@@ -240,6 +241,7 @@ export async function removeFromTeam(groupId: string, uid: string, actorUid: str
   const name = (target.get('displayName') as string) || 'Someone';
   await postSystemMessage(groupId, 'removed', `${name} was removed`, actorUid, uid);
   await clearTeamNotifications(groupId, uid);
+  await tryDeleteCalendarLinksOf(uid, groupId);
   return target.get('role') as Role;
 }
 
@@ -395,6 +397,10 @@ const TEAM_COLLECTIONS = [
   Collections.invites,
   Collections.notifications,
   Collections.reports,
+  // Calendar links to the team, and its cached calendar (SCHED-11), after
+  // events, whose triggers only mark a cache that still exists.
+  Collections.calendarLinks,
+  Collections.teamCalendars,
   Collections.groupMembers,
 ];
 

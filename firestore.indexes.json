@@ -755,6 +755,12 @@
       "indexes": []
     },
     {
+      "collectionGroup": "teamCalendars",
+      "fieldPath": "events",
+      "ttl": false,
+      "indexes": []
+    },
+    {
       "collectionGroup": "notifications",
       "fieldPath": "expiresAt",
       "ttl": true,

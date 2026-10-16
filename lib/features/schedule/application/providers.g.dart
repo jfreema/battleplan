@@ -101,6 +101,105 @@ final class RsvpRepositoryProvider
 
 String _$rsvpRepositoryHash() => r'dae2f30aa727a35ad456a18c6c01f61ef621d5e0';
 
+/// Overridden in app/providers.dart.
+
+@ProviderFor(calendarLinkRepository)
+final calendarLinkRepositoryProvider = CalendarLinkRepositoryProvider._();
+
+/// Overridden in app/providers.dart.
+
+final class CalendarLinkRepositoryProvider
+    extends
+        $FunctionalProvider<
+          CalendarLinkRepository,
+          CalendarLinkRepository,
+          CalendarLinkRepository
+        >
+    with $Provider<CalendarLinkRepository> {
+  /// Overridden in app/providers.dart.
+  CalendarLinkRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'calendarLinkRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$calendarLinkRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<CalendarLinkRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  CalendarLinkRepository create(Ref ref) {
+    return calendarLinkRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CalendarLinkRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CalendarLinkRepository>(value),
+    );
+  }
+}
+
+String _$calendarLinkRepositoryHash() =>
+    r'1f3bcfc6ae7f681d39571cef729b3ed092f226a0';
+
+/// The signed-in person's calendar links, live (SCHED-11).
+
+@ProviderFor(myCalendarLinks)
+final myCalendarLinksProvider = MyCalendarLinksProvider._();
+
+/// The signed-in person's calendar links, live (SCHED-11).
+
+final class MyCalendarLinksProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<CalendarLink>>,
+          List<CalendarLink>,
+          Stream<List<CalendarLink>>
+        >
+    with
+        $FutureModifier<List<CalendarLink>>,
+        $StreamProvider<List<CalendarLink>> {
+  /// The signed-in person's calendar links, live (SCHED-11).
+  MyCalendarLinksProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myCalendarLinksProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myCalendarLinksHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<CalendarLink>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<CalendarLink>> create(Ref ref) {
+    return myCalendarLinks(ref);
+  }
+}
+
+String _$myCalendarLinksHash() => r'aa7d23a070fb6e6ad8d20dccc22dcdc6d54ac05a';
+
 /// The viewer's own time zone: times show in it (SCHED-9).
 
 @ProviderFor(viewerTimeZone)

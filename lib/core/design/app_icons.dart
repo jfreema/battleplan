@@ -82,6 +82,7 @@ abstract final class AppIcons {
   static const IconData location = Symbols.location_on_rounded;
   static const IconData directions = Symbols.directions_rounded;
   static const IconData addToCalendar = Symbols.calendar_add_on_rounded;
+  static const IconData calendarLink = Symbols.event_repeat_rounded;
   static const IconData repeat = Symbols.repeat_rounded;
   static const IconData time = Symbols.schedule_rounded;
   static const IconData timeZone = Symbols.public_rounded;

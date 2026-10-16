@@ -1,5 +1,6 @@
 // Schedule triggers (ARCH §6.4 trigger map).
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { calendarChanged, markTeamCalendarChanged } from '../calendar/service.js';
 import { followUpEventWrite, recountEventRsvps, rsvpCountChanged } from './service.js';
 
 /**
@@ -7,10 +8,17 @@ import { followUpEventWrite, recountEventRsvps, rsvpCountChanged } from './servi
  * create, eventChanged on a time or place change or a cancel, and
  * nextReminderAt on any change; the RSVPs on delete. Exits early for
  * changes only Functions make and for series events (saveEventSeries
- * follows those up itself).
+ * follows those up itself). A change calendar links print marks the
+ * team's cached calendar (SCHED-11).
  */
 export const onEventWritten = onDocumentWritten('events/{eventId}', async (event) => {
-  await followUpEventWrite(event.params.eventId, event.data?.before.data(), event.data?.after.data());
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  const groupId = (after?.groupId ?? before?.groupId) as string | undefined;
+  await Promise.all([
+    followUpEventWrite(event.params.eventId, before, after),
+    groupId && calendarChanged(event.params.eventId, before, after) ? markTeamCalendarChanged(groupId) : null,
+  ]);
 });
 
 /**

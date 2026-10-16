@@ -9,6 +9,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/players/application/providers.dart';
+import 'package:battleplan/features/schedule/domain/calendar_link.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_repository.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
@@ -32,6 +33,19 @@ EventRepository eventRepository(Ref ref) =>
 @Riverpod(keepAlive: true)
 RsvpRepository rsvpRepository(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
+
+/// Overridden in app/providers.dart.
+@Riverpod(keepAlive: true)
+CalendarLinkRepository calendarLinkRepository(Ref ref) =>
+    throw UnimplementedError('Wired in app/providers.dart');
+
+/// The signed-in person's calendar links, live (SCHED-11).
+@riverpod
+Stream<List<CalendarLink>> myCalendarLinks(Ref ref) {
+  final uid = ref.watch(authUserProvider).value?.uid;
+  if (uid == null) return Stream.value(const []);
+  return ref.watch(calendarLinkRepositoryProvider).watchMine(UserId(uid));
+}
 
 /// The viewer's own time zone: times show in it (SCHED-9).
 @Riverpod(keepAlive: true)

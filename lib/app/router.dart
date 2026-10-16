@@ -55,6 +55,7 @@ import 'package:battleplan/features/plays/presentation/plays_screen.dart';
 import 'package:battleplan/features/safety/presentation/blocked_people_screen.dart';
 import 'package:battleplan/features/safety/presentation/reports_screen.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
+import 'package:battleplan/features/schedule/presentation/calendar_link_screen.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/features/schedule/presentation/event_form_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
@@ -564,6 +565,16 @@ GoRouter router(Ref ref) {
             pageBuilder: (_, state) => PanelPage(
               key: state.pageKey,
               child: TeamNotificationsScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
+            ),
+          ),
+          // A calendar link that keeps the schedule in sync (SCHED-11).
+          GoRoute(
+            path: 'calendar',
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: CalendarLinkScreen(
                 groupId: GroupId(state.pathParameters['groupId']!),
               ),
             ),

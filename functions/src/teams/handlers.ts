@@ -10,6 +10,7 @@ import { requireAuth, requireSuperAdmin } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { parse } from '../shared/validate.js';
 import { audit } from '../audit/service.js';
+import { tryDeleteCalendarLinksOf } from '../calendar/service.js';
 import { alertTeamCreated, alertTeamDeleted } from '../admin/alerts.js';
 import { groupCreationConfig } from '../admin/service.js';
 import { postSystemMessage } from '../chat/service.js';
@@ -227,6 +228,7 @@ export const leaveGroup = onCall(async (request) => {
   const name = (me.get('displayName') as string) || 'Someone';
   await postSystemMessage(input.groupId, 'left', `${name} left`, uid);
   await clearTeamNotifications(input.groupId, uid);
+  await tryDeleteCalendarLinksOf(uid, input.groupId);
   return { ok: true };
 });
 

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { audit } from '../audit/service.js';
 import { chunk, trySend } from '../notify/service.js';
 import { db } from '../shared/admin.js';
+import { markTeamCalendarChanged } from '../calendar/service.js';
 import {
   Collections,
   eventTypeValues,
@@ -298,7 +299,12 @@ const events = () => db().collection(Collections.events);
 
 /** Runs one saveEventSeries call (ARCH §6.4). */
 export async function saveSeries(input: SaveSeriesInput, caller: Caller, nowMs = Date.now()): Promise<SeriesResult> {
-  if (input.action === 'create') return createSeries(input, caller, nowMs);
+  if (input.action === 'create') {
+    const created = await createSeries(input, caller, nowMs);
+    // Calendar links (SCHED-11): once for the whole series.
+    if (!input.dryRun) await markTeamCalendarChanged(input.groupId);
+    return created;
+  }
   const target = await events().doc(input.eventId).get();
   if (!target.exists) throw new HttpsError('not-found', 'event-not-found');
   const seriesId = target.get('seriesId') as string | null | undefined;
@@ -333,6 +339,7 @@ export async function saveSeries(input: SaveSeriesInput, caller: Caller, nowMs =
       after: { canceled: result.canceled, removed: result.removed },
     });
   }
+  if (!input.dryRun) await markTeamCalendarChanged(String(target.get('groupId')));
   return result;
 }
 

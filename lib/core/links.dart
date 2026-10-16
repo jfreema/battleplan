@@ -62,6 +62,29 @@ class LinkService {
     path: page.startsWith('/') ? page : '/$page',
   );
 
+  /// A calendar link's feed (SCHED-11): `https://<host>/cal/<token>.ics`,
+  /// which Hosting hands to the `calendarFeed` function (ARCH §6.15).
+  Uri calendarFeed(String token) => site('/cal/$token.ics');
+
+  /// The same feed as `webcal://`, which Apple Calendar subscribes to.
+  Uri calendarWebcal(String token) =>
+      calendarFeed(token).replace(scheme: 'webcal');
+
+  /// Google Calendar's page that adds the feed. It's on Google's website:
+  /// the phone app can't add a calendar from a link.
+  Uri googleCalendarAdd(String token) => Uri.https(
+    'calendar.google.com',
+    '/calendar/r',
+    {'cid': calendarWebcal(token).toString()},
+  );
+
+  /// Outlook's page that adds the feed as a calendar named [name].
+  Uri outlookAdd(String token, String name) => Uri.https(
+    'outlook.live.com',
+    '/calendar/0/addfromweb',
+    {'url': calendarFeed(token).toString(), 'name': name},
+  );
+
   /// The iPhone app's App Store listing (NOTIF-9), through `/ios` on our
   /// domain, which Hosting redirects to the listing (firebase.json), so the
   /// link in installed apps never has to change.

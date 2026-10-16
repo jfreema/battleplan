@@ -35,6 +35,7 @@ export {
   adminUpdateUser,
 } from './admin/handlers.js';
 export { importDocuments, importEvents, importMessages } from './imports/handlers.js';
+export { calendarFeed, setCalendarLink } from './calendar/handlers.js';
 export {
   addMemberByEmail,
   adminSetGroupQuota,

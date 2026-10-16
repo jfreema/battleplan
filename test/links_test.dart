@@ -33,6 +33,31 @@ void main() {
       expect(dev.emailLoginText, 'battleplan-dev-ecce4.web.app/emaillogin');
     });
 
+    test('calendar links read from /cal/, and add to each calendar app '
+        '(SCHED-11)', () {
+      const token = 'Xk3v9QmZp0aB1cD2eF3gH4iJ5kL6mN7oP8qR9sT0uVw';
+      expect(
+        prod.calendarFeed(token).toString(),
+        'https://getbattleplan.app/cal/$token.ics',
+      );
+      expect(
+        prod.calendarWebcal(token).toString(),
+        'webcal://getbattleplan.app/cal/$token.ics',
+      );
+      expect(
+        prod.googleCalendarAdd(token).toString(),
+        'https://calendar.google.com/calendar/r'
+        '?cid=webcal%3A%2F%2Fgetbattleplan.app%2Fcal%2F$token.ics',
+      );
+      final outlook = dev.outlookAdd(token, 'Thunder');
+      expect(outlook.host, 'outlook.live.com');
+      expect(outlook.path, '/calendar/0/addfromweb');
+      expect(outlook.queryParameters, {
+        'url': 'https://battleplan-dev-ecce4.web.app/cal/$token.ics',
+        'name': 'Thunder',
+      });
+    });
+
     test('puts app routes under /app', () {
       expect(
         prod.app('/g/a/schedule/e/e1').toString(),

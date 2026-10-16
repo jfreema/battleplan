@@ -935,6 +935,14 @@ service cloud.firestore {
         && onlyChanges(['read']) && incoming().read == true;
     }
 
+    // SCHED-11: someone's calendar links, whose IDs are the secret tokens.
+    // Only their owner reads them; setCalendarLink makes, resets, and turns
+    // them off. Teams' cached calendars are for calendarFeed alone.
+    match /calendarLinks/{token} {
+      allow get: if signedIn() && resource.data.uid == uid();
+      allow list: if boundedQuery() && signedIn() && resource.data.uid == uid();
+    }
+
     // SAFE-1: a team's admins read its reports, except those about one of
     // its admins (teamVisible false), which go to super admins only, so a
     // reported admin never learns who reported them. A list must ask for

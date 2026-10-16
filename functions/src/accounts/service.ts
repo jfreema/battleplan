@@ -9,6 +9,7 @@ import { Collections, Limits, notificationPrefValues, type NotificationPref } fr
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { teamMembershipsOf } from '../shared/roles.js';
 import { anonymizeAuthor, joinedLine, postSystemMessage } from '../chat/service.js';
+import { deleteCalendarLinksOf } from '../calendar/service.js';
 import { anonymizeUploader } from '../documents/service.js';
 import { removeAccountNotifications, removeDevices } from '../notify/service.js';
 import { removeAccountFromPlayers } from '../players/service.js';
@@ -334,6 +335,7 @@ export async function deleteAccount(uid: string, newOwners: Record<string, strin
   await anonymizeUploader(uid);
   await removeAccountNotifications(uid);
   await removeAccountBlocks(uid);
+  await deleteCalendarLinksOf(uid);
   await storage()
     .bucket()
     .deleteFiles({ prefix: `users/${uid}/` })

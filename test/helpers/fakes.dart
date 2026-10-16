@@ -44,6 +44,7 @@ import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/polls/domain/poll_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:battleplan/features/safety/domain/safety_repository.dart';
+import 'package:battleplan/features/schedule/domain/calendar_link.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_draft.dart';
 import 'package:battleplan/features/schedule/domain/event_repository.dart';
@@ -2461,6 +2462,47 @@ class FakeRsvpRepository implements RsvpRepository {
 }
 
 /// Records what was added to the calendar.
+/// Calendar links in memory (SCHED-11), as setCalendarLink keeps them:
+/// one per team and one for all teams; make returns the one there is,
+/// reset swaps it for a new token, and off removes it. Each call is logged
+/// in [calls]; set [failWith] to make the next one throw.
+class FakeCalendarLinkRepository implements CalendarLinkRepository {
+  new({List<CalendarLink> links = const []}) : _links = [...links];
+
+  final List<CalendarLink> _links;
+  final _changes = StreamController<List<CalendarLink>>.broadcast();
+  final List<String> calls = [];
+  AppFailure? failWith;
+  var _made = 0;
+
+  List<CalendarLink> get links => List.unmodifiable(_links);
+
+  @override
+  Stream<List<CalendarLink>> watchMine(UserId uid) async* {
+    yield links;
+    yield* _changes.stream;
+  }
+
+  @override
+  Future<String?> set(GroupId? groupId, CalendarLinkAction action) async {
+    calls.add('${action.name} ${groupId?.value ?? 'all'}');
+    if (failWith case final failure?) {
+      failWith = null;
+      throw failure;
+    }
+    final at = _links.indexWhere((l) => l.groupId == groupId);
+    if (action == CalendarLinkAction.make && at >= 0) return _links[at].token;
+    if (at >= 0) _links.removeAt(at);
+    String? token;
+    if (action != CalendarLinkAction.off) {
+      token = 'token${_made++}'.padRight(43, 'x');
+      _links.add(CalendarLink(token: token, groupId: groupId));
+    }
+    _changes.add(links);
+    return token;
+  }
+}
+
 class FakeCalendarAdder implements CalendarAdder {
   final List<CalendarEntry> added = [];
 

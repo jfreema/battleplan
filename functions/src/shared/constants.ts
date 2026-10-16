@@ -28,6 +28,8 @@ export const Collections = {
   config: 'config',
   notifyLog: 'notifyLog',
   plays: 'plays',
+  calendarLinks: 'calendarLinks',
+  teamCalendars: 'teamCalendars',
 } as const;
 
 export const Limits = {
@@ -117,6 +119,11 @@ export const Limits = {
   notifyLogTtlDays: 7,
   pushTokensPerSend: 500,
   mutedForeverMs: 253402214400000,
+  calendarPastDays: 60,
+  calendarFutureDays: 366,
+  calendarEventsMax: 500,
+  calendarCacheHours: 6,
+  calendarFetchedEveryMinutes: 60,
 } as const;
 
 export const TEAM_COLORS = [

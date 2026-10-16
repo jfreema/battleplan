@@ -433,7 +433,7 @@ class _StorageBanner extends ConsumerWidget {
   }
 }
 
-/// The team menu: Roster, Invite, and Notifications, the admin items
+/// The team menu: Roster, Invite, Notifications, and Calendar link, the admin items
 /// (Team settings, Media, Reports, Import) for the team's admins and super
 /// admins (§3). A super admin viewing a team they're not on
 /// ([viewing], ADMIN-3) gets the roster, invite, and admin items only.
@@ -457,8 +457,11 @@ class _TeamMenu extends ConsumerWidget {
     final items = [
       ('roster', AppIcons.roster, l10n.rosterMenu),
       ('invite', AppIcons.invite, l10n.inviteMenu),
-      if (!viewing)
+      if (!viewing) ...[
         ('notifications', AppIcons.notifications, l10n.teamNotificationsMenu),
+        // The schedule in your own calendar, kept in sync (SCHED-11).
+        ('calendar', AppIcons.calendarLink, l10n.calendarLinkMenu),
+      ],
       if (admin) ('settings', AppIcons.settings, l10n.teamSettingsMenu),
       if (admin) ('media', AppIcons.media, l10n.mediaMenu),
       if (admin) ('reports', AppIcons.report, l10n.reportsMenu),

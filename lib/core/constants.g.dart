@@ -30,6 +30,8 @@ abstract final class Collections {
   static const String config = 'config';
   static const String notifyLog = 'notifyLog';
   static const String plays = 'plays';
+  static const String calendarLinks = 'calendarLinks';
+  static const String teamCalendars = 'teamCalendars';
 }
 
 /// Limits shared with the server and security rules.
@@ -120,6 +122,11 @@ abstract final class Limits {
   static const int notifyLogTtlDays = 7;
   static const int pushTokensPerSend = 500;
   static const int mutedForeverMs = 253402214400000;
+  static const int calendarPastDays = 60;
+  static const int calendarFutureDays = 366;
+  static const int calendarEventsMax = 500;
+  static const int calendarCacheHours = 6;
+  static const int calendarFetchedEveryMinutes = 60;
 }
 
 /// The team colors (TEAM-1), as ARGB.
