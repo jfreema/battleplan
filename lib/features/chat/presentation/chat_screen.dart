@@ -1106,16 +1106,33 @@ class _DateSeparator extends StatelessWidget {
 
   final DateTime day;
 
+  /// A small pill ("Today"), as GroupMe has it.
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Space.md),
+      padding: const EdgeInsets.symmetric(vertical: Space.sm),
       child: Center(
-        child: Text(
-          dayLabel(AppLocalizations.of(context), day.toLocal(), DateTime.now()),
-          style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(Corners.pill),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Space.md,
+              vertical: Space.xs,
+            ),
+            child: Text(
+              dayLabel(
+                AppLocalizations.of(context),
+                day.toLocal(),
+                DateTime.now(),
+              ),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
       ),

@@ -502,77 +502,50 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               onTap: widget.onOpenQuote,
             ),
           );
-    // A one-line bubble is 48 tall, a full tap target (SPEC §7.6).
-    final textBubble = Container(
-      constraints: const BoxConstraints(maxWidth: 520),
-      padding: const EdgeInsets.symmetric(
-        horizontal: Space.md,
-        vertical: Space.md,
-      ),
-      decoration: BoxDecoration(
-        color: deleted ? Colors.transparent : background,
-        border: deleted
-            ? Border.all(color: scheme.outlineVariant)
-            : announcement
-            ? Border.all(color: scheme.secondary)
-            : null,
-        borderRadius: BorderRadius.circular(Corners.bubble),
-      ),
-      child: deleted
-          ? Text(
-              switch (m.deletedReason) {
-                'admin' => l10n.messageRemovedByAdmin,
-                // Its last photo was deleted in Media (STORE-5).
-                'media' => l10n.photoRemovedByAdmin,
-                _ => l10n.messageDeleted,
-              },
-              style: TextStyle(
-                fontStyle: FontStyle.italic,
-                color: scheme.onSurfaceVariant,
+    // A poll shows as its card (POLL-2, CHAT-11); its text is the question,
+    // which the card shows itself.
+    final isPoll = m.type == MessageType.poll && !deleted;
+    // An event card (CHAT-11, SCHED-3), posted by the server.
+    final isEvent =
+        m.type == MessageType.event && m.eventId != null && !deleted;
+    final card = isPoll || isEvent;
+
+    // Inside the bubble, at the top (CHAT-1), as GroupMe has it: the name and
+    // time on a group's first message (mine shows only the time), and
+    // "edited" or "Pinned" on any message that is.
+    final meta = [
+      if (widget.startsGroup) ?time,
+      if (widget.startsGroup) headerMarks else marks,
+    ].where((p) => p.isNotEmpty).join(' · ');
+    final named = widget.startsGroup && !mine;
+    final innerHeader = card || (!named && meta.isEmpty)
+        ? null
+        : Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  if (named)
+                    TextSpan(
+                      text: nameWithPlayersOf(
+                        m.authorName,
+                        m.authorPlayerSummary,
+                      ),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: foreground,
+                      ),
+                    ),
+                  if (meta.isNotEmpty) TextSpan(text: named ? '  $meta' : meta),
+                ],
               ),
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (announcement)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: Space.xs),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          AppIcons.announcement,
-                          size: 18,
-                          color: foreground,
-                        ),
-                        const SizedBox(width: Space.xs),
-                        Text(
-                          l10n.chatAnnouncementLabel,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: foreground,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ?quote,
-                if (hasText)
-                  LinkifiedText(
-                    m.text,
-                    phones: !web,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: foreground,
-                    ),
-                    linkColor: foreground,
-                    highlights: highlights,
-                    onOpen: (uri) =>
-                        unawaited(ref.read(linkOpenerProvider).open(uri)),
-                  ),
-              ],
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: foreground.withValues(alpha: 0.7),
+              ),
             ),
-    );
-    // Photos sit above the caption (CHAT-3).
+          );
+
+    // Photos sit inside the bubble, above the caption (CHAT-3).
     final photos = deleted || m.attachments.isEmpty
         ? null
         : PhotoGrid(
@@ -597,13 +570,112 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               );
             },
           );
-    // A poll shows as its card (POLL-2, CHAT-11); its text is the question,
-    // which the card shows itself.
-    final isPoll = m.type == MessageType.poll && !deleted;
-    // An event card (CHAT-11, SCHED-3), posted by the server.
-    final isEvent =
-        m.type == MessageType.event && m.eventId != null && !deleted;
-    final bubble = isPoll || isEvent
+    // Around photos the bubble is a thin frame, and what's above and below
+    // them is inset to line up with a text bubble's.
+    const photoInset = Space.xs + 2;
+    Widget inset(Widget child) => photos == null
+        ? child
+        : Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Space.md - photoInset,
+            ),
+            child: child,
+          );
+    final body = <Widget>[
+      if (innerHeader != null) inset(innerHeader),
+      if (deleted)
+        Text(
+          switch (m.deletedReason) {
+            'admin' => l10n.messageRemovedByAdmin,
+            // Its last photo was deleted in Media (STORE-5).
+            'media' => l10n.photoRemovedByAdmin,
+            _ => l10n.messageDeleted,
+          },
+          style: TextStyle(
+            fontStyle: FontStyle.italic,
+            color: scheme.onSurfaceVariant,
+          ),
+        )
+      else ...[
+        if (announcement)
+          Padding(
+            padding: const EdgeInsets.only(bottom: Space.xs),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(AppIcons.announcement, size: 18, color: foreground),
+                const SizedBox(width: Space.xs),
+                Text(
+                  l10n.chatAnnouncementLabel,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: foreground,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (photos != null)
+          Padding(
+            padding: EdgeInsets.only(
+              top: innerHeader == null ? 0 : Space.xs,
+              bottom: hasText || quote != null ? Space.xs + 2 : 0,
+            ),
+            child: photos,
+          ),
+        if (quote != null) inset(quote),
+        if (hasText)
+          inset(
+            LinkifiedText(
+              m.text,
+              phones: !web,
+              style: theme.textTheme.bodyLarge?.copyWith(color: foreground),
+              linkColor: foreground,
+              highlights: highlights,
+              onOpen: (uri) =>
+                  unawaited(ref.read(linkOpenerProvider).open(uri)),
+            ),
+          ),
+      ],
+    ];
+    // Each message is its own bubble. A one-line bubble is 48 tall, a full
+    // tap target (SPEC §7.6); one with a header line is taller anyway, so
+    // its padding is tighter.
+    final textBubble = Container(
+      constraints: const BoxConstraints(maxWidth: 520),
+      padding: photos != null
+          ? EdgeInsets.fromLTRB(
+              photoInset,
+              innerHeader == null ? photoInset : Space.sm,
+              photoInset,
+              hasText ? Space.sm + 2 : photoInset,
+            )
+          : innerHeader != null
+          ? const EdgeInsets.fromLTRB(
+              Space.md,
+              Space.sm,
+              Space.md,
+              Space.sm + 2,
+            )
+          : const EdgeInsets.symmetric(
+              horizontal: Space.md,
+              vertical: Space.md,
+            ),
+      decoration: BoxDecoration(
+        color: deleted ? Colors.transparent : background,
+        border: deleted
+            ? Border.all(color: scheme.outlineVariant)
+            : announcement
+            ? Border.all(color: scheme.secondary)
+            : null,
+        borderRadius: BorderRadius.circular(Corners.bubble),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: body,
+      ),
+    );
+    final bubble = card
         ? Column(
             crossAxisAlignment: mine
                 ? CrossAxisAlignment.end
@@ -622,20 +694,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                 ),
             ],
           )
-        : Column(
-            crossAxisAlignment: mine
-                ? CrossAxisAlignment.end
-                : CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ?photos,
-              if (photos != null && hasText) const SizedBox(height: 2),
-              if (photos == null || hasText || quote != null) textBubble,
-            ],
-          );
+        : textBubble;
 
     final openAuthor = mine ? null : _authorTap(m);
-    final header = widget.startsGroup && !mine
+    // Cards (polls, events) keep the name and time above them.
+    final header = !card
+        ? null
+        : widget.startsGroup && !mine
         ? Padding(
             padding: const EdgeInsets.only(left: Space.md, bottom: Space.xs),
             child: Text.rich(
@@ -825,18 +890,22 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     // in a slot as wide as a tap target, since it opens their page.
     final avatarSlot = SizedBox(
       width: kMinInteractiveDimension,
+      // Level with the bubble's top, where the name is; a card has its
+      // name above it.
       child: widget.startsGroup
           ? Padding(
-              padding: const EdgeInsets.only(top: Space.lg),
+              padding: EdgeInsets.only(top: card ? Space.lg : 0),
               child: _AuthorAvatar(message: m, onTap: openAuthor),
             )
           : null,
     );
 
     final row = Padding(
+      // Compact, as GroupMe is: each bubble a little apart from the next,
+      // a little more between people.
       padding: EdgeInsets.fromLTRB(
         Space.md,
-        widget.startsGroup ? Space.sm : 2,
+        widget.startsGroup ? Space.xs + 2 : 3,
         Space.md,
         widget.endsGroup ? Space.xs : 0,
       ),
@@ -881,7 +950,7 @@ class _AuthorAvatar extends ConsumerWidget {
       name: message.authorName,
       colorKey: message.authorId,
       imageUrl: url,
-      size: 32,
+      size: 36,
     );
     final tap = onTap;
     if (tap == null) return avatar;

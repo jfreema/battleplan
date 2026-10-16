@@ -281,16 +281,17 @@ Sign in
 
 ```
 ┌────────────────────────────────────┐
-│ (TU) Thunder U14 v       ...  (JF) │
+│ (TU) Thunder U14 v [M] (!) ...(JF) │
 ├────────────────────────────────────┤
-│               Today                │
-│ (AK) Alex Kim                      │
-│      ┌─────────────────────────┐   │
+│              ( Today )             │
+│ (AK) ┌─────────────────────────┐   │
+│      │ Alex Kim  5:58 PM       │   │
 │      │ Field 3 is open. See    │   │
 │      │ you at 6!               │   │
 │      └─────────────────────────┘   │
 │       (Like 4) (Love 1)            │
 │               ┌──────────────────┐ │
+│               │ 6:02 PM          │ │
 │               │ On my way!       │ │
 │               └──────────────────┘ │
 │                                    │
@@ -600,8 +601,8 @@ Players that others answer for never get accounts, and every account belongs to 
   - One chat per team, newest messages at the bottom.
   - **Paging.** The chat loads the newest 50 messages and keeps them live. Scrolling up loads 50 older messages at a time, so a chat with years of history opens as fast as a new one.
   - With unread messages, the chat opens at the first unread message and loads newer ones as you scroll down.
-  - Date separators: Today, Yesterday, Mon Oct 6.
-  - Consecutive messages from one person are grouped, with their name and photo shown once. A member's name shows their players ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8).
+  - Date separators, as small pills: Today, Yesterday, Mon Oct 6.
+  - Each message is its own bubble, compact as GroupMe's (the owner's request, 2026-10-16). A person's run of messages (within 5 minutes) has their photo beside the first bubble, and their name and time inside it at the top; my own bubbles show just the time there. Photos sit inside the bubble, above the caption, and "edited" and "Pinned" go inside too. Polls and event cards keep the name and time above them. A member's name shows their players ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8).
   - Your messages sit on the right in the brand color; others' sit on the left on a neutral background.
   - Times appear on tap (phones), on hover (web), and at the start of each group.
 - **CHAT-2 · MVP · Composer.**
