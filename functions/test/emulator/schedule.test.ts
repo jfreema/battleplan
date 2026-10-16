@@ -30,8 +30,16 @@ const call = (uid: string, data: object, token: object = {}) =>
   ({ data, auth: { uid, token }, rawRequest: {} }) as unknown as CallRequest;
 const save = (uid: string, data: object, token: object = {}) => saveEventSeries.run(call(uid, data, token));
 
-/** The date in Chicago [days] from now. */
-const day = (days: number) => dateInZone(Date.now() + days * DAY, CHI);
+/**
+ * The date in Chicago [days] calendar days from today. Counted in days, not
+ * 24-hour steps, which land on the wrong date across a clock change when
+ * the tests run just after midnight.
+ */
+const day = (days: number) => {
+  const d = new Date(`${dateInZone(Date.now(), CHI)}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
 
 const template = (extra: object = {}) => ({
   type: 'practice',
