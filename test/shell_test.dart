@@ -252,8 +252,8 @@ void main() {
       final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
       expect(rail.destinations[2].label, isA<Text>());
       expect((rail.destinations[2].label as Text).data, 'Documents');
-      expect((rail.destinations[3].label as Text).data, "Coach's whiteboard");
-      await tester.tap(find.text("Coach's whiteboard"));
+      expect((rail.destinations[3].label as Text).data, 'Plays');
+      await tester.tap(find.text('Plays'));
       await tester.pumpAndSettle();
       expect(find.byType(NavigationRail), findsOneWidget);
       expect(

@@ -6,6 +6,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -134,7 +135,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
         appBar: AppBar(),
         body: async.isLoading
             ? const Center(child: CircularProgressIndicator())
-            : EmptyState(icon: AppIcons.plays, message: l10n.playGone),
+            : EmptyState(art: const PlaysIcon(), message: l10n.playGone),
       );
     }
     final step = _step.clamp(0, play.steps.length - 1);

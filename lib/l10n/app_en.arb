@@ -5,6 +5,7 @@
   "tabChat": "Chat",
   "tabSchedule": "Schedule",
   "tabDocuments": "Documents",
+  "tabPlays": "Plays",
   "continueWithGoogle": "Continue with Google",
   "continueWithApple": "Continue with Apple",
   "continueWithEmail": "Continue with email",
@@ -1706,8 +1707,6 @@
   "@importRun": {"placeholders": {"count": {"type": "int"}}},
   "importDone": "{count, plural, =1{1 event added to the schedule.} other{{count} events added to the schedule.}}",
   "@importDone": {"placeholders": {"count": {"type": "int"}}},
-  "playsMenu": "Whiteboard",
-  "playsTitle": "Whiteboard",
   "playsEmpty": "No plays yet. Your coaches' plays will show up here.",
   "playsEmptyAdmin": "No saved plays yet. Draw on the whiteboard and tap Save to plays to keep one.",
   "playNew": "New play",
@@ -1783,7 +1782,6 @@
   "toolDraw": "Draw",
   "toolText": "Text",
   "toolErase": "Erase",
-  "whiteboardTitle": "Whiteboard",
   "playNewBoard": "New board",
   "playNewBoardTitle": "Start a new board?",
   "playNewBoardBody": "What's on the whiteboard now will be erased. Save it first to keep it.",
@@ -1794,6 +1792,5 @@
   "@playSaved": {"placeholders": {"title": {"type": "String"}}},
   "playPlaySteps": "Play the steps",
   "playStopPlaying": "Stop",
-  "playToWhiteboard": "Put on the whiteboard",
-  "playsMenuHelp": "Coach's whiteboard"
+  "playToWhiteboard": "Put on the whiteboard"
 }

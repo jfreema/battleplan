@@ -8,6 +8,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/admin/admin.dart';
@@ -29,7 +30,7 @@ import 'package:material_ui/material_ui.dart';
 /// The tab names in route order: `/g/:groupId/<tab>` (ARCH §5.4).
 const teamTabs = ['chat', 'schedule', 'documents', 'plays'];
 
-/// The team view: header with the switcher, then Chat · Schedule · Documents · Whiteboard
+/// The team view: header with the switcher, then Chat · Schedule · Documents · Plays
 /// as a bottom bar on phones or a left rail at 840 px and up (SPEC §5).
 ///
 /// A super admin who isn't on the team sees it read-only instead, under
@@ -139,11 +140,15 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         teams.value?.any((t) => t.group.id != groupId && t.hasUnread) ?? false;
     final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
 
-    final destinations = [
-      (AppIcons.chat, l10n.tabChat),
-      (AppIcons.schedule, l10n.tabSchedule),
-      (AppIcons.documents, l10n.tabDocuments),
-      (AppIcons.plays, l10n.playsMenuHelp),
+    // Each tab's icon, outlined, or filled for the tab that's showing.
+    Widget Function({required bool selected}) glyph(IconData icon) =>
+        ({required selected}) => selected ? Icon(icon, fill: 1) : Icon(icon);
+    final destinations = <(Widget Function({required bool selected}), String)>[
+      (glyph(AppIcons.chat), l10n.tabChat),
+      (glyph(AppIcons.schedule), l10n.tabSchedule),
+      (glyph(AppIcons.documents), l10n.tabDocuments),
+      // Drawn: no icon font has X's and O's on a chalkboard (BOARD-1).
+      (({required selected}) => PlaysIcon(filled: selected), l10n.tabPlays),
     ];
     // The Chat tab shows this team's unread count (CHAT-9).
     final unread = viewing
@@ -224,8 +229,8 @@ class _TeamShellState extends ConsumerState<TeamShell> {
                 destinations: [
                   for (final (i, (icon, label)) in destinations.indexed)
                     NavigationRailDestination(
-                      icon: tabIcon(i, Icon(icon)),
-                      selectedIcon: tabIcon(i, Icon(icon, fill: 1)),
+                      icon: tabIcon(i, icon(selected: false)),
+                      selectedIcon: tabIcon(i, icon(selected: true)),
                       label: Text(label),
                     ),
                 ],
@@ -275,8 +280,8 @@ class _TeamShellState extends ConsumerState<TeamShell> {
             destinations: [
               for (final (i, (icon, label)) in destinations.indexed)
                 NavigationDestination(
-                  icon: tabIcon(i, Icon(icon)),
-                  selectedIcon: tabIcon(i, Icon(icon, fill: 1)),
+                  icon: tabIcon(i, icon(selected: false)),
+                  selectedIcon: tabIcon(i, icon(selected: true)),
                   label: label,
                 ),
             ],

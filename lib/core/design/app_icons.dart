@@ -130,8 +130,9 @@ abstract final class AppIcons {
   };
   static const IconData cloudOff = Symbols.cloud_off_rounded;
 
-  // Plays (BOARD-1 to BOARD-5): the team menu's item and the board's tools.
-  static const IconData plays = Symbols.sports_rounded;
+  // Plays (BOARD-1 to BOARD-5): the board's tools. The Plays icon itself is
+  // drawn (core/widgets/plays_icon.dart): no font has X's and O's on a
+  // chalkboard.
   static const IconData toolMove = Symbols.pan_tool_rounded;
   static const IconData toolTeam = Symbols.person_rounded;
   static const IconData toolOpponent = Symbols.close_rounded;

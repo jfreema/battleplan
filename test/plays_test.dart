@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/plays/data/firestore_play_repository.dart';
 import 'package:battleplan/features/plays/data/prefs_whiteboard_store.dart';
@@ -345,10 +346,23 @@ void main() {
         navigation.destinations.cast<NavigationDestination>().map(
           (d) => d.label,
         ),
-        ['Chat', 'Schedule', 'Documents', "Coach's whiteboard"],
+        ['Chat', 'Schedule', 'Documents', 'Plays'],
       );
-      await tester.tap(find.text("Coach's whiteboard"));
+      // The drawn chalkboard, outlined until its tab is showing, then filled.
+      expect(tester.widget<PlaysIcon>(find.byType(PlaysIcon)).filled, isFalse);
+      await tester.tap(find.text('Plays'));
       await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<PlaysIcon>(
+              find.descendant(
+                of: find.byType(NavigationBar),
+                matching: find.byType(PlaysIcon),
+              ),
+            )
+            .filled,
+        isTrue,
+      );
       expect(
         find.text("No plays yet. Your coaches' plays will show up here."),
         findsOneWidget,
@@ -377,7 +391,7 @@ void main() {
         'board, ready to drag and draw, saved only when asked', (tester) async {
       final plays = FakePlayRepository();
       await open(tester, role: MemberRole.admin, plays: plays);
-      expect(find.text('Whiteboard'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Plays'), findsOneWidget);
       // Add a runner: the opponent tool, then a tap on the board.
       await tester.tap(find.byTooltip('Add an opponent'));
       await tester.pumpAndSettle();
@@ -401,7 +415,7 @@ void main() {
       expect(markers.where((m) => m.side == MarkerSide.ball), hasLength(1));
       expect(markers.where((m) => m.side == MarkerSide.opponent), hasLength(1));
       // The whiteboard keeps its drawing, and the saved copy is listed.
-      expect(find.text('Whiteboard'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Plays'), findsOneWidget);
       await tester.tap(find.byTooltip('Saved plays'));
       await tester.pumpAndSettle();
       expect(find.text('Pickoff at first'), findsOneWidget);
@@ -461,7 +475,7 @@ void main() {
       await tester.pumpAndSettle();
       // Back on the whiteboard, now with the play's two steps, and still
       // with the way back to the team.
-      expect(find.text('Whiteboard'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Plays'), findsOneWidget);
       expect(find.text('Step 1 of 2'), findsOneWidget);
       expect(find.byType(BackButton), findsOneWidget);
     });

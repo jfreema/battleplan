@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
@@ -531,13 +532,13 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                       ),
                     )
                   : roomy
-                  ? Text(l10n.whiteboardTitle)
+                  ? Text(l10n.tabPlays)
                   : null,
               actions: [
                 if (widget.whiteboard && roomy) ...[
                   IconButton(
                     tooltip: l10n.playNewBoard,
-                    icon: const Icon(AppIcons.plays),
+                    icon: const PlaysIcon(),
                     onPressed: () => unawaited(_newBoard()),
                   ),
                   IconButton(

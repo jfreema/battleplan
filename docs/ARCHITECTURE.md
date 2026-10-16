@@ -275,7 +275,7 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 | `/notifications` | Notification center |
 | `/g/:groupId/chat`, `/g/:groupId/chat/m/:messageId` | Chat; jump to a message (replies, notifications) |
 | `/g/:groupId/schedule`, `/g/:groupId/schedule/:eventId`, `/g/:groupId/schedule/new` | Schedule tab |
-| `/g/:groupId/plays`, `/g/:groupId/plays/saved`, `/g/:groupId/plays/:playId` | Coach's whiteboard tab; saved plays and play details |
+| `/g/:groupId/plays`, `/g/:groupId/plays/saved`, `/g/:groupId/plays/:playId` | Plays tab (the whiteboard); saved plays and play details |
 | `/g/:groupId/documents`, `/g/:groupId/documents/d/:docId` | Documents tab; a document (notifications). The old `docs` path redirects. |
 | `/g/:groupId/roster`, `/g/:groupId/roster/players/:playerId`, `/g/:groupId/invite`, `/g/:groupId/settings`, `/g/:groupId/reports` | Team menu |
 | `/settings/...` | Profile, appearance, notifications, sign-in methods, account |
@@ -298,7 +298,7 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 
   | Width | Navigation | Notes |
   |---|---|---|
-  | < 840 px (phones, narrow browser windows) | **Bottom navigation bar** with Chat · Schedule · Documents · Coach's whiteboard | |
+  | < 840 px (phones, narrow browser windows) | **Bottom navigation bar** with Chat · Schedule · Documents · Plays | |
   | ≥ 840 px (desktop browsers, tablets in landscape) | Same four destinations, same order and icons, as a **left navigation rail** | Content width is capped (~840 px for chat) so it stays readable. *(Decision D9; can be overridden to keep the bottom bar everywhere.)* |
 
 ### 5.6 Offline and performance
@@ -1198,7 +1198,7 @@ SPEC §6.15, ROADMAP tasks 219–227, 241, 249, 250, 252, and 254. Built: GameCh
 
 ### 6.14 Whiteboard · Built
 
-SPEC §6.16 (BOARD), ROADMAP tasks 242–248. The coach's whiteboard first (**Coach's whiteboard**, directly after Documents in the main navigation); saved plays second. The code says plays: `lib/features/plays/`, the `plays` collection, `/g/:groupId/plays`.
+SPEC §6.16 (BOARD), ROADMAP tasks 242–248. The coach's whiteboard first, in **Plays** (directly after Documents in the main navigation, with `PlaysIcon`, a chalkboard with an X, an O, and a route, drawn in `core/widgets/plays_icon.dart` and filled when selected); saved plays second. The code says plays: `lib/features/plays/`, the `plays` collection, `/g/:groupId/plays`.
 
 - **Data.** `plays/{playId}`: `groupId`, `board` (`baseball`, `basketball`, `soccer`, `football`, `blank`), `variant` (`full`, `half`), `title` (1–80), `note` (≤ 1000), `steps: [{ elements: [...] }]` (1–10 steps of ≤ 150 elements), `createdBy`, `createdAt`, `updatedAt`. Elements are compact maps: `k` is `m` (marker: `x`, `y`, `s` side `team`/`opponent`/`ball`, `l` label ≤ 12, `p` roster player), `a` (arrow: `t` `run`/`pass`/`block`, `pts`), `l` (freehand line: `pts`), or `n` (note: `x`, `y`, `text` ≤ 200). Points are 0–1 across the board and down it, rounded to 4 places, `pts` one flat list of x, y pairs (≤ 64 points, simplified as drawn). A play is a few kilobytes and doesn't count toward storage. One index: `groupId` with `updatedAt` descending. Team deletion deletes them (`TEAM_COLLECTIONS`).
 - **Rules.** Members and super admins read (lists bounded); admins and super admins create, update, and delete on active teams (`playEditorOk`); `validPlay` checks the keys, board, variant, title, note, and each step's element count; `createdBy` is the writer, and `groupId`, `createdBy`, and `createdAt` never change.

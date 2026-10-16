@@ -81,7 +81,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | 17 | Admins can delete messages | CHAT-8 |
 | 18 | 👍 ❤️ 👎 😂 reactions on messages | CHAT-6 |
 | 19 | Modern, clean UI | §7 |
-| 20 | Bottom tabs: Chat, Schedule, Documents, Coach's whiteboard | §5.3 |
+| 20 | Bottom tabs: Chat, Schedule, Documents, Plays | §5.3 |
 | 21 | Many sports teams, each with its own members, chat, and schedule | TEAM-1, TEAM-2, SCHED-2, §5.2; ARCH §1, §3 |
 | 22 | Youth players don't use the app; their adult parents and guardians do (adult players can be members themselves) | AUTH-5, §6.3 (PLAYER), SAFE-6; ARCH §1 |
 | 23 | Parent/guardian → player relationships, so parents RSVP for their child, not themselves | §6.3 (PLAYER-1 to PLAYER-6), on every team; ARCH §6.2 |
@@ -241,7 +241,7 @@ Sign in
  │     └─ No teams yet → Welcome: [Join a team]  [Create a team]
  └─ Team view (opens the last team you used)
       ├─ Header:     team switcher ▾ · notification bell · team menu ⋯ · your avatar
-      ├─ Tabs:       Chat | Schedule | Documents | Coach's whiteboard
+      ├─ Tabs:       Chat | Schedule | Documents | Plays
       ├─ Team menu:  Roster · Invite · Notifications for this team ·
       │              Team settings* · Media* · Reports* · Import*    (* admins)
       │              (Leave team is on your own card in the Roster, TEAM-8)
@@ -267,9 +267,9 @@ Sign in
 | **Chat** | Speech bubble | Unread message count for this team (CHAT-9) |
 | **Schedule** | Calendar | Number of events in the next 14 days still waiting for your RSVP (or your players') |
 | **Documents** | Folder | — |
-| **Coach's whiteboard** | Play diagram | — |
+| **Plays** | An X and an O, the X's route to it, on a chalkboard on an easel: drawn, as no icon font has one; filled when selected | — |
 
-- Labels are always visible. The tabs, order, and icons are the same everywhere. On wide screens, Coach's whiteboard sits directly below Documents in the left navigation rail.
+- Labels are always visible. The tabs, order, and icons are the same everywhere. On wide screens, Plays sits directly below Documents in the left navigation rail.
 - Each tab keeps its scroll position when you switch away and back.
 
 ### 5.4 Phone layout (Chat tab)
@@ -298,13 +298,13 @@ Sign in
 ├────────────────────────────────────┤
 │ (+)  Message Thunder U14...    (>) │
 ├────────────────────────────────────┤
-│ [Chat] Schedule Documents Whiteboard│
+│ [Chat] Schedule Documents Plays     │
 └────────────────────────────────────┘
 ```
 
 ### 5.5 Wide screens (web and tablets, 840 px and up)
 
-- **Navigation.** The tabs move to a **left rail**: the team switcher at the top, then Chat, Schedule, Documents, and Coach's whiteboard, with your avatar at the bottom. The order, icons, and labels match phones.
+- **Navigation.** The tabs move to a **left rail**: the team switcher at the top, then Chat, Schedule, Documents, and Plays, with your avatar at the bottom. The order, icons, and labels match phones.
 - **Chat** is centered at a readable width (about 840 px).
 - **Panels.** Event details, member cards, and settings open as side panels or dialogs instead of full screens.
 - **v1.1.** On very wide screens (1200 px and up), a persistent team list column, like Slack's.
@@ -1101,7 +1101,7 @@ Requested 2026-10-13. Built at the owner's request: GameChanger's events (2026-1
 
 ### 6.16 Whiteboard (BOARD) · Built
 
-Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's whiteboard (**Coach's whiteboard**, directly after Documents in the main navigation), made for an iPad's touch and a laptop's mouse alike: plays are mostly drawn, shown to the team, and erased, like a real whiteboard. Saving one is optional. Plays are visual aids only; they aren't attached to events or posted in the chat. This does not block any go-live phase.
+Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's whiteboard, in **Plays** (directly after Documents in the main navigation; Coach's whiteboard until 2026-10-15), made for an iPad's touch and a laptop's mouse alike: plays are mostly drawn, shown to the team, and erased, like a real whiteboard. Saving one is optional. Plays are visual aids only; they aren't attached to events or posted in the chat. This does not block any go-live phase.
 
 - **BOARD-1 · Four boards.** Each is drawn from a real field's measurements, with its own starting positions:
   - **Baseball** (also softball's): the field itself, with striped outfield grass, the warning track and fence, the infield dirt and grass, base paths, bases, home plate, the mound and rubber, batter's boxes, and foul lines. The nine stand at P, C, 1B, 2B, 3B, SS, LF, CF, and RF; the other side can start with a batter, or the bases loaded.
@@ -1109,9 +1109,9 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
   - **Soccer**: a full or half pitch with its boxes, arcs, and goals; 4-4-2, 4-3-3, 3-5-2, 9v9, and 7v7, for either side.
   - **Football (American), X's and O's**: yard lines, hash marks, the line of scrimmage, and the line to gain; the offense as O's in the I formation or shotgun, the defense as X's in a 4-3 or 3-4.
   - Every board starts with the ball in play: in the pitcher's hand, with the point guard, on the center spot, on the line of scrimmage. Teams of other sports get a blank board, and any board can be picked.
-- **BOARD-2 · The whiteboard.** **Whiteboard** in the team menu opens it for the team's admins: the team's sport's board, ready to draw. Drag players, opponents, and the ball with a finger, a pencil, or a mouse to show how a play unfolds; add more; label one with a number, a position, or a roster player; draw run (solid), pass (dashed), and block or screen (T) arrows, freehand lines, and text; erase; undo and redo (and ⌘/Ctrl+Z, Delete, and Escape on a keyboard). The tools sit beside the board on a tablet or laptop and below it on a phone, each big enough for a finger; on a phone, **New board** and **Saved plays** are under More. The drawing stays on that device until it's cleared, so leaving never loses it; **New board** starts over (asking first) on any board.
+- **BOARD-2 · The whiteboard.** **Plays** in the main navigation opens it for the team's admins: the team's sport's board, ready to draw. Drag players, opponents, and the ball with a finger, a pencil, or a mouse to show how a play unfolds; add more; label one with a number, a position, or a roster player; draw run (solid), pass (dashed), and block or screen (T) arrows, freehand lines, and text; erase; undo and redo (and ⌘/Ctrl+Z, Delete, and Escape on a keyboard). The tools sit beside the board on a tablet or laptop and below it on a phone, each big enough for a finger; on a phone, **New board** and **Saved plays** are under More. The drawing stays on that device until it's cleared, so leaving never loses it; **New board** starts over (asking first) on any board.
 - **BOARD-3 · Steps.** A play can have up to 10 steps. A new step starts where everyone stands; **Play** moves the players and the ball smoothly from each step to the next.
-- **BOARD-4 · Saved plays.** **Save to plays** keeps a copy, named, for the team: everyone on the team opens the Whiteboard to see them (for them it shows the saved plays), step by step. Admins edit, duplicate, delete, or put a saved play back on the whiteboard. Positions are only labels on the drawing; nothing is saved on a player (players have no position field, ROADMAP task 234).
+- **BOARD-4 · Saved plays.** **Save to plays** keeps a copy, named, for the team: everyone on the team opens Plays to see them (for them it shows the saved plays), step by step. Admins edit, duplicate, delete, or put a saved play back on the whiteboard. Positions are only labels on the drawing; nothing is saved on a player (players have no position field, ROADMAP task 234).
 
 **Acceptance**
 

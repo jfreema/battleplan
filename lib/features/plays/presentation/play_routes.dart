@@ -1,6 +1,6 @@
-import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/plays/application/providers.dart';
@@ -63,7 +63,7 @@ class EditPlayRoute extends ConsumerWidget {
         body: async.isLoading
             ? const Center(child: CircularProgressIndicator())
             : EmptyState(
-                icon: AppIcons.plays,
+                art: const PlaysIcon(),
                 message: AppLocalizations.of(context).playGone,
               ),
       );

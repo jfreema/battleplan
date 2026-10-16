@@ -4,14 +4,19 @@ import 'package:material_ui/material_ui.dart';
 /// Icon, one sentence, and at most one action (SPEC §7.5).
 class EmptyState extends StatelessWidget {
   const new({
-    required this.icon,
     required this.message,
+    this.icon,
+    this.art,
     this.actionLabel,
     this.onAction,
     super.key,
-  });
+  }) : assert(icon != null || art != null, 'An icon, or art to draw');
 
-  final IconData icon;
+  final IconData? icon;
+
+  /// A drawn icon in place of [icon], such as `PlaysIcon`, in the same size
+  /// and color.
+  final Widget? art;
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
@@ -28,7 +33,10 @@ class EmptyState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 48, color: scheme.onSurfaceVariant),
+              IconTheme(
+                data: IconThemeData(size: 48, color: scheme.onSurfaceVariant),
+                child: art ?? Icon(icon),
+              ),
               const SizedBox(height: Space.lg),
               Text(
                 message,

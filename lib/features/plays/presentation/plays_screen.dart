@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
-import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/plays/application/providers.dart';
@@ -74,7 +74,7 @@ class SavedPlaysScreen extends ConsumerWidget {
       body = const Center(child: CircularProgressIndicator());
     } else if (list.isEmpty) {
       body = EmptyState(
-        icon: AppIcons.plays,
+        art: const PlaysIcon(),
         message: canEdit ? l10n.playsEmptyAdmin : l10n.playsEmpty,
       );
     } else {
@@ -97,7 +97,7 @@ class SavedPlaysScreen extends ConsumerWidget {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: Text(canEdit ? l10n.playsSaved : l10n.playsTitle)),
+      appBar: AppBar(title: Text(canEdit ? l10n.playsSaved : l10n.tabPlays)),
       body: body,
     );
   }
