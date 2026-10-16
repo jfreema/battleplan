@@ -25,6 +25,7 @@ Hosting serves `support.html` at `/support` because `firebase.json` sets `cleanU
 - Keep the page `<title>`, `description`, `og:*`, and `twitter:*` tags in step when you change a page's purpose.
 - Images: give every `<img>` a `width`, `height`, and real `alt` text (or `alt=""` when decorative). Use `<picture>` with a `prefers-color-scheme: dark` source for screenshots. Keep `images/` under about 2 MB.
 - Text and UI paths should match the app's English strings (`lib/l10n/app_en.arb`), for example **Settings** → **Delete account**.
+- On the landing page, say **players** and **guardians**: never kids, children, or parents (the owner's rule, 2026-10-16). Accounts are for adults; players who don't use the app are roster entries their guardians answer for.
 - A pair of phones (`feature-media pair`) shows both side by side from 1100 px and only the first below that. Add `slider`, with the phones in a `slides` div and a `slider-dots` div after it, as the Plays pair has, to let narrower screens swipe between them.
 
 ## Store badges
