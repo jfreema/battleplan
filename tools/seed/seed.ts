@@ -579,45 +579,108 @@ async function main() {
     });
   }
 
-  // A saved play (BOARD-4): Thunder's bunt defense on the diamond, the
-  // corners charging and second covering first, then where everyone ends
-  // up. Positions match lib/features/plays/domain/board_layout.dart.
+  // Saved plays (BOARD-4), one on each of the coach's teams for the landing
+  // page's two whiteboard screenshots; a team's whiteboard draws any board.
+  // Cyclone's double cut to home: a ball in the left-center gap with a
+  // runner trying to score. Step 1, everyone heads for their spot; step 2,
+  // the relay: SS the lead, 2B trailing 30 feet behind, 1B the cutoff in
+  // front of the plate. Spots are feet from home along a direction (0° is
+  // dead center, negative toward left), as BaseballField.fromHome measures
+  // them in lib/features/plays/domain/board_layout.dart.
   const m = (id: string, x: number, y: number, s: string, l = '') => ({ k: 'm', id, x, y, s, ...(l ? { l } : {}) });
   const a = (id: string, t: string, pts: number[]) => ({ k: 'a', id, t, pts });
-  await db.doc('plays/thunder-bunt').set({
-    groupId: 'thunder',
+  const fh = (feet: number, degrees: number): [number, number] => {
+    const r = (degrees * Math.PI) / 180;
+    return [0.5 + (feet / 470) * Math.sin(r), 0.9 - (feet / 470) * Math.cos(r)];
+  };
+  const on = (id: string, spot: [number, number], s: string, l = '') => m(id, ...spot, s, l);
+  const line = (...spots: [number, number][]) => spots.flat();
+  // Where the fielders stand at the pitch, as the whiteboard's defense puts them.
+  const start: Record<string, [number, number]> = {
+    P: [0.5, 0.7713], C: [0.5, 0.9255], '1B': [0.6474, 0.7196], '2B': [0.5777, 0.6412],
+    SS: [0.4223, 0.6412], '3B': [0.3526, 0.7196], LF: [0.2303, 0.3928], CF: [0.5, 0.2617], RF: [0.7697, 0.3928],
+  };
+  // Where the double cut puts them, on the line from the ball to the plate.
+  const cut: Record<string, [number, number]> = {
+    P: fh(-38, -40), C: fh(-2, 0), '1B': fh(58, -17), '2B': fh(165, -17),
+    SS: fh(200, -17), '3B': fh(90, -46), LF: fh(318, -27), CF: fh(335, -15), RF: fh(130, 4),
+  };
+  const fielders = (spots: Record<string, [number, number]>) =>
+    Object.entries(spots).map(([l, spot]) => on(l.toLowerCase(), spot, 'team', l));
+  await db.doc('plays/cyclone-double-cut').set({
+    groupId: 'cyclone',
     board: 'baseball',
     variant: 'full',
-    title: 'Bunt defense',
-    note: 'Corners crash on the pitch. Second covers first; short covers second.',
+    title: 'Double cut to home',
+    note: 'Ball in the left-center gap. SS is the lead relay, 2B trails 30 feet behind; 1B cuts in front of the plate. P backs up home, RF covers second.',
     steps: [
       {
         elements: [
-          m('p', 0.5, 0.7713, 'team', 'P'), m('c', 0.5, 0.9255, 'team', 'C'),
-          m('1b', 0.6474, 0.7196, 'team', '1B'), m('2b', 0.5777, 0.6412, 'team', '2B'),
-          m('ss', 0.4223, 0.6412, 'team', 'SS'), m('3b', 0.3526, 0.7196, 'team', '3B'),
-          m('lf', 0.2303, 0.3928, 'team', 'LF'), m('cf', 0.5, 0.2617, 'team', 'CF'),
-          m('rf', 0.7697, 0.3928, 'team', 'RF'), m('b', 0.465, 0.9, 'opponent', 'B'),
-          m('ball', 0.53, 0.7833, 'ball'),
-          a('a1', 'run', [0.6474, 0.7196, 0.6, 0.81]), a('a3', 'run', [0.3526, 0.7196, 0.41, 0.81]),
-          a('a2', 'run', [0.5777, 0.6412, 0.6354, 0.7646]), a('as', 'run', [0.4223, 0.6412, 0.5, 0.6292]),
+          ...fielders(start),
+          on('r', fh(127, 0), 'opponent', 'R'), on('b', [0.465, 0.9], 'opponent', 'B'),
+          on('ball', fh(345, -19), 'ball'),
+          a('hit', 'pass', line(fh(8, -10), fh(330, -19))),
+          ...['CF', 'LF', 'SS', '2B', '1B', 'RF', 'P'].map((l) => a(`to-${l}`, 'run', line(start[l], cut[l]))),
+          a('r-run', 'run', line(fh(127, 0), fh(90, -45), fh(40, -45))),
+          a('b-run', 'run', line([0.465, 0.9], fh(90, 45), fh(95, 40))),
         ],
       },
       {
         elements: [
-          m('p', 0.5, 0.83, 'team', 'P'), m('c', 0.5, 0.9255, 'team', 'C'),
-          m('1b', 0.6, 0.81, 'team', '1B'), m('2b', 0.6354, 0.7646, 'team', '2B'),
-          m('ss', 0.5, 0.6292, 'team', 'SS'), m('3b', 0.41, 0.81, 'team', '3B'),
-          m('lf', 0.2303, 0.3928, 'team', 'LF'), m('cf', 0.5, 0.2617, 'team', 'CF'),
-          m('rf', 0.7697, 0.3928, 'team', 'RF'), m('b', 0.58, 0.85, 'opponent', 'B'),
-          m('ball', 0.47, 0.86, 'ball'),
-          a('t1', 'pass', [0.47, 0.86, 0.6354, 0.7646]),
+          ...fielders(cut),
+          on('r', fh(40, -45), 'opponent', 'R'), on('b', fh(95, 40), 'opponent', 'B'),
+          on('ball', fh(326, -12), 'ball'),
+          a('relay', 'pass', line(fh(322, -14), fh(212, -17))),
+          a('home', 'pass', line(fh(188, -17), fh(10, -10))),
+          a('r-home', 'run', line(fh(40, -45), fh(12, -32))),
         ],
       },
     ],
     createdBy: 'coach',
     createdAt: minutesAgo(60 * 24 * 2),
     updatedAt: minutesAgo(60 * 24),
+  });
+
+  // Thunder's pick and roll on the half court: the center
+  // screens for the point guard at the top, then rolls to the rim for the
+  // pass. Spots are in feet on the half court, 50 wide and 47 deep, the
+  // basket at the top (BasketballCourt in board_layout.dart).
+  const ft = (x: number, y: number): [number, number] => [x / 50, y / 47];
+  const at = (id: string, x: number, y: number, s: string, l = '') => m(id, ...ft(x, y), s, l);
+  const path = (...spots: [number, number][]) => spots.flatMap(([x, y]) => ft(x, y));
+  await db.doc('plays/thunder-pick-and-roll').set({
+    groupId: 'thunder',
+    board: 'basketball',
+    variant: 'half',
+    title: 'Pick and roll',
+    note: 'C sets the screen up top, then rolls to the rim. PG reads the switch: pull up, or hit C on the roll.',
+    steps: [
+      {
+        elements: [
+          at('pg', 25, 31, 'team', 'PG'), at('sg', 43, 19, 'team', 'SG'), at('sf', 7, 19, 'team', 'SF'),
+          at('pf', 41, 6, 'team', 'PF'), at('c', 16, 11, 'team', 'C'),
+          at('d1', 25, 26.5, 'opponent', '1'), at('d2', 39.5, 16.5, 'opponent', '2'), at('d3', 10.5, 16.5, 'opponent', '3'),
+          at('d4', 37, 7.5, 'opponent', '4'), at('d5', 19.5, 10, 'opponent', '5'),
+          at('ball', 27.2, 32.5, 'ball'),
+          a('screen', 'block', path([16, 11], [22, 19], [28.5, 25.5])),
+          a('drive', 'run', path([25, 31], [31, 30], [36, 24])),
+        ],
+      },
+      {
+        elements: [
+          at('pg', 36, 24, 'team', 'PG'), at('sg', 43, 19, 'team', 'SG'), at('sf', 7, 19, 'team', 'SF'),
+          at('pf', 41, 6, 'team', 'PF'), at('c', 28.5, 25.5, 'team', 'C'),
+          at('d1', 31, 27.5, 'opponent', '1'), at('d2', 39.5, 16.5, 'opponent', '2'), at('d3', 10.5, 16.5, 'opponent', '3'),
+          at('d4', 37, 7.5, 'opponent', '4'), at('d5', 32.5, 21, 'opponent', '5'),
+          at('ball', 37.5, 25.3, 'ball'),
+          a('roll', 'run', path([28.5, 25.5], [26, 18], [25, 11])),
+          a('feed', 'pass', path([37.5, 25.3], [26.2, 12.2])),
+        ],
+      },
+    ],
+    createdBy: 'coach',
+    createdAt: minutesAgo(60 * 24 * 3),
+    updatedAt: minutesAgo(60 * 24 * 2),
   });
 
   await db.doc('config/app').set({

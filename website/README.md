@@ -48,7 +48,8 @@ The screenshots are real captures of the web app with the seeded sample teams (T
 | `poll` | `rachel@example.com` | Rally Possums' tournament poll |
 | `documents` | `coach@example.com` | Thunder's documents |
 | `youth` | `claire@example.com` | Cyclone's practice, answering for Luke and Alex |
-| `whiteboard` | `coach@example.com` | **Plays** → More → **Saved plays** → **Bunt defense** → More → **Put on the whiteboard** |
+| `whiteboard` | `coach@example.com` | Cyclone: **Plays** → More → **Saved plays** → **Double cut to home** → More → **Put on the whiteboard** → **Next step** (step 2 of 2, the relay lined up) |
+| `whiteboard-basketball` | `coach@example.com` | Thunder: **Plays** → More → **Saved plays** → **Pick and roll** → More → **Put on the whiteboard**, in a new sign-in, so Cyclone's whiteboard doesn't carry over |
 
 1. Start the emulators **without functions** (`firebase emulators:start --only auth,firestore,storage`), so the seeded events don't post cards to the chats or send notifications. Then seed them (DEVELOPMENT.md, `npm --prefix tools/seed run seed`). Seed again before each run: opening a chat marks it read.
 2. Build from a scratch copy of the repo with `bannerLabel` in `lib/core/env.dart` returning null, so there's no "EMU" corner ribbon (never commit that change): `flutter build web --wasm -t lib/main_dev.dart --dart-define=USE_EMULATORS=true -o <a folder outside the repo>`. Serve that folder on a local port.
