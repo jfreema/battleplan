@@ -100,6 +100,8 @@ class EventDetailsScreen extends ConsumerWidget {
           await _setRsvpForSomeone(context, ref, event, group);
         case _Action.repost:
           await _repostToChat(context, ref, event);
+        case _Action.emailRsvp:
+          await _emailRsvpReminder(context, ref, event);
       }
     }
 
@@ -145,6 +147,17 @@ class EventDetailsScreen extends ConsumerWidget {
                     value: _Action.repost,
                     child: Text(l10n.eventRepost),
                   ),
+                // RSVPs by email for whoever hasn't answered (SCHED-14).
+                if (canEmailRsvpReminder(
+                  event,
+                  group,
+                  me,
+                  superAdmin: superAdmin,
+                ))
+                  PopupMenuItem(
+                    value: _Action.emailRsvp,
+                    child: Text(l10n.eventEmailRsvp),
+                  ),
                 if (canManage && !event.isCanceled)
                   PopupMenuItem(
                     value: _Action.cancel,
@@ -169,7 +182,57 @@ class EventDetailsScreen extends ConsumerWidget {
   }
 }
 
-enum _Action { edit, duplicate, setRsvp, repost, cancel, delete }
+enum _Action { edit, duplicate, setRsvp, repost, emailRsvp, cancel, delete }
+
+/// Emails the people linked to players who haven't RSVP'd, after asking
+/// how many it will be (SCHED-14). They answer from the email.
+Future<void> _emailRsvpReminder(
+  BuildContext context,
+  WidgetRef ref,
+  Event event,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final repo = ref.read(eventRepositoryProvider);
+  void say(String text) {
+    if (context.mounted) showAppSnackBar(context, text);
+  }
+
+  String failure(AppFailure e) => switch (e) {
+    RateLimited() => l10n.eventEmailRsvpTooSoon,
+    PermissionDenied() => l10n.notAllowed,
+    _ => l10n.eventEmailRsvpFailed,
+  };
+  try {
+    final count = await repo.emailRsvpReminder(event.id, dryRun: true);
+    if (!context.mounted) return;
+    if (count.people == 0) {
+      return say(
+        count.unreachable > 0
+            ? l10n.eventEmailRsvpNobody
+            : l10n.eventEmailRsvpEveryone,
+      );
+    }
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.eventEmailRsvpTitle(count.people),
+      message: l10n.eventEmailRsvpBody,
+      confirmLabel: l10n.eventEmailRsvpConfirm,
+      cancelLabel: l10n.cancel,
+    );
+    if (!ok || !context.mounted) return;
+    final sent = await repo.emailRsvpReminder(event.id);
+    final emailed = sent.people - sent.failed;
+    say(
+      emailed > 0
+          ? l10n.eventEmailRsvpSent(emailed)
+          : sent.people == 0
+          ? l10n.eventEmailRsvpEveryone
+          : l10n.eventEmailRsvpFailed,
+    );
+  } on AppFailure catch (e) {
+    say(failure(e));
+  }
+}
 
 /// Posts [event] in the chat again as a reminder, after asking (SCHED-8).
 Future<void> _repostToChat(

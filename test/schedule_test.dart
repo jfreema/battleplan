@@ -11,6 +11,7 @@ import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
+import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -967,6 +968,118 @@ void main() {
       await tester.tap(find.byTooltip('More actions'));
       await tester.pumpAndSettle();
       expect(find.text('Post a reminder in chat'), findsNothing);
+    });
+
+    testWidgets("an admin emails people who haven't RSVP'd, after saying "
+        'how many (SCHED-14)', (tester) async {
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [event('e1')],
+      );
+      rsvps.events.rsvpEmailCount = (
+        people: 3,
+        players: 2,
+        unreachable: 0,
+        failed: 0,
+      );
+      await openDetails(tester, 'Practice');
+      await menu(tester, "Email people who haven't RSVP'd");
+      expect(find.text("Email 3 people who haven't RSVP'd?"), findsOneWidget);
+      expect(find.text('They can RSVP right from the email.'), findsOneWidget);
+      await tester.tap(find.text('Send'));
+      await tester.pumpAndSettle();
+      expect(
+        rsvps.events.calls,
+        containsAllInOrder(['count rsvps e1', 'email rsvps e1']),
+      );
+      expect(find.text('Emailed 3 people.'), findsOneWidget);
+      // Again within the hour: it says so.
+      rsvps.events.rsvpEmailLimited = true;
+      await menu(tester, "Email people who haven't RSVP'd");
+      await tester.tap(find.text('Send'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('You emailed them in the last hour. Try again later.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('with nobody to email it says why, without asking', (
+      tester,
+    ) async {
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      await menu(tester, "Email people who haven't RSVP'd");
+      expect(find.text("Everyone has RSVP'd."), findsOneWidget);
+      expect(rsvps.events.calls.where((c) => c.startsWith('email')), isEmpty);
+      rsvps.events.rsvpEmailCount = (
+        people: 0,
+        players: 0,
+        unreachable: 2,
+        failed: 0,
+      );
+      await menu(tester, "Email people who haven't RSVP'd");
+      expect(
+        find.text('No one to email. Nobody is linked to those players.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('no RSVP email once RSVPs are closed or for members', (
+      tester,
+    ) async {
+      final past = DateTime.now().subtract(const Duration(hours: 1));
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [
+          event('e1', canceledAt: DateTime.now()),
+          event('e2', days: 2, title: 'Late', rsvpDeadline: past),
+        ],
+      );
+      for (final title in ['Practice', 'Late']) {
+        await openDetails(tester, title);
+        await tester.tap(find.byTooltip('More actions'));
+        await tester.pumpAndSettle();
+        expect(find.text("Email people who haven't RSVP'd"), findsNothing);
+        await tester.tapAt(Offset.zero);
+        await tester.pumpAndSettle();
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+      }
+      // Started events, and members who didn't make the event.
+      final team = testGroup('a', 'Thunder');
+      final started = event('e3', days: 0, hour: 0);
+      expect(
+        canEmailRsvpReminder(
+          started,
+          team,
+          testMembership('a', 'coach', role: MemberRole.admin),
+          now: started.startAt.add(const Duration(minutes: 5)),
+        ),
+        isFalse,
+      );
+      expect(
+        canEmailRsvpReminder(
+          event('e4').copyWith(createdBy: 'pat'),
+          team,
+          testMembership('a', 'sam'),
+        ),
+        isFalse,
+      );
+      expect(
+        canEmailRsvpReminder(
+          event('e4'),
+          team,
+          testMembership('a', 'coach', role: MemberRole.admin),
+        ),
+        isTrue,
+      );
     });
 
     testWidgets('admins set an answer for someone else', (tester) async {

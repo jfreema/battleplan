@@ -79,6 +79,13 @@
         }
       },
       {
+        "source": "/a/**",
+        "function": {
+          "functionId": "answerPage",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "/app/**",
         "destination": "/app/index.html"
       }

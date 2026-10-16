@@ -80,6 +80,15 @@ abstract interface class EventRepository {
   /// sooner).
   Future<void> repostToChat(EventId eventId);
 
+  /// "Email people who haven't RSVP'd" (SCHED-14): emails everyone linked
+  /// to a player with no answer, with a link for each answer. Team admins
+  /// and the event's creator, once an hour per event (a rate-limit failure
+  /// sooner). With [dryRun], only counts who would get one.
+  Future<RsvpEmailCount> emailRsvpReminder(
+    EventId eventId, {
+    bool dryRun = false,
+  });
+
   /// Creates a repeating series and its events (SCHED-3).
   Future<SeriesResult> createSeries(
     GroupId groupId,
@@ -114,3 +123,14 @@ abstract interface class EventRepository {
     bool dryRun,
   });
 }
+
+/// What "Email people who haven't RSVP'd" did, or would do (SCHED-14):
+/// how many `people` it emails about how many `players`; players with no
+/// answer and nobody to email (`unreachable`); emails that didn't go
+/// through (`failed`).
+typedef RsvpEmailCount = ({
+  int people,
+  int players,
+  int unreachable,
+  int failed,
+});

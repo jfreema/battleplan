@@ -1,5 +1,5 @@
 // The emails Battleplan sends from Functions (ARCH §6.7).
-import { layout, type Email } from './service.js';
+import { escapeHtml, layout, type Email } from './service.js';
 
 /** AUTH-6: an admin added someone who has no account yet. */
 export function setupEmail(to: string, teamName: string, addedBy: string, link: string): Email {
@@ -202,3 +202,53 @@ export function methodName(id: string): string {
   return ({ 'google.com': 'Google', 'apple.com': 'Apple', password: 'Password' } as Record<string, string>)[id] ?? id;
 }
 
+
+/**
+ * SCHED-14: an admin's "Email people who haven't RSVP'd": the event, who
+ * it asks about, and an answer link for each answer. [maybe] is null when
+ * the team doesn't allow Maybe.
+ */
+export function rsvpReminderEmail(input: {
+  to: string;
+  team: string;
+  title: string;
+  when: string;
+  place: string;
+  /** "Is Emma going?" */
+  question: string;
+  going: string;
+  maybe: string | null;
+  notGoing: string;
+  sentBy: string;
+  /** The event in Battleplan. */
+  eventUrl: string;
+}): Email {
+  const answers: [string, string, boolean][] = [
+    ['Going', input.going, true],
+    ...(input.maybe ? [['Maybe', input.maybe, false] as [string, string, boolean]] : []),
+    ['Not going', input.notGoing, false],
+  ];
+  const by = `${input.sentBy || 'Your coach'} sent this to everyone who hasn't RSVP'd.`;
+  const text = [
+    input.team,
+    [input.title, input.when, input.place].filter(Boolean).join('\n'),
+    input.question,
+    answers.map(([label, url]) => `${label}: ${url}`).join('\n'),
+    `${by} You can also answer in Battleplan: ${input.eventUrl}`,
+    '— Battleplan',
+  ].join('\n\n');
+  const button = (label: string, url: string, primary: boolean) =>
+    `<a href="${escapeHtml(url)}" style="display:inline-block;margin:0 8px 8px 0;padding:12px 20px;border-radius:999px;` +
+    `text-decoration:none;font-weight:600;${primary ? 'background:#2F5BEA;color:#fff' : 'border:2px solid #2F5BEA;color:#2F5BEA'}">` +
+    `${escapeHtml(label)}</a>`;
+  const html =
+    '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px;line-height:1.5;color:#1a1c22;max-width:520px">' +
+    `<p style="margin:0;color:#5b5f6b;font-size:14px">${escapeHtml(input.team)}</p>` +
+    `<p style="margin:4px 0 0;font-size:22px;font-weight:700">${escapeHtml(input.title)}</p>` +
+    `<p style="margin:4px 0 16px">${[input.when, input.place].filter(Boolean).map(escapeHtml).join('<br>')}</p>` +
+    `<p style="font-weight:600">${escapeHtml(input.question)}</p>` +
+    `<p>${answers.map(([label, url, primary]) => button(label, url, primary)).join('')}</p>` +
+    `<p style="color:#5b5f6b;font-size:14px">${escapeHtml(by)} You can also <a href="${escapeHtml(input.eventUrl)}" style="color:#2549c4">answer in Battleplan</a>.</p>` +
+    '<p style="color:#5b5f6b;font-size:14px">— Battleplan</p></div>';
+  return { to: input.to, subject: `${input.team}: RSVP for ${input.title}, ${input.when}`, text, html };
+}

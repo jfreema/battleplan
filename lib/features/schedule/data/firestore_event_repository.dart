@@ -246,6 +246,38 @@ class FirestoreEventRepository implements EventRepository {
     }
   }
 
+  @override
+  Future<RsvpEmailCount> emailRsvpReminder(
+    EventId eventId, {
+    bool dryRun = false,
+  }) async {
+    try {
+      final result = await _functions
+          .httpsCallable('emailRsvpReminder')
+          .call<Map<String, dynamic>>({
+            'eventId': eventId.value,
+            'dryRun': dryRun,
+          });
+      int count(String key) => (result.data[key] as num?)?.toInt() ?? 0;
+      return (
+        people: count('people'),
+        players: count('players'),
+        unreachable: count('unreachable'),
+        failed: count('failed'),
+      );
+    } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(message),
+        'not-found' => NotFound(message),
+        'resource-exhausted' => RateLimited(message),
+        'failed-precondition' || 'invalid-argument' => InvalidInput(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
+      };
+    }
+  }
+
   Future<void> _write(Future<void> Function() write) async {
     try {
       await write();

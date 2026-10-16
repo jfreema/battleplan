@@ -46,6 +46,23 @@ bool canRepost(
     !event.isCanceled &&
     event.endAt.isAfter(now ?? DateTime.now());
 
+/// "Email people who haven't RSVP'd" (SCHED-14): whoever may post a
+/// reminder ([canRepost]), on an event that takes RSVPs, hasn't started,
+/// and is before its deadline, as emailRsvpReminder checks too.
+bool canEmailRsvpReminder(
+  Event event,
+  Group group,
+  Membership? me, {
+  bool superAdmin = false,
+  DateTime? now,
+}) {
+  final at = now ?? DateTime.now();
+  return canRepost(event, group, me, superAdmin: superAdmin, now: at) &&
+      event.takesRsvps &&
+      event.startAt.isAfter(at) &&
+      !event.deadlinePassedAt(at);
+}
+
 /// Whether [me] may answer on [event] at [now]: RSVPs on, not canceled,
 /// an active team, and before the deadline unless an admin (SCHED-5).
 bool canAnswerNow(Event event, Group group, Membership? me, DateTime now) =>

@@ -795,14 +795,12 @@ Players that others answer for never get accounts, and every account belongs to 
   - Volunteer and snack sign-ups.
   - Carpools.
   - Season availability surveys.
-- **SCHED-14 · v1.1 · Answering without opening the app.** The people who don't answer tend to be the ones who rarely open the app, so the answer is a tap away in a notification or an email (ARCH §6.15).
-  - **Buttons on notifications:** pushes for a new event, a changed event, a reminder, or a nudge (NOTIF-2), for an event that takes RSVPs, carry **Going**, **Maybe** (when the team allows it, TEAM-5), and **Not going**. A tap answers without opening the app, for everyone the notification names: a guardian's players, or yourself. To answer each player differently, open the event. No buttons on a canceled or started event, or past its deadline.
-    - The iPhone and Android apps show all three (Phases 4 and 5). On the web, Chrome and Edge show two, Going and Not going; Safari and Firefox show none, and a tap opens the event as before.
-  - **Reminders by email:** people with no device that can get Battleplan's notifications (someone an admin added who hasn't set up the app, or who never allowed notifications) get the event reminder (SCHED-8) and any nudge (SCHED-12) by email, with the same answers. At most one reminder email per event.
-    - Each email says why it came ("Coach Andy added you to Thunder on Battleplan") and ends with **Stop these emails**, which needs no sign-in. Settings → Notifications has the same switch, **Email reminders when I can't get notifications**, on by default.
-    - A team set to Off or muted, or the Reminders switch off (NOTIF-3, NOTIF-4), means no email either.
-  - **Answering from an email:** each answer opens a small page on getbattleplan.app with that answer picked, the players it's for, an optional note, and **Send**. Opening the link never answers by itself, because email services open links to check them; Send does. No sign-in: the link works only for that person, that event, and the players it names, until the event starts or its deadline passes. Afterward the page offers to open the event in Battleplan.
+- **SCHED-14 · v1.1 · Answering without opening the app.** The people who don't answer tend to be the ones who rarely open the app, so they can answer from an email (ARCH §6.15). Built for now as a button (task 286), at the owner's request: emails go out only when a coach sends them.
+  - **Email people who haven't RSVP'd**, in the event's menu, for team admins and the event's creator, while the event takes RSVPs, hasn't started, and is before its deadline. It emails everyone linked to a player with no answer yet (the player, when they're on the team, and their guardians), one email per person naming their players, but not the person sending. It asks first, with the count ("Email 3 people who haven't RSVP'd?"), and says when there's no one to email. Once an hour per event, up to 100 people.
+  - **The email** names the team, the event, its time and place, and asks "Is Emma going?" ("Are you going?" for a player's own email) with **Going**, **Maybe** (when the team allows it, TEAM-5), and **Not going**, and says who sent it.
+  - **Answering:** each answer opens a small page on getbattleplan.app with that answer picked, an optional note, and **Send**. Opening the link never answers by itself, because email services open links to check them; Send does. No sign-in: the link works only for that person, that event, and the players it names, until the event starts or its deadline passes, and it can change the answer until then. The page says who's answering, and offers to open the event in Battleplan.
   - Every answer follows SCHED-5 (the deadline, whether Maybe is allowed, who may answer for whom) and is recorded as that person's answer.
+  - **Later** (tasks 287 to 290): Going, Maybe, and Not going buttons on event notifications (the iPhone and Android apps show all three; Chrome and Edge show Going and Not going), and reminder emails sent on their own to people who can't get notifications, with **Stop these emails** and a Settings switch.
 
 **Acceptance (MVP)**
 
@@ -867,7 +865,7 @@ Players that others answer for never get accounts, and every account belongs to 
 
   Plain chat messages and direct messages don't appear in the notification center; unread counts and Messages cover them (CHAT-9, CHAT-19).
 
-  Pushes about an event that takes RSVPs carry answer buttons, and people who can't get notifications get reminders and nudges by email (SCHED-14, v1.1).
+  Admins can email the people who haven't RSVP'd, who answer from the email (SCHED-14). Answer buttons on pushes, and reminder emails sent on their own, come later.
 - **NOTIF-3 · MVP · Notification settings for each team.**
   - Set them from the team menu ("Notifications for this team") or from Settings → Notifications. They sync across your devices.
   - **Level:** All activity (default), Important only, or Off.
@@ -910,7 +908,7 @@ Players that others answer for never get accounts, and every account belongs to 
 
 - **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. Email is shown read-only.
 - **SET-2 · MVP · Appearance.** System (default), Light, or Dark. The change applies instantly, is remembered on the device, and syncs to the account.
-- **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). From v1.1, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
+- **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
 - **SET-6 · MVP · About and account.**

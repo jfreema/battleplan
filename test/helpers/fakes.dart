@@ -2183,6 +2183,29 @@ class FakeEventRepository implements EventRepository {
     calls.add('repost ${eventId.value}');
   }
 
+  /// What emailRsvpReminder counts and sends (SCHED-14).
+  RsvpEmailCount rsvpEmailCount = (
+    people: 0,
+    players: 0,
+    unreachable: 0,
+    failed: 0,
+  );
+
+  /// Set to make the next RSVP email say it went out too recently.
+  bool rsvpEmailLimited = false;
+
+  @override
+  Future<RsvpEmailCount> emailRsvpReminder(
+    EventId eventId, {
+    bool dryRun = false,
+  }) async {
+    calls.add('${dryRun ? 'count' : 'email'} rsvps ${eventId.value}');
+    if (!dryRun && rsvpEmailLimited) {
+      throw const RateLimited('Slow down, try again later.');
+    }
+    return rsvpEmailCount;
+  }
+
   /// Set to make series calls fail as full storage does (STORE-4).
   bool storageFull = false;
 

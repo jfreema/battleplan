@@ -30,6 +30,7 @@ export const Collections = {
   plays: 'plays',
   calendarLinks: 'calendarLinks',
   teamCalendars: 'teamCalendars',
+  answerLinks: 'answerLinks',
 } as const;
 
 export const Limits = {
@@ -124,6 +125,8 @@ export const Limits = {
   calendarEventsMax: 500,
   calendarCacheHours: 6,
   calendarFetchedEveryMinutes: 60,
+  rsvpEmailPeopleMax: 100,
+  answerLinkTriesPerHour: 20,
 } as const;
 
 export const TEAM_COLORS = [

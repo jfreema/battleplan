@@ -27,7 +27,8 @@
     "notifyLog": "notifyLog",
     "plays": "plays",
     "calendarLinks": "calendarLinks",
-    "teamCalendars": "teamCalendars"
+    "teamCalendars": "teamCalendars",
+    "answerLinks": "answerLinks"
   },
   "enums": {
     "userStatus": [
@@ -277,7 +278,9 @@
     "calendarFutureDays": 366,
     "calendarEventsMax": 500,
     "calendarCacheHours": 6,
-    "calendarFetchedEveryMinutes": 60
+    "calendarFetchedEveryMinutes": 60,
+    "rsvpEmailPeopleMax": 100,
+    "answerLinkTriesPerHour": 20
   },
   "reminderOffsetsMinutes": [15, 60, 120, 1440, 2880, 10080],
   "inviteCodeAlphabet": "23456789ABCDEFGHJKMNPQRSTUVWXYZ",

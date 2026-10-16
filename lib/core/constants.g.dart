@@ -32,6 +32,7 @@ abstract final class Collections {
   static const String plays = 'plays';
   static const String calendarLinks = 'calendarLinks';
   static const String teamCalendars = 'teamCalendars';
+  static const String answerLinks = 'answerLinks';
 }
 
 /// Limits shared with the server and security rules.
@@ -127,6 +128,8 @@ abstract final class Limits {
   static const int calendarEventsMax = 500;
   static const int calendarCacheHours = 6;
   static const int calendarFetchedEveryMinutes = 60;
+  static const int rsvpEmailPeopleMax = 100;
+  static const int answerLinkTriesPerHour = 20;
 }
 
 /// The team colors (TEAM-1), as ARGB.
