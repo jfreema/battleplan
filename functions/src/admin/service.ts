@@ -11,6 +11,7 @@ import { signInMethodsOf } from '../accounts/profile.js';
 import { isUsable } from '../invites/service.js';
 import { playerStatusOf, relationOf } from '../players/roster.js';
 import { auth, db } from '../shared/admin.js';
+import { applyDefaultQuota, defaultQuotaMbOf } from '../teams/storage.js';
 import { Collections, Limits } from '../shared/constants.js';
 import {
   configFields,
@@ -591,13 +592,16 @@ const CONFIG_KEYS = [
 /**
  * Saves the platform settings (ADMIN-7) to config/app, which every
  * signed-in app reads (the announcement banner) and createGroup enforces
- * (who may create teams, how many a day, the new team's storage limit).
- * Other fields (maxImageMb) are kept. Returns the edited fields before and
- * after, as plain JSON.
+ * (who may create teams, how many a day). The storage limit is every
+ * team's that doesn't have its own, so saving puts those teams on it
+ * (applyDefaultQuota). Other fields (maxImageMb) are kept. Returns the
+ * edited fields before and after, as plain JSON, and how many teams' limits
+ * changed.
  */
 export async function updateConfig(input: AppConfigInput): Promise<{
   before: Record<string, unknown>;
   after: Record<string, unknown>;
+  teamsUpdated: number;
 }> {
   const ref = db().collection(Collections.config).doc('app');
   const fields = configFields(input);
@@ -608,7 +612,8 @@ export async function updateConfig(input: AppConfigInput): Promise<{
   });
   const pick = (data: Record<string, unknown>) =>
     plain(Object.fromEntries(CONFIG_KEYS.map((k) => [k, data[k] ?? null]))) as Record<string, unknown>;
-  return { before: pick(before), after: pick(fields) };
+  const teamsUpdated = await applyDefaultQuota(defaultQuotaMbOf(fields), defaultQuotaMbOf(before));
+  return { before: pick(before), after: pick(fields), teamsUpdated };
 }
 
 /**
@@ -625,9 +630,6 @@ export async function groupCreationConfig(): Promise<{
   return {
     allowUserGroupCreation: config.allowUserGroupCreation !== false,
     maxGroupsCreatedPerUserPerDay: positive(config.maxGroupsCreatedPerUserPerDay, Limits.groupsCreatedPerUserPerDay),
-    defaultStorageQuotaMb: Math.min(
-      positive(config.defaultStorageQuotaMb, Limits.defaultStorageQuotaMb),
-      Limits.storageQuotaMaxMb,
-    ),
+    defaultStorageQuotaMb: defaultQuotaMbOf(config),
   };
 }

@@ -355,8 +355,8 @@ class FakeGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<void> setStorageQuota(GroupId id, int quotaMb) async =>
-      updates.add('quota ${id.value} $quotaMb');
+  Future<void> setStorageQuota(GroupId id, int? quotaMb) async =>
+      updates.add('quota ${id.value} ${quotaMb ?? 'default'}');
 
   @override
   Future<String?> photoUrl(String path) async => null;
@@ -2979,11 +2979,15 @@ class FakeAdminRepository implements AdminRepository {
   /// The settings saved, in order.
   final List<AppConfig> savedConfigs = [];
 
+  /// How many teams a save moves to the storage default.
+  int teamsMoved = 0;
+
   @override
-  Future<void> updateConfig(AppConfig config) async {
+  Future<int> updateConfig(AppConfig config) async {
     await _act('updateConfig');
     savedConfigs.add(config);
     this.config = config;
+    return teamsMoved;
   }
 }
 

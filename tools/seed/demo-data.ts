@@ -152,7 +152,7 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
       lastMessageAt: ago(last[2]),
       lastMessagePreview: { authorName: nameOf(last[0]), text: last[1], type: 'text' },
       storageBytes: 0,
-      storageQuotaBytes: 500 * 1024 * 1024,
+      storageQuotaBytes: 200 * 1024 * 1024,
       storageAlert: 'none',
       createdAt: month,
       updatedAt: month,

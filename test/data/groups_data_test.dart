@@ -74,9 +74,12 @@ void main() {
       final sparse = groupFromFirestore('x', const {
         'color': 'blue',
         'storageQuotaBytes': 5,
+        'storageQuotaCustom': true,
       });
       expect(sparse.color, isNull);
       expect(sparse.storageQuotaBytes, 5);
+      expect(sparse.storageQuotaCustom, isTrue);
+      expect(g.storageQuotaCustom, isFalse);
       expect(sparse.settings, const GroupSettings());
       expect(sparse.pinnedMessageIds, isEmpty);
     });
@@ -226,6 +229,12 @@ void main() {
       expect(functions.lastData('adminSetGroupQuota'), {
         'groupId': 'g1',
         'quotaMb': 750,
+      });
+      // Back on the default (STORE-6).
+      await repo.setStorageQuota(_g, null);
+      expect(functions.lastData('adminSetGroupQuota'), {
+        'groupId': 'g1',
+        'quotaMb': null,
       });
       for (final (code, message, type) in [
         (

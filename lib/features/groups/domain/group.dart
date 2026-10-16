@@ -96,9 +96,14 @@ abstract class Group with _$Group {
     /// Bytes stored under `groups/{id}/`, kept by the Storage triggers.
     @Default(0) int storageBytes,
 
-    /// The team's limit: 500 MB unless a super admin changed it (STORE-1,
-    /// STORE-6). The data layer fills in the default when it's missing.
+    /// The team's limit: the platform's default, 200 MB unless platform
+    /// settings change it, or its own (STORE-1, STORE-6, ADMIN-7). The
+    /// data layer fills in the default when it's missing.
     @Default(0) int storageQuotaBytes,
+
+    /// A super admin gave the team its own limit (STORE-6), so a change to
+    /// the default leaves it alone.
+    @Default(false) bool storageQuotaCustom,
     ChatTheme? chatTheme,
 
     /// The chat's pinned messages, oldest pin first, at most

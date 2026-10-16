@@ -35,7 +35,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | **Player** | Someone on a team's roster, with a name and jersey number. A member can be a player ("I am this player"). Players that others answer for, such as kids, never have accounts. |
 | **Guardian** | A member linked to a player as their parent or guardian, who answers RSVPs for that player |
 | **Player link** | How a member is linked to a player: as the player (`self`) or as a guardian. A member claims a player, and a team admin approves (§6.3). |
-| **Storage limit** | How much a team can store in photos and files: 500 MB unless a super admin raises it (STORE-1) |
+| **Storage limit** | How much a team can store in photos and files: 200 MB unless a super admin gives it its own limit (STORE-1, STORE-6) |
 
 ### Release tags
 
@@ -123,7 +123,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Privacy Policy, Terms, store disclosures (LEGAL) | **Required** to publish |
 | Accessibility and translation-ready text (§7.6, §7.7) | Good practice, and cheap if done from the start |
 | An explainer website at `getbattleplan.app`, with the web app at `/app` (§4.3) | A place to explain Battleplan, host the legal pages, and send people to the stores or the web app |
-| Everything free with no ads, and a 500 MB storage limit per team with a Media section to free space (§6.14, [PLANS.md](PLANS.md)) | Keeps adoption easy while capping what one team can cost (Q4); ads may come once adoption justifies them |
+| Everything free with no ads, and a 200 MB storage limit per team with a Media section to free space (§6.14, [PLANS.md](PLANS.md)) | Keeps adoption easy while capping what one team can cost (Q4); ads may come once adoption justifies them |
 
 ---
 
@@ -431,7 +431,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - **Language:** filter strong language [on] (SAFE-7).
   - Default event reminders: 1 day before.
   - Manage the invite link.
-  - See storage used, e.g. "212 MB of 500 MB", and open Media to free space (STORE-2, STORE-5).
+  - See storage used, e.g. "112 MB of 200 MB", and open Media to free space (STORE-2, STORE-5).
 - **TEAM-6 · MVP · Transfer ownership.** The owner picks a member to take over and becomes an admin.
 - **TEAM-7 · MVP · Add members by email (admins).**
   - Add one person at a time, or paste a list of "Name, email" lines (up to 100).
@@ -928,7 +928,7 @@ This is for platform operators (super admins) to manage every team and user.
   - Read-only, kept for 1 year.
 - **ADMIN-7 · MVP · Platform settings.**
   - Whether anyone can create teams, and the teams-per-person-per-day limit.
-  - Default storage quota and maximum upload size.
+  - Storage per team, for every team without its own limit (STORE-1, STORE-6), and maximum upload size.
   - Support email.
   - Whether super admins get alert emails about new accounts and teams (ADMIN-9).
   - A banner announcement for all users, with text, severity, and an end date.
@@ -1029,9 +1029,10 @@ What does cost money as teams grow is storage, so each team has a limit, and adm
 **Requirements**
 
 - **STORE-1 · MVP · A storage limit per team.**
-  - Each team can store **500 MB** (the default for new teams, which super admins can change, ADMIN-7): chat photos, documents, the team logo, and the chat background all count (ARCH §6.8).
+  - Each team can store **200 MB** (500 MB until 2026-10-15), the default for every team without its own limit (STORE-6), which super admins change in platform settings (ADMIN-7): chat photos, documents, the team logo, and the chat background all count (ARCH §6.8).
+  - Saving platform settings puts every team without its own limit on the default, existing teams too, and says how many moved. A team already using more than its new limit is full until it frees space (STORE-4), and its admins are told.
   - A single file can be at most **10 MB** (chat photos are resized well under that before upload).
-- **STORE-2 · MVP · Storage used.** Team settings shows "212 MB of 500 MB used" with a meter, for the team's admins.
+- **STORE-2 · MVP · Storage used.** Team settings shows "112 MB of 200 MB used" with a meter, for the team's admins.
 - **STORE-3 · MVP · Nearly full.** At **90%**, the meter turns amber, the team's admins see a warning at the top of the team ("Storage is 90% full. Free up space in Media."), and they get a notification (NOTIF-2).
 - **STORE-4 · MVP · Full.**
   - New uploads (chat photos, documents, the team logo, a chat background), attachments, and **scheduling new events** are disabled until storage is freed up.
@@ -1040,7 +1041,7 @@ What does cost money as teams grow is storage, so each team has a limit, and adm
 - **STORE-5 · MVP · Media (admins).**
   - Team menu → **Media** lists every photo, attachment, document, the team logo, and the chat background, largest first, with a preview, size, who added it, and when.
   - Admins delete items to free space, after confirming. Deleting a chat photo removes it from its message, and a message left with no text or photos reads "Photo removed by a team admin"; deleting the logo or background resets it.
-- **STORE-6 · MVP · Raising a team's limit.** A super admin can raise (or lower) one team's limit, from the admin panel (ADMIN-3) or from Team settings while signed in as a super admin. The option isn't announced or advertised anywhere.
+- **STORE-6 · MVP · A team's own limit.** A super admin can give one team its own limit, higher or lower than the default, from the admin panel (ADMIN-3) or from Team settings while signed in as a super admin, and put it back on the default with **Use the default**. A team with its own limit keeps it when the default changes. The option isn't announced or advertised anywhere.
 - **STORE-7 · Later · Ads.** See ROADMAP "Ads, later".
 
 **Acceptance (MVP)**
@@ -1302,7 +1303,7 @@ Milestones M0 to M8 each ended with their features working on **iOS, Android, an
 ### Free for everyone and team storage · after M4
 
 - [x] Remove the paid tier; its features are free for everyone (edit messages, 16 reactions, chat look).
-- [x] 500 MB per team and 10 MB files; the 90% warning; full blocks uploads, attachments, and new events (STORE-1 to STORE-4).
+- [x] 200 MB per team (500 MB until 2026-10-15) and 10 MB files; the 90% warning; full blocks uploads, attachments, and new events (STORE-1 to STORE-4).
 - [x] Media for admins and the unannounced super-admin limit (STORE-5, STORE-6).
 
 **Done when:** the STORE acceptance criteria pass.
@@ -1497,7 +1498,7 @@ Each question has a default. The build follows the default until someone decides
 | Q1 | ~~Should the app say "Team" or "Group"?~~ **Decided 2026-10-11:** "Team". | — |
 | Q2 | ~~Will youth players use Battleplan?~~ **Decided:** no. Accounts are for adults (18+), and parents and guardians answer for youth players (§6.3). **2026-10-12:** adult players can be members and claim their own player ("I am this player"). | — |
 | Q3 | ~~Who can create teams?~~ **Decided 2026-10-11:** anyone with a verified email; super admins can turn it off. | — |
-| Q4 | ~~How will the platform be paid for once there are hundreds of teams?~~ **Decided 2026-10-12:** everything is free with no ads for now; ads may come once adoption justifies them (ROADMAP "Ads, later"). Each team has a 500 MB storage limit that a super admin can raise (§6.14). A paid plan was planned on 2026-10-11 and dropped. | — |
+| Q4 | ~~How will the platform be paid for once there are hundreds of teams?~~ **Decided 2026-10-12:** everything is free with no ads for now; ads may come once adoption justifies them (ROADMAP "Ads, later"). Each team has a storage limit, 200 MB since 2026-10-15 (500 MB before), that a super admin can change for every team or give one team its own (§6.14). A paid plan was planned on 2026-10-11 and dropped. | — |
 | Q5 | ~~Are direct messages needed at launch?~~ **Decided 2026-10-12 (the recommended default):** later, not at launch. | — |
 | Q6 | ~~Reactions: one per person per message, or several?~~ **Decided 2026-10-12 (the recommended default):** one. | — |
 | Q7 | ~~On wide screens, bottom tabs or a side rail?~~ **Decided 2026-10-12 (the recommended default):** a side rail at 840 px and wider. | — |

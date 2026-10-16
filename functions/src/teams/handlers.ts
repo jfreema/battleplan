@@ -349,18 +349,20 @@ const GroupId = z.string().min(1).max(128).regex(/^[^/]+$/);
 
 const SetQuotaInput = z.object({
   groupId: GroupId,
-  quotaMb: z.number().int().min(1).max(Limits.storageQuotaMaxMb),
+  // Null puts the team back on the default (ADMIN-7).
+  quotaMb: z.number().int().min(1).max(Limits.storageQuotaMaxMb).nullable(),
 });
 
 /**
- * Raises or lowers one team's storage limit (STORE-6). Super admins only,
- * and the option isn't shown to anyone else. Audited, and the team's
- * warning follows the new limit right away.
+ * Gives one team its own storage limit, higher or lower, or puts it back
+ * on the default (STORE-6). Super admins only, and the option isn't shown
+ * to anyone else. Audited, and the team's warning follows the new limit
+ * right away.
  */
 export const adminSetGroupQuota = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(SetQuotaInput, request.data);
-  const { before, after } = await setGroupQuota(input.groupId, input.quotaMb);
+  const { before, after, custom } = await setGroupQuota(input.groupId, input.quotaMb);
   await audit({
     actorId: actor,
     action: 'setGroupQuota',
@@ -368,7 +370,7 @@ export const adminSetGroupQuota = onCall(async (request) => {
     targetType: 'group',
     targetId: input.groupId,
     before: { storageQuotaBytes: before },
-    after: { storageQuotaBytes: after },
+    after: { storageQuotaBytes: after, storageQuotaCustom: custom },
   });
   await updateStorageAlert(input.groupId);
   return { storageQuotaBytes: after };

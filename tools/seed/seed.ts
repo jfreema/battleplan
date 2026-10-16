@@ -170,7 +170,7 @@ async function main() {
       lastMessagePreview: null,
       // The same limit createGroup gives every team (STORE-1).
       storageBytes: 0,
-      storageQuotaBytes: 500 * 1024 * 1024,
+      storageQuotaBytes: 200 * 1024 * 1024,
       storageAlert: 'none',
       createdAt: minutesAgo(60 * 24 * 30),
       updatedAt: minutesAgo(60 * 24 * 30),
@@ -536,7 +536,7 @@ async function main() {
   await db.doc('config/app').set({
     allowUserGroupCreation: true,
     maxGroupsCreatedPerUserPerDay: 5,
-    defaultStorageQuotaMb: 500,
+    defaultStorageQuotaMb: 200,
     maxUploadMb: 10,
     maxImageMb: 10,
     supportEmail: 'support@getbattleplan.app',

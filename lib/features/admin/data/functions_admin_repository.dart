@@ -402,9 +402,9 @@ class FunctionsAdminRepository implements AdminRepository {
   );
 
   @override
-  Future<void> updateConfig(AppConfig config) {
+  Future<int> updateConfig(AppConfig config) async {
     final banner = config.announcementBanner;
-    return _call('adminUpdateConfig', {
+    final result = await _call('adminUpdateConfig', {
       'allowUserGroupCreation': config.allowUserGroupCreation,
       'maxGroupsCreatedPerUserPerDay': config.maxGroupsCreatedPerUserPerDay,
       'defaultStorageQuotaMb': config.defaultStorageQuotaMb,
@@ -419,6 +419,7 @@ class FunctionsAdminRepository implements AdminRepository {
               'expiresAt': banner.expiresAt.toUtc().toIso8601String(),
             },
     });
+    return (result['teamsUpdated'] as num?)?.toInt() ?? 0;
   }
 }
 

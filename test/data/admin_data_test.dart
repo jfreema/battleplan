@@ -421,5 +421,11 @@ void main() {
       (functions.lastData('adminUpdateConfig')! as Map)['announcementBanner'],
       isNull,
     );
+    // How many teams moved to the storage limit (STORE-1).
+    functions.handlers['adminUpdateConfig'] = (_) => {
+      'ok': true,
+      'teamsUpdated': 4,
+    };
+    expect(await repo.updateConfig(const AppConfig()), 4);
   });
 }

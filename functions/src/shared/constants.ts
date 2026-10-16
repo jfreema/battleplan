@@ -98,7 +98,7 @@ export const Limits = {
   rateLimitTtlDays: 2,
   inviteCodeLength: 8,
   emailInviteExpiryDays: 14,
-  defaultStorageQuotaMb: 500,
+  defaultStorageQuotaMb: 200,
   storageQuotaMaxMb: 51200,
   storageWarnPercent: 90,
   maxUploadMb: 10,

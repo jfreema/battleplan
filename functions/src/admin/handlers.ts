@@ -559,7 +559,7 @@ async function resolveReport(
 export const adminUpdateConfig = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(UpdateConfigInput, request.data);
-  const { before, after } = await updateConfig(input);
+  const { before, after, teamsUpdated } = await updateConfig(input);
   await audit({ actorId: actor, action: 'updateConfig', targetType: 'config', targetId: 'app', before, after });
-  return { ok: true };
+  return { ok: true, teamsUpdated };
 });

@@ -132,6 +132,7 @@ abstract interface class AdminRepository {
   /// announcement banner (ADMIN-7).
   Stream<AppConfig> watchConfig();
 
-  /// Saves platform settings (ADMIN-7).
-  Future<void> updateConfig(AppConfig config);
+  /// Saves platform settings (ADMIN-7). Returns how many teams the storage
+  /// limit moved, as it's every team's that doesn't have its own.
+  Future<int> updateConfig(AppConfig config);
 }

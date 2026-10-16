@@ -7,6 +7,7 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import type { TokenMessage } from 'firebase-admin/messaging';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { adminUpdateConfig } from '../../src/admin/handlers.js';
 import { adminSetGroupQuota, deleteTeamMedia, listTeamMedia } from '../../src/teams/handlers.js';
 import { createGroup } from '../../src/teams/service.js';
 import { reconcileAllStorage, updateStorageAlert } from '../../src/teams/storage.js';
@@ -241,7 +242,7 @@ describe('team status (ADMIN-2)', () => {
 });
 
 describe('new teams (STORE-1)', () => {
-  it('start with the 500 MB limit, no warning, and no plan', async () => {
+  it('start with the 200 MB limit, no warning, and no plan', async () => {
     const id = await createGroup(
       'pat',
       { displayName: 'Pat', photoPath: null },
@@ -249,7 +250,7 @@ describe('new teams (STORE-1)', () => {
       Limits.defaultStorageQuotaMb,
     );
     const data = (await db().collection(Collections.groups).doc(id).get()).data() ?? {};
-    expect(data).toMatchObject({ storageBytes: 0, storageQuotaBytes: 500 * MB, storageAlert: 'none', status: 'active' });
+    expect(data).toMatchObject({ storageBytes: 0, storageQuotaBytes: 200 * MB, storageAlert: 'none', status: 'active' });
     expect(data).not.toHaveProperty('plan');
   });
 });
@@ -462,12 +463,13 @@ describe('the super-admin limit (STORE-6)', () => {
     await expect(adminSetGroupQuota.run(root({ groupId: G, quotaMb: 2048 }))).resolves.toEqual({ storageQuotaBytes: 2048 * MB });
     expect((await group()).storageQuotaBytes).toBe(2048 * MB);
     expect((await db().collection(Collections.groups).doc('teamB').get()).get('storageQuotaBytes')).toBe(500 * MB);
+    expect((await group()).storageQuotaCustom).toBe(true);
     const audit = (await db().collection(Collections.auditLogs).where('action', '==', 'setGroupQuota').get()).docs[0];
     expect(audit.data()).toMatchObject({
       actorId: 'root',
       groupId: G,
       before: { storageQuotaBytes: 100 * MB },
-      after: { storageQuotaBytes: 2048 * MB },
+      after: { storageQuotaBytes: 2048 * MB, storageQuotaCustom: true },
     });
 
     for (const quotaMb of [0, 1.5, 51_201]) {
@@ -485,5 +487,57 @@ describe('the super-admin limit (STORE-6)', () => {
     await adminSetGroupQuota.run(root({ groupId: G, quotaMb: 50 }));
     expect((await group()).storageAlert).toBe('full');
     expect(pushed().map((m) => m.token).sort()).toEqual(['tok-alex', 'tok-pat']);
+  });
+});
+
+describe('the default limit for every team (STORE-1, ADMIN-7)', () => {
+  const team = (id: string, fields: object) =>
+    db().collection(Collections.groups).doc(id).set({ name: id, storageBytes: 0, storageAlert: 'none', ...fields });
+  const quota = async (id: string) => (await db().collection(Collections.groups).doc(id).get()).data();
+  const save = (defaultStorageQuotaMb: number) =>
+    adminUpdateConfig.run(
+      root({
+        allowUserGroupCreation: true,
+        maxGroupsCreatedPerUserPerDay: 5,
+        defaultStorageQuotaMb,
+        maxUploadMb: 10,
+        supportEmail: 'support@getbattleplan.app',
+        announcementBanner: null,
+      }),
+    ) as Promise<{ teamsUpdated: number }>;
+
+  it('saving platform settings puts every team without its own limit on it', async () => {
+    await team('old', { storageQuotaBytes: 500 * MB }); // the built-in default until now
+    await team('own', { storageQuotaBytes: 2048 * MB, storageQuotaCustom: true });
+    await team('ownBefore', { storageQuotaBytes: 1000 * MB }); // a super admin's, before the mark
+    await groupRef().update({ storageQuotaBytes: 200 * MB });
+    expect((await save(200)).teamsUpdated).toBe(1);
+    expect(await quota('old')).toMatchObject({ storageQuotaBytes: 200 * MB });
+    expect(await quota('own')).toMatchObject({ storageQuotaBytes: 2048 * MB, storageQuotaCustom: true });
+    expect(await quota('ownBefore')).toMatchObject({ storageQuotaBytes: 1000 * MB, storageQuotaCustom: true });
+    expect((await group()).storageQuotaBytes).toBe(200 * MB);
+    // A later change of the default moves them all again.
+    expect((await save(300)).teamsUpdated).toBe(2);
+    expect(await quota('old')).toMatchObject({ storageQuotaBytes: 300 * MB });
+    expect((await group()).storageQuotaBytes).toBe(300 * MB);
+    expect(await quota('own')).toMatchObject({ storageQuotaBytes: 2048 * MB });
+  });
+
+  it('a team already over the new limit is full, and its admins hear', async () => {
+    await groupRef().update({ storageQuotaBytes: 500 * MB });
+    await useBytes(300 * MB);
+    fcm.batches.length = 0;
+    await save(200);
+    expect(await group()).toMatchObject({ storageQuotaBytes: 200 * MB, storageAlert: 'full' });
+    expect(pushed().map((m) => m.token).sort()).toEqual(['tok-alex', 'tok-pat']);
+  });
+
+  it("a super admin puts a team back on the default", async () => {
+    await db().collection(Collections.config).doc('app').set({ defaultStorageQuotaMb: 150 });
+    await adminSetGroupQuota.run(root({ groupId: G, quotaMb: 2048 }));
+    await expect(adminSetGroupQuota.run(root({ groupId: G, quotaMb: null }))).resolves.toEqual({
+      storageQuotaBytes: 150 * MB,
+    });
+    expect(await group()).toMatchObject({ storageQuotaBytes: 150 * MB, storageQuotaCustom: false });
   });
 });

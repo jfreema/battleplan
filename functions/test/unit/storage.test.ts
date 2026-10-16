@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Limits } from '../../src/shared/constants.js';
 import { classifyMediaPath, isTeamMediaPath } from '../../src/teams/media.js';
 import {
+  defaultQuotaMbOf,
   groupIdFromPath,
   quotaBytesOf,
   storageAlertBody,
@@ -47,10 +48,18 @@ describe('storageAlertLevel (STORE-3, STORE-4)', () => {
     );
   });
 
-  it('gives a team without a limit the 500 MB default (STORE-1)', () => {
-    expect(quotaBytesOf({})).toBe(500 * MB);
-    expect(quotaBytesOf(undefined)).toBe(500 * MB);
+  it('gives a team without a limit the 200 MB default (STORE-1)', () => {
+    expect(quotaBytesOf({})).toBe(200 * MB);
+    expect(quotaBytesOf(undefined)).toBe(200 * MB);
     expect(quotaBytesOf({ storageQuotaBytes: 2048 * MB })).toBe(2048 * MB);
+  });
+
+  it('reads the default from platform settings, else 200 MB, never over the maximum (ADMIN-7)', () => {
+    expect(defaultQuotaMbOf(undefined)).toBe(200);
+    expect(defaultQuotaMbOf({ defaultStorageQuotaMb: 0 })).toBe(200);
+    expect(defaultQuotaMbOf({ defaultStorageQuotaMb: 'lots' })).toBe(200);
+    expect(defaultQuotaMbOf({ defaultStorageQuotaMb: 1024 })).toBe(1024);
+    expect(defaultQuotaMbOf({ defaultStorageQuotaMb: 10 ** 9 })).toBe(Limits.storageQuotaMaxMb);
   });
 });
 

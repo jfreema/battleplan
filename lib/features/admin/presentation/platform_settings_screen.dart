@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -94,11 +95,22 @@ class _PlatformSettingsScreenState
     setState(() => _problems = problems);
     if (problems.isNotEmpty) return;
     setState(() => _saving = true);
-    await runAdminAction(
+    // The storage limit is every team's without its own (STORE-1), so a
+    // save can move teams to it; say how many.
+    var moved = 0;
+    final saved = await runAdminAction(
       context,
-      () => ref.read(adminRepositoryProvider).updateConfig(config),
-      done: l10n.adminSettingsSaved,
+      () async =>
+          moved = await ref.read(adminRepositoryProvider).updateConfig(config),
     );
+    if (saved && mounted) {
+      showAppSnackBar(
+        context,
+        moved == 0
+            ? l10n.adminSettingsSaved
+            : l10n.adminSettingsSavedTeams(moved, config.defaultStorageQuotaMb),
+      );
+    }
     if (mounted) setState(() => _saving = false);
   }
 

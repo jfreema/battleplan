@@ -185,7 +185,7 @@ class FirestoreGroupRepository implements GroupRepository {
       _call('deleteGroup', {'groupId': id.value, 'confirmName': confirmName});
 
   @override
-  Future<void> setStorageQuota(GroupId id, int quotaMb) =>
+  Future<void> setStorageQuota(GroupId id, int? quotaMb) =>
       _call('adminSetGroupQuota', {'groupId': id.value, 'quotaMb': quotaMb});
 
   Future<void> _call(String name, Map<String, Object?> data) async {
@@ -442,6 +442,7 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
       final num q when q > 0 => q.toInt(),
       _ => Limits.defaultStorageQuotaMb * bytesPerMb,
     },
+    storageQuotaCustom: d['storageQuotaCustom'] as bool? ?? false,
     chatTheme: switch (d['chatTheme']) {
       final Map<String, dynamic> t => ChatTheme(
         bubbleColor: _parseColor(t['bubbleColor'] as String?),

@@ -8,6 +8,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { trySend } from '../notify/service.js';
+import { forEachPage } from '../shared/batch.js';
 import { db, storage } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { teamStatus } from './status.js';
@@ -134,6 +135,24 @@ export function storageAlertBody(level: Exclude<StorageAlert, 'none'>): string {
     : 'Storage is full. Uploads, attachments, and scheduling new events are disabled until storage is freed up.';
 }
 
+/** The built-in default until 2026-10-15: teams still on it follow the default now. */
+const LEGACY_DEFAULT_MB = 500;
+
+/**
+ * The limit for teams without their own, in MB (STORE-1, ADMIN-7): config/app's
+ * defaultStorageQuotaMb in [config], else the built-in default, never over the
+ * largest limit.
+ */
+export function defaultQuotaMbOf(config: FirebaseFirestore.DocumentData | undefined): number {
+  const mb = config?.defaultStorageQuotaMb;
+  return Math.min(typeof mb === 'number' && mb > 0 ? mb : Limits.defaultStorageQuotaMb, Limits.storageQuotaMaxMb);
+}
+
+/** [defaultQuotaMbOf] for the platform settings as they are now. */
+export async function defaultQuotaMb(): Promise<number> {
+  return defaultQuotaMbOf((await db().collection(Collections.config).doc('app').get()).data());
+}
+
 /** A team's limit in bytes; teams written before the limit existed get the default (STORE-1). */
 export function quotaBytesOf(data: FirebaseFirestore.DocumentData | undefined): number {
   const quota = data?.storageQuotaBytes;
@@ -206,20 +225,56 @@ export async function updateStorageAlert(groupId: string): Promise<StorageAlert 
 }
 
 /**
- * Sets one team's storage limit (STORE-6, super admins). Returns the limit
- * before and after, in bytes, for the audit log; the caller then updates
- * the team's warning.
+ * Gives one team its own storage limit (STORE-6, super admins), or with a
+ * null [quotaMb] puts it back on the default (ADMIN-7). Its own limit is
+ * marked (storageQuotaCustom), so a change to the default leaves it alone.
+ * Returns the limit before and after, in bytes, for the audit log; the
+ * caller then updates the team's warning.
  */
 export async function setGroupQuota(
   groupId: string,
-  quotaMb: number,
-): Promise<{ before: number; after: number }> {
+  quotaMb: number | null,
+): Promise<{ before: number; after: number; custom: boolean }> {
   const ref = db().collection(Collections.groups).doc(groupId);
-  const after = quotaMb * MB;
+  const custom = quotaMb !== null;
+  const after = (quotaMb ?? (await defaultQuotaMb())) * MB;
   return db().runTransaction(async (tx) => {
     const group = await tx.get(ref);
     if (!group.exists) throw new HttpsError('not-found', 'No such team.');
-    tx.update(ref, { storageQuotaBytes: after, updatedAt: FieldValue.serverTimestamp() });
-    return { before: quotaBytesOf(group.data()), after };
+    tx.update(ref, { storageQuotaBytes: after, storageQuotaCustom: custom, updatedAt: FieldValue.serverTimestamp() });
+    return { before: quotaBytesOf(group.data()), after, custom };
   });
+}
+
+/**
+ * Puts every team without its own limit on [defaultMb] (STORE-1, ADMIN-7),
+ * when platform settings are saved, so the default is every such team's
+ * limit, not only new ones'. A team has its own limit when a super admin
+ * set it (storageQuotaCustom); one set before that mark existed, neither
+ * [previousDefaultMb] nor the old built-in 500 MB, keeps its limit and
+ * gets the mark. A team already using more than the new limit is full
+ * until it frees space, and its admins are told, as at any limit
+ * (STORE-3, STORE-4). Returns how many teams' limits changed.
+ */
+export async function applyDefaultQuota(defaultMb: number, previousDefaultMb: number): Promise<number> {
+  const target = defaultMb * MB;
+  const onDefault = new Set([previousDefaultMb * MB, LEGACY_DEFAULT_MB * MB, target]);
+  const changed: string[] = [];
+  await forEachPage(
+    db().collection(Collections.groups).select('storageQuotaBytes', 'storageQuotaCustom'),
+    (batch, team) => {
+      if (team.get('storageQuotaCustom') === true) return;
+      const quota = team.get('storageQuotaBytes') as unknown;
+      if (typeof quota === 'number' && !onDefault.has(quota)) {
+        batch.update(team.ref, { storageQuotaCustom: true });
+        return;
+      }
+      if (quota === target) return;
+      batch.update(team.ref, { storageQuotaBytes: target, updatedAt: FieldValue.serverTimestamp() });
+      changed.push(team.id);
+    },
+  );
+  for (const groupId of changed) await updateStorageAlert(groupId);
+  if (changed.length) logger.info('default_quota_applied', { defaultMb, teams: changed.length });
+  return changed.length;
 }

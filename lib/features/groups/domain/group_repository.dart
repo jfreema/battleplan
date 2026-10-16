@@ -33,9 +33,10 @@ abstract interface class GroupRepository {
   /// Uploads a chat background photo and returns its path (CHAT-18).
   Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes);
 
-  /// Sets one team's storage limit in MB, 1 to [Limits.storageQuotaMaxMb],
+  /// Gives one team its own storage limit in MB, 1 to
+  /// [Limits.storageQuotaMaxMb], or with null puts it back on the default,
   /// through `adminSetGroupQuota` (STORE-6). Super admins only.
-  Future<void> setStorageQuota(GroupId id, int quotaMb);
+  Future<void> setStorageQuota(GroupId id, int? quotaMb);
 
   /// Hands the team to another member (TEAM-6). Owner only.
   Future<void> transferOwnership(GroupId id, UserId newOwner);

@@ -945,10 +945,12 @@ describe('platform settings (ADMIN-7) and createGroup', () => {
 
   it("gives new teams the default storage limit, and the built-in one when there's no setting", async () => {
     const first = await newTeam('pat');
-    expect((await groups().doc(first.groupId).get()).get('storageQuotaBytes')).toBe(500 * MB);
+    expect((await groups().doc(first.groupId).get()).get('storageQuotaBytes')).toBe(200 * MB);
     await asRoot(admin.adminUpdateConfig, settings({ defaultStorageQuotaMb: 2048 }));
     const second = await newTeam('pat');
     expect((await groups().doc(second.groupId).get()).get('storageQuotaBytes')).toBe(2048 * MB);
+    // The default is every team's without its own limit, so the first moved too.
+    expect((await groups().doc(first.groupId).get()).get('storageQuotaBytes')).toBe(2048 * MB);
   });
 });
 

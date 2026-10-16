@@ -101,7 +101,7 @@ abstract final class Limits {
   static const int rateLimitTtlDays = 2;
   static const int inviteCodeLength = 8;
   static const int emailInviteExpiryDays = 14;
-  static const int defaultStorageQuotaMb = 500;
+  static const int defaultStorageQuotaMb = 200;
   static const int storageQuotaMaxMb = 51200;
   static const int storageWarnPercent = 90;
   static const int maxUploadMb = 10;

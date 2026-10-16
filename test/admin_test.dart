@@ -418,6 +418,30 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Save'));
       await tester.pumpAndSettle();
       expect(groups.updates, ['quota t1 2048']);
+      // On the default, there's nothing to go back to.
+      expect(find.textContaining('Use the default'), findsNothing);
+    });
+
+    testWidgets('a team with its own limit goes back to the default '
+        '(STORE-6)', (tester) async {
+      final groups = FakeGroupRepository({
+        'a': testGroup('a', 'Home team'),
+        't1': testGroup('t1', 'Thunder').copyWith(
+          storageQuotaBytes: 2048 * bytesPerMb,
+          storageQuotaCustom: true,
+        ),
+      });
+      await open(tester, '/admin/teams/t1', groupRepo: groups);
+      await tester.tap(find.text('Change storage limit'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('This team has its own limit'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Use the default (200 MB)'));
+      await tester.pumpAndSettle();
+      expect(groups.updates, ['quota t1 default']);
+      expect(find.text('Storage limit is now 200 MB.'), findsOneWidget);
     });
   });
 
@@ -894,6 +918,21 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Save'));
       await tester.pumpAndSettle();
       expect(admin.savedConfigs.single.emailAdminAlerts, isFalse);
+    });
+
+    testWidgets('saving says how many teams moved to the storage limit '
+        '(STORE-1)', (tester) async {
+      final admin = FakeAdminRepository(
+        config: const AppConfig(supportEmail: 'help@getbattleplan.app'),
+      )..teamsMoved = 3;
+      await open(tester, '/admin/settings', admin: admin, size: tall);
+      await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Settings saved. 3 teams now have 200 MB of storage.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a banner needs text, and turning it off removes it', (

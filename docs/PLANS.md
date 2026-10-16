@@ -19,14 +19,14 @@ Storage is the cost that grows with every photo and file, so each team has a lim
 
 | | |
 |---|---|
-| Team storage | **500 MB** (photos, documents, the team logo, and the chat background) |
+| Team storage | **200 MB** (photos, documents, the team logo, and the chat background; 500 MB until 2026-10-15) |
 | Largest file | **10 MB** |
 | Warning | At **90%**, admins see a warning and get a notification |
 | Full | New uploads, attachments, and scheduling new events stop until space is freed. Nothing else turns off, and nothing is deleted automatically. |
 | Freeing space | Team menu → **Media** lists every photo and file, largest first, for admins to delete |
 | More space | A super admin can raise one team's limit. This isn't announced or advertised. |
 
-For scale: a chat photo is resized to about 0.3 to 1 MB, so 500 MB holds roughly 500 to 1,500 photos.
+For scale: a chat photo is resized to about 0.3 to 1 MB, so 200 MB holds roughly 200 to 600 photos.
 
 ## Ads, later
 
