@@ -1982,7 +1982,7 @@ void main() {
         await tester.tap(find.text('Send report'));
         await tester.pumpAndSettle();
         expect(safety.reports, ['message m1 spam']);
-        expect(find.textContaining('admins will review'), findsOneWidget);
+        expect(find.textContaining('reviewed within 24 hours'), findsOneWidget);
         // Let the confirmation go away.
         await tester.pump(const Duration(seconds: 5));
         await tester.pumpAndSettle();

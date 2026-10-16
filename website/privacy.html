@@ -112,7 +112,7 @@
       <p>We use your information only to run Battleplan:</p>
       <ul>
         <li>to provide the service: show your teams their chat, schedule, polls, and documents, deliver messages, send reminders and notifications, and send the emails you need (setup links, invites, and security notices such as "a sign-in method was added to your account");</li>
-        <li>to keep accounts and teams safe: verify sign-ins, prevent spam and abuse, enforce limits, and review reports;</li>
+        <li>to keep accounts and teams safe: verify sign-ins, prevent spam and abuse, enforce limits, and review reports, including emailing the people who run Battleplan about each new report, new account, and new or deleted team (with the name and email address of the person or team owner, never what was reported or who reported it);</li>
         <li>to answer support requests;</li>
         <li>to find and fix bugs and understand which features are used, so we can improve the app;</li>
         <li>to comply with the law.</li>
@@ -137,7 +137,7 @@
         <li><strong>Google (Firebase and Google Cloud):</strong> sign-in, database, file storage, server functions, push notifications (Firebase Cloud Messaging), app settings (Remote Config), app verification (App Check), crash reports (Crashlytics), and usage analytics (Google Analytics for Firebase). Read <a href="https://firebase.google.com/support/privacy">Firebase's privacy information</a>.</li>
         <li><strong>Apple:</strong> push notifications to iPhones (Apple Push Notification service), and Sign in with Apple if you use it.</li>
         <li><strong>Google sign-in</strong>, if you use it.</li>
-        <li><strong>Resend:</strong> sends Battleplan's emails, such as setup links, invites, and security notices.</li>
+        <li><strong>Resend:</strong> sends Battleplan's emails, such as setup links, invites, security notices, and the notices to the people who run Battleplan described above.</li>
         <li><strong>Google reCAPTCHA</strong> in the web app, which checks that requests come from a real browser and not a bot (see <a href="#cookies">Cookies and browser storage</a>).</li>
       </ul>
       <p>Apple's App Store and Google Play handle app downloads under their own privacy policies; we don't get personal information about you from them.</p>
@@ -183,7 +183,7 @@
       <h2 id="security">Keeping it safe</h2>
       <ul>
         <li>All data travels over encrypted connections (HTTPS), and Google encrypts it where it's stored.</li>
-        <li>Database and storage rules let people see only the teams they belong to, and only the apps we publish can reach our servers.</li>
+        <li>Database and storage rules let people see only the teams they belong to, and our servers check that requests come from the apps we publish (Firebase App Check).</li>
         <li>Nobody at Battleplan, and no team admin, can see or set your password. Admins can only send setup and password-reset emails.</li>
         <li>Changes to your sign-in methods, email, or password send a notice to your email address.</li>
       </ul>

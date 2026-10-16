@@ -32,7 +32,7 @@ Required, and doable now.
   - a demo team with players, events, chat, a poll, and documents, and its invite code for the review notes: reviewers sign in with Apple (iPhone) or Google (Android) and join it with the code;
   - a demo account that owns the team, with a password, because reviewers can't get emails; it signs in at `getbattleplan.app/emaillogin`, which the sign-in screen doesn't link to;
   - an address you can read for it (forward appreview@getbattleplan.app; only support@ and privacy@ forward today).
-- ⬜ 1.15 **The privacy answers, written down once for both stores,** matching the Privacy Policy. Both stores ask about:
+- ✅ 1.15 **The privacy answers, written down once for both stores,** matching the Privacy Policy and the iPhone privacy manifest: [STORE-PRIVACY.md](STORE-PRIVACY.md), ready to copy into App Store Connect (3.4) and the Play Console (4.4). Both stores ask about:
   - names, emails, and the phone numbers people share;
   - messages, photos, and files;
   - **health data** (players' medical notes);
@@ -69,7 +69,7 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
   - built with Xcode 26 or later and the iOS 26 SDK, required since April 28, 2026 (this Mac has Xcode 27);
   - built with `FIREBASE_ANALYTICS_WITHOUT_ADID=true`, as Info.plist notes, so Analytics carries no advertising ID;
   - uploaded to TestFlight.
-- ⬜ 3.4 👤 **App Privacy labels** from the phase 1 answers (task 130).
+- ⬜ 3.4 👤 **App Privacy labels** from the phase 1 answers, [STORE-PRIVACY.md](STORE-PRIVACY.md) (task 130).
 - ⬜ 3.5 👤 **Age rating questionnaire** (task 130). Say yes to people chatting and sharing content. Don't pick the Kids category: accounts are for adults.
 - ⬜ 3.6 👤 **EU trader status** (task 131). A free app with no ads and no business behind it may qualify as non-trader, which shows nothing; apps that never answer get pulled from EU storefronts.
 - ⬜ 3.7 👤 **The listing** from phase 1 (task 129): the Sports category, the support and privacy URLs, and the iPhone and iPad screenshots.
@@ -81,7 +81,7 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 - ⬜ 4.2 **Play App Signing,** and the first App Bundle uploaded to internal testing. Then add Play's signing key fingerprints to Firebase, or Google sign-in fails in builds from Play (task 127).
 - ⬜ 4.3 👤 **Closed test:** at least 12 testers opted in for 14 days in a row, then apply for production access (task 128). New personal accounts can't publish without it. Recruit about 15, since testers who leave early don't count.
 - ⬜ 4.4 👤 **The App content forms:**
-  - Data safety from the phase 1 answers, with the delete-account URL;
+  - Data safety from the phase 1 answers, [STORE-PRIVACY.md](STORE-PRIVACY.md), with the delete-account URL;
   - content rating (IARC);
   - target audience: adults (18+);
   - ads: none;

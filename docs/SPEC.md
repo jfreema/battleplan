@@ -952,8 +952,8 @@ The App Store requires these for apps with user-generated content (guideline 1.2
 - **SAFE-1 · MVP · Report.**
   - Report a message, document, or person.
   - Reasons: Spam, Harassment or bullying, Inappropriate content, or Other, plus optional details.
-  - The report goes to the team's admins (Team menu → Reports) and to the super-admin queue.
-  - The reporter gets a confirmation. The reported person is never told who reported them.
+  - The report goes to the team's admins (Team menu → Reports) and to the super-admin queue; a report about one of the team's admins goes to the super-admin queue only (SAFE-4). The form says so before it's sent.
+  - The reporter gets a confirmation that it will be reviewed within 24 hours. The reported person is never told who reported them.
 - **SAFE-2 · MVP · Block.**
   - Hides that person's messages from you (collapsed) and stops notifications from them, in every team.
   - They aren't told.
@@ -1013,7 +1013,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - No ads, no selling data, no cross-app tracking, so no App Tracking Transparency prompt.
   - Analytics runs without advertising IDs.
 - **LEGAL-3 · MVP · Deletion.** In-app account deletion (AUTH-10), plus a public `/delete-account` page explaining how to request deletion (required by Google Play).
-- **LEGAL-4 · MVP · Store disclosures.** The App Store privacy labels (Phase 4) and the Google Play Data safety form (Phase 5) match LEGAL-1, and so does the iPhone app's privacy manifest (`ios/Runner/PrivacyInfo.xcprivacy`): no tracking, the data types the policy lists, and the reasons for the APIs Apple asks about (stored preferences, file timestamps in the app's own container, and elapsed time). Info.plist also declares no non-exempt encryption (`ITSAppUsesNonExemptEncryption` false): the app's only encryption is HTTPS.
+- **LEGAL-4 · MVP · Store disclosures.** The App Store privacy labels (Phase 4) and the Google Play Data safety form (Phase 5) match LEGAL-1, with the answers written once in [STORE-PRIVACY.md](STORE-PRIVACY.md), and so does the iPhone app's privacy manifest (`ios/Runner/PrivacyInfo.xcprivacy`): no tracking, the data types the policy lists, and the reasons for the APIs Apple asks about (stored preferences, file timestamps in the app's own container, and elapsed time). Info.plist also declares no non-exempt encryption (`ITSAppUsesNonExemptEncryption` false): the app's only encryption is HTTPS.
 - **LEGAL-5 · Phase 6 · Facebook data deletion.** Facebook's data-deletion URL comes back with Facebook sign-in in Phase 6 (Q16).
 - **LEGAL-6 · MVP · Retention.**
   - Content stays until its author, an admin, or the team's deletion removes it.
