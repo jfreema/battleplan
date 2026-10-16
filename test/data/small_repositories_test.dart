@@ -15,6 +15,8 @@ import 'package:battleplan/features/polls/data/firestore_poll_repository.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/safety/data/firestore_safety_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
+import 'package:battleplan/features/schedule/data/firestore_calendar_link_repository.dart';
+import 'package:battleplan/features/schedule/domain/calendar_link.dart';
 import 'package:battleplan/features/settings/data/shared_prefs_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
@@ -39,6 +41,66 @@ void main() {
   setUp(() {
     db = FakeFirebaseFirestore();
     functions = FakeFunctions();
+  });
+
+  group('FirestoreCalendarLinkRepository (SCHED-11)', () {
+    test('lists my links live, each with its team and last check', () async {
+      final checked = DateTime.utc(2026, 10, 16, 15, 40);
+      await db.collection(Collections.calendarLinks).doc('tokenTeam').set({
+        'uid': _me.value,
+        'groupId': _g.value,
+        'fetchedAt': Timestamp.fromDate(checked),
+      });
+      await db.collection(Collections.calendarLinks).doc('tokenAll').set({
+        'uid': _me.value,
+        'groupId': null,
+      });
+      await db.collection(Collections.calendarLinks).doc('tokenOther').set({
+        'uid': 'someone-else',
+        'groupId': _g.value,
+      });
+      final repo = FirestoreCalendarLinkRepository(db, functions);
+      final links = await repo.watchMine(_me).first;
+      final byToken = {for (final l in links) l.token: l};
+      expect(byToken.keys, unorderedEquals(['tokenTeam', 'tokenAll']));
+      expect(byToken['tokenTeam']!.groupId, _g);
+      expect(byToken['tokenTeam']!.fetchedAt!.toUtc(), checked);
+      expect(byToken['tokenAll']!.groupId, isNull);
+      expect(byToken['tokenAll']!.fetchedAt, isNull);
+    });
+
+    test(
+      'makes, resets, and turns off a link through setCalendarLink',
+      () async {
+        final repo = FirestoreCalendarLinkRepository(db, functions);
+        functions.handlers['setCalendarLink'] = (_) => {'token': 'newToken'};
+        expect(await repo.set(_g, CalendarLinkAction.reset), 'newToken');
+        expect(functions.lastData('setCalendarLink'), {
+          'groupId': 'g1',
+          'action': 'reset',
+        });
+        functions.handlers['setCalendarLink'] = (_) => {'token': null};
+        expect(await repo.set(null, CalendarLinkAction.off), isNull);
+        expect(functions.lastData('setCalendarLink'), {
+          'groupId': null,
+          'action': 'off',
+        });
+      },
+    );
+
+    test('maps refusals to failures', () async {
+      final repo = FirestoreCalendarLinkRepository(db, functions);
+      for (final (code, type) in [
+        ('permission-denied', isA<PermissionDenied>()),
+        ('failed-precondition', isA<InvalidInput>()),
+        ('invalid-argument', isA<InvalidInput>()),
+        ('unavailable', isA<Offline>()),
+        ('internal', isA<UnknownFailure>()),
+      ]) {
+        functions.fail('setCalendarLink', code);
+        await expectLater(repo.set(_g, CalendarLinkAction.make), throwsA(type));
+      }
+    });
   });
 
   group('FirestoreDeviceRepository', () {

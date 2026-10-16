@@ -849,5 +849,71 @@ void main() {
         );
       }
     });
+
+    test('posts a reminder in chat and emails RSVPs through their '
+        'callables (SCHED-8, SCHED-14)', () async {
+      final repo = FirestoreEventRepository(db, functions);
+      await repo.repostToChat(const EventId('e1'));
+      expect(functions.lastData('repostEvent'), {'eventId': 'e1'});
+
+      functions.handlers['emailRsvpReminder'] = (_) => {
+        'people': 3,
+        'players': 2,
+        'unreachable': 1,
+        'failed': 0,
+      };
+      final count = await repo.emailRsvpReminder(
+        const EventId('e1'),
+        dryRun: true,
+      );
+      expect(count, (people: 3, players: 2, unreachable: 1, failed: 0));
+      expect(functions.lastData('emailRsvpReminder'), {
+        'eventId': 'e1',
+        'dryRun': true,
+      });
+      // Anything missing reads as none.
+      functions.handlers['emailRsvpReminder'] = (_) => {'people': 2};
+      expect(await repo.emailRsvpReminder(const EventId('e1')), (
+        people: 2,
+        players: 0,
+        unreachable: 0,
+        failed: 0,
+      ));
+      expect(
+        (functions.lastData('emailRsvpReminder')! as Map)['dryRun'],
+        isFalse,
+      );
+    });
+
+    test('maps reminder and RSVP email refusals to failures', () async {
+      final repo = FirestoreEventRepository(db, functions);
+      for (final (code, type) in [
+        ('permission-denied', isA<PermissionDenied>()),
+        ('not-found', isA<NotFound>()),
+        ('resource-exhausted', isA<RateLimited>()),
+        ('unavailable', isA<Offline>()),
+        ('internal', isA<UnknownFailure>()),
+      ]) {
+        functions.fail('repostEvent', code);
+        await expectLater(
+          repo.repostToChat(const EventId('e1')),
+          throwsA(type),
+        );
+      }
+      for (final (code, type) in [
+        ('permission-denied', isA<PermissionDenied>()),
+        ('not-found', isA<NotFound>()),
+        ('resource-exhausted', isA<RateLimited>()),
+        ('failed-precondition', isA<InvalidInput>()),
+        ('deadline-exceeded', isA<Offline>()),
+        ('internal', isA<UnknownFailure>()),
+      ]) {
+        functions.fail('emailRsvpReminder', code);
+        await expectLater(
+          repo.emailRsvpReminder(const EventId('e1')),
+          throwsA(type),
+        );
+      }
+    });
   });
 }
