@@ -5,7 +5,8 @@ import { randomUUID } from 'node:crypto';
 import type { UserRecord } from 'firebase-admin/auth';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { auth, db, storage } from '../shared/admin.js';
-import { Collections, notificationPrefValues, type NotificationPref } from '../shared/constants.js';
+import { Collections, Limits, notificationPrefValues, type NotificationPref } from '../shared/constants.js';
+import { consumeRateLimit } from '../shared/rate_limit.js';
 import { anonymizeAuthor, joinedLine, postSystemMessage } from '../chat/service.js';
 import { anonymizeUploader } from '../documents/service.js';
 import { removeAccountNotifications, removeDevices } from '../notify/service.js';
@@ -192,6 +193,29 @@ export async function ensureUserProfile(
 }
 
 /**
+ * Keeps a person's profile photos to the newest few (SAFE-5): they don't
+ * count toward any team's storage, so without this one account could
+ * store without limit. Runs as each one is uploaded ([path]); the photo
+ * the profile uses is never removed. Returns how many it deleted.
+ */
+export async function pruneAvatars(path: string | undefined): Promise<number> {
+  const match = /^users\/([^/]+)\/avatar\/[^/]+$/.exec(path ?? '');
+  if (!match) return 0;
+  const uid = match[1];
+  const [files] = await storage().bucket().getFiles({ prefix: `users/${uid}/avatar/` });
+  if (files.length <= Limits.avatarFilesPerUserMax) return 0;
+  const current = (await db().collection(Collections.users).doc(uid).get()).get('photoPath') as unknown;
+  const created = (f: (typeof files)[number]) => Date.parse(String(f.metadata.timeCreated ?? '')) || 0;
+  const extra = files
+    .sort((a, b) => created(b) - created(a))
+    .slice(Limits.avatarFilesPerUserMax)
+    .filter((f) => f.name !== current);
+  await Promise.all(extra.map((f) => f.delete({ ignoreNotFound: true })));
+  if (extra.length) logger.info('avatars_pruned', { uid, deleted: extra.length });
+  return extra.length;
+}
+
+/**
  * Copies the provider's photo into our Storage once, so the profile never
  * depends on a provider URL (ARCH §6.1). Failures are logged, never fatal.
  */
@@ -268,8 +292,29 @@ export async function recordSignInMethodChange(
     ...(passwordChanged && !added.includes('password') ? ['The password for your Battleplan account was changed.'] : []),
   ];
   const email = (snap.get('email') as string | undefined) ?? user.email;
-  if (email && lines.length) await sendEmail(securityNoticeEmail(email, lines.join(' ')));
+  if (email && lines.length && (await securityNoticeAllowed(uid))) {
+    await sendEmail(securityNoticeEmail(email, lines.join(' ')));
+  }
   return { added, removed };
+}
+
+/**
+ * Whether [uid] may get another security notice today: 10 a day (SAFE-5),
+ * as the app reports a changed password itself, and a client calling over
+ * and over mustn't use up the day's email for everyone. Past that the
+ * change is still recorded; only the email waits for tomorrow.
+ */
+async function securityNoticeAllowed(uid: string): Promise<boolean> {
+  try {
+    await consumeRateLimit(uid, 'securityNotice', Limits.securityNoticesPerUserPerDay);
+    return true;
+  } catch (e) {
+    if (e instanceof HttpsError && e.code === 'resource-exhausted') {
+      logger.warn('security_notices_capped', { uid });
+      return false;
+    }
+    throw e;
+  }
 }
 
 /**

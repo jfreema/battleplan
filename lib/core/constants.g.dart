@@ -93,6 +93,10 @@ abstract final class Limits {
   static const int invitePreviewsPerIpPerHour = 60;
   static const int guardianRequestsPerUserPerDay = 10;
   static const int reportsPerUserPerDay = 20;
+  static const int clientErrorsPerIpPerHour = 30;
+  static const int securityNoticesPerUserPerDay = 10;
+  static const int superAdminEmailsPerDay = 50;
+  static const int avatarFilesPerUserMax = 3;
   static const int queryLimitMax = 100;
   static const int unreadCountCap = 100;
   static const int notificationPageSize = 30;

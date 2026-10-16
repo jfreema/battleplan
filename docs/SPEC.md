@@ -976,6 +976,11 @@ The App Store requires these for apps with user-generated content (guideline 1.2
     | Invite code attempts | 20 per person per hour |
     | Player claims and added players | 10 per person per day |
     | Reports | 20 per person per day |
+    | Reposting an event to chat | 1 per event per hour |
+    | Web error reports | 30 per IP address per hour |
+    | Security notice emails | 10 per person per day |
+    | Alert emails to super admins | 50 a day in all (the daily report reminder always goes) |
+    | Profile photos | The newest 3 per person, plus the one in use |
 
   - Real people shouldn't notice them. The app spaces messages automatically, and anyone who hits a limit sees "Slow down, try again in a minute" without losing what they typed.
   - A verified email is required to create teams, send email invites, or add people by email.

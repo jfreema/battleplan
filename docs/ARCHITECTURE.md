@@ -1068,6 +1068,12 @@ groups/{groupId}/documents/{docId}/{originalFileName}
 | Invite previews (signed out) | 60 per IP address per hour | `getInvitePreview` |
 | Player claims and added players | 10 per person per day | `claimPlayer`, `proposePlayer` |
 | Reports | 20 per person per day | `reportContent` |
+| Reposting an event to chat (SCHED-8) | 1 per event per hour | `repostEvent` |
+| Imports (§6.15) | 30 schedule imports and 1,000 chat-import calls per team per day | `importEvents`, `importMessages`, `importDocuments` |
+| Web error reports, which work signed out | 30 per IP address per hour; the rest are dropped quietly | `logClientError` |
+| Security notice emails (AUTH-7) | 10 per person per day; the change is still recorded | `recordSignInMethodChange` |
+| Email to super admins: report alerts (SAFE-4) and ADMIN-9's | 50 a day in all, so a flood of sign-ups or reports can't use up the day's email; the daily report reminder always goes | `emailSuperAdmins` |
+| Profile photos, which count toward no team | The newest 3 per person, plus the one the profile uses | `onGroupFileAdded` (`pruneAvatars`) |
 | Uploads | Size limits and per-team storage quota | Storage rules |
 | Sign-in attempts | Firebase Auth's built-in throttling | Firebase Auth |
 
@@ -1078,6 +1084,9 @@ Callable limits use `rateLimits` counters (`shared/rate_limit.ts`: one document 
 - A verified email is required to create teams, send email invites, or add people by email.
 - Every team has a storage quota.
 - Super admins can disable users and suspend teams.
+- Only two callables work signed out: `getInvitePreview` and `logClientError`, both limited by IP address.
+- **Not limited, on purpose:** reactions, RSVPs, poll votes, and profile edits are direct Firestore writes with no notifications, so their only cost is writes; a member's chat is held to 1 message a second, and the team's admins remove anyone who abuses it.
+- **The real ceiling is email.** Resend's free plan sends 100 a day across everything (§6.7). The limits above keep any one person or the alerts from taking it all, but a busy day of invites and setup links can still reach it; the paid plan lifts it (§13).
 
 ### 6.10 Region
 

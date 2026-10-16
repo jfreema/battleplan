@@ -7,6 +7,7 @@ import { postRenamedLine, renamedLine } from '../chat/service.js';
 import { addStorageBytes, enforceUploadLimit, groupIdFromPath, reconcileAllStorage, updateStorageAlert } from './storage.js';
 import { removeAllOrphanDocumentFiles } from '../documents/service.js';
 import { pruneDevices } from '../notify/service.js';
+import { pruneAvatars } from '../accounts/service.js';
 import { resendApiKey } from '../email/service.js';
 import { remindOpenReports } from '../safety/alerts.js';
 
@@ -15,7 +16,8 @@ import { remindOpenReports } from '../safety/alerts.js';
  * warn its admins if that crossed 90% or filled it (STORE-3, STORE-4). Any
  * upload (team files and profile photos) over the platform's upload limit
  * is deleted (ADMIN-7); a team file is counted first, so its delete
- * trigger's subtraction balances.
+ * trigger's subtraction balances. A person keeps only their newest few
+ * profile photos (SAFE-5).
  */
 export const onGroupFileAdded = onObjectFinalized(async (event) => {
   const size = Number(event.data.size ?? 0);
@@ -23,6 +25,8 @@ export const onGroupFileAdded = onObjectFinalized(async (event) => {
   if (groupId) await addStorageBytes(groupId, size);
   const removed = await enforceUploadLimit(event.data.name, size);
   if (groupId && !removed) await updateStorageAlert(groupId);
+  // Profile photos count toward no team, so only the newest few stay (SAFE-5).
+  if (!groupId && !removed) await pruneAvatars(event.data.name);
 });
 
 /**

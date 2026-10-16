@@ -5,7 +5,7 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { sendEmail } from '../email/service.js';
-import { superAdminEmails } from '../email/super_admins.js';
+import { emailSuperAdmins, superAdminEmails } from '../email/super_admins.js';
 import { openReportsEmail, reportAlertEmail } from '../email/templates.js';
 import { appUrl } from '../links/service.js';
 import { db } from '../shared/admin.js';
@@ -23,8 +23,9 @@ export function reportedThing(targetType: ReportTarget): string {
 }
 
 /**
- * Emails every super admin about a new report. Never throws: a failed
- * email mustn't fail the report, so it's logged instead.
+ * Emails every super admin about a new report, within the day's cap for
+ * super-admin email (emailSuperAdmins). Never throws: a failed email
+ * mustn't fail the report, so it's logged instead.
  */
 export async function alertSuperAdmins(report: {
   groupId: string;
@@ -32,16 +33,15 @@ export async function alertSuperAdmins(report: {
   reason: string;
   teamVisible: boolean;
 }): Promise<void> {
+  let teamName = 'a team';
   try {
     const team = await db().collection(Collections.groups).doc(report.groupId).get();
-    const teamName = (team.get('name') as string | undefined) ?? 'a team';
-    const details = { teamName, what: reportedThing(report.targetType), reason: report.reason, teamVisible: report.teamVisible };
-    for (const to of await superAdminEmails()) {
-      await sendEmail(reportAlertEmail(to, details, appUrl('/admin/reports')));
-    }
+    teamName = (team.get('name') as string | undefined) ?? teamName;
   } catch (e) {
     logger.error('report_alert_failed', { groupId: report.groupId, error: String(e) });
   }
+  const details = { teamName, what: reportedThing(report.targetType), reason: report.reason, teamVisible: report.teamVisible };
+  await emailSuperAdmins('report', (to) => reportAlertEmail(to, details, appUrl('/admin/reports')));
 }
 
 /**
