@@ -280,7 +280,7 @@ In SPEC §9's priority order. These are web build work, so they're built before 
 135. ✅ @mentions, edits, pins, and announcements (CHAT-14, CHAT-15). *Typing @ suggests team members, and a message names whoever's full name follows an @; mentions are bold, yours highlighted, and push even at Important only, with a Mentions switch in Settings. Admins can mention @everyone, pin up to 3 messages to a bar at the top (the `pinMessage` callable, audited), and send announcements that notify everyone who hasn't turned the team off. Editing was built in the MVP.*
 136. ✅ Roster details and contact sharing (TEAM-10). *Players sort by number or by name, and people by name with the owner first. Members share a phone number and email with each team from their own card, shown to the team with call, text, and email buttons; stopping always works, and leaving the team removes them.*
 137. ✅ "Same answer for all my players" and per-player RSVP history (PLAYER-11). *With two or more players to answer for, an "All my players" row on the event and its chat card answers for all of them in one batch, each keeping its note. The player card opens the player's RSVP history (last 3, 6, or 12 months, with totals) for the player's linked members and the team's admins.*
-138. Calendar subscription links (SCHED-11).
+138. Calendar subscription links (SCHED-11, ARCH §6.15, the owner's pick, 2026-10-16). *In the Schedule menu, **Subscribe in your calendar** for one team or for all my teams, with Google Calendar, Apple Calendar, and Outlook buttons, Copy link, Reset link, and Turn off; the feed (`calendarFeed` behind `/cal/`) served from one cached copy per team; links removed when someone leaves, is removed, or deletes their account; a line in the privacy policy.*
 139. RSVP nudges and guest counts (SCHED-12).
 140. Team-specific link previews for invites (ARCH §6.6).
 141. Document folders and the chat photo gallery (DOC-7).
@@ -289,6 +289,8 @@ In SPEC §9's priority order. These are web build work, so they're built before 
 144. App icon badges, mention notifications, hidden message text (NOTIF-12). *Mention notifications are built (task 135). The hide-message-text option isn't yet, and icon badges on iPhone and Android come with Phases 4 and 5.*
 145. Files in chat (CHAT-16).
 146. Persistent team list on very wide screens (§5.5).
+286. Answering from an email, and reminders by email for people who can't get notifications (SCHED-14, ARCH §6.15, the owner's pick, 2026-10-16). *Answer tokens; the answer page behind `/a/`, where Send answers and opening the link never does; reminder and nudge emails with the three answers and Stop these emails; the Settings switch; a paragraph in the privacy policy. First move Functions mail to Cloudflare Email Sending, since Resend Free's 100 a day can't carry reminders (§6.7).*
+287. Answer buttons on web notifications: Going and Not going in Chrome and Edge (SCHED-14).
 
 ## Phase 1 · Website and web app go-live
 
@@ -380,6 +382,7 @@ Apple sign-in on the web first (a popup). The iPhone's native sheet is checked i
 209. Decide where iOS builds run (macOS minutes on GitHub count 10×) and add the iOS build to the prod release workflow. *Split from task 117.*
 210. ✅ iPad pass: every screen on iPad sizes, in portrait, landscape, and Split View, with the side rail at 840 px and up (2026-10-15, SPEC §5.5, store checklist 1.12). *`test/ipad_layout_test.dart` opens every screen at iPad mini, Air, and Pro sizes in both orientations and at the Split View and Slide Over widths, and fails on any overflow; it found the whiteboard's top bar overflowing at Slide Over and a third of the screen (Save becomes an icon under 380 points) and the Schedule and Documents + buttons sharing a hero tag. The end-to-end test also passes on the iPad Air 11-inch simulator.*
 211. TestFlight beta with our team's iPhone and iPad users; Sign in with Apple's native sheet and App Attest join the sign-in matrix and App Check enforcement.
+288. Answer buttons on the iPhone app's event notifications: Going, Maybe, and Not going, answered in the background (SCHED-14, ARCH §6.15).
 129. App Store listing: screenshots for iPhone and iPad, description, keywords, support and privacy URLs. *Moved from Launch. The Google Play listing moved to task 213.*
 130. App Store privacy labels and the age-rating questionnaire (LEGAL-4). *Moved from Launch. The Play Data safety form moved to task 213.*
 131. 👤 **Jared:** Declare EU trader status in App Store Connect. *Moved from Launch. Google Play's is part of task 213.*
@@ -396,6 +399,7 @@ New fixed cost: the Google Play Console, $25 once.
 126. Generate the Android upload key at the first Play upload. 👤 **Jared:** store the keystore and its passwords in 1Password, plus an offline backup. *Moved from Launch. The **Android build** workflow and Gradle are ready for it (store checklist 1.11): it goes in the repository's secrets as `ANDROID_UPLOAD_KEYSTORE_BASE64`, `ANDROID_UPLOAD_KEYSTORE_PASSWORD`, and `ANDROID_UPLOAD_KEY_ALIAS`.*
 127. Add the Android SHA-1 and SHA-256 fingerprints (debug, upload, Play App Signing) to Firebase. *Moved from Launch.*
 212. Verify App Links on prod: `assetlinks.json` on `getbattleplan.app` with the upload and Play App Signing fingerprints, then check `/join/`, `/activate`, `/g/`, and `/app/` open the app on a phone (task 50).
+289. Answer buttons on the Android app's event notifications: Going, Maybe, and Not going, answered in the background (SCHED-14, ARCH §6.15).
 128. 👤 **Jared:** Run the Google Play closed test: 12+ testers opted in for 14 days in a row, then request production access. *Moved from Launch.*
 213. Google Play listing: phone and tablet screenshots, description, the Data safety form (LEGAL-4), the content rating, the target audience (adults), the review demo account, and 👤 **Jared:** EU trader status in the Play Console. *Split from tasks 129 to 132.*
 214. Add the Android build to the prod release workflow, submit to Google Play, enforce Play Integrity in App Check, and turn on the Google Play badge on the website and the `/join` page. *Split from task 133.*

@@ -485,6 +485,9 @@ App Store and Google Play both require in-app account deletion. The callable `de
 | `plays` | auto | saved play (§6.14) | `plays` | admins |
 | `notifications` | `{dedupeKey}_{uid}` | notification-center item | `notifications` | Functions; the recipient marks read |
 | `notifyLog` | dedupe key | one notification send | — | Functions only (TTL 7 days) |
+| `calendarLinks` | the link's token | calendar link (SCHED-11, §6.15) | — (operational) | Functions; the owner reads |
+| `teamCalendars` | `{groupId}` | a team's calendar feed, cached (§6.15) | — (cache) | Functions only |
+| `answerLinks` | SHA-256 of the token | answer link in a push or email (SCHED-14, §6.15; planned) | — (operational) | Functions only (TTL) |
 | `reports` | auto | report | `reports` | Functions |
 | `auditLogs` | auto | admin action | `audit_logs` | Functions |
 | `rateLimits` | `{uid}_{action}_{window}` | counter window | — (operational) | Functions |
@@ -654,6 +657,19 @@ notifications/{dedupeKey}_{uid}                         # notification-center it
 
 notifyLog/{dedupeKey}                                   # one per send, so a retried trigger can't push twice
   kind, groupId, createdAt, expiresAt                   # TTL: 7 days
+
+calendarLinks/{token}                                   # SCHED-11, §6.15: the ID is the secret, 32 random bytes in base64url
+  uid, groupId                                          # groupId null: all the person's teams
+  createdAt, fetchedAt?                                 # fetchedAt: when a calendar last read it, written at most hourly
+
+teamCalendars/{groupId}                                 # §6.15: what a team's feed prints, cached; Functions only
+  events: [{ id, title, type, allDay, startAt, endAt, startDate?, endDate?, location?, description,
+             arriveMinutesBefore?, canceled, updatedAt }]   # ≤ 500, from 60 days back to 12 months ahead
+  builtAt, changedAt                                    # rebuilt when changedAt is after builtAt, or after 6 hours
+
+answerLinks/{sha256(token)}                             # SCHED-14, §6.15 (planned)
+  uid, groupId, eventId, participants: [{ type, id }]   # whom the push or email answers for
+  expiresAt                                             # the event's start or its deadline, whichever comes first; TTL
 
 reports/{reportId}
   reporterId, groupId, targetType: 'message' | 'user' | 'document', targetId
@@ -969,6 +985,8 @@ Plain chat messages don't create center items; unread counts cover them. Replies
 | `/app/activate` | Account setup and email-link sign-in (the `url` in Auth's `ActionCodeSettings`) |
 | `/emaillogin` | Email sign-in (AUTH-2), short, for the people given it; Hosting redirects it to `/app/emaillogin` in the browser |
 | `/app/g/<groupId>/…` | Links into content from emails and notifications |
+| `/cal/<token>.ics` | Calendar links (SCHED-11): Hosting rewrites them to `calendarFeed` (§6.15). Not app links, so they never open the app |
+| `/a/<token>` | Answering from an email or a notification button (SCHED-14, planned): rewritten to `answerPage` (§6.15) |
 
 - **Redirects.** `/join/:code` → `/app/join/:code`, `/activate` → `/app/activate` (keeping the query string), `/emaillogin` → `/app/emaillogin`, and `/g/**` → `/app/g/**`, so older links and short QR codes keep working in browsers.
 - **The web app's own files** (service worker, `manifest.json`, icons) live under `/app/`, and FCM's `firebase-messaging-sw.js` is registered with the `/app/` scope.
@@ -1028,6 +1046,7 @@ Phase 1 sends email three ways, each the cheapest for its job (D61).
 | Email invites (INV-4), added to a team (TEAM-7), security notices (AUTH-7, AUTH-8) | Functions, through Resend |
 | A new report, and the daily reminder of reports open more than 12 hours, to every super admin (SAFE-4) | Functions, through Resend |
 | A new account (first-run setup finished), a new team, and a deleted team, to every super admin while `config/app.emailAdminAlerts` isn't false (ADMIN-9; `admin/alerts.ts`, from `ensureUserProfile`, `createGroup`, `deleteGroup`, and `adminDeleteGroup`, which now carry the Resend secret). They count toward Resend's 100 a day | Functions, through Resend |
+| Event reminders and nudges for people who can't get notifications (SCHED-14, planned, §6.15) | Functions, through Cloudflare Email Sending: Resend Free's 100 a day can't carry them |
 | Mail to `support@` and `privacy@` | Cloudflare Email Routing, forwarded to the owner's Gmail |
 
 - **Firebase Auth** costs $0, with no base fee. On Blaze its daily limits are 100,000 verification, 10,000 password-reset, 25,000 sign-in-link, and 10,000 address-change emails. The app already calls it (`lib/features/auth/data/firebase_auth_repository.dart`); Phase 1 adds the custom sender domain. Only the password-reset body can be edited; the other templates take a sender name, address, reply-to, and subject.
@@ -1080,8 +1099,10 @@ groups/{groupId}/documents/{docId}/{originalFileName}
 | Reports | 20 per person per day | `reportContent` |
 | New direct conversations (CHAT-19) | 20 per person per day; opening one again is free | `openDirectChat` |
 | Reposting an event to chat (SCHED-8) | 1 per event per hour | `repostEvent` |
-| Imports (§6.15) | 30 schedule imports and 1,000 chat-import calls per team per day | `importEvents`, `importMessages`, `importDocuments` |
+| Imports (§6.13) | 30 schedule imports and 1,000 chat-import calls per team per day | `importEvents`, `importMessages`, `importDocuments` |
 | Web error reports, which work signed out | 30 per IP address per hour; the rest are dropped quietly | `logClientError` |
+| Calendar links (SCHED-11) | One per person per team, and one for all teams; no limit on reads: a fetch costs a handful of reads, and `maxInstances` caps a runaway calendar | `setCalendarLink`, `calendarFeed` |
+| Answers from links and buttons (SCHED-14, planned) | 20 per token and 60 per IP address per hour | `answerPage` |
 | Security notice emails (AUTH-7) | 10 per person per day; the change is still recorded | `recordSignInMethodChange` |
 | Email to super admins: report alerts (SAFE-4) and ADMIN-9's | 50 a day in all, so a flood of sign-ups or reports can't use up the day's email; the daily report reminder always goes | `emailSuperAdmins` |
 | Profile photos, which count toward no team | The newest 3 per person, plus the one the profile uses | `onGroupFileAdded` (`pruneAvatars`) |
@@ -1095,7 +1116,7 @@ Callable limits use `rateLimits` counters (`shared/rate_limit.ts`: one document 
 - A verified email is required to create teams, send email invites, or add people by email.
 - Every team has a storage quota.
 - Super admins can disable users and suspend teams.
-- Only two callables work signed out: `getInvitePreview` and `logClientError`, both limited by IP address.
+- Only two callables work signed out: `getInvitePreview` and `logClientError`, both limited by IP address. Two web endpoints also work signed out, each authorized by the unguessable token in its link: `calendarFeed` and, when it's built, `answerPage` (§6.15).
 - **Not limited, on purpose:** reactions, RSVPs, poll votes, and profile edits are direct Firestore writes with no notifications, so their only cost is writes; a member's chat is held to 1 message a second, and the team's admins remove anyone who abuses it.
 - **The real ceiling is email.** Resend's free plan sends 100 a day across everything (§6.7). The limits above keep any one person or the alerts from taking it all, but a busy day of invites and setup links can still reach it; the paid plan lifts it (§13).
 
@@ -1216,6 +1237,25 @@ SPEC §6.16 (BOARD), ROADMAP tasks 242–248. The coach's whiteboard first, in *
 - **Drawing.** `PlayPainter` draws each field from `board_layout.dart`'s measurements (feet for baseball and basketball, meters for soccer, yards for football; the attacked end at the top), then the elements; the same painter draws the editor, the viewer, and the list's pictures. Formations' spots and the ball's start are in the same file, so positions sit where the field's lines are. A board may show only part of its field (`boardFrame`): baseball's `BaseballField.frame` is cut to the fence, from just past center field's fence to 47 feet behind home and 16 feet in from each side, so the field fills the board. The painter draws the whole field through the frame, and the editor maps touches back through it; `boardAspect` is the board's shape as shown, `fieldAspect` the field's, for distances. Points stay the field's, so the cut changed no saved play. What's drawn on the field is sized by the board as shown, so it keeps its size as the field grows: markers 2.5% of its width (1.5% on football's, so a line of eleven fits), arrows 0.5%, text 2.15%.
 - **Editing** (`board_edit.dart`, pure Dart): `BoardEdit` holds the steps, the step on show, and up to 100 undos; a drag moves its element live and commits once at the end, without picking it (a tap picks). Hit tests use a fingertip's reach (28 logical pixels) at the board's drawn size, markers before lines. Drawn paths are simplified (Ramer–Douglas–Peucker) to ≤ 64 points. The `GestureDetector` reports drags from where the finger went down, so arrows start under it.
 - **Playback** (`StepPlayer`): steps play in order, markers matched by ID gliding from one step's position to the next (`elementsBetween`, eased), the step's arrows on show until it ends. Touches are ignored while it plays.
+
+### 6.15 Calendar links and answering outside the app · Planned
+
+SPEC SCHED-11 and SCHED-14, ROADMAP tasks 138 and 286 to 289. The schedule reaches people where they already are: a calendar that stays in sync, and answers from a notification or an email. Both are plain HTTPS on our domain, served by Functions behind Hosting rewrites and authorized by an unguessable token in the link, not a sign-in (D66, D67).
+
+**Calendar links (SCHED-11, task 138)**
+
+- **Links.** `setCalendarLink({ groupId | null, action: 'make' | 'reset' | 'off' })` returns the person's link token for one team (they must be on it) or for all their teams, making it the first time; `reset` deletes the old one and makes a new one, and `off` deletes it. The token is 32 random bytes from the server in base64url, and it's the `calendarLinks` document's ID, so a feed request reads one document. Owners list their own links (`where('uid', '==', me)`); only Functions write. The app's `LinkService` builds `https://<host>/cal/<token>.ics` from it, the `webcal://` form for Apple Calendar, Google Calendar's `calendar.google.com/calendar/r?cid=<webcal link>`, and Outlook's `outlook.live.com/calendar/0/addfromweb?url=…`.
+- **The feed.** Hosting rewrites `/cal/**` to `calendarFeed` (`onRequest`, GET), which answers `/cal/<token>.ics` with `text/calendar; charset=utf-8`, `Cache-Control: private, max-age=300`, and `X-Robots-Tag: noindex`. An unknown token, or a disabled or deleted account, gets 404. A team the person has left, or that's archived, suspended, or deleted, gets an empty calendar rather than an error, so calendar apps drop its events. Times are UTC; all-day events use `VALUE=DATE` with the day after the last as the end, as the app's own .ics (SCHED-10) does. `UID` is `<eventId>@getbattleplan.app`, so a moved or canceled event updates in place; canceled ones are `STATUS:CANCELLED` and titled "Canceled: …". `REFRESH-INTERVAL` and `X-PUBLISHED-TTL` ask for an hourly check, which Apple Calendar and Outlook honor; Google Calendar keeps its own schedule, up to a day. A fetch writes `fetchedAt` at most hourly, so the sheet can say when a calendar last checked.
+- **One cached copy per team.** A feed carries no personal data, so every link to a team serves the same events. `teamCalendars/{groupId}` holds them, trimmed to what the feed prints: the window from 60 days back to 12 months ahead, at most 500. A fetch rebuilds it (one bounded `events` query) when `changedAt` is after `builtAt`, when it's over 6 hours old, or when it's missing; otherwise a fetch reads the link, the account, the membership, the team, and the cache, about five documents, or a few more per team for all teams. `changedAt` comes from the `events` trigger when a one-off event is added, deleted, or changed in a field the feed prints (not counts or reminder times), and once per call from `saveEventSeries` and `importEvents`, which write many events at once.
+- **Cleanup.** `deleteAccount` deletes the person's links; leaving or being removed deletes their links to that team; deleting a team deletes its cache and every link to it (`TEAM_COLLECTIONS`).
+
+**Answering outside the app (SCHED-14, tasks 286 to 289, planned)**
+
+- **Answer tokens.** `answerLinks/{sha256(token)}`: `uid`, `groupId`, `eventId`, `participants` (the `{ type, id }` the push or email names), and `expiresAt` (the earlier of the event's start and its deadline, with a TTL policy). `notify.send()` makes one per recipient for kinds that take answers (`eventCreated`, `eventChanged` unless canceled, `eventReminder`, `rsvpNudge`), and each reminder email gets its own. Tokens are 32 random bytes stored hashed, so a leaked database can't answer for anyone.
+- **The answer page.** Hosting rewrites `/a/**` to `answerPage` (`onRequest`). GET renders a small page with the website's look: the team, the event, the players, the picked answer, a note, and **Send**. It never writes, because email services open links to check them. POST checks the token, the event (active team, takes RSVPs, not canceled or started, before its deadline), and that the person may still answer for each participant (the RSVP write rule, §6.3, mirrored), then writes the `rsvps` documents with `respondedBy` set to the token's `uid`; the `rsvps` trigger recounts as usual.
+- **Notification buttons.** The push's `data` gains `answer` (the token) and `answers` (which buttons). The web service worker adds Going and Not going where `Notification.maxActions` allows two (Chrome, Edge) and POSTs to `/a/<token>` from `notificationclick`, closing the notification on success or showing one that opens the event on failure. The iPhone app registers an `rsvp` category with three background actions, and APNs pushes of these kinds carry `category: rsvp`; the Android app shows these kinds as data messages with three actions (`flutter_local_notifications`). Both POST the token in the background like the service worker, so no background sign-in is needed.
+- **Reminders by email.** In `notify.send()` step 4, recipients of `eventReminder` or `rsvpNudge` with no device tokens, who passed level, mute, and the Reminders switch, and whose `emailReminders` setting isn't off, get one email per event (deduped in `notifyLog` as `{eventId}_{uid}_email`) through `sendEmail()`, with the three answer links and a one-click `List-Unsubscribe` header (RFC 8058) to `/a/stop/<token>`. Off while `config/app.emailReminders` is false, and capped at `config/app.emailRemindersPerDay` a day, past which they're skipped and logged.
+- **Email volume.** A team of 15 with five people off the app and three events a week sends about 15 reminder emails a week, so 50 such teams would pass Resend Free's 100 a day (§6.7). Move Functions mail to Cloudflare Email Sending ($5 a month for 3,000, then $0.35 per 1,000) before turning reminders on.
 
 ## 7. Key flow: sending a message
 
@@ -1372,6 +1412,8 @@ Assumptions for one active team: 25 members; 50 messages and 10 photos a day; ea
 | Google Play Console | 5 | $25 once |
 | Facebook sign-in | 6 | $0 |
 | SAML or OIDC single sign-on, if used | 6 | Identity Platform's per-user pricing past its free tier |
+
+**Calendar links and reminder emails (§6.15).** Calendar apps poll on their own: Apple Calendar about hourly, Google Calendar a few times a day. With one cached copy per team, a fetch reads about five documents, so a thousand people with links checking hourly read about 120,000 documents a day, a few cents. Rebuilding a team's copy is one query of its events, and only after a change. Reminder emails are the cost to watch: past Resend Free's 100 a day, Cloudflare Email Sending is $5 a month for 3,000.
 
 ### 10.2 Cost-efficiency rules
 
@@ -1602,6 +1644,8 @@ Each phase is incremental and reversible.
 | D63 | Player details for coaches (SPEC PLAYER-12, Q18, 2026-10-12, the owner's request): date of birth, up to 2 emergency contacts, medical notes, and notes live in their own collection, `playerDetails/{playerId}`, seen and edited only by the team's admins and the player's linked members (super admins read only); medical notes need a recorded consent; deleted with the player or team | Coaches asked for easy administration. A separate collection keeps the roster record minimal for everyone else (PLAYER-10) and lets the rules hide details completely, since Firestore rules can't hide single fields. Consent with who and when covers GDPR's explicit consent for health data (LEGAL-7) | Teams ask to export details (v1.1 CSV, admins only), or a regulator or app store asks for stricter handling of children's health data |
 | D64 | Mentions, pins, and announcements (SPEC CHAT-14, CHAT-15, task 135): the app resolves whom a message names from members' full names and sends their IDs (`mentions`, ≤ 20); @everyone and announcements are flags the rules allow only from admins; the pinned bar is `groups.pinnedMessageIds` (≤ 3), written only by the `pinMessage` callable | IDs, not names, survive renames and need no server-side text parsing; the rules already read the sender's membership, so the admin checks are free. Keeping pins on the group needs no query or index (the chat already watches the group), and a callable can enforce the limit of 3 in a transaction, which rules can't | Teams want more than 3 pins, or mentions in edited messages to notify |
 | D65 | Direct messages (SPEC CHAT-19, 2026-10-16, the owner's request) are groups of kind `direct` with two `participant` memberships, rather than collections of their own. The conversation's ID comes from the pair, `openDirectChat` makes it once a team is shared, and the team chat's messages, rules, Storage paths, read markers, unread counts, delete, report, and app screens carry over. Team lists ask for the three team roles, `requireOpenTeam` and the admin panel's team callables refuse a conversation, and super admins don't read one (`canRead`) | Reuses the most-tested part of the app instead of a second chat to keep in step, with no migration: every existing membership keeps its role | Group conversations, or a conversation needs something a team's chat can't do |
+| D66 | Calendar links (SPEC SCHED-11, §6.15, 2026-10-16, the owner's pick): an unguessable token in the URL rather than a sign-in, since calendar apps can't sign in; the feed carries no personal data (no names, answers, or roster), so one cached copy per team serves every link to it and a fetch costs a handful of reads; a team you've left serves an empty calendar rather than an error, so calendars drop its events. |
+| D67 | Answering outside the app (SPEC SCHED-14, §6.15, 2026-10-16, the owner's pick, planned): one endpoint for email links and notification buttons, authorized by a per-person, per-event token stored hashed; opening a link never answers (email services open links to check them), only a POST does; notification buttons POST the same token, so answering in the background needs no sign-in. Reminder emails go only to people no push can reach. |
 
 ---
 

@@ -778,9 +778,13 @@ Players that others answer for never get accounts, and every account belongs to 
   - If the event's time zone is different, both appear: "6:00 PM CDT · 7:00 PM your time".
   - All-day events never shift to another day.
 - **SCHED-10 · MVP · Add to calendar.** The native calendar sheet on iOS and Android; an .ics download on web.
-- **SCHED-11 · v1.1 · Calendar subscription.**
-  - A private link that keeps Google, Apple, or Outlook Calendar in sync, for one team or all of a person's teams.
-  - Regenerating the link turns off the old one.
+- **SCHED-11 · v1.1 · Calendar subscription.** A private link that keeps Google, Apple, or Outlook Calendar in sync with the schedule, so a time change or a rainout reaches the calendar a player or guardian already checks (ARCH §6.15).
+  - **Where:** **Subscribe in your calendar** in a team's Schedule menu makes a link for that team; in **All my teams** (SCHED-2), a link for every team you're on, including teams you join later.
+  - **Adding it:** buttons for Google Calendar, Apple Calendar, and Outlook, and **Copy link** for anything else. Google Calendar adds links on its website, not in its phone app: on a phone the button opens the website, and once it's added the calendar shows in the app too.
+  - **What's in it:** every event from 60 days back through the next 12 months, with its title (a canceled one starts "Canceled:"), time (all-day events stay on their dates, SCHED-9), place, notes, arrival time for games, and a link that opens it in Battleplan. A link for all your teams puts the team's name before each title. Nothing else: no names, answers, or roster.
+  - **Staying in sync:** each calendar app checks the link on its own schedule. Apple Calendar and Outlook check about every hour; Google Calendar can take up to a day. The sheet says so, and when a calendar last checked the link.
+  - **It's private:** anyone with the link sees that schedule, so the sheet says not to share it. **Reset link** turns off the old link (calendars using it stop updating) and makes a new one; **Turn off** stops it. Each person has at most one link per team and one for all teams.
+  - **Leaving:** once you leave a team or are removed, its events drop out of your links. A disabled or deleted account's links stop working.
 - **SCHED-12 · v1.1 · Follow-ups.**
   - Admins can "Nudge" people who haven't answered; it also happens automatically 24 h before the RSVP deadline.
   - Guest counts (+1, +2).
@@ -791,6 +795,14 @@ Players that others answer for never get accounts, and every account belongs to 
   - Volunteer and snack sign-ups.
   - Carpools.
   - Season availability surveys.
+- **SCHED-14 · v1.1 · Answering without opening the app.** The people who don't answer tend to be the ones who rarely open the app, so the answer is a tap away in a notification or an email (ARCH §6.15).
+  - **Buttons on notifications:** pushes for a new event, a changed event, a reminder, or a nudge (NOTIF-2), for an event that takes RSVPs, carry **Going**, **Maybe** (when the team allows it, TEAM-5), and **Not going**. A tap answers without opening the app, for everyone the notification names: a guardian's players, or yourself. To answer each player differently, open the event. No buttons on a canceled or started event, or past its deadline.
+    - The iPhone and Android apps show all three (Phases 4 and 5). On the web, Chrome and Edge show two, Going and Not going; Safari and Firefox show none, and a tap opens the event as before.
+  - **Reminders by email:** people with no device that can get Battleplan's notifications (someone an admin added who hasn't set up the app, or who never allowed notifications) get the event reminder (SCHED-8) and any nudge (SCHED-12) by email, with the same answers. At most one reminder email per event.
+    - Each email says why it came ("Coach Andy added you to Thunder on Battleplan") and ends with **Stop these emails**, which needs no sign-in. Settings → Notifications has the same switch, **Email reminders when I can't get notifications**, on by default.
+    - A team set to Off or muted, or the Reminders switch off (NOTIF-3, NOTIF-4), means no email either.
+  - **Answering from an email:** each answer opens a small page on getbattleplan.app with that answer picked, the players it's for, an optional note, and **Send**. Opening the link never answers by itself, because email services open links to check them; Send does. No sign-in: the link works only for that person, that event, and the players it names, until the event starts or its deadline passes. Afterward the page offers to open the event in Battleplan.
+  - Every answer follows SCHED-5 (the deadline, whether Maybe is allowed, who may answer for whom) and is recorded as that person's answer.
 
 **Acceptance (MVP)**
 
@@ -854,6 +866,8 @@ Players that others answer for never get accounts, and every account belongs to 
   \* For players, these go to the member who is the player and to the guardians of the matching players, plus members who answered for themselves (PLAYER-7).
 
   Plain chat messages and direct messages don't appear in the notification center; unread counts and Messages cover them (CHAT-9, CHAT-19).
+
+  Pushes about an event that takes RSVPs carry answer buttons, and people who can't get notifications get reminders and nudges by email (SCHED-14, v1.1).
 - **NOTIF-3 · MVP · Notification settings for each team.**
   - Set them from the team menu ("Notifications for this team") or from Settings → Notifications. They sync across your devices.
   - **Level:** All activity (default), Important only, or Off.
@@ -889,14 +903,14 @@ Players that others answer for never get accounts, and every account belongs to 
   - A "Hide message text in notifications" option.
 - **NOTIF-13 · Later.**
   - Quiet hours.
-  - Email notifications or a daily digest for members without the app.
+  - Email for anything beyond event reminders and nudges (SCHED-14), or a daily digest.
   - SMS, which costs money per message.
 
 ### 6.10 Profile and settings (SET)
 
 - **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. Email is shown read-only.
 - **SET-2 · MVP · Appearance.** System (default), Light, or Dark. The change applies instantly, is remembered on the device, and syncs to the account.
-- **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3).
+- **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). From v1.1, **Email reminders when I can't get notifications** (SCHED-14) and your calendar links, to copy, reset, or turn off (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
 - **SET-6 · MVP · About and account.**
@@ -1512,7 +1526,7 @@ Not in v1; some may come later:
 - Link previews in chat, GIFs, video, voice notes
 - Voice and video calls
 - SMS
-- Email digests
+- Email digests (reminders by email for people who can't get notifications are SCHED-14)
 - Typing indicators and read receipts
 - Attendance tracking, stats, and scores
 - Payments and team dues
