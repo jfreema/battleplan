@@ -243,6 +243,9 @@ section { padding: 56px 0; }
 .cta .btn-primary:hover { background: #e6ecff; }
 .cta .actions { justify-content: center; }
 
+.project-support { text-align: center; padding-bottom: 48px; }
+.project-support p { color: var(--muted); font-size: 0.95rem; margin: 12px 0 0; }
+
 /* Text pages (support, legal) */
 .page { padding: 48px 0 72px; }
 .page h1 { font-size: clamp(2rem, 5vw, 2.8rem); }
