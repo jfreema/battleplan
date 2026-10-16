@@ -15,7 +15,8 @@ import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
-import type { Role } from '../shared/roles.js';
+import { teamCountOf, teamMembershipsOf, type Role } from '../shared/roles.js';
+import { leaveDirectChats, updateDirectPeople } from './direct.js';
 import { teamStatus } from './status.js';
 
 interface MemberRow {
@@ -44,12 +45,11 @@ export function nextOwner(members: MemberRow[], leavingUid: string, picked?: str
  * Removes a deleted account from every team: owned teams pass to the next
  * owner (or are archived when nobody is left), then all memberships go.
  * [newOwners] maps a team ID to the member its owner picked (AUTH-10).
+ * Their direct conversations go read-only for the other person, or are
+ * deleted when nobody is left in them (CHAT-19).
  */
 export async function removeAccountFromTeams(uid: string, newOwners: Record<string, string> = {}): Promise<void> {
-  const memberships = await db()
-    .collection(Collections.groupMembers)
-    .where('uid', '==', uid)
-    .get();
+  const memberships = await teamMembershipsOf(uid).get();
 
   for (const m of memberships.docs) {
     const groupId = m.get('groupId') as string;
@@ -85,27 +85,25 @@ export async function removeAccountFromTeams(uid: string, newOwners: Record<stri
     const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();
     await groupRef.update({ memberCount: count.data().count }).catch(() => undefined);
   }
+  await leaveDirectChats(uid, deleteGroupData);
 }
 
 
 /**
  * Copies a person's name and photo onto their memberships, the cache the
- * roster and message author snapshots read (ARCH §6.2 `groupMembers`).
+ * roster and message author snapshots read (ARCH §6.2 `groupMembers`),
+ * and onto their direct conversations, for the other person (CHAT-19).
+ * Every membership, teams and conversations alike, a page at a time.
  */
 export async function updateMemberSnapshots(
   uid: string,
   displayName: string,
   photoPath: string | null,
 ): Promise<void> {
-  const memberships = await db()
-    .collection(Collections.groupMembers)
-    .where('uid', '==', uid)
-    .limit(100)
-    .get();
-  if (memberships.empty) return;
-  const batch = db().batch();
-  memberships.docs.forEach((d) => batch.update(d.ref, { displayName, photoPath }));
-  await batch.commit();
+  await forEachPage(db().collection(Collections.groupMembers).where('uid', '==', uid), (batch, d) =>
+    batch.update(d.ref, { displayName, photoPath }),
+  );
+  await updateDirectPeople(uid, { name: displayName.trim(), photoPath });
 }
 
 export interface NewGroup {
@@ -484,8 +482,7 @@ export async function addMembersByEmail(
         continue;
       }
       // A person can be on up to 100 teams (TEAM-2).
-      const teams = await db().collection(Collections.groupMembers).where('uid', '==', user.uid).count().get();
-      if (teams.data().count >= Limits.groupsPerUserMax) {
+      if ((await teamCountOf(user.uid)) >= Limits.groupsPerUserMax) {
         result.problems.push(`${entry.email} (too-many-teams)`);
         continue;
       }

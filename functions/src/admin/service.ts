@@ -13,6 +13,7 @@ import { playerStatusOf, relationOf } from '../players/roster.js';
 import { auth, db } from '../shared/admin.js';
 import { applyDefaultQuota, defaultQuotaMbOf } from '../teams/storage.js';
 import { Collections, Limits } from '../shared/constants.js';
+import { teamMembershipsOf } from '../shared/roles.js';
 import {
   configFields,
   iso,
@@ -76,26 +77,32 @@ export interface DashboardTotals {
  * The platform's totals (ADMIN-1), each a count() or sum() aggregation, so
  * nothing is scanned: about one read per 1,000 entries (ARCH §6.2). "This
  * week" and "active" mean the last 7 days; an active team has had a message
- * in that time.
+ * in that time. Direct conversations (CHAT-19) are groups too, counted
+ * apart and taken off the teams; their messages and storage count.
  */
 export async function dashboard(now = Date.now()): Promise<DashboardTotals> {
   const weekAgo = Timestamp.fromMillis(now - 7 * DAY_MS);
   const count = async (q: Query) => (await q.count().get()).data().count;
   const groups = db().collection(Collections.groups);
-  const [users, teams, newTeams, activeTeams, messages, openReports, storage] = await Promise.all([
-    count(db().collection(Collections.users)),
-    count(groups),
-    count(groups.where('createdAt', '>=', weekAgo)),
-    count(groups.where('lastMessageAt', '>=', weekAgo)),
-    count(db().collection(Collections.messages).where('createdAt', '>=', weekAgo)),
-    count(db().collection(Collections.reports).where('status', '==', 'open')),
-    groups.aggregate({ bytes: AggregateField.sum('storageBytes') }).get(),
-  ]);
+  const direct = groups.where('kind', '==', 'direct');
+  const [users, groupCount, newGroups, activeGroups, chats, newChats, activeChats, messages, openReports, storage] =
+    await Promise.all([
+      count(db().collection(Collections.users)),
+      count(groups),
+      count(groups.where('createdAt', '>=', weekAgo)),
+      count(groups.where('lastMessageAt', '>=', weekAgo)),
+      count(direct),
+      count(direct.where('createdAt', '>=', weekAgo)),
+      count(direct.where('lastMessageAt', '>=', weekAgo)),
+      count(db().collection(Collections.messages).where('createdAt', '>=', weekAgo)),
+      count(db().collection(Collections.reports).where('status', '==', 'open')),
+      groups.aggregate({ bytes: AggregateField.sum('storageBytes') }).get(),
+    ]);
   return {
     users,
-    teams,
-    newTeams,
-    activeTeams,
+    teams: groupCount - chats,
+    newTeams: newGroups - newChats,
+    activeTeams: activeGroups - activeChats,
     messages,
     storageBytes: storage.data().bytes ?? 0,
     openReports,
@@ -165,6 +172,7 @@ export async function listTeams(input: {
       .get();
     // Teams made before groups.status existed are read by their dates.
     found = snap.docs
+      .filter((d) => d.get('kind') !== 'direct')
       .filter((d) => !input.status || teamStatus(d.data()) === input.status)
       .sort(bySortField(sortField))
       .slice(0, input.limit);
@@ -173,7 +181,9 @@ export async function listTeams(input: {
     query = query.orderBy(sortField, 'desc').limit(input.limit);
     if (input.cursor) query = query.startAfter(await cursorDoc(Collections.groups, input.cursor));
     const snap = await query.get();
-    found = snap.docs;
+    // Direct conversations (CHAT-19) aren't teams; a page may come back
+    // short, and the cursor still goes on from the last one read.
+    found = snap.docs.filter((d) => d.get('kind') !== 'direct');
     if (snap.size === input.limit) nextCursor = snap.docs[snap.size - 1].id;
   }
 
@@ -214,7 +224,8 @@ export const RECENT_MESSAGES_MAX = 20;
  */
 export async function getTeam(groupId: string) {
   const group = await db().collection(Collections.groups).doc(groupId).get();
-  if (!group.exists) throw new HttpsError('not-found', 'No such team.');
+  // A direct conversation (CHAT-19) is only its two people's.
+  if (!group.exists || group.get('kind') === 'direct') throw new HttpsError('not-found', 'No such team.');
   const byTeam = (collection: string) => db().collection(collection).where('groupId', '==', groupId);
   const [members, players, guardians, invites, events, documents, polls, messages] = await Promise.all([
     byTeam(Collections.groupMembers).limit(Limits.membersPerGroupMax).get(),
@@ -391,11 +402,8 @@ export async function getUser(uid: string) {
   ]);
   if (!profile.exists && !user) throw new HttpsError('not-found', 'No such user.');
   const p = profile.data() ?? {};
-  const memberships = await db()
-    .collection(Collections.groupMembers)
-    .where('uid', '==', uid)
-    .limit(Limits.groupsPerUserMax)
-    .get();
+  // Teams only: their direct conversations are theirs alone (CHAT-19).
+  const memberships = await teamMembershipsOf(uid).limit(Limits.groupsPerUserMax).get();
   const groups = await fieldsOf(
     Collections.groups,
     memberships.docs.map((m) => m.get('groupId') as string),
@@ -515,6 +523,11 @@ export interface ReportRow {
   id: string;
   groupId: string;
   groupName: string;
+  /**
+   * Reported in a direct conversation (CHAT-19), not a team: there's no
+   * team to remove anyone from or suspend, and groupName is empty.
+   */
+  direct: boolean;
   targetType: string;
   targetId: string;
   reason: string;
@@ -547,7 +560,7 @@ export async function listReports(input: {
   if (input.cursor) query = query.startAfter(await cursorDoc(Collections.reports, input.cursor));
   const snap = await query.get();
   const [groups, reporters] = await Promise.all([
-    fieldsOf(Collections.groups, snap.docs.map((d) => d.get('groupId') as string), ['name']),
+    fieldsOf(Collections.groups, snap.docs.map((d) => d.get('groupId') as string), ['name', 'kind']),
     fieldsOf(Collections.users, snap.docs.map((d) => d.get('reporterId') as string), ['displayName']),
   ]);
   const rows = snap.docs.map((d): ReportRow => {
@@ -556,6 +569,7 @@ export async function listReports(input: {
       id: d.id,
       groupId: String(r.groupId ?? ''),
       groupName: String(groups.get(r.groupId)?.name ?? ''),
+      direct: groups.get(r.groupId)?.kind === 'direct',
       targetType: String(r.targetType ?? ''),
       targetId: String(r.targetId ?? ''),
       reason: String(r.reason ?? ''),

@@ -46,8 +46,23 @@ service cloud.firestore {
     // joined; the admin actions §3 gives them (create, edit, and delete
     // events; RSVP for anyone; edit, delete, and pin documents) are in the
     // rules that name them, and moderation goes through callables
-    // (deleteMessage). superAdmin() is checked first; it costs no lookup.
-    function canRead(g) { return superAdmin() || isMember(g); }
+    // (deleteMessage). A direct conversation (CHAT-19) is only its two
+    // people's: super admins see what's reported, through the report.
+    function canRead(g) { return (superAdmin() && !isDirect(g)) || isMember(g); }
+    // A direct conversation between two people (CHAT-19): a group of kind
+    // 'direct' whose uids are the two of them, made by openDirectChat.
+    function isDirect(g) { return get(groupPath(g)).data.get('kind', 'team') == 'direct'; }
+    // The other person in direct conversation g.
+    function otherIn(g) {
+      let people = get(groupPath(g)).data.uids;
+      return people[0] == uid() ? people[1] : people[0];
+    }
+    // I blocked them (SAFE-2), so I can't message them. Their blocking me
+    // stops nothing here, since nobody is told they're blocked: what I send
+    // just never reaches them (collapsed, and no notification).
+    function iBlocked(other) {
+      return exists(/databases/$(database)/documents/userBlocks/$(uid() + '_' + other));
+    }
     // Archived teams are read-only (TEAM-9).
     function active(g) { return get(groupPath(g)).data.get('archivedAt', null) == null; }
 
@@ -128,7 +143,8 @@ service cloud.firestore {
     // ---- Teams -------------------------------------------------------------
 
     match /groups/{g} {
-      allow get: if isMember(g) || superAdmin();
+      // A direct conversation's preview is its two people's (CHAT-19).
+      allow get: if isMember(g) || (superAdmin() && resource.data.get('kind', 'team') != 'direct');
       // storageBytes, storageQuotaBytes, and storageAlert are left out on
       // purpose: Functions keep them (STORE-1, STORE-3, STORE-6), so no team
       // can give itself more room or silence its warning.
@@ -375,6 +391,7 @@ service cloud.firestore {
             || (incoming().replyToId is string && incoming().replyToId.size() <= 64))
         && mentionsOk(incoming())
         && announcementOk(incoming())
+        && directOk(incoming())
         && incoming().createdAt == request.time
         && incoming().keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
             'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',
@@ -445,6 +462,17 @@ service cloud.firestore {
       return m.get('announcement', false) == false
         || (m.announcement == true && m.type == 'text'
             && (isAdmin(m.groupId) || superAdmin()));
+    }
+
+    // A direct conversation (CHAT-19) takes text and photos, without
+    // @mentions, and nothing to someone I blocked (SAFE-2). The team doc is
+    // already fetched; the block costs one lookup, and only here.
+    function directOk(m) {
+      return !isDirect(m.groupId)
+        || (m.type in ['text', 'image']
+            && m.get('mentions', []).size() == 0
+            && m.get('mentionsEveryone', false) == false
+            && !iBlocked(otherIn(m.groupId)));
     }
 
     // The author fields must equal the sender's own membership snapshot.

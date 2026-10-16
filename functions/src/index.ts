@@ -50,7 +50,7 @@ export {
   updateGroupMember,
 } from './teams/handlers.js';
 export { dailyCleanup, onGroupFileAdded, onGroupFileRemoved, onGroupUpdated } from './teams/triggers.js';
-export { deleteMessage, pinMessage } from './chat/handlers.js';
+export { deleteMessage, openDirectChat, pinMessage } from './chat/handlers.js';
 export { onDocumentCreated, onDocumentDeleted } from './documents/triggers.js';
 export { reportContent, resolveReport } from './safety/handlers.js';
 export { onMessageCreated, onMessageUpdated } from './chat/triggers.js';

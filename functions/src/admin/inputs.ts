@@ -156,8 +156,11 @@ export const ListUsersInput = z.object({
   limit: Limit,
 });
 
-/** Roles an admin can give when adding someone to a team; ownership moves only by transfer. */
-const AddRole = z.enum(memberRoleValues).exclude(['owner']);
+/**
+ * Roles an admin can give when adding someone to a team; ownership moves
+ * only by transfer, and 'participant' is a direct conversation's (CHAT-19).
+ */
+const AddRole = z.enum(memberRoleValues).exclude(['owner', 'participant']);
 const DisplayName = z.string().trim().min(1).max(50);
 const Email = z.string().trim().toLowerCase().pipe(z.email()).pipe(z.string().max(200));
 

@@ -7,6 +7,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { auth, db, storage } from '../shared/admin.js';
 import { Collections, Limits, notificationPrefValues, type NotificationPref } from '../shared/constants.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
+import { teamMembershipsOf } from '../shared/roles.js';
 import { anonymizeAuthor, joinedLine, postSystemMessage } from '../chat/service.js';
 import { anonymizeUploader } from '../documents/service.js';
 import { removeAccountNotifications, removeDevices } from '../notify/service.js';
@@ -424,7 +425,7 @@ export async function sendSetupEmail(email: string, teamName: string, addedBy: s
 
 /** When an added account signs in, its memberships stop showing "Not joined yet". */
 export async function clearPendingMemberships(uid: string): Promise<void> {
-  const memberships = await db().collection(Collections.groupMembers).where('uid', '==', uid).limit(100).get();
+  const memberships = await teamMembershipsOf(uid).limit(Limits.groupsPerUserMax).get();
   const pending = memberships.docs.filter((d) => d.get('pending') === true);
   if (!pending.length) return;
   const batch = db().batch();

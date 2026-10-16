@@ -69,6 +69,25 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<GroupId> openDirectChat(UserId other) async {
+    try {
+      final result = await _functions
+          .httpsCallable('openDirectChat')
+          .call<Map<String, dynamic>>({'uid': other.value});
+      return GroupId(result.data['groupId'] as String);
+    } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
+      throw switch (e.code) {
+        'failed-precondition' || 'invalid-argument' => InvalidInput(message),
+        'permission-denied' => PermissionDenied(message),
+        'resource-exhausted' => RateLimited(message),
+        'unavailable' || 'deadline-exceeded' => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
+      };
+    }
+  }
+
+  @override
   Future<void> updateGroup(
     GroupId id, {
     String? name,
@@ -405,10 +424,44 @@ class FirestoreMemberRepository implements MemberRepository {
   Stream<List<Membership>> watchMyMemberships(UserId uid) => _db
       .collection(Collections.groupMembers)
       .where('uid', isEqualTo: uid.value)
+      // Team roles only: direct conversations aren't teams (CHAT-19).
+      .where('role', whereIn: teamRoles)
       .limit(Limits.groupsPerUserMax)
       .snapshots()
       .map((q) => [for (final d in q.docs) membershipFromFirestore(d.data())]);
+
+  @override
+  Stream<List<Membership>> watchMyDirectChats(UserId uid) => _db
+      .collection(Collections.groupMembers)
+      .where('uid', isEqualTo: uid.value)
+      .where('role', isEqualTo: MemberRole.participant.value)
+      .orderBy('lastMessageAt', descending: true)
+      .limit(Limits.queryLimitMax)
+      .snapshots()
+      .map((q) => [for (final d in q.docs) membershipFromFirestore(d.data())]);
+
+  @override
+  Stream<Membership?> watchMember(GroupId groupId, UserId uid) => _db
+      .collection(Collections.groupMembers)
+      .doc(CompositeIds.groupMember(groupId, uid))
+      .snapshots()
+      .map((s) => s.exists ? membershipFromFirestore(s.data()!) : null)
+      // A team I can no longer read shows nobody on it.
+      .transform(
+        StreamTransformer.fromHandlers(
+          handleError: (error, stack, sink) => _isPermissionDenied(error)
+              ? sink.add(null)
+              : sink.addError(error, stack),
+        ),
+      );
 }
+
+/// The roles people have on a team; a direct conversation's two people are
+/// participants (CHAT-19).
+final List<String> teamRoles = [
+  for (final r in MemberRole.values)
+    if (r != MemberRole.participant) r.value,
+];
 
 bool _isPermissionDenied(dynamic e) =>
     e is FirebaseException && e.code == 'permission-denied';
@@ -429,6 +482,8 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
     lastMessagePreview: preview == null
         ? null
         : '${preview['authorName']}: ${preview['text'] ?? ''}',
+    lastMessageAuthorId: preview?['authorId'] as String?,
+    lastMessageText: preview?['text'] as String?,
     archivedAt: _date(d['archivedAt']),
     suspendedAt: _date(d['suspendedAt']),
     ownerId: d['ownerId'] as String?,
@@ -457,6 +512,19 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
       for (final id in (d['pinnedMessageIds'] as List?) ?? const [])
         if (id is String) id,
     ],
+    uids: [
+      for (final u in (d['uids'] as List?) ?? const [])
+        if (u is String) u,
+    ],
+    people: {
+      for (final MapEntry(:key, :value)
+          in ((d['people'] as Map?) ?? const {}).entries)
+        if (key is String && value is Map)
+          key: DirectPerson(
+            name: value['name'] as String? ?? '',
+            photoPath: value['photoPath'] as String?,
+          ),
+    },
   );
 }
 
@@ -477,6 +545,8 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   contactPhone: _shared(d['contactPhone']),
   contactEmail: _shared(d['contactEmail']),
   coach: d['coach'] as bool?,
+  otherUid: d['otherUid'] as String?,
+  lastMessageAt: _date(d['lastMessageAt']),
 );
 
 /// A shared contact field (TEAM-10): its text, or null when it's missing

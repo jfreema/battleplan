@@ -68,7 +68,15 @@ StorageLevel storageLevelOf(int used, int quota) {
   return StorageLevel.ok;
 }
 
-/// A team (ARCH §6.2 `groups`).
+/// What a direct conversation shows of one of its two people (CHAT-19):
+/// their name and photo, kept up to date by the server.
+@freezed
+abstract class DirectPerson with _$DirectPerson {
+  const factory({required String name, String? photoPath}) = _DirectPerson;
+}
+
+/// A team (ARCH §6.2 `groups`), or a direct conversation between two
+/// people ([isDirect], CHAT-19), which uses the same chat.
 @freezed
 abstract class Group with _$Group {
   const factory({
@@ -109,9 +117,26 @@ abstract class Group with _$Group {
     /// The chat's pinned messages, oldest pin first, at most
     /// [Limits.pinnedMessagesMax] (CHAT-15). Only the server changes them.
     @Default(<String>[]) List<String> pinnedMessageIds,
+
+    /// A direct conversation's two people (CHAT-19); empty for a team.
+    @Default(<String>[]) List<String> uids,
+
+    /// A direct conversation's name and photo for each of its people.
+    @Default(<String, DirectPerson>{}) Map<String, DirectPerson> people,
+
+    /// A direct conversation's newest message: who sent it, and its line
+    /// without the name ("Photo" for photos), for Messages (CHAT-19).
+    String? lastMessageAuthorId,
+    String? lastMessageText,
   }) = _Group;
 
   const new _();
+
+  /// A direct conversation between two people, not a team (CHAT-19).
+  bool get isDirect => kind == GroupKind.direct;
+
+  /// In a direct conversation, the person who isn't [me].
+  String? otherThan(String? me) => uids.where((u) => u != me).firstOrNull;
 
   bool get isArchived => archivedAt != null;
 

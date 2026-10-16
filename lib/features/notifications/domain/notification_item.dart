@@ -65,8 +65,8 @@ String notificationIdFor(String nkey, UserId uid) =>
     '$nkey$idSeparator${uid.value}';
 
 /// Whether a push or center item may navigate to [route] (NOTIF-6). Only
-/// in-app team paths and the center itself, so a bad payload can't send
-/// the app anywhere else.
+/// in-app team paths, direct conversations (CHAT-19), and the center
+/// itself, so a bad payload can't send the app anywhere else.
 bool isAllowedNotificationRoute(String? route) {
   if (route == null || !route.startsWith('/') || route.startsWith('//')) {
     return false;
@@ -76,14 +76,17 @@ bool isAllowedNotificationRoute(String? route) {
   final segments = uri.pathSegments;
   if (segments.isEmpty) return false;
   return (segments.first == 'g' && segments.length >= 2) ||
+      (segments.first == 'messages' && segments.length >= 2) ||
       segments.first == 'notifications';
 }
 
-/// Whether [path] is [groupId]'s chat (or a message in it), where a push
-/// for that team shows no banner (NOTIF-7).
+/// Whether [path] is [groupId]'s chat (or a message in it), or the direct
+/// conversation [groupId] (CHAT-19), where a push for it shows no banner
+/// (NOTIF-7).
 bool isTeamChatPath(String path, String groupId) {
   final s = Uri.tryParse(path)?.pathSegments ?? const [];
-  return s.length >= 3 && s[0] == 'g' && s[1] == groupId && s[2] == 'chat';
+  return (s.length >= 3 && s[0] == 'g' && s[1] == groupId && s[2] == 'chat') ||
+      (s.length >= 2 && s[0] == 'messages' && s[1] == groupId);
 }
 
 /// Team tabs replace the stack when opened (switching teams, like the

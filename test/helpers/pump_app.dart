@@ -75,6 +75,11 @@ Future<FakeLocalPrefs> pumpApp(
   final polls = pollRepo ?? FakePollRepository();
   // Pinning a message lands on its team, as pinMessage writes it (CHAT-15).
   final teams = groupRepo ?? FakeGroupRepository(groups.cast());
+  // Opening a conversation adds both people's memberships (CHAT-19).
+  final members = memberRepo ?? FakeMemberRepository(memberships.cast());
+  teams
+    ..members ??= members
+    ..me ??= () => auth.currentUser?.uid;
   final messages = (messageRepo ?? FakeMessageRepository())
     ..polls = polls
     ..groups ??= teams;
@@ -97,9 +102,7 @@ Future<FakeLocalPrefs> pumpApp(
         authRepositoryProvider.overrideWithValue(auth),
         userRepositoryProvider.overrideWithValue(users ?? FakeUserRepository()),
         groupRepositoryProvider.overrideWithValue(teams),
-        memberRepositoryProvider.overrideWithValue(
-          memberRepo ?? FakeMemberRepository(memberships.cast()),
-        ),
+        memberRepositoryProvider.overrideWithValue(members),
         localPrefsRepositoryProvider.overrideWithValue(localPrefs),
         playerRepositoryProvider.overrideWithValue(
           playerRepo ?? FakePlayerRepository(),

@@ -27,22 +27,26 @@ const ReportInput = z.object({
  * Reports a message, document, or person to the team's admins and the
  * super-admin queue (SAFE-1), and emails every super admin (SAFE-4).
  * Members only; 20 a day. The reported person is never told, and admins
- * aren't shown who reported.
+ * aren't shown who reported. In a direct conversation (CHAT-19) there are
+ * no team admins: the report goes to super admins only.
  */
 export const reportContent = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(ReportInput, request.data);
   if (!(await roleOf(input.groupId, uid))) throw new HttpsError('permission-denied', 'Not a member.');
   // Not on a suspended team (§3); an archived one can still be reported (SAFE-1).
-  await requireOpenTeam(input.groupId, false, { allowArchived: true });
+  const group = await requireOpenTeam(input.groupId, false, { allowArchived: true, allowDirect: true });
+  const direct = group.get('kind') === 'direct';
   if (input.targetType === 'user' && input.targetId === uid) {
     throw new HttpsError('invalid-argument', 'You cannot report yourself.');
   }
   await consumeRateLimit(uid, 'report', Limits.reportsPerUserPerDay);
   const snapshot = await reportSnapshot(input.groupId, input.targetType, input.targetId);
   if (!snapshot) throw new HttpsError('not-found', 'Nothing to report.');
-  // A report about one of the team's admins goes to super admins only.
-  const teamVisible = teamSeesReport(snapshot.subjectId ? await roleOf(input.groupId, snapshot.subjectId) : null);
+  // A report about one of the team's admins goes to super admins only, as
+  // does everything in a direct conversation.
+  const teamVisible =
+    !direct && teamSeesReport(snapshot.subjectId ? await roleOf(input.groupId, snapshot.subjectId) : null);
   const reportId = await fileReport({ reporterId: uid, ...input, snapshot, teamVisible });
   // NOTIF-2: the team's admins are told, without who reported (no actor);
   // the reporter and the person reported are left out.
@@ -59,7 +63,13 @@ export const reportContent = onCall({ secrets: [resendApiKey] }, async (request)
     dedupeKey: reportId,
   });
   // Super admins hear about every report, by email (SAFE-4).
-  await alertSuperAdmins({ groupId: input.groupId, targetType: input.targetType, reason: input.reason, teamVisible });
+  await alertSuperAdmins({
+    groupId: input.groupId,
+    targetType: input.targetType,
+    reason: input.reason,
+    teamVisible,
+    direct,
+  });
   return { reportId };
 });
 

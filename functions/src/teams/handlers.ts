@@ -14,7 +14,13 @@ import { alertTeamCreated, alertTeamDeleted } from '../admin/alerts.js';
 import { groupCreationConfig } from '../admin/service.js';
 import { postSystemMessage } from '../chat/service.js';
 import { groupMemberId } from '../shared/ids.js';
-import { requireOpenTeam, requireTeamAdmin, requireTeamOwner, roleOf } from '../shared/roles.js';
+import {
+  requireOpenTeam,
+  requireRoomForAnotherTeam,
+  requireTeamAdmin,
+  requireTeamOwner,
+  roleOf,
+} from '../shared/roles.js';
 import { displayNameOf, sendSetupEmail } from '../accounts/service.js';
 import { resendApiKey } from '../email/service.js';
 import { trySend } from '../notify/service.js';
@@ -63,14 +69,7 @@ export const createGroup = onCall({ secrets: [resendApiKey] }, async (request) =
   }
 
   // A person can be on up to 100 teams (TEAM-2).
-  const teams = await db()
-    .collection(Collections.groupMembers)
-    .where('uid', '==', uid)
-    .count()
-    .get();
-  if (teams.data().count >= Limits.groupsPerUserMax) {
-    throw new HttpsError('failed-precondition', 'too-many-teams');
-  }
+  await requireRoomForAnotherTeam(uid, Limits.groupsPerUserMax);
 
   const profile = (await db().collection(Collections.users).doc(uid).get()).data();
   const groupId = await create(
@@ -362,6 +361,8 @@ const SetQuotaInput = z.object({
 export const adminSetGroupQuota = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(SetQuotaInput, request.data);
+  // Teams only: a direct conversation keeps its own limit (CHAT-19).
+  await requireOpenTeam(input.groupId, true, { allowArchived: true });
   const { before, after, custom } = await setGroupQuota(input.groupId, input.quotaMb);
   await audit({
     actorId: actor,

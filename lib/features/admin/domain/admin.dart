@@ -195,6 +195,10 @@ abstract class AdminReport with _$AdminReport {
     required String id,
     required GroupId groupId,
     @Default('') String groupName,
+
+    /// Reported in a direct conversation (CHAT-19), not a team: no team to
+    /// open, remove anyone from, or suspend.
+    @Default(false) bool direct,
     @Default(ReportTargetType.message) ReportTargetType targetType,
     @Default('') String targetId,
     @Default(ReportReason.other) ReportReason reason,
@@ -226,11 +230,15 @@ enum AdminReportAction {
 }
 
 /// The actions that fit [report]: a reported person has no content to
-/// delete.
+/// delete, and a direct conversation (CHAT-19) has no team to remove them
+/// from or suspend.
 List<AdminReportAction> reportActionsFor(AdminReport report) => [
   for (final a in AdminReportAction.values)
-    if (a != AdminReportAction.deleteContent ||
-        report.targetType != ReportTargetType.user)
+    if ((a != AdminReportAction.deleteContent ||
+            report.targetType != ReportTargetType.user) &&
+        !(report.direct &&
+            (a == AdminReportAction.removeMember ||
+                a == AdminReportAction.suspendTeam)))
       a,
 ];
 

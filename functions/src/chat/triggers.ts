@@ -1,7 +1,10 @@
 // Chat triggers (ARCH §6.4 trigger map): react to messages clients write.
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import type { Timestamp } from 'firebase-admin/firestore';
+import { touchParticipants } from '../teams/direct.js';
 import {
   filterMessageLanguage,
+  notifyDirectMessage,
   notifyNewMessage,
   refreshReplyPreviews,
   replyRecipientOf,
@@ -25,13 +28,22 @@ export const onMessageCreated = onDocumentCreated('messages/{messageId}', async 
   if (!created || created.imported) return;
   const messageId = event.params.messageId;
   const data = await filterMessageLanguage(messageId, created);
-  const teamName = await touchLastMessage(data.groupId as string, data);
+  const group = await touchLastMessage(data.groupId as string, data);
   let repliedTo: string | null = null;
   if (typeof data.replyToId === 'string') {
     const original = await writeReplyPreview(messageId, data.groupId as string, data.replyToId);
     repliedTo = replyRecipientOf(original, String(data.authorId ?? ''));
   }
-  await notifyNewMessage(messageId, data, teamName, repliedTo);
+  // A direct conversation (CHAT-19): both people's Messages lists move it
+  // up, and the other person gets one push.
+  if (group?.direct) {
+    if (data.createdAt) {
+      await touchParticipants(data.groupId as string, data.createdAt as Timestamp, String(data.authorId ?? ''));
+    }
+    await notifyDirectMessage(messageId, data);
+    return;
+  }
+  await notifyNewMessage(messageId, data, group?.name ?? null, repliedTo);
 });
 
 /**

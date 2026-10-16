@@ -95,6 +95,12 @@ abstract final class AppIcons {
 
   /// Mentions and announcements (CHAT-14, CHAT-15).
   static const IconData mention = Symbols.alternate_email_rounded;
+
+  /// Messages, the direct conversations (CHAT-19): two speech bubbles.
+  static const IconData directMessage = Symbols.forum_rounded;
+
+  /// Start a direct conversation (CHAT-19).
+  static const IconData newMessage = Symbols.edit_square_rounded;
   static const IconData announcement = Symbols.campaign_rounded;
   static const IconData unpin = Symbols.keep_off_rounded;
 

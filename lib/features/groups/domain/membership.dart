@@ -38,6 +38,11 @@ abstract class Membership with _$Membership {
     /// Coaches, and answering for themselves on events (PLAYER-6). Unset,
     /// the owner counts as one ([isCoach]).
     bool? coach,
+
+    /// In a direct conversation (CHAT-19, role participant): the other
+    /// person, and when it last had a message, which orders Messages.
+    String? otherUid,
+    DateTime? lastMessageAt,
   }) = _Membership;
 
   const new _();
@@ -52,6 +57,10 @@ abstract class Membership with _$Membership {
 
   /// Owners and admins manage the team (SPEC §3).
   bool get isAdmin => role == MemberRole.owner || role == MemberRole.admin;
+
+  /// One of the two people in a direct conversation (CHAT-19), not a team
+  /// member.
+  bool get isDirect => role == MemberRole.participant;
 
   /// A coach (TEAM-3): as the admins set it, else the owner, who usually
   /// started the team to coach it.

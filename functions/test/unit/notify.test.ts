@@ -19,12 +19,17 @@ const now = Date.parse('2026-10-11T12:00:00Z');
 const unmuted = { level: 'all', mutedUntilMs: null };
 
 describe('the kind table (NOTIF-2)', () => {
-  it('lists every kind, with a known switch and only plain messages left out of the center', () => {
+  it('lists every kind, with a known switch and only plain and direct messages left out of the center', () => {
     expect(Object.keys(NOTIFY_KINDS).sort()).toEqual([...notifyKindValues].sort());
     for (const info of Object.values(NOTIFY_KINDS)) {
       if (info.pref) expect(notificationPrefValues).toContain(info.pref);
     }
-    expect(notifyKindValues.filter((k) => !NOTIFY_KINDS[k].center)).toEqual(['message']);
+    // Unread counts cover both: the team's chat (CHAT-9) and Messages (CHAT-19).
+    expect(notifyKindValues.filter((k) => !NOTIFY_KINDS[k].center)).toEqual(['message', 'directMessage']);
+  });
+
+  it('pushes a direct message even at Important only, with its own switch (CHAT-19)', () => {
+    expect(NOTIFY_KINDS.directMessage).toEqual({ important: true, pref: 'directMessages', center: false, channel: 'messages' });
   });
 });
 

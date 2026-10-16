@@ -22,18 +22,22 @@ String reportReasonLabel(AppLocalizations l10n, ReportReason r) => switch (r) {
 };
 
 /// Report a message, document, or person (SAFE-1): a reason, optional
-/// details, and a confirmation. The reported person is never told.
+/// details, and a confirmation. The reported person is never told. One
+/// from a direct conversation ([direct], CHAT-19) goes to the people who
+/// run Battleplan only, and the form says so.
 Future<void> showReportSheet(
   BuildContext context,
   WidgetRef ref, {
   required GroupId groupId,
   required ReportTargetType targetType,
   required String targetId,
+  bool direct = false,
 }) async {
   final l10n = AppLocalizations.of(context);
   final sent = await showAdaptiveSheet<bool>(
     context,
     builder: (_) => _ReportForm(
+      direct: direct,
       onSend: (reason, details) => ref
           .read(safetyRepositoryProvider)
           .report(
@@ -51,9 +55,12 @@ Future<void> showReportSheet(
 }
 
 class _ReportForm extends StatefulWidget {
-  const new({required this.onSend});
+  const new({required this.onSend, this.direct = false});
 
   final Future<void> Function(ReportReason reason, String details) onSend;
+
+  /// From a direct conversation, which has no team admins (CHAT-19).
+  final bool direct;
 
   @override
   State<_ReportForm> createState() => _ReportFormState();
@@ -112,7 +119,7 @@ class _ReportFormState extends State<_ReportForm> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: Space.sm),
-            Text(l10n.reportHelp),
+            Text(widget.direct ? l10n.reportHelpDirect : l10n.reportHelp),
             const SizedBox(height: Space.md),
             RadioGroup<ReportReason>(
               groupValue: _reason,

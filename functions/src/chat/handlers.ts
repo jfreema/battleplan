@@ -4,17 +4,37 @@ import { z } from 'zod';
 import { audit } from '../audit/service.js';
 import { db } from '../shared/admin.js';
 import { onCall } from '../shared/callable.js';
-import { Collections } from '../shared/constants.js';
+import { Collections, Limits } from '../shared/constants.js';
 import { requireAuth } from '../shared/guards.js';
+import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireOpenTeam, requireTeamAdmin, roleOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
+import { openDirectChat as open } from '../teams/direct.js';
 import { eraseMessage, setPinned } from './service.js';
+
+/**
+ * Opens the caller's direct conversation with someone (CHAT-19), making it
+ * the first time: someone they share a team with, who has joined, and whom
+ * they haven't blocked. `{ groupId }`, the conversation's ID. New ones count
+ * toward Limits.directChatsPerUserPerDay; opening one again is free.
+ */
+export const openDirectChat = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const { uid: other } = parse(z.object({ uid: z.string().min(1).max(128).regex(/^[^/_]+$/) }), request.data);
+  const { groupId } = await open(uid, other, () =>
+    consumeRateLimit(uid, 'openDirectChat', Limits.directChatsPerUserPerDay),
+  );
+  return { groupId };
+});
 
 /**
  * Deletes a message (CHAT-8): its author, a team admin, or a super admin.
  * System messages can't be deleted. Admin deletions go in the audit log.
  * Not on a suspended team, nor an archived (read-only) one, except by a
- * super admin moderating it (§3, TEAM-9).
+ * super admin moderating it (§3, TEAM-9). In a direct conversation
+ * (CHAT-19) only the author, or a super admin acting on a report, deletes,
+ * and the author still can once it's read-only (the other person deleted
+ * their account).
  */
 export const deleteMessage = onCall(async (request) => {
   const uid = requireAuth(request);
@@ -25,7 +45,11 @@ export const deleteMessage = onCall(async (request) => {
   if (message.get('type') === 'system') throw new HttpsError('failed-precondition', 'system-message');
   const isAuthor = message.get('authorId') === uid;
   const superAdmin = request.auth?.token.superAdmin === true;
-  await requireOpenTeam(groupId, superAdmin, { allowArchived: superAdmin });
+  const group = await requireOpenTeam(groupId, superAdmin, { allowArchived: true, allowDirect: true });
+  const direct = group.get('kind') === 'direct';
+  if (group.get('archivedAt') != null && !superAdmin && !(direct && isAuthor)) {
+    throw new HttpsError('failed-precondition', 'team-archived');
+  }
   if (!isAuthor && !superAdmin) {
     const role = await roleOf(groupId, uid);
     if (role !== 'owner' && role !== 'admin') {

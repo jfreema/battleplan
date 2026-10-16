@@ -276,6 +276,47 @@ class FakeGroupRepository implements GroupRepository {
 
   final Map<String, Group> groups;
 
+  /// Where a new direct conversation's memberships go, and who's signed in
+  /// to open it, as `openDirectChat` knows them (CHAT-19). pumpApp wires
+  /// both.
+  FakeMemberRepository? members;
+  String? Function()? me;
+
+  /// Set to refuse opening a conversation the way the server would.
+  AppFailure? openDirectFailure;
+
+  /// The people conversations were opened with, in order.
+  final List<String> directOpened = [];
+
+  /// The pair's conversation, the same whoever opens it, as on the server.
+  static String directId(String a, String b) =>
+      'dm-${([a, b]..sort()).join('-')}';
+
+  @override
+  Future<GroupId> openDirectChat(UserId other) async {
+    final failure = openDirectFailure;
+    if (failure != null) throw failure;
+    final uid = me?.call() ?? 'me';
+    directOpened.add(other.value);
+    final id = directId(uid, other.value);
+    if (!groups.containsKey(id)) {
+      String nameOf(String u) =>
+          members?.memberships
+              .where((m) => m.uid.value == u && !m.isDirect)
+              .firstOrNull
+              ?.displayName ??
+          u;
+      setGroup(
+        testDirectChat(id, {
+          uid: nameOf(uid),
+          other.value: nameOf(other.value),
+        }),
+      );
+      members?.addDirectChat(GroupId(id), uid, other.value, nameOf);
+    }
+    return GroupId(id);
+  }
+
   ChatTheme? savedTheme;
 
   @override
@@ -520,11 +561,70 @@ class FakeMemberRepository implements MemberRepository {
 
   @override
   Stream<List<Membership>> watchMyMemberships(UserId uid) async* {
-    List<Membership> mine() => memberships.where((m) => m.uid == uid).toList();
+    // Teams only, as the query asks for team roles (CHAT-19).
+    List<Membership> mine() =>
+        memberships.where((m) => m.uid == uid && !m.isDirect).toList();
     yield mine();
     await for (final _ in _changes.stream) {
       yield mine();
     }
+  }
+
+  @override
+  Stream<List<Membership>> watchMyDirectChats(UserId uid) async* {
+    // Conversations with messages, newest first, as Messages lists them.
+    List<Membership> mine() => [
+      for (final m in memberships)
+        if (m.uid == uid && m.isDirect && m.lastMessageAt != null) m,
+    ]..sort((a, b) => b.lastMessageAt!.compareTo(a.lastMessageAt!));
+    yield mine();
+    await for (final _ in _changes.stream) {
+      yield mine();
+    }
+  }
+
+  @override
+  Stream<Membership?> watchMember(GroupId groupId, UserId uid) async* {
+    Membership? theirs() => memberships
+        .where((m) => m.groupId == groupId && m.uid == uid)
+        .firstOrNull;
+    yield theirs();
+    await for (final _ in _changes.stream) {
+      yield theirs();
+    }
+  }
+
+  /// Both people's memberships of a new conversation, as openDirectChat
+  /// writes them (CHAT-19).
+  void addDirectChat(
+    GroupId groupId,
+    String me,
+    String other,
+    String Function(String uid) nameOf,
+  ) {
+    for (final (uid, otherUid) in [(me, other), (other, me)]) {
+      memberships.add(
+        Membership(
+          groupId: groupId,
+          uid: UserId(uid),
+          role: MemberRole.participant,
+          displayName: nameOf(uid),
+          otherUid: otherUid,
+        ),
+      );
+    }
+    _changes.add(null);
+  }
+
+  /// A message landed in a conversation: both people's copies of when it
+  /// last had one move, as the trigger writes them (CHAT-19).
+  void touchDirectChat(GroupId groupId, DateTime at) {
+    for (final (i, m) in memberships.indexed) {
+      if (m.groupId == groupId) {
+        memberships[i] = m.copyWith(lastMessageAt: at);
+      }
+    }
+    _changes.add(null);
   }
 
   final List<String> reads = [];
@@ -615,6 +715,51 @@ Membership testMembership(
   uid: UserId(uid),
   role: role,
   displayName: name ?? uid,
+);
+
+/// A direct conversation between the two people in [people], by ID with
+/// their names (CHAT-19).
+Group testDirectChat(
+  String id,
+  Map<String, String> people, {
+  DateTime? lastMessageAt,
+  String? lastMessagePreview,
+  DateTime? archivedAt,
+}) => Group(
+  id: GroupId(id),
+  name: '',
+  sport: Sport.other,
+  memberCount: 2,
+  kind: GroupKind.direct,
+  uids: people.keys.toList()..sort(),
+  people: {for (final e in people.entries) e.key: DirectPerson(name: e.value)},
+  lastMessageAt: lastMessageAt,
+  lastMessagePreview: lastMessagePreview,
+  archivedAt: archivedAt,
+  settings: const GroupSettings(
+    membersCanCreatePolls: false,
+    membersCanUploadDocs: false,
+  ),
+  storageQuotaBytes: Limits.directChatStorageQuotaMb * bytesPerMb,
+  storageQuotaCustom: true,
+);
+
+/// One person's membership of a direct conversation (CHAT-19).
+Membership testParticipant(
+  String groupId,
+  String uid,
+  String otherUid, {
+  String? name,
+  DateTime? lastMessageAt,
+  DateTime? lastReadAt,
+}) => Membership(
+  groupId: GroupId(groupId),
+  uid: UserId(uid),
+  role: MemberRole.participant,
+  displayName: name ?? uid,
+  otherUid: otherUid,
+  lastMessageAt: lastMessageAt,
+  lastReadAt: lastReadAt,
 );
 
 /// Profiles start set up unless [needsSetup] is true, like a returning user.

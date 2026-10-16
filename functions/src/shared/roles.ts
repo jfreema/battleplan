@@ -6,6 +6,18 @@ import { groupMemberId } from './ids.js';
 export type Role = 'owner' | 'admin' | 'member';
 
 /**
+ * The roles people have on a team. A direct conversation's two people are
+ * 'participant's (CHAT-19), so asking for these leaves conversations out
+ * of everything that lists or counts someone's teams.
+ */
+export const TEAM_ROLES: readonly string[] = ['owner', 'admin', 'member'];
+
+/** Someone's team memberships, without their direct conversations (CHAT-19). */
+export function teamMembershipsOf(uid: string): FirebaseFirestore.Query {
+  return db().collection(Collections.groupMembers).where('uid', '==', uid).where('role', 'in', [...TEAM_ROLES]);
+}
+
+/**
  * The caller's role on a team, or null if not a member. Mirrors the
  * membership half of isMember/isAdmin in the rules; requireOpenTeam is the
  * other half (a suspended team) and the rules' active() (an archived one).
@@ -21,6 +33,11 @@ export interface OpenTeamOptions {
    * or deleting it (TEAM-9), and super-admin moderation. Default false.
    */
   allowArchived?: boolean;
+  /**
+   * Lets the call through on a direct conversation (CHAT-19): deleting a
+   * message and reporting. Everything else is for teams. Default false.
+   */
+  allowDirect?: boolean;
 }
 
 /**
@@ -43,6 +60,8 @@ export async function requireOpenTeam(
 ): Promise<FirebaseFirestore.DocumentSnapshot> {
   const group = await db().collection(Collections.groups).doc(groupId).get();
   if (!group.exists) throw new HttpsError('not-found', 'No such team.');
+  // A direct conversation isn't a team: team actions find no such team.
+  if (!options.allowDirect && group.get('kind') === 'direct') throw new HttpsError('not-found', 'No such team.');
   if (!superAdmin && group.get('suspendedAt') != null) {
     throw new HttpsError('permission-denied', 'team-suspended');
   }
@@ -93,6 +112,10 @@ export async function requireTeamOwner(
  * already be on the team check that first.
  */
 export async function requireRoomForAnotherTeam(uid: string, max: number): Promise<void> {
-  const teams = await db().collection(Collections.groupMembers).where('uid', '==', uid).count().get();
-  if (teams.data().count >= max) throw new HttpsError('failed-precondition', 'too-many-teams');
+  if ((await teamCountOf(uid)) >= max) throw new HttpsError('failed-precondition', 'too-many-teams');
+}
+
+/** How many teams someone is on (TEAM-2), their direct conversations left out. */
+export async function teamCountOf(uid: string): Promise<number> {
+  return (await teamMembershipsOf(uid).count().get()).data().count;
 }

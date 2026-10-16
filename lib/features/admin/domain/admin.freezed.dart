@@ -2896,7 +2896,9 @@ $AdminUserRowCopyWith<$Res> get user {
 /// @nodoc
 mixin _$AdminReport {
 
- String get id; GroupId get groupId; String get groupName; ReportTargetType get targetType; String get targetId; ReportReason get reason;/// The person it's about, and a copy of what was reported.
+ String get id; GroupId get groupId; String get groupName;/// Reported in a direct conversation (CHAT-19), not a team: no team to
+/// open, remove anyone from, or suspend.
+ bool get direct; ReportTargetType get targetType; String get targetId; ReportReason get reason;/// The person it's about, and a copy of what was reported.
  String get subjectId; String get subjectName; String get excerpt; String? get details; String get reporterId; String get reporterName; ReportStatus get status;/// How it was closed, and the super admin's note.
  String? get resolution; String? get note; DateTime? get createdAt;
 /// Create a copy of AdminReport
@@ -2910,20 +2912,20 @@ $AdminReportCopyWith<AdminReport> get copyWith => _$AdminReportCopyWithImpl<Admi
 @override
 bool operator ==(Object other) {
   final _this = this as AdminReport;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminReport&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.groupName, _this.groupName) || other.groupName == _this.groupName)&&(identical(other.targetType, _this.targetType) || other.targetType == _this.targetType)&&(identical(other.targetId, _this.targetId) || other.targetId == _this.targetId)&&(identical(other.reason, _this.reason) || other.reason == _this.reason)&&(identical(other.subjectId, _this.subjectId) || other.subjectId == _this.subjectId)&&(identical(other.subjectName, _this.subjectName) || other.subjectName == _this.subjectName)&&(identical(other.excerpt, _this.excerpt) || other.excerpt == _this.excerpt)&&(identical(other.details, _this.details) || other.details == _this.details)&&(identical(other.reporterId, _this.reporterId) || other.reporterId == _this.reporterId)&&(identical(other.reporterName, _this.reporterName) || other.reporterName == _this.reporterName)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.resolution, _this.resolution) || other.resolution == _this.resolution)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminReport&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.groupName, _this.groupName) || other.groupName == _this.groupName)&&(identical(other.direct, _this.direct) || other.direct == _this.direct)&&(identical(other.targetType, _this.targetType) || other.targetType == _this.targetType)&&(identical(other.targetId, _this.targetId) || other.targetId == _this.targetId)&&(identical(other.reason, _this.reason) || other.reason == _this.reason)&&(identical(other.subjectId, _this.subjectId) || other.subjectId == _this.subjectId)&&(identical(other.subjectName, _this.subjectName) || other.subjectName == _this.subjectName)&&(identical(other.excerpt, _this.excerpt) || other.excerpt == _this.excerpt)&&(identical(other.details, _this.details) || other.details == _this.details)&&(identical(other.reporterId, _this.reporterId) || other.reporterId == _this.reporterId)&&(identical(other.reporterName, _this.reporterName) || other.reporterName == _this.reporterName)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.resolution, _this.resolution) || other.resolution == _this.resolution)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AdminReport;
-  return Object.hash(runtimeType,_this.id,_this.groupId,_this.groupName,_this.targetType,_this.targetId,_this.reason,_this.subjectId,_this.subjectName,_this.excerpt,_this.details,_this.reporterId,_this.reporterName,_this.status,_this.resolution,_this.note,_this.createdAt);
+  return Object.hash(runtimeType,_this.id,_this.groupId,_this.groupName,_this.direct,_this.targetType,_this.targetId,_this.reason,_this.subjectId,_this.subjectName,_this.excerpt,_this.details,_this.reporterId,_this.reporterName,_this.status,_this.resolution,_this.note,_this.createdAt);
 }
 
 @override
 String toString() {
   final _this = this as AdminReport;
-  return 'AdminReport(id: ${_this.id}, groupId: ${_this.groupId}, groupName: ${_this.groupName}, targetType: ${_this.targetType}, targetId: ${_this.targetId}, reason: ${_this.reason}, subjectId: ${_this.subjectId}, subjectName: ${_this.subjectName}, excerpt: ${_this.excerpt}, details: ${_this.details}, reporterId: ${_this.reporterId}, reporterName: ${_this.reporterName}, status: ${_this.status}, resolution: ${_this.resolution}, note: ${_this.note}, createdAt: ${_this.createdAt})';
+  return 'AdminReport(id: ${_this.id}, groupId: ${_this.groupId}, groupName: ${_this.groupName}, direct: ${_this.direct}, targetType: ${_this.targetType}, targetId: ${_this.targetId}, reason: ${_this.reason}, subjectId: ${_this.subjectId}, subjectName: ${_this.subjectName}, excerpt: ${_this.excerpt}, details: ${_this.details}, reporterId: ${_this.reporterId}, reporterName: ${_this.reporterName}, status: ${_this.status}, resolution: ${_this.resolution}, note: ${_this.note}, createdAt: ${_this.createdAt})';
 }
 
 
@@ -2934,7 +2936,7 @@ abstract mixin class $AdminReportCopyWith<$Res>  {
   factory $AdminReportCopyWith(AdminReport value, $Res Function(AdminReport) _then) = _$AdminReportCopyWithImpl;
 @useResult
 $Res call({
- String id, GroupId groupId, String groupName, ReportTargetType targetType, String targetId, ReportReason reason, String subjectId, String subjectName, String excerpt, String? details, String reporterId, String reporterName, ReportStatus status, String? resolution, String? note, DateTime? createdAt
+ String id, GroupId groupId, String groupName, bool direct, ReportTargetType targetType, String targetId, ReportReason reason, String subjectId, String subjectName, String excerpt, String? details, String reporterId, String reporterName, ReportStatus status, String? resolution, String? note, DateTime? createdAt
 });
 
 
@@ -2951,12 +2953,13 @@ class _$AdminReportCopyWithImpl<$Res>
 
 /// Create a copy of AdminReport
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? groupName = null,Object? targetType = null,Object? targetId = null,Object? reason = null,Object? subjectId = null,Object? subjectName = null,Object? excerpt = null,Object? details = freezed,Object? reporterId = null,Object? reporterName = null,Object? status = null,Object? resolution = freezed,Object? note = freezed,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? groupName = null,Object? direct = null,Object? targetType = null,Object? targetId = null,Object? reason = null,Object? subjectId = null,Object? subjectName = null,Object? excerpt = null,Object? details = freezed,Object? reporterId = null,Object? reporterName = null,Object? status = null,Object? resolution = freezed,Object? note = freezed,Object? createdAt = freezed,}) {
   return _then(AdminReport(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId,groupName: null == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
-as String,targetType: null == targetType ? _self.targetType : targetType // ignore: cast_nullable_to_non_nullable
+as String,direct: null == direct ? _self.direct : direct // ignore: cast_nullable_to_non_nullable
+as bool,targetType: null == targetType ? _self.targetType : targetType // ignore: cast_nullable_to_non_nullable
 as ReportTargetType,targetId: null == targetId ? _self.targetId : targetId // ignore: cast_nullable_to_non_nullable
 as String,reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
 as ReportReason,subjectId: null == subjectId ? _self.subjectId : subjectId // ignore: cast_nullable_to_non_nullable
@@ -3054,10 +3057,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String groupName,  ReportTargetType targetType,  String targetId,  ReportReason reason,  String subjectId,  String subjectName,  String excerpt,  String? details,  String reporterId,  String reporterName,  ReportStatus status,  String? resolution,  String? note,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String groupName,  bool direct,  ReportTargetType targetType,  String targetId,  ReportReason reason,  String subjectId,  String subjectName,  String excerpt,  String? details,  String reporterId,  String reporterName,  ReportStatus status,  String? resolution,  String? note,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AdminReport() when $default != null:
-return $default(_that.id,_that.groupId,_that.groupName,_that.targetType,_that.targetId,_that.reason,_that.subjectId,_that.subjectName,_that.excerpt,_that.details,_that.reporterId,_that.reporterName,_that.status,_that.resolution,_that.note,_that.createdAt);case _:
+return $default(_that.id,_that.groupId,_that.groupName,_that.direct,_that.targetType,_that.targetId,_that.reason,_that.subjectId,_that.subjectName,_that.excerpt,_that.details,_that.reporterId,_that.reporterName,_that.status,_that.resolution,_that.note,_that.createdAt);case _:
   return orElse();
 
 }
@@ -3075,10 +3078,10 @@ return $default(_that.id,_that.groupId,_that.groupName,_that.targetType,_that.ta
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String groupName,  ReportTargetType targetType,  String targetId,  ReportReason reason,  String subjectId,  String subjectName,  String excerpt,  String? details,  String reporterId,  String reporterName,  ReportStatus status,  String? resolution,  String? note,  DateTime? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String groupName,  bool direct,  ReportTargetType targetType,  String targetId,  ReportReason reason,  String subjectId,  String subjectName,  String excerpt,  String? details,  String reporterId,  String reporterName,  ReportStatus status,  String? resolution,  String? note,  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _AdminReport():
-return $default(_that.id,_that.groupId,_that.groupName,_that.targetType,_that.targetId,_that.reason,_that.subjectId,_that.subjectName,_that.excerpt,_that.details,_that.reporterId,_that.reporterName,_that.status,_that.resolution,_that.note,_that.createdAt);case _:
+return $default(_that.id,_that.groupId,_that.groupName,_that.direct,_that.targetType,_that.targetId,_that.reason,_that.subjectId,_that.subjectName,_that.excerpt,_that.details,_that.reporterId,_that.reporterName,_that.status,_that.resolution,_that.note,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3095,10 +3098,10 @@ return $default(_that.id,_that.groupId,_that.groupName,_that.targetType,_that.ta
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String groupName,  ReportTargetType targetType,  String targetId,  ReportReason reason,  String subjectId,  String subjectName,  String excerpt,  String? details,  String reporterId,  String reporterName,  ReportStatus status,  String? resolution,  String? note,  DateTime? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String groupName,  bool direct,  ReportTargetType targetType,  String targetId,  ReportReason reason,  String subjectId,  String subjectName,  String excerpt,  String? details,  String reporterId,  String reporterName,  ReportStatus status,  String? resolution,  String? note,  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _AdminReport() when $default != null:
-return $default(_that.id,_that.groupId,_that.groupName,_that.targetType,_that.targetId,_that.reason,_that.subjectId,_that.subjectName,_that.excerpt,_that.details,_that.reporterId,_that.reporterName,_that.status,_that.resolution,_that.note,_that.createdAt);case _:
+return $default(_that.id,_that.groupId,_that.groupName,_that.direct,_that.targetType,_that.targetId,_that.reason,_that.subjectId,_that.subjectName,_that.excerpt,_that.details,_that.reporterId,_that.reporterName,_that.status,_that.resolution,_that.note,_that.createdAt);case _:
   return null;
 
 }
@@ -3110,12 +3113,15 @@ return $default(_that.id,_that.groupId,_that.groupName,_that.targetType,_that.ta
 
 
 class _AdminReport implements AdminReport {
-  const _AdminReport({required this.id, required this.groupId, this.groupName = '', this.targetType = ReportTargetType.message, this.targetId = '', this.reason = ReportReason.other, this.subjectId = '', this.subjectName = '', this.excerpt = '', this.details, this.reporterId = '', this.reporterName = '', this.status = ReportStatus.open, this.resolution, this.note, this.createdAt});
+  const _AdminReport({required this.id, required this.groupId, this.groupName = '', this.direct = false, this.targetType = ReportTargetType.message, this.targetId = '', this.reason = ReportReason.other, this.subjectId = '', this.subjectName = '', this.excerpt = '', this.details, this.reporterId = '', this.reporterName = '', this.status = ReportStatus.open, this.resolution, this.note, this.createdAt});
   
 
 @override final  String id;
 @override final  GroupId groupId;
 @override@JsonKey() final  String groupName;
+/// Reported in a direct conversation (CHAT-19), not a team: no team to
+/// open, remove anyone from, or suspend.
+@override@JsonKey() final  bool direct;
 @override@JsonKey() final  ReportTargetType targetType;
 @override@JsonKey() final  String targetId;
 @override@JsonKey() final  ReportReason reason;
@@ -3142,18 +3148,18 @@ _$AdminReportCopyWith<_AdminReport> get copyWith => __$AdminReportCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminReport&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.targetType, targetType) || other.targetType == targetType)&&(identical(other.targetId, targetId) || other.targetId == targetId)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.subjectName, subjectName) || other.subjectName == subjectName)&&(identical(other.excerpt, excerpt) || other.excerpt == excerpt)&&(identical(other.details, details) || other.details == details)&&(identical(other.reporterId, reporterId) || other.reporterId == reporterId)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.status, status) || other.status == status)&&(identical(other.resolution, resolution) || other.resolution == resolution)&&(identical(other.note, note) || other.note == note)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminReport&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.groupName, groupName) || other.groupName == groupName)&&(identical(other.direct, direct) || other.direct == direct)&&(identical(other.targetType, targetType) || other.targetType == targetType)&&(identical(other.targetId, targetId) || other.targetId == targetId)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.subjectId, subjectId) || other.subjectId == subjectId)&&(identical(other.subjectName, subjectName) || other.subjectName == subjectName)&&(identical(other.excerpt, excerpt) || other.excerpt == excerpt)&&(identical(other.details, details) || other.details == details)&&(identical(other.reporterId, reporterId) || other.reporterId == reporterId)&&(identical(other.reporterName, reporterName) || other.reporterName == reporterName)&&(identical(other.status, status) || other.status == status)&&(identical(other.resolution, resolution) || other.resolution == resolution)&&(identical(other.note, note) || other.note == note)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,groupId,groupName,targetType,targetId,reason,subjectId,subjectName,excerpt,details,reporterId,reporterName,status,resolution,note,createdAt);
+    return Object.hash(runtimeType,id,groupId,groupName,direct,targetType,targetId,reason,subjectId,subjectName,excerpt,details,reporterId,reporterName,status,resolution,note,createdAt);
 }
 
 @override
 String toString() {
-    return 'AdminReport(id: $id, groupId: $groupId, groupName: $groupName, targetType: $targetType, targetId: $targetId, reason: $reason, subjectId: $subjectId, subjectName: $subjectName, excerpt: $excerpt, details: $details, reporterId: $reporterId, reporterName: $reporterName, status: $status, resolution: $resolution, note: $note, createdAt: $createdAt)';
+    return 'AdminReport(id: $id, groupId: $groupId, groupName: $groupName, direct: $direct, targetType: $targetType, targetId: $targetId, reason: $reason, subjectId: $subjectId, subjectName: $subjectName, excerpt: $excerpt, details: $details, reporterId: $reporterId, reporterName: $reporterName, status: $status, resolution: $resolution, note: $note, createdAt: $createdAt)';
 }
 
 
@@ -3164,7 +3170,7 @@ abstract mixin class _$AdminReportCopyWith<$Res> implements $AdminReportCopyWith
   factory _$AdminReportCopyWith(_AdminReport value, $Res Function(_AdminReport) _then) = __$AdminReportCopyWithImpl;
 @override @useResult
 $Res call({
- String id, GroupId groupId, String groupName, ReportTargetType targetType, String targetId, ReportReason reason, String subjectId, String subjectName, String excerpt, String? details, String reporterId, String reporterName, ReportStatus status, String? resolution, String? note, DateTime? createdAt
+ String id, GroupId groupId, String groupName, bool direct, ReportTargetType targetType, String targetId, ReportReason reason, String subjectId, String subjectName, String excerpt, String? details, String reporterId, String reporterName, ReportStatus status, String? resolution, String? note, DateTime? createdAt
 });
 
 
@@ -3181,12 +3187,13 @@ class __$AdminReportCopyWithImpl<$Res>
 
 /// Create a copy of AdminReport
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? groupName = null,Object? targetType = null,Object? targetId = null,Object? reason = null,Object? subjectId = null,Object? subjectName = null,Object? excerpt = null,Object? details = freezed,Object? reporterId = null,Object? reporterName = null,Object? status = null,Object? resolution = freezed,Object? note = freezed,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? groupName = null,Object? direct = null,Object? targetType = null,Object? targetId = null,Object? reason = null,Object? subjectId = null,Object? subjectName = null,Object? excerpt = null,Object? details = freezed,Object? reporterId = null,Object? reporterName = null,Object? status = null,Object? resolution = freezed,Object? note = freezed,Object? createdAt = freezed,}) {
   return _then(_AdminReport(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId,groupName: null == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
-as String,targetType: null == targetType ? _self.targetType : targetType // ignore: cast_nullable_to_non_nullable
+as String,direct: null == direct ? _self.direct : direct // ignore: cast_nullable_to_non_nullable
+as bool,targetType: null == targetType ? _self.targetType : targetType // ignore: cast_nullable_to_non_nullable
 as ReportTargetType,targetId: null == targetId ? _self.targetId : targetId // ignore: cast_nullable_to_non_nullable
 as String,reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
 as ReportReason,subjectId: null == subjectId ? _self.subjectId : subjectId // ignore: cast_nullable_to_non_nullable

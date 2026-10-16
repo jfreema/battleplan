@@ -91,6 +91,7 @@ export const Limits = {
   invitePreviewsPerIpPerHour: 60,
   guardianRequestsPerUserPerDay: 10,
   reportsPerUserPerDay: 20,
+  directChatsPerUserPerDay: 20,
   clientErrorsPerIpPerHour: 30,
   securityNoticesPerUserPerDay: 10,
   superAdminEmailsPerDay: 50,
@@ -104,6 +105,7 @@ export const Limits = {
   inviteCodeLength: 8,
   emailInviteExpiryDays: 14,
   defaultStorageQuotaMb: 200,
+  directChatStorageQuotaMb: 50,
   storageQuotaMaxMb: 51200,
   storageWarnPercent: 90,
   maxUploadMb: 10,
@@ -143,13 +145,13 @@ export type UserStatus = (typeof userStatusValues)[number];
 export const themePreferenceValues = ['system', 'light', 'dark'] as const;
 export type ThemePreference = (typeof themePreferenceValues)[number];
 
-export const groupKindValues = ['team'] as const;
+export const groupKindValues = ['team', 'direct'] as const;
 export type GroupKind = (typeof groupKindValues)[number];
 
 export const sportValues = ['baseball', 'basketball', 'football', 'hockey', 'lacrosse', 'soccer', 'softball', 'volleyball', 'other'] as const;
 export type Sport = (typeof sportValues)[number];
 
-export const memberRoleValues = ['owner', 'admin', 'member'] as const;
+export const memberRoleValues = ['owner', 'admin', 'member', 'participant'] as const;
 export type MemberRole = (typeof memberRoleValues)[number];
 
 export const notificationLevelValues = ['all', 'important', 'none'] as const;
@@ -194,10 +196,10 @@ export type ReportStatus = (typeof reportStatusValues)[number];
 export const devicePlatformValues = ['ios', 'android', 'web'] as const;
 export type DevicePlatform = (typeof devicePlatformValues)[number];
 
-export const notifyKindValues = ['message', 'reply', 'addedToTeam', 'madeAdmin', 'guardianRequest', 'guardianApproved', 'playerAdded', 'contentReported', 'storageWarning', 'pollCreated', 'pollClosed', 'eventCreated', 'eventChanged', 'eventReminder', 'documentAdded', 'mention', 'announcement'] as const;
+export const notifyKindValues = ['message', 'reply', 'addedToTeam', 'madeAdmin', 'guardianRequest', 'guardianApproved', 'playerAdded', 'contentReported', 'storageWarning', 'pollCreated', 'pollClosed', 'eventCreated', 'eventChanged', 'eventReminder', 'documentAdded', 'mention', 'announcement', 'directMessage'] as const;
 export type NotifyKind = (typeof notifyKindValues)[number];
 
-export const notificationPrefValues = ['messages', 'replies', 'mentions', 'polls', 'eventsNew', 'eventsChanged', 'reminders', 'documents'] as const;
+export const notificationPrefValues = ['messages', 'directMessages', 'replies', 'mentions', 'polls', 'eventsNew', 'eventsChanged', 'reminders', 'documents'] as const;
 export type NotificationPref = (typeof notificationPrefValues)[number];
 
 export const notifyChannelValues = ['messages', 'replies', 'team', 'polls', 'events', 'documents'] as const;
@@ -222,6 +224,7 @@ export const NOTIFY_KINDS = {
   documentAdded: { important: false, pref: 'documents' as NotificationPref | null, center: true, channel: 'documents' as NotifyChannel },
   mention: { important: true, pref: 'mentions' as NotificationPref | null, center: true, channel: 'replies' as NotifyChannel },
   announcement: { important: true, pref: null as NotificationPref | null, center: true, channel: 'team' as NotifyChannel },
+  directMessage: { important: true, pref: 'directMessages' as NotificationPref | null, center: false, channel: 'messages' as NotifyChannel },
 } as const;
 
 /** The words a team's language filter masks (SAFE-7), from shared/strong_language.json. */

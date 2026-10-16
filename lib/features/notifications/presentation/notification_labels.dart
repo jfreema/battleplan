@@ -6,10 +6,11 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The global switches shown in Settings (NOTIF-4), Mentions included
-/// (CHAT-14, NOTIF-12). Announcements have no switch: they reach everyone
-/// who hasn't turned the team off (CHAT-15).
+/// (CHAT-14, NOTIF-12), and Direct messages (CHAT-19). Announcements have
+/// no switch: they reach everyone who hasn't turned the team off (CHAT-15).
 const List<NotificationPref> shownNotificationPrefs = [
   NotificationPref.messages,
+  NotificationPref.directMessages,
   NotificationPref.replies,
   NotificationPref.mentions,
   NotificationPref.polls,
@@ -22,6 +23,7 @@ const List<NotificationPref> shownNotificationPrefs = [
 String notificationPrefLabel(AppLocalizations l10n, NotificationPref p) =>
     switch (p) {
       NotificationPref.messages => l10n.prefMessages,
+      NotificationPref.directMessages => l10n.prefDirectMessages,
       NotificationPref.replies => l10n.prefReplies,
       NotificationPref.mentions => l10n.prefMentions,
       NotificationPref.polls => l10n.prefPolls,
@@ -80,6 +82,7 @@ IconData notificationIcon(NotifyKind? kind) => switch (kind) {
   NotifyKind.documentAdded => AppIcons.document,
   NotifyKind.mention => AppIcons.mention,
   NotifyKind.announcement => AppIcons.announcement,
+  NotifyKind.directMessage => AppIcons.directMessage,
 };
 
 /// "now", "5m", "3h", "2d", then the date: short, for a list row.

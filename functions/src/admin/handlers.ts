@@ -76,9 +76,13 @@ import {
 /** The caller's name for emails they trigger ("Jordan added you to Thunder"). */
 const actorName = (uid: string) => displayNameOf(uid, 'Battleplan support');
 
-/** Throws unless the team exists. */
+/**
+ * Throws unless the team exists. A direct conversation (CHAT-19) isn't a
+ * team, so the panel's team actions never reach one.
+ */
 async function requireTeam(groupId: string): Promise<void> {
-  if (!(await db().collection(Collections.groups).doc(groupId).get()).exists) {
+  const group = await db().collection(Collections.groups).doc(groupId).get();
+  if (!group.exists || group.get('kind') === 'direct') {
     throw new HttpsError('not-found', 'No such team.');
   }
 }
@@ -160,6 +164,7 @@ export const adminOpenGroup = onCall(async (request) => {
 export const adminSetGroupSuspended = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(SetSuspendedInput, request.data);
+  await requireTeam(input.groupId);
   const before = await setGroupSuspended(input.groupId, input.suspended);
   await audit({
     actorId: actor,
@@ -177,6 +182,7 @@ export const adminSetGroupSuspended = onCall(async (request) => {
 export const adminArchiveGroup = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(ArchiveInput, request.data);
+  await requireTeam(input.groupId);
   const before = await setGroupArchived(input.groupId, input.archived);
   await audit({
     actorId: actor,
@@ -202,6 +208,7 @@ export const adminArchiveGroup = onCall(async (request) => {
 export const adminUpdateGroup = onCall(async (request) => {
   const actor = requireSuperAdmin(request);
   const { groupId, ...edit } = parse(UpdateGroupInput, request.data);
+  await requireTeam(groupId);
   await requireFiles(edit.photoPath, edit.backgroundPath, edit.chatTheme?.backgroundPath);
   const { before, after } = await updateGroupProfile(groupId, edit);
   await audit({
@@ -241,6 +248,7 @@ export const adminUpdatePlayer = onCall(async (request) => {
 export const adminDeleteGroup = onCall({ secrets: [resendApiKey] }, async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(DeleteGroupInput, request.data);
+  await requireTeam(input.groupId);
   const deleted: { before?: { name: string; memberCount: number } } = {};
   await deleteGroupNamed(input.groupId, input.confirmName, (before) => {
     deleted.before = before;
@@ -496,6 +504,12 @@ async function resolveReport(
   if (input.action === 'disableUser') {
     if (!subjectId) throw new HttpsError('failed-precondition', 'no-subject');
     if (subjectId === actor) throw new HttpsError('failed-precondition', 'cannot-disable-self');
+  }
+  // A direct conversation (CHAT-19) has nobody to remove and no team to
+  // suspend: deleting the message, disabling the person, or dismissing.
+  if (input.action === 'removeMember' || input.action === 'suspendTeam') {
+    const group = await db().collection(Collections.groups).doc(groupId).get();
+    if (group.get('kind') === 'direct') throw new HttpsError('failed-precondition', 'direct-message');
   }
 
   // Claim it: only one resolve gets past this.

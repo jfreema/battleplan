@@ -8,6 +8,7 @@ import { db } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { forEachPage } from '../shared/batch.js';
 import { compositeId, groupMemberId } from '../shared/ids.js';
+import { teamCountOf } from '../shared/roles.js';
 import { moveMemberRsvpsToPlayer, removeUpcomingRsvps, renameUpcomingRsvps } from '../schedule/service.js';
 import {
   linkLimitProblem,
@@ -176,8 +177,7 @@ export async function addPlayers(
         // A person can be on up to 100 teams (TEAM-2).
         const member = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, user.uid)).get();
         if (!member.exists) {
-          const teams = await db().collection(Collections.groupMembers).where('uid', '==', user.uid).count().get();
-          if (teams.data().count >= Limits.groupsPerUserMax) {
+          if ((await teamCountOf(user.uid)) >= Limits.groupsPerUserMax) {
             result.problems.push(`${name}: ${person.email} (too-many-teams)`);
             continue;
           }

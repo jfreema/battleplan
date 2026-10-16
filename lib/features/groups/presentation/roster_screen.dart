@@ -13,6 +13,7 @@ import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/auth.dart';
+import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/presentation/leave_team.dart';
@@ -508,11 +509,12 @@ class _Section extends StatelessWidget {
   );
 }
 
-/// Role badge text: Owner or Admin.
+/// Role badge text: Owner or Admin. A direct conversation's people
+/// (CHAT-19) aren't on a roster.
 String? roleBadge(AppLocalizations l10n, MemberRole role) => switch (role) {
   MemberRole.owner => l10n.roleOwner,
   MemberRole.admin => l10n.roleAdmin,
-  MemberRole.member => null,
+  MemberRole.member || MemberRole.participant => null,
 };
 
 class _MemberRow extends StatelessWidget {
@@ -635,6 +637,37 @@ class MemberCard extends ConsumerWidget {
               Text(label),
             ],
             const SizedBox(height: Space.lg),
+            // Their page (TEAM-15), and a direct message (CHAT-19) to
+            // someone who has joined and isn't blocked.
+            if (!isSelf)
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: Space.sm,
+                runSpacing: Space.sm,
+                children: [
+                  if (!member.pending &&
+                      !ref.watch(blockedIdsProvider).contains(member.uid.value))
+                    MessageButton(uid: member.uid, name: member.displayName),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      // The card closes first; its context goes with it.
+                      final router = GoRouter.of(context);
+                      Navigator.of(context).pop();
+                      unawaited(
+                        router.push(
+                          personPageLocation(
+                            member.uid,
+                            teamId: member.groupId,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(AppIcons.person),
+                    label: Text(l10n.viewProfile),
+                  ),
+                ],
+              ),
+            if (!isSelf) const SizedBox(height: Space.md),
             _SharedContact(member: member, isSelf: isSelf),
             if (canPromote)
               ListTile(

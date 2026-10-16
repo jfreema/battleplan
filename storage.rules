@@ -26,8 +26,9 @@ service firebase.storage {
     // ADMIN-3, and Media). The only files they upload into a team they
     // aren't on are its logo and chat background (ADMIN-3 Edit), which
     // adminUpdateGroup then saves; they never post photos or documents.
+    // A direct conversation's photos (CHAT-19) are only its two people's.
     function canRead(g) {
-      return superAdmin() || isMember(g);
+      return (superAdmin() && team(g).get('kind', 'team') != 'direct') || isMember(g);
     }
     // The same test as Firestore rules' hasRoom (STORE-4), on an active
     // team: archived teams are read-only (TEAM-9), so nothing uploads there.

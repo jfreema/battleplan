@@ -12,7 +12,7 @@ import { postSystemMessage } from '../chat/service.js';
 import { refreshMemberCount } from '../teams/service.js';
 import { normalizeCode } from './codes.js';
 import { requireAuth } from '../shared/guards.js';
-import { requireOpenTeam, requireTeamAdmin, roleOf } from '../shared/roles.js';
+import { requireOpenTeam, requireTeamAdmin, roleOf, teamCountOf } from '../shared/roles.js';
 import { parse } from '../shared/validate.js';
 import { resendApiKey, sendEmail } from '../email/service.js';
 import { inviteEmail } from '../email/templates.js';
@@ -137,7 +137,7 @@ export const redeemInvite = onCall(async (request) => {
   const uid = requireAuth(request);
   const { code } = parse(CodeInput, request.data);
   await consumeRateLimit(uid, 'redeemInvite', Limits.inviteRedeemsPerUserPerHour, 'hour');
-  const teams = await db().collection(Collections.groupMembers).where('uid', '==', uid).count().get();
+  const teams = await teamCountOf(uid);
   const profile = (await db().collection(Collections.users).doc(uid).get()).data();
   const result = await redeem(normalizeCode(code), uid, request.auth?.token.email ?? null, {
     displayName: (profile?.displayName as string | undefined) ?? 'New member',
@@ -145,7 +145,7 @@ export const redeemInvite = onCall(async (request) => {
   });
   if (typeof result === 'string') throw new HttpsError('not-found', result);
   if (!result.alreadyMember) {
-    if (teams.data().count >= Limits.groupsPerUserMax) {
+    if (teams >= Limits.groupsPerUserMax) {
       // Undo: over the 100-team limit (TEAM-2).
       await db().collection(Collections.groupMembers).doc(groupMemberId(result.groupId, uid)).delete();
       await refreshMemberCount(result.groupId);

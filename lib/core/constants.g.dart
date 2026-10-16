@@ -94,6 +94,7 @@ abstract final class Limits {
   static const int invitePreviewsPerIpPerHour = 60;
   static const int guardianRequestsPerUserPerDay = 10;
   static const int reportsPerUserPerDay = 20;
+  static const int directChatsPerUserPerDay = 20;
   static const int clientErrorsPerIpPerHour = 30;
   static const int securityNoticesPerUserPerDay = 10;
   static const int superAdminEmailsPerDay = 50;
@@ -107,6 +108,7 @@ abstract final class Limits {
   static const int inviteCodeLength = 8;
   static const int emailInviteExpiryDays = 14;
   static const int defaultStorageQuotaMb = 200;
+  static const int directChatStorageQuotaMb = 50;
   static const int storageQuotaMaxMb = 51200;
   static const int storageWarnPercent = 90;
   static const int maxUploadMb = 10;
@@ -179,7 +181,8 @@ enum ThemePreference {
 }
 
 enum GroupKind {
-  team('team');
+  team('team'),
+  direct('direct');
 
   const GroupKind(this.value);
 
@@ -221,7 +224,8 @@ enum Sport {
 enum MemberRole {
   owner('owner'),
   admin('admin'),
-  member('member');
+  member('member'),
+  participant('participant');
 
   const MemberRole(this.value);
 
@@ -520,7 +524,8 @@ enum NotifyKind {
   eventReminder('eventReminder'),
   documentAdded('documentAdded'),
   mention('mention'),
-  announcement('announcement');
+  announcement('announcement'),
+  directMessage('directMessage');
 
   const NotifyKind(this.value);
 
@@ -537,6 +542,7 @@ enum NotifyKind {
 
 enum NotificationPref {
   messages('messages'),
+  directMessages('directMessages'),
   replies('replies'),
   mentions('mentions'),
   polls('polls'),
@@ -701,6 +707,12 @@ const Map<NotifyKind, NotifyKindInfo> notifyKindInfo = {
     pref: null,
     center: true,
     channel: NotifyChannel.team,
+  ),
+  NotifyKind.directMessage: NotifyKindInfo(
+    important: true,
+    pref: NotificationPref.directMessages,
+    center: false,
+    channel: NotifyChannel.messages,
   ),
 };
 

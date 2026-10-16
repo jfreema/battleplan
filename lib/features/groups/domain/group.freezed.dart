@@ -589,6 +589,273 @@ as String?,
 }
 
 /// @nodoc
+mixin _$DirectPerson {
+
+ String get name; String? get photoPath;
+/// Create a copy of DirectPerson
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DirectPersonCopyWith<DirectPerson> get copyWith => _$DirectPersonCopyWithImpl<DirectPerson>(this as DirectPerson, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as DirectPerson;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DirectPerson&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as DirectPerson;
+  return Object.hash(runtimeType,_this.name,_this.photoPath);
+}
+
+@override
+String toString() {
+  final _this = this as DirectPerson;
+  return 'DirectPerson(name: ${_this.name}, photoPath: ${_this.photoPath})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DirectPersonCopyWith<$Res>  {
+  factory $DirectPersonCopyWith(DirectPerson value, $Res Function(DirectPerson) _then) = _$DirectPersonCopyWithImpl;
+@useResult
+$Res call({
+ String name, String? photoPath
+});
+
+
+
+
+}
+/// @nodoc
+class _$DirectPersonCopyWithImpl<$Res>
+    implements $DirectPersonCopyWith<$Res> {
+  _$DirectPersonCopyWithImpl(this._self, this._then);
+
+  final DirectPerson _self;
+  final $Res Function(DirectPerson) _then;
+
+/// Create a copy of DirectPerson
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? photoPath = freezed,}) {
+  return _then(DirectPerson(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,photoPath: freezed == photoPath ? _self.photoPath : photoPath // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DirectPerson].
+extension DirectPersonPatterns on DirectPerson {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DirectPerson value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DirectPerson() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DirectPerson value)  $default,){
+final _that = this;
+switch (_that) {
+case _DirectPerson():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DirectPerson value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DirectPerson() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? photoPath)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DirectPerson() when $default != null:
+return $default(_that.name,_that.photoPath);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? photoPath)  $default,) {final _that = this;
+switch (_that) {
+case _DirectPerson():
+return $default(_that.name,_that.photoPath);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? photoPath)?  $default,) {final _that = this;
+switch (_that) {
+case _DirectPerson() when $default != null:
+return $default(_that.name,_that.photoPath);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _DirectPerson implements DirectPerson {
+  const _DirectPerson({required this.name, this.photoPath});
+  
+
+@override final  String name;
+@override final  String? photoPath;
+
+/// Create a copy of DirectPerson
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DirectPersonCopyWith<_DirectPerson> get copyWith => __$DirectPersonCopyWithImpl<_DirectPerson>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DirectPerson&&(identical(other.name, name) || other.name == name)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,name,photoPath);
+}
+
+@override
+String toString() {
+    return 'DirectPerson(name: $name, photoPath: $photoPath)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DirectPersonCopyWith<$Res> implements $DirectPersonCopyWith<$Res> {
+  factory _$DirectPersonCopyWith(_DirectPerson value, $Res Function(_DirectPerson) _then) = __$DirectPersonCopyWithImpl;
+@override @useResult
+$Res call({
+ String name, String? photoPath
+});
+
+
+
+
+}
+/// @nodoc
+class __$DirectPersonCopyWithImpl<$Res>
+    implements _$DirectPersonCopyWith<$Res> {
+  __$DirectPersonCopyWithImpl(this._self, this._then);
+
+  final _DirectPerson _self;
+  final $Res Function(_DirectPerson) _then;
+
+/// Create a copy of DirectPerson
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? photoPath = freezed,}) {
+  return _then(_DirectPerson(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,photoPath: freezed == photoPath ? _self.photoPath : photoPath // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$Group {
 
  GroupId get id; String get name; Sport get sport; int get memberCount;/// One kind of team (TEAM-1); a missing kind reads as a team, so a
@@ -602,7 +869,11 @@ mixin _$Group {
 /// the default leaves it alone.
  bool get storageQuotaCustom; ChatTheme? get chatTheme;/// The chat's pinned messages, oldest pin first, at most
 /// [Limits.pinnedMessagesMax] (CHAT-15). Only the server changes them.
- List<String> get pinnedMessageIds;
+ List<String> get pinnedMessageIds;/// A direct conversation's two people (CHAT-19); empty for a team.
+ List<String> get uids;/// A direct conversation's name and photo for each of its people.
+ Map<String, DirectPerson> get people;/// A direct conversation's newest message: who sent it, and its line
+/// without the name ("Photo" for photos), for Messages (CHAT-19).
+ String? get lastMessageAuthorId; String? get lastMessageText;
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -614,20 +885,20 @@ $GroupCopyWith<Group> get copyWith => _$GroupCopyWithImpl<Group>(this as Group, 
 @override
 bool operator ==(Object other) {
   final _this = this as Group;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Group&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.lastMessagePreview, _this.lastMessagePreview) || other.lastMessagePreview == _this.lastMessagePreview)&&(identical(other.archivedAt, _this.archivedAt) || other.archivedAt == _this.archivedAt)&&(identical(other.suspendedAt, _this.suspendedAt) || other.suspendedAt == _this.suspendedAt)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.timeZone, _this.timeZone) || other.timeZone == _this.timeZone)&&(identical(other.settings, _this.settings) || other.settings == _this.settings)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes)&&(identical(other.storageQuotaCustom, _this.storageQuotaCustom) || other.storageQuotaCustom == _this.storageQuotaCustom)&&(identical(other.chatTheme, _this.chatTheme) || other.chatTheme == _this.chatTheme)&&const DeepCollectionEquality().equals(other.pinnedMessageIds, _this.pinnedMessageIds));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Group&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.sport, _this.sport) || other.sport == _this.sport)&&(identical(other.memberCount, _this.memberCount) || other.memberCount == _this.memberCount)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.lastMessageAt, _this.lastMessageAt) || other.lastMessageAt == _this.lastMessageAt)&&(identical(other.lastMessagePreview, _this.lastMessagePreview) || other.lastMessagePreview == _this.lastMessagePreview)&&(identical(other.archivedAt, _this.archivedAt) || other.archivedAt == _this.archivedAt)&&(identical(other.suspendedAt, _this.suspendedAt) || other.suspendedAt == _this.suspendedAt)&&(identical(other.ownerId, _this.ownerId) || other.ownerId == _this.ownerId)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.timeZone, _this.timeZone) || other.timeZone == _this.timeZone)&&(identical(other.settings, _this.settings) || other.settings == _this.settings)&&(identical(other.storageBytes, _this.storageBytes) || other.storageBytes == _this.storageBytes)&&(identical(other.storageQuotaBytes, _this.storageQuotaBytes) || other.storageQuotaBytes == _this.storageQuotaBytes)&&(identical(other.storageQuotaCustom, _this.storageQuotaCustom) || other.storageQuotaCustom == _this.storageQuotaCustom)&&(identical(other.chatTheme, _this.chatTheme) || other.chatTheme == _this.chatTheme)&&const DeepCollectionEquality().equals(other.pinnedMessageIds, _this.pinnedMessageIds)&&const DeepCollectionEquality().equals(other.uids, _this.uids)&&const DeepCollectionEquality().equals(other.people, _this.people)&&(identical(other.lastMessageAuthorId, _this.lastMessageAuthorId) || other.lastMessageAuthorId == _this.lastMessageAuthorId)&&(identical(other.lastMessageText, _this.lastMessageText) || other.lastMessageText == _this.lastMessageText));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Group;
-  return Object.hashAll([runtimeType,_this.id,_this.name,_this.sport,_this.memberCount,_this.kind,_this.description,_this.color,_this.lastMessageAt,_this.lastMessagePreview,_this.archivedAt,_this.suspendedAt,_this.ownerId,_this.photoPath,_this.timeZone,_this.settings,_this.storageBytes,_this.storageQuotaBytes,_this.storageQuotaCustom,_this.chatTheme,const DeepCollectionEquality().hash(_this.pinnedMessageIds)]);
+  return Object.hashAll([runtimeType,_this.id,_this.name,_this.sport,_this.memberCount,_this.kind,_this.description,_this.color,_this.lastMessageAt,_this.lastMessagePreview,_this.archivedAt,_this.suspendedAt,_this.ownerId,_this.photoPath,_this.timeZone,_this.settings,_this.storageBytes,_this.storageQuotaBytes,_this.storageQuotaCustom,_this.chatTheme,const DeepCollectionEquality().hash(_this.pinnedMessageIds),const DeepCollectionEquality().hash(_this.uids),const DeepCollectionEquality().hash(_this.people),_this.lastMessageAuthorId,_this.lastMessageText]);
 }
 
 @override
 String toString() {
   final _this = this as Group;
-  return 'Group(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, memberCount: ${_this.memberCount}, kind: ${_this.kind}, description: ${_this.description}, color: ${_this.color}, lastMessageAt: ${_this.lastMessageAt}, lastMessagePreview: ${_this.lastMessagePreview}, archivedAt: ${_this.archivedAt}, suspendedAt: ${_this.suspendedAt}, ownerId: ${_this.ownerId}, photoPath: ${_this.photoPath}, timeZone: ${_this.timeZone}, settings: ${_this.settings}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes}, storageQuotaCustom: ${_this.storageQuotaCustom}, chatTheme: ${_this.chatTheme}, pinnedMessageIds: ${_this.pinnedMessageIds})';
+  return 'Group(id: ${_this.id}, name: ${_this.name}, sport: ${_this.sport}, memberCount: ${_this.memberCount}, kind: ${_this.kind}, description: ${_this.description}, color: ${_this.color}, lastMessageAt: ${_this.lastMessageAt}, lastMessagePreview: ${_this.lastMessagePreview}, archivedAt: ${_this.archivedAt}, suspendedAt: ${_this.suspendedAt}, ownerId: ${_this.ownerId}, photoPath: ${_this.photoPath}, timeZone: ${_this.timeZone}, settings: ${_this.settings}, storageBytes: ${_this.storageBytes}, storageQuotaBytes: ${_this.storageQuotaBytes}, storageQuotaCustom: ${_this.storageQuotaCustom}, chatTheme: ${_this.chatTheme}, pinnedMessageIds: ${_this.pinnedMessageIds}, uids: ${_this.uids}, people: ${_this.people}, lastMessageAuthorId: ${_this.lastMessageAuthorId}, lastMessageText: ${_this.lastMessageText})';
 }
 
 
@@ -638,7 +909,7 @@ abstract mixin class $GroupCopyWith<$Res>  {
   factory $GroupCopyWith(Group value, $Res Function(Group) _then) = _$GroupCopyWithImpl;
 @useResult
 $Res call({
- GroupId id, String name, Sport sport, int memberCount, GroupKind kind, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, bool storageQuotaCustom, ChatTheme? chatTheme, List<String> pinnedMessageIds
+ GroupId id, String name, Sport sport, int memberCount, GroupKind kind, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, bool storageQuotaCustom, ChatTheme? chatTheme, List<String> pinnedMessageIds, List<String> uids, Map<String, DirectPerson> people, String? lastMessageAuthorId, String? lastMessageText
 });
 
 
@@ -655,7 +926,7 @@ class _$GroupCopyWithImpl<$Res>
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? memberCount = null,Object? kind = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? storageQuotaCustom = null,Object? chatTheme = freezed,Object? pinnedMessageIds = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? memberCount = null,Object? kind = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? storageQuotaCustom = null,Object? chatTheme = freezed,Object? pinnedMessageIds = null,Object? uids = null,Object? people = null,Object? lastMessageAuthorId = freezed,Object? lastMessageText = freezed,}) {
   return _then(Group(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -677,7 +948,11 @@ as int,storageQuotaBytes: null == storageQuotaBytes ? _self.storageQuotaBytes : 
 as int,storageQuotaCustom: null == storageQuotaCustom ? _self.storageQuotaCustom : storageQuotaCustom // ignore: cast_nullable_to_non_nullable
 as bool,chatTheme: freezed == chatTheme ? _self.chatTheme : chatTheme // ignore: cast_nullable_to_non_nullable
 as ChatTheme?,pinnedMessageIds: null == pinnedMessageIds ? _self.pinnedMessageIds : pinnedMessageIds // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,uids: null == uids ? _self.uids : uids // ignore: cast_nullable_to_non_nullable
+as List<String>,people: null == people ? _self.people : people // ignore: cast_nullable_to_non_nullable
+as Map<String, DirectPerson>,lastMessageAuthorId: freezed == lastMessageAuthorId ? _self.lastMessageAuthorId : lastMessageAuthorId // ignore: cast_nullable_to_non_nullable
+as String?,lastMessageText: freezed == lastMessageText ? _self.lastMessageText : lastMessageText // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of Group
@@ -783,10 +1058,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  int memberCount,  GroupKind kind,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  bool storageQuotaCustom,  ChatTheme? chatTheme,  List<String> pinnedMessageIds)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  int memberCount,  GroupKind kind,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  bool storageQuotaCustom,  ChatTheme? chatTheme,  List<String> pinnedMessageIds,  List<String> uids,  Map<String, DirectPerson> people,  String? lastMessageAuthorId,  String? lastMessageText)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.storageQuotaCustom,_that.chatTheme,_that.pinnedMessageIds);case _:
+return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.storageQuotaCustom,_that.chatTheme,_that.pinnedMessageIds,_that.uids,_that.people,_that.lastMessageAuthorId,_that.lastMessageText);case _:
   return orElse();
 
 }
@@ -804,10 +1079,10 @@ return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  int memberCount,  GroupKind kind,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  bool storageQuotaCustom,  ChatTheme? chatTheme,  List<String> pinnedMessageIds)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GroupId id,  String name,  Sport sport,  int memberCount,  GroupKind kind,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  bool storageQuotaCustom,  ChatTheme? chatTheme,  List<String> pinnedMessageIds,  List<String> uids,  Map<String, DirectPerson> people,  String? lastMessageAuthorId,  String? lastMessageText)  $default,) {final _that = this;
 switch (_that) {
 case _Group():
-return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.storageQuotaCustom,_that.chatTheme,_that.pinnedMessageIds);case _:
+return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.storageQuotaCustom,_that.chatTheme,_that.pinnedMessageIds,_that.uids,_that.people,_that.lastMessageAuthorId,_that.lastMessageText);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -824,10 +1099,10 @@ return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  int memberCount,  GroupKind kind,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  bool storageQuotaCustom,  ChatTheme? chatTheme,  List<String> pinnedMessageIds)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GroupId id,  String name,  Sport sport,  int memberCount,  GroupKind kind,  String? description,  int? color,  DateTime? lastMessageAt,  String? lastMessagePreview,  DateTime? archivedAt,  DateTime? suspendedAt,  String? ownerId,  String? photoPath,  String timeZone,  GroupSettings settings,  int storageBytes,  int storageQuotaBytes,  bool storageQuotaCustom,  ChatTheme? chatTheme,  List<String> pinnedMessageIds,  List<String> uids,  Map<String, DirectPerson> people,  String? lastMessageAuthorId,  String? lastMessageText)?  $default,) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
-return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.storageQuotaCustom,_that.chatTheme,_that.pinnedMessageIds);case _:
+return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_that.description,_that.color,_that.lastMessageAt,_that.lastMessagePreview,_that.archivedAt,_that.suspendedAt,_that.ownerId,_that.photoPath,_that.timeZone,_that.settings,_that.storageBytes,_that.storageQuotaBytes,_that.storageQuotaCustom,_that.chatTheme,_that.pinnedMessageIds,_that.uids,_that.people,_that.lastMessageAuthorId,_that.lastMessageText);case _:
   return null;
 
 }
@@ -839,7 +1114,7 @@ return $default(_that.id,_that.name,_that.sport,_that.memberCount,_that.kind,_th
 
 
 class _Group extends Group {
-  const _Group({required this.id, required this.name, required this.sport, required this.memberCount, this.kind = GroupKind.team, this.description, this.color, this.lastMessageAt, this.lastMessagePreview, this.archivedAt, this.suspendedAt, this.ownerId, this.photoPath, this.timeZone = 'America/Chicago', this.settings = const GroupSettings(), this.storageBytes = 0, this.storageQuotaBytes = 0, this.storageQuotaCustom = false, this.chatTheme,  List<String> pinnedMessageIds = const <String>[]}): _pinnedMessageIds = pinnedMessageIds,super._();
+  const _Group({required this.id, required this.name, required this.sport, required this.memberCount, this.kind = GroupKind.team, this.description, this.color, this.lastMessageAt, this.lastMessagePreview, this.archivedAt, this.suspendedAt, this.ownerId, this.photoPath, this.timeZone = 'America/Chicago', this.settings = const GroupSettings(), this.storageBytes = 0, this.storageQuotaBytes = 0, this.storageQuotaCustom = false, this.chatTheme,  List<String> pinnedMessageIds = const <String>[],  List<String> uids = const <String>[],  Map<String, DirectPerson> people = const <String, DirectPerson>{}, this.lastMessageAuthorId, this.lastMessageText}): _pinnedMessageIds = pinnedMessageIds,_uids = uids,_people = people,super._();
   
 
 @override final  GroupId id;
@@ -881,6 +1156,28 @@ class _Group extends Group {
   return EqualUnmodifiableListView(_pinnedMessageIds);
 }
 
+/// A direct conversation's two people (CHAT-19); empty for a team.
+ final  List<String> _uids;
+/// A direct conversation's two people (CHAT-19); empty for a team.
+@override@JsonKey() List<String> get uids {
+  if (_uids is EqualUnmodifiableListView) return _uids;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_uids);
+}
+
+/// A direct conversation's name and photo for each of its people.
+ final  Map<String, DirectPerson> _people;
+/// A direct conversation's name and photo for each of its people.
+@override@JsonKey() Map<String, DirectPerson> get people {
+  if (_people is EqualUnmodifiableMapView) return _people;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_people);
+}
+
+/// A direct conversation's newest message: who sent it, and its line
+/// without the name ("Photo" for photos), for Messages (CHAT-19).
+@override final  String? lastMessageAuthorId;
+@override final  String? lastMessageText;
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
@@ -892,18 +1189,18 @@ _$GroupCopyWith<_Group> get copyWith => __$GroupCopyWithImpl<_Group>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Group&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.description, description) || other.description == description)&&(identical(other.color, color) || other.color == color)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastMessagePreview, lastMessagePreview) || other.lastMessagePreview == lastMessagePreview)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.suspendedAt, suspendedAt) || other.suspendedAt == suspendedAt)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.timeZone, timeZone) || other.timeZone == timeZone)&&(identical(other.settings, settings) || other.settings == settings)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes)&&(identical(other.storageQuotaCustom, storageQuotaCustom) || other.storageQuotaCustom == storageQuotaCustom)&&(identical(other.chatTheme, chatTheme) || other.chatTheme == chatTheme)&&const DeepCollectionEquality().equals(other.pinnedMessageIds, _pinnedMessageIds));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Group&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.sport, sport) || other.sport == sport)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.description, description) || other.description == description)&&(identical(other.color, color) || other.color == color)&&(identical(other.lastMessageAt, lastMessageAt) || other.lastMessageAt == lastMessageAt)&&(identical(other.lastMessagePreview, lastMessagePreview) || other.lastMessagePreview == lastMessagePreview)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.suspendedAt, suspendedAt) || other.suspendedAt == suspendedAt)&&(identical(other.ownerId, ownerId) || other.ownerId == ownerId)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.timeZone, timeZone) || other.timeZone == timeZone)&&(identical(other.settings, settings) || other.settings == settings)&&(identical(other.storageBytes, storageBytes) || other.storageBytes == storageBytes)&&(identical(other.storageQuotaBytes, storageQuotaBytes) || other.storageQuotaBytes == storageQuotaBytes)&&(identical(other.storageQuotaCustom, storageQuotaCustom) || other.storageQuotaCustom == storageQuotaCustom)&&(identical(other.chatTheme, chatTheme) || other.chatTheme == chatTheme)&&const DeepCollectionEquality().equals(other.pinnedMessageIds, _pinnedMessageIds)&&const DeepCollectionEquality().equals(other.uids, _uids)&&const DeepCollectionEquality().equals(other.people, _people)&&(identical(other.lastMessageAuthorId, lastMessageAuthorId) || other.lastMessageAuthorId == lastMessageAuthorId)&&(identical(other.lastMessageText, lastMessageText) || other.lastMessageText == lastMessageText));
 }
 
 
 @override
 int get hashCode {
-    return Object.hashAll([runtimeType,id,name,sport,memberCount,kind,description,color,lastMessageAt,lastMessagePreview,archivedAt,suspendedAt,ownerId,photoPath,timeZone,settings,storageBytes,storageQuotaBytes,storageQuotaCustom,chatTheme,const DeepCollectionEquality().hash(_pinnedMessageIds)]);
+    return Object.hashAll([runtimeType,id,name,sport,memberCount,kind,description,color,lastMessageAt,lastMessagePreview,archivedAt,suspendedAt,ownerId,photoPath,timeZone,settings,storageBytes,storageQuotaBytes,storageQuotaCustom,chatTheme,const DeepCollectionEquality().hash(_pinnedMessageIds),const DeepCollectionEquality().hash(_uids),const DeepCollectionEquality().hash(_people),lastMessageAuthorId,lastMessageText]);
 }
 
 @override
 String toString() {
-    return 'Group(id: $id, name: $name, sport: $sport, memberCount: $memberCount, kind: $kind, description: $description, color: $color, lastMessageAt: $lastMessageAt, lastMessagePreview: $lastMessagePreview, archivedAt: $archivedAt, suspendedAt: $suspendedAt, ownerId: $ownerId, photoPath: $photoPath, timeZone: $timeZone, settings: $settings, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes, storageQuotaCustom: $storageQuotaCustom, chatTheme: $chatTheme, pinnedMessageIds: $pinnedMessageIds)';
+    return 'Group(id: $id, name: $name, sport: $sport, memberCount: $memberCount, kind: $kind, description: $description, color: $color, lastMessageAt: $lastMessageAt, lastMessagePreview: $lastMessagePreview, archivedAt: $archivedAt, suspendedAt: $suspendedAt, ownerId: $ownerId, photoPath: $photoPath, timeZone: $timeZone, settings: $settings, storageBytes: $storageBytes, storageQuotaBytes: $storageQuotaBytes, storageQuotaCustom: $storageQuotaCustom, chatTheme: $chatTheme, pinnedMessageIds: $pinnedMessageIds, uids: $uids, people: $people, lastMessageAuthorId: $lastMessageAuthorId, lastMessageText: $lastMessageText)';
 }
 
 
@@ -914,7 +1211,7 @@ abstract mixin class _$GroupCopyWith<$Res> implements $GroupCopyWith<$Res> {
   factory _$GroupCopyWith(_Group value, $Res Function(_Group) _then) = __$GroupCopyWithImpl;
 @override @useResult
 $Res call({
- GroupId id, String name, Sport sport, int memberCount, GroupKind kind, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, bool storageQuotaCustom, ChatTheme? chatTheme, List<String> pinnedMessageIds
+ GroupId id, String name, Sport sport, int memberCount, GroupKind kind, String? description, int? color, DateTime? lastMessageAt, String? lastMessagePreview, DateTime? archivedAt, DateTime? suspendedAt, String? ownerId, String? photoPath, String timeZone, GroupSettings settings, int storageBytes, int storageQuotaBytes, bool storageQuotaCustom, ChatTheme? chatTheme, List<String> pinnedMessageIds, List<String> uids, Map<String, DirectPerson> people, String? lastMessageAuthorId, String? lastMessageText
 });
 
 
@@ -931,7 +1228,7 @@ class __$GroupCopyWithImpl<$Res>
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? memberCount = null,Object? kind = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? storageQuotaCustom = null,Object? chatTheme = freezed,Object? pinnedMessageIds = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? sport = null,Object? memberCount = null,Object? kind = null,Object? description = freezed,Object? color = freezed,Object? lastMessageAt = freezed,Object? lastMessagePreview = freezed,Object? archivedAt = freezed,Object? suspendedAt = freezed,Object? ownerId = freezed,Object? photoPath = freezed,Object? timeZone = null,Object? settings = null,Object? storageBytes = null,Object? storageQuotaBytes = null,Object? storageQuotaCustom = null,Object? chatTheme = freezed,Object? pinnedMessageIds = null,Object? uids = null,Object? people = null,Object? lastMessageAuthorId = freezed,Object? lastMessageText = freezed,}) {
   return _then(_Group(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as GroupId,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
@@ -953,7 +1250,11 @@ as int,storageQuotaBytes: null == storageQuotaBytes ? _self.storageQuotaBytes : 
 as int,storageQuotaCustom: null == storageQuotaCustom ? _self.storageQuotaCustom : storageQuotaCustom // ignore: cast_nullable_to_non_nullable
 as bool,chatTheme: freezed == chatTheme ? _self.chatTheme : chatTheme // ignore: cast_nullable_to_non_nullable
 as ChatTheme?,pinnedMessageIds: null == pinnedMessageIds ? _self._pinnedMessageIds : pinnedMessageIds // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,uids: null == uids ? _self._uids : uids // ignore: cast_nullable_to_non_nullable
+as List<String>,people: null == people ? _self._people : people // ignore: cast_nullable_to_non_nullable
+as Map<String, DirectPerson>,lastMessageAuthorId: freezed == lastMessageAuthorId ? _self.lastMessageAuthorId : lastMessageAuthorId // ignore: cast_nullable_to_non_nullable
+as String?,lastMessageText: freezed == lastMessageText ? _self.lastMessageText : lastMessageText // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

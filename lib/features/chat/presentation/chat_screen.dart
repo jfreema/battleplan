@@ -22,6 +22,8 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/polls/polls.dart';
+import 'package:battleplan/features/safety/application/providers.dart';
+import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -32,7 +34,9 @@ const _groupGap = Duration(minutes: 5);
 
 /// The team chat (CHAT-1, CHAT-2): newest at the bottom, 50 at a time, with
 /// older pages loading as you scroll up, date separators, and messages
-/// grouped by sender.
+/// grouped by sender. A direct conversation (CHAT-19) uses it too, without
+/// what's a team's: polls, announcements, @mentions, pins, and the chat
+/// look.
 class ChatScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, this.initialMessageId, super.key});
 
@@ -208,7 +212,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (!(ModalRoute.isCurrentOf(context) ?? true)) return false;
     if (ref.read(viewingAsSuperAdminProvider(widget.groupId))) return false;
     final group = ref.read(groupProvider(widget.groupId)).value;
-    return group != null && !group.isArchived;
+    return group != null && !group.isArchived && !_blockedOther(group);
+  }
+
+  /// In a direct conversation, whether I blocked the other person, so I
+  /// can't message them (SAFE-2).
+  bool _blockedOther(Group group) {
+    if (!group.isDirect) return false;
+    final other = group.otherThan(ref.read(authUserProvider).value?.uid);
+    return other != null && ref.read(blockedIdsProvider).contains(other);
+  }
+
+  /// Storage is full (STORE-4): the team's notice, or a conversation's.
+  void _showFull() {
+    final group = ref.read(groupProvider(widget.groupId)).value;
+    if (group?.isDirect ?? false) {
+      showAppSnackBar(context, AppLocalizations.of(context).directStorageFull);
+    } else {
+      showStorageFull(context);
+    }
   }
 
   /// Pasted or dropped photos (CHAT-2) send as picked ones do (CHAT-3),
@@ -413,6 +435,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final me = ref.watch(authUserProvider).value?.uid;
     final group = ref.watch(groupProvider(widget.groupId)).value;
     final archived = group?.isArchived ?? false;
+    // A direct conversation (CHAT-19): the other person, and whether I
+    // blocked them, which stops me messaging them (SAFE-2).
+    final direct = group?.isDirect ?? false;
+    final otherUid = direct ? group?.otherThan(me) : null;
+    final otherName = otherUid == null
+        ? ''
+        : group?.people[otherUid]?.name ?? '';
+    final blockedOther =
+        otherUid != null && ref.watch(blockedIdsProvider).contains(otherUid);
     // A super admin viewing the team reads it and moderates, nothing more
     // (ADMIN-3): no composer, replies, or reactions.
     final viewing = ref.watch(viewingAsSuperAdminProvider(widget.groupId));
@@ -428,14 +459,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final messages = chat.messages;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final picker = ref.watch(photoPickerProvider);
-    final candidates = ref.watch(mentionCandidatesProvider(widget.groupId));
+    // Nobody to @mention in a conversation for two.
+    final candidates = direct
+        ? const <MentionCandidate>[]
+        : ref.watch(mentionCandidatesProvider(widget.groupId));
     final byId = {for (final m in messages) m.id: m};
     final membership = ref.watch(myMembershipProvider(widget.groupId));
     // Team admins, and super admins on the team (§3): @everyone,
-    // announcements, and polls.
+    // announcements, and polls. Nobody is one in a conversation.
     final isAdmin =
-        (membership?.isAdmin ?? false) ||
-        (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
+        !direct &&
+        ((membership?.isAdmin ?? false) ||
+            (ref.watch(authUserProvider).value?.isSuperAdmin ?? false));
     // The bar at the top, newest pin first (CHAT-15).
     final pinnedIds = ref.watch(pinnedMessageIdsProvider(widget.groupId));
     if (!_openedMarkerTaken &&
@@ -498,7 +533,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           online: chat.online,
           // Retrying into full storage would only fail again (STORE-4).
           onRetry: storageFull
-              ? () => showStorageFull(context)
+              ? _showFull
               : () => unawaited(
                   controller.retryPhotos(item.id).catchError((_) {}),
                 ),
@@ -594,7 +629,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (chat.loading) {
       list = const SkeletonList();
     } else if (messages.isEmpty && pending.isEmpty) {
-      list = EmptyState(icon: AppIcons.chat, message: l10n.chatEmpty);
+      list = EmptyState(
+        icon: direct ? AppIcons.directMessage : AppIcons.chat,
+        message: direct ? l10n.directEmpty(otherName) : l10n.chatEmpty,
+      );
     } else {
       final scrollView = CustomScrollView(
         key: _listKey,
@@ -678,8 +716,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
               // Files dragged over the page (web): where they'll go.
-              if (_dragging && !viewing && !archived)
-                Positioned.fill(child: _DropHint(storageFull: storageFull)),
+              if (_dragging && !viewing && !archived && !blockedOther)
+                Positioned.fill(
+                  child: _DropHint(storageFull: storageFull, direct: direct),
+                ),
             ],
           ),
         ),
@@ -691,11 +731,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         else if (archived)
           Padding(
             padding: const EdgeInsets.all(Space.lg),
-            child: Text(l10n.chatArchived, textAlign: TextAlign.center),
+            // A conversation closes when the other person deletes their
+            // account (CHAT-19).
+            child: Text(
+              direct ? l10n.directClosed : l10n.chatArchived,
+              textAlign: TextAlign.center,
+            ),
+          )
+        else if (blockedOther)
+          Padding(
+            padding: const EdgeInsets.all(Space.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.directBlockedByMe(otherName),
+                  textAlign: TextAlign.center,
+                ),
+                TextButton(
+                  onPressed: () =>
+                      unawaited(unblock(context, ref, UserId(otherUid))),
+                  child: Text(l10n.unblock),
+                ),
+              ],
+            ),
           )
         else
           Composer(
-            teamName: group?.name ?? '',
+            // "Message Thunder…", or the other person's name.
+            teamName: direct ? otherName : group?.name ?? '',
             replyingTo: _replyTo,
             onCancelReply: () => setState(() => _replyTo = null),
             mentionCandidates: candidates,
@@ -735,12 +799,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             // Polls (POLL-1) for admins, and for members if the team allows
             // it (TEAM-5). Full storage doesn't stop them (STORE-4).
             onCreatePoll:
-                isAdmin || (group?.settings.membersCanCreatePolls ?? false)
+                !direct &&
+                    (isAdmin ||
+                        (group?.settings.membersCanCreatePolls ?? false))
                 ? () => unawaited(_createPoll(controller))
                 : null,
-            onAttachBlocked: storageFull
-                ? () => showStorageFull(context)
-                : null,
+            onAttachBlocked: storageFull ? _showFull : null,
           ),
       ],
     );
@@ -753,7 +817,7 @@ extension on _ChatScreenState {
   bool _fullAfterPicking() {
     final full =
         ref.read(groupProvider(widget.groupId)).value?.storageFull ?? false;
-    if (full && mounted) showStorageFull(context);
+    if (full && mounted) _showFull();
     return full;
   }
 
@@ -1062,9 +1126,12 @@ class _DateSeparator extends StatelessWidget {
 /// "Drop photos to send" over the chat while files are dragged over the
 /// page (SPEC §4.2), or why they can't be added.
 class _DropHint extends StatelessWidget {
-  const new({required this.storageFull});
+  const new({required this.storageFull, this.direct = false});
 
   final bool storageFull;
+
+  /// A direct conversation's storage, not a team's (CHAT-19).
+  final bool direct;
 
   @override
   Widget build(BuildContext context) {
@@ -1082,7 +1149,11 @@ class _DropHint extends StatelessWidget {
                 Icon(AppIcons.photo, size: 48, color: scheme.primary),
                 const SizedBox(height: Space.md),
                 Text(
-                  storageFull ? l10n.storageFullMessage : l10n.chatDropPhotos,
+                  !storageFull
+                      ? l10n.chatDropPhotos
+                      : direct
+                      ? l10n.directStorageFull
+                      : l10n.storageFullMessage,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),

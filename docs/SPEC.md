@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft v0.3 |
 | **Owner** | Jared Freeman |
-| **Last updated** | 2026-10-12 |
+| **Last updated** | 2026-10-16 |
 | **Companion doc** | [ARCHITECTURE.md](ARCHITECTURE.md): how it's built ("ARCH §n" below) |
 
 ---
@@ -124,6 +124,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Accessibility and translation-ready text (§7.6, §7.7) | Good practice, and cheap if done from the start |
 | An explainer website at `getbattleplan.app`, with the web app at `/app` (§4.3) | A place to explain Battleplan, host the legal pages, and send people to the stores or the web app |
 | Everything free with no ads, and a 200 MB storage limit per team with a Media section to free space (§6.14, [PLANS.md](PLANS.md)) | Keeps adoption easy while capping what one team can cost (Q4); ads may come once adoption justifies them |
+| Direct messages and a page for each person (CHAT-19, TEAM-15) | The owner's request (2026-10-16): coaches and parents message one to one, as they did in GroupMe, and see who's who across the teams they share |
 
 ---
 
@@ -149,6 +150,8 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Share your own phone and email with the team (TEAM-10) | ✓ | ✓ | ✓ | in teams they've joined |
 | **Delete anyone's message** | — | ✓ | ✓ | ✓ |
 | Mention people with @ (CHAT-14) | ✓ | ✓ | ✓ | in teams they've joined |
+| Message someone you share a team with, one to one (CHAT-19) | ✓ | ✓ | ✓ | on teams they've joined |
+| Read a direct conversation (CHAT-19) | their own | their own | their own | their own; others' only what's reported (SAFE-1) |
 | Mention @everyone; send announcements; pin messages (CHAT-14, CHAT-15) | — | ✓ | ✓ | pin any team; others in teams they've joined |
 | Create polls | setting (on) | ✓ | ✓ | in teams they've joined |
 | Close any poll | — | ✓ | ✓ | ✓ |
@@ -240,7 +243,9 @@ Sign in
  ├─ First time → Profile setup (name, photo, 18+ confirmation, terms)
  │     └─ No teams yet → Welcome: [Join a team]  [Create a team]
  └─ Team view (opens the last team you used)
-      ├─ Header:     team switcher ▾ · notification bell · team menu ⋯ · your avatar
+      ├─ Header:     team switcher ▾ · Messages · notification bell · team menu ⋯ · your avatar
+      ├─ Messages:   your direct conversations → one of them (CHAT-19)
+      ├─ A person:   their page, from their photo in chat or the roster (TEAM-15)
       ├─ Tabs:       Chat | Schedule | Documents | Plays
       ├─ Team menu:  Roster · Invite · Notifications for this team ·
       │              Team settings* · Media* · Reports* · Import*    (* admins)
@@ -405,7 +410,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **TEAM-2 · MVP · Many teams per person.**
   - A person can be on up to 100 teams and switches between them with the team switcher (§5.2).
   - Each team has its own chat, schedule, documents, members, admins, settings, and notification level.
-  - Teams are walled off from each other. Nothing shows which other teams a member belongs to.
+  - Teams are walled off from each other. Nothing shows which other teams a member belongs to: a person's page (TEAM-15) lists only the teams you share with them.
 - **TEAM-3 · MVP · Roster screen.**
   - A **Players** section on every team (jersey number, name, and who's linked: "Player" or "Guardian"), then sections for **Coaches**, Admins, and Members. Each member shows their players: a guardian shows "Emma #7", and a member who is a player shows their number (PLAYER-8).
   - **Who sees the people:** with the team setting "Everyone can see who's on the team" off (TEAM-5), members see the players, the coaches, and their own card (which has Leave team), and a line saying the admins keep the rest private; admins see everyone. Names still show where people act, as authors in chat and on RSVPs.
@@ -414,6 +419,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Each person row shows a photo or initials, name, title, role badge (Owner/Admin), and "Not joined yet" for added accounts.
   - Search by name.
   - Tap a person to open their card: photo, name, title, role, Coach, their players, and only the actions you're allowed. Actions: Make admin / Remove admin, Edit title, Coach (on or off), Remove from team, Resend setup email, Report, Block.
+  - Someone else's card also has **Message** (CHAT-19), when they've joined and you haven't blocked them, and **Profile**, their page (TEAM-15).
   - Tap a player to open the player card (PLAYER-2).
 - **TEAM-4 · MVP · Team admins.**
   - The owner and admins run the team (§3).
@@ -455,6 +461,14 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Copying a team for a new season (members and settings).
   - Organizations and leagues with club admins.
   - Sub-chats within a team ("Parents", "Coaches").
+
+- **TEAM-15 · MVP · A person's page.** Owner's request (2026-10-16): "click on another user's icon to get to their user profile page… show what teams they're a member of and if they're a coach show that as well."
+  - **Opening it:** tap someone's photo beside their messages in a team's chat or a direct conversation, **Profile** on their roster card (TEAM-3), or their name at the top of a direct conversation (CHAT-19).
+  - **What it shows:** their photo and name, **Message** (CHAT-19), and **Teams in common**: each team you're both on, with its badge and what they are there: Coach, Owner or Admin, their title, and who's who from their players ("Player #12", "Parent of Emma #7", PLAYER-8), or Member. Teams they coach come first. Tapping a team opens their card on that team, with what they share there (TEAM-10) and the actions you have there.
+  - **Only teams you share.** Teams stay walled off (TEAM-2): a team you're not on never shows. A team that keeps its people to its admins (TEAM-3) shows only when they coach it, you're one of its admins, or you opened the page from that team, where you've already seen them.
+  - Its menu has **Block** or **Unblock** (SAFE-2), and **Report** on a team you share (SAFE-1).
+  - **Your own page** lists all your teams, with **Edit profile** (SET-1).
+  - Someone you share no team or conversation with shows only "This person isn't on any of your teams."
 
 ### 6.3 Players, guardians, and claims (PLAYER)
 
@@ -649,9 +663,18 @@ Players that others answer for never get accounts, and every account belongs to 
   - Message search, which needs a search service or SQL (ARCH §12).
   - Link previews, GIFs, video, voice notes.
   - Typing indicators and read receipts.
-  - Direct messages (Q5).
 
 - **CHAT-18 · MVP · Chat look.** Team admins choose the chat's message color (the team color or any of the 13 palette colors) and background (plain, a subtle pattern, or a photo), which everyone on the team sees, with text kept readable (WCAG AA).
+- **CHAT-19 · MVP · Direct messages.** Owner's request (2026-10-16): "add a direct messaging feature that allows users to directly message each other." Q5 had put them after launch.
+  - **The same chat, for two.** A conversation works as a team's chat does: text, photos (CHAT-3), replies (CHAT-13), reactions (CHAT-6), editing and deleting your own (CHAT-8, CHAT-15), delivery states and the offline queue (CHAT-4), links (CHAT-5), the read position across devices, and the language filter (SAFE-7). What belongs to a team isn't there: polls, announcements, @mentions, pins, the chat look, and system lines.
+  - **Who you can message:** anyone you share a team with who has joined (not "Not joined yet"), from **Message** on their page (TEAM-15) or their roster card (TEAM-3), or from **New message** in Messages, which lists the people your rosters show you (TEAM-3) with the teams you share, searchable by name. A suspended team doesn't count. Once started, a conversation stays, even when you no longer share a team.
+  - **Messages:** the two-bubbles button in the header, beside the bell, on every screen size. It counts the conversations with unread messages, muted ones left out, and opens Messages: your conversations, newest first, each with the other person's photo and name, the newest message ("You: …" for yours), when, and how many you haven't read (gray when muted). A conversation shows there once it has a message. **New message** starts one.
+  - **A conversation:** the other person's photo and name at the top, which open their page, and a menu with Profile, Mute or Unmute (pushes only; unread counts stay, NOTIF-3), and Block or Unblock. An empty one says "Say hi to Jordan. Only the two of you see this conversation."
+  - **Private.** Only the two people read it, not super admins, who can read team content (LEGAL-1). A report (SAFE-1) shows super admins what was reported, and they act on it from the admin panel.
+  - **Blocking (SAFE-2).** You can't message someone you blocked: the composer says so, with Unblock. Someone you blocked can still send, unknowing, but nothing reaches you: their conversation leaves your Messages, their messages are collapsed if you open it, and you get no notification. Nobody is told they're blocked.
+  - **A deleted account (AUTH-10).** The other person keeps the conversation, read-only, with the messages from "Deleted user", and can still delete their own. A conversation nobody is left in is deleted with everything in it.
+  - **Photos:** a conversation holds up to 50 MB of photos, apart from any team's storage (STORE-1). Once full it says so, and text still sends.
+  - **Limits (SAFE-5):** 20 new conversations per person per day; sending is spaced as in team chat, 1 message a second.
 
 **Acceptance (MVP)**
 
@@ -822,18 +845,19 @@ Players that others answer for never get accounts, and every account belongs to 
   | Storage 90% full, or full (STORE-3, STORE-4) | Team admins | **Yes** | ✓ | MVP |
   | @mention (CHAT-14) | The people mentioned; everyone, for an admin's @everyone | **Yes** | ✓ | v1.1 (built) |
   | Announcement (CHAT-15) | Everyone except the sender | **Yes** | ✓ | v1.1 (built) |
+  | Direct message (CHAT-19) | The other person in the conversation | **Yes** | — | MVP |
   | RSVP nudge | People who haven't answered\* | **Yes** | ✓ | v1.1 |
 
   \* For players, these go to the member who is the player and to the guardians of the matching players, plus members who answered for themselves (PLAYER-7).
 
-  Plain chat messages don't appear in the notification center; unread counts cover them (CHAT-9).
+  Plain chat messages and direct messages don't appear in the notification center; unread counts and Messages cover them (CHAT-9, CHAT-19).
 - **NOTIF-3 · MVP · Notification settings for each team.**
   - Set them from the team menu ("Notifications for this team") or from Settings → Notifications. They sync across your devices.
   - **Level:** All activity (default), Important only, or Off.
   - **Mute** for 1 hour, 8 hours, 1 week, or until unmuted. Muted teams show a muted icon, and their unread counts turn gray.
   - These settings control pushes only. Notification-center items and unread counts still appear, so nothing is lost.
-- **NOTIF-4 · MVP · Global switches.** Settings → Notifications has switches for Messages, Replies, Mentions (v1.1, CHAT-14), Polls, New events, Event changes, Reminders, and Documents. They apply to every team. Announcements have no switch (CHAT-15).
-- **NOTIF-5 · MVP · Wording.** The title is always the team name. Examples:
+- **NOTIF-4 · MVP · Global switches.** Settings → Notifications has switches for Messages, Direct messages (CHAT-19), Replies, Mentions (v1.1, CHAT-14), Polls, New events, Event changes, Reminders, and Documents. They apply to every team. Announcements have no switch (CHAT-15).
+- **NOTIF-5 · MVP · Wording.** The title is the team name, or for a direct message the sender's name, with the message alone as the text ("See you at 6", "Sent a photo", CHAT-19). Examples:
   - "Alex: Field 3 is open"
   - "Alex replied to you: Sounds good"
   - "Alex mentioned you: Can you bring the cones?" (CHAT-14)
@@ -843,7 +867,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - "New game: vs. Eagles · Sat Oct 18, 10:00 AM"
   - "Emma, Liam: Practice today at 6:00 PM" (to a guardian; no names for a member's own player)
 - **NOTIF-6 · MVP · Tap to open.** Tapping a notification opens the exact message, poll, event, or document, switching teams if needed.
-- **NOTIF-7 · MVP · While the app is open.** A small in-app banner appears instead of a system notification. Nothing appears if you're already in that team's chat.
+- **NOTIF-7 · MVP · While the app is open.** A small in-app banner appears instead of a system notification. Nothing appears if you're already in that team's chat, or in that conversation (CHAT-19).
 - **NOTIF-8 · MVP · Grouping.** The phone's notification list groups Battleplan notifications by team.
 - **NOTIF-9 · MVP · Web.**
   - Browser notifications work after permission is granted, even with the tab closed.
@@ -890,7 +914,7 @@ This is for platform operators (super admins) to manage every team and user.
 **Requirements**
 
 - **ADMIN-1 · MVP · Dashboard.** Totals for:
-  - users and teams;
+  - users and teams (direct conversations, CHAT-19, aren't teams and don't count);
   - new teams this week;
   - active teams (a message in the last 7 days);
   - messages in the last 7 days;
@@ -924,6 +948,7 @@ This is for platform operators (super admins) to manage every team and user.
   - Open reports from every team, with a content preview, the reporter, and the team.
   - Actions: delete the content, remove the person from the team, disable the person, suspend the team, or dismiss.
   - Each resolution saves a note.
+  - A report from a direct conversation (CHAT-19) says **Direct message** instead of a team, and offers delete the message, disable the person, or dismiss: there's no team to remove anyone from or suspend.
 - **ADMIN-6 · MVP · Audit log.**
   - Records every admin or destructive action: who, what, which team, when, and before/after values.
   - Filter by person, action, team, or date.
@@ -955,10 +980,12 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Reasons: Spam, Harassment or bullying, Inappropriate content, or Other, plus optional details.
   - The report goes to the team's admins (Team menu → Reports) and to the super-admin queue; a report about one of the team's admins goes to the super-admin queue only (SAFE-4). The form says so before it's sent.
   - The reporter gets a confirmation that it will be reviewed within 24 hours. The reported person is never told who reported them.
+  - A report from a direct conversation (CHAT-19) goes to the super-admin queue only, since a conversation has no admins. The form says so.
 - **SAFE-2 · MVP · Block.**
   - Hides that person's messages from you (collapsed) and stops notifications from them, in every team.
   - They aren't told.
   - Blocking doesn't remove anyone from a team.
+  - In direct messages (CHAT-19) you can't message someone you blocked, and what they send never reaches you: their conversation leaves your Messages, and you aren't notified.
 - **SAFE-3 · MVP · Terms.** Everyone accepts the Terms of Use at sign-up, including zero tolerance for objectionable content and abusive behavior.
 - **SAFE-4 · MVP · Acting on reports.**
   - Team admins act in their own team: delete content, remove members.
@@ -978,6 +1005,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
     | Invite code attempts | 20 per person per hour |
     | Player claims and added players | 10 per person per day |
     | Reports | 20 per person per day |
+    | Starting direct conversations (CHAT-19) | 20 per person per day |
     | Reposting an event to chat | 1 per event per hour |
     | Web error reports | 30 per IP address per hour |
     | Security notice emails | 10 per person per day |
@@ -1006,7 +1034,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Linked from sign-in, Settings, the store listings, and the Apple developer settings.
   - The Privacy Policy covers:
     - what we collect: name, email, photo, messages, files, the phone number and email members choose to share with a team (TEAM-10), device tokens, usage analytics, crash reports, and the player records members enter on any team (name, jersey number, walk-up song, plus the optional details in PLAYER-12: date of birth, emergency contacts, medical notes, and notes, seen only by the team's admins and the player's linked people). Some player records are managed by parents and may be children's. Medical notes are health information and are saved only with consent;
-    - that super admins can access content for moderation and support;
+    - that super admins can access team content for moderation and support, and see a direct message (CHAT-19) only when it's reported;
     - how long data is kept;
     - how to delete it.
   - The Terms of Use require account holders to be 18 or older.
@@ -1474,7 +1502,6 @@ When to buy or set up each item is in [TODO.md](../TODO.md). Purchases happen ju
 
 Not in v1; some may come later:
 
-- Direct messages (Q5)
 - Sub-chats or channels within a team
 - Organizations and leagues
 - A public team directory
@@ -1506,7 +1533,7 @@ Each question has a default. The build follows the default until someone decides
 | Q2 | ~~Will youth players use Battleplan?~~ **Decided:** no. Accounts are for adults (18+), and parents and guardians answer for youth players (§6.3). **2026-10-12:** adult players can be members and claim their own player ("I am this player"). | — |
 | Q3 | ~~Who can create teams?~~ **Decided 2026-10-11:** anyone with a verified email; super admins can turn it off. | — |
 | Q4 | ~~How will the platform be paid for once there are hundreds of teams?~~ **Decided 2026-10-12:** everything is free with no ads for now; ads may come once adoption justifies them (ROADMAP "Ads, later"). Each team has a storage limit, 200 MB since 2026-10-15 (500 MB before), that a super admin can change for every team or give one team its own (§6.14). A paid plan was planned on 2026-10-11 and dropped. | — |
-| Q5 | ~~Are direct messages needed at launch?~~ **Decided 2026-10-12 (the recommended default):** later, not at launch. | — |
+| Q5 | ~~Are direct messages needed at launch?~~ **Decided 2026-10-12 (the recommended default):** later, not at launch. **2026-10-16 (the owner's request):** built (CHAT-19). | — |
 | Q6 | ~~Reactions: one per person per message, or several?~~ **Decided 2026-10-12 (the recommended default):** one. | — |
 | Q7 | ~~On wide screens, bottom tabs or a side rail?~~ **Decided 2026-10-12 (the recommended default):** a side rail at 840 px and wider. | — |
 | Q8 | ~~What domain name for invite links and email?~~ **Decided:** `getbattleplan.app`, registered at Cloudflare ($8.20 the first year, then $14.20/year). battleplan.com, .app, and .io are taken. App ID `app.getbattleplan` (`.dev` for dev builds). | — |

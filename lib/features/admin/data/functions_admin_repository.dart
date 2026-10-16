@@ -503,6 +503,7 @@ AdminReport _report(Map<String, dynamic> r) => AdminReport(
   id: _str(r['id']),
   groupId: GroupId(_str(r['groupId'])),
   groupName: _str(r['groupName']),
+  direct: r['direct'] == true,
   targetType:
       ReportTargetType.values.asNameMap()[r['targetType']] ??
       ReportTargetType.message,

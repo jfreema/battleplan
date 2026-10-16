@@ -3,4 +3,5 @@
 library;
 
 export 'presentation/notification_bell.dart' show NotificationBell;
+export 'presentation/notification_labels.dart' show relativeTime;
 export 'presentation/push_pre_prompt.dart' show NotificationPrePrompt;

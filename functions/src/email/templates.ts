@@ -89,9 +89,24 @@ export function securityNoticeEmail(to: string, change: string): Email {
  */
 export function reportAlertEmail(
   to: string,
-  report: { teamName: string; what: string; reason: string; teamVisible: boolean },
+  report: { teamName: string; what: string; reason: string; teamVisible: boolean; direct?: boolean },
   url: string,
 ): Email {
+  // A direct conversation (CHAT-19) has no team or admins: only super admins act.
+  if (report.direct) {
+    return {
+      to,
+      subject: `New report in a direct message: ${report.what}`,
+      ...layout(
+        [
+          `Someone reported ${report.what} in a direct message (${report.reason}).`,
+          'Direct messages have no team admins, so only super admins see it.',
+          'Battleplan promises to act on every report within 24 hours.',
+        ],
+        { label: 'Open reports', url },
+      ),
+    };
+  }
   return {
     to,
     subject: `New report on ${report.teamName}: ${report.what}`,

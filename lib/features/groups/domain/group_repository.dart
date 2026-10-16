@@ -53,6 +53,14 @@ abstract interface class GroupRepository {
   /// A URL to show a stored team photo, or null.
   Future<String?> photoUrl(String path);
 
+  /// Opens my direct conversation with [other] through `openDirectChat`,
+  /// making it the first time (CHAT-19), and returns its ID. Throws
+  /// `PermissionDenied('no-shared-team')` when we share no team,
+  /// `InvalidInput('not-available')` for someone who hasn't joined or is
+  /// gone, `InvalidInput('blocked')` for someone I blocked, and
+  /// `RateLimited` past the day's new conversations.
+  Future<GroupId> openDirectChat(UserId other);
+
   /// Creates a team with the caller as owner (TEAM-1) and returns its ID.
   /// [color] is one of the 15 team colors as `#RRGGBB`.
   Future<GroupId> createGroup({
@@ -66,7 +74,17 @@ abstract interface class GroupRepository {
 
 abstract interface class MemberRepository {
   /// The caller's own memberships, one per team (at most 100, TEAM-2).
+  /// Direct conversations aren't teams and aren't in it (CHAT-19).
   Stream<List<Membership>> watchMyMemberships(UserId uid);
+
+  /// The caller's direct conversations that have messages, newest first,
+  /// up to 100 (CHAT-19): their memberships, which carry the other person,
+  /// the read marker, the mute, and when each last had a message.
+  Stream<List<Membership>> watchMyDirectChats(UserId uid);
+
+  /// One person's membership of a team I'm on, live, or null when they
+  /// aren't on it (the person page, TEAM-15).
+  Stream<Membership?> watchMember(GroupId groupId, UserId uid);
 
   /// A team's roster (TEAM-3). Readable by its members.
   Stream<List<Membership>> watchRoster(GroupId groupId);

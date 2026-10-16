@@ -145,6 +145,146 @@ final class MyMembershipsProvider
 
 String _$myMembershipsHash() => r'3c7f5221b372f48e0de076a2a0b4941b6e9a3500';
 
+/// My direct conversations that have messages, newest first (CHAT-19):
+/// my memberships of them, one query. Enough for the Messages badge; the
+/// list reads each conversation too.
+
+@ProviderFor(myDirectMemberships)
+final myDirectMembershipsProvider = MyDirectMembershipsProvider._();
+
+/// My direct conversations that have messages, newest first (CHAT-19):
+/// my memberships of them, one query. Enough for the Messages badge; the
+/// list reads each conversation too.
+
+final class MyDirectMembershipsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Membership>>,
+          List<Membership>,
+          Stream<List<Membership>>
+        >
+    with $FutureModifier<List<Membership>>, $StreamProvider<List<Membership>> {
+  /// My direct conversations that have messages, newest first (CHAT-19):
+  /// my memberships of them, one query. Enough for the Messages badge; the
+  /// list reads each conversation too.
+  MyDirectMembershipsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myDirectMembershipsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myDirectMembershipsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Membership>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Membership>> create(Ref ref) {
+    return myDirectMemberships(ref);
+  }
+}
+
+String _$myDirectMembershipsHash() =>
+    r'6dff2163aa1c18a727054b0a4fb12326bf0d8b2c';
+
+/// Someone's membership of a team I'm on, live, or null when they aren't
+/// on it (the person page, TEAM-15); or mine of a direct conversation.
+
+@ProviderFor(member)
+final memberProvider = MemberFamily._();
+
+/// Someone's membership of a team I'm on, live, or null when they aren't
+/// on it (the person page, TEAM-15); or mine of a direct conversation.
+
+final class MemberProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Membership?>,
+          Membership?,
+          Stream<Membership?>
+        >
+    with $FutureModifier<Membership?>, $StreamProvider<Membership?> {
+  /// Someone's membership of a team I'm on, live, or null when they aren't
+  /// on it (the person page, TEAM-15); or mine of a direct conversation.
+  MemberProvider._({
+    required MemberFamily super.from,
+    required (GroupId, UserId) super.argument,
+  }) : super(
+         retry: null,
+         name: r'memberProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$memberHash();
+
+  @override
+  String toString() {
+    return r'memberProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<Membership?> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<Membership?> create(Ref ref) {
+    final argument = this.argument as (GroupId, UserId);
+    return member(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MemberProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$memberHash() => r'da2a66c34aa58bf7f4232679de23065a2bebd20a';
+
+/// Someone's membership of a team I'm on, live, or null when they aren't
+/// on it (the person page, TEAM-15); or mine of a direct conversation.
+
+final class MemberFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<Membership?>, (GroupId, UserId)> {
+  MemberFamily._()
+    : super(
+        retry: null,
+        name: r'memberProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Someone's membership of a team I'm on, live, or null when they aren't
+  /// on it (the person page, TEAM-15); or mine of a direct conversation.
+
+  MemberProvider call(GroupId groupId, UserId uid) =>
+      MemberProvider._(argument: (groupId, uid), from: this);
+
+  @override
+  String toString() => r'memberProvider';
+}
+
 /// A team, live. One you can't read (removed, deleted, or suspended)
 /// reads as null, and its read ends there. A suspension can be lifted with
 /// nothing to tell its members, so while it's null the read starts over:
@@ -439,17 +579,23 @@ final class RosterFamily extends $Family
   String toString() => r'rosterProvider';
 }
 
-/// The signed-in person's membership on [groupId], if any.
+/// The signed-in person's membership on [groupId], if any: of a team, or
+/// of a direct conversation (CHAT-19), which isn't among my teams and is
+/// read on its own, only once the conversation shows it's one.
 
 @ProviderFor(myMembership)
 final myMembershipProvider = MyMembershipFamily._();
 
-/// The signed-in person's membership on [groupId], if any.
+/// The signed-in person's membership on [groupId], if any: of a team, or
+/// of a direct conversation (CHAT-19), which isn't among my teams and is
+/// read on its own, only once the conversation shows it's one.
 
 final class MyMembershipProvider
     extends $FunctionalProvider<Membership?, Membership?, Membership?>
     with $Provider<Membership?> {
-  /// The signed-in person's membership on [groupId], if any.
+  /// The signed-in person's membership on [groupId], if any: of a team, or
+  /// of a direct conversation (CHAT-19), which isn't among my teams and is
+  /// read on its own, only once the conversation shows it's one.
   MyMembershipProvider._({
     required MyMembershipFamily super.from,
     required GroupId super.argument,
@@ -501,9 +647,11 @@ final class MyMembershipProvider
   }
 }
 
-String _$myMembershipHash() => r'5eca66810f071d3c929e0ad39d9f8c4e8f18f865';
+String _$myMembershipHash() => r'6db40062e5ba9ae9d8511799b59bd07c0d97bde7';
 
-/// The signed-in person's membership on [groupId], if any.
+/// The signed-in person's membership on [groupId], if any: of a team, or
+/// of a direct conversation (CHAT-19), which isn't among my teams and is
+/// read on its own, only once the conversation shows it's one.
 
 final class MyMembershipFamily extends $Family
     with $FunctionalFamilyOverride<Membership?, GroupId> {
@@ -516,7 +664,9 @@ final class MyMembershipFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// The signed-in person's membership on [groupId], if any.
+  /// The signed-in person's membership on [groupId], if any: of a team, or
+  /// of a direct conversation (CHAT-19), which isn't among my teams and is
+  /// read on its own, only once the conversation shows it's one.
 
   MyMembershipProvider call(GroupId groupId) =>
       MyMembershipProvider._(argument: groupId, from: this);
@@ -594,7 +744,7 @@ final class ViewingAsSuperAdminProvider
 }
 
 String _$viewingAsSuperAdminHash() =>
-    r'2a73a7945409c7a899b46d7f0db4344552923118';
+    r'452fef99ee1b3c818872f0d790a4f19d04e60e1b';
 
 /// True while a super admin looks at a team they aren't on (ADMIN-3 View
 /// team): its tabs, read-only, with the "Viewing as super admin" banner and

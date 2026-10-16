@@ -215,7 +215,8 @@ void main() {
     testWidgets('only admins see Poll when members may not make them '
         '(TEAM-5)', (tester) async {
       await openChat(tester, membersCanCreatePolls: false);
-      await tester.tap(find.byTooltip('Add photos or a poll'));
+      // Photos only, and the + says so.
+      await tester.tap(find.byTooltip('Add photos'));
       await tester.pumpAndSettle();
       expect(find.text('Create poll'), findsNothing);
 
@@ -489,7 +490,7 @@ void main() {
         },
         memberships: [testMembership('a', 'coach')],
       );
-      await tester.tap(find.byTooltip('Add photos or a poll'));
+      await tester.tap(find.byTooltip('Add photos'));
       await tester.pumpAndSettle();
       expect(find.text('Photo library'), findsNothing);
       expect(

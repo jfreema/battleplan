@@ -22,6 +22,8 @@ import 'package:battleplan/features/auth/presentation/setup_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_methods_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
+import 'package:battleplan/features/chat/presentation/direct_chat_screen.dart';
+import 'package:battleplan/features/chat/presentation/messages_screen.dart';
 import 'package:battleplan/features/documents/presentation/document_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -32,6 +34,7 @@ import 'package:battleplan/features/groups/presentation/enter_code_screen.dart';
 import 'package:battleplan/features/groups/presentation/invite_screen.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/features/groups/presentation/media_screen.dart';
+import 'package:battleplan/features/groups/presentation/person_screen.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_settings_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
@@ -315,6 +318,40 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/notifications',
         builder: (_, _) => const NotificationsScreen(),
+      ),
+      // Messages: direct conversations (CHAT-19), one of them, and one
+      // opened at a message from a notification (NOTIF-6). Siblings rather
+      // than children, so opening a conversation from a profile goes back
+      // to the profile, and a jump doesn't stack a second copy of it.
+      GoRoute(path: '/messages', builder: (_, _) => const MessagesScreen()),
+      GoRoute(
+        path: '/messages/:groupId',
+        builder: (_, state) => DirectChatScreen(
+          key: ValueKey('dm-${state.pathParameters['groupId']}'),
+          groupId: GroupId(state.pathParameters['groupId']!),
+        ),
+      ),
+      GoRoute(
+        path: '/messages/:groupId/m/:messageId',
+        builder: (_, state) => DirectChatScreen(
+          key: ValueKey('dm-${state.pathParameters['groupId']}'),
+          groupId: GroupId(state.pathParameters['groupId']!),
+          initialMessageId: state.pathParameters['messageId'],
+        ),
+      ),
+      // A person's page (TEAM-15); `?team=` is the team it was opened from.
+      GoRoute(
+        path: '/people/:uid',
+        pageBuilder: (_, state) => PanelPage(
+          key: state.pageKey,
+          child: PersonScreen(
+            uid: UserId(state.pathParameters['uid']!),
+            fromTeam: switch (state.uri.queryParameters['team']) {
+              final id? when id.isNotEmpty => GroupId(id),
+              _ => null,
+            },
+          ),
+        ),
       ),
       GoRoute(
         path: '/settings',

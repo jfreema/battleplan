@@ -32,6 +32,8 @@ export async function alertSuperAdmins(report: {
   targetType: ReportTarget;
   reason: string;
   teamVisible: boolean;
+  /** Reported in a direct conversation (CHAT-19), which has no team name. */
+  direct?: boolean;
 }): Promise<void> {
   let teamName = 'a team';
   try {
@@ -40,7 +42,13 @@ export async function alertSuperAdmins(report: {
   } catch (e) {
     logger.error('report_alert_failed', { groupId: report.groupId, error: String(e) });
   }
-  const details = { teamName, what: reportedThing(report.targetType), reason: report.reason, teamVisible: report.teamVisible };
+  const details = {
+    teamName,
+    what: reportedThing(report.targetType),
+    reason: report.reason,
+    teamVisible: report.teamVisible,
+    direct: report.direct === true,
+  };
   await emailSuperAdmins('report', (to) => reportAlertEmail(to, details, appUrl('/admin/reports')));
 }
 

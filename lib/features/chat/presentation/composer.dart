@@ -205,6 +205,10 @@ class _ComposerState extends State<Composer> {
         : widget.teamName.trim().isEmpty
         ? l10n.messageHint
         : l10n.messageTeamHint(widget.teamName.trim());
+    // Photos only where there are no polls (a direct conversation, CHAT-19).
+    final addTooltip = widget.onCreatePoll == null
+        ? l10n.addPhotosToMessage
+        : l10n.addToMessage;
     final box = SafeArea(
       top: false,
       child: Padding(
@@ -220,7 +224,7 @@ class _ComposerState extends State<Composer> {
             if (widget.onAttachBlocked case final blocked?
                 when widget.onCreatePoll == null && widget.onAnnounce == null)
               IconButton(
-                tooltip: l10n.addToMessage,
+                tooltip: addTooltip,
                 onPressed: blocked,
                 icon: Icon(
                   AppIcons.add,
@@ -229,7 +233,7 @@ class _ComposerState extends State<Composer> {
               )
             else if (widget.onPickPhotos != null)
               PopupMenuButton<VoidCallback>(
-                tooltip: l10n.addToMessage,
+                tooltip: addTooltip,
                 icon: const Icon(AppIcons.add),
                 onSelected: (action) => action(),
                 itemBuilder: (_) => [

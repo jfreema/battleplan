@@ -16,6 +16,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/mentions.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/chat/presentation/direct_actions.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
 import 'package:battleplan/features/chat/presentation/photo_viewer.dart';
 import 'package:battleplan/features/chat/presentation/quote_block.dart';
@@ -209,9 +210,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final me = user?.uid;
     final viewing = ref.read(viewingAsSuperAdminProvider(m.groupId));
     final superAdmin = user?.isSuperAdmin ?? false;
+    // A direct conversation (CHAT-19) has no admins: each person deletes
+    // their own, and super admins act on reports from the admin panel.
+    final direct = ref.read(groupProvider(m.groupId)).value?.isDirect ?? false;
     final canModerate =
-        superAdmin ||
-        (ref.read(myMembershipProvider(m.groupId))?.isAdmin ?? false);
+        !direct &&
+        (superAdmin ||
+            (ref.read(myMembershipProvider(m.groupId))?.isAdmin ?? false));
     // An archived team is read-only (TEAM-9): deleteMessage refuses
     // everyone there but a super admin.
     final archived =
@@ -306,6 +311,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                         groupId: m.groupId,
                         targetType: ReportTargetType.message,
                         targetId: m.id,
+                        direct: direct,
                       ),
                     );
                   },
@@ -346,6 +352,23 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Opens the author's page (TEAM-15), when they're someone on the team,
+  /// or in the conversation, now: not for system lines, imported messages,
+  /// or a deleted account. From a team's chat it names the team, which the
+  /// page then lists (they've been seen there).
+  VoidCallback? _authorTap(Message m) {
+    if (m.isSystem || m.importedFrom != null) return null;
+    if (!ref.watch(memberNamesProvider(m.groupId)).containsKey(m.authorId)) {
+      return null;
+    }
+    final direct = ref.watch(groupProvider(m.groupId)).value?.isDirect ?? false;
+    return () => openPersonPage(
+      context,
+      UserId(m.authorId),
+      teamId: direct ? null : m.groupId,
     );
   }
 
@@ -611,6 +634,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             ],
           );
 
+    final openAuthor = mine ? null : _authorTap(m);
     final header = widget.startsGroup && !mine
         ? Padding(
             padding: const EdgeInsets.only(left: Space.md, bottom: Space.xs),
@@ -797,13 +821,14 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       ],
     );
 
-    // Others' messages get their photo beside the first bubble of a group.
+    // Others' messages get their photo beside the first bubble of a group,
+    // in a slot as wide as a tap target, since it opens their page.
     final avatarSlot = SizedBox(
-      width: 36,
+      width: kMinInteractiveDimension,
       child: widget.startsGroup
           ? Padding(
               padding: const EdgeInsets.only(top: Space.lg),
-              child: _AuthorAvatar(message: m),
+              child: _AuthorAvatar(message: m, onTap: openAuthor),
             )
           : null,
     );
@@ -821,7 +846,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!mine) ...[avatarSlot, const SizedBox(width: Space.sm)],
+          if (!mine) avatarSlot,
           Flexible(child: column),
         ],
       ),
@@ -837,10 +862,14 @@ class _MessageTileState extends ConsumerState<MessageTile> {
   }
 }
 
+/// The author's photo beside their messages; tapping it opens their page
+/// (TEAM-15) when [onTap] is given. The photo sits at the top left of a
+/// full 48 × 48 tap target (SPEC §7.6), which the slot leaves room for.
 class _AuthorAvatar extends ConsumerWidget {
-  const new({required this.message});
+  const new({required this.message, this.onTap});
 
   final Message message;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -848,11 +877,31 @@ class _AuthorAvatar extends ConsumerWidget {
     final url = path == null
         ? null
         : ref.watch(teamPhotoUrlProvider(path)).value;
-    return Avatar(
+    final avatar = Avatar(
       name: message.authorName,
       colorKey: message.authorId,
       imageUrl: url,
       size: 32,
+    );
+    final tap = onTap;
+    if (tap == null) return avatar;
+    // Its own node, so a screen reader finds it apart from the message.
+    return Semantics(
+      container: true,
+      button: true,
+      label: AppLocalizations.of(context).openProfile(message.authorName),
+      excludeSemantics: true,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: tap,
+          child: SizedBox.square(
+            dimension: kMinInteractiveDimension,
+            child: Align(alignment: Alignment.topLeft, child: avatar),
+          ),
+        ),
+      ),
     );
   }
 }

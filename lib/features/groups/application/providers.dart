@@ -38,6 +38,24 @@ Stream<List<Membership>> myMemberships(Ref ref) {
       .watchMyMemberships(UserId(user.uid));
 }
 
+/// My direct conversations that have messages, newest first (CHAT-19):
+/// my memberships of them, one query. Enough for the Messages badge; the
+/// list reads each conversation too.
+@Riverpod(keepAlive: true)
+Stream<List<Membership>> myDirectMemberships(Ref ref) {
+  final user = ref.watch(authUserProvider).value;
+  if (user == null) return Stream.value(const []);
+  return ref
+      .watch(memberRepositoryProvider)
+      .watchMyDirectChats(UserId(user.uid));
+}
+
+/// Someone's membership of a team I'm on, live, or null when they aren't
+/// on it (the person page, TEAM-15); or mine of a direct conversation.
+@riverpod
+Stream<Membership?> member(Ref ref, GroupId groupId, UserId uid) =>
+    ref.watch(memberRepositoryProvider).watchMember(groupId, uid);
+
 /// A team, live. One you can't read (removed, deleted, or suspended)
 /// reads as null, and its read ends there. A suspension can be lifted with
 /// nothing to tell its members, so while it's null the read starts over:
@@ -145,13 +163,24 @@ Stream<List<Membership>> roster(Ref ref, GroupId groupId) => ref
         ),
     );
 
-/// The signed-in person's membership on [groupId], if any.
+/// The signed-in person's membership on [groupId], if any: of a team, or
+/// of a direct conversation (CHAT-19), which isn't among my teams and is
+/// read on its own, only once the conversation shows it's one.
 @riverpod
-Membership? myMembership(Ref ref, GroupId groupId) => ref
-    .watch(myMembershipsProvider)
-    .value
-    ?.where((m) => m.groupId == groupId)
-    .firstOrNull;
+Membership? myMembership(Ref ref, GroupId groupId) {
+  final team = ref
+      .watch(myMembershipsProvider)
+      .value
+      ?.where((m) => m.groupId == groupId)
+      .firstOrNull;
+  if (team != null) return team;
+  if (!(ref.watch(groupProvider(groupId)).value?.isDirect ?? false)) {
+    return null;
+  }
+  final me = ref.watch(authUserProvider).value?.uid;
+  if (me == null) return null;
+  return ref.watch(memberProvider(groupId, UserId(me))).value;
+}
 
 /// True while a super admin looks at a team they aren't on (ADMIN-3 View
 /// team): its tabs, read-only, with the "Viewing as super admin" banner and
@@ -165,7 +194,9 @@ bool viewingAsSuperAdmin(Ref ref, GroupId groupId) {
   // Right after sign-in the list still holds the previous one.
   final memberships = ref.watch(myMembershipsProvider);
   if (!memberships.hasValue || memberships.isLoading) return false;
-  return !memberships.value!.any((m) => m.groupId == groupId);
+  if (memberships.value!.any((m) => m.groupId == groupId)) return false;
+  // My own direct conversation (CHAT-19) isn't among my teams.
+  return !(ref.watch(groupProvider(groupId)).value?.isDirect ?? false);
 }
 
 /// Saves edits to [groupId] (TEAM-5, CHAT-18): directly for its admins,

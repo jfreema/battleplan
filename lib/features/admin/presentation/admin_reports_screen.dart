@@ -172,14 +172,21 @@ class _ReportCard extends ConsumerWidget {
                     style: theme.textTheme.labelLarge,
                   ),
                 ),
-                TextButton(
-                  onPressed: () => unawaited(
-                    context.push('/admin/teams/${r.groupId.value}'),
+                // A direct conversation (CHAT-19) has no team page.
+                if (r.direct)
+                  Text(
+                    l10n.reportsDirectMessage,
+                    style: theme.textTheme.labelLarge,
+                  )
+                else
+                  TextButton(
+                    onPressed: () => unawaited(
+                      context.push('/admin/teams/${r.groupId.value}'),
+                    ),
+                    child: Text(
+                      r.groupName.isEmpty ? r.groupId.value : r.groupName,
+                    ),
                   ),
-                  child: Text(
-                    r.groupName.isEmpty ? r.groupId.value : r.groupName,
-                  ),
-                ),
               ],
             ),
             Text(about),

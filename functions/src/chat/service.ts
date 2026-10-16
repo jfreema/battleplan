@@ -362,8 +362,15 @@ export async function removeAttachment(
   return 'removed';
 }
 
-/** The switcher's one-line preview of a message: "Photo" for photos. */
-export function lastMessagePreviewOf(m: Record<string, unknown>): { authorName: string; text: string; type: string } {
+/**
+ * The switcher's one-line preview of a message: "Photo" for photos. A direct
+ * conversation's (CHAT-19) also names the author by ID, so Messages can
+ * tell "You: …" from the other person's ([withAuthorId]).
+ */
+export function lastMessagePreviewOf(
+  m: Record<string, unknown>,
+  withAuthorId = false,
+): { authorName: string; text: string; type: string; authorId?: string } {
   const type = String(m.type ?? 'text');
   const firstLine = String(m.text ?? '').split('\n')[0].trim();
   // A poll's text is its question (POLL-1): "Poll: Saturday or Sunday?".
@@ -378,6 +385,7 @@ export function lastMessagePreviewOf(m: Record<string, unknown>): { authorName: 
     authorName: String(m.authorName ?? ''),
     text: text.length > 80 ? `${text.slice(0, 79)}…` : text,
     type,
+    ...(withAuthorId ? { authorId: String(m.authorId ?? '') } : {}),
   };
 }
 
@@ -406,6 +414,7 @@ export async function rebuildLastMessagePreview(groupId: string, anonymizedUid?:
     const preview = latest
       ? lastMessagePreviewOf(
           anonymizedUid && latest.authorId === anonymizedUid ? { ...latest, authorName: DELETED_USER_NAME } : latest,
+          group.get('kind') === 'direct',
         )
       : null;
     if (isDeepStrictEqual(group.get('lastMessagePreview') ?? null, preview)) return;
@@ -413,12 +422,6 @@ export async function rebuildLastMessagePreview(groupId: string, anonymizedUid?:
   });
 }
 
-/**
- * Moves the team's `lastMessageAt` and preview forward to [message]. Runs
- * in a transaction and never moves backward, since triggers can arrive out
- * of order or twice. Returns the team's name (null if the team is gone),
- * so the message's notification needn't read the team again.
- */
 /** Whether the team masks strong language (SAFE-7); on unless turned off. */
 export async function filtersLanguage(groupId: string): Promise<boolean> {
   const group = await db().collection(Collections.groups).doc(groupId).get();
@@ -455,18 +458,35 @@ export async function filterMessageLanguage(
   return { ...message, text: masked };
 }
 
-export async function touchLastMessage(groupId: string, message: Record<string, unknown>): Promise<string | null> {
+/** What a new message's follow-up needs to know of its team. */
+export interface MessageGroup {
+  name: string;
+  /** A direct conversation between two people (CHAT-19), not a team. */
+  direct: boolean;
+}
+
+/**
+ * Moves the team's `lastMessageAt` and preview forward to [message]. Runs
+ * in a transaction and never moves backward, since triggers can arrive out
+ * of order or twice. Returns the team's name and whether it's a direct
+ * conversation (null if the team is gone), so the message's notification
+ * needn't read the team again.
+ */
+export async function touchLastMessage(
+  groupId: string,
+  message: Record<string, unknown>,
+): Promise<MessageGroup | null> {
   const at = message.createdAt as Timestamp | undefined;
   if (!at) return null;
   const ref = db().collection(Collections.groups).doc(groupId);
   return db().runTransaction(async (tx) => {
     const group = await tx.get(ref);
     if (!group.exists) return null;
-    const name = (group.get('name') as string | undefined) ?? '';
+    const found = { name: (group.get('name') as string | undefined) ?? '', direct: group.get('kind') === 'direct' };
     const current = group.get('lastMessageAt') as Timestamp | undefined;
-    if (current && current.toMillis() >= at.toMillis()) return name;
-    tx.update(ref, { lastMessageAt: at, lastMessagePreview: lastMessagePreviewOf(message) });
-    return name;
+    if (current && current.toMillis() >= at.toMillis()) return found;
+    tx.update(ref, { lastMessageAt: at, lastMessagePreview: lastMessagePreviewOf(message, found.direct) });
+    return found;
   });
 }
 
@@ -641,6 +661,41 @@ export async function notifyNewMessage(
     exclude: [...repliedPushed, ...mentionPushed],
     body: messagePushBody(message),
     dedupeKey: messageId,
+  });
+}
+
+/**
+ * A direct message's push (CHAT-19, NOTIF-5): titled with the sender's
+ * name, so the text stands alone: "See you at 6", or "Sent a photo".
+ */
+export function directPushBody(m: Record<string, unknown>): string {
+  const { text, photos } = pushWording(m);
+  if (text) return text;
+  return photos > 1 ? `Sent ${photos} photos` : 'Sent a photo';
+}
+
+/**
+ * Notifies the other person in a direct conversation (CHAT-19, NOTIF-2):
+ * one push, titled with the sender's name, even at Important only. No
+ * notification-center item: Messages shows what's unread. Replies and
+ * @mentions don't add another, and someone who blocked the sender never
+ * hears (notify drops them, SAFE-2). Dedupes on the message ID.
+ */
+export async function notifyDirectMessage(messageId: string, message: Record<string, unknown>): Promise<void> {
+  if (!notifiesAsMessage(message)) return;
+  const groupId = message.groupId as string;
+  const { name } = pushWording(message);
+  await trySend({
+    kind: 'directMessage',
+    groupId,
+    recipients: { members: true },
+    actor: { uid: String(message.authorId ?? ''), name },
+    target: { type: 'message', id: messageId },
+    route: `/messages/${groupId}/m/${messageId}`,
+    params: { authorName: name },
+    body: directPushBody(message),
+    dedupeKey: messageId,
+    teamName: name,
   });
 }
 

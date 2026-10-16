@@ -15,6 +15,7 @@ import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
+import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
@@ -327,6 +328,8 @@ class _TeamHeader extends StatelessWidget {
               ),
             ),
           ),
+          // Direct conversations, with how many are unread (CHAT-19).
+          const MessagesButton(),
           // Unread notification-center items across all teams (NOTIF-11).
           const NotificationBell(),
           _TeamMenu(
