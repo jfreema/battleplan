@@ -37,7 +37,7 @@ interface Person { uid: string; name: string; email: string; superAdmin?: boolea
 // The sample people are common American names and TV characters (they're
 // on the website's screenshots too).
 const people: Person[] = [
-  { uid: 'coach', name: 'Eric Taylor', email: 'coach@example.com' },
+  { uid: 'coach', name: 'Andy Bernard', email: 'coach@example.com' },
   { uid: 'jim', name: 'Jim Halpert', email: 'jim@example.com' },
   { uid: 'andy', name: 'Andy Dwyer', email: 'andy@example.com' },
   { uid: 'claire', name: 'Claire Dunphy', email: 'claire@example.com' },

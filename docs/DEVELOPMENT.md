@@ -26,7 +26,7 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
 
    | Email | Who |
    |---|---|
-   | `coach@example.com` | Eric Taylor, owner of Thunder (adult players) and Cyclone (kids) |
+   | `coach@example.com` | Andy Bernard, owner of Thunder (adult players) and Cyclone (kids) |
    | `claire@example.com` | Claire Dunphy, parent on all three teams, with players on two (Luke and Alex on Cyclone, Haley on Rally Possums); asked to join Thunder's roster as a player (pending) |
    | `rachel@example.com` | Rachel Green, owner of Rally Possums, parent on Cyclone |
    | `jim@example.com`, `andy@example.com` | Jim Halpert and Andy Dwyer, players on Thunder, linked to their own players (Jim is also an admin) |
