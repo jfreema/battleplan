@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/chat_icon.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
@@ -144,7 +145,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     Widget Function({required bool selected}) glyph(IconData icon) =>
         ({required selected}) => selected ? Icon(icon, fill: 1) : Icon(icon);
     final destinations = <(Widget Function({required bool selected}), String)>[
-      (glyph(AppIcons.chat), l10n.tabChat),
+      (({required selected}) => ChatIcon(filled: selected), l10n.tabChat),
       (glyph(AppIcons.schedule), l10n.tabSchedule),
       (glyph(AppIcons.documents), l10n.tabDocuments),
       // Drawn: no icon font has X's and O's on a chalkboard (BOARD-1).
@@ -195,21 +196,6 @@ class _TeamShellState extends ConsumerState<TeamShell> {
               NavigationRail(
                 selectedIndex: navigationShell.currentIndex,
                 onDestinationSelected: navigationShell.goBranch,
-                leading: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: Space.sm),
-                  child: viewing
-                      ? GroupBadge(group: viewed)
-                      : Builder(
-                          builder: (button) => TeamSwitcherButton(
-                            name: team?.group.name ?? '',
-                            badge: GroupBadge(group: team?.group),
-                            showDot: otherUnread,
-                            compact: true,
-                            onPressed: () =>
-                                _openSwitcher(context, anchor: button),
-                          ),
-                        ),
-                ),
                 trailing: const Expanded(
                   child: Align(
                     alignment: Alignment.bottomCenter,

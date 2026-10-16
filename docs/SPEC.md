@@ -309,7 +309,7 @@ Sign in
 
 ### 5.5 Wide screens (web and tablets, 840 px and up)
 
-- **Navigation.** The tabs move to a **left rail**: the team switcher at the top, then Chat, Schedule, Documents, and Plays, with your avatar at the bottom. The order, icons, and labels match phones.
+- **Navigation.** The tabs move to a **left rail**: Chat, Schedule, Documents, and Plays, with your avatar at the bottom. The team switcher stays in the header beside the rail. The order, icons, and labels match phones.
 - **Chat** is centered at a readable width (about 840 px).
 - **Panels.** Event details, member cards, and settings open as side panels or dialogs instead of full screens.
 - **v1.1.** On very wide screens (1200 px and up), a persistent team list column, like Slack's.
