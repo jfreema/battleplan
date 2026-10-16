@@ -8,6 +8,7 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { createHash } from 'node:crypto';
 
 if (!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_AUTH_EMULATOR_HOST) {
   console.error('Refusing to seed: the emulator hosts are not set.');
@@ -464,6 +465,89 @@ async function main() {
       lastMessageAt: minutesAgo(last.ago),
       lastMessagePreview: { authorName: nameOf(last.uid), text: last.text, type: 'text' },
       ...(groupId === 'thunder' ? { pinnedMessageIds: ['thunder-seed-0'] } : {}),
+    });
+  }
+
+  // A direct conversation (CHAT-19): Claire asks the coach about Alex, and
+  // both have read it, so Messages has one to show and nothing is unread.
+  // Its ID is the one openDirectChat makes for the pair (teams/direct.ts).
+  const dmPeople = ['claire', 'coach'];
+  const dm = `dm${createHash('sha256').update(dmPeople.join('\n')).digest('hex').slice(0, 32)}`;
+  const dmLines = [
+    { uid: 'claire', text: "Is Alex OK to play Saturday? She's been nursing a sore ankle.", ago: 400 },
+    { uid: 'coach', text: "Let's see how she feels at warmups. We'll keep her minutes light.", ago: 380 },
+    { uid: 'claire', text: 'Sounds good, thank you!', ago: 376 },
+  ];
+  const dmLast = dmLines[dmLines.length - 1];
+  await db.doc(`groups/${dm}`).set({
+    kind: 'direct',
+    uids: dmPeople,
+    people: Object.fromEntries(dmPeople.map((uid) => [uid, { name: nameOf(uid), photoPath: null }])),
+    name: '',
+    nameLower: '',
+    description: '',
+    photoPath: null,
+    color: null,
+    sport: 'other',
+    ownerId: null,
+    createdBy: 'claire',
+    timeZone: 'UTC',
+    settings: {
+      membersCanCreateEvents: false,
+      membersCanCreatePolls: false,
+      membersCanUploadDocs: false,
+      membersCanInvite: false,
+      allowMaybe: false,
+      membersCanSeePeople: true,
+      filterLanguage: true,
+      defaultReminderOffsets: [],
+    },
+    memberCount: 2,
+    playerCount: 0,
+    lastMessageAt: minutesAgo(dmLast.ago),
+    lastMessagePreview: { authorName: nameOf(dmLast.uid), text: dmLast.text, type: 'text', authorId: dmLast.uid },
+    storageBytes: 0,
+    storageQuotaBytes: 50 * 1024 * 1024,
+    storageQuotaCustom: true,
+    storageAlert: 'none',
+    archivedAt: null,
+    suspendedAt: null,
+    status: 'active',
+    createdAt: minutesAgo(400),
+    updatedAt: minutesAgo(376),
+    schemaVersion: 1,
+  });
+  for (const uid of dmPeople) {
+    await db.doc(`groupMembers/${dm}_${uid}`).set({
+      groupId: dm,
+      uid,
+      otherUid: dmPeople.find((u) => u !== uid),
+      role: 'participant',
+      title: null,
+      displayName: nameOf(uid),
+      photoPath: null,
+      playerSummary: null,
+      notificationLevel: 'all',
+      mutedUntil: null,
+      lastMessageAt: minutesAgo(dmLast.ago),
+      lastReadAt: minutesAgo(dmLast.ago - 1),
+      lastPostedAt: null,
+      joinedAt: minutesAgo(400),
+      addedBy: 'claire',
+    });
+  }
+  for (const [i, line] of dmLines.entries()) {
+    await db.doc(`messages/dm-seed-${i}`).set({
+      groupId: dm,
+      authorId: line.uid,
+      authorName: nameOf(line.uid),
+      authorPhotoPath: null,
+      authorPlayerSummary: null,
+      type: 'text',
+      text: line.text,
+      attachments: [],
+      reactions: {},
+      createdAt: minutesAgo(line.ago),
     });
   }
 

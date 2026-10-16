@@ -51,19 +51,45 @@ class TeamSwitcherButton extends StatelessWidget {
             children: [
               dotted,
               const SizedBox(width: Space.sm),
-              Flexible(
-                child: Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
+              Flexible(child: _FittedName(name)),
               const Icon(AppIcons.expand),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The team's name on one line: a size smaller when it doesn't fit (a
+/// phone's header has the Messages button and the bell beside it), and cut
+/// with "…" only when even that doesn't fit.
+class _FittedName extends StatelessWidget {
+  const new(this.name);
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final larger = text.titleMedium;
+        final painter = TextPainter(
+          text: TextSpan(text: name, style: larger),
+          maxLines: 1,
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout(maxWidth: constraints.maxWidth);
+        final fits = !painter.didExceedMaxLines;
+        painter.dispose();
+        return Text(
+          name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: fits ? larger : text.titleSmall,
+        );
+      },
     );
   }
 }
