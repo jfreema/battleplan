@@ -199,7 +199,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 
 `getbattleplan.app` is a small explainer website; the web app lives under it at **`getbattleplan.app/app`**. The site's source is the `website/` folder in the repo (ARCH §5.1, §6.6).
 
-- **WEB-1 · MVP · Landing page.** What Battleplan is (team chat, schedule and RSVPs, polls, documents, players and parents for adult and youth teams), that it's free with no ads, screenshots, and clear ways in: **Get Started** (the web app's sign-up page, `/app/sign-up`) and **Login** (`/app`), and App Store and Google Play badges once the apps are listed.
+- **WEB-1 · MVP · Landing page.** Ends with "Made by a volunteer": Jared Freeman builds Battleplan for free, because his own team needed a better app, and charges nothing. What Battleplan is (team chat, schedule and RSVPs, polls, documents, players and parents for adult and youth teams), that it's free with no ads, screenshots, and clear ways in: **Get Started** (the web app's sign-up page, `/app/sign-up`) and **Login** (`/app`), and App Store and Google Play badges once the apps are listed.
 - **WEB-2 · MVP · Support and legal pages.** `/privacy`, `/terms`, and `/delete-account` (LEGAL-1, LEGAL-3), and `/support` with the support email. These are the URLs the store listings and Firebase settings use.
 - **WEB-3 · MVP · The web app at `/app`.** The Flutter web app is served under `/app/` and linked from every page of the site. Signed-in people who open `/app` go straight to their teams.
 - **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app. So does email sign-in's address, `getbattleplan.app/emaillogin` (AUTH-2).
@@ -432,6 +432,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Default event reminders: 1 day before.
   - Manage the invite link.
   - See storage used, e.g. "112 MB of 200 MB", and open Media to free space (STORE-2, STORE-5).
+  - **About**, at the end, at the owner's request: the version and build, "Developed by Jared Freeman", that Battleplan is free and Jared builds it as a volunteer, and **Buy Jared a coffee**, which shows his Venmo card (a QR code to scan) and **Open Venmo** for paying from the same phone. A tip is voluntary and unlocks nothing.
 - **TEAM-6 · MVP · Transfer ownership.** The owner picks a member to take over and becomes an admin.
 - **TEAM-7 · MVP · Add members by email (admins).**
   - Add one person at a time, or paste a list of "Name, email" lines (up to 100).

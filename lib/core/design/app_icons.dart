@@ -64,6 +64,7 @@ abstract final class AppIcons {
   static const IconData upload = Symbols.upload_file_rounded;
   static const IconData pin = Symbols.push_pin_rounded;
   static const IconData openExternal = Symbols.open_in_new_rounded;
+  static const IconData coffee = Symbols.coffee_rounded;
   static const IconData search = Symbols.search_rounded;
   static const IconData sort = Symbols.sort_rounded;
   static const IconData info = Symbols.info_rounded;

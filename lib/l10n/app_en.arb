@@ -64,6 +64,17 @@
   "versionLabel": "Version {version}",
   "versionBuildLabel": "Version {version} (build {build})",
   "@versionBuildLabel": {"placeholders": {"version": {"type": "String"}, "build": {"type": "String"}}},
+  "developedBy": "Developed by {name}",
+  "@developedBy": {"placeholders": {"name": {"type": "String"}}},
+  "aboutVolunteer": "Battleplan is free. {name} builds it as a volunteer and doesn't charge for it.",
+  "@aboutVolunteer": {"placeholders": {"name": {"type": "String"}}},
+  "buyCoffee": "Buy {name} a coffee",
+  "@buyCoffee": {"placeholders": {"name": {"type": "String"}}},
+  "buyCoffeeBody": "Battleplan is free, with no ads. If it helps your team, you can thank {name} with a coffee on Venmo.",
+  "@buyCoffeeBody": {"placeholders": {"name": {"type": "String"}}},
+  "venmoCardLabel": "{name}'s Venmo code, {handle}",
+  "@venmoCardLabel": {"placeholders": {"name": {"type": "String"}, "handle": {"type": "String"}}},
+  "openVenmo": "Open Venmo",
   "@versionLabel": {
     "placeholders": {
       "version": {

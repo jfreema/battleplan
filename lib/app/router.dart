@@ -452,6 +452,7 @@ GoRouter router(Ref ref) {
               key: state.pageKey,
               child: TeamSettingsScreen(
                 groupId: GroupId(state.pathParameters['groupId']!),
+                appBuild: ref.read(appBuildProvider),
               ),
             ),
           ),

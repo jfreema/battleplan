@@ -76,6 +76,8 @@ flutter:
   # text ships with it and shows under Licenses.
   assets:
     - assets/fonts/inter/OFL.txt
+    # Jared's Venmo card, for Buy Jared a coffee (TEAM-5, About).
+    - assets/about/venmo.png
   fonts:
     - family: Inter
       fonts:

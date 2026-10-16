@@ -6,6 +6,8 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/version.dart';
+import 'package:battleplan/core/widgets/about_battleplan.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
@@ -32,9 +34,12 @@ const reminderChoices = [15, 60, 120, 1440, 2880, 10080];
 /// reminders, the invite link (managed on the invite screen), the chat look,
 /// and storage used with Media.
 class TeamSettingsScreen extends ConsumerStatefulWidget {
-  const new({required this.groupId, super.key});
+  const new({required this.groupId, required this.appBuild, super.key});
 
   final GroupId groupId;
+
+  /// For About: the version and build (ARCH §9).
+  final AppBuild appBuild;
 
   @override
   ConsumerState<TeamSettingsScreen> createState() => _TeamSettingsScreenState();
@@ -474,6 +479,11 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                   onTap: () => _delete(group),
                 ),
               ],
+              // About Battleplan, at the owner's request: the version, who
+              // made it, and Buy Jared a coffee.
+              section(l10n.about),
+              AboutBattleplan(appBuild: widget.appBuild),
+              const SizedBox(height: Space.xl),
             ],
           ),
         ),

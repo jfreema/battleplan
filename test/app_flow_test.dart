@@ -561,6 +561,47 @@ void main() {
     expect(groupRepo.groups['a']!.settings.filterLanguage, isFalse);
   });
 
+  testWidgets('Team settings ends with About: the version, who made it, '
+      "that it's free, and Buy Jared a coffee (TEAM-5)", (tester) async {
+    final links = FakeLinkOpener();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      linkOpener: links,
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Team settings'));
+    await tester.pumpAndSettle();
+    final coffee = find.text('Buy Jared a coffee');
+    await tester.dragUntilVisible(
+      coffee,
+      find.byType(ListView).last,
+      const Offset(0, -300),
+    );
+    expect(find.text('Version 1.0.0 (build 1)'), findsOneWidget);
+    expect(find.text('Developed by Jared Freeman'), findsOneWidget);
+    expect(find.textContaining('builds it as a volunteer'), findsOneWidget);
+    await tester.ensureVisible(coffee);
+    await tester.pumpAndSettle();
+    await tester.tap(coffee);
+    await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Image &&
+            w.semanticLabel == "Jared Freeman's Venmo code, @Jared-D-Freeman",
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Open Venmo'));
+    await tester.pumpAndSettle();
+    expect(links.opened, [Uri.parse('https://venmo.com/u/Jared-D-Freeman')]);
+    expect(find.text('Open Venmo'), findsNothing);
+  });
+
   /// Opens my own card on the roster, where Leave team is (TEAM-8).
   Future<void> openMyCard(WidgetTester tester) async {
     await tester.tap(find.byTooltip('Team menu'));
