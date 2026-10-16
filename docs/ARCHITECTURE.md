@@ -539,6 +539,7 @@ groupMembers/{groupId}_{uid}
 
 players/{playerId}                                      # name and number only (PLAYER-10)
   groupId, displayName, displayNameLower, jerseyNumber?, position?   # position: older players only; the app no longer writes or shows it
+  walkUpSong?                                           # PLAYER-2: up to walkUpSongMax (100), the whole team sees it
   status: 'active' | 'pending'                          # a member's new player is pending until an admin decides; missing = active (old docs)
   proposedBy?, proposedRelation?: 'self' | 'guardian'   # players added with proposePlayer: who added it and how they're linked; approval links them that way (missing = guardian)
   decidedBy?, decidedAt?                                # with proposedBy: the admin who approved it, or the admin who added it
@@ -763,7 +764,7 @@ function hasRoom(g)      { let t = get(/databases/$(database)/documents/groups/$
 **Message create rule.** All of these must hold:
 
 - The author is a member, and `authorId == auth.uid`.
-- **Players (PLAYER-10):** only Functions create, approve, or decline players. Linked members (self or guardian) may edit an active player's `displayName` (1 to 60 characters, with a matching `displayNameLower`), `jerseyNumber` (up to 4), and `position` (up to 30), and admins any player's, pending ones included (to correct them before deciding, PLAYER-4). Nothing else changes, so a player record can never gain a photo, birthdate, or contact field.
+- **Players (PLAYER-10):** only Functions create, approve, or decline players. Linked members (self or guardian) may edit an active player's `displayName` (1 to 60 characters, with a matching `displayNameLower`), `jerseyNumber` (up to 4), `position` (up to 30), and `walkUpSong` (up to 100), and admins any player's, pending ones included (to correct them before deciding, PLAYER-4). Nothing else changes, so a player record can never gain a photo, birthdate, or contact field.
 - `authorName`, `authorPhotoPath`, and `authorPlayerSummary` equal the member's own `groupMembers` doc. The rule already fetches that doc, so this check costs nothing extra.
 - `type` is `text`, `image`, or `poll`. A `poll` message must be written in the same batch as its poll (`getAfter()`). Event cards and system messages come only from Functions.
 - `text` is ≤ 4,000 characters, and `createdAt == request.time`.

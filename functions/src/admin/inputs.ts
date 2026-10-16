@@ -190,8 +190,8 @@ const PlayerText = (max: number) =>
 
 /**
  * A super admin's edit to a player on a team they aren't on (ADMIN-3):
- * only a name, number, and position (PLAYER-10), within the rules'
- * validPlayer limits.
+ * only a name, number, position, and walk-up song (PLAYER-10), within the
+ * rules' validPlayer limits.
  */
 export const UpdatePlayerInput = z
   .object({
@@ -199,10 +199,16 @@ export const UpdatePlayerInput = z
     displayName: z.string().trim().min(1).max(60).optional(),
     jerseyNumber: PlayerText(4),
     position: PlayerText(30),
+    walkUpSong: PlayerText(Limits.walkUpSongMax),
   })
-  .refine((p) => p.displayName !== undefined || p.jerseyNumber !== undefined || p.position !== undefined, {
-    message: 'Nothing to change.',
-  });
+  .refine(
+    (p) =>
+      p.displayName !== undefined ||
+      p.jerseyNumber !== undefined ||
+      p.position !== undefined ||
+      p.walkUpSong !== undefined,
+    { message: 'Nothing to change.' },
+  );
 
 // ---- Reports (ADMIN-5) -------------------------------------------------------
 

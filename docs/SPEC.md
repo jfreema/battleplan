@@ -470,7 +470,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Players that admins add are active right away. Nobody is linked to them here: parents, guardians, and adult players link themselves when they join the team and claim the player (PLAYER-3), and admins can still add a guardian from the player card, from the team or by email (PLAYER-5). The form says so.
   - Afterward the app says how many players were added; a pasted list with lines it couldn't read shows them on a results screen.
 - **PLAYER-2 · MVP · Player card.**
-  - Shows the name, jersey number, date of birth and age (for the people who see the player's details, PLAYER-12), who's linked, each marked "Player" or "Guardian" ("Not joined yet" where it applies), and upcoming RSVPs. The player's linked members and the team's admins also open its RSVP history (PLAYER-11).
+  - Shows the name, jersey number, walk-up song, date of birth and age (for the people who see the player's details, PLAYER-12), who's linked, each marked "Player" or "Guardian" ("Not joined yet" where it applies), and upcoming RSVPs. The player's linked members and the team's admins also open its RSVP history (PLAYER-11).
   - The player's linked members can edit the name and number, and, with admins, the date of birth in the same Edit player dialog (PLAYER-12).
   - A member who isn't linked sees **Claim this player** (PLAYER-3).
   - Linked members and admins can add a guardian (PLAYER-5). Admins can also remove links and remove the player, and a linked member can remove their own link.
@@ -504,7 +504,8 @@ Players that others answer for never get accounts, and every account belongs to 
 - **PLAYER-8 · MVP · Who's who.** In chat and on the roster, each member's name shows their players. A guardian shows "Maria R. · Emma #7". A member who is a player shows their number when it's set: "Jared F. #12".
 - **PLAYER-9 · MVP · Players on several teams.** A person on two teams is a separate player on each team. In "All my teams" (SCHED-2), each event shows which of a member's players it's for.
 - **PLAYER-10 · MVP · Players' privacy.** This applies to every player record.
-  - The roster record everyone on the team sees holds only a name and jersey number: no photos, birthdates, or contact details. (Players added before positions left the roster may still carry one, which the app no longer shows.)
+  - The roster record everyone on the team sees holds only a name, jersey number, and walk-up song: no photos, birthdates, or contact details. (Players added before positions left the roster may still carry one, which the app no longer shows.)
+  - **Walk-up song:** the song played as the player comes up, "Thunderstruck, AC/DC", up to 100 characters, set in Edit player by the player's linked members and the team's admins (and super admins, ADMIN-3). The whole team sees it on the player card, and the people who edit the player see the row before there's one.
   - Optional details for running the team (PLAYER-12) are kept apart from the roster record and seen only by the team's admins and the people linked to that player.
   - Players never get accounts of their own. Accounts are for adults only (18+), and a `self` link just means that member is the player.
   - Player records that others manage may be children's, so we treat every record this way (LEGAL-1).
@@ -1003,7 +1004,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Privacy Policy at `/privacy` and Terms of Use at `/terms`, on the website (WEB-2).
   - Linked from sign-in, Settings, the store listings, and the Apple developer settings.
   - The Privacy Policy covers:
-    - what we collect: name, email, photo, messages, files, the phone number and email members choose to share with a team (TEAM-10), device tokens, usage analytics, crash reports, and the player records members enter on any team (name, jersey number, position, plus the optional details in PLAYER-12: date of birth, emergency contacts, medical notes, and notes, seen only by the team's admins and the player's linked people). Some player records are managed by parents and may be children's. Medical notes are health information and are saved only with consent;
+    - what we collect: name, email, photo, messages, files, the phone number and email members choose to share with a team (TEAM-10), device tokens, usage analytics, crash reports, and the player records members enter on any team (name, jersey number, walk-up song, plus the optional details in PLAYER-12: date of birth, emergency contacts, medical notes, and notes, seen only by the team's admins and the player's linked people). Some player records are managed by parents and may be children's. Medical notes are health information and are saved only with consent;
     - that super admins can access content for moderation and support;
     - how long data is kept;
     - how to delete it.

@@ -420,6 +420,8 @@
   "pasteAList": "Paste a list",
   "playerNameLabel": "Player name",
   "jerseyNumberLabel": "Number",
+  "walkUpSongLabel": "Walk-up song",
+  "walkUpSongHint": "Song and artist",
   "guardianNameLabel": "Guardian name",
   "guardianEmailLabel": "Guardian email",
   "addPlayer": "Add player",

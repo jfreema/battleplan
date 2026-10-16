@@ -98,4 +98,4 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 - ⬜ 5.4 **Run a trademark search on "Battleplan."** Another software company already uses the name.
 - ⬜ 5.5 **Keep other apps' names out of Apple's keywords** (GroupMe, TeamSnap, TeamReach, GameChanger), and don't mention Android in the iPhone listing.
 - ⬜ 5.6 **Aim the listings at coaches and parents:** no kid-focused art or wording, so neither store treats Battleplan as a kids' app.
-- ⬜ 5.7 **Take "position" out of the Privacy Policy and the delete-account page.** Players no longer have one, and the policy should match the app exactly.
+- ✅ 5.7 **Take "position" out of the Privacy Policy and the delete-account page.** Players no longer have one, and the policy should match the app exactly. They, and the Terms, now say a player's name, jersey number, and walk-up song.

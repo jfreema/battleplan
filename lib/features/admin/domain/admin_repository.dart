@@ -62,6 +62,7 @@ abstract interface class AdminRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
+    String? walkUpSong,
   });
 
   /// A page of people (ADMIN-4), after [after] when given.

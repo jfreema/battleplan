@@ -143,15 +143,22 @@ void main() {
         const PlayerId('emma'),
         name: ' Emma R ',
         jerseyNumber: ' 9 ',
+        walkUpSong: ' Thunderstruck, AC/DC ',
       );
       var d = (await db.doc('players/emma').get()).data()!;
       expect(d['displayName'], 'Emma R');
       expect(d['displayNameLower'], 'emma r');
       expect(d['jerseyNumber'], '9');
+      expect(d['walkUpSong'], 'Thunderstruck, AC/DC');
       expect(d['position'], 'Keeper');
+      expect(
+        playerFromFirestore('emma', const GroupId('y'), d).walkUpSong,
+        'Thunderstruck, AC/DC',
+      );
       await repo.updatePlayer(const PlayerId('emma'), name: 'Emma R');
       d = (await db.doc('players/emma').get()).data()!;
       expect(d['jerseyNumber'], isNull);
+      expect(d['walkUpSong'], isNull);
       for (final (code, type) in [
         ('permission-denied', isA<PermissionDenied>()),
         ('aborted', isA<UnknownFailure>()),

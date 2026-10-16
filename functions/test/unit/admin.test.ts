@@ -124,10 +124,14 @@ describe('super-admin team and player edits (ADMIN-3)', () => {
     }
   });
 
-  it('edits only a name, number, and position, within validPlayer, a blank one clearing it (PLAYER-10)', () => {
+  it('edits only a name, number, position, and walk-up song, within validPlayer, a blank one clearing it (PLAYER-10)', () => {
     expect(UpdatePlayerInput.parse({ playerId: 'p1', displayName: ' Emma ', jerseyNumber: '', position: ' SS ' })).toEqual({
       playerId: 'p1', displayName: 'Emma', jerseyNumber: null, position: 'SS',
     });
+    expect(UpdatePlayerInput.parse({ playerId: 'p1', walkUpSong: ' Jump Around ' })).toEqual({
+      playerId: 'p1', walkUpSong: 'Jump Around',
+    });
+    expect(ok(UpdatePlayerInput, { playerId: 'p1', walkUpSong: 'x'.repeat(101) })).toBe(false);
     expect(UpdatePlayerInput.parse({ playerId: 'p1', jerseyNumber: null })).toEqual({ playerId: 'p1', jerseyNumber: null });
     for (const bad of [{}, { displayName: '' }, { displayName: 'x'.repeat(61) }, { jerseyNumber: '12345' }, { position: 'x'.repeat(31) }]) {
       expect(ok(UpdatePlayerInput, { playerId: 'p1', ...bad })).toBe(false);

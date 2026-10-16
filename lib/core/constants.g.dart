@@ -82,6 +82,7 @@ abstract final class Limits {
   static const int emergencyContactRelationshipMax = 30;
   static const int medicalNotesMax = 500;
   static const int playerNotesMax = 500;
+  static const int walkUpSongMax = 100;
   static const int playerAgeMaxYears = 100;
   static const int pastedRosterLinesMax = 200;
   static const int pastedMembersMax = 100;

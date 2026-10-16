@@ -574,6 +574,50 @@ void main() {
       expect(repo.details[emma.id], isNull);
     });
 
+    testWidgets('Edit player sets the walk-up song, which the whole team '
+        'sees (PLAYER-2)', (tester) async {
+      final repo = withEmma();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberships: people,
+        playerRepo: repo,
+      );
+      await go(tester, '/g/y/roster/players/emma');
+      // An admin sees the row before there's a song.
+      expect(find.text('Walk-up song'), findsOneWidget);
+      await tester.tap(find.byTooltip('Edit player'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Walk-up song'),
+        ' Thunderstruck, AC/DC ',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(repo.walkUpSongs['emma'], ' Thunderstruck, AC/DC ');
+
+      // Someone on the team who isn't linked sees the song, and only once
+      // there is one.
+      Future<void> asSam(Player player) async {
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(
+            user: const AuthUser(uid: 'sam', emailVerified: true),
+          ),
+          groups: youth,
+          memberships: [...people, testMembership('y', 'sam')],
+          playerRepo: FakePlayerRepository([player]),
+        );
+        await go(tester, '/g/y/roster/players/emma');
+      }
+
+      await asSam(emma.copyWith(walkUpSong: 'Eye of the Tiger, Survivor'));
+      expect(find.text('Eye of the Tiger, Survivor'), findsOneWidget);
+      await asSam(emma);
+      expect(find.text('Walk-up song'), findsNothing);
+    });
+
     testWidgets("a player who isn't there says so", (tester) async {
       await pumpApp(
         tester,

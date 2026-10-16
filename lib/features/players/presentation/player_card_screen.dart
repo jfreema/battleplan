@@ -26,8 +26,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// PLAYER-2 at `/g/:groupId/roster/players/:playerId`: name, number, date
-/// of birth (for those who see the Details), and who's linked, each marked
+/// PLAYER-2 at `/g/:groupId/roster/players/:playerId`: name, number, walk-up
+/// song, date of birth (for those who see the Details), and who's linked, each marked
 /// Player or Guardian. Linked
 /// members (the player themselves included) and admins edit the details
 /// and add a guardian, picked from the team or by email (PLAYER-5); admins remove links and the player, and
@@ -135,6 +135,14 @@ class PlayerCardScreen extends ConsumerWidget {
             title: Text(l10n.jerseyNumberLabel),
             subtitle: Text(player.jerseyNumber ?? '—'),
           ),
+          // The whole team sees the walk-up song (PLAYER-2); the people who
+          // edit the player see the row before there's one.
+          if ((player.walkUpSong?.isNotEmpty ?? false) || canEdit)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.walkUpSongLabel),
+              subtitle: Text(player.walkUpSong ?? '—'),
+            ),
           if (seesDetails) DateOfBirthTile(playerId: playerId),
           if (seesDetails) ...[
             const SizedBox(height: Space.lg),
@@ -424,6 +432,7 @@ class PlayerCardScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final name = TextEditingController(text: player.displayName);
     final number = TextEditingController(text: player.jerseyNumber);
+    final song = TextEditingController(text: player.walkUpSong);
     // Only once the details have loaded, so saving keeps the rest of them.
     final stored = withDateOfBirth
         ? ref.read(playerDetailsProvider(playerId))
@@ -450,6 +459,15 @@ class PlayerCardScreen extends ConsumerWidget {
                 controller: number,
                 maxLength: 4,
                 decoration: InputDecoration(labelText: l10n.jerseyNumberLabel),
+              ),
+              TextField(
+                controller: song,
+                maxLength: Limits.walkUpSongMax,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: l10n.walkUpSongLabel,
+                  hintText: l10n.walkUpSongHint,
+                ),
               ),
               if (withDob) ...[
                 DateOfBirthField(
@@ -488,6 +506,7 @@ class PlayerCardScreen extends ConsumerWidget {
               player.id,
               name: name.text,
               jerseyNumber: number.text,
+              walkUpSong: song.text,
             );
       } else {
         await ref
@@ -496,6 +515,7 @@ class PlayerCardScreen extends ConsumerWidget {
               player.id,
               name: name.text,
               jerseyNumber: number.text,
+              walkUpSong: song.text,
             );
       }
     } on AppFailure {

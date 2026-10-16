@@ -102,15 +102,17 @@ class FirestorePlayerRepository implements PlayerRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
+    String? walkUpSong,
   }) async {
     final trimmed = name.trim();
+    String? blankToNull(String? v) =>
+        (v?.trim().isEmpty ?? true) ? null : v!.trim();
     try {
       await _db.collection(Collections.players).doc(id.value).update({
         'displayName': trimmed,
         'displayNameLower': trimmed.toLowerCase(),
-        'jerseyNumber': (jerseyNumber?.trim().isEmpty ?? true)
-            ? null
-            : jerseyNumber!.trim(),
+        'jerseyNumber': blankToNull(jerseyNumber),
+        'walkUpSong': blankToNull(walkUpSong),
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
@@ -397,6 +399,7 @@ Player playerFromFirestore(
   groupId: groupId,
   displayName: d['displayName'] as String? ?? '',
   jerseyNumber: d['jerseyNumber'] as String?,
+  walkUpSong: d['walkUpSong'] as String?,
   status: PlayerStatus.tryParse(d['status'] as String?) ?? PlayerStatus.active,
   proposedBy: d['proposedBy'] as String?,
   proposedRelation: PlayerRelation.tryParse(d['proposedRelation'] as String?),

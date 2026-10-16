@@ -756,11 +756,12 @@ export interface PlayerEdit {
   displayName?: string;
   jerseyNumber?: string | null;
   position?: string | null;
+  walkUpSong?: string | null;
 }
 
 /**
- * Changes a player's name, number, or position for a super admin who isn't
- * on the team (ADMIN-3); its admins and guardians write them directly.
+ * Changes a player's name, number, position, or walk-up song for a super
+ * admin who isn't on the team (ADMIN-3); its admins and guardians write them directly.
  * Callers validate [edit] as validPlayer does. Returns the player's team
  * and each changed field before and after, for the audit log.
  */
@@ -773,7 +774,7 @@ export async function updatePlayerProfile(
     const player = await tx.get(ref);
     if (!player.exists) throw new HttpsError('not-found', 'No such player.');
     const after: Record<string, unknown> = {};
-    for (const key of ['displayName', 'jerseyNumber', 'position'] as const) {
+    for (const key of ['displayName', 'jerseyNumber', 'position', 'walkUpSong'] as const) {
       if (edit[key] !== undefined) after[key] = edit[key];
     }
     const before = Object.fromEntries(Object.keys(after).map((k) => [k, player.get(k) ?? null]));

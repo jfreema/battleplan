@@ -523,9 +523,15 @@ describe('cache and server-only fields', () => {
 describe("kids' privacy (PLAYER-10)", () => {
   const edit = { displayName: 'Emma R', displayNameLower: 'emma r', jerseyNumber: '8', position: 'Keeper' };
 
-  it('lets a guardian or an admin edit name, number, and position', async () => {
+  it('lets a guardian or an admin edit name, number, position, and walk-up song', async () => {
     await assertSucceeds(as('dan').doc('players/emma').update(edit));
     await assertSucceeds(as('carol').doc('players/emma').update({ jerseyNumber: null }));
+    // The walk-up song (PLAYER-2): up to 100 characters, or none.
+    await assertSucceeds(as('dan').doc('players/emma').update({ walkUpSong: 'Thunderstruck, AC/DC' }));
+    await assertSucceeds(as('carol').doc('players/emma').update({ walkUpSong: null }));
+    await assertFails(as('dan').doc('players/emma').update({ walkUpSong: 'x'.repeat(101) }));
+    await assertFails(as('dan').doc('players/emma').update({ walkUpSong: 7 }));
+    await assertFails(as('frank').doc('players/emma').update({ walkUpSong: 'Jump Around' }));
   });
 
   it('blocks other parents and other teams', async () => {
@@ -533,7 +539,7 @@ describe("kids' privacy (PLAYER-10)", () => {
     await assertFails(as('alice').doc('players/emma').update(edit));
   });
 
-  it('never lets a player record hold more than a name, number, and position', async () => {
+  it('never lets a player record hold more than a name, number, position, and walk-up song', async () => {
     await assertFails(as('dan').doc('players/emma').update({ birthdate: '2016-04-01' }));
     await assertFails(as('dan').doc('players/emma').update({ photoPath: 'x.jpg' }));
     await assertFails(as('dan').doc('players/emma').update({ jerseyNumber: '12345' }));

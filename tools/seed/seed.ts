@@ -99,6 +99,8 @@ const players: {
   guardians: string[];
   self?: string;
   pendingBy?: string;
+  /** The song played as they come up to bat (PLAYER-2). */
+  walkUpSong?: string;
 }[] = [
   { id: 'luke-dunphy', groupId: 'cyclone', name: 'Luke Dunphy', number: '7', position: 'Forward', guardians: ['claire', 'phil'] },
   { id: 'alex-dunphy', groupId: 'cyclone', name: 'Alex Dunphy', number: '9', position: 'Midfield', guardians: ['claire'] },
@@ -107,9 +109,9 @@ const players: {
   { id: 'haley-dunphy', groupId: 'possums', name: 'Haley Dunphy', number: '23', position: 'Guard', guardians: ['claire'] },
   { id: 'erica-bing', groupId: 'possums', name: 'Erica Bing', number: '4', position: 'Forward', guardians: ['monica'] },
   { id: 'jack-bing', groupId: 'possums', name: 'Jack Bing', number: '12', position: 'Center', guardians: ['chandler'] },
-  { id: 'jim-halpert', groupId: 'thunder', name: 'Jim Halpert', number: '3', position: 'Pitcher', guardians: [], self: 'jim' },
-  { id: 'andy-dwyer', groupId: 'thunder', name: 'Andy Dwyer', number: '12', position: 'Shortstop', guardians: [], self: 'andy' },
-  { id: 'pam-beesly', groupId: 'thunder', name: 'Pam Beesly', number: '5', position: 'Outfield', guardians: [] },
+  { id: 'jim-halpert', groupId: 'thunder', name: 'Jim Halpert', number: '3', position: 'Pitcher', guardians: [], self: 'jim', walkUpSong: 'Thunderstruck, AC/DC' },
+  { id: 'andy-dwyer', groupId: 'thunder', name: 'Andy Dwyer', number: '12', position: 'Shortstop', guardians: [], self: 'andy', walkUpSong: 'Eye of the Tiger, Survivor' },
+  { id: 'pam-beesly', groupId: 'thunder', name: 'Pam Beesly', number: '5', position: 'Outfield', guardians: [], walkUpSong: 'Walking on Sunshine, Katrina and the Waves' },
   { id: 'claire-dunphy', groupId: 'thunder', name: 'Claire Dunphy', number: null, position: null, guardians: [], pendingBy: 'claire' },
 ];
 
@@ -205,6 +207,7 @@ async function main() {
       displayNameLower: p.name.toLowerCase(),
       jerseyNumber: p.number,
       position: p.position,
+      ...(p.walkUpSong ? { walkUpSong: p.walkUpSong } : {}),
       status: p.pendingBy ? 'pending' : 'active',
       // Linked to its proposer once an admin approves it (PLAYER-4).
       ...(p.pendingBy ? { proposedBy: p.pendingBy, proposedRelation: 'self', decidedBy: null, decidedAt: null } : {}),

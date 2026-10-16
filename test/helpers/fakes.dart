@@ -1075,7 +1075,14 @@ class FakePlayerRepository implements PlayerRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
-  }) async => calls.add('update ${id.value} $name');
+    String? walkUpSong,
+  }) async {
+    calls.add('update ${id.value} $name');
+    walkUpSongs[id.value] = walkUpSong;
+  }
+
+  /// The walk-up song each player was last saved with (PLAYER-2).
+  final Map<String, String?> walkUpSongs = {};
 
   @override
   Future<void> removePlayer(GroupId groupId, PlayerId id) async {}
@@ -2815,6 +2822,7 @@ class FakeAdminRepository implements AdminRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
+    String? walkUpSong,
   }) => _act('player ${id.value} $name #${jerseyNumber ?? ''}');
 
   @override

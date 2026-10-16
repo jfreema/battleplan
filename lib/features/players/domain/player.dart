@@ -17,6 +17,10 @@ abstract class Player with _$Player {
     required String displayName,
     String? jerseyNumber,
 
+    /// The song played as they come up (PLAYER-2), "Thunderstruck, AC/DC":
+    /// the whole team sees it, up to [Limits.walkUpSongMax] characters.
+    String? walkUpSong,
+
     /// Pending until a team admin approves a member's new player
     /// (PLAYER-4). Players without a status are active.
     @Default(PlayerStatus.active) PlayerStatus status,

@@ -28,6 +28,7 @@ abstract interface class PlayerRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
+    String? walkUpSong,
   });
 
   /// Removes a player (PLAYER-2). Admins only.

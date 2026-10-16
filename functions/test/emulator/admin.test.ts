@@ -503,14 +503,16 @@ describe('editing a team the super admin is not on (ADMIN-3)', () => {
   });
 
   it('edits a player, a blank number or position clearing it, and audits it', async () => {
-    await asRoot(admin.adminUpdatePlayer, { playerId: 'emma', displayName: ' Emma R ', jerseyNumber: ' ', position: 'CF' });
+    await asRoot(admin.adminUpdatePlayer, {
+      playerId: 'emma', displayName: ' Emma R ', jerseyNumber: ' ', position: 'CF', walkUpSong: 'Jump Around',
+    });
     expect((await db().collection(Collections.players).doc('emma').get()).data()).toMatchObject({
-      displayName: 'Emma R', displayNameLower: 'emma r', jerseyNumber: null, position: 'CF',
+      displayName: 'Emma R', displayNameLower: 'emma r', jerseyNumber: null, position: 'CF', walkUpSong: 'Jump Around',
     });
     expect((await audits('updatePlayer'))[0]).toMatchObject({
       actorId: 'root', groupId: 'thunder', targetType: 'player', targetId: 'emma',
-      before: { displayName: 'Emma', jerseyNumber: '7', position: 'SS' },
-      after: { displayName: 'Emma R', jerseyNumber: null, position: 'CF' },
+      before: { displayName: 'Emma', jerseyNumber: '7', position: 'SS', walkUpSong: null },
+      after: { displayName: 'Emma R', jerseyNumber: null, position: 'CF', walkUpSong: 'Jump Around' },
     });
   });
 

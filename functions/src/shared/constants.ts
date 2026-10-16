@@ -79,6 +79,7 @@ export const Limits = {
   emergencyContactRelationshipMax: 30,
   medicalNotesMax: 500,
   playerNotesMax: 500,
+  walkUpSongMax: 100,
   playerAgeMaxYears: 100,
   pastedRosterLinesMax: 200,
   pastedMembersMax: 100,

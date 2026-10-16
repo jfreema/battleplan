@@ -189,11 +189,13 @@ void main() {
         const PlayerId('emma'),
         name: ' Emma ',
         jerseyNumber: ' 7 ',
+        walkUpSong: ' Jump Around ',
       );
       expect(functions.lastData('adminUpdatePlayer'), {
         'playerId': 'emma',
         'displayName': 'Emma',
         'jerseyNumber': '7',
+        'walkUpSong': 'Jump Around',
       });
       expect(
         functions.calls.map((c) => c.$1),

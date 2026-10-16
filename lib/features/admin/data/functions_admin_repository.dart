@@ -229,10 +229,12 @@ class FunctionsAdminRepository implements AdminRepository {
     PlayerId id, {
     required String name,
     String? jerseyNumber,
+    String? walkUpSong,
   }) => _call('adminUpdatePlayer', {
     'playerId': id.value,
     'displayName': name.trim(),
     'jerseyNumber': jerseyNumber?.trim() ?? '',
+    'walkUpSong': walkUpSong?.trim() ?? '',
   });
 
   @override

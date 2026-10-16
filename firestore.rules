@@ -225,7 +225,9 @@ service cloud.firestore {
       return p.displayName is string && p.displayName.size() >= 1 && p.displayName.size() <= 60
         && p.displayNameLower == p.displayName.lower()
         && (p.get('jerseyNumber', null) == null || (p.jerseyNumber is string && p.jerseyNumber.size() <= 4))
-        && (p.get('position', null) == null || (p.position is string && p.position.size() <= 30));
+        && (p.get('position', null) == null || (p.position is string && p.position.size() <= 30))
+        // The song played as they come up (PLAYER-2), up to walkUpSongMax.
+        && (p.get('walkUpSong', null) == null || (p.walkUpSong is string && p.walkUpSong.size() <= 100));
     }
 
     // Active players are on the roster for everyone on the team. A pending
@@ -252,7 +254,8 @@ service cloud.firestore {
       allow update: if (isGuardian(playerId) && isMember(resource.data.groupId)
                         || isAdmin(resource.data.groupId))
         && active(resource.data.groupId)
-        && onlyChanges(['displayName', 'displayNameLower', 'jerseyNumber', 'position', 'updatedAt'])
+        && onlyChanges(['displayName', 'displayNameLower', 'jerseyNumber', 'position',
+                        'walkUpSong', 'updatedAt'])
         && validPlayer(incoming());
     }
 
