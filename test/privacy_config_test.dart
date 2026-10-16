@@ -62,4 +62,16 @@ void main() {
       });
     }
   });
+
+  // Store checklist 1.10: only exempt encryption (HTTPS), declared in the
+  // app so App Store Connect doesn't hold each build for the question.
+  test('iOS declares no non-exempt encryption', () {
+    final plist = File('ios/Runner/Info.plist')
+        .readAsStringSync()
+        .replaceAll(RegExp(r'\s+'), ' ');
+    expect(
+      plist,
+      contains('<key>ITSAppUsesNonExemptEncryption</key> <false/>'),
+    );
+  });
 }

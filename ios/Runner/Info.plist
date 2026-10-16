@@ -28,6 +28,14 @@
 	<false/>
 	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS</key>
 	<false/>
+	<!-- Export compliance (store checklist 1.10): the app's only encryption
+	     is HTTPS/TLS from iOS and the Firebase SDKs, which is exempt, so App
+	     Store Connect doesn't ask about it for every build. SHA-256 in
+	     imports only names documents; it encrypts nothing. Turn this to
+	     true, and file the export forms, before adding any encryption of
+	     our own (end-to-end messages, encrypted files). -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Battleplan saves team photos to your library when you tap Save photo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
