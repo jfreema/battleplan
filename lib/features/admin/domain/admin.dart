@@ -305,6 +305,10 @@ abstract class AppConfig with _$AppConfig {
     @Default(Limits.defaultStorageQuotaMb) int defaultStorageQuotaMb,
     @Default(Limits.maxUploadMb) int maxUploadMb,
     @Default('') String supportEmail,
+
+    /// Email super admins when someone finishes signing up and when a team
+    /// is created or deleted (ADMIN-9).
+    @Default(true) bool emailAdminAlerts,
     Announcement? announcementBanner,
   }) = _AppConfig;
 

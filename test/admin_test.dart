@@ -876,6 +876,26 @@ void main() {
   });
 
   group('platform settings (ADMIN-7)', () {
+    testWidgets('the alert emails to super admins can be turned off '
+        '(ADMIN-9)', (tester) async {
+      final admin = FakeAdminRepository(
+        config: const AppConfig(supportEmail: 'help@getbattleplan.app'),
+      );
+      await open(tester, '/admin/settings', admin: admin, size: tall);
+      final alerts = find.widgetWithText(
+        SwitchListTile,
+        'Email super admins about new accounts and teams',
+      );
+      await tester.ensureVisible(alerts);
+      expect(tester.widget<SwitchListTile>(alerts).value, isTrue);
+      await tester.tap(alerts);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.widgetWithText(FilledButton, 'Save'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(admin.savedConfigs.single.emailAdminAlerts, isFalse);
+    });
+
     testWidgets('a banner needs text, and turning it off removes it', (
       tester,
     ) async {

@@ -21,6 +21,7 @@ import {
 import { eraseMessage } from '../chat/service.js';
 import { deleteDocumentOf } from '../documents/service.js';
 import { resendApiKey } from '../email/service.js';
+import { alertTeamDeleted } from './alerts.js';
 import { updatePlayerProfile } from '../players/service.js';
 import { closeReport, openReport, reopenReport } from '../safety/service.js';
 import { auth, db, storage } from '../shared/admin.js';
@@ -237,19 +238,25 @@ export const adminUpdatePlayer = onCall(async (request) => {
 });
 
 /** Permanently deletes any team once its name is typed (ADMIN-3, TEAM-9): `name-mismatch` otherwise. */
-export const adminDeleteGroup = onCall(async (request) => {
+export const adminDeleteGroup = onCall({ secrets: [resendApiKey] }, async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(DeleteGroupInput, request.data);
-  await deleteGroupNamed(input.groupId, input.confirmName, (before) =>
-    audit({
+  const deleted: { before?: { name: string; memberCount: number } } = {};
+  await deleteGroupNamed(input.groupId, input.confirmName, (before) => {
+    deleted.before = before;
+    return audit({
       actorId: actor,
       action: 'deleteGroup',
       groupId: input.groupId,
       targetType: 'group',
       targetId: input.groupId,
       before,
-    }),
-  );
+    });
+  });
+  // ADMIN-9: super admins hear about every deleted team.
+  if (deleted.before) {
+    await alertTeamDeleted({ groupId: input.groupId, ...deleted.before, actorUid: actor, bySuperAdmin: true });
+  }
   return { ok: true };
 });
 

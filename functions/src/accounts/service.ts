@@ -21,6 +21,7 @@ import {
   setupEmail,
 } from '../email/templates.js';
 import { sendEmail } from '../email/service.js';
+import { alertNewAccount } from '../admin/alerts.js';
 import { activateUrl, appUrl } from '../links/service.js';
 import { projectId } from '../shared/project.js';
 import {
@@ -49,6 +50,10 @@ export interface ProfileResult {
   needsSetup: boolean;
   /** The old contact email, when it just followed a verified email change. */
   emailChangedFrom?: string | null;
+  /** First-run setup just finished (AUTH-5), so super admins hear about it (ADMIN-9). */
+  signedUp?: boolean;
+  /** An admin added this account before it was set up (AUTH-6). */
+  addedByAdmin?: boolean;
 }
 
 export interface EnsureOptions {
@@ -135,6 +140,11 @@ export async function ensureUserProfile(
     }
 
     if (setup) {
+      // Only the first setup is a new account; a retried save isn't.
+      const signedUp = !data?.adultConfirmedAt;
+      // Added accounts carry chooseSignIn from when an admin added them
+      // (findOrProvisionUser); accounts people made themselves don't.
+      const addedByAdmin = data?.chooseSignIn !== undefined;
       const name = setup.displayName.trim().slice(0, 50);
       const update = {
         displayName: name,
@@ -148,12 +158,23 @@ export async function ensureUserProfile(
       } else {
         tx.update(ref, update);
       }
-      return { created, activated, needsSetup: false, emailChangedFrom };
+      return { created, activated, needsSetup: false, emailChangedFrom, signedUp, addedByAdmin };
     }
     return { created, activated, needsSetup: needsSetup(data ?? {}), emailChangedFrom };
   });
 
   if (result.activated) await clearPendingMemberships(uid);
+
+  // ADMIN-9: super admins hear about every new account.
+  if (result.signedUp && setup) {
+    await alertNewAccount({
+      uid,
+      name: setup.displayName.trim().slice(0, 50),
+      email: user.email ?? '',
+      providerIds: identity.providerIds,
+      addedByAdmin: result.addedByAdmin === true,
+    });
+  }
 
   // AUTH-7, AUTH-8: the old address hears about the change from us too,
   // not only from Firebase, and so does the new one.

@@ -32,6 +32,7 @@ class _PlatformSettingsScreenState
   final _support = TextEditingController();
   final _bannerText = TextEditingController();
   bool _allowCreation = true;
+  bool _emailAlerts = true;
   bool _bannerOn = false;
   BannerSeverity _severity = BannerSeverity.info;
   DateTime? _expiresAt;
@@ -54,6 +55,7 @@ class _PlatformSettingsScreenState
   void _load(AppConfig c) {
     _loaded = true;
     _allowCreation = c.allowUserGroupCreation;
+    _emailAlerts = c.emailAdminAlerts;
     _perDay.text = '${c.maxGroupsCreatedPerUserPerDay}';
     _quota.text = '${c.defaultStorageQuotaMb}';
     _upload.text = '${c.maxUploadMb}';
@@ -74,6 +76,7 @@ class _PlatformSettingsScreenState
     defaultStorageQuotaMb: int.tryParse(_quota.text.trim()) ?? 0,
     maxUploadMb: int.tryParse(_upload.text.trim()) ?? 0,
     supportEmail: _support.text.trim(),
+    emailAdminAlerts: _emailAlerts,
     announcementBanner: _bannerOn
         ? Announcement(
             text: _bannerText.text.trim(),
@@ -204,6 +207,20 @@ class _PlatformSettingsScreenState
                         ConfigProblem.maxUpload,
                         l10n.adminRangeError(1, Limits.maxUploadMb),
                       ),
+                    ),
+                  ],
+                ),
+                // Emails to super admins about new accounts and teams
+                // (ADMIN-9). Reports always email (SAFE-4).
+                AdminSectionCard(
+                  title: l10n.adminAlerts,
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(l10n.adminEmailAlerts),
+                      subtitle: Text(l10n.adminEmailAlertsHelp),
+                      value: _emailAlerts,
+                      onChanged: (v) => setState(() => _emailAlerts = v),
                     ),
                   ],
                 ),

@@ -10,6 +10,7 @@ import { requireAuth, requireSuperAdmin } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { parse } from '../shared/validate.js';
 import { audit } from '../audit/service.js';
+import { alertTeamCreated, alertTeamDeleted } from '../admin/alerts.js';
 import { groupCreationConfig } from '../admin/service.js';
 import { postSystemMessage } from '../chat/service.js';
 import { groupMemberId } from '../shared/ids.js';
@@ -42,7 +43,7 @@ const CreateGroupInput = z.object({
 });
 
 /** Creates a team with the caller as owner (TEAM-1). */
-export const createGroup = onCall(async (request) => {
+export const createGroup = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(CreateGroupInput, request.data);
 
@@ -82,6 +83,14 @@ export const createGroup = onCall(async (request) => {
     // New teams start at the platform's default limit (STORE-1, ADMIN-7).
     config.defaultStorageQuotaMb,
   );
+  // ADMIN-9: super admins hear about every new team.
+  await alertTeamCreated({
+    groupId,
+    name: input.name,
+    sport: input.sport,
+    ownerName: (profile?.displayName as string | undefined) ?? user.displayName ?? 'Someone',
+    ownerEmail: user.email ?? '',
+  });
   return { groupId };
 });
 
@@ -248,26 +257,33 @@ export const archiveGroup = onCall(async (request) => {
  * archived team can be deleted; a suspended one only by a super admin, so
  * its owner can't erase what it was suspended for (§3).
  */
-export const deleteGroup = onCall(async (request) => {
+export const deleteGroup = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(GroupOnly.extend({ confirmName: z.string() }), request.data);
   const superAdmin = request.auth?.token.superAdmin === true;
-  if (!superAdmin && (await roleOf(input.groupId, uid)) !== 'owner') {
+  const owner = (await roleOf(input.groupId, uid)) === 'owner';
+  if (!superAdmin && !owner) {
     throw new HttpsError('permission-denied', 'Only the team owner can do that.');
   }
   // A team that's already gone is left alone (deleteGroupNamed).
   const group = await db().collection(Collections.groups).doc(input.groupId).get();
   if (group.exists) await requireOpenTeam(input.groupId, superAdmin, { allowArchived: true });
-  await deleteGroupNamed(input.groupId, input.confirmName, (before) =>
-    audit({
+  const deleted: { before?: { name: string; memberCount: number } } = {};
+  await deleteGroupNamed(input.groupId, input.confirmName, (before) => {
+    deleted.before = before;
+    return audit({
       actorId: uid,
       action: 'deleteGroup',
       groupId: input.groupId,
       targetType: 'group',
       targetId: input.groupId,
       before,
-    }),
-  );
+    });
+  });
+  // ADMIN-9: super admins hear about every deleted team.
+  if (deleted.before) {
+    await alertTeamDeleted({ groupId: input.groupId, ...deleted.before, actorUid: uid, bySuperAdmin: !owner });
+  }
   return { ok: true };
 });
 

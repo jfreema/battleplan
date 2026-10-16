@@ -124,6 +124,64 @@ export function openReportsEmail(to: string, count: number, oldestHours: number,
   };
 }
 
+/** "a soccer team", "an other team" never: just "a team". */
+function aTeam(sport: string): string {
+  if (!sport || sport === 'other') return 'a team';
+  return `${/^[aeiou]/i.test(sport) ? 'an' : 'a'} ${sport} team`;
+}
+
+/** ADMIN-9: someone finished signing up, for every super admin. */
+export function newAccountEmail(
+  to: string,
+  account: { name: string; email: string; methods: string[]; addedByAdmin: boolean },
+  url: string,
+): Email {
+  const how = account.methods.length ? `, with ${account.methods.join(' and ')}` : '';
+  return {
+    to,
+    subject: `New account: ${account.name}`,
+    ...layout(
+      [
+        `${account.name} (${account.email}) finished signing up for Battleplan${how}.`,
+        ...(account.addedByAdmin ? ['A team admin added them first.'] : []),
+      ],
+      { label: 'Open in the admin panel', url },
+    ),
+  };
+}
+
+/** ADMIN-9: someone created a team, for every super admin. */
+export function teamCreatedEmail(
+  to: string,
+  team: { name: string; sport: string; ownerName: string; ownerEmail: string },
+  url: string,
+): Email {
+  const owner = team.ownerEmail ? `${team.ownerName} (${team.ownerEmail})` : team.ownerName;
+  return {
+    to,
+    subject: `New team: ${team.name}`,
+    ...layout([`${owner} created ${team.name}, ${aTeam(team.sport)}.`], { label: 'Open in the admin panel', url }),
+  };
+}
+
+/** ADMIN-9: a team was deleted, for every super admin. */
+export function teamDeletedEmail(
+  to: string,
+  team: { name: string; memberCount: number; actorName: string; bySuperAdmin: boolean },
+  url: string,
+): Email {
+  const members = team.memberCount === 1 ? '1 member' : `${team.memberCount} members`;
+  const who = team.bySuperAdmin ? `${team.actorName}, a super admin,` : team.actorName;
+  return {
+    to,
+    subject: `Team deleted: ${team.name}`,
+    ...layout([`${who} deleted ${team.name}, which had ${members}. Everything in it is gone.`], {
+      label: 'Open the audit log',
+      url,
+    }),
+  };
+}
+
 /** Readable names for sign-in methods. */
 export function methodName(id: string): string {
   return ({ 'google.com': 'Google', 'apple.com': 'Apple', password: 'Password' } as Record<string, string>)[id] ?? id;

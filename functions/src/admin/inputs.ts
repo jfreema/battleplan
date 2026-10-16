@@ -257,6 +257,9 @@ export const UpdateConfigInput = z.object({
   // storage.rules refuse files over Limits.maxUploadMb whatever this says.
   maxUploadMb: z.number().int().min(1).max(Limits.maxUploadMb),
   supportEmail: Email,
+  // ADMIN-9: email super admins about new accounts and teams. Optional, so
+  // an admin panel from before it still saves (and leaves it as it was).
+  emailAdminAlerts: z.boolean().optional(),
   announcementBanner: z
     .object({
       text: z.string().trim().min(1).max(BANNER_TEXT_MAX),
@@ -270,8 +273,10 @@ export type AppConfigInput = z.infer<typeof UpdateConfigInput>;
 
 /** config/app's fields for [input] (ARCH §6.2), with the banner's end as a Timestamp. */
 export function configFields(input: AppConfigInput): Record<string, unknown> {
+  const { emailAdminAlerts, ...rest } = input;
   return {
-    ...input,
+    ...rest,
+    ...(emailAdminAlerts === undefined ? {} : { emailAdminAlerts }),
     announcementBanner: input.announcementBanner && {
       text: input.announcementBanner.text,
       severity: input.announcementBanner.severity,

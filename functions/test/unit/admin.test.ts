@@ -212,6 +212,16 @@ describe('platform settings (ADMIN-7)', () => {
     expect(ok(UpdateConfigInput, banner({ expiresAt: '2026-11-01T01:00:00-05:00' }))).toBe(true);
   });
 
+  it('saves the alerts switch (ADMIN-9) only when the form sends it', () => {
+    expect(ok(UpdateConfigInput, config({ emailAdminAlerts: false }))).toBe(true);
+    expect(ok(UpdateConfigInput, config({ emailAdminAlerts: 'off' }))).toBe(false);
+    expect(configFields(UpdateConfigInput.parse(config({ emailAdminAlerts: false })))).toMatchObject({
+      emailAdminAlerts: false,
+    });
+    // An admin panel from before it leaves it as it was.
+    expect(configFields(UpdateConfigInput.parse(config()))).not.toHaveProperty('emailAdminAlerts');
+  });
+
   it('stores the banner end as a Timestamp', () => {
     const fields = configFields(UpdateConfigInput.parse(config()));
     const banner = fields.announcementBanner as { expiresAt: Timestamp };

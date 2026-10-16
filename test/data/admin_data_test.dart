@@ -388,6 +388,7 @@ void main() {
       'allowUserGroupCreation': false,
       'maxUploadMb': 5,
       'supportEmail': 'help@example.com',
+      'emailAdminAlerts': false,
       'announcementBanner': {
         'text': 'Maintenance',
         'severity': 'warning',
@@ -397,6 +398,8 @@ void main() {
     final config = await repo.watchConfig().first;
     expect(config.allowUserGroupCreation, isFalse);
     expect(config.maxUploadMb, 5);
+    expect(config.emailAdminAlerts, isFalse);
+    expect(const AppConfig().emailAdminAlerts, isTrue);
     expect(config.announcementBanner!.severity, BannerSeverity.warning);
     expect(
       appConfigFromFirestore(const {
@@ -408,6 +411,7 @@ void main() {
     await repo.updateConfig(config.copyWith(supportEmail: ' s@example.com '));
     final sent = functions.lastData('adminUpdateConfig')! as Map;
     expect(sent['supportEmail'], 's@example.com');
+    expect(sent['emailAdminAlerts'], isFalse);
     expect(
       (sent['announcementBanner'] as Map)['expiresAt'],
       '2026-11-01T00:00:00.000Z',

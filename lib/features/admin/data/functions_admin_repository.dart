@@ -410,6 +410,7 @@ class FunctionsAdminRepository implements AdminRepository {
       'defaultStorageQuotaMb': config.defaultStorageQuotaMb,
       'maxUploadMb': config.maxUploadMb,
       'supportEmail': config.supportEmail.trim(),
+      'emailAdminAlerts': config.emailAdminAlerts,
       'announcementBanner': banner == null
           ? null
           : {
@@ -442,6 +443,8 @@ AppConfig appConfigFromFirestore(Map<String, dynamic> d) {
         defaults.defaultStorageQuotaMb,
     maxUploadMb: (d['maxUploadMb'] as num?)?.toInt() ?? defaults.maxUploadMb,
     supportEmail: d['supportEmail'] as String? ?? '',
+    emailAdminAlerts:
+        d['emailAdminAlerts'] as bool? ?? defaults.emailAdminAlerts,
     announcementBanner: banner is Map && expires != null
         ? Announcement(
             text: _str(banner['text']),

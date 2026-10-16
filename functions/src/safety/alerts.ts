@@ -4,8 +4,8 @@
 // about every report.
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
-import { currentSuperAdminEmails } from '../admin/service.js';
 import { sendEmail } from '../email/service.js';
+import { superAdminEmails } from '../email/super_admins.js';
 import { openReportsEmail, reportAlertEmail } from '../email/templates.js';
 import { appUrl } from '../links/service.js';
 import { db } from '../shared/admin.js';
@@ -36,7 +36,7 @@ export async function alertSuperAdmins(report: {
     const team = await db().collection(Collections.groups).doc(report.groupId).get();
     const teamName = (team.get('name') as string | undefined) ?? 'a team';
     const details = { teamName, what: reportedThing(report.targetType), reason: report.reason, teamVisible: report.teamVisible };
-    for (const to of await currentSuperAdminEmails()) {
+    for (const to of await superAdminEmails()) {
       await sendEmail(reportAlertEmail(to, details, appUrl('/admin/reports')));
     }
   } catch (e) {
@@ -58,7 +58,7 @@ export async function remindOpenReports(nowMs = Date.now()): Promise<number> {
   if (waiting.empty) return 0;
   const oldest = waiting.docs[waiting.size - 1].get('createdAt') as Timestamp;
   const hours = Math.floor((nowMs - oldest.toMillis()) / HOUR);
-  for (const to of await currentSuperAdminEmails()) {
+  for (const to of await superAdminEmails()) {
     await sendEmail(openReportsEmail(to, waiting.size, hours, appUrl('/admin/reports')));
   }
   return waiting.size;

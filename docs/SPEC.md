@@ -930,12 +930,19 @@ This is for platform operators (super admins) to manage every team and user.
   - Whether anyone can create teams, and the teams-per-person-per-day limit.
   - Default storage quota and maximum upload size.
   - Support email.
+  - Whether super admins get alert emails about new accounts and teams (ADMIN-9).
   - A banner announcement for all users, with text, severity, and an end date.
 - **ADMIN-8 · MVP · Safeguards.**
   - Destructive actions require confirmation.
   - Every admin action writes an audit entry.
   - Nobody can set or see another person's password. Admins can only send setup and password-reset emails (AUTH-6).
   - The Privacy Policy states that super admins can access team content for moderation and support (LEGAL-1).
+- **ADMIN-9 · MVP · Alert emails.** Every super admin gets an email, at the owner's request:
+  - **New account:** when someone finishes first-run setup (AUTH-5), once: their name, email, how they sign in, and whether a team admin added them first (AUTH-6), linking to them in the admin panel. Someone who signs in but never finishes setup isn't counted.
+  - **New team:** who created it and its sport, linking to it in the admin panel.
+  - **Team deleted:** who deleted it (the owner, or a super admin) and how many members it had, linking to its audit entries.
+  - Platform settings (ADMIN-7) has **Email super admins about new accounts and teams**, on by default. Report alerts (SAFE-4) always email.
+  - An email that fails never stops what it's about; it's logged.
 
 ### 6.12 Safety and moderation (SAFE)
 
