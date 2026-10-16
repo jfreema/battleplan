@@ -175,8 +175,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, box) {
+            // On a phone the board runs the screen's width, as big as the
+            // team can see it.
+            final phone = MediaQuery.sizeOf(context).width < 600;
             final board = Padding(
-              padding: const EdgeInsets.all(Space.md),
+              padding: phone
+                  ? const EdgeInsets.symmetric(vertical: Space.sm)
+                  : const EdgeInsets.all(Space.md),
               child: Center(
                 // While playing, the board repaints each frame.
                 child: AnimatedBuilder(
@@ -191,6 +196,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                     semanticLabel: l10n.playBoardLabel(
                       boardName(l10n, play.board),
                     ),
+                    edgeToEdge: phone,
                   ),
                 ),
               ),
@@ -249,6 +255,24 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                     width: 320,
                     child: SingleChildScrollView(child: note),
                   ),
+                ],
+              );
+            }
+            // On a phone the notes follow the board, which keeps the
+            // screen's width: the page scrolls to them.
+            if (phone && note != null) {
+              return ListView(
+                children: [
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight:
+                          box.maxHeight -
+                          (steps == null ? 0 : kMinInteractiveDimension),
+                    ),
+                    child: board,
+                  ),
+                  ?steps,
+                  note,
                 ],
               );
             }

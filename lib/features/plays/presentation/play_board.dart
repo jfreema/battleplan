@@ -12,6 +12,7 @@ class PlayBoardView extends StatelessWidget {
     required this.variant,
     required this.elements,
     this.semanticLabel,
+    this.edgeToEdge = false,
     super.key,
   });
 
@@ -20,11 +21,14 @@ class PlayBoardView extends StatelessWidget {
   final List<BoardElement> elements;
   final String? semanticLabel;
 
+  /// Square corners, for a board that runs a phone's width.
+  final bool edgeToEdge;
+
   @override
   Widget build(BuildContext context) => AspectRatio(
     aspectRatio: boardAspect(board, variant),
     child: ClipRRect(
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(edgeToEdge ? 0 : 6),
       child: CustomPaint(
         painter: PlayPainter(
           board: board,

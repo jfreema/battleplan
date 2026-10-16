@@ -100,7 +100,11 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
   /// An arrow or line being drawn.
   List<BoardPoint>? _drawing;
 
-  double get _aspect => boardAspect(_board, _variant);
+  /// The field's width over its height, for distances on it.
+  double get _aspect => fieldAspect(_board, _variant);
+
+  /// The part of the field the board shows.
+  BoardFrame get _frame => boardFrame(_board);
 
   @override
   void dispose() {
@@ -153,6 +157,7 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
 
   // ---- Touch ---------------------------------------------------------------------
 
+  /// A tap at [p] on the board, the whole field [width] pixels across.
   Future<void> _tap(BoardPoint p, double width) async {
     if (_player.playing) return;
     final l10n = AppLocalizations.of(context);
@@ -218,7 +223,9 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
         );
         if (hit == null) return;
         setState(() {
-          _selected = hit.id;
+          // A drag moves it; only a tap picks it, so the step's controls
+          // stay in reach on a phone (and what was picked stays picked).
+          if (_selected != hit.id) _selected = null;
           _dragStart = _edit;
           _dragId = hit.id;
           _dragLast = p;
@@ -244,7 +251,7 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
     final dragged = _byId(_dragId);
     if (last == null || dragged == null) return;
     _set(
-      _edit.moveLive(moveElement(dragged, p.x - last.x, p.y - last.y)),
+      _edit.moveLive(moveElement(dragged, p.x - last.x, p.y - last.y, _frame)),
       persist: false,
     );
     _dragLast = p;
@@ -501,12 +508,27 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
       const SingleActivator(LogicalKeyboardKey.escape): () =>
           setState(() => _selected = null),
     };
-    // A phone's whiteboard keeps a new board and the saved plays in More,
-    // and goes without its title, so undo, redo, and saving fit.
-    final roomy = MediaQuery.sizeOf(context).width >= 600;
-    // Slide Over, a third of an iPad, and 375-point phones (BOARD-1, store
-    // checklist 1.12): Save is an icon, so Undo, Redo, and More still fit.
-    final narrow = MediaQuery.sizeOf(context).width < 380;
+    // A phone has one bar over the board, so the board runs the screen's
+    // width (BOARD-2); a tablet or laptop has room for the steps' own bar.
+    final phone = MediaQuery.sizeOf(context).width < 600;
+    final saveLabel = widget.whiteboard ? l10n.playSaveToTeam : l10n.save;
+    // What's in More. A phone's whiteboard keeps a new board and the saved
+    // plays here too, and goes without its title.
+    final more = <_Action>[
+      if (widget.whiteboard && phone) ...[
+        (label: l10n.playNewBoard, onPressed: () => unawaited(_newBoard())),
+        (label: l10n.playsSaved, onPressed: _openSaved),
+      ],
+      if (!widget.whiteboard)
+        (label: l10n.playRename, onPressed: () => unawaited(_rename())),
+      (label: l10n.playNotes, onPressed: () => unawaited(_editNote())),
+      (label: l10n.playClearStep, onPressed: () => _set(_edit.clear())),
+    ];
+    void onShow(int i) => _set(_edit.show(i), dirty: false);
+    void onAdd() => _set(_edit.addStep());
+    void onRemove() => _set(_edit.removeStep());
+    void onPlay() => unawaited(_playSteps());
+    void onEditSelected() => unawaited(_editSelected());
 
     return PopScope(
       canPop: widget.whiteboard || !_dirty,
@@ -522,116 +544,100 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
         child: Focus(
           autofocus: true,
           child: Scaffold(
-            appBar: AppBar(
-              title: !widget.whiteboard
-                  ? InkWell(
-                      onTap: () => unawaited(_rename()),
-                      child: Text(
-                        _title.isEmpty ? l10n.playUntitled : _title,
-                        overflow: TextOverflow.ellipsis,
+            appBar: phone
+                ? _PhoneBar(
+                    edit: _edit,
+                    playing: _player.playing,
+                    selected: selected,
+                    saveLabel: saveLabel,
+                    saveInMore: widget.whiteboard,
+                    onSave: _saving ? null : () => unawaited(_save()),
+                    onUndo: undo,
+                    onRedo: redo,
+                    onShow: onShow,
+                    onAdd: onAdd,
+                    onRemove: onRemove,
+                    onPlay: onPlay,
+                    onEditSelected: onEditSelected,
+                    onDeleteSelected: _deleteSelected,
+                    more: more,
+                  )
+                : AppBar(
+                    title: widget.whiteboard
+                        ? Text(l10n.tabPlays)
+                        : InkWell(
+                            onTap: () => unawaited(_rename()),
+                            child: Text(
+                              _title.isEmpty ? l10n.playUntitled : _title,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                    actions: [
+                      if (widget.whiteboard) ...[
+                        IconButton(
+                          tooltip: l10n.playNewBoard,
+                          icon: const PlaysIcon(),
+                          onPressed: () => unawaited(_newBoard()),
+                        ),
+                        IconButton(
+                          tooltip: l10n.playsSaved,
+                          icon: const Icon(AppIcons.savedPlays),
+                          onPressed: _openSaved,
+                        ),
+                      ],
+                      IconButton(
+                        tooltip: l10n.playUndo,
+                        icon: const Icon(AppIcons.undo),
+                        onPressed: undo,
                       ),
-                    )
-                  : roomy
-                  ? Text(l10n.tabPlays)
-                  : null,
-              actions: [
-                if (widget.whiteboard && roomy) ...[
-                  IconButton(
-                    tooltip: l10n.playNewBoard,
-                    icon: const PlaysIcon(),
-                    onPressed: () => unawaited(_newBoard()),
-                  ),
-                  IconButton(
-                    tooltip: l10n.playsSaved,
-                    icon: const Icon(AppIcons.savedPlays),
-                    onPressed: _openSaved,
-                  ),
-                ],
-                IconButton(
-                  tooltip: l10n.playUndo,
-                  icon: const Icon(AppIcons.undo),
-                  onPressed: undo,
-                ),
-                IconButton(
-                  tooltip: l10n.playRedo,
-                  icon: const Icon(AppIcons.redo),
-                  onPressed: redo,
-                ),
-                PopupMenuButton<String>(
-                  tooltip: l10n.playMore,
-                  onSelected: (v) => switch (v) {
-                    'new' => unawaited(_newBoard()),
-                    'saved' => _openSaved(),
-                    'rename' => unawaited(_rename()),
-                    'note' => unawaited(_editNote()),
-                    _ => _set(_edit.clear()),
-                  },
-                  itemBuilder: (_) => [
-                    if (widget.whiteboard && !roomy) ...[
-                      PopupMenuItem(
-                        value: 'new',
-                        child: Text(l10n.playNewBoard),
+                      IconButton(
+                        tooltip: l10n.playRedo,
+                        icon: const Icon(AppIcons.redo),
+                        onPressed: redo,
                       ),
-                      PopupMenuItem(
-                        value: 'saved',
-                        child: Text(l10n.playsSaved),
+                      _MoreButton(actions: more),
+                      Padding(
+                        padding: const EdgeInsets.only(right: Space.md),
+                        child: FilledButton(
+                          onPressed: _saving ? null : () => unawaited(_save()),
+                          child: Text(saveLabel),
+                        ),
                       ),
                     ],
-                    if (!widget.whiteboard)
-                      PopupMenuItem(
-                        value: 'rename',
-                        child: Text(l10n.playRename),
-                      ),
-                    PopupMenuItem(value: 'note', child: Text(l10n.playNotes)),
-                    PopupMenuItem(
-                      value: 'clear',
-                      child: Text(l10n.playClearStep),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: Space.md),
-                  child: narrow
-                      ? IconButton.filled(
-                          tooltip: widget.whiteboard
-                              ? l10n.playSaveToTeam
-                              : l10n.save,
-                          onPressed: _saving ? null : () => unawaited(_save()),
-                          icon: const Icon(AppIcons.save),
-                        )
-                      : FilledButton(
-                          onPressed: _saving ? null : () => unawaited(_save()),
-                          child: Text(
-                            widget.whiteboard ? l10n.playSaveToTeam : l10n.save,
-                          ),
-                        ),
-                ),
-              ],
-            ),
+                  ),
             body: SafeArea(
               child: LayoutBuilder(
                 builder: (context, box) {
                   final wide = box.maxWidth >= 720;
-                  final board = _boardArea();
-                  final steps = _StepsBar(
-                    edit: _edit,
-                    playing: _player.playing,
-                    onPlay: () => unawaited(_playSteps()),
-                    selected: selected,
-                    onShow: (i) => _set(_edit.show(i), dirty: false),
-                    onAdd: () => _set(_edit.addStep()),
-                    onRemove: () => _set(_edit.removeStep()),
-                    onEditSelected: () => unawaited(_editSelected()),
-                    onDeleteSelected: _deleteSelected,
-                  );
+                  final board = _boardArea(phone: phone);
                   final tools = _Tools(
                     tool: _tool,
                     board: _board,
                     vertical: wide,
+                    compact: phone,
                     onTool: (t) => setState(() {
                       _tool = t;
                       if (t != BoardTool.move) _selected = null;
                     }),
+                  );
+                  if (phone) {
+                    return Column(
+                      children: [
+                        Expanded(child: board),
+                        tools,
+                      ],
+                    );
+                  }
+                  final steps = _StepsBar(
+                    edit: _edit,
+                    playing: _player.playing,
+                    onPlay: onPlay,
+                    selected: selected,
+                    onShow: onShow,
+                    onAdd: onAdd,
+                    onRemove: onRemove,
+                    onEditSelected: onEditSelected,
+                    onDeleteSelected: _deleteSelected,
                   );
                   if (wide) {
                     return Row(
@@ -665,31 +671,40 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
     );
   }
 
-  Widget _boardArea() => Padding(
-    padding: const EdgeInsets.all(Space.md),
+  /// The board, as big as it fits: on a phone, the screen's width, edge to
+  /// edge.
+  Widget _boardArea({required bool phone}) => Padding(
+    padding: phone ? EdgeInsets.zero : const EdgeInsets.all(Space.md),
     child: Center(
       child: AspectRatio(
-        aspectRatio: _aspect,
+        aspectRatio: boardAspect(_board, _variant),
         child: LayoutBuilder(
           builder: (context, box) {
             final size = box.biggest;
-            BoardPoint at(Offset o) =>
-                onBoard((x: o.dx / size.width, y: o.dy / size.height));
+            // The board may show only part of the field (baseball's is cut
+            // to the fence): where a touch is on the field, and how wide
+            // the whole field is on screen.
+            final frame = _frame;
+            BoardPoint at(Offset o) => onBoard(
+              frame.pointAt(o.dx / size.width, o.dy / size.height),
+              frame,
+            );
+            final width = size.width / frame.width;
             return GestureDetector(
               key: const ValueKey('playBoard'),
               behavior: HitTestBehavior.opaque,
               // Report where a drag began, not where it was recognized:
               // arrows start at the finger.
               dragStartBehavior: DragStartBehavior.down,
-              onTapUp: (d) => unawaited(_tap(at(d.localPosition), size.width)),
+              onTapUp: (d) => unawaited(_tap(at(d.localPosition), width)),
               onDoubleTap: _selected == null
                   ? null
                   : () => unawaited(_editSelected()),
-              onPanStart: (d) => _panStart(at(d.localPosition), size.width),
+              onPanStart: (d) => _panStart(at(d.localPosition), width),
               onPanUpdate: (d) => _panUpdate(at(d.localPosition)),
-              onPanEnd: (_) => _panEnd(size.width),
+              onPanEnd: (_) => _panEnd(width),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(phone ? 0 : 8),
                 // While playing, the board repaints each frame.
                 child: AnimatedBuilder(
                   animation: _player.controller,
@@ -699,7 +714,8 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                       board: _board,
                       variant: _variant,
                       elements: _player.elements(_edit.steps, _edit.elements),
-                      selectedId: _selected,
+                      // What's being dragged is ringed while it moves.
+                      selectedId: _dragId ?? _selected,
                       draft: _draft,
                       dark: Theme.of(context).brightness == Brightness.dark,
                     ),
@@ -720,6 +736,253 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
   );
 }
 
+/// An action in a menu: its name, and what it does (null when it can't
+/// be done now).
+typedef _Action = ({String label, VoidCallback? onPressed});
+
+/// More: the editor's [actions] that have no button of their own.
+class _MoreButton extends StatelessWidget {
+  const new({required this.actions});
+
+  final List<_Action> actions;
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<VoidCallback>(
+    tooltip: AppLocalizations.of(context).playMore,
+    onSelected: (action) => action(),
+    itemBuilder: (_) => [
+      for (final a in actions)
+        PopupMenuItem(
+          value: a.onPressed,
+          enabled: a.onPressed != null,
+          child: Text(a.label),
+        ),
+    ],
+  );
+}
+
+/// The editor's bar on a phone (BOARD-2): one row over the board, so the
+/// board gets the screen's width and most of its height. The step's
+/// controls sit on the left (or, with something picked, what to do with
+/// it), and undo, redo, More, and Save on the right. What doesn't fit, in
+/// this order, goes in More: removing a step, redo, playing the steps,
+/// adding one, the step's controls, undo.
+class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
+  const new({
+    required this.edit,
+    required this.playing,
+    required this.selected,
+    required this.saveLabel,
+    required this.saveInMore,
+    required this.onSave,
+    required this.onUndo,
+    required this.onRedo,
+    required this.onShow,
+    required this.onAdd,
+    required this.onRemove,
+    required this.onPlay,
+    required this.onEditSelected,
+    required this.onDeleteSelected,
+    required this.more,
+  });
+
+  final BoardEdit edit;
+  final bool playing;
+  final BoardElement? selected;
+  final String saveLabel;
+
+  /// The whiteboard's Save to plays waits in More, first: the drawing
+  /// stays on the device either way, and the board's tools get the room.
+  final bool saveInMore;
+  final VoidCallback? onSave;
+  final VoidCallback? onUndo;
+  final VoidCallback? onRedo;
+  final ValueChanged<int> onShow;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
+  final VoidCallback onPlay;
+  final VoidCallback onEditSelected;
+  final VoidCallback onDeleteSelected;
+
+  /// What's in More whatever fits.
+  final List<_Action> more;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kMinInteractiveDimension);
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme.labelLarge;
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    double widthOf(String label) {
+      final painter = TextPainter(
+        text: TextSpan(text: label, style: text),
+        maxLines: 1,
+        textDirection: direction,
+        textScaler: scaler,
+      )..layout();
+      final width = painter.width;
+      painter.dispose();
+      return width;
+    }
+
+    final back = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
+    final s = selected;
+    final many = edit.steps.length > 1;
+    return SafeArea(
+      bottom: false,
+      child: LayoutBuilder(
+        builder: (context, box) {
+          const slot = kMinInteractiveDimension;
+          // Back, More, and Save (unless it's in More) are always there.
+          var room =
+              box.maxWidth -
+              Space.xs * 2 -
+              slot * (1 + (back ? 1 : 0) + (saveInMore ? 0 : 1));
+          bool fits(double width) {
+            if (width > room) return false;
+            room -= width;
+            return true;
+          }
+
+          final overflow = <_Action>[];
+          final lead = <Widget>[];
+          Widget? button(
+            String label,
+            IconData icon,
+            VoidCallback? onPressed, {
+            bool filled = false,
+          }) {
+            if (!fits(slot)) {
+              overflow.add((label: label, onPressed: onPressed));
+              return null;
+            }
+            return filled
+                ? IconButton.filledTonal(
+                    tooltip: label,
+                    icon: Icon(icon),
+                    onPressed: onPressed,
+                  )
+                : IconButton(
+                    tooltip: label,
+                    icon: Icon(icon),
+                    onPressed: onPressed,
+                  );
+          }
+
+          final undo = button(l10n.playUndo, AppIcons.undo, onUndo);
+          if (s != null) {
+            // What to do with the picked thing.
+            lead.addAll([
+              if (s is MarkerElement || s is NoteElement)
+                ?button(
+                  s is MarkerElement ? l10n.playLabel : l10n.playEditNote,
+                  AppIcons.edit,
+                  onEditSelected,
+                ),
+              ?button(l10n.playDeleteItem, AppIcons.delete, onDeleteSelected),
+            ]);
+          } else {
+            final step = edit.step;
+            final total = edit.steps.length;
+            final previous = step > 0 ? () => onShow(step - 1) : null;
+            final next = step < total - 1 ? () => onShow(step + 1) : null;
+            if (many) {
+              final label = l10n.playStepShort(step + 1, total);
+              if (fits(slot * 2 + widthOf(label) + Space.xs * 2)) {
+                lead.addAll([
+                  IconButton(
+                    tooltip: l10n.playStepBack,
+                    icon: const Icon(AppIcons.stepBack),
+                    onPressed: previous,
+                  ),
+                  Semantics(
+                    container: true,
+                    label: l10n.playStepOf(step + 1, total),
+                    excludeSemantics: true,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+                      child: Text(label, style: text),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l10n.playStepNext,
+                    icon: const Icon(AppIcons.stepNext),
+                    onPressed: next,
+                  ),
+                ]);
+              } else {
+                overflow.addAll([
+                  (label: l10n.playStepBack, onPressed: previous),
+                  (label: l10n.playStepNext, onPressed: next),
+                ]);
+              }
+            }
+            final add = edit.canAddStep && !playing ? onAdd : null;
+            // Until there are steps, "Add step" says what they are: a
+            // text button's icon, gap, and padding around its words.
+            if (!many && fits(widthOf(l10n.playAddStep) + 58)) {
+              lead.add(
+                TextButton.icon(
+                  onPressed: add,
+                  icon: const Icon(AppIcons.add),
+                  label: Text(l10n.playAddStep),
+                ),
+              );
+            } else {
+              lead.addAll([?button(l10n.playAddStep, AppIcons.add, add)]);
+            }
+          }
+          final stepped = s == null && many;
+          if (stepped) {
+            lead.addAll([
+              ?button(
+                playing ? l10n.playStopPlaying : l10n.playPlaySteps,
+                playing ? AppIcons.stop : AppIcons.play,
+                onPlay,
+                filled: true,
+              ),
+            ]);
+          }
+          final redo = button(l10n.playRedo, AppIcons.redo, onRedo);
+          if (stepped) {
+            lead.addAll([
+              ?button(l10n.playRemoveStep, AppIcons.delete, onRemove),
+            ]);
+          }
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+            child: Row(
+              children: [
+                if (back) const BackButton(),
+                ...lead,
+                const Spacer(),
+                ?undo,
+                ?redo,
+                _MoreButton(
+                  actions: [
+                    if (saveInMore) (label: saveLabel, onPressed: onSave),
+                    ...overflow,
+                    ...more,
+                  ],
+                ),
+                if (!saveInMore)
+                  IconButton.filled(
+                    tooltip: saveLabel,
+                    onPressed: onSave,
+                    icon: const Icon(AppIcons.save),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 /// The tools: big enough for a finger, with their names for mice and
 /// screen readers.
 class _Tools extends StatelessWidget {
@@ -728,12 +991,16 @@ class _Tools extends StatelessWidget {
     required this.board,
     required this.vertical,
     required this.onTool,
+    this.compact = false,
   });
 
   final BoardTool tool;
   final PlayBoard board;
   final bool vertical;
   final ValueChanged<BoardTool> onTool;
+
+  /// A phone's: a finger's size, no more, so the board has the room.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -759,10 +1026,11 @@ class _Tools extends StatelessWidget {
       (BoardTool.text, AppIcons.toolText, l10n.toolText),
       (BoardTool.erase, AppIcons.toolErase, l10n.toolErase),
     ];
+    final side = compact ? kMinInteractiveDimension : 52.0;
     final buttons = [
       for (final (t, icon, label) in items)
         Padding(
-          padding: const EdgeInsets.all(Space.xs),
+          padding: EdgeInsets.all(compact ? Space.xs / 2 : Space.xs),
           child: Tooltip(
             message: label,
             child: Semantics(
@@ -771,11 +1039,8 @@ class _Tools extends StatelessWidget {
               label: label,
               child: IconButton.filledTonal(
                 isSelected: t == tool,
-                iconSize: 26,
-                constraints: const BoxConstraints.tightFor(
-                  width: 52,
-                  height: 52,
-                ),
+                iconSize: compact ? 24 : 26,
+                constraints: BoxConstraints.tightFor(width: side, height: side),
                 onPressed: () => onTool(t),
                 icon: Icon(icon),
               ),
@@ -792,10 +1057,12 @@ class _Tools extends StatelessWidget {
             ),
           )
         : SizedBox(
-            height: 68,
+            height: compact ? side + Space.sm : 68,
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: Space.sm),
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? Space.xs : Space.sm,
+              ),
               child: Row(children: buttons),
             ),
           );

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/features/plays/domain/board_layout.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 
 /// How many changes undo remembers.
@@ -244,13 +245,18 @@ List<BoardPoint> simplifyPath(
   return out;
 }
 
-/// [p] kept on the board.
-BoardPoint onBoard(BoardPoint p) =>
-    (x: p.x.clamp(0.0, 1.0), y: p.y.clamp(0.0, 1.0));
+/// [p] kept on the board: within the part of the field it shows.
+BoardPoint onBoard(BoardPoint p, [BoardFrame frame = BoardFrame.whole]) =>
+    frame.clamp(p);
 
 /// [e] moved by [dx], [dy], kept on the board.
-BoardElement moveElement(BoardElement e, double dx, double dy) {
-  BoardPoint by(BoardPoint p) => onBoard((x: p.x + dx, y: p.y + dy));
+BoardElement moveElement(
+  BoardElement e,
+  double dx,
+  double dy, [
+  BoardFrame frame = BoardFrame.whole,
+]) {
+  BoardPoint by(BoardPoint p) => onBoard((x: p.x + dx, y: p.y + dy), frame);
   return switch (e) {
     MarkerElement() => e.copyWith(at: by(e.at)),
     NoteElement() => e.copyWith(at: by(e.at)),

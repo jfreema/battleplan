@@ -35,25 +35,32 @@ class PlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.clipRect(Offset.zero & size);
+    // The whole field, of which [size] shows the board's frame.
+    final frame = boardFrame(board);
+    final field = Size(size.width / frame.width, size.height / frame.height);
+    canvas.translate(-frame.left * field.width, -frame.top * field.height);
     switch (board) {
       case PlayBoard.baseball:
-        _baseball(canvas, size);
+        _baseball(canvas, field);
       case PlayBoard.basketball:
-        _basketball(canvas, size, variant);
+        _basketball(canvas, field, variant);
       case PlayBoard.soccer:
-        _soccer(canvas, size, variant);
+        _soccer(canvas, field, variant);
       case PlayBoard.football:
-        _football(canvas, size);
+        _football(canvas, field);
       case PlayBoard.blank:
-        _blank(canvas, size, dark: dark);
+        _blank(canvas, field, dark: dark);
     }
+    // What's drawn on the field is sized by the board as shown, so it
+    // stays the same size however much of the field is.
+    final shown = size.width;
     final ink = inkFor(board, dark: dark);
     for (final e in [...elements, ?draft]) {
       switch (e) {
         case ArrowElement():
-          _arrow(canvas, size, e, ink, selected: e.id == selectedId);
+          _arrow(canvas, field, shown, e, ink, selected: e.id == selectedId);
         case LineElement():
-          _line(canvas, size, e, ink, selected: e.id == selectedId);
+          _line(canvas, field, shown, e, ink, selected: e.id == selectedId);
         case MarkerElement() || NoteElement():
           break;
       }
@@ -61,9 +68,9 @@ class PlayPainter extends CustomPainter {
     for (final e in elements) {
       switch (e) {
         case MarkerElement():
-          _marker(canvas, size, e, selected: e.id == selectedId);
+          _marker(canvas, field, shown, e, selected: e.id == selectedId);
         case NoteElement():
-          _note(canvas, size, e, ink, selected: e.id == selectedId);
+          _note(canvas, field, shown, e, ink, selected: e.id == selectedId);
         case ArrowElement() || LineElement():
           break;
       }
@@ -81,20 +88,21 @@ class PlayPainter extends CustomPainter {
 
   // ---- Elements --------------------------------------------------------------------
 
-  /// A marker's radius on [board] [width] pixels across: finger-sized on a
-  /// tablet, still readable in a thumbnail. Football's are smaller, so a
-  /// line's eleven stand side by side.
+  /// A marker's radius on [board] shown [width] pixels across: big enough
+  /// to read on a phone, still readable in a thumbnail. Football's are
+  /// smaller, so a line's eleven stand side by side.
   static double markerRadius(double width, PlayBoard board) =>
-      width * (board == PlayBoard.football ? 0.018 : 0.03);
+      width * (board == PlayBoard.football ? 0.015 : 0.025);
 
   void _marker(
     Canvas canvas,
-    Size size,
+    Size field,
+    double shown,
     MarkerElement m, {
     required bool selected,
   }) {
-    final c = Offset(m.at.x * size.width, m.at.y * size.height);
-    final r = markerRadius(size.width, board);
+    final c = Offset(m.at.x * field.width, m.at.y * field.height);
+    final r = markerRadius(shown, board);
     if (selected) {
       canvas.drawCircle(c, r * 1.45, Paint()..color = const Color(0xCCFFD43B));
     }
@@ -209,20 +217,22 @@ class PlayPainter extends CustomPainter {
     p.paint(canvas, at - Offset(p.width / 2, p.height / 2));
   }
 
-  static double strokeFor(double width) => math.max(2.5, width * 0.006);
+  /// An arrow's width on a board shown [width] pixels across.
+  static double strokeFor(double width) => math.max(2.5, width * 0.005);
 
   void _arrow(
     Canvas canvas,
-    Size size,
+    Size field,
+    double shown,
     ArrowElement a,
     Color ink, {
     required bool selected,
   }) {
     final pts = [
-      for (final p in a.points) Offset(p.x * size.width, p.y * size.height),
+      for (final p in a.points) Offset(p.x * field.width, p.y * field.height),
     ];
     if (pts.length < 2) return;
-    final w = strokeFor(size.width);
+    final w = strokeFor(shown);
     final path = _smooth(pts);
     final paint = Paint()
       ..color = ink
@@ -274,16 +284,17 @@ class PlayPainter extends CustomPainter {
 
   void _line(
     Canvas canvas,
-    Size size,
+    Size field,
+    double shown,
     LineElement l,
     Color ink, {
     required bool selected,
   }) {
     final pts = [
-      for (final p in l.points) Offset(p.x * size.width, p.y * size.height),
+      for (final p in l.points) Offset(p.x * field.width, p.y * field.height),
     ];
     if (pts.length < 2) return;
-    final w = strokeFor(size.width) * 0.85;
+    final w = strokeFor(shown) * 0.85;
     final path = _smooth(pts);
     if (selected) {
       canvas.drawPath(
@@ -308,13 +319,14 @@ class PlayPainter extends CustomPainter {
 
   void _note(
     Canvas canvas,
-    Size size,
+    Size field,
+    double shown,
     NoteElement n,
     Color ink, {
     required bool selected,
   }) {
-    final c = Offset(n.at.x * size.width, n.at.y * size.height);
-    final fontSize = (size.width * 0.026).clamp(9.0, 20.0);
+    final c = Offset(n.at.x * field.width, n.at.y * field.height);
+    final fontSize = (shown * 0.0215).clamp(9.0, 20.0);
     final dark = ink.computeLuminance() > 0.5;
     final p = TextPainter(
       text: TextSpan(
@@ -328,7 +340,7 @@ class PlayPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
       textAlign: TextAlign.center,
       maxLines: 4,
-    )..layout(maxWidth: size.width * 0.4);
+    )..layout(maxWidth: shown * 0.33);
     final box = Rect.fromCenter(
       center: c,
       width: p.width + fontSize,

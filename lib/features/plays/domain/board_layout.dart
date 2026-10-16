@@ -8,10 +8,36 @@ import 'package:battleplan/features/plays/domain/play.dart';
 /// on them, so a shortstop stands at short. Points are 0 to 1 across and
 /// down; boards are drawn with the end the team attacks at the top.
 
+/// The part of a field a board shows, in the field's points: all of it, or
+/// (baseball's) cut to the fence so the field fills the board.
+final class BoardFrame {
+  const new({
+    required this.left,
+    required this.top,
+    required this.width,
+    required this.height,
+  });
+
+  static const whole = BoardFrame(left: 0, top: 0, width: 1, height: 1);
+
+  final double left;
+  final double top;
+  final double width;
+  final double height;
+
+  /// The field's point [x] across and [y] down the frame, each 0 to 1.
+  BoardPoint pointAt(double x, double y) =>
+      (x: left + x * width, y: top + y * height);
+
+  /// [p], kept within the frame.
+  BoardPoint clamp(BoardPoint p) =>
+      (x: p.x.clamp(left, left + width), y: p.y.clamp(top, top + height));
+}
+
 /// Baseball (and softball): home plate near the bottom, the outfield fence
 /// across the top. Distances in feet, 90-foot bases.
 abstract final class BaseballField {
-  /// The board's width in feet: the fence's foul poles sit near the edges.
+  /// The field's width in feet: the fence's foul poles sit near the edges.
   static const double widthFeet = 470;
   static const BoardPoint home = (x: 0.5, y: 0.9);
   static const double baseFeet = 90;
@@ -36,6 +62,17 @@ abstract final class BaseballField {
 
   /// Width over height.
   static const double aspect = 1;
+
+  /// What the board shows: from a few feet past the center-field fence to
+  /// 47 feet behind home (room for the pitcher backing up the plate), and
+  /// 16 feet in from each side. The fence runs to the board's edges, and
+  /// the field fills it.
+  static const frame = BoardFrame(
+    left: 16 / widthFeet,
+    top: 0.04,
+    width: 1 - 2 * 16 / widthFeet,
+    height: 0.96,
+  );
 
   static BoardPoint get first => fromHome(baseFeet, 45);
   static BoardPoint get second => fromHome(baseFeet * math.sqrt2, 0);
@@ -117,14 +154,25 @@ abstract final class BlankBoard {
   static const double aspect = 4 / 3;
 }
 
-/// Width over height of [board] in [variant].
-double boardAspect(PlayBoard board, BoardVariant variant) => switch (board) {
+/// Width over height of [board]'s whole field in [variant]: what a point's
+/// units measure, for distances on it.
+double fieldAspect(PlayBoard board, BoardVariant variant) => switch (board) {
   PlayBoard.baseball => BaseballField.aspect,
   PlayBoard.basketball => BasketballCourt.aspectOf(variant),
   PlayBoard.soccer => SoccerPitch.aspectOf(variant),
   PlayBoard.football => FootballField.aspect,
   PlayBoard.blank => BlankBoard.aspect,
 };
+
+/// The part of [board]'s field it shows.
+BoardFrame boardFrame(PlayBoard board) =>
+    board == PlayBoard.baseball ? BaseballField.frame : BoardFrame.whole;
+
+/// Width over height of [board] in [variant], as it's shown.
+double boardAspect(PlayBoard board, BoardVariant variant) {
+  final frame = boardFrame(board);
+  return fieldAspect(board, variant) * frame.width / frame.height;
+}
 
 /// The variants [board] has (BOARD-1): basketball's half and full court,
 /// soccer's full and half pitch; one for the others.

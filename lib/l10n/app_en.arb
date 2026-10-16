@@ -1744,6 +1744,8 @@
   "@playStepCount": {"placeholders": {"count": {"type": "int"}}},
   "playStepOf": "Step {step} of {total}",
   "@playStepOf": {"placeholders": {"step": {"type": "int"}, "total": {"type": "int"}}},
+  "playStepShort": "{step}/{total}",
+  "@playStepShort": {"description": "The step on show and how many, short, in the whiteboard's bar on a phone; read out as playStepOf.", "placeholders": {"step": {"type": "int"}, "total": {"type": "int"}}},
   "playStepBack": "Previous step",
   "playStepNext": "Next step",
   "playAddStep": "Add step",

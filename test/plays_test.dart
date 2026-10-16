@@ -34,8 +34,9 @@ const _marker = BoardElement.marker(
 
 void main() {
   group('boards and their starting spots (BOARD-1)', () {
-    test('every formation stands on its board', () {
+    test('every formation stands on its board, in the part it shows', () {
       for (final board in PlayBoard.values) {
+        final frame = boardFrame(board);
         for (final v in boardVariants(board)) {
           for (final f in [
             ...teamFormations(board, v),
@@ -44,18 +45,51 @@ void main() {
             for (final s in f.spots) {
               expect(
                 s.at.x,
-                inInclusiveRange(0, 1),
+                inInclusiveRange(frame.left, frame.left + frame.width),
                 reason: '${f.id} ${s.label}',
               );
               expect(
                 s.at.y,
-                inInclusiveRange(0, 1),
+                inInclusiveRange(frame.top, frame.top + frame.height),
                 reason: '${f.id} ${s.label}',
               );
             }
           }
         }
       }
+    });
+
+    test("baseball's board is cut to the fence, so the field fills it", () {
+      const frame = BaseballField.frame;
+      // The center-field fence runs to the top edge, a few feet short of
+      // it; the foul poles' corners run off the sides.
+      expect(
+        (BaseballField.center.y - frame.top) * BaseballField.widthFeet,
+        inInclusiveRange(1, 6),
+      );
+      expect(BaseballField.leftPole.x, lessThan(frame.left));
+      expect(BaseballField.rightPole.x, greaterThan(frame.left + frame.width));
+      // Behind home there's room for the pitcher backing up the plate.
+      expect(
+        (frame.top + frame.height - BaseballField.home.y) *
+            BaseballField.widthFeet,
+        greaterThanOrEqualTo(45),
+      );
+      // A little taller than wide, for a phone held upright; the other
+      // boards show all of their fields.
+      expect(
+        boardAspect(PlayBoard.baseball, BoardVariant.full),
+        inInclusiveRange(0.9, 1),
+      );
+      expect(
+        boardAspect(PlayBoard.soccer, BoardVariant.full),
+        fieldAspect(PlayBoard.soccer, BoardVariant.full),
+      );
+      // A point kept on the board stays in what it shows.
+      expect(onBoard((x: 0, y: 1), frame), (
+        x: frame.left,
+        y: frame.top + frame.height,
+      ));
     });
 
     test("baseball's nine stand at their positions on the diamond", () {
@@ -480,34 +514,112 @@ void main() {
       expect(find.byType(BackButton), findsOneWidget);
     });
 
-    testWidgets("a phone's whiteboard keeps a new board and the saved plays "
-        'in More', (tester) async {
+    testWidgets("a phone's whiteboard runs the screen's width under one "
+        'bar, with the rest in More', (tester) async {
+      final semantics = tester.ensureSemantics();
       await open(
         tester,
         role: MemberRole.admin,
         plays: FakePlayRepository([saved]),
         size: const Size(390, 844),
       );
-      expect(find.byTooltip('Saved plays'), findsNothing);
+      // The board, edge to edge; the bar over it, and the tools under it.
+      final board = tester.getRect(find.byKey(const ValueKey('playBoard')));
+      expect(board.width, 390);
+      expect(find.byType(AppBar), findsNothing);
       expect(find.byTooltip('Undo'), findsOneWidget);
-      expect(
-        find.widgetWithText(FilledButton, 'Save to plays'),
-        findsOneWidget,
+      expect(find.byTooltip('Redo'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Add step'), findsOneWidget);
+      expect(find.byTooltip('Saved plays'), findsNothing);
+      expect(find.byTooltip('Save to plays'), findsNothing);
+      // A tap in the board's corner lands at the corner of the field it
+      // shows: baseball's is cut to the fence.
+      await tester.tap(find.byTooltip('Add an opponent'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(board.topLeft + const Offset(1, 1));
+      await tester.pumpAndSettle();
+      final painted = tester.widget<CustomPaint>(
+        find.descendant(
+          of: find.byKey(const ValueKey('playBoard')),
+          matching: find.byType(CustomPaint),
+        ),
       );
+      final added = (painted.painter! as PlayPainter).elements
+          .whereType<MarkerElement>()
+          .firstWhere((m) => m.side == MarkerSide.opponent);
+      expect(added.at.x, closeTo(BaseballField.frame.left, 0.01));
+      expect(added.at.y, closeTo(BaseballField.frame.top, 0.01));
       await tester.tap(find.byTooltip('More'));
       await tester.pumpAndSettle();
+      expect(find.text('Save to plays'), findsOneWidget);
       expect(find.text('New board'), findsOneWidget);
       await tester.tap(find.text('Saved plays'));
       await tester.pumpAndSettle();
-      // A play's steps, with playing and adding them, fit a phone too.
+      // A play's steps fit a phone too: where they are, and adding one, in
+      // the bar; playing them, if there's no room, in More.
       await tester.tap(find.text('Bunt defense'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('More'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Put on the whiteboard'));
       await tester.pumpAndSettle();
-      expect(find.text('Step 1 of 2'), findsOneWidget);
-      expect(find.byTooltip('Play the steps'), findsOneWidget);
+      expect(find.text('1/2'), findsOneWidget);
+      expect(find.bySemanticsLabel('Step 1 of 2'), findsOneWidget);
+      expect(find.byTooltip('Add step'), findsOneWidget);
+      if (find.byTooltip('Play the steps').evaluate().isEmpty) {
+        await tester.tap(find.byTooltip('More'));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.text('Play the steps').hitTestable().first);
+      await tester.pumpAndSettle();
+      expect(find.text('2/2'), findsOneWidget);
+      semantics.dispose();
+    });
+
+    testWidgets('on a phone, a drag moves a player; a tap picks one, and the '
+        'bar shows what to do with it', (tester) async {
+      await open(
+        tester,
+        role: MemberRole.admin,
+        plays: FakePlayRepository(),
+        size: const Size(390, 844),
+      );
+      final board = tester.getRect(find.byKey(const ValueKey('playBoard')));
+      List<MarkerElement> markers() =>
+          (tester
+                      .widget<CustomPaint>(
+                        find.descendant(
+                          of: find.byKey(const ValueKey('playBoard')),
+                          matching: find.byType(CustomPaint),
+                        ),
+                      )
+                      .painter!
+                  as PlayPainter)
+              .elements
+              .whereType<MarkerElement>()
+              .toList();
+      // Where the center fielder stands on screen.
+      final center = markers().firstWhere((m) => m.label == 'CF').at;
+      const frame = BaseballField.frame;
+      final onScreen = Offset(
+        board.left + (center.x - frame.left) / frame.width * board.width,
+        board.top + (center.y - frame.top) / frame.height * board.height,
+      );
+      await tester.dragFrom(onScreen, const Offset(0, 40));
+      await tester.pumpAndSettle();
+      final moved = markers().firstWhere((m) => m.label == 'CF');
+      expect(moved.at.y, greaterThan(center.y));
+      // Still the step's controls, not the center fielder's.
+      expect(find.widgetWithText(TextButton, 'Add step'), findsOneWidget);
+      expect(find.byTooltip('Label'), findsNothing);
+      await tester.tapAt(onScreen + const Offset(0, 40));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Label'), findsOneWidget);
+      expect(find.byTooltip('Delete'), findsOneWidget);
+      await tester.tap(find.byTooltip('Delete'));
+      await tester.pumpAndSettle();
+      expect(markers().where((m) => m.label == 'CF'), isEmpty);
+      expect(find.widgetWithText(TextButton, 'Add step'), findsOneWidget);
     });
 
     testWidgets('playing the steps glides everyone to the last one', (
