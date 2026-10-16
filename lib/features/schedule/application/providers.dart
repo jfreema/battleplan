@@ -454,35 +454,3 @@ class ScheduleView extends _$ScheduleView {
 Uri eventLink(Ref ref, GroupId groupId, EventId eventId) => ref
     .watch(linkServiceProvider)
     .app('/g/${groupId.value}/schedule/e/${eventId.value}');
-
-/// The Schedule tab's badge (SPEC §5.3): events in the next 14 days still
-/// waiting for my answer or my players'. Reads the team's events and my
-/// answers from the start of this hour for 15 days, one live query each,
-/// so the window moves only when they change.
-@riverpod
-AsyncValue<int> awaitingRsvpCount(Ref ref, GroupId groupId) {
-  final now = DateTime.now();
-  const hour = Duration.millisecondsPerHour;
-  final from = DateTime.fromMillisecondsSinceEpoch(
-    now.millisecondsSinceEpoch ~/ hour * hour,
-    isUtc: true,
-  );
-  final until = from.add(awaitingRsvpWindow + const Duration(days: 1));
-  final group = ref.watch(groupProvider(groupId)).value;
-  final me = ref.watch(myMembershipProvider(groupId));
-  if (group == null || me == null) return const AsyncData(0);
-  final events = ref.watch(eventsInRangeProvider(groupId, from, until));
-  final answers = ref.watch(myRsvpsProvider(groupId, from: from, until: until));
-  // Until my answers load, every event would look unanswered.
-  if (!answers.hasValue) return const AsyncLoading();
-  return events.whenData(
-    (list) => countAwaitingRsvp(
-      events: list,
-      group: group,
-      me: me,
-      participants: ref.watch(myParticipantsProvider(groupId)),
-      answers: answers.requireValue,
-      now: now,
-    ),
-  );
-}

@@ -11,11 +11,8 @@ import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
-import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
-import 'package:battleplan/features/schedule/domain/rsvp.dart';
-import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -74,16 +71,6 @@ void main() {
       canceledAt: canceledAt,
     );
   }
-
-  Rsvp answer(String eventId, String who, {RsvpStatus s = RsvpStatus.going}) =>
-      Rsvp(
-        eventId: EventId(eventId),
-        groupId: const GroupId('a'),
-        participantType: ParticipantType.member,
-        participantId: who,
-        participantName: who,
-        status: s,
-      );
 
   group('team switcher (SPEC §5.2)', () {
     testWidgets('shows the team logo in the header and the list, with '
@@ -166,76 +153,26 @@ void main() {
     });
   });
 
-  group('Schedule tab badge (SPEC §5.3)', () {
-    test('counts upcoming events in 14 days still waiting for an answer', () {
-      final now = DateTime.now();
-      final group = testGroup('a', 'Thunder');
-      final me = testMembership('a', 'coach');
-      const self = Participant(
-        type: ParticipantType.member,
-        id: 'coach',
-        name: 'Coach Lee',
-      );
-      final events = [
-        event('answered', days: 1),
-        event('open', days: 2),
-        event('later', days: 20),
-        event('off', days: 3, rsvpEnabled: false),
-        event('canceled', days: 3, canceledAt: now),
-        event('past', days: -1),
-        event(
-          'closed',
-          days: 4,
-        ).copyWith(rsvpDeadline: now.subtract(const Duration(hours: 1))),
-      ];
-      int count(Membership m) => countAwaitingRsvp(
-        events: events,
-        group: group,
-        me: m,
-        participants: const [self],
-        answers: {
-          'answered': {'coach': answer('answered', 'coach')},
-        },
-        now: now,
-      );
-      expect(count(me), 1);
-      // Admins can still answer after the deadline (SCHED-5).
-      expect(count(me.copyWith(role: MemberRole.admin)), 2);
-    });
-
-    testWidgets('shows on the tab and goes down as I answer', (tester) async {
-      final events = FakeEventRepository([
-        event('e1', days: 1),
-        event('e2', days: 3, title: 'vs. Eagles'),
-        event('e3', days: 30, title: 'Far off'),
-      ]);
-      final rsvps = FakeRsvpRepository(events);
-      await pumpApp(
-        tester,
-        auth: FakeAuthRepository(user: coach),
-        groups: {'a': testGroup('a', 'Thunder')},
-        memberships: [testMembership('a', 'coach', name: 'Coach Lee')],
-        rsvpRepo: rsvps,
-      );
-      Finder badge(String label) => find.descendant(
+  testWidgets('the Schedule tab shows no count, even with events waiting '
+      'for an answer (SPEC §5.3)', (tester) async {
+    final events = FakeEventRepository([
+      event('e1', days: 1),
+      event('e2', days: 3, title: 'vs. Eagles'),
+    ]);
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberships: [testMembership('a', 'coach', name: 'Coach Lee')],
+      rsvpRepo: FakeRsvpRepository(events),
+    );
+    expect(
+      find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.widgetWithText(Badge, label),
-      );
-      expect(badge('2'), findsOneWidget);
-      rsvps.put(answer('e1', 'coach'));
-      await tester.pumpAndSettle();
-      expect(badge('2'), findsNothing);
-      expect(badge('1'), findsOneWidget);
-      rsvps.put(answer('e2', 'coach', s: RsvpStatus.notGoing));
-      await tester.pumpAndSettle();
-      expect(
-        find.descendant(
-          of: find.byType(NavigationBar),
-          matching: find.byType(Badge),
-        ),
-        findsNothing,
-      );
-    });
+        matching: find.byType(Badge),
+      ),
+      findsNothing,
+    );
   });
 
   group('wide screens (SPEC §5.5)', () {

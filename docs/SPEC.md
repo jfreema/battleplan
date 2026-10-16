@@ -265,7 +265,7 @@ Sign in
 | Tab | Icon | Badge |
 |---|---|---|
 | **Chat** | Speech bubble | Unread message count for this team (CHAT-9) |
-| **Schedule** | Calendar | Number of events in the next 14 days still waiting for your RSVP (or your players') |
+| **Schedule** | Calendar | — |
 | **Documents** | Folder | — |
 | **Plays** | An X and an O, the X's route to it, on a chalkboard on an easel: drawn, as no icon font has one; filled when selected | — |
 

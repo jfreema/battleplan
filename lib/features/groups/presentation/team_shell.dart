@@ -20,7 +20,6 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
-import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -154,17 +153,10 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     final unread = viewing
         ? 0
         : ref.watch(unreadCountProvider(groupId)).value ?? 0;
-    // The Schedule tab shows the events in the next 14 days still waiting
-    // for my answer or my players' (SPEC §5.3).
-    final awaiting = viewing
-        ? 0
-        : ref.watch(awaitingRsvpCountProvider(groupId)).value ?? 0;
     Widget tabIcon(int index, Widget icon) => switch (index) {
       0 when unread > 0 => Badge(label: Text(unreadLabel(unread)), child: icon),
-      1 when awaiting > 0 => Badge(
-        label: Text(unreadLabel(awaiting)),
-        child: icon,
-      ),
+      // Only Chat counts; Schedule's waiting RSVPs were too noisy (owner's
+      // request, 2026-10-15).
       _ => icon,
     };
 
