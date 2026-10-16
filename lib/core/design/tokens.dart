@@ -22,6 +22,34 @@ abstract final class Space {
   static double gutter(double width) => width >= Breakpoints.wide ? xl : lg;
 }
 
+/// Chat messages' text (CHAT-1), set as iMessage's: 17 points, a little
+/// tighter than body text. In the iPhone, iPad, and Mac apps it's San
+/// Francisco, the system font iMessage uses; Apple licenses it only for its
+/// own platforms, so the web app and Android use Inter, the closest the app
+/// may ship, tracked to match.
+abstract final class ChatText {
+  static const double size = 17;
+
+  /// San Francisco, as Flutter names Apple's system font on iOS and macOS.
+  static const String appleSystemFont = 'CupertinoSystemText';
+
+  /// [base] as message text: the face, size, line height, and tracking.
+  static TextStyle of(TextStyle? base, {required bool appleFont}) =>
+      face(base, appleFont: appleFont).copyWith(
+        fontSize: size,
+        height: 1.3,
+        // Apple's tracking for San Francisco at 17 points, and Inter's own
+        // dynamic metrics at that size.
+        letterSpacing: appleFont ? -0.41 : -0.22,
+      );
+
+  /// [base] in the message face only, for the name and time beside it.
+  static TextStyle face(TextStyle? base, {required bool appleFont}) =>
+      (base ?? const TextStyle()).copyWith(
+        fontFamily: appleFont ? appleSystemFont : null,
+      );
+}
+
 abstract final class Corners {
   static const double chip = 8;
   static const double card = 12;

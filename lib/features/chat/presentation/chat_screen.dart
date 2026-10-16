@@ -523,6 +523,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _markRead();
     });
     final shownIds = byId.keys.toSet();
+    // Messages, those on their way, and the composer in iMessage's face:
+    // San Francisco in Apple's own apps (ChatText).
+    final appleFont = chatUsesAppleFont(
+      context,
+      isWeb: ref.watch(browserInfoProvider).isWeb,
+    );
     // Things still on their way, shown below everything, oldest first:
     // uploading photos, then queued or refused texts. A queued text whose
     // local write is already in the chat shows there instead.
@@ -544,6 +550,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           OutgoingTextTile(
             item: q,
             bubbleColor: bubbleColor,
+            appleFont: appleFont,
             onRetry: () =>
                 unawaited(controller.retryText(q.id).catchError((_) {})),
             onDiscard: () => controller.discardText(q.id),
@@ -558,6 +565,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               failed: p.failed,
             ),
             bubbleColor: bubbleColor,
+            appleFont: appleFont,
             onRetry: () =>
                 unawaited(controller.retryPoll(p.id).catchError((_) {})),
             onDiscard: () => controller.discardPoll(p.id),
@@ -758,6 +766,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           )
         else
           Composer(
+            appleFont: appleFont,
             // "Message Thunder…", or the other person's name.
             teamName: direct ? otherName : group?.name ?? '',
             replyingTo: _replyTo,

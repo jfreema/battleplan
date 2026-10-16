@@ -229,6 +229,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 | Invite links | Open the app (Universal Links) | Open the app (App Links) | Open the site |
 | Save files | Files or Photos | Downloads | Browser download |
 | Haptics | Yes | Yes | — |
+| Message type (CHAT-1) | San Francisco, the system font | Inter | Inter (Apple licenses San Francisco only for its own platforms) |
 | Keyboard | — | — | Enter sends, Shift+Enter new line, Esc closes, Ctrl/⌘+K opens the team switcher |
 | Offline | Full offline cache | Full offline cache | Offline cache in the browser (lost if site data is cleared) |
 
@@ -603,7 +604,8 @@ Players that others answer for never get accounts, and every account belongs to 
   - With unread messages, the chat opens at the first unread message and loads newer ones as you scroll down.
   - Date separators, as small pills: Today, Yesterday, Mon Oct 6.
   - Each message is its own bubble, compact as GroupMe's (the owner's request, 2026-10-16). A person's run of messages (within 5 minutes) has their photo beside the first bubble, and their name and time inside it at the top; my own bubbles show just the time there. Photos sit inside the bubble, above the caption, and "edited" and "Pinned" go inside too. Polls and event cards keep the name and time above them. A member's name shows their players ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8).
-  - Your messages sit on the right in the brand color; others' sit on the left on a neutral background.
+  - Laid out as iMessage lays them out (the owner's request, 2026-10-16): others' messages sit on the left on a neutral background, mine on the right in the brand color. Each bubble fits its text, its longest line setting its width, and grows to about four fifths of the chat's width (at most 520 px) before the text wraps, so the two sides stay apart. In a direct conversation (CHAT-19) the other person's messages have no photo or name beside them.
+  - Messages read in iMessage's type, 17 points with its tighter spacing: San Francisco, the iPhone's own font, in the iPhone, iPad, and Mac apps; Inter, tracked to match, on the web and Android. Apple licenses San Francisco only for its own platforms, so a browser or Android app can't use it.
   - Times appear on tap (phones), on hover (web), and at the start of each group.
 - **CHAT-2 · MVP · Composer.**
   - Multi-line text up to 4,000 characters, with a counter near the limit, and a Send button.
@@ -1176,7 +1178,7 @@ The content carries the visual weight: messages, photos, and event cards. The ta
 | Token | Values |
 |---|---|
 | **Color** | Material 3 light and dark schemes generated from the brand color, then hand-tuned. Semantic colors: Going (green), Maybe (amber), Not going (red), and one color per event type. Every color is contrast-checked in both themes. |
-| **Type** | Inter, bundled with the app. Sizes 28 / 22 / 18 / 16 / 14 / 12 (headline, title, subtitle, body, secondary, label). Layouts survive system text scaling up to 200%. |
+| **Type** | Inter, bundled with the app. Sizes 28 / 22 / 18 / 16 / 14 / 12 (headline, title, subtitle, body, secondary, label). Chat messages are 17, as iMessage's, and in San Francisco in Apple's own apps (CHAT-1). Layouts survive system text scaling up to 200%. |
 | **Spacing** | 4-point grid: 4, 8, 12, 16, 24, 32, 48. Side padding is 16 on phones and 24 on wide screens. |
 | **Corners** | 8 for chips, 12 for cards and inputs, 18 for chat bubbles, fully round for avatars and pills |
 | **Elevation** | Tonal surface levels. Shadows only on floating things: menus, sheets, the + button. |

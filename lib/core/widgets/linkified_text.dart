@@ -55,6 +55,7 @@ class LinkifiedText extends StatefulWidget {
     this.linkColor,
     this.phones = true,
     this.highlights = const [],
+    this.textWidthBasis = TextWidthBasis.parent,
     super.key,
   });
 
@@ -67,6 +68,9 @@ class LinkifiedText extends StatefulWidget {
   /// Stretches of the text to style apart, in order and not overlapping.
   /// Links inside them stay plain links.
   final List<TextHighlight> highlights;
+
+  /// [TextWidthBasis.longestLine] fits a chat bubble to its text (CHAT-1).
+  final TextWidthBasis textWidthBasis;
 
   @override
   State<LinkifiedText> createState() => _LinkifiedTextState();
@@ -124,6 +128,7 @@ class _LinkifiedTextState extends State<LinkifiedText> {
       offset += p.text.length;
     }
     return Text.rich(
+      textWidthBasis: widget.textWidthBasis,
       TextSpan(
         style: widget.style,
         children: [

@@ -39,10 +39,11 @@ class PhotoGrid extends StatelessWidget {
       );
     }
     final columns = count == 2 || count == 4 ? 2 : 3;
+    // As wide as it may be, within a narrower bubble (CHAT-1).
     return ClipRRect(
       borderRadius: BorderRadius.circular(Corners.card),
-      child: SizedBox(
-        width: maxWidth,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: maxWidth),
         child: GridView.count(
           crossAxisCount: columns,
           mainAxisSpacing: gap,

@@ -5,8 +5,10 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/linkified_text.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/direct_chat_screen.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
@@ -14,6 +16,7 @@ import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/person_screen.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -567,6 +570,87 @@ void main() {
         find.text('You can message people you share a team with.'),
         findsOneWidget,
       );
+    });
+  });
+
+  group('messages laid out as iMessage lays them out (CHAT-1)', () {
+    Future<void> openThunder(
+      WidgetTester tester, {
+      required List<Message> messages,
+      bool web = false,
+    }) => pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: teams(),
+      memberRepo: FakeMemberRepository(people()),
+      messageRepo: FakeMessageRepository(messages),
+      browser: FakeBrowserInfo(isWeb: web),
+      size: phoneSize,
+    );
+
+    String? familyOf(WidgetTester tester, String text) {
+      final rich = tester.widget<Text>(
+        find.descendant(
+          of: find.byType(LinkifiedText),
+          matching: find.byWidgetPredicate(
+            (w) => w is Text && (w.textSpan?.toPlainText() ?? '') == text,
+          ),
+        ),
+      );
+      return rich.textSpan?.style?.fontFamily;
+    }
+
+    testWidgets("San Francisco in Apple's own apps, Inter in a browser", (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await openThunder(
+          tester,
+          messages: [from('sam', 'Sam Rivera', 'Field 3 is open')],
+        );
+        expect(familyOf(tester, 'Field 3 is open'), ChatText.appleSystemFont);
+        await openThunder(
+          tester,
+          messages: [from('sam', 'Sam Rivera', 'Field 3 is open')],
+          web: true,
+        );
+        // The theme's Inter, which a browser on an iPhone gets too.
+        expect(familyOf(tester, 'Field 3 is open'), AppTokens.fontFamily);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('a bubble fits its text, and the other side stays free', (
+      tester,
+    ) async {
+      const long =
+          'Saturday games are 4pm and 5:45pm on field 5. Let us be there to '
+          'start the routines at 3.';
+      await openThunder(
+        tester,
+        messages: [
+          from('sam', 'Sam Rivera', long),
+          from(
+            'coach',
+            'Coach Lee',
+            'On my\nway!',
+          ).copyWith(id: 'mine', createdAt: later),
+        ],
+      );
+      final width = phoneSize.width;
+      Rect textOf(String text) => tester.getRect(
+        find.byWidgetPredicate((w) => w is LinkifiedText && w.text == text),
+      );
+      // Others' wrap well short of the right edge; mine stays off the left.
+      final theirs = textOf(long);
+      expect(theirs.right, lessThan(width - 48));
+      final mine = textOf('On my\nway!');
+      expect(mine.left, greaterThan(width / 2));
+      // Its longest line sets the bubble's width: two short lines make a
+      // narrow bubble, not one as wide as it may grow.
+      expect(mine.width, lessThan(width / 3));
     });
   });
 

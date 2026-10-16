@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
@@ -28,6 +29,7 @@ import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -378,6 +380,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final web = ref.watch(browserInfoProvider).isWeb;
+    // Messages read in iMessage's face (CHAT-1): San Francisco in the
+    // iPhone, iPad, and Mac apps, Inter elsewhere.
+    final appleFont = chatUsesAppleFont(context, isWeb: web);
+    // A direct conversation (CHAT-19) is laid out as iMessage lays out one:
+    // no photo or name beside the other person's messages.
+    final direct = ref.watch(groupProvider(m.groupId)).value?.isDirect ?? false;
     if (m.isSystem) {
       // CHAT-10: small centered lines like "Sam joined".
       return Padding(
@@ -517,12 +525,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       if (widget.startsGroup) ?time,
       if (widget.startsGroup) headerMarks else marks,
     ].where((p) => p.isNotEmpty).join(' · ');
-    final named = widget.startsGroup && !mine;
+    final named = widget.startsGroup && !mine && !direct;
     final innerHeader = card || (!named && meta.isEmpty)
         ? null
         : Padding(
             padding: const EdgeInsets.only(bottom: 2),
             child: Text.rich(
+              textWidthBasis: TextWidthBasis.longestLine,
               TextSpan(
                 children: [
                   if (named)
@@ -539,8 +548,11 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                   if (meta.isNotEmpty) TextSpan(text: named ? '  $meta' : meta),
                 ],
               ),
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: foreground.withValues(alpha: 0.7),
+              style: ChatText.face(
+                theme.textTheme.labelMedium?.copyWith(
+                  color: foreground.withValues(alpha: 0.7),
+                ),
+                appleFont: appleFont,
               ),
             ),
           );
@@ -628,7 +640,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             LinkifiedText(
               m.text,
               phones: !web,
-              style: theme.textTheme.bodyLarge?.copyWith(color: foreground),
+              // The bubble hugs its longest line, as iMessage's do.
+              textWidthBasis: TextWidthBasis.longestLine,
+              style: ChatText.of(
+                theme.textTheme.bodyLarge?.copyWith(color: foreground),
+                appleFont: appleFont,
+              ),
               linkColor: foreground,
               highlights: highlights,
               onOpen: (uri) =>
@@ -637,11 +654,16 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           ),
       ],
     ];
-    // Each message is its own bubble. A one-line bubble is 48 tall, a full
-    // tap target (SPEC §7.6); one with a header line is taller anyway, so
-    // its padding is tighter.
+    // Each message is its own bubble, fitted to its text and no wider than
+    // iMessage's (bubbleMaxWidth). A one-line bubble is 48 tall, a full tap
+    // target (SPEC §7.6); one with a header line is taller anyway, so its
+    // padding is tighter.
+    final besideAvatar = !mine && !direct;
     final textBubble = Container(
-      constraints: const BoxConstraints(maxWidth: 520),
+      constraints: BoxConstraints(
+        maxWidth: bubbleMaxWidth(context, besideAvatar: besideAvatar),
+        minHeight: kMinInteractiveDimension,
+      ),
       padding: photos != null
           ? EdgeInsets.fromLTRB(
               photoInset,
@@ -658,7 +680,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             )
           : const EdgeInsets.symmetric(
               horizontal: Space.md,
-              vertical: Space.md,
+              vertical: Space.md + 1,
             ),
       decoration: BoxDecoration(
         color: deleted ? Colors.transparent : background,
@@ -902,11 +924,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
 
     final row = Padding(
       // Compact, as GroupMe is: each bubble a little apart from the next,
-      // a little more between people.
+      // a little more between people. Close to the screen's edges, as
+      // iMessage's are: others' messages on the left, mine on the right.
       padding: EdgeInsets.fromLTRB(
-        Space.md,
+        Space.sm,
         widget.startsGroup ? Space.xs + 2 : 3,
-        Space.md,
+        Space.sm,
         widget.endsGroup ? Space.xs : 0,
       ),
       child: Row(
@@ -915,7 +938,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!mine) avatarSlot,
+          if (besideAvatar) avatarSlot,
           Flexible(child: column),
         ],
       ),
@@ -930,6 +953,28 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     );
   }
 }
+
+/// The widest a message bubble grows (CHAT-1), as iMessage's: about four
+/// fifths of the room beside it, so others' messages sit to the left and
+/// mine to the right, and no wider than a comfortable line on big screens.
+/// [besideAvatar] leaves the photo's slot out of the room.
+double bubbleMaxWidth(BuildContext context, {bool besideAvatar = false}) {
+  final room =
+      MediaQuery.sizeOf(context).width -
+      2 * Space.sm -
+      (besideAvatar ? kMinInteractiveDimension : 0);
+  return math.max(kMinInteractiveDimension, math.min(520, room * 0.78));
+}
+
+/// Whether messages are in Apple's San Francisco (ChatText): only in the
+/// iPhone, iPad, and Mac apps, which have it as their system font; a
+/// browser on those devices can't hand it to the web app.
+bool chatUsesAppleFont(BuildContext context, {required bool isWeb}) =>
+    !isWeb &&
+    const {
+      TargetPlatform.iOS,
+      TargetPlatform.macOS,
+    }.contains(defaultTargetPlatform);
 
 /// The author's photo beside their messages; tapping it opens their page
 /// (TEAM-15) when [onTap] is given. The photo sits at the top left of a
@@ -1089,10 +1134,14 @@ class OutgoingTextTile extends StatelessWidget {
     required this.onRetry,
     required this.onDiscard,
     this.bubbleColor,
+    this.appleFont = false,
     super.key,
   });
 
   final OutgoingText item;
+
+  /// In Apple's San Francisco, as sent messages are (ChatText).
+  final bool appleFont;
 
   /// My bubbles' color from the team's chat look (CHAT-18), as on the
   /// messages already sent; null uses the brand color.
@@ -1113,17 +1162,21 @@ class OutgoingTextTile extends StatelessWidget {
         ? Colors.white
         : Colors.black;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.md, 2, Space.md, Space.xs),
+      padding: const EdgeInsets.fromLTRB(Space.sm, 2, Space.sm, Space.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Opacity(
             opacity: item.failed ? 0.6 : 0.8,
+            // As a sent bubble of mine (MessageTile): fitted to its text.
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 520),
+              constraints: BoxConstraints(
+                maxWidth: bubbleMaxWidth(context),
+                minHeight: kMinInteractiveDimension,
+              ),
               padding: const EdgeInsets.symmetric(
                 horizontal: Space.md,
-                vertical: Space.md,
+                vertical: Space.md + 1,
               ),
               decoration: BoxDecoration(
                 color: background,
@@ -1131,7 +1184,11 @@ class OutgoingTextTile extends StatelessWidget {
               ),
               child: Text(
                 item.text,
-                style: theme.textTheme.bodyLarge?.copyWith(color: foreground),
+                textWidthBasis: TextWidthBasis.longestLine,
+                style: ChatText.of(
+                  theme.textTheme.bodyLarge?.copyWith(color: foreground),
+                  appleFont: appleFont,
+                ),
               ),
             ),
           ),

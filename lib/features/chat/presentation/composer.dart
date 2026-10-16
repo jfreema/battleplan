@@ -30,8 +30,12 @@ class Composer extends StatefulWidget {
     this.onAnnounce,
     this.announcing = false,
     this.onCancelAnnouncement,
+    this.appleFont = false,
     super.key,
   });
+
+  /// Types in Apple's San Francisco, as messages read (ChatText, CHAT-1).
+  final bool appleFont;
 
   /// Names the team in the hint, "Message Thunder U14…" (SPEC §5.4).
   final String teamName;
@@ -282,6 +286,11 @@ class _ComposerState extends State<Composer> {
                 maxLines: 6,
                 textCapitalization: TextCapitalization.sentences,
                 keyboardType: TextInputType.multiline,
+                // What's typed looks as it will once sent (ChatText).
+                style: ChatText.of(
+                  Theme.of(context).textTheme.bodyLarge,
+                  appleFont: widget.appleFont,
+                ),
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: hint,
