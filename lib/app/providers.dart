@@ -74,6 +74,7 @@ List<Override> buildOverrides({
   required Analytics analytics,
   required CrashReporter crashReporter,
   required RemoteConfig remoteConfig,
+  PhotoPicker photoPicker = const ImagePickerPhotoPicker(),
 }) => [
   appEnvProvider.overrideWithValue(env),
   appVersionProvider.overrideWithValue(build.version),
@@ -82,7 +83,7 @@ List<Override> buildOverrides({
   crashReporterProvider.overrideWithValue(crashReporter),
   remoteConfigProvider.overrideWithValue(remoteConfig),
   photoPickerProvider.overrideWithValue(
-    const LocationStrippingPhotoPicker(ImagePickerPhotoPicker()),
+    LocationStrippingPhotoPicker(photoPicker),
   ),
   photoDropsProvider.overrideWithValue(
     LocationStrippingPhotoDrops(browserPhotoDrops()),

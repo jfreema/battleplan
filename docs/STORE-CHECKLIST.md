@@ -18,9 +18,11 @@ Required, and doable now.
 - ✅ 1.8 **Act on every report within 24 hours.** Reviewers ask for this, and the Terms promise it. Every new report emails each super admin, reports about a team's admins included, and a daily email lists any report open more than 12 hours.
 - ✅ 1.9 **A privacy manifest** (`ios/Runner/PrivacyInfo.xcprivacy`) for the iPhone app, declaring why it uses APIs Apple lists (stored preferences, file timestamps, elapsed time), so uploads aren't refused (ITMS-91053). It also lists the data the Privacy Policy covers, which the App Privacy labels (1.15, 3.4) must match.
 - ✅ 1.10 **Encryption:** `ITSAppUsesNonExemptEncryption` set to NO in Info.plist. Battleplan's only encryption is standard HTTPS, which is exempt, so export compliance won't hold up each build. A test keeps the key in place; any encryption of our own later (such as end-to-end messages) means turning it on and filing the export forms first.
-- ⬜ 1.11 **Android release builds in GitHub Actions** (tasks 126, 214): an upload key, and an Android App Bundle signed with it. Nothing runs on your Mac. Today the release build is set up with the debug key.
-- ⬜ 1.12 **iPad.** The app is built for iPad too, so every screen has to work there, in both orientations and in Split View (task 210); review runs on iPads.
-- ⬜ 1.13 **It works end to end,** on the iPhone and iPad simulators and on Android with a build from GitHub Actions:
+- ⬜ 1.11 **Android release builds in GitHub Actions** (tasks 126, 214, 272): an upload key, and an Android App Bundle signed with it. Nothing runs on your Mac.
+  - ✅ The **Android build** workflow (Actions tab) makes the App Bundle and an APK for dev or prod, signed with the upload key from the repository's secrets, and shows the key's fingerprints for Firebase. Without the key a dev build is signed with a throwaway key, and a prod build fails.
+  - ⬜ 👤 The upload key itself: a keystore and password, in 1Password and in the repository's secrets (`ANDROID_UPLOAD_KEYSTORE_BASE64`, `ANDROID_UPLOAD_KEYSTORE_PASSWORD`, `ANDROID_UPLOAD_KEY_ALIAS`), then its SHA-1 and SHA-256 added to the Android apps in Firebase so Google sign-in works on these builds.
+- ✅ 1.12 **iPad.** The app is built for iPad too, so every screen has to work there, in both orientations and in Split View (task 210); review runs on iPads. Every screen is tested at iPad mini, Air, and Pro sizes in both orientations and at the Split View and Slide Over widths, and the end-to-end test passes on the iPad simulator.
+- ⬜ 1.13 **It works end to end,** on the iPhone and iPad simulators and on Android with a build from GitHub Actions (`integration_test/e2e_test.dart`, task 271). ✅ iPhone and iPad simulators. ⬜ Android, with the workflow's end-to-end APK. ⬜ 👤 Google sign-up, which needs a real Google account:
   - sign up with Google and finish setup (Jade's fix);
   - join a team;
   - chat, post photos, and RSVP.

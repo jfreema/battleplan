@@ -46,6 +46,9 @@ class ScheduleScreen extends ConsumerWidget {
       child: Scaffold(
         floatingActionButton: canCreate
             ? FloatingActionButton(
+                // The team's tabs stay built side by side, and Documents
+                // has one too: no shared hero tag between them.
+                heroTag: null,
                 tooltip: l10n.eventNew,
                 // Full storage stops new events (STORE-4); the button
                 // stays, greyed, to say why.

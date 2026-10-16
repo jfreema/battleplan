@@ -60,6 +60,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   freezed: ^4.0.2
+  # The end-to-end run on simulators and emulators (store checklist 1.13).
+  integration_test:
+    sdk: flutter
   json_serializable: ^6.14.1
   mock_exceptions: ^0.8.2
   riverpod_generator: ^4.0.9

@@ -36,7 +36,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   bool _terms = false;
   bool _saving = false;
   bool _failed = false;
-  bool _prefilled = false;
+
+  /// Whether the person has typed in the name, after which it's theirs.
+  bool _nameEdited = false;
   bool _uploading = false;
 
   /// After a save, gives Continue back if the app hasn't moved on.
@@ -102,9 +104,16 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     final profile = ref.watch(myProfileProvider).value;
     // The provider's photo, copied in at first sign-in (AUTH-12).
     final photoUrl = ref.watch(myPhotoUrlProvider).value;
-    if (!_prefilled && profile != null) {
-      _name.text = profile.displayName;
-      _prefilled = true;
+    // The name to start from (AUTH-12): the sign-in's own, else the
+    // profile's. An email sign-up names the account just after the profile
+    // is made, from the email address, so this follows that name until
+    // the person types here.
+    if (!_nameEdited && profile != null) {
+      final signInName = ref.watch(authUserProvider).value?.displayName;
+      final start = (signInName?.trim().isNotEmpty ?? false)
+          ? signInName!.trim()
+          : profile.displayName;
+      if (_name.text != start) _name.text = start;
     }
     final canContinue =
         _adult && _terms && _name.text.trim().isNotEmpty && !_saving;
@@ -167,7 +176,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                     controller: _name,
                     maxLength: 50,
                     textCapitalization: TextCapitalization.words,
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (_) => setState(() => _nameEdited = true),
                     decoration: InputDecoration(
                       labelText: l10n.nameLabel,
                       helperText: l10n.setupNameHelp,

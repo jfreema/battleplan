@@ -50,11 +50,30 @@ android {
         }
     }
 
+    // The Google Play upload key (store checklist 1.11). Only the Android
+    // build workflow has it, from the repository's secrets: it writes the
+    // PKCS #12 keystore to a temporary file and names it here. Nothing
+    // builds Android on a developer's Mac.
+    val uploadKeystore = System.getenv("ANDROID_UPLOAD_KEYSTORE")
+    signingConfigs {
+        if (uploadKeystore != null) {
+            create("upload") {
+                storeFile = file(uploadKeystore)
+                storeType = "pkcs12"
+                storePassword = System.getenv("ANDROID_UPLOAD_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_UPLOAD_KEY_ALIAS")
+                // A PKCS #12 keystore has one password for both.
+                keyPassword = System.getenv("ANDROID_UPLOAD_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Without the upload key, the debug key, so a release build
+            // still runs; the workflow refuses to make a prod build that way.
+            signingConfig = signingConfigs.findByName("upload")
+                ?: signingConfigs.getByName("debug")
         }
     }
 }

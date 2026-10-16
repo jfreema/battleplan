@@ -106,6 +106,10 @@ GoRouter router(Ref ref) {
   // new router (a new sign-in in tests) never shares it.
   final rootKey = GlobalKey<NavigatorState>();
 
+  // Whether anyone has signed in since the app started, to tell signing
+  // out from arriving signed out.
+  var signedInBefore = false;
+
   final router = GoRouter(
     navigatorKey: rootKey,
     initialLocation: '/',
@@ -137,12 +141,18 @@ GoRouter router(Ref ref) {
         if (_publicPaths.contains(path) || path.startsWith('/join')) {
           return null;
         }
+        // Signing out starts over at sign-in, not back where they were
+        // (Settings, say): whoever signs in next may be someone else. A
+        // link opened on arriving signed out goes on there after signing
+        // in.
+        if (signedInBefore) return '/sign-in';
         final from = state.uri.toString();
         return from == '/'
             ? '/sign-in'
             : '/sign-in?from=${Uri.encodeComponent(from)}';
       }
 
+      signedInBefore = true;
       if (path.startsWith('/sign-in') ||
           path == '/sign-up' ||
           path == '/emaillogin') {

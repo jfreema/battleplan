@@ -9,7 +9,6 @@ import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
-import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -468,8 +467,7 @@ class _TeamMenu extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final admin =
         isAdmin || (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
-    // (route under /g/<id>/, icon, label). Items without a screen yet say
-    // "Coming soon".
+    // (route under /g/<id>/, icon, label).
     final items = [
       ('roster', AppIcons.roster, l10n.rosterMenu),
       ('invite', AppIcons.invite, l10n.inviteMenu),
@@ -483,26 +481,13 @@ class _TeamMenu extends ConsumerWidget {
       // Leave team is on your own card in the roster, out of the way of a
       // stray tap (TEAM-8).
     ];
-    const built = {
-      'roster',
-      'settings',
-      'media',
-      'invite',
-      'reports',
-      'notifications',
-      'import',
-    };
     return PopupMenuButton<String>(
       tooltip: l10n.teamMenuTooltip,
       icon: const Icon(AppIcons.more),
       onSelected: (route) {
         final id = groupId;
         if (id == null) return;
-        if (built.contains(route)) {
-          unawaited(context.push('/g/${id.value}/$route'));
-        } else {
-          showAppSnackBar(context, l10n.comingSoon);
-        }
+        unawaited(context.push('/g/${id.value}/$route'));
       },
       itemBuilder: (_) => [
         for (final (route, icon, label) in items)

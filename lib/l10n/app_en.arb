@@ -18,7 +18,6 @@
   "@setupSignedInAs": {"placeholders": {"email": {"type": "String"}}},
   "useDifferentAccount": "Use a different account",
   "signInTermsFooter": "By continuing you agree to the Terms and Privacy Policy",
-  "comingSoon": "Coming soon",
   "emailLabel": "Email",
   "passwordLabel": "Password",
   "showPassword": "Show password",

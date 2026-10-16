@@ -153,6 +153,9 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     return Scaffold(
       floatingActionButton: canAdd
           ? FloatingActionButton(
+              // The team's tabs stay built side by side, and Schedule has
+              // one too: no shared hero tag between them.
+              heroTag: null,
               tooltip: l10n.documentsAddTooltip,
               onPressed: () => unawaited(showAddDocument(context, ref, group)),
               child: const Icon(AppIcons.add),

@@ -100,6 +100,25 @@ Prod (`battleplan-prod`) serves the website and the web app at `getbattleplan.ap
    From your Mac instead, `tools/release_prod.sh` does the same checks and deploys.
 4. **Once, after your first sign-in on prod:** `npm --prefix tools/seed run super-admin -- battleplan-prod <your email>`.
 
+## Android builds
+
+Android builds run only in GitHub Actions, never on a Mac (no Java or Gradle locally). **Android build** in the Actions tab takes the app (dev or prod) and makes an App Bundle for Google Play and an APK to install, both signed with the Play upload key, with its SHA-1 and SHA-256 in the run's summary (Firebase needs them for Google sign-in). Download them from the run's Artifacts. The build number is the commit count, as on the web.
+
+The upload key lives in the repository's secrets: `ANDROID_UPLOAD_KEYSTORE_BASE64` (a PKCS #12 keystore), `ANDROID_UPLOAD_KEYSTORE_PASSWORD` (the keystore's and the key's), and `ANDROID_UPLOAD_KEY_ALIAS`. `android/app/build.gradle.kts` signs release builds with it when the workflow provides it, and with the debug key otherwise; the workflow refuses a prod build without it. Keep the keystore and password in 1Password too (ROADMAP task 126). If it's lost, Google Play can reset the upload key, since Google holds the app signing key (Play App Signing).
+
+## End-to-end test
+
+`integration_test/e2e_test.dart` runs the real app against the emulators (store checklist 1.13): the seeded coach opens a team's invite code, then a new parent signs up with email, finishes setup, joins with the code, chats, posts a photo, and answers an RSVP. On an iPad it turns to landscape and back. Any error fails it. Google sign-up needs a real Google account and the system photo picker can't be tapped by a test, so those are checked by hand; a stand-in picker hands the app one photo, which uploads and posts like any other.
+
+With the emulators running and the seed loaded (steps 1 and 2 above):
+
+```sh
+flutter test integration_test/e2e_test.dart -d <iPhone or iPad simulator> \
+  --flavor dev --dart-define=USE_EMULATORS=true
+```
+
+On Android, tick **End-to-end test APK** in **Android build**, install the `-e2e.apk` on an Android emulator (`adb install`), and open it: the test runs as the app starts, against the emulators on this Mac at `10.0.2.2`, and prints its result to `adb logcat` under `flutter`.
+
 ## App Check
 
 App Check proves requests come from the real apps (ARCH §6.9). It runs in **monitor mode** until the console shows nearly all traffic verified, then it's enforced on Functions, Firestore, and Storage.

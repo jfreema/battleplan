@@ -198,6 +198,41 @@ void main() {
     expect(find.textContaining('already an account'), findsOneWidget);
   });
 
+  testWidgets('setup offers the name typed at email sign-up, which reaches '
+      'the account just after its profile is made from the address', (
+    tester,
+  ) async {
+    // The profile still has the fallback name; the sign-in has the real one.
+    final users = FakeUserRepository(needsSetup: true)..savedName = 'coach';
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach.copyWith(displayName: 'Pat Lee')),
+      users: users,
+    );
+    final name = find.widgetWithText(TextField, 'Pat Lee');
+    expect(name, findsOneWidget);
+    // What the person types is theirs from then on.
+    await tester.enterText(name, 'Patricia Lee');
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Patricia Lee'), findsOneWidget);
+  });
+
+  testWidgets('signing out from Settings starts over at sign-in: the next '
+      'person in goes to their teams, not Settings', (tester) async {
+    await pumpApp(tester, auth: FakeAuthRepository(user: coach));
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/settings');
+    await tester.pumpAndSettle();
+    final signOut = find.text('Sign out');
+    await tester.ensureVisible(signOut);
+    await tester.tap(signOut);
+    await tester.pumpAndSettle();
+    final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
+    expect(router.state.uri.toString(), '/sign-in');
+    await tester.tap(find.text('Continue with Google'));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+  });
+
   testWidgets('first-run setup comes first and needs both confirmations', (
     tester,
   ) async {

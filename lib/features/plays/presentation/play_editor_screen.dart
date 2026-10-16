@@ -503,6 +503,9 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
     // A phone's whiteboard keeps a new board and the saved plays in More,
     // and goes without its title, so undo, redo, and saving fit.
     final roomy = MediaQuery.sizeOf(context).width >= 600;
+    // Slide Over, a third of an iPad, and 375-point phones (BOARD-1, store
+    // checklist 1.12): Save is an icon, so Undo, Redo, and More still fit.
+    final narrow = MediaQuery.sizeOf(context).width < 380;
 
     return PopScope(
       canPop: widget.whiteboard || !_dirty,
@@ -587,12 +590,20 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: Space.md),
-                  child: FilledButton(
-                    onPressed: _saving ? null : () => unawaited(_save()),
-                    child: Text(
-                      widget.whiteboard ? l10n.playSaveToTeam : l10n.save,
-                    ),
-                  ),
+                  child: narrow
+                      ? IconButton.filled(
+                          tooltip: widget.whiteboard
+                              ? l10n.playSaveToTeam
+                              : l10n.save,
+                          onPressed: _saving ? null : () => unawaited(_save()),
+                          icon: const Icon(AppIcons.save),
+                        )
+                      : FilledButton(
+                          onPressed: _saving ? null : () => unawaited(_save()),
+                          child: Text(
+                            widget.whiteboard ? l10n.playSaveToTeam : l10n.save,
+                          ),
+                        ),
                 ),
               ],
             ),

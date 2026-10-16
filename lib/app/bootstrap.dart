@@ -7,12 +7,14 @@ import 'package:battleplan/app/providers.dart';
 import 'package:battleplan/app/services/crashlytics_reporter.dart';
 import 'package:battleplan/app/services/firebase_analytics_service.dart';
 import 'package:battleplan/app/services/firebase_remote_config_service.dart';
+import 'package:battleplan/app/services/image_picker_photo_picker.dart';
 import 'package:battleplan/app/services/web_error_reporter.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/core/services/analytics.dart';
 import 'package:battleplan/core/services/crash_reporter.dart';
+import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/remote_config.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/version.dart';
@@ -41,9 +43,14 @@ const _useEmulators = bool.fromEnvironment('USE_EMULATORS');
 const _emulatorHostOverride = String.fromEnvironment('EMULATOR_HOST');
 
 /// App startup, shared by both entry points (ARCH §5.1).
+///
+/// [photoPicker] is the system photo picker. Only the end-to-end test
+/// passes another (`integration_test/`), as it can't tap through the
+/// system's own picker.
 Future<void> bootstrap({
   required AppFlavor flavor,
   required FirebaseOptions Function() cloudOptions,
+  PhotoPicker? photoPicker,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
@@ -143,6 +150,7 @@ Future<void> bootstrap({
         analytics: analytics,
         crashReporter: crashReporter,
         remoteConfig: remoteConfig,
+        photoPicker: photoPicker ?? const ImagePickerPhotoPicker(),
       ),
       child: const BattleplanApp(),
     ),

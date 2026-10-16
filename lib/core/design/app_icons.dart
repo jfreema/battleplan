@@ -149,4 +149,5 @@ abstract final class AppIcons {
   static const IconData play = Symbols.play_arrow_rounded;
   static const IconData stop = Symbols.stop_rounded;
   static const IconData savedPlays = Symbols.folder_open_rounded;
+  static const IconData save = Symbols.save_rounded;
 }

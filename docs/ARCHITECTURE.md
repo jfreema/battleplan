@@ -1262,8 +1262,8 @@ Repo conventions:
 |---|---|---|
 | Unit | Domain logic, controllers (with fake repositories), DTO mappers, composite IDs | `test/` |
 | Data | Each repository implementation against an in-memory Firestore and fake Auth, Storage, and Functions; CI fails below 80% line coverage of the domain and data layers (D52) | `test/data/` |
-| Widget + golden | Key screens and components; accessibility checks in **light and dark**; golden images with real fonts, compared on macOS only, for review | `test/` |
-| Integration | The team and players flows below | `integration_test/`, against emulators |
+| Widget + golden | Key screens and components; accessibility checks in **light and dark**; golden images with real fonts, compared on macOS only, for review; every screen at iPad sizes in portrait, landscape, Split View, and Slide Over, failing on any overflow (`ipad_layout_test.dart`, store checklist 1.12) | `test/` |
+| Integration | The real app on an iPhone or iPad simulator or an Android emulator, against the emulators with the seed (`e2e_test.dart`, store checklist 1.13): sign up with email, set up, join by code, chat, post a photo (a stand-in for the system picker), and RSVP; the team and players flows below join it | `integration_test/`, against emulators |
 | Functions | Services, handlers, and every trigger's early-exit conditions | `functions/test/` |
 | Rules | Every collection and role, cross-team isolation, one RSVP per event and player, the message rate limit | `functions/test/rules/` |
 
@@ -1281,6 +1281,7 @@ Integration flows:
   - Rules tests on the emulator
   - `flutter build web --base-href /app/`, assembled with `website/` into `build/hosting/`, and a deploy to a **Hosting preview channel**, with the URL posted on the PR
 - **On merge to `main`:** deploy rules, indexes, TTL policies, functions, and hosting to **dev**.
+- **Android build**, started by hand (`.github/workflows/android.yml`, store checklist 1.11): the App Bundle and an APK for dev or prod, signed with the Play upload key from the repository's secrets (`build.gradle.kts` reads it from the environment; a prod build without it fails), with the key's fingerprints in the run summary, and on request the end-to-end test as a debug APK for an Android emulator. Android is never built on a developer's Mac.
 - **On a release**, started by hand: deploy to **prod**. A private repo on GitHub Free has no approval gates (environments and required reviewers), so starting the workflow is the approval. Google accepts prod deploys only from this workflow, through a condition on its Workload Identity Federation provider. Fastlane or Codemagic builds and uploads to **TestFlight** (from Phase 4) and the **Play Console internal track** (from Phase 5).
 - **Deploy access** is keyless: Workload Identity Federation, with one deploy service account per project and no key files in GitHub.
 - **Minutes.** A private repo on GitHub Free gets 2,000 Actions minutes a month. Linux jobs (checks, web builds, Firebase deploys) take a few minutes each and fit easily. macOS jobs count 10×, so where iOS builds run (GitHub, Fastlane on the Mac, Codemagic, or Xcode Cloud) is decided in Phase 4.
