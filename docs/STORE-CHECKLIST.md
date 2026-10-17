@@ -62,9 +62,9 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 
 ## Phase 3 · After joining the Apple Developer Program
 
-- ⬜ 3.1 👤 **Enroll** as an individual, $99 a year (task 106). It takes a few days.
-- ⬜ 3.2 👤 **Create the app in App Store Connect** under the name "Battleplan." The name has to be free on the App Store.
-- ⬜ 3.3 **iPhone release builds** (task 209). *Built 2026-10-17 as **Release iOS** in the Actions tab; checked once its first run reaches TestFlight:*
+- ✅ 3.1 👤 **Enroll** as an individual, $99 a year (task 106). It takes a few days.
+- ✅ 3.2 👤 **Create the app in App Store Connect** under the name "Battleplan." The name has to be free on the App Store.
+- ✅ 3.3 **iPhone release builds** (task 209). *Release iOS in the Actions tab; its first good run (2026-10-17) uploaded version 0.1.0, build 272, to TestFlight, after an iPhone was registered on the team so automatic signing could work:*
   - signed for the App Store;
   - built with Xcode 26 or later and the iOS 26 SDK, required since April 28, 2026 (this Mac has Xcode 27);
   - built with `FIREBASE_ANALYTICS_WITHOUT_ADID=true`, as Info.plist notes, so Analytics carries no advertising ID;
