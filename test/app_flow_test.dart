@@ -43,8 +43,8 @@ void main() {
     expect(find.text('Email me a sign-in link instead'), findsOneWidget);
   });
 
-  testWidgets('Continue with Apple signs in; prod shows it once its Apple '
-      'setup is in (AUTH-1, task 109)', (tester) async {
+  testWidgets('Continue with Apple signs in, in dev and in prod '
+      '(AUTH-1, task 109)', (tester) async {
     final auth = FakeAuthRepository();
     await pumpApp(tester, auth: auth, env: cloud);
     await tester.tap(find.text('Continue with Apple'));
@@ -58,10 +58,8 @@ void main() {
       env: const AppEnv(flavor: AppFlavor.prod, useEmulators: false),
     );
     expect(find.text('Continue with Google'), findsOneWidget);
-    expect(
-      find.text('Continue with Apple'),
-      AppEnv.appleSignInInProd ? findsOneWidget : findsNothing,
-    );
+    // Prod's Firebase project has Apple's key (2026-10-17).
+    expect(find.text('Continue with Apple'), findsOneWidget);
   });
 
   testWidgets('against the emulators, sign-in also offers email, for the '

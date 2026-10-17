@@ -14,12 +14,13 @@ class AppEnv {
   bool get isProd => flavor == AppFlavor.prod;
 
   /// Sign in with Apple (AUTH-1, roadmap task 109): on in dev and on the
-  /// emulators, and in prod once the prod Firebase project has Apple's
-  /// Services ID and key, so prod never shows a button that can't work.
+  /// emulators, and in prod while [appleSignInInProd] is on.
   bool get appleSignIn => !isProd || appleSignInInProd;
 
-  /// Turned on when prod's Apple provider is set up (ARCH §6.1).
-  static const appleSignInInProd = false;
+  /// On since prod's Firebase project got Apple's Services ID and key
+  /// (2026-10-17, ARCH §6.1). Turning it off hides Apple in prod again, so
+  /// prod never shows a button that can't work.
+  static const appleSignInInProd = true;
 
   /// Shown as a small banner so dev builds are never mistaken for prod.
   String? get bannerLabel => switch ((flavor, useEmulators)) {
