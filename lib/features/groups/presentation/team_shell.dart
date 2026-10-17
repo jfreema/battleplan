@@ -214,22 +214,28 @@ class _TeamShellState extends ConsumerState<TeamShell> {
                     ),
                 ],
               ),
+              // Below the status bar on an iPad, as the narrow layout is;
+              // the rail keeps the left edge, and screens their own bottom.
               Expanded(
-                child: Column(
-                  children: [
-                    header,
-                    banner,
-                    Expanded(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: Breakpoints.contentMax,
+                child: SafeArea(
+                  left: false,
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      header,
+                      banner,
+                      Expanded(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: Breakpoints.contentMax,
+                            ),
+                            child: body,
                           ),
-                          child: body,
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],

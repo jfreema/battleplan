@@ -76,6 +76,22 @@ Future<void> visit(WidgetTester tester, String route, String size) async {
 }
 
 void main() {
+  testWidgets("the team header stays below an iPad's status bar, in the "
+      'wide layout too', (tester) async {
+    tester.view
+      ..padding = const FakeViewPadding(top: 24)
+      ..viewPadding = const FakeViewPadding(top: 24);
+    await pumpTeam(
+      tester,
+      dark: false,
+      size: ipadSizes['iPad Pro 13-inch, portrait']!,
+    );
+    expect(
+      tester.getTopLeft(find.byTooltip('Team menu')).dy,
+      greaterThanOrEqualTo(24),
+    );
+  });
+
   for (final MapEntry(key: name, value: size) in ipadSizes.entries) {
     group(name, () {
       testWidgets('sign-in, sign-up, and email sign-in', (tester) async {
