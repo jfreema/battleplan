@@ -173,14 +173,14 @@ npm --prefix tools/seed run super-admin -- battleplan-dev-ecce4 someone@example.
 
 ## App Review demo account
 
-App Review needs a demo account with a seeded team (SPEC §10). `tools/seed/demo.ts` makes one on the **dev** project or the emulators, and refuses every other project. Release iOS builds point at **prod**, so the account App Review uses is made by hand on prod (task 132, D54). It uses your gcloud sign-in (`gcloud auth application-default login`, then `gcloud auth application-default set-quota-project battleplan-dev-ecce4`), so there's no key file:
+App Review needs a demo account with a seeded team (SPEC §10). `tools/seed/demo.ts` makes one on the **dev** project (`--write-to-dev`), on **prod** (`--project battleplan-prod --write-to-prod`; App Review uses prod, since Release iOS builds point there), or on the emulators, and refuses every other project. It uses your gcloud sign-in (`gcloud auth application-default login`, then `gcloud auth application-default set-quota-project battleplan-dev-ecce4`), so there's no key file:
 
 ```sh
 DEMO_PASSWORD='<at least 12 characters>' npm --prefix tools/seed run demo -- \
   --project battleplan-dev-ecce4 --write-to-dev
 ```
 
-It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which owns *Thunder*, a team of adult players with one player linked to its own member and a pending player to approve, and is a parent on the kids' team *Cyclone*, with messages, events, RSVPs, and a pinned link. Running it again resets the password and rewrites the same `demo-` documents. Put the email and password in the App Review notes, never in the repo, with where to sign in: the sign-in screen offers only Google and Apple (SPEC AUTH-1), so the demo account signs in at `getbattleplan.app/emaillogin` (on dev, `battleplan-dev-ecce4.web.app/emaillogin`). To try it locally, start the emulators and run `npm --prefix tools/seed run demo:emulators`. A prod demo account, at launch, is made by hand.
+It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which owns *Thunder*, a team of adult players with one player linked to its own member and a pending player to approve, and is a parent on the kids' team *Cyclone*, with messages, events, RSVPs, and a pinned link. Running it again resets the password and rewrites the same `demo-` documents. Put the email and password in the App Review notes, never in the repo, with where to sign in: the sign-in screen offers only Google and Apple (SPEC AUTH-1), so the demo account signs in at `getbattleplan.app/emaillogin` (on dev, `battleplan-dev-ecce4.web.app/emaillogin`). To try it locally, start the emulators and run `npm --prefix tools/seed run demo:emulators`. The prod demo account was made this way on 2026-10-17; its team's invite code is in docs/STORE-LISTING.md.
 
 ## App icons and splash screens
 

@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Universal Links (INV-9, roadmap task 110): getbattleplan.app links
+	     open the app; the site's apple-app-site-association lists them. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:getbattleplan.app</string>
+	</array>
 	<!-- Push notifications through APNs (NOTIF-1, roadmap task 108). -->
 	<key>aps-environment</key>
 	<string>production</string>

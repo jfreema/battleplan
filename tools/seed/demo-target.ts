@@ -1,14 +1,20 @@
 // Where the App Review demo seed may write (SPEC §10: "An App Review demo
-// account with a seeded team"). Only the dev project, and only with an
-// explicit flag, or the local emulators under a demo- project ID. Never
-// prod: App Review runs against a build pointed at dev until launch, and a
-// prod demo account is made by hand then (docs/DEVELOPMENT.md).
+// account with a seeded team"). The dev or prod project, each only with its
+// own explicit flag, or the local emulators under a demo- project ID. App
+// Review uses prod, since Release iOS builds point there; the seed writes
+// only the demo account and its "demo-" documents (D54).
 
 /** The dev Firebase project (ARCH §5.7). */
 export const DEV_PROJECT = 'battleplan-dev-ecce4';
 
 /** The flag that says, yes, write the demo team to the dev project. */
 export const CONFIRM_FLAG = '--write-to-dev';
+
+/** The prod Firebase project, where App Review signs in. */
+export const PROD_PROJECT = 'battleplan-prod';
+
+/** The flag that says, yes, write the demo team to prod. */
+export const PROD_CONFIRM_FLAG = '--write-to-prod';
 
 /** The demo account's email unless DEMO_EMAIL says otherwise. */
 export const DEFAULT_DEMO_EMAIL = 'appreview@getbattleplan.app';
@@ -43,11 +49,12 @@ export function demoTarget(
     }
     return { projectId, emulators: true, email, password: env.DEMO_PASSWORD || 'password' };
   }
-  if (projectId !== DEV_PROJECT) {
-    return { error: `Refusing to seed ${projectId}: the demo seed writes only to ${DEV_PROJECT} or the emulators.` };
+  const flag = projectId === DEV_PROJECT ? CONFIRM_FLAG : projectId === PROD_PROJECT ? PROD_CONFIRM_FLAG : null;
+  if (!flag) {
+    return { error: `Refusing to seed ${projectId}: the demo seed writes only to ${DEV_PROJECT}, ${PROD_PROJECT}, or the emulators.` };
   }
-  if (!argv.includes(CONFIRM_FLAG)) {
-    return { error: `Writing to ${DEV_PROJECT} needs ${CONFIRM_FLAG}.` };
+  if (!argv.includes(flag)) {
+    return { error: `Writing to ${projectId} needs ${flag}.` };
   }
   if (emulatorHosts) {
     return { error: 'The emulator hosts are set; unset them to write to the dev project.' };

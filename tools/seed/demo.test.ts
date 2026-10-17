@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { DEMO_PEOPLE, DEMO_TEAM, DEMO_YOUTH_TEAM, demoDocs } from './demo-data.js';
-import { CONFIRM_FLAG, DEFAULT_DEMO_EMAIL, DEV_PROJECT, demoTarget } from './demo-target.js';
+import { CONFIRM_FLAG, DEFAULT_DEMO_EMAIL, DEV_PROJECT, PROD_CONFIRM_FLAG, PROD_PROJECT, demoTarget } from './demo-target.js';
 
 const emulators = { FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080', FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099' };
 const longPassword = 'correct-horse-battery';
@@ -25,11 +25,14 @@ describe('demoTarget', () => {
     );
   });
 
-  it('never writes to prod or any other project', () => {
-    for (const project of ['battleplan-prod', 'someone-else']) {
-      const result = demoTarget(['--project', project, CONFIRM_FLAG], { DEMO_PASSWORD: longPassword });
-      assert.match(errorOf(result), /Refusing/);
-    }
+  it('writes to prod only with its own flag, and never to any other project', () => {
+    assert.match(errorOf(demoTarget(['--project', PROD_PROJECT, CONFIRM_FLAG], { DEMO_PASSWORD: longPassword })), /--write-to-prod/);
+    assert.equal(
+      (demoTarget(['--project', PROD_PROJECT, PROD_CONFIRM_FLAG], { DEMO_PASSWORD: longPassword }) as { projectId: string }).projectId,
+      PROD_PROJECT,
+    );
+    const result = demoTarget(['--project', 'someone-else', CONFIRM_FLAG], { DEMO_PASSWORD: longPassword });
+    assert.match(errorOf(result), /Refusing/);
     assert.match(errorOf(demoTarget([], {})), /Usage/);
     assert.match(errorOf(demoTarget(['--project', CONFIRM_FLAG], {})), /Usage/);
   });

@@ -1,5 +1,6 @@
 // Creates the App Review demo account and its seeded teams (SPEC §10), on
-// the dev project or the local emulators. Never prod (demo-target.ts).
+// the dev or prod project (each behind its own flag) or the local emulators
+// (demo-target.ts). App Review signs in on prod.
 //
 // Dev, with your gcloud sign-in (gcloud auth application-default login; no
 // key file):
