@@ -1,0 +1,152 @@
+# Release iOS: builds the iPhone and iPad app for prod (app.getbattleplan)
+# and uploads it to TestFlight in App Store Connect (ROADMAP task 209). Start
+# it from the Actions tab, on main; starting it is the approval. From
+# TestFlight the build goes to testers (task 211), and later to App Review
+# (task 133). The server and the web app go out with Release to prod.
+#
+# Signing is automatic: Xcode signs in to App Store Connect with the API key
+# in the APP_STORE_CONNECT_* secrets and makes or reuses the distribution
+# certificate and profile, so no certificate or profile is kept anywhere.
+# It runs on GitHub's macOS machines, whose minutes count 10 times against
+# the repo's Actions minutes (it's private), so it runs only when started.
+name: Release iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_ci_check:
+        description: Release without waiting for CI to pass on this commit
+        type: boolean
+        default: false
+
+env:
+  # The same Flutter as ci.yml and release.yml.
+  FLUTTER_VERSION: 3.47.7
+  # The Apple Developer team (individual membership).
+  TEAM_ID: 885XHF7XLL
+
+jobs:
+  # On Linux, where minutes are cheap: wait for CI before paying for macOS.
+  checks:
+    name: Ready to release
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    permissions:
+      actions: read
+    steps:
+      - name: Release from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::iOS releases come from main (this is ${GITHUB_REF_NAME})."
+          exit 1
+
+      - name: Skipping the CI check, as asked
+        if: ${{ inputs.skip_ci_check }}
+        run: echo "::warning::Releasing ${GITHUB_SHA:0:7} without checking CI (skip_ci_check)."
+
+      - name: CI passed on this commit
+        if: ${{ !inputs.skip_ci_check }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The latest CI run on this commit, waiting while it runs.
+          for _ in $(seq 1 120); do
+            ci=$(gh run list --repo "$GITHUB_REPOSITORY" --commit "$GITHUB_SHA" --workflow ci.yml \
+              --limit 1 --json status,conclusion -q '.[0] | "\(.status) \(.conclusion)"')
+            case "$ci" in
+              "completed success") echo "CI passed on ${GITHUB_SHA:0:7}."; exit 0 ;;
+              completed*) echo "::error::CI didn't pass on ${GITHUB_SHA:0:7} ($ci)."; exit 1 ;;
+              "") echo "::error::CI hasn't run on ${GITHUB_SHA:0:7}. Push it to main, or run with skip_ci_check."; exit 1 ;;
+              *) echo "CI is ${ci%% *} on ${GITHUB_SHA:0:7}; waiting."; sleep 30 ;;
+            esac
+          done
+          echo "::error::CI didn't finish within an hour."
+          exit 1
+
+  release:
+    name: Build and upload to TestFlight
+    needs: checks
+    # macOS 26 with Xcode 26: App Store uploads need the iOS 26 SDK or later
+    # (store checklist 3.3).
+    runs-on: macos-26
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    # One upload at a time; a second waits for the first.
+    concurrency:
+      group: release-ios
+      cancel-in-progress: false
+    steps:
+      # The whole history: the build number counts the commits (ARCH §9), the
+      # same number the web app shows for this commit.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Xcode
+        run: xcodebuild -version
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: App Store Connect key
+        env:
+          PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$PRIVATE_KEY" > "$RUNNER_TEMP/asc_key.p8"
+
+      # Compiles the Dart code and the plugins and writes the flavor, entry
+      # point, build number, and commit into ios/Flutter/Generated.xcconfig,
+      # which the archive below builds with.
+      - name: Build for prod
+        env:
+          # Analytics without the advertising ID (Info.plist, store checklist 3.3).
+          FIREBASE_ANALYTICS_WITHOUT_ADID: 'true'
+        run: |
+          build_number=$(git rev-list --count HEAD)
+          commit=$(git rev-parse --short=7 HEAD)
+          echo "BUILD_NUMBER=$build_number" >> "$GITHUB_ENV"
+          echo "Building prod build $build_number ($commit)."
+          flutter build ios --release --flavor prod -t lib/main_prod.dart --no-codesign \
+            --build-number="$build_number" --dart-define=APP_COMMIT="$commit"
+
+      - name: Archive, signed for the App Store
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild archive \
+            -workspace ios/Runner.xcworkspace -scheme prod -configuration Release-prod \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Battleplan.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc_key.p8" \
+            -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID"
+
+      # Exporting with destination "upload" (ios/ExportOptions-AppStore.plist)
+      # signs the app for distribution and uploads it to App Store Connect.
+      - name: Upload to TestFlight
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Battleplan.xcarchive" \
+            -exportOptionsPlist ios/ExportOptions-AppStore.plist \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc_key.p8" \
+            -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID"
+
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/asc_key.p8"
+
+      - name: Summary
+        run: |
+          echo "Uploaded prod build **$BUILD_NUMBER** (\`${GITHUB_SHA:0:7}\`) to App Store Connect. It shows in TestFlight once Apple finishes processing it, usually within an hour." >> "$GITHUB_STEP_SUMMARY"

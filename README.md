@@ -19,7 +19,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 | **Production** | [getbattleplan.app](https://getbattleplan.app) | [getbattleplan.app/app](https://getbattleplan.app/app) |
 | **Dev** | [battleplan-dev-ecce4.web.app](https://battleplan-dev-ecce4.web.app) | [battleplan-dev-ecce4.web.app/app](https://battleplan-dev-ecce4.web.app/app) |
 
-Every push to `main` updates dev's web app once CI passes; **Release to dev** in GitHub Actions deploys everything there, server functions included. Production changes only when someone runs **Release to prod**.
+Every push to `main` updates dev's web app once CI passes; **Release to dev** in GitHub Actions deploys everything there, server functions included. Production changes only when someone runs **Release to prod**. **Release iOS** uploads the iPhone and iPad app to TestFlight.
 
 ## Built with
 
@@ -32,3 +32,4 @@ Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, 
 - [ROADMAP.md](docs/ROADMAP.md): what's done and what's next.
 - [DEVELOPMENT.md](docs/DEVELOPMENT.md): running it locally with the Firebase emulators, testing, and releasing.
 - [STORE-CHECKLIST.md](docs/STORE-CHECKLIST.md): what has to be done before the App Store and Google Play will approve the apps.
+- [STORE-LISTING.md](docs/STORE-LISTING.md): the App Store listing, age rating answers, and App Review notes, ready to paste in.

@@ -40,11 +40,11 @@ Required, and doable now.
   - device tokens, crash reports, and usage analytics.
 
   The rest: no tracking, no ads, nothing sold.
-- ⬜ 1.16 **The listing, ready to paste in:**
+- ⬜ 1.16 **The listing, ready to paste in:** *App Store text and iPhone and iPad screenshots done 2026-10-17 ([STORE-LISTING.md](STORE-LISTING.md), `store/app-store/`); the Android screenshots and Google's feature graphic wait for Phase 5.*
   - name, subtitle or short description, and description;
   - screenshots of the app in use, not the sign-in screen: 6.9-inch iPhone, 13-inch iPad, and Android phone;
   - a 1024 × 500 feature graphic for Google; the 512 px icon is `assets/brand/icon.png`.
-- ⬜ 1.17 **App Review notes:**
+- ⬜ 1.17 **App Review notes:** *drafted in [STORE-LISTING.md](STORE-LISTING.md); the demo team's code comes with task 132.*
   - what Battleplan is, and how to get in: sign in with Apple or Google and join the demo team with its code, or the demo login at `getbattleplan.app/emaillogin`;
   - that email sign-in is at that address and not on the sign-in screen, since guideline 2.3.1 asks for anything hidden to be described;
   - that teams are invite-only and the demo account already has one;
@@ -64,7 +64,7 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 
 - ⬜ 3.1 👤 **Enroll** as an individual, $99 a year (task 106). It takes a few days.
 - ⬜ 3.2 👤 **Create the app in App Store Connect** under the name "Battleplan." The name has to be free on the App Store.
-- ⬜ 3.3 **iPhone release builds** (task 209):
+- ⬜ 3.3 **iPhone release builds** (task 209). *Built 2026-10-17 as **Release iOS** in the Actions tab; checked once its first run reaches TestFlight:*
   - signed for the App Store;
   - built with Xcode 26 or later and the iOS 26 SDK, required since April 28, 2026 (this Mac has Xcode 27);
   - built with `FIREBASE_ANALYTICS_WITHOUT_ADID=true`, as Info.plist notes, so Analytics carries no advertising ID;

@@ -100,6 +100,14 @@ Prod (`battleplan-prod`) serves the website and the web app at `getbattleplan.ap
    From your Mac instead, `tools/release_prod.sh` does the same checks and deploys.
 4. **Once, after your first sign-in on prod:** `npm --prefix tools/seed run super-admin -- battleplan-prod <your email>`.
 
+## iPhone and iPad builds
+
+**Release iOS** in the Actions tab (`.github/workflows/release-ios.yml`) builds the prod app (`app.getbattleplan`) on GitHub's macOS machines and uploads it to App Store Connect, where it shows in TestFlight once Apple has processed it. Start it on `main`; it waits for CI on the commit (`skip_ci_check` skips that) before it starts the macOS machine, whose minutes count 10 times against the repository's Actions minutes. The build number is the commit count, as on the web.
+
+Signing is automatic: `xcodebuild` signs in to App Store Connect with the API key in the repository's secrets, `APP_STORE_CONNECT_PRIVATE_KEY` (the `.p8` file's contents), `APP_STORE_CONNECT_KEY_ID`, and `APP_STORE_CONNECT_ISSUER_ID` (a Team key with the Admin role, kept in 1Password), and makes or reuses the distribution certificate and profile for team `885XHF7XLL`. Nothing else is stored. `ios/ExportOptions-AppStore.plist` says how the archive is exported: for the App Store, uploaded, with symbols, keeping the build number.
+
+To check a build on your Mac without signing: `flutter build ios --release --flavor prod -t lib/main_prod.dart --no-codesign`.
+
 ## Android builds
 
 Android builds run only in GitHub Actions, never on a Mac (no Java or Gradle locally). **Android build** in the Actions tab takes the app (dev or prod) and makes an App Bundle for Google Play and an APK to install, both signed with the Play upload key, with its SHA-1 and SHA-256 in the run's summary (Firebase needs them for Google sign-in). Download them from the run's Artifacts. The build number is the commit count, as on the web.

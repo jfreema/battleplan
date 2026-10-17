@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Release iOS (.github/workflows/release-ios.yml): sign the archive
+	     for the App Store, automatically, and upload it to App Store
+	     Connect, where it shows in TestFlight. -->
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>destination</key>
+	<string>upload</string>
+	<key>teamID</key>
+	<string>885XHF7XLL</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<!-- Crash reports with symbols in App Store Connect. -->
+	<key>uploadSymbols</key>
+	<true/>
+	<!-- The build number is the commit count (ARCH §9); keep it. -->
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+</dict>
+</plist>
