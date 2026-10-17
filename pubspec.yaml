@@ -1,7 +1,7 @@
 name: battleplan
 description: "Messaging and scheduling for sports teams."
 publish_to: 'none'
-version: 0.1.0+1
+version: 1.0.0+1
 
 environment:
   sdk: ^3.13.5
