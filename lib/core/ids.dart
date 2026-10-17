@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:battleplan/core/constants.g.dart';
 
 /// ID value types (ARCH §5.3). Wrapping strings keeps a group ID from being
@@ -49,4 +51,18 @@ abstract final class CompositeIds {
     );
     return '$a$idSeparator$b';
   }
+}
+
+/// A random ID for one attempt at something the app may send more than
+/// once, such as creating a team after a request that seemed to hang
+/// (createGroup's `requestId`, TEAM-1): 20 characters from 62, about 119
+/// random bits, so nobody else's attempt shares it.
+String newRequestId() {
+  const alphabet =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  final random = Random.secure();
+  return String.fromCharCodes([
+    for (var i = 0; i < 20; i++)
+      alphabet.codeUnitAt(random.nextInt(alphabet.length)),
+  ]);
 }

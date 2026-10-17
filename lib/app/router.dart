@@ -201,10 +201,19 @@ GoRouter router(Ref ref) {
       }
       if (path == '/choose-sign-in') return '/';
 
-      // First-run setup (AUTH-5) comes before anything else. Until the
-      // profile exists (the callable creates it), nothing is blocked.
-      final profile = ref.read(myProfileProvider).value;
-      final needsSetup = profile?.needsSetup ?? false;
+      // First-run setup (AUTH-5) comes before anything else, also for an
+      // account the server hasn't made a profile for yet: Continue makes it
+      // with the answers (ensureUserProfile), so a first request that sits
+      // on a phone for minutes can't let anyone into the app, or make a
+      // team, before the Terms and the 18+ confirmation. While the profile
+      // is still loading (it can hold the last account's for a moment),
+      // nothing is decided.
+      final profileState = ref.read(myProfileProvider);
+      final profile = profileState.value;
+      final needsSetup =
+          !profileState.isLoading &&
+          profileState.hasValue &&
+          (profile?.needsSetup ?? true);
       // A new account on its way somewhere (an invite link, INV-5 step 2)
       // goes there after setup.
       if (needsSetup && path != '/setup') {

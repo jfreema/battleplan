@@ -2,7 +2,7 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError } from 'firebase-functions/v2/https';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
 import { tryDeleteCalendarLinksOf } from '../calendar/service.js';
 import { joinedLine, postSystemMessage } from '../chat/service.js';
@@ -128,6 +128,15 @@ export const DEFAULT_SETTINGS = {
 };
 
 /**
+ * The team ID for one create attempt (TEAM-1): the same for every retry of
+ * it by the same person, and unguessable without their requestId. Twenty
+ * hex characters, like Firestore's own IDs in length.
+ */
+export function teamIdFor(uid: string, requestId: string): string {
+  return createHash('sha256').update(`${uid}:${requestId}`).digest('hex').slice(0, 20);
+}
+
+/**
  * Creates a team with its creator as owner (TEAM-1). Callers check who may
  * create teams; this only writes the group and the owner's membership.
  */
@@ -136,13 +145,16 @@ export async function createGroup(
   owner: { displayName: string; photoPath: string | null },
   input: NewGroup,
   quotaMb: number,
+  id?: string,
 ): Promise<string> {
-  const ref = db().collection(Collections.groups).doc();
+  // [id] (teamIdFor) makes a retried attempt land on the same team; create
+  // fails with ALREADY_EXISTS (code 6) rather than overwrite it.
+  const ref = id ? db().collection(Collections.groups).doc(id) : db().collection(Collections.groups).doc();
   const now = FieldValue.serverTimestamp();
   const name = input.name.trim();
   await db()
     .batch()
-    .set(ref, {
+    .create(ref, {
       name,
       nameLower: name.toLowerCase(),
       description: input.description?.trim() ?? '',

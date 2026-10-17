@@ -5,6 +5,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/admin.dart';
@@ -26,6 +27,15 @@ class CreateTeamScreen extends ConsumerStatefulWidget {
 }
 
 class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
+  /// How long Create waits for the server before saying it couldn't. A
+  /// request can sit on a phone for minutes before it's sent, and would
+  /// otherwise leave Create spinning.
+  static const _saveTimeout = Duration(seconds: 30);
+
+  /// This screen's attempt, the same on every retry, so a first request
+  /// that arrives late and a retry make one team between them (TEAM-1).
+  final String _requestId = newRequestId();
+
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _description = TextEditingController();
@@ -89,18 +99,36 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
             timeZone: _timeZone ?? 'America/Chicago',
             color: _color == null ? null : _hex(_color!),
             description: _description.text.trim(),
-          );
+            requestId: _requestId,
+          )
+          .timeout(_saveTimeout);
       final logo = _logo;
       if (logo != null) {
         try {
-          await ref.read(groupRepositoryProvider).uploadLogo(id, logo);
-        } on AppFailure {
+          await ref
+              .read(groupRepositoryProvider)
+              .uploadLogo(id, logo)
+              .timeout(_saveTimeout);
+        } on Object catch (e) {
+          if (e is! AppFailure && e is! TimeoutException) rethrow;
           // The team is made; the logo can be added in Team settings.
           if (mounted) showAppSnackBar(context, l10n.createTeamLogoFailed);
         }
       }
       // TEAM-1: the next screen is "Invite your team".
       if (mounted) context.go('/g/${id.value}/invite');
+    } on TimeoutException catch (error, stack) {
+      // Said, and reported, like first-run setup's: it keeps someone from
+      // making a team. Trying again is safe (_requestId).
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'create team',
+          context: ErrorDescription('while creating the team'),
+        ),
+      );
+      if (mounted) setState(() => _error = l10n.errorCreateTeam);
     } on AppFailure catch (e) {
       if (!mounted) return;
       setState(

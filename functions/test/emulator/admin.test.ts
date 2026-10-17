@@ -945,6 +945,27 @@ describe('platform settings (ADMIN-7) and createGroup', () => {
     await newTeam('sam');
   });
 
+  it('a retry of one attempt gets back the team it made, once (TEAM-1)', async () => {
+    await asRoot(admin.adminUpdateConfig, settings({ maxGroupsCreatedPerUserPerDay: 1 }));
+    const attempt = { name: 'New Team', sport: 'soccer', timeZone: 'America/Chicago', requestId: 'attempt-0001' };
+    const first = await run<{ groupId: string }>(createGroup, 'pat', attempt);
+    // The phone held the first request and the app retried: the same team,
+    // and the day's limit isn't spent again.
+    const again = await run<{ groupId: string }>(createGroup, 'pat', attempt);
+    expect(again.groupId).toBe(first.groupId);
+    expect((await groups().where('createdBy', '==', 'pat').get()).size).toBe(1);
+    // The same ID from someone else is their own attempt.
+    const other = await run<{ groupId: string }>(createGroup, 'sam', attempt);
+    expect(other.groupId).not.toBe(first.groupId);
+    // A new attempt is a new team, here past the day's limit.
+    await expect(run(createGroup, 'pat', { ...attempt, requestId: 'attempt-0002' })).rejects.toMatchObject({
+      code: 'resource-exhausted',
+    });
+    await expect(run(createGroup, 'pat', { ...attempt, requestId: 'not ok!' })).rejects.toMatchObject({
+      code: 'invalid-argument',
+    });
+  });
+
   it("gives new teams the default storage limit, and the built-in one when there's no setting", async () => {
     const first = await newTeam('pat');
     expect((await groups().doc(first.groupId).get()).get('storageQuotaBytes')).toBe(200 * MB);

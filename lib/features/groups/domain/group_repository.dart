@@ -62,13 +62,16 @@ abstract interface class GroupRepository {
   Future<GroupId> openDirectChat(UserId other);
 
   /// Creates a team with the caller as owner (TEAM-1) and returns its ID.
-  /// [color] is one of the 15 team colors as `#RRGGBB`.
+  /// [color] is one of the 15 team colors as `#RRGGBB`. [requestId]
+  /// ([newRequestId]) names this attempt: a retry with the same one returns
+  /// the team an earlier, late request already made instead of a second.
   Future<GroupId> createGroup({
     required String name,
     required Sport sport,
     required String timeZone,
     String? color,
     String? description,
+    String? requestId,
   });
 }
 

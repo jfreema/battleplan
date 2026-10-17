@@ -33,6 +33,7 @@ import {
   clearTeamNotifications,
   createGroup as create,
   deleteGroupNamed,
+  teamIdFor,
   refreshMemberCount,
   removeFromTeam,
   setGroupArchived,
@@ -47,12 +48,23 @@ const CreateGroupInput = z.object({
   color: z.enum(TEAM_COLORS).optional(),
   timeZone: z.string().min(1).max(64),
   description: z.string().max(500).optional(),
+  // The app's ID for this attempt, the same on every retry of it (TEAM-1).
+  requestId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional(),
 });
 
-/** Creates a team with the caller as owner (TEAM-1). */
+/**
+ * Creates a team with the caller as owner (TEAM-1). With a requestId, the
+ * team's ID comes from it, so a retry of an attempt whose first request
+ * arrived late (a phone can hold a request for minutes before sending it)
+ * gets back the team that request made, not a second one.
+ */
 export const createGroup = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(CreateGroupInput, request.data);
+  const madeId = input.requestId ? teamIdFor(uid, input.requestId) : undefined;
+  const alreadyMade = async () =>
+    madeId !== undefined && (await db().collection(Collections.groups).doc(madeId).get()).get('createdBy') === uid;
+  if (await alreadyMade()) return { groupId: madeId };
 
   // Verified email required (AUTH-3, SAFE-5); super admins can turn
   // team creation off for everyone else (Q3, ADMIN-7).
@@ -73,16 +85,24 @@ export const createGroup = onCall({ secrets: [resendApiKey] }, async (request) =
   await requireRoomForAnotherTeam(uid, Limits.groupsPerUserMax);
 
   const profile = (await db().collection(Collections.users).doc(uid).get()).data();
-  const groupId = await create(
-    uid,
-    {
-      displayName: (profile?.displayName as string | undefined) ?? user.displayName ?? 'Team owner',
-      photoPath: (profile?.photoPath as string | null | undefined) ?? null,
-    },
-    input,
-    // New teams start at the platform's default limit (STORE-1, ADMIN-7).
-    config.defaultStorageQuotaMb,
-  );
+  let groupId: string;
+  try {
+    groupId = await create(
+      uid,
+      {
+        displayName: (profile?.displayName as string | undefined) ?? user.displayName ?? 'Team owner',
+        photoPath: (profile?.photoPath as string | null | undefined) ?? null,
+      },
+      input,
+      // New teams start at the platform's default limit (STORE-1, ADMIN-7).
+      config.defaultStorageQuotaMb,
+      madeId,
+    );
+  } catch (e) {
+    // Two copies of one attempt at the same moment: the other made it.
+    if ((e as { code?: number }).code === 6 && (await alreadyMade())) return { groupId: madeId };
+    throw e;
+  }
   // ADMIN-9: super admins hear about every new team.
   await alertTeamCreated({
     groupId,

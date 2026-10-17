@@ -111,6 +111,17 @@ void main() {
         (functions.lastData('createGroup')! as Map)['description'],
         'Rec league',
       );
+      // The attempt's ID goes along, so a retry can't make a second team.
+      await repo.createGroup(
+        name: 'H',
+        sport: Sport.other,
+        timeZone: 'UTC',
+        requestId: 'attempt-0001',
+      );
+      expect(
+        (functions.lastData('createGroup')! as Map)['requestId'],
+        'attempt-0001',
+      );
       // On the web too, where the message arrives with its status.
       for (final web in [false, true]) {
         functions.web = web;

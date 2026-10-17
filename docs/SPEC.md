@@ -355,6 +355,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Only the confirmation and its date are stored.
   - It says which account is signed in ("Signed in as …"), with **Use a different account**, which signs out and goes back to the sign-in choices: for a Google account picked by mistake.
   - **Continue** shows a spinner while it saves. A save that fails, or gets no answer within 30 seconds, says so ("Couldn't save your profile. Check your connection and try again.") and Continue works again; the error is reported like other app errors.
+  - **Setup comes first, always.** A new account goes to setup even before the server has made its profile (a request can sit on a phone for minutes before it's sent): Continue makes the profile with the answers. Nobody gets into the app, or creates a team, before confirming 18+ and accepting the Terms.
 - **AUTH-6 · MVP · Accounts added by admins.**
   - Team admins and super admins add people with just a **name and email** (TEAM-7, PLAYER-1, ADMIN-4).
   - **Admins never set, see, or know anyone's password.** No screen or tool lets them. They can only send setup and password-reset emails.
@@ -409,6 +410,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Time zone (defaults to the device's).
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).
+  - **Create a team** shows a spinner while it saves. One that fails, or gets no answer within 30 seconds, says so ("Couldn't create the team. Check your connection and try again."), and is reported. Trying again is safe: a first request that arrives late and the retry make one team between them.
   - There's one kind of team, with no team type to pick. Every team has a roster of players, and works for adult and youth teams alike (§6.3). Teams are stored with kind `team`, so a basic group without players can be added later (TEAM-14).
   - **Goal:** create a team and share an invite in under 2 minutes.
 - **TEAM-2 · MVP · Many teams per person.**

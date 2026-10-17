@@ -458,6 +458,13 @@ class FakeGroupRepository implements GroupRepository {
   /// The color each created team was given, null for none (TEAM-1).
   final List<String?> createdColors = [];
 
+  /// Each create's requestId; one seen before gets its team back, as the
+  /// server does for a retry (TEAM-1).
+  final Map<String, GroupId> createRequests = {};
+
+  /// The next create never answers, as a request stuck on a phone wouldn't.
+  bool createHangs = false;
+
   @override
   Future<GroupId> createGroup({
     required String name,
@@ -465,11 +472,18 @@ class FakeGroupRepository implements GroupRepository {
     required String timeZone,
     String? color,
     String? description,
+    String? requestId,
   }) async {
+    if (createHangs) {
+      createHangs = false;
+      return await Completer<GroupId>().future;
+    }
+    if (createRequests[requestId] case final made?) return made;
     created.add(name);
     createdColors.add(color);
     final id = 'new${created.length}';
     groups[id] = testGroup(id, name);
+    if (requestId != null) createRequests[requestId] = GroupId(id);
     return GroupId(id);
   }
 }
@@ -822,6 +836,10 @@ class FakeUserRepository implements UserRepository {
   /// Finishing setup never answers, as a request stuck on its way would.
   bool setupHangs = false;
 
+  /// No profile yet: the first-sign-in request hasn't reached the server.
+  /// Finishing setup makes it (ensureUserProfile with the answers).
+  bool profileMissing = false;
+
   UserProfile _profile(String uid) => UserProfile(
     uid: uid,
     displayName: savedName ?? 'Jordan Coach',
@@ -846,9 +864,9 @@ class FakeUserRepository implements UserRepository {
 
   @override
   Stream<UserProfile?> watchProfile(String uid) async* {
-    yield _profile(uid);
+    yield profileMissing ? null : _profile(uid);
     await for (final _ in _changes.stream) {
-      yield _profile(uid);
+      yield profileMissing ? null : _profile(uid);
     }
   }
 
@@ -886,6 +904,7 @@ class FakeUserRepository implements UserRepository {
     if (setupError case final error?) throw error;
     savedName = displayName;
     needsSetup = false;
+    profileMissing = false;
     _changes.add(null);
   }
 }

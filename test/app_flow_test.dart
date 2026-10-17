@@ -279,6 +279,31 @@ void main() {
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
   });
 
+  testWidgets("a new account the server hasn't made a profile for yet goes "
+      'to setup, not into the app (AUTH-5)', (tester) async {
+    // The first-sign-in request is stuck on the phone: no profile yet.
+    final users = FakeUserRepository()..profileMissing = true;
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach.copyWith(displayName: 'Pat Apple')),
+      users: users,
+    );
+    expect(find.text("Welcome! Let's set up your profile"), findsOneWidget);
+    expect(find.text('Create a team'), findsNothing);
+    // The sign-in's name starts the name field, with no profile to read.
+    expect(find.widgetWithText(TextField, 'Pat Apple'), findsOneWidget);
+    // Continue makes the profile with the answers, then the app opens.
+    await tester.tap(find.text("I'm 18 or older"));
+    await tester.tap(find.textContaining('I agree to the Terms'));
+    await tester.pumpAndSettle();
+    final next = find.widgetWithText(FilledButton, 'Continue');
+    await tester.ensureVisible(next);
+    await tester.tap(next);
+    await tester.pumpAndSettle();
+    expect(users.savedName, 'Pat Apple');
+    expect(find.text('Welcome to Battleplan'), findsOneWidget);
+  });
+
   group('finishing setup when the save goes wrong', () {
     Future<Finder> readyToContinue(
       WidgetTester tester,

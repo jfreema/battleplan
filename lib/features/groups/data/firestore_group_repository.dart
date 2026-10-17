@@ -39,6 +39,7 @@ class FirestoreGroupRepository implements GroupRepository {
     required String timeZone,
     String? color,
     String? description,
+    String? requestId,
   }) async {
     try {
       final result = await _functions
@@ -50,6 +51,7 @@ class FirestoreGroupRepository implements GroupRepository {
             'color': ?color,
             if (description != null && description.isNotEmpty)
               'description': description,
+            'requestId': ?requestId,
           });
       return GroupId(result.data['groupId'] as String);
     } on FirebaseFunctionsException catch (e) {

@@ -107,13 +107,14 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     // The name to start from (AUTH-12): the sign-in's own, else the
     // profile's. An email sign-up names the account just after the profile
     // is made, from the email address, so this follows that name until
-    // the person types here.
-    if (!_nameEdited && profile != null) {
+    // the person types here. Before the profile exists, the sign-in's
+    // name, if it has one.
+    if (!_nameEdited) {
       final signInName = ref.watch(authUserProvider).value?.displayName;
       final start = (signInName?.trim().isNotEmpty ?? false)
           ? signInName!.trim()
-          : profile.displayName;
-      if (_name.text != start) _name.text = start;
+          : profile?.displayName;
+      if (start != null && _name.text != start) _name.text = start;
     }
     final canContinue =
         _adult && _terms && _name.text.trim().isNotEmpty && !_saving;

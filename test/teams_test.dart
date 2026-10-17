@@ -10,6 +10,7 @@ import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/application/providers.dart'
     show inviteRepositoryProvider;
 import 'package:battleplan/features/groups/domain/invite.dart';
+import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/features/groups/presentation/results_screen.dart';
 import 'package:battleplan/features/players/domain/player.dart';
@@ -107,6 +108,40 @@ void main() {
       await tester.pumpAndSettle();
       expect(groupRepo.createdColors, ['#2F5BEA']);
       expect(groupRepo.logosUploaded, 0);
+    });
+
+    testWidgets('a create stuck on its way says so after 30 seconds, and '
+        'trying again makes one team', (tester) async {
+      final groupRepo = FakeGroupRepository({})..createHangs = true;
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groupRepo: groupRepo,
+      );
+      await tester.tap(find.text('Create a team'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).first, 'Hawks');
+      final create = find.widgetWithText(FilledButton, 'Create a team');
+      await tester.ensureVisible(create);
+      await tester.tap(create);
+      await tester.pump();
+      expect(tester.widget<FilledButton>(create).onPressed, isNull);
+      await tester.pump(const Duration(seconds: 31));
+      await tester.pump();
+      expect(
+        find.text(
+          "Couldn't create the team. Check your connection and try again.",
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isA<TimeoutException>());
+      // The retry is the same attempt: had the stuck request arrived, the
+      // server would hand back the team it made instead of a second one.
+      await tester.tap(create);
+      await tester.pumpAndSettle();
+      expect(groupRepo.created, ['Hawks']);
+      expect(groupRepo.createRequests, hasLength(1));
+      expect(find.byType(CreateTeamScreen), findsNothing);
     });
   });
 
