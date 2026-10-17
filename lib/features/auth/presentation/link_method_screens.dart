@@ -132,9 +132,16 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
                     child: Text(l10n.continueWithGoogle),
                   ),
                   const SizedBox(height: Space.md),
-                  // Hidden until Sign in with Apple is on (task 187).
+                  // Where Sign in with Apple is on (task 109).
                   if (widget.appleEnabled) ...[
-                    AppleSignInButton(label: l10n.continueWithApple),
+                    AppleSignInButton(
+                      label: l10n.continueWithApple,
+                      onPressed: _busy
+                          ? null
+                          : () => unawaited(
+                              _choose(() => auth.linkApple(checkRecent: false)),
+                            ),
+                    ),
                     const SizedBox(height: Space.md),
                   ],
                   // For people without Google (or Apple): the sign-in
@@ -168,9 +175,13 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
 /// AUTH-7 at `/finish-link`: someone tried Google with an email that
 /// already has an account, so the app emailed a link instead of merging.
 /// The link proved the email and signed them in; now they finish adding
-/// Google by completing Google's own sign-in, or skip it.
+/// the method they tried, Google or Apple, by completing its own sign-in,
+/// or skip it.
 class FinishLinkScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({this.appleEnabled = false, super.key});
+
+  /// Whether Apple can be linked here (task 109); otherwise it's Google.
+  final bool appleEnabled;
 
   @override
   ConsumerState<FinishLinkScreen> createState() => _FinishLinkScreenState();
@@ -184,19 +195,30 @@ class _FinishLinkScreenState extends ConsumerState<FinishLinkScreen> {
     if (mounted) context.go('/');
   }
 
+  /// The method tried: Apple when that's what the email link was for.
+  bool get _apple =>
+      widget.appleEnabled &&
+      ref.read(localPrefsRepositoryProvider).pendingLink?.providerId ==
+          'apple.com';
+
   Future<void> _link() async {
     final l10n = AppLocalizations.of(context);
+    final apple = _apple;
     setState(() => _busy = true);
     try {
       var linked = false;
+      final auth = ref.read(authRepositoryProvider);
       final ran = await withFreshSignIn(
         context,
         ref,
         () async =>
-            linked = await ref.read(authRepositoryProvider).linkGoogle(),
+            linked = await (apple ? auth.linkApple() : auth.linkGoogle()),
       );
       if (!ran || !linked || !mounted) return;
-      showAppSnackBar(context, l10n.methodLinkedDone('Google'));
+      showAppSnackBar(
+        context,
+        l10n.methodLinkedDone(apple ? 'Apple' : 'Google'),
+      );
       await _done();
     } on AppFailure catch (e) {
       if (mounted) showAppSnackBar(context, _failureText(l10n, e));
@@ -209,6 +231,8 @@ class _FinishLinkScreenState extends ConsumerState<FinishLinkScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final apple = _apple;
+    final name = apple ? 'Apple' : 'Google';
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -220,20 +244,23 @@ class _FinishLinkScreenState extends ConsumerState<FinishLinkScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    l10n.finishLinkTitle('Google'),
+                    l10n.finishLinkTitle(name),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall,
                   ),
                   const SizedBox(height: Space.sm),
-                  Text(
-                    l10n.finishLinkBody('Google'),
-                    textAlign: TextAlign.center,
-                  ),
+                  Text(l10n.finishLinkBody(name), textAlign: TextAlign.center),
                   const SizedBox(height: Space.xxl),
-                  FilledButton(
-                    onPressed: _busy ? null : () => unawaited(_link()),
-                    child: Text(l10n.continueWithGoogle),
-                  ),
+                  if (apple)
+                    AppleSignInButton(
+                      label: l10n.continueWithApple,
+                      onPressed: _busy ? null : () => unawaited(_link()),
+                    )
+                  else
+                    FilledButton(
+                      onPressed: _busy ? null : () => unawaited(_link()),
+                      child: Text(l10n.continueWithGoogle),
+                    ),
                   const SizedBox(height: Space.sm),
                   TextButton(
                     onPressed: _busy ? null : () => unawaited(_done()),

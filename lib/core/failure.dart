@@ -158,6 +158,14 @@ final class StorageFull extends AppFailure {
   String get code => 'storageFull';
 }
 
+/// The person closed a sign-in the app asked for, so nothing was done.
+final class SignInCanceled extends AppFailure {
+  const new([super.message]);
+
+  @override
+  String get code => 'signInCanceled';
+}
+
 /// The person canceled an upload (DOC-2).
 final class UploadCanceled extends AppFailure {
   const new([super.message]);

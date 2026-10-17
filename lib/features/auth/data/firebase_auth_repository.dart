@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/links.dart';
+import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/features/auth/domain/auth_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -162,11 +163,13 @@ class FirebaseAuthRepository implements AuthRepository {
   );
 
   @override
-  Future<void> signInWithApple() => _signInWithProvider(
-    AppleAuthProvider()
-      ..addScope('email')
-      ..addScope('name'),
-  );
+  Future<void> signInWithApple() => _signInWithProvider(_apple());
+
+  /// Apple's provider, asking for the email and, the first time only, the
+  /// name (AUTH-1).
+  static AppleAuthProvider _apple() => AppleAuthProvider()
+    ..addScope('email')
+    ..addScope('name');
 
   /// Shared by every OAuth provider. Web uses a popup (redirects break under
   /// browser storage partitioning, ARCH §6.1). Mobile opens the provider in
@@ -325,9 +328,16 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<bool> linkGoogle({bool checkRecent = true}) async {
-    final provider = GoogleAuthProvider()
-      ..setCustomParameters({'prompt': 'select_account'});
+  Future<bool> linkGoogle({bool checkRecent = true}) => _link(
+    GoogleAuthProvider()..setCustomParameters({'prompt': 'select_account'}),
+    checkRecent: checkRecent,
+  );
+
+  @override
+  Future<bool> linkApple({bool checkRecent = true}) =>
+      _link(_apple(), checkRecent: checkRecent);
+
+  Future<bool> _link(AuthProvider provider, {required bool checkRecent}) async {
     if (checkRecent) await _requireRecentSignIn();
     try {
       if (kIsWeb) {
@@ -417,7 +427,7 @@ class FirebaseAuthRepository implements AuthRepository {
   @override
   Future<void> reauthenticateWithProvider(String providerId) async {
     final provider = switch (providerId) {
-      'apple.com' => AppleAuthProvider(),
+      'apple.com' => _apple(),
       _ => GoogleAuthProvider(),
     };
     try {
@@ -434,6 +444,7 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> deleteAccount({Map<String, String> newOwners = const {}}) async {
+    await _revokeAppleSignIn();
     try {
       await _functions.httpsCallable('deleteAccount').call<void>({
         if (newOwners.isNotEmpty) 'newOwners': newOwners,
@@ -448,6 +459,41 @@ class FirebaseAuthRepository implements AuthRepository {
     }
     // The Auth user is gone; clear the local session too.
     await _auth.signOut();
+  }
+
+  /// App Review 5.1.1(v): in the iPhone, iPad, and Mac apps, an account
+  /// that signs in with Apple has Apple's tokens revoked before it's
+  /// deleted. Revoking takes the authorization code from a fresh Apple
+  /// sign-in, which is also the recent sign-in deleting needs. The web and
+  /// Android SDKs can't revoke (ARCH §6.1).
+  Future<void> _revokeAppleSignIn() async {
+    final apple =
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+    final user = _auth.currentUser;
+    if (kIsWeb ||
+        !apple ||
+        user == null ||
+        !user.providerData.any((p) => p.providerId == 'apple.com')) {
+      return;
+    }
+    final UserCredential fresh;
+    try {
+      fresh = await user.reauthenticateWithProvider(_apple());
+    } on FirebaseAuthException catch (e) {
+      if (_cancelCodes.contains(e.code)) throw const SignInCanceled();
+      _throwMethodError(e);
+    }
+    final code = fresh.additionalUserInfo?.authorizationCode;
+    if (code == null) return;
+    try {
+      await _auth.revokeTokenWithAuthorizationCode(code);
+    } on FirebaseAuthException catch (e) {
+      // Deleting still goes ahead: the account is what they asked to
+      // remove, and without it Apple's tokens open nothing. They can also
+      // remove Battleplan under Sign in with Apple in their Apple Account.
+      Log.error('Revoking Apple sign-in failed', e);
+    }
   }
 
   @override

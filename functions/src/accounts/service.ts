@@ -57,6 +57,11 @@ export interface ProfileResult {
   signedUp?: boolean;
   /** An admin added this account before it was set up (AUTH-6). */
   addedByAdmin?: boolean;
+  /**
+   * Firebase Auth's methods differ from users.signInMethods: Firebase
+   * added or replaced one at sign-in itself (AUTH-7).
+   */
+  signInMethodsChanged?: boolean;
 }
 
 export interface EnsureOptions {
@@ -131,6 +136,15 @@ export async function ensureUserProfile(
       activated = true;
     }
 
+    // Firebase changes methods at sign-in by itself: Apple, whose addresses
+    // it always treats as verified, joins the account with the same email,
+    // and Apple or a Gmail address's Google replaces an unverified password
+    // (AUTH-7). The notice below goes out as for the app's own changes.
+    const methods = signInMethodsOf(identity.providerIds);
+    const recorded = (data?.signInMethods as string[] | undefined) ?? [];
+    const signInMethodsChanged =
+      snap.exists && !activated && methods.join() !== [...recorded].sort().join();
+
     // The sign-in email changed through the verified flow (AUTH-8): the
     // contact email follows it (AUTH-12).
     const nextEmail = snap.exists ? changedEmail(data?.email as string | null, user.email, user.emailVerified) : null;
@@ -161,9 +175,9 @@ export async function ensureUserProfile(
       } else {
         tx.update(ref, update);
       }
-      return { created, activated, needsSetup: false, emailChangedFrom, signedUp, addedByAdmin };
+      return { created, activated, needsSetup: false, emailChangedFrom, signedUp, addedByAdmin, signInMethodsChanged };
     }
-    return { created, activated, needsSetup: needsSetup(data ?? {}), emailChangedFrom };
+    return { created, activated, needsSetup: needsSetup(data ?? {}), emailChangedFrom, signInMethodsChanged };
   });
 
   if (result.activated) await clearPendingMemberships(uid);
@@ -187,6 +201,10 @@ export async function ensureUserProfile(
     await sendEmail(securityNoticeEmail(result.emailChangedFrom, change));
     await sendEmail(securityNoticeEmail(user.email.toLowerCase(), change));
   }
+
+  // AUTH-7: a method Firebase added or removed at sign-in gets the same
+  // record and security notice as one the app linked.
+  if (result.signInMethodsChanged) await recordSignInMethodChange(uid);
 
   if (result.created && user.photoURL) {
     await copyProviderPhoto(uid, user.photoURL);

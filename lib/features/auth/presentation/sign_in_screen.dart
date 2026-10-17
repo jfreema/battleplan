@@ -10,10 +10,10 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// AUTH-1: Continue with Google, then Apple, with the Terms footer. The
-/// same screen on every platform. Apple shows only once it's turned on
-/// (Phase 3, roadmap tasks 187 and 109). Email sign-in isn't offered here:
-/// it's at `/emaillogin`, which nothing links to, for the people who need
-/// it (AUTH-2). At `/sign-up` ([signUp], the website's "Sign up, it's
+/// same screen on every platform. Apple shows where it's turned on
+/// (`AppEnv.appleSignIn`, roadmap task 109). Email sign-in isn't offered
+/// here: it's at `/emaillogin`, which nothing links to, for the people who
+/// need it (AUTH-2). At `/sign-up` ([signUp], the website's "Sign up, it's
 /// free!") it says "Create your free account". Each links to the other.
 class SignInScreen extends ConsumerWidget {
   const new({
@@ -23,8 +23,9 @@ class SignInScreen extends ConsumerWidget {
     super.key,
   });
 
-  /// Sign in with Apple needs the Apple Developer membership (roadmap task
-  /// 109). Until then the button is hidden (task 187).
+  /// Whether Sign in with Apple is on (`AppEnv.appleSignIn`, roadmap task
+  /// 109): in dev and on the emulators, and in prod once prod's Firebase
+  /// project has Apple's Services ID and key.
   final bool appleEnabled;
 
   /// The sign-up page. Google and Apple make an account the first time

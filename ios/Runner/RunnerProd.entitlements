@@ -6,5 +6,10 @@
 	     Dev builds use the debug provider and need no entitlement. -->
 	<key>com.apple.developer.devicecheck.appattest-environment</key>
 	<string>production</string>
+	<!-- Sign in with Apple (AUTH-1, roadmap task 109). -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 </dict>
 </plist>

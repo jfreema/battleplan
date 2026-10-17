@@ -30,19 +30,38 @@ void main() {
   // A dev build in the cloud, as people use it: not against the emulators.
   const cloud = AppEnv(flavor: AppFlavor.dev, useEmulators: false);
 
-  testWidgets('signed out lands on sign-in with Google only: email is at '
-      '/emaillogin, and Apple stays hidden until Phase 3 (task 187)', (
-    tester,
-  ) async {
+  testWidgets('signed out lands on sign-in with Google and Apple: email is '
+      'at /emaillogin', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository(), env: cloud);
     expect(find.widgetWithText(FilledButton, 'Continue with Google'), findsOne);
-    expect(find.text('Continue with Apple'), findsNothing);
+    expect(find.text('Continue with Apple'), findsOneWidget);
     expect(find.text('Continue with email'), findsNothing);
     // Nothing links to email sign-in, but it's there for who needs it.
     await openEmailSignIn(tester);
     expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
     expect(find.text('Forgot password?'), findsOneWidget);
     expect(find.text('Email me a sign-in link instead'), findsOneWidget);
+  });
+
+  testWidgets('Continue with Apple signs in; prod shows it once its Apple '
+      'setup is in (AUTH-1, task 109)', (tester) async {
+    final auth = FakeAuthRepository();
+    await pumpApp(tester, auth: auth, env: cloud);
+    await tester.tap(find.text('Continue with Apple'));
+    await tester.pumpAndSettle();
+    expect(auth.currentUser!.providerIds, ['apple.com']);
+    expect(find.text('Continue with Apple'), findsNothing);
+
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(),
+      env: const AppEnv(flavor: AppFlavor.prod, useEmulators: false),
+    );
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(
+      find.text('Continue with Apple'),
+      AppEnv.appleSignInInProd ? findsOneWidget : findsNothing,
+    );
   });
 
   testWidgets('against the emulators, sign-in also offers email, for the '
@@ -53,15 +72,15 @@ void main() {
     expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
   });
 
-  testWidgets("the website's sign-up page: Google only, and /emaillogin can "
-      'open on Create account', (tester) async {
+  testWidgets("the website's sign-up page: Google and Apple, and "
+      '/emaillogin can open on Create account', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository(), env: cloud);
     // Sign-in links to it, and the website links straight to /sign-up.
     await tester.tap(find.text("New here? Sign up, it's free"));
     await tester.pumpAndSettle();
     expect(find.text('Create your free account'), findsOneWidget);
     expect(find.text('Sign up with Google'), findsOneWidget);
-    expect(find.text('Sign up with Apple'), findsNothing);
+    expect(find.text('Sign up with Apple'), findsOneWidget);
     expect(find.text('Sign up with email'), findsNothing);
     await openEmailSignIn(tester, query: '?mode=create');
     // Create account is chosen: it asks for a name.
@@ -2340,6 +2359,12 @@ void main() {
     expect(find.text('Continue with Google'), findsOneWidget);
   });
 
+  /// The Link button on [method]'s row in Sign-in methods.
+  Finder linkFor(String method) => find.descendant(
+    of: find.widgetWithText(ListTile, method),
+    matching: find.widgetWithText(TextButton, 'Link'),
+  );
+
   testWidgets('sign-in methods: the only method cannot be removed', (
     tester,
   ) async {
@@ -2370,7 +2395,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sign-in methods'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Link'));
+    await tester.tap(linkFor('Google'));
     await tester.pumpAndSettle();
     // Linking Google needed a fresh sign-in: the password prompt appears.
     expect(find.text("Confirm it's you"), findsOneWidget);
@@ -2419,7 +2444,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sign-in methods'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Link'));
+    await tester.tap(linkFor('Google'));
     await tester.pumpAndSettle();
     expect(find.text("Confirm it's you"), findsNothing);
     expect(auth.sentLinks, ['coach@example.com']);
@@ -2461,10 +2486,67 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
     await tester.pumpAndSettle();
     auth.needsRecentLogin = true;
-    await tester.tap(find.text('Link'));
+    await tester.tap(linkFor('Google'));
     await tester.pumpAndSettle();
     expect(find.text("Confirm it's you"), findsOneWidget);
     expect(auth.sentLinks, isEmpty);
+  });
+
+  testWidgets('Apple links from Sign-in methods, and comes off again '
+      '(AUTH-8, task 109)', (tester) async {
+    final auth = FakeAuthRepository(
+      user: coach.copyWith(providerIds: ['google.com']),
+    );
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign-in methods'));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.widgetWithText(ListTile, 'Apple'),
+        matching: find.text('Not linked'),
+      ),
+      findsOneWidget,
+    );
+    // Closing Apple's sheet links nothing, and says nothing.
+    auth.linkCancels = true;
+    await tester.tap(linkFor('Apple'));
+    await tester.pumpAndSettle();
+    expect(find.text('Apple linked.'), findsNothing);
+    auth.linkCancels = false;
+    await tester.tap(linkFor('Apple'));
+    await tester.pumpAndSettle();
+    expect(auth.currentUser!.providerIds, contains('apple.com'));
+    expect(find.text('Apple linked.'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.widgetWithText(ListTile, 'Apple'),
+        matching: find.widgetWithText(TextButton, 'Remove'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Remove'));
+    await tester.pumpAndSettle();
+    expect(auth.currentUser!.providerIds, ['google.com']);
+  });
+
+  testWidgets("closing Apple's sheet before deleting deletes nothing, "
+      'quietly (App Review 5.1.1(v))', (tester) async {
+    final auth = FakeAuthRepository(
+      user: coach.copyWith(providerIds: ['apple.com']),
+    )..deleteFailsWith = const SignInCanceled();
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.byTooltip('Settings'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Delete account'), 100);
+    await tester.tap(find.text('Delete account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
+    await tester.pumpAndSettle();
+    expect(auth.deleted, isFalse);
+    expect(find.textContaining("Couldn't"), findsNothing);
+    expect(find.text('Delete account'), findsOneWidget);
   });
 
   testWidgets('deleting the account confirms, signs in again, then deletes', (

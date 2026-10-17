@@ -212,6 +212,8 @@ class SettingsScreen extends ConsumerWidget {
                       .read(sessionServiceProvider)
                       .deleteAccount(newOwners: newOwners),
                 );
+              } on SignInCanceled {
+                // They closed Apple's sheet: nothing was deleted.
               } on AppFailure {
                 if (context.mounted) {
                   showAppSnackBar(context, l10n.deleteAccountFailed);

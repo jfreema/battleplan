@@ -117,6 +117,23 @@ describe('security notices (AUTH-7)', () => {
     await run(accounts.recordSignInMethodChange, 'sam');
     expect(mail.sent).toHaveLength(0);
   });
+
+  it("a method Firebase adds at sign-in is recorded and emailed, like the app's own (Apple)", async () => {
+    await person('sam');
+    // Firebase joins Apple to the account with the same email by itself:
+    // it always treats Apple's addresses as verified.
+    await auth().updateUser('sam', {
+      providerToLink: { providerId: 'apple.com', uid: 'apple-sam', email: 'sam@example.com' },
+    });
+    await run(accounts.ensureUserProfile, 'sam');
+    expect((await profile('sam')).signInMethods).toEqual(['apple.com', 'password']);
+    expect(mail.sent).toHaveLength(1);
+    expect(mail.sent[0].to).toBe('sam@example.com');
+    expect(mail.sent[0].text).toContain('Apple sign-in was added');
+    // The next sign-in has nothing new to tell.
+    await run(accounts.ensureUserProfile, 'sam');
+    expect(mail.sent).toHaveLength(1);
+  });
 });
 
 describe('added accounts choose how to sign in next time (AUTH-6)', () => {

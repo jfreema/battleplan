@@ -115,6 +115,22 @@ void main() {
       expect(find.text('Welcome to Battleplan'), findsOneWidget);
     });
 
+    testWidgets('Apple for an existing email links the same way '
+        '(task 109)', (tester) async {
+      final prefs = FakeLocalPrefs()
+        ..pendingLink = (providerId: 'apple.com', email: 'coach@example.com');
+      final auth = FakeAuthRepository(user: coach);
+      await pumpApp(tester, auth: auth, prefs: prefs);
+      expect(find.text('Add Apple sign-in?'), findsOneWidget);
+      await tester.tap(
+        find.widgetWithText(AppleSignInButton, 'Continue with Apple'),
+      );
+      await tester.pumpAndSettle();
+      expect(auth.currentUser!.providerIds, contains('apple.com'));
+      expect(prefs.pendingLink, isNull);
+      expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    });
+
     testWidgets('Not now skips linking and forgets it', (tester) async {
       final prefs = FakeLocalPrefs()
         ..pendingLink = (providerId: 'google.com', email: 'coach@example.com');
@@ -155,8 +171,8 @@ void main() {
         find.text('How do you want to sign in from now on?'),
         findsOneWidget,
       );
-      // Not offered until Sign in with Apple is on (task 187).
-      expect(find.byType(AppleSignInButton), findsNothing);
+      // Apple too, where Sign in with Apple is on (task 109).
+      expect(find.byType(AppleSignInButton), findsOneWidget);
       // Google is the main way in; a password is the quiet choice, and says
       // where it works, since the sign-in screen has no email (AUTH-1).
       expect(
@@ -181,6 +197,21 @@ void main() {
       // A fresh sign-in on this device may ask for it from now on.
       expect(prefs.passwordSetUids, {'coach'});
       expect(find.text('Welcome to Battleplan'), findsOneWidget);
+    });
+
+    testWidgets('they can choose Apple instead (task 109)', (tester) async {
+      final users = FakeUserRepository()..chooseSignIn = true;
+      final auth = FakeAuthRepository(
+        user: coach.copyWith(providerIds: ['password']),
+      );
+      await pumpApp(tester, auth: auth, users: users);
+      await tester.tap(
+        find.widgetWithText(AppleSignInButton, 'Continue with Apple'),
+      );
+      await tester.pumpAndSettle();
+      expect(auth.uncheckedChanges, ['apple.com']);
+      expect(auth.currentUser!.providerIds, contains('apple.com'));
+      expect(users.chooseSignIn, isFalse);
     });
 
     testWidgets('long after the setup link, Google still links without '

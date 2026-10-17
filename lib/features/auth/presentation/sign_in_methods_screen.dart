@@ -11,11 +11,15 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Settings → Sign-in methods (AUTH-8, SET-4): link or remove Google, set or
-/// change a password, and change the account email. Actions that need a
-/// fresh sign-in ask for one first, then carry on (AUTH-7).
+/// Settings → Sign-in methods (AUTH-8, SET-4): link or remove Google and
+/// Apple, set or change a password, and change the account email. Actions
+/// that need a fresh sign-in ask for one first, then carry on (AUTH-7).
 class SignInMethodsScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({this.appleEnabled = false, super.key});
+
+  /// Whether Apple can be linked (task 109). Without it, Apple shows only
+  /// on an account that already has it.
+  final bool appleEnabled;
 
   @override
   ConsumerState<SignInMethodsScreen> createState() =>
@@ -45,6 +49,17 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
       });
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Links a method with [link], saying so only once it's linked: closing
+  /// the provider's sheet does nothing.
+  Future<void> _linkMethod(Future<bool> Function() link, String name) async {
+    final l10n = AppLocalizations.of(context);
+    var linked = false;
+    await _run(() async => linked = await link());
+    if (linked && mounted) {
+      showAppSnackBar(context, l10n.methodLinkedDone(name));
     }
   }
 
@@ -116,7 +131,9 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
     final ids = user.providerIds;
     final onlyOne = ids.length <= 1;
     final hasGoogle = ids.contains('google.com');
+    final hasApple = ids.contains('apple.com');
     final hasPassword = ids.contains('password');
+    final auth = ref.read(authRepositoryProvider);
 
     Widget removeButton(String providerId, String name) => TextButton(
       onPressed: _busy || onlyOne
@@ -140,19 +157,26 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
                 : TextButton(
                     onPressed: _busy
                         ? null
-                        : () => _run(
-                            () => ref.read(authRepositoryProvider).linkGoogle(),
-                            done: l10n.methodLinkedDone('Google'),
-                          ),
+                        : () => _linkMethod(auth.linkGoogle, 'Google'),
                     child: Text(l10n.linkMethod),
                   ),
           ),
-          // Apple shows only on an account that already has it, until
-          // Sign in with Apple is turned on (task 187).
-          if (ids.contains('apple.com'))
+          // Apple where Sign in with Apple is on (task 109); elsewhere,
+          // only on an account that already has it.
+          if (widget.appleEnabled || hasApple)
             ListTile(
               title: const Text('Apple'),
-              subtitle: Text(l10n.methodLinked),
+              subtitle: Text(
+                hasApple ? l10n.methodLinked : l10n.methodNotLinked,
+              ),
+              trailing: hasApple
+                  ? removeButton('apple.com', 'Apple')
+                  : TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => _linkMethod(auth.linkApple, 'Apple'),
+                      child: Text(l10n.linkMethod),
+                    ),
             ),
           ListTile(
             title: Text(l10n.passwordLabel),

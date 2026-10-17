@@ -65,6 +65,10 @@ abstract interface class AuthRepository {
   /// Returns false if the person closed Google's sheet.
   Future<bool> linkGoogle({bool checkRecent = true});
 
+  /// Links Apple the same way: the native sheet on an iPhone, iPad, or
+  /// Mac, a popup on the web. Returns false if the person closed it.
+  Future<bool> linkApple({bool checkRecent = true});
+
   /// Removes a sign-in method. The last one can't be removed.
   Future<void> unlink(String providerId);
 
@@ -85,7 +89,10 @@ abstract interface class AuthRepository {
   /// Deletes the account and its data on the server, then signs out here
   /// (AUTH-10). [newOwners] maps a team the person owns to the member they
   /// picked to take it over; the rest go to the longest-serving admin or
-  /// member. Throws RequiresRecentLogin without a fresh sign-in.
+  /// member. Throws RequiresRecentLogin without a fresh sign-in. In the
+  /// Apple apps, an account with Apple sign-in first signs in with Apple
+  /// once more so Apple's tokens can be revoked (App Review 5.1.1(v));
+  /// closing that sheet throws SignInCanceled and deletes nothing.
   Future<void> deleteAccount({Map<String, String> newOwners = const {}});
 
   Future<void> signOut();

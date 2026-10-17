@@ -177,11 +177,17 @@ GoRouter router(Ref ref) {
       if (disabled) return path == '/disabled' ? null : '/disabled';
       if (path == '/disabled') return '/';
 
-      // AUTH-7: the emailed link proved the email after Google sign-in
-      // found an existing account; offer to finish linking Google.
+      // AUTH-7: the emailed link proved the email after Google (or Apple,
+      // where it's on) found an existing account; offer to finish linking
+      // the method they tried.
       final pendingLink = ref.read(localPrefsRepositoryProvider).pendingLink;
+      final linkable = switch (pendingLink?.providerId) {
+        'google.com' => true,
+        'apple.com' => env.appleSignIn,
+        _ => false,
+      };
       final finishLink =
-          pendingLink?.providerId == 'google.com' &&
+          linkable &&
           pendingLink?.email.toLowerCase() == user.email?.toLowerCase();
       if (finishLink) return path == '/finish-link' ? null : '/finish-link';
       if (path == '/finish-link') return '/';
@@ -258,7 +264,10 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/sign-in',
         // Email only against the emulators, for the seeded accounts.
-        builder: (_, _) => SignInScreen(emailButton: env.useEmulators),
+        builder: (_, _) => SignInScreen(
+          emailButton: env.useEmulators,
+          appleEnabled: env.appleSignIn,
+        ),
         routes: [
           GoRoute(
             path: 'email',
@@ -275,18 +284,21 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/sign-up',
-        builder: (_, _) =>
-            SignInScreen(signUp: true, emailButton: env.useEmulators),
+        builder: (_, _) => SignInScreen(
+          signUp: true,
+          emailButton: env.useEmulators,
+          appleEnabled: env.appleSignIn,
+        ),
       ),
       GoRoute(path: '/setup', builder: (_, _) => const SetupScreen()),
       GoRoute(path: '/disabled', builder: (_, _) => const DisabledScreen()),
       GoRoute(
         path: '/choose-sign-in',
-        builder: (_, _) => const ChooseSignInScreen(),
+        builder: (_, _) => ChooseSignInScreen(appleEnabled: env.appleSignIn),
       ),
       GoRoute(
         path: '/finish-link',
-        builder: (_, _) => const FinishLinkScreen(),
+        builder: (_, _) => FinishLinkScreen(appleEnabled: env.appleSignIn),
       ),
       GoRoute(
         path: '/reset-password',
@@ -375,7 +387,7 @@ GoRouter router(Ref ref) {
             path: 'sign-in-methods',
             pageBuilder: (_, state) => PanelPage(
               key: state.pageKey,
-              child: const SignInMethodsScreen(),
+              child: SignInMethodsScreen(appleEnabled: env.appleSignIn),
             ),
           ),
           GoRoute(

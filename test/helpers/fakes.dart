@@ -116,8 +116,21 @@ class FakeAuthRepository implements AuthRepository {
     _controller.add(_user);
   }
 
+  /// Who Continue with Apple signs in.
   @override
-  Future<void> signInWithApple() async {}
+  Future<void> signInWithApple() async {
+    _user = const AuthUser(
+      uid: 'coach',
+      email: knownEmail,
+      emailVerified: true,
+      providerIds: ['apple.com'],
+    );
+    _controller.add(_user);
+  }
+
+  /// Set to make the next deleteAccount fail this way (the Apple apps'
+  /// fresh Apple sign-in, closed: SignInCanceled).
+  AppFailure? deleteFailsWith;
 
   final List<String> resetEmails = [];
   int verificationEmailsSent = 0;
@@ -181,6 +194,18 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<bool> linkApple({bool checkRecent = true}) async {
+    if (checkRecent) {
+      _requireRecent();
+    } else {
+      uncheckedChanges.add('apple.com');
+    }
+    if (linkCancels) return false;
+    _setProviders([..._user!.providerIds, 'apple.com']);
+    return true;
+  }
+
+  @override
   Future<void> unlink(String providerId) async {
     _requireRecent();
     _setProviders([..._user!.providerIds]..remove(providerId));
@@ -225,6 +250,10 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> deleteAccount({Map<String, String> newOwners = const {}}) async {
+    if (deleteFailsWith case final failure?) {
+      deleteFailsWith = null;
+      throw failure;
+    }
     _requireRecent();
     deleted = true;
     deletedNewOwners = newOwners;

@@ -4,6 +4,7 @@ import 'package:battleplan/core/links.dart';
 import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mock_exceptions/mock_exceptions.dart';
 
@@ -64,6 +65,74 @@ class _Token implements IdTokenResult {
 
 FirebaseAuthException _e(String code, {String? email}) =>
     FirebaseAuthException(code: code, email: email);
+
+/// An account with Apple sign-in whose fresh Apple sign-in hands back
+/// Apple's authorization code, or fails with [reauthError].
+// ignore: must_be_immutable, MockUser's own name and photo fields change.
+class _AppleUser extends MockUser {
+  new({this.reauthError})
+    : super(
+        uid: 'u1',
+        email: 'alex@example.com',
+        idTokenResult: _Token(
+          DateTime.now(),
+          null,
+          issuedAtTime: DateTime.now(),
+        ),
+        providerData: [_Info('apple.com')],
+      );
+
+  final FirebaseAuthException? reauthError;
+
+  /// The providers each fresh sign-in used.
+  final reauths = <String>[];
+
+  @override
+  Future<UserCredential> reauthenticateWithProvider(
+    AuthProvider provider,
+  ) async {
+    reauths.add(provider.providerId);
+    if (reauthError case final error?) throw error;
+    return _AppleCredential(this);
+  }
+}
+
+class _AppleCredential implements UserCredential {
+  new(this.user);
+
+  @override
+  final User user;
+
+  @override
+  AdditionalUserInfo get additionalUserInfo => _AppleInfo();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _AppleInfo implements AdditionalUserInfo {
+  @override
+  String get authorizationCode => 'apple-code';
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// Records the Apple authorization codes revoked, or fails with
+/// [revokeError].
+class _RevokingAuth extends MockFirebaseAuth {
+  new(MockUser user, {this.revokeError})
+    : super(signedIn: true, mockUser: user);
+
+  final FirebaseAuthException? revokeError;
+  final revoked = <String>[];
+
+  @override
+  Future<void> revokeTokenWithAuthorizationCode(String code) async {
+    if (revokeError case final error?) throw error;
+    revoked.add(code);
+  }
+}
 
 void main() {
   late FakeFunctions functions;
@@ -455,4 +524,74 @@ void main() {
       }
     },
   );
+  test('links Apple the way it links Google (task 109)', () async {
+    final user = _user();
+    final repo = repoFor(MockFirebaseAuth(signedIn: true, mockUser: user));
+    expect(await repo.linkApple(), isTrue);
+    expect(user.providerData.map((p) => p.providerId), contains('apple.com'));
+    expect(functions.calls.single.$1, 'recordSignInMethodChange');
+  });
+
+  group('deleting an account with Apple sign-in in the iPhone and iPad app '
+      '(App Review 5.1.1(v))', () {
+    setUp(() => debugDefaultTargetPlatformOverride = TargetPlatform.iOS);
+    tearDown(() => debugDefaultTargetPlatformOverride = null);
+
+    test("signs in with Apple again, revokes Apple's tokens, then "
+        'deletes', () async {
+      final user = _AppleUser();
+      final auth = _RevokingAuth(user);
+      await repoFor(auth).deleteAccount();
+      expect(user.reauths, ['apple.com']);
+      expect(auth.revoked, ['apple-code']);
+      expect(functions.calls.single.$1, 'deleteAccount');
+      expect(auth.currentUser, isNull);
+    });
+
+    test("closing Apple's sheet deletes nothing", () async {
+      final auth = _RevokingAuth(_AppleUser(reauthError: _e('canceled')));
+      await expectLater(
+        repoFor(auth).deleteAccount(),
+        throwsA(isA<SignInCanceled>()),
+      );
+      expect(auth.revoked, isEmpty);
+      expect(functions.calls, isEmpty);
+    });
+
+    test('a refused Apple sign-in deletes nothing', () async {
+      final auth = _RevokingAuth(_AppleUser(reauthError: _e('user-mismatch')));
+      await expectLater(
+        repoFor(auth).deleteAccount(),
+        throwsA(isA<UnknownFailure>()),
+      );
+      expect(functions.calls, isEmpty);
+    });
+
+    test('a failed revoke still deletes the account', () async {
+      final auth = _RevokingAuth(
+        _AppleUser(),
+        revokeError: _e('invalid-credential'),
+      );
+      await repoFor(auth).deleteAccount();
+      expect(functions.calls.single.$1, 'deleteAccount');
+      expect(auth.currentUser, isNull);
+    });
+
+    test('accounts without Apple, and Android, skip it', () async {
+      final google = _RevokingAuth(_user(providers: ['google.com']));
+      await repoFor(google).deleteAccount();
+      expect(google.revoked, isEmpty);
+
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      final user = _AppleUser();
+      final android = _RevokingAuth(user);
+      await repoFor(android).deleteAccount();
+      expect(user.reauths, isEmpty);
+      expect(android.revoked, isEmpty);
+      expect(functions.calls.map((c) => c.$1), [
+        'deleteAccount',
+        'deleteAccount',
+      ]);
+    });
+  });
 }

@@ -55,9 +55,9 @@ Required, and doable now.
 
 Setting it up (the key and Services ID, task 107) happens in your Apple Developer account, so it comes right after you enroll in phase 3. Sign in with Apple is required because Battleplan offers Google sign-in: guideline 4.8 then calls for a sign-in that lets people keep their email private.
 
-- ⬜ 2.1 **Continue with Apple** on the sign-in screen and in Sign-in methods, on iPhone, iPad, and the web, with Apple's standard button (task 109). It's in the app now, hidden. With email off the sign-in screen, it's the only choice there besides Google, which is what guideline 4.8 asks for: the iPhone app can't go to review without it.
+- ⬜ 2.1 **Continue with Apple** on the sign-in screen and in Sign-in methods, on iPhone, iPad, and the web, with Apple's standard button (task 109). It's built and on in dev; prod shows it once Firebase has Apple's key (task 291). With email off the sign-in screen, it's the only choice there besides Google, which is what guideline 4.8 asks for: the iPhone app can't go to review without it.
 - ⬜ 2.2 **Email reaches people who hide their address:** register Battleplan's sending domain with Apple's private email relay (task 207).
-- ⬜ 2.3 **Delete account also revokes the person's Sign in with Apple token,** through Apple's REST API. Apple requires this of apps that offer Sign in with Apple.
+- ⬜ 2.3 **Delete account also revokes the person's Sign in with Apple token,** through Apple's REST API. Apple requires this of apps that offer Sign in with Apple. *Built 2026-10-16: the iPhone and iPad app signs in with Apple once more and hands the code to Firebase, which revokes the token with Apple using the key, before deleting (SPEC AUTH-10). It's checked in 2.4 once the key is in.*
 - ⬜ 2.4 **Test it end to end:** a new account with Apple, setup, signing out and back in, and deleting the account.
 
 ## Phase 3 · After joining the Apple Developer Program

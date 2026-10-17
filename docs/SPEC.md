@@ -333,7 +333,8 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - **The stores allow it.** Neither store asks for email sign-in. Apple's guideline 4.8 does ask an app that offers Google sign-in to offer one that can keep the email private beside it, which Sign in with Apple does, so the iPhone app ships with Apple on (store checklist 2.1). Reviewers sign in with Apple or Google and join the demo team with its code, or use the demo account at `/emaillogin`, which the review notes describe, as Apple's guideline 2.3.1 asks of anything not on screen (store checklist 1.14, 1.17).
   - Google always asks which Google account to use (its account chooser), so a browser signed in to one Google account never picks it silently.
   - The screen is identical on every platform. The Apple button follows Apple's design rules.
-  - **Continue with Apple is hidden until Phase 3**, when Sign in with Apple is turned on (§9). Until then the screen shows Google only, and Sign-in methods (AUTH-8) doesn't offer Apple.
+  - **Continue with Apple** (Phase 3, §9) shows in dev and on the emulators. Prod shows it once its Firebase project has Apple's Services ID and key, so it never offers a button that can't work; until then prod shows Google only, and Sign-in methods (AUTH-8) offers Apple only to an account that already has it.
+  - Apple asks for the email and, the first time, the name, which prefill the profile (AUTH-12). With Hide My Email, Apple shares a private relay address instead (`…@privaterelay.appleid.com`), which reaches the person as long as our sending domains are registered with Apple (task 207).
   - Continue with Facebook joins in Phase 6, with single sign-on (Q16).
 - **AUTH-2 · MVP · Email and password.**
   - At `/emaillogin`, not linked from the sign-in screen (AUTH-1). `getbattleplan.app/emaillogin` works too: Hosting redirects it into the web app, and the phone apps open it. `/sign-in/email`, its old address, redirects there, keeping where to go back to.
@@ -357,19 +358,19 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **AUTH-6 · MVP · Accounts added by admins.**
   - Team admins and super admins add people with just a **name and email** (TEAM-7, PLAYER-1, ADMIN-4).
   - **Admins never set, see, or know anyone's password.** No screen or tool lets them. They can only send setup and password-reset emails.
-  - The person gets a **setup email**. Its link signs them in, verifies their email, and asks how they want to sign in from now on: Google (the main button), Apple (from Phase 3), or **Use a password instead**, whose dialog says they'll sign in with it at `/emaillogin` (AUTH-2).
+  - The person gets a **setup email**. Its link signs them in, verifies their email, and asks how they want to sign in from now on: Google (the main button), Apple (where it's on, AUTH-1), or **Use a password instead**, whose dialog says they'll sign in with it at `/emaillogin` (AUTH-2).
   - A setup or sign-in link that's expired or broken says so, and **Back to sign-in** opens email sign-in, where "Email me a sign-in link instead" sends a new one.
   - Setup links expire, and admins can resend a fresh one.
   - Until setup, the person appears on the roster as "Not joined yet", and admins can RSVP for them.
 - **AUTH-7 · MVP · Safe account linking.**
   - **Prove both sides.** A sign-in method is added only when the person is signed in to their Battleplan account (recently) and completes the provider's own sign-in.
-  - **No merging just because emails match.** If someone tries a new method with an email that already has an account, the app explains ("You've signed in with Google before. We sent you a link to confirm it's you.") and links the new method only after that emailed link is opened. The one exception is Google sign-in for a Gmail address, because Google vouches for those itself.
-  - **Security emails.** Adding or removing a sign-in method, or changing the email or password, sends a notice: "Google sign-in was added to your Battleplan account. Not you? Contact support."
+  - **No merging just because emails match.** If someone tries a new method with an email that already has an account, the app explains ("You've signed in with Google before. We sent you a link to confirm it's you.") and links the new method only after that emailed link is opened, offering to finish adding it (Google, or Apple where it's on). The exceptions are the providers Firebase trusts to vouch for an address themselves: Google for a Gmail address, and Apple, whose addresses Firebase always treats as verified. Signing in with either joins the account with that email and adds the method, and replaces a password whose email was never verified. A Hide My Email relay address matches no account, so it starts a new one; to use Apple on an existing account, link it from Sign-in methods (AUTH-8).
+  - **Security emails.** Adding or removing a sign-in method, or changing the email or password, sends a notice: "Google sign-in was added to your Battleplan account. Not you? Contact support." That includes a method Firebase adds or replaces at sign-in by itself (the exceptions above).
   - **A fresh sign-in is required** for linking, unlinking, changing the email or password, and deleting the account.
   - **Two separate accounts are never merged automatically.** Support can move memberships by hand.
 - **AUTH-8 · MVP · Sign-in methods screen.**
-  - Settings → Sign-in methods lists the linked methods (Google, Apple, password). A linked password says where it works: "Linked. Sign in with it at getbattleplan.app/emaillogin."
-  - Link another, unlink one (never the last), or set or change a password.
+  - Settings → Sign-in methods lists the linked methods (Google, Apple, password). A linked password says where it works: "Linked. Sign in with it at getbattleplan.app/emaillogin." Apple is listed where it's on (AUTH-1), and on any account that already has it.
+  - Link another, unlink one (never the last), or set or change a password. Linking uses the provider's own sign-in: Apple's sheet on an iPhone, iPad, or Mac, and a popup on the web. Closing it links nothing and says nothing.
   - Change the account email, confirmed through a link sent to the new address. The old address gets a notice.
 - **AUTH-9 · MVP · Sessions.**
   - Stay signed in across app restarts and browser sessions.
@@ -377,6 +378,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - "Sign out of all devices" ends every session at once.
 - **AUTH-10 · MVP · Delete account.**
   - Settings → Account → Delete account explains what will happen, asks the user to sign in again, then deletes everything.
+  - In the iPhone, iPad, and Mac apps, an account with Apple sign-in signs in with Apple once more, so the app can revoke Apple's tokens first (App Review 5.1.1(v)). Closing Apple's sheet deletes nothing. The web and Android can't revoke; people there can remove Battleplan under Sign in with Apple in their Apple Account settings.
   - Owners pick a new owner for each team they own. If they skip it, ownership goes to the longest-serving admin, otherwise the longest-serving member. Teams with nobody else are archived.
   - Their player links end (as a player or a guardian). A player left with no links stays on the roster for admins to manage. Their player claims, and the players they added that no admin approved yet, are deleted.
   - Their past messages stay, shown from "Deleted user".
