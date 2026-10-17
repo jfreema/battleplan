@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Push notifications through APNs (NOTIF-1, roadmap task 108);
+	     builds run from Xcode use Apple's sandbox. -->
+	<key>aps-environment</key>
+	<string>development</string>
 	<!-- Sign in with Apple (AUTH-1, roadmap task 109). Dev builds use
 	     App Check's debug provider, so no App Attest here (ARCH §6.9). -->
 	<key>com.apple.developer.applesignin</key>

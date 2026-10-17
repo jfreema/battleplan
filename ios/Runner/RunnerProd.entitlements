@@ -2,6 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Push notifications through APNs (NOTIF-1, roadmap task 108). -->
+	<key>aps-environment</key>
+	<string>production</string>
 	<!-- App Check's App Attest provider, prod flavor only (ARCH §6.9).
 	     Dev builds use the debug provider and need no entitlement. -->
 	<key>com.apple.developer.devicecheck.appattest-environment</key>

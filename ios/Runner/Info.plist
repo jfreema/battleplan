@@ -93,6 +93,12 @@
 			</array>
 		</dict>
 	</dict>
+	<!-- Push notifications (NOTIF-1, roadmap task 108): FCM delivers
+	     through APNs, including messages handled in the background. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
