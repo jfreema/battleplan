@@ -1,6 +1,6 @@
 // Rules tests for player details (PLAYER-12): who reads, lists, writes,
 // and deletes them, their fields and sizes (kept in step with Limits in
-// shared/constants.json), the date of birth, and the medical consent. Run
+// shared/constants.json), the date of birth, and no health data. Run
 // with:
 //   npm --prefix functions run emulators:test
 import {
@@ -18,8 +18,9 @@ import { Limits } from '../../src/shared/constants.js';
 type Db = firebase.firestore.Firestore;
 let env: RulesTestEnvironment;
 const now = () => firebase.firestore.FieldValue.serverTimestamp();
+const del = () => firebase.firestore.FieldValue.delete();
 const ts = (iso: string) => firebase.firestore.Timestamp.fromDate(new Date(iso));
-const CONSENTED = ts('2026-09-01T00:00:00Z');
+const SAVED = ts('2026-09-01T00:00:00Z');
 
 const as = (uid: string): Db => env.authenticatedContext(uid).firestore();
 const anon = (): Db => env.unauthenticatedContext().firestore();
@@ -59,14 +60,11 @@ async function seed() {
       groupId: 'teamA',
       dateOfBirth: '2016-04-01',
       emergencyContacts: [{ name: 'Dan Lee', phone: '555-0100', relationship: 'Dad' }],
-      medicalNotes: 'Peanut allergy',
-      medicalConsentAt: CONSENTED,
-      medicalConsentBy: 'dan',
       notes: 'Wears glasses',
       updatedBy: 'dan',
-      updatedAt: CONSENTED,
+      updatedAt: SAVED,
     });
-    await db.doc('playerDetails/gus').set({ groupId: 'teamB', emergencyContacts: [], updatedBy: 'gina', updatedAt: CONSENTED });
+    await db.doc('playerDetails/gus').set({ groupId: 'teamB', emergencyContacts: [], updatedBy: 'gina', updatedAt: SAVED });
   });
 }
 
@@ -89,20 +87,22 @@ afterAll(async () => {
 const setTeam = (fields: object) =>
   env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update(fields));
 
-/** What the app writes on save, with no medical notes (PLAYER-12). */
+/** The medical keys the app once wrote, which it now deletes on save. */
+const MEDICAL = ['medicalNotes', 'medicalConsentAt', 'medicalConsentBy'];
+/** What the app writes on save (PLAYER-12): no health data, and any left
+ * from before deleted. */
 const details = (uid: string, extra: object = {}) => ({
   groupId: 'teamA',
   dateOfBirth: '2016-04-01',
   emergencyContacts: [{ name: 'Dan Lee', phone: '555-0100', relationship: 'Dad' }],
-  medicalNotes: null,
+  medicalNotes: del(),
+  medicalConsentAt: del(),
+  medicalConsentBy: del(),
   notes: 'Wears glasses',
   updatedBy: uid,
   updatedAt: now(),
   ...extra,
 });
-/** New medical notes with the writer's consent. */
-const consented = (uid: string, notes: string, extra: object = {}) =>
-  details(uid, { medicalNotes: notes, medicalConsentAt: now(), medicalConsentBy: uid, ...extra });
 /** [data] without [key]. */
 const without = (data: Record<string, unknown>, key: string) => Object.fromEntries(Object.entries(data).filter(([k]) => k !== key));
 /** The app's save: one set with merge. */
@@ -170,15 +170,15 @@ describe('who reads them', () => {
 
 describe('who writes them', () => {
   it('lets admins, guardians, and the member who is the player save them', async () => {
-    await assertSucceeds(save('carol', 'emma', details('carol', { medicalNotes: 'Peanut allergy' })));
-    await assertSucceeds(save('alice', 'emma', details('alice', { medicalNotes: 'Peanut allergy', notes: null })));
-    await assertSucceeds(save('dan', 'emma', details('dan', { medicalNotes: 'Peanut allergy' })));
+    await assertSucceeds(save('carol', 'emma', details('carol')));
+    await assertSucceeds(save('alice', 'emma', details('alice', { notes: null })));
+    await assertSucceeds(save('dan', 'emma', details('dan')));
     await assertSucceeds(save('sam', 'sam-p', details('sam')));
     await assertSucceeds(save('carol', 'sam-p', details('carol', { dateOfBirth: null, emergencyContacts: [] })));
   });
 
-  it('takes the fullest save the app makes: two contacts, new medical notes, and notes', async () => {
-    await assertSucceeds(save('dan', 'emma', consented('dan', 'Peanut allergy; carries an EpiPen', {
+  it('takes the fullest save the app makes: two contacts and notes', async () => {
+    await assertSucceeds(save('dan', 'emma', details('dan', {
       emergencyContacts: [
         { name: 'Dan Lee', phone: '555-0100', relationship: 'Dad' },
         { name: 'Erin Lee', phone: '555-0101' },
@@ -187,17 +187,17 @@ describe('who writes them', () => {
   });
 
   it('refuses other members, other teams, people on no team, and signed-out visitors', async () => {
-    await assertFails(save('bob', 'emma', details('bob', { medicalNotes: 'Peanut allergy' })));
-    await assertFails(save('sam', 'emma', details('sam', { medicalNotes: 'Peanut allergy' })));
+    await assertFails(save('bob', 'emma', details('bob')));
+    await assertFails(save('sam', 'emma', details('sam')));
     await assertFails(save('dan', 'sam-p', details('dan')));
-    await assertFails(save('gina', 'emma', details('gina', { medicalNotes: 'Peanut allergy' })));
+    await assertFails(save('gina', 'emma', details('gina')));
     await assertFails(save('nina', 'sam-p', details('nina')));
-    await assertFails(anon().doc('playerDetails/sam-p').set(details('anon')));
+    await assertFails(anon().doc('playerDetails/sam-p').set(details('anon'), { merge: true }));
   });
 
   it('lets super admins read but never write', async () => {
     await assertFails(root().doc('playerDetails/sam-p').set(details('root'), { merge: true }));
-    await assertFails(root().doc('playerDetails/emma').set(details('root', { medicalNotes: 'Peanut allergy' }), { merge: true }));
+    await assertFails(root().doc('playerDetails/emma').set(details('root'), { merge: true }));
     await assertFails(root().doc('playerDetails/emma').delete());
   });
 
@@ -223,7 +223,7 @@ describe('who writes them', () => {
   it("freezes them on an archived team, and on a suspended one", async () => {
     await setTeam({ archivedAt: ts('2026-10-01T00:00:00Z') });
     await assertFails(save('carol', 'sam-p', details('carol')));
-    await assertFails(save('dan', 'emma', details('dan', { medicalNotes: 'Peanut allergy' })));
+    await assertFails(save('dan', 'emma', details('dan')));
     await assertFails(as('carol').doc('playerDetails/emma').delete());
     await setTeam({ archivedAt: null, suspendedAt: ts('2026-10-01T00:00:00Z') });
     await assertFails(save('carol', 'sam-p', details('carol')));
@@ -263,10 +263,7 @@ describe('their fields and sizes (Limits)', () => {
   it('allows notes up to their limits', async () => {
     await assertSucceeds(save('carol', 'sam-p', details('carol', { notes: 'x'.repeat(Limits.playerNotesMax) })));
     await assertFails(save('carol', 'sam-p', details('carol', { notes: 'x'.repeat(Limits.playerNotesMax + 1) })));
-    await assertSucceeds(save('carol', 'sam-p', consented('carol', 'x'.repeat(Limits.medicalNotesMax))));
-    await assertFails(save('carol', 'sam-p', consented('carol', 'y'.repeat(Limits.medicalNotesMax + 1))));
     await assertFails(save('carol', 'sam-p', details('carol', { notes: 42 })));
-    await assertFails(save('carol', 'sam-p', consented('carol', ['Peanut allergy'] as unknown as string)));
   });
 
   it(`allows up to ${Limits.emergencyContactsMax} emergency contacts, each a name and a phone number`, async () => {
@@ -322,49 +319,44 @@ describe('date of birth', () => {
   });
 });
 
-describe('medical consent', () => {
-  it('needs consent, stamped now by the writer, for new medical notes', async () => {
-    await assertFails(save('sam', 'sam-p', details('sam', { medicalNotes: 'Asthma' })));
-    await assertFails(save('sam', 'sam-p', details('sam', { medicalNotes: 'Asthma', medicalConsentAt: now() })));
-    await assertFails(save('sam', 'sam-p', details('sam', { medicalNotes: 'Asthma', medicalConsentBy: 'sam' })));
-    await assertFails(save('sam', 'sam-p', consented('sam', 'Asthma', { medicalConsentBy: 'carol' })));
-    await assertFails(save('sam', 'sam-p', consented('sam', 'Asthma', { medicalConsentAt: CONSENTED })));
-    await assertSucceeds(save('sam', 'sam-p', consented('sam', 'Asthma')));
-  });
+describe('no health data', () => {
+  /** A record saved before medical notes were removed. */
+  const legacy = () =>
+    env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('playerDetails/emma').update({
+      medicalNotes: 'Peanut allergy', medicalConsentAt: SAVED, medicalConsentBy: 'dan',
+    }));
+  /** [data] without the medical keys' deletes: a save that leaves them be. */
+  const keeping = (data: Record<string, unknown>) => MEDICAL.reduce((d, k) => without(d, k), data);
 
-  it('lets an admin give it, with the family’s permission', async () => {
-    await assertSucceeds(save('carol', 'sam-p', consented('carol', 'Asthma')));
-  });
-
-  it('needs it again whenever the notes change', async () => {
-    await assertFails(save('dan', 'emma', details('dan', { medicalNotes: 'Peanut and egg allergy' })));
-    await assertSucceeds(save('carol', 'emma', consented('carol', 'Peanut and egg allergy')));
-  });
-
-  it('keeps the consent as it was while the notes stay the same', async () => {
-    // Merge leaves the consent fields alone.
-    await assertSucceeds(save('carol', 'emma', details('carol', { medicalNotes: 'Peanut allergy' })));
-    // Writing them back unchanged is fine too.
-    await assertSucceeds(save('carol', 'emma', details('carol', {
-      medicalNotes: 'Peanut allergy', medicalConsentAt: CONSENTED, medicalConsentBy: 'dan',
+  it('refuses medical notes and their consent, with any value', async () => {
+    for (const key of MEDICAL) {
+      for (const value of ['Peanut allergy', '', null, now(), 'sam']) {
+        await assertFails(save('sam', 'sam-p', details('sam', { [key]: value })));
+        await assertFails(save('carol', 'emma', details('carol', { [key]: value })));
+      }
+    }
+    await assertFails(save('sam', 'sam-p', details('sam', {
+      medicalNotes: 'Asthma', medicalConsentAt: now(), medicalConsentBy: 'sam',
     })));
-    // A fresh stamp or another name on the same notes isn't.
-    await assertFails(save('carol', 'emma', consented('carol', 'Peanut allergy')));
-    await assertFails(save('carol', 'emma', details('carol', { medicalNotes: 'Peanut allergy', medicalConsentBy: 'carol' })));
-    await assertFails(save('carol', 'emma', details('carol', { medicalNotes: 'Peanut allergy', medicalConsentAt: null, medicalConsentBy: null })));
   });
 
-  it('lets clearing the notes clear the consent, or keep it', async () => {
-    await assertSucceeds(save('dan', 'emma', details('dan', { medicalNotes: null, medicalConsentAt: null, medicalConsentBy: null })));
-    await seed();
-    await assertSucceeds(save('dan', 'emma', details('dan', { medicalNotes: null })));
-    await seed();
-    await assertSucceeds(save('dan', 'emma', details('dan', { medicalNotes: '', medicalConsentAt: null, medicalConsentBy: null })));
+  it('takes a save without the deletes on a record with none', async () => {
+    await assertSucceeds(save('carol', 'emma', keeping(details('carol'))));
+    await assertSucceeds(save('sam', 'sam-p', keeping(details('sam'))));
   });
 
-  it('takes no consent without notes, and no made-up consent', async () => {
-    await assertFails(save('sam', 'sam-p', details('sam', { medicalConsentAt: now(), medicalConsentBy: 'sam' })));
-    await assertFails(save('sam', 'sam-p', details('sam', { medicalNotes: null, medicalConsentAt: CONSENTED, medicalConsentBy: 'sam' })));
-    await assertFails(save('dan', 'emma', details('dan', { medicalNotes: null, medicalConsentAt: now(), medicalConsentBy: 'dan' })));
+  it("refuses a save that keeps an old record's medical notes, and takes the app's, which deletes them", async () => {
+    await legacy();
+    await assertFails(save('dan', 'emma', keeping(details('dan'))));
+    await assertSucceeds(save('dan', 'emma', details('dan')));
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const data = (await ctx.firestore().doc('playerDetails/emma').get()).data() ?? {};
+      for (const key of MEDICAL) if (key in data) throw new Error(`${key} is still there`);
+    });
+  });
+
+  it('still lets the same people delete an old record with medical notes', async () => {
+    await legacy();
+    await assertSucceeds(as('dan').doc('playerDetails/emma').delete());
   });
 });

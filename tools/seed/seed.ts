@@ -233,8 +233,8 @@ async function main() {
     }
   }
   // Details for coaches (PLAYER-12), sample values only: Luke's from his
-  // guardian Claire, with the medical consent the app asks for, and Jim's
-  // own. The coach sees both, and their ages on the rosters.
+  // guardian Claire, and Jim's own. No medical notes: the app keeps no
+  // health data. The coach sees both, and their ages on the rosters.
   const year = new Date(now).getFullYear();
   batch.set(db.doc('playerDetails/luke-dunphy'), {
     groupId: 'cyclone',
@@ -243,9 +243,6 @@ async function main() {
       { name: 'Claire Dunphy', phone: '555-0100', relationship: 'Mom' },
       { name: 'Phil Dunphy', phone: '555-0101', relationship: 'Dad' },
     ],
-    medicalNotes: 'Peanut allergy',
-    medicalConsentAt: minutesAgo(60 * 24 * 10),
-    medicalConsentBy: 'claire',
     notes: 'Wears glasses for games.',
     updatedBy: 'claire',
     updatedAt: minutesAgo(60 * 24 * 10),
@@ -254,7 +251,6 @@ async function main() {
     groupId: 'thunder',
     dateOfBirth: `${year - 31}-02-20`,
     emergencyContacts: [{ name: 'Pam Beesly', phone: '555-0142', relationship: 'Partner' }],
-    medicalNotes: null,
     notes: null,
     updatedBy: 'jim',
     updatedAt: minutesAgo(60 * 24 * 10),

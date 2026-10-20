@@ -112,7 +112,6 @@ abstract final class AppIcons {
   /// Player details (PLAYER-12).
   static const IconData birthday = Symbols.cake_rounded;
   static const IconData call = Symbols.call_rounded;
-  static const IconData medical = Symbols.medical_information_rounded;
 
   /// Event types (SCHED-1), next to their colors.
   static const IconData game = Symbols.sports_score_rounded;

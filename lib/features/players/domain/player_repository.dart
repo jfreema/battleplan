@@ -108,15 +108,9 @@ abstract interface class PlayerRepository {
   /// (PLAYER-12). Admins only.
   Stream<List<PlayerDetails>> watchTeamPlayerDetails(GroupId groupId);
 
-  /// Saves a player's details as [by] (PLAYER-12). [stored] is what was
-  /// there, which decides the medical consent ([medicalConsentFor]): new
-  /// or changed medical notes record it, and clearing them clears it.
-  /// Admins and linked members, while the team isn't archived.
-  Future<void> savePlayerDetails(
-    PlayerDetails details, {
-    required UserId by,
-    PlayerDetails? stored,
-  });
+  /// Saves a player's details as [by] (PLAYER-12). Admins and linked
+  /// members, while the team isn't archived.
+  Future<void> savePlayerDetails(PlayerDetails details, {required UserId by});
 
   /// Removes a player's details (PLAYER-12). Admins and linked members.
   Future<void> deletePlayerDetails(PlayerId playerId);

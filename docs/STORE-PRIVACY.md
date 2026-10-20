@@ -11,7 +11,6 @@ If the app starts collecting something new, change the Privacy Policy, the priva
 | Name | Sign-in and setup; admins who add someone | Shown to the person's teams | Yes |
 | Email address | Sign-in; admins and members who invite or add someone | Sign-in, setup links, invites, security notices | Yes |
 | Phone number | A person who shares one with a team (TEAM-10); players' emergency contacts (PLAYER-12) | Shown to that team, or to the player's admins and linked people | No |
-| Health information | Players' medical notes, with consent (PLAYER-12) | Seen only by the team's admins and the player's linked people | No |
 | Photos | Chat photos, profile photos, team logos and backgrounds | Shown to the team | No |
 | Files and documents | Team documents | Shown to the team | No |
 | Messages | Team chat | Shown to the team | No |
@@ -22,7 +21,7 @@ If the app starts collecting something new, change the Privacy Policy, the priva
 | Approximate location | Analytics infers the country from the IP address | Analytics | Yes |
 | Crash logs and diagnostics | Firebase Crashlytics on phones; sampled error reports from the web app | Fixing bugs | Yes |
 
-Not collected: precise location, contacts (the system calendar sheet reads them, not Battleplan), browsing or search history, purchases, financial information, the advertising ID, and audio. Nothing is used for tracking or advertising, and nothing is sold.
+Not collected: health information (medical notes were removed on 2026-10-20), precise location, contacts (the system calendar sheet reads them, not Battleplan), browsing or search history, purchases, financial information, the advertising ID, and audio. Nothing is used for tracking or advertising, and nothing is sold.
 
 ## App Store: App Privacy
 
@@ -35,7 +34,6 @@ Not collected: precise location, contacts (the system calendar sheet reads them,
 | Contact Info: Name | Yes | Yes | App Functionality |
 | Contact Info: Email Address | Yes | Yes | App Functionality |
 | Contact Info: Phone Number | Yes | Yes | App Functionality |
-| Health & Fitness: Health | Yes | Yes | App Functionality |
 | User Content: Photos or Videos | Yes | Yes | App Functionality |
 | User Content: Other User Content | Yes | Yes | App Functionality |
 | Identifiers: User ID | Yes | Yes | App Functionality, Analytics |
@@ -61,7 +59,6 @@ Everything else: not collected. These match the manifest's `NSPrivacyCollectedDa
 | Personal info: Email address | Yes | Required | App functionality, Account management, Developer communications |
 | Personal info: User IDs | Yes | Required | App functionality, Analytics, Account management |
 | Personal info: Phone number | Yes | Optional | App functionality |
-| Health and fitness: Health info | Yes | Optional | App functionality |
 | Photos and videos: Photos | Yes | Optional | App functionality |
 | Files and docs: Files and docs | Yes | Optional | App functionality |
 | Messages: Other in-app messages | Yes | Optional | App functionality |
@@ -78,5 +75,5 @@ Everything else: not collected. These match the manifest's `NSPrivacyCollectedDa
 
 - **Privacy Policy URL:** `https://getbattleplan.app/privacy`. **Account deletion URL** (Play): `https://getbattleplan.app/delete-account`.
 - **Play target audience:** adults, 18 and over. Accounts are for adults (SAFE-6); youth players never sign in.
-- **Play Health apps declaration:** Battleplan isn't a health app; it keeps optional medical notes that parents and admins enter for coaches.
+- **Play Health apps declaration:** Battleplan isn't a health app and collects no health data.
 - **App Store age rating:** say yes to people chatting and sharing content, which comes with Report, Block, and the language filter (SAFE-1, SAFE-2, SAFE-7).

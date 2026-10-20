@@ -13,6 +13,8 @@ import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
+import 'package:flutter/foundation.dart'
+    show debugDefaultTargetPlatformOverride;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -601,6 +603,29 @@ void main() {
     await tester.tap(filter);
     await tester.pumpAndSettle();
     expect(groupRepo.groups['a']!.settings.filterLanguage, isFalse);
+  });
+
+  testWidgets('the iPhone and iPad app leaves out Buy Jared a coffee', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+    );
+    await tester.tap(find.byTooltip('Team menu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Team settings'));
+    await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.textContaining('builds it as a volunteer'),
+      find.byType(ListView).last,
+      const Offset(0, -300),
+    );
+    expect(find.text('Buy Jared a coffee'), findsNothing);
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('Team settings ends with About: the version, who made it, '

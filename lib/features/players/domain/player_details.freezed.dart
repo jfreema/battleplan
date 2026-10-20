@@ -286,10 +286,7 @@ as String?,
 mixin _$PlayerDetails {
 
  PlayerId get playerId; GroupId get groupId;/// 'YYYY-MM-DD': a calendar day, with no time or time zone.
- String? get dateOfBirth; List<EmergencyContact> get emergencyContacts;/// Allergies, conditions, and medications.
- String? get medicalNotes;/// When and by whom the medical notes were shared, with the consent
-/// line, each time they were set or changed.
- DateTime? get medicalConsentAt; String? get medicalConsentBy;/// "Anything else coaches should know".
+ String? get dateOfBirth; List<EmergencyContact> get emergencyContacts;/// "Anything else coaches should know".
  String? get notes; String? get updatedBy; DateTime? get updatedAt;
 /// Create a copy of PlayerDetails
 /// with the given fields replaced by the non-null parameter values.
@@ -302,20 +299,20 @@ $PlayerDetailsCopyWith<PlayerDetails> get copyWith => _$PlayerDetailsCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as PlayerDetails;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlayerDetails&&(identical(other.playerId, _this.playerId) || other.playerId == _this.playerId)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.dateOfBirth, _this.dateOfBirth) || other.dateOfBirth == _this.dateOfBirth)&&const DeepCollectionEquality().equals(other.emergencyContacts, _this.emergencyContacts)&&(identical(other.medicalNotes, _this.medicalNotes) || other.medicalNotes == _this.medicalNotes)&&(identical(other.medicalConsentAt, _this.medicalConsentAt) || other.medicalConsentAt == _this.medicalConsentAt)&&(identical(other.medicalConsentBy, _this.medicalConsentBy) || other.medicalConsentBy == _this.medicalConsentBy)&&(identical(other.notes, _this.notes) || other.notes == _this.notes)&&(identical(other.updatedBy, _this.updatedBy) || other.updatedBy == _this.updatedBy)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlayerDetails&&(identical(other.playerId, _this.playerId) || other.playerId == _this.playerId)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.dateOfBirth, _this.dateOfBirth) || other.dateOfBirth == _this.dateOfBirth)&&const DeepCollectionEquality().equals(other.emergencyContacts, _this.emergencyContacts)&&(identical(other.notes, _this.notes) || other.notes == _this.notes)&&(identical(other.updatedBy, _this.updatedBy) || other.updatedBy == _this.updatedBy)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as PlayerDetails;
-  return Object.hash(runtimeType,_this.playerId,_this.groupId,_this.dateOfBirth,const DeepCollectionEquality().hash(_this.emergencyContacts),_this.medicalNotes,_this.medicalConsentAt,_this.medicalConsentBy,_this.notes,_this.updatedBy,_this.updatedAt);
+  return Object.hash(runtimeType,_this.playerId,_this.groupId,_this.dateOfBirth,const DeepCollectionEquality().hash(_this.emergencyContacts),_this.notes,_this.updatedBy,_this.updatedAt);
 }
 
 @override
 String toString() {
   final _this = this as PlayerDetails;
-  return 'PlayerDetails(playerId: ${_this.playerId}, groupId: ${_this.groupId}, dateOfBirth: ${_this.dateOfBirth}, emergencyContacts: ${_this.emergencyContacts}, medicalNotes: ${_this.medicalNotes}, medicalConsentAt: ${_this.medicalConsentAt}, medicalConsentBy: ${_this.medicalConsentBy}, notes: ${_this.notes}, updatedBy: ${_this.updatedBy}, updatedAt: ${_this.updatedAt})';
+  return 'PlayerDetails(playerId: ${_this.playerId}, groupId: ${_this.groupId}, dateOfBirth: ${_this.dateOfBirth}, emergencyContacts: ${_this.emergencyContacts}, notes: ${_this.notes}, updatedBy: ${_this.updatedBy}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -326,7 +323,7 @@ abstract mixin class $PlayerDetailsCopyWith<$Res>  {
   factory $PlayerDetailsCopyWith(PlayerDetails value, $Res Function(PlayerDetails) _then) = _$PlayerDetailsCopyWithImpl;
 @useResult
 $Res call({
- PlayerId playerId, GroupId groupId, String? dateOfBirth, List<EmergencyContact> emergencyContacts, String? medicalNotes, DateTime? medicalConsentAt, String? medicalConsentBy, String? notes, String? updatedBy, DateTime? updatedAt
+ PlayerId playerId, GroupId groupId, String? dateOfBirth, List<EmergencyContact> emergencyContacts, String? notes, String? updatedBy, DateTime? updatedAt
 });
 
 
@@ -343,16 +340,13 @@ class _$PlayerDetailsCopyWithImpl<$Res>
 
 /// Create a copy of PlayerDetails
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? playerId = null,Object? groupId = null,Object? dateOfBirth = freezed,Object? emergencyContacts = null,Object? medicalNotes = freezed,Object? medicalConsentAt = freezed,Object? medicalConsentBy = freezed,Object? notes = freezed,Object? updatedBy = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? playerId = null,Object? groupId = null,Object? dateOfBirth = freezed,Object? emergencyContacts = null,Object? notes = freezed,Object? updatedBy = freezed,Object? updatedAt = freezed,}) {
   return _then(PlayerDetails(
 playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
 as PlayerId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
 as String?,emergencyContacts: null == emergencyContacts ? _self.emergencyContacts : emergencyContacts // ignore: cast_nullable_to_non_nullable
-as List<EmergencyContact>,medicalNotes: freezed == medicalNotes ? _self.medicalNotes : medicalNotes // ignore: cast_nullable_to_non_nullable
-as String?,medicalConsentAt: freezed == medicalConsentAt ? _self.medicalConsentAt : medicalConsentAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,medicalConsentBy: freezed == medicalConsentBy ? _self.medicalConsentBy : medicalConsentBy // ignore: cast_nullable_to_non_nullable
-as String?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
+as List<EmergencyContact>,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,updatedBy: freezed == updatedBy ? _self.updatedBy : updatedBy // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -440,10 +434,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  String? dateOfBirth,  List<EmergencyContact> emergencyContacts,  String? medicalNotes,  DateTime? medicalConsentAt,  String? medicalConsentBy,  String? notes,  String? updatedBy,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  String? dateOfBirth,  List<EmergencyContact> emergencyContacts,  String? notes,  String? updatedBy,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PlayerDetails() when $default != null:
-return $default(_that.playerId,_that.groupId,_that.dateOfBirth,_that.emergencyContacts,_that.medicalNotes,_that.medicalConsentAt,_that.medicalConsentBy,_that.notes,_that.updatedBy,_that.updatedAt);case _:
+return $default(_that.playerId,_that.groupId,_that.dateOfBirth,_that.emergencyContacts,_that.notes,_that.updatedBy,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -461,10 +455,10 @@ return $default(_that.playerId,_that.groupId,_that.dateOfBirth,_that.emergencyCo
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  String? dateOfBirth,  List<EmergencyContact> emergencyContacts,  String? medicalNotes,  DateTime? medicalConsentAt,  String? medicalConsentBy,  String? notes,  String? updatedBy,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerId playerId,  GroupId groupId,  String? dateOfBirth,  List<EmergencyContact> emergencyContacts,  String? notes,  String? updatedBy,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _PlayerDetails():
-return $default(_that.playerId,_that.groupId,_that.dateOfBirth,_that.emergencyContacts,_that.medicalNotes,_that.medicalConsentAt,_that.medicalConsentBy,_that.notes,_that.updatedBy,_that.updatedAt);case _:
+return $default(_that.playerId,_that.groupId,_that.dateOfBirth,_that.emergencyContacts,_that.notes,_that.updatedBy,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -481,10 +475,10 @@ return $default(_that.playerId,_that.groupId,_that.dateOfBirth,_that.emergencyCo
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerId playerId,  GroupId groupId,  String? dateOfBirth,  List<EmergencyContact> emergencyContacts,  String? medicalNotes,  DateTime? medicalConsentAt,  String? medicalConsentBy,  String? notes,  String? updatedBy,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerId playerId,  GroupId groupId,  String? dateOfBirth,  List<EmergencyContact> emergencyContacts,  String? notes,  String? updatedBy,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _PlayerDetails() when $default != null:
-return $default(_that.playerId,_that.groupId,_that.dateOfBirth,_that.emergencyContacts,_that.medicalNotes,_that.medicalConsentAt,_that.medicalConsentBy,_that.notes,_that.updatedBy,_that.updatedAt);case _:
+return $default(_that.playerId,_that.groupId,_that.dateOfBirth,_that.emergencyContacts,_that.notes,_that.updatedBy,_that.updatedAt);case _:
   return null;
 
 }
@@ -496,7 +490,7 @@ return $default(_that.playerId,_that.groupId,_that.dateOfBirth,_that.emergencyCo
 
 
 class _PlayerDetails extends PlayerDetails {
-  const _PlayerDetails({required this.playerId, required this.groupId, this.dateOfBirth,  List<EmergencyContact> emergencyContacts = const <EmergencyContact>[], this.medicalNotes, this.medicalConsentAt, this.medicalConsentBy, this.notes, this.updatedBy, this.updatedAt}): _emergencyContacts = emergencyContacts,super._();
+  const _PlayerDetails({required this.playerId, required this.groupId, this.dateOfBirth,  List<EmergencyContact> emergencyContacts = const <EmergencyContact>[], this.notes, this.updatedBy, this.updatedAt}): _emergencyContacts = emergencyContacts,super._();
   
 
 @override final  PlayerId playerId;
@@ -510,12 +504,6 @@ class _PlayerDetails extends PlayerDetails {
   return EqualUnmodifiableListView(_emergencyContacts);
 }
 
-/// Allergies, conditions, and medications.
-@override final  String? medicalNotes;
-/// When and by whom the medical notes were shared, with the consent
-/// line, each time they were set or changed.
-@override final  DateTime? medicalConsentAt;
-@override final  String? medicalConsentBy;
 /// "Anything else coaches should know".
 @override final  String? notes;
 @override final  String? updatedBy;
@@ -531,18 +519,18 @@ _$PlayerDetailsCopyWith<_PlayerDetails> get copyWith => __$PlayerDetailsCopyWith
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlayerDetails&&(identical(other.playerId, playerId) || other.playerId == playerId)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&const DeepCollectionEquality().equals(other.emergencyContacts, _emergencyContacts)&&(identical(other.medicalNotes, medicalNotes) || other.medicalNotes == medicalNotes)&&(identical(other.medicalConsentAt, medicalConsentAt) || other.medicalConsentAt == medicalConsentAt)&&(identical(other.medicalConsentBy, medicalConsentBy) || other.medicalConsentBy == medicalConsentBy)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.updatedBy, updatedBy) || other.updatedBy == updatedBy)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlayerDetails&&(identical(other.playerId, playerId) || other.playerId == playerId)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&const DeepCollectionEquality().equals(other.emergencyContacts, _emergencyContacts)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.updatedBy, updatedBy) || other.updatedBy == updatedBy)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,playerId,groupId,dateOfBirth,const DeepCollectionEquality().hash(_emergencyContacts),medicalNotes,medicalConsentAt,medicalConsentBy,notes,updatedBy,updatedAt);
+    return Object.hash(runtimeType,playerId,groupId,dateOfBirth,const DeepCollectionEquality().hash(_emergencyContacts),notes,updatedBy,updatedAt);
 }
 
 @override
 String toString() {
-    return 'PlayerDetails(playerId: $playerId, groupId: $groupId, dateOfBirth: $dateOfBirth, emergencyContacts: $emergencyContacts, medicalNotes: $medicalNotes, medicalConsentAt: $medicalConsentAt, medicalConsentBy: $medicalConsentBy, notes: $notes, updatedBy: $updatedBy, updatedAt: $updatedAt)';
+    return 'PlayerDetails(playerId: $playerId, groupId: $groupId, dateOfBirth: $dateOfBirth, emergencyContacts: $emergencyContacts, notes: $notes, updatedBy: $updatedBy, updatedAt: $updatedAt)';
 }
 
 
@@ -553,7 +541,7 @@ abstract mixin class _$PlayerDetailsCopyWith<$Res> implements $PlayerDetailsCopy
   factory _$PlayerDetailsCopyWith(_PlayerDetails value, $Res Function(_PlayerDetails) _then) = __$PlayerDetailsCopyWithImpl;
 @override @useResult
 $Res call({
- PlayerId playerId, GroupId groupId, String? dateOfBirth, List<EmergencyContact> emergencyContacts, String? medicalNotes, DateTime? medicalConsentAt, String? medicalConsentBy, String? notes, String? updatedBy, DateTime? updatedAt
+ PlayerId playerId, GroupId groupId, String? dateOfBirth, List<EmergencyContact> emergencyContacts, String? notes, String? updatedBy, DateTime? updatedAt
 });
 
 
@@ -570,16 +558,13 @@ class __$PlayerDetailsCopyWithImpl<$Res>
 
 /// Create a copy of PlayerDetails
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? playerId = null,Object? groupId = null,Object? dateOfBirth = freezed,Object? emergencyContacts = null,Object? medicalNotes = freezed,Object? medicalConsentAt = freezed,Object? medicalConsentBy = freezed,Object? notes = freezed,Object? updatedBy = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? playerId = null,Object? groupId = null,Object? dateOfBirth = freezed,Object? emergencyContacts = null,Object? notes = freezed,Object? updatedBy = freezed,Object? updatedAt = freezed,}) {
   return _then(_PlayerDetails(
 playerId: null == playerId ? _self.playerId : playerId // ignore: cast_nullable_to_non_nullable
 as PlayerId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
 as String?,emergencyContacts: null == emergencyContacts ? _self._emergencyContacts : emergencyContacts // ignore: cast_nullable_to_non_nullable
-as List<EmergencyContact>,medicalNotes: freezed == medicalNotes ? _self.medicalNotes : medicalNotes // ignore: cast_nullable_to_non_nullable
-as String?,medicalConsentAt: freezed == medicalConsentAt ? _self.medicalConsentAt : medicalConsentAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,medicalConsentBy: freezed == medicalConsentBy ? _self.medicalConsentBy : medicalConsentBy // ignore: cast_nullable_to_non_nullable
-as String?,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
+as List<EmergencyContact>,notes: freezed == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as String?,updatedBy: freezed == updatedBy ? _self.updatedBy : updatedBy // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,

@@ -1,5 +1,5 @@
 // Player details (PLAYER-12): ages from a date of birth, the dates the app
-// takes, the medical consent decision, who sees them, and what's saved.
+// takes, who sees them, and what's saved.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/players/domain/player.dart';
@@ -9,17 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 const _emma = PlayerId('emma');
 const _team = GroupId('y');
 
-PlayerDetails _details({
-  String? medicalNotes,
-  DateTime? consentAt,
-  String? consentBy,
-}) => PlayerDetails(
-  playerId: _emma,
-  groupId: _team,
-  medicalNotes: medicalNotes,
-  medicalConsentAt: consentAt,
-  medicalConsentBy: consentBy,
-);
+PlayerDetails _details({String? notes}) =>
+    PlayerDetails(playerId: _emma, groupId: _team, notes: notes);
 
 void main() {
   group('ageOn', () {
@@ -105,102 +96,6 @@ void main() {
     });
   });
 
-  group('medical consent', () {
-    test('new medical notes need it', () {
-      expect(
-        medicalConsentFor(stored: null, medicalNotes: 'Peanut allergy'),
-        MedicalConsent.record,
-      );
-      expect(
-        medicalConsentFor(stored: _details(), medicalNotes: 'Peanut allergy'),
-        MedicalConsent.record,
-      );
-      expect(
-        needsMedicalConsent(stored: null, medicalNotes: 'Peanut allergy'),
-        isTrue,
-      );
-    });
-
-    test('changed medical notes need it again', () {
-      final stored = _details(
-        medicalNotes: 'Peanut allergy',
-        consentAt: DateTime(2026),
-        consentBy: 'maria',
-      );
-      expect(
-        medicalConsentFor(stored: stored, medicalNotes: 'Peanut and egg'),
-        MedicalConsent.record,
-      );
-    });
-
-    test('unchanged medical notes keep it, spaces aside', () {
-      final stored = _details(
-        medicalNotes: 'Peanut allergy',
-        consentAt: DateTime(2026),
-        consentBy: 'maria',
-      );
-      expect(
-        medicalConsentFor(stored: stored, medicalNotes: 'Peanut allergy'),
-        MedicalConsent.keep,
-      );
-      expect(
-        medicalConsentFor(stored: stored, medicalNotes: '  Peanut allergy\n'),
-        MedicalConsent.keep,
-      );
-      expect(
-        needsMedicalConsent(stored: stored, medicalNotes: 'Peanut allergy'),
-        isFalse,
-      );
-    });
-
-    test('clearing medical notes clears it', () {
-      final stored = _details(
-        medicalNotes: 'Peanut allergy',
-        consentAt: DateTime(2026),
-        consentBy: 'maria',
-      );
-      expect(
-        medicalConsentFor(stored: stored, medicalNotes: ''),
-        MedicalConsent.clear,
-      );
-      expect(
-        medicalConsentFor(stored: stored, medicalNotes: '   '),
-        MedicalConsent.clear,
-      );
-      expect(
-        medicalConsentFor(stored: stored, medicalNotes: null),
-        MedicalConsent.clear,
-      );
-      // A consent left without notes goes too.
-      expect(
-        medicalConsentFor(
-          stored: _details(consentAt: DateTime(2026)),
-          medicalNotes: null,
-        ),
-        MedicalConsent.clear,
-      );
-      expect(
-        medicalConsentFor(
-          stored: _details(consentBy: 'maria'),
-          medicalNotes: null,
-        ),
-        MedicalConsent.clear,
-      );
-    });
-
-    test('no medical notes before or after leave it alone', () {
-      expect(
-        medicalConsentFor(stored: null, medicalNotes: ''),
-        MedicalConsent.keep,
-      );
-      expect(
-        medicalConsentFor(stored: _details(), medicalNotes: null),
-        MedicalConsent.keep,
-      );
-      expect(needsMedicalConsent(stored: null, medicalNotes: ' '), isFalse);
-    });
-  });
-
   group('who sees details', () {
     final links = [
       const GuardianLink(playerId: _emma, groupId: _team, uid: UserId('maria')),
@@ -267,7 +162,6 @@ void main() {
             relationship: 'Dad',
           ),
         ],
-        medicalNotes: '  ',
         notes: ' Wears glasses ',
       );
       final c = d.cleaned;
@@ -276,13 +170,12 @@ void main() {
         EmergencyContact(name: 'Maria', phone: '555-0100'),
         EmergencyContact(name: 'Luis', phone: '555-0101', relationship: 'Dad'),
       ]);
-      expect(c.medicalNotes, isNull);
       expect(c.notes, 'Wears glasses');
       expect(d.isEmpty, isFalse);
     });
 
     test('nothing filled in is empty', () {
-      expect(_details(medicalNotes: ' ').isEmpty, isTrue);
+      expect(_details(notes: ' ').isEmpty, isTrue);
       expect(
         const PlayerDetails(
           playerId: _emma,

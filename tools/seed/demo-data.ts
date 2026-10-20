@@ -207,15 +207,12 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
   }
   // Details for coaches (PLAYER-12), sample values only: the demo account
   // sees its child's as a guardian, and its own player's age as Thunder's
-  // owner. Medical notes carry the consent the app asks for.
+  // owner. No medical notes: the app keeps no health data.
   const year = now.getFullYear();
   add('playerDetails/demo-riley', {
     groupId: DEMO_YOUTH_TEAM,
     dateOfBirth: `${year - 10}-04-12`,
     emergencyContacts: [{ name: 'App Review', phone: '555-0100', relationship: 'Parent' }],
-    medicalNotes: 'Peanut allergy',
-    medicalConsentAt: month,
-    medicalConsentBy: demo.uid,
     notes: 'Wears glasses for games.',
     updatedBy: demo.uid,
     updatedAt: month,
@@ -224,7 +221,6 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
     groupId: DEMO_TEAM,
     dateOfBirth: `${year - 27}-08-03`,
     emergencyContacts: [{ name: 'April Ludgate', phone: '555-0142', relationship: 'Partner' }],
-    medicalNotes: null,
     notes: null,
     updatedBy: 'demo-sam',
     updatedAt: month,

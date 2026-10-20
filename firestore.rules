@@ -291,8 +291,8 @@ service cloud.firestore {
         && (resource.data.uid == uid() || superAdmin() || isAdmin(resource.data.groupId));
     }
 
-    // Player details (PLAYER-12): date of birth, emergency contacts, medical
-    // notes, and notes, kept apart from the roster record (PLAYER-10) under
+    // Player details (PLAYER-12): date of birth, emergency contacts, and
+    // notes, kept apart from the roster record (PLAYER-10) under
     // the player's own ID. The team's admins and the player's linked members
     // ('self' or a guardian) read and write them, on an active player of a
     // team that isn't archived; super admins read them for support (View
@@ -310,8 +310,7 @@ service cloud.firestore {
       // groupId never changes: it's the player's.
       allow create, update: if detailsWriter(incoming().groupId, playerId)
         && (resource == null || resource.data.groupId == incoming().groupId)
-        && validDetails(incoming())
-        && consentOk(incoming(), resource == null ? {} : resource.data);
+        && validDetails(incoming());
       // Checked against the player too, so deleting none is no error.
       allow delete: if detailsWriter(playerOf(playerId).groupId, playerId);
     }
@@ -333,17 +332,19 @@ service cloud.firestore {
     // app also refuses one over Limits.playerAgeMaxYears ago), up to 2
     // emergency contacts, and notes up to 500 characters (the Limits in
     // shared/constants.json; player_details.test.ts keeps these in step).
+    // No medical notes or their consent: the app keeps no health data, so
+    // a save deletes any left from before.
     function validDetails(d) {
       let dob = d.get('dateOfBirth', null);
       let c = d.get('emergencyContacts', []);
-      return d.keys().hasOnly(['groupId', 'dateOfBirth', 'emergencyContacts', 'medicalNotes',
-             'medicalConsentAt', 'medicalConsentBy', 'notes', 'updatedBy', 'updatedAt'])
+      return d.keys().hasOnly(['groupId', 'dateOfBirth', 'emergencyContacts', 'notes',
+             'updatedBy', 'updatedAt'])
         && d.updatedBy == uid() && d.updatedAt == request.time
         && (dob == null
             || (dob is string && dob.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])')
                 && timestamp.date(int(dob[0:4]), int(dob[5:7]), int(dob[8:10])) < request.time))
         && c is list && c.size() <= 2 && contactOk(c, 0) && contactOk(c, 1)
-        && textOk(d.get('medicalNotes', null), 500) && textOk(d.get('notes', null), 500);
+        && textOk(d.get('notes', null), 500);
     }
     function textOk(t, max) { return t == null || (t is string && t.size() <= max); }
     // A name and a phone number, and optionally how they're related.
@@ -354,19 +355,6 @@ service cloud.firestore {
             && c[i].phone is string && c[i].phone.trim().size() > 0 && c[i].phone.size() <= 30
             && textOk(c[i].get('relationship', null), 30));
     }
-    // Medical notes need consent (PLAYER-12): new or changed notes carry the
-    // writer's consent, stamped now. Otherwise the consent stays as it was,
-    // or is cleared along with the notes.
-    function consentOk(d, old) {
-      let notes = d.get('medicalNotes', null);
-      let at = d.get('medicalConsentAt', null);
-      let by = d.get('medicalConsentBy', null);
-      return notes != null && notes != '' && notes != old.get('medicalNotes', null)
-        ? at == request.time && by == uid()
-        : (at == old.get('medicalConsentAt', null) && by == old.get('medicalConsentBy', null))
-          || ((notes == null || notes == '') && at == null && by == null);
-    }
-
     // ---- Chat --------------------------------------------------------------
 
     match /messages/{messageId} {

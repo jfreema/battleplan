@@ -875,12 +875,6 @@
     },
     {
       "collectionGroup": "playerDetails",
-      "fieldPath": "medicalNotes",
-      "ttl": false,
-      "indexes": []
-    },
-    {
-      "collectionGroup": "playerDetails",
       "fieldPath": "notes",
       "ttl": false,
       "indexes": []

@@ -1,6 +1,6 @@
 // Player details for coaches (PLAYER-12): the player card's Details for the
-// team's admins and linked members only, the edit form and its medical
-// consent, ages on the roster for admins, and archived teams read-only.
+// team's admins and linked members only, the edit form with no medical
+// notes, ages on the roster for admins, and archived teams read-only.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -25,7 +25,6 @@ class _RefusingDetails extends FakePlayerRepository {
   Future<void> savePlayerDetails(
     PlayerDetails details, {
     required UserId by,
-    PlayerDetails? stored,
   }) async => throw failure;
 }
 
@@ -45,10 +44,6 @@ void main() {
     testMembership('y', 'emma1', name: 'Emma R'),
     testMembership('y', 'sam', name: 'Sam Lee'),
   ];
-  const consentLine =
-      "I'm this player or their parent or guardian (or a team admin with the "
-      "family's permission), and I agree to share this with the team's "
-      'admins.';
 
   final today = DateTime.now();
   // The first of last month, 12 years back: 12 whatever day it is.
@@ -64,9 +59,6 @@ void main() {
         relationship: 'Mom',
       ),
     ],
-    medicalNotes: 'Peanut allergy',
-    medicalConsentAt: DateTime(2026),
-    medicalConsentBy: 'maria',
     notes: 'Wears glasses',
   );
 
@@ -139,7 +131,7 @@ void main() {
       expect(find.text('Emma Rodriguez'), findsWidgets);
       expect(find.text('Details'), findsNothing);
       expect(find.text('Date of birth'), findsNothing);
-      expect(find.text('Peanut allergy'), findsNothing);
+      expect(find.text('Wears glasses'), findsNothing);
       expect(find.text('Edit details'), findsNothing);
       // Not on the roster either, nor by going to the form.
       await go(tester, '/g/y/roster');
@@ -167,7 +159,7 @@ void main() {
       expect(find.text('Remove player'), findsOneWidget);
       // For support (§3): shown, but never changed.
       expect(find.text('Details'), findsOneWidget);
-      expect(find.text('Peanut allergy'), findsOneWidget);
+      expect(find.text('Wears glasses'), findsOneWidget);
       expect(find.text('Edit details'), findsNothing);
       await go(tester, '/g/y/roster/players/emma/details');
       expect(find.text("You can't do that on this team."), findsOneWidget);
@@ -199,8 +191,9 @@ void main() {
       );
       expect(find.text('Emergency contacts'), findsOneWidget);
       expect(find.text('Mom · +1 (555) 010-0199'), findsOneWidget);
-      expect(find.text('Peanut allergy'), findsOneWidget);
       expect(find.text('Wears glasses'), findsOneWidget);
+      // No medical notes: the app keeps no health data.
+      expect(find.text('Medical notes'), findsNothing);
       expect(find.text('Edit details'), findsOneWidget);
       // Tap-to-call opens the phone app with the number's digits.
       await tester.tap(find.byTooltip('Call Maria Rodriguez'));
@@ -220,7 +213,7 @@ void main() {
         final repo = emmaTeam(details: full);
         await openCard(tester, uid, repo);
         expect(find.text('Details'), findsOneWidget);
-        expect(find.text('Peanut allergy'), findsOneWidget);
+        expect(find.text('Wears glasses'), findsOneWidget);
         expect(find.text('Edit details'), findsOneWidget);
         expect(repo.detailsReads, ['player emma']);
       });
@@ -277,7 +270,7 @@ void main() {
 
   group('the details form (PLAYER-12)', () {
     testWidgets('a date of birth from the picker, a contact needing a name '
-        'and phone, and medical notes needing consent', (tester) async {
+        'and phone, and no medical notes', (tester) async {
       final repo = emmaTeam();
       await openCard(tester, 'maria', repo);
       await edit(tester);
@@ -320,22 +313,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Enter a phone number.'), findsNothing);
 
-      // New medical notes need the consent line checked.
-      expect(find.text(consentLine), findsNothing);
-      await tester.enterText(field('Medical notes'), 'Peanut allergy');
-      await tester.pumpAndSettle();
-      expect(find.text(consentLine), findsOneWidget);
-      await save(tester);
+      // No medical notes: the app keeps no health data.
+      expect(find.text('Medical notes'), findsNothing);
       expect(
-        find.text('Check the box to share the medical notes.'),
+        find.text(
+          'Anything else coaches should know. Leave out medical '
+          'information.',
+        ),
         findsOneWidget,
       );
-      expect(repo.calls, isEmpty);
-      await tester.tap(find.text(consentLine));
       await tester.enterText(field('Notes'), 'Wears glasses');
       await save(tester);
 
-      expect(repo.calls, ['saveDetails emma record']);
+      expect(repo.calls, ['saveDetails emma']);
       expect(find.text('Details saved'), findsOneWidget);
       final saved = repo.details[emmaId]!;
       expect(saved.dateOfBirth, picked);
@@ -346,8 +336,6 @@ void main() {
           relationship: 'Dad',
         ),
       ]);
-      expect(saved.medicalNotes, 'Peanut allergy');
-      expect(saved.medicalConsentBy, 'maria');
       expect(saved.notes, 'Wears glasses');
       // Back on the card, which shows them.
       expect(find.text('Dad · 555-0101'), findsOneWidget);
@@ -376,42 +364,19 @@ void main() {
       expect(repo.calls, isEmpty);
     });
 
-    testWidgets('changed medical notes ask again; unchanged keep the consent; '
-        'cleared clear it', (tester) async {
+    testWidgets('saving changed notes keeps the rest', (tester) async {
       final repo = emmaTeam(details: full);
       await openCard(tester, 'coach', repo);
       await edit(tester);
-      expect(find.text(consentLine), findsNothing);
-      await tester.enterText(field('Medical notes'), 'Peanut and egg allergy');
-      await tester.pumpAndSettle();
-      expect(find.text(consentLine), findsOneWidget);
-      // Back as it was: nothing new to agree to.
-      await tester.enterText(field('Medical notes'), 'Peanut allergy');
-      await tester.pumpAndSettle();
-      expect(find.text(consentLine), findsNothing);
       await tester.enterText(field('Notes'), 'Wears glasses, bats left');
       await save(tester);
-      expect(repo.calls, ['saveDetails emma keep']);
-      expect(repo.details[emmaId]!.medicalConsentBy, 'maria');
+      expect(repo.calls, ['saveDetails emma']);
+      final saved = repo.details[emmaId]!;
+      expect(saved.notes, 'Wears glasses, bats left');
+      expect(saved.dateOfBirth, full.dateOfBirth);
+      expect(saved.emergencyContacts, full.emergencyContacts);
+      expect(saved.updatedBy, 'coach');
       expect(find.text('Wears glasses, bats left'), findsOneWidget);
-
-      await edit(tester);
-      await tester.enterText(field('Medical notes'), 'Peanut and egg allergy');
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(consentLine));
-      await save(tester);
-      expect(repo.calls.last, 'saveDetails emma record');
-      expect(repo.details[emmaId]!.medicalConsentBy, 'coach');
-
-      await edit(tester);
-      await tester.enterText(field('Medical notes'), '');
-      await tester.pumpAndSettle();
-      expect(find.text(consentLine), findsNothing);
-      await save(tester);
-      expect(repo.calls.last, 'saveDetails emma clear');
-      expect(repo.details[emmaId]!.medicalNotes, isNull);
-      expect(repo.details[emmaId]!.medicalConsentAt, isNull);
-      expect(repo.details[emmaId]!.medicalConsentBy, isNull);
     });
 
     testWidgets('clearing everything removes the details', (tester) async {
@@ -426,7 +391,6 @@ void main() {
       // A contact left blank is dropped rather than refused.
       await tester.tap(find.text('Add an emergency contact'));
       await tester.pumpAndSettle();
-      await tester.enterText(field('Medical notes'), '');
       await tester.enterText(field('Notes'), ' ');
       await save(tester);
       expect(repo.calls, ['deleteDetails emma']);
@@ -452,7 +416,7 @@ void main() {
         await tester.enterText(field('Notes'), 'Lefty');
         await save(tester);
         expect(find.text(message), findsOneWidget);
-        expect(find.text('Medical notes'), findsWidgets);
+        expect(find.text('Emergency contacts'), findsWidgets);
       }
     });
 
@@ -484,7 +448,7 @@ void main() {
       },
     );
     expect(find.text('Details'), findsOneWidget);
-    expect(find.text('Peanut allergy'), findsOneWidget);
+    expect(find.text('Wears glasses'), findsOneWidget);
     expect(find.text('Edit details'), findsNothing);
     await go(tester, '/g/y/roster/players/emma/details');
     expect(find.text("You can't do that on this team."), findsOneWidget);

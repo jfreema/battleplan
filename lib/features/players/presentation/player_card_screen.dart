@@ -544,7 +544,7 @@ class PlayerCardScreen extends ConsumerWidget {
       if (details.isEmpty) {
         if (before != null) await repo.deletePlayerDetails(player.id);
       } else {
-        await repo.savePlayerDetails(details, by: UserId(uid), stored: before);
+        await repo.savePlayerDetails(details, by: UserId(uid));
       }
     } on AppFailure {
       if (context.mounted) {

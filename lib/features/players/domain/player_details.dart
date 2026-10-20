@@ -34,9 +34,9 @@ bool hasDialableDigits(String phone) => RegExp('[0-9]').hasMatch(phone);
 
 /// A player's optional details for coaches (PLAYER-12, `playerDetails`,
 /// same ID as the player): date of birth, up to 2 emergency contacts,
-/// medical notes, and other notes. Kept apart from the roster record
-/// (PLAYER-10), so only the team's admins and the members linked to the
-/// player ever read them.
+/// and other notes. No medical notes: the app keeps no health data. Kept
+/// apart from the roster record (PLAYER-10), so only the team's admins and
+/// the members linked to the player ever read them.
 @freezed
 abstract class PlayerDetails with _$PlayerDetails {
   const factory({
@@ -46,14 +46,6 @@ abstract class PlayerDetails with _$PlayerDetails {
     /// 'YYYY-MM-DD': a calendar day, with no time or time zone.
     String? dateOfBirth,
     @Default(<EmergencyContact>[]) List<EmergencyContact> emergencyContacts,
-
-    /// Allergies, conditions, and medications.
-    String? medicalNotes,
-
-    /// When and by whom the medical notes were shared, with the consent
-    /// line, each time they were set or changed.
-    DateTime? medicalConsentAt,
-    String? medicalConsentBy,
 
     /// "Anything else coaches should know".
     String? notes,
@@ -75,7 +67,6 @@ abstract class PlayerDetails with _$PlayerDetails {
     final c = cleaned;
     return c.dateOfBirth == null &&
         c.emergencyContacts.isEmpty &&
-        c.medicalNotes == null &&
         c.notes == null;
   }
 
@@ -94,7 +85,6 @@ abstract class PlayerDetails with _$PlayerDetails {
             relationship: blankToNull(c.relationship),
           ),
     ],
-    medicalNotes: blankToNull(medicalNotes),
     notes: blankToNull(notes),
   );
 }
@@ -175,47 +165,3 @@ bool dateOfBirthAllowed(String dateOfBirth, DateTime today) {
   final day = DateTime(born.year, born.month, born.day);
   return !day.isBefore(range.first) && !day.isAfter(range.last);
 }
-
-/// What saving does to the medical consent (PLAYER-12).
-enum MedicalConsent {
-  /// New or changed medical notes: the one saving them consents now, so
-  /// the save records when and who.
-  record,
-
-  /// The medical notes and their consent stay as they are.
-  keep,
-
-  /// The medical notes are cleared, and their consent with them.
-  clear,
-}
-
-/// What saving [medicalNotes] does to the consent, given what's [stored]
-/// (PLAYER-12). Non-empty notes need consent the first time they're set and
-/// whenever they change, and only then: the rules refuse a new consent on
-/// unchanged notes, and want it unchanged otherwise.
-MedicalConsent medicalConsentFor({
-  required PlayerDetails? stored,
-  required String? medicalNotes,
-}) {
-  final next = blankToNull(medicalNotes);
-  if (next != null) {
-    return next == blankToNull(stored?.medicalNotes)
-        ? MedicalConsent.keep
-        : MedicalConsent.record;
-  }
-  final hadAny =
-      stored != null &&
-      (blankToNull(stored.medicalNotes) != null ||
-          stored.medicalConsentAt != null ||
-          stored.medicalConsentBy != null);
-  return hadAny ? MedicalConsent.clear : MedicalConsent.keep;
-}
-
-/// Whether saving [medicalNotes] needs the consent line checked
-/// (PLAYER-12): they're entered or changed.
-bool needsMedicalConsent({
-  required PlayerDetails? stored,
-  required String? medicalNotes,
-}) =>
-    medicalConsentFor(stored: stored, medicalNotes: medicalNotes) ==
-    MedicalConsent.record;

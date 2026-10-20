@@ -1417,37 +1417,19 @@ class FakePlayerRepository implements PlayerRepository {
     }
   }
 
-  /// Saves as the Firestore repository does: cleaned, with the consent
-  /// recorded, kept, or cleared ([medicalConsentFor]), logged in [calls]
-  /// as `saveDetails <id> <consent>`.
+  /// Saves as the Firestore repository does: cleaned, logged in [calls]
+  /// as `saveDetails <id>`.
   @override
   Future<void> savePlayerDetails(
     PlayerDetails details, {
     required UserId by,
-    PlayerDetails? stored,
   }) async {
     final d = details.cleaned;
-    final consent = medicalConsentFor(
-      stored: stored,
-      medicalNotes: d.medicalNotes,
-    );
-    final before = this.details[d.playerId];
-    final now = DateTime.now();
     this.details[d.playerId] = d.copyWith(
-      medicalConsentAt: switch (consent) {
-        MedicalConsent.record => now,
-        MedicalConsent.clear => null,
-        MedicalConsent.keep => before?.medicalConsentAt,
-      },
-      medicalConsentBy: switch (consent) {
-        MedicalConsent.record => by.value,
-        MedicalConsent.clear => null,
-        MedicalConsent.keep => before?.medicalConsentBy,
-      },
       updatedBy: by.value,
-      updatedAt: now,
+      updatedAt: DateTime.now(),
     );
-    calls.add('saveDetails ${d.playerId.value} ${consent.name}');
+    calls.add('saveDetails ${d.playerId.value}');
     _detailsChanges.add(null);
   }
 

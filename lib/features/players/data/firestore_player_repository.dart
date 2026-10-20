@@ -286,21 +286,15 @@ class FirestorePlayerRepository implements PlayerRepository {
       );
 
   /// One merge write with exactly the keys the rules allow (ARCH §6.2
-  /// `playerDetails`). The consent fields are written only when the
-  /// medical notes are new or changed (stamped now, by [by]) or cleared
-  /// (cleared with them); otherwise they're left out, so the merge keeps
-  /// them.
+  /// `playerDetails`). The medical notes and their consent the app once
+  /// kept are deleted, so a save leaves no health data behind and the
+  /// merged record has only keys the rules allow.
   @override
   Future<void> savePlayerDetails(
     PlayerDetails details, {
     required UserId by,
-    PlayerDetails? stored,
   }) async {
     final d = details.cleaned;
-    final consent = medicalConsentFor(
-      stored: stored,
-      medicalNotes: d.medicalNotes,
-    );
     try {
       await _details(d.playerId).set({
         'groupId': d.groupId.value,
@@ -314,18 +308,9 @@ class FirestorePlayerRepository implements PlayerRepository {
               'relationship': ?c.relationship,
             },
         ],
-        'medicalNotes': d.medicalNotes,
-        ...switch (consent) {
-          MedicalConsent.record => {
-            'medicalConsentAt': FieldValue.serverTimestamp(),
-            'medicalConsentBy': by.value,
-          },
-          MedicalConsent.clear => {
-            'medicalConsentAt': null,
-            'medicalConsentBy': null,
-          },
-          MedicalConsent.keep => const <String, Object?>{},
-        },
+        'medicalNotes': FieldValue.delete(),
+        'medicalConsentAt': FieldValue.delete(),
+        'medicalConsentBy': FieldValue.delete(),
         'notes': d.notes,
         'updatedBy': by.value,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -429,9 +414,6 @@ PlayerDetails playerDetailsFromFirestore(String id, Map<String, dynamic> d) =>
               relationship: c['relationship'] as String?,
             ),
       ],
-      medicalNotes: d['medicalNotes'] as String?,
-      medicalConsentAt: (d['medicalConsentAt'] as Timestamp?)?.toDate(),
-      medicalConsentBy: d['medicalConsentBy'] as String?,
       notes: d['notes'] as String?,
       updatedBy: d['updatedBy'] as String?,
       updatedAt: (d['updatedAt'] as Timestamp?)?.toDate(),

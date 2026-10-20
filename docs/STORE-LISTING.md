@@ -16,7 +16,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 | Primary category | Sports |
 | Secondary category | Social Networking |
 | Price | Free |
-| Availability | United States only, while Buy Jared a coffee links to Venmo (store checklist 5.8) |
+| Availability | United States and Canada. The iPhone and iPad app leaves out Buy Jared a coffee, which links to Venmo, so it's allowed outside the US (store checklist 5.8) |
 | Copyright | `2026` and your legal name, as on your Apple Account |
 | Content rights | No third-party content: everything in the app is the team's own or ours |
 
@@ -119,6 +119,4 @@ Where things are:
 • A language filter is on for every team.
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.
-
-Buy Jared a coffee (Team settings, About Battleplan) opens the developer's Venmo. It's a voluntary tip that unlocks nothing, and the app is listed in the United States only while it's there.
 ```

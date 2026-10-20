@@ -163,7 +163,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Add players | pending until an admin approves | ✓ | ✓ | ✓ |
 | Add a guardian to a player | players they're linked to (as the player or a guardian) | ✓ | ✓ | ✓ |
 | Remove player links; approve or decline claims and pending players | their own link only | ✓ | ✓ | ✓ |
-| See and edit a player's details: date of birth, emergency contacts, medical notes (PLAYER-12) | players they're linked to | ✓ | ✓ | see only |
+| See and edit a player's details: date of birth, emergency contacts, notes (PLAYER-12) | players they're linked to | ✓ | ✓ | see only |
 | Upload documents and add links | setting (on) | ✓ | ✓ | in teams they've joined |
 | Delete any document; pin documents | — | ✓ | ✓ | ✓ |
 | Share the invite link, QR, or code; send email invites | setting (on) | ✓ | ✓ | ✓ |
@@ -531,10 +531,9 @@ Players that others answer for never get accounts, and every account belongs to 
   - Players never get accounts of their own. Accounts are for adults only (18+), and a `self` link just means that member is the player.
   - Player records that others manage may be children's, so we treat every record this way (LEGAL-1).
   - Photos shared in team chat may still show kids. They're visible only to the team's members, and anyone can report one.
-- **PLAYER-12 · MVP · Player details for coaches.** Owner's request (2026-10-12): "store player info, like date of birth, and such for easy administration as a coach."
-  - Each player can have optional details: date of birth, up to 2 emergency contacts (name, phone, relationship), medical notes (allergies, conditions, medications; up to 500 characters), and other notes for coaches (up to 500 characters).
+- **PLAYER-12 · MVP · Player details for coaches.** Owner's request (2026-10-12): "store player info, like date of birth, and such for easy administration as a coach." On 2026-10-20, at the owner's request, medical notes and their consent stamp were removed, so Battleplan collects no health data.
+  - Each player can have optional details: date of birth, up to 2 emergency contacts (name, phone, relationship), and notes for coaches (up to 500 characters). There are no medical notes: Battleplan doesn't collect health data.
   - Who sees and edits them: the team's admins and the members linked to that player (the player themselves or a parent or guardian). Other members never see them, not even that they exist. Super admins can see them for support but can't change them.
-  - Medical notes need consent. Saving new or changed medical notes needs a tick on "I'm this player or their parent or guardian (or a team admin with the family's permission), and I agree to share this with the team's admins." The app records who agreed and when.
   - The date of birth can also be given when a player is added (PLAYER-1, PLAYER-4) and changed in Edit player on the card; it's still stored only in the details. A member's pending player keeps it, and a decline deletes it with the player.
   - On the player card, the Details section shows the age and date of birth, the emergency contacts with tap to call, and the notes, with Edit. On the roster, admins see each player's age.
   - Details are deleted with the player or the team. Removing a guardian or deleting a linked account doesn't delete them, since they belong to the player. They never appear in notifications, chat, search, logs, or analytics.
@@ -1052,7 +1051,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Privacy Policy at `/privacy` and Terms of Use at `/terms`, on the website (WEB-2).
   - Linked from sign-in, Settings, the store listings, and the Apple developer settings.
   - The Privacy Policy covers:
-    - what we collect: name, email, photo, messages, files, the phone number and email members choose to share with a team (TEAM-10), device tokens, usage analytics, crash reports, and the player records members enter on any team (name, jersey number, walk-up song, plus the optional details in PLAYER-12: date of birth, emergency contacts, medical notes, and notes, seen only by the team's admins and the player's linked people). Some player records are managed by parents and may be children's. Medical notes are health information and are saved only with consent;
+    - what we collect: name, email, photo, messages, files, the phone number and email members choose to share with a team (TEAM-10), device tokens, usage analytics, crash reports, and the player records members enter on any team (name, jersey number, walk-up song, plus the optional details in PLAYER-12: date of birth, emergency contacts, and notes, seen only by the team's admins and the player's linked people). Some player records are managed by parents and may be children's. Battleplan collects no health information;
     - that super admins can access team content for moderation and support, and see a direct message (CHAT-19) only when it's reported;
     - how long data is kept;
     - how to delete it.
@@ -1069,7 +1068,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
 - **LEGAL-7 · Phase 2 · GDPR and EU.** Done in Phase 2, after the web go-live (§9):
   - the Privacy Policy's EU sections: who the controller is, the lawful basis for each use, people's rights (access, correction, erasure, portability, objection), how to complain to a data protection authority, and transfers to the US under each provider's data processing terms;
   - **Download my data** in Settings → Account, a file with the person's profile, memberships, messages, RSVPs, and player links, plus the details of the players they're linked to (PLAYER-12);
-  - medical notes (PLAYER-12) are special-category health data under GDPR: the lawful basis is explicit consent (the consent tick, recorded with who and when), kept to what coaches need, and deleted on request by deleting the notes, the player, or the team;
+  - no special-category data: player details (PLAYER-12) hold no health information, since medical notes were removed on 2026-10-20 at the owner's request;
   - no cookie banner needed: the website sets no cookies, the web app stores only what sign-in and the offline cache need, and Google Analytics on the web is off for EU visitors or asks first;
   - the EU Digital Services Act basics: a point of contact, Report as the way to flag content, and a reason given when content is removed;
   - a data breach plan, with notice to the authority within 72 hours.
@@ -1565,4 +1564,4 @@ Each question has a default. The build follows the default until someone decides
 | Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). **2026-10-12:** this covers every claim, as the player or a guardian; an admin's own claim is approved at once. | — |
 | Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email. **2026-10-12:** Facebook sign-in was removed from the plan. **Later on 2026-10-12:** it returns as go-live Phase 6, with single sign-on (§9, ARCH D60). | — |
 | Q17 | ~~Should there be separate adult and youth team types?~~ **Decided 2026-10-12 (the owner's request):** no. There's one team type. Every team has players; any member can claim a player as "I am this player" or as a parent or guardian, and any member can add a player. Team admins approve or decline claims and members' new players (§6.3). | — |
-| Q18 | ~~Should we store player details such as date of birth?~~ **Decided 2026-10-12 (the owner's request):** yes, as optional details seen only by the team's admins and the player's linked people, with consent for medical notes (PLAYER-12, ARCH D63). | — |
+| Q18 | ~~Should we store player details such as date of birth?~~ **Decided 2026-10-12 (the owner's request):** yes, as optional details seen only by the team's admins and the player's linked people, with consent for medical notes (PLAYER-12, ARCH D63). **2026-10-20 (the owner's request):** medical notes and their consent stamp were removed, so no health data is stored. Date of birth, emergency contacts, and notes stay. | — |

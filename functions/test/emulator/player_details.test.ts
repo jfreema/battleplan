@@ -43,20 +43,17 @@ const hasDetails = async (playerId: string) => (await details().doc(playerId).ge
 const detailsOf = async (groupId: string) =>
   (await details().where('groupId', '==', groupId).get()).docs.map((d) => d.id).sort();
 
-/** Sample details as the app saves them (never real medical data). */
+/** Sample details as the app saves them (sample values only). */
 const sample = (groupId: string, by: string) => ({
   groupId,
   dateOfBirth: '2016-04-01',
   emergencyContacts: [{ name: 'Sam Rivera', phone: '555-0100', relationship: 'Parent' }],
-  medicalNotes: 'Peanut allergy',
-  medicalConsentAt: Timestamp.now(),
-  medicalConsentBy: by,
   notes: 'Wears glasses',
   updatedBy: by,
   updatedAt: Timestamp.now(),
 });
 /** Pieces of the sample that must never be copied anywhere else. */
-const SECRETS = ['2016-04-01', '555-0100', 'Peanut allergy', 'Wears glasses'];
+const SECRETS = ['2016-04-01', '555-0100', 'Wears glasses'];
 
 async function person(uid: string, name: string): Promise<void> {
   const email = `${uid}@example.com`;
@@ -204,7 +201,7 @@ describe('player details are never copied elsewhere (PLAYER-12)', () => {
         for (const secret of SECRETS) expect(text, `${collection}/${d.id}`).not.toContain(secret);
       }
     }
-    expect(mail.sent.map((m) => m.text).join('\n')).not.toContain('Peanut');
+    expect(mail.sent.map((m) => m.text).join('\n')).not.toContain('Wears glasses');
   });
 });
 

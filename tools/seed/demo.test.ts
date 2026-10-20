@@ -137,8 +137,8 @@ describe('demo data: player details (PLAYER-12)', () => {
 
   it('writes them as the rules take them, for active players, on their team', () => {
     assert.ok(details.length >= 1);
-    const keys = ['groupId', 'dateOfBirth', 'emergencyContacts', 'medicalNotes', 'medicalConsentAt', 'medicalConsentBy',
-      'notes', 'updatedBy', 'updatedAt'];
+    // No medical notes or their consent: the rules refuse them.
+    const keys = ['groupId', 'dateOfBirth', 'emergencyContacts', 'notes', 'updatedBy', 'updatedAt'];
     for (const d of details) {
       const player = byPath.get(`players/${d.path.split('/')[1]}`);
       assert.equal(player?.status, 'active', d.path);
@@ -148,9 +148,11 @@ describe('demo data: player details (PLAYER-12)', () => {
       assert.ok(Date.parse(d.data.dateOfBirth as string) < Date.parse('2026-10-12T00:00:00Z'), 'in the past');
       const contacts = d.data.emergencyContacts as { name: string; phone: string }[];
       assert.ok(contacts.length <= 2 && contacts.every((c) => c.name && c.phone), d.path);
-      // Medical notes carry consent (PLAYER-12).
-      if (d.data.medicalNotes) assert.ok(d.data.medicalConsentAt instanceof Date && d.data.medicalConsentBy, d.path);
     }
+  });
+
+  it('holds no health data anywhere', () => {
+    for (const d of docs) assert.doesNotMatch(JSON.stringify(d.data), /medical|allerg/i, d.path);
   });
 });
 

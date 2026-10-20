@@ -35,7 +35,7 @@ Required, and doable now.
 - ✅ 1.15 **The privacy answers, written down once for both stores,** matching the Privacy Policy and the iPhone privacy manifest: [STORE-PRIVACY.md](STORE-PRIVACY.md), ready to copy into App Store Connect (3.4) and the Play Console (4.4). Both stores ask about:
   - names, emails, and the phone numbers people share;
   - messages, photos, and files;
-  - **health data** (players' medical notes);
+  - no health data (medical notes were removed on 2026-10-20);
   - players' records entered by parents, which may be children's;
   - device tokens, crash reports, and usage analytics.
 
@@ -86,7 +86,7 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
   - target audience: adults (18+);
   - ads: none;
   - app access: sign in with Google and join the demo team with its code, or the demo login at `getbattleplan.app/emaillogin`;
-  - the Health apps declaration, which every app files; Battleplan stores medical notes.
+  - the Health apps declaration, which every app files; Battleplan isn't a health app and stores no health data.
 - ⬜ 4.5 👤 **EU trader status** in the Play Console.
 - ⬜ 4.6 👤 **The listing** from phase 1 (task 213): the short and full descriptions, the Sports category, the contact email, the privacy URL, the icon, the feature graphic, and the phone screenshots. Then submit for production (task 214).
 
@@ -99,4 +99,4 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 - ⬜ 5.5 **Keep other apps' names out of Apple's keywords** (GroupMe, TeamSnap, TeamReach, GameChanger), and don't mention Android in the iPhone listing.
 - ⬜ 5.6 **Aim the listings at coaches and parents:** no kid-focused art or wording, so neither store treats Battleplan as a kids' app.
 - ✅ 5.7 **Take "position" out of the Privacy Policy and the delete-account page.** Players no longer have one, and the policy should match the app exactly. They, and the Terms, now say a player's name, jersey number, and walk-up song.
-- ⬜ 5.8 **Buy Jared a coffee links out to Venmo.** In the United States both stores now let apps link to other ways to pay, so list the apps in the US only (App Store Connect's availability, the Play Console's countries) while it's there, and say in the App Review notes (1.17) that it's a voluntary tip to the developer that unlocks nothing. Elsewhere, Apple and Google generally want their own in-app purchase for tips, so it would have to go before listing outside the US. Venmo's own terms also expect a business profile for money taken in through an app.
+- ✅ 5.8 **Buy Jared a coffee links out to Venmo.** In the United States both stores now let apps link to other ways to pay, so list the apps in the US only (App Store Connect's availability, the Play Console's countries) while it's there, and say in the App Review notes (1.17) that it's a voluntary tip to the developer that unlocks nothing. Elsewhere, Apple and Google generally want their own in-app purchase for tips, so it would have to go before listing outside the US. Venmo's own terms also expect a business profile for money taken in through an app. *Done 2026-10-20 the other way: the iPhone and iPad app leaves the coffee link out (it stays on the web), so the App Store listing can include Canada.*

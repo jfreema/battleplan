@@ -87,9 +87,8 @@ class PlayerDetailsRoute extends ConsumerWidget {
 /// The details form (PLAYER-12): date of birth from a date picker (not
 /// today or later, and not more than [Limits.playerAgeMaxYears] years
 /// ago), up to [Limits.emergencyContactsMax] emergency contacts that each
-/// need a name and a phone, medical notes with the consent line to check
-/// whenever they're entered or changed, and notes. Saving with nothing
-/// filled in removes the details.
+/// need a name and a phone, and notes. No medical notes: the app keeps no
+/// health data. Saving with nothing filled in removes the details.
 class PlayerDetailsScreen extends ConsumerStatefulWidget {
   const new({
     required this.player,
@@ -100,7 +99,7 @@ class PlayerDetailsScreen extends ConsumerStatefulWidget {
 
   final Player player;
 
-  /// Who's saving: recorded with the save, and with the consent.
+  /// Who's saving: recorded with the save.
   final UserId uid;
 
   /// What's saved now, or null when there's nothing yet.
@@ -143,11 +142,9 @@ class _ContactFields {
 
 class _PlayerDetailsScreenState extends ConsumerState<PlayerDetailsScreen> {
   final _form = GlobalKey<FormState>();
-  final _medical = TextEditingController();
   final _notes = TextEditingController();
   final _contacts = <_ContactFields>[];
   DateTime? _dob;
-  bool _consent = false;
   bool _tried = false;
   bool _saving = false;
 
@@ -162,23 +159,17 @@ class _PlayerDetailsScreenState extends ConsumerState<PlayerDetailsScreen> {
     for (final c in s?.emergencyContacts ?? const <EmergencyContact>[]) {
       _contacts.add(_ContactFields(c));
     }
-    _medical.text = s?.medicalNotes ?? '';
     _notes.text = s?.notes ?? '';
   }
 
   @override
   void dispose() {
-    _medical.dispose();
     _notes.dispose();
     for (final c in _contacts) {
       c.dispose();
     }
     super.dispose();
   }
-
-  /// New or changed medical notes need the consent line (PLAYER-12).
-  bool get _needsConsent =>
-      needsMedicalConsent(stored: widget.stored, medicalNotes: _medical.text);
 
   String? get _dobText => switch (_dob) {
     final d? => formatDateOfBirth(d),
@@ -219,7 +210,7 @@ class _PlayerDetailsScreenState extends ConsumerState<PlayerDetailsScreen> {
     final l10n = AppLocalizations.of(context);
     setState(() => _tried = true);
     final valid = _form.currentState!.validate();
-    if (!valid || !_dobOk || (_needsConsent && !_consent)) return;
+    if (!valid || !_dobOk) return;
     final p = widget.player;
     final details = PlayerDetails(
       playerId: p.id,
@@ -229,7 +220,6 @@ class _PlayerDetailsScreenState extends ConsumerState<PlayerDetailsScreen> {
         for (final c in _contacts)
           if (!c.blank) c.contact,
       ],
-      medicalNotes: _medical.text,
       notes: _notes.text,
     ).cleaned;
     final repo = ref.read(playerRepositoryProvider);
@@ -240,11 +230,7 @@ class _PlayerDetailsScreenState extends ConsumerState<PlayerDetailsScreen> {
         // Nothing left to keep: the details go (PLAYER-12).
         if (widget.stored != null) await repo.deletePlayerDetails(p.id);
       } else {
-        await repo.savePlayerDetails(
-          details,
-          by: widget.uid,
-          stored: widget.stored,
-        );
+        await repo.savePlayerDetails(details, by: widget.uid);
       }
       if (!mounted) return;
       messenger
@@ -279,7 +265,6 @@ class _PlayerDetailsScreenState extends ConsumerState<PlayerDetailsScreen> {
     final scheme = theme.colorScheme;
     final dob = _dob;
     final age = _dobText == null ? null : ageOn(_dobText!, DateTime.now());
-    final needsConsent = _needsConsent;
 
     Widget section(String text) => Padding(
       padding: const EdgeInsets.only(top: Space.lg, bottom: Space.xs),
@@ -420,38 +405,6 @@ class _PlayerDetailsScreenState extends ConsumerState<PlayerDetailsScreen> {
                       icon: const Icon(AppIcons.add),
                       label: Text(l10n.addEmergencyContact),
                     ),
-                  ),
-                section(l10n.medicalNotesLabel),
-                TextFormField(
-                  controller: _medical,
-                  minLines: 2,
-                  maxLines: 6,
-                  maxLength: Limits.medicalNotesMax,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    labelText: l10n.medicalNotesLabel,
-                    helperText: l10n.medicalNotesHelp,
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: _upTo(Limits.medicalNotesMax),
-                  // The consent line comes and goes with changes.
-                  onChanged: (_) => setState(() {}),
-                ),
-                // Shown when the medical notes are entered or changed; the
-                // save records who agreed and when (PLAYER-12).
-                if (needsConsent)
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    value: _consent,
-                    onChanged: (v) => setState(() => _consent = v ?? false),
-                    title: Text(l10n.medicalConsentLine),
-                    subtitle: _tried && !_consent
-                        ? Text(
-                            l10n.medicalConsentRequired,
-                            style: TextStyle(color: scheme.error),
-                          )
-                        : null,
                   ),
                 section(l10n.playerNotesLabel),
                 TextFormField(

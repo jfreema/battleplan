@@ -6,8 +6,15 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+
+/// Whether About offers Buy Jared a coffee: everywhere but the Apple apps.
+bool get showsBuyCoffee =>
+    kIsWeb ||
+    (defaultTargetPlatform != TargetPlatform.iOS &&
+        defaultTargetPlatform != TargetPlatform.macOS);
 
 /// Who made Battleplan, for About.
 const developerName = 'Jared Freeman';
@@ -21,7 +28,9 @@ const venmoCardAsset = 'assets/about/venmo.png';
 
 /// About Battleplan, at the end of Team settings (TEAM-5): the version and
 /// build, who made it, that it's free and he volunteers, and Buy Jared a
-/// coffee, which shows his Venmo.
+/// coffee, which shows his Venmo, except in the iPhone and iPad app: the
+/// App Store allows a link to pay outside it only in the US, and the app
+/// is listed in Canada too (store checklist 5.8).
 class AboutBattleplan extends ConsumerWidget {
   const new({required this.appBuild, super.key});
 
@@ -47,12 +56,14 @@ class AboutBattleplan extends ConsumerWidget {
           style: Theme.of(context).textTheme.bodyMedium
               ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
-        const SizedBox(height: Space.md),
-        OutlinedButton.icon(
-          onPressed: () => unawaited(showBuyCoffee(context)),
-          icon: const Icon(AppIcons.coffee),
-          label: Text(l10n.buyCoffee(_developerFirstName)),
-        ),
+        if (showsBuyCoffee) ...[
+          const SizedBox(height: Space.md),
+          OutlinedButton.icon(
+            onPressed: () => unawaited(showBuyCoffee(context)),
+            icon: const Icon(AppIcons.coffee),
+            label: Text(l10n.buyCoffee(_developerFirstName)),
+          ),
+        ],
       ],
     );
   }

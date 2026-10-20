@@ -80,7 +80,6 @@ export const Limits = {
   emergencyContactNameMax: 60,
   emergencyContactPhoneMax: 30,
   emergencyContactRelationshipMax: 30,
-  medicalNotesMax: 500,
   playerNotesMax: 500,
   walkUpSongMax: 100,
   playerAgeMaxYears: 100,

@@ -198,8 +198,8 @@ SPEC Q17, §6.3 (PLAYER-1 to PLAYER-11), ARCH §6.2 and D59. The owner asked for
 
 SPEC PLAYER-12 and Q18, ARCH §6.2, §6.3, and D63. The owner asked to keep player information such as date of birth for easier team administration.
 
-216. ✅ Server: `playerDetails/{playerId}` with rules (admins and the player's linked members read and write; super admins read only; nobody else sees them; strict fields and sizes; consent stamped with who and when for medical notes); deleted with the player and the team; sample details in the seed and demo data; rules and emulator tests.
-217. ✅ App: a Details section on the player card for admins and linked members (age and date of birth, emergency contacts with tap to call, medical notes, notes) with an Edit form and the consent tick for medical notes; ages on the roster for admins.
+216. ✅ Server: `playerDetails/{playerId}` with rules (admins and the player's linked members read and write; super admins read only; nobody else sees them; strict fields and sizes; no medical notes, removed 2026-10-20 at the owner's request so there's no health data); deleted with the player and the team; sample details in the seed and demo data; rules and emulator tests.
+217. ✅ App: a Details section on the player card for admins and linked members (age and date of birth, emergency contacts with tap to call, notes) with an Edit form; ages on the roster for admins.
 218. ✅ Docs and website: SPEC PLAYER-10 and PLAYER-12, §3, LEGAL-1 and LEGAL-7; ARCH data model, rules, and D63; the privacy, terms, and delete-account pages and the landing page.
 
 ## Date of birth on the player forms · after go-live

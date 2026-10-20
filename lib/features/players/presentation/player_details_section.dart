@@ -12,7 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The player card's Details (PLAYER-12): emergency contacts with
-/// tap-to-call, medical notes, and notes, and Edit, which
+/// tap-to-call, and notes, and Edit, which
 /// opens the form at `/g/:groupId/roster/players/:playerId/details`. The
 /// card shows it only to the team's admins and the members linked to the
 /// player ([seesPlayerDetails]), so nobody else's app asks for the details;
@@ -137,12 +137,6 @@ class _DetailsList extends ConsumerWidget {
               ),
             ),
         ],
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(AppIcons.medical),
-          title: Text(l10n.medicalNotesLabel),
-          subtitle: Text(d.medicalNotes ?? '—'),
-        ),
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(AppIcons.notes),
