@@ -112,7 +112,8 @@ jobs:
   # Web preview per PR.
   preview:
     name: Web preview
-    if: github.event_name == 'pull_request' && vars.FIREBASE_DEPLOYS == 'true'
+    # Only pull requests from this repo: a fork's can't sign in to deploy.
+    if: github.event_name == 'pull_request' && vars.FIREBASE_DEPLOYS == 'true' && github.event.pull_request.head.repo.full_name == github.repository
     needs: [app, functions, web]
     runs-on: ubuntu-latest
     permissions:

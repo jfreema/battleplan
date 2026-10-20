@@ -24,6 +24,9 @@
 set -euo pipefail
 
 REPO=jfreema/battleplan
+# The repository's numeric ID: a renamed or re-created repo with the same
+# name can't take over the trust.
+REPO_ID=1409477976
 SA_NAME=github-deployer
 POOL=github
 PROVIDER=github
@@ -31,11 +34,13 @@ PROVIDER=github
 case "${1:-}" in
   dev)
     PROJECT=battleplan-dev-ecce4
-    CONDITION="assertion.repository == '$REPO'"
+    # The public repo's own runs only: never a run another repo's pull
+    # request can steer (pull_request_target, workflow_run).
+    CONDITION="assertion.repository == '$REPO' && assertion.repository_id == '$REPO_ID' && !(assertion.event_name in ['pull_request_target', 'workflow_run'])"
     ;;
   prod)
     PROJECT=battleplan-prod
-    CONDITION="assertion.repository == '$REPO' && assertion.event_name == 'workflow_dispatch' && assertion.ref == 'refs/heads/main' && assertion.workflow_ref == '$REPO/.github/workflows/release-prod.yml@refs/heads/main'"
+    CONDITION="assertion.repository == '$REPO' && assertion.repository_id == '$REPO_ID' && assertion.event_name == 'workflow_dispatch' && assertion.ref == 'refs/heads/main' && assertion.workflow_ref == '$REPO/.github/workflows/release-prod.yml@refs/heads/main'"
     ;;
   *)
     echo "Usage: $0 dev|prod" >&2
