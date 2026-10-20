@@ -208,7 +208,7 @@ SPEC PLAYER-12 and Q18, ARCH §6.2, §6.3, and D63. The owner asked to keep play
 
 ## Super admins manage every team · after go-live
 
-229. ✅ Super admins manage any team as SPEC §3 says, joined or not, at the owner's request (2026-10-13, SPEC §3, ADMIN-3, PLAYER-12). *While viewing a team they're not on, the team menu (Roster, Invite, Team settings, Media, Reports), Team settings' owner actions, Set RSVP for someone, and editing and pinning documents now show; player details show read-only, with ages on the roster. On a team they've joined, they also send @everyone and announcements, post polls, and add documents whatever the team's switches (Firestore and Storage rules). `addPlayers` refuses a date of birth from a super admin who isn't an admin of the team. The owner's account (jared.d.freeman@gmail.com) has the claim on prod.*
+229. ✅ Super admins manage any team as SPEC §3 says, joined or not, at the owner's request (2026-10-13, SPEC §3, ADMIN-3, PLAYER-12). *While viewing a team they're not on, the team menu (Roster, Invite, Team settings, Media, Reports), Team settings' owner actions, Set RSVP for someone, and editing and pinning documents now show; player details show read-only, with ages on the roster. On a team they've joined, they also send @everyone and announcements, post polls, and add documents whatever the team's switches (Firestore and Storage rules). `addPlayers` refuses a date of birth from a super admin who isn't an admin of the team. The owner's account has the claim on prod.*
 
 ## Release workflows · after go-live
 
@@ -388,7 +388,7 @@ Apple sign-in on the web first (a popup). The iPhone's native sheet is checked i
 129. ✅ App Store listing: screenshots for iPhone and iPad, description, keywords, support and privacy URLs. *Moved from Launch. The Google Play listing moved to task 213. Done 2026-10-17: [STORE-LISTING.md](STORE-LISTING.md) has the text, the age rating answers, and the App Review notes, and `store/app-store/` the 6.9-inch iPhone, 6.3-inch iPhone, and 13-inch iPad screenshots, from the Simulator with sample data. Taking them found the team header under the iPad's status bar in the wide layout, now fixed.*
 130. App Store privacy labels and the age-rating questionnaire (LEGAL-4). *Moved from Launch. The Play Data safety form moved to task 213.*
 131. 👤 **Jared:** Declare EU trader status in App Store Connect. *Moved from Launch. Google Play's is part of task 213.*
-132. ✅ App Review demo account with a seeded team, made by hand on prod (D54), and review notes explaining that teams are invite-only. *Moved from Launch. Done 2026-10-17 with `tools/seed/demo.ts --write-to-prod`: `appreview@getbattleplan.app` owns Thunder (invite code H7V5-SAQ3); the password went to the owner, not the repo.*
+132. ✅ App Review demo account with a seeded team, made by hand on prod (D54), and review notes explaining that teams are invite-only. *Moved from Launch. Done 2026-10-17 with `tools/seed/demo.ts --write-to-prod`: `appreview@getbattleplan.app` owns Thunder (its invite code is only in App Store Connect's review notes); the password went to the owner, not the repo.*
 133. Submit to the App Store. Once it's listed, turn on the App Store badge on the website and the `/join` page (task 179) and the App Store link in the iOS Safari tip (task 73). *Moved from Launch. The Google Play submission moved to task 214.*
 
 **Phase 4 is done when** the app is on the App Store for iPhone and iPad. From here on, every feature ships on iOS and the web in the same release.

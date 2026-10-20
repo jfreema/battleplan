@@ -109,7 +109,7 @@ They're captures of the app in the iOS Simulator (iPhone 18 Pro Max and iPad Pro
 Battleplan is team chat and scheduling for sports teams. Teams are invite-only, so the demo account above already owns a team with players, events, chat, a poll, documents, and a play, and you can sign in with it directly.
 
 How to get in:
-• Sign in with Apple or Google on the sign-in screen, then join the demo team with code H7V5-SAQ3 (Join a team).
+• Sign in with Apple or Google on the sign-in screen, then join the demo team with code [the demo team's code, kept only in App Store Connect] (Join a team).
 • Or use the demo account above. Email sign-in isn't on the sign-in screen, which offers Apple and Google; it's at getbattleplan.app/emaillogin. On the device, paste that address into Notes and tap it, and the app opens its email sign-in.
 
 Where things are:
