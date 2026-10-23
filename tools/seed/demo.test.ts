@@ -105,6 +105,47 @@ describe('demoDocs', () => {
   });
 });
 
+describe('demo data: what the App Review notes promise', () => {
+  const now = new Date('2026-10-12T15:00:00Z');
+  const docs = demoDocs({ uid: 'demo-appreview', email: DEFAULT_DEMO_EMAIL }, now);
+  const byPath = new Map(docs.map((d) => [d.path, d.data]));
+  const inCollection = (c: string) => docs.filter((d) => d.path.startsWith(`${c}/`));
+
+  it('keeps events coming on both teams for four weeks after a run', () => {
+    const later = now.getTime() + 28 * 86_400_000;
+    for (const team of [DEMO_TEAM, DEMO_YOUTH_TEAM]) {
+      const starts = inCollection('events').filter((e) => e.data.groupId === team).map((e) => (e.data.startAt as Date).getTime());
+      assert.ok(starts.some((t) => t > later), team);
+    }
+  });
+
+  it('gives Thunder a poll, with its message and true counts (POLL-1)', () => {
+    const polls = inCollection('polls').filter((p) => p.data.groupId === DEMO_TEAM);
+    assert.equal(polls.length, 1);
+    const id = polls[0].path.split('/')[1];
+    const message = byPath.get(`messages/${id}`)!;
+    assert.equal(message.type, 'poll');
+    assert.equal(message.pollId, id);
+    assert.equal(message.text, polls[0].data.question);
+    const votes = inCollection('pollVotes').filter((v) => v.data.pollId === id);
+    assert.equal(polls[0].data.voterCount, votes.length);
+    const counted = Object.values(polls[0].data.voteCounts as Record<string, number>).reduce((a, b) => a + b, 0);
+    assert.equal(counted, votes.flatMap((v) => v.data.optionIds as string[]).length);
+    for (const v of votes) assert.ok(byPath.has(`groupMembers/${DEMO_TEAM}_${v.data.uid}`), v.path);
+  });
+
+  it('gives Thunder a play on the softball field', () => {
+    const plays = inCollection('plays').filter((p) => p.data.groupId === DEMO_TEAM);
+    assert.equal(plays.length, 1);
+    assert.equal(plays[0].data.board, 'baseball');
+    const steps = plays[0].data.steps as { elements: { x?: number; y?: number; pts?: number[] }[] }[];
+    assert.ok(steps.length >= 2);
+    for (const e of steps.flatMap((s) => s.elements)) {
+      for (const n of [e.x, e.y, ...(e.pts ?? [])].filter((n) => n !== undefined)) assert.ok(n! >= 0 && n! <= 1);
+    }
+  });
+});
+
 describe('demo data: one team type (TEAM-1, PLAYER-3, PLAYER-4)', () => {
   const docs = demoDocs({ uid: 'demo-appreview', email: DEFAULT_DEMO_EMAIL }, new Date('2026-10-12T15:00:00Z'));
   const inCollection = (c: string) => docs.filter((d) => d.path.startsWith(`${c}/`));

@@ -244,11 +244,23 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
     }
   }
 
-  const events = [
+  // Five weeks of them, so the schedule isn't empty however long App
+  // Review takes after a run. The first of each keeps its old ID and the
+  // RSVPs below.
+  const events: { id: string; groupId: string; type: string; title: string; day: number; hour: number; opponent?: string; homeAway?: string }[] = [
     { id: 'demo-thunder-practice', groupId: DEMO_TEAM, type: 'practice', title: 'Practice', day: 2, hour: 18 },
     { id: 'demo-thunder-game', groupId: DEMO_TEAM, type: 'game', title: 'vs. Eagles', day: 5, hour: 10, opponent: 'Eagles', homeAway: 'home' },
     { id: 'demo-lightning-practice', groupId: DEMO_YOUTH_TEAM, type: 'practice', title: 'Practice', day: 1, hour: 17 },
   ];
+  const opponents: [string, string][] = [['Hawks', 'away'], ['Comets', 'home'], ['Wildcats', 'away'], ['Eagles', 'away']];
+  for (let week = 1; week <= 4; week++) {
+    const [opponent, homeAway] = opponents[week - 1];
+    events.push(
+      { id: `demo-thunder-practice-${week}`, groupId: DEMO_TEAM, type: 'practice', title: 'Practice', day: 2 + 7 * week, hour: 18 },
+      { id: `demo-thunder-game-${week}`, groupId: DEMO_TEAM, type: 'game', title: `${homeAway === 'home' ? 'vs.' : 'at'} ${opponent}`, day: 5 + 7 * week, hour: 10, opponent, homeAway },
+      { id: `demo-lightning-practice-${week}`, groupId: DEMO_YOUTH_TEAM, type: 'practice', title: 'Practice', day: 1 + 7 * week, hour: 17 },
+    );
+  }
   // [event, type, participant, status, respondedBy]. Players count in
   // rsvpCounts, members answering for themselves in staffCounts (SCHED-5).
   const rsvps: [string, string, string, string, string][] = [
@@ -310,6 +322,86 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
       updatedAt: ago(60),
     });
   }
+
+  // A poll in Thunder's chat (POLL-1): the poll message shares the poll's
+  // ID, the question its text, and the counts match the votes.
+  const poll = { id: 'demo-thunder-dinner', question: 'Team dinner after the game?', options: ['Tacos', 'Pizza', 'Burgers'], minutes: 150 };
+  const votes: Record<string, number> = { 'demo-jordan': 0, 'demo-sam': 0, 'demo-maria': 1 };
+  const voteCounts: Record<string, number> = {};
+  for (const i of Object.values(votes)) voteCounts[`${i}`] = (voteCounts[`${i}`] ?? 0) + 1;
+  add(`polls/${poll.id}`, {
+    groupId: DEMO_TEAM,
+    messageId: poll.id,
+    createdBy: demo.uid,
+    question: poll.question,
+    options: poll.options.map((text, i) => ({ id: `${i}`, text })),
+    allowMultiple: false,
+    anonymous: false,
+    closesAt: null,
+    closedAt: null,
+    voteCounts,
+    voterCount: Object.keys(votes).length,
+    createdAt: ago(poll.minutes),
+  });
+  for (const [uid, i] of Object.entries(votes)) {
+    add(`pollVotes/${poll.id}_${uid}`, { pollId: poll.id, groupId: DEMO_TEAM, uid, optionIds: [`${i}`], updatedAt: ago(poll.minutes - 5) });
+  }
+  add(`messages/${poll.id}`, {
+    groupId: DEMO_TEAM,
+    authorId: demo.uid,
+    authorName: nameOf(demo.uid),
+    authorPhotoPath: null,
+    authorPlayerSummary: null,
+    type: 'poll',
+    pollId: poll.id,
+    text: poll.question,
+    attachments: [],
+    reactions: {},
+    createdAt: ago(poll.minutes),
+  });
+
+  // A play on Thunder's whiteboard: bunt defense on the softball field.
+  // Spots are fractions of the board, home plate at the bottom, where the
+  // whiteboard's defense puts the fielders (as in seed.ts).
+  const spot: Record<string, [number, number]> = {
+    P: [0.5, 0.7713], C: [0.5, 0.9255], '1B': [0.6474, 0.7196], '2B': [0.5777, 0.6412],
+    SS: [0.4223, 0.6412], '3B': [0.3526, 0.7196], LF: [0.2303, 0.3928], CF: [0.5, 0.2617], RF: [0.7697, 0.3928],
+  };
+  // On the bunt: 1B and 3B charge, P covers the middle, 2B covers first,
+  // SS covers second, and the outfield backs up the bases.
+  const moved: Record<string, [number, number]> = {
+    ...spot, P: [0.5, 0.82], '1B': [0.58, 0.82], '3B': [0.42, 0.82], '2B': [0.6474, 0.7196],
+    SS: [0.5, 0.6194], LF: [0.3, 0.62], RF: [0.72, 0.62],
+  };
+  const marker = (l: string, [x, y]: [number, number]) => ({ k: 'm', id: l.toLowerCase(), x, y, s: 'team', l });
+  const charges = ['P', '1B', '3B', '2B', 'SS', 'LF', 'RF'];
+  add('plays/demo-thunder-bunt-defense', {
+    groupId: DEMO_TEAM,
+    board: 'baseball',
+    variant: 'full',
+    title: 'Bunt defense',
+    note: '1B and 3B charge, P takes the middle, 2B covers first, SS covers second. C calls the throw.',
+    steps: [
+      {
+        elements: [
+          ...Object.entries(spot).map(([l, at]) => marker(l, at)),
+          { k: 'm', id: 'b', x: 0.465, y: 0.9, s: 'opponent', l: 'B' },
+          ...charges.map((l) => ({ k: 'a', id: `to-${l}`, t: 'run', pts: [...spot[l], ...moved[l]] })),
+        ],
+      },
+      {
+        elements: [
+          ...Object.entries(moved).map(([l, at]) => marker(l, at)),
+          { k: 'm', id: 'b', x: 0.56, y: 0.84, s: 'opponent', l: 'B' },
+          { k: 'm', id: 'ball', x: 0.43, y: 0.83, s: 'ball' },
+          { k: 'a', id: 'throw', t: 'pass', pts: [0.44, 0.81, 0.63, 0.73] },
+        ],
+      },
+    ],
+    createdBy: demo.uid,
+    createdAt: ago(60 * 24 * 2),
+    updatedAt: ago(60 * 24 * 2),
+  });
 
   add(`groupDocuments/demo-thunder-rules`, {
     groupId: DEMO_TEAM,
