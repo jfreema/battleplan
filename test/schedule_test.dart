@@ -1729,7 +1729,10 @@ void main() {
       expect(find.byType(ActionChip), findsNWidgets(6));
 
       await tester.tap(find.text('Save'));
-      await tester.pumpAndSettle();
+      // The saving bar runs while the dialog is open, so it never settles;
+      // pump through the dialog's entrance instead.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
       expect(find.text('Adds 2 practices.'), findsOneWidget);
       await tester.tap(find.text('Save').last);
       await tester.pumpAndSettle();
