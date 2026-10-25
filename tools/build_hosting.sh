@@ -100,8 +100,13 @@ if [ -f "$aasa" ]; then
     echo "APPLE_TEAM_ID isn't set: apple-app-site-association keeps its placeholder." >&2
   fi
 fi
+# assetlinks.json lists the SHA-256 of every key that signs the Android app:
+# the upload key (the Android build's run summary) and, for prod, Play App
+# Signing's key (Play Console, App integrity). They only exist once the
+# upload key is made and the first bundle is in Google Play, so until then
+# there's no file and this warns (docs/DEVELOPMENT.md, App Links).
 [ -f "$out/.well-known/assetlinks.json" ] ||
-  echo "No assetlinks.json for $flavor yet: Android App Links won't verify." >&2
+  echo "No hosting/well-known/$flavor/assetlinks.json yet: Android App Links won't verify. It needs the upload key's and (prod) Play App Signing's SHA-256 (docs/DEVELOPMENT.md, App Links)." >&2
 
 for f in "$out"/.well-known/*; do
   [ -f "$f" ] || continue

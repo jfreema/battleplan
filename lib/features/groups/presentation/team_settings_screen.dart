@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -16,10 +18,13 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/application/team_editor.dart';
+import 'package:battleplan/features/groups/domain/chat_colors.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/presentation/chat_bubble_colors.dart';
 import 'package:battleplan/features/groups/presentation/chat_look_section.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/storage_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +53,7 @@ class TeamSettingsScreen extends ConsumerStatefulWidget {
 class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
   final _name = TextEditingController();
   final _description = TextEditingController();
+  final GlobalKey _chatLookKey = GlobalKey();
   bool _loaded = false;
 
   @override
@@ -203,7 +209,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     final theme = Theme.of(context);
     final group = ref.watch(groupProvider(widget.groupId)).value;
     if (group == null) {
-      return Scaffold(appBar: AppBar(title: Text(l10n.teamSettingsMenu)));
+      return Scaffold(
+        appBar: gumdropAppBar(context, title: l10n.teamSettingsMenu),
+      );
     }
     if (!_loaded) {
       _name.text = group.name;
@@ -227,264 +235,468 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
         ? null
         : ref.watch(teamPhotoUrlProvider(group.photoPath!)).value;
 
-    Widget section(String title) => Padding(
-      padding: const EdgeInsets.fromLTRB(0, Space.xl, 0, Space.sm),
-      child: Text(title, style: theme.textTheme.titleSmall),
+    final c = GumdropColors.of(context);
+    final text = theme.textTheme;
+    const gap = SizedBox(height: 12);
+    const headingGap = SizedBox(height: 10);
+    final look = group.chatTheme ?? const ChatTheme();
+    final candy = look.bubbleColor == null
+        ? chatCandyOrder(c.flavor).first
+        : ChatCandy.fromStored(look.bubbleColor);
+    final lookColor = candy == null
+        ? l10n.teamColorOption
+        : chatCandyName(l10n, candy);
+    final lookBackground = switch (look.background) {
+      ChatBackground.plain => l10n.backgroundPlain,
+      ChatBackground.pattern => l10n.backgroundPattern,
+      ChatBackground.photo => l10n.backgroundPhoto,
+    };
+
+    Widget switchRow({
+      required String title,
+      required bool value,
+      required ValueChanged<bool> onChanged,
+      String? subtitle,
+    }) => SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      minTileHeight: 44,
+      title: Text(title, style: switchRowTitle(context)),
+      subtitle: subtitle == null
+          ? null
+          : Text(
+              subtitle,
+              style: text.bodySmall?.copyWith(color: c.card.textMuted),
+            ),
+      value: value,
+      onChanged: onChanged,
+    );
+
+    // A card with a heading and switch rows (design §3.5 "permissions").
+    Widget switchCard(String heading, List<Widget> rows) => SettingsCard(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+      divided: false,
+      children: [
+        CardHeading(heading),
+        for (final (i, row) in rows.indexed) ...[
+          if (i > 0) Divider(height: 2, color: c.card.divider),
+          row,
+        ],
+      ],
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.teamSettingsMenu)),
+      appBar: gumdropAppBar(context, title: l10n.teamSettingsMenu),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
-          child: ListView(
-            padding: const EdgeInsets.all(Space.xl),
-            children: [
-              Center(
-                child: TeamBadge(
-                  name: group.name,
-                  color: group.color == null ? null : Color(group.color!),
-                  imageUrl: logoUrl,
-                  size: 72,
-                ),
-              ),
-              Center(
-                child: TextButton(
-                  style: full
-                      ? TextButton.styleFrom(
-                          foregroundColor: theme.disabledColor,
-                        )
-                      : null,
-                  onPressed: full
-                      ? () => showStorageFull(context)
-                      : () => unawaited(_changeLogo(group.id)),
-                  child: Text(l10n.changeLogo),
-                ),
-              ),
-              TextField(
-                controller: _name,
-                maxLength: Limits.groupNameMax,
-                decoration: InputDecoration(
-                  labelText: l10n.teamNameLabel,
-                  counterText: '',
-                ),
-                onSubmitted: (v) => v.trim().isEmpty
-                    ? null
-                    : _save(() => repo.update(group.id, name: v)),
-              ),
-              const SizedBox(height: Space.md),
-              TextField(
-                controller: _description,
-                maxLength: 500,
-                maxLines: 3,
-                minLines: 1,
-                decoration: InputDecoration(
-                  labelText: l10n.teamDescriptionLabel,
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  onPressed: () => _save(
-                    () => repo.update(
-                      group.id,
-                      name: _name.text.trim().isEmpty ? null : _name.text,
-                      description: _description.text,
-                    ),
-                  ),
-                  child: Text(l10n.save),
-                ),
-              ),
-              const SizedBox(height: Space.lg),
-              DropdownButtonFormField<Sport>(
-                initialValue: group.sport,
-                decoration: InputDecoration(labelText: l10n.sportLabel),
-                items: [
-                  for (final sp in Sport.values)
-                    DropdownMenuItem(
-                      value: sp,
-                      child: Text(sportName(l10n, sp)),
-                    ),
-                ],
-                onChanged: (sp) => sp == null
-                    ? null
-                    : _save(() => repo.update(group.id, sport: sp)),
-              ),
-              section(l10n.teamColorLabel),
-              Wrap(
-                spacing: Space.sm,
-                runSpacing: Space.sm,
-                children: [
-                  for (final c in teamColorValues)
-                    InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => _save(
-                        () => repo.update(group.id, color: _hex(c)),
-                        announce: false,
-                      ),
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Color(c),
-                        child: c == group.color
-                            ? const Icon(AppIcons.check, color: Colors.white)
-                            : null,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: Space.lg),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(AppIcons.timeZone),
-                title: Text(l10n.timeZoneLabel),
-                subtitle: Text(group.timeZone),
-                trailing: const Icon(AppIcons.edit),
-                onTap: () => unawaited(_changeTimeZone(group, repo)),
-              ),
-              // The invite link: expiry, uses, reset, and turn off (INV-2).
-              section(l10n.linkSettings),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(AppIcons.invite),
-                title: Text(l10n.manageInviteLink),
-                subtitle: Text(l10n.manageInviteLinkSubtitle),
-                onTap: () =>
-                    unawaited(context.push('/g/${group.id.value}/invite')),
-              ),
-              section(l10n.memberPermissions),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.permCreateEvents),
-                value: s.membersCanCreateEvents,
-                onChanged: (v) =>
-                    setSettings(s.copyWith(membersCanCreateEvents: v)),
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.permCreatePolls),
-                value: s.membersCanCreatePolls,
-                onChanged: (v) =>
-                    setSettings(s.copyWith(membersCanCreatePolls: v)),
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.permUploadDocs),
-                value: s.membersCanUploadDocs,
-                onChanged: (v) =>
-                    setSettings(s.copyWith(membersCanUploadDocs: v)),
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.permInvite),
-                value: s.membersCanInvite,
-                onChanged: (v) => setSettings(s.copyWith(membersCanInvite: v)),
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.permAllowMaybe),
-                value: s.allowMaybe,
-                onChanged: (v) => setSettings(s.copyWith(allowMaybe: v)),
-              ),
-              // Who sees the roster's people (TEAM-3).
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.permSeePeople),
-                subtitle: Text(l10n.permSeePeopleHelp),
-                value: s.membersCanSeePeople,
-                onChanged: (v) =>
-                    setSettings(s.copyWith(membersCanSeePeople: v)),
-              ),
-              // The language filter for chat and polls (SAFE-7).
-              section(l10n.languageSection),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.filterLanguage),
-                subtitle: Text(l10n.filterLanguageHelp),
-                value: s.filterLanguage,
-                onChanged: (v) => setSettings(s.copyWith(filterLanguage: v)),
-              ),
-              section(l10n.defaultReminders),
-              Wrap(
-                spacing: Space.sm,
-                children: [
-                  for (final m in reminderChoices)
-                    FilterChip(
-                      label: Text(_reminderLabel(l10n, m)),
-                      selected: s.defaultReminderOffsets.contains(m),
-                      onSelected: (on) {
-                        final next = {...s.defaultReminderOffsets};
-                        on ? next.add(m) : next.remove(m);
-                        setSettings(
-                          s.copyWith(
-                            defaultReminderOffsets: next.toList()..sort(),
+          // Built whole, not lazily: a settings page, short enough, and
+          // every row is there to scroll to (the Chat look row).
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // The team: logo, name, sport (design §3.5 "Team section").
+                SettingsPanel(
+                  radius: Corners.panel,
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),
+                  child: Builder(
+                    builder: (context) {
+                      final card = GumdropColors.of(context);
+                      final field = gumdropFieldText(context);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // The logo button goes under the name when the
+                          // panel is too narrow for one row (Slide Over).
+                          LayoutBuilder(
+                            builder: (context, box) {
+                              final wide = box.maxWidth >= 300;
+                              final badge = DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: card.divider,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: TeamBadge(
+                                  name: group.name,
+                                  color: group.color == null
+                                      ? null
+                                      : Color(group.color!),
+                                  imageUrl: logoUrl,
+                                  size: 58,
+                                ),
+                              );
+                              final name = Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      group.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: text.titleMedium?.copyWith(
+                                        fontSize: 23,
+                                        height: 1.15,
+                                        color: card.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      sportName(l10n, group.sport),
+                                      style: text.bodyMedium?.copyWith(
+                                        color: card.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              final button = OutlinedButton.icon(
+                                style: GumdropButtons.of(context)
+                                    .secondary(
+                                      height: 37,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                      textStyle: text.labelMedium,
+                                    )
+                                    .copyWith(
+                                      foregroundColor: full
+                                          ? WidgetStatePropertyAll(
+                                              card.textMuted,
+                                            )
+                                          : null,
+                                    ),
+                                onPressed: full
+                                    ? () => showStorageFull(context)
+                                    : () => unawaited(_changeLogo(group.id)),
+                                icon: const Icon(AppIcons.edit, size: 15),
+                                label: Text(l10n.changeLogo),
+                              );
+                              final top = Row(
+                                children: [
+                                  badge,
+                                  const SizedBox(width: 12),
+                                  name,
+                                  if (wide) ...[
+                                    const SizedBox(width: 8),
+                                    button,
+                                  ],
+                                ],
+                              );
+                              if (wide) return top;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  top,
+                                  const SizedBox(height: 9),
+                                  button,
+                                ],
+                              );
+                            },
                           ),
-                        );
+                          const SizedBox(height: 9),
+                          LabeledField(
+                            label: l10n.teamNameLabel,
+                            child: TextField(
+                              controller: _name,
+                              maxLength: Limits.groupNameMax,
+                              style: field,
+                              decoration: gumdropField(),
+                              onSubmitted: (v) => v.trim().isEmpty
+                                  ? null
+                                  : _save(() => repo.update(group.id, name: v)),
+                            ),
+                          ),
+                          const SizedBox(height: 9),
+                          LabeledField(
+                            label: l10n.sportLabel,
+                            child: DropdownButtonFormField<Sport>(
+                              initialValue: group.sport,
+                              style: field?.copyWith(color: card.textPrimary),
+                              decoration: gumdropField(),
+                              icon: Icon(
+                                AppIcons.expand,
+                                size: 24,
+                                color: card.textMuted,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                Corners.input,
+                              ),
+                              items: [
+                                for (final sp in Sport.values)
+                                  DropdownMenuItem(
+                                    value: sp,
+                                    child: Text(sportName(l10n, sp)),
+                                  ),
+                              ],
+                              onChanged: (sp) => sp == null
+                                  ? null
+                                  : _save(
+                                      () => repo.update(group.id, sport: sp),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 9),
+                          LabeledField(
+                            label: l10n.teamDescriptionLabel,
+                            child: TextField(
+                              controller: _description,
+                              maxLength: 500,
+                              maxLines: 3,
+                              minLines: 1,
+                              style: field,
+                              decoration: gumdropField(),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: FilledButton(
+                              onPressed: () => _save(
+                                () => repo.update(
+                                  group.id,
+                                  name: _name.text.trim().isEmpty
+                                      ? null
+                                      : _name.text,
+                                  description: _description.text,
+                                ),
+                              ),
+                              child: Text(l10n.save),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                gap,
+                // The team color, which tints every screen in the team
+                // (TEAM-1, design §3.18).
+                PageHeading(l10n.teamColorLabel),
+                headingGap,
+                TeamColorGrid(
+                  selected: group.color,
+                  onPick: (argb) => argb == null
+                      ? null
+                      : _save(
+                          () => repo.update(group.id, color: _hex(argb)),
+                          announce: false,
+                        ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.teamColorTintNote,
+                  style: text.bodySmall?.copyWith(color: c.textMutedOnPage),
+                ),
+                gap,
+                SettingsCard(
+                  children: [
+                    SettingsRow(
+                      icon: AppIcons.chat,
+                      highlighted: true,
+                      title: l10n.chatLook,
+                      subtitle: l10n.chatLookSummary(
+                        lookColor,
+                        lookBackground.toLowerCase(),
+                      ),
+                      onTap: () {
+                        final target = _chatLookKey.currentContext;
+                        if (target != null) {
+                          Scrollable.ensureVisible(
+                            target,
+                            duration: Motion.of(context, Motion.normal),
+                            curve: Motion.curve,
+                          );
+                        }
                       },
                     ),
-                ],
-              ),
-              // The chat's look for everyone on the team (CHAT-18).
-              section(l10n.chatLook),
-              ChatLookSection(group: group),
-              // Storage used against the team's limit (STORE-2), with Media
-              // to free space (STORE-5).
-              section(l10n.storageSection),
-              StorageMeter(
-                usedBytes: group.storageBytes,
-                quotaBytes: group.storageQuotaBytes,
-              ),
-              const SizedBox(height: Space.sm),
-              Wrap(
-                spacing: Space.sm,
-                runSpacing: Space.sm,
-                children: [
-                  if (isAdmin)
-                    OutlinedButton.icon(
-                      onPressed: () =>
-                          unawaited(context.push('/g/${group.id.value}/media')),
-                      icon: const Icon(AppIcons.media),
-                      label: Text(l10n.mediaMenu),
+                    SettingsRow(
+                      icon: AppIcons.timeZone,
+                      title: l10n.timeZoneLabel,
+                      subtitle: group.timeZone,
+                      onTap: () => unawaited(_changeTimeZone(group, repo)),
                     ),
-                  // Raising one team's limit isn't advertised (STORE-6):
-                  // only super admins ever see it, until the admin panel
-                  // (M8) takes it over.
-                  if (superAdmin)
-                    TextButton(
-                      onPressed: () => unawaited(_changeQuota(group)),
-                      child: Text(l10n.changeStorageLimit),
+                    // The invite link: expiry, uses, reset, and turn off
+                    // (INV-2).
+                    SettingsRow(
+                      icon: AppIcons.link,
+                      title: l10n.manageInviteLink,
+                      subtitle: l10n.manageInviteLinkSubtitle,
+                      onTap: () => unawaited(
+                        context.push('/g/${group.id.value}/invite'),
+                      ),
                     ),
+                  ],
+                ),
+                gap,
+                switchCard(l10n.memberPermissions, [
+                  switchRow(
+                    title: l10n.permCreateEvents,
+                    value: s.membersCanCreateEvents,
+                    onChanged: (v) =>
+                        setSettings(s.copyWith(membersCanCreateEvents: v)),
+                  ),
+                  switchRow(
+                    title: l10n.permCreatePolls,
+                    value: s.membersCanCreatePolls,
+                    onChanged: (v) =>
+                        setSettings(s.copyWith(membersCanCreatePolls: v)),
+                  ),
+                  switchRow(
+                    title: l10n.permUploadDocs,
+                    value: s.membersCanUploadDocs,
+                    onChanged: (v) =>
+                        setSettings(s.copyWith(membersCanUploadDocs: v)),
+                  ),
+                  switchRow(
+                    title: l10n.permInvite,
+                    value: s.membersCanInvite,
+                    onChanged: (v) =>
+                        setSettings(s.copyWith(membersCanInvite: v)),
+                  ),
+                  switchRow(
+                    title: l10n.permAllowMaybe,
+                    value: s.allowMaybe,
+                    onChanged: (v) => setSettings(s.copyWith(allowMaybe: v)),
+                  ),
+                  // Who sees the roster's people (TEAM-3).
+                  switchRow(
+                    title: l10n.permSeePeople,
+                    subtitle: l10n.permSeePeopleHelp,
+                    value: s.membersCanSeePeople,
+                    onChanged: (v) =>
+                        setSettings(s.copyWith(membersCanSeePeople: v)),
+                  ),
+                ]),
+                gap,
+                // The language filter for chat and polls (SAFE-7).
+                switchCard(l10n.languageSection, [
+                  switchRow(
+                    title: l10n.filterLanguage,
+                    subtitle: l10n.filterLanguageHelp,
+                    value: s.filterLanguage,
+                    onChanged: (v) =>
+                        setSettings(s.copyWith(filterLanguage: v)),
+                  ),
+                ]),
+                gap,
+                PageHeading(l10n.defaultReminders),
+                headingGap,
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final m in reminderChoices)
+                      FilterChip(
+                        label: Text(_reminderLabel(l10n, m)),
+                        selected: s.defaultReminderOffsets.contains(m),
+                        onSelected: (on) {
+                          final next = {...s.defaultReminderOffsets};
+                          on ? next.add(m) : next.remove(m);
+                          setSettings(
+                            s.copyWith(
+                              defaultReminderOffsets: next.toList()..sort(),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                // The chat's look for everyone on the team (CHAT-18).
+                PageHeading(key: _chatLookKey, l10n.chatLook),
+                headingGap,
+                ChatLookSection(group: group),
+                const SizedBox(height: 18),
+                // Storage used against the team's limit (STORE-2), with Media
+                // to free space (STORE-5).
+                PageHeading(l10n.storageSection),
+                headingGap,
+                SettingsPanel(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      StorageMeter(
+                        usedBytes: group.storageBytes,
+                        quotaBytes: group.storageQuotaBytes,
+                      ),
+                      if (isAdmin || superAdmin) ...[
+                        const SizedBox(height: Space.sm),
+                        Wrap(
+                          spacing: Space.sm,
+                          runSpacing: Space.sm,
+                          children: [
+                            if (isAdmin)
+                              OutlinedButton.icon(
+                                onPressed: () => unawaited(
+                                  context.push('/g/${group.id.value}/media'),
+                                ),
+                                icon: const Icon(AppIcons.media),
+                                label: Text(l10n.mediaMenu),
+                              ),
+                            // Raising one team's limit isn't advertised
+                            // (STORE-6): only super admins ever see it, until
+                            // the admin panel (M8) takes it over.
+                            if (superAdmin)
+                              TextButton(
+                                onPressed: () => unawaited(_changeQuota(group)),
+                                child: Text(l10n.changeStorageLimit),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // The owner's, and a super admin's on any team (§3).
+                if (isOwner || superAdmin) ...[
+                  const SizedBox(height: 18),
+                  PageHeading(l10n.ownerActions),
+                  headingGap,
+                  SettingsCard(
+                    children: [
+                      SettingsRow(
+                        icon: AppIcons.key,
+                        title: l10n.transferOwnership,
+                        onTap: () => _transfer(group),
+                      ),
+                      SettingsRow(
+                        icon: group.isArchived
+                            ? AppIcons.unarchive
+                            : AppIcons.archive,
+                        title: group.isArchived
+                            ? l10n.restoreTeam
+                            : l10n.archiveTeam,
+                        onTap: () => _archive(group),
+                      ),
+                      Builder(
+                        builder: (context) => SettingsRow(
+                          icon: AppIcons.delete,
+                          accent: GumdropColors.of(context).cherry,
+                          title: l10n.deleteTeam,
+                          titleColor: GumdropColors.of(context).cherry.text,
+                          onTap: () => _delete(group),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
-              ),
-              // The owner's, and a super admin's on any team (§3).
-              if (isOwner || superAdmin) ...[
-                section(l10n.ownerActions),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.transferOwnership),
-                  onTap: () => _transfer(group),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    group.isArchived ? l10n.restoreTeam : l10n.archiveTeam,
-                  ),
-                  onTap: () => _archive(group),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    l10n.deleteTeam,
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                  onTap: () => _delete(group),
+                // About Battleplan, at the owner's request: the version, who
+                // made it, and Buy Jared a coffee.
+                const SizedBox(height: 18),
+                PageHeading(l10n.about),
+                headingGap,
+                SettingsPanel(
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+                  child: AboutBattleplan(appBuild: widget.appBuild),
                 ),
               ],
-              // About Battleplan, at the owner's request: the version, who
-              // made it, and Buy Jared a coffee.
-              section(l10n.about),
-              AboutBattleplan(appBuild: widget.appBuild),
-              const SizedBox(height: Space.xl),
-            ],
+            ),
           ),
         ),
       ),

@@ -206,7 +206,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 - **WEB-2 · MVP · Support and legal pages.** `/privacy`, `/terms`, and `/delete-account` (LEGAL-1, LEGAL-3), and `/support` with the support email. These are the URLs the store listings and Firebase settings use.
 - **WEB-3 · MVP · The web app at `/app`.** The Flutter web app is served under `/app/` and linked from every page of the site. Signed-in people who open `/app` go straight to their teams.
 - **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app. So does email sign-in's address, `getbattleplan.app/emaillogin` (AUTH-2).
-- **WEB-5 · MVP · Fast and plain.** Static pages with no ads, no tracking, and no cookie banner needed; light and dark mode; readable on phones; indexed by search engines, while `/app` isn't.
+- **WEB-5 · MVP · Fast and plain.** Static pages with no ads, no tracking, and no cookie banner needed; one dark look, Gumdrop Pop Dark's navy and candy colors (§7.4), with no light version; the fonts served from the site itself, not Google Fonts (LEGAL-2); readable on phones; indexed by search engines, while `/app` isn't.
 
 ### 4.2 The parity rule
 
@@ -229,7 +229,6 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 | Invite links | Open the app (Universal Links) | Open the app (App Links) | Open the site |
 | Save files | Files or Photos | Downloads | Browser download |
 | Haptics | Yes | Yes | — |
-| Message type (CHAT-1) | San Francisco, the system font | Inter | Inter (Apple licenses San Francisco only for its own platforms) |
 | Keyboard | — | — | Enter sends, Shift+Enter new line, Esc closes, Ctrl/⌘+K opens the team switcher |
 | Offline | Full offline cache | Full offline cache | Offline cache in the browser (lost if site data is cleared) |
 
@@ -406,7 +405,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Name (required, ≤ 50 characters).
     - Sport: Baseball, Basketball, Football, Hockey, Lacrosse, Soccer, Softball, Volleyball, or Other.
     - Logo or photo (optional).
-    - Team color (optional). Chosen from 15 colors, navy and gold among them, that pass contrast checks in both themes; badges and bubbles show white or black text on them, whichever reads better.
+    - Team color (optional). Chosen from 15 colors, navy and gold among them. It tints the background of every screen inside the team, in every theme (§7.4); badges show white or black text on it, whichever reads better.
     - Time zone (defaults to the device's).
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).
@@ -433,6 +432,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Every team has exactly one owner.
 - **TEAM-5 · MVP · Team settings (admins).**
   - Edit name, sport, logo, color, description, and time zone.
+  - **Team color:** the 15 colors as swatches, under "Your team color tints the background of every screen in the team." (TEAM-1, §7.4).
   - **Member permissions** (defaults in brackets):
     - create events [off]
     - create polls [on]
@@ -607,8 +607,8 @@ Players that others answer for never get accounts, and every account belongs to 
   - With unread messages, the chat opens at the first unread message and loads newer ones as you scroll down.
   - Date separators, as small pills: Today, Yesterday, Mon Oct 6.
   - Each message is its own bubble, compact as GroupMe's (the owner's request, 2026-10-16). A person's run of messages (within 5 minutes) has their photo beside the first bubble, and their name and time inside it at the top; my own bubbles show just the time there. Photos sit inside the bubble, above the caption, and "edited" and "Pinned" go inside too. Polls and event cards keep the name and time above them. A member's name shows their players ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8).
-  - Laid out as iMessage lays them out (the owner's request, 2026-10-16): others' messages sit on the left on a neutral background, mine on the right in the brand color. Each bubble fits its text, its longest line setting its width, and grows to about four fifths of the chat's width (at most 520 px) before the text wraps, so the two sides stay apart. In a direct conversation (CHAT-19) the other person's messages have no photo or name beside them.
-  - Messages read in iMessage's type, 17 points with its tighter spacing: San Francisco, the iPhone's own font, in the iPhone, iPad, and Mac apps; Inter, tracked to match, on the web and Android. Apple licenses San Francisco only for its own platforms, so a browser or Android app can't use it.
+  - Laid out as iMessage lays them out (the owner's request, 2026-10-16): others' messages sit on the left on a neutral background, mine on the right in the theme's own color (blue raspberry, or lemon in Gumdrop Candy) or the one the chat look picks (CHAT-18). Each bubble fits its text, its longest line setting its width, and grows to about four fifths of the chat's width (at most 520 px) before the text wraps, so the two sides stay apart. In a direct conversation (CHAT-19) the other person's messages have no photo or name beside them.
+  - Message text is Nunito, 16 points, bold on others' messages and extra bold on mine, the same on every platform (§7.3; 1.1 replaced iMessage's type, San Francisco on Apple's platforms and Inter elsewhere).
   - Times appear on tap (phones), on hover (web), and at the start of each group.
 - **CHAT-2 · MVP · Composer.**
   - Multi-line text up to 4,000 characters, with a counter near the limit, and a Send button.
@@ -670,7 +670,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Link previews, GIFs, video, voice notes.
   - Typing indicators and read receipts.
 
-- **CHAT-18 · MVP · Chat look.** Team admins choose the chat's message color (the team color or any of the 13 palette colors) and background (plain, a subtle pattern, or a photo), which everyone on the team sees, with text kept readable (WCAG AA).
+- **CHAT-18 · MVP · Chat look.** Team admins choose the chat's message color and background (Plain; Sprinkles, small candy-colored dashes; or a photo), which everyone on the team sees, with text kept readable (WCAG AA). The colors are seven candies, Blue raspberry, Bubblegum, Grape, Mint, Lemon, Tangerine, and Cherry, and the team color last. Each theme draws a candy in its own shade, with dark text on it; the team color has white or dark text, whichever reads better. Nothing picked is the theme's own color, the first candy: Blue raspberry, or Lemon in Gumdrop Candy, which lists Lemon first. A color picked from the old 13-color palette before 1.1 still shows as it was, with Team color marked.
 - **CHAT-19 · MVP · Direct messages.** Owner's request (2026-10-16): "add a direct messaging feature that allows users to directly message each other." Q5 had put them after launch.
   - **The same chat, for two.** A conversation works as a team's chat does: text, photos (CHAT-3), replies (CHAT-13), reactions (CHAT-6), editing and deleting your own (CHAT-8, CHAT-15), delivery states and the offline queue (CHAT-4), links (CHAT-5), the read position across devices, and the language filter (SAFE-7). What belongs to a team isn't there: polls, announcements, @mentions, pins, the chat look, and system lines.
   - **Who you can message:** anyone you share a team with who has joined (not "Not joined yet"), from **Message** on their page (TEAM-15) or their roster card (TEAM-3), or from **New message** in Messages, which lists the people your rosters show you (TEAM-3) with the teams you share, searchable by name. A suspended team doesn't count. Once started, a conversation stays, even when you no longer share a team.
@@ -910,7 +910,7 @@ Players that others answer for never get accounts, and every account belongs to 
 ### 6.10 Profile and settings (SET)
 
 - **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. Email is shown read-only.
-- **SET-2 · MVP · Appearance.** System (default), Light, or Dark. The change applies instantly, is remembered on the device, and syncs to the account.
+- **SET-2 · MVP · Appearance.** Three themes, each shown as a small preview: **Gumdrop Pop Dark** (the default), **Gumdrop Pop Light**, and **Gumdrop Candy** (§7.4, 1.1). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it from before 1.1 gets Gumdrop Pop Dark.
 - **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
@@ -1172,39 +1172,49 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 
 - **Name:** Battleplan.
 - **Logo:** a white flag on a pole, waving, with an angular B cut out of it, on a rounded blue tile, plus the wordmark (2026-10-14, from the owner's sketch). The same mark is the website's favicon and header mark, the web app's tab icon and loading screen, the app icons, and the splash screens. The B drops out at 16 px, leaving the flag; at 32 px and up it reads. The app icon has to read clearly at small sizes in both light and dark mode.
-- **Primary color:** proposed deep blue `#2F5BEA` (Q9).
-- **Team colors** personalize each team without competing with the brand. They're used only for the team's logo or initials badge, the switcher, and calendar dots in the all-teams view. Chat bubbles always use the brand color.
+- **Primary color:** deep blue `#2F5BEA` (Q9), for the brand mark and app icon. Inside the app the main accent is Gumdrop Pop's blue raspberry `#4D9BFF` (§7.3).
+- **Team colors** make each team's screens its own: the color tints the background of every screen inside the team (§7.4), and shows on the team's logo or initials badge, the switcher, and calendar dots in the all-teams view. Buttons and the candy accents keep the theme's colors, and so do my chat bubbles unless the chat look picks the team color (CHAT-18).
 
 ### 7.2 Look and feel
 
-Modern and clean:
+**Gumdrop Pop**, from 1.1 (the owner's pick, 2026-10-25): bright and playful, like candy, and still clean:
 
-- generous whitespace;
-- flat tonal surfaces instead of borders and heavy shadows;
-- rounded corners;
-- one accent color;
-- a clear type hierarchy;
-- quick, subtle motion.
+- a navy page in the default theme, with rounded cards a step lighter;
+- gumdrop buttons: a rounded face on a hard lip in a darker shade, with a thin highlight along the top, that sinks onto its lip when pressed;
+- candy accents, each with a meaning: blue raspberry for you and the main action, mint for Going, lemon for Maybe and pins, cherry for Not going and unread, tangerine for games, grape for practices, and bubblegum for polls, other events, and your reactions;
+- chunky headings with a stacked hard shadow;
+- generous rounding and whitespace;
+- quick motion.
 
-The content carries the visual weight: messages, photos, and event cards. The target feel is closer to iMessage and Apple Calendar than to a dense sports-admin tool.
+The content still carries the visual weight: messages, photos, and event cards.
 
 ### 7.3 Design tokens
 
 | Token | Values |
 |---|---|
-| **Color** | Material 3 light and dark schemes generated from the brand color, then hand-tuned. Semantic colors: Going (green), Maybe (amber), Not going (red), and one color per event type. Every color is contrast-checked in both themes. |
-| **Type** | Inter, bundled with the app. Sizes 28 / 22 / 18 / 16 / 14 / 12 (headline, title, subtitle, body, secondary, label). Chat messages are 17, as iMessage's, and in San Francisco in Apple's own apps (CHAT-1). Layouts survive system text scaling up to 200%. |
+| **Color** | Three themes (§7.4), each with a full set of roles: page, cards, raised buttons, wells, inputs, lines, text, and headings. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is ink, a dark navy. Every text color is contrast-checked in all three themes, under every team color too. |
+| **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages. Sizes 36 / 32 / 24 / 22 / 17 / 16 / 14 / 12 (team name, screen title, section, title, subtitle, body, secondary, label); chat messages are 16 (CHAT-1). Headings carry a stacked hard shadow: four steps on screen titles and the team name, three on sections. Layouts survive system text scaling up to 200%. |
+| **Buttons** | Gumdrops: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above, with a highlight along its top. The main action is a candy gumdrop (the theme's own color, or a candy for its meaning); the rest are raised gumdrops in the card color. Pressed, the face sinks onto the lip; disabled, it's flat and muted. Chips, segmented buttons, the + button, and the navigation indicator are gumdrops too. |
 | **Spacing** | 4-point grid: 4, 8, 12, 16, 24, 32, 48. Side padding is 16 on phones and 24 on wide screens. |
-| **Corners** | 8 for chips, 12 for cards and inputs, 18 for chat bubbles, fully round for avatars and pills |
-| **Elevation** | Tonal surface levels. Shadows only on floating things: menus, sheets, the + button. |
+| **Corners** | 14 for inputs, 18 for tiles, 20 for cards and chat bubbles (6 at a bubble's tail), 22 for panels, 26 for sheets, fully round for avatars, pills, and buttons |
+| **Elevation** | No soft shadows on cards: they're flat, with a thin outline in Gumdrop Pop Light. Depth comes from the lips under buttons and the hard shadows under headings, the back button, and stickers. |
 | **Icons** | Material Symbols Rounded, the same set on every platform |
 | **Motion** | 150–250 ms with standard easing. Respect the system "reduce motion" setting. |
 
-### 7.4 Light and dark mode
+### 7.4 Themes
 
-- Dark mode uses near-black tonal surfaces (not pure black), with accents lightened for contrast. Photos are never dimmed.
-- Both themes meet **WCAG AA contrast** (4.5:1 for body text).
-- Every key screen has golden images in both themes, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in light and, where a screen has colors of its own, dark.
+Three themes, picked in Settings (SET-2), from 1.1:
+
+- **Gumdrop Pop Dark**, the default: a navy page (`#0B1531`), navy cards a step lighter (`#16244A`), white text, and white headings with a blue shadow.
+- **Gumdrop Pop Light**: a pale blue-gray page (`#F2F5FD`), white cards with a thin outline, navy text, and navy headings with a light blue shadow.
+- **Gumdrop Candy**: a bright blue page (`#305AF6`) with white text and headings, white cards with navy text, and lemon as your color.
+
+**Team colors.** Every screen inside a team takes the team's color (TEAM-1) in its background; screens outside a team keep the theme's own.
+
+- In Gumdrop Pop Dark and Light, the page, wells, inputs, lines, and lips take the team's hue at their own lightness, so every contrast stays as designed, and so do the cards and raised buttons in Dark (Light's cards stay white). A team color close to the theme's own navy (Blue, Royal blue, Navy, and Slate) keeps the default colors.
+- In Gumdrop Candy the page is the team color itself (Green a little darker, so white text reads on it), and the page's text is white, or navy on Light blue and Yellow. Cards, text on cards, and the candies don't change.
+
+Photos are never dimmed. All three themes meet **WCAG AA contrast** (4.5:1 for body text), under every team color too. Every key screen has golden images in all three themes, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in all three.
 
 ### 7.5 Components
 

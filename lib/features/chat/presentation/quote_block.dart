@@ -1,5 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
-import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -15,14 +17,16 @@ String quoteText(AppLocalizations l10n, MessageType type, String text) {
   };
 }
 
-/// A quoted message: a colored bar, the author, and one line (CHAT-13).
+/// A quoted message (CHAT-13): a recessed block with a mint bar on its
+/// left, the author in Fredoka, and one muted line (Gumdrop Pop §3.14).
+/// It's always in the card's colors, so it reads the same in a bubble, a
+/// card, or above the composer.
 class QuoteBlock extends StatelessWidget {
   const new({
     required this.authorName,
     required this.text,
     this.deleted = false,
     this.onTap,
-    this.foreground,
     super.key,
   });
 
@@ -33,63 +37,81 @@ class QuoteBlock extends StatelessWidget {
   final bool deleted;
   final VoidCallback? onTap;
 
-  /// Text color, to sit inside a colored bubble.
-  final Color? foreground;
+  static const _radius = BorderRadius.only(
+    topLeft: Radius.circular(6),
+    bottomLeft: Radius.circular(6),
+    topRight: Radius.circular(12),
+    bottomRight: Radius.circular(12),
+  );
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final color = foreground ?? theme.colorScheme.onSurfaceVariant;
-    return Semantics(
-      button: onTap != null,
-      label: deleted
-          ? l10n.quoteDeleted
-          : l10n.quoteSemantics(authorName, text),
-      excludeSemantics: true,
-      // The InkWell's own tap is excluded with its semantics.
-      onTap: onTap,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Corners.chip),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(
-            Space.sm,
-            Space.xs,
-            Space.sm,
-            Space.xs,
-          ),
-          decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: color, width: 3)),
-          ),
-          child: deleted
-              ? Text(
-                  l10n.quoteDeleted,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: color,
-                    fontStyle: FontStyle.italic,
+    return GumdropSurface(
+      child: Builder(
+        builder: (context) {
+          final c = GumdropColors.of(context);
+          final muted = TextStyle(
+            fontFamily: AppFonts.body,
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            height: 1.25,
+            color: c.textMuted,
+          );
+          return Semantics(
+            button: onTap != null,
+            label: deleted
+                ? l10n.quoteDeleted
+                : l10n.quoteSemantics(authorName, text),
+            excludeSemantics: true,
+            // The InkWell's own tap is excluded with its semantics.
+            onTap: onTap,
+            child: Material(
+              color: c.well,
+              borderRadius: _radius,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onTap,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(10, 5, 10, 6),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: c.mint.face, width: 4),
+                    ),
                   ),
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      authorName,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      text,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(color: color),
-                    ),
-                  ],
+                  child: deleted
+                      ? Text(
+                          l10n.quoteDeleted,
+                          style: muted.copyWith(fontStyle: FontStyle.italic),
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              authorName,
+                              style: TextStyle(
+                                fontFamily: AppFonts.label,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                height: 1.25,
+                                color: c.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              text,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: muted,
+                            ),
+                          ],
+                        ),
                 ),
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/about_battleplan.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/reactions.dart';
@@ -605,31 +606,36 @@ void main() {
     expect(groupRepo.groups['a']!.settings.filterLanguage, isFalse);
   });
 
-  testWidgets('the iPhone and iPad app leaves out Buy Jared a coffee', (
-    tester,
-  ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-    await pumpApp(
+  for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
+    testWidgets('the ${platform.name} app leaves out Buy Jared a coffee', (
       tester,
-      auth: FakeAuthRepository(user: coach),
-      groups: {'a': testGroup('a', 'Thunder')},
-      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
-    );
-    await tester.tap(find.byTooltip('Team menu'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Team settings'));
-    await tester.pumpAndSettle();
-    await tester.dragUntilVisible(
-      find.textContaining('builds it as a volunteer'),
-      find.byType(ListView).last,
-      const Offset(0, -300),
-    );
-    expect(find.text('Buy Jared a coffee'), findsNothing);
-    debugDefaultTargetPlatformOverride = null;
-  });
+    ) async {
+      debugDefaultTargetPlatformOverride = platform;
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+      );
+      await tester.tap(find.byTooltip('Team menu'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Team settings'));
+      await tester.pumpAndSettle();
+      await tester.dragUntilVisible(
+        find.textContaining('builds it as a volunteer'),
+        find.byType(ListView).last,
+        const Offset(0, -300),
+      );
+      expect(find.text('Buy Jared a coffee'), findsNothing);
+      debugDefaultTargetPlatformOverride = null;
+    });
+  }
 
   testWidgets('Team settings ends with About: the version, who made it, '
       "that it's free, and Buy Jared a coffee (TEAM-5)", (tester) async {
+    // The web app, the only one that offers it.
+    debugShowsBuyCoffee = true;
+    addTearDown(() => debugShowsBuyCoffee = null);
     final links = FakeLinkOpener();
     await pumpApp(
       tester,
@@ -2714,7 +2720,7 @@ void main() {
         groupRepo: groupRepo,
         memberships: [testMembership('a', 'coach', role: MemberRole.admin)],
       );
-      final pattern = find.text('Pattern');
+      final pattern = find.text('Sprinkles');
       await openSettings(tester, until: pattern);
       await tester.ensureVisible(pattern);
       await tester.pumpAndSettle();

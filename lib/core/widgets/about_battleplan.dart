@@ -10,11 +10,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Whether About offers Buy Jared a coffee: everywhere but the Apple apps.
-bool get showsBuyCoffee =>
-    kIsWeb ||
-    (defaultTargetPlatform != TargetPlatform.iOS &&
-        defaultTargetPlatform != TargetPlatform.macOS);
+/// Whether About offers Buy Jared a coffee: on the web only. The iPhone,
+/// iPad and Android apps leave it out, so neither store asks for its own
+/// payments (store checklist 5.8).
+bool get showsBuyCoffee => debugShowsBuyCoffee ?? kIsWeb;
+
+/// Tests set this to show (or hide) Buy Jared a coffee as the web app
+/// would, since widget tests don't run as the web.
+@visibleForTesting
+bool? debugShowsBuyCoffee;
 
 /// Who made Battleplan, for About.
 const developerName = 'Jared Freeman';
@@ -28,9 +32,10 @@ const venmoCardAsset = 'assets/about/venmo.png';
 
 /// About Battleplan, at the end of Team settings (TEAM-5): the version and
 /// build, who made it, that it's free and he volunteers, and Buy Jared a
-/// coffee, which shows his Venmo, except in the iPhone and iPad app: the
-/// App Store allows a link to pay outside it only in the US, and the app
-/// is listed in Canada too (store checklist 5.8).
+/// coffee, which shows his Venmo, on the web only: the App Store allows a
+/// link to pay outside it only in the US, and the app is listed in Canada
+/// too; Google Play generally wants its own billing for tips outside the
+/// US (store checklist 5.8).
 class AboutBattleplan extends ConsumerWidget {
   const new({required this.appBuild, super.key});
 

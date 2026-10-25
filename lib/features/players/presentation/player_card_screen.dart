@@ -13,6 +13,7 @@ import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
@@ -106,8 +107,9 @@ class PlayerCardScreen extends ConsumerWidget {
         group != null && !group.isArchived && group.suspendedAt == null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(player.displayName),
+      appBar: gumdropAppBar(
+        context,
+        title: player.displayName,
         actions: [
           if (canEdit)
             IconButton(

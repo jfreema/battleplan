@@ -13,6 +13,7 @@ import firebase from 'firebase/compat/app';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { CHAT_CANDY_COLORS } from '../../src/admin/inputs.js';
 import { reactionValues, TEAM_COLORS } from '../../src/shared/constants.js';
 
 type Db = firebase.firestore.Firestore;
@@ -382,6 +383,10 @@ describe('chat look (CHAT-18)', () => {
     for (const color of TEAM_COLORS) {
       await assertSucceeds(look('alice', 'teamA', { ...good, bubbleColor: color }));
       await assertSucceeds(as('alice').doc('groups/teamA').update({ color }));
+    }
+    // And every Gumdrop candy as the bubble color (CHAT-18).
+    for (const color of CHAT_CANDY_COLORS) {
+      await assertSucceeds(look('alice', 'teamA', { ...good, bubbleColor: color }));
     }
   });
 });

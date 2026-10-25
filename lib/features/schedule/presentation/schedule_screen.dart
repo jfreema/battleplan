@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
@@ -41,6 +43,49 @@ class ScheduleScreen extends ConsumerWidget {
         group != null && canCreateEvents(group, me, superAdmin: superAdmin);
     final full = group?.storageFull ?? false;
 
+    final c = GumdropColors.of(context);
+    final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
+
+    Widget filter({
+      required String label,
+      required bool selected,
+      required GumdropAccent accent,
+      required ValueChanged<bool> onSelected,
+      bool? lit,
+    }) {
+      // The filter's own candy while its events show (design §3.7): when
+      // it's on, and for every kind while none is picked (all show).
+      // [selected] alone stays the chip's state for screen readers.
+      final on = lit ?? selected;
+      return FilterChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: onSelected,
+        showCheckmark: false,
+        labelStyle: TextStyle(color: on ? c.ink : c.textPrimary),
+        side: on ? BorderSide.none : null,
+        color: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.disabled)
+              ? c.well
+              : on
+              ? accent.face
+              : c.raisedFace,
+        ),
+        shape: WidgetStateOutlinedBorder.resolveWith(
+          (s) => GumdropShape(
+            lip: 3,
+            lipColor: on ? accent.lip : c.raisedLip,
+            highlight: on ? 2 : 1.5,
+            highlightColor: on
+                ? GumdropColors.accentHighlight
+                : c.raisedHighlight,
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(11, 5, 11, 8),
+        labelPadding: EdgeInsets.zero,
+      );
+    }
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -51,57 +96,88 @@ class ScheduleScreen extends ConsumerWidget {
                 heroTag: null,
                 tooltip: l10n.eventNew,
                 // Full storage stops new events (STORE-4); the button
-                // stays, greyed, to say why.
-                backgroundColor: full
-                    ? Theme.of(context).colorScheme.surfaceContainerHighest
-                    : null,
+                // stays, flat in the well's color, to say why.
+                backgroundColor: full ? c.well : null,
+                foregroundColor: full ? c.textMuted : null,
+                shape: full ? const GumdropShape() : null,
                 onPressed: () => full
                     ? showStorageFull(context)
                     : unawaited(
                         context.push('/g/${groupId.value}/schedule/new'),
                       ),
-                child: const Icon(AppIcons.add),
+                child: const Icon(AppIcons.add, weight: 700),
               )
             : null,
         body: Column(
           children: [
-            TabBar(
-              tabs: [
-                Tab(text: l10n.scheduleUpcoming),
-                Tab(text: l10n.schedulePast),
-                Tab(text: l10n.scheduleCalendar),
-              ],
-            ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(
-                horizontal: Space.gutter(MediaQuery.sizeOf(context).width),
-                vertical: Space.sm,
+            // Upcoming, Past, Calendar: a well with the chosen view as a
+            // gumdrop in it (design §3.7). Each tab stays 48 tall to tap.
+            Container(
+              margin: EdgeInsets.fromLTRB(gutter, 14, gutter, 0),
+              decoration: BoxDecoration(
+                color: c.well,
+                borderRadius: BorderRadius.circular(23),
               ),
-              child: Row(
-                children: [
-                  if (teamCount > 1) ...[
-                    FilterChip(
-                      avatar: const Icon(AppIcons.group, size: 18),
-                      label: Text(l10n.scheduleAllTeams),
-                      selected: options.allTeams,
-                      onSelected: (on) => ref
-                          .read(scheduleViewProvider.notifier)
-                          .setAllTeams(on: on),
+              child: TabBar(
+                tabs: [
+                  for (final label in [
+                    l10n.scheduleUpcoming,
+                    l10n.schedulePast,
+                    l10n.scheduleCalendar,
+                  ])
+                    Tab(
+                      height: 48,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Text(label),
+                      ),
                     ),
-                    const SizedBox(width: Space.md),
-                  ],
-                  for (final f in EventFilter.values) ...[
-                    FilterChip(
-                      label: Text(filterLabel(l10n, f)),
-                      selected: options.filters.contains(f),
-                      onSelected: (_) => ref
-                          .read(scheduleViewProvider.notifier)
-                          .toggleFilter(f),
-                    ),
-                    const SizedBox(width: Space.sm),
-                  ],
                 ],
+                indicator: ShapeDecoration(
+                  color: c.you.face,
+                  shape: GumdropShape(lip: 3, lipColor: c.you.lip),
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicatorPadding: const EdgeInsets.fromLTRB(4, 4, 4, 3),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                labelColor: c.ink,
+                unselectedLabelColor: c.textMuted,
+                dividerHeight: 0,
+                splashBorderRadius: BorderRadius.circular(23),
+              ),
+            ),
+            // The filters wrap onto a second line rather than hiding off
+            // the edge with large text.
+            Padding(
+              padding: EdgeInsets.fromLTRB(gutter, 6, gutter, 0),
+              child: SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  spacing: 6,
+                  children: [
+                    for (final f in EventFilter.values)
+                      filter(
+                        label: filterLabel(l10n, f),
+                        selected: options.filters.contains(f),
+                        lit:
+                            options.filters.isEmpty ||
+                            options.filters.contains(f),
+                        accent: filterAccent(context, f),
+                        onSelected: (_) => ref
+                            .read(scheduleViewProvider.notifier)
+                            .toggleFilter(f),
+                      ),
+                    if (teamCount > 1)
+                      filter(
+                        label: l10n.scheduleAllTeams,
+                        selected: options.allTeams,
+                        accent: c.you,
+                        onSelected: (on) => ref
+                            .read(scheduleViewProvider.notifier)
+                            .setAllTeams(on: on),
+                      ),
+                  ],
+                ),
               ),
             ),
             Expanded(
@@ -124,8 +200,8 @@ class ScheduleScreen extends ConsumerWidget {
 void openEvent(BuildContext context, Event e) =>
     unawaited(context.push('/g/${e.groupId.value}/schedule/e/${e.id.value}'));
 
-/// Upcoming or Past (SCHED-1) for this team or all my teams, grouped by
-/// day with a date block on each day's first row.
+/// Upcoming or Past (SCHED-1) for this team or all my teams, in day order,
+/// each event a card with its date block.
 class EventList extends ConsumerWidget {
   const new({required this.groupId, required this.past, super.key});
 
@@ -154,14 +230,13 @@ class EventList extends ConsumerWidget {
       );
     }
     final range = _range(state.events, zone);
-    // Each row's date block shows only on the first event of its day.
     final days = [for (final e in events) dayOf(e, zone)];
     final more = !state.reachedEnd;
     // Built as they scroll into view, so a long list (or one with more
     // pages loaded) doesn't build every row and its RSVP lookups at once
     // (SPEC §8.1).
     return ListView.builder(
-      padding: const EdgeInsets.only(bottom: Space.xxxl * 2),
+      padding: const EdgeInsets.only(top: 5, bottom: Space.xxxl * 2),
       itemCount: events.length + (more ? 1 : 0),
       itemBuilder: (context, i) {
         if (i == events.length) {
@@ -182,7 +257,8 @@ class EventList extends ConsumerWidget {
           key: ValueKey(e.id.value),
           event: e,
           viewerZone: zone,
-          day: i > 0 && days[i] == days[i - 1] ? null : days[i],
+          // Every card has its date block (SCHED-1, design §3.15).
+          day: days[i],
           showTeam: options.allTeams,
           rsvpRange: range,
         );

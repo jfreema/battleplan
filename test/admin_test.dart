@@ -616,7 +616,7 @@ void main() {
       expect(admin.calls.last, 'team t1 photoPath=groups/t1/avatar/logo0.jpg');
       expect(groups.logosUploaded, 0);
 
-      await tester.tap(find.text('Pattern'));
+      await tester.tap(find.text('Sprinkles'));
       await tester.pumpAndSettle();
       expect(admin.calls.last, 'team t1 chatTheme=pattern');
       await tester.tap(find.text('Photo'));

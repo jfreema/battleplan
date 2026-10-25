@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/widgets/gumdrop_icon_button.dart';
 import 'package:battleplan/features/chat/application/direct_chats.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -18,15 +19,13 @@ class MessagesButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final count = ref.watch(directUnreadCountProvider);
-    return IconButton(
+    // A 38 px round gumdrop (Gumdrop Pop design §3.1).
+    return GumdropIconButton(
       tooltip: count > 0
           ? l10n.messagesButtonUnread(count)
           : l10n.messagesButton,
-      icon: Badge(
-        isLabelVisible: count > 0,
-        label: Text(unreadLabel(count)),
-        child: const Icon(AppIcons.directMessage),
-      ),
+      icon: AppIcons.directMessage,
+      badgeLabel: count > 0 ? unreadLabel(count) : null,
       onPressed: () => unawaited(context.push('/messages')),
     );
   }

@@ -1,11 +1,15 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
+import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// One event in a schedule list (SCHED-1): the date block on the day's
@@ -34,7 +38,8 @@ class EventRow extends StatelessWidget {
   final String viewerZone;
   final VoidCallback onTap;
 
-  /// Shown as the date block on the first event of a day.
+  /// The day on the date block; the event's own day in the viewer's zone
+  /// when null.
   final DateTime? day;
 
   /// Who I answer for on this team, and my answers by participant ID.
@@ -48,151 +53,236 @@ class EventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final color = typeColor(context, event.type);
     final canceled = event.isCanceled;
-    final muted = theme.textTheme.bodyMedium?.copyWith(
-      color: scheme.onSurfaceVariant,
-    );
     final allowMaybe = group?.settings.allowMaybe ?? true;
     // The players I'm here for; my own player needs no name (PLAYER-9).
     final players = [
       for (final p in participants)
         if (p.isPlayer && !p.isMe) p,
     ];
+    final date = day ?? dayOf(event, viewerZone);
+    // Just me, with no name to show: my answer is the disc at the end.
+    final soloLabel = participants.length == 1
+        ? answerLabel(l10n, participants.single, participants)
+        : '';
+    final solo = event.takesRsvps && soloLabel == null;
 
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: Space.gutter(MediaQuery.sizeOf(context).width),
-          vertical: Space.sm,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 44,
-              child: day == null ? null : _DateBlock(day: day!),
-            ),
-            const SizedBox(width: Space.md),
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(Corners.chip),
-              ),
-              // The type is read out, as it isn't written on the row.
-              child: Icon(
-                typeIcon(event.type),
-                color: color,
-                size: 20,
-                semanticLabel: typeLabel(l10n, event.type),
-              ),
-            ),
-            const SizedBox(width: Space.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (showTeam && group != null)
-                    Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: group!.color == null
-                                ? AppTokens.brand
-                                : Color(group!.color!),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: Space.xs),
-                        Flexible(
-                          child: Text(
-                            [
-                              group!.name,
-                              if (players.isNotEmpty)
-                                l10n.eventForPlayers(
-                                  joinAnd(l10n, [
-                                    for (final p in players)
-                                      p.name.split(' ').first,
-                                  ]),
-                                ),
-                            ].join(' · '),
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  Row(
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: Space.gutter(MediaQuery.sizeOf(context).width),
+        vertical: 5,
+      ),
+      child: TapCard(
+        onTap: onTap,
+        child: Builder(
+          builder: (context) {
+            final theme = Theme.of(context);
+            final card = GumdropColors.of(context);
+            final muted = theme.textTheme.bodyMedium?.copyWith(
+              color: card.textMuted,
+              fontWeight: FontWeight.w700,
+            );
+            return Row(
+              children: [
+                // The type is read out with the day, as it isn't written
+                // on the card.
+                DateBlock(
+                  day: date,
+                  accent: typeAccent(context, event.type),
+                  semanticLabel:
+                      '${typeLabel(l10n, event.type)}, ${dayLabel(l10n, date)}',
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
-                        child: Text(
-                          event.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            decoration: canceled
-                                ? TextDecoration.lineThrough
-                                : null,
+                      if (showTeam && group != null)
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: group!.color == null
+                                    ? AppTokens.brand
+                                    : Color(group!.color!),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: Space.xs),
+                            Flexible(
+                              child: Text(
+                                [
+                                  group!.name,
+                                  if (players.isNotEmpty)
+                                    l10n.eventForPlayers(
+                                      joinAnd(l10n, [
+                                        for (final p in players)
+                                          p.name.split(' ').first,
+                                      ]),
+                                    ),
+                                ].join(' · '),
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: card.textMuted,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              event.title,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontSize: 19,
+                                height: 1.2,
+                                color: card.textPrimary,
+                                decoration: canceled
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
+                          if (canceled) ...[
+                            const SizedBox(width: Space.sm),
+                            const CanceledBadge(),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 1),
+                      Text(timeRange(l10n, event, viewerZone), style: muted),
+                      // "6:00 PM CDT · 7:00 PM your time" (SCHED-9).
+                      if (otherZoneLine(l10n, event, viewerZone) case final z?)
+                        Text(z, style: muted),
+                      if (event.location case final loc?)
+                        Text(
+                          loc.label,
+                          style: muted,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      if (canceled) ...[
-                        const SizedBox(width: Space.sm),
-                        const CanceledBadge(),
+                      if (event.takesRsvps) ...[
+                        if (participants.isNotEmpty && !solo)
+                          Padding(
+                            padding: const EdgeInsets.only(top: Space.xs),
+                            child: Wrap(
+                              spacing: Space.md,
+                              runSpacing: Space.xs,
+                              children: [
+                                for (final p in participants)
+                                  _MyAnswer(
+                                    label: answerLabel(l10n, p, participants),
+                                    status: answers[p.id]?.status,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5),
+                          child: _GoingRow(
+                            text: eventCountsText(
+                              l10n,
+                              event,
+                              players: playerCount,
+                              allowMaybe: allowMaybe,
+                            ),
+                            going: playerCount > 0
+                                ? event.rsvpCounts.going
+                                : (event.rsvpCounts + event.staffCounts).going,
+                            of: playerCount > 0
+                                ? playerCount
+                                : group?.memberCount ?? 0,
+                            color: card.mint.text,
+                          ),
+                        ),
                       ],
                     ],
                   ),
-                  Text(timeRange(l10n, event, viewerZone), style: muted),
-                  // "6:00 PM CDT · 7:00 PM your time" (SCHED-9).
-                  if (otherZoneLine(l10n, event, viewerZone) case final z?)
-                    Text(z, style: muted),
-                  if (event.location case final loc?)
-                    Text(
-                      loc.label,
-                      style: muted,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  if (event.takesRsvps) ...[
-                    if (participants.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: Space.xs),
-                        child: Wrap(
-                          spacing: Space.sm,
-                          runSpacing: Space.xs,
-                          children: [
-                            for (final p in participants)
-                              _MyAnswer(
-                                label: answerLabel(l10n, p, participants),
-                                status: answers[p.id]?.status,
-                              ),
-                          ],
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: Space.xs),
-                      child: Text(
-                        eventCountsText(
-                          l10n,
-                          event,
-                          players: playerCount,
-                          allowMaybe: allowMaybe,
-                        ),
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
+                ),
+                if (solo) ...[
+                  const SizedBox(width: 12),
+                  _SoloAnswer(status: answers[participants.single.id]?.status),
                 ],
-              ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// The going bar and "7 of 12 going" beside it (design §3.15).
+class _GoingRow extends StatelessWidget {
+  const new({
+    required this.text,
+    required this.going,
+    required this.of,
+    required this.color,
+  });
+
+  final String text;
+  final int going;
+  final int of;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final label = Text(
+      text,
+      style: theme.textTheme.labelMedium?.copyWith(
+        fontSize: 13,
+        color: going > 0 ? color : GumdropColors.of(context).textMuted,
+      ),
+    );
+    if (of <= 0) return label;
+    return LayoutBuilder(
+      builder: (context, constraints) => Row(
+        children: [
+          Expanded(child: GoingBar(fraction: going / of)),
+          const SizedBox(width: Space.sm),
+          ConstrainedBox(
+            // The counts take what they need, leaving the bar 40 px.
+            constraints: BoxConstraints(
+              maxWidth: math.max(0, constraints.maxWidth - 48),
+            ),
+            child: label,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// My answer as the card's trailing disc (design §3.15), with the answer
+/// in words under it for anyone who doesn't see the color.
+class _SoloAnswer extends StatelessWidget {
+  const new({required this.status});
+
+  final RsvpStatus? status;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
+    final s = status;
+    return MergeSemantics(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 72),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnswerDisc(status: s),
+            const SizedBox(height: 3),
+            Text(
+              s == null ? l10n.rsvpNoResponse : statusLabel(l10n, s),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: c.textMuted, height: 1.1),
             ),
           ],
         ),
@@ -217,45 +307,7 @@ String? answerLabel(
       : l10n.eventYou;
 }
 
-/// "OCT" over "13".
-class _DateBlock extends StatelessWidget {
-  const new({required this.day});
-
-  final DateTime day;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return Semantics(
-      label: dayLabel(l10n, day),
-      excludeSemantics: true,
-      child: Column(
-        children: [
-          Text(
-            DateFormat.MMM(l10n.localeName).format(day).toUpperCase(),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            '${day.day}',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            DateFormat.E(l10n.localeName).format(day),
-            style: theme.textTheme.labelSmall,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// My answer on a row: "Emma: Going", or "No response".
+/// My answer on a row: "Emma: Going", or "No response", after its disc.
 class _MyAnswer extends StatelessWidget {
   const new({required this.label, required this.status});
 
@@ -266,23 +318,22 @@ class _MyAnswer extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final c = GumdropColors.of(context);
     final s = status;
     final text = s == null ? l10n.rsvpNoResponse : statusLabel(l10n, s);
-    final color = s == null
-        ? theme.colorScheme.onSurfaceVariant
-        : statusColor(context, s);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (s != null) ...[
-          Icon(statusIcon(s), size: 16, color: color),
-          const SizedBox(width: 2),
-        ],
+        AnswerDisc(status: s, size: 18),
+        const SizedBox(width: 5),
         // Wraps rather than overflowing with large text (SPEC §7.6).
         Flexible(
           child: Text(
             label == null ? text : '$label: $text',
-            style: theme.textTheme.labelMedium?.copyWith(color: color),
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontSize: 13,
+              color: s == null ? c.textMuted : c.textPrimary,
+            ),
           ),
         ),
       ],
@@ -290,25 +341,24 @@ class _MyAnswer extends StatelessWidget {
   }
 }
 
-/// The red "Canceled" badge (SCHED-7).
+/// The red "Canceled" badge (SCHED-7): a cherry tag chip with ink text
+/// (design §3.6).
 class CanceledBadge extends StatelessWidget {
   const new({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final c = GumdropColors.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Space.sm, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(Corners.pill),
+        color: c.cherry.face,
+        borderRadius: BorderRadius.circular(11),
       ),
       child: Text(
         AppLocalizations.of(context).eventCanceled,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: scheme.onErrorContainer,
-          fontWeight: FontWeight.w600,
-        ),
+        style: Theme.of(context).textTheme.labelSmall
+            ?.copyWith(color: c.ink, letterSpacing: 0.4),
       ),
     );
   }

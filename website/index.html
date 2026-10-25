@@ -6,9 +6,8 @@
   <title>Battleplan: free team chat and scheduling for sports teams</title>
   <meta name="description" content="Team chat, schedule and RSVPs, polls, and documents for sports teams. Players RSVP for themselves, and guardians RSVP for their players. Free, with no ads.">
   <link rel="canonical" href="https://getbattleplan.app/">
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#121317" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0b1531">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -26,6 +25,8 @@
   <meta name="twitter:description" content="Chat, schedule and RSVPs, polls, and documents in one place. For adult and youth teams. Free, with no ads.">
   <meta name="twitter:image" content="https://getbattleplan.app/images/og.png">
   <meta name="twitter:image:alt" content="Battleplan on a phone: team chat with a poll, and the team schedule.">
+  <link rel="preload" href="/fonts/lilita-one.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/site.css">
 </head>
 <body>
@@ -71,14 +72,12 @@
         <div class="hero-shots">
           <div class="phone">
             <picture>
-              <source srcset="/images/chat-dark.webp" media="(prefers-color-scheme: dark)">
-              <img src="/images/chat-light.webp" width="600" height="1298" alt="The team chat in Battleplan: the coach's announcement with thumbs-up and heart reactions, then new messages: a player mentions the coach, a game card for Tuesday's game against the Eagles with Going, Maybe, and Not going, and a poll about the team dinner.">
+              <img src="/images/chat-dark.webp" width="600" height="1298" alt="The team chat in Battleplan: the coach's announcement with thumbs-up and heart reactions, then new messages: a player mentions the coach, a game card for the game against the Eagles with Going, Maybe, and Not going, and a poll about the team dinner.">
             </picture>
           </div>
           <div class="phone sm" aria-hidden="true">
             <picture>
-              <source srcset="/images/teams-dark.webp" media="(prefers-color-scheme: dark)">
-              <img src="/images/teams-light.webp" width="600" height="1298" alt="">
+              <img src="/images/teams-dark.webp" width="600" height="1298" alt="">
             </picture>
           </div>
         </div>
@@ -109,8 +108,7 @@
             <div class="feature-media">
               <div class="phone sm">
                 <picture>
-                  <source srcset="/images/conversation-dark.webp" media="(prefers-color-scheme: dark)">
-                  <img src="/images/conversation-light.webp" width="600" height="1298" loading="lazy" alt="A team chat: a guardian asks who can carpool, another guardian replies to that message and gets a heart, the coach thanks that guardian with an @mention and the kickoff time, and a new message about a player's cleats.">
+                  <img src="/images/conversation-dark.webp" width="600" height="1298" loading="lazy" alt="A team chat: a guardian asks who can carpool, another guardian replies to that message and gets a heart, the coach thanks that guardian with an @mention and the kickoff time, and a new message about a player's cleats.">
                 </picture>
               </div>
             </div>
@@ -130,14 +128,12 @@
             <div class="feature-media pair">
               <div class="phone sm">
                 <picture>
-                  <source srcset="/images/event-dark.webp" media="(prefers-color-scheme: dark)">
-                  <img src="/images/event-light.webp" width="600" height="1298" loading="lazy" alt="Event details for a game against the Eagles: date and time, opponent and home, the field with directions, a reminder one day before, Going, Maybe, and Not going buttons, and who's going: 2 of 3 players, each with who answered.">
+                  <img src="/images/event-dark.webp" width="600" height="1298" loading="lazy" alt="Event details for a game against the Eagles: date and time, opponent and home, the field with directions, a reminder one day before, Going, Maybe, and Not going buttons, and who's going: 2 of 3 players, each with who answered.">
                 </picture>
               </div>
               <div class="phone sm">
                 <picture>
-                  <source srcset="/images/schedule-dark.webp" media="(prefers-color-scheme: dark)">
-                  <img src="/images/schedule-light.webp" width="600" height="1298" loading="lazy" alt="The team schedule: practices, a game against the Eagles, and a season kickoff barbecue, each with its time, place, your answer, and how many players are going.">
+                  <img src="/images/schedule-dark.webp" width="600" height="1298" loading="lazy" alt="The team schedule: practices, a game against the Eagles, and a season kickoff barbecue, each with its time, place, your answer, and how many players are going.">
                 </picture>
               </div>
             </div>
@@ -157,8 +153,7 @@
             <div class="feature-media">
               <div class="phone sm">
                 <picture>
-                  <source srcset="/images/poll-dark.webp" media="(prefers-color-scheme: dark)">
-                  <img src="/images/poll-light.webp" width="600" height="1298" loading="lazy" alt="A poll in the team chat that takes more than one answer: which tournament weekend works? Nov 7–8 has 3 votes, Nov 14–15 has 2, and Dec 5–6 has none. Four people have voted; below, two guardians answer and the coach picks the weekend.">
+                  <img src="/images/poll-dark.webp" width="600" height="1298" loading="lazy" alt="A poll in the team chat that takes more than one answer: which tournament weekend works? Nov 7–8 has 3 votes, Nov 14–15 has 2, and Dec 5–6 has none. Four people have voted; below, two guardians answer and the coach picks the weekend.">
                 </picture>
               </div>
             </div>
@@ -178,8 +173,7 @@
             <div class="feature-media">
               <div class="phone sm">
                 <picture>
-                  <source srcset="/images/documents-dark.webp" media="(prefers-color-scheme: dark)">
-                  <img src="/images/documents-light.webp" width="600" height="1298" loading="lazy" alt="The Documents tab: a pinned Saturday lineup and league rules, a practice plan, a link to field directions, and a player waiver, each with its size, who added it, and when.">
+                  <img src="/images/documents-dark.webp" width="600" height="1298" loading="lazy" alt="The Documents tab: a pinned Saturday lineup and league rules, a practice plan, a link to field directions, and a player waiver, each with its size, who added it, and when.">
                 </picture>
               </div>
             </div>
@@ -199,8 +193,7 @@
             <div class="feature-media">
               <div class="phone sm">
                 <picture>
-                  <source srcset="/images/youth-dark.webp" media="(prefers-color-scheme: dark)">
-                  <img src="/images/youth-light.webp" width="600" height="1298" loading="lazy" alt="A guardian's RSVPs for practice, for two players: one answer for both, or one each. Luke #7 is going and Alex #9 hasn't answered yet. Below, 1 of 4 players going, each with the person who answered for them.">
+                  <img src="/images/youth-dark.webp" width="600" height="1298" loading="lazy" alt="A guardian's RSVPs for practice, for two players: one answer for both, or one each. Luke #7 is going and Alex #9 hasn't answered yet. Below, 1 of 4 players going, each with the person who answered for them.">
                 </picture>
               </div>
             </div>
@@ -221,14 +214,12 @@
               <div class="slides" role="region" aria-roledescription="carousel" aria-label="Plays on the whiteboard" tabindex="0">
                 <div class="phone sm" role="group" aria-roledescription="slide" aria-label="Baseball">
                   <picture>
-                    <source srcset="/images/whiteboard-dark.webp" media="(prefers-color-scheme: dark)">
-                    <img src="/images/whiteboard-light.webp" width="600" height="1298" loading="lazy" alt="Plays, the coach's whiteboard: a relay home from right-center on a baseball diamond. The right fielder has the ball at the fence, the center fielder beside him, and throws to the second baseman, the relay. The first baseman is the cutoff on the line to the plate: the throw goes home, or he cuts it and throws to second. A runner in red heads home and the batter heads for second; the shortstop covers second, the left fielder backs up third, and the pitcher backs up the catcher. It's step 2 of 2, with a play button and the tools to move, add, and draw.">
+                    <img src="/images/whiteboard-dark.webp" width="600" height="1298" loading="lazy" alt="Plays, the coach's whiteboard: a relay home from right-center on a baseball diamond. The right fielder has the ball at the fence, the center fielder beside him, and throws to the second baseman, the relay. The first baseman is the cutoff on the line to the plate: the throw goes home, or he cuts it and throws to second. A runner in red heads home and the batter heads for second; the shortstop covers second, the left fielder backs up third, and the pitcher backs up the catcher. It's step 2 of 2, with a play button and the tools to move, add, and draw.">
                   </picture>
                 </div>
                 <div class="phone sm" role="group" aria-roledescription="slide" aria-label="Basketball">
                   <picture>
-                    <source srcset="/images/whiteboard-basketball-dark.webp" media="(prefers-color-scheme: dark)">
-                    <img src="/images/whiteboard-basketball-light.webp" width="600" height="1298" loading="lazy" alt="A pick and roll on a basketball half court: the offense in blue and the defense in red, the center coming up to set a screen for the point guard, who dribbles to the right off it, step 1 of 2.">
+                    <img src="/images/whiteboard-basketball-dark.webp" width="600" height="1298" loading="lazy" alt="A pick and roll on a basketball half court: the offense in blue and the defense in red, the center coming up to set a screen for the point guard, who dribbles to the right off it, step 1 of 2.">
                   </picture>
                 </div>
               </div>

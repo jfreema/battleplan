@@ -36,6 +36,7 @@ import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/features/groups/presentation/media_screen.dart';
 import 'package:battleplan/features/groups/presentation/person_screen.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
+import 'package:battleplan/features/groups/presentation/team_colors.dart';
 import 'package:battleplan/features/groups/presentation/team_settings_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
@@ -483,7 +484,7 @@ GoRouter router(Ref ref) {
         redirect: (_, state) => state.uri.pathSegments.length == 2
             ? '/g/${state.pathParameters['groupId']}/chat'
             : null,
-        routes: [
+        routes: _inTeamColors([
           // The Documents tab was `docs` before M7; a device may still
           // remember that as its last tab.
           GoRoute(
@@ -620,7 +621,7 @@ GoRouter router(Ref ref) {
             branches: [
               for (final tab in teamTabs)
                 StatefulShellBranch(
-                  routes: [
+                  routes: _inTeamColors([
                     GoRoute(
                       path: tab,
                       builder: (_, state) {
@@ -765,11 +766,11 @@ GoRouter router(Ref ref) {
                           initialMessageId: state.pathParameters['messageId'],
                         ),
                       ),
-                  ],
+                  ]),
                 ),
             ],
           ),
-        ],
+        ]),
       ),
     ],
   );
@@ -855,4 +856,48 @@ class _AdminPanelState extends State<_AdminPanel> {
             ),
     );
   }
+}
+
+/// [routes] and every route under them with their screens in the team's
+/// colors (TEAM-1, TeamColors): the team's own pages, like its settings and
+/// roster, and its event and document pages over the tabs. The tabs
+/// themselves are inside the team shell, which tints itself.
+List<RouteBase> _inTeamColors(List<RouteBase> routes) => [
+  for (final route in routes)
+    if (route is GoRoute) _inTeamColor(route) else route,
+];
+
+GoRoute _inTeamColor(GoRoute route) {
+  Widget tinted(GoRouterState state, Widget child) => TeamColors(
+    groupId: GroupId(state.pathParameters['groupId']!),
+    child: child,
+  );
+  final builder = route.builder;
+  final pageBuilder = route.pageBuilder;
+  return GoRoute(
+    path: route.path,
+    name: route.name,
+    parentNavigatorKey: route.parentNavigatorKey,
+    redirect: route.redirect,
+    metadata: route.metadata,
+    onExit: route.onExit,
+    caseSensitive: route.caseSensitive,
+    builder: builder == null
+        ? null
+        : (context, state) => tinted(state, builder(context, state)),
+    pageBuilder: pageBuilder == null
+        ? null
+        : (context, state) {
+            final page = pageBuilder(context, state);
+            return page is PanelPage
+                ? PanelPage<Object?>(
+                    key: page.key,
+                    name: page.name,
+                    arguments: page.arguments,
+                    child: tinted(state, page.child),
+                  )
+                : page;
+          },
+    routes: _inTeamColors(route.routes),
+  );
 }

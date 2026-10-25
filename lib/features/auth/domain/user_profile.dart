@@ -13,7 +13,7 @@ abstract class UserProfile with _$UserProfile {
     required UserStatus status,
     String? email,
     String? photoPath,
-    @Default(ThemePreference.system) ThemePreference themeMode,
+    @Default(ThemePreference.dark) ThemePreference themeMode,
     @Default(<String>[]) List<String> signInMethods,
     DateTime? adultConfirmedAt,
     DateTime? acceptedTermsAt,

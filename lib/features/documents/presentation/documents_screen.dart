@@ -113,7 +113,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       // Rows are built as they scroll into view, so image thumbnails below
       // the fold don't all look up their files at once (SPEC §8.1).
       body = ListView.builder(
-        padding: const EdgeInsets.only(bottom: Space.xxxl * 2),
+        padding: const EdgeInsets.only(top: 5, bottom: Space.xxxl * 2),
         itemCount: (noMatches ? 1 : shown.length) + (more ? 1 : 0),
         itemBuilder: (context, i) {
           if (noMatches && i == 0) {
@@ -180,7 +180,6 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   hintText: l10n.documentsFilterHint,
                   prefixIcon: const Icon(AppIcons.search),
                   isDense: true,
-                  border: const OutlineInputBorder(),
                   suffixIcon: view.filter.isEmpty
                       ? null
                       : IconButton(

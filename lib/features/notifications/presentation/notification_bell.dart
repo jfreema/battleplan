@@ -1,4 +1,5 @@
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/widgets/gumdrop_icon_button.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -37,13 +38,11 @@ class _NotificationBellState extends ConsumerState<NotificationBell> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final count = ref.watch(unreadNotificationCountProvider).value ?? 0;
-    return IconButton(
+    // A 38 px round gumdrop (Gumdrop Pop design §3.1).
+    return GumdropIconButton(
       tooltip: l10n.notificationsTooltip,
-      icon: Badge(
-        isLabelVisible: count > 0,
-        label: Text(unreadLabel(count)),
-        child: const Icon(AppIcons.notifications),
-      ),
+      icon: AppIcons.notifications,
+      badgeLabel: count > 0 ? unreadLabel(count) : null,
       onPressed: () async {
         await context.push<void>('/notifications');
         // Items read in the center lower the count.

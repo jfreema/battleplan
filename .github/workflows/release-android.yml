@@ -1,0 +1,161 @@
+# Release Android: builds the Android app for prod (app.getbattleplan) with
+# the Android build workflow and uploads the App Bundle to Google Play
+# (ROADMAP task 214, store checklist 4.2). Start it from the Actions tab, on
+# main; starting it is the approval. The server and the web app go out with
+# Release to prod.
+#
+# It needs, in the repository's secrets:
+#   - the upload key (ANDROID_UPLOAD_KEYSTORE_BASE64,
+#     ANDROID_UPLOAD_KEYSTORE_PASSWORD, ANDROID_UPLOAD_KEY_ALIAS), which the
+#     Android build signs with;
+#   - PLAY_SERVICE_ACCOUNT_JSON: the JSON key of a Google Cloud service
+#     account that the Play Console has invited as a user with permission to
+#     release to testing tracks and production (docs/DEVELOPMENT.md).
+# Google Play takes uploads only after the app exists in the Play Console
+# and its first App Bundle was uploaded there by hand, which also turns on
+# Play App Signing.
+#
+# Tracks: internal testing (the default) and closed testing go to their
+# testers once Play has processed the bundle. Production is only ever a
+# draft: open it in the Play Console, check it, and send it for review there.
+name: Release Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: Google Play track
+        type: choice
+        options: [internal, closed, production]
+        default: internal
+      draft:
+        description: Upload as a draft only (Play requires this until the app is first published)
+        type: boolean
+        default: false
+      skip_ci_check:
+        description: Release without waiting for CI to pass on this commit
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  # Before paying for a build: on main, the Play secret is there, and CI
+  # passed on this commit.
+  checks:
+    name: Ready to release
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    permissions:
+      actions: read
+    steps:
+      - name: Release from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Android releases come from main (this is ${GITHUB_REF_NAME})."
+          exit 1
+
+      - name: Google Play access
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          missing=0
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::No PLAY_SERVICE_ACCOUNT_JSON secret. Make a service account in Google Cloud, invite its email in the Play Console (Users and permissions) with release permissions for Battleplan, and save its JSON key as the repository secret PLAY_SERVICE_ACCOUNT_JSON (docs/DEVELOPMENT.md, Android builds)."
+            missing=1
+          fi
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::No ANDROID_UPLOAD_KEYSTORE_BASE64 secret: Google Play takes only bundles signed with the upload key (docs/DEVELOPMENT.md, Android builds)."
+            missing=1
+          fi
+          exit "$missing"
+
+      - name: Skipping the CI check, as asked
+        if: ${{ inputs.skip_ci_check }}
+        run: echo "::warning::Releasing ${GITHUB_SHA:0:7} without checking CI (skip_ci_check)."
+
+      - name: CI passed on this commit
+        if: ${{ !inputs.skip_ci_check }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The latest CI run on this commit, waiting while it runs.
+          for _ in $(seq 1 120); do
+            ci=$(gh run list --repo "$GITHUB_REPOSITORY" --commit "$GITHUB_SHA" --workflow ci.yml \
+              --limit 1 --json status,conclusion -q '.[0] | "\(.status) \(.conclusion)"')
+            case "$ci" in
+              "completed success") echo "CI passed on ${GITHUB_SHA:0:7}."; exit 0 ;;
+              completed*) echo "::error::CI didn't pass on ${GITHUB_SHA:0:7} ($ci)."; exit 1 ;;
+              "") echo "::error::CI hasn't run on ${GITHUB_SHA:0:7}. Push it to main, or run with skip_ci_check."; exit 1 ;;
+              *) echo "CI is ${ci%% *} on ${GITHUB_SHA:0:7}; waiting."; sleep 30 ;;
+            esac
+          done
+          echo "::error::CI didn't finish within an hour."
+          exit 1
+
+  # The same build as Android build for prod: signed with the upload key,
+  # build number = commit count, and checked that it's the upload key.
+  build:
+    name: Build
+    needs: checks
+    uses: ./.github/workflows/android.yml
+    with:
+      flavor: prod
+    secrets: inherit
+
+  upload:
+    name: Upload to Google Play (${{ inputs.track }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # One upload at a time; a second waits for the first.
+    concurrency:
+      group: release-android
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.build.outputs.artifact }}
+          path: out
+
+      - name: Track and status
+        env:
+          TRACK: ${{ inputs.track }}
+          DRAFT: ${{ inputs.draft }}
+        run: |
+          # Play's API calls closed testing "alpha".
+          case "$TRACK" in
+            internal) play_track=internal ;;
+            closed) play_track=alpha ;;
+            production) play_track=production ;;
+            *) echo "::error::Unknown track $TRACK."; exit 1 ;;
+          esac
+          status=completed
+          if [ "$TRACK" = production ] || [ "$DRAFT" = true ]; then
+            status=draft
+          fi
+          echo "PLAY_TRACK=$play_track" >> "$GITHUB_ENV"
+          echo "PLAY_STATUS=$status" >> "$GITHUB_ENV"
+
+      - uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: app.getbattleplan
+          releaseFiles: out/battleplan-prod-${{ needs.build.outputs.build_number }}.aab
+          releaseName: Build ${{ needs.build.outputs.build_number }}
+          track: ${{ env.PLAY_TRACK }}
+          status: ${{ env.PLAY_STATUS }}
+
+      - name: Summary
+        env:
+          BUILD_NUMBER: ${{ needs.build.outputs.build_number }}
+          TRACK: ${{ inputs.track }}
+        run: |
+          if [ "$PLAY_STATUS" = draft ]; then
+            next="It's a draft: open the Play Console (Test and release, then the $TRACK track), check the release, and roll it out or send it for review there."
+          else
+            next="Testers on the $TRACK track get it once Google Play finishes processing it, usually within an hour."
+          fi
+          echo "Uploaded prod build **$BUILD_NUMBER** (\`${GITHUB_SHA:0:7}\`) to Google Play, $TRACK track. $next" >> "$GITHUB_STEP_SUMMARY"

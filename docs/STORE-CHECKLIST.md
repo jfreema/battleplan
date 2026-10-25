@@ -20,6 +20,7 @@ Required, and doable now.
 - ✅ 1.10 **Encryption:** `ITSAppUsesNonExemptEncryption` set to NO in Info.plist. Battleplan's only encryption is standard HTTPS, which is exempt, so export compliance won't hold up each build. A test keeps the key in place; any encryption of our own later (such as end-to-end messages) means turning it on and filing the export forms first.
 - ⬜ 1.11 **Android release builds in GitHub Actions** (tasks 126, 214, 272): an upload key, and an Android App Bundle signed with it. Nothing runs on your Mac.
   - ✅ The **Android build** workflow (Actions tab) makes the App Bundle and an APK for dev or prod, signed with the upload key from the repository's secrets, and shows the key's fingerprints for Firebase. Without the key a dev build is signed with a throwaway key, and a prod build fails.
+  - ✅ The **Release Android** workflow (Actions tab) builds prod the same way and uploads the App Bundle to Google Play: internal testing by default, closed testing, or production as a draft. It waits for CI, and stops with what to set up while its secret is missing (2026-10-25). ⬜ 👤 The Play service account and its `PLAY_SERVICE_ACCOUNT_JSON` secret ([DEVELOPMENT.md](DEVELOPMENT.md), Android builds).
   - ⬜ 👤 The upload key itself: a keystore and password, in 1Password and in the repository's secrets (`ANDROID_UPLOAD_KEYSTORE_BASE64`, `ANDROID_UPLOAD_KEYSTORE_PASSWORD`, `ANDROID_UPLOAD_KEY_ALIAS`), then its SHA-1 and SHA-256 added to the Android apps in Firebase so Google sign-in works on these builds.
 - ✅ 1.12 **iPad.** The app is built for iPad too, so every screen has to work there, in both orientations and in Split View (task 210); review runs on iPads. Every screen is tested at iPad mini, Air, and Pro sizes in both orientations and at the Split View and Slide Over widths, and the end-to-end test passes on the iPad simulator.
 - ⬜ 1.13 **It works end to end,** on the iPhone and iPad simulators and on Android with a build from GitHub Actions (`integration_test/e2e_test.dart`, task 271). ✅ iPhone and iPad simulators. ⬜ Android, with the workflow's end-to-end APK. ⬜ 👤 Google sign-up, which needs a real Google account:
@@ -40,10 +41,10 @@ Required, and doable now.
   - device tokens, crash reports, and usage analytics.
 
   The rest: no tracking, no ads, nothing sold.
-- ⬜ 1.16 **The listing, ready to paste in:** *App Store text and iPhone and iPad screenshots done 2026-10-17 ([STORE-LISTING.md](STORE-LISTING.md), `store/app-store/`); the Android screenshots and Google's feature graphic wait for Phase 5.*
+- ⬜ 1.16 **The listing, ready to paste in:** *App Store text and iPhone and iPad screenshots done 2026-10-17 ([STORE-LISTING.md](STORE-LISTING.md), `store/app-store/`). Google Play text, the 512 px icon, and the 1024 × 500 feature graphic done 2026-10-25 ([STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md), `store/google-play/`), and the six Android phone screenshots on 2026-10-25 too (`store/google-play/phone/`).*
   - name, subtitle or short description, and description;
   - screenshots of the app in use, not the sign-in screen: 6.9-inch iPhone, 13-inch iPad, and Android phone;
-  - a 1024 × 500 feature graphic for Google; the 512 px icon is `assets/brand/icon.png`.
+  - a 1024 × 500 feature graphic for Google (`store/google-play/feature-graphic.png`); the 512 px icon is `store/google-play/icon-512.png`.
 - ⬜ 1.17 **App Review notes:** *drafted in [STORE-LISTING.md](STORE-LISTING.md); the demo team's code comes with task 132.*
   - what Battleplan is, and how to get in: sign in with Apple or Google and join the demo team with its code, or the demo login at `getbattleplan.app/emaillogin`;
   - that email sign-in is at that address and not on the sign-in screen, since guideline 2.3.1 asks for anything hidden to be described;
@@ -80,15 +81,16 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 - ⬜ 4.1 👤 **Open the Play Console** as a personal account, $25 once (task 125). Google verifies your legal name and address and has you confirm on a real Android phone.
 - ⬜ 4.2 **Play App Signing,** and the first App Bundle uploaded to internal testing. Then add Play's signing key fingerprints to Firebase, or Google sign-in fails in builds from Play (task 127).
 - ⬜ 4.3 👤 **Closed test:** at least 12 testers opted in for 14 days in a row, then apply for production access (task 128). New personal accounts can't publish without it. Recruit about 15, since testers who leave early don't count.
-- ⬜ 4.4 👤 **The App content forms:**
+- ⬜ 4.4 👤 **The App content forms:** *every answer is written out in [STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md), App content, ready to paste (2026-10-25).*
   - Data safety from the phase 1 answers, [STORE-PRIVACY.md](STORE-PRIVACY.md), with the delete-account URL;
   - content rating (IARC);
   - target audience: adults (18+);
   - ads: none;
   - app access: sign in with Google and join the demo team with its code, or the demo login at `getbattleplan.app/emaillogin`;
-  - the Health apps declaration, which every app files; Battleplan isn't a health app and stores no health data.
+  - the Health apps declaration, which every app files; Battleplan isn't a health app and stores no health data;
+  - government apps, financial features, and news: none.
 - ⬜ 4.5 👤 **EU trader status** in the Play Console.
-- ⬜ 4.6 👤 **The listing** from phase 1 (task 213): the short and full descriptions, the Sports category, the contact email, the privacy URL, the icon, the feature graphic, and the phone screenshots. Then submit for production (task 214).
+- ⬜ 4.6 👤 **The listing** from phase 1 (task 213): the short and full descriptions, the Sports category, the contact email, the privacy URL, the icon, the feature graphic, and the phone screenshots, all in [STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md) and `store/google-play/`. Then submit for production (task 214).
 
 ## Phase 5 · Not required, but lowers the odds of a rejection
 
@@ -99,4 +101,4 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 - ⬜ 5.5 **Keep other apps' names out of Apple's keywords** (GroupMe, TeamSnap, TeamReach, GameChanger), and don't mention Android in the iPhone listing.
 - ⬜ 5.6 **Aim the listings at coaches and parents:** no kid-focused art or wording, so neither store treats Battleplan as a kids' app.
 - ✅ 5.7 **Take "position" out of the Privacy Policy and the delete-account page.** Players no longer have one, and the policy should match the app exactly. They, and the Terms, now say a player's name, jersey number, and walk-up song.
-- ✅ 5.8 **Buy Jared a coffee links out to Venmo.** In the United States both stores now let apps link to other ways to pay, so list the apps in the US only (App Store Connect's availability, the Play Console's countries) while it's there, and say in the App Review notes (1.17) that it's a voluntary tip to the developer that unlocks nothing. Elsewhere, Apple and Google generally want their own in-app purchase for tips, so it would have to go before listing outside the US. Venmo's own terms also expect a business profile for money taken in through an app. *Done 2026-10-20 the other way: the iPhone and iPad app leaves the coffee link out (it stays on the web), so the App Store listing can include Canada.*
+- ✅ 5.8 **Buy Jared a coffee links out to Venmo.** In the United States both stores now let apps link to other ways to pay, so list the apps in the US only (App Store Connect's availability, the Play Console's countries) while it's there, and say in the App Review notes (1.17) that it's a voluntary tip to the developer that unlocks nothing. Elsewhere, Apple and Google generally want their own in-app purchase for tips, so it would have to go before listing outside the US. Venmo's own terms also expect a business profile for money taken in through an app. *Done 2026-10-20 the other way: the iPhone and iPad app leaves the coffee link out (it stays on the web), so the App Store listing can include Canada. The Android app leaves it out too since 2026-10-25, so the Play listing needs no billing review and can include Canada.*

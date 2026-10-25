@@ -1,6 +1,6 @@
 # App Store listing
 
-What to paste into App Store Connect for the iPhone and iPad app (roadmap task 129, store checklist 1.16, 1.17, and 3.2 to 3.8). The privacy answers are in [STORE-PRIVACY.md](STORE-PRIVACY.md). The Google Play listing (task 213) can reuse this text, minus the Apple-only fields.
+What to paste into App Store Connect for the iPhone and iPad app (roadmap task 129, store checklist 1.16, 1.17, and 3.2 to 3.8). The privacy answers are in [STORE-PRIVACY.md](STORE-PRIVACY.md). The Google Play listing (task 213) is [STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md).
 
 Keep it true to the app: change this page when a feature it names changes. Don't name other apps anywhere in the listing, don't mention Android, and aim it at coaches and parents, never at kids (store checklist 5.5, 5.6).
 

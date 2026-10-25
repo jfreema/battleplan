@@ -1,4 +1,5 @@
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
@@ -35,40 +36,57 @@ class DocumentRow extends ConsumerWidget {
     final what = doc.isLink
         ? (Uri.tryParse(doc.url ?? '')?.host ?? l10n.documentKindLink)
         : formatBytes(doc.size ?? 0);
-    return ListTile(
-      onTap: onTap,
-      contentPadding: EdgeInsets.only(
-        left: Space.gutter(MediaQuery.sizeOf(context).width),
-        right: Space.xs,
-      ),
-      leading: DocumentThumbnail(doc: doc),
-      title: Row(
-        children: [
-          if (doc.pinned) ...[
-            Icon(
-              AppIcons.pin,
-              size: 16,
-              fill: 1,
-              color: theme.colorScheme.primary,
-              semanticLabel: l10n.documentPinnedLabel,
-            ),
-            const SizedBox(width: Space.xs),
-          ],
-          Flexible(
-            child: Text(doc.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+    final c = GumdropColors.of(context);
+    final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
+    // Each document on its own card (design §3.5), 10 apart.
+    return Padding(
+      padding: EdgeInsets.fromLTRB(gutter, 5, gutter, 5),
+      child: SettingsPanel(
+        radius: Corners.tile,
+        padding: EdgeInsets.zero,
+        child: ListTile(
+          onTap: onTap,
+          minTileHeight: 60,
+          contentPadding: const EdgeInsets.only(left: 10, right: 2),
+          horizontalTitleGap: 12,
+          leading: DocumentThumbnail(doc: doc),
+          title: Row(
+            children: [
+              if (doc.pinned) ...[
+                Icon(
+                  AppIcons.pin,
+                  size: 16,
+                  fill: 1,
+                  color: c.card.lemon.text,
+                  semanticLabel: l10n.documentPinnedLabel,
+                ),
+                const SizedBox(width: Space.xs),
+              ],
+              Flexible(
+                child: Text(
+                  doc.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: c.card.textPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      subtitle: Text(
-        l10n.documentRowLine(
-          what,
-          doc.uploaderName,
-          documentDate(doc.createdAt, DateTime.now()),
+          subtitle: Text(
+            l10n.documentRowLine(
+              what,
+              doc.uploaderName,
+              documentDate(doc.createdAt, DateTime.now()),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(color: c.card.textMuted),
+          ),
+          trailing: DocumentMenu(doc: doc, group: group, me: me),
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
-      trailing: DocumentMenu(doc: doc, group: group, me: me),
     );
   }
 }
@@ -81,22 +99,22 @@ class DocumentThumbnail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
+    final c = GumdropColors.of(context);
     final icon = Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(Corners.chip),
+        color: c.well,
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(documentIcon(doc.type), color: scheme.onSurfaceVariant),
+      child: Icon(documentIcon(doc.type), size: 20, color: c.textPrimary),
     );
     final path = doc.path;
     if (doc.type != DocumentType.image || path == null) return icon;
     final url = ref.watch(documentFileUrlProvider(path)).value;
     if (url == null) return icon;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(Corners.chip),
+      borderRadius: BorderRadius.circular(12),
       child: Image(
         image: CoverResizeImage.forBox(
           NetworkImage(url),

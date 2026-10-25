@@ -69,6 +69,10 @@ class TeamSwitcherList extends ConsumerWidget {
       return ListTile(
         selected: selected,
         leading: GroupBadge(group: t.group, size: 40),
+        // Team names in Fredoka, as names are (Gumdrop Pop design §2).
+        titleTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: selected ? Theme.of(context).colorScheme.primary : null,
+        ),
         title: Row(
           children: [
             Flexible(
@@ -135,7 +139,7 @@ class TeamSwitcherList extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.sm),
           child: Text(
             l10n.teamSwitcherTitle,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleLarge,
           ),
         ),
         ...active.map(tile),

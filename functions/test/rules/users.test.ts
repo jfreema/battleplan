@@ -76,6 +76,8 @@ describe('users: writing', () => {
       updatedAt: now(),
     }));
     await assertSucceeds(db.doc('users/alice').update({ themeMode: 'dark' }));
+    await assertSucceeds(db.doc('users/alice').update({ themeMode: 'candy' }));
+    await assertSucceeds(db.doc('users/alice').update({ themeMode: 'light' }));
     await assertSucceeds(db.doc('users/alice').update({ photoPath: 'users/alice/avatar/123.jpg' }));
     await assertSucceeds(db.doc('users/alice').update({ 'notificationPrefs.messages': false }));
     await assertSucceeds(db.doc('users/alice').update({ 'notificationPrefs.eventsChanged': false }));

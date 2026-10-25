@@ -113,7 +113,7 @@ export async function ensureUserProfile(
         photoPath: null,
         status: 'active',
         signInMethods: signInMethodsOf(identity.providerIds),
-        themeMode: 'system',
+        themeMode: 'dark',
         notificationPrefs: defaultNotificationPrefs(),
         acceptedTermsAt: null,
         adultConfirmedAt: null,
@@ -408,7 +408,7 @@ export async function findOrProvisionUser(email: string, name: string | null): P
     signInMethods: [],
     // The setup link asks how they want to sign in next time (AUTH-6).
     chooseSignIn: true,
-    themeMode: 'system',
+    themeMode: 'dark',
     notificationPrefs: defaultNotificationPrefs(),
     acceptedTermsAt: null,
     adultConfirmedAt: null,

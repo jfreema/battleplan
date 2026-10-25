@@ -1,5 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_shape.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
@@ -30,12 +37,8 @@ class Composer extends StatefulWidget {
     this.onAnnounce,
     this.announcing = false,
     this.onCancelAnnouncement,
-    this.appleFont = false,
     super.key,
   });
-
-  /// Types in Apple's San Francisco, as messages read (ChatText, CHAT-1).
-  final bool appleFont;
 
   /// Names the team in the hint, "Message Thunder U14…" (SPEC §5.4).
   final String teamName;
@@ -213,32 +216,64 @@ class _ComposerState extends State<Composer> {
     final addTooltip = widget.onCreatePoll == null
         ? l10n.addPhotosToMessage
         : l10n.addToMessage;
+    final c = GumdropColors.of(context);
+    final buttons = GumdropButtons.of(context);
+    // The 46 px + and Send gumdrops (§3.13): + secondary, Send in the
+    // "you" color. With nothing to send it stays candy-colored, its arrow
+    // faded, as the design draws the empty composer.
+    final addStyle = buttons
+        .icon(size: 46)
+        .copyWith(iconSize: const WidgetStatePropertyAll(26));
+    final sendLip = GumdropShape.lipFor(46);
+    final sendStyle = buttons
+        .icon(size: 46, accent: c.you)
+        .copyWith(
+          iconSize: const WidgetStatePropertyAll(22),
+          backgroundColor: WidgetStatePropertyAll(c.you.face),
+          iconColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.disabled)
+                ? c.ink.withValues(alpha: 0.5)
+                : c.ink,
+          ),
+          shape: WidgetStateProperty.resolveWith(
+            (s) => GumdropShape(
+              lip: sendLip,
+              lipColor: c.you.lip,
+              pressed: s.contains(WidgetState.pressed) ? 1 : 0,
+            ),
+          ),
+          padding: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.pressed)
+                ? EdgeInsets.only(top: sendLip)
+                : EdgeInsets.only(bottom: sendLip),
+          ),
+        );
+    final inputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(23),
+      borderSide: BorderSide(color: c.inputBorder, width: 2),
+    );
     final box = SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          Space.md,
-          Space.xs,
-          Space.xs,
-          Space.sm,
-        ),
+        padding: const EdgeInsets.fromLTRB(Space.lg, 6, Space.lg, Space.sm),
         child: Row(
+          // The buttons carry a 4 px lip below their faces; the box lines
+          // up with the faces.
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (widget.onAttachBlocked case final blocked?
                 when widget.onCreatePoll == null && widget.onAnnounce == null)
               IconButton(
                 tooltip: addTooltip,
+                style: addStyle,
                 onPressed: blocked,
-                icon: Icon(
-                  AppIcons.add,
-                  color: Theme.of(context).disabledColor,
-                ),
+                icon: Icon(AppIcons.add, weight: 700, color: c.textMuted),
               )
             else if (widget.onPickPhotos != null)
               PopupMenuButton<VoidCallback>(
                 tooltip: addTooltip,
-                icon: const Icon(AppIcons.add),
+                style: addStyle,
+                icon: const Icon(AppIcons.add, weight: 700),
                 onSelected: (action) => action(),
                 itemBuilder: (_) => [
                   PopupMenuItem(
@@ -278,37 +313,77 @@ class _ComposerState extends State<Composer> {
                     ),
                 ],
               ),
+            const SizedBox(width: Space.xs),
             Expanded(
-              child: TextField(
-                controller: _text,
-                focusNode: _focus,
-                minLines: 1,
-                maxLines: 6,
-                textCapitalization: TextCapitalization.sentences,
-                keyboardType: TextInputType.multiline,
-                // What's typed looks as it will once sent (ChatText).
-                style: ChatText.of(
-                  Theme.of(context).textTheme.bodyLarge,
-                  appleFont: widget.appleFont,
-                ),
-                onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  hintText: hint,
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(Corners.bubble),
+              child: Padding(
+                padding: EdgeInsets.only(bottom: sendLip),
+                // The box is in the card's colors (navy text in Candy).
+                child: GumdropSurface(
+                  child: Builder(
+                    builder: (context) => TextField(
+                      controller: _text,
+                      focusNode: _focus,
+                      minLines: 1,
+                      maxLines: 6,
+                      textCapitalization: TextCapitalization.sentences,
+                      keyboardType: TextInputType.multiline,
+                      // What's typed looks as it will once sent, but in
+                      // the box's weight (ChatText).
+                      style: ChatText.of(
+                        Theme.of(context).textTheme.bodyLarge,
+                      ).copyWith(color: GumdropColors.of(context).textPrimary),
+                      cursorColor: GumdropColors.of(context).textPrimary,
+                      onChanged: (_) => setState(() {}),
+                      decoration: InputDecoration(
+                        hintText: hint,
+                        hintStyle: TextStyle(
+                          fontFamily: AppFonts.body,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: GumdropColors.of(context).textMuted,
+                        ),
+                        isDense: true,
+                        filled: true,
+                        fillColor: c.inputFill,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        border: inputBorder,
+                        enabledBorder: inputBorder,
+                        focusedBorder: inputBorder.copyWith(
+                          borderSide: BorderSide(
+                            color: GumdropColors.of(context).textPrimary,
+                            width: 2,
+                          ),
+                        ),
+                        // The counter appears only near the limit, on the
+                        // page under the box.
+                        counterStyle: TextStyle(
+                          fontFamily: AppFonts.body,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          color: c.textMutedOnPage,
+                        ),
+                        counterText: length > Limits.messageTextMax - 500
+                            ? '$length / ${Limits.messageTextMax}'
+                            : null,
+                      ),
+                    ),
                   ),
-                  // The counter appears only near the limit.
-                  counterText: length > Limits.messageTextMax - 500
-                      ? '$length / ${Limits.messageTextMax}'
-                      : null,
                 ),
               ),
             ),
+            const SizedBox(width: Space.xs),
             IconButton(
               tooltip: l10n.send,
+              style: sendStyle,
               onPressed: canSend ? _send : null,
-              icon: const Icon(AppIcons.send),
+              // The paper plane points up and to the right (design §3.14).
+              icon: Transform.rotate(
+                angle: -math.pi / 4,
+                child: const Icon(AppIcons.send, weight: 700),
+              ),
             ),
           ],
         ),
@@ -327,7 +402,7 @@ class _ComposerState extends State<Composer> {
           _AnnouncementBanner(onCancel: widget.onCancelAnnouncement),
         if (replying != null)
           Padding(
-            padding: const EdgeInsets.fromLTRB(Space.lg, Space.xs, Space.xs, 0),
+            padding: const EdgeInsets.fromLTRB(Space.lg, 6, Space.sm, 0),
             child: Row(
               children: [
                 Expanded(
@@ -338,7 +413,7 @@ class _ComposerState extends State<Composer> {
                 ),
                 IconButton(
                   tooltip: l10n.cancelReply,
-                  icon: const Icon(AppIcons.close),
+                  icon: Icon(AppIcons.close, color: c.textOnPage),
                   onPressed: widget.onCancelReply,
                 ),
               ],
@@ -365,39 +440,47 @@ class _MentionList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final c = GumdropColors.of(context);
     return Semantics(
       container: true,
       label: l10n.mentionSuggestions,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(Space.md, Space.xs, Space.md, 0),
-        // Its own Material, so the rows' highlight and ink show.
-        child: Material(
-          color: scheme.surfaceContainerHigh,
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: scheme.outlineVariant),
-            borderRadius: BorderRadius.circular(Corners.bubble),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final (i, c) in suggestions.indexed)
-                ListTile(
-                  dense: true,
-                  selected: i == selected,
-                  leading: c.uid.isEmpty
-                      ? const Icon(AppIcons.group)
-                      : Avatar(name: c.name, colorKey: c.uid, size: 28),
-                  title: Text(
-                    c.uid.isEmpty ? l10n.mentionEveryoneName : c.name,
+        padding: const EdgeInsets.fromLTRB(Space.lg, Space.xs, Space.lg, 0),
+        // Its own Material, so the rows' highlight and ink show: a card,
+        // in the card's colors.
+        child: GumdropSurface(
+          child: Material(
+            color: c.surface,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              side: c.surfaceBorderWidth == 0
+                  ? BorderSide.none
+                  : BorderSide(
+                      color: c.surfaceBorder,
+                      width: c.surfaceBorderWidth,
+                    ),
+              borderRadius: BorderRadius.circular(Corners.tile),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final (i, c) in suggestions.indexed)
+                  ListTile(
+                    dense: true,
+                    selected: i == selected,
+                    leading: c.uid.isEmpty
+                        ? const Icon(AppIcons.group)
+                        : Avatar(name: c.name, colorKey: c.uid, size: 28),
+                    title: Text(
+                      c.uid.isEmpty ? l10n.mentionEveryoneName : c.name,
+                    ),
+                    subtitle: c.uid.isEmpty
+                        ? Text(l10n.mentionEveryoneHelp)
+                        : null,
+                    onTap: () => onPick(c),
                   ),
-                  subtitle: c.uid.isEmpty
-                      ? Text(l10n.mentionEveryoneHelp)
-                      : null,
-                  onTap: () => onPick(c),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -415,27 +498,33 @@ class _AnnouncementBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final c = GumdropColors.of(context);
+    // A lemon note, as announcements are lemon in the chat.
     return Container(
-      margin: const EdgeInsets.fromLTRB(Space.md, Space.xs, Space.md, 0),
+      margin: const EdgeInsets.fromLTRB(Space.lg, 6, Space.lg, 0),
       padding: const EdgeInsets.only(left: Space.md),
       decoration: BoxDecoration(
-        color: scheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(Corners.bubble),
+        color: c.lemon.face,
+        borderRadius: BorderRadius.circular(Corners.tile),
       ),
       child: Row(
         children: [
-          Icon(AppIcons.announcement, color: scheme.onSecondaryContainer),
+          Icon(AppIcons.announcement, color: c.ink),
           const SizedBox(width: Space.sm),
           Expanded(
             child: Text(
               l10n.announcementBanner,
-              style: TextStyle(color: scheme.onSecondaryContainer),
+              style: TextStyle(
+                fontFamily: AppFonts.body,
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                color: c.ink,
+              ),
             ),
           ),
           IconButton(
             tooltip: l10n.cancelAnnouncement,
-            icon: Icon(AppIcons.close, color: scheme.onSecondaryContainer),
+            icon: Icon(AppIcons.close, color: c.ink),
             onPressed: onCancel,
           ),
         ],

@@ -174,7 +174,8 @@ enum UserStatus {
 enum ThemePreference {
   system('system'),
   light('light'),
-  dark('dark');
+  dark('dark'),
+  candy('candy');
 
   const ThemePreference(this.value);
 

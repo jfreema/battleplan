@@ -103,6 +103,9 @@ describe('super-admin team and player edits (ADMIN-3)', () => {
     });
     expect(ok(UpdateGroupInput, group({ settings: { allowMaybe: false, defaultReminderOffsets: [15, 60, 120, 1440, 2880, 10080] } }))).toBe(true);
     expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: '#7C3AED', background: 'pattern', backgroundPath: null } }))).toBe(true);
+    // A Gumdrop candy (CHAT-18), but not any color.
+    expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: '#FF7AC8' } }))).toBe(true);
+    expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: '#123456' } }))).toBe(false);
     for (const bad of [
       {}, { color: '#000000' }, { sport: 'golf' }, { name: ' ' }, { name: 'x'.repeat(Limits.groupNameMax + 1) },
       { description: 'x'.repeat(501) }, { settings: { membersCanPost: true } }, { settings: { defaultReminderOffsets: [30] } },

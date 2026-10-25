@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -51,14 +53,17 @@ class EventCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final c = GumdropColors.of(context);
     var async = ref.watch(eventProvider(eventId));
     final zone = ref.watch(viewerTimeZoneProvider).value;
+    // A card in the chat (design §3.5): the surface and its outline.
+    final outline = c.surfaceBorderWidth == 0
+        ? BorderSide.none
+        : BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth);
     final frame = BoxDecoration(
-      color: scheme.surfaceContainerLow,
-      border: Border.all(color: scheme.outlineVariant),
-      borderRadius: BorderRadius.circular(Corners.bubble),
+      color: c.surface,
+      border: Border.fromBorderSide(outline),
+      borderRadius: BorderRadius.circular(Corners.panel),
     );
     // The card's event is gone, but its series goes on.
     var seriesLeft = false;
@@ -72,88 +77,140 @@ class EventCard extends ConsumerWidget {
     }
     final event = async.value;
     if (event == null || zone == null) {
-      final muted = TextStyle(
-        fontStyle: FontStyle.italic,
-        color: scheme.onSurfaceVariant,
-      );
       return Container(
         width: 320,
         padding: const EdgeInsets.all(Space.md),
         decoration: frame,
-        child: async.isLoading || zone == null
-            ? const LinearProgressIndicator()
-            : seriesLeft && text.isNotEmpty
-            ? Text(text, style: theme.textTheme.bodyMedium)
-            : Text(l10n.eventCardDeleted, style: muted),
+        child: GumdropSurface(
+          child: Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              return async.isLoading || zone == null
+                  ? const LinearProgressIndicator()
+                  : seriesLeft && text.isNotEmpty
+                  ? Text(text, style: theme.textTheme.bodyMedium)
+                  : Text(
+                      l10n.eventCardDeleted,
+                      style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: GumdropColors.of(context).textMuted,
+                      ),
+                    );
+            },
+          ),
+        ),
       );
     }
-    final color = typeColor(context, event.type);
-    final muted = theme.textTheme.bodyMedium?.copyWith(
-      color: scheme.onSurfaceVariant,
-    );
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(Corners.bubble),
-        onTap: () => openEvent(context, event),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.all(Space.md),
-          decoration: frame,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(typeIcon(event.type), size: 16, color: color),
-                  const SizedBox(width: Space.xs),
-                  Text(
-                    typeLabel(l10n, event.type),
-                    style: theme.textTheme.labelMedium?.copyWith(color: color),
-                  ),
-                  if (reminder) ...[
-                    Text(' · ', style: theme.textTheme.labelMedium),
-                    Icon(
-                      AppIcons.notifications,
-                      size: 16,
-                      color: scheme.primary,
+    final accent = typeAccent(context, event.type);
+    return GumdropSurface(
+      child: Material(
+        color: c.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Corners.panel),
+          side: outline,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => openEvent(context, event),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 420),
+            padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
+            child: Builder(
+              builder: (context) {
+                final theme = Theme.of(context);
+                final card = GumdropColors.of(context);
+                final muted = theme.textTheme.bodyMedium?.copyWith(
+                  color: card.textMuted,
+                );
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Wrap(
+                      spacing: Space.sm,
+                      runSpacing: Space.xs,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        // The type as a tag chip in its candy (design §3.6).
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accent.face,
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                typeIcon(event.type),
+                                size: 14,
+                                color: card.ink,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                typeLabel(l10n, event.type),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: card.ink,
+                                  letterSpacing: 0.7,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (reminder)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                AppIcons.notifications,
+                                size: 16,
+                                color: card.textPrimary,
+                              ),
+                              const SizedBox(width: Space.xs),
+                              Text(
+                                l10n.eventCardReminder,
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: card.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (event.isCanceled) const CanceledBadge(),
+                      ],
                     ),
-                    const SizedBox(width: Space.xs),
+                    const SizedBox(height: Space.sm),
                     Text(
-                      l10n.eventCardReminder,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: scheme.primary,
+                      event.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontSize: 19,
+                        height: 1.2,
+                        color: card.textPrimary,
+                        decoration: event.isCanceled
+                            ? TextDecoration.lineThrough
+                            : null,
                       ),
                     ),
+                    Text(
+                      timeRange(l10n, event, zone, withDay: true),
+                      style: muted,
+                    ),
+                    if (otherZoneLine(l10n, event, zone) case final z?)
+                      Text(z, style: muted),
+                    if (event.location case final loc?)
+                      Text(loc.label, style: muted),
+                    _CardRsvps(
+                      event: event,
+                      groupId: groupId,
+                      zone: zone,
+                      reminder: reminder,
+                    ),
                   ],
-                  if (event.isCanceled) ...[
-                    const SizedBox(width: Space.sm),
-                    const CanceledBadge(),
-                  ],
-                ],
-              ),
-              const SizedBox(height: Space.xs),
-              Text(
-                event.title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  decoration: event.isCanceled
-                      ? TextDecoration.lineThrough
-                      : null,
-                ),
-              ),
-              Text(timeRange(l10n, event, zone, withDay: true), style: muted),
-              if (otherZoneLine(l10n, event, zone) case final z?)
-                Text(z, style: muted),
-              if (event.location case final loc?) Text(loc.label, style: muted),
-              _CardRsvps(
-                event: event,
-                groupId: groupId,
-                zone: zone,
-                reminder: reminder,
-              ),
-            ],
+                );
+              },
+            ),
           ),
         ),
       ),

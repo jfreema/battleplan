@@ -112,7 +112,20 @@ To check a build on your Mac without signing: `flutter build ios --release --fla
 
 Android builds run only in GitHub Actions, never on a Mac (no Java or Gradle locally). **Android build** in the Actions tab takes the app (dev or prod) and makes an App Bundle for Google Play and an APK to install, both signed with the Play upload key, with its SHA-1 and SHA-256 in the run's summary (Firebase needs them for Google sign-in). Download them from the run's Artifacts. The build number is the commit count, as on the web.
 
-The upload key lives in the repository's secrets: `ANDROID_UPLOAD_KEYSTORE_BASE64` (a PKCS #12 keystore), `ANDROID_UPLOAD_KEYSTORE_PASSWORD` (the keystore's and the key's), and `ANDROID_UPLOAD_KEY_ALIAS`. `android/app/build.gradle.kts` signs release builds with it when the workflow provides it, and with the debug key otherwise; the workflow refuses a prod build without it. Keep the keystore and password in 1Password too (ROADMAP task 126). If it's lost, Google Play can reset the upload key, since Google holds the app signing key (Play App Signing).
+The upload key lives in the repository's secrets: `ANDROID_UPLOAD_KEYSTORE_BASE64` (a PKCS #12 keystore), `ANDROID_UPLOAD_KEYSTORE_PASSWORD` (the keystore's and the key's), and `ANDROID_UPLOAD_KEY_ALIAS`. `android/app/build.gradle.kts` signs release builds with it when the workflow provides it, and with the debug key otherwise; the workflow refuses a prod build without it. Keep the keystore and password in 1Password too (ROADMAP task 126). If it's lost, Google Play can reset the upload key, since Google holds the app signing key (Play App Signing). The prod build checks that the key's owner name contains "Battleplan", so make it with a name like `CN=Battleplan`.
+
+**Release Android** in the Actions tab (`.github/workflows/release-android.yml`) builds prod the same way (it runs Android build) and uploads the App Bundle to Google Play. Start it on `main`; it waits for CI on the commit (`skip_ci_check` skips that). Pick the track: **internal** (the default) or **closed** testing roll out to their testers once Play has processed the bundle; **production** is always uploaded as a draft, to check and send for review in the Play Console. Tick **draft** for any track while the app has never been published, since Play takes only drafts until then. It needs, besides the upload key:
+
+- `PLAY_SERVICE_ACCOUNT_JSON`: the JSON key of a service account that can release the app. Make it once in the Google Cloud console (a project of its own, or battleplan-prod): IAM and admin, Service accounts, Create service account (no roles), then Keys, Add key, JSON. Enable the Google Play Android Developer API in that project. In the Play Console, Users and permissions, Invite new users: the service account's email, with Battleplan's permissions to release to testing tracks and to production. Save the JSON as the repository secret and in 1Password. Without it the workflow stops before building and says what's missing.
+
+Google Play takes uploads from the workflow only after the app exists in the Play Console and its first App Bundle was uploaded there by hand (any Android build artifact for prod), which also turns on Play App Signing.
+
+**App Links** need `hosting/well-known/<flavor>/assetlinks.json` with the SHA-256 of every key that signs that app, or Android won't open `getbattleplan.app` links in it. There's none for prod yet, and dev's has an old key, because the real ones don't exist until the upload key is made and the first bundle is in Google Play. They come from:
+
+- the upload key: the `SHA256:` line in an Android build run's summary (it signs both dev and prod);
+- Play App Signing's key (prod only, what Play-installed apps are signed with): Play Console, Test and release, App integrity, App signing, "App signing key certificate", SHA-256.
+
+Write prod's file like dev's, with package `app.getbattleplan` and both fingerprints, replace dev's fingerprint with the upload key's, and add the same SHA-1 and SHA-256s to each Android app in Firebase (Project settings) for Google sign-in. Never guess a fingerprint. `tools/build_hosting.sh` warns while a flavor has no `assetlinks.json`. Play Console's Deep links page checks the file once it's live.
 
 ## End-to-end test
 
@@ -208,4 +221,4 @@ CI runs all of these on every PR (`.github/workflows/ci.yml`). Generated model a
 - `lib/features/<feature>/` has `domain/` (models and repository interfaces, pure Dart), `data/` (the only Firebase code), `application/` (providers and multi-repository services), and `presentation/` (screens and controllers).
 - Repository providers are declared in each feature's `application/providers.dart` and wired to Firebase implementations in one place, `lib/app/providers.dart`. Tests override them with fakes (`test/helpers/fakes.dart`).
 - Widgets import `package:material_ui/material_ui.dart`, Flutter's standalone Material library, not `package:flutter/material.dart`.
-- Icons come from `AppIcons` (Material Symbols Rounded), spacing and sizes from `core/design/tokens.dart`, and colors from the theme or `AppColors`.
+- Icons come from `AppIcons` (Material Symbols Rounded), spacing and sizes from `core/design/tokens.dart`, and colors from the theme: `GumdropColors.of(context)` for Gumdrop Pop's roles and candies (or the older `AppColors`), never a hard-coded hex (ARCH §5.5).

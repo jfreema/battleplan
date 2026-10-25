@@ -1,0 +1,68 @@
+<!doctype html>
+<!-- Google Play feature graphic (1024 x 500), Gumdrop Pop Dark. Render with headless Chrome:
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+    --force-device-scale-factor=1 --allow-file-access-from-files --window-size=1024,500 \
+    --virtual-time-budget=3000 --screenshot=$PWD/store/google-play/feature-graphic.png \
+    file://$PWD/store/google-play/feature-graphic.html -->
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Lilita;src:url(../../assets/fonts/lilita_one/LilitaOne-Regular.ttf)}
+@font-face{font-family:Fredoka;font-weight:600;src:url(../../assets/fonts/fredoka/Fredoka-SemiBold.ttf)}
+@font-face{font-family:Nunito;font-weight:800;src:url(../../assets/fonts/nunito/Nunito-ExtraBold.ttf)}
+@font-face{font-family:Nunito;font-weight:900;src:url(../../assets/fonts/nunito/Nunito-Black.ttf)}
+*{box-sizing:border-box;margin:0}
+html,body{width:1024px;height:500px;overflow:hidden;background:#0B1531}
+body{position:relative;font-family:Nunito;font-weight:800;color:#F2F6FF}
+.glow{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55}
+.sprinkle{position:absolute;width:26px;height:9px;border-radius:5px}
+.left{position:absolute;left:64px;top:92px;width:470px}
+.brand{display:flex;align-items:center;gap:22px}
+.tile{width:112px;height:112px;border-radius:30px;background:#305AF6;box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 6px 0 #2A63C9;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+h1{font-family:Lilita;font-weight:400;font-size:84px;line-height:1;color:#fff;
+  text-shadow:1px 1px 0 #2A63C9,2px 2px 0 #2A63C9,3px 3px 0 #2A63C9,4px 4px 0 #2A63C9,5px 5px 0 #2A63C9,6px 6px 0 #2A63C9}
+.sticker{display:inline-block;margin:26px 0 0 4px;padding:5px 16px 6px;background:#FFD84A;color:#0B1531;border:3px solid #0B1531;border-radius:12px;box-shadow:4px 4px 0 #2A63C9;font-family:Lilita;font-size:24px;letter-spacing:.03em;transform:rotate(-2deg)}
+.tag{margin-top:22px;font-size:27px;line-height:1.3;color:#B2BFE0}
+.right{position:absolute;left:584px;top:58px;width:380px}
+.bubble{background:#4D9BFF;color:#0B1531;border-radius:24px 24px 8px 24px;padding:14px 18px;font-size:20px;line-height:1.3;box-shadow:inset 0 2px 0 rgba(255,255,255,.35),0 4px 0 #2A63C9;margin-left:60px;transform:rotate(1.5deg)}
+.bubble .who{font-family:Fredoka;font-weight:600;font-size:15px;opacity:.75;margin-bottom:2px}
+.card{background:#FF9B42;color:#0B1531;border-radius:26px;padding:16px 20px 18px;margin-top:22px;box-shadow:0 5px 0 #C7600C;transform:rotate(-1.5deg)}
+.chips{display:flex;gap:8px}
+.chip{height:25px;padding:0 11px;border-radius:13px;font-family:Fredoka;font-weight:600;font-size:13px;letter-spacing:.07em;display:flex;align-items:center}
+.chip.ink{background:#0B1531;color:#FF9B42}.chip.soft{background:rgba(20,17,43,.14)}
+.card h2{font-family:Lilita;font-weight:400;font-size:34px;line-height:1;margin-top:10px}
+.card p{font-size:17px;margin-top:4px}
+.rsvp{display:flex;gap:10px;margin-top:22px}
+.g{flex:1;height:50px;border-radius:25px;display:flex;align-items:center;justify-content:center;font-family:Fredoka;font-weight:600;font-size:18px;color:#0B1531;box-shadow:inset 0 2px 0 rgba(255,255,255,.35),0 4px 0 var(--lip);background:var(--face)}
+</style></head><body>
+<div class="glow" style="width:420px;height:420px;left:-120px;top:-160px;background:#1E3D8F"></div>
+<div class="glow" style="width:380px;height:380px;right:-80px;bottom:-200px;background:#3A2A86"></div>
+<div class="sprinkle" style="left:40px;top:40px;background:#FF7AC8;transform:rotate(-25deg)"></div>
+<div class="sprinkle" style="left:470px;top:30px;background:#4DDC8C;transform:rotate(20deg)"></div>
+<div class="sprinkle" style="left:520px;top:440px;background:#FFD84A;transform:rotate(-35deg)"></div>
+<div class="sprinkle" style="left:90px;top:452px;background:#A88BFF;transform:rotate(15deg)"></div>
+<div class="sprinkle" style="left:980px;top:28px;background:#FF5D73;transform:rotate(40deg)"></div>
+<div class="sprinkle" style="left:330px;top:466px;background:#4D9BFF;transform:rotate(-10deg)"></div>
+
+<div class="left">
+  <div class="brand">
+    <div class="tile"><svg viewBox="0 0 512 512" width="96" height="96"><g fill="#fff" transform="translate(256 262) scale(0.5) translate(-375 -330)"><path d="M60 660 108 75" stroke="#fff" stroke-width="48" stroke-linecap="round"/><circle cx="112" cy="52" r="42"/><path fill-rule="evenodd" d="M150 98C260 40 380 190 690 122L588 305 690 480C470 560 330 400 118 492ZM200 155H445L505 215V255L462 297 505 340V385L445 430H218L270 370H405L428 347 400 318H205L262 260H408L435 235 410 210H255Z"/></g></svg></div>
+    <h1>Battleplan</h1>
+  </div>
+  <div class="sticker">FREE FOR EVERY TEAM</div>
+  <p class="tag">Team chat, the schedule, and who's coming, all in one place.</p>
+</div>
+
+<div class="right">
+  <div class="bubble"><div class="who">Coach Rivera</div>Bring the blue jerseys Saturday!</div>
+  <div class="card">
+    <div class="chips"><span class="chip ink">GAME</span><span class="chip soft">IN 3 DAYS</span></div>
+    <h2>vs. Hawks</h2>
+    <p>Saturday, 10:00 AM · Field 2</p>
+  </div>
+  <div class="rsvp">
+    <div class="g" style="--face:#4DDC8C;--lip:#1F9A55">Going</div>
+    <div class="g" style="--face:#FFD84A;--lip:#C2950B">Maybe</div>
+    <div class="g" style="--face:#FF5D73;--lip:#C42A45">Not going</div>
+  </div>
+</div>
+</body></html>

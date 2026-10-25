@@ -265,19 +265,22 @@ List<Document> get sceneDocuments => [
   ),
 ];
 
-FakeLocalPrefs _prefs({required bool dark}) => FakeLocalPrefs()
-  ..themePreference = dark ? ThemePreference.dark : ThemePreference.light
+FakeLocalPrefs _prefs({required ThemePreference theme}) => FakeLocalPrefs()
+  ..themePreference = theme
   // The notification pre-prompt is its own screen, not these.
   ..pushPrePromptShown = true;
 
 /// The sign-in screen, signed out, as people see it in prod: Google only
 /// until Apple is on (AUTH-1).
-Future<void> pumpSignIn(WidgetTester tester, {required bool dark}) async {
+Future<void> pumpSignIn(
+  WidgetTester tester, {
+  required ThemePreference theme,
+}) async {
   await pumpApp(
     tester,
     auth: FakeAuthRepository(),
     env: const AppEnv(flavor: AppFlavor.prod, useEmulators: false),
-    prefs: _prefs(dark: dark),
+    prefs: _prefs(theme: theme),
     size: phoneSize,
   );
 }
@@ -285,7 +288,7 @@ Future<void> pumpSignIn(WidgetTester tester, {required bool dark}) async {
 /// The team's app on fake data, opened on the chat.
 Future<void> pumpTeam(
   WidgetTester tester, {
-  required bool dark,
+  required ThemePreference theme,
   AuthUser user = coach,
   Size size = phoneSize,
   FakeMessageRepository? messages,
@@ -306,15 +309,14 @@ Future<void> pumpTeam(
   await pumpApp(
     tester,
     auth: FakeAuthRepository(user: user),
-    prefs: _prefs(dark: dark),
+    prefs: _prefs(theme: theme),
     groups: {'a': sceneTeam},
     memberships: [
       ...sceneMembers,
       if (user.uid != 'coach') testMembership('a', user.uid),
     ],
     // The account's theme wins over this device's once the profile loads.
-    users: FakeUserRepository()
-      ..themeMode = dark ? ThemePreference.dark : ThemePreference.light,
+    users: FakeUserRepository()..themeMode = theme,
     messageRepo: messages ?? FakeMessageRepository(sceneMessages),
     pollRepo: polls,
     eventRepo: events,
@@ -340,37 +342,49 @@ Future<void> goTo(WidgetTester tester, String path) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> pumpChat(WidgetTester tester, {required bool dark}) =>
-    pumpTeam(tester, dark: dark);
+Future<void> pumpChat(WidgetTester tester, {required ThemePreference theme}) =>
+    pumpTeam(tester, theme: theme);
 
-Future<void> pumpSchedule(WidgetTester tester, {required bool dark}) async {
-  await pumpTeam(tester, dark: dark);
+Future<void> pumpSchedule(
+  WidgetTester tester, {
+  required ThemePreference theme,
+}) async {
+  await pumpTeam(tester, theme: theme);
   await tester.tap(find.text('Schedule'));
   await tester.pumpAndSettle();
 }
 
-Future<void> pumpEventDetails(WidgetTester tester, {required bool dark}) async {
-  await pumpSchedule(tester, dark: dark);
+Future<void> pumpEventDetails(
+  WidgetTester tester, {
+  required ThemePreference theme,
+}) async {
+  await pumpSchedule(tester, theme: theme);
   await tester.tap(find.text('vs. Eagles').first);
   await tester.pumpAndSettle();
 }
 
-Future<void> pumpDocuments(WidgetTester tester, {required bool dark}) async {
-  await pumpTeam(tester, dark: dark);
+Future<void> pumpDocuments(
+  WidgetTester tester, {
+  required ThemePreference theme,
+}) async {
+  await pumpTeam(tester, theme: theme);
   await tester.tap(find.text('Documents'));
   await tester.pumpAndSettle();
 }
 
 Future<void> pumpAdminDashboard(
   WidgetTester tester, {
-  required bool dark,
+  required ThemePreference theme,
 }) async {
-  await pumpTeam(tester, dark: dark, user: boss);
+  await pumpTeam(tester, theme: theme, user: boss);
   await goTo(tester, '/admin');
 }
 
 /// The main screens by name, for tests that go through them all.
-final Map<String, Future<void> Function(WidgetTester, {required bool dark})>
+final Map<
+  String,
+  Future<void> Function(WidgetTester, {required ThemePreference theme})
+>
 mainScreens = {
   'sign_in': pumpSignIn,
   'chat': pumpChat,
@@ -386,34 +400,36 @@ const wideSize = Size(1280, 800);
 /// Every key screen with a golden in both themes (SPEC §7.4): the main
 /// screens, and welcome, the team switcher, roster, settings, invite, and
 /// the wide rail layout.
-final Map<String, Future<void> Function(WidgetTester, {required bool dark})>
+final Map<
+  String,
+  Future<void> Function(WidgetTester, {required ThemePreference theme})
+>
 goldenScreens = {
   ...mainScreens,
-  'welcome': (tester, {required dark}) => pumpApp(
+  'welcome': (tester, {required theme}) => pumpApp(
     tester,
     auth: FakeAuthRepository(user: coach),
-    prefs: _prefs(dark: dark),
-    users: FakeUserRepository()
-      ..themeMode = dark ? ThemePreference.dark : ThemePreference.light,
+    prefs: _prefs(theme: theme),
+    users: FakeUserRepository()..themeMode = theme,
     size: phoneSize,
   ),
-  'team_switcher': (tester, {required dark}) async {
-    await pumpTeam(tester, dark: dark);
+  'team_switcher': (tester, {required theme}) async {
+    await pumpTeam(tester, theme: theme);
     await tester.tap(find.bySemanticsLabel('Switch team: Thunder U14'));
     await tester.pumpAndSettle();
   },
-  'roster': (tester, {required dark}) async {
-    await pumpTeam(tester, dark: dark);
+  'roster': (tester, {required theme}) async {
+    await pumpTeam(tester, theme: theme);
     await goTo(tester, '/g/a/roster');
   },
-  'settings': (tester, {required dark}) async {
-    await pumpTeam(tester, dark: dark);
+  'settings': (tester, {required theme}) async {
+    await pumpTeam(tester, theme: theme);
     await goTo(tester, '/settings');
   },
-  'invite': (tester, {required dark}) async {
-    await pumpTeam(tester, dark: dark);
+  'invite': (tester, {required theme}) async {
+    await pumpTeam(tester, theme: theme);
     await goTo(tester, '/g/a/invite');
   },
-  'chat_wide': (tester, {required dark}) =>
-      pumpTeam(tester, dark: dark, size: wideSize),
+  'chat_wide': (tester, {required theme}) =>
+      pumpTeam(tester, theme: theme, size: wideSize),
 };

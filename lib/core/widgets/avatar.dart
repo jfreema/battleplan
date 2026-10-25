@@ -1,3 +1,5 @@
+import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -19,17 +21,6 @@ class Avatar extends StatelessWidget {
   final String? imageUrl;
   final double size;
 
-  static const _palette = [
-    Color(0xFF2F5BEA),
-    Color(0xFF0F8A5F),
-    Color(0xFFC2410C),
-    Color(0xFF7C3AED),
-    Color(0xFF0E7490),
-    Color(0xFFBE185D),
-    Color(0xFFA16207),
-    Color(0xFF334155),
-  ];
-
   static String initialsOf(String name) {
     final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
     if (parts.isEmpty) return '?';
@@ -38,12 +29,23 @@ class Avatar extends StatelessWidget {
     return (first + last).toUpperCase();
   }
 
-  static Color colorFor(String key) {
+  /// The candy color for [key] (Gumdrop Pop design §3.9: circles in an
+  /// accent with ink initials), the same for a person everywhere.
+  static Color colorFor(GumdropColors colors, String key) {
+    final palette = [
+      colors.blueRaspberry,
+      colors.lemon,
+      colors.mint,
+      colors.grape,
+      colors.bubblegum,
+      colors.tangerine,
+      colors.cherry,
+    ];
     var hash = 0;
     for (final unit in key.codeUnits) {
       hash = (hash * 31 + unit) & 0x7fffffff;
     }
-    return _palette[hash % _palette.length];
+    return palette[hash % palette.length].face;
   }
 
   @override
@@ -67,25 +69,31 @@ class Avatar extends StatelessWidget {
                     devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
                   ),
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _initials(),
+                  errorBuilder: (_, _, _) => _initials(context),
                 )
-              : _initials(),
+              : _initials(context),
         ),
       ),
     );
   }
 
-  Widget _initials() => ColoredBox(
-    color: colorFor(colorKey ?? name),
-    child: Center(
-      child: Text(
-        initialsOf(name),
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: size * 0.38,
+  Widget _initials(BuildContext context) {
+    final colors = GumdropColors.of(context);
+    return ColoredBox(
+      color: colorFor(colors, colorKey ?? name),
+      child: Center(
+        child: Text(
+          initialsOf(name),
+          maxLines: 1,
+          style: TextStyle(
+            fontFamily: AppFonts.label,
+            fontWeight: FontWeight.w600,
+            fontSize: size * 0.38,
+            height: 1,
+            color: colors.ink,
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

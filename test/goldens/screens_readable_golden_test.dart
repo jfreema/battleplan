@@ -1,6 +1,7 @@
-// The key screens with real fonts (the bundled Inter, Material Symbols for
-// icons) in light and dark at a phone size (one at a wide size), at 2x, to look at in review
-// (ARCH §9). Fonts rasterize a little differently on each operating
+// The key screens with real fonts (the bundled Lilita One, Fredoka, and
+// Nunito, Material Symbols for icons) in the three Gumdrop themes, Light,
+// Dark, and Candy, at a phone size (one at a wide size), at 2x, to look at
+// in review (ARCH §9). Fonts rasterize a little differently on each operating
 // system, so these compare only on the one that made them
 // ([readableGoldensOs]), and CI (Linux) skips them: they're for looking at
 // a change, not for catching one.
@@ -12,6 +13,7 @@ library;
 
 import 'dart:io';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -29,10 +31,15 @@ void main() {
       : 'Readable goldens compare on $readableGoldensOs only';
 
   for (final MapEntry(key: name, value: pump) in goldenScreens.entries) {
-    for (final dark in [false, true]) {
-      final theme = dark ? 'dark' : 'light';
+    // The three Gumdrop themes (SET-2).
+    for (final preference in [
+      ThemePreference.light,
+      ThemePreference.dark,
+      ThemePreference.candy,
+    ]) {
+      final theme = preference.value;
       testWidgets('$name ($theme)', skip: skip != null, (tester) async {
-        await pump(tester, dark: dark);
+        await pump(tester, theme: preference);
         // The same layout, drawn at 2x so the text is sharp, with real
         // shadows rather than the test's solid outlines (reset before the
         // test ends, as the test framework checks).

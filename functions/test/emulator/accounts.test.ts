@@ -140,6 +140,8 @@ describe('added accounts choose how to sign in next time (AUTH-6)', () => {
   it('asks after the setup link, until they choose', async () => {
     const lee = await findOrProvisionUser('lee@example.com', 'Lee Kim');
     expect((await profile(lee.uid)).chooseSignIn).toBe(true);
+    // New accounts start in Gumdrop Pop Dark (SET-2).
+    expect((await profile(lee.uid)).themeMode).toBe('dark');
     // The setup link signs them in and verifies the email.
     await auth().updateUser(lee.uid, { emailVerified: true });
     await run(accounts.ensureUserProfile, lee.uid);

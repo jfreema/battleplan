@@ -6,8 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Loads real fonts into the test, so golden images are readable instead of
-/// the test font's boxes: every font the app bundles (Inter, Material
-/// Symbols and MaterialIcons, from the asset manifest the test build makes)
+/// the test font's boxes: every font the app bundles (Lilita One, Fredoka,
+/// Nunito, Material Symbols and MaterialIcons, from the asset manifest the
+/// test build makes)
 /// and Roboto from the Flutter SDK for anything that asks for it (ARCH §5.5).
 ///
 /// Text rasterizes a little differently on each operating system, so

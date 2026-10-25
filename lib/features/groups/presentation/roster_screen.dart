@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -16,6 +17,7 @@ import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/leave_team.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
@@ -95,8 +97,9 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
     final today = DateTime.now();
     final order = ref.watch(rosterViewProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.rosterMenu),
+      appBar: gumdropAppBar(
+        context,
+        title: l10n.rosterMenu,
         actions: [
           // By number or by name (TEAM-10).
           PopupMenuButton<RosterOrder>(
@@ -178,39 +181,63 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
           final mine = isAdmin
               ? const <Player>[]
               : pending.where(matches).toList();
+          // Each group of rows on its own card (design §3.5).
+          Widget card(List<Widget> rows) => Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: SettingsCard(padding: EdgeInsets.zero, children: rows),
+          );
+          final memberRows = [
+            (l10n.rosterCoaches, coaches),
+            (l10n.rosterAdmins, admins),
+            (l10n.rosterMembers, others),
+          ];
           return ListView(
+            padding: const EdgeInsets.only(bottom: Space.xl),
             children: [
               Padding(
-                padding: const EdgeInsets.all(Space.lg),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
                 child: TextField(
-                  decoration: InputDecoration(
-                    hintText: l10n.searchByName,
-                    isDense: true,
-                  ),
+                  style: gumdropFieldText(context),
+                  decoration: gumdropField(hint: l10n.searchByName)
+                      .copyWith(prefixIcon: const Icon(AppIcons.search)),
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
               if (toDecide.isNotEmpty || claims.isNotEmpty) ...[
                 _Section(title: l10n.playerRequestsTitle),
-                for (final p in toDecide)
-                  _PendingPlayerRow(player: p, who: nameOf(p.proposedBy)),
-                for (final r in claims)
-                  _RequestRow(
-                    request: r,
-                    who: nameOf(r.uid.value),
-                    player: players
-                        .where((p) => p.id == r.playerId)
-                        .firstOrNull
-                        ?.label,
-                  ),
+                card([
+                  for (final p in toDecide)
+                    _PendingPlayerRow(player: p, who: nameOf(p.proposedBy)),
+                  for (final r in claims)
+                    _RequestRow(
+                      request: r,
+                      who: nameOf(r.uid.value),
+                      player: players
+                          .where((p) => p.id == r.playerId)
+                          .firstOrNull
+                          ?.label,
+                    ),
+                ]),
               ],
-              if (!isAdmin && me != null && !linked && !waiting)
-                ListTile(
-                  leading: const Icon(AppIcons.invite),
-                  title: Text(l10n.whoAreYouHereFor),
-                  subtitle: Text(l10n.whoAreYouHereForRosterHint),
-                  onTap: () => context.push('/g/${widget.groupId.value}/who'),
+              if (!isAdmin && me != null && !linked && !waiting) ...[
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SettingsCard(
+                    children: [
+                      SettingsRow(
+                        icon: AppIcons.invite,
+                        highlighted: true,
+                        title: l10n.whoAreYouHereFor,
+                        subtitle: l10n.whoAreYouHereForRosterHint,
+                        subtitleLines: 3,
+                        onTap: () =>
+                            context.push('/g/${widget.groupId.value}/who'),
+                      ),
+                    ],
+                  ),
                 ),
+              ],
               _Section(title: l10n.rosterPlayers),
               if (players.isEmpty && mine.isEmpty)
                 Padding(
@@ -218,55 +245,57 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                     horizontal: Space.lg,
                     vertical: Space.sm,
                   ),
-                  child: Text(l10n.adminNoPlayers),
-                ),
-              // My own players waiting for an admin (PLAYER-4).
-              for (final p in mine)
-                ListTile(
-                  leading: CircleAvatar(child: Text(p.jerseyNumber ?? '')),
-                  title: Text(p.displayName),
-                  subtitle: Text(l10n.playerPending),
-                ),
-              for (final p in shownPlayers)
-                _PlayerRow(
-                  player: p,
-                  age: details[p.id]?.ageAt(today),
-                  // TEAM-3: number, name, and who's linked.
-                  linked: [
-                    for (final l in links)
-                      if (l.playerId == p.id)
-                        if (nameOf(l.uid.value) case final name?)
-                          if (l.isSelf) l10n.playerLinkSelfName(name) else name,
-                  ],
-                ),
-              if (coaches.isNotEmpty) _Section(title: l10n.rosterCoaches),
-              for (final m in coaches)
-                _MemberRow(
-                  member: m,
-                  me: me,
-                  who: whoLabel(l10n, m.uid, links, players),
-                ),
-              if (admins.isNotEmpty) _Section(title: l10n.rosterAdmins),
-              for (final m in admins)
-                _MemberRow(
-                  member: m,
-                  me: me,
-                  who: whoLabel(l10n, m.uid, links, players),
-                ),
-              if (others.isNotEmpty) _Section(title: l10n.rosterMembers),
-              for (final m in others)
-                _MemberRow(
-                  member: m,
-                  me: me,
-                  who: whoLabel(l10n, m.uid, links, players),
-                ),
+                  child: Text(
+                    l10n.adminNoPlayers,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: GumdropColors.of(context).textMutedOnPage,
+                    ),
+                  ),
+                )
+              else if (mine.isNotEmpty || shownPlayers.isNotEmpty)
+                card([
+                  // My own players waiting for an admin (PLAYER-4).
+                  for (final p in mine)
+                    ListTile(
+                      leading: _JerseyDisc(number: p.jerseyNumber),
+                      title: Text(p.displayName),
+                      subtitle: Text(l10n.playerPending),
+                    ),
+                  for (final p in shownPlayers)
+                    _PlayerRow(
+                      player: p,
+                      age: details[p.id]?.ageAt(today),
+                      // TEAM-3: number, name, and who's linked.
+                      linked: [
+                        for (final l in links)
+                          if (l.playerId == p.id)
+                            if (nameOf(l.uid.value) case final name?)
+                              if (l.isSelf)
+                                l10n.playerLinkSelfName(name)
+                              else
+                                name,
+                      ],
+                    ),
+                ]),
+              for (final (title, people) in memberRows)
+                if (people.isNotEmpty) ...[
+                  _Section(title: title),
+                  card([
+                    for (final m in people)
+                      _MemberRow(
+                        member: m,
+                        me: me,
+                        who: whoLabel(l10n, m.uid, links, players),
+                      ),
+                  ]),
+                ],
               if (!seePeople)
                 Padding(
                   padding: const EdgeInsets.all(Space.lg),
                   child: Text(
                     l10n.rosterPeopleHidden,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: GumdropColors.of(context).textMutedOnPage,
                     ),
                   ),
                 ),
@@ -324,7 +353,7 @@ class _PlayerRow extends StatelessWidget {
       if (linked.isNotEmpty) linked.join(', '),
     ];
     return ListTile(
-      leading: CircleAvatar(child: Text(player.jerseyNumber ?? '')),
+      leading: _JerseyDisc(number: player.jerseyNumber),
       title: Text(player.displayName),
       subtitle: details.isEmpty ? null : Text(details.join(' · ')),
       onTap: () => context.push(
@@ -504,9 +533,31 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(Space.lg, Space.lg, Space.lg, Space.xs),
-    child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+    padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
+    child: PageHeading(title),
   );
+}
+
+/// A player's jersey number on a 40 px candy disc (design §3.9).
+class _JerseyDisc extends StatelessWidget {
+  const new({required this.number});
+
+  final String? number;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: c.you.face, shape: BoxShape.circle),
+      child: Text(
+        number ?? '',
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: c.ink),
+      ),
+    );
+  }
 }
 
 /// Role badge text: Owner or Admin. A direct conversation's people

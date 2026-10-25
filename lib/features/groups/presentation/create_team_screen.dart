@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -10,6 +11,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -151,57 +153,131 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final error = _error;
+    final c = GumdropColors.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.createTeam)),
+      appBar: gumdropAppBar(context, title: l10n.createTeam),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
           child: Form(
             key: _form,
             child: ListView(
-              padding: const EdgeInsets.all(Space.xl),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
               children: [
-                TextFormField(
-                  controller: _name,
-                  maxLength: Limits.groupNameMax,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(
-                    labelText: l10n.teamNameLabel,
-                    counterText: '',
+                SettingsPanel(
+                  radius: Corners.panel,
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),
+                  child: Builder(
+                    builder: (context) {
+                      final card = GumdropColors.of(context);
+                      final field = gumdropFieldText(context);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          LabeledField(
+                            label: l10n.teamNameLabel,
+                            child: TextFormField(
+                              controller: _name,
+                              maxLength: Limits.groupNameMax,
+                              textCapitalization: TextCapitalization.words,
+                              style: field,
+                              decoration: gumdropField(),
+                              validator: (v) => (v ?? '').trim().isEmpty
+                                  ? l10n.teamNameRequired
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(height: 9),
+                          LabeledField(
+                            label: l10n.sportLabel,
+                            child: DropdownButtonFormField<Sport>(
+                              initialValue: _sport,
+                              style: field?.copyWith(color: card.textPrimary),
+                              decoration: gumdropField(),
+                              icon: Icon(
+                                AppIcons.expand,
+                                size: 24,
+                                color: card.textMuted,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                Corners.input,
+                              ),
+                              items: [
+                                for (final s in Sport.values)
+                                  DropdownMenuItem(
+                                    value: s,
+                                    child: Text(sportName(l10n, s)),
+                                  ),
+                              ],
+                              onChanged: (s) =>
+                                  setState(() => _sport = s ?? _sport),
+                            ),
+                          ),
+                          const SizedBox(height: 9),
+                          LabeledField(
+                            label: l10n.timeZoneLabel,
+                            child: DropdownButtonFormField<String>(
+                              initialValue: _timeZone,
+                              isExpanded: true,
+                              style: field?.copyWith(color: card.textPrimary),
+                              decoration: gumdropField(),
+                              icon: Icon(
+                                AppIcons.expand,
+                                size: 24,
+                                color: card.textMuted,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                Corners.input,
+                              ),
+                              items: [
+                                for (final z in _zones)
+                                  DropdownMenuItem(value: z, child: Text(z)),
+                              ],
+                              onChanged: (z) => setState(() => _timeZone = z),
+                            ),
+                          ),
+                          const SizedBox(height: 9),
+                          LabeledField(
+                            label: l10n.teamDescriptionLabel,
+                            child: TextFormField(
+                              controller: _description,
+                              maxLength: 500,
+                              maxLines: 3,
+                              minLines: 1,
+                              style: field,
+                              decoration: gumdropField(),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                  validator: (v) =>
-                      (v ?? '').trim().isEmpty ? l10n.teamNameRequired : null,
                 ),
-                const SizedBox(height: Space.lg),
-                DropdownButtonFormField<Sport>(
-                  initialValue: _sport,
-                  decoration: InputDecoration(labelText: l10n.sportLabel),
-                  items: [
-                    for (final s in Sport.values)
-                      DropdownMenuItem(
-                        value: s,
-                        child: Text(sportName(l10n, s)),
-                      ),
-                  ],
-                  onChanged: (s) => setState(() => _sport = s ?? _sport),
-                ),
-                const SizedBox(height: Space.xl),
-                Text(l10n.teamLogoLabel, style: theme.textTheme.titleSmall),
-                const SizedBox(height: Space.sm),
+                const SizedBox(height: 12),
+                PageHeading(l10n.teamLogoLabel),
+                const SizedBox(height: 10),
                 Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: Space.sm,
                   runSpacing: Space.sm,
                   children: [
                     if (_logo != null) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(Corners.card),
-                        child: Image.memory(
-                          _logo!,
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                          semanticLabel: l10n.teamLogoLabel,
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(color: c.divider, spreadRadius: 2),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Image.memory(
+                            _logo!,
+                            width: 58,
+                            height: 58,
+                            fit: BoxFit.cover,
+                            semanticLabel: l10n.teamLogoLabel,
+                          ),
                         ),
                       ),
                     ],
@@ -219,78 +295,30 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                       ),
                   ],
                 ),
-                const SizedBox(height: Space.xl),
-                Text(l10n.teamColorLabel, style: theme.textTheme.titleSmall),
-                const SizedBox(height: Space.sm),
-                Wrap(
-                  spacing: Space.sm,
-                  runSpacing: Space.sm,
-                  children: [
-                    // No color (TEAM-1: optional).
-                    Semantics(
-                      button: true,
-                      selected: _color == null,
-                      label: l10n.noTeamColor,
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => setState(() => _color = null),
-                        child: CircleAvatar(
-                          radius: 20,
-                          backgroundColor:
-                              theme.colorScheme.surfaceContainerHighest,
-                          child: Icon(
-                            _color == null ? AppIcons.check : AppIcons.close,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
-                    for (final c in teamColorValues)
-                      Semantics(
-                        button: true,
-                        selected: c == _color,
-                        label: _hex(c),
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => setState(() => _color = c),
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Color(c),
-                            child: c == _color
-                                ? const Icon(
-                                    AppIcons.check,
-                                    color: Colors.white,
-                                  )
-                                : null,
-                          ),
-                        ),
-                      ),
-                  ],
+                const SizedBox(height: 12),
+                PageHeading(l10n.teamColorLabel),
+                const SizedBox(height: 10),
+                // Optional (TEAM-1): "No color" first.
+                TeamColorGrid(
+                  selected: _color,
+                  allowNone: true,
+                  onPick: (argb) => setState(() => _color = argb),
                 ),
-                const SizedBox(height: Space.xl),
-                DropdownButtonFormField<String>(
-                  initialValue: _timeZone,
-                  isExpanded: true,
-                  decoration: InputDecoration(labelText: l10n.timeZoneLabel),
-                  items: [
-                    for (final z in _zones)
-                      DropdownMenuItem(value: z, child: Text(z)),
-                  ],
-                  onChanged: (z) => setState(() => _timeZone = z),
-                ),
-                const SizedBox(height: Space.lg),
-                TextFormField(
-                  controller: _description,
-                  maxLength: 500,
-                  maxLines: 3,
-                  minLines: 1,
-                  decoration: InputDecoration(
-                    labelText: l10n.teamDescriptionLabel,
+                const SizedBox(height: 6),
+                Text(
+                  l10n.teamColorTintNote,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: c.textMutedOnPage,
                   ),
                 ),
                 if (error != null) ...[
                   const SizedBox(height: Space.md),
-                  Text(error, style: TextStyle(color: theme.colorScheme.error)),
+                  Text(
+                    error,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
                 ],
                 const SizedBox(height: Space.xl),
                 FilledButton(

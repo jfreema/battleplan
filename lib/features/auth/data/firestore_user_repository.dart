@@ -144,7 +144,7 @@ UserProfile userProfileFromFirestore(String uid, Map<String, dynamic> d) =>
       photoPath: d['photoPath'] as String?,
       themeMode:
           ThemePreference.tryParse(d['themeMode'] as String?) ??
-          ThemePreference.system,
+          ThemePreference.dark,
       signInMethods: [
         for (final m in (d['signInMethods'] as List?) ?? const []) '$m',
       ],

@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
@@ -18,6 +21,7 @@ import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/chat/presentation/message_tile.dart';
 import 'package:battleplan/features/chat/presentation/quote_block.dart';
+import 'package:battleplan/features/chat/presentation/sprinkles.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/groups.dart';
@@ -25,6 +29,7 @@ import 'package:battleplan/features/polls/polls.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
@@ -448,12 +453,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // (ADMIN-3): no composer, replies, or reactions.
     final viewing = ref.watch(viewingAsSuperAdminProvider(widget.groupId));
     // The team's chat look (CHAT-18): my bubble color and the background.
-    // No color chosen means the team color, as Team settings shows it, so
-    // changing only the background never changes the bubbles; a team with
-    // neither keeps the brand color and a plain chat.
+    // No color chosen means the theme's "you" color (lemon in Gumdrop
+    // Candy), so changing only the background never changes the bubbles;
+    // a team with neither has a plain chat.
     final look = group?.chatTheme;
-    final bubbleArgb = look?.bubbleColor ?? group?.color;
-    final bubbleColor = bubbleArgb == null ? null : Color(bubbleArgb);
+    // A candy color (Chat look) is drawn in this theme's shade of it.
+    final bubbleColor = chatBubbleColor(
+      GumdropColors.of(context),
+      look?.bubbleColor,
+    );
     // Full storage stops photos, not text (STORE-4).
     final storageFull = group?.storageFull ?? false;
     final messages = chat.messages;
@@ -523,12 +531,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _markRead();
     });
     final shownIds = byId.keys.toSet();
-    // Messages, those on their way, and the composer in iMessage's face:
-    // San Francisco in Apple's own apps (ChatText).
-    final appleFont = chatUsesAppleFont(
-      context,
-      isWeb: ref.watch(browserInfoProvider).isWeb,
-    );
     // Things still on their way, shown below everything, oldest first:
     // uploading photos, then queued or refused texts. A queued text whose
     // local write is already in the chat shows there instead.
@@ -550,7 +552,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           OutgoingTextTile(
             item: q,
             bubbleColor: bubbleColor,
-            appleFont: appleFont,
             onRetry: () =>
                 unawaited(controller.retryText(q.id).catchError((_) {})),
             onDiscard: () => controller.discardText(q.id),
@@ -565,7 +566,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               failed: p.failed,
             ),
             bubbleColor: bubbleColor,
-            appleFont: appleFont,
             onRetry: () =>
                 unawaited(controller.retryPoll(p.id).catchError((_) {})),
             onDiscard: () => controller.discardPoll(p.id),
@@ -646,12 +646,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         key: _listKey,
         controller: _scroll,
         reverse: true,
+        // Gumdrop cards (polls, events) are tall: keeping more of the list
+        // laid out keeps its length steady, so a fling lands where it
+        // should rather than short of the newest messages.
+        scrollCacheExtent: const ScrollCacheExtent.pixels(1000),
         center: _centerKey,
         slivers: [
           // Below the center, top to bottom: newer messages (with the gap
           // still to load, if any), then what's on its way.
           SliverPadding(
-            padding: const EdgeInsets.only(bottom: Space.sm),
+            padding: const EdgeInsets.only(bottom: Space.xs),
             sliver: SliverList.list(children: pending),
           ),
           SliverList.builder(
@@ -766,7 +770,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           )
         else
           Composer(
-            appleFont: appleFont,
             // "Message Thunder…", or the other person's name.
             teamName: direct ? otherName : group?.name ?? '',
             replyingTo: _replyTo,
@@ -905,8 +908,9 @@ String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
       : DateFormat.yMMMEd(l10n.localeName).format(d);
 }
 
-/// The team's chat background (CHAT-18): a subtle pattern, or a photo
-/// under a scrim so messages stay readable.
+/// The team's chat background (CHAT-18): the page color, Gumdrop Pop's
+/// sprinkles over it, or a photo under a page-colored scrim so messages
+/// stay readable.
 class _Backdrop extends ConsumerWidget {
   const new({required this.look});
 
@@ -914,14 +918,12 @@ class _Backdrop extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
+    final c = GumdropColors.of(context);
     switch (look.background) {
       case ChatBackground.plain:
         return const SizedBox.shrink();
       case ChatBackground.pattern:
-        return CustomPaint(
-          painter: _DotsPainter(scheme.onSurface.withValues(alpha: 0.06)),
-        );
+        return Sprinkles(colors: c);
       case ChatBackground.photo:
         final path = look.backgroundPath;
         final url = path == null
@@ -936,32 +938,11 @@ class _Backdrop extends ConsumerWidget {
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => const SizedBox.shrink(),
             ),
-            ColoredBox(color: scheme.surface.withValues(alpha: 0.78)),
+            ColoredBox(color: c.page.withValues(alpha: 0.78)),
           ],
         );
     }
   }
-}
-
-class _DotsPainter extends CustomPainter {
-  new(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
-    const step = 22.0;
-    for (var y = step / 2; y < size.height; y += step) {
-      final offset = (y ~/ step).isEven ? 0.0 : step / 2;
-      for (var x = step / 2 + offset; x < size.width; x += step) {
-        canvas.drawCircle(Offset(x, y), 1.6, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DotsPainter old) => old.color != color;
 }
 
 /// The pinned messages at the top of the chat (CHAT-15): one at a time,
@@ -984,8 +965,6 @@ class _PinnedBarState extends ConsumerState<_PinnedBar> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final count = widget.ids.length;
     final index = _index % count;
     final id = widget.ids[index];
@@ -999,52 +978,99 @@ class _PinnedBarState extends ConsumerState<_PinnedBar> {
             if (message.authorName.isNotEmpty) message.authorName,
             quoteText(l10n, message.type, message.text),
           ].where((p) => p.isNotEmpty).join(': ');
+    // A card (§3.5): a lemon pin disc, the label in lemon caps type, the
+    // message on one line, and a chevron.
     return Semantics(
       button: true,
       label: l10n.pinnedBarLabel(label, preview),
       excludeSemantics: true,
-      child: Material(
-        color: scheme.surfaceContainerLow,
-        child: InkWell(
-          onTap: () {
-            widget.onOpen(id);
-            setState(() => _index = index + 1);
-          },
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 48),
-            padding: const EdgeInsets.symmetric(
-              horizontal: Space.lg,
-              vertical: Space.xs,
-            ),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
-            ),
-            child: Row(
-              children: [
-                Icon(AppIcons.pin, size: 20, color: scheme.primary),
-                const SizedBox(width: Space.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        label,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: scheme.primary,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, 0),
+        child: GumdropSurface(
+          child: Builder(
+            builder: (context) {
+              final c = GumdropColors.of(context);
+              return Material(
+                color: c.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Corners.tile),
+                  side: c.surfaceBorderWidth == 0
+                      ? BorderSide.none
+                      : BorderSide(
+                          color: c.surfaceBorder,
+                          width: c.surfaceBorderWidth,
                         ),
-                      ),
-                      Text(
-                        preview,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () {
+                    widget.onOpen(id);
+                    setState(() => _index = index + 1);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(7, 7, 12, 7),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: c.lemon.face,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            AppIcons.pin,
+                            size: 18,
+                            weight: 600,
+                            color: c.ink,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                label,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.label,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  height: 1.2,
+                                  letterSpacing: 0.84,
+                                  color: c.lemon.text,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                preview,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.body,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                  height: 1.25,
+                                  color: c.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: Space.sm),
+                        Icon(
+                          AppIcons.chevronRight,
+                          size: 22,
+                          weight: 700,
+                          color: c.textMuted,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
@@ -1080,69 +1106,104 @@ class _GapLoaderState extends State<_GapLoader> {
   );
 }
 
-/// The line above the first unread message (CHAT-9).
+/// The line above the first unread message (CHAT-9): a cherry tag between
+/// two rules (§3.14).
 class _NewMessagesDivider extends StatelessWidget {
   const new();
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Space.lg,
-        vertical: Space.sm,
-      ),
-      child: Row(
-        children: [
-          Expanded(child: Divider(color: color)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Space.sm),
-            child: Text(
-              AppLocalizations.of(context).newMessages,
-              style: Theme.of(context).textTheme.labelMedium
-                  ?.copyWith(color: color),
-            ),
+    final c = GumdropColors.of(context);
+    return _RuledLabel(
+      child: Container(
+        // 23 tall (§3.6), taller with large text.
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5.5),
+        decoration: BoxDecoration(
+          color: c.cherry.face,
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Text(
+          AppLocalizations.of(context).newMessages,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: AppFonts.label,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            height: 1,
+            letterSpacing: 0.72,
+            color: c.ink,
           ),
-          Expanded(child: Divider(color: color)),
-        ],
+        ),
       ),
     );
   }
 }
 
+/// [child] centered between two 2 px rules in the divider color.
+class _RuledLabel extends StatelessWidget {
+  const new({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    Widget rule() => Expanded(
+      child: Container(
+        height: 2,
+        decoration: BoxDecoration(
+          color: c.divider,
+          borderRadius: BorderRadius.circular(1),
+        ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Space.lg,
+        vertical: Space.sm,
+      ),
+      // The label leaves room for a bit of each rule, and wraps in large
+      // text.
+      child: LayoutBuilder(
+        builder: (context, constraints) => Row(
+          children: [
+            rule(),
+            const SizedBox(width: 10),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: math.max(0, constraints.maxWidth - 2 * (10 + 16)),
+              ),
+              child: child,
+            ),
+            const SizedBox(width: 10),
+            rule(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Today", "Yesterday", or a date between two rules, on the page, as the
+/// NEW MESSAGES line is drawn.
 class _DateSeparator extends StatelessWidget {
   const new({required this.day});
 
   final DateTime day;
 
-  /// A small pill ("Today"), as GroupMe has it.
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: Space.sm),
-      child: Center(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(Corners.pill),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Space.md,
-              vertical: Space.xs,
-            ),
-            child: Text(
-              dayLabel(
-                AppLocalizations.of(context),
-                day.toLocal(),
-                DateTime.now(),
-              ),
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
+    final c = GumdropColors.of(context);
+    return _RuledLabel(
+      child: Text(
+        dayLabel(AppLocalizations.of(context), day.toLocal(), DateTime.now()),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: AppFonts.label,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          height: 1.2,
+          color: c.textMutedOnPage,
         ),
       ),
     );
@@ -1162,17 +1223,17 @@ class _DropHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final c = GumdropColors.of(context);
     return IgnorePointer(
       child: ColoredBox(
-        color: scheme.surface.withValues(alpha: 0.85),
+        color: c.page.withValues(alpha: 0.9),
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(Space.xl),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(AppIcons.photo, size: 48, color: scheme.primary),
+                Icon(AppIcons.photo, size: 48, color: c.textOnPage),
                 const SizedBox(height: Space.md),
                 Text(
                   !storageFull
@@ -1181,7 +1242,8 @@ class _DropHint extends StatelessWidget {
                       ? l10n.directStorageFull
                       : l10n.storageFullMessage,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(color: c.textOnPage),
                 ),
               ],
             ),

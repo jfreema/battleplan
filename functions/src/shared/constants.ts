@@ -151,7 +151,7 @@ export const REMINDER_OFFSETS_MINUTES = [15, 60, 120, 1440, 2880, 10080] as cons
 export const userStatusValues = ['provisioned', 'active', 'disabled'] as const;
 export type UserStatus = (typeof userStatusValues)[number];
 
-export const themePreferenceValues = ['system', 'light', 'dark'] as const;
+export const themePreferenceValues = ['system', 'light', 'dark', 'candy'] as const;
 export type ThemePreference = (typeof themePreferenceValues)[number];
 
 export const groupKindValues = ['team', 'direct'] as const;

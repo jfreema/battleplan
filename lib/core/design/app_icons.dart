@@ -19,9 +19,6 @@ abstract final class AppIcons {
   static const IconData invite = Symbols.person_add_rounded;
   static const IconData leave = Symbols.exit_to_app_rounded;
   static const IconData admin = Symbols.shield_person_rounded;
-  static const IconData lightMode = Symbols.light_mode_rounded;
-  static const IconData darkMode = Symbols.dark_mode_rounded;
-  static const IconData systemMode = Symbols.brightness_auto_rounded;
   static const IconData email = Symbols.mail_rounded;
   static const IconData visibility = Symbols.visibility_rounded;
   static const IconData visibilityOff = Symbols.visibility_off_rounded;
@@ -85,7 +82,7 @@ abstract final class AppIcons {
   static const IconData calendarLink = Symbols.event_repeat_rounded;
   static const IconData repeat = Symbols.repeat_rounded;
   static const IconData time = Symbols.schedule_rounded;
-  static const IconData timeZone = Symbols.public_rounded;
+  static const IconData timeZone = Symbols.language_rounded;
   static const IconData notes = Symbols.notes_rounded;
   static const IconData duplicate = Symbols.content_copy_rounded;
   static const IconData cancelEvent = Symbols.event_busy_rounded;

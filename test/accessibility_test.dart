@@ -1,6 +1,6 @@
-// Accessibility of the main screens (SPEC §7.6) in light, and in dark where
-// a screen has colors of its own: Flutter's guideline checks for tap
-// targets, labels, and text contrast.
+// Accessibility of the main screens (SPEC §7.6) in each Gumdrop theme,
+// Dark, Light, and Candy: Flutter's guideline checks for tap targets,
+// labels, and text contrast.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:flutter/services.dart';
@@ -26,55 +26,61 @@ void main() {
   // The main screens, and the sheets and screens most used from them.
   final screens = {
     ...mainScreens,
-    'team switcher': (WidgetTester tester, {required bool dark}) async {
-      await pumpChat(tester, dark: dark);
-      await tester.tap(find.bySemanticsLabel('Switch team: Thunder U14'));
-      await tester.pumpAndSettle();
-    },
-    'message menu': (WidgetTester tester, {required bool dark}) async {
-      await pumpChat(tester, dark: dark);
-      await tester.scrollUntilVisible(
-        find.text('Great hustle today'),
-        100,
-        scrollable: find.byType(Scrollable).first,
-      );
-      // At large text sizes the scroll can leave it just off screen.
-      await tester.ensureVisible(find.text('Great hustle today'));
-      await tester.pumpAndSettle();
-      await tester.longPress(find.text('Great hustle today'));
-      await tester.pumpAndSettle();
-      expect(find.text('Copy text'), findsOneWidget, reason: 'menu open');
-    },
-    'roster': (WidgetTester tester, {required bool dark}) async {
-      await pumpTeam(tester, dark: dark);
+    'team switcher':
+        (WidgetTester tester, {required ThemePreference theme}) async {
+          await pumpChat(tester, theme: theme);
+          await tester.tap(find.bySemanticsLabel('Switch team: Thunder U14'));
+          await tester.pumpAndSettle();
+        },
+    'message menu':
+        (WidgetTester tester, {required ThemePreference theme}) async {
+          await pumpChat(tester, theme: theme);
+          await tester.scrollUntilVisible(
+            find.text('Great hustle today'),
+            100,
+            scrollable: find.byType(Scrollable).first,
+          );
+          // At large text sizes the scroll can leave it just off screen.
+          await tester.ensureVisible(find.text('Great hustle today'));
+          await tester.pumpAndSettle();
+          await tester.longPress(find.text('Great hustle today'));
+          await tester.pumpAndSettle();
+          expect(find.text('Copy text'), findsOneWidget, reason: 'menu open');
+        },
+    'roster': (WidgetTester tester, {required ThemePreference theme}) async {
+      await pumpTeam(tester, theme: theme);
       await goTo(tester, '/g/a/roster');
     },
-    'settings': (WidgetTester tester, {required bool dark}) async {
-      await pumpTeam(tester, dark: dark);
+    'settings': (WidgetTester tester, {required ThemePreference theme}) async {
+      await pumpTeam(tester, theme: theme);
       await goTo(tester, '/settings');
     },
-    'notifications': (WidgetTester tester, {required bool dark}) async {
-      await pumpTeam(tester, dark: dark);
-      await goTo(tester, '/notifications');
-    },
-    'calendar': (WidgetTester tester, {required bool dark}) async {
-      await pumpSchedule(tester, dark: dark);
+    'notifications':
+        (WidgetTester tester, {required ThemePreference theme}) async {
+          await pumpTeam(tester, theme: theme);
+          await goTo(tester, '/notifications');
+        },
+    'calendar': (WidgetTester tester, {required ThemePreference theme}) async {
+      await pumpSchedule(tester, theme: theme);
       await tester.tap(find.text('Calendar'));
       await tester.pumpAndSettle();
     },
   };
 
-  // Dark mode changes only colors, so it's checked where the colors are the
-  // screen's own: chat bubbles, RSVP answers, event types, and file types.
-  // The other screens use the same theme colors.
-  const darkToo = {'chat', 'schedule', 'event_details', 'documents'};
+  // Every screen in every theme: their colors are all different, and
+  // Candy's page and cards hold different text colors.
+  const themes = [
+    ThemePreference.dark,
+    ThemePreference.light,
+    ThemePreference.candy,
+  ];
 
   for (final MapEntry(key: name, value: pump) in screens.entries) {
-    for (final dark in [false, if (darkToo.contains(name)) true]) {
-      final theme = dark ? 'dark' : 'light';
+    for (final preference in themes) {
+      final theme = preference.value;
       testWidgets('$name ($theme) meets the guidelines', (tester) async {
         final handle = tester.ensureSemantics();
-        await pump(tester, dark: dark);
+        await pump(tester, theme: preference);
         // Every guideline, so one failure doesn't hide the next.
         final failures = <String>[];
         for (final MapEntry(key: what, value: guideline)
@@ -93,7 +99,7 @@ void main() {
   group('screen reader labels (SPEC §7.6)', () {
     testWidgets('photos, reactions, and the team switcher', (tester) async {
       final handle = tester.ensureSemantics();
-      await pumpChat(tester, dark: false);
+      await pumpChat(tester, theme: ThemePreference.dark);
       // Photos read "Photo from Alex Kim" and open the viewer.
       expect(
         tester.getSemantics(find.bySemanticsLabel('Photo from Alex Kim').first),
@@ -118,7 +124,7 @@ void main() {
 
     testWidgets('RSVP answers say their state in words with an icon, not '
         'color alone', (tester) async {
-      await pumpEventDetails(tester, dark: false);
+      await pumpEventDetails(tester, theme: ThemePreference.dark);
       for (final word in ['Going', 'Maybe', 'Not going']) {
         final button = find.ancestor(
           of: find.text(word).first,
@@ -140,7 +146,7 @@ void main() {
       testWidgets('$name lays out without overflow', (tester) async {
         tester.platformDispatcher.textScaleFactorTestValue = 2;
         addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-        await pump(tester, dark: false);
+        await pump(tester, theme: ThemePreference.dark);
         // An overflow is reported as an exception while laying out.
         expect(tester.takeException(), isNull);
       });
@@ -165,7 +171,7 @@ void main() {
     testWidgets('Ctrl+K opens the team switcher sheet, and Esc closes it', (
       tester,
     ) async {
-      await pumpChat(tester, dark: false);
+      await pumpChat(tester, theme: ThemePreference.dark);
       await press(tester, LogicalKeyboardKey.keyK, control: true);
       expect(find.text('Join a team'), findsOneWidget);
       await press(tester, LogicalKeyboardKey.escape);
@@ -173,7 +179,7 @@ void main() {
     });
 
     testWidgets('Esc closes dialogs and menus', (tester) async {
-      await pumpChat(tester, dark: false);
+      await pumpChat(tester, theme: ThemePreference.dark);
       await tester.scrollUntilVisible(
         find.text('Close poll'),
         100,
@@ -196,7 +202,7 @@ void main() {
 
     testWidgets('Enter sends; Shift+Enter starts a new line', (tester) async {
       final messages = FakeMessageRepository(sceneMessages);
-      await pumpTeam(tester, dark: false, messages: messages);
+      await pumpTeam(tester, theme: ThemePreference.dark, messages: messages);
       await tester.tap(find.byType(TextField));
       await tester.enterText(find.byType(TextField), 'On my way');
       await press(tester, LogicalKeyboardKey.enter, shift: true);
@@ -208,7 +214,7 @@ void main() {
     testWidgets('Enter picks the word an input method is composing, and '
         "doesn't send", (tester) async {
       final messages = FakeMessageRepository(sceneMessages);
-      await pumpTeam(tester, dark: false, messages: messages);
+      await pumpTeam(tester, theme: ThemePreference.dark, messages: messages);
       await tester.tap(find.byType(TextField));
       await tester.pump();
       // Typing Japanese: 'にほ' is still a candidate, not yet confirmed.
@@ -236,7 +242,7 @@ void main() {
 
     testWidgets('Tab reaches the header, the composer, and the tabs, with a '
         'visible focus', (tester) async {
-      await pumpChat(tester, dark: false);
+      await pumpChat(tester, theme: ThemePreference.dark);
       final reached = <String>[];
       for (var i = 0; i < 40; i++) {
         await press(tester, LogicalKeyboardKey.tab);

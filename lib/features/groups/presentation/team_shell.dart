@@ -3,12 +3,17 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/chat_icon.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/gumdrop_icon_button.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
@@ -20,6 +25,7 @@ import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -141,22 +147,30 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         teams.value?.any((t) => t.group.id != groupId && t.hasUnread) ?? false;
     final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
 
-    // Each tab's icon, outlined, or filled for the tab that's showing.
+    // Each tab's icon, outlined on every tab: the gumdrop indicator marks
+    // the one that's showing (design §3.2).
     Widget Function({required bool selected}) glyph(IconData icon) =>
-        ({required selected}) => selected ? Icon(icon, fill: 1) : Icon(icon);
+        ({required selected}) => Icon(icon);
     final destinations = <(Widget Function({required bool selected}), String)>[
-      (({required selected}) => ChatIcon(filled: selected), l10n.tabChat),
+      (({required selected}) => const ChatIcon(), l10n.tabChat),
       (glyph(AppIcons.schedule), l10n.tabSchedule),
       (glyph(AppIcons.documents), l10n.tabDocuments),
       // Drawn: no icon font has X's and O's on a chalkboard (BOARD-1).
-      (({required selected}) => PlaysIcon(filled: selected), l10n.tabPlays),
+      (({required selected}) => const PlaysIcon(), l10n.tabPlays),
     ];
     // The Chat tab shows this team's unread count (CHAT-9).
     final unread = viewing
         ? 0
         : ref.watch(unreadCountProvider(groupId)).value ?? 0;
+    // The count sits at the tab icon's top right, 6 px out from its
+    // 21 px glyph (design §3.6, §3.12).
     Widget tabIcon(int index, Widget icon) => switch (index) {
-      0 when unread > 0 => Badge(label: Text(unreadLabel(unread)), child: icon),
+      0 when unread > 0 => unreadBadge(
+        context,
+        label: unreadLabel(unread),
+        offset: const Offset(4, -4),
+        child: icon,
+      ),
       // Only Chat counts; Schedule's waiting RSVPs were too noisy (owner's
       // request, 2026-10-15).
       _ => icon,
@@ -168,6 +182,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
             team: team,
             switcherKey: _switcherKey,
             showOtherUnreadDot: otherUnread,
+            tabIndex: navigationShell.currentIndex,
             onOpenSwitcher: (anchor) => _openSwitcher(context, anchor: anchor),
           );
     // Under the header: "Viewing as super admin", or the storage warning.
@@ -193,26 +208,30 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         child: Scaffold(
           body: Row(
             children: [
-              NavigationRail(
-                selectedIndex: navigationShell.currentIndex,
-                onDestinationSelected: navigationShell.goBranch,
-                trailing: const Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: EdgeInsets.only(bottom: Space.lg),
-                      child: _AccountButton(),
+              // A floating rounded panel, as the phone's tab bar is.
+              FloatingRail(
+                child: NavigationRail(
+                  backgroundColor: Colors.transparent,
+                  selectedIndex: navigationShell.currentIndex,
+                  onDestinationSelected: navigationShell.goBranch,
+                  trailing: const Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: Space.lg),
+                        child: _AccountButton(),
+                      ),
                     ),
                   ),
+                  destinations: [
+                    for (final (i, (icon, label)) in destinations.indexed)
+                      NavigationRailDestination(
+                        icon: tabIcon(i, icon(selected: false)),
+                        selectedIcon: tabIcon(i, icon(selected: true)),
+                        label: Text(label),
+                      ),
+                  ],
                 ),
-                destinations: [
-                  for (final (i, (icon, label)) in destinations.indexed)
-                    NavigationRailDestination(
-                      icon: tabIcon(i, icon(selected: false)),
-                      selectedIcon: tabIcon(i, icon(selected: true)),
-                      label: Text(label),
-                    ),
-                ],
               ),
               // Below the status bar on an iPad, as the narrow layout is;
               // the rail keeps the left edge, and screens their own bottom.
@@ -256,27 +275,36 @@ class _TeamShellState extends ConsumerState<TeamShell> {
               ],
             ),
           ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: (i) => navigationShell.goBranch(
-              i,
-              initialLocation: i == navigationShell.currentIndex,
+          // A floating rounded panel (design §3.12).
+          bottomNavigationBar: FloatingTabBar(
+            child: NavigationBar(
+              backgroundColor: Colors.transparent,
+              selectedIndex: navigationShell.currentIndex,
+              onDestinationSelected: (i) => navigationShell.goBranch(
+                i,
+                initialLocation: i == navigationShell.currentIndex,
+              ),
+              destinations: [
+                for (final (i, (icon, label)) in destinations.indexed)
+                  NavigationDestination(
+                    icon: tabIcon(i, icon(selected: false)),
+                    selectedIcon: tabIcon(i, icon(selected: true)),
+                    label: label,
+                  ),
+              ],
             ),
-            destinations: [
-              for (final (i, (icon, label)) in destinations.indexed)
-                NavigationDestination(
-                  icon: tabIcon(i, icon(selected: false)),
-                  selectedIcon: tabIcon(i, icon(selected: true)),
-                  label: label,
-                ),
-            ],
           ),
         ),
       );
     }
+    // The whole shell, header and tabs, in the team's colors (TEAM-1).
+    final tinted = TeamTheme(
+      teamColor: viewing ? viewed?.color : team?.group.color,
+      child: shell,
+    );
     // Asks for notification permission once the person is in a team
     // (NOTIF-1); viewing someone else's team doesn't count.
-    return viewing ? shell : NotificationPrePrompt(child: shell);
+    return viewing ? tinted : NotificationPrePrompt(child: tinted);
   }
 }
 
@@ -285,6 +313,7 @@ class _TeamHeader extends StatelessWidget {
     required this.team,
     required this.switcherKey,
     required this.showOtherUnreadDot,
+    required this.tabIndex,
     required this.onOpenSwitcher,
   });
 
@@ -292,43 +321,67 @@ class _TeamHeader extends StatelessWidget {
   final GlobalKey switcherKey;
   final bool showOtherUnreadDot;
 
+  /// The tab showing, which the sticker names.
+  final int tabIndex;
+
   /// Opens the switcher from the button given.
   final void Function(BuildContext anchor) onOpenSwitcher;
 
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
+    final l10n = AppLocalizations.of(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= Breakpoints.wide;
+    final group = team?.group;
+    // The team name with its chevron, then the round buttons, and the
+    // tab's sticker under the name (Gumdrop Pop design §3.3, §3.4).
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: Space.gutter(MediaQuery.sizeOf(context).width) - Space.sm,
-        vertical: Space.sm,
+      padding: EdgeInsets.fromLTRB(
+        Space.gutter(width) - 2,
+        Space.xs,
+        Space.gutter(width) - 5,
+        0,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: TeamSwitcherButton(
-                key: switcherKey,
-                name: team?.group.name ?? '',
-                badge: GroupBadge(group: team?.group),
-                showDot: showOtherUnreadDot && !wide,
-                onPressed: () {
-                  final anchor = switcherKey.currentContext;
-                  if (anchor != null) onOpenSwitcher(anchor);
-                },
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TeamSwitcherButton(
+                    key: switcherKey,
+                    name: group?.name ?? '',
+                    // An uploaded logo; initials would repeat the name.
+                    badge: group?.photoPath == null
+                        ? null
+                        : GroupBadge(group: group, size: 36),
+                    showDot: showOtherUnreadDot && !wide,
+                    onPressed: () {
+                      final anchor = switcherKey.currentContext;
+                      if (anchor != null) onOpenSwitcher(anchor);
+                    },
+                  ),
+                ),
               ),
+              // Direct conversations, with how many are unread (CHAT-19).
+              const MessagesButton(),
+              // Unread notification-center items across all teams (NOTIF-11).
+              const NotificationBell(),
+              _TeamMenu(
+                groupId: group?.id,
+                isAdmin: team?.membership.isAdmin ?? false,
+              ),
+              if (!wide) const _AccountButton(),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 2, bottom: 2),
+            child: TeamSticker(
+              TeamSticker.labelFor(l10n, tabIndex, DateTime.now()),
             ),
           ),
-          // Direct conversations, with how many are unread (CHAT-19).
-          const MessagesButton(),
-          // Unread notification-center items across all teams (NOTIF-11).
-          const NotificationBell(),
-          _TeamMenu(
-            groupId: team?.group.id,
-            isAdmin: team?.membership.isAdmin ?? false,
-          ),
-          if (!wide) const _AccountButton(),
         ],
       ),
     );
@@ -346,20 +399,26 @@ class _ViewingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: Space.gutter(width),
-        vertical: Space.sm,
+      padding: EdgeInsets.fromLTRB(
+        Space.gutter(width) - 2,
+        Space.xs,
+        Space.gutter(width) - 5,
+        Space.xs,
       ),
       child: Row(
         children: [
-          GroupBadge(group: group),
+          GroupBadge(group: group, size: 36),
           const SizedBox(width: Space.sm),
           Expanded(
-            child: Text(
-              group?.name ?? '',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium,
+            child: Padding(
+              // Room for the heading's 4 px shadow.
+              padding: const EdgeInsets.only(right: 4, bottom: 4),
+              child: Text(
+                group?.name ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
             ),
           ),
           _TeamMenu(groupId: group?.id, isAdmin: true, viewing: true),
@@ -476,8 +535,13 @@ class _TeamMenu extends ConsumerWidget {
       // Leave team is on your own card in the roster, out of the way of a
       // stray tap (TEAM-8).
     ];
+    final c = GumdropColors.of(context);
+    // A 38 px round gumdrop (design §3.1).
     return PopupMenuButton<String>(
       tooltip: l10n.teamMenuTooltip,
+      style: GumdropButtons.of(context).icon(),
+      iconSize: 19,
+      iconColor: c.textPrimary,
       icon: const Icon(AppIcons.more),
       onSelected: (route) {
         final id = groupId;
@@ -509,8 +573,13 @@ class _AccountButton extends ConsumerWidget {
     final name = user?.displayName ?? user?.email ?? '';
     // My photo when I have one (SPEC §5.4), else my initials.
     final photoUrl = ref.watch(myPhotoUrlProvider).value;
+    final c = GumdropColors.of(context);
+    // A 38 px gumdrop in the "you" color with my initials (design §3.1),
+    // or my photo on it.
     return PopupMenuButton<String>(
       tooltip: l10n.accountMenuTooltip,
+      style: GumdropButtons.of(context).icon(accent: c.you),
+      iconColor: c.ink,
       onSelected: (value) => switch (value) {
         'settings' => context.push('/settings'),
         'admin' => context.push('/admin'),
@@ -523,15 +592,27 @@ class _AccountButton extends ConsumerWidget {
           PopupMenuItem(value: 'admin', child: Text(l10n.adminPanel)),
         PopupMenuItem(value: 'signOut', child: Text(l10n.signOut)),
       ],
-      child: Padding(
-        padding: const EdgeInsets.all(Space.sm),
-        child: Avatar(
-          name: name,
-          colorKey: user?.uid,
-          imageUrl: photoUrl,
-          size: 32,
-        ),
-      ),
+      icon: photoUrl != null
+          ? Avatar(
+              name: name,
+              colorKey: user?.uid,
+              imageUrl: photoUrl,
+              size: 38,
+            )
+          : Semantics(
+              label: name,
+              excludeSemantics: true,
+              child: Text(
+                Avatar.initialsOf(name),
+                style: TextStyle(
+                  fontFamily: AppFonts.label,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  height: 1,
+                  color: c.ink,
+                ),
+              ),
+            ),
     );
   }
 }

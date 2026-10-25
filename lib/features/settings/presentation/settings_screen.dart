@@ -1,5 +1,5 @@
-import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
@@ -12,8 +12,10 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/new_owners_dialog.dart';
+import 'package:battleplan/features/settings/presentation/theme_picker.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -39,190 +41,227 @@ class SettingsScreen extends ConsumerWidget {
     final links = ref.read(linkOpenerProvider);
     // The legal pages are on the website, at the root of the domain (D40).
     final site = ref.read(linkServiceProvider);
-    final error = Theme.of(context).colorScheme.error;
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final support = ref.watch(supportEmailProvider);
 
-    Widget section(String title) => Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Space.lg,
-        Space.lg,
-        Space.lg,
-        Space.sm,
-      ),
-      child: Text(title, style: Theme.of(context).textTheme.titleSmall),
-    );
+    const gap = SizedBox(height: 12);
+    const headingGap = SizedBox(height: 10);
+    final c = GumdropColors.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settings)),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: Space.xl),
-        children: [
-          if (profile != null)
-            ListTile(
-              leading: Avatar(
-                name: profile.displayName,
-                colorKey: profile.uid,
-                imageUrl: photoUrl,
-              ),
-              title: Text(profile.displayName),
-              subtitle: Text(profile.email ?? ''),
-              trailing: const Icon(AppIcons.expand),
-              onTap: () => context.push('/settings/profile'),
-            ),
-          section(l10n.appearance),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-            child: SegmentedButton<ThemePreference>(
-              segments: [
-                ButtonSegment(
-                  value: ThemePreference.system,
-                  icon: const Icon(AppIcons.systemMode),
-                  label: Text(l10n.themeSystem),
+      appBar: gumdropAppBar(context, title: l10n.settings),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+            children: [
+              if (profile != null) ...[
+                SettingsCard(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      minTileHeight: 64,
+                      horizontalTitleGap: 11,
+                      leading: Avatar(
+                        name: profile.displayName,
+                        colorKey: profile.uid,
+                        imageUrl: photoUrl,
+                      ),
+                      title: Text(
+                        profile.displayName,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(color: c.card.textPrimary),
+                      ),
+                      subtitle: Text(
+                        profile.email ?? '',
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: c.card.textMuted),
+                      ),
+                      trailing: Icon(
+                        AppIcons.chevronRight,
+                        size: 22,
+                        weight: 700,
+                        color: c.card.textMuted,
+                      ),
+                      onTap: () => context.push('/settings/profile'),
+                    ),
+                  ],
                 ),
-                ButtonSegment(
-                  value: ThemePreference.light,
-                  icon: const Icon(AppIcons.lightMode),
-                  label: Text(l10n.themeLight),
-                ),
-                ButtonSegment(
-                  value: ThemePreference.dark,
-                  icon: const Icon(AppIcons.darkMode),
-                  label: Text(l10n.themeDark),
-                ),
+                gap,
               ],
-              selected: {theme},
-              onSelectionChanged: (s) => ref
-                  .read(themePreferenceControllerProvider.notifier)
-                  .set(s.first),
-            ),
+              PageHeading(l10n.appearance),
+              headingGap,
+              ThemePicker(
+                selected: theme,
+                onSelect: (t) =>
+                    ref.read(themePreferenceControllerProvider.notifier).set(t),
+              ),
+              gap,
+              PageHeading(l10n.account),
+              headingGap,
+              SettingsCard(
+                children: [
+                  SettingsRow(
+                    icon: AppIcons.notifications,
+                    highlighted: true,
+                    title: l10n.notificationSettings,
+                    onTap: () => context.push('/settings/notifications'),
+                  ),
+                  SettingsRow(
+                    icon: AppIcons.key,
+                    title: l10n.signInMethods,
+                    onTap: () => context.push('/settings/sign-in-methods'),
+                  ),
+                  SettingsRow(
+                    icon: AppIcons.block,
+                    title: l10n.blockedPeople,
+                    onTap: () => context.push('/settings/blocked'),
+                  ),
+                  // Also here for super admins on no team, who never see a
+                  // team's account menu (ADMIN).
+                  if (superAdmin)
+                    SettingsRow(
+                      icon: AppIcons.admin,
+                      title: l10n.adminPanel,
+                      onTap: () => context.push('/admin'),
+                    ),
+                  if (showDevTools)
+                    SettingsRow(
+                      icon: AppIcons.notifications,
+                      // Dev-only, never shipped, so not translated.
+                      title: 'Push test (dev only)',
+                      onTap: () => context.push('/settings/push-test'),
+                    ),
+                ],
+              ),
+              gap,
+              PageHeading(l10n.about),
+              headingGap,
+              SettingsCard(
+                children: [
+                  SettingsRow(
+                    icon: AppIcons.info,
+                    title: appBuild.number.isEmpty
+                        ? l10n.versionLabel(appBuild.version)
+                        : l10n.versionBuildLabel(
+                            appBuild.version,
+                            appBuild.number,
+                          ),
+                    // The commit it was built from, to match it with GitHub.
+                    subtitle: appBuild.commit.isEmpty ? null : appBuild.commit,
+                  ),
+                  SettingsRow(
+                    icon: AppIcons.document,
+                    title: l10n.termsOfUse,
+                    onTap: () => links.open(site.site('/terms')),
+                  ),
+                  SettingsRow(
+                    icon: AppIcons.visibility,
+                    title: l10n.privacyPolicy,
+                    onTap: () => links.open(site.site('/privacy')),
+                  ),
+                  SettingsRow(
+                    icon: AppIcons.file,
+                    title: l10n.openSourceLicenses,
+                    onTap: () => showLicensePage(
+                      context: context,
+                      applicationName: l10n.appName,
+                      applicationVersion: appBuild.full,
+                    ),
+                  ),
+                  // The address from platform settings (ADMIN-7).
+                  SettingsRow(
+                    icon: AppIcons.email,
+                    title: l10n.contactSupport,
+                    subtitle: support,
+                    onTap: () =>
+                        links.open(Uri(scheme: 'mailto', path: support)),
+                  ),
+                ],
+              ),
+              gap,
+              SettingsCard(
+                children: [
+                  SettingsRow(
+                    icon: AppIcons.signOut,
+                    title: l10n.signOut,
+                    chevron: false,
+                    onTap: () => ref.read(sessionServiceProvider).signOut(),
+                  ),
+                  SettingsRow(
+                    icon: AppIcons.signOut,
+                    title: l10n.signOutEverywhere,
+                    subtitle: l10n.signOutEverywhereHelp,
+                    subtitleLines: 3,
+                    chevron: false,
+                    onTap: () async {
+                      final ok = await showConfirmDialog(
+                        context,
+                        title: l10n.signOutEverywhereConfirmTitle,
+                        message: l10n.signOutEverywhereHelp,
+                        confirmLabel: l10n.signOutEverywhere,
+                        cancelLabel: l10n.cancel,
+                      );
+                      if (ok) {
+                        await ref
+                            .read(sessionServiceProvider)
+                            .signOutEverywhere();
+                      }
+                    },
+                  ),
+                  Builder(
+                    builder: (context) => SettingsRow(
+                      icon: AppIcons.error,
+                      accent: GumdropColors.of(context).cherry,
+                      title: l10n.deleteAccount,
+                      titleColor: GumdropColors.of(context).cherry.text,
+                      chevron: false,
+                      onTap: () => _deleteAccount(context, ref),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          section(l10n.account),
-          ListTile(
-            leading: const Icon(AppIcons.notifications),
-            title: Text(l10n.notificationSettings),
-            onTap: () => context.push('/settings/notifications'),
-          ),
-          ListTile(
-            leading: const Icon(AppIcons.settings),
-            title: Text(l10n.signInMethods),
-            onTap: () => context.push('/settings/sign-in-methods'),
-          ),
-          ListTile(
-            leading: const Icon(AppIcons.block),
-            title: Text(l10n.blockedPeople),
-            onTap: () => context.push('/settings/blocked'),
-          ),
-          // Also here for super admins on no team, who never see a team's
-          // account menu (ADMIN).
-          if (superAdmin)
-            ListTile(
-              leading: const Icon(AppIcons.admin),
-              title: Text(l10n.adminPanel),
-              onTap: () => context.push('/admin'),
-            ),
-          if (showDevTools)
-            ListTile(
-              leading: const Icon(AppIcons.notifications),
-              // Dev-only, never shipped, so not translated.
-              title: const Text('Push test (dev only)'),
-              onTap: () => context.push('/settings/push-test'),
-            ),
-          section(l10n.about),
-          ListTile(
-            title: Text(
-              appBuild.number.isEmpty
-                  ? l10n.versionLabel(appBuild.version)
-                  : l10n.versionBuildLabel(appBuild.version, appBuild.number),
-            ),
-            // The commit it was built from, to match it with GitHub.
-            subtitle: appBuild.commit.isEmpty ? null : Text(appBuild.commit),
-          ),
-          ListTile(
-            title: Text(l10n.termsOfUse),
-            onTap: () => links.open(site.site('/terms')),
-          ),
-          ListTile(
-            title: Text(l10n.privacyPolicy),
-            onTap: () => links.open(site.site('/privacy')),
-          ),
-          ListTile(
-            title: Text(l10n.openSourceLicenses),
-            onTap: () => showLicensePage(
-              context: context,
-              applicationName: l10n.appName,
-              applicationVersion: appBuild.full,
-            ),
-          ),
-          // The address from platform settings (ADMIN-7).
-          ListTile(
-            title: Text(l10n.contactSupport),
-            subtitle: Text(support),
-            onTap: () => links.open(Uri(scheme: 'mailto', path: support)),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(AppIcons.signOut),
-            title: Text(l10n.signOut),
-            onTap: () => ref.read(sessionServiceProvider).signOut(),
-          ),
-          ListTile(
-            leading: const Icon(AppIcons.signOut),
-            title: Text(l10n.signOutEverywhere),
-            subtitle: Text(l10n.signOutEverywhereHelp),
-            onTap: () async {
-              final ok = await showConfirmDialog(
-                context,
-                title: l10n.signOutEverywhereConfirmTitle,
-                message: l10n.signOutEverywhereHelp,
-                confirmLabel: l10n.signOutEverywhere,
-                cancelLabel: l10n.cancel,
-              );
-              if (ok) {
-                await ref.read(sessionServiceProvider).signOutEverywhere();
-              }
-            },
-          ),
-          ListTile(
-            leading: Icon(AppIcons.error, color: error),
-            title: Text(l10n.deleteAccount, style: TextStyle(color: error)),
-            onTap: () async {
-              final ok = await showConfirmDialog(
-                context,
-                title: l10n.deleteAccountTitle,
-                message: l10n.deleteAccountBody,
-                confirmLabel: l10n.deleteAccount,
-                cancelLabel: l10n.cancel,
-                destructive: true,
-              );
-              if (!ok || !context.mounted) return;
-              // AUTH-10: owners pick who takes over each team they own.
-              final owned = ownedTeams(ref.read(myTeamsProvider).value ?? []);
-              var newOwners = const <String, String>{};
-              if (owned.isNotEmpty) {
-                final picks = await pickNewOwners(context, owned);
-                if (picks == null || !context.mounted) return;
-                newOwners = picks;
-              }
-              try {
-                await withFreshSignIn(
-                  context,
-                  ref,
-                  () => ref
-                      .read(sessionServiceProvider)
-                      .deleteAccount(newOwners: newOwners),
-                );
-              } on SignInCanceled {
-                // They closed Apple's sheet: nothing was deleted.
-              } on AppFailure {
-                if (context.mounted) {
-                  showAppSnackBar(context, l10n.deleteAccountFailed);
-                }
-              }
-            },
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final ok = await showConfirmDialog(
+      context,
+      title: l10n.deleteAccountTitle,
+      message: l10n.deleteAccountBody,
+      confirmLabel: l10n.deleteAccount,
+      cancelLabel: l10n.cancel,
+      destructive: true,
+    );
+    if (!ok || !context.mounted) return;
+    // AUTH-10: owners pick who takes over each team they own.
+    final owned = ownedTeams(ref.read(myTeamsProvider).value ?? []);
+    var newOwners = const <String, String>{};
+    if (owned.isNotEmpty) {
+      final picks = await pickNewOwners(context, owned);
+      if (picks == null || !context.mounted) return;
+      newOwners = picks;
+    }
+    try {
+      await withFreshSignIn(
+        context,
+        ref,
+        () => ref
+            .read(sessionServiceProvider)
+            .deleteAccount(newOwners: newOwners),
+      );
+    } on SignInCanceled {
+      // They closed Apple's sheet: nothing was deleted.
+    } on AppFailure {
+      if (context.mounted) {
+        showAppSnackBar(context, l10n.deleteAccountFailed);
+      }
+    }
   }
 }

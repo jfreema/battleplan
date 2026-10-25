@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/plays/application/providers.dart';
 import 'package:battleplan/features/plays/domain/board_layout.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
@@ -83,11 +85,11 @@ class SavedPlaysScreen extends ConsumerWidget {
           // A grid of pictures on a tablet or laptop, a list on a phone.
           final columns = (box.maxWidth / 300).floor().clamp(1, 4);
           return GridView.builder(
-            padding: const EdgeInsets.all(Space.lg),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
-              mainAxisSpacing: Space.lg,
-              crossAxisSpacing: Space.lg,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
               childAspectRatio: 0.9,
             ),
             itemCount: list.length,
@@ -97,7 +99,10 @@ class SavedPlaysScreen extends ConsumerWidget {
       );
     }
     return Scaffold(
-      appBar: AppBar(title: Text(canEdit ? l10n.playsSaved : l10n.tabPlays)),
+      appBar: gumdropAppBar(
+        context,
+        title: canEdit ? l10n.playsSaved : l10n.tabPlays,
+      ),
       body: body,
     );
   }
@@ -114,8 +119,8 @@ class _PlayCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final updated = play.updatedAt;
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return SettingsPanel(
+      padding: EdgeInsets.zero,
       child: InkWell(
         onTap: () => unawaited(
           context.push('/g/${groupId.value}/plays/${play.id.value}'),
@@ -139,7 +144,9 @@ class _PlayCard extends StatelessWidget {
                 play.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: GumdropColors.of(context).textPrimary,
+                ),
               ),
               Text(
                 [
@@ -150,7 +157,9 @@ class _PlayCard extends StatelessWidget {
                     DateFormat.MMMd(Localizations.localeOf(context).toString())
                         .format(updated.toLocal()),
                 ].join(' · '),
-                style: theme.textTheme.bodySmall,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: GumdropColors.of(context).textMuted,
+                ),
               ),
             ],
           ),

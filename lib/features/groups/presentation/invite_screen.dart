@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -11,6 +12,7 @@ import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,7 +42,7 @@ class InviteScreen extends ConsumerWidget {
     // way into the new team (its chat) sits at the bottom.
     final dead = !context.canPop();
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.inviteMenu)),
+      appBar: gumdropAppBar(context, title: l10n.inviteMenu),
       bottomNavigationBar: dead
           ? SafeArea(
               minimum: const EdgeInsets.all(Space.lg),
@@ -106,15 +108,19 @@ class _InviteBody extends ConsumerWidget {
       if (!shared) await copy();
     }
 
+    final c = GumdropColors.of(context);
     return ListView(
-      padding: const EdgeInsets.all(Space.xl),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
       children: [
         Center(
+          // The code stays black on white in every theme, so any camera
+          // reads it (INV-1).
           child: Container(
             padding: const EdgeInsets.all(Space.md),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(Corners.card),
+              borderRadius: BorderRadius.circular(Corners.panel),
+              boxShadow: [BoxShadow(color: c.divider, spreadRadius: 2)],
             ),
             child: QrImageView(
               data: link,
@@ -125,17 +131,26 @@ class _InviteBody extends ConsumerWidget {
         ),
         const SizedBox(height: Space.lg),
         Text(
-          l10n.inviteCodeLabel,
+          l10n.inviteCodeLabel.toUpperCase(),
+          semanticsLabel: l10n.inviteCodeLabel,
           textAlign: TextAlign.center,
-          style: theme.textTheme.titleSmall,
+          style: theme.textTheme.labelSmall?.copyWith(
+            letterSpacing: 12 * 0.07,
+            color: c.textMutedOnPage,
+          ),
         ),
+        const SizedBox(height: 4),
         SelectableText(
           invite.display,
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineMedium?.copyWith(letterSpacing: 2),
         ),
         const SizedBox(height: Space.sm),
-        SelectableText(link, textAlign: TextAlign.center),
+        SelectableText(
+          link,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(color: c.textMutedOnPage),
+        ),
         const SizedBox(height: Space.xl),
         Wrap(
           alignment: WrapAlignment.center,
@@ -164,22 +179,34 @@ class _InviteBody extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: Space.xl),
-        ListTile(
-          leading: const Icon(AppIcons.email),
-          title: Text(l10n.emailInvites),
-          subtitle: Text(l10n.emailInvitesSubtitle),
-          onTap: () => context.push('/g/${groupId.value}/invite/email'),
+        SettingsCard(
+          children: [
+            SettingsRow(
+              icon: AppIcons.email,
+              highlighted: true,
+              title: l10n.emailInvites,
+              subtitle: l10n.emailInvitesSubtitle,
+              subtitleLines: 2,
+              onTap: () => context.push('/g/${groupId.value}/invite/email'),
+            ),
+            if (isAdmin)
+              SettingsRow(
+                icon: AppIcons.invite,
+                title: l10n.addByEmail,
+                onTap: () => context.push('/g/${groupId.value}/members/add'),
+              ),
+          ],
         ),
         if (isAdmin) ...[
-          ListTile(
-            leading: const Icon(AppIcons.invite),
-            title: Text(l10n.addByEmail),
-            onTap: () => context.push('/g/${groupId.value}/members/add'),
+          const SizedBox(height: 18),
+          PageHeading(l10n.linkSettings),
+          const SizedBox(height: 10),
+          Text(
+            _linkSummary(context, invite),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: c.textMutedOnPage,
+            ),
           ),
-          const Divider(height: Space.xxl),
-          Text(l10n.linkSettings, style: theme.textTheme.titleSmall),
-          const SizedBox(height: Space.sm),
-          Text(_linkSummary(context, invite)),
           const SizedBox(height: Space.sm),
           Wrap(
             spacing: Space.sm,
@@ -383,7 +410,7 @@ class _LinkOff extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return ListView(
-      padding: const EdgeInsets.all(Space.xl),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
       children: [
         EmptyState(icon: AppIcons.invite, message: l10n.linkIsOff),
         if (isAdmin)
@@ -403,11 +430,17 @@ class _LinkOff extends ConsumerWidget {
             ),
           ),
         const SizedBox(height: Space.xl),
-        ListTile(
-          leading: const Icon(AppIcons.email),
-          title: Text(l10n.emailInvites),
-          subtitle: Text(l10n.emailInvitesSubtitle),
-          onTap: () => context.push('/g/${groupId.value}/invite/email'),
+        SettingsCard(
+          children: [
+            SettingsRow(
+              icon: AppIcons.email,
+              highlighted: true,
+              title: l10n.emailInvites,
+              subtitle: l10n.emailInvitesSubtitle,
+              subtitleLines: 2,
+              onTap: () => context.push('/g/${groupId.value}/invite/email'),
+            ),
+          ],
         ),
       ],
     );

@@ -1,6 +1,10 @@
+import 'package:battleplan/core/design/color_math.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// App-specific colors that Material's scheme doesn't cover (ARCH §5.5).
+/// App-specific colors that Material's scheme doesn't cover (ARCH §5.5),
+/// all for text and icons: the RSVP answers and event types. The theme
+/// builds them from its [GumdropColors]; gumdrop faces are there.
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   const new({
@@ -18,34 +22,37 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.otherEvent,
   });
 
-  static const light = AppColors(
-    going: Color(0xFF16803C),
-    maybe: Color(0xFFA15C07),
-    notGoing: Color(0xFFC0262D),
-    bubbleMine: Color(0xFF2F5BEA),
-    onBubbleMine: Color(0xFFFFFFFF),
-    bubbleOther: Color(0xFFEDEFF5),
-    onBubbleOther: Color(0xFF1A1C22),
-    game: Color(0xFFC2410C),
-    practice: Color(0xFF2F5BEA),
-    meeting: Color(0xFF7C3AED),
-    social: Color(0xFF0F8A5F),
-    otherEvent: Color(0xFF475569),
-  );
+  /// The colors for [g], readable as text and icons on every one of
+  /// [backgrounds] (the page and the cards under it) and on their own light
+  /// tint over them (ARCH §5.5): the Gumdrop candies, as text.
+  ///
+  /// RSVP answers are mint, lemon, and cherry. Event types: games
+  /// tangerine, practices grape, meetings blue raspberry, socials mint, and
+  /// other events bubblegum (the design's Other filter). Mine are the "you"
+  /// bubble and ink; others' the card.
+  factory fromGumdrop(GumdropColors g, {required List<Color> backgrounds}) {
+    Color text(GumdropAccent a) =>
+        ColorMath.readable(a.text, backgrounds, tint: 0.18);
+    return AppColors(
+      going: text(g.mint),
+      maybe: text(g.lemon),
+      notGoing: text(g.cherry),
+      bubbleMine: g.you.face,
+      onBubbleMine: g.ink,
+      bubbleOther: g.surface,
+      onBubbleOther: g.textPrimary,
+      game: text(g.tangerine),
+      practice: text(g.grape),
+      meeting: text(g.blueRaspberry),
+      social: text(g.mint),
+      otherEvent: text(g.bubblegum),
+    );
+  }
 
-  static const dark = AppColors(
-    going: Color(0xFF4ADE80),
-    maybe: Color(0xFFFBBF24),
-    notGoing: Color(0xFFF87171),
-    bubbleMine: Color(0xFF3D67F0),
-    onBubbleMine: Color(0xFFFFFFFF),
-    bubbleOther: Color(0xFF262A33),
-    onBubbleOther: Color(0xFFE6E8EF),
-    game: Color(0xFFFB923C),
-    practice: Color(0xFF8AA6FF),
-    meeting: Color(0xFFC4B5FD),
-    social: Color(0xFF6EE7B7),
-    otherEvent: Color(0xFFCBD5E1),
+  /// Gumdrop Pop Dark's, for a bare MaterialApp (some tests).
+  static final fallback = AppColors.fromGumdrop(
+    GumdropColors.dark,
+    backgrounds: [GumdropColors.dark.page, GumdropColors.dark.surface],
   );
 
   final Color going;
@@ -62,7 +69,7 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color otherEvent;
 
   static AppColors of(BuildContext context) =>
-      Theme.of(context).extension<AppColors>()!;
+      Theme.of(context).extension<AppColors>() ?? fallback;
 
   @override
   AppColors copyWith({

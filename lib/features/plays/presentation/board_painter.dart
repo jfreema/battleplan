@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/features/plays/domain/board_layout.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 import 'package:material_ui/material_ui.dart';
@@ -205,6 +206,7 @@ class PlayPainter extends CustomPainter {
       text: TextSpan(
         text: text,
         style: TextStyle(
+          fontFamily: AppFonts.label,
           color: color,
           fontSize: fontSize,
           fontWeight: FontWeight.w700,
@@ -332,6 +334,7 @@ class PlayPainter extends CustomPainter {
       text: TextSpan(
         text: n.text,
         style: TextStyle(
+          fontFamily: AppFonts.label,
           color: dark ? Colors.white : const Color(0xFF111827),
           fontSize: fontSize,
           fontWeight: FontWeight.w600,

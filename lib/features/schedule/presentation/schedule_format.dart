@@ -1,6 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
@@ -32,6 +33,20 @@ Color typeColor(BuildContext context, EventType type) {
   };
 }
 
+/// The event type's candy (Gumdrop Pop): games tangerine, practices grape,
+/// meetings blue raspberry, socials mint, other events bubblegum, the same
+/// as [typeColor].
+GumdropAccent typeAccent(BuildContext context, EventType type) {
+  final g = GumdropColors.of(context);
+  return switch (type) {
+    EventType.game => g.tangerine,
+    EventType.practice => g.grape,
+    EventType.meeting => g.blueRaspberry,
+    EventType.social => g.mint,
+    EventType.other => g.bubblegum,
+  };
+}
+
 IconData typeIcon(EventType type) => switch (type) {
   EventType.game => AppIcons.game,
   EventType.practice => AppIcons.practice,
@@ -46,6 +61,17 @@ String filterLabel(AppLocalizations l10n, EventFilter f) => switch (f) {
   EventFilter.other => l10n.eventFilterOther,
 };
 
+/// The type filter's candy when it's on (design §3.7): Games tangerine,
+/// Practices grape, Other bubblegum.
+GumdropAccent filterAccent(BuildContext context, EventFilter f) {
+  final g = GumdropColors.of(context);
+  return switch (f) {
+    EventFilter.games => g.tangerine,
+    EventFilter.practices => g.grape,
+    EventFilter.other => g.bubblegum,
+  };
+}
+
 String statusLabel(AppLocalizations l10n, RsvpStatus s) => switch (s) {
   RsvpStatus.going => l10n.rsvpGoing,
   RsvpStatus.maybe => l10n.rsvpMaybe,
@@ -58,6 +84,17 @@ Color statusColor(BuildContext context, RsvpStatus s) {
     RsvpStatus.going => c.going,
     RsvpStatus.maybe => c.maybe,
     RsvpStatus.notGoing => c.notGoing,
+  };
+}
+
+/// The answer's candy (Gumdrop Pop): mint, lemon, or cherry, for a face
+/// with ink on it.
+GumdropAccent statusAccent(BuildContext context, RsvpStatus s) {
+  final g = GumdropColors.of(context);
+  return switch (s) {
+    RsvpStatus.going => g.mint,
+    RsvpStatus.maybe => g.lemon,
+    RsvpStatus.notGoing => g.cherry,
   };
 }
 

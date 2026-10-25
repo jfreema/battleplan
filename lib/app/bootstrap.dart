@@ -56,7 +56,7 @@ Future<void> bootstrap({
   usePathUrlStrategy();
   // Event times convert between zones (SCHED-9); load the zones once.
   ZonedTime.ensureInitialized();
-  // The bundled Inter font's license, under Licenses (SPEC §7.3).
+  // The bundled fonts' licenses, under Licenses (SPEC §7.3).
   registerFontLicenses();
 
   final env = AppEnv(flavor: flavor, useEmulators: _useEmulators);

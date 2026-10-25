@@ -1,3 +1,5 @@
+import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/cover_image.dart';
@@ -21,7 +23,8 @@ class TeamBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = imageUrl;
-    final radius = BorderRadius.circular(size * 0.28);
+    // A rounded square, 18 on the 58 px logo (Gumdrop Pop design §3.9).
+    final radius = BorderRadius.circular(size * 0.31);
     return Semantics(
       label: name,
       image: true,
@@ -41,15 +44,15 @@ class TeamBadge extends StatelessWidget {
                     devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
                   ),
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _initials(),
+                  errorBuilder: (_, _, _) => _initials(context),
                 )
-              : _initials(),
+              : _initials(context),
         ),
       ),
     );
   }
 
-  Widget _initials() {
+  Widget _initials(BuildContext context) {
     final fill = color ?? AppTokens.brand;
     return ColoredBox(
       color: fill,
@@ -61,9 +64,11 @@ class TeamBadge extends StatelessWidget {
             // (Carolina blue and gold are light), as chat bubbles do.
             color: ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
                 ? Colors.white
-                : Colors.black,
-            fontWeight: FontWeight.w700,
-            fontSize: size * 0.38,
+                : GumdropColors.of(context).ink,
+            fontFamily: AppFonts.label,
+            fontWeight: FontWeight.w600,
+            fontSize: size * 0.42,
+            height: 1,
           ),
         ),
       ),

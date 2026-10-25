@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
-import 'package:battleplan/core/widgets/tap_target.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -52,14 +54,12 @@ String reactionEmoji(Reaction r) => switch (r) {
   Reaction.trophy => '🏆',
 };
 
-/// The heart's red, in both themes, as the emoji itself is.
-const heartRed = Color(0xFFE53935);
-
-/// [r]'s emoji, with ❤️ drawn red: some fonts, the web's among them, only
-/// have a plain black heart, which the color tints.
-TextSpan reactionSpan(Reaction r) => TextSpan(
+/// [r]'s emoji, with ❤️ drawn in [heart] (the theme's cherry): some
+/// fonts, the web's among them, only have a plain black heart, which the
+/// color tints.
+TextSpan reactionSpan(Reaction r, {Color? heart}) => TextSpan(
   text: reactionEmoji(r),
-  style: r == Reaction.love ? const TextStyle(color: heartRed) : null,
+  style: r == Reaction.love && heart != null ? TextStyle(color: heart) : null,
 );
 
 String reactionName(AppLocalizations l10n, Reaction r) => switch (r) {
@@ -95,7 +95,7 @@ class ReactionPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final c = GumdropColors.of(context);
     Widget button(Reaction r) => Tooltip(
       message: reactionName(l10n, r),
       // The emoji's own label already names it for screen readers.
@@ -114,13 +114,14 @@ class ReactionPicker extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: r == mine ? scheme.primaryContainer : null,
+            // Mine in my reaction's bubblegum, as its chip is.
+            color: r == mine ? c.bubblegum.face : null,
           ),
           child: Center(
             widthFactor: 1,
             heightFactor: 1,
             child: Text.rich(
-              reactionSpan(r),
+              reactionSpan(r, heart: c.cherry.face),
               style: const TextStyle(fontSize: 28),
               semanticsLabel: reactionName(l10n, r),
             ),
@@ -149,14 +150,17 @@ class ReactionPicker extends StatelessWidget {
 }
 
 /// Chips under a bubble: each reaction with its count, mine highlighted
-/// (CHAT-6). Tapping one gives it my reaction, or takes mine back if it
-/// was mine already; a long-press or right-click shows who reacted.
+/// (CHAT-6), as 30 px gumdrops (Gumdrop Pop §3.1): secondary, or
+/// bubblegum for mine. Tapping one gives it my reaction, or takes mine
+/// back if it was mine already; a long-press or right-click shows who
+/// reacted.
 class ReactionChips extends StatelessWidget {
   const new({
     required this.message,
     required this.me,
     required this.onShowWho,
     this.onReact,
+    this.alignEnd = false,
     super.key,
   });
 
@@ -168,22 +172,50 @@ class ReactionChips extends StatelessWidget {
   /// who reacted.
   final void Function(Reaction)? onReact;
 
+  /// Under my own bubble, the chips line up on the right.
+  final bool alignEnd;
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final c = GumdropColors.of(context);
+    final buttons = GumdropButtons.of(context);
     final counts = <Reaction, int>{};
     for (final r in message.reactions.values) {
       counts[r] = (counts[r] ?? 0) + 1;
     }
     final mine = me == null ? null : message.reactions[me];
     final l10n = AppLocalizations.of(context);
+    const label = TextStyle(
+      fontFamily: AppFonts.label,
+      fontWeight: FontWeight.w600,
+      fontSize: 14,
+      height: 1,
+    );
+    // A 30 px face on a 3 px lip, padded out to a 48-point target (SPEC
+    // §7.6) without drawing any bigger.
+    ButtonStyle style({required bool reacted}) =>
+        (reacted
+                ? buttons.accent(
+                    c.bubblegum,
+                    height: 33,
+                    padding: const EdgeInsets.symmetric(horizontal: 11),
+                    textStyle: label,
+                    minimumSize: const Size(0, 33),
+                  )
+                : buttons.secondary(
+                    height: 33,
+                    padding: const EdgeInsets.symmetric(horizontal: 11),
+                    textStyle: label,
+                    minimumSize: const Size(0, 33),
+                  ))
+            .copyWith(tapTargetSize: MaterialTapTargetSize.padded);
     return Wrap(
-      spacing: Space.xs,
+      spacing: Space.sm,
+      alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
       children: [
         for (final r in reactionOrder)
           if (counts[r] case final n?)
-            // Read as "Like, 2" rather than the emoji, and a 48-point
-            // target around the small chip (SPEC §7.6).
+            // Read as "Like, 2" rather than the emoji.
             Semantics(
               container: true,
               button: true,
@@ -200,34 +232,31 @@ class ReactionChips extends StatelessWidget {
               customSemanticsActions: {
                 CustomSemanticsAction(label: l10n.whoReacted): onShowWho,
               },
-              child: TapTargetPadding(
-                child: Material(
-                  color: r == mine
-                      ? scheme.primaryContainer
-                      : scheme.surfaceContainerHigh,
-                  shape: StadiumBorder(
-                    side: BorderSide(
-                      color: r == mine ? scheme.primary : scheme.outlineVariant,
-                    ),
-                  ),
-                  child: InkWell(
-                    customBorder: const StadiumBorder(),
-                    onTap: onReact == null ? onShowWho : () => onReact!(r),
-                    onLongPress: onShowWho,
-                    onSecondaryTap: onShowWho,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Space.sm,
-                        vertical: 2,
-                      ),
-                      child: Text.rich(
+              child: GestureDetector(
+                onSecondaryTap: onShowWho,
+                child: TextButton(
+                  style: style(reacted: r == mine),
+                  onPressed: onReact == null ? onShowWho : () => onReact!(r),
+                  onLongPress: onShowWho,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
                         TextSpan(
                           children: [
-                            reactionSpan(r),
-                            TextSpan(text: ' $n'),
+                            reactionSpan(
+                              r,
+                              heart: r == mine ? null : c.cherry.face,
+                            ),
                           ],
+                          style: const TextStyle(fontSize: 15),
                         ),
-                      ),
+                        // The design's 7 px gap.
+                        const TextSpan(
+                          text: ' ',
+                          style: TextStyle(letterSpacing: 3),
+                        ),
+                        TextSpan(text: '$n'),
+                      ],
                     ),
                   ),
                 ),
@@ -262,7 +291,7 @@ class ReactionsSheet extends ConsumerWidget {
                 leading: Avatar(name: nameOf(e.key), colorKey: e.key, size: 32),
                 title: Text(nameOf(e.key)),
                 trailing: Text.rich(
-                  reactionSpan(r),
+                  reactionSpan(r, heart: GumdropColors.of(context).cherry.face),
                   style: const TextStyle(fontSize: 20),
                 ),
               ),

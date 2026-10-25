@@ -15,6 +15,14 @@ import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
 
 void main() {
+  /// The options I've chosen on the poll card, as screen readers hear them.
+  Finder chosenOptions() => find.byWidgetPredicate(
+    (w) =>
+        w is Semantics &&
+        (w.properties.selected ?? false) &&
+        (w.properties.label?.contains(' vote') ?? false),
+  );
+
   const coach = AuthUser(
     uid: 'coach',
     email: 'coach@example.com',
@@ -190,7 +198,7 @@ void main() {
       expect(messages.messages.first.type, MessageType.poll);
       // The card shows in the chat.
       expect(find.text('Team dinner?'), findsOneWidget);
-      expect(find.text('Poll · Choose any'), findsOneWidget);
+      expect(find.textContaining('Choose any'), findsOneWidget);
       expect(find.text('No votes yet'), findsOneWidget);
     });
 
@@ -238,7 +246,7 @@ void main() {
       expect(polls.votes['p1']?['coach'], {'1'});
       expect(find.text('1 · 100%'), findsOneWidget);
       expect(find.text('1 person voted'), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+      expect(chosenOptions(), findsOneWidget);
 
       // Changing my mind moves the vote.
       await tester.tap(find.text('Saturday'));
@@ -258,7 +266,7 @@ void main() {
       await tester.tap(find.text('Sunday'));
       await tester.pumpAndSettle();
       expect(polls.votes['p1']?['coach'], {'0', '1'});
-      expect(find.byIcon(Icons.check_box), findsNWidgets(2));
+      expect(chosenOptions(), findsNWidgets(2));
     });
 
     testWidgets('who voted, and who has not (POLL-3)', (tester) async {
@@ -302,7 +310,7 @@ void main() {
       final polls = await openChat(tester, existing: poll(anonymous: true));
       await polls.setVote(poll(anonymous: true), const UserId('sam'), {'0'});
       await tester.pumpAndSettle();
-      expect(find.text('Poll · Anonymous'), findsOneWidget);
+      expect(find.textContaining('Anonymous'), findsOneWidget);
       expect(find.text('1 · 100%'), findsOneWidget);
       expect(find.text('See votes'), findsNothing);
       await tester.longPress(find.text('Saturday'));

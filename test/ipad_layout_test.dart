@@ -2,6 +2,7 @@
 // Review runs on iPads, so every screen has to lay out at iPad sizes, in
 // portrait and landscape, and in Split View and Slide Over, which give the
 // app a narrow slice of the screen. A layout that overflows fails here.
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -83,7 +84,7 @@ void main() {
       ..viewPadding = const FakeViewPadding(top: 24);
     await pumpTeam(
       tester,
-      dark: false,
+      theme: ThemePreference.dark,
       size: ipadSizes['iPad Pro 13-inch, portrait']!,
     );
     expect(
@@ -108,7 +109,7 @@ void main() {
       });
 
       testWidgets("every team member's screen", (tester) async {
-        await pumpTeam(tester, dark: false, size: size);
+        await pumpTeam(tester, theme: ThemePreference.dark, size: size);
         expect(tester.takeException(), isNull);
         for (final route in teamRoutes) {
           await visit(tester, route, name);
@@ -116,7 +117,12 @@ void main() {
       });
 
       testWidgets("the super admin's panel", (tester) async {
-        await pumpTeam(tester, dark: false, size: size, user: boss);
+        await pumpTeam(
+          tester,
+          theme: ThemePreference.dark,
+          size: size,
+          user: boss,
+        );
         for (final route in adminRoutes) {
           await visit(tester, route, name);
         }

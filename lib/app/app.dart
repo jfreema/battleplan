@@ -1,7 +1,6 @@
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/push_handler.dart';
 import 'package:battleplan/app/router.dart';
-import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
@@ -20,10 +19,6 @@ import 'package:material_ui/material_ui.dart';
 class BattleplanApp extends ConsumerWidget {
   const new({super.key});
 
-  // Built once; rebuilding ThemeData on every frame is wasteful.
-  static final ThemeData _light = AppTheme.light();
-  static final ThemeData _dark = AppTheme.dark();
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // App-wide push work (ARCH §6.5): keeping this device registered, and
@@ -37,13 +32,13 @@ class BattleplanApp extends ConsumerWidget {
     final app = MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appName,
       debugShowCheckedModeBanner: false,
-      theme: _light,
-      darkTheme: _dark,
-      themeMode: switch (ref.watch(themePreferenceControllerProvider)) {
-        ThemePreference.system => ThemeMode.system,
-        ThemePreference.light => ThemeMode.light,
-        ThemePreference.dark => ThemeMode.dark,
-      },
+      // One Gumdrop theme at a time (SET-2): Dark (also the old "system"),
+      // Light, or Candy. Candy and Dark aren't a Material light and dark
+      // pair, so the theme is picked here and never by the system's mode.
+      // Built once each and cached (AppTheme.of).
+      theme: AppTheme.forPreference(
+        ref.watch(themePreferenceControllerProvider),
+      ),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         ...GlobalMaterialLocalizations.delegates,

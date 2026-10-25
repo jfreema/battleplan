@@ -5,7 +5,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
-import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/linkified_text.dart';
@@ -600,23 +600,19 @@ void main() {
       return rich.textSpan?.style?.fontFamily;
     }
 
-    testWidgets("San Francisco in Apple's own apps, Inter in a browser", (
+    testWidgets('Nunito on every platform, the app as the browser', (
       tester,
     ) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       try {
-        await openThunder(
-          tester,
-          messages: [from('sam', 'Sam Rivera', 'Field 3 is open')],
-        );
-        expect(familyOf(tester, 'Field 3 is open'), ChatText.appleSystemFont);
-        await openThunder(
-          tester,
-          messages: [from('sam', 'Sam Rivera', 'Field 3 is open')],
-          web: true,
-        );
-        // The theme's Inter, which a browser on an iPhone gets too.
-        expect(familyOf(tester, 'Field 3 is open'), AppTokens.fontFamily);
+        for (final web in [false, true]) {
+          await openThunder(
+            tester,
+            messages: [from('sam', 'Sam Rivera', 'Field 3 is open')],
+            web: web,
+          );
+          expect(familyOf(tester, 'Field 3 is open'), AppFonts.body);
+        }
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }

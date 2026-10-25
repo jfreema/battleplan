@@ -91,7 +91,7 @@ service cloud.firestore {
       return p.displayName is string
         && p.displayName.size() >= 1 && p.displayName.size() <= 50
         && p.displayNameLower == p.displayName.lower()
-        && p.themeMode in ['system', 'light', 'dark']
+        && p.themeMode in ['system', 'light', 'dark', 'candy']
         && (p.photoPath == null
             || (p.photoPath is string && p.photoPath.matches('users/' + userId + '/avatar/[^/]+')))
         && validPrefs(p.notificationPrefs)
@@ -159,12 +159,14 @@ service cloud.firestore {
     }
 
     // A team's chat look (CHAT-18), set by its admins: a bubble color from the
-    // team palette (or null for the team's own color) and a background.
+    // team palette or one of the Gumdrop candies (or null for the theme's
+    // own) and a background.
     function validChatTheme(t, g) {
       return t is map && t.keys().hasOnly(['bubbleColor', 'background', 'backgroundPath'])
         && (t.get('bubbleColor', null) == null || t.bubbleColor in ['#2F5BEA', '#7BAFD4',
             '#0F8A5F', '#C2410C', '#B91C1C', '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F',
-            '#1D4ED8', '#9333EA', '#334155', '#1E3A5F', '#D4A017'])
+            '#1D4ED8', '#9333EA', '#334155', '#1E3A5F', '#D4A017',
+            '#4D9BFF', '#FF7AC8', '#A88BFF', '#4DDC8C', '#FFD84A', '#FF9B42', '#FF5D73'])
         && t.get('background', 'plain') in ['plain', 'pattern', 'photo']
         && (t.get('backgroundPath', null) == null
             || t.backgroundPath.matches('groups/' + g + '/theme/[^/]+'));

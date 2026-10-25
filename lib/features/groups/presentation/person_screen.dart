@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
@@ -11,6 +12,7 @@ import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
@@ -146,8 +148,9 @@ class PersonScreen extends ConsumerWidget {
         .firstOrNull;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.personTitle),
+      appBar: gumdropAppBar(
+        context,
+        title: l10n.personTitle,
         actions: [
           if (!isMe && !unknown)
             PopupMenuButton<String>(
@@ -201,7 +204,7 @@ class PersonScreen extends ConsumerWidget {
                   child: Text(
                     name,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
                 if (notJoined)
@@ -209,7 +212,7 @@ class PersonScreen extends ConsumerWidget {
                     l10n.notJoinedYet,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: GumdropColors.of(context).textMutedOnPage,
                     ),
                   ),
                 const SizedBox(height: Space.lg),
@@ -233,33 +236,52 @@ class PersonScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: Space.xl),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-                  child: Text(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  child: PageHeading(
                     isMe ? l10n.personMyTeams : l10n.personTeamsInCommon,
-                    style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
                 if (rows.isEmpty && !teams.isLoading)
                   Padding(
                     padding: const EdgeInsets.all(Space.lg),
-                    child: Text(l10n.personNoTeams),
-                  ),
-                for (final row in rows)
-                  ListTile(
-                    leading: GroupBadge(group: row.team.group, size: 40),
-                    title: Text(row.team.group.name),
-                    subtitle: Text(roleLineOf(l10n, row.theirs)),
-                    // Their card on that team: its contact info and the
-                    // actions I have there (TEAM-3, TEAM-10).
-                    onTap: () => unawaited(
-                      showAdaptiveSheet<void>(
-                        context,
-                        builder: (_) => MemberCard(
-                          member: row.theirs,
-                          me: row.team.membership,
-                          who: whoFromSummary(l10n, row.theirs.playerSummary),
-                        ),
+                    child: Text(
+                      l10n.personNoTeams,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: GumdropColors.of(context).textMutedOnPage,
                       ),
+                    ),
+                  )
+                else if (rows.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SettingsCard(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        for (final row in rows)
+                          ListTile(
+                            leading: GroupBadge(
+                              group: row.team.group,
+                              size: 40,
+                            ),
+                            title: Text(row.team.group.name),
+                            subtitle: Text(roleLineOf(l10n, row.theirs)),
+                            // Their card on that team: its contact info and
+                            // the actions I have there (TEAM-3, TEAM-10).
+                            onTap: () => unawaited(
+                              showAdaptiveSheet<void>(
+                                context,
+                                builder: (_) => MemberCard(
+                                  member: row.theirs,
+                                  me: row.team.membership,
+                                  who: whoFromSummary(
+                                    l10n,
+                                    row.theirs.playerSummary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
               ],

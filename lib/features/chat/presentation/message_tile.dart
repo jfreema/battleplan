@@ -3,6 +3,10 @@ import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/color_math.dart';
+import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/haptics.dart';
@@ -29,7 +33,6 @@ import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -380,14 +383,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final web = ref.watch(browserInfoProvider).isWeb;
-    // Messages read in iMessage's face (CHAT-1): San Francisco in the
-    // iPhone, iPad, and Mac apps, Inter elsewhere.
-    final appleFont = chatUsesAppleFont(context, isWeb: web);
     // A direct conversation (CHAT-19) is laid out as iMessage lays out one:
     // no photo or name beside the other person's messages.
     final direct = ref.watch(groupProvider(m.groupId)).value?.isDirect ?? false;
+    final c = GumdropColors.of(context);
     if (m.isSystem) {
-      // CHAT-10: small centered lines like "Sam joined".
+      // CHAT-10: small centered lines like "Sam joined", on the page.
       return Padding(
         padding: const EdgeInsets.symmetric(
           vertical: Space.sm,
@@ -397,14 +398,14 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           m.text,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+            color: c.textMutedOnPage,
+            fontWeight: FontWeight.w800,
           ),
         ),
       );
     }
 
     final mine = widget.mine;
-    final scheme = theme.colorScheme;
     // Messages from someone I blocked are collapsed until I tap Show
     // (CHAT-12).
     if (!mine &&
@@ -421,7 +422,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               child: Text(
                 l10n.blockedMessage,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
+                  color: c.textMutedOnPage,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -435,26 +436,33 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       );
     }
     final deleted = m.deletedAt != null;
-    // An admin's announcement (CHAT-15) looks the same from everyone.
+    // An admin's announcement (CHAT-15) looks the same from everyone: a
+    // lemon bubble.
     final announcement = m.announcement && !deleted;
     final custom = mine && !announcement ? widget.bubbleColor : null;
+    // Others' bubbles are cards (Gumdrop Pop §3.14); mine are candy, in the
+    // chat look's color or the theme's "you" color, with ink text, or white
+    // on a dark team color.
     final background = announcement
-        ? scheme.secondaryContainer
-        : custom ?? (mine ? scheme.primary : scheme.surfaceContainerHighest);
-    // Text on a custom color is white or black, whichever reads better.
+        ? c.lemon.face
+        : mine
+        ? custom ?? c.you.face
+        : c.surface;
     final foreground = announcement
-        ? scheme.onSecondaryContainer
-        : custom != null
-        ? (ThemeData.estimateBrightnessForColor(custom) == Brightness.dark
-              ? Colors.white
-              : Colors.black)
-        : (mine ? scheme.onPrimary : scheme.onSurface);
+        ? c.ink
+        : mine
+        ? (custom == null ? c.ink : bubbleTextOn(c, custom))
+        : c.textPrimary;
+    final muted = mine || announcement
+        ? foreground
+        : (deleted ? c.textMutedOnPage : c.textMuted);
     final time = m.createdAt == null
         ? null
         : MaterialLocalizations.of(context)
               .formatTimeOfDay(TimeOfDay.fromDateTime(m.createdAt!.toLocal()));
     // @mentions (CHAT-14) in bold, and the ones naming me (or everyone)
-    // stand out, by the mentioned people's current names.
+    // stand out, by the mentioned people's current names. In my bubble a
+    // mention is a white pill, as the design has it.
     final names = m.mentions.isEmpty
         ? const <String, String>{}
         : ref.watch(memberNamesProvider(m.groupId));
@@ -468,13 +476,19 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         (
           start: r.start,
           end: r.end,
-          style: r.isMe
+          style: mine
               ? TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: scheme.onTertiaryContainer,
-                  backgroundColor: scheme.tertiaryContainer,
+                  fontWeight: FontWeight.w900,
+                  color: c.ink,
+                  backgroundColor: GumdropColors.mentionBg,
                 )
-              : const TextStyle(fontWeight: FontWeight.w700),
+              : r.isMe
+              ? TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: c.ink,
+                  backgroundColor: c.lemon.face,
+                )
+              : const TextStyle(fontWeight: FontWeight.w900),
         ),
     ];
     // "edited" and "Pinned" (CHAT-15) beside the time. Where an imported
@@ -506,54 +520,46 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                   : quoteText(l10n, original.type, original.text),
               deleted:
                   (preview?.deleted ?? false) || original?.deletedAt != null,
-              foreground: foreground.withValues(alpha: 0.85),
               onTap: widget.onOpenQuote,
             ),
           );
     // A poll shows as its card (POLL-2, CHAT-11); its text is the question,
-    // which the card shows itself.
+    // which the card shows itself, with who asked and when.
     final isPoll = m.type == MessageType.poll && !deleted;
     // An event card (CHAT-11, SCHED-3), posted by the server.
     final isEvent =
         m.type == MessageType.event && m.eventId != null && !deleted;
     final card = isPoll || isEvent;
 
-    // Inside the bubble, at the top (CHAT-1), as GroupMe has it: the name and
-    // time on a group's first message (mine shows only the time), and
-    // "edited" or "Pinned" on any message that is.
+    // Inside the bubble, at the top (CHAT-1): the name (Fredoka) with the
+    // players and time beside it in small muted type on a group's first
+    // message (mine shows only the time), and "edited" or "Pinned" on any
+    // message that is.
     final meta = [
       if (widget.startsGroup) ?time,
       if (widget.startsGroup) headerMarks else marks,
     ].where((p) => p.isNotEmpty).join(' · ');
     final named = widget.startsGroup && !mine && !direct;
+    final metaStyle = ChatText.face(theme.textTheme.bodySmall).copyWith(
+      fontSize: 13,
+      height: 1.2,
+      fontWeight: mine ? FontWeight.w800 : FontWeight.w700,
+      color: muted,
+      letterSpacing: 0,
+    );
     final innerHeader = card || (!named && meta.isEmpty)
         ? null
         : Padding(
-            padding: const EdgeInsets.only(bottom: 2),
+            padding: const EdgeInsets.only(bottom: Space.xs),
             child: Text.rich(
               textWidthBasis: TextWidthBasis.longestLine,
               TextSpan(
                 children: [
-                  if (named)
-                    TextSpan(
-                      text: nameWithPlayersOf(
-                        m.authorName,
-                        m.authorPlayerSummary,
-                      ),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: foreground,
-                      ),
-                    ),
+                  if (named) ..._nameSpans(m, foreground, muted),
                   if (meta.isNotEmpty) TextSpan(text: named ? '  $meta' : meta),
                 ],
               ),
-              style: ChatText.face(
-                theme.textTheme.labelMedium?.copyWith(
-                  color: foreground.withValues(alpha: 0.7),
-                ),
-                appleFont: appleFont,
-              ),
+              style: mine ? metaStyle.copyWith(fontSize: 12) : metaStyle,
             ),
           );
 
@@ -585,12 +591,11 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     // Around photos the bubble is a thin frame, and what's above and below
     // them is inset to line up with a text bubble's.
     const photoInset = Space.xs + 2;
+    final side = mine ? 14.0 : 13.0;
     Widget inset(Widget child) => photos == null
         ? child
         : Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Space.md - photoInset,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: side - photoInset),
             child: child,
           );
     final body = <Widget>[
@@ -603,9 +608,10 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             'media' => l10n.photoRemovedByAdmin,
             _ => l10n.messageDeleted,
           },
-          style: TextStyle(
+          style: ChatText.of(theme.textTheme.bodyLarge).copyWith(
             fontStyle: FontStyle.italic,
-            color: scheme.onSurfaceVariant,
+            fontSize: 15,
+            color: c.textMutedOnPage,
           ),
         )
       else ...[
@@ -632,7 +638,10 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               top: innerHeader == null ? 0 : Space.xs,
               bottom: hasText || quote != null ? Space.xs + 2 : 0,
             ),
-            child: photos,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: photos,
+            ),
           ),
         if (quote != null) inset(quote),
         if (hasText)
@@ -644,7 +653,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               textWidthBasis: TextWidthBasis.longestLine,
               style: ChatText.of(
                 theme.textTheme.bodyLarge?.copyWith(color: foreground),
-                appleFont: appleFont,
+                mine: mine,
               ),
               linkColor: foreground,
               highlights: highlights,
@@ -655,76 +664,110 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       ],
     ];
     // Each message is its own bubble, fitted to its text and no wider than
-    // iMessage's (bubbleMaxWidth). A one-line bubble is 48 tall, a full tap
-    // target (SPEC §7.6); one with a header line is taller anyway, so its
-    // padding is tighter.
+    // the design's (bubbleMaxWidth), rounded with a small tail corner: at
+    // the top left of the first of others' messages, at the bottom right of
+    // the last of mine (§3.14). A one-line bubble is still 48 tall, a full
+    // tap target (SPEC §7.6), with its text centered.
     final besideAvatar = !mine && !direct;
-    final textBubble = Container(
+    final radius = bubbleRadius(
+      mine: mine,
+      tail: mine ? widget.endsGroup : widget.startsGroup,
+    );
+    final padding = photos != null
+        ? EdgeInsets.fromLTRB(
+            photoInset,
+            innerHeader == null ? photoInset : 7,
+            photoInset,
+            hasText ? 9 : photoInset,
+          )
+        : mine
+        ? const EdgeInsets.fromLTRB(14, 9, 14, 10)
+        : innerHeader != null
+        ? const EdgeInsets.fromLTRB(13, 7, 13, 9)
+        : const EdgeInsets.fromLTRB(13, 9, 13, 10);
+    final content = ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: bubbleMaxWidth(context, besideAvatar: besideAvatar),
         minHeight: kMinInteractiveDimension,
       ),
-      padding: photos != null
-          ? EdgeInsets.fromLTRB(
-              photoInset,
-              innerHeader == null ? photoInset : Space.sm,
-              photoInset,
-              hasText ? Space.sm + 2 : photoInset,
-            )
-          : innerHeader != null
-          ? const EdgeInsets.fromLTRB(
-              Space.md,
-              Space.sm,
-              Space.md,
-              Space.sm + 2,
-            )
-          : const EdgeInsets.symmetric(
-              horizontal: Space.md,
-              vertical: Space.md + 1,
-            ),
-      decoration: BoxDecoration(
-        color: deleted ? Colors.transparent : background,
-        border: deleted
-            ? Border.all(color: scheme.outlineVariant)
-            : announcement
-            ? Border.all(color: scheme.secondary)
-            : null,
-        borderRadius: BorderRadius.circular(Corners.bubble),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: body,
+      child: Padding(
+        padding: padding,
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          widthFactor: 1,
+          heightFactor: 1,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: body,
+          ),
+        ),
       ),
     );
+    final textBubble = DecoratedBox(
+      decoration: BoxDecoration(
+        color: deleted ? null : background,
+        border: deleted
+            ? Border.all(color: c.divider, width: 2)
+            // My candy on a Candy page of its own hue (lemon on a Yellow
+            // team) keeps an ink edge.
+            : mine &&
+                  c.flavor == GumdropFlavor.candy &&
+                  ColorMath.contrast(background, c.page) < 2
+            ? Border.all(color: c.ink, width: 2)
+            : !mine && !announcement && c.surfaceBorderWidth > 0
+            ? Border.all(color: c.surfaceBorder, width: c.surfaceBorderWidth)
+            : null,
+        borderRadius: radius,
+      ),
+      // Others' bubbles are white cards in Candy: their text and quotes
+      // take the card's colors.
+      child: !mine && !announcement && !deleted
+          ? GumdropSurface(child: content)
+          : content,
+    );
     final bubble = card
-        ? Column(
-            crossAxisAlignment: mine
-                ? CrossAxisAlignment.end
-                : CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isPoll)
-                PollCard(pollId: PollId(m.pollId ?? m.id), groupId: m.groupId)
-              else
-                EventCard(
-                  eventId: EventId(m.eventId!),
+        ? isPoll
+              ? PollCard(
+                  pollId: PollId(m.pollId ?? m.id),
                   groupId: m.groupId,
-                  seriesId: m.seriesId,
-                  text: m.text,
-                  reminder: m.reminder,
-                ),
-            ],
-          )
+                  asked: mine
+                      ? l10n.pollYouAsked
+                      : l10n.pollPersonAsked(shortNameOf(m.authorName)),
+                  time: [
+                    ?time,
+                    if (headerMarks.isNotEmpty) headerMarks,
+                  ].join(' · '),
+                )
+              : Column(
+                  crossAxisAlignment: mine
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    EventCard(
+                      eventId: EventId(m.eventId!),
+                      groupId: m.groupId,
+                      seriesId: m.seriesId,
+                      text: m.text,
+                      reminder: m.reminder,
+                    ),
+                  ],
+                )
         : textBubble;
 
     final openAuthor = mine ? null : _authorTap(m);
-    // Cards (polls, events) keep the name and time above them.
-    final header = !card
+    final pageMeta = theme.textTheme.bodySmall?.copyWith(
+      color: c.textMutedOnPage,
+      fontWeight: FontWeight.w800,
+    );
+    // Event cards keep the name and time above them, on the page. A poll
+    // card says who asked inside it.
+    final header = !isEvent
         ? null
         : widget.startsGroup && !mine
         ? Padding(
-            padding: const EdgeInsets.only(left: Space.md, bottom: Space.xs),
+            padding: const EdgeInsets.only(left: 2, bottom: Space.xs),
             child: Text.rich(
               TextSpan(
                 children: [
@@ -734,41 +777,32 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                       m.authorPlayerSummary,
                     ),
                     style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      color: c.textOnPage,
                     ),
                   ),
                   if (time != null) TextSpan(text: '  $time'),
                   if (headerMarks.isNotEmpty) TextSpan(text: ' · $headerMarks'),
                 ],
               ),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: pageMeta,
             ),
           )
         : widget.startsGroup && time != null
         ? Padding(
-            padding: const EdgeInsets.only(right: Space.md, bottom: Space.xs),
+            padding: const EdgeInsets.only(right: 2, bottom: Space.xs),
             child: Text(
               headerMarks.isNotEmpty ? '$time · $headerMarks' : time,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: pageMeta,
             ),
           )
         : marks.isNotEmpty
         ? Padding(
             padding: EdgeInsets.only(
-              left: mine ? 0 : Space.md,
-              right: mine ? Space.md : 0,
+              left: mine ? 0 : 2,
+              right: mine ? 2 : 0,
               bottom: 2,
             ),
-            child: Text(
-              marks,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
+            child: Text(marks, style: pageMeta),
           )
         : null;
 
@@ -839,18 +873,21 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               child: Transform.translate(
                 offset: Offset(_swipe, 0),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: isPoll ? MainAxisSize.max : MainAxisSize.min,
                   children: [
                     if (mine && _hovering && !deleted) _hoverButton(),
                     Flexible(
+                      fit: isPoll ? FlexFit.tight : FlexFit.loose,
                       child: DecoratedBox(
                         // The visible focus ring (SPEC §7.6).
                         position: DecorationPosition.foreground,
                         decoration: BoxDecoration(
                           border: _focused
-                              ? Border.all(color: scheme.primary, width: 2)
+                              ? Border.all(color: c.textOnPage, width: 2)
                               : null,
-                          borderRadius: BorderRadius.circular(Corners.bubble),
+                          borderRadius: card
+                              ? BorderRadius.circular(Corners.panel)
+                              : radius,
                         ),
                         child: bubble,
                       ),
@@ -866,6 +903,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           ReactionChips(
             message: m,
             me: ref.watch(authUserProvider).value?.uid,
+            alignEnd: mine,
             onShowWho: () => unawaited(_showWho()),
             // As the picker: not while viewing as a super admin.
             onReact: ref.watch(viewingAsSuperAdminProvider(m.groupId))
@@ -876,15 +914,14 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                   },
           ),
         // Delivery state (CHAT-4): sending until the server has it, then
-        // "Sent" under my newest message, and with the time on the others.
+        // "Sent" with a mint check under my newest message, and with the
+        // time on the others.
         if (m.pending || widget.showSent)
           Padding(
-            padding: const EdgeInsets.only(top: 2, right: Space.xs),
-            child: Text(
-              m.pending ? l10n.messageSending : l10n.messageSent,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+            padding: const EdgeInsets.only(top: 5, right: 2),
+            child: ReadReceipt(
+              label: m.pending ? l10n.messageSending : l10n.messageSent,
+              sent: !m.pending,
             ),
           )
         else if ((_showTime || _hovering) &&
@@ -892,9 +929,9 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             (mine || !widget.startsGroup))
           Padding(
             padding: EdgeInsets.only(
-              top: 2,
-              left: mine ? 0 : Space.md,
-              right: mine ? Space.xs : 0,
+              top: 4,
+              left: mine ? 0 : 2,
+              right: mine ? 2 : 0,
             ),
             child: Text(
               !mine
@@ -902,35 +939,37 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                   : widget.startsGroup
                   ? l10n.messageSent
                   : '$time · ${l10n.messageSent}',
-              style: theme.textTheme.labelSmall,
+              style: pageMeta?.copyWith(fontSize: 12),
             ),
           ),
       ],
     );
 
     // Others' messages get their photo beside the first bubble of a group,
-    // in a slot as wide as a tap target, since it opens their page.
+    // in a slot as wide as a tap target, since it opens their page. A poll
+    // card takes the whole width and names who asked.
     final avatarSlot = SizedBox(
       width: kMinInteractiveDimension,
       // Level with the bubble's top, where the name is; a card has its
       // name above it.
       child: widget.startsGroup
           ? Padding(
-              padding: EdgeInsets.only(top: card ? Space.lg : 0),
+              padding: EdgeInsets.only(top: isEvent ? 20 : 0),
               child: _AuthorAvatar(message: m, onTap: openAuthor),
             )
           : null,
     );
 
     final row = Padding(
-      // Compact, as GroupMe is: each bubble a little apart from the next,
-      // a little more between people. Close to the screen's edges, as
-      // iMessage's are: others' messages on the left, mine on the right.
+      // The design's spacing (§3.14): 16 from the screen's edges (the
+      // photo's tap target reaches 4 past it), 12 between people, a little
+      // less between one person's messages. Others' messages on the left,
+      // mine on the right.
       padding: EdgeInsets.fromLTRB(
-        Space.sm,
-        widget.startsGroup ? Space.xs + 2 : 3,
-        Space.sm,
-        widget.endsGroup ? Space.xs : 0,
+        besideAvatar && !isPoll ? Space.md : Space.lg,
+        widget.startsGroup ? Space.xs + 2 : 2,
+        Space.lg,
+        widget.endsGroup ? Space.xs + 2 : 2,
       ),
       child: Row(
         mainAxisAlignment: mine
@@ -938,7 +977,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (besideAvatar) avatarSlot,
+          if (besideAvatar && !isPoll) avatarSlot,
           Flexible(child: column),
         ],
       ),
@@ -947,38 +986,126 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       duration: Motion.of(context, Motion.slow),
       curve: Motion.curve,
       color: widget.highlighted
-          ? scheme.primaryContainer.withValues(alpha: 0.5)
+          ? c.you.face.withValues(alpha: 0.28)
           : Colors.transparent,
       child: row,
     );
   }
+
+  /// The sender's name in Fredoka, and their players beside it in small
+  /// muted type ("Claire D." then "· Luke #7"), as the design has it.
+  List<InlineSpan> _nameSpans(Message m, Color name, Color muted) {
+    final full = nameWithPlayersOf(m.authorName, m.authorPlayerSummary);
+    final short = shortNameOf(m.authorName);
+    final split =
+        full != m.authorName && full.startsWith(short) && full != short;
+    final nameStyle = TextStyle(
+      fontFamily: AppFonts.label,
+      fontWeight: FontWeight.w600,
+      fontSize: 16,
+      height: 1.2,
+      color: name,
+    );
+    return [
+      TextSpan(text: split ? short : full, style: nameStyle),
+      if (split) TextSpan(text: ' ${full.substring(short.length).trim()}'),
+    ];
+  }
 }
 
-/// The widest a message bubble grows (CHAT-1), as iMessage's: about four
-/// fifths of the room beside it, so others' messages sit to the left and
-/// mine to the right, and no wider than a comfortable line on big screens.
+/// The text color on a bubble of [color]: ink, or white on a dark team
+/// color, whichever reads better (CHAT-18).
+Color bubbleTextOn(GumdropColors c, Color color) =>
+    ColorMath.contrast(c.ink, color) >= ColorMath.contrast(Colors.white, color)
+    ? c.ink
+    : Colors.white;
+
+/// A bubble's corners (§3.14): 20, with the [tail] corner 6, at the top
+/// left of others' messages and the bottom right of mine.
+BorderRadius bubbleRadius({required bool mine, bool tail = true}) {
+  const round = Radius.circular(Corners.bubble);
+  const point = Radius.circular(Corners.bubbleTail);
+  return BorderRadius.only(
+    topLeft: !mine && tail ? point : round,
+    topRight: round,
+    bottomLeft: round,
+    bottomRight: mine && tail ? point : round,
+  );
+}
+
+/// The widest a message bubble grows (CHAT-1): others' nearly fill the
+/// column beside their photo, as the design has them, still leaving the
+/// other side a little free, and mine (or others' in a direct conversation,
+/// which have no photo) about three quarters of the room, so they sit to
+/// the right; no wider than a comfortable line on big screens.
 /// [besideAvatar] leaves the photo's slot out of the room.
 double bubbleMaxWidth(BuildContext context, {bool besideAvatar = false}) {
   final room =
       MediaQuery.sizeOf(context).width -
-      2 * Space.sm -
-      (besideAvatar ? kMinInteractiveDimension : 0);
-  return math.max(kMinInteractiveDimension, math.min(520, room * 0.78));
+      2 * Space.lg -
+      (besideAvatar ? kMinInteractiveDimension - Space.xs : 0);
+  return math.max(
+    kMinInteractiveDimension,
+    math.min(520, room * (besideAvatar ? 0.92 : 0.78)),
+  );
 }
 
-/// Whether messages are in Apple's San Francisco (ChatText): only in the
-/// iPhone, iPad, and Mac apps, which have it as their system font; a
-/// browser on those devices can't hand it to the web app.
-bool chatUsesAppleFont(BuildContext context, {required bool isWeb}) =>
-    !isWeb &&
-    const {
-      TargetPlatform.iOS,
-      TargetPlatform.macOS,
-    }.contains(defaultTargetPlatform);
+/// "Sent" under my newest message (CHAT-4): small heavy type on the page
+/// with a mint check disc (§3.14), or "Sending…" without it.
+class ReadReceipt extends StatelessWidget {
+  const new({
+    required this.label,
+    this.sent = true,
+    this.failed = false,
+    super.key,
+  });
+
+  final String label;
+  final bool sent;
+
+  /// Not sent: a cherry disc with an X in place of the check.
+  final bool failed;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (sent || failed) ...[
+          Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: failed ? c.cherry.face : c.mint.face,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              failed ? AppIcons.close : AppIcons.check,
+              size: 12,
+              weight: 800,
+              color: c.ink,
+            ),
+          ),
+          const SizedBox(width: 5),
+        ],
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppFonts.body,
+            fontWeight: FontWeight.w900,
+            fontSize: 12,
+            color: c.textMutedOnPage,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 /// The author's photo beside their messages; tapping it opens their page
-/// (TEAM-15) when [onTap] is given. The photo sits at the top left of a
-/// full 48 × 48 tap target (SPEC §7.6), which the slot leaves room for.
+/// (TEAM-15) when [onTap] is given. The 36 px photo sits 4 in from the top
+/// left of a full 48 × 48 tap target (SPEC §7.6), 8 from the bubble.
 class _AuthorAvatar extends ConsumerWidget {
   const new({required this.message, this.onTap});
 
@@ -991,14 +1118,17 @@ class _AuthorAvatar extends ConsumerWidget {
     final url = path == null
         ? null
         : ref.watch(teamPhotoUrlProvider(path)).value;
-    final avatar = Avatar(
-      name: message.authorName,
-      colorKey: message.authorId,
-      imageUrl: url,
-      size: 36,
+    final avatar = Padding(
+      padding: const EdgeInsetsDirectional.only(start: Space.xs),
+      child: Avatar(
+        name: message.authorName,
+        colorKey: message.authorId,
+        imageUrl: url,
+        size: 36,
+      ),
     );
     final tap = onTap;
-    if (tap == null) return avatar;
+    if (tap == null) return Align(alignment: Alignment.topLeft, child: avatar);
     // Its own node, so a screen reader finds it apart from the message.
     return Semantics(
       container: true,
@@ -1041,7 +1171,7 @@ class OutgoingPhotosTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final c = GumdropColors.of(context);
     final waiting = !item.failed && (item.waiting || !online);
     // Progress shows in the bubble itself (CHAT-3): a ring over the photos.
     final grid = PhotoGrid(
@@ -1049,7 +1179,7 @@ class OutgoingPhotosTile extends StatelessWidget {
       tile: (i) => LocalPhoto(bytes: item.photos[i].bytes),
     );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.md, Space.sm, Space.md, 0),
+      padding: const EdgeInsets.fromLTRB(Space.lg, Space.sm, Space.lg, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -1062,8 +1192,8 @@ class OutgoingPhotosTile extends StatelessWidget {
                 Opacity(opacity: 0.7, child: grid),
                 Container(
                   padding: const EdgeInsets.all(Space.sm),
-                  decoration: const BoxDecoration(
-                    color: Colors.black54,
+                  decoration: BoxDecoration(
+                    color: c.ink.withValues(alpha: 0.6),
                     shape: BoxShape.circle,
                   ),
                   child: SizedBox.square(
@@ -1083,7 +1213,13 @@ class OutgoingPhotosTile extends StatelessWidget {
           if (item.caption.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Text(item.caption),
+              child: Text(
+                item.caption,
+                style: ChatText.of(
+                  Theme.of(context).textTheme.bodyLarge,
+                  mine: true,
+                ).copyWith(color: c.textOnPage),
+              ),
             ),
           const SizedBox(height: Space.xs),
           if (item.failed || item.waiting)
@@ -1093,13 +1229,10 @@ class OutgoingPhotosTile extends StatelessWidget {
               children: [
                 // Offline they wait for the connection and go by themselves;
                 // Retry tries now, Delete gives up.
-                Text(
-                  item.failed ? l10n.photosFailed : l10n.photosWaiting,
-                  style: TextStyle(
-                    color: item.failed
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
+                ReadReceipt(
+                  label: item.failed ? l10n.photosFailed : l10n.photosWaiting,
+                  sent: false,
+                  failed: item.failed,
                 ),
                 TextButton.icon(
                   onPressed: onRetry,
@@ -1111,12 +1244,10 @@ class OutgoingPhotosTile extends StatelessWidget {
             )
           else
             Padding(
-              padding: const EdgeInsets.only(right: Space.xs),
-              child: Text(
-                waiting ? l10n.photosWaiting : l10n.messageSending,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              padding: const EdgeInsets.only(right: 2),
+              child: ReadReceipt(
+                label: waiting ? l10n.photosWaiting : l10n.messageSending,
+                sent: false,
               ),
             ),
         ],
@@ -1134,14 +1265,10 @@ class OutgoingTextTile extends StatelessWidget {
     required this.onRetry,
     required this.onDiscard,
     this.bubbleColor,
-    this.appleFont = false,
     super.key,
   });
 
   final OutgoingText item;
-
-  /// In Apple's San Francisco, as sent messages are (ChatText).
-  final bool appleFont;
 
   /// My bubbles' color from the team's chat look (CHAT-18), as on the
   /// messages already sent; null uses the brand color.
@@ -1153,41 +1280,43 @@ class OutgoingTextTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final c = GumdropColors.of(context);
     final custom = bubbleColor;
-    final background = custom ?? scheme.primary;
-    final foreground = custom == null
-        ? scheme.onPrimary
-        : ThemeData.estimateBrightnessForColor(custom) == Brightness.dark
-        ? Colors.white
-        : Colors.black;
+    final background = custom ?? c.you.face;
+    final foreground = custom == null ? c.ink : bubbleTextOn(c, custom);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.sm, 2, Space.sm, Space.xs),
+      padding: const EdgeInsets.fromLTRB(Space.lg, 2, Space.lg, Space.xs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Opacity(
             opacity: item.failed ? 0.6 : 0.8,
             // As a sent bubble of mine (MessageTile): fitted to its text.
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: bubbleMaxWidth(context),
-                minHeight: kMinInteractiveDimension,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: Space.md,
-                vertical: Space.md + 1,
-              ),
+            child: DecoratedBox(
               decoration: BoxDecoration(
                 color: background,
-                borderRadius: BorderRadius.circular(Corners.bubble),
+                borderRadius: bubbleRadius(mine: true),
               ),
-              child: Text(
-                item.text,
-                textWidthBasis: TextWidthBasis.longestLine,
-                style: ChatText.of(
-                  theme.textTheme.bodyLarge?.copyWith(color: foreground),
-                  appleFont: appleFont,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: bubbleMaxWidth(context),
+                  minHeight: kMinInteractiveDimension,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 9, 14, 10),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    widthFactor: 1,
+                    heightFactor: 1,
+                    child: Text(
+                      item.text,
+                      textWidthBasis: TextWidthBasis.longestLine,
+                      style: ChatText.of(
+                        theme.textTheme.bodyLarge?.copyWith(color: foreground),
+                        mine: true,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1197,11 +1326,10 @@ class OutgoingTextTile extends StatelessWidget {
               spacing: Space.sm,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text(
-                  l10n.messageNotSent,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: scheme.error,
-                  ),
+                ReadReceipt(
+                  label: l10n.messageNotSent,
+                  sent: false,
+                  failed: true,
                 ),
                 TextButton(onPressed: onRetry, child: Text(l10n.retry)),
                 TextButton(onPressed: onDiscard, child: Text(l10n.delete)),
@@ -1209,13 +1337,8 @@ class OutgoingTextTile extends StatelessWidget {
             )
           else
             Padding(
-              padding: const EdgeInsets.only(top: 2, right: Space.xs),
-              child: Text(
-                l10n.messageSending,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
+              padding: const EdgeInsets.only(top: 5, right: 2),
+              child: ReadReceipt(label: l10n.messageSending, sent: false),
             ),
         ],
       ),

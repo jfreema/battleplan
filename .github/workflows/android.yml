@@ -6,8 +6,9 @@
 # with "End-to-end test APK" ticked, a debug APK that runs
 # integration_test/e2e_test.dart against the Firebase emulators on the Mac
 # whose Android emulator installs it (store checklist 1.13).
-# Download them from the run's Artifacts. Uploading to Google Play comes
-# with the Play Console (store checklist 4.2, ROADMAP task 214).
+# Download them from the run's Artifacts. Release Android
+# (release-android.yml) runs this for prod and uploads the App Bundle to
+# Google Play (store checklist 4.2, ROADMAP task 214).
 name: Android build
 
 on:
@@ -22,6 +23,22 @@ on:
         description: End-to-end test APK too (dev only)
         type: boolean
         default: false
+  # Release Android builds prod with this and uploads the App Bundle.
+  workflow_call:
+    inputs:
+      flavor:
+        type: string
+        default: prod
+      e2e:
+        type: boolean
+        default: false
+    outputs:
+      artifact:
+        description: The artifact holding the App Bundle and APK
+        value: ${{ jobs.build.outputs.artifact }}
+      build_number:
+        description: The build number (the commit count)
+        value: ${{ jobs.build.outputs.build_number }}
 
 permissions:
   contents: read
@@ -35,6 +52,9 @@ jobs:
     name: Build (${{ inputs.flavor }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    outputs:
+      artifact: battleplan-android-${{ inputs.flavor }}-${{ steps.build.outputs.build_number }}
+      build_number: ${{ steps.build.outputs.build_number }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -67,6 +87,7 @@ jobs:
           echo "ANDROID_UPLOAD_KEYSTORE=$RUNNER_TEMP/upload.p12" >> "$GITHUB_ENV"
 
       - name: Build the App Bundle and APK
+        id: build
         env:
           ANDROID_UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_PASSWORD }}
           ANDROID_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
@@ -74,6 +95,7 @@ jobs:
           build_number=$(git rev-list --count HEAD)
           commit=$(git rev-parse --short HEAD)
           echo "BUILD_NUMBER=$build_number" >> "$GITHUB_ENV"
+          echo "build_number=$build_number" >> "$GITHUB_OUTPUT"
           for target in appbundle apk; do
             flutter build "$target" --release --flavor "$FLAVOR" \
               -t "lib/main_$FLAVOR.dart" --build-number="$build_number" \

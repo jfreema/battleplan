@@ -13,6 +13,11 @@ import {
 } from '../shared/constants.js';
 import { teamStatusValues } from '../teams/status.js';
 
+/** The Gumdrop candy message colors of the chat look (CHAT-18), stored as their
+ * Gumdrop Pop Dark faces (lib/features/groups/domain/chat_colors.dart; also listed in
+ * firestore.rules validChatTheme). */
+export const CHAT_CANDY_COLORS = ['#4D9BFF', '#FF7AC8', '#A88BFF', '#4DDC8C', '#FFD84A', '#FF9B42', '#FF5D73'] as const;
+
 /** The most rows one admin list call returns (ADMIN-2, ADMIN-4, ADMIN-5). */
 export const ADMIN_PAGE_MAX = 50;
 
@@ -112,7 +117,7 @@ export const UpdateGroupInput = z
       .optional(),
     chatTheme: z
       .strictObject({
-        bubbleColor: z.enum(TEAM_COLORS).nullable().optional(),
+        bubbleColor: z.enum([...TEAM_COLORS, ...CHAT_CANDY_COLORS]).nullable().optional(),
         background: z.enum(['plain', 'pattern', 'photo']).optional(),
         backgroundPath: StoragePath,
       })

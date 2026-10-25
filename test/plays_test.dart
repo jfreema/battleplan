@@ -382,7 +382,8 @@ void main() {
         ),
         ['Chat', 'Schedule', 'Documents', 'Plays'],
       );
-      // The drawn chalkboard, outlined until its tab is showing, then filled.
+      // The drawn chalkboard, outlined, also while its tab is showing: the
+      // gumdrop indicator marks the tab (Gumdrop Pop design §3.2).
       expect(tester.widget<PlaysIcon>(find.byType(PlaysIcon)).filled, isFalse);
       await tester.tap(find.text('Plays'));
       await tester.pumpAndSettle();
@@ -395,7 +396,7 @@ void main() {
               ),
             )
             .filled,
-        isTrue,
+        isFalse,
       );
       expect(
         find.text("No plays yet. Your coaches' plays will show up here."),

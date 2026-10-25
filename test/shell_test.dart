@@ -424,12 +424,29 @@ void main() {
       expect(Motion.fast.inMilliseconds, 150);
     });
 
-    testWidgets('Inter is bundled, and its license is listed', (tester) async {
+    testWidgets("Gumdrop Pop's fonts are bundled, with their licenses", (
+      tester,
+    ) async {
       final manifest = await rootBundle.loadString('FontManifest.json');
-      expect(manifest, contains('assets/fonts/inter/Inter-Regular.ttf'));
+      for (final file in [
+        'assets/fonts/lilita_one/LilitaOne-Regular.ttf',
+        'assets/fonts/fredoka/Fredoka-SemiBold.ttf',
+        'assets/fonts/nunito/Nunito-Bold.ttf',
+        'assets/fonts/nunito/Nunito-ExtraBold.ttf',
+      ]) {
+        expect(manifest, contains(file));
+      }
+      // Inter is gone.
+      expect(manifest, isNot(contains('Inter')));
       registerFontLicenses();
       final entries = await LicenseRegistry.licenses.toList();
-      expect(entries.any((e) => e.packages.contains('Inter')), isTrue);
+      for (final family in [AppFonts.display, AppFonts.label, AppFonts.body]) {
+        expect(
+          entries.where((e) => e.packages.contains(family)),
+          hasLength(1),
+          reason: family,
+        );
+      }
     });
   });
 

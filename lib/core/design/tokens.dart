@@ -1,11 +1,10 @@
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Design tokens from SPEC §7.3. Screens use these, never raw numbers.
 abstract final class AppTokens {
-  /// Brand blue (SPEC §7.1, Q9).
+  /// Brand blue (SPEC §7.1, Q9): the brand mark, and a team with no color.
   static const Color brand = Color(0xFF2F5BEA);
-
-  static const String fontFamily = 'Inter';
 }
 
 /// 4-point spacing grid.
@@ -22,38 +21,50 @@ abstract final class Space {
   static double gutter(double width) => width >= Breakpoints.wide ? xl : lg;
 }
 
-/// Chat messages' text (CHAT-1), set as iMessage's: 17 points, a little
-/// tighter than body text. In the iPhone, iPad, and Mac apps it's San
-/// Francisco, the system font iMessage uses; Apple licenses it only for its
-/// own platforms, so the web app and Android use Inter, the closest the app
-/// may ship, tracked to match.
+/// Chat messages' text (CHAT-1): Nunito on every platform, as Gumdrop Pop
+/// sets it: 16 px on a 1.35 line, bold in others' bubbles and extra bold in
+/// mine.
 abstract final class ChatText {
-  static const double size = 17;
+  static const double size = 16;
+  static const double height = 1.35;
 
-  /// San Francisco, as Flutter names Apple's system font on iOS and macOS.
-  static const String appleSystemFont = 'CupertinoSystemText';
-
-  /// [base] as message text: the face, size, line height, and tracking.
-  static TextStyle of(TextStyle? base, {required bool appleFont}) =>
-      face(base, appleFont: appleFont).copyWith(
+  /// [base] as message text: the face, size, line height, and weight.
+  /// [mine] for my own bubbles.
+  static TextStyle of(TextStyle? base, {bool mine = false}) =>
+      face(base).copyWith(
         fontSize: size,
-        height: 1.3,
-        // Apple's tracking for San Francisco at 17 points, and Inter's own
-        // dynamic metrics at that size.
-        letterSpacing: appleFont ? -0.41 : -0.22,
+        height: height,
+        fontWeight: mine ? FontWeight.w800 : FontWeight.w700,
+        letterSpacing: 0,
       );
 
   /// [base] in the message face only, for the name and time beside it.
-  static TextStyle face(TextStyle? base, {required bool appleFont}) =>
-      (base ?? const TextStyle()).copyWith(
-        fontFamily: appleFont ? appleSystemFont : null,
-      );
+  static TextStyle face(TextStyle? base) =>
+      (base ?? const TextStyle()).copyWith(fontFamily: AppFonts.body);
 }
 
+/// Corner radii (Gumdrop Pop design §3).
 abstract final class Corners {
   static const double chip = 8;
-  static const double card = 12;
-  static const double bubble = 18;
+
+  /// Text fields and selects.
+  static const double input = 14;
+
+  /// Small cards: attendee rows, stat tiles, picker tiles.
+  static const double tile = 18;
+
+  /// Cards and settings sections.
+  static const double card = 20;
+
+  /// Chat bubbles; the tail corner is [bubbleTail].
+  static const double bubble = 20;
+  static const double bubbleTail = 6;
+
+  /// Large cards: the poll card, dialogs.
+  static const double panel = 22;
+
+  /// Sheets, the tab bar, the game card.
+  static const double sheet = 26;
   static const double pill = 999;
 }
 
@@ -84,11 +95,19 @@ abstract final class Motion {
       reduced(context) ? Duration.zero : d;
 }
 
-/// Type scale: 28 / 22 / 18 / 16 / 14 / 12.
+/// Type scale (Gumdrop Pop design §2): the headings are Lilita One, which
+/// the theme's headline and title styles carry.
 abstract final class TypeScale {
-  static const double headline = 28;
+  /// The team's name on its tab screens.
+  static const double teamName = 36;
+
+  /// A screen's title.
+  static const double headline = 32;
+
+  /// A section heading.
+  static const double section = 24;
   static const double title = 22;
-  static const double subtitle = 18;
+  static const double subtitle = 17;
   static const double body = 16;
   static const double secondary = 14;
   static const double label = 12;

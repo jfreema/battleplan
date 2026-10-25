@@ -150,8 +150,8 @@ void main() {
       expect(find.text('Riverside Park'), findsNWidgets(3));
       expect(find.text('12 going · 3 maybe · 2 no'), findsOneWidget);
       expect(find.text('No response'), findsNWidgets(3));
-      // Two events tomorrow share one date block.
-      expect(find.text('${addDays(today(), 1).day}'), findsOneWidget);
+      // Each card has its date block, so tomorrow's two show the day twice.
+      expect(find.text('${addDays(today(), 1).day}'), findsNWidgets(2));
 
       rsvps.put(
         const Rsvp(
@@ -728,7 +728,13 @@ void main() {
       final emmaRow = tester.getTopLeft(find.text('Emma #7').first);
       final myRow = tester.getTopLeft(find.text('You'));
       expect(emmaRow.dy, lessThan(myRow.dy));
-      await tester.tap(find.text('Going').last);
+      // My row's buttons (the count tiles below say Going too).
+      await tester.tap(
+        find.descendant(
+          of: find.byType(RsvpButtons).last,
+          matching: find.text('Going'),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'coach');
     });
@@ -920,7 +926,13 @@ void main() {
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
       expect(find.text('You'), findsOneWidget);
       expect(find.text('Coach #12 (you)'), findsOneWidget);
-      await tester.tap(find.text('Not going').last);
+      // My row's buttons (the count tiles below say Not going too).
+      await tester.tap(
+        find.descendant(
+          of: find.byType(RsvpButtons).last,
+          matching: find.text('Not going'),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(
         rsvps.rsvps
