@@ -345,9 +345,11 @@ class _ComposerState extends State<Composer> {
                         isDense: true,
                         filled: true,
                         fillColor: c.inputFill,
+                        // 48 px tall, the smallest tap target (the
+                        // design's 46 is just under it).
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
-                          vertical: 12,
+                          vertical: 13,
                         ),
                         border: inputBorder,
                         enabledBorder: inputBorder,

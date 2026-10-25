@@ -910,7 +910,7 @@ Players that others answer for never get accounts, and every account belongs to 
 ### 6.10 Profile and settings (SET)
 
 - **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. Email is shown read-only.
-- **SET-2 · MVP · Appearance.** Three themes, each shown as a small preview: **Gumdrop Pop Dark** (the default), **Gumdrop Pop Light**, and **Gumdrop Candy** (§7.4, 1.1). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it from before 1.1 gets Gumdrop Pop Dark.
+- **SET-2 · MVP · Appearance.** Three themes, each shown as a small preview: **Gumdrop Pop Dark** (the default), **Gumdrop Pop Light**, and **Gumdrop Candy** (§7.4, 1.1). They're in Settings and, one tap away, at the top of the account menu (the profile button). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it from before 1.1 gets Gumdrop Pop Dark.
 - **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
@@ -1203,7 +1203,7 @@ The content still carries the visual weight: messages, photos, and event cards.
 
 ### 7.4 Themes
 
-Three themes, picked in Settings (SET-2), from 1.1:
+Three themes, picked in Settings or the account menu (SET-2), from 1.1:
 
 - **Gumdrop Pop Dark**, the default: a navy page (`#0B1531`), navy cards a step lighter (`#16244A`), white text, and white headings with a blue shadow.
 - **Gumdrop Pop Light**: a pale blue-gray page (`#F2F5FD`), white cards with a thin outline, navy text, and navy headings with a light blue shadow.

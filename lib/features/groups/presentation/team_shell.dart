@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
@@ -28,6 +29,7 @@ import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
+import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -574,6 +576,15 @@ class _AccountButton extends ConsumerWidget {
     // My photo when I have one (SPEC §5.4), else my initials.
     final photoUrl = ref.watch(myPhotoUrlProvider).value;
     final c = GumdropColors.of(context);
+    final theme = AppTheme.flavorOf(
+      ref.watch(themePreferenceControllerProvider),
+    );
+    // The three themes, one tap away (SET-2), as well as in Settings.
+    final themes = [
+      (ThemePreference.dark, GumdropFlavor.dark, l10n.themeGumdropDark),
+      (ThemePreference.light, GumdropFlavor.light, l10n.themeGumdropLight),
+      (ThemePreference.candy, GumdropFlavor.candy, l10n.themeGumdropCandy),
+    ];
     // A 38 px gumdrop in the "you" color with my initials (design §3.1),
     // or my photo on it.
     return PopupMenuButton<String>(
@@ -584,9 +595,20 @@ class _AccountButton extends ConsumerWidget {
         'settings' => context.push('/settings'),
         'admin' => context.push('/admin'),
         'signOut' => ref.read(sessionServiceProvider).signOut(),
+        _ when value.startsWith('theme:') =>
+          ref
+              .read(themePreferenceControllerProvider.notifier)
+              .set(ThemePreference.tryParse(value.substring(6))!),
         _ => null,
       },
       itemBuilder: (_) => [
+        for (final (value, flavor, name) in themes)
+          CheckedPopupMenuItem(
+            value: 'theme:${value.value}',
+            checked: flavor == theme,
+            child: Text(name),
+          ),
+        const PopupMenuDivider(),
         PopupMenuItem(value: 'settings', child: Text(l10n.settings)),
         if (user?.isSuperAdmin ?? false)
           PopupMenuItem(value: 'admin', child: Text(l10n.adminPanel)),

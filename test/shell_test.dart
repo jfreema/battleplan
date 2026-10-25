@@ -257,6 +257,40 @@ void main() {
     });
   });
 
+  testWidgets('the account menu switches the theme in one tap (SET-2)', (
+    tester,
+  ) async {
+    final users = FakeUserRepository();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberships: [testMembership('a', 'coach')],
+      users: users,
+    );
+    await tester.tap(find.byTooltip('Account'));
+    await tester.pumpAndSettle();
+    // Dark is the default, so it's the one checked.
+    final dark = find.widgetWithText(
+      CheckedPopupMenuItem<String>,
+      'Gumdrop Pop Dark',
+    );
+    expect(tester.widget<CheckedPopupMenuItem<String>>(dark).checked, isTrue);
+    await tester.tap(
+      find.widgetWithText(CheckedPopupMenuItem<String>, 'Gumdrop Candy'),
+    );
+    await tester.pumpAndSettle();
+    expect(users.themeMode, ThemePreference.candy);
+
+    await tester.tap(find.byTooltip('Account'));
+    await tester.pumpAndSettle();
+    final candy = find.widgetWithText(
+      CheckedPopupMenuItem<String>,
+      'Gumdrop Candy',
+    );
+    expect(tester.widget<CheckedPopupMenuItem<String>>(candy).checked, isTrue);
+  });
+
   group('web parity (SPEC §4.2)', () {
     testWidgets('pasted or dropped photos send to the chat, with a hint '
         'while dragging', (tester) async {

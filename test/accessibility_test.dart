@@ -47,6 +47,9 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.text('Copy text'), findsOneWidget, reason: 'menu open');
         },
+    // The rail is a white card in Candy: its labels must use the card's ink.
+    'wide chat': (WidgetTester tester, {required ThemePreference theme}) =>
+        pumpTeam(tester, theme: theme, size: wideSize),
     'roster': (WidgetTester tester, {required ThemePreference theme}) async {
       await pumpTeam(tester, theme: theme);
       await goTo(tester, '/g/a/roster');

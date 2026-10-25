@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -138,7 +139,12 @@ class _Panel extends StatelessWidget {
                 width: colors.surfaceBorderWidth,
               ),
       ),
-      child: ClipRRect(borderRadius: radius, child: child),
+      // The panel is a card: in Candy its text and icons are the card's
+      // ink, not the page's white.
+      child: ClipRRect(
+        borderRadius: radius,
+        child: GumdropSurface(child: child),
+      ),
     );
   }
 }
