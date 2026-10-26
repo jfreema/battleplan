@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 /functions/coverage/
+# The web engine's fallback fonts, downloaded for a local `flutter run`
+# (docs/DEVELOPMENT.md); their license stays.
+/web/fonts/fallback/*/
 
 # Symbolication related
 app.*.symbols

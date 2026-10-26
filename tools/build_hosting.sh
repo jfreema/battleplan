@@ -87,6 +87,16 @@ grep -q '<base href="/app/">' "$app/index.html" || {
   exit 1
 }
 
+# The web engine's fallback fonts (Roboto, the emoji, and Noto for other
+# scripts), served from /app/fonts/fallback/ so browsers never fetch them
+# from fonts.gstatic.com; web/flutter_bootstrap.js points the engine there
+# (ARCH §5.5). About 22 MB, downloaded here, not kept in the repo.
+dart run tools/fetch_fallback_fonts.dart "$app/fonts/fallback"
+grep -q "fontFallbackBaseUrl" "$app/flutter_bootstrap.js" || {
+  echo "$app/flutter_bootstrap.js doesn't set fontFallbackBaseUrl." >&2
+  exit 1
+}
+
 # 3. .well-known at the root, for Universal Links and App Links.
 mkdir -p "$out/.well-known"
 if [ -d "$well_known_src" ]; then

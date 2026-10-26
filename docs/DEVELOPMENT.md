@@ -48,6 +48,12 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
 
 Dev builds show a small **EMU** (emulators) or **DEV** ribbon in the corner. Prod builds show nothing.
 
+The web app gets the engine's fallback fonts (Roboto, the emoji, and Noto for other scripts) from its own site, not Google's (ARCH §5.5). `tools/build_hosting.sh` downloads them into the build; for `flutter run -d chrome`, which serves `web/`, run this once or emoji show as boxes (the files are git-ignored):
+
+```sh
+dart run tools/fetch_fallback_fonts.dart web/fonts/fallback
+```
+
 ## Flavors
 
 | | Dev | Prod |
