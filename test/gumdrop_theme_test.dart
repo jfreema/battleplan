@@ -159,14 +159,17 @@ void main() {
             reason: '$what page shadow ${ColorMath.hex(c.pageShadow)}',
           );
           expect(c.badgeRing, anyOf(c.page, c.ink), reason: what);
-          // Each theme keeps its own cards, inputs, text on cards, and
-          // candy faces.
-          expect(c.surface, base.surface, reason: what);
-          expect(c.inputFill, base.inputFill, reason: what);
-          expect(c.textPrimary, base.textPrimary, reason: what);
+          // Light and Candy keep their own cards, inputs, and text on
+          // cards; Dark's are the team color, muted (below). Every theme
+          // keeps its candy faces.
+          if (flavor != GumdropFlavor.dark) {
+            expect(c.surface, base.surface, reason: what);
+            expect(c.inputFill, base.inputFill, reason: what);
+            expect(c.textPrimary, base.textPrimary, reason: what);
+            expect(c.raisedFace, base.raisedFace, reason: what);
+          }
           expect(c.headingTextOnCard, base.headingTextOnCard, reason: what);
           expect(c.you.face, base.you.face, reason: what);
-          expect(c.raisedFace, base.raisedFace, reason: what);
         }
       }
       // A gray is the gray itself: Black's page is black in every theme.
@@ -178,6 +181,50 @@ void main() {
         expect(black.page, const Color(0xFF111111), reason: flavor.name);
         expect(black.textOnPage, const Color(0xFFFFFFFF), reason: flavor.name);
       }
+    });
+
+    test("Dark's cards and bubbles are a muted version of the team color", () {
+      const d = GumdropColors.dark;
+      for (final (i, name) in _names.indexed) {
+        final c = teamTinted(d, teamColorValues[i]);
+        if (_ownPage.contains(name)) {
+          expect(c.surface, d.surface, reason: '$name keeps the navy');
+          continue;
+        }
+        final team = ColorMath.lch(Color(teamColorValues[i]));
+        for (final (role, color, navy) in [
+          ('card', c.surface, d.surface),
+          ('raised', c.raisedFace, d.raisedFace),
+          ('well', c.well, d.well),
+          ('input', c.inputFill, d.inputFill),
+          ('line', c.divider, d.divider),
+          ('text', c.textPrimary, d.textPrimary),
+          ('muted text', c.textMuted, d.textMuted),
+          ('heading shadow', c.headingShadowOnCard, d.headingShadowOnCard),
+        ]) {
+          final what = '$name $role ${ColorMath.hex(color)}';
+          final got = ColorMath.lch(color);
+          final own = ColorMath.lch(navy);
+          // The navy's own lightness, so every contrast stays as designed,
+          expect(got.l, closeTo(own.l, 0.6), reason: what);
+          // no more color than the navy has,
+          expect(got.c, lessThanOrEqualTo(own.c + 1), reason: what);
+          // in the team's hue (the grays are gray; a near-white's hue
+          // rounds too loosely to check).
+          if (got.c > 6) {
+            expect(
+              ColorMath.hueDistance(got.h, team.h),
+              lessThan(4),
+              reason: what,
+            );
+          }
+        }
+      }
+      // A red team's cards are a deep red; Black's are neutral gray.
+      final red = teamTinted(d, _argb('Red'));
+      expect(ColorMath.lch(red.surface).c, greaterThan(15));
+      final black = teamTinted(d, _argb('Black'));
+      expect(ColorMath.lch(black.surface).c, lessThan(0.5));
     });
 
     test('Dark and Light keep their own pages for Blue and Navy', () {
@@ -219,7 +266,7 @@ void main() {
         expect(c.raisedLip, c.ink, reason: name);
       }
       final onYellow = teamTinted(GumdropColors.dark, _argb('Yellow'));
-      expect(onYellow.raisedLip, GumdropColors.dark.raisedLip);
+      expect(onYellow.raisedLip, isNot(onYellow.ink));
       expect(onYellow.raisedBorderWidth, 0);
       // On every team page, every candy either stands out from the page or
       // has an ink lip. A theme's own page is as designed: Dark's and
@@ -288,8 +335,8 @@ void main() {
         final card = teamTinted(base.card, _argb('Light blue'));
         expect(card.onCard, isTrue);
         expect(card.page, page.page);
-        expect(card.textOnPage, base.textPrimary);
-        expect(card.headingText, base.headingTextOnCard);
+        expect(card.textOnPage, page.textPrimary);
+        expect(card.headingText, page.headingTextOnCard);
       }
     });
   });

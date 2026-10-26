@@ -10,9 +10,10 @@ import 'package:material_ui/material_ui.dart';
 ///
 /// The page is the team's own color, not a blend, in every theme, as in the
 /// Rounded Candy Pop design the picker comes from: darkened along L* only
-/// when neither white nor ink would read on it (Green). Each theme keeps its
-/// own cards, buttons, inputs, and candies (navy cards in Dark, white in
-/// Light and Candy), so the page is a [GumdropColors.coloredPage]:
+/// when neither white nor ink would read on it (Green). Light and Candy keep
+/// their white cards; Dark's cards, bubbles, buttons, inputs, and the text
+/// on them are a muted version of the team color ([mutedDarkCards]). The
+/// candies stay as they are. So the page is a [GumdropColors.coloredPage]:
 /// - Text on the page is whichever of white and ink reads better (ink on
 ///   Light blue and Yellow), and its heading shadow the other one. Muted
 ///   and success text keep the theme's colors where they read on the page,
@@ -32,8 +33,12 @@ GumdropColors teamTinted(GumdropColors base, int? teamColor) {
   final untinted = GumdropColors.forFlavor(base.flavor);
   final team = Color(teamColor).withAlpha(255);
   final keepsOwnPage = base.flavor != GumdropFlavor.candy && isGumdropHue(team);
-  final tinted = (keepsOwnPage ? untinted : _onTeamPage(untinted, team))
-      .copyWith(teamColor: team);
+  final cards = base.flavor == GumdropFlavor.dark
+      ? mutedDarkCards(untinted, team)
+      : untinted;
+  final tinted = (keepsOwnPage ? untinted : _onTeamPage(cards, team)).copyWith(
+    teamColor: team,
+  );
   return base.onCard ? tinted.card : tinted;
 }
 
@@ -61,6 +66,36 @@ bool isGray(Color team) => ColorMath.lch(team).c < grayChroma;
 bool isGumdropHue(Color team) =>
     !isGray(team) &&
     ColorMath.hueDistance(ColorMath.lch(team).h, gumdropHue) <= sameHueDegrees;
+
+/// Gumdrop Pop Dark's cards in [team]'s color: every navy surface (cards,
+/// bubbles, the tab bar, raised buttons, wells, inputs, lines, lips), the
+/// text on them, and the heading shadow inside them, each at its own L* (so
+/// every contrast stays as designed) in [team]'s hue, with chroma no higher
+/// than the navy's: a muted, dark version of the team color (a deep red for
+/// Red, a dark brown for Orange, neutral grays for Black).
+GumdropColors mutedDarkCards(GumdropColors d, Color team) {
+  final t = ColorMath.lch(team);
+  Color muted(Color token) {
+    final n = ColorMath.lch(token);
+    return ColorMath.fromLch(n.l, math.min(n.c, t.c), t.h);
+  }
+
+  final raised = muted(d.raisedFace);
+  final line = muted(d.inputBorder);
+  return d.copyWith(
+    surface: muted(d.surface),
+    raisedFace: raised,
+    switchOffTrack: raised,
+    raisedLip: muted(d.raisedLip),
+    well: muted(d.well),
+    inputFill: muted(d.inputFill),
+    inputBorder: line,
+    divider: line,
+    textPrimary: muted(d.textPrimary),
+    textMuted: muted(d.textMuted),
+    headingShadowOnCard: muted(d.headingShadowOnCard),
+  );
+}
 
 /// Under this contrast with the page, a candy or a secondary button gets an
 /// ink lip (and the button an ink outline), so it doesn't melt into it.

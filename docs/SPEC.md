@@ -1211,7 +1211,7 @@ Three themes, picked in Settings or the account menu (SET-2), from 1.1:
 
 **Team colors.** Every screen inside a team takes the team's color (TEAM-1) as its background, in every theme: the color itself, not a blend (owner's request, 2026-10-26, as in the Rounded Candy Pop design the picker comes from). Screens outside a team keep the theme's own.
 
-- The page is the team color, a little darker only where neither white nor navy text would read on it (Green). Each theme keeps its own cards, buttons, inputs, and candies: navy cards in Gumdrop Pop Dark, white in Light and Candy.
+- The page is the team color, a little darker only where neither white nor navy text would read on it (Green). In Gumdrop Pop Dark, the cards, chat bubbles, event cards, tab bar, buttons, and inputs are a muted, dark version of the team color (a deep red for Red, a dark brown for Orange, grays for Black), each as dark as the navy it replaces, with its text tinted to match, so every contrast stays as designed. Light and Candy keep their white cards. The candies don't change.
 - Text straight on the page is white, or navy on light colors (Light blue, Yellow), with a heading shadow in the other one. Hard shadows on the page (the back button, the sticker) are navy, or the team color lifted lighter where navy wouldn't show (Navy, Maroon, Gray, Black).
 - A candy or a button too close to the page (lemon on Yellow, Dark's navy buttons on Gray or Black) gets a navy edge so it still stands out, and a red team's unread badge a navy ring.
 - Blue and Navy are the theme's own navy, so Dark and Light keep their own pages for them; new teams start on Blue, so a new team looks as the theme was designed. Candy's page takes them as it takes every color.
