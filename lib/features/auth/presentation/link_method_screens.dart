@@ -123,13 +123,13 @@ class _ChooseSignInScreenState extends ConsumerState<ChooseSignInScreen> {
                     ),
                   ),
                   const SizedBox(height: Space.xxl),
-                  FilledButton(
+                  GoogleSignInButton(
+                    label: l10n.continueWithGoogle,
                     onPressed: _busy
                         ? null
                         : () => unawaited(
                             _choose(() => auth.linkGoogle(checkRecent: false)),
                           ),
-                    child: Text(l10n.continueWithGoogle),
                   ),
                   const SizedBox(height: Space.md),
                   // Where Sign in with Apple is on (task 109).
@@ -257,9 +257,9 @@ class _FinishLinkScreenState extends ConsumerState<FinishLinkScreen> {
                       onPressed: _busy ? null : () => unawaited(_link()),
                     )
                   else
-                    FilledButton(
+                    GoogleSignInButton(
+                      label: l10n.continueWithGoogle,
                       onPressed: _busy ? null : () => unawaited(_link()),
-                      child: Text(l10n.continueWithGoogle),
                     ),
                   const SizedBox(height: Space.sm),
                   TextButton(

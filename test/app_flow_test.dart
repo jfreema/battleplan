@@ -7,6 +7,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/about_battleplan.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
@@ -37,6 +38,8 @@ void main() {
       'at /emaillogin', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository(), env: cloud);
     expect(find.widgetWithText(FilledButton, 'Continue with Google'), findsOne);
+    // Google's own "G" on the button, as its branding guidelines ask.
+    expect(find.byType(GoogleLogo), findsOneWidget);
     expect(find.text('Continue with Apple'), findsOneWidget);
     expect(find.text('Continue with email'), findsNothing);
     // Nothing links to email sign-in, but it's there for who needs it.
