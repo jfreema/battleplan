@@ -1,6 +1,7 @@
 /* Battleplan website (WEB-1, WEB-5). Plain CSS, no build step.
-   One theme: Gumdrop Pop Dark, the app's default (navy page, candy
-   accents, gumdrop buttons with a hard lip). Fonts are bundled in
+   One theme: Gumdrop Olive, the app's default (an olive page with cream
+   text, cream cards and gumdrop buttons outlined in ink on a hard ink lip,
+   coral accents, and cream headings outlined in ink over an ink shadow). Fonts are bundled in
    fonts/ (SIL OFL), so the site makes no third-party requests. */
 
 @font-face {
@@ -24,31 +25,40 @@
 
 :root {
   color-scheme: dark;
-  /* Neutrals */
-  --page: #0b1531;
-  --surface: #16244a;
-  --raised: #22355f;
-  --raised-lip: #050c1f;
-  --well: #07102a;
-  --divider: #2d4274;
-  --card-border: rgba(255, 255, 255, 0.06);
-  --text: #f2f6ff;
-  --muted: #b2bfe0;
-  --ink: #0b1531;
-  --heading: #ffffff;
-  --heading-shadow: #2a63c9;
-  --link: #7db6ff;
-  /* Candy accents and their lips */
-  --blue: #4d9bff;     --blue-lip: #2a63c9;
-  --lemon: #ffd84a;    --lemon-lip: #c2950b;
-  --mint: #4ddc8c;     --mint-lip: #1f9a55;
-  --cherry: #ff5d73;   --cherry-lip: #c42a45;
-  --tangerine: #ff9b42; --tangerine-lip: #c7600c;
-  --grape: #a88bff;    --grape-lip: #6e4fd6;
-  --gum: #ff7ac8;      --gum-lip: #c93e91;
+  /* Neutrals: text on the olive page is cream; on cream cards, ink. */
+  --page: #6e6b4e;
+  --page-rgb: 110, 107, 78;
+  --surface: #f4ead0;
+  --raised: #f4ead0;
+  --raised-lip: #1a1a18;
+  --well: #5f5c42;
+  --card-well: #e6dcbf;
+  --divider: #dbd0b0;
+  --card-divider: #ddd2b3;
+  --card-border: #f4ead0;
+  --text: #fff9ec;
+  --muted: #f4ead0;
+  --card-text: #1a1a18;
+  --card-muted: #5b5840;
+  --ink: #1a1a18;
+  --heading: #f4ead0;
+  --heading-shadow: #1a1a18;
+  --link: #fff9ec;
+  --card-link: #c0262f;
+  /* Candy accents; every one sits on an ink lip, outlined in ink. */
+  --coral: #f45b5b;
+  --blue: #79bbff;
+  --lemon: #f8d84a;
+  --mint: #58c173;
+  --cherry: #f45b5b;
+  --tangerine: #ee8131;
+  --grape: #a57cf5;
+  --gum: #eb50a2;
   --shine: inset 0 2px 0 rgba(255, 255, 255, 0.35);
-  --shadow-3: 1px 1px 0 var(--heading-shadow), 2px 2px 0 var(--heading-shadow), 3px 3px 0 var(--heading-shadow);
-  --shadow-4: var(--shadow-3), 4px 4px 0 var(--heading-shadow);
+  /* Headings: outlined in ink (paint-order puts the stroke under the
+     fill) over a stacked ink shadow. */
+  --shadow-3: 0.25px 1px 0 var(--heading-shadow), 0.5px 2px 0 var(--heading-shadow), 0.75px 3px 0 var(--heading-shadow);
+  --shadow-4: var(--shadow-3), 1px 4px 0 var(--heading-shadow);
   --max: 1120px;
   --display: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
   --label: "Fredoka", "Arial Rounded MT Bold", system-ui, sans-serif;
@@ -77,13 +87,16 @@ a { color: var(--link); text-underline-offset: 0.15em; }
 a:hover { text-decoration-thickness: 2px; }
 
 :focus-visible {
-  outline: 3px solid var(--lemon);
+  outline: 3px solid var(--text);
   outline-offset: 3px;
   border-radius: 6px;
 }
 
 h1, h2, h3 { margin: 0 0 0.5em; color: var(--heading); font-weight: 400; }
-h1, h2 { font-family: var(--display); line-height: 1.1; letter-spacing: 0.01em; }
+h1, h2 {
+  font-family: var(--display); line-height: 1.1; letter-spacing: 0.02em; word-spacing: 0.06em;
+  -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill;
+}
 h1 { font-size: clamp(2.4rem, 8vw, 4rem); text-shadow: var(--shadow-4); }
 h2 { font-size: clamp(1.8rem, 5vw, 2.5rem); text-shadow: var(--shadow-3); }
 h3 { font: 600 1.3rem/1.25 var(--label); }
@@ -91,7 +104,7 @@ p, ul, ol { margin: 0 0 1em; }
 
 .skip {
   position: absolute; left: 16px; top: -100px; z-index: 10;
-  background: var(--lemon); color: var(--ink); font: 600 1rem var(--label);
+  background: var(--coral); color: var(--ink); font: 600 1rem var(--label);
   padding: 10px 16px; border: 2.5px solid var(--ink); border-radius: 10px;
   box-shadow: 3px 3px 0 var(--heading-shadow);
 }
@@ -103,25 +116,26 @@ p, ul, ol { margin: 0 0 1em; }
 /* Header */
 .site-header {
   position: sticky; top: 0; z-index: 5;
-  background: rgba(11, 21, 49, 0.92);
+  background: rgba(var(--page-rgb), 0.94);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
-  border-bottom: 2px solid var(--divider);
+  border-bottom: 2px solid var(--ink);
 }
 .site-header .wrap { display: flex; align-items: center; gap: 12px; min-height: 68px; }
 .brand {
   display: inline-flex; align-items: center; gap: 10px; min-height: 44px;
   color: var(--heading); text-decoration: none;
-  font: 1.5rem/1 var(--display); letter-spacing: 0.01em; text-shadow: var(--shadow-3);
+  font: 1.5rem/1 var(--display); letter-spacing: 0.02em; text-shadow: var(--shadow-3);
+  -webkit-text-stroke: 2.5px var(--ink); paint-order: stroke fill;
 }
-.brand img { width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 3px 0 var(--raised-lip); }
+.brand img { width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 0 0 2px var(--ink), 0 3px 0 2px var(--ink); }
 .site-nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
 .site-nav a:not(.btn) {
   display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 22px;
   color: var(--text); text-decoration: none; font: 600 1rem var(--label);
 }
-.site-nav a:not(.btn):hover { background: var(--surface); }
-.site-nav a[aria-current="page"] { color: var(--lemon); }
+.site-nav a:not(.btn):hover { background: var(--well); }
+.site-nav a[aria-current="page"] { text-decoration: underline 2px; text-underline-offset: 0.3em; }
 @media (max-width: 560px) {
   .site-nav a.hide-sm { display: none; }
   .brand { font-size: 1.3rem; }
@@ -130,19 +144,20 @@ p, ul, ol { margin: 0 0 1em; }
   .site-nav a.hide-xs { display: none; }
 }
 
-/* Gumdrop buttons: a pill with a hard lip under it (the app's buttons). */
+/* Gumdrop buttons: a pill outlined in ink with a hard ink lip under it
+   (the app's buttons): cream, or coral for the main one. */
 .btn {
   --face: var(--raised); --lip: var(--raised-lip); --lip-h: 4px;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 48px; padding: 0 22px; margin-bottom: var(--lip-h); border: 0; border-radius: 999px;
-  background: var(--face); color: var(--text);
+  min-height: 48px; padding: 0 22px; margin-bottom: var(--lip-h); border: 2px solid var(--ink); border-radius: 999px;
+  background: var(--face); color: var(--ink);
   font: 600 1.05rem/1 var(--label); text-decoration: none; white-space: nowrap; cursor: pointer;
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.1), 0 var(--lip-h) 0 var(--lip);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.6), 0 var(--lip-h) 0 var(--lip);
   transition: transform 0.1s, box-shadow 0.1s, filter 0.15s;
 }
 .btn:hover { filter: brightness(1.08); }
 .btn:active { transform: translateY(var(--lip-h)); box-shadow: none; }
-.btn-primary { --face: var(--blue); --lip: var(--blue-lip); color: var(--ink); box-shadow: var(--shine), 0 var(--lip-h) 0 var(--lip); }
+.btn-primary { --face: var(--coral); color: var(--ink); box-shadow: var(--shine), 0 var(--lip-h) 0 var(--lip); }
 .btn-sm { --lip-h: 3px; min-height: 44px; padding: 0 18px; font-size: 1rem; }
 .btn-lg { min-height: 56px; padding: 0 30px; font-size: 1.15rem; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
@@ -154,10 +169,10 @@ p, ul, ol { margin: 0 0 1em; }
 /* Hero */
 .hero { padding: 48px 0 40px; overflow: hidden; }
 .hero .wrap { display: grid; gap: 40px; align-items: center; }
-/* The lemon sticker (the app's tag under the team name). */
+/* The coral sticker (the app's tag under the team name). */
 .eyebrow {
   display: inline-block; margin: 0 0 22px 2px; padding: 4px 13px 5px;
-  background: var(--lemon); color: var(--ink); border: 2.5px solid var(--ink); border-radius: 10px;
+  background: var(--coral); color: var(--ink); border: 2.5px solid var(--ink); border-radius: 10px;
   box-shadow: 3px 3px 0 var(--heading-shadow); transform: rotate(-2deg);
   font: 1rem/1.3 var(--display); letter-spacing: 0.03em; text-transform: uppercase;
 }
@@ -179,7 +194,7 @@ p, ul, ol { margin: 0 0 1em; }
   border-radius: 34px;
   padding: 9px;
   background: #0d0e11;
-  box-shadow: 0 0 0 2px var(--divider), 0 18px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 2px var(--ink), 0 18px 40px rgba(0, 0, 0, 0.35);
 }
 .phone img, .phone picture { border-radius: 26px; overflow: hidden; width: 100%; }
 .phone.sm { width: min(260px, 72vw); }
@@ -195,24 +210,25 @@ section { padding: 56px 0; }
 .feature .phone { margin: 0 auto; }
 .feature h3 { font: 2rem/1.1 var(--display); text-shadow: var(--shadow-3); }
 .feature p { color: var(--muted); font-size: 1.075rem; }
-/* A candy gumdrop per feature. */
+/* A candy gumdrop per feature, outlined in ink on an ink lip. */
 .feature .icon {
-  --face: var(--blue); --lip: var(--blue-lip);
+  --face: var(--coral);
   width: 52px; height: 52px; border-radius: 18px; display: grid; place-items: center; margin-bottom: 20px;
-  background: var(--face); color: var(--ink); box-shadow: var(--shine), 0 4px 0 var(--lip);
+  background: var(--face); color: var(--ink); border: 2px solid var(--ink);
+  box-shadow: var(--shine), 0 4px 0 var(--ink);
 }
-.feature:nth-child(2) .icon { --face: var(--tangerine); --lip: var(--tangerine-lip); }
-.feature:nth-child(3) .icon { --face: var(--gum); --lip: var(--gum-lip); }
-.feature:nth-child(4) .icon { --face: var(--lemon); --lip: var(--lemon-lip); }
-.feature:nth-child(5) .icon { --face: var(--mint); --lip: var(--mint-lip); }
-.feature:nth-child(6) .icon { --face: var(--grape); --lip: var(--grape-lip); }
+.feature:nth-child(2) .icon { --face: var(--tangerine); }
+.feature:nth-child(3) .icon { --face: var(--gum); }
+.feature:nth-child(4) .icon { --face: var(--lemon); }
+.feature:nth-child(5) .icon { --face: var(--mint); }
+.feature:nth-child(6) .icon { --face: var(--grape); }
 .feature .icon svg { width: 26px; height: 26px; }
 /* Mint check discs, like the app's Going check. */
 .checks { list-style: none; padding: 0; margin: 0; }
 .checks li { position: relative; padding-left: 34px; margin: 0 0 10px; }
 .checks li::before {
   content: ""; position: absolute; left: 0; top: 0.2em; width: 22px; height: 22px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%234ddc8c'/%3E%3Cpath d='m7 12.5 3.2 3.2L17 9' fill='none' stroke='%230b1531' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%2358c173' stroke='%231a1a18' stroke-width='2'/%3E%3Cpath d='m7 12.5 3.2 3.2L17 9' fill='none' stroke='%231a1a18' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 @media (min-width: 900px) {
   section { padding: 88px 0; }
@@ -243,9 +259,9 @@ section { padding: 56px 0; }
 }
 .slider-dots button::before {
   content: ""; width: 10px; height: 10px; border-radius: 50%;
-  background: var(--divider); transition: background-color 0.2s, transform 0.2s;
+  background: var(--divider); border: 2px solid var(--ink); transition: background-color 0.2s, transform 0.2s;
 }
-.slider-dots button[aria-current="true"]::before { background: var(--blue); transform: scale(1.3); }
+.slider-dots button[aria-current="true"]::before { background: var(--coral); transform: scale(1.3); }
 @media (max-width: 1099px) {
   .feature-media.slider .phone + .phone { display: block; }
   .slides {
@@ -268,13 +284,18 @@ section { padding: 56px 0; }
 .switch-more { margin: 24px 0 0; font: 600 1.05rem var(--label); }
 .fineprint { margin: 20px 0 0; color: var(--muted); font-size: 0.875rem; }
 
-/* Cards (the app's surface cards) */
+/* Cards (the app's cream cards, with ink text). */
 .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); }
+.card, .faq details, .note, .toc { color: var(--card-text); }
+.card a, .faq details a, .note a, .toc a { color: var(--card-link); }
 .card {
   background: var(--surface); border: 1px solid var(--card-border); border-radius: 22px; padding: 22px;
 }
-.card h3 { font: 1.4rem/1.15 var(--display); text-shadow: var(--shadow-3); margin-bottom: 8px; }
-.card p { color: var(--muted); margin: 0; }
+.card h3 {
+  font: 1.4rem/1.15 var(--display); color: var(--ink); margin-bottom: 8px;
+  text-shadow: 0.25px 1px 0 var(--coral), 0.5px 2px 0 var(--coral);
+}
+.card p { color: var(--card-muted); margin: 0; }
 
 /* FAQ */
 .faq { display: grid; gap: 12px; }
@@ -289,29 +310,28 @@ section { padding: 56px 0; }
 .faq summary::after {
   content: "+"; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
   width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--raised); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.1), 0 3px 0 var(--raised-lip);
-  font: 600 1.3rem/1 var(--label); color: var(--text);
+  background: var(--coral); border: 2px solid var(--ink); box-shadow: var(--shine), 0 3px 0 var(--ink);
+  font: 600 1.3rem/1 var(--label); color: var(--ink);
 }
 .faq details[open] > summary::after { content: "\2212"; }
-.faq details > :not(summary) { color: var(--muted); }
+.faq details > :not(summary) { color: var(--card-muted); }
 .faq details > p:last-child { padding-bottom: 8px; }
 /* Steps for each app, folded inside an answer. */
 .faq details details {
-  border: 0; border-top: 2px solid var(--divider); border-radius: 0; background: transparent; padding: 0;
+  border: 0; border-top: 2px solid var(--card-divider); border-radius: 0; background: transparent; padding: 0;
 }
 .faq details details:last-child { margin-bottom: 10px; }
-.faq details details summary { padding: 14px 44px 14px 0; font-size: 1.05rem; color: var(--text); }
+.faq details details summary { padding: 14px 44px 14px 0; font-size: 1.05rem; color: var(--card-text); }
 .faq details details .steps { margin: 0 0 12px; }
 
-/* CTA band: a blue gumdrop slab with a lemon button. */
+/* CTA band: a cream gumdrop slab, outlined in ink, with a coral button. */
 .cta {
-  text-align: center; background: var(--blue); color: var(--ink);
-  border-radius: 28px; padding: 48px 24px 44px; margin: 0 auto;
-  box-shadow: var(--shine), 0 6px 0 var(--blue-lip);
+  text-align: center; background: var(--surface); color: var(--ink);
+  border: 2.5px solid var(--ink); border-radius: 28px; padding: 48px 24px 44px; margin: 0 auto;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 6px 0 var(--ink);
 }
-.cta h2 { color: var(--ink); text-shadow: none; }
+.cta h2 { color: var(--ink); -webkit-text-stroke: 0; text-shadow: 0.5px 2px 0 var(--coral), 1px 4px 0 var(--coral); }
 .cta p { color: var(--ink); font-size: 1.15rem; font-weight: 700; }
-.cta .btn-primary { --face: var(--lemon); --lip: var(--lemon-lip); }
 .cta .actions { justify-content: center; }
 
 .project-support { text-align: center; padding-bottom: 48px; }
@@ -325,28 +345,29 @@ section { padding: 56px 0; }
 .page .lead { margin-bottom: 1.5em; }
 .page li { margin-bottom: 0.4em; }
 .note {
-  background: var(--surface); border: 1px solid var(--card-border); border-left: 5px solid var(--lemon);
+  background: var(--surface); border: 1px solid var(--card-border); border-left: 5px solid var(--coral);
   border-radius: 8px 20px 20px 8px; padding: 16px 20px; margin: 0 0 24px;
 }
 .note p:last-child { margin-bottom: 0; }
 .steps { padding-left: 1.4em; }
 .steps li { padding-left: 4px; }
-.steps li::marker { font-family: var(--label); font-weight: 600; color: var(--lemon); }
+.steps li::marker { font-family: var(--label); font-weight: 600; color: var(--text); }
+.card .steps li::marker, .faq .steps li::marker, .note .steps li::marker { color: var(--card-link); }
 .toc {
   background: var(--surface); border: 1px solid var(--card-border); border-radius: 20px;
   padding: 18px 22px 8px; margin-bottom: 28px;
 }
-.toc h2 { font-size: 1.3rem; margin: 0 0 8px; }
+.toc h2 { font-size: 1.3rem; margin: 0 0 8px; color: var(--ink); -webkit-text-stroke: 0; text-shadow: none; }
 .email { font: 600 1.15rem var(--label); }
 .placeholder { color: var(--muted); font-style: italic; }
 kbd, .ui {
-  font: 600 0.95em var(--label); color: var(--text); background: var(--raised);
+  font: 600 0.95em var(--label); color: var(--ink); background: var(--raised);
   padding: 1px 8px; border-radius: 8px; white-space: nowrap;
 }
 
 /* Footer */
 .site-footer {
-  border-top: 2px solid var(--divider); padding: 36px 0 44px; color: var(--muted); font-size: 0.95rem;
+  border-top: 2px solid var(--ink); padding: 36px 0 44px; color: var(--muted); font-size: 0.95rem;
 }
 .site-footer .wrap { display: grid; gap: 14px; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 0 20px; list-style: none; padding: 0; margin: 0; }
@@ -354,7 +375,7 @@ kbd, .ui {
   display: inline-flex; align-items: center; min-height: 44px;
   color: var(--text); font: 600 1rem var(--label); text-decoration: none;
 }
-.footer-links a:hover { color: var(--lemon); }
+.footer-links a:hover { text-decoration: underline 2px; }
 .site-footer p { margin: 0; }
 @media (min-width: 760px) {
   .site-footer .wrap { grid-template-columns: 1fr auto; align-items: center; }
