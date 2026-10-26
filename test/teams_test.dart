@@ -162,11 +162,13 @@ void main() {
 
     testWidgets('the time zone can be changed', (tester) async {
       final groupRepo = await openSettings(tester);
-      await tester.tap(find.text('America/Denver'));
+      // By the name people know it by; the ID is what's saved.
+      await tester.tap(find.text('Mountain Time (Denver)'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).last, 'chic');
+      await tester.enterText(find.byType(TextField).last, 'central');
       await tester.pumpAndSettle();
-      await tester.tap(find.text('America/Chicago'));
+      expect(find.text('Mountain Time (Denver)'), findsOneWidget);
+      await tester.tap(find.text('Central Time (Chicago)'));
       await tester.pumpAndSettle();
       expect(groupRepo.updates, contains('timeZone America/Chicago'));
     });

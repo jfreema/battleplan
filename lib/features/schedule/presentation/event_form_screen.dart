@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
@@ -255,8 +256,10 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     final l10n = AppLocalizations.of(context);
     final zones = await ref.read(timeZonesProvider).available();
     if (!mounted) return;
-    final all = {...zones, _draft.timeZone, widget.group.timeZone}.toList()
-      ..sort();
+    final all = TimeZoneNames.ordered(
+      zones,
+      keep: [_draft.timeZone, widget.group.timeZone],
+    );
     final picked = await showAdaptiveSheet<String>(
       context,
       builder: (_) => _TimeZoneList(zones: all, title: l10n.eventTimeZone),
@@ -575,7 +578,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(AppIcons.timeZone),
-                  title: Text(d.timeZone.replaceAll('_', ' ')),
+                  title: Text(TimeZoneNames.label(d.timeZone)),
                   subtitle: Text(l10n.eventTimeZone),
                   trailing: const Icon(AppIcons.edit),
                   onTap: () => unawaited(_pickTimeZone()),
@@ -998,10 +1001,9 @@ class _TimeZoneListState extends State<_TimeZoneList> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final q = _query.toLowerCase().replaceAll(' ', '_');
     final shown = [
       for (final z in widget.zones)
-        if (z.toLowerCase().contains(q)) z,
+        if (TimeZoneNames.matches(z, _query)) z,
     ];
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1024,7 +1026,7 @@ class _TimeZoneListState extends State<_TimeZoneList> {
             children: [
               for (final z in shown)
                 ListTile(
-                  title: Text(z.replaceAll('_', ' ')),
+                  title: Text(TimeZoneNames.label(z)),
                   onTap: () => Navigator.of(context).pop(z),
                 ),
             ],

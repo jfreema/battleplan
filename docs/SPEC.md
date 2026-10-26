@@ -784,6 +784,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Times show in the viewer's local time.
   - If the event's time zone is different, both appear: "6:00 PM CDT · 7:00 PM your time".
   - All-day events never shift to another day.
+  - Time zones are shown by the names people know them by (the owner's request, 2026-10-26): the US and Canada's first, as "Central Time (Chicago)" or "Mountain Time (Phoenix)", then the rest of the world by city and offset from GMT, "Berlin (GMT+1)", in Create team, Team settings, and the event form. Search finds a zone by its name, city, or ID. What's stored is still the IANA ID ("America/Chicago").
 - **SCHED-10 · MVP · Add to calendar.** The native calendar sheet on iOS and Android; an .ics download on web.
 - **SCHED-11 · v1.1 · Calendar subscription.** Built (task 138). A private link that keeps Google, Apple, or Outlook Calendar in sync with the schedule, so a time change or a rainout reaches the calendar a player or guardian already checks (ARCH §6.15).
   - **Where:** **Calendar link** in the team menu: a link for that team, or, under **All my teams**, one for every team you're on, including teams you join later. A link is made only when asked (**Make my calendar link**).

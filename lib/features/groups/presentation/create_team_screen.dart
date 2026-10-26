@@ -8,6 +8,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -64,7 +65,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     if (!mounted) return;
     setState(() {
       _timeZone = device;
-      _zones = zones.contains(device) ? zones : [device, ...zones];
+      _zones = TimeZoneNames.ordered(zones, keep: [device]);
     });
   }
 
@@ -235,7 +236,13 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                               ),
                               items: [
                                 for (final z in _zones)
-                                  DropdownMenuItem(value: z, child: Text(z)),
+                                  DropdownMenuItem(
+                                    value: z,
+                                    child: Text(
+                                      TimeZoneNames.label(z),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
                               ],
                               onChanged: (z) => setState(() => _timeZone = z),
                             ),

@@ -8,6 +8,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/about_battleplan.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
@@ -88,9 +89,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     final picked = await showDialog<String>(
       context: context,
       builder: (context) => _TimeZonePicker(
-        zones: zones.contains(group.timeZone)
-            ? zones
-            : [group.timeZone, ...zones],
+        zones: TimeZoneNames.ordered(zones, keep: [group.timeZone]),
         current: group.timeZone,
       ),
     );
@@ -527,7 +526,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                     SettingsRow(
                       icon: AppIcons.timeZone,
                       title: l10n.timeZoneLabel,
-                      subtitle: group.timeZone,
+                      subtitle: TimeZoneNames.label(group.timeZone),
                       onTap: () => unawaited(_changeTimeZone(group, repo)),
                     ),
                     // The invite link: expiry, uses, reset, and turn off
@@ -731,10 +730,10 @@ class _TimeZonePickerState extends State<_TimeZonePicker> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final q = _query.toLowerCase().replaceAll(' ', '_');
-    final shown = widget.zones
-        .where((z) => z.toLowerCase().contains(q))
-        .toList();
+    final shown = [
+      for (final z in widget.zones)
+        if (TimeZoneNames.matches(z, _query)) z,
+    ];
     return AlertDialog(
       title: Text(l10n.timeZoneLabel),
       content: SizedBox(
@@ -754,7 +753,7 @@ class _TimeZonePickerState extends State<_TimeZonePicker> {
               child: ListView.builder(
                 itemCount: shown.length,
                 itemBuilder: (context, i) => ListTile(
-                  title: Text(shown[i]),
+                  title: Text(TimeZoneNames.label(shown[i])),
                   selected: shown[i] == widget.current,
                   onTap: () => Navigator.of(context).pop(shown[i]),
                 ),
