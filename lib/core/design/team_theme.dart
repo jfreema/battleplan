@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// [child] in the current Gumdrop theme tinted with a team's color (TEAM-1;
@@ -90,12 +91,12 @@ class GumdropCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = GumdropColors.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color ?? colors.surface,
-        borderRadius: BorderRadius.circular(radius),
-        border: colors.surfaceBorderWidth == 0
-            ? null
-            : Border.all(
+      decoration: GumdropStyle.of(context).cardDecoration(
+        color ?? colors.surface,
+        radius,
+        side: colors.surfaceBorderWidth == 0
+            ? BorderSide.none
+            : BorderSide(
                 color: colors.surfaceBorder,
                 width: colors.surfaceBorderWidth,
               ),

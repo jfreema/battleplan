@@ -1,6 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
@@ -90,12 +91,13 @@ class QuoteBlock extends StatelessWidget {
                           children: [
                             Text(
                               authorName,
-                              style: TextStyle(
-                                fontFamily: AppFonts.label,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                                height: 1.25,
-                                color: c.textPrimary,
+                              style: GumdropStyle.of(context).label(
+                                TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  height: 1.25,
+                                  color: c.textPrimary,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 1),

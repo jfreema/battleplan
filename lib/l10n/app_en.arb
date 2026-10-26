@@ -67,6 +67,7 @@
   "themeGumdropDark": "Gumdrop Pop Dark",
   "themeGumdropLight": "Gumdrop Pop Light",
   "themeGumdropCandy": "Gumdrop Candy",
+  "themeGumdropArena": "Gumdrop Arena",
   "about": "About",
   "versionLabel": "Version {version}",
   "versionBuildLabel": "Version {version} (build {build})",

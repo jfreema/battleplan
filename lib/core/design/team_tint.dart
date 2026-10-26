@@ -10,13 +10,14 @@ import 'package:material_ui/material_ui.dart';
 ///
 /// - **Gumdrop Pop Light** stays a light off-white page, shaded slightly
 ///   toward the team color ([paleLight]), with its white cards.
-/// - **Gumdrop Pop Dark** and **Gumdrop Candy** take the team's own color as
-///   the page, not a blend, as in the Rounded Candy Pop design the picker
-///   comes from: darkened along L* only when neither white nor ink would
-///   read on it (Green). Candy keeps its white cards; Dark's cards, bubbles,
-///   buttons, inputs, and the text on them are a muted version of the team
-///   color ([mutedDarkCards]). The candies stay as they are. So the page is
-///   a [GumdropColors.coloredPage]:
+/// - **Gumdrop Pop Dark**, **Gumdrop Arena**, and **Gumdrop Candy** take the
+///   team's own color as the page, not a blend, as in the Rounded Candy Pop
+///   design the picker comes from: darkened along L* only when neither
+///   white nor ink would read on it (Green). Candy keeps its white cards;
+///   Dark's and Arena's cards, bubbles, buttons, inputs, and the text on
+///   them are a muted version of the team color ([mutedDarkCards]). The
+///   candies stay as they are. So the page is a
+///   [GumdropColors.coloredPage]:
 ///   - Text on the page is whichever of white and ink reads better (ink on
 ///     Light blue and Yellow), and its heading shadow the other one. Muted
 ///     and success text keep the theme's colors where they read on the
@@ -28,9 +29,10 @@ import 'package:material_ui/material_ui.dart';
 ///     gets an ink lip, and so do the secondary buttons, so they still stand
 ///     out; a red team's unread badge gets an ink ring.
 ///
-/// Blue and Navy are Gumdrop's own navy ([isGumdropHue]): Dark and Light
-/// keep their own colors for them, so the theme looks as designed for the
-/// default team color. Candy's page is already blue, and takes the team's.
+/// Blue and Navy are Gumdrop's own navy ([isGumdropHue]): Dark, Light, and
+/// Arena keep their own colors for them, so the theme looks as designed for
+/// the default team color. Candy's page is already blue, and takes the
+/// team's.
 GumdropColors teamTinted(GumdropColors base, int? teamColor) {
   if (teamColor == null) return base;
   final untinted = GumdropColors.forFlavor(base.flavor);
@@ -40,7 +42,8 @@ GumdropColors teamTinted(GumdropColors base, int? teamColor) {
       ? untinted
       : switch (base.flavor) {
           GumdropFlavor.light => paleLight(untinted, team),
-          GumdropFlavor.dark => _onTeamPage(
+          // Arena is dark too: its violet cards take the team color, muted.
+          GumdropFlavor.dark || GumdropFlavor.arena => _onTeamPage(
             mutedDarkCards(untinted, team),
             team,
           ),
@@ -115,12 +118,13 @@ GumdropColors paleLight(GumdropColors l, Color team) {
   );
 }
 
-/// Gumdrop Pop Dark's cards in [team]'s color: every navy surface (cards,
-/// bubbles, the tab bar, raised buttons, wells, inputs, lines, lips), the
-/// text on them, and the heading shadow inside them, each at its own L* (so
-/// every contrast stays as designed) in [team]'s hue, with chroma no higher
-/// than the navy's: a muted, dark version of the team color (a deep red for
-/// Red, a dark brown for Orange, neutral grays for Black).
+/// Gumdrop Pop Dark's (or Arena's) cards in [team]'s color: every navy (or
+/// violet) surface (cards, bubbles, the tab bar, raised buttons, wells,
+/// inputs, lines, lips), the text on them, and the heading shadow inside
+/// them, each at its own L* (so every contrast stays as designed) in
+/// [team]'s hue, with chroma no higher than the theme's: a muted, dark
+/// version of the team color (a deep red for Red, a dark brown for Orange,
+/// neutral grays for Black).
 GumdropColors mutedDarkCards(GumdropColors d, Color team) {
   final t = ColorMath.lch(team);
   Color muted(Color token) {

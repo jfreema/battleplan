@@ -91,7 +91,7 @@ service cloud.firestore {
       return p.displayName is string
         && p.displayName.size() >= 1 && p.displayName.size() <= 50
         && p.displayNameLower == p.displayName.lower()
-        && p.themeMode in ['system', 'light', 'dark', 'candy']
+        && p.themeMode in ['system', 'light', 'dark', 'candy', 'arena']
         && (p.photoPath == null
             || (p.photoPath is string && p.photoPath.matches('users/' + userId + '/avatar/[^/]+')))
         && validPrefs(p.notificationPrefs)

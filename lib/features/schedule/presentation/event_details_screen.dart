@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/haptics.dart';
@@ -401,10 +402,8 @@ class _GameCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 15, 18, 16),
-      decoration: BoxDecoration(
-        color: accent.face,
-        borderRadius: BorderRadius.circular(Corners.sheet),
-      ),
+      decoration: GumdropStyle.of(context)
+          .cardDecoration(accent.face, Corners.sheet),
       child: DefaultTextStyle.merge(
         style: TextStyle(color: ink),
         child: IconTheme.merge(

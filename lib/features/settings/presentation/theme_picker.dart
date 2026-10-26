@@ -2,13 +2,17 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_shape.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/design/theme_choices.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Appearance (SET-2): the three Gumdrop themes as small previews, Gumdrop
-/// Pop Dark, Gumdrop Pop Light, and Gumdrop Candy. The old "system" setting
-/// shows as Dark, which it now is.
+/// Appearance (SET-2): the Gumdrop themes as small previews, Gumdrop Pop
+/// Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena: four across
+/// where they fit, else two rows of two. The old "system" setting shows as
+/// Dark, which it now is.
 class ThemePicker extends StatelessWidget {
   const new({required this.selected, required this.onSelect, super.key});
 
@@ -19,29 +23,38 @@ class ThemePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final current = AppTheme.flavorOf(selected);
-    final choices = [
-      (ThemePreference.dark, GumdropFlavor.dark, l10n.themeGumdropDark),
-      (ThemePreference.light, GumdropFlavor.light, l10n.themeGumdropLight),
-      (ThemePreference.candy, GumdropFlavor.candy, l10n.themeGumdropCandy),
-    ];
+    final choices = themeChoices(l10n);
     return Semantics(
       label: l10n.appearance,
       container: true,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final (i, (value, flavor, name)) in choices.indexed) ...[
-            if (i > 0) const SizedBox(width: Space.sm),
-            Expanded(
-              child: _ThemeTile(
-                flavor: flavor,
-                name: name,
-                selected: flavor == current,
-                onTap: () => onSelect(value),
-              ),
-            ),
-          ],
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final perRow = constraints.maxWidth >= 480 ? choices.length : 2;
+          return Column(
+            children: [
+              for (var row = 0; row < choices.length; row += perRow) ...[
+                if (row > 0) const SizedBox(height: Space.sm),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final (i, (value, flavor, name))
+                        in choices.skip(row).take(perRow).indexed) ...[
+                      if (i > 0) const SizedBox(width: Space.sm),
+                      Expanded(
+                        child: _ThemeTile(
+                          flavor: flavor,
+                          name: name,
+                          selected: flavor == current,
+                          onTap: () => onSelect(value),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -131,7 +144,8 @@ class _ThemeTile extends StatelessWidget {
 }
 
 /// A tiny screen in [flavor]'s colors: the page, a heading, a card, and
-/// your bubble.
+/// your bubble. Where the theme's gumdrops lean (Gumdrop Arena), the bubble
+/// leans and the card has a corner cut.
 class _Preview extends StatelessWidget {
   const new({required this.flavor});
 
@@ -140,13 +154,24 @@ class _Preview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.forFlavor(flavor);
+    final slant = GumdropStyle.forFlavor(flavor).slant;
     Widget bar(Color color, double width, double height) => Container(
       width: width,
       height: height,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(height / 2),
-      ),
+      decoration: slant == 0
+          ? BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(height / 2),
+            )
+          : ShapeDecoration(
+              color: color,
+              shape: GumdropShape(
+                lip: 0,
+                highlight: 0,
+                radius: const BorderRadius.all(Radius.circular(2)),
+                slant: slant,
+              ),
+            ),
     );
     return Container(
       height: 64,
@@ -164,10 +189,20 @@ class _Preview extends StatelessWidget {
           const SizedBox(height: 6),
           Container(
             height: 14,
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(6),
-            ),
+            decoration: slant == 0
+                ? BoxDecoration(
+                    color: c.surface,
+                    borderRadius: BorderRadius.circular(6),
+                  )
+                : ShapeDecoration(
+                    color: c.surface,
+                    shape: const BeveledRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(5),
+                        bottomLeft: Radius.circular(5),
+                      ),
+                    ),
+                  ),
           ),
           const Spacer(),
           Align(

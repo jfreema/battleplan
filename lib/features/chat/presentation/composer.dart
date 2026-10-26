@@ -236,10 +236,12 @@ class _ComposerState extends State<Composer> {
                 : c.ink,
           ),
           shape: WidgetStateProperty.resolveWith(
-            (s) => GumdropShape(
-              lip: sendLip,
-              lipColor: c.you.lip,
-              pressed: s.contains(WidgetState.pressed) ? 1 : 0,
+            (s) => buttons.style.styled(
+              GumdropShape(
+                lip: sendLip,
+                lipColor: c.you.lip,
+                pressed: s.contains(WidgetState.pressed) ? 1 : 0,
+              ),
             ),
           ),
           padding: WidgetStateProperty.resolveWith(

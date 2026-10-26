@@ -1,5 +1,5 @@
-import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -85,12 +85,13 @@ class Avatar extends StatelessWidget {
         child: Text(
           initialsOf(name),
           maxLines: 1,
-          style: TextStyle(
-            fontFamily: AppFonts.label,
-            fontWeight: FontWeight.w600,
-            fontSize: size * 0.38,
-            height: 1,
-            color: colors.ink,
+          style: GumdropStyle.of(context).label(
+            TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: size * 0.38,
+              height: 1,
+              color: colors.ink,
+            ),
           ),
         ),
       ),

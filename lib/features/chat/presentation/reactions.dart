@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
-import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
@@ -185,11 +185,8 @@ class ReactionChips extends StatelessWidget {
     }
     final mine = me == null ? null : message.reactions[me];
     final l10n = AppLocalizations.of(context);
-    const label = TextStyle(
-      fontFamily: AppFonts.label,
-      fontWeight: FontWeight.w600,
-      fontSize: 14,
-      height: 1,
+    final label = GumdropStyle.of(context).label(
+      const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, height: 1),
     );
     // A 30 px face on a 3 px lip, padded out to a 48-point target (SPEC
     // §7.6) without drawing any bigger.

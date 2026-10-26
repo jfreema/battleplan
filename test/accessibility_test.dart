@@ -1,6 +1,6 @@
 // Accessibility of the main screens (SPEC §7.6) in each Gumdrop theme,
-// Dark, Light, and Candy: Flutter's guideline checks for tap targets,
-// labels, and text contrast.
+// Dark, Light, Candy, and Arena: Flutter's guideline checks for tap
+// targets, labels, and text contrast.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:flutter/services.dart';
@@ -106,6 +106,7 @@ void main() {
     ThemePreference.dark,
     ThemePreference.light,
     ThemePreference.candy,
+    ThemePreference.arena,
   ];
 
   for (final MapEntry(key: name, value: pump) in screens.entries) {

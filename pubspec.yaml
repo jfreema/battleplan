@@ -73,13 +73,15 @@ flutter:
   generate: true
   # Gumdrop Pop's fonts, bundled so text looks the same on every platform and
   # offline (SPEC §7.3, ARCH §5.5): Lilita One for headings, Fredoka for
-  # buttons, labels, and names, Nunito for body text and messages. Static
-  # instances from Google Fonts; each is OFL 1.1, whose text ships with it and
-  # shows under Licenses.
+  # buttons, labels, and names, Nunito for body text and messages, and
+  # Barlow Condensed ExtraBold Italic for Gumdrop Arena's headings and labels
+  # (lib/core/design/arena/). Static instances from Google Fonts; each is OFL
+  # 1.1, whose text ships with it and shows under Licenses.
   assets:
     - assets/fonts/lilita_one/OFL.txt
     - assets/fonts/fredoka/OFL.txt
     - assets/fonts/nunito/OFL.txt
+    - assets/fonts/barlow_condensed/OFL.txt
     # Jared's Venmo card, for Buy Jared a coffee (TEAM-5, About).
     - assets/about/venmo.png
   fonts:
@@ -105,6 +107,11 @@ flutter:
           weight: 800
         - asset: assets/fonts/nunito/Nunito-Black.ttf
           weight: 900
+    - family: Barlow Condensed
+      fonts:
+        - asset: assets/fonts/barlow_condensed/BarlowCondensed-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
 
 # App icons and splash screens from the placeholder mark on #2F5BEA (SPEC
 # §7.1, Q9). Regenerate with tools/brand_icons.sh.

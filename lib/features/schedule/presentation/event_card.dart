@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -54,17 +55,14 @@ class EventCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final c = GumdropColors.of(context);
+    final style = GumdropStyle.of(context);
     var async = ref.watch(eventProvider(eventId));
     final zone = ref.watch(viewerTimeZoneProvider).value;
     // A card in the chat (design §3.5): the surface and its outline.
     final outline = c.surfaceBorderWidth == 0
         ? BorderSide.none
         : BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth);
-    final frame = BoxDecoration(
-      color: c.surface,
-      border: Border.fromBorderSide(outline),
-      borderRadius: BorderRadius.circular(Corners.panel),
-    );
+    final frame = style.cardDecoration(c.surface, Corners.panel, side: outline);
     // The card's event is gone, but its series goes on.
     var seriesLeft = false;
     if (seriesId case final s? when async.hasValue && async.value == null) {
@@ -105,10 +103,7 @@ class EventCard extends ConsumerWidget {
     return GumdropSurface(
       child: Material(
         color: c.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Corners.panel),
-          side: outline,
-        ),
+        shape: style.cardShape(Corners.panel, side: outline),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => openEvent(context, event),

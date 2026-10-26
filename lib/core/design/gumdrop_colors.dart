@@ -1,3 +1,4 @@
+import 'package:battleplan/core/design/arena/arena_theme.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -11,6 +12,13 @@ enum GumdropFlavor {
 
   /// Gumdrop Candy: blue page, white cards, navy ink.
   candy,
+
+  /// Gumdrop Arena: a deep violet page with a game-day feel
+  /// (arena/arena_theme.dart).
+  arena;
+
+  /// Whether its page and cards are dark, with light text.
+  bool get isDark => this == dark || this == arena;
 }
 
 /// One candy color: the gumdrop's [face], the hard [lip] under it, and
@@ -325,6 +333,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     GumdropFlavor.dark => dark,
     GumdropFlavor.light => light,
     GumdropFlavor.candy => candy,
+    GumdropFlavor.arena => arenaColors,
   };
 
   /// The colors in effect at [context]: the theme's, or Gumdrop Pop Dark
@@ -461,7 +470,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
           ? Brightness.dark
           : Brightness.light;
     }
-    return flavor == GumdropFlavor.dark ? Brightness.dark : Brightness.light;
+    return flavor.isDark ? Brightness.dark : Brightness.light;
   }
 
   /// What text sits on in this context: the page, or a card.

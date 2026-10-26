@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -990,19 +991,20 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     );
   }
 
-  /// The sender's name in Fredoka, and their players beside it in small
+  /// The sender's name in the label font, and their players beside it in small
   /// muted type ("Claire D." then "· Luke #7"), as the design has it.
   List<InlineSpan> _nameSpans(Message m, Color name, Color muted) {
     final full = nameWithPlayersOf(m.authorName, m.authorPlayerSummary);
     final short = shortNameOf(m.authorName);
     final split =
         full != m.authorName && full.startsWith(short) && full != short;
-    final nameStyle = TextStyle(
-      fontFamily: AppFonts.label,
-      fontWeight: FontWeight.w600,
-      fontSize: 16,
-      height: 1.2,
-      color: name,
+    final nameStyle = GumdropStyle.of(context).label(
+      TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 16,
+        height: 1.2,
+        color: name,
+      ),
     );
     return [
       TextSpan(text: split ? short : full, style: nameStyle),

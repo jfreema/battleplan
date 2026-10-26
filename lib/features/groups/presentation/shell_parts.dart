@@ -1,8 +1,11 @@
 import 'dart:math' as math;
 
-import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_shape.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
+import 'package:battleplan/core/design/team_tint.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -32,36 +35,59 @@ class TeamSticker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
+    final style = GumdropStyle.of(context);
+    final text = Text(
+      label.toUpperCase(),
+      maxLines: 1,
+      style: style.display(
+        TextStyle(
+          fontWeight: FontWeight.w400,
+          fontSize: 15,
+          height: 1.2,
+          letterSpacing: 15 * 0.03,
+          color: c.ink,
+        ),
+      ),
+    );
     return Semantics(
       container: true,
       label: label,
       excludeSemantics: true,
-      child: Transform.rotate(
-        angle: -2 * math.pi / 180,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 3, 12, 4),
-          decoration: BoxDecoration(
-            color: c.lemon.face,
-            border: Border.all(color: c.ink, width: 2.5),
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(color: c.pageShadow, offset: const Offset(3, 3)),
-            ],
-          ),
-          child: Text(
-            label.toUpperCase(),
-            maxLines: 1,
-            style: TextStyle(
-              fontFamily: AppFonts.display,
-              fontWeight: FontWeight.w400,
-              fontSize: 15,
-              height: 1.2,
-              letterSpacing: 15 * 0.03,
-              color: c.ink,
+      // In a theme whose gumdrops lean (Gumdrop Arena), the sticker leans
+      // with them, flat, with an ink outline only on a page it would melt
+      // into (a Yellow team's).
+      child: style.slant != 0
+          ? Container(
+              padding: const EdgeInsets.fromLTRB(15, 4, 15, 4),
+              decoration: ShapeDecoration(
+                color: c.lemon.face,
+                shape: GumdropShape(
+                  lip: 0,
+                  highlight: 0,
+                  radius: const BorderRadius.all(Radius.circular(3)),
+                  slant: style.slant,
+                  side: ColorMath.contrast(c.lemon.face, c.page) < edgeContrast
+                      ? BorderSide(color: c.ink, width: 2)
+                      : BorderSide.none,
+                ),
+              ),
+              child: text,
+            )
+          : Transform.rotate(
+              angle: -2 * math.pi / 180,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 3, 12, 4),
+                decoration: BoxDecoration(
+                  color: c.lemon.face,
+                  border: Border.all(color: c.ink, width: 2.5),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(color: c.pageShadow, offset: const Offset(3, 3)),
+                  ],
+                ),
+                child: text,
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -127,24 +153,31 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const radius = BorderRadius.all(Radius.circular(26));
+    const radius = 26.0;
+    final style = GumdropStyle.of(context);
+    // The panel is a card: in Candy its text and icons are the card's
+    // ink, not the page's white.
+    final surface = GumdropSurface(child: child);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: radius,
-        border: colors.surfaceBorderWidth == 0
-            ? null
-            : Border.all(
+      decoration: style.cardDecoration(
+        colors.surface,
+        radius,
+        side: colors.surfaceBorderWidth == 0
+            ? BorderSide.none
+            : BorderSide(
                 color: colors.surfaceBorder,
                 width: colors.surfaceBorderWidth,
               ),
       ),
-      // The panel is a card: in Candy its text and icons are the card's
-      // ink, not the page's white.
-      child: ClipRRect(
-        borderRadius: radius,
-        child: GumdropSurface(child: child),
-      ),
+      child: style.cardCut > 0
+          ? ClipPath(
+              clipper: ShapeBorderClipper(shape: style.cardShape(radius)),
+              child: surface,
+            )
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(radius),
+              child: surface,
+            ),
     );
   }
 }

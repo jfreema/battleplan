@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -57,6 +58,11 @@ class GumdropBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
+    // Where the theme's gumdrops lean (Gumdrop Arena), the theme's own back
+    // button, a leaning lemon gumdrop.
+    if (GumdropStyle.of(context).slant != 0) {
+      return BackButton(onPressed: onPressed);
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -100,8 +106,8 @@ class SettingsPanel extends StatelessWidget {
     return Material(
       color: c.surface,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(radius),
+      shape: GumdropStyle.of(context).cardShape(
+        radius,
         side: c.surfaceBorderWidth == 0
             ? BorderSide.none
             : BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth),

@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -353,11 +354,13 @@ class _ColorTile extends StatelessWidget {
                 height: 48,
                 decoration: ShapeDecoration(
                   color: accent.face,
-                  shape: GumdropShape(
-                    lipColor: accent.lip,
-                    side: teamSwatch
-                        ? BorderSide(color: c.swatchInsetRing, width: 2)
-                        : BorderSide.none,
+                  shape: GumdropStyle.of(context).styled(
+                    GumdropShape(
+                      lipColor: accent.lip,
+                      side: teamSwatch
+                          ? BorderSide(color: c.swatchInsetRing, width: 2)
+                          : BorderSide.none,
+                    ),
                   ),
                 ),
                 padding: const EdgeInsets.only(bottom: 4),

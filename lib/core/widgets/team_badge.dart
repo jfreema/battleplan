@@ -1,5 +1,5 @@
-import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/cover_image.dart';
@@ -59,16 +59,18 @@ class TeamBadge extends StatelessWidget {
       child: Center(
         child: Text(
           Avatar.initialsOf(name),
-          style: TextStyle(
-            // White or black, whichever reads better on the team's color
-            // (Carolina blue and gold are light), as chat bubbles do.
-            color: ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
-                ? Colors.white
-                : GumdropColors.of(context).ink,
-            fontFamily: AppFonts.label,
-            fontWeight: FontWeight.w600,
-            fontSize: size * 0.42,
-            height: 1,
+          style: GumdropStyle.of(context).label(
+            TextStyle(
+              // White or black, whichever reads better on the team's color
+              // (Carolina blue and gold are light), as chat bubbles do.
+              color:
+                  ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
+                  ? Colors.white
+                  : GumdropColors.of(context).ink,
+              fontWeight: FontWeight.w600,
+              fontSize: size * 0.42,
+              height: 1,
+            ),
           ),
         ),
       ),

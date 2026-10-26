@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Button styles in the gumdrop recipe (design §3.1), for any Material
@@ -15,18 +16,30 @@ import 'package:material_ui/material_ui.dart';
 /// ```
 ///
 /// Pressed, the face sinks onto its lip; disabled, it sits flat in the
-/// well's color.
+/// well's color. In Gumdrop Arena ([style]) every gumdrop leans and has
+/// small corners.
 @immutable
 class GumdropButtons {
-  const new(this.colors, {required this.focusRing});
+  const new(
+    this.colors, {
+    required this.focusRing,
+    this.style = GumdropStyle.gumdrop,
+  });
 
-  /// For the colors at [context].
+  /// For the colors and style at [context].
   factory of(BuildContext context) {
     final colors = GumdropColors.of(context);
-    return GumdropButtons(colors, focusRing: colors.textOnPage);
+    return GumdropButtons(
+      colors,
+      focusRing: colors.textOnPage,
+      style: GumdropStyle.of(context),
+    );
   }
 
   final GumdropColors colors;
+
+  /// The theme's shapes: how far a gumdrop leans, and its corners.
+  final GumdropStyle style;
 
   /// The keyboard focus ring's color: the text color, which shows on every
   /// face.
@@ -151,13 +164,15 @@ class GumdropButtons {
       shadowColor: const WidgetStatePropertyAll(Colors.transparent),
       surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
       shape: WidgetStateProperty.resolveWith(
-        (s) => GumdropShape(
-          lip: lipHeight,
-          lipColor: lip,
-          highlight: s.contains(WidgetState.disabled) ? 0 : highlight,
-          highlightColor: highlightColor,
-          radius: radius,
-          pressed: down(s) ? 1 : 0,
+        (s) => style.styled(
+          GumdropShape(
+            lip: lipHeight,
+            lipColor: lip,
+            highlight: s.contains(WidgetState.disabled) ? 0 : highlight,
+            highlightColor: highlightColor,
+            radius: radius,
+            pressed: down(s) ? 1 : 0,
+          ),
         ),
       ),
       side: WidgetStateProperty.resolveWith(

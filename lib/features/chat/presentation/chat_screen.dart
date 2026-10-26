@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -992,8 +993,8 @@ class _PinnedBarState extends ConsumerState<_PinnedBar> {
               final c = GumdropColors.of(context);
               return Material(
                 color: c.surface,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Corners.tile),
+                shape: GumdropStyle.of(context).cardShape(
+                  Corners.tile,
                   side: c.surfaceBorderWidth == 0
                       ? BorderSide.none
                       : BorderSide(
@@ -1033,13 +1034,14 @@ class _PinnedBarState extends ConsumerState<_PinnedBar> {
                             children: [
                               Text(
                                 label,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.label,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                  height: 1.2,
-                                  letterSpacing: 0.84,
-                                  color: c.lemon.text,
+                                style: GumdropStyle.of(context).label(
+                                  TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                    height: 1.2,
+                                    letterSpacing: 0.84,
+                                    color: c.lemon.text,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 1),
@@ -1125,13 +1127,14 @@ class _NewMessagesDivider extends StatelessWidget {
         child: Text(
           AppLocalizations.of(context).newMessages,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: AppFonts.label,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-            height: 1,
-            letterSpacing: 0.72,
-            color: c.ink,
+          style: GumdropStyle.of(context).label(
+            TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              height: 1,
+              letterSpacing: 0.72,
+              color: c.ink,
+            ),
           ),
         ),
       ),
@@ -1198,12 +1201,13 @@ class _DateSeparator extends StatelessWidget {
       child: Text(
         dayLabel(AppLocalizations.of(context), day.toLocal(), DateTime.now()),
         textAlign: TextAlign.center,
-        style: TextStyle(
-          fontFamily: AppFonts.label,
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-          height: 1.2,
-          color: c.textMutedOnPage,
+        style: GumdropStyle.of(context).label(
+          TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            height: 1.2,
+            color: c.textMutedOnPage,
+          ),
         ),
       ),
     );

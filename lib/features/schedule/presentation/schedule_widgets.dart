@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
@@ -34,8 +35,8 @@ class TapCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(radius),
+    final shape = GumdropStyle.of(context).cardShape(
+      radius,
       side: c.surfaceBorderWidth == 0
           ? BorderSide.none
           : BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth),
@@ -72,12 +73,8 @@ class DateBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final ink = GumdropColors.of(context).ink;
-    final label = TextStyle(
-      fontFamily: AppFonts.label,
-      fontWeight: FontWeight.w600,
-      color: ink,
-      height: 1,
-    );
+    final label = GumdropStyle.of(context)
+        .label(TextStyle(fontWeight: FontWeight.w600, color: ink, height: 1));
     return Semantics(
       label: semanticLabel,
       excludeSemantics: true,
@@ -212,12 +209,13 @@ class AnswerDisc extends StatelessWidget {
           RsvpStatus.maybe => Text(
             '?',
             textScaler: TextScaler.noScaling,
-            style: TextStyle(
-              fontFamily: AppFonts.label,
-              fontWeight: FontWeight.w600,
-              fontSize: size * 0.63,
-              height: 1,
-              color: c.ink,
+            style: GumdropStyle.of(context).label(
+              TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: size * 0.63,
+                height: 1,
+                color: c.ink,
+              ),
             ),
           ),
         },
@@ -249,12 +247,12 @@ class StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(Corners.tile),
-        border: c.surfaceBorderWidth == 0
-            ? null
-            : Border.all(color: c.surfaceBorder, width: c.surfaceBorderWidth),
+      decoration: GumdropStyle.of(context).cardDecoration(
+        c.surface,
+        Corners.tile,
+        side: c.surfaceBorderWidth == 0
+            ? BorderSide.none
+            : BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth),
       ),
       child: GumdropSurface(
         child: Builder(
@@ -268,12 +266,13 @@ class StatTile extends StatelessWidget {
                   children: [
                     Text(
                       '$count',
-                      style: TextStyle(
-                        fontFamily: AppFonts.label,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 28,
-                        height: 1,
-                        color: color(card) ?? cc.textPrimary,
+                      style: GumdropStyle.of(context).label(
+                        TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 28,
+                          height: 1,
+                          color: color(card) ?? cc.textPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -340,12 +339,13 @@ class CandyInitials extends StatelessWidget {
         child: Text(
           initialsOf(name),
           textScaler: TextScaler.noScaling,
-          style: TextStyle(
-            fontFamily: AppFonts.label,
-            fontWeight: FontWeight.w600,
-            fontSize: size * 0.375,
-            height: 1,
-            color: c.ink,
+          style: GumdropStyle.of(context).label(
+            TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: size * 0.375,
+              height: 1,
+              color: c.ink,
+            ),
           ),
         ),
       ),
@@ -372,14 +372,19 @@ class InfoPill extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
         decoration: ShapeDecoration(
           color: c.raisedFace,
-          shape: GumdropShape(
-            lipColor: c.raisedLip,
-            highlight: 1.5,
-            highlightColor: c.raisedHighlight,
-            radius: BorderRadius.circular(20),
-            side: c.raisedBorderWidth == 0
-                ? BorderSide.none
-                : BorderSide(color: c.raisedBorder, width: c.raisedBorderWidth),
+          shape: GumdropStyle.of(context).styled(
+            GumdropShape(
+              lipColor: c.raisedLip,
+              highlight: 1.5,
+              highlightColor: c.raisedHighlight,
+              radius: BorderRadius.circular(20),
+              side: c.raisedBorderWidth == 0
+                  ? BorderSide.none
+                  : BorderSide(
+                      color: c.raisedBorder,
+                      width: c.raisedBorderWidth,
+                    ),
+            ),
           ),
         ),
         child: Row(
@@ -390,11 +395,12 @@ class InfoPill extends StatelessWidget {
             Flexible(
               child: Text(
                 text,
-                style: TextStyle(
-                  fontFamily: AppFonts.label,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                  color: c.textPrimary,
+                style: GumdropStyle.of(context).label(
+                  TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: c.textPrimary,
+                  ),
                 ),
               ),
             ),
@@ -545,12 +551,14 @@ class _RsvpGumdrop extends StatelessWidget {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: face,
-          shape: GumdropShape(
-            lip: lip,
-            lipColor: lipColor,
-            highlight: selected ? 2 : 1.5,
-            highlightColor: highlight,
-            side: side,
+          shape: GumdropStyle.of(context).styled(
+            GumdropShape(
+              lip: lip,
+              lipColor: lipColor,
+              highlight: selected ? 2 : 1.5,
+              highlightColor: highlight,
+              side: side,
+            ),
           ),
         ),
         child: Padding(
@@ -572,12 +580,13 @@ class _RsvpGumdrop extends StatelessWidget {
                   Text(
                     label,
                     maxLines: 1,
-                    style: TextStyle(
-                      fontFamily: AppFonts.label,
-                      fontWeight: FontWeight.w600,
-                      fontSize: compact ? 15 : 17,
-                      height: 1,
-                      color: text,
+                    style: GumdropStyle.of(context).label(
+                      TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: compact ? 15 : 17,
+                        height: 1,
+                        color: text,
+                      ),
                     ),
                   ),
                 ],
@@ -602,6 +611,14 @@ class LemonBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
+    // Where the theme's gumdrops lean (Gumdrop Arena), the theme's own back
+    // button, a leaning lemon gumdrop.
+    if (GumdropStyle.of(context).slant != 0) {
+      return const Padding(
+        padding: EdgeInsetsDirectional.only(start: 14),
+        child: BackButton(),
+      );
+    }
     return Padding(
       padding: const EdgeInsetsDirectional.only(start: 14),
       child: DecoratedBox(

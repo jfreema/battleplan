@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -156,11 +157,12 @@ class _PollCardState extends ConsumerState<PollCard> {
                 height: 35,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 minimumSize: const Size(0, 35),
-                textStyle: const TextStyle(
-                  fontFamily: AppFonts.label,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  height: 1,
+                textStyle: GumdropStyle.of(context).label(
+                  const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    height: 1,
+                  ),
                 ),
               )
               .copyWith(tapTargetSize: MaterialTapTargetSize.padded);
@@ -190,12 +192,13 @@ class _PollCardState extends ConsumerState<PollCard> {
               const SizedBox(height: Space.sm),
               Text(
                 value.question,
-                style: TextStyle(
-                  fontFamily: AppFonts.label,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 20,
-                  height: 1.15,
-                  color: c.textPrimary,
+                style: GumdropStyle.of(context).label(
+                  TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 20,
+                    height: 1.15,
+                    color: c.textPrimary,
+                  ),
                 ),
               ),
               const SizedBox(height: Space.sm),
@@ -351,13 +354,14 @@ class _PollTag extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: TextStyle(
-              fontFamily: AppFonts.label,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              height: 1,
-              letterSpacing: 0.72,
-              color: c.ink,
+            style: GumdropStyle.of(context).label(
+              TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                height: 1,
+                letterSpacing: 0.72,
+                color: c.ink,
+              ),
             ),
           ),
         ],
@@ -422,14 +426,16 @@ class _OptionRow extends StatelessWidget {
         ),
         foregroundColor: WidgetStatePropertyAll(ink),
         shape: WidgetStatePropertyAll(
-          GumdropShape(
-            lip: lip,
-            lipColor: chosen ? c.bubblegum.lip : c.raisedLip,
-            highlight: chosen ? 2 : 1.5,
-            highlightColor: chosen
-                ? GumdropColors.accentHighlight
-                : c.raisedHighlight,
-            radius: _radius,
+          buttons.style.styled(
+            GumdropShape(
+              lip: lip,
+              lipColor: chosen ? c.bubblegum.lip : c.raisedLip,
+              highlight: chosen ? 2 : 1.5,
+              highlightColor: chosen
+                  ? GumdropColors.accentHighlight
+                  : c.raisedHighlight,
+              radius: _radius,
+            ),
           ),
         ),
         side: WidgetStatePropertyAll(
@@ -444,12 +450,13 @@ class _OptionRow extends StatelessWidget {
     }
     final count = Text(
       '$votes · ${(share * 100).round()}%',
-      style: TextStyle(
-        fontFamily: AppFonts.label,
-        fontWeight: FontWeight.w600,
-        fontSize: 16,
-        height: 1,
-        color: ink,
+      style: GumdropStyle.of(context).label(
+        TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+          height: 1,
+          color: ink,
+        ),
       ),
     );
     final marker = chosen

@@ -918,7 +918,7 @@ Players that others answer for never get accounts, and every account belongs to 
 ### 6.10 Profile and settings (SET)
 
 - **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. Email is shown read-only.
-- **SET-2 · MVP · Appearance.** Three themes, each shown as a small preview: **Gumdrop Pop Dark** (the default), **Gumdrop Pop Light**, and **Gumdrop Candy** (§7.4, 1.1). They're in Settings and, one tap away, at the top of the account menu (the profile button). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it from before 1.1 gets Gumdrop Pop Dark.
+- **SET-2 · MVP · Appearance.** Four themes, each shown as a small preview: **Gumdrop Pop Dark** (the default), **Gumdrop Pop Light**, **Gumdrop Candy**, and **Gumdrop Arena** (§7.4, 1.1). Settings lays the previews out four across where they fit, otherwise two rows of two. They're in Settings and, one tap away, at the top of the account menu (the profile button). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it from before 1.1 gets Gumdrop Pop Dark.
 - **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
@@ -1200,32 +1200,33 @@ The content still carries the visual weight: messages, photos, and event cards.
 
 | Token | Values |
 |---|---|
-| **Color** | Three themes (§7.4), each with a full set of roles: page, cards, raised buttons, wells, inputs, lines, text, and headings. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is ink, a dark navy. Every text color is contrast-checked in all three themes, under every team color too. |
-| **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages. Sizes 36 / 32 / 24 / 22 / 17 / 16 / 14 / 12 (team name, screen title, section, title, subtitle, body, secondary, label); chat messages are 16 (CHAT-1). Headings carry a stacked hard shadow: four steps on screen titles and the team name, three on sections. Layouts survive system text scaling up to 200%. |
-| **Buttons** | Gumdrops: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above, with a highlight along its top. The main action is a candy gumdrop (the theme's own color, or a candy for its meaning); the rest are raised gumdrops in the card color. Pressed, the face sinks onto the lip; disabled, it's flat and muted. Chips, segmented buttons, the + button, and the navigation indicator are gumdrops too. |
+| **Color** | Four themes (§7.4), each with a full set of roles: page, cards, raised buttons, wells, inputs, lines, text, and headings. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is ink, a dark navy. Every text color is contrast-checked in every theme, under every team color too. |
+| **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages. Sizes 36 / 32 / 24 / 22 / 17 / 16 / 14 / 12 (team name, screen title, section, title, subtitle, body, secondary, label); chat messages are 16 (CHAT-1). Headings carry a stacked hard shadow: four steps on screen titles and the team name, three on sections. Gumdrop Arena sets headings and labels in **Barlow Condensed** ExtraBold Italic instead, over a single 3 px shadow; its body text is Nunito too. Layouts survive system text scaling up to 200%. |
+| **Buttons** | Gumdrops: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above, with a highlight along its top. The main action is a candy gumdrop (the theme's own color, or a candy for its meaning); the rest are raised gumdrops in the card color. Pressed, the face sinks onto the lip; disabled, it's flat and muted. Chips, segmented buttons, the + button, and the navigation indicator are gumdrops too. In Gumdrop Arena every gumdrop leans 11° (its label stays upright) and has 7 px corners. |
 | **Spacing** | 4-point grid: 4, 8, 12, 16, 24, 32, 48. Side padding is 16 on phones and 24 on wide screens. |
-| **Corners** | 14 for inputs, 18 for tiles, 20 for cards and chat bubbles (6 at a bubble's tail), 22 for panels, 26 for sheets, fully round for avatars, pills, and buttons |
+| **Corners** | 14 for inputs, 18 for tiles, 20 for cards and chat bubbles (6 at a bubble's tail), 22 for panels, 26 for sheets, fully round for avatars, pills, and buttons. Gumdrop Arena cuts 12 px off the top-right and bottom-left corners of cards, panels, and dialogs instead. |
 | **Elevation** | No soft shadows on cards: they're flat, with a thin outline in Gumdrop Pop Light. Depth comes from the lips under buttons and the hard shadows under headings, the back button, and stickers. |
 | **Icons** | Material Symbols Rounded, the same set on every platform |
 | **Motion** | 150–250 ms with standard easing. Respect the system "reduce motion" setting. |
 
 ### 7.4 Themes
 
-Three themes, picked in Settings or the account menu (SET-2), from 1.1:
+Four themes, picked in Settings or the account menu (SET-2), from 1.1:
 
 - **Gumdrop Pop Dark**, the default: a navy page (`#0B1531`), navy cards a step lighter (`#16244A`), white text, and white headings with a blue shadow.
 - **Gumdrop Pop Light**: a pale blue-gray page (`#F2F5FD`), white cards with a thin outline, navy text, and navy headings with a light blue shadow.
 - **Gumdrop Candy**: a bright blue page (`#305AF6`) with white text and headings, white cards with navy text, and lemon as your color.
+- **Gumdrop Arena** (the owner's request, 2026-10-26, from the V3 design): Gumdrop Pop's layout with a game-day feel. A deep violet page (`#0F0D24`), violet cards (`#221D45`), white text, the same candies, headings and labels in a condensed bold italic over one blue shadow, gumdrops that lean, and cards with two corners cut. It's kept apart in the code, so it can be taken out cleanly; an account set to it would then get Gumdrop Pop Dark.
 
 **Team colors.** Every screen inside a team takes the team's color (TEAM-1) in its background (owner's requests, 2026-10-26). Screens outside a team keep the theme's own.
 
 - **Gumdrop Pop Light** stays a light off-white page, shaded slightly toward the team color (a pale blush for Red, cream for Yellow, a gray off-white for Gray and Black), with its lines and button edges in the same hue. Its white cards, text, headings, and candies don't change.
-- **Gumdrop Pop Dark and Gumdrop Candy** take the team color itself as the page, not a blend, as in the Rounded Candy Pop design the picker comes from; it's a little darker only where neither white nor navy text would read on it (Green). In Dark, the cards, chat bubbles, event cards, tab bar, buttons, and inputs are a muted, dark version of the team color (a deep red for Red, a dark brown for Orange, grays for Black), each as dark as the navy it replaces, with its text tinted to match, so every contrast stays as designed. Candy keeps its white cards. The candies don't change.
+- **Gumdrop Pop Dark, Gumdrop Arena, and Gumdrop Candy** take the team color itself as the page, not a blend, as in the Rounded Candy Pop design the picker comes from; it's a little darker only where neither white nor navy text would read on it (Green). In Dark and Arena, the cards, chat bubbles, event cards, tab bar, buttons, and inputs are a muted, dark version of the team color (a deep red for Red, a dark brown for Orange, grays for Black), each as dark as the navy (or violet) it replaces, with its text tinted to match, so every contrast stays as designed. Candy keeps its white cards. The candies don't change.
 - On those colored pages, text straight on the page is white, or navy on light colors (Light blue, Yellow), with a heading shadow in the other one. Hard shadows on the page (the back button, the sticker) are navy, or the team color lifted lighter where navy wouldn't show (Navy, Maroon, Gray, Black). A candy or a button too close to the page (lemon on Yellow, Dark's buttons on Gray or Black) gets a navy edge so it still stands out, and a red team's unread badge a navy ring.
-- Blue and Navy are the theme's own navy, so Dark and Light keep their own colors for them; new teams start on Blue, so a new team looks as the theme was designed. Candy's page takes them as it takes every color.
+- Blue and Navy are the theme's own navy, so Dark, Light, and Arena keep their own colors for them; new teams start on Blue, so a new team looks as the theme was designed. Candy's page takes them as it takes every color.
 - A team still on a retired color (Royal blue or Violet) shows as its replacement (Blue or Purple) everywhere (TEAM-5).
 
-Photos are never dimmed. All three themes meet **WCAG AA contrast** (4.5:1 for body text), under every team color too. Every key screen has golden images in all three themes, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in all three.
+Photos are never dimmed. Every theme meets **WCAG AA contrast** (4.5:1 for body text), under every team color too. Every key screen has golden images in Dark, Light, and Candy, and five of them in Arena, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in all four.
 
 ### 7.5 Components
 

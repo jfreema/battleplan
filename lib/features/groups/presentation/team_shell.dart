@@ -4,10 +4,11 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/app_theme.dart';
-import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
+import 'package:battleplan/core/design/theme_choices.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
@@ -580,12 +581,8 @@ class _AccountButton extends ConsumerWidget {
     final theme = AppTheme.flavorOf(
       ref.watch(themePreferenceControllerProvider),
     );
-    // The three themes, one tap away (SET-2), as well as in Settings.
-    final themes = [
-      (ThemePreference.dark, GumdropFlavor.dark, l10n.themeGumdropDark),
-      (ThemePreference.light, GumdropFlavor.light, l10n.themeGumdropLight),
-      (ThemePreference.candy, GumdropFlavor.candy, l10n.themeGumdropCandy),
-    ];
+    // The themes, one tap away (SET-2), as well as in Settings.
+    final themes = themeChoices(l10n);
     // A 38 px gumdrop in the "you" color with my initials (design §3.1),
     // or my photo on it.
     return PopupMenuButton<String>(
@@ -627,12 +624,13 @@ class _AccountButton extends ConsumerWidget {
               excludeSemantics: true,
               child: Text(
                 Avatar.initialsOf(name),
-                style: TextStyle(
-                  fontFamily: AppFonts.label,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  height: 1,
-                  color: c.ink,
+                style: GumdropStyle.of(context).label(
+                  TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    height: 1,
+                    color: c.ink,
+                  ),
                 ),
               ),
             ),

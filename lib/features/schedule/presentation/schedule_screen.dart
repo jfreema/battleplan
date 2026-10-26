@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
@@ -72,13 +73,15 @@ class ScheduleScreen extends ConsumerWidget {
               : c.raisedFace,
         ),
         shape: WidgetStateOutlinedBorder.resolveWith(
-          (s) => GumdropShape(
-            lip: 3,
-            lipColor: on ? accent.lip : c.raisedLip,
-            highlight: on ? 2 : 1.5,
-            highlightColor: on
-                ? GumdropColors.accentHighlight
-                : c.raisedHighlight,
+          (s) => GumdropStyle.of(context).styled(
+            GumdropShape(
+              lip: 3,
+              lipColor: on ? accent.lip : c.raisedLip,
+              highlight: on ? 2 : 1.5,
+              highlightColor: on
+                  ? GumdropColors.accentHighlight
+                  : c.raisedHighlight,
+            ),
           ),
         ),
         padding: const EdgeInsets.fromLTRB(11, 5, 11, 8),
@@ -99,7 +102,9 @@ class ScheduleScreen extends ConsumerWidget {
                 // stays, flat in the well's color, to say why.
                 backgroundColor: full ? c.well : null,
                 foregroundColor: full ? c.textMuted : null,
-                shape: full ? const GumdropShape() : null,
+                shape: full
+                    ? GumdropStyle.of(context).styled(const GumdropShape())
+                    : null,
                 onPressed: () => full
                     ? showStorageFull(context)
                     : unawaited(
@@ -135,7 +140,8 @@ class ScheduleScreen extends ConsumerWidget {
                 ],
                 indicator: ShapeDecoration(
                   color: c.you.face,
-                  shape: GumdropShape(lip: 3, lipColor: c.you.lip),
+                  shape: GumdropStyle.of(context)
+                      .styled(GumdropShape(lip: 3, lipColor: c.you.lip)),
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicatorPadding: const EdgeInsets.fromLTRB(4, 4, 4, 3),

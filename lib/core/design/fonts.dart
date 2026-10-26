@@ -1,3 +1,4 @@
+import 'package:battleplan/core/design/arena/arena_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -18,6 +19,7 @@ const Map<String, String> fontLicenseAssets = {
   AppFonts.display: 'assets/fonts/lilita_one/OFL.txt',
   AppFonts.label: 'assets/fonts/fredoka/OFL.txt',
   AppFonts.body: 'assets/fonts/nunito/OFL.txt',
+  arenaFont: 'assets/fonts/barlow_condensed/OFL.txt',
 };
 
 /// Lists each bundled font's SIL Open Font License under Settings › About ›
