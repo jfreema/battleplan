@@ -155,7 +155,7 @@ class PersonScreen extends ConsumerWidget {
           if (!isMe && !unknown)
             PopupMenuButton<String>(
               tooltip: l10n.directMenuTooltip,
-              icon: const Icon(AppIcons.more),
+              icon: const Icon(AppIcons.menu),
               onSelected: (action) => unawaited(switch (action) {
                 'block' => confirmBlock(context, ref, uid: uid, name: name),
                 'unblock' => unblock(context, ref, uid),

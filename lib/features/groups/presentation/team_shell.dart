@@ -545,7 +545,7 @@ class _TeamMenu extends ConsumerWidget {
       style: GumdropButtons.of(context).icon(),
       iconSize: 19,
       iconColor: c.textPrimary,
-      icon: const Icon(AppIcons.more),
+      icon: const Icon(AppIcons.menu),
       onSelected: (route) {
         final id = groupId;
         if (id == null) return;

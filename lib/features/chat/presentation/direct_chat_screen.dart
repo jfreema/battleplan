@@ -129,7 +129,7 @@ class DirectChatScreen extends ConsumerWidget {
           if (otherUid != null && !closed)
             PopupMenuButton<String>(
               tooltip: l10n.directMenuTooltip,
-              icon: const Icon(AppIcons.more),
+              icon: const Icon(AppIcons.menu),
               onSelected: (action) => switch (action) {
                 'profile' => openPersonPage(context, UserId(otherUid)),
                 'mute' => unawaited(setMuted(on: true)),

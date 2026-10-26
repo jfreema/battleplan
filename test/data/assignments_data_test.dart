@@ -78,8 +78,13 @@ void main() {
       by: coach,
     );
     final list = await current();
-    expect(list.first.label, isNull);
-    expect(list.last.label, hasLength(Limits.assignmentLabelMax));
+    Assignment of(AssignmentKind kind) =>
+        list.firstWhere((a) => a.kind == kind);
+    expect(of(AssignmentKind.drinks).label, isNull);
+    expect(
+      of(AssignmentKind.other).label,
+      hasLength(Limits.assignmentLabelMax),
+    );
   });
 
   test('an admin can add a task with someone on it', () async {

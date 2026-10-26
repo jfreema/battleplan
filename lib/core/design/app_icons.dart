@@ -9,7 +9,12 @@ abstract final class AppIcons {
   static const IconData schedule = Symbols.calendar_month_rounded;
   static const IconData documents = Symbols.folder_rounded;
   static const IconData notifications = Symbols.notifications_rounded;
+
+  /// A row's or a card's options: three dots.
   static const IconData more = Symbols.more_horiz_rounded;
+
+  /// A screen's options, at the top right: a hamburger, three lines.
+  static const IconData menu = Symbols.menu_rounded;
   static const IconData expand = Symbols.expand_more_rounded;
   static const IconData settings = Symbols.settings_rounded;
   static const IconData signOut = Symbols.logout_rounded;

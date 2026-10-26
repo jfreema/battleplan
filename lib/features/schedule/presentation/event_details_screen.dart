@@ -136,7 +136,7 @@ class EventDetailsScreen extends ConsumerWidget {
           if (canManage || canCreate)
             PopupMenuButton<_Action>(
               style: icon,
-              icon: const Icon(AppIcons.more),
+              icon: const Icon(AppIcons.menu),
               tooltip: l10n.eventMoreActions,
               onSelected: (a) => unawaited(onMenu(a)),
               itemBuilder: (_) => [

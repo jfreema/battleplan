@@ -349,7 +349,8 @@ class DocumentMenu extends ConsumerWidget {
 
     return PopupMenuButton<DocumentAction>(
       tooltip: l10n.documentMoreActions,
-      icon: const Icon(AppIcons.more),
+      // A hamburger at the viewer's top right, dots on a row.
+      icon: Icon(inViewer ? AppIcons.menu : AppIcons.more),
       onSelected: (a) => unawaited(run(a)),
       itemBuilder: (_) => [
         for (final a in actions)
