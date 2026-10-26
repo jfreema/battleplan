@@ -226,6 +226,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                       ),
                       const SizedBox(width: Space.sm),
                       IconButton.filledTonal(
+                        // Ink on the cream (or navy) face: the theme's icon color is the
+                        // page's, which is the face's own on a colored page (Olive, Candy).
+                        style: IconButton.styleFrom(
+                          foregroundColor: Theme.of(context)
+                              .colorScheme
+                              .onSecondaryContainer,
+                        ),
                         tooltip: _player.playing
                             ? l10n.playStopPlaying
                             : l10n.playPlaySteps,

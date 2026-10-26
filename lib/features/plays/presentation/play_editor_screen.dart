@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
@@ -861,6 +863,13 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
             }
             return filled
                 ? IconButton.filledTonal(
+                    // Ink on the cream (or navy) face: the theme's icon color is the
+                    // page's, which is the face's own on a colored page (Olive, Candy).
+                    style: IconButton.styleFrom(
+                      foregroundColor: Theme.of(context)
+                          .colorScheme
+                          .onSecondaryContainer,
+                    ),
                     tooltip: label,
                     icon: Icon(icon),
                     onPressed: onPressed,
@@ -969,9 +978,12 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
                   ],
                 ),
                 if (!saveInMore)
-                  IconButton.filled(
+                  IconButton(
                     tooltip: saveLabel,
                     onPressed: onSave,
+                    // A candy in the "you" color, with an ink icon.
+                    style: GumdropButtons.of(context)
+                        .icon(accent: GumdropColors.of(context).you),
                     icon: const Icon(AppIcons.save),
                   ),
               ],
@@ -1027,6 +1039,23 @@ class _Tools extends StatelessWidget {
       (BoardTool.erase, AppIcons.toolErase, l10n.toolErase),
     ];
     final side = compact ? kMinInteractiveDimension : 52.0;
+    // The picked tool is a candy in the "you" color with ink on it; the
+    // rest are the theme's tonal buttons. Set here, not left to the tonal
+    // defaults, which draw the picked one's icon in its face's color on a
+    // colored page (Olive, Candy).
+    final c = GumdropColors.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final toolStyle = ButtonStyle(
+      backgroundColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.selected)
+            ? c.you.face
+            : scheme.surfaceContainerHighest,
+      ),
+      foregroundColor: WidgetStateProperty.resolveWith(
+        (s) =>
+            s.contains(WidgetState.selected) ? c.ink : scheme.onSurfaceVariant,
+      ),
+    );
     final buttons = [
       for (final (t, icon, label) in items)
         Padding(
@@ -1039,6 +1068,7 @@ class _Tools extends StatelessWidget {
               label: label,
               child: IconButton.filledTonal(
                 isSelected: t == tool,
+                style: toolStyle,
                 iconSize: compact ? 24 : 26,
                 constraints: BoxConstraints.tightFor(width: side, height: side),
                 onPressed: () => onTool(t),
@@ -1128,6 +1158,13 @@ class _StepsBar extends StatelessWidget {
             children: [
               if (edit.steps.length > 1)
                 IconButton.filledTonal(
+                  // Ink on the cream (or navy) face: the theme's icon color is the
+                  // page's, which is the face's own on a colored page (Olive, Candy).
+                  style: IconButton.styleFrom(
+                    foregroundColor: Theme.of(context)
+                        .colorScheme
+                        .onSecondaryContainer,
+                  ),
                   tooltip: playing ? l10n.playStopPlaying : l10n.playPlaySteps,
                   icon: Icon(playing ? AppIcons.stop : AppIcons.play),
                   onPressed: onPlay,
