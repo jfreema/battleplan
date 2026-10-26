@@ -267,6 +267,7 @@ The owner's request (2026-10-25): Gumdrop Pop Navy as the default look, named Gu
 295. ✅ The chat look's colors are seven candies and the team color, and its pattern is Sprinkles (SPEC CHAT-18). *Each theme draws a candy in its own shade; Candy lists Lemon first, its own color. The rules accept the candies; colors picked from the old palette still show.*
 296. ✅ The website redone in Gumdrop Pop Dark's navy, in one dark look with no light version, with its fonts served from the site (SPEC WEB-5, [website/README.md](../website/README.md)).
 297. ✅ Version 1.1.0 (the build number is still the commit count). *Google Play prepared without a device: tasks 213 and 214.*
+300. ✅ The Sticker Crest is the app icon and brand mark (owner's pick 2026-10-26, SPEC §7.1). *A tilted lemon shield with a B in a chat bubble, on blue raspberry: the iOS and Android icons (Android's themed icon is the shield as one shape), the splash screens on navy, the web app's icons and loading screen, the website's favicon and header mark, the sign-in screen's logo, the link-preview image, and the Play listing's icon and feature graphic, all from `tools/brand_icons.sh`. The 1.0 build in App Review keeps the old flag; iPhone gets the crest with its next build.*
 298. 👤 **Jared:** Run **Release to prod** once 1.1 is pushed and CI passes, to put the web app and the website on `getbattleplan.app`.
 299. iOS 1.1 is held back: 1.1 goes to the web only, so nothing is uploaded to App Store Connect or sent through **Release iOS** for it. The iPhone and iPad app takes Gumdrop Pop with a later release (Phase 4).
 
@@ -316,7 +317,7 @@ The website and the web app at `getbattleplan.app/app`, working well in desktop 
 
 105. Accessibility, performance (SPEC §8), and golden-test passes in both themes. *Moved from M9. A first pass is in the code (commit e1eab87); check it against the web proof pass (task 188).*
 187. ✅ Hide Continue with Apple on the sign-in screen and in Sign-in methods until Phase 3 (AUTH-1). *The sign-in and "How do you want to sign in?" screens show Google and email only, and Sign-in methods lists Apple only on an account that already has it. Undone by tasks 109 and 291 (2026-10-17).*
-120. ✅ App icons and splash screens. *Moved from M9. Done 2026-10-14 with the brand mark (task 238): every app icon and splash screen on iOS, Android, and the web, from `tools/brand_icons.sh`, including iOS's 1024 px App Store icon. The Play listing's 512 px icon is `assets/brand/icon.png`, uploaded in task 213.*
+120. ✅ App icons and splash screens. *Moved from M9. Done 2026-10-14 with the brand mark (task 238): every app icon and splash screen on iOS, Android, and the web, from `tools/brand_icons.sh`, including iOS's 1024 px App Store icon. The Play listing's 512 px icon is `store/google-play/icon-512.png`, uploaded in task 213.*
 188. Web proof pass: every MVP flow in desktop Chrome, Edge, Firefox, and Safari, and in phone browsers (Safari on iPhone, Chrome on Android), including web push from the iPhone home-screen web app. Web first load under 4 s (SPEC §8.1). Fix what it finds before go-live.
 
 **Prod project**

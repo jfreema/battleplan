@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Regenerates every icon and splash screen from the brand mark (SPEC §7.1:
-# a white flag on a pole with an angular B cut out of it, on #2F5BEA).
+# the Sticker Crest, a tilted lemon shield with a B in a chat bubble, on
+# blue raspberry).
 #
 #   assets/brand/icon.svg  the full icon: white mark on blue, square
 #   assets/brand/mark.svg  the mark alone on transparent, inside the splash
 #                          screens' safe zones (Android 12 crops a circle)
 #   assets/brand/foreground.svg  the mark larger, for Android's adaptive icon
 #                          (the tool insets it into the safe zone)
+#   assets/brand/monochrome.svg  the shield as one shape, for Android's themed
+#                          icon
 #   assets/brand/maskable.svg  the web app's maskable icon: the mark inside
 #                          the 80% circle any mask keeps
 #   website/favicon.svg    the website's favicon and header mark: the rounded
@@ -29,7 +32,7 @@ size() { # size <png> <px> <out>
   sips -z "$2" "$2" "$1" --out "$3" >/dev/null
 }
 
-for name in icon mark foreground maskable; do
+for name in icon mark foreground monochrome maskable; do
   render "assets/brand/$name.svg" "$PWD/assets/brand/$name.png"
 done
 

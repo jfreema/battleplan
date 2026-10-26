@@ -1171,8 +1171,8 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 ### 7.1 Brand
 
 - **Name:** Battleplan.
-- **Logo:** a white flag on a pole, waving, with an angular B cut out of it, on a rounded blue tile, plus the wordmark (2026-10-14, from the owner's sketch). The same mark is the website's favicon and header mark, the web app's tab icon and loading screen, the app icons, and the splash screens. The B drops out at 16 px, leaving the flag; at 32 px and up it reads. The app icon has to read clearly at small sizes in both light and dark mode.
-- **Primary color:** deep blue `#2F5BEA` (Q9), for the brand mark and app icon. Inside the app the main accent is Gumdrop Pop's blue raspberry `#4D9BFF` (§7.3).
+- **Logo:** the Sticker Crest (owner's pick, 2026-10-26, for 1.1): a fat lemon shield tilted 7° to the left, outlined in navy on a navy hard shadow, with a white chat bubble saying B, on a blue raspberry gradient tile, plus the wordmark. The same mark is the website's favicon and header mark, the web app's tab icon and loading screen, the app icons (Android's themed icon is the shield as one shape), and the splash screens on Gumdrop Pop Dark's navy. The favicon draws the crest 10% bigger so it reads at 32 px. Before 1.1 the mark was a white flag on a pole with an angular B cut out of it (2026-10-14); the 1.0 App Store build keeps it.
+- **Primary color:** blue raspberry `#4D9BFF`, the app icon's background (a gradient from `#6DB3FF` to `#2F6FDE`) and Gumdrop Pop's main accent (§7.3). Deep blue `#2F5BEA` (Q9) was the 1.0 mark's color and is still the first team color.
 - **Team colors** make each team's screens its own: the color tints the background of every screen inside the team (§7.4), and shows on the team's logo or initials badge, the switcher, and calendar dots in the all-teams view. Buttons and the candy accents keep the theme's colors, and so do my chat bubbles unless the chat look picks the team color (CHAT-18).
 
 ### 7.2 Look and feel
