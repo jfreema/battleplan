@@ -45,11 +45,6 @@
         "type": 302
       },
       {
-        "source": "/join/:code",
-        "destination": "/app/join/:code",
-        "type": 302
-      },
-      {
         "source": "/activate",
         "destination": "/app/activate",
         "type": 302
@@ -71,6 +66,13 @@
       }
     ],
     "rewrites": [
+      {
+        "source": "/join/**",
+        "function": {
+          "functionId": "joinPage",
+          "region": "us-central1"
+        }
+      },
       {
         "source": "/cal/**",
         "function": {

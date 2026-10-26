@@ -585,6 +585,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **INV-6 · MVP · Join without a link.** "Join a team" (on the welcome screen and in the team switcher) offers **Enter code** and **Scan QR code**, using the camera on phones and in the browser.
 - **INV-7 · MVP · Web join page.**
   - `/join/<code>` (served by the web app under `/app`, WEB-4) shows the team preview, **Open in app**, App Store and Google Play badges once the apps are listed (Phases 4 and 5), and **Continue in browser**.
+  - Shared in a messaging app (iMessage, WhatsApp, Messenger, Slack, Discord, and others), the link's preview says "Join Thunder U14 on Battleplan" and who sent the invite, with the team's logo, or Battleplan's card when the team has none or the link no longer works (1.1, ARCH §6.6).
   - The invite code is shown large, so people can type it in after installing the app.
 - **INV-8 · MVP · Problems.**
   - Expired, revoked, used-up, or unknown codes get a plain explanation and "Ask a team admin for a new link."
@@ -1475,7 +1476,7 @@ The web parts are built before the Phase 1 go-live (ROADMAP). Native-only parts,
 2. Roster details and contact sharing (TEAM-10); "Same answer for all my players" and RSVP history (PLAYER-11). Built (tasks 136 and 137).
 3. Calendar subscription (SCHED-11)
 4. RSVP nudges and guest counts (SCHED-12)
-5. Team-specific link previews for invites (ARCH §6.6)
+5. Team-specific link previews for invites (ARCH §6.6). Built (task 140).
 6. Folders and the chat photo gallery (DOC-7)
 7. Announcement-only mode (TEAM-12), polls list (POLL-6)
 8. App icon badges, hidden notification text (NOTIF-12), files in chat (CHAT-16)

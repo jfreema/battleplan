@@ -1,6 +1,7 @@
 // Thin entry points for the invites domain (ARCH §6.4).
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
-import { HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
+import { HttpsError, onRequest } from 'firebase-functions/v2/https';
 import { z } from 'zod';
 import { audit } from '../audit/service.js';
 import { db } from '../shared/admin.js';
@@ -16,7 +17,8 @@ import { requireOpenTeam, requireTeamAdmin, roleOf, teamCountOf } from '../share
 import { parse } from '../shared/validate.js';
 import { resendApiKey, sendEmail } from '../email/service.js';
 import { inviteEmail } from '../email/templates.js';
-import { joinUrl } from '../links/service.js';
+import { APP_PREFIX, joinUrl, linkHost } from '../links/service.js';
+import { type InviteCard, invitePreviewPage, isPreviewFetcher } from './page.js';
 import {
   activeTeamLink,
   createEmailInvite,
@@ -130,6 +132,47 @@ export const getInvitePreview = onCall(async (request) => {
   const result = await previewInvite(normalizeCode(code));
   if (typeof result === 'string') throw new HttpsError('not-found', result);
   return result;
+});
+
+/**
+ * `/join/<CODE>` (Hosting rewrites it here; ARCH §6.6). Link-preview
+ * fetchers get a page whose tags show the team's name and logo (task 140);
+ * everyone else goes straight on to the app's /join page with a 302, as the
+ * Hosting redirect this replaces did. The team lookup shares
+ * getInvitePreview's limit per IP address; past it, or for a code that
+ * doesn't work, the preview is Battleplan's own.
+ */
+export const joinPage = onRequest({ invoker: 'public' }, async (req, res) => {
+  // The answer differs by who asks, so no cache may keep it for others.
+  res.set('Cache-Control', 'no-store');
+  res.set('Vary', 'User-Agent');
+  res.set('X-Robots-Tag', 'noindex');
+  const raw = req.path.replace(/^\/join\/?/, '').split('/')[0] ?? '';
+  const query = req.originalUrl?.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  const appJoinUrl = `${APP_PREFIX}/join${raw ? `/${encodeURIComponent(raw)}` : ''}${query}`;
+  if (!isPreviewFetcher(req.get('user-agent'))) {
+    res.redirect(302, appJoinUrl);
+    return;
+  }
+  let card: InviteCard | null = null;
+  if (CodeInput.safeParse({ code: raw }).success) {
+    try {
+      const ip = req.ip ?? 'unknown';
+      await consumeRateLimit(`ip-${ip.replace(/[^0-9a-fA-F.:]/g, '')}`, 'invitePreview', Limits.invitePreviewsPerIpPerHour, 'hour');
+      const preview = await previewInvite(normalizeCode(raw));
+      if (typeof preview !== 'string') {
+        card = { teamName: preview.name, logoUrl: preview.logoUrl, invitedBy: preview.invitedBy };
+      }
+    } catch (e) {
+      if (!(e instanceof HttpsError)) logger.warn('join_page_lookup_failed', { error: String(e) });
+    }
+  }
+  const html = invitePreviewPage(card, {
+    joinUrl: joinUrl(raw),
+    appJoinUrl: `https://${linkHost()}${appJoinUrl}`,
+    siteImage: `https://${linkHost()}/images/og.png`,
+  });
+  res.status(200).type('text/html; charset=utf-8').send(req.method === 'HEAD' ? '' : html);
 });
 
 /** Joins the team behind an invite code (INV-5). 20 tries an hour per person. */

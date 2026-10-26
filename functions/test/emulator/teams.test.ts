@@ -865,4 +865,67 @@ describe("the team's link (INV-2, §3)", () => {
     await groups().doc('open').update({ photoPath: null });
     expect(((await previewInvite(link.code)) as { logoUrl: string | null }).logoUrl).toBeNull();
   });
+
+  it("gives link previews the team's name and logo, and sends people on (task 140)", async () => {
+    const path = 'groups/open/logo.jpg';
+    await storage().bucket().file(path).save(Buffer.from('logo'), {
+      contentType: 'image/jpeg',
+      metadata: { metadata: { firebaseStorageDownloadTokens: 'tok' } },
+    });
+    await groups().doc('open').update({ photoPath: path, name: 'Thunder U14' });
+    const link = await run<{ code: string }>(invites.getTeamInvite, 'ada', { groupId: 'open' });
+    const open = async (url: string, agent: string, method = 'GET') => {
+      const out = { status: 0, headers: {} as Record<string, string>, body: '', location: '' };
+      const res = {
+        status(code: number) {
+          out.status = code;
+          return res;
+        },
+        set(name: string, value: string) {
+          out.headers[name.toLowerCase()] = value;
+          return res;
+        },
+        type(value: string) {
+          out.headers['content-type'] = value;
+          return res;
+        },
+        send(text: string) {
+          out.body = text;
+          return res;
+        },
+        redirect(code: number, location: string) {
+          out.status = code;
+          out.location = location;
+          return res;
+        },
+      };
+      const [pathname] = url.split('?');
+      await (invites.joinPage as unknown as (req: object, res: object) => Promise<void>)(
+        { method, path: pathname, originalUrl: url, ip: '203.0.113.9', get: (h: string) => (h === 'user-agent' ? agent : undefined) },
+        res,
+      );
+      return out;
+    };
+    // A person goes on to the app's join page, the query kept.
+    const person = await open(`/join/${link.code}?via=qr`, 'Mozilla/5.0 (iPhone) Safari/604.1');
+    expect(person.status).toBe(302);
+    expect(person.location).toBe(`/app/join/${link.code}?via=qr`);
+    expect(person.headers['cache-control']).toBe('no-store');
+    expect(person.headers.vary).toBe('User-Agent');
+    // A preview gets the team.
+    const preview = await open(`/join/${link.code}`, 'facebookexternalhit/1.1');
+    expect(preview.status).toBe(200);
+    expect(preview.headers['content-type']).toBe('text/html; charset=utf-8');
+    expect(preview.body).toContain('<meta property="og:title" content="Join Thunder U14 on Battleplan">');
+    expect(preview.body).toContain('Ada Admin invited you');
+    expect(preview.body).toMatch(/og:image" content="[^"]*tok/);
+    expect((await open(`/join/${link.code}`, 'WhatsApp/2', 'HEAD')).body).toBe('');
+    // A link that doesn't work, or no code: Battleplan's own preview.
+    await run(invites.revokeGroupInvite, 'ada', { groupId: 'open' });
+    const revoked = await open(`/join/${link.code}`, 'Twitterbot/1.0');
+    expect(revoked.body).toContain('Join your team on Battleplan');
+    expect(revoked.body).not.toContain('Thunder');
+    expect((await open('/join/', 'Twitterbot/1.0')).body).toContain('images/og.png');
+    expect((await open('/join/', 'Mozilla/5.0')).location).toBe('/app/join');
+  });
 });

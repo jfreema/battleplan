@@ -59,6 +59,7 @@ export { onMessageCreated, onMessageUpdated } from './chat/triggers.js';
 export {
   getInvitePreview,
   getTeamInvite,
+  joinPage,
   listEmailInvites,
   redeemInvite,
   resendEmailInvite,
