@@ -112,7 +112,16 @@ abstract final class AppTheme {
           : ColorMath.onColor(c, dark: const Color(0xFF000000));
     }
 
-    final primary = readable(g.you.face);
+    // Where "you" is red (Olive's coral), Material's primary is the blue
+    // raspberry, so selection, focus, and "normal" never look like an
+    // error. Your bubbles, the FAB, and buttons keep the "you" color.
+    final youIsRed =
+        ColorMath.hueDistance(
+          ColorMath.lch(g.you.face).h,
+          ColorMath.lch(g.cherry.face).h,
+        ) <
+        30;
+    final primary = readable(youIsRed ? g.blueRaspberry.face : g.you.face);
     final secondary = readable(g.bubblegum.face);
     final tertiary = readable(g.grape.face);
     final error = readable(g.cherry.text);

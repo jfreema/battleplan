@@ -101,6 +101,12 @@ class TeamSwitcherList extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // The team you're in, marked by more than its name's color.
+            if (selected)
+              const Padding(
+                padding: EdgeInsets.only(right: Space.sm),
+                child: Icon(AppIcons.check, size: 20),
+              ),
             if (t.membership.isMutedAt(now))
               Icon(
                 AppIcons.muted,

@@ -1,6 +1,6 @@
 // The key screens with real fonts (the bundled Lilita One, Fredoka, and
-// Nunito, Material Symbols for icons) in the three Gumdrop themes, Light,
-// Dark, and Candy, at a phone size (one at a wide size), at 2x, to look at
+// Nunito, Material Symbols for icons) in the Gumdrop themes but Arena
+// (Olive, Light, Dark, and Candy), at a phone size (one at a wide size), at 2x, to look at
 // in review (ARCH §9). Fonts rasterize a little differently on each operating
 // system, so these compare only on the one that made them
 // ([readableGoldensOs]), and CI (Linux) skips them: they're for looking at

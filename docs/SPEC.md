@@ -1191,7 +1191,7 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 
 **Gumdrop Pop**, from 1.1 (the owner's pick, 2026-10-25): bright and playful, like candy, and still clean:
 
-- a navy page in the default theme, with rounded cards a step lighter;
+- an olive page in the default theme (Gumdrop Olive), with cream cards;
 - gumdrop buttons: a rounded face on a hard lip in a darker shade, with a thin highlight along the top, that sinks onto its lip when pressed;
 - candy accents, each with a meaning: blue raspberry for you and the main action, mint for Going, lemon for Maybe and pins, cherry for Not going and unread, tangerine for games, grape for practices, and bubblegum for polls, other events, and your reactions;
 - chunky headings with a stacked hard shadow;
@@ -1204,7 +1204,7 @@ The content still carries the visual weight: messages, photos, and event cards.
 
 | Token | Values |
 |---|---|
-| **Color** | Four themes (§7.4), each with a full set of roles: page, cards, raised buttons, wells, inputs, lines, text, and headings. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is ink, a dark navy. Every text color is contrast-checked in every theme, under every team color too. |
+| **Color** | Five themes (§7.4), each with a full set of roles: page, cards, raised buttons, wells, inputs, lines, text, and headings. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is ink, a dark navy. Every text color is contrast-checked in every theme, under every team color too. |
 | **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages. Sizes 36 / 32 / 24 / 22 / 17 / 16 / 14 / 12 (team name, screen title, section, title, subtitle, body, secondary, label); chat messages are 16 (CHAT-1). Headings carry a stacked hard shadow: four steps on screen titles and the team name, three on sections. Gumdrop Arena sets headings and labels in **Barlow Condensed** ExtraBold Italic instead, over a single 3 px shadow; its body text is Nunito too. Layouts survive system text scaling up to 200%. |
 | **Buttons** | Gumdrops: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above, with a highlight along its top. The main action is a candy gumdrop (the theme's own color, or a candy for its meaning); the rest are raised gumdrops in the card color. Pressed, the face sinks onto the lip; disabled, it's flat and muted. Chips, segmented buttons, the + button, and the navigation indicator are gumdrops too. In Gumdrop Arena every gumdrop leans 11° (its label stays upright) and has 7 px corners. |
 | **Spacing** | 4-point grid: 4, 8, 12, 16, 24, 32, 48. Side padding is 16 on phones and 24 on wide screens. |

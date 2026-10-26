@@ -78,6 +78,8 @@ describe('users: writing', () => {
     await assertSucceeds(db.doc('users/alice').update({ themeMode: 'dark' }));
     await assertSucceeds(db.doc('users/alice').update({ themeMode: 'candy' }));
     await assertSucceeds(db.doc('users/alice').update({ themeMode: 'arena' }));
+    await assertSucceeds(db.doc('users/alice').update({ themeMode: 'olive' }));
+    await assertSucceeds(db.doc('users/alice').update({ themeMode: 'system' }));
     await assertSucceeds(db.doc('users/alice').update({ themeMode: 'light' }));
     await assertSucceeds(db.doc('users/alice').update({ photoPath: 'users/alice/avatar/123.jpg' }));
     await assertSucceeds(db.doc('users/alice').update({ 'notificationPrefs.messages': false }));

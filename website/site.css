@@ -91,6 +91,8 @@ a:hover { text-decoration-thickness: 2px; }
   outline-offset: 3px;
   border-radius: 6px;
 }
+/* On cream, the ring is ink. */
+:is(.card, .faq details, .note, .toc, .cta) :focus-visible { outline-color: var(--ink); }
 
 h1, h2, h3 { margin: 0 0 0.5em; color: var(--heading); font-weight: 400; }
 h1, h2 {
@@ -362,6 +364,7 @@ section { padding: 56px 0; }
 .placeholder { color: var(--muted); font-style: italic; }
 kbd, .ui {
   font: 600 0.95em var(--label); color: var(--ink); background: var(--raised);
+  box-shadow: inset 0 0 0 1.5px var(--card-divider);
   padding: 1px 8px; border-radius: 8px; white-space: nowrap;
 }
 

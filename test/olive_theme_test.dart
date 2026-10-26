@@ -89,4 +89,23 @@ void main() {
     final filled = AppTheme.of(GumdropFlavor.olive).filledButtonTheme.style!;
     expect(filled.side!.resolve({})!.color, o.ink);
   });
+
+  test('selection and focus never look like an error, in any theme', () {
+    for (final flavor in GumdropFlavor.values) {
+      for (final onCard in [false, true]) {
+        final s = AppTheme.of(flavor, onCard: onCard).colorScheme;
+        // Apart in lightness or, on a dark page where every readable color
+        // is pale, in hue.
+        final (p, e) = (ColorMath.lch(s.primary), ColorMath.lch(s.error));
+        expect(
+          ColorMath.contrast(s.primary, s.error) > 1.5 ||
+              (ColorMath.hueDistance(p.h, e.h) > 60 && p.c > 8 && e.c > 8),
+          isTrue,
+          reason:
+              '${flavor.name} onCard=$onCard ${ColorMath.hex(s.primary)} '
+              '${ColorMath.hex(s.error)}',
+        );
+      }
+    }
+  });
 }
