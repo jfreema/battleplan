@@ -131,8 +131,8 @@ void main() {
       }
     });
 
-    test("the page is the team's own color in every theme, not a blend", () {
-      for (final flavor in GumdropFlavor.values) {
+    test("Dark's and Candy's page is the team's own color, not a blend", () {
+      for (final flavor in [GumdropFlavor.dark, GumdropFlavor.candy]) {
         final base = GumdropColors.forFlavor(flavor);
         for (final (i, name) in _names.indexed) {
           final what = '$name ${flavor.name}';
@@ -159,10 +159,9 @@ void main() {
             reason: '$what page shadow ${ColorMath.hex(c.pageShadow)}',
           );
           expect(c.badgeRing, anyOf(c.page, c.ink), reason: what);
-          // Light and Candy keep their own cards, inputs, and text on
-          // cards; Dark's are the team color, muted (below). Every theme
-          // keeps its candy faces.
-          if (flavor != GumdropFlavor.dark) {
+          // Candy keeps its own cards, inputs, and text on cards; Dark's
+          // are the team color, muted (below). Both keep their candy faces.
+          if (flavor == GumdropFlavor.candy) {
             expect(c.surface, base.surface, reason: what);
             expect(c.inputFill, base.inputFill, reason: what);
             expect(c.textPrimary, base.textPrimary, reason: what);
@@ -172,14 +171,52 @@ void main() {
           expect(c.you.face, base.you.face, reason: what);
         }
       }
-      // A gray is the gray itself: Black's page is black in every theme.
-      for (final flavor in GumdropFlavor.values) {
+      // A gray is the gray itself: Black's page is black.
+      for (final flavor in [GumdropFlavor.dark, GumdropFlavor.candy]) {
         final black = teamTinted(
           GumdropColors.forFlavor(flavor),
           _argb('Black'),
         );
         expect(black.page, const Color(0xFF111111), reason: flavor.name);
         expect(black.textOnPage, const Color(0xFFFFFFFF), reason: flavor.name);
+      }
+    });
+
+    test("Light's page stays an off-white, shaded toward the team color", () {
+      const l = GumdropColors.light;
+      final own = ColorMath.lch(l.page);
+      for (final (i, name) in _names.indexed) {
+        final c = teamTinted(l, teamColorValues[i]);
+        final what = '$name ${ColorMath.hex(c.page)}';
+        // Not a colored page: Light's text, headings, cards, and candies.
+        expect(c.coloredPage, isFalse, reason: what);
+        expect(c.textOnPage, l.textOnPage, reason: what);
+        expect(c.textMutedOnPage, l.textMutedOnPage, reason: what);
+        expect(c.headingText, l.headingText, reason: what);
+        expect(c.headingShadow, l.headingShadow, reason: what);
+        expect(c.surface, l.surface, reason: what);
+        expect(c.you, l.you, reason: what);
+        if (_ownPage.contains(name)) {
+          expect(c.page, l.page, reason: what);
+          continue;
+        }
+        final page = ColorMath.lch(c.page);
+        // As light as Light's own page,
+        expect(page.l, closeTo(own.l, 0.6), reason: what);
+        // only slightly colored,
+        expect(page.c, lessThanOrEqualTo(own.c * lightShade + 1), reason: what);
+        // and in the team's hue (the grays are a gray off-white).
+        final team = ColorMath.lch(Color(teamColorValues[i]));
+        if (_grays.contains(name)) {
+          expect(page.c, lessThan(2.5), reason: what);
+        } else {
+          expect(page.c, greaterThan(3), reason: what);
+          expect(
+            ColorMath.hueDistance(page.h, team.h),
+            lessThan(12),
+            reason: what,
+          );
+        }
       }
     });
 
@@ -271,7 +308,7 @@ void main() {
       // On every team page, every candy either stands out from the page or
       // has an ink lip. A theme's own page is as designed: Dark's and
       // Light's for Blue and Navy, and Candy's blue for Blue.
-      for (final flavor in GumdropFlavor.values) {
+      for (final flavor in [GumdropFlavor.dark, GumdropFlavor.candy]) {
         for (final (i, name) in _names.indexed) {
           if (flavor == GumdropFlavor.candy
               ? name == 'Blue'
@@ -308,7 +345,7 @@ void main() {
         }
       }
       // The red teams' badges get an ink ring, not a red gap.
-      for (final flavor in GumdropFlavor.values) {
+      for (final flavor in [GumdropFlavor.dark, GumdropFlavor.candy]) {
         for (final name in ['Red', 'Maroon']) {
           final c = teamTinted(GumdropColors.forFlavor(flavor), _argb(name));
           expect(c.badgeRing, c.ink, reason: '$name ${flavor.name}');
@@ -317,9 +354,11 @@ void main() {
     });
 
     test("a team page's brightness follows the text on it", () {
-      final red = teamTinted(GumdropColors.light, _argb('Red'));
+      final red = teamTinted(GumdropColors.candy, _argb('Red'));
       expect(red.brightness, Brightness.dark);
       expect(red.card.brightness, Brightness.light);
+      final lightRed = teamTinted(GumdropColors.light, _argb('Red'));
+      expect(lightRed.brightness, Brightness.light);
       final yellow = teamTinted(GumdropColors.dark, _argb('Yellow'));
       expect(yellow.brightness, Brightness.light);
       expect(yellow.card.brightness, Brightness.dark);
@@ -560,7 +599,8 @@ void main() {
       );
       final c = t.extension<GumdropColors>()!;
       expect(c.flavor, GumdropFlavor.light);
-      expect(c.page, const Color(0xFFC2410C));
+      // Light's off-white, shaded toward orange.
+      expect(c.page, _near('#FFF3EE'));
       expect(t.scaffoldBackgroundColor, c.page);
     });
 

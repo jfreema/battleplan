@@ -721,7 +721,7 @@
   "candyLemon": "Lemon",
   "candyTangerine": "Tangerine",
   "candyCherry": "Cherry",
-  "teamColorTintNote": "Your team color is the background of every screen in the team.",
+  "teamColorTintNote": "Your team color shows in the background of every screen in the team.",
   "chatLookIntro": "How the team chat looks for everyone on {team}. Only admins can change it.",
   "@chatLookIntro": {"placeholders": {"team": {"type": "String"}}},
   "chatLookTip": "Every color keeps its words easy to read: dark text on candy, white on your team color.",

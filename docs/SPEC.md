@@ -405,7 +405,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Name (required, ≤ 50 characters).
     - Sport: Baseball, Basketball, Football, Hockey, Lacrosse, Soccer, Softball, Volleyball, or Other.
     - Logo or photo (optional).
-    - Team color (optional). Chosen from 15 colors, navy and gold among them. It's the background of every screen inside the team, in every theme (§7.4); badges show white or black text on it, whichever reads better.
+    - Team color (optional). Chosen from 15 colors, navy and gold among them. It shows in the background of every screen inside the team, in every theme (§7.4); badges show white or black text on it, whichever reads better.
     - Time zone (defaults to the device's).
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).
@@ -432,7 +432,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Every team has exactly one owner.
 - **TEAM-5 · MVP · Team settings (admins).**
   - Edit name, sport, logo, color, description, and time zone.
-  - **Team color:** the 15 colors as swatches, in this order: Blue (new teams start on it), Light blue, Navy, Teal, Green, Olive, Yellow, Mustard, Orange, Red, Maroon, Pink, Purple, Gray, and Black, under "Your team color is the background of every screen in the team." (TEAM-1, §7.4). Royal blue and Violet were taken out in 1.1 as too close to Blue and Purple: a team still set to one keeps it, and the app shows it as Blue or Purple (its swatch picked, its badge and backgrounds in that color).
+  - **Team color:** the 15 colors as swatches, in this order: Blue (new teams start on it), Light blue, Navy, Teal, Green, Olive, Yellow, Mustard, Orange, Red, Maroon, Pink, Purple, Gray, and Black, under "Your team color shows in the background of every screen in the team." (TEAM-1, §7.4). Royal blue and Violet were taken out in 1.1 as too close to Blue and Purple: a team still set to one keeps it, and the app shows it as Blue or Purple (its swatch picked, its badge and backgrounds in that color).
   - **Member permissions** (defaults in brackets):
     - create events [off]
     - create polls [on]
@@ -1173,7 +1173,7 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 - **Name:** Battleplan.
 - **Logo:** the Sticker Crest (owner's pick, 2026-10-26, for 1.1): a fat lemon shield tilted 7° to the left, outlined in navy on a navy hard shadow, with a white chat bubble saying B, on a blue raspberry gradient tile, plus the wordmark. The same mark is the website's favicon and header mark, the web app's tab icon and loading screen, the app icons (Android's themed icon is the shield as one shape), and the splash screens on Gumdrop Pop Dark's navy. The favicon draws the crest 10% bigger so it reads at 32 px. Before 1.1 the mark was a white flag on a pole with an angular B cut out of it (2026-10-14); the 1.0 App Store build keeps it.
 - **Primary color:** blue raspberry `#4D9BFF`, the app icon's background (a gradient from `#6DB3FF` to `#2F6FDE`) and Gumdrop Pop's main accent (§7.3). Deep blue `#2F5BEA` (Q9) was the 1.0 mark's color and is still the first team color.
-- **Team colors** make each team's screens its own: the color is the background of every screen inside the team (§7.4), and shows on the team's logo or initials badge, the switcher, and calendar dots in the all-teams view. Buttons and the candy accents keep the theme's colors, and so do my chat bubbles unless the chat look picks the team color (CHAT-18).
+- **Team colors** make each team's screens its own: the color shows in the background of every screen inside the team (§7.4), and shows on the team's logo or initials badge, the switcher, and calendar dots in the all-teams view. Buttons and the candy accents keep the theme's colors, and so do my chat bubbles unless the chat look picks the team color (CHAT-18).
 
 ### 7.2 Look and feel
 
@@ -1209,12 +1209,12 @@ Three themes, picked in Settings or the account menu (SET-2), from 1.1:
 - **Gumdrop Pop Light**: a pale blue-gray page (`#F2F5FD`), white cards with a thin outline, navy text, and navy headings with a light blue shadow.
 - **Gumdrop Candy**: a bright blue page (`#305AF6`) with white text and headings, white cards with navy text, and lemon as your color.
 
-**Team colors.** Every screen inside a team takes the team's color (TEAM-1) as its background, in every theme: the color itself, not a blend (owner's request, 2026-10-26, as in the Rounded Candy Pop design the picker comes from). Screens outside a team keep the theme's own.
+**Team colors.** Every screen inside a team takes the team's color (TEAM-1) in its background (owner's requests, 2026-10-26). Screens outside a team keep the theme's own.
 
-- The page is the team color, a little darker only where neither white nor navy text would read on it (Green). In Gumdrop Pop Dark, the cards, chat bubbles, event cards, tab bar, buttons, and inputs are a muted, dark version of the team color (a deep red for Red, a dark brown for Orange, grays for Black), each as dark as the navy it replaces, with its text tinted to match, so every contrast stays as designed. Light and Candy keep their white cards. The candies don't change.
-- Text straight on the page is white, or navy on light colors (Light blue, Yellow), with a heading shadow in the other one. Hard shadows on the page (the back button, the sticker) are navy, or the team color lifted lighter where navy wouldn't show (Navy, Maroon, Gray, Black).
-- A candy or a button too close to the page (lemon on Yellow, Dark's navy buttons on Gray or Black) gets a navy edge so it still stands out, and a red team's unread badge a navy ring.
-- Blue and Navy are the theme's own navy, so Dark and Light keep their own pages for them; new teams start on Blue, so a new team looks as the theme was designed. Candy's page takes them as it takes every color.
+- **Gumdrop Pop Light** stays a light off-white page, shaded slightly toward the team color (a pale blush for Red, cream for Yellow, a gray off-white for Gray and Black), with its lines and button edges in the same hue. Its white cards, text, headings, and candies don't change.
+- **Gumdrop Pop Dark and Gumdrop Candy** take the team color itself as the page, not a blend, as in the Rounded Candy Pop design the picker comes from; it's a little darker only where neither white nor navy text would read on it (Green). In Dark, the cards, chat bubbles, event cards, tab bar, buttons, and inputs are a muted, dark version of the team color (a deep red for Red, a dark brown for Orange, grays for Black), each as dark as the navy it replaces, with its text tinted to match, so every contrast stays as designed. Candy keeps its white cards. The candies don't change.
+- On those colored pages, text straight on the page is white, or navy on light colors (Light blue, Yellow), with a heading shadow in the other one. Hard shadows on the page (the back button, the sticker) are navy, or the team color lifted lighter where navy wouldn't show (Navy, Maroon, Gray, Black). A candy or a button too close to the page (lemon on Yellow, Dark's buttons on Gray or Black) gets a navy edge so it still stands out, and a red team's unread badge a navy ring.
+- Blue and Navy are the theme's own navy, so Dark and Light keep their own colors for them; new teams start on Blue, so a new team looks as the theme was designed. Candy's page takes them as it takes every color.
 - A team still on a retired color (Royal blue or Violet) shows as its replacement (Blue or Purple) everywhere (TEAM-5).
 
 Photos are never dimmed. All three themes meet **WCAG AA contrast** (4.5:1 for body text), under every team color too. Every key screen has golden images in all three themes, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in all three.

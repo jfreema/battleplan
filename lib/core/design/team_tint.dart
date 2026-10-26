@@ -5,41 +5,48 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A team's color behind every screen inside the team (TEAM-1): the theme's
-/// [base] colors with the page in [teamColor] (ARGB, from `groups.color`).
-/// Null leaves [base] as it is.
+/// [base] colors in [teamColor] (ARGB, from `groups.color`). Null leaves
+/// [base] as it is.
 ///
-/// The page is the team's own color, not a blend, in every theme, as in the
-/// Rounded Candy Pop design the picker comes from: darkened along L* only
-/// when neither white nor ink would read on it (Green). Light and Candy keep
-/// their white cards; Dark's cards, bubbles, buttons, inputs, and the text
-/// on them are a muted version of the team color ([mutedDarkCards]). The
-/// candies stay as they are. So the page is a [GumdropColors.coloredPage]:
-/// - Text on the page is whichever of white and ink reads better (ink on
-///   Light blue and Yellow), and its heading shadow the other one. Muted
-///   and success text keep the theme's colors where they read on the page,
-///   and are the page's text color where they don't.
-/// - Hard shadows on the page (the back button, the sticker) are ink, or
-///   the team color 25 L* lighter where ink would vanish (Gray, Navy,
-///   Black, Maroon).
-/// - A candy too close to the page (lemon on Yellow, tangerine on Orange)
-///   gets an ink lip, and so do the secondary buttons, so they still stand
-///   out; a red team's unread badge gets an ink ring.
+/// - **Gumdrop Pop Light** stays a light off-white page, shaded slightly
+///   toward the team color ([paleLight]), with its white cards.
+/// - **Gumdrop Pop Dark** and **Gumdrop Candy** take the team's own color as
+///   the page, not a blend, as in the Rounded Candy Pop design the picker
+///   comes from: darkened along L* only when neither white nor ink would
+///   read on it (Green). Candy keeps its white cards; Dark's cards, bubbles,
+///   buttons, inputs, and the text on them are a muted version of the team
+///   color ([mutedDarkCards]). The candies stay as they are. So the page is
+///   a [GumdropColors.coloredPage]:
+///   - Text on the page is whichever of white and ink reads better (ink on
+///     Light blue and Yellow), and its heading shadow the other one. Muted
+///     and success text keep the theme's colors where they read on the
+///     page, and are the page's text color where they don't.
+///   - Hard shadows on the page (the back button, the sticker) are ink, or
+///     the team color 25 L* lighter where ink would vanish (Gray, Navy,
+///     Black, Maroon).
+///   - A candy too close to the page (lemon on Yellow, tangerine on Orange)
+///     gets an ink lip, and so do the secondary buttons, so they still stand
+///     out; a red team's unread badge gets an ink ring.
 ///
 /// Blue and Navy are Gumdrop's own navy ([isGumdropHue]): Dark and Light
-/// keep their own pages for them, so the theme looks as designed for the
+/// keep their own colors for them, so the theme looks as designed for the
 /// default team color. Candy's page is already blue, and takes the team's.
 GumdropColors teamTinted(GumdropColors base, int? teamColor) {
   if (teamColor == null) return base;
   final untinted = GumdropColors.forFlavor(base.flavor);
   final team = Color(teamColor).withAlpha(255);
-  final keepsOwnPage = base.flavor != GumdropFlavor.candy && isGumdropHue(team);
-  final cards = base.flavor == GumdropFlavor.dark
-      ? mutedDarkCards(untinted, team)
-      : untinted;
-  final tinted = (keepsOwnPage ? untinted : _onTeamPage(cards, team)).copyWith(
-    teamColor: team,
-  );
-  return base.onCard ? tinted.card : tinted;
+  final keepsOwn = base.flavor != GumdropFlavor.candy && isGumdropHue(team);
+  final tinted = keepsOwn
+      ? untinted
+      : switch (base.flavor) {
+          GumdropFlavor.light => paleLight(untinted, team),
+          GumdropFlavor.dark => _onTeamPage(
+            mutedDarkCards(untinted, team),
+            team,
+          ),
+          GumdropFlavor.candy => _onTeamPage(untinted, team),
+        };
+  return (base.onCard ? tinted.card : tinted).copyWith(teamColor: team);
 }
 
 /// Gumdrop's own hue: halfway between the Dark and Light pages' hues
@@ -57,6 +64,10 @@ const sameHueDegrees = 25.0;
 /// their hue: never the theme's own navy.
 const grayChroma = 20.0;
 
+/// How much of its chroma a gray team color (Gray, Black) gives Light's
+/// off-white.
+const grayShare = 0.35;
+
 /// Whether [team] is a gray (Gray, Black) rather than a color.
 bool isGray(Color team) => ColorMath.lch(team).c < grayChroma;
 
@@ -66,6 +77,43 @@ bool isGray(Color team) => ColorMath.lch(team).c < grayChroma;
 bool isGumdropHue(Color team) =>
     !isGray(team) &&
     ColorMath.hueDistance(ColorMath.lch(team).h, gumdropHue) <= sameHueDegrees;
+
+/// How much more chroma than its own blue-white Gumdrop Pop Light takes in
+/// a team's hue: enough to see the team color, little enough to stay an
+/// off-white.
+const lightShade = 1.5;
+
+/// Gumdrop Pop Light in [team]'s color: the page, wells, inputs, hairlines,
+/// outlines, and lips each keep their L* (so every contrast stays as
+/// designed) and take the team's hue, at [lightShade] times Light's own
+/// chroma (no more than the team's, and a third of that for a gray, so Gray
+/// is a gray off-white rather than Light's own blue-white). The page stays a
+/// light off-white, shaded slightly toward the team color; cards stay white,
+/// and the text, headings, and candies don't change.
+GumdropColors paleLight(GumdropColors l, Color team) {
+  final t = ColorMath.lch(team);
+  final share = t.c < grayChroma ? grayShare : 1.0;
+  Color shade(Color token) {
+    final n = ColorMath.lch(token);
+    return ColorMath.fromLch(n.l, math.min(n.c * lightShade, t.c) * share, t.h);
+  }
+
+  final page = shade(l.page);
+  final chip = shade(l.well);
+  final border = shade(l.raisedBorder);
+  return l.copyWith(
+    page: page,
+    inputFill: shade(l.inputFill),
+    well: chip,
+    switchOffTrack: chip,
+    surfaceBorder: shade(l.surfaceBorder),
+    raisedBorder: border,
+    inputBorder: border,
+    divider: border,
+    raisedLip: shade(l.raisedLip),
+    badgeRing: page,
+  );
+}
 
 /// Gumdrop Pop Dark's cards in [team]'s color: every navy surface (cards,
 /// bubbles, the tab bar, raised buttons, wells, inputs, lines, lips), the
