@@ -23,19 +23,21 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 Free team chat, schedule, and RSVPs for sports teams. No ads, ever.
 ```
 
-**Full description** (4,000 characters at most; this one is about 1,850):
+**Full description** (4,000 characters at most; this one is about 2,000):
 
 ```
 Battleplan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
 
 TEAM CHAT
 • Photos, reactions, replies, @mentions, and pinned messages
+• Every photo shared in the chat, in one place
 • Announcements from coaches that everyone sees
 • Direct messages with anyone you share a team with
 
 SCHEDULE AND RSVPS
 • Games, practices, and events with opponents, places, and reminders
-• Going, Maybe, or Not going in one tap, for yourself or for each of your players
+• Going, Maybe, or Not going in one tap, for yourself or for each of your players, right from the schedule
+• Assignments like snacks, drinks, and scorekeeper that families volunteer for
 • Coaches see how many players are coming, with coaches and others counted apart
 • Coaches can email everyone who hasn't answered, and they can answer right from the email
 • A private calendar link keeps your calendar app in sync
@@ -52,9 +54,9 @@ MORE FOR COACHES
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS
-• Three looks: Gumdrop Pop Dark, Gumdrop Pop Light, and Gumdrop Candy
+• Four looks: Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
 • Each team picks its color, and the team's screens take it on
-• Pick your own message color in the chat
+• Coaches pick the chat's message color and background
 
 SAFE AND PRIVATE
 • Teams are invite-only, by link, QR code, or code

@@ -1,0 +1,169 @@
+<!doctype html>
+<!-- A chalkboard lineup for the store screenshots' chat (store-shots.ts), drawn
+     with macOS fonts. Rendered to lineup.jpg with headless Chrome at 1600x1200
+     (--headless=new --window-size=1600,1200 --screenshot), then saved as a
+     JPEG at quality 86. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; width: 1600px; height: 1200px; overflow: hidden; background: #3a3631; }
+  #scene { position: absolute; inset: 0; perspective: 2200px; perspective-origin: 50% 45%; }
+  #wall { position: absolute; inset: 0; }
+  #board {
+    position: absolute; left: 70px; top: 40px; width: 1460px; height: 1110px;
+    transform: rotateY(-9deg) rotateX(3deg) rotateZ(-1.2deg);
+    transform-origin: 50% 50%;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.55), 0 8px 18px rgba(0,0,0,0.45);
+  }
+  #fx { position: absolute; inset: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="scene">
+  <!-- The dugout wall: painted cinder block. -->
+  <svg id="wall" width="1600" height="1200" viewBox="0 0 1600 1200">
+    <defs>
+      <filter id="wallgrain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="3" seed="4" result="n"/>
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0.9 -0.25"/>
+        <feComposite in2="SourceGraphic" operator="in" result="g"/>
+        <feBlend in="SourceGraphic" in2="g" mode="multiply"/>
+      </filter>
+      <pattern id="blocks" width="400" height="200" patternUnits="userSpaceOnUse">
+        <rect width="400" height="200" fill="#7d7a73"/>
+        <rect x="4" y="4" width="392" height="92" fill="#86837b"/>
+        <rect x="-196" y="104" width="392" height="92" fill="#83807a"/>
+        <rect x="204" y="104" width="392" height="92" fill="#888579"/>
+      </pattern>
+    </defs>
+    <rect width="1600" height="1200" fill="url(#blocks)" filter="url(#wallgrain)"/>
+    <rect width="1600" height="1200" fill="#2a2620" opacity="0.35"/>
+  </svg>
+
+  <svg id="board" width="1460" height="1110" viewBox="0 0 1460 1110">
+    <defs>
+      <!-- Oak frame grain: long streaks along the piece. -->
+      <filter id="oakH" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.004 0.18" numOctaves="3" seed="7" result="n"/>
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.42  0 0 0 0 0.27  0 0 0 0 0.13  0 0 0 1.4 -0.35"/>
+        <feComposite in2="SourceGraphic" operator="in" result="g"/>
+        <feBlend in="SourceGraphic" in2="g" mode="multiply"/>
+      </filter>
+      <filter id="oakV" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.18 0.004" numOctaves="3" seed="9" result="n"/>
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.42  0 0 0 0 0.27  0 0 0 0 0.13  0 0 0 1.4 -0.35"/>
+        <feComposite in2="SourceGraphic" operator="in" result="g"/>
+        <feBlend in="SourceGraphic" in2="g" mode="multiply"/>
+      </filter>
+      <!-- Slate with old, half-erased chalk clouding it. -->
+      <filter id="slate" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.0035 0.006" numOctaves="4" seed="21" result="clouds"/>
+        <feColorMatrix in="clouds" type="matrix" values="0 0 0 0 0.80  0 0 0 0 0.84  0 0 0 0 0.82  0 0 0 0.75 -0.42" result="dust"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="grain"/>
+        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0.8  0 0 0 0 0.8  0 0 0 0 0.8  0 0 0 0.35 -0.12" result="speck"/>
+        <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="dust"/><feMergeNode in="speck"/></feMerge>
+      </filter>
+      <!-- Erase swipes: wide, soft arcs of residue. -->
+      <filter id="swipe" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.02 0.2" numOctaves="2" seed="5" result="t"/>
+        <feDisplacementMap in="SourceGraphic" in2="t" scale="30" result="d"/>
+        <feGaussianBlur in="d" stdDeviation="14"/>
+      </filter>
+      <!-- Chalk strokes: rough edges and a broken, powdery fill. -->
+      <filter id="chalk" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="11" result="wob"/>
+        <feDisplacementMap in="SourceGraphic" in2="wob" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+        <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="2" result="pow"/>
+        <feColorMatrix in="pow" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -3.2 2.35" result="holes"/>
+        <feComposite in="rough" in2="holes" operator="in" result="broken"/>
+        <feGaussianBlur in="broken" stdDeviation="0.6" result="soft"/>
+        <feGaussianBlur in="rough" stdDeviation="3" result="halo"/>
+        <feComponentTransfer in="halo" result="halo2"><feFuncA type="linear" slope="0.22"/></feComponentTransfer>
+        <feMerge><feMergeNode in="halo2"/><feMergeNode in="soft"/></feMerge>
+      </filter>
+      <linearGradient id="slateShade" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#26362d"/>
+        <stop offset="0.55" stop-color="#1f2d26"/>
+        <stop offset="1" stop-color="#17221d"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Frame -->
+    <rect x="0" y="0" width="1460" height="56" fill="#b98a55" filter="url(#oakH)"/>
+    <rect x="0" y="1054" width="1460" height="56" fill="#b08250" filter="url(#oakH)"/>
+    <rect x="0" y="0" width="56" height="1110" fill="#b5864f" filter="url(#oakV)"/>
+    <rect x="1404" y="0" width="56" height="1110" fill="#ad7e4b" filter="url(#oakV)"/>
+    <rect x="0" y="0" width="1460" height="1110" fill="none" stroke="#5a3d1f" stroke-width="3" opacity="0.6"/>
+    <rect x="54" y="54" width="1352" height="1002" fill="none" stroke="#3d2914" stroke-width="5" opacity="0.7"/>
+
+    <!-- Slate -->
+    <rect x="56" y="56" width="1348" height="998" fill="url(#slateShade)" filter="url(#slate)"/>
+    <g opacity="0.10" fill="none" stroke="#dfe6e2" stroke-width="70" filter="url(#swipe)">
+      <path d="M150 260 C 420 200, 760 330, 1180 240"/>
+      <path d="M200 640 C 520 560, 900 720, 1300 600"/>
+      <path d="M120 900 C 400 860, 700 960, 1050 880"/>
+    </g>
+    <!-- Chalk tray dust along the bottom edge -->
+    <rect x="70" y="1030" width="1320" height="22" fill="#e8ece8" opacity="0.18" filter="url(#swipe)"/>
+
+    <g opacity="0.07" fill="#e8ece8" font-family="Chalkduster" font-size="60" filter="url(#swipe)">
+      <text x="760" y="300">PRACTICE 6PM</text>
+      <text x="820" y="380">bring helmets</text>
+    </g>
+    <!-- The lineup, in chalk -->
+    <g filter="url(#chalk)" fill="#f2f4f0" font-family="Chalkduster" >
+      <text x="130" y="175" font-size="78" letter-spacing="2">LINEUP vs. EAGLES</text>
+      <path d="M128 205 C 400 196, 700 210, 905 199" stroke="#f2f4f0" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <g font-size="54">
+        <text x="140" y="300">1. Tasha <tspan dx="20">CF</tspan></text>
+        <text x="140" y="372">2. Jim <tspan dx="20">P</tspan></text>
+        <text x="140" y="444">3. Andy <tspan dx="20">SS</tspan></text>
+        <text x="140" y="516">4. Maria <tspan dx="20">2B</tspan></text>
+        <text x="140" y="588">5. Chris <tspan dx="20">1B</tspan></text>
+        <text x="140" y="660">6. Sarah <tspan dx="20">C</tspan></text>
+        <text x="140" y="732">7. Mike <tspan dx="20">3B</tspan></text>
+        <text x="140" y="804">8. Dan <tspan dx="20">LF</tspan></text>
+        <text x="140" y="876">9. Jess <tspan dx="20">RF</tspan></text>
+        <text x="140" y="948">10. Luis <tspan dx="20">DP</tspan></text>
+      </g>
+      <!-- A quick diamond sketch -->
+      <g fill="none" stroke="#f2f4f0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1035 820 L 1215 640 L 1035 460 L 855 640 Z"/>
+        <path d="M1035 820 L 760 545 M1035 820 L 1310 545" opacity="0.85"/>
+        <path d="M 760 545 C 860 330, 1210 330, 1310 545" opacity="0.85"/>
+        <circle cx="1035" cy="660" r="16"/>
+      </g>
+      <g font-size="40">
+        <text x="1010" y="415">CF</text>
+        <text x="1195" y="610">1B</text>
+        <text x="830" y="610">3B</text>
+        <text x="1095" y="510">2B</text>
+        <text x="935" y="510">SS</text>
+        <text x="1050" y="890">C</text>
+      </g>
+      <text x="800" y="975" font-size="50">Warmups 9:15!</text>
+    </g>
+    <!-- A little gloss from the overhead light -->
+    <ellipse cx="980" cy="260" rx="520" ry="200" fill="#ffffff" opacity="0.05" filter="url(#swipe)"/>
+  </svg>
+</div>
+
+<!-- Phone-camera look: warm light, vignette, grain. -->
+<svg id="fx" width="1600" height="1200" viewBox="0 0 1600 1200">
+  <defs>
+    <radialGradient id="vig" cx="0.52" cy="0.45" r="0.78">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.55"/>
+    </radialGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="1" seed="8" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0.16 0"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1200" fill="#ffb764" opacity="0.07"/>
+  <rect width="1600" height="1200" fill="url(#vig)"/>
+  <rect width="1600" height="1200" filter="url(#grain)"/>
+</svg>
+</body>
+</html>

@@ -1744,6 +1744,7 @@ What exists in the code today, and where. This section is updated with every cha
 | Answering from an email | `functions/src/answers/` | `emailRsvpReminder` (an admin's "Email people who haven't RSVP'd": one email per person with an answer link for each answer) and `answerPage`, the `/a/<token>` page behind Hosting's rewrite where Send saves the RSVP (SCHED-14, §6.15) |
 | Super-admin bootstrap | `tools/seed/set-super-admin.ts` | Grants or revokes the `superAdmin` claim with your gcloud sign-in, and sets `users.superAdmin` to match |
 | Seed data | `tools/seed/seed.ts` | Sample people, teams of adult players and of kids, players (two with sample details: fake 555-01xx phone numbers), messages, events, RSVPs for the emulators |
+| Store screenshot data | `tools/seed/store-shots.ts`, `store-shots/` | On top of the seed, for the App Store screenshots (docs/STORE-LISTING.md): more players and parents, events and answers, poll votes, documents, photo posts made for it (no people), and the relay play on Thunder's board; emulators only |
 | App Review demo | `tools/seed/demo.ts`, `demo-data.ts`, `demo-target.ts` | The demo account (password from `DEMO_PASSWORD`) owning a team of adult players (one linked to its own member as the player, and a pending player to approve) and guardian of a player on a kids' team, with messages, events, RSVPs, and a pinned link; only on dev behind `--write-to-dev`, or the emulators; never prod (D54). Tests: `npm --prefix tools/seed test` |
 
 ### Tooling

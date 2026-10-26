@@ -34,6 +34,20 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 
 ## Version information
 
+**What's New in This Version** (1.1, for the version after 1.0; 4,000 characters):
+
+```
+A whole new look, Gumdrop Pop, with four themes to pick from in Settings or your profile menu: Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena. Each team's color now fills the background of every screen in the team.
+
+Also new:
+• Assignments on events: snacks, drinks, scorekeeper, or anything else, that families volunteer for or coaches assign
+• Photos: every photo shared in the team's chat, in one place under Documents
+• Answer an RSVP right from the schedule by tapping your answer
+• Shared invite links show the team's name and logo
+• Time zones by name, like Central Time (Chicago)
+• A new app icon
+```
+
 **Promotional text** (170 characters; can change without a new version):
 
 ```
@@ -47,12 +61,14 @@ Battleplan is team chat and scheduling for sports teams, free for every team and
 
 TEAM CHAT
 • Photos, reactions, replies, @mentions, and pinned messages
+• Every photo shared in the chat, in one place
 • Announcements from coaches that everyone sees
 • Direct messages with anyone you share a team with
 
 SCHEDULE AND RSVPS
 • Games, practices, and events with opponents, places, and reminders
-• Going, Maybe, or Not going in one tap, for yourself or for each of your players
+• Going, Maybe, or Not going in one tap, for yourself or for each of your players, right from the schedule
+• Assignments like snacks, drinks, and scorekeeper that families volunteer for
 • Coaches see how many players are coming, with coaches and others counted apart
 • Coaches can email everyone who hasn't answered, and they can answer right from the email
 • A private calendar link keeps your calendar app in sync
@@ -67,6 +83,11 @@ MORE FOR COACHES
 • Documents: lineups, rules, waivers, and links
 • Plays: a whiteboard with real baseball, basketball, soccer, and football fields. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
+
+MAKE IT YOURS
+• Four looks: Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
+• Each team picks its color, and the team's screens take it on
+• Coaches pick the chat's message color and background
 
 SAFE AND PRIVATE
 • Teams are invite-only, by link, QR code, or code
@@ -97,7 +118,7 @@ coach,sports,roster,attendance,practice,league,parents,baseball,softball,soccer,
 | `store/app-store/iphone-6.3/` | iPhone 6.3-inch, only if App Store Connect asks for it | 1206 × 2622 | the same six, scaled down |
 | `store/app-store/ipad-13/` | iPad 13-inch | 2064 × 2752 | chat, schedule, an event's RSVPs, a play, documents |
 
-They're captures of the app in the iOS Simulator (iPhone 18 Pro Max and iPad Pro 13-inch) against the Firebase emulators, with the seed data plus sample players, events, documents, and photos made for them (no real people). Retake them when the screens they show change: build from a scratch copy with `bannerLabel` returning null (as website/README.md describes), set the Simulator's status bar to 9:41 with full bars, and capture with `xcrun simctl io <device> screenshot`.
+They're captures of the app in Gumdrop Pop Dark, retaken for 1.1 on 2026-10-26 in the iOS Simulator (iPhone 18 Pro Max and iPad Pro 13-inch (M5)) against the Firebase emulators, with the seed data plus the sample players, events, documents, and photos `tools/seed/store-shots.ts` adds (no real people). Retake them when the screens they show change: start the emulators, then run `npm --prefix tools/seed run seed` and `npm --prefix tools/seed run store-shots` (add `-- --ipad` for the iPad's); build from a scratch copy with `bannerLabel` returning null (as website/README.md describes); set the Simulator's status bar to 9:41 with full bars, and the iPad to Full Screen Apps so its status bar shows no app name; sign in as `coach@example.com`; and capture with `xcrun simctl io <device> screenshot`. The iPhone captures have a 3 × 3 black speck in the top-left corner to paint over. The roster is Cyclone's; the rest is Thunder's, with the iPad's schedule on All my teams.
 
 ## App Review information (store checklist 1.14, 1.17, 3.8)
 
