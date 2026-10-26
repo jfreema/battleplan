@@ -308,10 +308,14 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // The logo button goes under the name when the
-                          // panel is too narrow for one row (Slide Over).
+                          // panel is too narrow for one row (Slide Over, or
+                          // large text).
                           LayoutBuilder(
                             builder: (context, box) {
-                              final wide = box.maxWidth >= 300;
+                              final scale =
+                                  MediaQuery.textScalerOf(context).scale(14) /
+                                  14;
+                              final wide = box.maxWidth >= 300 * scale;
                               final badge = DecoratedBox(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(18),
@@ -416,6 +420,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                             label: l10n.sportLabel,
                             child: DropdownButtonFormField<Sport>(
                               initialValue: group.sport,
+                              // The sport's name gets the room, and shortens
+                              // at large text sizes.
+                              isExpanded: true,
                               style: field?.copyWith(color: card.textPrimary),
                               decoration: gumdropField(),
                               icon: Icon(
@@ -430,7 +437,10 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                                 for (final sp in Sport.values)
                                   DropdownMenuItem(
                                     value: sp,
-                                    child: Text(sportName(l10n, sp)),
+                                    child: Text(
+                                      sportName(l10n, sp),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                               ],
                               onChanged: (sp) => sp == null

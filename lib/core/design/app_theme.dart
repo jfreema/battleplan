@@ -65,11 +65,11 @@ abstract final class AppTheme {
   /// well), low (cards, sheets), container (menus), high (dialogs), and
   /// highest (chips, others' old-style bubbles).
   static List<Color> _containers(GumdropColors g) {
-    if (g.flavor == GumdropFlavor.candy && !g.onCard) {
-      // Candy's page is blue with white (or ink) text, so the surfaces that
-      // hold that text sit a little further from it than the page does:
-      // darker under white text, lighter under ink. White cards with navy
-      // text are GumdropSurface's.
+    if (g.coloredPage && !g.onCard) {
+      // A colored page (Candy's blue, a team's color) has white (or ink)
+      // text, so the surfaces that hold that text sit a little further from
+      // it than the page does: darker under white text, lighter under ink.
+      // The theme's own cards, with their text, are GumdropSurface's.
       final page = ColorMath.lch(g.page);
       final sign = g.textOnPage == g.ink ? 1 : -1;
       Color step(double by) =>
@@ -89,7 +89,7 @@ abstract final class AppTheme {
   }
 
   static ThemeData build(GumdropColors g) {
-    final candyPage = g.flavor == GumdropFlavor.candy && !g.onCard;
+    final colorPage = g.coloredPage && !g.onCard;
     final background = g.background;
     final text = g.textOnPage;
     final muted = g.textMutedOnPage;
@@ -156,15 +156,16 @@ abstract final class AppTheme {
     final appColors = AppColors.fromGumdrop(g, backgrounds: textBackgrounds);
     final textTheme = _textTheme(g, text);
     final buttons = GumdropButtons(g, focusRing: text);
-    // Inputs on Candy's blue page hold white text, so they're the deepest
-    // blue; on a card (GumdropSurface) they're the design's pale blue.
-    final inputFill = candyPage ? highest : g.inputFill;
-    final inputBorder = candyPage ? g.pageShadow : g.inputBorder;
+    // Inputs on a colored page hold its text, so they're a step past the
+    // page (the deepest blue on Candy's); on a card (GumdropSurface) they're
+    // the theme's own.
+    final inputFill = colorPage ? highest : g.inputFill;
+    final inputBorder = colorPage ? g.pageShadow : g.inputBorder;
     OutlineInputBorder outline(Color color, double width) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(Corners.input),
       borderSide: BorderSide(color: color, width: width),
     );
-    final cardSide = candyPage || g.surfaceBorderWidth == 0
+    final cardSide = colorPage || g.surfaceBorderWidth == 0
         ? BorderSide.none
         : BorderSide(color: g.surfaceBorder, width: g.surfaceBorderWidth);
     final label = textTheme.labelLarge!;
@@ -226,7 +227,7 @@ abstract final class AppTheme {
         border: outline(inputBorder, 2),
         enabledBorder: outline(inputBorder, 2),
         disabledBorder: outline(inputBorder.withValues(alpha: 0.5), 2),
-        focusedBorder: outline(candyPage ? g.you.face : primary, 2.5),
+        focusedBorder: outline(colorPage ? g.you.face : primary, 2.5),
         errorBorder: outline(error, 2),
         focusedErrorBorder: outline(error, 2.5),
         hintStyle: textTheme.bodyLarge?.copyWith(color: muted),

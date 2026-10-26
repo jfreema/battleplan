@@ -50,6 +50,36 @@ void main() {
     // The rail is a white card in Candy: its labels must use the card's ink.
     'wide chat': (WidgetTester tester, {required ThemePreference theme}) =>
         pumpTeam(tester, theme: theme, size: wideSize),
+    // A team's color is the page (TEAM-1): text on a light one (Yellow)
+    // and a dark one (Maroon) must read, on the page and on its cards.
+    for (final (color, argb) in [
+      ('Yellow', 0xFFD4A017),
+      ('Maroon', 0xFF7F1D1D),
+    ]) ...{
+      'chat, $color team': (
+        WidgetTester tester, {
+        required ThemePreference theme,
+      }) => pumpTeam(tester, theme: theme, teamColor: argb),
+      'schedule, $color team':
+          (WidgetTester tester, {required ThemePreference theme}) async {
+            await pumpTeam(tester, theme: theme, teamColor: argb);
+            await tester.tap(find.text('Schedule'));
+            await tester.pumpAndSettle();
+          },
+      'team settings, $color team':
+          (WidgetTester tester, {required ThemePreference theme}) async {
+            await pumpTeam(tester, theme: theme, teamColor: argb);
+            await goTo(tester, '/g/a/settings');
+          },
+      'event, $color team':
+          (WidgetTester tester, {required ThemePreference theme}) async {
+            await pumpTeam(tester, theme: theme, teamColor: argb);
+            await tester.tap(find.text('Schedule'));
+            await tester.pumpAndSettle();
+            await tester.tap(find.text('vs. Eagles').first);
+            await tester.pumpAndSettle();
+          },
+    },
     'roster': (WidgetTester tester, {required ThemePreference theme}) async {
       await pumpTeam(tester, theme: theme);
       await goTo(tester, '/g/a/roster');

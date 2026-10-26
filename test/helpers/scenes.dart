@@ -435,14 +435,12 @@ goldenScreens = {
   },
   'chat_wide': (tester, {required theme}) =>
       pumpTeam(tester, theme: theme, size: wideSize),
-  // A gray team color (Gray) tints the team gray (TEAM-1).
+  // A team's color is the page in every theme (TEAM-1): Gray, Orange (no
+  // longer a brown blend in Dark), and Black.
   'chat_gray': (tester, {required theme}) =>
       pumpTeam(tester, theme: theme, teamColor: 0xFF334155),
-  // A warm team color (Orange): a warm charcoal in Dark, not brown, with
-  // orange heading shadows.
   'chat_orange': (tester, {required theme}) =>
       pumpTeam(tester, theme: theme, teamColor: 0xFFC2410C),
-  // Black: gray in Dark and Light, a black page with lifted shadows in Candy.
   'chat_black': (tester, {required theme}) =>
       pumpTeam(tester, theme: theme, teamColor: 0xFF111111),
 };

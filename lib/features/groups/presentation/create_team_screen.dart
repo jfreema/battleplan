@@ -192,6 +192,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                             label: l10n.sportLabel,
                             child: DropdownButtonFormField<Sport>(
                               initialValue: _sport,
+                              isExpanded: true,
                               style: field?.copyWith(color: card.textPrimary),
                               decoration: gumdropField(),
                               icon: Icon(
@@ -206,7 +207,10 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                                 for (final s in Sport.values)
                                   DropdownMenuItem(
                                     value: s,
-                                    child: Text(sportName(l10n, s)),
+                                    child: Text(
+                                      sportName(l10n, s),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                               ],
                               onChanged: (s) =>

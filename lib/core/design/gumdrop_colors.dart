@@ -49,9 +49,10 @@ class GumdropAccent {
 /// surfaces under it (team_tint.dart).
 ///
 /// Two contexts: on the page (the default), and on a card ([onCard]). They
-/// differ only in Candy, where the page is blue with white text and cards
-/// are white with navy text; [card] gives the card context, and
-/// `GumdropSurface` applies it to a subtree.
+/// differ where the page is a color of its own ([coloredPage]): Candy's
+/// blue page with white text and white cards with navy text, or a team's
+/// color behind a team's screens in any theme. [card] gives the card
+/// context, and `GumdropSurface` applies it to a subtree.
 @immutable
 class GumdropColors extends ThemeExtension<GumdropColors> {
   const new({
@@ -94,6 +95,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     required this.bubblegum,
     this.teamColor,
     this.onCard = false,
+    this.coloredPage = false,
   });
 
   /// Gumdrop Pop Dark (tokens "Navy").
@@ -247,6 +249,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Gumdrop Candy. Its "you" color is lemon, so you and maybe match.
   static const candy = GumdropColors(
     flavor: GumdropFlavor.candy,
+    coloredPage: true,
     page: Color(0xFF305AF6),
     surface: Color(0xFFFFFFFF),
     surfaceBorder: Color(0xFFFFFFFF),
@@ -357,6 +360,12 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Whether these are the card context (see [card]).
   final bool onCard;
 
+  /// Whether the page is a color of its own, with its own text colors
+  /// ([textOnPage] and the rest): Candy's blue, or a team's color
+  /// (team_tint.dart). Material's surfaces on such a page take their colors
+  /// from it, and cards keep the theme's own.
+  final bool coloredPage;
+
   /// The screen's background.
   final Color page;
 
@@ -385,11 +394,12 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   final Color divider;
   final Color switchOffTrack;
 
-  /// Text on [surface] (and on the page in Dark and Light).
+  /// Text on [surface] (and on the page, unless it's a [coloredPage]).
   final Color textPrimary;
   final Color textMuted;
 
-  /// Text straight on the [page]. Differs from [textPrimary] only in Candy.
+  /// Text straight on the [page]. Differs from [textPrimary] only on a
+  /// [coloredPage].
   final Color textOnPage;
   final Color textMutedOnPage;
 
@@ -442,19 +452,24 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   final GumdropAccent bubblegum;
 
   /// Light, or dark, for Material and the status bar: the brightness of
-  /// what text sits on in this context (Candy's page is "dark": white text).
-  Brightness get brightness => switch (flavor) {
-    GumdropFlavor.dark => Brightness.dark,
-    GumdropFlavor.light => Brightness.light,
-    GumdropFlavor.candy => onCard ? Brightness.light : Brightness.dark,
-  };
+  /// what text sits on in this context. A [coloredPage] is "dark" under
+  /// white text (Candy's blue, a red team) and "light" under ink (a Yellow
+  /// team); cards are dark in Dark and light in Light and Candy.
+  Brightness get brightness {
+    if (coloredPage && !onCard) {
+      return ColorMath.luminance(textOnPage) > 0.5
+          ? Brightness.dark
+          : Brightness.light;
+    }
+    return flavor == GumdropFlavor.dark ? Brightness.dark : Brightness.light;
+  }
 
   /// What text sits on in this context: the page, or a card.
   Color get background => onCard ? surface : page;
 
   /// The card context: text, headings, and success colors for a [surface],
-  /// as `GumdropSurface` applies them. The same colors in Dark and Light,
-  /// whose cards share the page's text colors.
+  /// as `GumdropSurface` applies them. The same colors as the page's unless
+  /// it's a [coloredPage].
   GumdropColors get card => onCard
       ? this
       : copyWith(
@@ -493,6 +508,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     GumdropFlavor? flavor,
     Color? teamColor,
     bool? onCard,
+    bool? coloredPage,
     Color? page,
     Color? surface,
     Color? surfaceBorder,
@@ -533,6 +549,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     flavor: flavor ?? this.flavor,
     teamColor: teamColor ?? this.teamColor,
     onCard: onCard ?? this.onCard,
+    coloredPage: coloredPage ?? this.coloredPage,
     page: page ?? this.page,
     surface: surface ?? this.surface,
     surfaceBorder: surfaceBorder ?? this.surfaceBorder,
@@ -581,6 +598,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       flavor: near.flavor,
       teamColor: near.teamColor,
       onCard: near.onCard,
+      coloredPage: near.coloredPage,
       page: c(page, other.page),
       surface: c(surface, other.surface),
       surfaceBorder: c(surfaceBorder, other.surfaceBorder),

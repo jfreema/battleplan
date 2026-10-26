@@ -709,11 +709,9 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         color: deleted ? null : background,
         border: deleted
             ? Border.all(color: c.divider, width: 2)
-            // My candy on a Candy page of its own hue (lemon on a Yellow
-            // team) keeps an ink edge.
-            : mine &&
-                  c.flavor == GumdropFlavor.candy &&
-                  ColorMath.contrast(background, c.page) < 2
+            // My bubble on a page of its own hue (lemon on a Yellow team's
+            // page, blue on a Light blue team's) keeps an ink edge.
+            : mine && ColorMath.contrast(background, c.page) < 2
             ? Border.all(color: c.ink, width: 2)
             : !mine && !announcement && c.surfaceBorderWidth > 0
             ? Border.all(color: c.surfaceBorder, width: c.surfaceBorderWidth)
