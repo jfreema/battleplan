@@ -754,6 +754,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **SCHED-4 · MVP · Event details.**
   - Every field from creation.
   - Large **Going / Maybe / Not going** buttons, with an optional note ("Leaving at halftime"). Members linked to players get one set per player, and admins and members not linked to a player get a Me set, unless they're a player themselves (PLAYER-6).
+  - The same buttons without opening the event (the owner's request, 2026-10-26): on the schedule list, my answer on an upcoming event I can still answer is a button that opens them in a sheet (a panel on wide screens), with All my players, a set per person, Maybe where the team allows it, Clear, a note, and **See event**. The rest of the card opens the event.
   - Attendee lists grouped by Going, Maybe, Not going, and No response, with notes. The lists show players and who answered for them, with coaches and others listed apart.
   - Actions for everyone: Add to calendar, Share, Directions.
   - Admin actions: Edit, Cancel event, Delete, Set RSVP for a member or player.

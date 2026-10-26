@@ -938,6 +938,8 @@
   "eventNotes": "Notes",
   "eventRsvpTitle": "RSVPs",
   "eventAreYouGoing": "Are you going?",
+  "rsvpChangeHint": "Answer here",
+  "rsvpSeeEvent": "See event",
   "eventInDays": "{count, plural, =0{Today} =1{Tomorrow} other{In {count} days}}",
   "eventTakeRsvps": "Ask for RSVPs",
   "eventRsvpDeadline": "RSVP deadline",

@@ -13,6 +13,7 @@ import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
+import 'package:battleplan/features/schedule/presentation/rsvp_sheet.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -231,6 +232,113 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('vs. Eagles'), findsOneWidget);
       expect(find.text('Practice'), findsNothing);
+    });
+  });
+
+  group('answering from the list (SCHED-4)', () {
+    Finder inSheet(String text) =>
+        find.descendant(of: find.byType(RsvpSheet), matching: find.text(text));
+
+    testWidgets('my answer on a row opens the answer sheet; See event opens '
+        'the event', (tester) async {
+      final rsvps = await openSchedule(tester, events: [event('e1')]);
+      await tester.tap(find.byTooltip('Answer here'));
+      await tester.pumpAndSettle();
+      expect(inSheet('Are you going?'), findsOneWidget);
+      expect(inSheet('Practice'), findsOneWidget);
+      await tester.tap(inSheet('Going'));
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.status, RsvpStatus.going);
+      expect(rsvps.rsvps.single.participantId, 'coach');
+      // The note, as on the event's page.
+      await tester.tap(inSheet('Add a note'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'Leaving early');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps.single.note, 'Leaving early');
+      await tester.tap(inSheet('See event'));
+      await tester.pumpAndSettle();
+      expect(find.byType(RsvpSheet), findsNothing);
+      expect(find.text('100 River Rd'), findsOneWidget);
+    });
+
+    testWidgets('the rest of the card still opens the event', (tester) async {
+      await openSchedule(tester, events: [event('e1')]);
+      await tester.tap(find.text('Practice'));
+      await tester.pumpAndSettle();
+      expect(find.byType(RsvpSheet), findsNothing);
+      expect(find.text('100 River Rd'), findsOneWidget);
+    });
+
+    testWidgets('guardians answer for all their players at once', (
+      tester,
+    ) async {
+      final players =
+          FakePlayerRepository(const [
+              Player(
+                id: PlayerId('p1'),
+                groupId: GroupId('a'),
+                displayName: 'Emma Rivera',
+                jerseyNumber: '7',
+              ),
+              Player(
+                id: PlayerId('p2'),
+                groupId: GroupId('a'),
+                displayName: 'Liam Rivera',
+              ),
+            ])
+            ..links.addAll(const [
+              GuardianLink(
+                playerId: PlayerId('p1'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+              ),
+              GuardianLink(
+                playerId: PlayerId('p2'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+              ),
+            ]);
+      final rsvps = await openSchedule(
+        tester,
+        players: players,
+        events: [event('e1')],
+      );
+      await tester.tap(find.byTooltip('Answer here'));
+      await tester.pumpAndSettle();
+      expect(inSheet('All my players'), findsOneWidget);
+      expect(inSheet('Emma #7'), findsOneWidget);
+      await tester.tap(inSheet('Going').first);
+      await tester.pumpAndSettle();
+      expect(
+        {for (final r in rsvps.rsvps) r.participantId: r.status},
+        {'p1': RsvpStatus.going, 'p2': RsvpStatus.going},
+      );
+      // The list behind the sheet has them too.
+      Navigator.of(tester.element(find.byType(RsvpSheet))).pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Emma: Going'), findsOneWidget);
+      expect(find.text('Liam: Going'), findsOneWidget);
+    });
+
+    testWidgets('only where I can answer now: not past, canceled, or closed', (
+      tester,
+    ) async {
+      final passed = DateTime.now().subtract(const Duration(hours: 1));
+      await openSchedule(
+        tester,
+        events: [
+          event('c', canceledAt: DateTime.now()),
+          event('d', days: 2, title: 'Closed', rsvpDeadline: passed),
+          event('p', days: -2, title: 'Last game'),
+        ],
+      );
+      expect(find.byTooltip('Answer here'), findsNothing);
+      await tester.tap(find.text('Past'));
+      await tester.pumpAndSettle();
+      expect(find.text('Last game'), findsOneWidget);
+      expect(find.byTooltip('Answer here'), findsNothing);
     });
   });
 

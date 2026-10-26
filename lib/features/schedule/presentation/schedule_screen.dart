@@ -17,6 +17,7 @@ import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/calendar_view.dart';
 import 'package:battleplan/features/schedule/presentation/event_row.dart';
+import 'package:battleplan/features/schedule/presentation/rsvp_sheet.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -344,6 +345,14 @@ class ScheduleEventRow extends ConsumerWidget {
     if (ref.watch(authUserProvider).value == null) {
       return const SizedBox.shrink();
     }
+    // Upcoming events I can answer now: my answer opens the answer sheet.
+    final now = DateTime.now();
+    final me = ref.watch(myMembershipProvider(g));
+    final canAnswer =
+        group != null &&
+        participants.isNotEmpty &&
+        !event.startedBefore(now) &&
+        canAnswerNow(event, group, me, now);
     return EventRow(
       event: event,
       group: group,
@@ -354,6 +363,16 @@ class ScheduleEventRow extends ConsumerWidget {
       showTeam: showTeam,
       playerCount: players,
       onTap: () => openEvent(context, event),
+      onAnswer: canAnswer
+          ? (answer) => unawaited(
+              showRsvpSheet(
+                context,
+                event,
+                rsvpRange: rsvpRange,
+                anchor: answer,
+              ),
+            )
+          : null,
     );
   }
 }
