@@ -106,13 +106,13 @@ describe('super-admin team and player edits (ADMIN-3)', () => {
     // A Gumdrop candy (CHAT-18), but not any color.
     expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: '#FF7AC8' } }))).toBe(true);
     expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: '#123456' } }))).toBe(false);
-    // Maroon and Black are team colors; the retired Royal blue and Violet
-    // aren't written any more (TEAM-5).
+    // Maroon and Black are team colors; the retired Royal blue and Violet,
+    // which iOS 1.0 still offers, are stored as Blue and Purple (TEAM-5).
     expect(ok(UpdateGroupInput, group({ color: '#7F1D1D' }))).toBe(true);
     expect(ok(UpdateGroupInput, group({ color: '#111111' }))).toBe(true);
-    for (const retired of ['#1D4ED8', '#9333EA']) {
-      expect(ok(UpdateGroupInput, group({ color: retired }))).toBe(false);
-      expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: retired } }))).toBe(false);
+    for (const [retired, now] of [['#1D4ED8', '#2F5BEA'], ['#9333EA', '#7C3AED']]) {
+      expect(UpdateGroupInput.parse(group({ color: retired })).color).toBe(now);
+      expect(UpdateGroupInput.parse(group({ chatTheme: { bubbleColor: retired } })).chatTheme?.bubbleColor).toBe(now);
     }
     for (const bad of [
       {}, { color: '#000000' }, { sport: 'golf' }, { name: ' ' }, { name: 'x'.repeat(Limits.groupNameMax + 1) },

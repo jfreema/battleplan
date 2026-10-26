@@ -9,8 +9,8 @@ import {
   REMINDER_OFFSETS_MINUTES,
   reportStatusValues,
   sportValues,
-  TEAM_COLORS,
 } from '../shared/constants.js';
+import { teamColor } from '../shared/team_color.js';
 import { teamStatusValues } from '../teams/status.js';
 
 /** The Gumdrop candy message colors of the chat look (CHAT-18), stored as their
@@ -99,7 +99,7 @@ export const UpdateGroupInput = z
     groupId: Id,
     name: z.string().trim().min(1).max(Limits.groupNameMax).optional(),
     description: z.string().trim().max(GROUP_DESCRIPTION_MAX).optional(),
-    color: z.enum(TEAM_COLORS).nullable().optional(),
+    color: teamColor.nullable().optional(),
     sport: z.enum(sportValues).optional(),
     timeZone: z.string().min(1).max(64).optional(),
     settings: z
@@ -117,7 +117,7 @@ export const UpdateGroupInput = z
       .optional(),
     chatTheme: z
       .strictObject({
-        bubbleColor: z.enum([...TEAM_COLORS, ...CHAT_CANDY_COLORS]).nullable().optional(),
+        bubbleColor: z.union([teamColor, z.enum(CHAT_CANDY_COLORS)]).nullable().optional(),
         background: z.enum(['plain', 'pattern', 'photo']).optional(),
         backgroundPath: StoragePath,
       })

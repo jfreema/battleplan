@@ -5,7 +5,8 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { auth, db } from '../shared/admin.js';
 import { onCall } from '../shared/callable.js';
-import { Collections, Limits, sportValues, TEAM_COLORS } from '../shared/constants.js';
+import { Collections, Limits, sportValues } from '../shared/constants.js';
+import { teamColor } from '../shared/team_color.js';
 import { requireAuth, requireSuperAdmin } from '../shared/guards.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { parse } from '../shared/validate.js';
@@ -46,7 +47,7 @@ import { setGroupQuota, updateStorageAlert } from './storage.js';
 const CreateGroupInput = z.object({
   name: z.string().trim().min(1).max(Limits.groupNameMax),
   sport: z.enum(sportValues),
-  color: z.enum(TEAM_COLORS).optional(),
+  color: teamColor.optional(),
   timeZone: z.string().min(1).max(64),
   description: z.string().max(500).optional(),
   // The app's ID for this attempt, the same on every retry of it (TEAM-1).
