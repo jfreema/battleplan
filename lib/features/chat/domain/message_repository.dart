@@ -31,6 +31,15 @@ abstract interface class MessageRepository {
     int limit = 50,
   });
 
+  /// The team's photo messages, newest first, [limit] at a time from
+  /// [before] (a page's [MessagePage.next]), for the Photos gallery
+  /// (DOC-7).
+  Future<MessagePage> photoMessages(
+    GroupId groupId, {
+    PageCursor? before,
+    int limit = 30,
+  });
+
   /// A fresh message ID, so a queued message keeps one identity from the
   /// moment it's typed until the server has it.
   String newMessageId();

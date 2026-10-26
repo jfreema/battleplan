@@ -84,6 +84,24 @@ class FirestoreMessageRepository implements MessageRepository {
     );
   }
 
+  @override
+  Future<MessagePage> photoMessages(
+    GroupId groupId, {
+    PageCursor? before,
+    int limit = 30,
+  }) async {
+    // The groupId + type + createdAt descending index.
+    var q = _db
+        .collection(Collections.messages)
+        .where('groupId', isEqualTo: groupId.value)
+        .where('type', isEqualTo: MessageType.image.value)
+        .orderBy('createdAt', descending: true);
+    if (before != null) {
+      q = q.startAfterDocument(before.handle as DocumentSnapshot<Object?>);
+    }
+    return _page(await q.limit(limit).get(), groupId, limit);
+  }
+
   Message _message(DocumentSnapshot<Map<String, dynamic>> d, GroupId groupId) {
     final x = d.data()!;
     final created = x['createdAt'];

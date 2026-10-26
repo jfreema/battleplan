@@ -1235,4 +1235,291 @@ as bool,
 
 }
 
+/// @nodoc
+mixin _$TeamPhotosState {
+
+/// Every photo loaded so far, newest first.
+ List<TeamPhoto> get photos; bool get loading; bool get loadingMore;/// True once the team's first photo is loaded.
+ bool get reachedEnd; bool get failed;
+/// Create a copy of TeamPhotosState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TeamPhotosStateCopyWith<TeamPhotosState> get copyWith => _$TeamPhotosStateCopyWithImpl<TeamPhotosState>(this as TeamPhotosState, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as TeamPhotosState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TeamPhotosState&&const DeepCollectionEquality().equals(other.photos, _this.photos)&&(identical(other.loading, _this.loading) || other.loading == _this.loading)&&(identical(other.loadingMore, _this.loadingMore) || other.loadingMore == _this.loadingMore)&&(identical(other.reachedEnd, _this.reachedEnd) || other.reachedEnd == _this.reachedEnd)&&(identical(other.failed, _this.failed) || other.failed == _this.failed));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as TeamPhotosState;
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.photos),_this.loading,_this.loadingMore,_this.reachedEnd,_this.failed);
+}
+
+@override
+String toString() {
+  final _this = this as TeamPhotosState;
+  return 'TeamPhotosState(photos: ${_this.photos}, loading: ${_this.loading}, loadingMore: ${_this.loadingMore}, reachedEnd: ${_this.reachedEnd}, failed: ${_this.failed})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $TeamPhotosStateCopyWith<$Res>  {
+  factory $TeamPhotosStateCopyWith(TeamPhotosState value, $Res Function(TeamPhotosState) _then) = _$TeamPhotosStateCopyWithImpl;
+@useResult
+$Res call({
+ List<TeamPhoto> photos, bool loading, bool loadingMore, bool reachedEnd, bool failed
+});
+
+
+
+
+}
+/// @nodoc
+class _$TeamPhotosStateCopyWithImpl<$Res>
+    implements $TeamPhotosStateCopyWith<$Res> {
+  _$TeamPhotosStateCopyWithImpl(this._self, this._then);
+
+  final TeamPhotosState _self;
+  final $Res Function(TeamPhotosState) _then;
+
+/// Create a copy of TeamPhotosState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? photos = null,Object? loading = null,Object? loadingMore = null,Object? reachedEnd = null,Object? failed = null,}) {
+  return _then(TeamPhotosState(
+photos: null == photos ? _self.photos : photos // ignore: cast_nullable_to_non_nullable
+as List<TeamPhoto>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
+as bool,loadingMore: null == loadingMore ? _self.loadingMore : loadingMore // ignore: cast_nullable_to_non_nullable
+as bool,reachedEnd: null == reachedEnd ? _self.reachedEnd : reachedEnd // ignore: cast_nullable_to_non_nullable
+as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [TeamPhotosState].
+extension TeamPhotosStatePatterns on TeamPhotosState {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _TeamPhotosState value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _TeamPhotosState() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _TeamPhotosState value)  $default,){
+final _that = this;
+switch (_that) {
+case _TeamPhotosState():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _TeamPhotosState value)?  $default,){
+final _that = this;
+switch (_that) {
+case _TeamPhotosState() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<TeamPhoto> photos,  bool loading,  bool loadingMore,  bool reachedEnd,  bool failed)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _TeamPhotosState() when $default != null:
+return $default(_that.photos,_that.loading,_that.loadingMore,_that.reachedEnd,_that.failed);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<TeamPhoto> photos,  bool loading,  bool loadingMore,  bool reachedEnd,  bool failed)  $default,) {final _that = this;
+switch (_that) {
+case _TeamPhotosState():
+return $default(_that.photos,_that.loading,_that.loadingMore,_that.reachedEnd,_that.failed);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<TeamPhoto> photos,  bool loading,  bool loadingMore,  bool reachedEnd,  bool failed)?  $default,) {final _that = this;
+switch (_that) {
+case _TeamPhotosState() when $default != null:
+return $default(_that.photos,_that.loading,_that.loadingMore,_that.reachedEnd,_that.failed);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _TeamPhotosState implements TeamPhotosState {
+  const _TeamPhotosState({ List<TeamPhoto> photos = const <TeamPhoto>[], this.loading = true, this.loadingMore = false, this.reachedEnd = false, this.failed = false}): _photos = photos;
+  
+
+/// Every photo loaded so far, newest first.
+ final  List<TeamPhoto> _photos;
+/// Every photo loaded so far, newest first.
+@override@JsonKey() List<TeamPhoto> get photos {
+  if (_photos is EqualUnmodifiableListView) return _photos;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_photos);
+}
+
+@override@JsonKey() final  bool loading;
+@override@JsonKey() final  bool loadingMore;
+/// True once the team's first photo is loaded.
+@override@JsonKey() final  bool reachedEnd;
+@override@JsonKey() final  bool failed;
+
+/// Create a copy of TeamPhotosState
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$TeamPhotosStateCopyWith<_TeamPhotosState> get copyWith => __$TeamPhotosStateCopyWithImpl<_TeamPhotosState>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TeamPhotosState&&const DeepCollectionEquality().equals(other.photos, _photos)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.loadingMore, loadingMore) || other.loadingMore == loadingMore)&&(identical(other.reachedEnd, reachedEnd) || other.reachedEnd == reachedEnd)&&(identical(other.failed, failed) || other.failed == failed));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_photos),loading,loadingMore,reachedEnd,failed);
+}
+
+@override
+String toString() {
+    return 'TeamPhotosState(photos: $photos, loading: $loading, loadingMore: $loadingMore, reachedEnd: $reachedEnd, failed: $failed)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$TeamPhotosStateCopyWith<$Res> implements $TeamPhotosStateCopyWith<$Res> {
+  factory _$TeamPhotosStateCopyWith(_TeamPhotosState value, $Res Function(_TeamPhotosState) _then) = __$TeamPhotosStateCopyWithImpl;
+@override @useResult
+$Res call({
+ List<TeamPhoto> photos, bool loading, bool loadingMore, bool reachedEnd, bool failed
+});
+
+
+
+
+}
+/// @nodoc
+class __$TeamPhotosStateCopyWithImpl<$Res>
+    implements _$TeamPhotosStateCopyWith<$Res> {
+  __$TeamPhotosStateCopyWithImpl(this._self, this._then);
+
+  final _TeamPhotosState _self;
+  final $Res Function(_TeamPhotosState) _then;
+
+/// Create a copy of TeamPhotosState
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? photos = null,Object? loading = null,Object? loadingMore = null,Object? reachedEnd = null,Object? failed = null,}) {
+  return _then(_TeamPhotosState(
+photos: null == photos ? _self._photos : photos // ignore: cast_nullable_to_non_nullable
+as List<TeamPhoto>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
+as bool,loadingMore: null == loadingMore ? _self.loadingMore : loadingMore // ignore: cast_nullable_to_non_nullable
+as bool,reachedEnd: null == reachedEnd ? _self.reachedEnd : reachedEnd // ignore: cast_nullable_to_non_nullable
+as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
 // dart format on

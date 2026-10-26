@@ -1495,6 +1495,24 @@ class FakeMessageRepository implements MessageRepository {
     );
   }
 
+  @override
+  Future<MessagePage> photoMessages(
+    GroupId groupId, {
+    PageCursor? before,
+    int limit = 30,
+  }) async {
+    final all = [
+      for (final m in messages)
+        if (m.groupId == groupId && m.type == MessageType.image) m,
+    ];
+    final start = (before?.handle as int?) ?? 0;
+    final end = (start + limit).clamp(0, all.length);
+    return MessagePage(
+      messages: all.sublist(start, end),
+      next: end < all.length ? PageCursor(end) : null,
+    );
+  }
+
   final List<int> photoBatches = [];
 
   /// Where posted polls go; pumpApp links it to the fake poll repository.

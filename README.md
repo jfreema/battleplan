@@ -6,7 +6,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 - **Direct messages:** one-to-one conversations with anyone you share a team with, from the Messages button or their profile.
 - **Profiles:** tap someone's photo to see the teams you share with them, and whether they coach.
 - **Schedule and RSVPs:** games, practices, and events with opponents, places, and reminders; Going, Maybe, or Not going in one tap, or from an email a coach sends to whoever hasn't answered; assignments like snacks, drinks, and scorekeeper that families volunteer for; and a private calendar link that keeps Google, Apple, or Outlook Calendar in sync.
-- **Polls** and **Documents** for each team.
+- **Polls**, **Documents**, and **Photos** (every photo shared in the chat) for each team.
 - **Plays:** directly below Documents in the main navigation, the coach's whiteboard, made for an iPad and good with a mouse, with real baseball, basketball, soccer, and football fields: drag players and the ball to show how a play unfolds, draw routes, play the steps back, and save the plays worth keeping for the team.
 - **Players and parents:** adult players answer for themselves; parents and guardians answer for their kids, who don't need accounts.
 - **Sign-in:** Continue with Google or Apple; an email and password, or an emailed link, for whoever needs one.

@@ -14,12 +14,15 @@ import 'package:battleplan/features/documents/presentation/add_document.dart';
 import 'package:battleplan/features/documents/presentation/document_actions.dart';
 import 'package:battleplan/features/documents/presentation/document_row.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The Documents tab (DOC-1): pinned first, then everything else by Recent
-/// or Name, filtered by typing; + for people allowed to add (DOC-2, DOC-3,
+/// The Documents tab (DOC-1): Photos, every photo from the chat (DOC-7),
+/// then the documents, pinned first, then everything else by Recent or
+/// Name, filtered by typing; + for people allowed to add (DOC-2, DOC-3,
 /// TEAM-5). Archived teams are read-only (TEAM-9).
 class DocumentsScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
@@ -217,6 +220,23 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
               ),
             ),
           ),
+          // Hidden while a filter looks through the documents.
+          if (view.filter.trim().isEmpty)
+            Padding(
+              padding: EdgeInsets.fromLTRB(gutter, Space.xs, gutter, Space.xs),
+              child: SettingsCard(
+                children: [
+                  SettingsRow(
+                    icon: AppIcons.photo,
+                    title: l10n.photosTitle,
+                    subtitle: l10n.photosSubtitle,
+                    onTap: () => unawaited(
+                      context.push('/g/${groupId.value}/documents/photos'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Expanded(child: body),
         ],
       ),

@@ -24,6 +24,7 @@ import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/chat/presentation/direct_chat_screen.dart';
 import 'package:battleplan/features/chat/presentation/messages_screen.dart';
+import 'package:battleplan/features/chat/presentation/team_photos_screen.dart';
 import 'package:battleplan/features/documents/presentation/document_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -753,8 +754,9 @@ GoRouter router(Ref ref) {
                           ),
                         ],
                         // A document (DOC-4; notification taps land
-                        // here), covering the tabs.
-                        if (tab == 'documents')
+                        // here), and Photos, every photo from the chat
+                        // (DOC-7), covering the tabs.
+                        if (tab == 'documents') ...[
                           GoRoute(
                             path: 'd/:docId',
                             parentNavigatorKey: rootKey,
@@ -765,6 +767,19 @@ GoRouter router(Ref ref) {
                               docId: DocumentId(state.pathParameters['docId']!),
                             ),
                           ),
+                          GoRoute(
+                            path: 'photos',
+                            parentNavigatorKey: rootKey,
+                            pageBuilder: (_, state) => PanelPage(
+                              key: state.pageKey,
+                              child: TeamPhotosScreen(
+                                groupId: GroupId(
+                                  state.pathParameters['groupId']!,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     // A message from a notification tap (NOTIF-6): the

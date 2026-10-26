@@ -753,3 +753,122 @@ final class MentionCandidatesFamily extends $Family
   @override
   String toString() => r'mentionCandidatesProvider';
 }
+
+/// Every photo shared in a team's chat, newest first (DOC-7), a page of
+/// photo messages at a time, leaving out deleted messages and those from
+/// people I blocked (SAFE-2).
+
+@ProviderFor(TeamPhotos)
+final teamPhotosProvider = TeamPhotosFamily._();
+
+/// Every photo shared in a team's chat, newest first (DOC-7), a page of
+/// photo messages at a time, leaving out deleted messages and those from
+/// people I blocked (SAFE-2).
+final class TeamPhotosProvider
+    extends $NotifierProvider<TeamPhotos, TeamPhotosState> {
+  /// Every photo shared in a team's chat, newest first (DOC-7), a page of
+  /// photo messages at a time, leaving out deleted messages and those from
+  /// people I blocked (SAFE-2).
+  TeamPhotosProvider._({
+    required TeamPhotosFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamPhotosProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamPhotosHash();
+
+  @override
+  String toString() {
+    return r'teamPhotosProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  TeamPhotos create() => TeamPhotos();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(TeamPhotosState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TeamPhotosState>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamPhotosProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamPhotosHash() => r'b7d9eccc91a61a243d3673f0cfaea663e3b2252f';
+
+/// Every photo shared in a team's chat, newest first (DOC-7), a page of
+/// photo messages at a time, leaving out deleted messages and those from
+/// people I blocked (SAFE-2).
+
+final class TeamPhotosFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          TeamPhotos,
+          TeamPhotosState,
+          TeamPhotosState,
+          TeamPhotosState,
+          GroupId
+        > {
+  TeamPhotosFamily._()
+    : super(
+        retry: null,
+        name: r'teamPhotosProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Every photo shared in a team's chat, newest first (DOC-7), a page of
+  /// photo messages at a time, leaving out deleted messages and those from
+  /// people I blocked (SAFE-2).
+
+  TeamPhotosProvider call(GroupId groupId) =>
+      TeamPhotosProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'teamPhotosProvider';
+}
+
+/// Every photo shared in a team's chat, newest first (DOC-7), a page of
+/// photo messages at a time, leaving out deleted messages and those from
+/// people I blocked (SAFE-2).
+
+abstract class _$TeamPhotos extends $Notifier<TeamPhotosState> {
+  late final _$args = ref.$arg as GroupId;
+  GroupId get groupId => _$args;
+
+  TeamPhotosState build(GroupId groupId);
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<TeamPhotosState, TeamPhotosState>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<TeamPhotosState, TeamPhotosState>,
+              TeamPhotosState,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, () => build(_$args));
+  }
+}

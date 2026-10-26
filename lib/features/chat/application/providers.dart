@@ -725,3 +725,67 @@ List<MentionCandidate> mentionCandidates(Ref ref, GroupId groupId) {
       if (e.key != me) (uid: e.key, name: e.value),
   ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 }
+
+/// One photo shared in a team's chat, and the message it came in (DOC-7).
+typedef TeamPhoto = ({Message message, Attachment photo});
+
+/// The Photos gallery (DOC-7).
+@freezed
+abstract class TeamPhotosState with _$TeamPhotosState {
+  const factory({
+    /// Every photo loaded so far, newest first.
+    @Default(<TeamPhoto>[]) List<TeamPhoto> photos,
+    @Default(true) bool loading,
+    @Default(false) bool loadingMore,
+
+    /// True once the team's first photo is loaded.
+    @Default(false) bool reachedEnd,
+    @Default(false) bool failed,
+  }) = _TeamPhotosState;
+}
+
+/// Every photo shared in a team's chat, newest first (DOC-7), a page of
+/// photo messages at a time, leaving out deleted messages and those from
+/// people I blocked (SAFE-2).
+@riverpod
+class TeamPhotos extends _$TeamPhotos {
+  PageCursor? _next;
+
+  @override
+  TeamPhotosState build(GroupId groupId) {
+    unawaited(_load());
+    return const TeamPhotosState();
+  }
+
+  /// The next page, unless one is loading or the first photo is in.
+  Future<void> loadMore() async {
+    if (state.loading || state.loadingMore || state.reachedEnd) return;
+    state = state.copyWith(loadingMore: true, failed: false);
+    await _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final page = await ref
+          .read(messageRepositoryProvider)
+          .photoMessages(groupId, before: _next);
+      if (!ref.mounted) return;
+      _next = page.next;
+      final blocked = ref.read(blockedIdsProvider);
+      state = state.copyWith(
+        photos: [
+          ...state.photos,
+          for (final m in page.messages)
+            if (m.deletedAt == null && !blocked.contains(m.authorId))
+              for (final a in m.attachments) (message: m, photo: a),
+        ],
+        loading: false,
+        loadingMore: false,
+        reachedEnd: page.next == null,
+      );
+    } on Object {
+      if (!ref.mounted) return;
+      state = state.copyWith(loading: false, loadingMore: false, failed: true);
+    }
+  }
+}

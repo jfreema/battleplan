@@ -844,6 +844,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Admins can pin and unpin.
 - **DOC-6 · MVP · Notify.** Uploading sends a "New document: Fall roster.pdf" notification, following each member's notification level. The uploader can switch "Notify team" off.
 - **DOC-7 · v1.1.** Folders (one level deep), and a Photos section that collects every photo shared in the team's chat.
+  - **Photos** is built (the owner's go, 2026-10-26): the first row of the Documents tab opens every photo shared in the team's chat, newest first, as a grid of squares, without deleted messages or people I blocked. A tap opens the chat's photo viewer, which swipes through them, with Share and Save. Folders aren't built yet.
 - **DOC-8 · Later.** Version history, comments, and e-signatures for waivers.
 
 ### 6.9 Notifications (NOTIF)
@@ -1478,7 +1479,7 @@ The web parts are built before the Phase 1 go-live (ROADMAP). Native-only parts,
 3. Calendar subscription (SCHED-11)
 4. RSVP nudges and guest counts (SCHED-12)
 5. Team-specific link previews for invites (ARCH §6.6). Built (task 140).
-6. Folders and the chat photo gallery (DOC-7)
+6. Folders and the chat photo gallery (DOC-7). The gallery is built (task 141); folders aren't.
 7. Announcement-only mode (TEAM-12), polls list (POLL-6)
 8. App icon badges, hidden notification text (NOTIF-12), files in chat (CHAT-16)
 9. Persistent team list on very wide screens (§5.5)

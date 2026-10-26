@@ -104,6 +104,13 @@ describe('team isolation', () => {
     await assertSucceeds(as('bob').collection('messages').where('groupId', '==', 'teamA').limit(50).get());
   });
 
+  it("lets a member list their team's photo messages for Photos (DOC-7)", async () => {
+    const photos = (db: ReturnType<typeof as>, groupId: string) =>
+      db.collection('messages').where('groupId', '==', groupId).where('type', '==', 'image').orderBy('createdAt', 'desc').limit(30).get();
+    await assertSucceeds(photos(as('bob'), 'teamA'));
+    await assertFails(photos(as('bob'), 'teamB'));
+  });
+
   it('blocks a member of team A from reading team B', async () => {
     await assertFails(as('bob').collection('messages').where('groupId', '==', 'teamB').limit(50).get());
     await assertFails(as('bob').doc('messages/m2').get());

@@ -190,6 +190,35 @@ void main() {
     expect(await repo.countUnread(_g, late), 100);
   });
 
+  test("lists the team's photo messages, newest first, a page at a time "
+      '(DOC-7)', () async {
+    Future<void> add(String id, String type, int minute, {String g = 'g1'}) =>
+        db.doc('messages/$id').set({
+          'groupId': g,
+          'type': type,
+          'authorId': 'alex',
+          'text': '',
+          'attachments': [
+            if (type == 'image') {'path': 'groups/$g/chat/$id/0.jpg'},
+          ],
+          'createdAt': Timestamp.fromDate(DateTime.utc(2026, 10, 1, 9, minute)),
+        });
+    await add('a', 'image', 1);
+    await add('b', 'text', 2);
+    await add('c', 'image', 3);
+    await add('d', 'image', 4, g: 'g2');
+    await add('e', 'image', 5);
+    final first = await repo.photoMessages(_g, limit: 2);
+    expect([for (final m in first.messages) m.id], ['e', 'c']);
+    expect(
+      first.messages.first.attachments.single.path,
+      'groups/g1/chat/e/0.jpg',
+    );
+    final rest = await repo.photoMessages(_g, before: first.next, limit: 2);
+    expect([for (final m in rest.messages) m.id], ['a']);
+    expect(rest.next, isNull);
+  });
+
   test('edits, reacts, and deletes', () async {
     await db.doc('messages/m1').set({
       'groupId': 'g1',
