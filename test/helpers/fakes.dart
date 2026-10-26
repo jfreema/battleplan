@@ -44,6 +44,8 @@ import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/polls/domain/poll_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:battleplan/features/safety/domain/safety_repository.dart';
+import 'package:battleplan/features/schedule/domain/assignment.dart';
+import 'package:battleplan/features/schedule/domain/assignment_repository.dart';
 import 'package:battleplan/features/schedule/domain/calendar_link.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_draft.dart';
@@ -2350,6 +2352,122 @@ class FakeEventRepository implements EventRepository {
 
 /// RSVPs in memory. Each answer recounts its event at once, as the
 /// server's trigger does a moment later.
+/// Event assignments in memory (SCHED-15), with the rules' refusals:
+/// taking a task someone already has fails, as the rules refuse it.
+class FakeAssignmentRepository implements AssignmentRepository {
+  new([List<Assignment> initial = const []]) : assignments = [...initial];
+
+  final List<Assignment> assignments;
+  final _changes = StreamController<void>.broadcast();
+  var _next = 0;
+
+  /// Makes every write fail as the rules refuse it.
+  bool refuse = false;
+
+  Stream<T> _live<T>(T Function() read) async* {
+    yield read();
+    await for (final _ in _changes.stream) {
+      yield read();
+    }
+  }
+
+  void _check() {
+    if (refuse) throw const PermissionDenied('permission-denied');
+  }
+
+  void _replace(Assignment a, Assignment Function(Assignment) change) {
+    final i = assignments.indexWhere((x) => x.id == a.id);
+    if (i < 0) throw const NotFound();
+    assignments[i] = change(assignments[i]);
+    _changes.add(null);
+  }
+
+  @override
+  Stream<List<Assignment>> watchForEvent(GroupId groupId, EventId eventId) =>
+      _live(
+        () => [
+          for (final a in assignments)
+            if (a.groupId == groupId && a.eventId == eventId) a,
+        ],
+      );
+
+  @override
+  Future<void> add(
+    Event event, {
+    required AssignmentKind kind,
+    required UserId by,
+    String? label,
+    UserId? assignee,
+  }) async {
+    _check();
+    assignments.add(
+      Assignment(
+        id: 'as${_next++}',
+        groupId: event.groupId,
+        eventId: event.id,
+        kind: kind,
+        label: label,
+        assigneeUid: assignee?.value,
+        assignedBy: assignee == null ? null : by.value,
+        createdBy: by.value,
+        createdAt: DateTime.now(),
+      ),
+    );
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> edit(
+    Assignment assignment, {
+    required AssignmentKind kind,
+    String? label,
+  }) async {
+    _check();
+    _replace(assignment, (a) => a.copyWith(kind: kind, label: label));
+  }
+
+  @override
+  Future<void> volunteer(Assignment assignment, UserId me) async {
+    _check();
+    _replace(assignment, (a) {
+      if (!a.isOpen) throw const PermissionDenied('permission-denied');
+      return a.copyWith(assigneeUid: me.value, assignedBy: me.value);
+    });
+  }
+
+  @override
+  Future<void> giveUp(Assignment assignment) async {
+    _check();
+    _replace(
+      assignment,
+      (a) => a.copyWith(assigneeUid: null, assignedBy: null),
+    );
+  }
+
+  @override
+  Future<void> assign(
+    Assignment assignment,
+    UserId? assignee, {
+    required UserId by,
+  }) async {
+    _check();
+    _replace(
+      assignment,
+      (a) => a.copyWith(
+        assigneeUid: assignee?.value,
+        assignedBy: assignee == null ? null : by.value,
+      ),
+    );
+  }
+
+  @override
+  Future<void> remove(Assignment assignment) async {
+    _check();
+    assignments.removeWhere((a) => a.id == assignment.id);
+    _changes.add(null);
+  }
+}
+
 class FakeRsvpRepository implements RsvpRepository {
   new(this.events);
 

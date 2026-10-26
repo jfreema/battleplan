@@ -26,6 +26,7 @@ import { displayNameOf, sendSetupEmail } from '../accounts/service.js';
 import { resendApiKey } from '../email/service.js';
 import { trySend } from '../notify/service.js';
 import { hideReportsAbout } from '../safety/service.js';
+import { tryClearAssignmentsOf } from '../schedule/assignments.js';
 import {
   addMembersByEmail,
   canChangeRole,
@@ -231,7 +232,10 @@ export const transferOwnership = onCall(async (request) => {
   return { ok: true };
 });
 
-/** Leaves a team (TEAM-8). The owner transfers ownership first. */
+/**
+ * Leaves a team (TEAM-8). The owner transfers ownership first. Their tasks
+ * on the team's events open again (SCHED-15).
+ */
 export const leaveGroup = onCall(async (request) => {
   const uid = requireAuth(request);
   const input = parse(GroupOnly, request.data);
@@ -249,6 +253,7 @@ export const leaveGroup = onCall(async (request) => {
   await postSystemMessage(input.groupId, 'left', `${name} left`, uid);
   await clearTeamNotifications(input.groupId, uid);
   await tryDeleteCalendarLinksOf(uid, input.groupId);
+  await tryClearAssignmentsOf(uid, input.groupId);
   return { ok: true };
 });
 

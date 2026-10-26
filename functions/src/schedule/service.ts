@@ -9,6 +9,7 @@ import { groupMemberId, rsvpId } from '../shared/ids.js';
 import { chunk, trySend } from '../notify/service.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireOpenTeam } from '../shared/roles.js';
+import { deleteEventAssignments } from './assignments.js';
 import { addDays, dateInZone, type Recurrence } from './recurrence.js';
 
 const MINUTE_MS = 60_000;
@@ -619,7 +620,7 @@ export function changedFields(before: DocumentData, after: DocumentData): string
  * Whether an events write needs the trigger (ARCH §6.4 trigger map): not
  * when only counts, the reminder time, the card, or updatedAt changed, and
  * not for series events, which saveEventSeries follows up itself.
- * Deletes always do (their RSVPs go).
+ * Deletes always do (their RSVPs and assignments go).
  */
 export function eventNeedsFollowUp(before: DocumentData | undefined, after: DocumentData | undefined): boolean {
   if (!after) return before !== undefined;
@@ -666,8 +667,9 @@ export async function refreshRsvpStartTimes(startAtById: Map<string, Timestamp>)
  * events written → the follow-up for one-off events (ARCH §6.4): on
  * create, the chat card (postToChat) and eventCreated (notifyTeam); on a
  * time or place change or a cancel, eventChanged to everyone but Not
- * going; on any change, nextReminderAt; on delete, the RSVPs. The card
- * stays when an event is deleted; the app shows it as deleted.
+ * going; on any change, nextReminderAt; on delete, the RSVPs and the
+ * assignments (SCHED-15). The card stays when an event is deleted; the app
+ * shows it as deleted.
  */
 export async function followUpEventWrite(
   eventId: string,
@@ -678,6 +680,7 @@ export async function followUpEventWrite(
   if (!eventNeedsFollowUp(before, after)) return;
   if (!after) {
     await deleteEventRsvps([eventId]);
+    await deleteEventAssignments([eventId]);
     return;
   }
   const groupId = String(after.groupId);

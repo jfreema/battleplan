@@ -18,6 +18,7 @@ import {
 } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
 import { quotaBytesOf } from '../teams/storage.js';
+import { deleteEventAssignments } from './assignments.js';
 import {
   addDays,
   dateInZone,
@@ -537,9 +538,10 @@ export function followingRule(old: Recurrence, input: Recurrence | undefined, fr
 /**
  * "This and following" (SCHED-6): the old series ends the day before this
  * event, and a new one starts on its date with the new rule and template.
- * Upcoming events on dates the new rule still produces keep their docs and
- * RSVPs (fields updated, except their own overrides); the others go with
- * their RSVPs; new dates get new events. Past events are never touched.
+ * Upcoming events on dates the new rule still produces keep their docs,
+ * RSVPs, and assignments (fields updated, except their own overrides); the
+ * others go with their RSVPs and assignments; new dates get new events.
+ * Past events are never touched.
  * When nothing of the series comes before this event, the series itself
  * is updated instead of split.
  */
@@ -634,6 +636,7 @@ async function updateFollowing(
   removed.forEach((e) => writes.push((b) => b.delete(e.ref)));
   await commitAll(writes);
   await deleteEventRsvps(removed.map((e) => e.id));
+  await deleteEventAssignments(removed.map((e) => e.id));
   if (split && messageId) await followSplit(messageId, oldId, newId, new Set(affected.map((e) => e.id)));
   const moved = new Map(
     updates
@@ -757,9 +760,9 @@ async function skipDate(ref: FirebaseFirestore.DocumentReference, date: string, 
 
 /**
  * Deletes this event, or this and every later upcoming one, with their
- * RSVPs and no notification (SCHED-7). Deleting one event skips its date
- * in the series, so a later "this and following" edit doesn't bring it
- * back; deleting the rest ends the series the day before.
+ * RSVPs and assignments and no notification (SCHED-7). Deleting one event
+ * skips its date in the series, so a later "this and following" edit
+ * doesn't bring it back; deleting the rest ends the series the day before.
  */
 async function deleteEvents(run: Run, scope: 'this' | 'following', dryRun: boolean): Promise<SeriesResult> {
   const { target, series, nowMs } = run;
@@ -774,6 +777,7 @@ async function deleteEvents(run: Run, scope: 'this' | 'following', dryRun: boole
   const now = Timestamp.fromMillis(nowMs);
   await commitAll(targets.map((e) => (b) => b.delete(e.ref)));
   await deleteEventRsvps(targets.map((e) => e.id));
+  await deleteEventAssignments(targets.map((e) => e.id));
   if (scope === 'this') {
     await skipDate(series.ref, from, now);
   } else if (all.length === targets.length) {

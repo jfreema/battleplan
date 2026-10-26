@@ -48,6 +48,7 @@ const DOCS: [collection: string, id: string, field: string, value: string][] = [
   ['eventSeries', 's1', 'groupId', 'teamA'],
   ['events', 'e1', 'groupId', 'teamA'],
   ['rsvps', 'e1_alice', 'groupId', 'teamA'],
+  ['assignments', 'as1', 'groupId', 'teamA'],
   ['groupDocuments', 'd1', 'groupId', 'teamA'],
   ['plays', 'pl1', 'groupId', 'teamA'],
   ['notifications', 'n1_alice', 'uid', 'alice'],
@@ -60,7 +61,8 @@ const DOCS: [collection: string, id: string, field: string, value: string][] = [
 
 /** The team-owned collections a member reads. */
 const TEAM_COLLECTIONS = [
-  'groupMembers', 'players', 'playerGuardians', 'messages', 'polls', 'eventSeries', 'events', 'rsvps', 'groupDocuments', 'plays',
+  'groupMembers', 'players', 'playerGuardians', 'messages', 'polls', 'eventSeries', 'events', 'rsvps', 'assignments',
+  'groupDocuments', 'plays',
 ];
 
 /** teamA's files, one in each Storage folder, plus alice's avatar. */
@@ -117,6 +119,10 @@ async function seed(group: object = {}) {
       createdBy: 'bob', createdAt: ts('2026-10-01T00:00:00Z'), updatedAt: ts('2026-10-01T00:00:00Z'),
     });
     await db.doc('rsvps/e1_alice').set({ groupId: 'teamA', eventId: 'e1', participantType: 'member', participantId: 'alice', status: 'going' });
+    await db.doc('assignments/as1').set({
+      groupId: 'teamA', eventId: 'e1', kind: 'snacks', label: null, assigneeUid: null, assignedBy: null,
+      createdBy: 'alice', createdAt: ts('2026-10-01T00:00:00Z'), updatedAt: ts('2026-10-01T00:00:00Z'),
+    });
     await db.doc('groupDocuments/d1').set({ groupId: 'teamA', kind: 'link', name: 'Site', uploadedBy: 'bob' });
     await db.doc('plays/pl1').set({ groupId: 'teamA', board: 'soccer', variant: 'full', title: 'Corner', note: '', steps: [{ elements: [] }], createdBy: 'alice' });
     await db.doc('notifications/n1_alice').set({ uid: 'alice', groupId: 'teamA', read: false });
@@ -219,6 +225,14 @@ describe('a suspended team (ADMIN-3)', () => {
       as('dan').doc('rsvps/e1_emma').set({
         eventId: 'e1', groupId: 'teamA', participantType: 'player', participantId: 'emma', participantName: 'Emma',
         eventStartAt: ts(START), status: 'going', respondedBy: 'dan', updatedAt: now(),
+      }),
+    );
+    // Assignments (SCHED-15): no volunteering, and no new tasks from its admins.
+    await assertFails(as('bob').doc('assignments/as1').update({ assigneeUid: 'bob', assignedBy: 'bob', updatedAt: now() }));
+    await assertFails(
+      as('alice').collection('assignments').add({
+        groupId: 'teamA', eventId: 'e1', kind: 'drinks', label: null, assigneeUid: null, assignedBy: null,
+        createdBy: 'alice', createdAt: now(), updatedAt: now(),
       }),
     );
   });

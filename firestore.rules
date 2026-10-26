@@ -788,6 +788,85 @@ service cloud.firestore {
       return p.groupId == g && p.get('status', 'active') == 'active';
     }
 
+    // Assignments (SCHED-15): tasks on an event, such as snacks, drinks, or
+    // scorekeeper, or an admin's own ('other', named by its label), each
+    // with at most one person. Everyone on the team reads them. The team's
+    // admins, and super admins (§3), add, change, and remove tasks and put
+    // anyone on the team on one; any member takes an open task (volunteers)
+    // or gives up their own. The app writes them directly; Functions delete
+    // them with their event and their team, and open the ones a person had
+    // when they leave the team, are removed from it, or delete their
+    // account. Archived teams are read-only (TEAM-9). Rules can't count, so
+    // the cap of tasks per event (Limits.assignmentsPerEventMax) is the app's.
+    match /assignments/{assignmentId} {
+      allow get: if canRead(resource.data.groupId);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
+      // A new task on one of the team's events, open or with someone on it.
+      allow create: if assignmentAdmin(incoming().groupId)
+        && validAssignment(incoming())
+        && get(/databases/$(database)/documents/events/$(incoming().eventId)).data.groupId == incoming().groupId
+        && incoming().createdBy == uid()
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && assigneeOk(incoming());
+      // The team, event, creator, and creation time never change: neither
+      // way of editing lists them.
+      allow update: if incoming().updatedAt == request.time
+        && (assignmentAdminEdit() || assignmentMemberEdit());
+      allow delete: if assignmentAdmin(resource.data.groupId);
+    }
+
+    // Who manages a team's tasks: its admins, and super admins (§3), on a
+    // team that isn't archived, as with plays.
+    function assignmentAdmin(g) { return active(g) && (superAdmin() || isAdmin(g)); }
+
+    // A task's own fields, every one always there: a known kind, and a
+    // label of up to 40 characters (Limits.assignmentLabelMax), not blank.
+    // An 'other' task must have one, as its name; on the rest it's an
+    // optional detail ("Halftime oranges").
+    function validAssignment(a) {
+      let fields = ['groupId', 'eventId', 'kind', 'label', 'assigneeUid', 'assignedBy',
+                    'createdBy', 'createdAt', 'updatedAt'];
+      return a.keys().hasAll(fields) && a.keys().hasOnly(fields)
+        && a.kind in ['snacks', 'drinks', 'scorekeeper', 'other']
+        && ((a.label == null && a.kind != 'other')
+            || (a.label is string && a.label.trim().size() > 0 && a.label.size() <= 40));
+    }
+
+    // Who has the task: nobody (and nobody put them there), or someone on
+    // the team, put there by the person writing: themselves, or the admin
+    // assigning them. Super admins assign only people on the team.
+    function assigneeOk(a) {
+      return (a.assigneeUid == null && a.assignedBy == null)
+        || (a.assigneeUid is string && a.assignedBy == uid()
+            && exists(/databases/$(database)/documents/groupMembers/$(a.groupId + '_' + a.assigneeUid)));
+    }
+
+    // Admins change the kind and label, and who has the task: the same
+    // person as before (someone who volunteered keeps it through an edit),
+    // someone else on the team, or nobody.
+    function assignmentAdminEdit() {
+      let before = resource.data;
+      let after = incoming();
+      return assignmentAdmin(before.groupId)
+        && onlyChanges(['kind', 'label', 'assigneeUid', 'assignedBy', 'updatedAt'])
+        && validAssignment(after)
+        && ((after.assigneeUid == before.assigneeUid && after.assignedBy == before.assignedBy)
+            || assigneeOk(after));
+    }
+
+    // Any member takes an open task for themselves, or gives up their own,
+    // which opens it again. Nobody takes a task someone has, or puts
+    // anyone else on one.
+    function assignmentMemberEdit() {
+      let before = resource.data;
+      let after = incoming();
+      return isMember(before.groupId) && active(before.groupId)
+        && onlyChanges(['assigneeUid', 'assignedBy', 'updatedAt'])
+        && ((before.assigneeUid == null && after.assigneeUid == uid() && after.assignedBy == uid())
+            || (before.assigneeUid == uid() && after.assigneeUid == null && after.assignedBy == null));
+    }
+
     // ---- Plays (SPEC §6.16, ARCH §6.14) ------------------------------------
 
     // Everyone on the team reads its plays; admins draw, change, and delete

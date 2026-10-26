@@ -52,6 +52,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeBrowserInfo browser = const FakeBrowserInfo(),
   FakeEventRepository? eventRepo,
   FakeRsvpRepository? rsvpRepo,
+  FakeAssignmentRepository? assignmentRepo,
   FakeCalendarLinkRepository? calendarLinks,
   FakeCalendarAdder? calendar,
   FakeDocumentRepository? documentRepo,
@@ -134,6 +135,9 @@ Future<FakeLocalPrefs> pumpApp(
         eventRepositoryProvider.overrideWithValue(events),
         rsvpRepositoryProvider.overrideWithValue(
           rsvpRepo ?? FakeRsvpRepository(events),
+        ),
+        assignmentRepositoryProvider.overrideWithValue(
+          assignmentRepo ?? FakeAssignmentRepository(),
         ),
         calendarAdderProvider.overrideWithValue(
           calendar ?? FakeCalendarAdder(),

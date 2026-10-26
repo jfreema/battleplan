@@ -25,6 +25,7 @@ import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/event_actions.dart';
+import 'package:battleplan/features/schedule/presentation/event_assignments.dart';
 import 'package:battleplan/features/schedule/presentation/event_row.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
@@ -338,6 +339,9 @@ class _Details extends ConsumerWidget {
         ],
         const SizedBox(height: Space.md),
         _RsvpSection(event: event, group: group, me: me),
+        // Snacks, drinks, a scorekeeper (SCHED-15): secondary, so last.
+        const SizedBox(height: Space.lg),
+        AssignmentsRow(event: event, group: group, me: me),
       ],
     );
   }

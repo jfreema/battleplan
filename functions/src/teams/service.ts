@@ -12,6 +12,7 @@ import { teamUrl } from '../links/service.js';
 import { removeTeamNotifications, trySend } from '../notify/service.js';
 import { removeGuardianFromTeam } from '../players/service.js';
 import { hideReportsAbout } from '../safety/service.js';
+import { tryClearAssignmentsOf } from '../schedule/assignments.js';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections, Limits } from '../shared/constants.js';
@@ -240,6 +241,7 @@ export async function clearTeamNotifications(groupId: string, uid: string): Prom
 /**
  * Takes someone off a team (TEAM-3, SAFE-4): the membership, their
  * guardian links and requests there, the member count, "Sam was removed" in chat, and their center items for the team.
+ * Their tasks on the team's events open again (SCHED-15).
  * Callers check who may remove whom (canRemove). Returns the role they had,
  * or null when they weren't on the team.
  */
@@ -254,6 +256,7 @@ export async function removeFromTeam(groupId: string, uid: string, actorUid: str
   await postSystemMessage(groupId, 'removed', `${name} was removed`, actorUid, uid);
   await clearTeamNotifications(groupId, uid);
   await tryDeleteCalendarLinksOf(uid, groupId);
+  await tryClearAssignmentsOf(uid, groupId);
   return target.get('role') as Role;
 }
 
@@ -397,6 +400,7 @@ const TEAM_COLLECTIONS = [
   Collections.polls,
   Collections.pollVotes,
   Collections.rsvps,
+  Collections.assignments,
   Collections.events,
   Collections.eventSeries,
   Collections.groupDocuments,

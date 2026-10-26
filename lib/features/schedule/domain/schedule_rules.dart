@@ -31,6 +31,20 @@ bool canManageEvent(
     (superAdmin ||
         (me != null && (me.isAdmin || event.createdBy == me.uid.value)));
 
+/// Adding, changing, and removing an event's assignments, and assigning
+/// people (SCHED-15): the team's admins and super admins, on a team that
+/// isn't archived, as the rules decide.
+bool canManageAssignments(
+  Group group,
+  Membership? me, {
+  bool superAdmin = false,
+}) => !group.isArchived && (superAdmin || (me?.isAdmin ?? false));
+
+/// Taking an open assignment, or giving up one's own (SCHED-15): anyone on
+/// the team, on a team that isn't archived.
+bool canVolunteer(Group group, Membership? me) =>
+    !group.isArchived && me != null;
+
 /// Posting [event] in the chat again as a reminder (SCHED-8): whoever
 /// manages it ([canManageEvent]), while it's on and not over, as
 /// repostEvent checks too.

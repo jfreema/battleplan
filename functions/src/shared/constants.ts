@@ -31,6 +31,7 @@ export const Collections = {
   calendarLinks: 'calendarLinks',
   teamCalendars: 'teamCalendars',
   answerLinks: 'answerLinks',
+  assignments: 'assignments',
 } as const;
 
 export const Limits = {
@@ -51,6 +52,8 @@ export const Limits = {
   opponentMax: 60,
   arriveMinutesMax: 240,
   rsvpNoteMax: 200,
+  assignmentLabelMax: 40,
+  assignmentsPerEventMax: 20,
   documentNameMax: 100,
   documentDescriptionMax: 500,
   documentUrlMax: 2000,
@@ -195,6 +198,9 @@ export type ParticipantType = (typeof participantTypeValues)[number];
 
 export const rsvpStatusValues = ['going', 'maybe', 'not_going'] as const;
 export type RsvpStatus = (typeof rsvpStatusValues)[number];
+
+export const assignmentKindValues = ['snacks', 'drinks', 'scorekeeper', 'other'] as const;
+export type AssignmentKind = (typeof assignmentKindValues)[number];
 
 export const documentKindValues = ['file', 'link'] as const;
 export type DocumentKind = (typeof documentKindValues)[number];

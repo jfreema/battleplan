@@ -8,7 +8,7 @@ Reviewed 2026-10-12, and updated the same day for one team type (pending players
 
 **Roles:** *Signed out* has no auth. *Other team* is an admin or member of another team. *Member* is on the team. *Guardian* is a member linked to the player, as a parent or guardian or as the player themselves (`self`); the rules treat both relations alike (`isGuardian`). A *proposer* is the member who added a pending player. *Admin* has the team's `admin` role. *Owner* has `owner`; the rules treat it like admin everywhere (checked in `coverage.test.ts`). *Super admin* has the `superAdmin` claim and isn't on the team, except where a cell says "on the team".
 
-**Test files:** F `firestore.test.ts`, T `teams.test.ts`, A `admin.test.ts`, P `polls.test.ts`, S `schedule.test.ts`, D `documents.test.ts`, N `notifications.test.ts`, U `users.test.ts`, St `storage.test.ts`, PD `player_details.test.ts`, C `coverage.test.ts`.
+**Test files:** F `firestore.test.ts`, T `teams.test.ts`, A `admin.test.ts`, P `polls.test.ts`, S `schedule.test.ts`, D `documents.test.ts`, N `notifications.test.ts`, U `users.test.ts`, St `storage.test.ts`, PD `player_details.test.ts`, As `assignments.test.ts`, C `coverage.test.ts`.
 
 ## Bugs found and fixed
 
@@ -72,6 +72,10 @@ Only those three tests fail against the old rules; they pass against the new one
 | | create, update | ✗\* | ✗ | ✓ self / ✗ others | ✓ their player (guardian or `self`) / ✗ unlinked | ✓ anyone | ✓ | ✓ anyone / ✗ self | F, S, A |
 | | create, update for a pending player | · | · | ✗ (proposer) | · | ✗ | = | ✗ | S |
 | | delete | ✗\* | · | ✗ | · | · | · | · | S |
+| `assignments` (SCHED-15) | get, list (list names the team, limit ≤ 100) | ✗ | ✗ | ✓ | = | = | = | ✓ | As, C |
+| | create, delete, edit kind and label | ✗ | ✗ | ✗ | = | ✓ | = | ✓ (✗ archived team) | As, C |
+| | assign someone on the team, or nobody | · | · | ✗ | = | ✓ | = | ✓ | As |
+| | volunteer for an open task, give up your own | · | ✗ | ✓ / ✗ (taken, or someone else's) | = | ✓ | = | ✗ not on the team | As, C |
 | `groupDocuments` | get, list | ✗\* | ✗ | ✓ | = | = | = | ✓ | D, A |
 | | create | ✗\* | ✗ | ✓ / ✗ (setting) | = | ✓ | ✓ | ✗ / ✓ on the team (setting off too) | D, A |
 | | update | ✗\* | ✗ | ✓ uploader / ✗ | = | ✓ (pins) | ✓ | ✓ (pins) | D |

@@ -293,6 +293,7 @@ Future<void> pumpTeam(
   Size size = phoneSize,
   FakeMessageRepository? messages,
   int? teamColor,
+  FakeAssignmentRepository? assignments,
 }) async {
   final events = FakeEventRepository(sceneEvents);
   final rsvps = FakeRsvpRepository(events)
@@ -324,6 +325,7 @@ Future<void> pumpTeam(
     pollRepo: polls,
     eventRepo: events,
     rsvpRepo: rsvps,
+    assignmentRepo: assignments,
     documentRepo: FakeDocumentRepository(sceneDocuments),
     admin: FakeAdminRepository(
       totalsValue: const AdminTotals(

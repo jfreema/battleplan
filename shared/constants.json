@@ -28,7 +28,8 @@
     "plays": "plays",
     "calendarLinks": "calendarLinks",
     "teamCalendars": "teamCalendars",
-    "answerLinks": "answerLinks"
+    "answerLinks": "answerLinks",
+    "assignments": "assignments"
   },
   "enums": {
     "userStatus": [
@@ -121,6 +122,12 @@
       "maybe",
       "not_going"
     ],
+    "assignmentKind": [
+      "snacks",
+      "drinks",
+      "scorekeeper",
+      "other"
+    ],
     "documentKind": [
       "file",
       "link"
@@ -206,6 +213,8 @@
     "opponentMax": 60,
     "arriveMinutesMax": 240,
     "rsvpNoteMax": 200,
+    "assignmentLabelMax": 40,
+    "assignmentsPerEventMax": 20,
     "documentNameMax": 100,
     "documentDescriptionMax": 500,
     "documentUrlMax": 2000,

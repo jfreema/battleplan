@@ -57,6 +57,7 @@ import 'package:battleplan/features/safety/presentation/blocked_people_screen.da
 import 'package:battleplan/features/safety/presentation/reports_screen.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/presentation/calendar_link_screen.dart';
+import 'package:battleplan/features/schedule/presentation/event_assignments.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/features/schedule/presentation/event_form_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
@@ -678,6 +679,22 @@ GoRouter router(Ref ref) {
                               ),
                             ),
                             routes: [
+                              // The event's assignments (SCHED-15).
+                              GoRoute(
+                                path: 'assignments',
+                                parentNavigatorKey: rootKey,
+                                pageBuilder: (_, state) => PanelPage(
+                                  key: state.pageKey,
+                                  child: EventAssignmentsScreen(
+                                    groupId: GroupId(
+                                      state.pathParameters['groupId']!,
+                                    ),
+                                    eventId: EventId(
+                                      state.pathParameters['eventId']!,
+                                    ),
+                                  ),
+                                ),
+                              ),
                               GoRoute(
                                 path: 'edit',
                                 parentNavigatorKey: rootKey,

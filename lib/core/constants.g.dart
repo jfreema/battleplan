@@ -33,6 +33,7 @@ abstract final class Collections {
   static const String calendarLinks = 'calendarLinks';
   static const String teamCalendars = 'teamCalendars';
   static const String answerLinks = 'answerLinks';
+  static const String assignments = 'assignments';
 }
 
 /// Limits shared with the server and security rules.
@@ -54,6 +55,8 @@ abstract final class Limits {
   static const int opponentMax = 60;
   static const int arriveMinutesMax = 240;
   static const int rsvpNoteMax = 200;
+  static const int assignmentLabelMax = 40;
+  static const int assignmentsPerEventMax = 20;
   static const int documentNameMax = 100;
   static const int documentDescriptionMax = 500;
   static const int documentUrlMax = 2000;
@@ -425,6 +428,25 @@ enum RsvpStatus {
   final String value;
 
   static RsvpStatus? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum AssignmentKind {
+  snacks('snacks'),
+  drinks('drinks'),
+  scorekeeper('scorekeeper'),
+  other('other');
+
+  const AssignmentKind(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static AssignmentKind? tryParse(String? value) {
     for (final e in values) {
       if (e.value == value) return e;
     }

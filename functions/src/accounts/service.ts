@@ -14,6 +14,7 @@ import { anonymizeUploader } from '../documents/service.js';
 import { removeAccountNotifications, removeDevices } from '../notify/service.js';
 import { removeAccountFromPlayers } from '../players/service.js';
 import { removeAccountBlocks } from '../safety/service.js';
+import { clearAssignmentsOf } from '../schedule/assignments.js';
 import { removeUpcomingRsvps } from '../schedule/service.js';
 import { removeAccountFromTeams, updateMemberSnapshots } from '../teams/service.js';
 import {
@@ -349,6 +350,8 @@ export async function deleteAccount(uid: string, newOwners: Record<string, strin
   await removeAccountFromTeams(uid, newOwners);
   await removeAccountFromPlayers(uid);
   await removeUpcomingRsvps(uid);
+  // Their tasks on every team open again (SCHED-15).
+  await clearAssignmentsOf(uid);
   await anonymizeAuthor(uid);
   await anonymizeUploader(uid);
   await removeAccountNotifications(uid);

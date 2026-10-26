@@ -116,6 +116,13 @@ abstract final class AppIcons {
   static const IconData meeting = Symbols.groups_rounded;
   static const IconData social = Symbols.celebration_rounded;
 
+  /// Event assignments (SCHED-15): the row on an event, and each kind.
+  static const IconData assignments = Symbols.assignment_ind_rounded;
+  static const IconData snacks = Symbols.cookie_rounded;
+  static const IconData drinks = Symbols.water_full_rounded;
+  static const IconData scorekeeper = Symbols.scoreboard_rounded;
+  static const IconData assignmentOther = Symbols.task_alt_rounded;
+
   /// RSVP answers (SCHED-4).
   static const IconData going = Symbols.check_circle_rounded;
   static const IconData maybe = Symbols.help_rounded;

@@ -154,6 +154,147 @@ final class CalendarLinkRepositoryProvider
 String _$calendarLinkRepositoryHash() =>
     r'1f3bcfc6ae7f681d39571cef729b3ed092f226a0';
 
+/// Overridden in app/providers.dart.
+
+@ProviderFor(assignmentRepository)
+final assignmentRepositoryProvider = AssignmentRepositoryProvider._();
+
+/// Overridden in app/providers.dart.
+
+final class AssignmentRepositoryProvider
+    extends
+        $FunctionalProvider<
+          AssignmentRepository,
+          AssignmentRepository,
+          AssignmentRepository
+        >
+    with $Provider<AssignmentRepository> {
+  /// Overridden in app/providers.dart.
+  AssignmentRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'assignmentRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$assignmentRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<AssignmentRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AssignmentRepository create(Ref ref) {
+    return assignmentRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AssignmentRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AssignmentRepository>(value),
+    );
+  }
+}
+
+String _$assignmentRepositoryHash() =>
+    r'41423d491b2d4f4adab24dfba13ba8418cdfcc1e';
+
+/// An event's tasks (snacks, drinks, scorekeeper...), live (SCHED-15).
+
+@ProviderFor(eventAssignments)
+final eventAssignmentsProvider = EventAssignmentsFamily._();
+
+/// An event's tasks (snacks, drinks, scorekeeper...), live (SCHED-15).
+
+final class EventAssignmentsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Assignment>>,
+          List<Assignment>,
+          Stream<List<Assignment>>
+        >
+    with $FutureModifier<List<Assignment>>, $StreamProvider<List<Assignment>> {
+  /// An event's tasks (snacks, drinks, scorekeeper...), live (SCHED-15).
+  EventAssignmentsProvider._({
+    required EventAssignmentsFamily super.from,
+    required (GroupId, EventId) super.argument,
+  }) : super(
+         retry: null,
+         name: r'eventAssignmentsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$eventAssignmentsHash();
+
+  @override
+  String toString() {
+    return r'eventAssignmentsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Assignment>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Assignment>> create(Ref ref) {
+    final argument = this.argument as (GroupId, EventId);
+    return eventAssignments(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EventAssignmentsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$eventAssignmentsHash() => r'1ff0903864622e5e47fa8ca9d42d4fb8c31dc48a';
+
+/// An event's tasks (snacks, drinks, scorekeeper...), live (SCHED-15).
+
+final class EventAssignmentsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          Stream<List<Assignment>>,
+          (GroupId, EventId)
+        > {
+  EventAssignmentsFamily._()
+    : super(
+        retry: null,
+        name: r'eventAssignmentsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// An event's tasks (snacks, drinks, scorekeeper...), live (SCHED-15).
+
+  EventAssignmentsProvider call(GroupId groupId, EventId eventId) =>
+      EventAssignmentsProvider._(argument: (groupId, eventId), from: this);
+
+  @override
+  String toString() => r'eventAssignmentsProvider';
+}
+
 /// The signed-in person's calendar links, live (SCHED-11).
 
 @ProviderFor(myCalendarLinks)

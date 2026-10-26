@@ -48,6 +48,7 @@ import 'package:battleplan/features/polls/data/firestore_poll_repository.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/data/firestore_safety_repository.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
+import 'package:battleplan/features/schedule/data/firestore_assignment_repository.dart';
 import 'package:battleplan/features/schedule/data/firestore_calendar_link_repository.dart';
 import 'package:battleplan/features/schedule/data/firestore_event_repository.dart';
 import 'package:battleplan/features/schedule/data/firestore_rsvp_repository.dart';
@@ -124,6 +125,9 @@ List<Override> buildOverrides({
     FirestoreEventRepository(firestore, functions),
   ),
   rsvpRepositoryProvider.overrideWithValue(FirestoreRsvpRepository(firestore)),
+  assignmentRepositoryProvider.overrideWithValue(
+    FirestoreAssignmentRepository(firestore),
+  ),
   calendarLinkRepositoryProvider.overrideWithValue(
     FirestoreCalendarLinkRepository(firestore, functions),
   ),

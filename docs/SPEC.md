@@ -159,6 +159,8 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | Edit, cancel, or delete events | own only | ✓ | ✓ | ✓ |
 | RSVP for your linked players (as the player or a guardian) | approved links | ✓ | ✓ | ✓ |
 | RSVP for any member or player | — | ✓ | ✓ | ✓ |
+| Volunteer for an open assignment, or drop out of your own (SCHED-15) | ✓ | ✓ | ✓ | in teams they've joined |
+| Add, edit, and remove assignments; assign anyone on the team (SCHED-15) | — | ✓ | ✓ | ✓ |
 | Claim a player ("I am this player" or parent/guardian) | needs admin approval | ✓ at once | ✓ at once | at once, in teams they've joined |
 | Add players | pending until an admin approves | ✓ | ✓ | ✓ |
 | Add a guardian to a player | players they're linked to (as the player or a guardian) | ✓ | ✓ | ✓ |
@@ -795,7 +797,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Attendance tracking: who actually came.
   - RSVP and attendance reports with CSV export.
   - Game scores.
-  - Volunteer and snack sign-ups.
+  - Volunteer and snack sign-ups (built as assignments, SCHED-15).
   - Carpools.
   - Season availability surveys.
 - **SCHED-14 · v1.1 · Answering without opening the app.** The people who don't answer tend to be the ones who rarely open the app, so they can answer from an email (ARCH §6.15). Built for now as a button (task 286), at the owner's request: emails go out only when a coach sends them.
@@ -804,6 +806,12 @@ Players that others answer for never get accounts, and every account belongs to 
   - **Answering:** each answer opens a small page on getbattleplan.app with that answer picked, an optional note, and **Send**. Opening the link never answers by itself, because email services open links to check them; Send does. No sign-in: the link works only for that person, that event, and the players it names, until the event starts or its deadline passes, and it can change the answer until then. The page says who's answering, and offers to open the event in Battleplan.
   - Every answer follows SCHED-5 (the deadline, whether Maybe is allowed, who may answer for whom) and is recorded as that person's answer.
   - **Later** (tasks 287 to 290): Going, Maybe, and Not going buttons on event notifications (the iPhone and Android apps show all three; Chrome and Edge show Going and Not going), and reminder emails sent on their own to people who can't get notifications, with **Stop these emails** and a Settings switch.
+- **SCHED-15 · 1.1 · Assignments.** An event can have assignments: tasks such as **Snacks**, **Drinks**, **Scorekeeper**, or **Other** (the admin names it, "Field setup"), each with optional details ("Halftime oranges") and at most one person. They're a secondary part of the event, so an **Assignments** row sits near the bottom of the event's page, under who's coming: "3 of 4 taken", or "You: Snacks" for your own. It shows for members once the event has assignments, and always for admins, to add the first. It opens the list (route `/g/{groupId}/schedule/e/{eventId}/assignments`).
+  - **Volunteering:** anyone on the team taps **Volunteer** on an open task, and **Drop out** on their own. Guardians volunteer as themselves. If someone else took it a moment before, the app says so.
+  - **Admins** (and super admins, §3) add assignments (up to 20 an event), assign anyone on the team (or assign someone as they add it), make a task open again, edit its kind and details, and remove it.
+  - Each task shows who has it: "Open", "You", "Alex Kim volunteered", or "Assigned to Alex Kim".
+  - Assignments go with their event when it's deleted, and with the team. Someone who leaves the team, or deletes their account, comes off their tasks, which are open again.
+  - No notifications yet (a reminder for the person on a task would be a later addition).
 
 **Acceptance (MVP)**
 
@@ -1544,7 +1552,7 @@ Not in v1; some may come later:
 - Typing indicators and read receipts
 - Attendance tracking, stats, and scores
 - Payments and team dues
-- Volunteer and snack sign-ups
+- Volunteer and snack sign-ups beyond assignments (SCHED-15 has one person a task, chosen in the app)
 - Carpools
 - Importing chat from TeamSnap, which doesn't export it. GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar imports are built (§6.15; ROADMAP tasks 241, 249, 250, 252, 254).
 - Languages other than English

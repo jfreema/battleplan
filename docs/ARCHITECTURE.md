@@ -489,6 +489,7 @@ Before calling it, the iPhone, iPad, and Mac apps revoke Apple's tokens for an a
 | `eventSeries` | auto | repeating series | `event_series` | Functions |
 | `events` | auto | event | `events` | admins and allowed members, Functions |
 | `rsvps` | `{eventId}_{participantId}` | event + participant | `event_rsvps` | the member; for a player, its `self` member, its guardians, or admins |
+| `assignments` | auto | a task on an event (SCHED-15) | `event_assignments` | admins (everything); members (volunteer, drop out) |
 | `groupDocuments` | auto | file or link | `documents` | members if allowed, Functions |
 | `plays` | auto | saved play (§6.14) | `plays` | admins |
 | `notifications` | `{dedupeKey}_{uid}` | notification-center item | `notifications` | Functions; the recipient marks read |
@@ -645,6 +646,12 @@ rsvps/{eventId}_{participantId}                         # exactly one per event 
   status: 'going' | 'maybe' | 'not_going', note (≤ 200, '' when none), guests (0 until v1.1)
   respondedBy (uid), updatedAt
 
+assignments/{auto}                                      # a task on an event (SCHED-15), at most 20 an event
+  groupId, eventId                                      # the event's team
+  kind: 'snacks' | 'drinks' | 'scorekeeper' | 'other', label (1-40, or null; required for 'other')
+  assigneeUid (or null: open), assignedBy (the person themselves when they volunteered, or the admin; null when open)
+  createdBy, createdAt, updatedAt
+
 groupDocuments/{docId}
   groupId, kind: 'file' | 'link'
   name (1–100, trimmed non-empty), nameLower            # nameLower == name.lower(), for the Name sort
@@ -786,6 +793,7 @@ function hasRoom(g)      { let t = get(/databases/$(database)/documents/groups/$
 | `pollVotes/{id}` | the voter; members and super admins, if the poll isn't anonymous | The voter, while the poll is open. The ID must be `{pollId}_{auth.uid}`, and choices must be valid (one unless `allowMultiple`). |
 | `events/{id}` | members, super admins | **Create** one-off events only: admins, or any member when `membersCanCreateEvents` (Q12), on an active team with room (`hasRoom`, STORE-4). No `rsvpFor` is needed (one left on an old doc is ignored), both count maps start at zero, and `seriesId`, `seriesDate`, `seriesOverrides`, `nextReminderAt`, `messageId`, `canceledAt`, and `canceledBy` are unset. **Update and delete:** admins, super admins, or the creator while `membersCanCreateEvents` is on, on an active team, and only events with no `seriesId` (series events go through `saveEventSeries`). Updates can't change `groupId`, `createdBy`, `createdAt`, the counts, `nextReminderAt`, `messageId`, the series fields, `notifyTeam`, or `postToChat`. Cancel sets `canceledAt` once, to `request.time`, with `canceledBy == auth.uid`, and it's never cleared. Field limits come from `shared/constants.json` (`validEvent`, `validLocation`, `gameFieldsOk`). |
 | `rsvps/{id}` | members, super admins | See below. No client deletes. |
+| `assignments/{id}` | members, super admins; lists need `where groupId ==` and `limit <= 100` | **Create, update, delete:** admins and super admins, on an active team: keys limited to the schema, a valid kind, a label of 1 to 40 characters and not blank (required for `other`), the event in the same team, `createdBy == auth.uid`, `createdAt` and `updatedAt == request.time`, and an assignee who's on the team, put there by the writer (`assignedBy == auth.uid`), or none. `groupId`, `eventId`, `createdBy`, and `createdAt` never change. **Members** may only take an open task (`assigneeUid` and `assignedBy` set to themselves) or give up their own (both back to null), on an active team. Functions delete them with their event (the `events` trigger and `saveEventSeries`) and team, and clear a person's when they leave the team, are removed from it, or delete their account. |
 | `groupDocuments/{id}` | members, super admins | **Create:** admins, or any member while `membersCanUploadDocs` (unset counts as on), on an active team. `uploadedBy == auth.uid`, `uploaderName` equals the member's `groupMembers` `displayName`, `pinned` is false unless an admin creates it, `notifyTeam` is a bool, and `createdAt` and `updatedAt == request.time`. A file names its `path` in this document's own folder of this team, an allowed `contentType`, and a `size` up to 10 MB; a link names an http(s) `url` up to 2,000 characters. No `hasRoom` check: Storage rules already refuse the upload when the team is full, and links use no storage (STORE-4). **Update:** the uploader (while still a member) or an admin, on an active team, on `name`, `nameLower`, `description`, and `updatedAt` only; admins also `pinned`. **Delete:** the uploader (while still a member), an admin, or a super admin, on an active team. Clients never delete the file; `onDocumentDeleted` does. |
 | `notifications/{id}` | the recipient | The recipient may set `read` to `true`, nothing else |
 | `reports`, `auditLogs`, `rateLimits` | super admins (team admins read their team's reports with `teamVisible == true`, never one about themselves); lists need `limit <= 100` | Functions only |
@@ -911,7 +919,7 @@ These are the only triggers, and they react only to writes clients make directly
 | `messages` updated | An edited text or photo message's `text`, masked when the team filters strong language (SAFE-7; that update runs it again); otherwise `replyPreview` on replies to an edited message (CHAT-15) | `text` unchanged, or the message deleted |
 | `pollVotes` written | `polls.voteCounts`, `voterCount` | — |
 | `rsvps` written | `events.rsvpCounts` (players) and `staffCounts` (everyone else), recounted in a transaction (which fires the `events` trigger, which exits early) | the answer didn't change (a moved event's `eventStartAt`, a renamed player) |
-| `events` written | Create: the event card in chat when `postToChat` (message ID = event ID, then `messageId` on the event), and `eventCreated` to the team when `notifyTeam`. Time, place, or cancel: `eventChanged` to the team minus people who said Not going, with each player's `self` member and guardians told per player (names prefixed for guardians only), and `rsvps.eventStartAt` moved with the event. Any change: `nextReminderAt`, settled in a transaction from a fresh read with a 5-minute grace. Delete: the event's `rsvps`; the card stays and the app shows "Event deleted". | only `rsvpCounts`, `staffCounts`, `nextReminderAt`, `messageId`, or `updatedAt` changed; the event has a `seriesId` (`saveEventSeries` did the follow-up) |
+| `events` written | Create: the event card in chat when `postToChat` (message ID = event ID, then `messageId` on the event), and `eventCreated` to the team when `notifyTeam`. Time, place, or cancel: `eventChanged` to the team minus people who said Not going, with each player's `self` member and guardians told per player (names prefixed for guardians only), and `rsvps.eventStartAt` moved with the event. Any change: `nextReminderAt`, settled in a transaction from a fresh read with a 5-minute grace. Delete: the event's `rsvps` and `assignments`; the card stays and the app shows "Event deleted". | only `rsvpCounts`, `staffCounts`, `nextReminderAt`, `messageId`, or `updatedAt` changed; the event has a `seriesId` (`saveEventSeries` did the follow-up) |
 | `players` updated (`onPlayerUpdated`, players/triggers.ts) | `groupMembers.playerSummary` for each member linked to the player (`self` or guardian), and after a rename, `participantName` on the player's upcoming `rsvps` (which fires the `rsvps` trigger, which exits early). Linked members and admins edit players directly; `adminUpdatePlayer` also leaves this follow-up to the trigger | the name and number are unchanged (so link writes, which touch only `linksUpdatedAt`, and approvals cost nothing); the player isn't active |
 | `groupDocuments` created / deleted | Create: `documentAdded` to the team ("New document: Fall roster.pdf", or "New link: League site"), the uploader as actor, target `{ type: 'document', id }`, route `/g/{groupId}/documents/d/{docId}`, dedupe key `{docId}_added`. Delete: the document's whole Storage folder (which fires the Storage trigger, and also takes an earlier upload left in it) and the notification-center items about it. | create: `notifyTeam` is false |
 | `users` updated | `displayName` and `photoPath` on all the person's `groupMembers`, a page at a time, and `people.<uid>` on their direct conversations (CHAT-19) | name and photo unchanged |
@@ -1541,6 +1549,7 @@ It fits our stack without running our own API server. The alternative, a Cloud R
 | `pollVotes` | `poll_votes` | PK `(poll_id, user_id, option_id)` |
 | `eventSeries`, `events` | `event_series`, `events` | `reminder_offsets int[]`, `skip_dates date[]` |
 | `rsvps` | `event_rsvps` | PK `(event_id, participant_type, participant_id)` |
+| `assignments` | `event_assignments` | `event_id`, `assignee_uid` nullable |
 | `groupDocuments` | `documents` | Files stay in Cloud Storage |
 | `notifications` | `notifications` | Could also stay in Firestore |
 | `reports`, `auditLogs`, `config` | `reports`, `audit_logs`, `app_config` | |

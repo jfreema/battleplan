@@ -9,6 +9,8 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/players/application/providers.dart';
+import 'package:battleplan/features/schedule/domain/assignment.dart';
+import 'package:battleplan/features/schedule/domain/assignment_repository.dart';
 import 'package:battleplan/features/schedule/domain/calendar_link.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_repository.dart';
@@ -38,6 +40,19 @@ RsvpRepository rsvpRepository(Ref ref) =>
 @Riverpod(keepAlive: true)
 CalendarLinkRepository calendarLinkRepository(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
+
+/// Overridden in app/providers.dart.
+@Riverpod(keepAlive: true)
+AssignmentRepository assignmentRepository(Ref ref) =>
+    throw UnimplementedError('Wired in app/providers.dart');
+
+/// An event's tasks (snacks, drinks, scorekeeper...), live (SCHED-15).
+@riverpod
+Stream<List<Assignment>> eventAssignments(
+  Ref ref,
+  GroupId groupId,
+  EventId eventId,
+) => ref.watch(assignmentRepositoryProvider).watchForEvent(groupId, eventId);
 
 /// The signed-in person's calendar links, live (SCHED-11).
 @riverpod
