@@ -97,7 +97,14 @@ abstract final class AppTheme {
     // Text in a role's color must read on the page and on cards.
     final textBackgrounds = [background, low];
     Color readable(Color c) => ColorMath.readable(c, textBackgrounds);
-    Color on(Color c) => ColorMath.onColor(c, dark: g.ink);
+    // White or ink on a role's color; black where neither reads (error on
+    // the Black team's Candy page, lifted to a mid red).
+    Color on(Color c) {
+      final o = ColorMath.onColor(c, dark: g.ink);
+      return ColorMath.contrast(o, c) >= 4.5
+          ? o
+          : ColorMath.onColor(c, dark: const Color(0xFF000000));
+    }
 
     final primary = readable(g.you.face);
     final secondary = readable(g.bubblegum.face);

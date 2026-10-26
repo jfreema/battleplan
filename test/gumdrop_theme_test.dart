@@ -1,6 +1,7 @@
 // The Gumdrop Pop themes (SPEC §7.3, §7.4, SET-2, TEAM-1): the team-color
-// tint against the design's tables (Gumdrop team-color proposal §5), and
-// 4.5:1 text contrast for every text role in every theme and team color.
+// tint against the design's tables (Gumdrop team-color proposal §5; Dark's
+// is the lighter touch), the team-colored shadows, and 4.5:1 text contrast
+// for every text role in every theme and team color.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_theme.dart';
@@ -16,57 +17,53 @@ import 'package:material_ui/material_ui.dart';
 const _names = [
   'Blue',
   'Light blue',
+  'Navy',
+  'Teal',
   'Green',
+  'Olive',
+  'Yellow',
+  'Mustard',
   'Orange',
   'Red',
-  'Purple',
-  'Teal',
-  'Mustard',
+  'Maroon',
   'Pink',
-  'Olive',
-  'Royal blue',
-  'Violet',
-  'Slate',
-  'Navy',
-  'Yellow',
+  'Purple',
+  'Gray',
+  'Black',
 ];
 
-/// §5a, Dark: page, card, raised, input, drop (lip), border.
+/// Dark: page, card, raised, input, drop (lip), border. These are the
+/// lighter touch, not table 5a: the team's hue at half the chroma
+/// ([darkTeamShare]), and warm hues held to [warmChroma] so they're a warm
+/// charcoal, not brown. Blue and Navy keep the defaults (the 25° rule);
+/// Gray and Black are grays.
 const _dark = {
-  'Blue': ['#121430', '#202248', '#31325C', '#0F0E29', '#0D0A1E', '#3E3F71'],
   'Light blue': [
-    '#001926',
-    '#00293D',
-    '#003A54',
-    '#00141E',
-    '#000F17',
-    '#004967',
+    '#051824',
+    '#112837',
+    '#233948',
+    '#01141E',
+    '#010E17',
+    '#304656',
   ],
-  'Green': ['#001B0F', '#002D1C', '#003F29', '#00160B', '#001008', '#004E33'],
-  'Orange': ['#281000', '#421A07', '#572A18', '#200C00', '#190900', '#6A3520'],
-  'Red': ['#2E0C00', '#451711', '#5A271F', '#240900', '#1D0600', '#6F3128'],
-  'Purple': ['#1C112C', '#2E1E43', '#402E57', '#180B26', '#14081C', '#4F3A6B'],
-  'Teal': ['#001921', '#002A36', '#003C4C', '#00141A', '#000F14', '#014A5E'],
-  'Mustard': ['#211400', '#382100', '#4D300D', '#1B0F00', '#150B00', '#5F3C13'],
-  'Pink': ['#2F0815', '#471324', '#5C2334', '#29040F', '#20030B', '#712D41'],
-  'Olive': ['#121900', '#1B2B00', '#293C11', '#0E1400', '#0A0F00', '#344A17'],
-  'Royal blue': [
-    '#131430',
-    '#212248',
-    '#32325C',
-    '#100E29',
-    '#0E0A1E',
-    '#3F3E71',
-  ],
-  'Violet': ['#1F102B', '#311D42', '#432D55', '#1A0B24', '#15071B', '#533868'],
-  'Slate': ['#071729', '#182739', '#29374B', '#011224', '#000E1D', '#374559'],
-  'Navy': ['#001730', '#012749', '#1A375C', '#001228', '#010D1F', '#2A446A'],
-  'Yellow': ['#1E1500', '#322400', '#463309', '#181000', '#130C00', '#56400E'],
+  'Teal': ['#001921', '#062A35', '#183A47', '#00141A', '#000F14', '#274855'],
+  'Green': ['#051A11', '#132A1F', '#223B2F', '#00160B', '#001008', '#2B4A3B'],
+  'Olive': ['#131906', '#212816', '#313925', '#0E1400', '#0A0F00', '#3D472F'],
+  'Yellow': ['#1A160F', '#2A251F', '#3A362F', '#161107', '#120C01', '#48433C'],
+  'Mustard': ['#1C150F', '#2B251F', '#3C352F', '#171008', '#140B02', '#49423C'],
+  'Orange': ['#1D1511', '#2D2421', '#3D3431', '#190F0A', '#160A04', '#4B423E'],
+  'Red': ['#1D1412', '#2D2422', '#3E3432', '#1A0F0C', '#160A06', '#4C413F'],
+  'Maroon': ['#1D1413', '#2D2422', '#3E3432', '#1A0F0D', '#160907', '#4C4140'],
+  'Pink': ['#241116', '#381F25', '#4B2E35', '#1F0C11', '#18080C', '#5C3A42'],
+  'Purple': ['#1A1421', '#2B2235', '#3C3246', '#160F1C', '#110A15', '#4A3F57'],
+  // Grays: a third of their chroma, so they read gray, not navy.
+  'Gray': ['#13171D', '#22262D', '#33363D', '#0D1218', '#080D15', '#40444B'],
+  'Black': ['#161616', '#262626', '#363636', '#121212', '#0D0D0D', '#444444'],
 };
 
 /// §5b, Light: page, input, chip (well), hairline, border, drop (lip).
+/// Blue and Navy keep the defaults (the 25° rule).
 const _light = {
-  'Blue': ['#F5F4FC', '#F8F7FD', '#ECEAF8', '#E4E2F3', '#DBD9EF', '#D2CFEA'],
   'Light blue': [
     '#EFF6FD',
     '#F3F9FE',
@@ -75,51 +72,49 @@ const _light = {
     '#C8DEF0',
     '#BBD5EB',
   ],
+  'Teal': ['#EDF7FB', '#F2F9FD', '#DEEFF6', '#D3E7F1', '#C2E0ED', '#B4D7E7'],
   'Green': ['#EEF7F2', '#F3FAF6', '#E0EFE7', '#D6E8DE', '#C7E1D3', '#BAD9C9'],
+  'Olive': ['#F3F6EE', '#F7F9F3', '#E9EEE1', '#E0E6D6', '#D6DEC8', '#CCD6BC'],
+  'Yellow': ['#FAF4ED', '#FCF8F2', '#F3EBDF', '#EDE3D4', '#E7D9C5', '#E0D0B8'],
+  'Mustard': ['#FBF4ED', '#FDF7F2', '#F6EADF', '#F0E2D5', '#ECD8C6', '#E5CEB9'],
   'Orange': ['#FDF3EF', '#FEF7F4', '#F9E8E2', '#F4E0D8', '#F1D5CB', '#ECCBBF'],
   'Red': ['#FEF3F0', '#FFF6F5', '#FAE8E4', '#F6DFDB', '#F3D4CE', '#EECAC3'],
-  'Purple': ['#F7F4FB', '#FAF7FD', '#F0E9F6', '#E9E1F1', '#E2D7EC', '#DACDE6'],
-  'Teal': ['#EDF7FB', '#F2F9FD', '#DEEFF6', '#D3E7F1', '#C2E0ED', '#B4D7E7'],
-  'Mustard': ['#FBF4ED', '#FDF7F2', '#F6EADF', '#F0E2D5', '#ECD8C6', '#E5CEB9'],
+  'Maroon': ['#FEF3F1', '#FFF6F5', '#FBE8E5', '#F6DFDC', '#F3D4CF', '#EECAC4'],
   'Pink': ['#FEF2F4', '#FFF6F8', '#FAE7EB', '#F5DFE3', '#F2D3D9', '#EDC9D0'],
-  'Olive': ['#F3F6EE', '#F7F9F3', '#E9EEE1', '#E0E6D6', '#D6DEC8', '#CCD6BC'],
-  'Royal blue': [
-    '#F5F4FC',
-    '#F8F7FD',
-    '#ECEAF8',
-    '#E5E2F3',
-    '#DCD8EF',
-    '#D2CFEA',
-  ],
-  'Violet': ['#F8F3FB', '#FAF7FC', '#F1E9F6', '#EAE1F0', '#E3D6EB', '#DCCDE5'],
-  'Slate': ['#F1F5FD', '#F5F8FE', '#E5ECF9', '#DCE5F4', '#CFDCF1', '#C4D3EC'],
-  'Navy': ['#F2F5FD', '#F6F8FE', '#E7ECF9', '#DEE4F4', '#D2DBF1', '#C7D2EC'],
-  'Yellow': ['#FAF4ED', '#FCF8F2', '#F3EBDF', '#EDE3D4', '#E7D9C5', '#E0D0B8'],
+  'Purple': ['#F7F4FB', '#FAF7FD', '#F0E9F6', '#E9E1F1', '#E2D7EC', '#DACDE6'],
+  'Gray': ['#F4F5F8', '#F7F8FA', '#EAECF0', '#E1E4EA', '#D7DBE3', '#CDD2DB'],
+  'Black': ['#F5F5F5', '#F8F8F8', '#ECECEC', '#E4E4E4', '#DBDBDB', '#D2D2D2'],
 };
 
 /// §5c, Candy: the page, the text on it, and the title (and page) shadow.
 const _candy = {
   'Blue': ['#2F5BEA', '#FFFFFF', '#0D163D'],
   'Light blue': ['#7BAFD4', '#0D163D', '#FFFFFF'],
+  'Navy': ['#1E3A5F', '#FFFFFF', '#5E759F'],
+  'Teal': ['#0E7490', '#FFFFFF', '#0D163D'],
   'Green': ['#01855B', '#FFFFFF', '#0D163D'],
+  'Olive': ['#4D7C0F', '#FFFFFF', '#0D163D'],
+  'Yellow': ['#D4A017', '#0D163D', '#FFFFFF'],
+  'Mustard': ['#A16207', '#FFFFFF', '#0D163D'],
   'Orange': ['#C2410C', '#FFFFFF', '#0D163D'],
   'Red': ['#B91C1C', '#FFFFFF', '#0D163D'],
-  'Purple': ['#7C3AED', '#FFFFFF', '#0D163D'],
-  'Teal': ['#0E7490', '#FFFFFF', '#0D163D'],
-  'Mustard': ['#A16207', '#FFFFFF', '#0D163D'],
+  'Maroon': ['#7F1D1D', '#FFFFFF', '#C95E55'],
   'Pink': ['#BE185D', '#FFFFFF', '#0D163D'],
-  'Olive': ['#4D7C0F', '#FFFFFF', '#0D163D'],
-  'Royal blue': ['#1D4ED8', '#FFFFFF', '#0D163D'],
-  'Violet': ['#9333EA', '#FFFFFF', '#0D163D'],
-  'Slate': ['#334155', '#FFFFFF', '#6F7D94'],
-  'Navy': ['#1E3A5F', '#FFFFFF', '#5E759F'],
-  'Yellow': ['#D4A017', '#0D163D', '#FFFFFF'],
+  'Purple': ['#7C3AED', '#FFFFFF', '#0D163D'],
+  'Gray': ['#334155', '#FFFFFF', '#6F7D94'],
+  'Black': ['#111111', '#FFFFFF', '#474747'],
 };
 
 /// The team hues that are Gumdrop's own navy keep the default Dark and
-/// Light colors (the 25° rule), so their table rows, which show the plain
-/// formula, aren't used.
-const _sameHue = {'Blue', 'Royal blue', 'Slate', 'Navy'};
+/// Light colors (the 25° rule). Gray is in that hue too, but it's a gray,
+/// and tints gray.
+const _sameHue = {'Blue', 'Navy'};
+
+/// The grays (Gray, Black): gray in Dark and Light, not navy.
+const _grays = {'Gray', 'Black'};
+
+/// [name]'s ARGB, by the palette's order.
+int _argb(String name) => teamColorValues[_names.indexOf(name)];
 
 Color _hex(String hex) => Color(int.parse('FF${hex.substring(1)}', radix: 16));
 
@@ -187,7 +182,7 @@ void main() {
       }
     });
 
-    test('Gumdrop Pop Dark matches table 5a', () {
+    test('Gumdrop Pop Dark matches its table (the lighter touch)', () {
       for (final (i, name) in _names.indexed) {
         final c = teamTinted(GumdropColors.dark, teamColorValues[i]);
         const d = GumdropColors.dark;
@@ -253,6 +248,152 @@ void main() {
       }
     });
 
+    test('the grays tint Dark and Light gray, not navy', () {
+      for (final name in _grays) {
+        final argb = _argb(name);
+        expect(isGray(Color(argb)), isTrue, reason: name);
+        for (final base in [GumdropColors.dark, GumdropColors.light]) {
+          final c = teamTinted(base, argb);
+          expect(c.page, isNot(base.page), reason: '$name ${base.flavor}');
+          expect(ColorMath.lch(c.page).c, lessThan(5), reason: '$name page');
+          expect(ColorMath.lch(c.surface).c, lessThan(6), reason: '$name card');
+        }
+      }
+      // Black is a neutral gray, at the theme's own lightness.
+      final black = teamTinted(GumdropColors.dark, _argb('Black'));
+      expect(ColorMath.lch(black.page).c, lessThan(0.5));
+      expect(
+        ColorMath.lch(black.page).l,
+        closeTo(ColorMath.lch(GumdropColors.dark.page).l, 0.5),
+      );
+      // Every other team color is a color.
+      for (final (i, name) in _names.indexed) {
+        if (_grays.contains(name)) continue;
+        expect(isGray(Color(teamColorValues[i])), isFalse, reason: name);
+      }
+    });
+
+    test('Dark is a lighter touch: warm teams are not brown', () {
+      // Brown is a dark warm hue (orange to yellow, 40° to 100°) with real
+      // chroma. The warm teams' pages and cards are a warm charcoal: their
+      // own hue, with too little chroma to read brown.
+      for (final name in ['Yellow', 'Mustard', 'Orange', 'Red', 'Maroon']) {
+        expect(isWarmHue(ColorMath.lch(Color(_argb(name))).h), isTrue);
+        final c = teamTinted(GumdropColors.dark, _argb(name));
+        for (final (role, color) in [('page', c.page), ('card', c.surface)]) {
+          final lch = ColorMath.lch(color);
+          final brown = lch.h >= 40 && lch.h <= 100 && lch.c >= 6;
+          expect(brown, isFalse, reason: '$name $role ${ColorMath.hex(color)}');
+        }
+      }
+      for (final name in ['Pink', 'Olive', 'Green', 'Purple']) {
+        expect(isWarmHue(ColorMath.lch(Color(_argb(name))).h), isFalse);
+      }
+      // Every team but the theme's own hues still changes Dark's page and
+      // cards.
+      for (final (i, name) in _names.indexed) {
+        if (_sameHue.contains(name)) continue;
+        final c = teamTinted(GumdropColors.dark, teamColorValues[i]);
+        expect(c.page, isNot(GumdropColors.dark.page), reason: name);
+        expect(c.surface, isNot(GumdropColors.dark.surface), reason: name);
+      }
+    });
+
+    test("Dark and Light pages keep the team's hue", () {
+      // Within 30° of the team color's own hue, so Green isn't teal and
+      // Yellow isn't mauve. The grays are gray, and Blue and Navy keep the
+      // defaults.
+      for (final (i, name) in _names.indexed) {
+        if (_sameHue.contains(name) || _grays.contains(name)) continue;
+        final team = ColorMath.lch(Color(teamColorValues[i])).h;
+        for (final base in [GumdropColors.dark, GumdropColors.light]) {
+          final page = teamTinted(base, teamColorValues[i]).page;
+          expect(
+            ColorMath.hueDistance(ColorMath.lch(page).h, team),
+            lessThanOrEqualTo(30),
+            reason: '$name ${base.flavor} page ${ColorMath.hex(page)}',
+          );
+        }
+      }
+    });
+
+    test(
+      'Dark and Light shadows are the team color, and each team its own',
+      () {
+        // A page this dark (or pale) can't tell Red from Maroon, or Yellow
+        // from Mustard: they're the same hue. The hard shadows under headings
+        // and on the page carry the team color itself, so every team shows.
+        for (final base in [GumdropColors.dark, GumdropColors.light]) {
+          final shadows = <String, Color>{};
+          for (final (i, name) in _names.indexed) {
+            final c = teamTinted(base, teamColorValues[i]);
+            final what = '$name ${base.flavor}';
+            expect(c.pageShadow, c.headingShadow, reason: what);
+            if (_sameHue.contains(name)) {
+              expect(c.headingShadow, base.headingShadow, reason: what);
+              expect(c.headingShadowOnCard, base.headingShadowOnCard);
+              continue;
+            }
+            final team = ColorMath.lch(Color(teamColorValues[i]));
+            final shadow = ColorMath.lch(c.headingShadow);
+            // The team's own hue and chroma, at most a little lighter.
+            if (!_grays.contains(name)) {
+              expect(
+                ColorMath.hueDistance(shadow.h, team.h),
+                lessThan(3),
+                reason: what,
+              );
+            }
+            expect(shadow.c, closeTo(team.c, 1.5), reason: what);
+            if (base.flavor == GumdropFlavor.dark) {
+              // It shows on the page, and on cards.
+              for (final (shadow, bg) in [
+                (c.headingShadow, c.page),
+                (c.headingShadowOnCard, c.surface),
+              ]) {
+                expect(
+                  ColorMath.contrast(shadow, bg),
+                  greaterThanOrEqualTo(shadowContrast),
+                  reason: '$what ${ColorMath.hex(shadow)}',
+                );
+              }
+            } else {
+              // Clear of the navy heading text, and it shows on the page.
+              expect(
+                ColorMath.contrast(c.headingShadow, c.headingText),
+                greaterThanOrEqualTo(shadowContrast),
+                reason: what,
+              );
+              expect(
+                ColorMath.contrast(c.headingShadow, c.page),
+                greaterThanOrEqualTo(2),
+                reason: what,
+              );
+            }
+            shadows[name] = c.headingShadow;
+          }
+          shadows['Blue'] = base.headingShadow;
+          // Any two teams' shadows are clearly different colors (Blue and
+          // Navy share the default).
+          final names = shadows.keys.toList();
+          for (final (i, a) in names.indexed) {
+            for (final b in names.skip(i + 1)) {
+              expect(
+                ColorMath.deltaE(shadows[a]!, shadows[b]!),
+                greaterThanOrEqualTo(10),
+                reason: '${base.flavor} $a and $b',
+              );
+            }
+          }
+        }
+        // Maroon is its own red: a duller one than Red, lifted to show.
+        final dark = teamTinted(GumdropColors.dark, _argb('Maroon'));
+        expect(dark.headingShadow, _near('#A8423B'));
+        final light = teamTinted(GumdropColors.light, _argb('Black'));
+        expect(light.headingShadow, _near('#666666'));
+      },
+    );
+
     test('Gumdrop Candy matches table 5c', () {
       for (final (i, name) in _names.indexed) {
         final c = teamTinted(GumdropColors.candy, teamColorValues[i]);
@@ -274,26 +415,41 @@ void main() {
           reason: '$name you lip',
         );
       }
-      final yellow = teamTinted(
-        GumdropColors.candy,
-        teamColorValues[_names.indexOf('Yellow')],
-      );
+      final yellow = teamTinted(GumdropColors.candy, _argb('Yellow'));
       expect(yellow.you.lip, yellow.ink);
       expect(yellow.lemon.lip, yellow.ink);
       // Hard shadows on the page stay ink where ink shows, and lift where
-      // it wouldn't (Slate, Navy).
-      final slate = teamTinted(GumdropColors.candy, teamColorValues[12]);
-      expect(slate.pageShadow, _near('#6F7D94'));
-      final lightBlue = teamTinted(GumdropColors.candy, teamColorValues[1]);
+      // it wouldn't (Gray, Navy, Maroon, Black).
+      for (final (name, shadow) in [
+        ('Gray', '#6F7D94'),
+        ('Navy', '#5E759F'),
+        ('Maroon', '#C95E55'),
+        ('Black', '#474747'),
+      ]) {
+        final c = teamTinted(GumdropColors.candy, _argb(name));
+        expect(c.pageShadow, _near(shadow), reason: name);
+        expect(
+          ColorMath.contrast(c.pageShadow, c.page),
+          greaterThanOrEqualTo(2),
+          reason: '$name shadow shows',
+        );
+      }
+      final lightBlue = teamTinted(GumdropColors.candy, _argb('Light blue'));
       expect(lightBlue.pageShadow, GumdropColors.candy.ink);
-      // The red team's badge gets an ink ring, not a red gap.
-      final red = teamTinted(GumdropColors.candy, teamColorValues[4]);
-      expect(red.badgeRing, red.ink);
+      // The red teams' badges get an ink ring, not a red gap.
+      for (final name in ['Red', 'Maroon']) {
+        final c = teamTinted(GumdropColors.candy, _argb(name));
+        expect(c.badgeRing, c.ink, reason: name);
+      }
+      // Black's page is black, with white text.
+      final black = teamTinted(GumdropColors.candy, _argb('Black'));
+      expect(black.page, const Color(0xFF111111));
+      expect(black.textOnPage, const Color(0xFFFFFFFF));
     });
 
     test('a tinted card context is the tinted theme on a card', () {
-      final page = teamTinted(GumdropColors.candy, teamColorValues[1]);
-      final card = teamTinted(GumdropColors.candy.card, teamColorValues[1]);
+      final page = teamTinted(GumdropColors.candy, _argb('Light blue'));
+      final card = teamTinted(GumdropColors.candy.card, _argb('Light blue'));
       expect(card.onCard, isTrue);
       expect(card.page, page.page);
       expect(card.textOnPage, GumdropColors.candy.textPrimary);

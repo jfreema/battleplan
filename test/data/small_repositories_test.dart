@@ -354,6 +354,13 @@ void main() {
       };
       final sparse = await repo.preview('K7XPM2QR');
       expect(sparse.color, isNull);
+      // A team on a retired color (Violet) previews in its replacement.
+      functions.handlers['getInvitePreview'] = (_) => {
+        'groupId': 'g1',
+        'name': 'X',
+        'color': '#9333EA',
+      };
+      expect((await repo.preview('K7XPM2QR')).color, 0xFF7C3AED);
       expect(sparse.sport, Sport.other);
       expect(sparse.memberCount, 0);
       final joined = await repo.redeem('K7XPM2QR');

@@ -292,6 +292,7 @@ Future<void> pumpTeam(
   AuthUser user = coach,
   Size size = phoneSize,
   FakeMessageRepository? messages,
+  int? teamColor,
 }) async {
   final events = FakeEventRepository(sceneEvents);
   final rsvps = FakeRsvpRepository(events)
@@ -310,7 +311,9 @@ Future<void> pumpTeam(
     tester,
     auth: FakeAuthRepository(user: user),
     prefs: _prefs(theme: theme),
-    groups: {'a': sceneTeam},
+    groups: {
+      'a': teamColor == null ? sceneTeam : sceneTeam.copyWith(color: teamColor),
+    },
     memberships: [
       ...sceneMembers,
       if (user.uid != 'coach') testMembership('a', user.uid),
@@ -432,4 +435,14 @@ goldenScreens = {
   },
   'chat_wide': (tester, {required theme}) =>
       pumpTeam(tester, theme: theme, size: wideSize),
+  // A gray team color (Gray) tints the team gray (TEAM-1).
+  'chat_gray': (tester, {required theme}) =>
+      pumpTeam(tester, theme: theme, teamColor: 0xFF334155),
+  // A warm team color (Orange): a warm charcoal in Dark, not brown, with
+  // orange heading shadows.
+  'chat_orange': (tester, {required theme}) =>
+      pumpTeam(tester, theme: theme, teamColor: 0xFFC2410C),
+  // Black: gray in Dark and Light, a black page with lifted shadows in Candy.
+  'chat_black': (tester, {required theme}) =>
+      pumpTeam(tester, theme: theme, teamColor: 0xFF111111),
 };

@@ -108,6 +108,20 @@ String _dart(Map<String, dynamic> json) {
     ..writeln('];')
     ..writeln()
     ..writeln(
+      '/// Team colors taken out of the palette, as ARGB, each with the one it',
+    )
+    ..writeln('/// shows as now (TEAM-5).')
+    ..writeln('const Map<int, int> retiredTeamColorValues = {');
+  (json['retiredTeamColors'] as Map<String, dynamic>).forEach((old, now) {
+    b.writeln(
+      '  0xFF${old.substring(1).toUpperCase()}: '
+      '0xFF${(now as String).substring(1).toUpperCase()},',
+    );
+  });
+  b
+    ..writeln('};')
+    ..writeln()
+    ..writeln(
       '/// The reminder times an event can have, in minutes before (SCHED-3).',
     )
     ..writeln(
@@ -225,6 +239,17 @@ String _ts(Map<String, dynamic> json) {
   }
   b
     ..writeln('] as const;')
+    ..writeln()
+    ..writeln(
+      '/** Team colors taken out of the palette, each with the one it shows as '
+      'now (TEAM-5). Never written; firestore.rules still accepts them. */',
+    )
+    ..writeln('export const RETIRED_TEAM_COLORS = {');
+  (json['retiredTeamColors'] as Map<String, dynamic>).forEach((old, now) {
+    b.writeln("  '$old': '$now',");
+  });
+  b
+    ..writeln('} as const;')
     ..writeln()
     ..writeln(
       'export const REMINDER_OFFSETS_MINUTES = '

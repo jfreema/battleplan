@@ -3,6 +3,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/invite_repository.dart';
+import 'package:battleplan/features/groups/domain/team_palette.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
 /// Invites through the invite callables (`getTeamInvite`, `redeemInvite`,
@@ -149,5 +150,5 @@ TeamInvite _invite(Map<String, dynamic> d) => TeamInvite(
 int? _color(String? hex) {
   if (hex == null || hex.length != 7) return null;
   final rgb = int.tryParse(hex.substring(1), radix: 16);
-  return rgb == null ? null : 0xFF000000 | rgb;
+  return rgb == null ? null : currentTeamColor(0xFF000000 | rgb);
 }

@@ -135,20 +135,27 @@ abstract final class Limits {
 const List<int> teamColorValues = [
   0xFF2F5BEA,
   0xFF7BAFD4,
+  0xFF1E3A5F,
+  0xFF0E7490,
   0xFF0F8A5F,
+  0xFF4D7C0F,
+  0xFFD4A017,
+  0xFFA16207,
   0xFFC2410C,
   0xFFB91C1C,
-  0xFF7C3AED,
-  0xFF0E7490,
-  0xFFA16207,
+  0xFF7F1D1D,
   0xFFBE185D,
-  0xFF4D7C0F,
-  0xFF1D4ED8,
-  0xFF9333EA,
+  0xFF7C3AED,
   0xFF334155,
-  0xFF1E3A5F,
-  0xFFD4A017,
+  0xFF111111,
 ];
+
+/// Team colors taken out of the palette, as ARGB, each with the one it
+/// shows as now (TEAM-5).
+const Map<int, int> retiredTeamColorValues = {
+  0xFF1D4ED8: 0xFF2F5BEA,
+  0xFF9333EA: 0xFF7C3AED,
+};
 
 /// The reminder times an event can have, in minutes before (SCHED-3).
 const List<int> reminderOffsetsMinutes = [15, 60, 120, 1440, 2880, 10080];

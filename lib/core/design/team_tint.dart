@@ -13,14 +13,25 @@ import 'package:material_ui/material_ui.dart';
 ///   chroma capped at the role's own (and the team's): the page, cards,
 ///   raised buttons, wells, inputs, lips, and lines in Dark; the page, wells,
 ///   inputs, hairlines, outlines, and lips in Light (cards stay white).
-///   A team hue within 25° of Gumdrop's own navy hue (Blue, Royal blue,
-///   Navy, Slate) keeps the default colors: it's the theme's own.
+///   Dark is a lighter touch, at half that chroma ([darkTeamShare]), and a
+///   warm hue that would read brown that dark (Yellow, Mustard, Orange, Red,
+///   Maroon: [isWarmHue]) is held to [warmChroma], a warm charcoal.
+///   A saturated team hue within 25° of Gumdrop's own navy hue (Blue,
+///   Navy) keeps the default colors: it's the theme's own. A gray team
+///   color (Gray, Black) gives gray backgrounds: its own faint hue at a
+///   third of the chroma, so it doesn't read as navy.
+///   The team color itself is the hard shadow under headings and on the
+///   page (the team name, the tab's sticker, the back button), so every
+///   team reads as its color however dark or pale the page: in Dark made
+///   lighter until it shows on the page ([_darkShadow]), in Light kept clear
+///   of the navy heading text and darkened only if it would vanish on the
+///   page ([_lightShadow]).
 /// - **Candy** uses the team color itself as the page, darkened along L*
 ///   until white text reads when neither white nor ink does (Green). Text
 ///   on the page is whichever of white and ink reads better (ink on Light
 ///   blue and Yellow), its heading shadow the other one; shadows on the page
-///   that would vanish (ink on Slate and Navy) use the team color 25 L*
-///   lighter. Cards, ink, and the candies don't change.
+///   that would vanish (ink on Gray, Navy, and Black) use the team color 25
+///   L* lighter. Cards, ink, and the candies don't change.
 GumdropColors teamTinted(GumdropColors base, int? teamColor) {
   if (teamColor == null) return base;
   final untinted = GumdropColors.forFlavor(base.flavor);
@@ -44,35 +55,113 @@ final double gumdropHue =
 /// colors in Dark and Light.
 const sameHueDegrees = 25.0;
 
-/// Whether [team] is close enough to Gumdrop's own navy to leave Dark and
-/// Light untinted.
+/// Team colors with less chroma than this are grays (Gray, Black): they
+/// tint Dark and Light gray, even in Gumdrop's own hue.
+const grayChroma = 20.0;
+
+/// How much of the chroma a gray team color keeps in Dark and Light.
+const grayShare = 0.35;
+
+/// Whether [team] is a gray (Gray, Black) rather than a color.
+bool isGray(Color team) => ColorMath.lch(team).c < grayChroma;
+
+/// Whether [team] is close enough to Gumdrop's own navy, and colorful
+/// enough, to leave Dark and Light untinted.
 bool isGumdropHue(Color team) =>
+    !isGray(team) &&
     ColorMath.hueDistance(ColorMath.lch(team).h, gumdropHue) <= sameHueDegrees;
 
-/// [token]'s lightness in [team]'s hue, with chroma no higher than either's.
+/// [token]'s lightness in [team]'s hue, with chroma no higher than either's
+/// (and a third of that for a gray team).
 Color _derive(Color token, Lch team) {
   final t = ColorMath.lch(token);
-  return ColorMath.fromLch(t.l, math.min(t.c, team.c), team.h);
+  final chroma = math.min(t.c, team.c) * (team.c < grayChroma ? grayShare : 1);
+  return ColorMath.fromLch(t.l, chroma, team.h);
+}
+
+/// How much of the chroma Gumdrop Pop Dark takes, so its tint is a lighter
+/// touch than Light's.
+const darkTeamShare = 0.5;
+
+/// The most chroma a warm hue ([isWarmHue]) gets in Dark: a warm charcoal.
+/// Any more at Dark's lightness reads brown.
+const warmChroma = 5.0;
+
+/// Whether [hue] is one that reads brown at Dark's lightness: orange to
+/// yellow, 20° to 110° (Red, Maroon, Orange, Mustard, Yellow). Pink and
+/// Olive are just outside.
+bool isWarmHue(double hue) => hue >= 20 && hue <= 110;
+
+/// Dark's [token] tinted for [team]: [token]'s L* in [team]'s hue, at half
+/// the chroma ([darkTeamShare]), and no more than [warmChroma] for a warm
+/// hue. A gray team's is [_derive]'s, so it stays gray.
+Color _shadeDark(Color token, Lch team) {
+  if (team.c < grayChroma) return _derive(token, team);
+  final t = ColorMath.lch(token);
+  var chroma = darkTeamShare * math.min(t.c, team.c);
+  if (isWarmHue(team.h)) chroma = math.min(chroma, warmChroma);
+  return ColorMath.fromLch(t.l, chroma, team.h);
+}
+
+/// The contrast a team color's hard shadow keeps against what it sits on in
+/// Dark, and against Light's navy heading text.
+const shadowContrast = 3.0;
+
+/// [team] as a hard shadow on Dark's [background]: a whole L* step lighter
+/// at a time, same hue and chroma, until it reaches [shadowContrast].
+Color _darkShadow(Color team, Color background) {
+  final t = ColorMath.lch(team);
+  var shadow = team;
+  for (
+    var l = t.l.floorToDouble() + 1;
+    ColorMath.contrast(shadow, background) < shadowContrast && l <= 100;
+    l++
+  ) {
+    shadow = ColorMath.fromLch(l, t.c, t.h);
+  }
+  return shadow;
+}
+
+/// [team] as a hard shadow under Light's navy [text] on [background]: a
+/// step lighter at a time until it's [shadowContrast] from the text (Black,
+/// Maroon), then a step darker at a time while it would vanish on
+/// [background] (under 2:1).
+Color _lightShadow(Color team, Color text, Color background) {
+  final t = ColorMath.lch(team);
+  var shadow = team;
+  var l = t.l.floorToDouble();
+  while (ColorMath.contrast(shadow, text) < shadowContrast && l < 100) {
+    shadow = ColorMath.fromLch(++l, t.c, t.h);
+  }
+  while (ColorMath.contrast(shadow, background) < 2 && l > 0) {
+    shadow = ColorMath.fromLch(--l, t.c, t.h);
+  }
+  return shadow;
 }
 
 GumdropColors _tintDark(GumdropColors d, Color teamColor) {
   if (isGumdropHue(teamColor)) return d;
   final team = ColorMath.lch(teamColor);
-  final page = _derive(d.page, team);
-  final raised = _derive(d.raisedFace, team);
-  final input = _derive(d.inputFill, team);
-  final line = _derive(d.inputBorder, team);
+  final page = _shadeDark(d.page, team);
+  final surface = _shadeDark(d.surface, team);
+  final raised = _shadeDark(d.raisedFace, team);
+  final input = _shadeDark(d.inputFill, team);
+  final line = _shadeDark(d.inputBorder, team);
+  final shadow = _darkShadow(teamColor, page);
   return d.copyWith(
     page: page,
-    surface: _derive(d.surface, team),
+    surface: surface,
     raisedFace: raised,
     switchOffTrack: raised,
     inputFill: input,
     well: input,
-    raisedLip: _derive(d.raisedLip, team),
+    raisedLip: _shadeDark(d.raisedLip, team),
     inputBorder: line,
     divider: line,
     badgeRing: page,
+    headingShadow: shadow,
+    headingShadowOnCard: _darkShadow(teamColor, surface),
+    pageShadow: shadow,
   );
 }
 
@@ -82,6 +171,7 @@ GumdropColors _tintLight(GumdropColors l, Color teamColor) {
   final page = _derive(l.page, team);
   final chip = _derive(l.well, team);
   final border = _derive(l.raisedBorder, team);
+  final shadow = _lightShadow(teamColor, l.headingText, page);
   return l.copyWith(
     page: page,
     inputFill: _derive(l.inputFill, team),
@@ -93,6 +183,13 @@ GumdropColors _tintLight(GumdropColors l, Color teamColor) {
     divider: border,
     raisedLip: _derive(l.raisedLip, team),
     badgeRing: page,
+    headingShadow: shadow,
+    headingShadowOnCard: _lightShadow(
+      teamColor,
+      l.headingTextOnCard,
+      l.surface,
+    ),
+    pageShadow: shadow,
   );
 }
 

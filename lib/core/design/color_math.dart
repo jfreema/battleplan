@@ -6,6 +6,11 @@ import 'dart:ui' show Color;
 /// L* keeps every text contrast on the color (team_tint.dart).
 typedef Lch = ({double l, double c, double h});
 
+/// A color in CIELAB (D65): lightness L* and the a* (green to red) and b*
+/// (blue to yellow) axes, where [ColorMath.deltaE] measures how far apart
+/// two colors look.
+typedef Lab = ({double l, double a, double b});
+
 /// Color arithmetic for the Gumdrop themes: WCAG contrast, and sRGB to and
 /// from CIE LCh. The formulas and constants are the ones the design's color
 /// tables were computed with, so the tables' hexes come out exactly.
@@ -47,6 +52,25 @@ abstract final class ColorMath {
     final hi = math.max(la, lb);
     final lo = math.min(la, lb);
     return (hi + 0.05) / (lo + 0.05);
+  }
+
+  /// [color] in CIELAB.
+  static Lab lab(Color color) {
+    final c = lch(color);
+    final rad = c.h * math.pi / 180;
+    return (l: c.l, a: c.c * math.cos(rad), b: c.c * math.sin(rad));
+  }
+
+  /// How different [a] and [b] look: their distance in CIELAB (CIE76
+  /// ΔE). Under about 2 is hard to see; the team colors' tints and shadows
+  /// are checked against it.
+  static double deltaE(Color a, Color b) {
+    final p = lab(a);
+    final q = lab(b);
+    final dl = p.l - q.l;
+    final da = p.a - q.a;
+    final db = p.b - q.b;
+    return math.sqrt(dl * dl + da * da + db * db);
   }
 
   /// [color] in CIE LCh.

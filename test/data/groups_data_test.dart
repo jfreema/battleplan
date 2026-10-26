@@ -84,6 +84,27 @@ void main() {
       expect(sparse.pinnedMessageIds, isEmpty);
     });
 
+    test('reads a retired team color as its replacement (TEAM-5)', () {
+      // Royal blue reads as Blue, Violet as Purple, as the team color and
+      // as the chat look's message color; the stored value stays.
+      final royal = groupFromFirestore('x', const {
+        'color': '#1D4ED8',
+        'chatTheme': {'bubbleColor': '#9333EA'},
+      });
+      expect(royal.color, 0xFF2F5BEA);
+      expect(royal.chatTheme!.bubbleColor, 0xFF7C3AED);
+      expect(
+        groupFromFirestore('x', const {'color': '#9333EA'}).color,
+        0xFF7C3AED,
+      );
+      // Colors still in the palette read as they are.
+      for (final argb in teamColorValues) {
+        final hex =
+            '#${(argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+        expect(groupFromFirestore('x', {'color': hex}).color, argb);
+      }
+    });
+
     test('creates a team through createGroup', () async {
       functions.handlers['createGroup'] = (_) => {'groupId': 'new1'};
       final repo = FirestoreGroupRepository(db, functions, storage);

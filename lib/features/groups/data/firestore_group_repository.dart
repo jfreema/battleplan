@@ -8,6 +8,7 @@ import 'package:battleplan/core/live_pages.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/domain/team_palette.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -556,10 +557,12 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
 String? _shared(Object? value) =>
     value is String && value.trim().isNotEmpty ? value.trim() : null;
 
+/// A stored `#RRGGBB` as ARGB; a retired team color as its replacement
+/// (TEAM-5).
 int? _parseColor(String? hex) {
   if (hex == null || !hex.startsWith('#') || hex.length != 7) return null;
   final rgb = int.tryParse(hex.substring(1), radix: 16);
-  return rgb == null ? null : 0xFF000000 | rgb;
+  return rgb == null ? null : currentTeamColor(0xFF000000 | rgb);
 }
 
 GroupSettings settingsFromFirestore(Map<String, dynamic>? d) {

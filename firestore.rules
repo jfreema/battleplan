@@ -160,12 +160,13 @@ service cloud.firestore {
 
     // A team's chat look (CHAT-18), set by its admins: a bubble color from the
     // team palette or one of the Gumdrop candies (or null for the theme's
-    // own) and a background.
+    // own) and a background. The last two team colors are retired ones
+    // (Royal blue, Violet; TEAM-5): still accepted so an old look validates.
     function validChatTheme(t, g) {
       return t is map && t.keys().hasOnly(['bubbleColor', 'background', 'backgroundPath'])
         && (t.get('bubbleColor', null) == null || t.bubbleColor in ['#2F5BEA', '#7BAFD4',
-            '#0F8A5F', '#C2410C', '#B91C1C', '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F',
-            '#1D4ED8', '#9333EA', '#334155', '#1E3A5F', '#D4A017',
+            '#1E3A5F', '#0E7490', '#0F8A5F', '#4D7C0F', '#D4A017', '#A16207', '#C2410C', '#B91C1C',
+            '#7F1D1D', '#BE185D', '#7C3AED', '#334155', '#111111', '#1D4ED8', '#9333EA',
             '#4D9BFF', '#FF7AC8', '#A88BFF', '#4DDC8C', '#FFD84A', '#FF9B42', '#FF5D73'])
         && t.get('background', 'plain') in ['plain', 'pattern', 'photo']
         && (t.get('backgroundPath', null) == null
@@ -178,9 +179,11 @@ service cloud.firestore {
         && t.nameLower == t.name.lower()
         && t.sport in ['baseball', 'basketball', 'football', 'hockey', 'lacrosse',
                        'soccer', 'softball', 'volleyball', 'other']
-        && (t.color == null || t.color in ['#2F5BEA', '#7BAFD4', '#0F8A5F', '#C2410C', '#B91C1C',
-            '#7C3AED', '#0E7490', '#A16207', '#BE185D', '#4D7C0F', '#1D4ED8',
-            '#9333EA', '#334155', '#1E3A5F', '#D4A017'])
+        // The team palette, then the retired Royal blue and Violet (TEAM-5),
+        // still accepted so an old team's other edits validate.
+        && (t.color == null || t.color in ['#2F5BEA', '#7BAFD4', '#1E3A5F', '#0E7490', '#0F8A5F',
+            '#4D7C0F', '#D4A017', '#A16207', '#C2410C', '#B91C1C', '#7F1D1D', '#BE185D',
+            '#7C3AED', '#334155', '#111111', '#1D4ED8', '#9333EA'])
         && t.get('description', '').size() <= 500
         && (t.photoPath == null || t.photoPath.matches('groups/' + g + '/avatar/[^/]+'))
         && t.settings.keys().hasOnly(['membersCanCreateEvents', 'membersCanCreatePolls',

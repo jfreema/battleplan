@@ -131,20 +131,26 @@ export const Limits = {
 export const TEAM_COLORS = [
   '#2F5BEA',
   '#7BAFD4',
+  '#1E3A5F',
+  '#0E7490',
   '#0F8A5F',
+  '#4D7C0F',
+  '#D4A017',
+  '#A16207',
   '#C2410C',
   '#B91C1C',
-  '#7C3AED',
-  '#0E7490',
-  '#A16207',
+  '#7F1D1D',
   '#BE185D',
-  '#4D7C0F',
-  '#1D4ED8',
-  '#9333EA',
+  '#7C3AED',
   '#334155',
-  '#1E3A5F',
-  '#D4A017',
+  '#111111',
 ] as const;
+
+/** Team colors taken out of the palette, each with the one it shows as now (TEAM-5). Never written; firestore.rules still accepts them. */
+export const RETIRED_TEAM_COLORS = {
+  '#1D4ED8': '#2F5BEA',
+  '#9333EA': '#7C3AED',
+} as const;
 
 export const REMINDER_OFFSETS_MINUTES = [15, 60, 120, 1440, 2880, 10080] as const;
 

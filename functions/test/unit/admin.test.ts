@@ -106,6 +106,14 @@ describe('super-admin team and player edits (ADMIN-3)', () => {
     // A Gumdrop candy (CHAT-18), but not any color.
     expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: '#FF7AC8' } }))).toBe(true);
     expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: '#123456' } }))).toBe(false);
+    // Maroon and Black are team colors; the retired Royal blue and Violet
+    // aren't written any more (TEAM-5).
+    expect(ok(UpdateGroupInput, group({ color: '#7F1D1D' }))).toBe(true);
+    expect(ok(UpdateGroupInput, group({ color: '#111111' }))).toBe(true);
+    for (const retired of ['#1D4ED8', '#9333EA']) {
+      expect(ok(UpdateGroupInput, group({ color: retired }))).toBe(false);
+      expect(ok(UpdateGroupInput, group({ chatTheme: { bubbleColor: retired } }))).toBe(false);
+    }
     for (const bad of [
       {}, { color: '#000000' }, { sport: 'golf' }, { name: ' ' }, { name: 'x'.repeat(Limits.groupNameMax + 1) },
       { description: 'x'.repeat(501) }, { settings: { membersCanPost: true } }, { settings: { defaultReminderOffsets: [30] } },

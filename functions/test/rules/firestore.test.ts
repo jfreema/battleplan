@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 import { CHAT_CANDY_COLORS } from '../../src/admin/inputs.js';
-import { reactionValues, TEAM_COLORS } from '../../src/shared/constants.js';
+import { reactionValues, RETIRED_TEAM_COLORS, TEAM_COLORS } from '../../src/shared/constants.js';
 
 type Db = firebase.firestore.Firestore;
 
@@ -387,6 +387,13 @@ describe('chat look (CHAT-18)', () => {
     // And every Gumdrop candy as the bubble color (CHAT-18).
     for (const color of CHAT_CANDY_COLORS) {
       await assertSucceeds(look('alice', 'teamA', { ...good, bubbleColor: color }));
+    }
+    // A retired color (TEAM-5) still validates, so an old team can save
+    // its other fields.
+    for (const color of Object.keys(RETIRED_TEAM_COLORS)) {
+      await assertSucceeds(look('alice', 'teamA', { ...good, bubbleColor: color }));
+      await assertSucceeds(as('alice').doc('groups/teamA').update({ color }));
+      await assertSucceeds(as('alice').doc('groups/teamA').update({ description: 'Still here' }));
     }
   });
 });

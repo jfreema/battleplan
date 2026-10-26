@@ -432,7 +432,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Every team has exactly one owner.
 - **TEAM-5 · MVP · Team settings (admins).**
   - Edit name, sport, logo, color, description, and time zone.
-  - **Team color:** the 15 colors as swatches, under "Your team color tints the background of every screen in the team." (TEAM-1, §7.4).
+  - **Team color:** the 15 colors as swatches, in this order: Blue (new teams start on it), Light blue, Navy, Teal, Green, Olive, Yellow, Mustard, Orange, Red, Maroon, Pink, Purple, Gray, and Black, under "Your team color tints the background of every screen in the team." (TEAM-1, §7.4). Royal blue and Violet were taken out in 1.1 as too close to Blue and Purple: a team still set to one keeps it, and the app shows it as Blue or Purple (its swatch picked, its badge and backgrounds in that color).
   - **Member permissions** (defaults in brackets):
     - create events [off]
     - create polls [on]
@@ -1211,8 +1211,12 @@ Three themes, picked in Settings or the account menu (SET-2), from 1.1:
 
 **Team colors.** Every screen inside a team takes the team's color (TEAM-1) in its background; screens outside a team keep the theme's own.
 
-- In Gumdrop Pop Dark and Light, the page, wells, inputs, lines, and lips take the team's hue at their own lightness, so every contrast stays as designed, and so do the cards and raised buttons in Dark (Light's cards stay white). A team color close to the theme's own navy (Blue, Royal blue, Navy, and Slate) keeps the default colors.
-- In Gumdrop Candy the page is the team color itself (Green a little darker, so white text reads on it), and the page's text is white, or navy on Light blue and Yellow. Cards, text on cards, and the candies don't change.
+- In Gumdrop Pop Dark and Light, the page, wells, inputs, lines, and lips take the team's hue at their own lightness, so every contrast stays as designed, and so do the cards and raised buttons in Dark (Light's cards stay white).
+- Dark is a lighter touch: the team's hue at half the chroma. A warm hue that dark reads brown, so Yellow, Mustard, Orange, Red, and Maroon get a warm charcoal (their own hue, barely tinted); the other teams stay clearly their color. Light's tints are already pale, so Light takes the team's hue as it is.
+- A page that dark or that pale can't tell apart teams of the same hue (Red and Maroon, Yellow and Mustard), so in Dark and Light the team color itself is the hard shadow under headings and on the page: the team name, the tab's sticker, and the back button. It's made lighter where it wouldn't show (on Dark's page, or under Light's navy headings), so Maroon is a duller red than Red, and Black a mid gray.
+- A team color close to the theme's own navy (Blue and Navy) keeps the default colors. The grays (Gray and Black) tint them gray: their own faint hue at a third of the chroma, so they don't read as navy.
+- A team still on a retired color (Royal blue or Violet) shows as its replacement (Blue or Purple) everywhere (TEAM-5).
+- In Gumdrop Candy the page is the team color itself (Green a little darker, so white text reads on it), and the page's text is white, or navy on Light blue and Yellow. Hard shadows on a page too dark for navy to show (Navy, Maroon, Gray, Black) are the team color lifted lighter. Cards, text on cards, and the candies don't change.
 
 Photos are never dimmed. All three themes meet **WCAG AA contrast** (4.5:1 for body text), under every team color too. Every key screen has golden images in all three themes, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in all three.
 
