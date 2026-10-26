@@ -631,7 +631,7 @@ class LemonBackButton extends StatelessWidget {
         child: BackButton(
           color: c.ink,
           style: ButtonStyle(
-            backgroundColor: WidgetStatePropertyAll(c.lemon.face),
+            backgroundColor: WidgetStatePropertyAll(c.sticker.face),
             foregroundColor: WidgetStatePropertyAll(c.ink),
             iconColor: WidgetStatePropertyAll(c.ink),
             fixedSize: const WidgetStatePropertyAll(Size(48, 48)),

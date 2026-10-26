@@ -270,12 +270,12 @@ void main() {
     );
     await tester.tap(find.byTooltip('Account'));
     await tester.pumpAndSettle();
-    // Dark is the default, so it's the one checked.
-    final dark = find.widgetWithText(
+    // Olive is the default, so it's the one checked.
+    final olive = find.widgetWithText(
       CheckedPopupMenuItem<String>,
-      'Gumdrop Pop Dark',
+      'Gumdrop Olive',
     );
-    expect(tester.widget<CheckedPopupMenuItem<String>>(dark).checked, isTrue);
+    expect(tester.widget<CheckedPopupMenuItem<String>>(olive).checked, isTrue);
     await tester.tap(
       find.widgetWithText(CheckedPopupMenuItem<String>, 'Gumdrop Candy'),
     );

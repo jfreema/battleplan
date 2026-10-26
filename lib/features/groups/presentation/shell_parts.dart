@@ -60,13 +60,14 @@ class TeamSticker extends StatelessWidget {
           ? Container(
               padding: const EdgeInsets.fromLTRB(15, 4, 15, 4),
               decoration: ShapeDecoration(
-                color: c.lemon.face,
+                color: c.sticker.face,
                 shape: GumdropShape(
                   lip: 0,
                   highlight: 0,
                   radius: const BorderRadius.all(Radius.circular(3)),
                   slant: style.slant,
-                  side: ColorMath.contrast(c.lemon.face, c.page) < edgeContrast
+                  side:
+                      ColorMath.contrast(c.sticker.face, c.page) < edgeContrast
                       ? BorderSide(color: c.ink, width: 2)
                       : BorderSide.none,
                 ),
@@ -78,7 +79,7 @@ class TeamSticker extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.fromLTRB(12, 3, 12, 4),
                 decoration: BoxDecoration(
-                  color: c.lemon.face,
+                  color: c.sticker.face,
                   border: Border.all(color: c.ink, width: 2.5),
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [

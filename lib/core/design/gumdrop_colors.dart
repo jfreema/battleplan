@@ -2,9 +2,13 @@ import 'package:battleplan/core/design/arena/arena_theme.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The three Gumdrop Pop themes (SPEC SET-2).
+/// The Gumdrop themes (SPEC SET-2).
 enum GumdropFlavor {
-  /// Gumdrop Pop Dark: navy page, the default.
+  /// Gumdrop Pop Olive: an olive page, cream cards, coral accents, the
+  /// default.
+  olive,
+
+  /// Gumdrop Pop Dark: navy page.
   dark,
 
   /// Gumdrop Pop Light: pale page, white cards.
@@ -101,10 +105,93 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     required this.tangerine,
     required this.grape,
     required this.bubblegum,
+    this._sticker,
     this.teamColor,
     this.onCard = false,
     this.coloredPage = false,
   });
+
+  /// Gumdrop Pop Olive (design V1 Olive, from the owner's team t-shirt), the
+  /// default: an olive page with cream text, cream cards and buttons with ink
+  /// outlines and lips, coral for your messages, the sticker, and the back
+  /// button, and Candy's candies, every one on an ink lip.
+  static const olive = GumdropColors(
+    flavor: GumdropFlavor.olive,
+    coloredPage: true,
+    page: Color(0xFF6E6B4E),
+    surface: Color(0xFFF4EAD0),
+    surfaceBorder: Color(0xFFF4EAD0),
+    surfaceBorderWidth: 1,
+    raisedFace: Color(0xFFF4EAD0),
+    raisedBorder: Color(0xFF1A1A18),
+    raisedBorderWidth: 2,
+    raisedHighlight: Color(0x99FFFFFF),
+    raisedLip: Color(0xFF1A1A18),
+    well: Color(0xFFE6DCBF),
+    inputFill: Color(0xFFE6DCBF),
+    inputBorder: Color(0xFF1A1A18),
+    divider: Color(0xFFDDD2B3),
+    switchOffTrack: Color(0xFFE6DCBF),
+    textPrimary: Color(0xFF1A1A18),
+    textMuted: Color(0xFF5B5840),
+    textOnPage: Color(0xFFF4EAD0),
+    textMutedOnPage: Color(0xFFF4EAD0),
+    successOnPage: Color(0xFFB5FAD0),
+    ink: Color(0xFF1A1A18),
+    headingText: Color(0xFFF4EAD0),
+    headingShadow: Color(0xFF1A1A18),
+    headingTextOnCard: Color(0xFF1A1A18),
+    headingShadowOnCard: Color(0xFFF45B5B),
+    pageShadow: Color(0xFF1A1A18),
+    selectedRingOuter: Color(0xFFFFF9EC),
+    swatchInsetRing: Color(0xFF1A1A18),
+    badgeRing: Color(0xFF6E6B4E),
+    you: GumdropAccent(
+      face: Color(0xFFF45B5B),
+      lip: Color(0xFF1A1A18),
+      text: Color(0xFFC0262F),
+    ),
+    blueRaspberry: GumdropAccent(
+      face: Color(0xFF79BBFF),
+      lip: Color(0xFF1A1A18),
+      text: Color(0xFF2A63C9),
+    ),
+    lemon: GumdropAccent(
+      face: Color(0xFFF8D84A),
+      lip: Color(0xFF1A1A18),
+      text: Color(0xFF755A00),
+    ),
+    mint: GumdropAccent(
+      face: Color(0xFF58C173),
+      lip: Color(0xFF1A1A18),
+      text: Color(0xFF137236),
+    ),
+    cherry: GumdropAccent(
+      face: Color(0xFFF45B5B),
+      lip: Color(0xFF1A1A18),
+      text: Color(0xFFC0262F),
+    ),
+    tangerine: GumdropAccent(
+      face: Color(0xFFEE8131),
+      lip: Color(0xFF1A1A18),
+      text: Color(0xFF9E4B0A),
+    ),
+    grape: GumdropAccent(
+      face: Color(0xFFA57CF5),
+      lip: Color(0xFF1A1A18),
+      text: Color(0xFF6C46CC),
+    ),
+    bubblegum: GumdropAccent(
+      face: Color(0xFFEB50A2),
+      lip: Color(0xFF1A1A18),
+      text: Color(0xFFAE2770),
+    ),
+    sticker: GumdropAccent(
+      face: Color(0xFFF45B5B),
+      lip: Color(0xFF1A1A18),
+      text: Color(0xFFC0262F),
+    ),
+  );
 
   /// Gumdrop Pop Dark (tokens "Navy").
   static const dark = GumdropColors(
@@ -330,6 +417,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
 
   /// The untinted colors of [flavor].
   static GumdropColors forFlavor(GumdropFlavor flavor) => switch (flavor) {
+    GumdropFlavor.olive => olive,
     GumdropFlavor.dark => dark,
     GumdropFlavor.light => light,
     GumdropFlavor.candy => candy,
@@ -460,6 +548,12 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Other events, your reactions, polls.
   final GumdropAccent bubblegum;
 
+  final GumdropAccent? _sticker;
+
+  /// The round back button and the sticker under the team name: lemon, or
+  /// coral in Gumdrop Pop Olive.
+  GumdropAccent get sticker => _sticker ?? lemon;
+
   /// Light, or dark, for Material and the status bar: the brightness of
   /// what text sits on in this context. A [coloredPage] is "dark" under
   /// white text (Candy's blue, a red team) and "light" under ink (a Yellow
@@ -554,6 +648,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     GumdropAccent? tangerine,
     GumdropAccent? grape,
     GumdropAccent? bubblegum,
+    GumdropAccent? sticker,
   }) => GumdropColors(
     flavor: flavor ?? this.flavor,
     teamColor: teamColor ?? this.teamColor,
@@ -595,6 +690,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     tangerine: tangerine ?? this.tangerine,
     grape: grape ?? this.grape,
     bubblegum: bubblegum ?? this.bubblegum,
+    sticker: sticker ?? _sticker,
   );
 
   @override
@@ -644,6 +740,9 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       tangerine: tangerine.lerp(other.tangerine, t),
       grape: grape.lerp(other.grape, t),
       bubblegum: bubblegum.lerp(other.bubblegum, t),
+      sticker: _sticker == null && other._sticker == null
+          ? null
+          : sticker.lerp(other.sticker, t),
     );
   }
 }

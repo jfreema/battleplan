@@ -37,7 +37,7 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 **What's New in This Version** (1.1, for the version after 1.0; 4,000 characters):
 
 ```
-A whole new look, Gumdrop Pop, with four themes to pick from in Settings or your profile menu: Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena. Each team's color now fills the background of every screen in the team.
+A whole new look, Gumdrop Pop, with five themes to pick from in Settings or your profile menu: Gumdrop Olive, the new default, plus Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena. In every theme but Olive, each team's color fills the background of every screen in the team.
 
 Also new:
 • Assignments on events: snacks, drinks, scorekeeper, or anything else, that families volunteer for or coaches assign
@@ -85,8 +85,8 @@ MORE FOR COACHES
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS
-• Four looks: Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
-• Each team picks its color, and the team's screens take it on
+• Five looks: Gumdrop Olive, Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
+• Each team picks its color, and in all but Olive the team's screens take it on
 • Coaches pick the chat's message color and background
 
 SAFE AND PRIVATE

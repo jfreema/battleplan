@@ -12,17 +12,19 @@ import 'package:battleplan/core/widgets/gumdrop_back_button.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The Gumdrop Pop themes (SPEC §7.3, §7.4, SET-2): Gumdrop Pop Dark (the
-/// default), Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena, each
+/// The Gumdrop Pop themes (SPEC §7.3, §7.4, SET-2): Gumdrop Pop Olive (the
+/// default), Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop
+/// Arena, each
 /// optionally in a team's color (team_tint.dart). Every Material widget is
 /// themed in the gumdrop style; screens read the full palette with
 /// [GumdropColors.of], and the fonts and shapes with [GumdropStyle.of].
 abstract final class AppTheme {
-  /// The theme a saved preference picks: system (the old default) and dark
-  /// are Gumdrop Pop Dark.
+  /// The theme a saved preference picks: system (no choice made) is the
+  /// default, Gumdrop Pop Olive.
   static GumdropFlavor flavorOf(ThemePreference preference) =>
       switch (preference) {
-        ThemePreference.system || ThemePreference.dark => GumdropFlavor.dark,
+        ThemePreference.system || ThemePreference.olive => GumdropFlavor.olive,
+        ThemePreference.dark => GumdropFlavor.dark,
         ThemePreference.light => GumdropFlavor.light,
         ThemePreference.candy => GumdropFlavor.candy,
         ThemePreference.arena => GumdropFlavor.arena,
@@ -42,7 +44,7 @@ abstract final class AppTheme {
   static final _cache = <(GumdropFlavor, int?, bool), ThemeData>{};
 
   /// The theme for [flavor] in [teamColor] (ARGB), built once and kept:
-  /// there are 4 flavors, 16 colors (none and the 15 team colors), and two
+  /// there are 5 flavors, 16 colors (none and the 15 team colors), and two
   /// contexts.
   static ThemeData of(
     GumdropFlavor flavor, {

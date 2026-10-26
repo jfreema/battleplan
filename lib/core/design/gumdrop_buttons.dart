@@ -45,8 +45,8 @@ class GumdropButtons {
   /// face.
   final Color focusRing;
 
-  /// A candy-colored gumdrop: [accent]'s face and lip, ink text, no
-  /// outline. [height] includes the lip, which is 3 px up to a 38 px face
+  /// A candy-colored gumdrop: [accent]'s face and lip, ink text, and no
+  /// outline but in Gumdrop Pop Olive. [height] includes the lip, which is 3 px up to a 38 px face
   /// and 4 above.
   ButtonStyle accent(
     GumdropAccent accent, {
@@ -62,7 +62,9 @@ class GumdropButtons {
     foreground: colors.ink,
     highlight: 2,
     highlightColor: GumdropColors.accentHighlight,
-    side: BorderSide.none,
+    side: style.accentOutline == 0
+        ? BorderSide.none
+        : BorderSide(color: colors.ink, width: style.accentOutline),
     height: height,
     width: width,
     radius: radius,

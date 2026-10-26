@@ -76,7 +76,7 @@ class GumdropBackButton extends StatelessWidget {
           fixedSize: const Size(48, 48),
           minimumSize: const Size(48, 48),
           padding: EdgeInsets.zero,
-          backgroundColor: c.lemon.face,
+          backgroundColor: c.sticker.face,
           foregroundColor: c.ink,
           shape: CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
         ),

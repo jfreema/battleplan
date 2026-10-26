@@ -29,6 +29,9 @@ import 'package:material_ui/material_ui.dart';
 ///     gets an ink lip, and so do the secondary buttons, so they still stand
 ///     out; a red team's unread badge gets an ink ring.
 ///
+/// **Gumdrop Pop Olive** keeps its own olive page and cream cards in every
+/// team, as its design does; the team's color shows in its logo.
+///
 /// Blue and Navy are Gumdrop's own navy ([isGumdropHue]): Dark, Light, and
 /// Arena keep their own colors for them, so the theme looks as designed for
 /// the default team color. Candy's page is already blue, and takes the
@@ -37,10 +40,14 @@ GumdropColors teamTinted(GumdropColors base, int? teamColor) {
   if (teamColor == null) return base;
   final untinted = GumdropColors.forFlavor(base.flavor);
   final team = Color(teamColor).withAlpha(255);
-  final keepsOwn = base.flavor != GumdropFlavor.candy && isGumdropHue(team);
+  // Olive keeps its olive page in every team, as designed (V1 Olive).
+  final keepsOwn =
+      base.flavor == GumdropFlavor.olive ||
+      (base.flavor != GumdropFlavor.candy && isGumdropHue(team));
   final tinted = keepsOwn
       ? untinted
       : switch (base.flavor) {
+          GumdropFlavor.olive => untinted,
           GumdropFlavor.light => paleLight(untinted, team),
           // Arena is dark too: its violet cards take the team color, muted.
           GumdropFlavor.dark || GumdropFlavor.arena => _onTeamPage(

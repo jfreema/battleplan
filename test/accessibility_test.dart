@@ -101,8 +101,9 @@ void main() {
   };
 
   // Every screen in every theme: their colors are all different, and
-  // Candy's page and cards hold different text colors.
+  // Candy's and Olive's pages and cards hold different text colors.
   const themes = [
+    ThemePreference.olive,
     ThemePreference.dark,
     ThemePreference.light,
     ThemePreference.candy,

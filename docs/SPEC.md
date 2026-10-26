@@ -922,7 +922,7 @@ Players that others answer for never get accounts, and every account belongs to 
 ### 6.10 Profile and settings (SET)
 
 - **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. Email is shown read-only.
-- **SET-2 · MVP · Appearance.** Four themes, each shown as a small preview: **Gumdrop Pop Dark** (the default), **Gumdrop Pop Light**, **Gumdrop Candy**, and **Gumdrop Arena** (§7.4, 1.1). Settings lays the previews out four across where they fit, otherwise two rows of two. They're in Settings and, one tap away, at the top of the account menu (the profile button). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it from before 1.1 gets Gumdrop Pop Dark.
+- **SET-2 · MVP · Appearance.** Five themes, each shown as a small preview: **Gumdrop Olive** (the default), **Gumdrop Pop Dark**, **Gumdrop Pop Light**, **Gumdrop Candy**, and **Gumdrop Arena** (§7.4, 1.1). Settings lays the previews out five across where they fit, otherwise in rows of three. They're in Settings and, one tap away, at the top of the account menu (the profile button). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it, or never set, gets the default, Gumdrop Olive; new accounts start on it.
 - **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
@@ -1215,14 +1215,15 @@ The content still carries the visual weight: messages, photos, and event cards.
 
 ### 7.4 Themes
 
-Four themes, picked in Settings or the account menu (SET-2), from 1.1:
+Five themes, picked in Settings or the account menu (SET-2), from 1.1:
 
-- **Gumdrop Pop Dark**, the default: a navy page (`#0B1531`), navy cards a step lighter (`#16244A`), white text, and white headings with a blue shadow.
+- **Gumdrop Olive**, the default (the owner's request, 2026-10-26, from the V1 Olive design, after the owner's team t-shirt): an olive page (`#6E6B4E`) with cream text, cream cards and buttons (`#F4EAD0`) outlined in near-black on a hard near-black lip, coral (`#F45B5B`) for your messages, the sticker, and the back button, Candy's candies outlined in near-black, and cream headings outlined in near-black over a near-black shadow. It keeps its olive page in every team.
+- **Gumdrop Pop Dark**: a navy page (`#0B1531`), navy cards a step lighter (`#16244A`), white text, and white headings with a blue shadow.
 - **Gumdrop Pop Light**: a pale blue-gray page (`#F2F5FD`), white cards with a thin outline, navy text, and navy headings with a light blue shadow.
 - **Gumdrop Candy**: a bright blue page (`#305AF6`) with white text and headings, white cards with navy text, and lemon as your color.
 - **Gumdrop Arena** (the owner's request, 2026-10-26, from the V3 design): Gumdrop Pop's layout with a game-day feel. A deep violet page (`#0F0D24`), violet cards (`#221D45`), white text, the same candies, headings and labels in a condensed bold italic over one blue shadow, gumdrops that lean, and cards with two corners cut. It's kept apart in the code, so it can be taken out cleanly; an account set to it would then get Gumdrop Pop Dark.
 
-**Team colors.** Every screen inside a team takes the team's color (TEAM-1) in its background (owner's requests, 2026-10-26). Screens outside a team keep the theme's own.
+**Team colors.** In every theme but Gumdrop Olive, every screen inside a team takes the team's color (TEAM-1) in its background (owner's requests, 2026-10-26). Screens outside a team keep the theme's own. Gumdrop Olive keeps its olive page and cream cards in every team, as its design does; the team's color shows in its logo.
 
 - **Gumdrop Pop Light** stays a light off-white page, shaded slightly toward the team color (a pale blush for Red, cream for Yellow, a gray off-white for Gray and Black), with its lines and button edges in the same hue. Its white cards, text, headings, and candies don't change.
 - **Gumdrop Pop Dark, Gumdrop Arena, and Gumdrop Candy** take the team color itself as the page, not a blend, as in the Rounded Candy Pop design the picker comes from; it's a little darker only where neither white nor navy text would read on it (Green). In Dark and Arena, the cards, chat bubbles, event cards, tab bar, buttons, and inputs are a muted, dark version of the team color (a deep red for Red, a dark brown for Orange, grays for Black), each as dark as the navy (or violet) it replaces, with its text tinted to match, so every contrast stays as designed. Candy keeps its white cards. The candies don't change.
@@ -1230,7 +1231,7 @@ Four themes, picked in Settings or the account menu (SET-2), from 1.1:
 - Blue and Navy are the theme's own navy, so Dark, Light, and Arena keep their own colors for them; new teams start on Blue, so a new team looks as the theme was designed. Candy's page takes them as it takes every color.
 - A team still on a retired color (Royal blue or Violet) shows as its replacement (Blue or Purple) everywhere (TEAM-5).
 
-Photos are never dimmed. Every theme meets **WCAG AA contrast** (4.5:1 for body text), under every team color too. Every key screen has golden images in Dark, Light, and Candy, and five of them in Arena, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in all four.
+Photos are never dimmed. Every theme meets **WCAG AA contrast** (4.5:1 for body text), under every team color too. Every key screen has golden images in Olive, Dark, Light, and Candy, and five of them in Arena, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in all five.
 
 ### 7.5 Components
 

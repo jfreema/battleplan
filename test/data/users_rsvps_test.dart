@@ -62,8 +62,12 @@ void main() {
       expect(notificationPrefsFromFirestore(null), isEmpty);
       final sparse = userProfileFromFirestore('x', const {});
       expect(sparse.status, UserStatus.active);
-      // A profile with no theme yet is in Gumdrop Pop Dark, the default.
-      expect(sparse.themeMode, ThemePreference.dark);
+      // A profile with no theme yet is on the default, Gumdrop Pop Olive.
+      expect(sparse.themeMode, ThemePreference.system);
+      expect(
+        userProfileFromFirestore('z', const {'themeMode': 'olive'}).themeMode,
+        ThemePreference.olive,
+      );
       expect(
         userProfileFromFirestore('y', const {'themeMode': 'candy'}).themeMode,
         ThemePreference.candy,

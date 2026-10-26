@@ -28,27 +28,37 @@ String chatCandyName(AppLocalizations l10n, ChatCandy candy) => switch (candy) {
 
 /// The candies in the order the Chat look shows them: the theme's own
 /// "you" color first, so Gumdrop Candy starts with Lemon and puts Blue
-/// raspberry fifth, where the others have Lemon (design §4.3).
-List<ChatCandy> chatCandyOrder(GumdropFlavor flavor) =>
-    flavor == GumdropFlavor.candy
-    ? const [
-        ChatCandy.lemon,
-        ChatCandy.bubblegum,
-        ChatCandy.grape,
-        ChatCandy.mint,
-        ChatCandy.blueRaspberry,
-        ChatCandy.tangerine,
-        ChatCandy.cherry,
-      ]
-    : const [
-        ChatCandy.blueRaspberry,
-        ChatCandy.bubblegum,
-        ChatCandy.grape,
-        ChatCandy.mint,
-        ChatCandy.lemon,
-        ChatCandy.tangerine,
-        ChatCandy.cherry,
-      ];
+/// raspberry fifth, where the others have Lemon (design §4.3), and Gumdrop
+/// Olive starts with Cherry, its coral, and puts Blue raspberry last.
+List<ChatCandy> chatCandyOrder(GumdropFlavor flavor) => switch (flavor) {
+  GumdropFlavor.olive => const [
+    ChatCandy.cherry,
+    ChatCandy.bubblegum,
+    ChatCandy.grape,
+    ChatCandy.mint,
+    ChatCandy.lemon,
+    ChatCandy.tangerine,
+    ChatCandy.blueRaspberry,
+  ],
+  GumdropFlavor.candy => const [
+    ChatCandy.lemon,
+    ChatCandy.bubblegum,
+    ChatCandy.grape,
+    ChatCandy.mint,
+    ChatCandy.blueRaspberry,
+    ChatCandy.tangerine,
+    ChatCandy.cherry,
+  ],
+  _ => const [
+    ChatCandy.blueRaspberry,
+    ChatCandy.bubblegum,
+    ChatCandy.grape,
+    ChatCandy.mint,
+    ChatCandy.lemon,
+    ChatCandy.tangerine,
+    ChatCandy.cherry,
+  ],
+};
 
 /// My bubbles' color for a team's chat look (CHAT-18) in the theme [c]: a
 /// candy in the theme's shade, a team palette color as it is, or null

@@ -496,8 +496,10 @@ void main() {
   });
 
   group('themes', () {
-    test('each preference picks its theme; system is Gumdrop Pop Dark', () {
-      expect(AppTheme.flavorOf(ThemePreference.system), GumdropFlavor.dark);
+    test('each preference picks its theme; system is Gumdrop Pop Olive', () {
+      expect(AppTheme.flavorOf(ThemePreference.system), GumdropFlavor.olive);
+      expect(AppTheme.flavorOf(ThemePreference.olive), GumdropFlavor.olive);
+      expect(AppTheme.flavorOf(ThemePreference.arena), GumdropFlavor.arena);
       expect(AppTheme.flavorOf(ThemePreference.dark), GumdropFlavor.dark);
       expect(AppTheme.flavorOf(ThemePreference.light), GumdropFlavor.light);
       expect(AppTheme.flavorOf(ThemePreference.candy), GumdropFlavor.candy);
@@ -529,7 +531,7 @@ void main() {
       expect(a.extension<GumdropColors>()!.page, const Color(0xFFB91C1C));
       expect(
         AppTheme.forPreference(ThemePreference.system),
-        same(AppTheme.of(GumdropFlavor.dark)),
+        same(AppTheme.of(GumdropFlavor.olive)),
       );
     });
 

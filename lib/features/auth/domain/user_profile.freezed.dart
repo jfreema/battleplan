@@ -229,7 +229,7 @@ return $default(_that.uid,_that.displayName,_that.status,_that.email,_that.photo
 
 
 class _UserProfile extends UserProfile {
-  const _UserProfile({required this.uid, required this.displayName, required this.status, this.email, this.photoPath, this.themeMode = ThemePreference.dark,  List<String> signInMethods = const <String>[], this.adultConfirmedAt, this.acceptedTermsAt, this.chooseSignIn = false, this.sessionsRevokedAt,  Map<NotificationPref, bool> notificationPrefs = const <NotificationPref, bool>{}}): _signInMethods = signInMethods,_notificationPrefs = notificationPrefs,super._();
+  const _UserProfile({required this.uid, required this.displayName, required this.status, this.email, this.photoPath, this.themeMode = ThemePreference.system,  List<String> signInMethods = const <String>[], this.adultConfirmedAt, this.acceptedTermsAt, this.chooseSignIn = false, this.sessionsRevokedAt,  Map<NotificationPref, bool> notificationPrefs = const <NotificationPref, bool>{}}): _signInMethods = signInMethods,_notificationPrefs = notificationPrefs,super._();
   
 
 @override final  String uid;

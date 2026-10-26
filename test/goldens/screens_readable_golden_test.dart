@@ -31,8 +31,9 @@ void main() {
       : 'Readable goldens compare on $readableGoldensOs only';
 
   for (final MapEntry(key: name, value: pump) in goldenScreens.entries) {
-    // The three Gumdrop themes (SET-2).
+    // The Gumdrop themes (SET-2) but Arena, whose goldens are with it.
     for (final preference in [
+      ThemePreference.olive,
       ThemePreference.light,
       ThemePreference.dark,
       ThemePreference.candy,

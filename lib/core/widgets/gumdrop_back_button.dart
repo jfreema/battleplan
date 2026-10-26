@@ -103,10 +103,10 @@ class GumdropBackDisc extends StatelessWidget {
         height: GumdropBackButton.size,
         padding: const EdgeInsets.only(bottom: 4),
         decoration: ShapeDecoration(
-          color: c.lemon.face,
+          color: c.sticker.face,
           shape: style.styled(
             GumdropShape(
-              lipColor: c.lemon.lip,
+              lipColor: c.sticker.lip,
               side: focused
                   ? BorderSide(color: c.textOnPage, width: 3)
                   : BorderSide.none,
@@ -121,7 +121,7 @@ class GumdropBackDisc extends StatelessWidget {
       width: GumdropBackButton.size,
       height: GumdropBackButton.size,
       decoration: BoxDecoration(
-        color: c.lemon.face,
+        color: c.sticker.face,
         shape: BoxShape.circle,
         border: Border.all(color: c.ink, width: 2.5),
         boxShadow: [

@@ -7,6 +7,7 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 List<(ThemePreference, GumdropFlavor, String)> themeChoices(
   AppLocalizations l10n,
 ) => [
+  (ThemePreference.olive, GumdropFlavor.olive, l10n.themeGumdropOlive),
   (ThemePreference.dark, GumdropFlavor.dark, l10n.themeGumdropDark),
   (ThemePreference.light, GumdropFlavor.light, l10n.themeGumdropLight),
   (ThemePreference.candy, GumdropFlavor.candy, l10n.themeGumdropCandy),

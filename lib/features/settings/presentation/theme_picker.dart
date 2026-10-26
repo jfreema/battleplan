@@ -9,10 +9,10 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Appearance (SET-2): the Gumdrop themes as small previews, Gumdrop Pop
-/// Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena: four across
-/// where they fit, else two rows of two. The old "system" setting shows as
-/// Dark, which it now is.
+/// Appearance (SET-2): the Gumdrop themes as small previews, Gumdrop Olive,
+/// Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena: all
+/// five across where they fit, else rows of three. The old "system" setting
+/// shows as Olive, the default, which it now is.
 class ThemePicker extends StatelessWidget {
   const new({required this.selected, required this.onSelect, super.key});
 
@@ -29,7 +29,7 @@ class ThemePicker extends StatelessWidget {
       container: true,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final perRow = constraints.maxWidth >= 480 ? choices.length : 2;
+          final perRow = constraints.maxWidth >= 560 ? choices.length : 3;
           return Column(
             children: [
               for (var row = 0; row < choices.length; row += perRow) ...[
@@ -48,6 +48,11 @@ class ThemePicker extends StatelessWidget {
                           onTap: () => onSelect(value),
                         ),
                       ),
+                    ],
+                    // A short last row keeps the tiles the same width.
+                    for (var i = choices.length - row; i < perRow; i++) ...[
+                      const SizedBox(width: Space.sm),
+                      const Expanded(child: SizedBox()),
                     ],
                   ],
                 ),

@@ -4,8 +4,8 @@
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
-    "background_color": "#0B1531",
-    "theme_color": "#0B1531",
+    "background_color": "#6E6B4E",
+    "theme_color": "#6E6B4E",
     "description": "Messaging and scheduling for sports teams.",
     "prefer_related_applications": false,
     "icons": [

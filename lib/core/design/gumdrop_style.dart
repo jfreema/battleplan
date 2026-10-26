@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/design/arena/arena_theme.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
@@ -20,15 +22,25 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
     this.slant = 0,
     this.buttonRadius,
     this.cardCut = 0,
+    this.headingOutline = 0,
+    this.accentOutline = 0,
   });
 
   /// Gumdrop Pop's style: Lilita One headings with stacked shadows, Fredoka
   /// labels, pill gumdrops, and rounded cards.
   static const gumdrop = GumdropStyle();
 
+  /// Gumdrop Pop Olive's style: Gumdrop Pop's, with headings outlined in
+  /// the shadow's color and every candy gumdrop outlined in ink (design V1
+  /// Olive).
+  static const olive = GumdropStyle(headingOutline: 1.5, accentOutline: 2);
+
   /// The style of [flavor].
-  static GumdropStyle forFlavor(GumdropFlavor flavor) =>
-      flavor == GumdropFlavor.arena ? arenaStyle : gumdrop;
+  static GumdropStyle forFlavor(GumdropFlavor flavor) => switch (flavor) {
+    GumdropFlavor.arena => arenaStyle,
+    GumdropFlavor.olive => olive,
+    _ => gumdrop,
+  };
 
   /// The style in effect at [context]: the theme's, or Gumdrop Pop's.
   static GumdropStyle of(BuildContext context) =>
@@ -61,6 +73,13 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
   /// pixels; 0 rounds all four.
   final double cardCut;
 
+  /// How thick an outline a heading has, in its shadow's color, around its
+  /// letters (Olive's 1.5); 0 for none.
+  final double headingOutline;
+
+  /// How thick an ink outline candy gumdrops have (Olive's 2); 0 for none.
+  final double accentOutline;
+
   /// [shape] in this style: leaning [slant] degrees, with [buttonRadius]
   /// corners when the style has them. Gumdrop Pop's leaves it as it is.
   GumdropShape styled(GumdropShape shape) => slant == 0 && buttonRadius == null
@@ -85,9 +104,22 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
   /// Pop's stack.
   List<Shadow> headingShadow(Color color, int steps) {
     final o = headingShadowOffset;
-    return o == null
-        ? GumdropColors.stackedShadow(color, steps)
-        : [Shadow(color: color, offset: Offset(o, o))];
+    final w = headingOutline;
+    return [
+      // The outline: copies all around the letters, as a stroke would be.
+      if (w > 0)
+        for (var i = 0; i < 16; i++)
+          Shadow(
+            color: color,
+            offset: Offset(
+              w * math.cos(i * math.pi / 8),
+              w * math.sin(i * math.pi / 8),
+            ),
+          ),
+      ...o == null
+          ? GumdropColors.stackedShadow(color, steps)
+          : [Shadow(color: color, offset: Offset(o, o))],
+    ];
   }
 
   /// A card's outline: rounded, or with two corners cut off ([cardCut]).
@@ -136,6 +168,8 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
     double? slant,
     BorderRadius? buttonRadius,
     double? cardCut,
+    double? headingOutline,
+    double? accentOutline,
   }) => GumdropStyle(
     displayFont: displayFont ?? this.displayFont,
     labelFont: labelFont ?? this.labelFont,
@@ -145,6 +179,8 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
     slant: slant ?? this.slant,
     buttonRadius: buttonRadius ?? this.buttonRadius,
     cardCut: cardCut ?? this.cardCut,
+    headingOutline: headingOutline ?? this.headingOutline,
+    accentOutline: accentOutline ?? this.accentOutline,
   );
 
   @override

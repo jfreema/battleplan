@@ -186,7 +186,8 @@ enum ThemePreference {
   light('light'),
   dark('dark'),
   candy('candy'),
-  arena('arena');
+  arena('arena'),
+  olive('olive');
 
   const ThemePreference(this.value);
 
