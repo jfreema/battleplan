@@ -157,7 +157,8 @@ class _TeamShellState extends ConsumerState<TeamShell> {
       (({required selected}) => const ChatIcon(), l10n.tabChat),
       (glyph(AppIcons.schedule), l10n.tabSchedule),
       (glyph(AppIcons.documents), l10n.tabDocuments),
-      // Drawn: no icon font has X's and O's on a chalkboard (BOARD-1).
+      // Drawn: no icon font has a coach's play, an O, its route, and an X
+      // (BOARD-1).
       (({required selected}) => const PlaysIcon(), l10n.tabPlays),
     ];
     // The Chat tab shows this team's unread count (CHAT-9).

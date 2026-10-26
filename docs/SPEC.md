@@ -272,7 +272,7 @@ Sign in
 | **Chat** | Speech bubble | Unread message count for this team (CHAT-9) |
 | **Schedule** | Calendar | — |
 | **Documents** | Folder | — |
-| **Plays** | An X and an O, the X's route to it, on a chalkboard on an easel: drawn, as no icon font has one; filled when selected | — |
+| **Plays** | A coach's play, after the Play Call app icon design: an O at the bottom left, its dotted route arcing up to an arrowhead, and an X at the bottom right. Drawn, as no icon font has one; one color in the tabs, and in color on the empty Plays screens (a lemon O and a cherry X) | — |
 
 - Labels are always visible. The tabs, order, and icons are the same everywhere. On wide screens, Plays sits directly below Documents in the left navigation rail.
 - Each tab keeps its scroll position when you switch away and back.

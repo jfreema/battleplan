@@ -135,7 +135,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
         appBar: AppBar(),
         body: async.isLoading
             ? const Center(child: CircularProgressIndicator())
-            : EmptyState(art: const PlaysIcon(), message: l10n.playGone),
+            : EmptyState(
+                art: const PlaysIcon(colorful: true, size: 64),
+                message: l10n.playGone,
+              ),
       );
     }
     final step = _step.clamp(0, play.steps.length - 1);

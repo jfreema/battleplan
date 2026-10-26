@@ -4,6 +4,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -402,6 +403,29 @@ void main() {
         find.text("No plays yet. Your coaches' plays will show up here."),
         findsOneWidget,
       );
+      // The empty screen's art is the play in color: a lemon O and a
+      // cherry X on their lips (the Play Call app icon); the tab's is one
+      // color, like the icons beside it.
+      final art = tester.widget<CustomPaint>(
+        find.descendant(
+          of: find.byWidgetPredicate((w) => w is PlaysIcon && w.colorful),
+          matching: find.byType(CustomPaint),
+        ),
+      );
+      final candies = (art.painter! as PlaysIconPainter).candies!;
+      final colors = GumdropColors.of(tester.element(find.byWidget(art)));
+      expect(candies.o, colors.lemon);
+      expect(candies.x, colors.cherry);
+      final tab = tester.widget<CustomPaint>(
+        find.descendant(
+          of: find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.byType(PlaysIcon),
+          ),
+          matching: find.byType(CustomPaint),
+        ),
+      );
+      expect((tab.painter! as PlaysIconPainter).candies, isNull);
       // Members view; only admins start one.
       expect(find.text('New play'), findsNothing);
     });

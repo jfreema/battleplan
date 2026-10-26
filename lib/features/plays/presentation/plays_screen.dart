@@ -76,7 +76,7 @@ class SavedPlaysScreen extends ConsumerWidget {
       body = const Center(child: CircularProgressIndicator());
     } else if (list.isEmpty) {
       body = EmptyState(
-        art: const PlaysIcon(),
+        art: const PlaysIcon(colorful: true, size: 64),
         message: canEdit ? l10n.playsEmptyAdmin : l10n.playsEmpty,
       );
     } else {

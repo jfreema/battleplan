@@ -63,7 +63,7 @@ class EditPlayRoute extends ConsumerWidget {
         body: async.isLoading
             ? const Center(child: CircularProgressIndicator())
             : EmptyState(
-                art: const PlaysIcon(),
+                art: const PlaysIcon(colorful: true, size: 64),
                 message: AppLocalizations.of(context).playGone,
               ),
       );
