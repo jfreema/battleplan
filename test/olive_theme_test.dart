@@ -51,6 +51,14 @@ void main() {
     }
   });
 
+  test('headings on its cards are plain ink, with no shadow under them '
+      '(a coral one looked smudged)', () {
+    expect(o.headingTextOnCard, o.ink);
+    expect(o.headingShadowOnCard.a, 0);
+    // On the page they keep their ink shadow.
+    expect(o.headingShadow, o.ink);
+  });
+
   test('coral is you, the sticker, and the back button; lemon is Maybe', () {
     expect(o.you.face, const Color(0xFFF45B5B));
     expect(o.sticker.face, const Color(0xFFF45B5B));

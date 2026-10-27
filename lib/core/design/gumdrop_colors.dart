@@ -141,7 +141,9 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     headingText: Color(0xFFF4EAD0),
     headingShadow: Color(0xFF1A1A18),
     headingTextOnCard: Color(0xFF1A1A18),
-    headingShadowOnCard: Color(0xFFF45B5B),
+    // Plain ink on the cards: a coral shadow under it looked smudged
+    // (owner, 2026-10-27).
+    headingShadowOnCard: Color(0x00000000),
     pageShadow: Color(0xFF1A1A18),
     selectedRingOuter: Color(0xFFFFF9EC),
     swatchInsetRing: Color(0xFF1A1A18),

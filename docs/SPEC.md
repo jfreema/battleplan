@@ -1230,7 +1230,7 @@ The content still carries the visual weight: messages, photos, and event cards.
 
 Five themes, picked in Profile → Themes (SET-2), from 1.1:
 
-- **Gumdrop Army**, the default (the owner's request, 2026-10-26, from the V1 Olive design, after the owner's team t-shirt, and renamed with a darker green on 2026-10-27): an army-green page (`#474C2B`) with cream text, cream cards and buttons (`#F4EAD0`) outlined in near-black on a hard near-black lip, coral (`#F45B5B`) for your messages, the sticker, and the back button, Candy's candies outlined in near-black, and cream headings outlined in near-black over a near-black shadow. It keeps its army-green page in every team.
+- **Gumdrop Army**, the default (the owner's request, 2026-10-26, from the V1 Olive design, after the owner's team t-shirt, and renamed with a darker green on 2026-10-27): an army-green page (`#474C2B`) with cream text, cream cards and buttons (`#F4EAD0`) outlined in near-black on a hard near-black lip, coral (`#F45B5B`) for your messages, the sticker, and the back button, Candy's candies outlined in near-black, and cream headings outlined in near-black over a near-black shadow. Headings on its cream cards are plain near-black, with no shadow: a coral one looked smudged (the owner's request, 2026-10-27). It keeps its army-green page in every team.
 - **Gumdrop Pop Dark**: a navy page (`#0B1531`), navy cards a step lighter (`#16244A`), white text, and white headings with a blue shadow.
 - **Gumdrop Pop Light**: a pale blue-gray page (`#F2F5FD`), white cards with a thin outline, navy text, and navy headings with a light blue shadow.
 - **Gumdrop Candy**: a bright blue page (`#305AF6`) with white text and headings, white cards with navy text, and lemon as your color.

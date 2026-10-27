@@ -12,7 +12,7 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 | `privacy.html`, `terms.html` | `/privacy`, `/terms`: the Privacy Policy and Terms of Use, in effect since 2026-10-13 (LEGAL-1, ROADMAP task 121) |
 | `delete-account.html` | `/delete-account`: deletion in the app and by email (LEGAL-3) |
 | `404.html` | Hosting's not-found page |
-| `site.css` | All styles, in one theme: Gumdrop Army, the app's default (an army-green page with cream text, cream cards with ink text, gumdrop buttons outlined in ink on a hard ink lip, coral accents, and cream Lilita One headings outlined in ink over a stacked ink shadow). No light theme and no `prefers-color-scheme` switch |
+| `site.css` | All styles, in one theme: Gumdrop Army, the app's default (an army-green page with cream text, cream cards with ink text, gumdrop buttons outlined in ink on a hard ink lip, coral accents, and cream Lilita One headings outlined in ink over a stacked ink shadow; headings on the cream cards are plain ink, with no shadow). No light theme and no `prefers-color-scheme` switch |
 | `fonts/` | Lilita One (headings), Fredoka (buttons, labels, questions), and Nunito (body) as Latin `woff2` files from Google Fonts, served from this site so it makes no third-party requests, with each font's `*-OFL.txt` license. Fredoka and Nunito are variable fonts (one file covers every weight) |
 | `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | Icons: the brand mark (SPEC §7.1). `favicon.svg` is also the header mark; `tools/brand_icons.sh` makes the PNGs from it and `assets/brand/icon.svg` |
 | `images/*-olive.webp` | App screenshots in Gumdrop Army, 600 × 1298 |
