@@ -543,7 +543,7 @@ abstract final class AppTheme {
       titleSmall: fredoka(15),
       bodyLarge: nunito(TypeScale.body),
       bodyMedium: nunito(TypeScale.secondary),
-      bodySmall: nunito(13),
+      bodySmall: nunito(14),
       labelLarge: fredoka(15, height: 1),
       labelMedium: fredoka(TypeScale.secondary, height: 1),
       labelSmall: fredoka(TypeScale.label, height: 1),

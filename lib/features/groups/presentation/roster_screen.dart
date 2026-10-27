@@ -121,7 +121,16 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
             ],
           ),
           // Anyone can add a player; a member's waits for an admin (PLAYER-4).
-          if (canAdd)
+          // With large text, a plus with its name as a tooltip, so the
+          // title still fits beside it.
+          if (canAdd && MediaQuery.textScalerOf(context).scale(10) > 15)
+            IconButton(
+              tooltip: isAdmin ? l10n.addPlayers : l10n.addPlayer,
+              onPressed: () =>
+                  context.push('/g/${widget.groupId.value}/players/add'),
+              icon: const Icon(AppIcons.add),
+            )
+          else if (canAdd)
             TextButton(
               onPressed: () =>
                   context.push('/g/${widget.groupId.value}/players/add'),

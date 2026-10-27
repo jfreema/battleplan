@@ -25,31 +25,45 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final label = actionLabel;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(Space.xxl),
+    // Centered, and scrolling where the space is short (a small phone,
+    // large text) rather than overflowing.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconTheme(
-                data: IconThemeData(size: 48, color: scheme.onSurfaceVariant),
-                child: art ?? Icon(icon),
-              ),
-              const SizedBox(height: Space.lg),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge
-                    ?.copyWith(color: scheme.onSurfaceVariant),
-              ),
-              if (label != null && onAction != null) ...[
-                const SizedBox(height: Space.xl),
-                FilledButton(onPressed: onAction, child: Text(label)),
-              ],
-            ],
+          constraints: BoxConstraints(
+            minWidth: constraints.maxWidth,
+            minHeight: constraints.hasBoundedHeight ? constraints.maxHeight : 0,
           ),
+          child: Center(child: _content(context, scheme, label)),
+        ),
+      ),
+    );
+  }
+
+  Widget _content(BuildContext context, ColorScheme scheme, String? label) {
+    return Padding(
+      padding: const EdgeInsets.all(Space.xxl),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconTheme(
+              data: IconThemeData(size: 48, color: scheme.onSurfaceVariant),
+              child: art ?? Icon(icon),
+            ),
+            const SizedBox(height: Space.lg),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge
+                  ?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            if (label != null && onAction != null) ...[
+              const SizedBox(height: Space.xl),
+              FilledButton(onPressed: onAction, child: Text(label)),
+            ],
+          ],
         ),
       ),
     );

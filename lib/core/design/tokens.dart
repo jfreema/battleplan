@@ -22,10 +22,10 @@ abstract final class Space {
 }
 
 /// Chat messages' text (CHAT-1): Nunito on every platform, as Gumdrop Pop
-/// sets it: 16 px on a 1.35 line, bold in others' bubbles and extra bold in
-/// mine.
+/// sets it, a point bigger (17 px, the owner's request, 2026-10-27) on a
+/// 1.35 line, bold in others' bubbles and extra bold in mine.
 abstract final class ChatText {
-  static const double size = 16;
+  static const double size = 17;
   static const double height = 1.35;
 
   /// [base] as message text: the face, size, line height, and weight.
@@ -108,7 +108,9 @@ abstract final class TypeScale {
   static const double section = 24;
   static const double title = 22;
   static const double subtitle = 17;
-  static const double body = 16;
-  static const double secondary = 14;
-  static const double label = 12;
+  // A point over the design's (16, 14, 12), for reading on a phone (the
+  // owner's request, 2026-10-27).
+  static const double body = 17;
+  static const double secondary = 15;
+  static const double label = 13;
 }

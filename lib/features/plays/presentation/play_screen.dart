@@ -9,11 +9,13 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/plays/application/providers.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 import 'package:battleplan/features/plays/domain/play_rules.dart';
 import 'package:battleplan/features/plays/presentation/play_board.dart';
+import 'package:battleplan/features/plays/presentation/play_image.dart';
 import 'package:battleplan/features/plays/presentation/step_player.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,6 +81,21 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
     if (router.state.uri.path != whiteboard) router.go(whiteboard);
   }
 
+  /// Posts the play to the team's chat as a picture of each step, with
+  /// its name, and goes to the chat to see it (BOARD-5).
+  Future<void> _postToChat(Play play) async {
+    final l10n = AppLocalizations.of(context);
+    final chat = ref.read(chatMessagesProvider(widget.groupId).notifier);
+    try {
+      final photos = await playImages(play);
+      if (!mounted) return;
+      context.go('/g/${widget.groupId.value}/chat');
+      await chat.sendPhotos(photos, caption: play.title);
+    } on Object {
+      if (mounted) showAppSnackBar(context, l10n.playPostFailed);
+    }
+  }
+
   Future<void> _duplicate(Play play) async {
     final l10n = AppLocalizations.of(context);
     final uid = ref.read(authUserProvider).value?.uid;
@@ -130,6 +147,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final canEdit =
         group != null && canEditPlays(group, me, superAdmin: superAdmin);
+    final canPost = group != null && me != null && !group.isArchived;
     if (play == null) {
       return Scaffold(
         appBar: AppBar(),
@@ -146,6 +164,12 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
       appBar: AppBar(
         title: Text(play.title, overflow: TextOverflow.ellipsis),
         actions: [
+          if (canPost)
+            IconButton(
+              tooltip: l10n.playPostToChat,
+              icon: const Icon(AppIcons.send),
+              onPressed: () => unawaited(_postToChat(play)),
+            ),
           if (canEdit) ...[
             IconButton(
               tooltip: l10n.playEdit,

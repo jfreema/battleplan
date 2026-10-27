@@ -8,6 +8,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/plays/data/firestore_play_repository.dart';
 import 'package:battleplan/features/plays/data/prefs_whiteboard_store.dart';
 import 'package:battleplan/features/plays/domain/board_edit.dart';
@@ -430,6 +431,36 @@ void main() {
       expect(find.text('New play'), findsNothing);
     });
 
+    testWidgets('anyone on the team posts a saved play to the chat: a '
+        'picture of each step, then the chat (BOARD-5)', (tester) async {
+      final messages = FakeMessageRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [testMembership('a', 'coach')],
+        playRepo: FakePlayRepository([saved]),
+        messageRepo: messages,
+        size: const Size(1024, 1366),
+      );
+      unawaited(
+        GoRouter.of(tester.element(find.byType(Scaffold).first))
+            .push('/g/a/plays/${saved.id.value}'),
+      );
+      await tester.pumpAndSettle();
+      await tester.runAsync(() async {
+        await tester.tap(find.byTooltip('Post to chat'));
+        for (var i = 0; i < 20 && messages.photoBatches.isEmpty; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          await tester.pump();
+        }
+      });
+      await tester.pumpAndSettle();
+      // Two steps, two pictures, in one message.
+      expect(messages.photoBatches, [2]);
+      expect(find.byType(Composer), findsOneWidget);
+    });
+
     testWidgets('a member views a play step by step, without edit tools', (
       tester,
     ) async {
@@ -475,7 +506,7 @@ void main() {
       expect(markers.where((m) => m.side == MarkerSide.opponent), hasLength(1));
       // The whiteboard keeps its drawing, and the saved copy is listed.
       expect(find.widgetWithText(AppBar, 'Plays'), findsOneWidget);
-      await tester.tap(find.byTooltip('Saved plays'));
+      await tester.tap(find.widgetWithText(TextButton, 'Saved plays'));
       await tester.pumpAndSettle();
       expect(find.text('Pickoff at first'), findsOneWidget);
     });
@@ -524,7 +555,7 @@ void main() {
       final plays = FakePlayRepository([saved]);
       await open(tester, role: MemberRole.admin, plays: plays);
       expect(find.text('Step 1 of 1'), findsOneWidget);
-      await tester.tap(find.byTooltip('Saved plays'));
+      await tester.tap(find.widgetWithText(TextButton, 'Saved plays'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Bunt defense'));
       await tester.pumpAndSettle();
@@ -554,8 +585,10 @@ void main() {
       expect(find.byType(AppBar), findsNothing);
       expect(find.byTooltip('Undo'), findsOneWidget);
       expect(find.byTooltip('Redo'), findsOneWidget);
-      expect(find.widgetWithText(TextButton, 'Add step'), findsOneWidget);
-      expect(find.byTooltip('Saved plays'), findsNothing);
+      // The saved plays by name, so they're found; Add step makes room as
+      // a plus.
+      expect(find.byTooltip('Add step'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Saved'), findsOneWidget);
       expect(find.byTooltip('Save to plays'), findsNothing);
       // A tap in the board's corner lands at the corner of the field it
       // shows: baseball's is cut to the fence.
@@ -578,7 +611,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Save to plays'), findsOneWidget);
       expect(find.text('New board'), findsOneWidget);
-      await tester.tap(find.text('Saved plays'));
+      await tester.tapAt(const Offset(200, 600));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, 'Saved'));
       await tester.pumpAndSettle();
       // A play's steps fit a phone too: where they are, and adding one, in
       // the bar; playing them, if there's no room, in More.
@@ -635,7 +670,7 @@ void main() {
       final moved = markers().firstWhere((m) => m.label == 'CF');
       expect(moved.at.y, greaterThan(center.y));
       // Still the step's controls, not the center fielder's.
-      expect(find.widgetWithText(TextButton, 'Add step'), findsOneWidget);
+      expect(find.byTooltip('Add step'), findsOneWidget);
       expect(find.byTooltip('Label'), findsNothing);
       await tester.tapAt(onScreen + const Offset(0, 40));
       await tester.pumpAndSettle();
@@ -644,7 +679,7 @@ void main() {
       await tester.tap(find.byTooltip('Delete'));
       await tester.pumpAndSettle();
       expect(markers().where((m) => m.label == 'CF'), isEmpty);
-      expect(find.widgetWithText(TextButton, 'Add step'), findsOneWidget);
+      expect(find.byTooltip('Add step'), findsOneWidget);
     });
 
     testWidgets('playing the steps glides everyone to the last one', (

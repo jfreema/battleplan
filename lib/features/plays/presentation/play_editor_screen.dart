@@ -519,7 +519,6 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
     final more = <_Action>[
       if (widget.whiteboard && phone) ...[
         (label: l10n.playNewBoard, onPressed: () => unawaited(_newBoard())),
-        (label: l10n.playsSaved, onPressed: _openSaved),
       ],
       if (!widget.whiteboard)
         (label: l10n.playRename, onPressed: () => unawaited(_rename())),
@@ -553,6 +552,7 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                     selected: selected,
                     saveLabel: saveLabel,
                     saveInMore: widget.whiteboard,
+                    onSaved: widget.whiteboard ? _openSaved : null,
                     onSave: _saving ? null : () => unawaited(_save()),
                     onUndo: undo,
                     onRedo: redo,
@@ -581,10 +581,11 @@ class _PlayEditorState extends ConsumerState<PlayEditorScreen>
                           icon: const PlaysIcon(),
                           onPressed: () => unawaited(_newBoard()),
                         ),
-                        IconButton(
-                          tooltip: l10n.playsSaved,
-                          icon: const Icon(AppIcons.savedPlays),
+                        // Named, not just an icon, so it's found.
+                        TextButton.icon(
                           onPressed: _openSaved,
+                          icon: const Icon(AppIcons.savedPlays),
+                          label: Text(l10n.playsSaved),
                         ),
                       ],
                       IconButton(
@@ -786,6 +787,7 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onEditSelected,
     required this.onDeleteSelected,
     required this.more,
+    this.onSaved,
   });
 
   final BoardEdit edit;
@@ -805,6 +807,10 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onPlay;
   final VoidCallback onEditSelected;
   final VoidCallback onDeleteSelected;
+
+  /// Opens the saved plays: on the whiteboard, named first on the bar,
+  /// or in More where it doesn't fit.
+  final VoidCallback? onSaved;
 
   /// What's in More whatever fits.
   final List<_Action> more;
@@ -927,6 +933,25 @@ class _PhoneBar extends StatelessWidget implements PreferredSizeWidget {
                   (label: l10n.playStepBack, onPressed: previous),
                   (label: l10n.playStepNext, onPressed: next),
                 ]);
+              }
+            }
+            // The whiteboard's saved plays, by name, first on the bar where
+            // there's room after
+            // the steps' own controls, and before Add step's name: an icon alone in
+            // More wasn't found (the owner's report, 2026-10-27).
+            if (onSaved case final open? when s == null) {
+              final label = l10n.playsSavedShort;
+              if (fits(widthOf(label) + 58)) {
+                lead.insert(
+                  0,
+                  TextButton.icon(
+                    onPressed: open,
+                    icon: const Icon(AppIcons.savedPlays),
+                    label: Text(label),
+                  ),
+                );
+              } else {
+                overflow.add((label: l10n.playsSaved, onPressed: open));
               }
             }
             final add = edit.canAddStep && !playing ? onAdd : null;
