@@ -48,7 +48,7 @@ The screenshots show the app with the seeded sample teams (Thunder, Cyclone, and
 | Image | Signed in as | Screen |
 |---|---|---|
 | `chat` (hero) | `coach@example.com` | Thunder's chat, opened at the first unread message: the announcement, Jim's mention, the game card, the dinner poll |
-| `teams` (hero, behind) | `claire@example.com` | The team switcher over Rally Possums' chat |
+| `teams` (hero, behind) | `claire@example.com` | Teams, the top of the app: her three teams, with their last messages |
 | `conversation` | `coach@example.com` | Cyclone's chat: a reply, a mention, reactions |
 | `event`, `schedule` | `coach@example.com` | Thunder's game against the Eagles, and Thunder's schedule |
 | `poll` | `rachel@example.com` | Rally Possums' tournament poll |
