@@ -7,6 +7,7 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 | Path | What |
 |---|---|
 | `index.html` | `/`: the landing page (features, players and parents, the coach's whiteboard, switching from other apps, free with no ads, screenshots, FAQ) |
+| `switch.html` | `/switch`: switching from GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar, the steps for each (the landing page's Switching section and FAQ link here). Other apps appear by name in a neutral badge, never their logos |
 | `support.html` | `/support`: support email, common questions, deleting your account |
 | `privacy.html`, `terms.html` | `/privacy`, `/terms`: the Privacy Policy and Terms of Use, in effect since 2026-10-13 (LEGAL-1, ROADMAP task 121) |
 | `delete-account.html` | `/delete-account`: deletion in the app and by email (LEGAL-3) |

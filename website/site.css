@@ -389,3 +389,32 @@ kbd, .ui {
   *, *::before, *::after { transition: none !important; }
   .btn:active { transform: none; }
 }
+
+/* Apps you can switch from: a dense row of candy-badged links (landing
+   page), and the same badges on /switch. Each app's name in a neutral
+   badge: no other company's logo or colors. */
+.app-badge {
+  flex: none; width: 40px; height: 40px; border-radius: 12px; display: inline-grid; place-items: center;
+  background: var(--coral); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink);
+  font: 1.25rem/1 var(--display);
+}
+.apps { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
+.apps a {
+  display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 14px;
+  background: var(--surface); color: var(--card-text); border-radius: 18px; text-decoration: none;
+}
+.apps a:hover { box-shadow: 0 0 0 2px var(--ink); }
+.apps a:focus-visible { outline-color: var(--ink); }
+.apps strong { display: block; font: 600 1.05rem/1.2 var(--label); }
+.apps small { display: block; font-size: 0.9rem; line-height: 1.3; color: var(--card-muted); }
+.apps li:nth-child(2) .app-badge, .app-jump li:nth-child(2) .app-badge, #teamsnap .app-badge { background: var(--tangerine); }
+.apps li:nth-child(3) .app-badge, .app-jump li:nth-child(3) .app-badge, #teamreach .app-badge { background: var(--grape); }
+.apps li:nth-child(4) .app-badge, .app-jump li:nth-child(4) .app-badge, #gamechanger .app-badge { background: var(--mint); }
+.apps li:nth-child(5) .app-badge, .app-jump li:nth-child(5) .app-badge, #google-calendar .app-badge { background: var(--lemon); }
+.app-jump { list-style: none; padding: 0; margin: 4px 0 10px; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.app-jump a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font: 600 1rem var(--label); }
+.app-jump .app-badge { width: 30px; height: 30px; border-radius: 9px; font-size: 1rem; }
+.switch-app { padding: 8px 0 12px; }
+.switch-app h2 { display: flex; align-items: center; gap: 14px; }
+.switch-app .lead { margin-bottom: 0.6em; }
+.switch-app h2 .app-badge { -webkit-text-stroke: 0; text-shadow: none; color: var(--ink); letter-spacing: 0; }

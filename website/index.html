@@ -239,29 +239,14 @@
           <h2 id="switch-title">Switching is easy</h2>
           <p>Bring what your team already has, so nobody starts over. A team admin opens <span class="ui">Import</span> in the team's menu, picks the app, and previews everything before it's added.</p>
         </div>
-        <div class="cards">
-          <div class="card">
-            <h3>From GroupMe</h3>
-            <p>Move your group's messages, photos, files, and events over from GroupMe's data export, with everyone's names and the original dates.</p>
-          </div>
-          <div class="card">
-            <h3>From TeamSnap</h3>
-            <p>Bring your schedule, your players with their numbers and birthdates, and your team's files.</p>
-          </div>
-          <div class="card">
-            <h3>From TeamReach</h3>
-            <p>Copy your team's schedule over from its calendar link: games, practices, and everything else on it.</p>
-          </div>
-          <div class="card">
-            <h3>GameChanger calendars</h3>
-            <p>Import your GameChanger schedule from its calendar link, with opponents and home or away filled in.</p>
-          </div>
-          <div class="card">
-            <h3>Google Calendar</h3>
-            <p>Bring a team calendar's events over from Google Calendar with its private calendar link.</p>
-          </div>
-        </div>
-        <p class="switch-more"><a href="#faq-import">See the steps for each app</a></p>
+        <ul class="apps">
+          <li><a href="/switch#groupme"><span class="app-badge" aria-hidden="true">G</span><span><strong>GroupMe</strong><small>Messages, photos, files, and events</small></span></a></li>
+          <li><a href="/switch#teamsnap"><span class="app-badge" aria-hidden="true">T</span><span><strong>TeamSnap</strong><small>Schedule, players, and files</small></span></a></li>
+          <li><a href="/switch#teamreach"><span class="app-badge" aria-hidden="true">T</span><span><strong>TeamReach</strong><small>Schedule</small></span></a></li>
+          <li><a href="/switch#gamechanger"><span class="app-badge" aria-hidden="true">G</span><span><strong>GameChanger</strong><small>Schedule, with opponents</small></span></a></li>
+          <li><a href="/switch#google-calendar"><span class="app-badge" aria-hidden="true">G</span><span><strong>Google Calendar</strong><small>Events</small></span></a></li>
+        </ul>
+        <p class="switch-more"><a href="/switch">See the steps for each app</a></p>
         <p class="fineprint">Importing again adds only what's new, and nothing imported sends notifications. GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar are trademarks of their owners; Battleplan isn't affiliated with them.</p>
       </div>
     </section>
@@ -311,52 +296,7 @@
           </details>
           <details id="faq-import">
             <summary>How do I move my team over from another app?</summary>
-            <p>A team admin does it, in Battleplan: open your team's menu, tap <span class="ui">Import</span>, and choose the app. You'll see a preview of everything before it's added. Nothing imported sends notifications, and importing again adds only what's new. RSVPs and attendance stay behind.</p>
-            <details>
-              <summary>From GroupMe: messages, photos, files, and events</summary>
-              <ol class="steps">
-                <li>On a computer, go to <a href="https://web.groupme.com">web.groupme.com</a> and sign in.</li>
-                <li>Click your profile picture, choose <span class="ui">Export my data</span>, then <span class="ui">Create export</span>. If GroupMe asks which chats to include, choose only your team's group.</li>
-                <li>When it's ready, download it from <span class="ui">Export my data</span>: a <span class="ui">.zip</span> file. A large export comes in parts; import each one.</li>
-                <li>In Battleplan, open <span class="ui">Import</span>, choose <span class="ui">GroupMe</span>, and choose the <span class="ui">.zip</span> file.</li>
-                <li>Pick your team's group, choose what to bring (messages, with or without photos, documents, and events), check the preview, and tap <span class="ui">Import</span>.</li>
-              </ol>
-              <p>If the export has all your GroupMe chats, that's fine: only the group you pick is imported, and your other chats never leave your device. Messages keep everyone's GroupMe names and the original dates. Likes, polls' votes, and videos aren't imported.</p>
-            </details>
-            <details>
-              <summary>From TeamSnap: your schedule, players, and files</summary>
-              <ol class="steps">
-                <li>Schedule: in TeamSnap on the web, open your team's <span class="ui">Schedule</span>, then <span class="ui">Settings</span>, then <span class="ui">Sync Calendar / Export</span>, and copy the calendar link. On an iPhone: <span class="ui">Schedule</span>, the share button, then <span class="ui">Subscribe</span>.</li>
-                <li>Players: on the web, open your team's <span class="ui">Roster</span>, then <span class="ui">Export</span>, then <span class="ui">Export CSV File</span>.</li>
-                <li>Files: open the <span class="ui">Media</span> tab, then <span class="ui">Files</span>, and download the ones you want.</li>
-                <li>In Battleplan, open <span class="ui">Import</span>, choose <span class="ui">TeamSnap</span>, then paste the link, choose the roster file, and choose the files. Check the preview, and tap <span class="ui">Import</span>.</li>
-              </ol>
-              <p>Players come with their names, numbers, and birthdates; coaches and contact details stay behind, and guardians link themselves to their players. TeamSnap doesn't export its chat.</p>
-            </details>
-            <details>
-              <summary>From TeamReach: your schedule</summary>
-              <ol class="steps">
-                <li>In TeamReach, open your team's schedule and choose the option to subscribe to it in a calendar app (iCal). Copy the calendar link.</li>
-                <li>In Battleplan, open <span class="ui">Import</span>, choose <span class="ui">TeamReach</span>, paste the link, check the preview, and tap <span class="ui">Import</span>.</li>
-              </ol>
-            </details>
-            <details>
-              <summary>From GameChanger: your schedule</summary>
-              <ol class="steps">
-                <li>In the GameChanger app, open your team and tap the gear, then <span class="ui">Schedule Sync</span>, <span class="ui">Sync Schedule to Your Calendar</span>, and <span class="ui">Copy Calendar Link</span>.</li>
-                <li>In Battleplan, open <span class="ui">Import</span>, choose <span class="ui">GameChanger</span>, paste the link, check the preview, and tap <span class="ui">Import</span>.</li>
-              </ol>
-              <p>Games come in with the opponent and home or away. Coaches, players, and guardians get every event in their link; followers get only games.</p>
-            </details>
-            <details>
-              <summary>From Google Calendar: your events</summary>
-              <ol class="steps">
-                <li>On a computer, open <a href="https://calendar.google.com">Google Calendar</a> and go to <span class="ui">Settings</span>.</li>
-                <li>Under <span class="ui">Settings for my calendars</span>, choose your team's calendar, then <span class="ui">Integrate calendar</span>, and copy the <span class="ui">Secret address in iCal format</span>.</li>
-                <li>In Battleplan, open <span class="ui">Import</span>, choose <span class="ui">Google Calendar</span>, paste the address, check the preview, and tap <span class="ui">Import</span>.</li>
-              </ol>
-              <p>Keep the secret address private: anyone who has it can see that calendar.</p>
-            </details>
+            <p>A team admin does it, in Battleplan: open your team's menu, tap <span class="ui">Import</span>, and choose the app. You'll see a preview of everything before it's added. Nothing imported sends notifications, and importing again adds only what's new. See <a href="/switch">Switch to Battleplan</a> for the steps for each app.</p>
           </details>
           <details>
             <summary>Can I use it on my computer?</summary>
