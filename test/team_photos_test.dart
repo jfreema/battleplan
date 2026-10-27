@@ -100,12 +100,12 @@ void main() {
     );
   });
 
-  testWidgets('leaves out deleted messages and people I blocked (SAFE-2)', (
-    tester,
-  ) async {
+  testWidgets('leaves out deleted messages, people I blocked (SAFE-2), and '
+      'plays posted from Plays (BOARD-5)', (tester) async {
     final safety = FakeSafetyRepository()
       ..blocks.add(const BlockedPerson(uid: UserId('sam'), name: 'Sam'));
     await openPhotos(tester, [
+      photos(4, author: 'coach', name: 'Coach Lee').copyWith(playId: 'p9'),
       photos(3),
       photos(2, author: 'coach', name: 'Coach Lee', deletedAt: start),
       photos(1, author: 'coach', name: 'Coach Lee'),

@@ -70,6 +70,13 @@ describe('lastMessagePreviewOf', () => {
     expect(lastMessagePreviewOf({ authorName: 'Sam', text: 'Game moved\nto 6', type: 'text' }).text).toBe('Game moved');
     expect(lastMessagePreviewOf({ authorName: 'Sam', text: '', type: 'image' }).text).toBe('Photo');
   });
+
+  it('names a posted play (BOARD-5)', () => {
+    expect(lastMessagePreviewOf({ authorName: 'Sam', text: 'Relay', type: 'image', playId: 'p1' }).text).toBe(
+      'Play: Relay',
+    );
+    expect(lastMessagePreviewOf({ authorName: 'Sam', text: '', type: 'image', playId: 'p1' }).text).toBe('Play');
+  });
 });
 
 describe('message notifications (NOTIF-2, NOTIF-5)', () => {
@@ -100,6 +107,12 @@ describe('message notifications (NOTIF-2, NOTIF-5)', () => {
       'Alex: Team pic',
     );
     expect(messagePushBody({ authorName: '', type: 'text', text: 'hi' })).toBe('Someone: hi');
+    expect(messagePushBody({ authorName: 'Alex', type: 'image', text: 'Relay', playId: 'p1', attachments: [{}] })).toBe(
+      'Alex posted a play: Relay',
+    );
+    expect(messagePushBody({ authorName: 'Alex', type: 'image', text: '', playId: 'p1', attachments: [{}] })).toBe(
+      'Alex posted a play',
+    );
   });
 
   it('words a reply push', () => {

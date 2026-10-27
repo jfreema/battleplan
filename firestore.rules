@@ -385,10 +385,11 @@ service cloud.firestore {
         && mentionsOk(incoming())
         && announcementOk(incoming())
         && directOk(incoming())
+        && playLinkOk(incoming())
         && incoming().createdAt == request.time
         && incoming().keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
             'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',
-            'mentions', 'mentionsEveryone', 'announcement', 'createdAt'])
+            'mentions', 'mentionsEveryone', 'announcement', 'playId', 'createdAt'])
         && rateLimitOk(incoming().groupId, messageId);
 
       // Reactions: a member may set or clear only their own, any of the 16,
@@ -455,6 +456,15 @@ service cloud.firestore {
       return m.get('announcement', false) == false
         || (m.announcement == true && m.type == 'text'
             && (isAdmin(m.groupId) || superAdmin()));
+    }
+
+    // A play posted from Plays (BOARD-5) is a photo message naming the
+    // saved play its picture opens, which must be this team's. Only these
+    // messages cost the lookup.
+    function playLinkOk(m) {
+      return !('playId' in m)
+        || (m.type == 'image' && m.playId is string && m.playId.size() <= 64
+            && get(/databases/$(database)/documents/plays/$(m.playId)).data.groupId == m.groupId);
     }
 
     // A direct conversation (CHAT-19) takes text and photos, without

@@ -949,7 +949,8 @@ as bool,
 /// @nodoc
 mixin _$OutgoingPhotos {
 
- int get id; List<NewPhoto> get photos; String get caption; double get progress; bool get failed;/// Offline: waiting for the connection to come back, then it uploads
+ int get id; List<NewPhoto> get photos; String get caption;/// A posted play's saved play (BOARD-5).
+ String? get playId; double get progress; bool get failed;/// Offline: waiting for the connection to come back, then it uploads
 /// by itself (CHAT-4).
  bool get waiting;
 /// Create a copy of OutgoingPhotos
@@ -963,20 +964,20 @@ $OutgoingPhotosCopyWith<OutgoingPhotos> get copyWith => _$OutgoingPhotosCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as OutgoingPhotos;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OutgoingPhotos&&(identical(other.id, _this.id) || other.id == _this.id)&&const DeepCollectionEquality().equals(other.photos, _this.photos)&&(identical(other.caption, _this.caption) || other.caption == _this.caption)&&(identical(other.progress, _this.progress) || other.progress == _this.progress)&&(identical(other.failed, _this.failed) || other.failed == _this.failed)&&(identical(other.waiting, _this.waiting) || other.waiting == _this.waiting));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OutgoingPhotos&&(identical(other.id, _this.id) || other.id == _this.id)&&const DeepCollectionEquality().equals(other.photos, _this.photos)&&(identical(other.caption, _this.caption) || other.caption == _this.caption)&&(identical(other.playId, _this.playId) || other.playId == _this.playId)&&(identical(other.progress, _this.progress) || other.progress == _this.progress)&&(identical(other.failed, _this.failed) || other.failed == _this.failed)&&(identical(other.waiting, _this.waiting) || other.waiting == _this.waiting));
 }
 
 
 @override
 int get hashCode {
   final _this = this as OutgoingPhotos;
-  return Object.hash(runtimeType,_this.id,const DeepCollectionEquality().hash(_this.photos),_this.caption,_this.progress,_this.failed,_this.waiting);
+  return Object.hash(runtimeType,_this.id,const DeepCollectionEquality().hash(_this.photos),_this.caption,_this.playId,_this.progress,_this.failed,_this.waiting);
 }
 
 @override
 String toString() {
   final _this = this as OutgoingPhotos;
-  return 'OutgoingPhotos(id: ${_this.id}, photos: ${_this.photos}, caption: ${_this.caption}, progress: ${_this.progress}, failed: ${_this.failed}, waiting: ${_this.waiting})';
+  return 'OutgoingPhotos(id: ${_this.id}, photos: ${_this.photos}, caption: ${_this.caption}, playId: ${_this.playId}, progress: ${_this.progress}, failed: ${_this.failed}, waiting: ${_this.waiting})';
 }
 
 
@@ -987,7 +988,7 @@ abstract mixin class $OutgoingPhotosCopyWith<$Res>  {
   factory $OutgoingPhotosCopyWith(OutgoingPhotos value, $Res Function(OutgoingPhotos) _then) = _$OutgoingPhotosCopyWithImpl;
 @useResult
 $Res call({
- int id, List<NewPhoto> photos, String caption, double progress, bool failed, bool waiting
+ int id, List<NewPhoto> photos, String caption, String? playId, double progress, bool failed, bool waiting
 });
 
 
@@ -1004,12 +1005,13 @@ class _$OutgoingPhotosCopyWithImpl<$Res>
 
 /// Create a copy of OutgoingPhotos
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? photos = null,Object? caption = null,Object? progress = null,Object? failed = null,Object? waiting = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? photos = null,Object? caption = null,Object? playId = freezed,Object? progress = null,Object? failed = null,Object? waiting = null,}) {
   return _then(OutgoingPhotos(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,photos: null == photos ? _self.photos : photos // ignore: cast_nullable_to_non_nullable
 as List<NewPhoto>,caption: null == caption ? _self.caption : caption // ignore: cast_nullable_to_non_nullable
-as String,progress: null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
+as String,playId: freezed == playId ? _self.playId : playId // ignore: cast_nullable_to_non_nullable
+as String?,progress: null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
 as double,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
 as bool,waiting: null == waiting ? _self.waiting : waiting // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -1097,10 +1099,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  List<NewPhoto> photos,  String caption,  double progress,  bool failed,  bool waiting)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  List<NewPhoto> photos,  String caption,  String? playId,  double progress,  bool failed,  bool waiting)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OutgoingPhotos() when $default != null:
-return $default(_that.id,_that.photos,_that.caption,_that.progress,_that.failed,_that.waiting);case _:
+return $default(_that.id,_that.photos,_that.caption,_that.playId,_that.progress,_that.failed,_that.waiting);case _:
   return orElse();
 
 }
@@ -1118,10 +1120,10 @@ return $default(_that.id,_that.photos,_that.caption,_that.progress,_that.failed,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  List<NewPhoto> photos,  String caption,  double progress,  bool failed,  bool waiting)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  List<NewPhoto> photos,  String caption,  String? playId,  double progress,  bool failed,  bool waiting)  $default,) {final _that = this;
 switch (_that) {
 case _OutgoingPhotos():
-return $default(_that.id,_that.photos,_that.caption,_that.progress,_that.failed,_that.waiting);case _:
+return $default(_that.id,_that.photos,_that.caption,_that.playId,_that.progress,_that.failed,_that.waiting);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1138,10 +1140,10 @@ return $default(_that.id,_that.photos,_that.caption,_that.progress,_that.failed,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  List<NewPhoto> photos,  String caption,  double progress,  bool failed,  bool waiting)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  List<NewPhoto> photos,  String caption,  String? playId,  double progress,  bool failed,  bool waiting)?  $default,) {final _that = this;
 switch (_that) {
 case _OutgoingPhotos() when $default != null:
-return $default(_that.id,_that.photos,_that.caption,_that.progress,_that.failed,_that.waiting);case _:
+return $default(_that.id,_that.photos,_that.caption,_that.playId,_that.progress,_that.failed,_that.waiting);case _:
   return null;
 
 }
@@ -1153,7 +1155,7 @@ return $default(_that.id,_that.photos,_that.caption,_that.progress,_that.failed,
 
 
 class _OutgoingPhotos implements OutgoingPhotos {
-  const _OutgoingPhotos({required this.id, required  List<NewPhoto> photos, this.caption = '', this.progress = 0, this.failed = false, this.waiting = false}): _photos = photos;
+  const _OutgoingPhotos({required this.id, required  List<NewPhoto> photos, this.caption = '', this.playId, this.progress = 0, this.failed = false, this.waiting = false}): _photos = photos;
   
 
 @override final  int id;
@@ -1165,6 +1167,8 @@ class _OutgoingPhotos implements OutgoingPhotos {
 }
 
 @override@JsonKey() final  String caption;
+/// A posted play's saved play (BOARD-5).
+@override final  String? playId;
 @override@JsonKey() final  double progress;
 @override@JsonKey() final  bool failed;
 /// Offline: waiting for the connection to come back, then it uploads
@@ -1181,18 +1185,18 @@ _$OutgoingPhotosCopyWith<_OutgoingPhotos> get copyWith => __$OutgoingPhotosCopyW
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _OutgoingPhotos&&(identical(other.id, id) || other.id == id)&&const DeepCollectionEquality().equals(other.photos, _photos)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.progress, progress) || other.progress == progress)&&(identical(other.failed, failed) || other.failed == failed)&&(identical(other.waiting, waiting) || other.waiting == waiting));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _OutgoingPhotos&&(identical(other.id, id) || other.id == id)&&const DeepCollectionEquality().equals(other.photos, _photos)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.playId, playId) || other.playId == playId)&&(identical(other.progress, progress) || other.progress == progress)&&(identical(other.failed, failed) || other.failed == failed)&&(identical(other.waiting, waiting) || other.waiting == waiting));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,const DeepCollectionEquality().hash(_photos),caption,progress,failed,waiting);
+    return Object.hash(runtimeType,id,const DeepCollectionEquality().hash(_photos),caption,playId,progress,failed,waiting);
 }
 
 @override
 String toString() {
-    return 'OutgoingPhotos(id: $id, photos: $photos, caption: $caption, progress: $progress, failed: $failed, waiting: $waiting)';
+    return 'OutgoingPhotos(id: $id, photos: $photos, caption: $caption, playId: $playId, progress: $progress, failed: $failed, waiting: $waiting)';
 }
 
 
@@ -1203,7 +1207,7 @@ abstract mixin class _$OutgoingPhotosCopyWith<$Res> implements $OutgoingPhotosCo
   factory _$OutgoingPhotosCopyWith(_OutgoingPhotos value, $Res Function(_OutgoingPhotos) _then) = __$OutgoingPhotosCopyWithImpl;
 @override @useResult
 $Res call({
- int id, List<NewPhoto> photos, String caption, double progress, bool failed, bool waiting
+ int id, List<NewPhoto> photos, String caption, String? playId, double progress, bool failed, bool waiting
 });
 
 
@@ -1220,12 +1224,13 @@ class __$OutgoingPhotosCopyWithImpl<$Res>
 
 /// Create a copy of OutgoingPhotos
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? photos = null,Object? caption = null,Object? progress = null,Object? failed = null,Object? waiting = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? photos = null,Object? caption = null,Object? playId = freezed,Object? progress = null,Object? failed = null,Object? waiting = null,}) {
   return _then(_OutgoingPhotos(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,photos: null == photos ? _self._photos : photos // ignore: cast_nullable_to_non_nullable
 as List<NewPhoto>,caption: null == caption ? _self.caption : caption // ignore: cast_nullable_to_non_nullable
-as String,progress: null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
+as String,playId: freezed == playId ? _self.playId : playId // ignore: cast_nullable_to_non_nullable
+as String?,progress: null == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
 as double,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
 as bool,waiting: null == waiting ? _self.waiting : waiting // ignore: cast_nullable_to_non_nullable
 as bool,

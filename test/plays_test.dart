@@ -1,11 +1,13 @@
-// Plays (SPEC §6.16, BOARD-1 to BOARD-4): the boards and their starting
-// spots, drawing and undoing, steps, saving through the repository, and
-// who may do what.
+// Plays (SPEC §6.16, BOARD-1 to BOARD-5): the boards and their starting
+// spots, drawing and undoing, steps, saving through the repository, who
+// may do what, and posting a play to the chat or saving it as a GIF.
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
@@ -14,6 +16,7 @@ import 'package:battleplan/features/plays/data/prefs_whiteboard_store.dart';
 import 'package:battleplan/features/plays/domain/board_edit.dart';
 import 'package:battleplan/features/plays/domain/board_layout.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
+import 'package:battleplan/features/plays/domain/play_gif.dart';
 import 'package:battleplan/features/plays/presentation/board_painter.dart';
 import 'package:battleplan/features/plays/presentation/play_editor_screen.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
@@ -248,6 +251,33 @@ void main() {
     });
   });
 
+  group("a play's GIF (BOARD-5)", () {
+    test('the first step shows 1.5 seconds, each next one glides in over '
+        '1.5 seconds, and the last holds 3 seconds', () {
+      final frames = playGifFrames(3);
+      expect(frames.first, (step: 0, t: 0.0, delay: 150));
+      // 20 frames a second while gliding, arriving on the step itself.
+      expect(frames[1], (step: 0, t: 1 / 30, delay: 5));
+      expect(frames[29], (step: 0, t: 29 / 30, delay: 5));
+      expect(frames[30], (step: 1, t: 0.0, delay: 5));
+      expect(frames[31], (step: 1, t: 1 / 30, delay: 5));
+      expect(frames.last, (step: 2, t: 0.0, delay: 300));
+      expect(frames, hasLength(61));
+      // Each step's 1.5 seconds, then the 3-second hold (which takes the
+      // last frame's own twentieth of a second).
+      expect(frames.fold(0, (sum, f) => sum + f.delay), 450 + 300 - 5);
+      // One step: a still picture.
+      expect(playGifFrames(1), [(step: 0, t: 0.0, delay: 300)]);
+    });
+
+    test("it's saved under the play's name", () {
+      expect(playGifName('Bunt defense'), 'Bunt defense');
+      expect(playGifName(' 4-3 / "Zone"?  press '), '4-3 Zone press');
+      expect(playGifName(r'a\b:c*d<e>f|g'), 'a b c d e f g');
+      expect(playGifName(' ?? '), 'Play');
+    });
+  });
+
   group('saving (BOARD-4, data)', () {
     test('a play goes to Firestore and back as drawn', () async {
       final db = FakeFirebaseFirestore();
@@ -432,7 +462,9 @@ void main() {
     });
 
     testWidgets('anyone on the team posts a saved play to the chat: a '
-        'picture of each step, then the chat (BOARD-5)', (tester) async {
+        'picture of its last step, which opens the play (BOARD-5)', (
+      tester,
+    ) async {
       final messages = FakeMessageRepository();
       await pumpApp(
         tester,
@@ -441,24 +473,138 @@ void main() {
         memberships: [testMembership('a', 'coach')],
         playRepo: FakePlayRepository([saved]),
         messageRepo: messages,
+        // The team's chat hasn't been opened yet.
+        prefs: FakeLocalPrefs()..lastTeamRoute = '/g/a/documents',
         size: const Size(1024, 1366),
       );
+      expect(find.byType(Composer), findsNothing);
       unawaited(
         GoRouter.of(tester.element(find.byType(Scaffold).first))
             .push('/g/a/plays/${saved.id.value}'),
       );
       await tester.pumpAndSettle();
       await tester.runAsync(() async {
-        await tester.tap(find.byTooltip('Post to chat'));
+        await tester.tap(find.widgetWithText(FilledButton, 'Post to chat'));
         for (var i = 0; i < 20 && messages.photoBatches.isEmpty; i++) {
           await Future<void>.delayed(const Duration(milliseconds: 100));
           await tester.pump();
         }
       });
       await tester.pumpAndSettle();
-      // Two steps, two pictures, in one message.
-      expect(messages.photoBatches, [2]);
+      // One picture, with the play's name, naming the play.
+      expect(messages.photoBatches, [1]);
+      final posted = messages.messages.first;
+      expect(posted.text, 'Bunt defense');
+      expect(posted.playId, 'p9');
       expect(find.byType(Composer), findsOneWidget);
+      // In the chat it says it opens the play, and a tap does.
+      expect(find.text('Open play'), findsOneWidget);
+      final semantics = tester.ensureSemantics();
+      await tester.pump();
+      expect(
+        tester.getSemantics(
+          find.bySemanticsLabel(RegExp('Open the play Bunt defense')),
+        ),
+        isSemantics(isButton: true, hasTapAction: true),
+      );
+      semantics.dispose();
+      await tester.tap(find.text('Open play'));
+      // Past the wait for a double tap (CHAT-6).
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(AppBar, 'Bunt defense'), findsOneWidget);
+      expect(find.text('Step 1 of 2'), findsOneWidget);
+      expect(find.byTooltip('Play the steps'), findsOneWidget);
+    });
+
+    // A runner who crosses the board between its two steps.
+    final crossing = saved.copyWith(
+      steps: const [
+        PlayStep(
+          elements: [
+            BoardElement.marker(
+              id: 'm1',
+              at: (x: 0.2, y: 0.8),
+              side: MarkerSide.team,
+              label: 'P',
+            ),
+          ],
+        ),
+        PlayStep(
+          elements: [
+            BoardElement.marker(
+              id: 'm1',
+              at: (x: 0.8, y: 0.2),
+              side: MarkerSide.team,
+              label: 'P',
+            ),
+          ],
+        ),
+      ],
+    );
+
+    /// Taps Save as GIF on the crossing play, and waits until [done].
+    Future<void> saveGif(WidgetTester tester, bool Function() done) async {
+      unawaited(
+        GoRouter.of(tester.element(find.byType(Scaffold).first))
+            .push('/g/a/plays/${crossing.id.value}'),
+      );
+      await tester.pumpAndSettle();
+      await tester.runAsync(() async {
+        await tester.tap(find.widgetWithText(OutlinedButton, 'Save as GIF'));
+        await tester.pump();
+        expect(find.text('Making the GIF…'), findsOneWidget);
+        for (var i = 0; i < 300 && !done(); i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          await tester.pump();
+        }
+      });
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('anyone saves a saved play to their phone as a GIF that '
+        'plays it (BOARD-5)', (tester) async {
+      final saver = FakePhotoSaver();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [testMembership('a', 'coach')],
+        playRepo: FakePlayRepository([crossing]),
+        size: const Size(1024, 1366),
+        overrides: [photoSaverProvider.overrideWithValue(saver)],
+      );
+      await saveGif(tester, () => saver.saved.isNotEmpty);
+      expect(saver.saved, ['Bunt defense']);
+      final gif = saver.bytes.single;
+      expect(String.fromCharCodes(gif.sublist(0, 6)), 'GIF89a');
+      // The first step for 1.5 seconds, 29 frames as the runner crosses
+      // and the second step, held 3 seconds.
+      final delays = _gifDelays(gif);
+      expect(delays, hasLength(31));
+      expect(delays.first, 150);
+      expect(delays.sublist(1, 30), everyElement(5));
+      expect(delays.last, 300);
+      expect(find.text('GIF saved to your photos.'), findsOneWidget);
+      expect(find.text('Save as GIF'), findsOneWidget);
+    });
+
+    testWidgets('in a browser, the GIF is shared or downloaded (BOARD-5)', (
+      tester,
+    ) async {
+      final sharer = FakeSharer();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [testMembership('a', 'coach')],
+        playRepo: FakePlayRepository([crossing]),
+        sharer: sharer,
+        size: const Size(1024, 1366),
+      );
+      await saveGif(tester, () => sharer.shared.isNotEmpty);
+      expect(sharer.shared, ['file Bunt defense.gif image/gif']);
+      expect(String.fromCharCodes(sharer.files.single.sublist(0, 6)), 'GIF89a');
     });
 
     testWidgets('a member views a play step by step, without edit tools', (
@@ -720,4 +866,31 @@ void main() {
       expect(plays.calls, isEmpty);
     });
   });
+}
+
+/// How long each of [gif]'s frames shows, in hundredths of a second, from
+/// the graphic control block before each image.
+List<int> _gifDelays(Uint8List gif) {
+  // The header, the screen, and the global table of 256 colors.
+  var at = 13 + 256 * 3;
+  final delays = <int>[];
+  void skipBlocks() {
+    while (gif[at] != 0) {
+      at += gif[at] + 1;
+    }
+    at++;
+  }
+
+  while (gif[at] != 0x3B) {
+    if (gif[at] == 0x21) {
+      if (gif[at + 1] == 0xF9) delays.add(gif[at + 4] | gif[at + 5] << 8);
+      at += 2;
+      skipBlocks();
+    } else {
+      // An image: its descriptor, the code size, then its data.
+      at += 11;
+      skipBlocks();
+    }
+  }
+  return delays;
 }

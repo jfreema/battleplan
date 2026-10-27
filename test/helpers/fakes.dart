@@ -1593,6 +1593,7 @@ class FakeMessageRepository implements MessageRepository {
     UploadedPhotos photos, {
     String caption = '',
     String? replyToId,
+    String? playId,
   }) async {
     photoBatches.add(photos.attachments.length);
     messages.insert(
@@ -1603,7 +1604,9 @@ class FakeMessageRepository implements MessageRepository {
         authorId: uid.value,
         authorName: uid.value,
         type: MessageType.image,
+        text: caption,
         attachments: photos.attachments,
+        playId: playId,
         createdAt: DateTime.now(),
       ),
     );
@@ -3011,6 +3014,9 @@ class FakeSharer implements Sharer {
     return true;
   }
 
+  /// The files shared, byte for byte.
+  final List<Uint8List> files = [];
+
   @override
   Future<bool> shareFile(
     Uint8List bytes, {
@@ -3018,6 +3024,7 @@ class FakeSharer implements Sharer {
     required String mimeType,
   }) async {
     shared.add('file $name $mimeType');
+    files.add(bytes);
     return true;
   }
 }
@@ -3410,12 +3417,16 @@ class ExistingAccountAuth extends FakeAuthRepository {
 class FakePhotoSaver implements PhotoSaver {
   final List<String> saved = [];
 
+  /// What was saved, byte for byte.
+  final List<Uint8List> bytes = [];
+
   @override
   bool get available => true;
 
   @override
   Future<bool> saveImage(Uint8List bytes, {required String name}) async {
     saved.add(name);
+    this.bytes.add(bytes);
     return true;
   }
 }

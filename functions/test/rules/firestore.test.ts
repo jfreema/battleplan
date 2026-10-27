@@ -302,6 +302,39 @@ describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
   });
 });
 
+describe('posted plays (BOARD-5)', () => {
+  /** Posts a play's picture as bob, a while after his last message, with [extra]. */
+  const post = async (id: string, extra: object) => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await db.doc('groupMembers/teamA_bob').update({ lastPostedAt: ts('2026-01-01T00:00:00Z') });
+      await db.doc('plays/relay').set({ groupId: 'teamA', title: 'Relay' });
+      await db.doc('plays/corner').set({ groupId: 'teamB', title: 'Corner' });
+    });
+    const db = as('bob');
+    const batch = db.batch();
+    batch.set(db.doc(`messages/${id}`), {
+      groupId: 'teamA', authorId: 'bob', authorName: 'Bob', authorPhotoPath: null,
+      type: 'image', text: 'Relay', createdAt: now(),
+      attachments: [{ path: `groups/teamA/messages/${id}/0.jpg`, width: 10, height: 10 }],
+      ...extra,
+    });
+    batch.update(db.doc('groupMembers/teamA_bob'), { lastPostedAt: now(), lastPostedMessageId: id });
+    return batch.commit();
+  };
+
+  it("lets a member post a picture that opens one of the team's plays", async () => {
+    await assertSucceeds(post('pp1', { playId: 'relay' }));
+  });
+
+  it("refuses another team's play, a missing one, a link on text, and an ID that isn't text", async () => {
+    await assertFails(post('pp2', { playId: 'corner' }));
+    await assertFails(post('pp3', { playId: 'gone' }));
+    await assertFails(post('pp4', { playId: 'relay', type: 'text', attachments: [] }));
+    await assertFails(post('pp5', { playId: 7 }));
+  });
+});
+
 describe('reactions (CHAT-6)', () => {
   it('lets a member set and clear only their own reaction', async () => {
     const db = as('bob');

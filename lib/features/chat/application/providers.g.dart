@@ -337,7 +337,7 @@ final class ChatMessagesProvider
   }
 }
 
-String _$chatMessagesHash() => r'4d16fc113a8049235d27a2e84f8e3fc962f776e3';
+String _$chatMessagesHash() => r'ef50f267091ff0cb8c324f9ba6f253e2e649a57e';
 
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out
@@ -755,20 +755,23 @@ final class MentionCandidatesFamily extends $Family
 }
 
 /// Every photo shared in a team's chat, newest first (DOC-7), a page of
-/// photo messages at a time, leaving out deleted messages and those from
-/// people I blocked (SAFE-2).
+/// photo messages at a time, leaving out deleted messages, those from
+/// people I blocked (SAFE-2), and plays posted from Plays, which are
+/// drawings rather than photos (BOARD-5).
 
 @ProviderFor(TeamPhotos)
 final teamPhotosProvider = TeamPhotosFamily._();
 
 /// Every photo shared in a team's chat, newest first (DOC-7), a page of
-/// photo messages at a time, leaving out deleted messages and those from
-/// people I blocked (SAFE-2).
+/// photo messages at a time, leaving out deleted messages, those from
+/// people I blocked (SAFE-2), and plays posted from Plays, which are
+/// drawings rather than photos (BOARD-5).
 final class TeamPhotosProvider
     extends $NotifierProvider<TeamPhotos, TeamPhotosState> {
   /// Every photo shared in a team's chat, newest first (DOC-7), a page of
-  /// photo messages at a time, leaving out deleted messages and those from
-  /// people I blocked (SAFE-2).
+  /// photo messages at a time, leaving out deleted messages, those from
+  /// people I blocked (SAFE-2), and plays posted from Plays, which are
+  /// drawings rather than photos (BOARD-5).
   TeamPhotosProvider._({
     required TeamPhotosFamily super.from,
     required GroupId super.argument,
@@ -813,11 +816,12 @@ final class TeamPhotosProvider
   }
 }
 
-String _$teamPhotosHash() => r'b7d9eccc91a61a243d3673f0cfaea663e3b2252f';
+String _$teamPhotosHash() => r'56d8e3d8c74ab09019f94e9e8cd28b62299e5003';
 
 /// Every photo shared in a team's chat, newest first (DOC-7), a page of
-/// photo messages at a time, leaving out deleted messages and those from
-/// people I blocked (SAFE-2).
+/// photo messages at a time, leaving out deleted messages, those from
+/// people I blocked (SAFE-2), and plays posted from Plays, which are
+/// drawings rather than photos (BOARD-5).
 
 final class TeamPhotosFamily extends $Family
     with
@@ -838,8 +842,9 @@ final class TeamPhotosFamily extends $Family
       );
 
   /// Every photo shared in a team's chat, newest first (DOC-7), a page of
-  /// photo messages at a time, leaving out deleted messages and those from
-  /// people I blocked (SAFE-2).
+  /// photo messages at a time, leaving out deleted messages, those from
+  /// people I blocked (SAFE-2), and plays posted from Plays, which are
+  /// drawings rather than photos (BOARD-5).
 
   TeamPhotosProvider call(GroupId groupId) =>
       TeamPhotosProvider._(argument: groupId, from: this);
@@ -849,8 +854,9 @@ final class TeamPhotosFamily extends $Family
 }
 
 /// Every photo shared in a team's chat, newest first (DOC-7), a page of
-/// photo messages at a time, leaving out deleted messages and those from
-/// people I blocked (SAFE-2).
+/// photo messages at a time, leaving out deleted messages, those from
+/// people I blocked (SAFE-2), and plays posted from Plays, which are
+/// drawings rather than photos (BOARD-5).
 
 abstract class _$TeamPhotos extends $Notifier<TeamPhotosState> {
   late final _$args = ref.$arg as GroupId;

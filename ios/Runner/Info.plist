@@ -37,7 +37,7 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Battleplan saves team photos to your library when you tap Save photo.</string>
+	<string>Battleplan saves team photos, and plays as GIFs, to your library when you tap Save photo or Save as GIF.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Battleplan uses your photo library so you can choose a profile photo and share photos with your teams.</string>
 	<key>NSCalendarsUsageDescription</key>

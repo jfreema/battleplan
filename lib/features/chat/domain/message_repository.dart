@@ -80,12 +80,15 @@ abstract interface class MessageRepository {
   });
 
   /// Posts uploaded photos as one message, with an optional caption.
+  /// [playId] makes it a posted play, whose picture opens that saved play
+  /// (BOARD-5).
   Future<void> sendPhotos(
     GroupId groupId,
     UserId uid,
     UploadedPhotos photos, {
     String caption = '',
     String? replyToId,
+    String? playId,
   });
 
   /// Posts a poll and its chat message together (POLL-1); they share an ID,

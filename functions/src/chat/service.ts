@@ -199,6 +199,7 @@ function erasedFields(deletedBy: string, reason: 'author' | 'admin' | 'media'): 
     attachments: [],
     reactions: {},
     replyPreview: FieldValue.delete(),
+    playId: FieldValue.delete(),
     deletedAt: FieldValue.serverTimestamp(),
     deletedBy,
     deletedReason: reason,
@@ -363,7 +364,8 @@ export async function removeAttachment(
 }
 
 /**
- * The switcher's one-line preview of a message: "Photo" for photos. A direct
+ * The switcher's one-line preview of a message: "Photo" for photos, and
+ * "Play: Relay" for a play posted from Plays (BOARD-5). A direct
  * conversation's (CHAT-19) also names the author by ID, so Messages can
  * tell "You: …" from the other person's ([withAuthorId]).
  */
@@ -375,7 +377,8 @@ export function lastMessagePreviewOf(
   const firstLine = String(m.text ?? '').split('\n')[0].trim();
   // A poll's text is its question (POLL-1): "Poll: Saturday or Sunday?".
   // An event card's is its summary (CHAT-11): "Event: Practice · Tue, Oct 13 at 6:00 PM".
-  const label = type === 'poll' ? 'Poll' : type === 'event' ? 'Event' : null;
+  // A posted play's is the play's name (BOARD-5).
+  const label = type === 'poll' ? 'Poll' : type === 'event' ? 'Event' : isPostedPlay(m) ? 'Play' : null;
   const text = label
     ? firstLine
       ? `${label}: ${firstLine}`
@@ -523,9 +526,18 @@ function photosPhrase(photos: number): string {
   return photos > 1 ? `${photos} photos` : 'a photo';
 }
 
-/** A message's push (NOTIF-5): "Alex: Field 3 is open", or "Alex sent a photo". */
+/** A play posted from Plays (BOARD-5): a photo message naming its saved play. */
+function isPostedPlay(m: Record<string, unknown>): boolean {
+  return m.type === 'image' && typeof m.playId === 'string';
+}
+
+/**
+ * A message's push (NOTIF-5): "Alex: Field 3 is open", "Alex sent a photo",
+ * or "Alex posted a play: Relay" (BOARD-5).
+ */
 export function messagePushBody(m: Record<string, unknown>): string {
   const { name, text, photos } = pushWording(m);
+  if (isPostedPlay(m)) return text ? `${name} posted a play: ${text}` : `${name} posted a play`;
   if (text) return `${name}: ${text}`;
   return m.type === 'image' || photos ? `${name} sent ${photosPhrase(photos)}` : `${name} sent a message`;
 }

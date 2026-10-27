@@ -135,6 +135,7 @@ class FirestoreMessageRepository implements MessageRepository {
       ],
       mentionsEveryone: x['mentionsEveryone'] == true,
       announcement: x['announcement'] == true,
+      playId: x['playId'] as String?,
       attachments: [
         for (final a in (x['attachments'] as List?) ?? const [])
           if (a is Map && a['path'] is String)
@@ -292,6 +293,7 @@ class FirestoreMessageRepository implements MessageRepository {
     UploadedPhotos photos, {
     String caption = '',
     String? replyToId,
+    String? playId,
   }) => _post(
     groupId,
     uid,
@@ -299,6 +301,7 @@ class FirestoreMessageRepository implements MessageRepository {
     type: MessageType.image,
     text: caption,
     replyToId: replyToId,
+    extra: {'playId': ?playId},
     attachments: [
       for (final a in photos.attachments)
         {

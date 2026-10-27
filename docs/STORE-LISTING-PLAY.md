@@ -50,12 +50,12 @@ PLAYERS AND PARENTS
 MORE FOR COACHES
 • Polls for quick decisions
 • Documents: lineups, rules, waivers, and links
-• Plays: a whiteboard with real baseball, basketball, soccer, and football fields. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping
+• Plays: a whiteboard with real baseball, basketball, soccer, and football fields. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping, then post them to the chat or save them as animated GIFs
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS
 • Five looks: Gumdrop Army, Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
-• Each team picks its color, and in all but Olive the team's screens take it on
+• Each team picks its color, and in all but Gumdrop Army the team's screens take it on
 • Coaches pick the chat's message color and background
 
 SAFE AND PRIVATE

@@ -103,6 +103,23 @@ void main() {
     final m = (await db.doc('messages/m9').get()).data()!;
     expect(m['type'], 'image');
     expect((m['attachments'] as List).single, containsPair('width', 4));
+    expect(m.containsKey('playId'), isFalse);
+  });
+
+  test('a posted play names its saved play (BOARD-5)', () async {
+    await repo.sendPhotos(
+      _g,
+      _me,
+      (
+        messageId: 'm10',
+        attachments: const [Attachment(path: 'groups/g1/messages/m10/0.jpg')],
+      ),
+      caption: 'Relay',
+      playId: 'play1',
+    );
+    final m = (await db.doc('messages/m10').get()).data()!;
+    expect(m['playId'], 'play1');
+    expect(m['text'], 'Relay');
   });
 
   test(
@@ -135,6 +152,7 @@ void main() {
             ],
             'reactions': {'alex': 'love', 'sam': 'unknown'},
             'editedAt': Timestamp.fromDate(DateTime.utc(2026, 10, 1, 13)),
+            'playId': 'play1',
           },
           if (i == 0) ...{
             'deletedAt': Timestamp.fromDate(DateTime.utc(2026, 10, 2)),
@@ -156,6 +174,7 @@ void main() {
       expect(m3.attachments.single.contentType, 'image/jpeg');
       expect(m3.reactions, {'alex': Reaction.love});
       expect(m3.editedAt, isNotNull);
+      expect(m3.playId, 'play1');
       expect(page.next, isNotNull);
 
       final older = await repo.loadOlder(_g, page.next!, limit: 2);

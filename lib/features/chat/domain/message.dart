@@ -43,6 +43,10 @@ abstract class Message with _$Message {
     /// Photos, up to 10 (CHAT-3).
     @Default(<Attachment>[]) List<Attachment> attachments,
 
+    /// A play posted from Plays: the saved play its picture opens
+    /// (BOARD-5).
+    String? playId,
+
     /// The people it names with @, by ID, up to 20 (CHAT-14).
     @Default(<String>[]) List<String> mentions,
 

@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -17,6 +18,7 @@ import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/linkified_text.dart';
+import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
@@ -36,6 +38,7 @@ import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// One row of the chat: a system line, or a bubble with the sender's name
@@ -564,27 +567,48 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             ),
           );
 
-    // Photos sit inside the bubble, above the caption (CHAT-3).
+    // Photos sit inside the bubble, above the caption (CHAT-3). A play
+    // posted from Plays opens the play instead, to play its steps
+    // (BOARD-5).
+    final playId = m.playId;
     final photos = deleted || m.attachments.isEmpty
         ? null
         : PhotoGrid(
             count: m.attachments.length,
             single: m.attachments.first.aspectRatio,
             tile: (i) {
-              void open() =>
-                  unawaited(PhotoViewer.open(context, m.attachments, i));
-              // "Photo from Alex", a button that opens the viewer.
+              void open() => playId != null
+                  ? context.go('/g/${m.groupId.value}/plays/$playId')
+                  : unawaited(PhotoViewer.open(context, m.attachments, i));
+              final photo = StoredPhoto(
+                attachment: m.attachments[i],
+                decodeWidth: PhotoGrid.maxWidth,
+              );
+              // "Photo from Alex", or "Open the play Relay": a button.
               return Semantics(
                 button: true,
-                label: l10n.photoFrom(m.authorName),
+                label: playId == null
+                    ? l10n.photoFrom(m.authorName)
+                    : m.text.trim().isEmpty
+                    ? l10n.playOpen
+                    : l10n.playOpenNamed(m.text.trim()),
                 excludeSemantics: true,
                 onTap: open,
                 child: GestureDetector(
                   onTap: open,
-                  child: StoredPhoto(
-                    attachment: m.attachments[i],
-                    decodeWidth: PhotoGrid.maxWidth,
-                  ),
+                  child: playId == null
+                      ? photo
+                      : Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            photo,
+                            const PositionedDirectional(
+                              start: Space.sm,
+                              bottom: Space.sm,
+                              child: _OpenPlayBadge(),
+                            ),
+                          ],
+                        ),
                 ),
               );
             },
@@ -1144,6 +1168,55 @@ class _AuthorAvatar extends ConsumerWidget {
             dimension: kMinInteractiveDimension,
             child: Align(alignment: Alignment.topLeft, child: avatar),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The Open play sticker on the picture of a play posted from Plays
+/// (BOARD-5): a little gumdrop in the sticker color, as the picture opens
+/// the play.
+class _OpenPlayBadge extends StatelessWidget {
+  const new();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    final style = GumdropStyle.of(context);
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        color: c.sticker.face,
+        shape: style.styled(
+          GumdropShape(
+            lip: 3,
+            lipColor: c.sticker.lip,
+            side: style.accentOutline == 0
+                ? BorderSide.none
+                : BorderSide(color: c.ink, width: style.accentOutline),
+          ),
+        ),
+      ),
+      child: Padding(
+        // The label rides on the face, above the lip.
+        padding: const EdgeInsets.fromLTRB(9, 4, 12, 7),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PlaysIcon(size: 16, color: c.ink),
+            const SizedBox(width: 5),
+            Text(
+              AppLocalizations.of(context).playOpen,
+              style: style.label(
+                TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  height: 1.2,
+                  color: c.ink,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
@@ -13,6 +14,7 @@ import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/plays/application/providers.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
+import 'package:battleplan/features/plays/domain/play_gif.dart';
 import 'package:battleplan/features/plays/domain/play_rules.dart';
 import 'package:battleplan/features/plays/presentation/play_board.dart';
 import 'package:battleplan/features/plays/presentation/play_image.dart';
@@ -23,7 +25,8 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// One play, for everyone on the team (BOARD-3, BOARD-4): the board, step
-/// by step, and its notes. Admins edit, duplicate, and delete it.
+/// by step, and its notes, with Post to chat and Save as GIF under it
+/// (BOARD-5). Admins edit, duplicate, and delete it.
 class PlayScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, required this.playId, super.key});
 
@@ -38,6 +41,12 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
     with SingleTickerProviderStateMixin {
   int _step = 0;
   late final _player = StepPlayer(this);
+
+  /// While posting: the picture is being drawn.
+  bool _posting = false;
+
+  /// While the GIF is being made: how far along, 0 to 1.
+  double? _gifProgress;
 
   @override
   void dispose() {
@@ -81,18 +90,70 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
     if (router.state.uri.path != whiteboard) router.go(whiteboard);
   }
 
-  /// Posts the play to the team's chat as a picture of each step, with
-  /// its name, and goes to the chat to see it (BOARD-5).
+  /// Posts the play to the team's chat, and goes to the chat to see it
+  /// (BOARD-5): a picture of its last step, with its name, that opens the
+  /// play.
   Future<void> _postToChat(Play play) async {
+    if (_posting) return;
     final l10n = AppLocalizations.of(context);
-    final chat = ref.read(chatMessagesProvider(widget.groupId).notifier);
+    // The team's chat stays alive from here until it's on screen, even if
+    // it wasn't open yet, so the post goes out from the chat that shows it.
+    final chat = chatMessagesProvider(widget.groupId);
+    final keep = ref.listenManual(chat, (_, _) {});
+    setState(() => _posting = true);
     try {
-      final photos = await playImages(play);
+      final photo = await playImage(play);
       if (!mounted) return;
+      final messages = ref.read(chat.notifier);
       context.go('/g/${widget.groupId.value}/chat');
-      await chat.sendPhotos(photos, caption: play.title);
+      await messages.sendPhotos(
+        [photo],
+        caption: play.title,
+        playId: play.id.value,
+      );
     } on Object {
       if (mounted) showAppSnackBar(context, l10n.playPostFailed);
+    } finally {
+      keep.close();
+      if (mounted) setState(() => _posting = false);
+    }
+  }
+
+  /// Makes the play's GIF and saves it to the phone's photos, or, in a
+  /// browser, shares or downloads it (BOARD-5).
+  Future<void> _saveGif(Play play) async {
+    if (_gifProgress != null) return;
+    final l10n = AppLocalizations.of(context);
+    final saver = ref.read(photoSaverProvider);
+    final sharer = ref.read(sharerProvider);
+    setState(() => _gifProgress = 0);
+    try {
+      final gif = await playGif(
+        play,
+        onProgress: (p) {
+          if (mounted) setState(() => _gifProgress = p);
+        },
+      );
+      final name = playGifName(play.title);
+      if (saver.available) {
+        final saved = await saver.saveImage(gif, name: name);
+        if (mounted) {
+          showAppSnackBar(
+            context,
+            saved ? l10n.playGifSaved : l10n.playGifSaveFailed,
+          );
+        }
+      } else if (!await sharer.shareFile(
+        gif,
+        name: '$name.gif',
+        mimeType: 'image/gif',
+      )) {
+        if (mounted) showAppSnackBar(context, l10n.playGifFailed);
+      }
+    } on Object {
+      if (mounted) showAppSnackBar(context, l10n.playGifFailed);
+    } finally {
+      if (mounted) setState(() => _gifProgress = null);
     }
   }
 
@@ -164,12 +225,6 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
       appBar: AppBar(
         title: Text(play.title, overflow: TextOverflow.ellipsis),
         actions: [
-          if (canPost)
-            IconButton(
-              tooltip: l10n.playPostToChat,
-              icon: const Icon(AppIcons.send),
-              onPressed: () => unawaited(_postToChat(play)),
-            ),
           if (canEdit) ...[
             IconButton(
               tooltip: l10n.playEdit,
@@ -267,6 +322,45 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                       ),
                     ],
                   );
+            // Post to chat for the team's members, and Save as GIF for
+            // everyone (BOARD-5).
+            final making = _gifProgress != null;
+            final actions = Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Space.md,
+                Space.xs,
+                Space.md,
+                Space.sm,
+              ),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: Space.sm,
+                runSpacing: Space.sm,
+                children: [
+                  if (canPost)
+                    FilledButton.icon(
+                      onPressed: _posting
+                          ? null
+                          : () => unawaited(_postToChat(play)),
+                      icon: const Icon(AppIcons.send),
+                      label: Text(l10n.playPostToChat),
+                    ),
+                  OutlinedButton.icon(
+                    onPressed: making ? null : () => unawaited(_saveGif(play)),
+                    icon: making
+                        ? SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              value: _gifProgress,
+                            ),
+                          )
+                        : const Icon(AppIcons.download),
+                    label: Text(making ? l10n.playMakingGif : l10n.playSaveGif),
+                  ),
+                ],
+              ),
+            );
             final note = play.note.isEmpty
                 ? null
                 : Padding(
@@ -282,6 +376,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                       children: [
                         Expanded(child: board),
                         ?steps,
+                        actions,
                       ],
                     ),
                   ),
@@ -301,11 +396,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                     constraints: BoxConstraints(
                       maxHeight:
                           box.maxHeight -
-                          (steps == null ? 0 : kMinInteractiveDimension),
+                          (steps == null ? 0 : kMinInteractiveDimension) -
+                          (kMinInteractiveDimension + Space.xs + Space.sm),
                     ),
                     child: board,
                   ),
                   ?steps,
+                  actions,
                   note,
                 ],
               );
@@ -314,6 +411,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
               children: [
                 Expanded(child: board),
                 ?steps,
+                actions,
                 if (note != null)
                   ConstrainedBox(
                     constraints: BoxConstraints(maxHeight: box.maxHeight * 0.3),

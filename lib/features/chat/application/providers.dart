@@ -107,6 +107,9 @@ abstract class OutgoingPhotos with _$OutgoingPhotos {
     required int id,
     required List<NewPhoto> photos,
     @Default('') String caption,
+
+    /// A posted play's saved play (BOARD-5).
+    String? playId,
     @Default(0) double progress,
     @Default(false) bool failed,
 
@@ -377,12 +380,18 @@ class ChatMessages extends _$ChatMessages {
 
   /// Uploads photos, then posts them as one message (CHAT-3). The chat shows
   /// them with progress meanwhile; a failed upload stays with Retry.
-  Future<void> sendPhotos(List<NewPhoto> photos, {String caption = ''}) {
+  /// [playId] posts a play's picture that opens that saved play (BOARD-5).
+  Future<void> sendPhotos(
+    List<NewPhoto> photos, {
+    String caption = '',
+    String? playId,
+  }) {
     if (photos.isEmpty) return Future.value();
     final item = OutgoingPhotos(
       id: _nextOutgoing++,
       photos: photos.take(10).toList(),
       caption: _filtered(caption.trim()),
+      playId: playId,
     );
     state = state.copyWith(outgoing: [...state.outgoing, item]);
     return _upload(item);
@@ -452,6 +461,7 @@ class ChatMessages extends _$ChatMessages {
           UserId(uid),
           uploaded,
           caption: item.caption,
+          playId: item.playId,
         ),
       );
       discardPhotos(item.id);
@@ -745,8 +755,9 @@ abstract class TeamPhotosState with _$TeamPhotosState {
 }
 
 /// Every photo shared in a team's chat, newest first (DOC-7), a page of
-/// photo messages at a time, leaving out deleted messages and those from
-/// people I blocked (SAFE-2).
+/// photo messages at a time, leaving out deleted messages, those from
+/// people I blocked (SAFE-2), and plays posted from Plays, which are
+/// drawings rather than photos (BOARD-5).
 @riverpod
 class TeamPhotos extends _$TeamPhotos {
   PageCursor? _next;
@@ -776,7 +787,9 @@ class TeamPhotos extends _$TeamPhotos {
         photos: [
           ...state.photos,
           for (final m in page.messages)
-            if (m.deletedAt == null && !blocked.contains(m.authorId))
+            if (m.deletedAt == null &&
+                m.playId == null &&
+                !blocked.contains(m.authorId))
               for (final a in m.attachments) (message: m, photo: a),
         ],
         loading: false,
