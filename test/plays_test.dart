@@ -666,7 +666,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('playBoard')));
       await tester.pumpAndSettle();
       // Away and back: still there, with no "unsaved" question on leaving.
-      await tester.pageBack();
+      await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
       expect(find.text('Leave without saving?'), findsNothing);
       unawaited(

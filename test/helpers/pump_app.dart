@@ -174,3 +174,20 @@ Future<void> openEmailSignIn(WidgetTester tester, {String query = ''}) async {
       .go('/emaillogin$query');
   await tester.pumpAndSettle();
 }
+
+/// From a team's page to Profile (SPEC §5.1): the back arrow to Teams, then
+/// the Profile tab.
+Future<void> openProfile(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Back'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Profile'));
+  await tester.pumpAndSettle();
+}
+
+/// From Teams to Settings (SPEC §5.1): the Profile tab, then Settings.
+Future<void> openAppSettings(WidgetTester tester) async {
+  await tester.tap(find.text('Profile'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Settings'));
+  await tester.pumpAndSettle();
+}

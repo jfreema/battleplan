@@ -43,6 +43,7 @@ const teamRoutes = [
   '/g/a/invite',
   '/g/a/invite/email',
   '/g/a/notifications',
+  '/g/a/info',
   '/g/a/settings',
   '/g/a/media',
   '/g/a/reports',
@@ -50,9 +51,11 @@ const teamRoutes = [
   '/g/a/members/add',
   '/g/a/players/add',
   '/g/a/who',
+  '/teams',
+  '/profile',
+  '/themes',
   '/notifications',
   '/settings',
-  '/settings/profile',
   '/settings/sign-in-methods',
   '/settings/blocked',
   '/settings/notifications',
@@ -88,7 +91,7 @@ void main() {
       size: ipadSizes['iPad Pro 13-inch, portrait']!,
     );
     expect(
-      tester.getTopLeft(find.byTooltip('Team menu')).dy,
+      tester.getTopLeft(find.byTooltip('Team info')).dy,
       greaterThanOrEqualTo(24),
     );
   });

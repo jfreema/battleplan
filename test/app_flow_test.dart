@@ -404,7 +404,7 @@ void main() {
     expect(find.byTooltip('Add photos or a poll'), findsOneWidget);
 
     // Opened from the team menu, the screen has Back instead.
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Invite').last);
     await tester.pumpAndSettle();
@@ -444,7 +444,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       memberRepo: members,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Roster'));
     await tester.pumpAndSettle();
@@ -470,7 +470,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       memberRepo: members,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Roster'));
     await tester.pumpAndSettle();
@@ -512,7 +512,7 @@ void main() {
           testMembership('a', 'coach', role: role, name: 'Jordan'),
         ]),
       );
-      await tester.tap(find.byTooltip('Team menu'));
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Roster'));
       await tester.pumpAndSettle();
@@ -545,7 +545,7 @@ void main() {
         testMembership('a', 'maria', name: 'Maria Rodriguez'),
       ]),
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Roster'));
     await tester.pumpAndSettle();
@@ -566,7 +566,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       memberRepo: members,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Roster'));
     await tester.pumpAndSettle();
@@ -587,9 +587,9 @@ void main() {
       groupRepo: groupRepo,
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Team settings'));
+    await tester.tap(find.text('Team admin'));
     await tester.pumpAndSettle();
     final perm = find.text('Members can create events');
     await tester.ensureVisible(perm);
@@ -620,9 +620,9 @@ void main() {
         groups: {'a': testGroup('a', 'Thunder')},
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
       );
-      await tester.tap(find.byTooltip('Team menu'));
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Team settings'));
+      await tester.tap(find.text('Team admin'));
       await tester.pumpAndSettle();
       await tester.dragUntilVisible(
         find.textContaining('builds it as a volunteer'),
@@ -647,9 +647,9 @@ void main() {
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
       linkOpener: links,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Team settings'));
+    await tester.tap(find.text('Team admin'));
     await tester.pumpAndSettle();
     final coffee = find.text('Buy Jared a coffee');
     await tester.dragUntilVisible(
@@ -680,7 +680,7 @@ void main() {
 
   /// Opens my own card on the roster, where Leave team is (TEAM-8).
   Future<void> openMyCard(WidgetTester tester) async {
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     // Not in the team menu, where a stray tap could leave the team.
     expect(find.text('Leave team'), findsNothing);
@@ -740,9 +740,9 @@ void main() {
       groupRepo: groupRepo,
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Team settings'));
+    await tester.tap(find.text('Team admin'));
     await tester.pumpAndSettle();
     final delete = find.text('Delete team');
     await tester.scrollUntilVisible(
@@ -769,7 +769,7 @@ void main() {
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
       invites: invites,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Invite'));
     await tester.pumpAndSettle();
@@ -793,7 +793,7 @@ void main() {
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
       invites: invites,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Invite'));
     await tester.pumpAndSettle();
@@ -924,7 +924,7 @@ void main() {
       memberships: [testMembership('y', 'coach', role: MemberRole.owner)],
       playerRepo: playerRepo,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Roster'));
     await tester.pumpAndSettle();
@@ -995,7 +995,7 @@ void main() {
     ]);
 
     Future<void> openRoster(WidgetTester tester) async {
-      await tester.tap(find.byTooltip('Team menu'));
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Roster'));
       await tester.pumpAndSettle();
@@ -1743,7 +1743,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       memberRepo: members,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Roster'));
     await tester.pumpAndSettle();
@@ -2401,8 +2401,7 @@ void main() {
     final auth = FakeAuthRepository(user: coach);
     final push = FakePushRepository();
     await pumpApp(tester, auth: auth, push: push);
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.scrollUntilVisible(find.text('Sign out of all devices'), 100);
     await tester.tap(find.text('Sign out of all devices'));
     await tester.pumpAndSettle();
@@ -2429,8 +2428,7 @@ void main() {
       user: coach.copyWith(providerIds: ['google.com']),
     );
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.tap(find.text('Sign-in methods'));
     await tester.pumpAndSettle();
     final remove = find.widgetWithText(TextButton, 'Remove');
@@ -2448,8 +2446,7 @@ void main() {
       ),
     )..needsRecentLogin = true;
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.tap(find.text('Sign-in methods'));
     await tester.pumpAndSettle();
     await tester.tap(linkFor('Google'));
@@ -2474,8 +2471,7 @@ void main() {
       ),
     )..needsRecentLogin = true;
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.tap(find.text('Sign-in methods'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Change email'));
@@ -2497,8 +2493,7 @@ void main() {
       ),
     )..needsRecentLogin = true;
     final prefs = await pumpApp(tester, auth: auth);
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.tap(find.text('Sign-in methods'));
     await tester.pumpAndSettle();
     await tester.tap(linkFor('Google'));
@@ -2528,8 +2523,7 @@ void main() {
       ),
     );
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.tap(find.text('Sign-in methods'));
     await tester.pumpAndSettle();
     // The sign-in screen has no email (AUTH-1), so it says where it works.
@@ -2555,8 +2549,7 @@ void main() {
       user: coach.copyWith(providerIds: ['google.com']),
     );
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.tap(find.text('Sign-in methods'));
     await tester.pumpAndSettle();
     expect(
@@ -2594,8 +2587,7 @@ void main() {
       user: coach.copyWith(providerIds: ['apple.com']),
     )..deleteFailsWith = const SignInCanceled();
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.scrollUntilVisible(find.text('Delete account'), 100);
     await tester.tap(find.text('Delete account'));
     await tester.pumpAndSettle();
@@ -2613,8 +2605,7 @@ void main() {
       user: coach.copyWith(providerIds: ['google.com']),
     )..needsRecentLogin = true;
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.scrollUntilVisible(find.text('Delete account'), 100);
     await tester.tap(find.text('Delete account'));
     await tester.pumpAndSettle();
@@ -2654,7 +2645,7 @@ void main() {
       messageRepo: messages,
       safety: safety,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Reports'));
     await tester.pumpAndSettle();
@@ -2677,8 +2668,7 @@ void main() {
       auth: FakeAuthRepository(user: coach),
       safety: safety,
     );
-    await tester.tap(find.byTooltip('Settings'));
-    await tester.pumpAndSettle();
+    await openAppSettings(tester);
     await tester.tap(find.text('Blocked people'));
     await tester.pumpAndSettle();
     expect(find.text('Sam Rivera'), findsOneWidget);
@@ -2701,9 +2691,9 @@ void main() {
         );
 
     Future<void> openSettings(WidgetTester tester, {Finder? until}) async {
-      await tester.tap(find.byTooltip('Team menu'));
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Team settings'));
+      await tester.tap(find.text('Team admin'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         until ?? find.textContaining('MB used'),
@@ -2754,7 +2744,7 @@ void main() {
       );
       expect(find.text(warning), findsNothing);
       // Media isn't in a member's team menu either.
-      await tester.tap(find.byTooltip('Team menu'));
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
       expect(find.text('Media'), findsNothing);
     });
@@ -2799,9 +2789,9 @@ void main() {
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
         photoPicker: picker,
       );
-      await tester.tap(find.byTooltip('Team menu'));
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Team settings'));
+      await tester.tap(find.text('Team admin'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Change logo'));
       await tester.pumpAndSettle();
@@ -2873,7 +2863,7 @@ void main() {
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
         media: media,
       );
-      await tester.tap(find.byTooltip('Team menu'));
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Media'));
       await tester.pumpAndSettle();

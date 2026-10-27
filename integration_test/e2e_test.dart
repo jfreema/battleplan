@@ -143,7 +143,7 @@ void main() {
 
     // The seeded coach opens their team's invite code.
     await signInWithEmail(tester, _coach, 'password');
-    await tap(tester, find.byTooltip('Team menu'));
+    await tap(tester, find.byTooltip('Team info'));
     await tap(tester, find.text('Invite'));
     final codeText = find.byWidgetPredicate(
       (w) =>
@@ -226,7 +226,7 @@ void main() {
     // layouts at every orientation and in Split View are checked by
     // test/ipad_layout_test.dart.
     go(tester, '/');
-    await until(tester, find.byTooltip('Team menu'));
+    await until(tester, find.byTooltip('Team info'));
     final width = tester.view.physicalSize.width / tester.view.devicePixelRatio;
     await until(
       tester,

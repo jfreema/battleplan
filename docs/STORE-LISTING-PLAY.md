@@ -112,7 +112,7 @@ How to get in:
 Where things are:
 • Report: press and hold someone's message, then Report.
 • Block: press and hold their message and choose Block, or tap their photo to open their page and use the menu at the top (Block, Report).
-• Delete account: Settings, then Delete account, or getbattleplan.app/delete-account.
+• Delete account: Profile (at the bottom of the Teams screen), then Settings, then Delete account, or getbattleplan.app/delete-account.
 • A language filter is on for every team.
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.
@@ -141,7 +141,7 @@ Expect a rating with an "Users interact" notice. Don't pick anything aimed at ch
 
 - Collects or shares required user data types: yes. Shared with third parties: none (Google Firebase, Apple, and Resend are service providers).
 - Encrypted in transit: yes. People can ask for their data to be deleted: yes.
-- Account deletion URL: `https://getbattleplan.app/delete-account` (also in the app: Settings, then Delete account).
+- Account deletion URL: `https://getbattleplan.app/delete-account` (also in the app: Profile, then Settings, then Delete account).
 - Data types and purposes: the table in STORE-PRIVACY.md, row for row (name, email, user IDs, phone number, photos, files and docs, other in-app messages, app interactions, other user-generated content, approximate location, crash logs, diagnostics, device or other IDs). Nothing is processed ephemerally, and nothing is used for advertising.
 
 **Government apps:** No, it isn't developed by or for a government.

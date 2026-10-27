@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/app/app_services.dart';
+import 'package:battleplan/app/home_shell.dart';
 import 'package:battleplan/app/update_required_screen.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
@@ -38,9 +39,10 @@ import 'package:battleplan/features/groups/presentation/media_screen.dart';
 import 'package:battleplan/features/groups/presentation/person_screen.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_colors.dart';
+import 'package:battleplan/features/groups/presentation/team_info_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_settings_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
-import 'package:battleplan/features/groups/presentation/welcome_screen.dart';
+import 'package:battleplan/features/groups/presentation/teams_screen.dart';
 import 'package:battleplan/features/imports/presentation/import_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notification_settings_screen.dart';
 import 'package:battleplan/features/notifications/presentation/notifications_screen.dart';
@@ -64,6 +66,7 @@ import 'package:battleplan/features/schedule/presentation/event_form_screen.dart
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/settings_screen.dart';
+import 'package:battleplan/features/settings/presentation/themes_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -236,9 +239,14 @@ GoRouter router(Ref ref) {
         final memberships = ref.read(myMembershipsProvider);
         if (!memberships.hasValue || memberships.isLoading) return null;
         final list = memberships.value!;
+        // Teams welcomes someone with no team yet (SPEC §5.1) at
+        // `/welcome`, which goes on to a team once there is one: one just
+        // joined, or mine arriving a moment late.
         if (path == '/welcome') return list.isEmpty ? null : '/';
         if (list.isEmpty) return '/welcome';
+        // Back where I was: Teams, or a team's tab.
         final last = ref.read(localPrefsRepositoryProvider).lastTeamRoute;
+        if (last == '/teams') return last;
         final lastGroup = last?.split('/').elementAtOrNull(2);
         if (last != null && list.any((m) => m.groupId.value == lastGroup)) {
           // Only a team its members can read: a suspended one (ADMIN-3)
@@ -265,7 +273,7 @@ GoRouter router(Ref ref) {
         icon: AppIcons.error,
         message: AppLocalizations.of(context).notFoundTitle,
         actionLabel: AppLocalizations.of(context).goToMyTeams,
-        onAction: () => context.go('/'),
+        onAction: () => context.go('/teams'),
       ),
     ),
     routes: [
@@ -335,10 +343,35 @@ GoRouter router(Ref ref) {
           autoJoin: state.uri.queryParameters['join'] == '1',
         ),
       ),
+      // The top of the app (SPEC §5.1): Teams, which a team's back arrow
+      // comes to, and Profile, switching in place as tabs do. Teams is also
+      // the welcome for someone with no team yet.
       GoRoute(
         path: '/welcome',
-        builder: (context, _) =>
-            WelcomeScreen(onOpenSettings: () => context.push('/settings')),
+        pageBuilder: (_, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const HomeShell(tab: 0, child: TeamsScreen()),
+        ),
+      ),
+      GoRoute(
+        path: '/teams',
+        pageBuilder: (_, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const HomeShell(tab: 0, child: TeamsScreen()),
+        ),
+      ),
+      GoRoute(
+        path: '/profile',
+        pageBuilder: (_, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const HomeShell(tab: 1, child: ProfileScreen()),
+        ),
+      ),
+      // The themes, from Profile (SET-2).
+      GoRoute(
+        path: '/themes',
+        pageBuilder: (_, state) =>
+            PanelPage(key: state.pageKey, child: const ThemesScreen()),
       ),
       GoRoute(
         path: '/notifications',
@@ -390,11 +423,8 @@ GoRouter router(Ref ref) {
           ),
         ),
         routes: [
-          GoRoute(
-            path: 'profile',
-            pageBuilder: (_, state) =>
-                PanelPage(key: state.pageKey, child: const ProfileScreen()),
-          ),
+          // The photo and name moved to Profile (SET-1).
+          GoRoute(path: 'profile', redirect: (_, _) => '/profile'),
           GoRoute(
             path: 'sign-in-methods',
             pageBuilder: (_, state) => PanelPage(
@@ -508,6 +538,17 @@ GoRouter router(Ref ref) {
               ),
             ],
           ),
+          // Team info, from the ⓘ in the team's header (SPEC §5.2).
+          GoRoute(
+            path: 'info',
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: TeamInfoScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
+            ),
+          ),
+          // Team admin (TEAM-5); its path is still `settings`.
           GoRoute(
             path: 'settings',
             pageBuilder: (_, state) => PanelPage(
@@ -619,6 +660,12 @@ GoRouter router(Ref ref) {
             builder: (context, state, shell) => TeamShell(
               groupId: GroupId(state.pathParameters['groupId']!),
               navigationShell: shell,
+              // Deeper than the tab, as Saved plays and a play are; a
+              // message opened from a notification is the chat itself.
+              inTab: switch (state.uri.pathSegments) {
+                [_, _, 'chat', 'm', ...] => false,
+                final s => s.length > 3,
+              },
             ),
             branches: [
               for (final tab in teamTabs)
@@ -807,9 +854,16 @@ GoRouter router(Ref ref) {
     ],
   );
 
-  // Remember the last team and tab on this device (SPEC §5.2).
+  // Remember the last team and tab on this device (SPEC §5.2), or Teams
+  // when that's where I am (Profile counts as Teams).
   router.routerDelegate.addListener(() {
     final path = router.routerDelegate.currentConfiguration.uri.path;
+    if (path == '/teams' || path == '/profile') {
+      unawaited(
+        ref.read(localPrefsRepositoryProvider).setLastTeamRoute('/teams'),
+      );
+      return;
+    }
     final segments = path.split('/');
     // A tab, or a message opened from a notification (/g/<id>/chat/m/<m>),
     // which remembers its team's chat tab.
@@ -817,11 +871,11 @@ GoRouter router(Ref ref) {
         segments[1] == 'g' &&
         teamTabs.contains(segments[3]) &&
         (segments.length == 4 || segments[4] == 'm')) {
-      unawaited(
-        ref
-            .read(localPrefsRepositoryProvider)
-            .setLastTeamRoute(segments.take(4).join('/')),
-      );
+      final route = segments.take(4).join('/');
+      ref
+          .read(lastTeamTabsProvider.notifier)
+          .remember(GroupId(segments[2]), route);
+      unawaited(ref.read(localPrefsRepositoryProvider).setLastTeamRoute(route));
     }
   });
   ref.onDispose(router.dispose);

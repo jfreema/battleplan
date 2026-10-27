@@ -675,6 +675,68 @@ final class MyMembershipFamily extends $Family
   String toString() => r'myMembershipProvider';
 }
 
+/// Where I last was in each team this run, by its tab's route (SPEC §5.2),
+/// so Teams opens a team where I left it. The router keeps it.
+
+@ProviderFor(LastTeamTabs)
+final lastTeamTabsProvider = LastTeamTabsProvider._();
+
+/// Where I last was in each team this run, by its tab's route (SPEC §5.2),
+/// so Teams opens a team where I left it. The router keeps it.
+final class LastTeamTabsProvider
+    extends $NotifierProvider<LastTeamTabs, Map<GroupId, String>> {
+  /// Where I last was in each team this run, by its tab's route (SPEC §5.2),
+  /// so Teams opens a team where I left it. The router keeps it.
+  LastTeamTabsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'lastTeamTabsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$lastTeamTabsHash();
+
+  @$internal
+  @override
+  LastTeamTabs create() => LastTeamTabs();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<GroupId, String> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<GroupId, String>>(value),
+    );
+  }
+}
+
+String _$lastTeamTabsHash() => r'0d574bb78e2a480c19c9581fac4af469cbf7c730';
+
+/// Where I last was in each team this run, by its tab's route (SPEC §5.2),
+/// so Teams opens a team where I left it. The router keeps it.
+
+abstract class _$LastTeamTabs extends $Notifier<Map<GroupId, String>> {
+  Map<GroupId, String> build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<Map<GroupId, String>, Map<GroupId, String>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<Map<GroupId, String>, Map<GroupId, String>>,
+              Map<GroupId, String>,
+              Object?,
+              Object?
+            >;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// True while a super admin looks at a team they aren't on (ADMIN-3 View
 /// team): its tabs, read-only, with the "Viewing as super admin" banner and
 /// moderation. False until their memberships have loaded.

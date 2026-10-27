@@ -4,25 +4,22 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/version.dart';
-import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
-import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/auth.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart';
-import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/new_owners_dialog.dart';
-import 'package:battleplan/features/settings/presentation/theme_picker.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Settings (SPEC §6.10): profile, appearance, notifications, sign-in
-/// methods, about, and the account actions.
+/// Settings (SPEC §6.10), from Profile: notifications, sign-in methods,
+/// blocked people, about, and the account actions. The photo and name,
+/// the themes, and the Admin panel are on Profile itself.
 class SettingsScreen extends ConsumerWidget {
   const new({required this.appBuild, this.showDevTools = false, super.key});
 
@@ -35,18 +32,13 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final theme = ref.watch(themePreferenceControllerProvider);
-    final profile = ref.watch(myProfileProvider).value;
-    final photoUrl = ref.watch(myPhotoUrlProvider).value;
     final links = ref.read(linkOpenerProvider);
     // The legal pages are on the website, at the root of the domain (D40).
     final site = ref.read(linkServiceProvider);
-    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final support = ref.watch(supportEmailProvider);
 
     const gap = SizedBox(height: 12);
     const headingGap = SizedBox(height: 10);
-    final c = GumdropColors.of(context);
 
     return Scaffold(
       appBar: gumdropAppBar(context, title: l10n.settings),
@@ -56,48 +48,6 @@ class SettingsScreen extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
             children: [
-              if (profile != null) ...[
-                SettingsCard(
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      minTileHeight: 64,
-                      horizontalTitleGap: 11,
-                      leading: Avatar(
-                        name: profile.displayName,
-                        colorKey: profile.uid,
-                        imageUrl: photoUrl,
-                      ),
-                      title: Text(
-                        profile.displayName,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(color: c.card.textPrimary),
-                      ),
-                      subtitle: Text(
-                        profile.email ?? '',
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: c.card.textMuted),
-                      ),
-                      trailing: Icon(
-                        AppIcons.chevronRight,
-                        size: 22,
-                        weight: 700,
-                        color: c.card.textMuted,
-                      ),
-                      onTap: () => context.push('/settings/profile'),
-                    ),
-                  ],
-                ),
-                gap,
-              ],
-              PageHeading(l10n.appearance),
-              headingGap,
-              ThemePicker(
-                selected: theme,
-                onSelect: (t) =>
-                    ref.read(themePreferenceControllerProvider.notifier).set(t),
-              ),
-              gap,
               PageHeading(l10n.account),
               headingGap,
               SettingsCard(
@@ -118,14 +68,6 @@ class SettingsScreen extends ConsumerWidget {
                     title: l10n.blockedPeople,
                     onTap: () => context.push('/settings/blocked'),
                   ),
-                  // Also here for super admins on no team, who never see a
-                  // team's account menu (ADMIN).
-                  if (superAdmin)
-                    SettingsRow(
-                      icon: AppIcons.admin,
-                      title: l10n.adminPanel,
-                      onTap: () => context.push('/admin'),
-                    ),
                   if (showDevTools)
                     SettingsRow(
                       icon: AppIcons.notifications,

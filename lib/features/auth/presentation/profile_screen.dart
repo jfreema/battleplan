@@ -1,18 +1,27 @@
 import 'dart:async';
 
+import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/app_theme.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/theme_choices.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/presentation/profile_photo.dart';
+import 'package:battleplan/features/groups/groups.dart';
+import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// SET-1 at `/settings/profile`: photo (cropped to a circle) and display name,
-/// used on every team. The email is shown read-only; it changes in
-/// Sign-in methods.
+/// Profile at `/profile`, the top of the app beside Teams (SPEC §5.1,
+/// SET-1): my photo (cropped to a circle) and the name my teams see, then
+/// Themes, Settings, the Admin panel for super admins, and Sign out, each
+/// its own card.
 class ProfileScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -22,7 +31,9 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _name = TextEditingController();
-  bool _loaded = false;
+
+  /// The saved name the field last took, so a change from elsewhere shows.
+  String? _loadedName;
   bool _saving = false;
   bool _uploading = false;
 
@@ -60,73 +71,186 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final l10n = AppLocalizations.of(context);
     final profile = ref.watch(myProfileProvider).value;
     final photoUrl = ref.watch(myPhotoUrlProvider).value;
-    if (profile == null) {
-      return Scaffold(appBar: AppBar(title: Text(l10n.profile)));
-    }
-    if (!_loaded) {
-      _name.text = profile.displayName;
-      _loaded = true;
+    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    final theme = AppTheme.flavorOf(
+      ref.watch(themePreferenceControllerProvider),
+    );
+    final themeName = themeChoices(l10n)
+        .where((t) => t.$2 == theme)
+        .map((t) => t.$3)
+        .firstOrNull;
+    final width = MediaQuery.sizeOf(context).width;
+    final c = GumdropColors.of(context);
+
+    final saved = profile?.displayName;
+    if (saved != null && saved != _loadedName) {
+      _name.text = saved;
+      _loadedName = saved;
     }
     final changed =
-        _name.text.trim() != profile.displayName &&
-        _name.text.trim().isNotEmpty;
+        saved != null &&
+        _name.text.trim().isNotEmpty &&
+        _name.text.trim() != saved;
+
+    /// A menu as its own rounded card.
+    Widget box(Widget row) => Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SettingsCard(children: [row]),
+    );
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.profile)),
-      body: ListView(
-        padding: const EdgeInsets.all(Space.xl),
-        children: [
-          Center(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Avatar(
-                  name: profile.displayName,
-                  colorKey: profile.uid,
-                  imageUrl: photoUrl,
-                  size: 96,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                Space.gutter(width),
+                Space.xs,
+                Space.gutter(width),
+                Space.sm,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Semantics(
+                  header: true,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 4, bottom: 4),
+                    child: Text(
+                      l10n.profile,
+                      style: Theme.of(context).textTheme.headlineLarge,
+                    ),
+                  ),
                 ),
-                if (_uploading) const CircularProgressIndicator(),
-              ],
+              ),
             ),
-          ),
-          Center(
-            child: TextButton(
-              onPressed: _uploading
-                  ? null
-                  : () => unawaited(_changePhoto(profile.uid)),
-              child: Text(l10n.changePhoto),
+            Expanded(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, Space.xl),
+                    children: [
+                      if (profile != null) ...[
+                        SettingsPanel(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Center(
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Avatar(
+                                      name: profile.displayName,
+                                      colorKey: profile.uid,
+                                      imageUrl: photoUrl,
+                                      size: 96,
+                                    ),
+                                    if (_uploading)
+                                      const CircularProgressIndicator(),
+                                  ],
+                                ),
+                              ),
+                              Center(
+                                child: TextButton.icon(
+                                  onPressed: _uploading
+                                      ? null
+                                      : () => unawaited(
+                                          _changePhoto(profile.uid),
+                                        ),
+                                  icon: const Icon(AppIcons.camera, size: 18),
+                                  label: Text(l10n.changePhoto),
+                                ),
+                              ),
+                              const SizedBox(height: Space.sm),
+                              LabeledField(
+                                label: l10n.nameLabel,
+                                // In the card's colors, as the card has them.
+                                child: Builder(
+                                  builder: (context) => TextField(
+                                    controller: _name,
+                                    maxLength: 50,
+                                    textCapitalization:
+                                        TextCapitalization.words,
+                                    style: gumdropFieldText(context),
+                                    onChanged: (_) => setState(() {}),
+                                    onSubmitted: (_) {
+                                      if (changed && !_saving) {
+                                        unawaited(_saveName(profile.uid));
+                                      }
+                                    },
+                                    decoration: gumdropField(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                l10n.setupNameHelp,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: c.card.textMuted),
+                              ),
+                              const SizedBox(height: Space.sm),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: FilledButton(
+                                  onPressed: changed && !_saving
+                                      ? () => unawaited(_saveName(profile.uid))
+                                      : null,
+                                  child: Text(l10n.save),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      box(
+                        SettingsRow(
+                          icon: AppIcons.themes,
+                          title: l10n.themes,
+                          subtitle: themeName,
+                          onTap: () => unawaited(context.push('/themes')),
+                        ),
+                      ),
+                      box(
+                        SettingsRow(
+                          icon: AppIcons.settings,
+                          title: l10n.settings,
+                          onTap: () => unawaited(context.push('/settings')),
+                        ),
+                      ),
+                      // The God admin panel (ADMIN), for super admins.
+                      if (superAdmin)
+                        box(
+                          SettingsRow(
+                            icon: AppIcons.admin,
+                            title: l10n.adminPanel,
+                            onTap: () => unawaited(context.push('/admin')),
+                          ),
+                        ),
+                      box(
+                        SettingsRow(
+                          icon: AppIcons.signOut,
+                          title: l10n.signOut,
+                          subtitle: switch (profile?.email) {
+                            final email? when email.isNotEmpty =>
+                              l10n.signedInAs(email),
+                            _ => null,
+                          },
+                          chevron: false,
+                          onTap: () => unawaited(
+                            ref.read(sessionServiceProvider).signOut(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: Space.lg),
-          TextField(
-            controller: _name,
-            maxLength: 50,
-            textCapitalization: TextCapitalization.words,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: l10n.nameLabel,
-              helperText: l10n.setupNameHelp,
-              counterText: '',
-            ),
-          ),
-          const SizedBox(height: Space.md),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton(
-              onPressed: changed && !_saving
-                  ? () => unawaited(_saveName(profile.uid))
-                  : null,
-              child: Text(l10n.save),
-            ),
-          ),
-          const SizedBox(height: Space.xl),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.emailLabel),
-            subtitle: Text(profile.email ?? ''),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

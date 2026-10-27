@@ -245,9 +245,8 @@ void main() {
         memberships: [testMembership('a', 'coach')],
         size: wide,
       );
-      await tester.tap(find.byTooltip('Account'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Settings').last);
+      await openProfile(tester);
+      await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
       expect(find.byType(NavigationRail), findsOneWidget);
       expect(
@@ -257,7 +256,7 @@ void main() {
     });
   });
 
-  testWidgets('the account menu switches the theme in one tap (SET-2)', (
+  testWidgets("Profile's Themes switches the theme in one tap (SET-2)", (
     tester,
   ) async {
     final users = FakeUserRepository();
@@ -268,27 +267,17 @@ void main() {
       memberships: [testMembership('a', 'coach')],
       users: users,
     );
-    await tester.tap(find.byTooltip('Account'));
+    await openProfile(tester);
+    // Olive is the default, so it's the one Themes names.
+    expect(find.text('Gumdrop Army'), findsOneWidget);
+    await tester.tap(find.text('Themes'));
     await tester.pumpAndSettle();
-    // Olive is the default, so it's the one checked.
-    final olive = find.widgetWithText(
-      CheckedPopupMenuItem<String>,
-      'Gumdrop Army',
-    );
-    expect(tester.widget<CheckedPopupMenuItem<String>>(olive).checked, isTrue);
-    await tester.tap(
-      find.widgetWithText(CheckedPopupMenuItem<String>, 'Gumdrop Candy'),
-    );
+    await tester.tap(find.text('Gumdrop Candy'));
     await tester.pumpAndSettle();
     expect(users.themeMode, ThemePreference.candy);
-
-    await tester.tap(find.byTooltip('Account'));
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
-    final candy = find.widgetWithText(
-      CheckedPopupMenuItem<String>,
-      'Gumdrop Candy',
-    );
-    expect(tester.widget<CheckedPopupMenuItem<String>>(candy).checked, isTrue);
+    expect(find.text('Gumdrop Candy'), findsOneWidget);
   });
 
   group('web parity (SPEC §4.2)', () {

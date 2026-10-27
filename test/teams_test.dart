@@ -184,7 +184,7 @@ void main() {
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
         invites: invites,
       );
-      await tester.tap(find.byTooltip('Team menu'));
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Invite'));
       await tester.pumpAndSettle();

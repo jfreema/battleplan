@@ -1195,16 +1195,16 @@ void main() {
         ),
         findsOneWidget,
       );
-      // The team menu manages it, without Notifications or Leave: this
-      // isn't one of their teams.
-      await tester.tap(find.byTooltip('Team menu'));
+      // Team info manages it, without Notifications or Leave: this isn't
+      // one of their teams.
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
-      for (final item in ['Roster', 'Invite', 'Team settings', 'Media']) {
+      for (final item in ['Roster', 'Invite', 'Team admin', 'Media']) {
         expect(find.text(item), findsOneWidget, reason: item);
       }
-      expect(find.text('Notifications'), findsNothing);
+      expect(find.text('Notifications for this team'), findsNothing);
       expect(find.text('Leave team'), findsNothing);
-      await tester.tapAt(Offset.zero);
+      await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
 
       // The menu offers moderation only.
@@ -1343,12 +1343,8 @@ void main() {
       ]);
       await open(tester, '/g/t9/chat', user: coach, memberRepo: memberRepo);
       expect(find.text('This team has been suspended.'), findsOneWidget);
-      await tester.tap(find.byTooltip('Account'));
-      await tester.pumpAndSettle();
-      expect(find.text('Settings'), findsOneWidget);
-      expect(find.text('Sign out'), findsOneWidget);
-      await tester.tapAt(Offset.zero);
-      await tester.pumpAndSettle();
+      // Never a dead end: back to Teams, with Profile beside it.
+      expect(find.byTooltip('Back'), findsOneWidget);
       await tester.tap(find.text('Home team'));
       await tester.pumpAndSettle();
       expect(find.text('This team has been suspended.'), findsNothing);

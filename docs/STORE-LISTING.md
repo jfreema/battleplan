@@ -37,9 +37,10 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 **What's New in This Version** (1.1, for the version after 1.0; 4,000 characters):
 
 ```
-A whole new look, Gumdrop Pop, with five themes to pick from in Settings or your profile menu: Gumdrop Army, the new default, plus Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena. In every theme but Gumdrop Army, each team's color fills the background of every screen in the team.
+A whole new look, Gumdrop Pop, with five themes to pick from in Profile: Gumdrop Army, the new default, plus Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena. In every theme but Gumdrop Army, each team's color fills the background of every screen in the team.
 
 Also new:
+• Teams and Profile at the top: all your teams in one list, a back arrow from each team, and Team info for its roster, invites, and Team admin
 • Assignments on events: snacks, drinks, scorekeeper, or anything else, that families volunteer for or coaches assign
 • Photos: every photo shared in the team's chat, in one place under Documents
 • Answer an RSVP right from the schedule by tapping your answer
@@ -137,7 +138,7 @@ How to get in:
 Where things are:
 • Report: press and hold someone's message, then Report.
 • Block: press and hold their message and choose Block, or tap their photo to open their page and use the menu at the top (Block, Report).
-• Delete account: Settings, then Delete account. Accounts that use Sign in with Apple sign in with Apple once more, and the app revokes Apple's tokens before deleting.
+• Delete account: Profile (at the bottom of the Teams screen; from a team, tap the back arrow at the top left first), then Settings, then Delete account. Accounts that use Sign in with Apple sign in with Apple once more, and the app revokes Apple's tokens before deleting.
 • A language filter is on for every team.
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.

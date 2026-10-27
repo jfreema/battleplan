@@ -83,8 +83,7 @@ void main() {
   }
 
   Future<void> openNotificationSettings(WidgetTester tester) async {
-    await tester.tap(find.byTooltip('Account'));
-    await tester.pumpAndSettle();
+    await openProfile(tester);
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Notifications'));
@@ -197,8 +196,7 @@ void main() {
         devices: devices,
       );
       expect(devices.docs, isNotEmpty);
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
+      await openAppSettings(tester);
       await tester.scrollUntilVisible(find.text('Sign out'), 100);
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
@@ -217,8 +215,7 @@ void main() {
         devices: FakeDeviceRepository(log: log),
       );
       expect(log, ['device register $installId']);
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
+      await openAppSettings(tester);
       await tester.scrollUntilVisible(find.text('Sign out'), 100);
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
@@ -271,8 +268,7 @@ void main() {
         push: push,
         devices: FakeDeviceRepository(),
       );
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
+      await openAppSettings(tester);
       await tester.scrollUntilVisible(find.text('Sign out'), 100);
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
@@ -296,8 +292,7 @@ void main() {
         ),
       )..needsRecentLogin = true;
       await pumpApp(tester, auth: auth, devices: devices);
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
+      await openAppSettings(tester);
       await tester.scrollUntilVisible(find.text('Delete account'), 100);
       await tester.tap(find.text('Delete account'));
       await tester.pumpAndSettle();
@@ -488,8 +483,7 @@ void main() {
         devices: devices,
         prefs: FakeLocalPrefs()..pushPrePromptShown = true,
       );
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
+      await openAppSettings(tester);
       await tester.tap(find.text('Notifications'));
       await tester.pumpAndSettle();
       expect(find.text('Notifications are off'), findsOneWidget);
@@ -510,7 +504,7 @@ void main() {
         groups: teams,
         memberRepo: members,
       );
-      await tester.tap(find.byTooltip('Team menu'));
+      await tester.tap(find.byTooltip('Team info'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Notifications for this team'));
       await tester.pumpAndSettle();

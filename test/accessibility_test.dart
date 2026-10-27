@@ -47,6 +47,16 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.text('Copy text'), findsOneWidget, reason: 'menu open');
         },
+    // The top (SPEC §5.1), and a team's info (§5.2).
+    for (final (name, route) in [
+      ('teams', '/teams'),
+      ('profile', '/profile'),
+      ('team info', '/g/a/info'),
+    ])
+      name: (WidgetTester tester, {required ThemePreference theme}) async {
+        await pumpChat(tester, theme: theme);
+        await goTo(tester, route);
+      },
     // The rail is a white card in Candy: its labels must use the card's ink.
     'wide chat': (WidgetTester tester, {required ThemePreference theme}) =>
         pumpTeam(tester, theme: theme, size: wideSize),
@@ -312,8 +322,7 @@ void main() {
         containsAllInOrder([
           'Switch team: Thunder U14',
           'Notifications',
-          'Team menu',
-          'Account',
+          'Team info',
           'Add photos or a poll',
           'message box',
           'Chat',

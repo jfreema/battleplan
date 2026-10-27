@@ -73,6 +73,8 @@ abstract final class AppIcons {
   static const IconData warning = Symbols.warning_rounded;
   static const IconData dashboard = Symbols.dashboard_rounded;
   static const IconData person = Symbols.person_rounded;
+  static const IconData profile = Symbols.account_circle_rounded;
+  static const IconData themes = Symbols.palette_rounded;
   static const IconData history = Symbols.history_rounded;
   static const IconData tune = Symbols.tune_rounded;
   static const IconData back = Symbols.arrow_back_rounded;

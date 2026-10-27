@@ -243,17 +243,26 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 ```
 Sign in
  ├─ First time → Profile setup (name, photo, 18+ confirmation, terms)
- │     └─ No teams yet → Welcome: [Join a team]  [Create a team]
- └─ Team view (opens the last team you used)
-      ├─ Header:     team switcher ▾ · Messages · notification bell · team menu ⋯ · your avatar
+ ├─ The top: tabs Teams | Profile
+ │    ├─ Teams:    your teams (each opens where you left it) · Join a team ·
+ │    │            Create a team · Messages · notification bell
+ │    │            (no team yet: a welcome with Join and Create)
+ │    └─ Profile:  your photo and name · Themes · Settings ·
+ │                 Admin panel** · Sign out              (** super admins)
+ └─ Team view (the app opens where you left it: the last team and tab, or Teams)
+      ├─ Header:     ‹ back to Teams · team switcher ▾ · Messages · notification bell · Team info ⓘ
       ├─ Messages:   your direct conversations → one of them (CHAT-19)
       ├─ A person:   their page, from their photo in chat or the roster (TEAM-15)
       ├─ Tabs:       Chat | Schedule | Documents | Plays
-      ├─ Team menu:  Roster · Invite · Notifications for this team ·
-      │              Team settings* · Media* · Reports* · Import*    (* admins)
-      │              (Leave team is on your own card in the Roster, TEAM-8)
-      └─ Your avatar: Settings · Admin panel** · Sign out           (** super admins)
+      └─ Team info:  the team · Roster · Invite · Notifications for this team · Calendar link ·
+                     Team admin* · Media* · Reports* · Import*    (* admins)
+                     (Leave team is on your own card in the Roster, TEAM-8)
 ```
+
+- **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name, sport, last message, unread count), then Join a team and Create a team; someone with no team yet sees a welcome with the same two. Profile has your photo (Change photo) and the name your teams see, then **Themes** (SET-2), **Settings**, the **Admin panel** for super admins, and **Sign out**, each its own rounded card.
+- **A team's back arrow** (‹ at the top left of the header) goes to Teams. Inside a tab, on a page with its own back button (Saved plays, a play), the header leaves its arrow out, so only one back shows.
+- **Team info** (ⓘ in the header) is a page: the team's logo, name, sport, and member count, then what the team menu had. **Team admin** was called Team settings.
+- **Your avatar** left the team's header: what it held is on Profile.
 
 ### 5.2 Team switcher
 
@@ -265,7 +274,7 @@ Sign in
   - Archived teams collapse into an "Archived" section.
   - At the bottom: **Join a team** (code or QR) and **Create a team**.
 - **Switching** keeps you on the same tab: from one team's Schedule to the other team's Schedule.
-- **Memory.** The app remembers the last team and tab on each device.
+- **Memory.** The app remembers the last team and tab on each device, or Teams when you left from there, and opens there. Teams opens each team at the tab you last had in it.
 
 ### 5.3 Bottom tabs
 
@@ -432,7 +441,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - The owner and admins run the team (§3).
   - Admins can make other members admins. Only the owner, or a super admin, can take admin away.
   - Every team has exactly one owner.
-- **TEAM-5 · MVP · Team settings (admins).**
+- **TEAM-5 · MVP · Team admin (admins).** Called Team settings until 2026-10-27; it opens from Team info.
   - Edit name, sport, logo, color, description, and time zone.
   - **Team color:** the 15 colors as swatches, in this order: Blue (new teams start on it), Light blue, Navy, Teal, Green, Olive, Yellow, Mustard, Orange, Red, Maroon, Pink, Purple, Gray, and Black, under "Your team color shows in the background of every screen in the team." (TEAM-1, §7.4). Royal blue and Violet were taken out in 1.1 as too close to Blue and Purple: a team still set to one keeps it, and the app shows it as Blue or Purple (its swatch picked, its badge and backgrounds in that color).
   - **Member permissions** (defaults in brackets):
@@ -454,7 +463,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - A results screen lists who was added, who was invited, and any problems.
   - To fill the Players section, admins add players with the player's or their parents' emails instead (PLAYER-1).
 - **TEAM-8 · MVP · Leave a team.**
-  - Anyone can leave, from their own card in the roster (team menu → **Roster** → their name → **Leave team**), after confirming. It isn't in the team menu, where it was too easy to tap by mistake (2026-10-15, at the owner's request).
+  - Anyone can leave, from their own card in the roster (Team info → **Roster** → their name → **Leave team**), after confirming. It isn't on Team info, as it once was in the team menu, where it was too easy to tap by mistake (2026-10-15, at the owner's request).
   - The owner must transfer ownership first. If they're the only member, they archive or delete the team instead.
 - **TEAM-9 · MVP · Archive or delete (owner, super admins).**
   - **Archive** makes the team read-only and moves it to "Archived" in the switcher. It can be restored.
@@ -555,7 +564,7 @@ Players that others answer for never get accounts, and every account belongs to 
 ### 6.4 Invites and joining (INV)
 
 - **INV-1 · MVP · Invite screen.**
-  - Opens from the team menu, and right after creating a team.
+  - Opens from Team info, and right after creating a team.
   - Shows the team's invite link, a QR code, and the invite code (e.g. `K7XP-M2QR`).
   - Actions:
     - Copy link.
@@ -582,7 +591,7 @@ Players that others answer for never get accounts, and every account belongs to 
   5. Land in the team's chat, where "Sam joined" appears.
 
   People who are already members just go to the team.
-- **INV-6 · MVP · Join without a link.** "Join a team" (on the welcome screen and in the team switcher) offers **Enter code** and **Scan QR code**, using the camera on phones and in the browser.
+- **INV-6 · MVP · Join without a link.** "Join a team" (on Teams and in the team switcher) offers **Enter code** and **Scan QR code**, using the camera on phones and in the browser.
 - **INV-7 · MVP · Web join page.**
   - `/join/<code>` (served by the web app under `/app`, WEB-4) shows the team preview, **Open in app**, App Store and Google Play badges once the apps are listed (Phases 4 and 5), and **Continue in browser**.
   - Shared in a messaging app (iMessage, WhatsApp, Messenger, Slack, Discord, and others), the link's preview says "Join Thunder U14 on Battleplan" and who sent the invite, with the team's logo, or Battleplan's card when the team has none or the link no longer works (1.1, ARCH §6.6).
@@ -737,7 +746,7 @@ Players that others answer for never get accounts, and every account belongs to 
     - Notes.
   - **Game fields:** opponent, home or away, arrival time ("Arrive 30 min early").
   - **RSVP:** on or off (default on), with an optional deadline.
-  - **Reminders:** defaults from team settings. Choose any of 15 min, 1 h, 2 h, 1 day, 2 days, or 1 week before.
+  - **Reminders:** defaults from Team admin. Choose any of 15 min, 1 h, 2 h, 1 day, 2 days, or 1 week before.
   - **Notify team** (default on) and **Post to chat** (default on).
   - **Repeat:** doesn't repeat (default), or:
     - **Daily**, every N days, for tournaments and camps.
@@ -787,7 +796,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Time zones are shown by the names people know them by (the owner's request, 2026-10-26): the US and Canada's first, as "Central Time (Chicago)" or "Mountain Time (Phoenix)", then the rest of the world by city and offset from GMT, "Berlin (GMT+1)", in Create team, Team settings, and the event form. Search finds a zone by its name, city, or ID. What's stored is still the IANA ID ("America/Chicago").
 - **SCHED-10 · MVP · Add to calendar.** The native calendar sheet on iOS and Android; an .ics download on web.
 - **SCHED-11 · v1.1 · Calendar subscription.** Built (task 138). A private link that keeps Google, Apple, or Outlook Calendar in sync with the schedule, so a time change or a rainout reaches the calendar a player or guardian already checks (ARCH §6.15).
-  - **Where:** **Calendar link** in the team menu: a link for that team, or, under **All my teams**, one for every team you're on, including teams you join later. A link is made only when asked (**Make my calendar link**).
+  - **Where:** **Calendar link** on Team info: a link for that team, or, under **All my teams**, one for every team you're on, including teams you join later. A link is made only when asked (**Make my calendar link**).
   - **Adding it:** buttons for Google Calendar, Apple Calendar (on an iPhone, iPad, or Mac, where its links open), and Outlook, and **Copy link** for anything else. Google Calendar adds links on its website, not in its phone app: on a phone the button opens the website, and once it's added the calendar shows in the app too.
   - **What's in it:** every event from 60 days back through the next 12 months, with its title (a canceled one starts "Canceled:"), time (all-day events stay on their dates, SCHED-9), place, notes, arrival time for games, and a link that opens it in Battleplan. A link for all your teams puts the team's name before each title. Nothing else: no names, answers, or roster.
   - **Staying in sync:** each calendar app checks the link on its own schedule. Apple Calendar and Outlook check about every hour; Google Calendar can take up to a day. The screen says so, and when a calendar last checked the link.
@@ -882,7 +891,7 @@ Players that others answer for never get accounts, and every account belongs to 
 
   Admins can email the people who haven't RSVP'd, who answer from the email (SCHED-14). Answer buttons on pushes, and reminder emails sent on their own, come later.
 - **NOTIF-3 · MVP · Notification settings for each team.**
-  - Set them from the team menu ("Notifications for this team") or from Settings → Notifications. They sync across your devices.
+  - Set them from Team info ("Notifications for this team") or from Settings → Notifications. They sync across your devices.
   - **Level:** All activity (default), Important only, or Off.
   - **Mute** for 1 hour, 8 hours, 1 week, or until unmuted. Muted teams show a muted icon, and their unread counts turn gray.
   - These settings control pushes only. Notification-center items and unread counts still appear, so nothing is lost.
@@ -921,8 +930,8 @@ Players that others answer for never get accounts, and every account belongs to 
 
 ### 6.10 Profile and settings (SET)
 
-- **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. Email is shown read-only.
-- **SET-2 · MVP · Appearance.** Five themes, each shown as a small preview: **Gumdrop Army** (the default), **Gumdrop Pop Dark**, **Gumdrop Pop Light**, **Gumdrop Candy**, and **Gumdrop Arena** (§7.4, 1.1). Settings lays the previews out five across where they fit, otherwise in rows of three. They're in Settings and, one tap away, at the top of the account menu (the profile button). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it, or never set, gets the default, Gumdrop Army; new accounts start on it.
+- **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team, at the top of **Profile** (§5.1). The email shows on Sign out ("Signed in as …"); it changes in Sign-in methods.
+- **SET-2 · MVP · Appearance.** Five themes, each shown as a small preview: **Gumdrop Army** (the default), **Gumdrop Pop Dark**, **Gumdrop Pop Light**, **Gumdrop Candy**, and **Gumdrop Arena** (§7.4, 1.1). **Themes** lays the previews out five across where they fit, otherwise in rows of three. It's a card on Profile, which names the theme in use (§5.1). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it, or never set, gets the default, Gumdrop Army; new accounts start on it.
 - **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
@@ -937,7 +946,7 @@ This is for platform operators (super admins) to manage every team and user.
 
 **Access and layout**
 
-- Only super admins see it: it's in their profile menu, at `/admin`.
+- Only super admins see it: it's on their Profile, at `/admin`.
 - It's designed for a desktop browser but works on phones, where tables become lists.
 - It's loaded separately, so regular users never download it.
 
@@ -961,7 +970,7 @@ This is for platform operators (super admins) to manage every team and user.
   - **Content:** revoke invite links; review recent messages (delete any), events, and documents.
   - **Storage:** see usage, open the team's Media, and raise or lower its limit (STORE-6).
   - **Actions:**
-    - **View team**: opens its tabs without joining, with a "Viewing as super admin" banner, and recorded in the audit log. The team menu, roster, schedule, documents, and Team settings work as §3 gives super admins; posting, voting, and RSVPing for themselves need them to join.
+    - **View team**: opens its tabs without joining, with a "Viewing as super admin" banner, and recorded in the audit log. Team info, the roster, schedule, documents, and Team settings work as §3 gives super admins; posting, voting, and RSVPing for themselves need them to join.
     - Archive or Restore.
     - Suspend or Unsuspend (members see "This team has been suspended").
     - Delete (type the name to confirm).
@@ -1008,7 +1017,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
 - **SAFE-1 · MVP · Report.**
   - Report a message, document, or person.
   - Reasons: Spam, Harassment or bullying, Inappropriate content, or Other, plus optional details.
-  - The report goes to the team's admins (Team menu → Reports) and to the super-admin queue; a report about one of the team's admins goes to the super-admin queue only (SAFE-4). The form says so before it's sent.
+  - The report goes to the team's admins (Team info → Reports) and to the super-admin queue; a report about one of the team's admins goes to the super-admin queue only (SAFE-4). The form says so before it's sent.
   - The reporter gets a confirmation that it will be reviewed within 24 hours. The reported person is never told who reported them.
   - A report from a direct conversation (CHAT-19) goes to the super-admin queue only, since a conversation has no admins. The form says so.
 - **SAFE-2 · MVP · Block.**
@@ -1054,7 +1063,7 @@ The App Store requires these for apps with user-generated content (guideline 1.2
   - Swear words and slurs in chat messages, photo captions, and polls are masked when they're posted, keeping the first letter: "What the f***".
   - Whole words only, ignoring case, so "Scunthorpe" and "cockpit" stay as they are; links are left alone.
   - The words are listed once, in `shared/strong_language.json`, for the app and the server.
-  - On for every team; admins can turn it off in team settings (TEAM-5). It applies to what's posted, or edited, while it's on.
+  - On for every team; admins can turn it off in Team admin (TEAM-5). It applies to what's posted, or edited, while it's on.
   - The app masks before it sends, so the sender sees the masked text at once. The server masks anything that gets past an older app before the chat preview and the push are written, and masks imported chat history (IMPORT-9) too.
 
 ### 6.13 Privacy and legal (LEGAL)
@@ -1097,16 +1106,16 @@ What does cost money as teams grow is storage, so each team has a limit, and adm
   - Each team can store **200 MB** (500 MB until 2026-10-15), the default for every team without its own limit (STORE-6), which super admins change in platform settings (ADMIN-7): chat photos, documents, the team logo, and the chat background all count (ARCH §6.8).
   - Saving platform settings puts every team without its own limit on the default, existing teams too, and says how many moved. A team already using more than its new limit is full until it frees space (STORE-4), and its admins are told.
   - A single file can be at most **10 MB** (chat photos are resized well under that before upload).
-- **STORE-2 · MVP · Storage used.** Team settings shows "112 MB of 200 MB used" with a meter, for the team's admins.
+- **STORE-2 · MVP · Storage used.** Team admin shows "112 MB of 200 MB used" with a meter, for the team's admins.
 - **STORE-3 · MVP · Nearly full.** At **90%**, the meter turns amber, the team's admins see a warning at the top of the team ("Storage is 90% full. Free up space in Media."), and they get a notification (NOTIF-2).
 - **STORE-4 · MVP · Full.**
   - New uploads (chat photos, documents, the team logo, a chat background), attachments, and **scheduling new events** are disabled until storage is freed up.
   - Everyone on the team sees: "Storage is full. Uploads, attachments, and scheduling new events are disabled until storage is freed up." Admins also get a notification.
   - Nothing else turns off: text messages, replies, reactions, polls, RSVPs, and existing events keep working. Nothing is ever deleted automatically.
 - **STORE-5 · MVP · Media (admins).**
-  - Team menu → **Media** lists every photo, attachment, document, the team logo, and the chat background, largest first, with a preview, size, who added it, and when.
+  - Team info → **Media** lists every photo, attachment, document, the team logo, and the chat background, largest first, with a preview, size, who added it, and when.
   - Admins delete items to free space, after confirming. Deleting a chat photo removes it from its message, and a message left with no text or photos reads "Photo removed by a team admin"; deleting the logo or background resets it.
-- **STORE-6 · MVP · A team's own limit.** A super admin can give one team its own limit, higher or lower than the default, from the admin panel (ADMIN-3) or from Team settings while signed in as a super admin, and put it back on the default with **Use the default**. A team with its own limit keeps it when the default changes. The option isn't announced or advertised anywhere.
+- **STORE-6 · MVP · A team's own limit.** A super admin can give one team its own limit, higher or lower than the default, from the admin panel (ADMIN-3) or from Team admin while signed in as a super admin, and put it back on the default with **Use the default**. A team with its own limit keeps it when the default changes. The option isn't announced or advertised anywhere.
 - **STORE-7 · Later · Ads.** See ROADMAP "Ads, later".
 
 **Acceptance (MVP)**
@@ -1219,7 +1228,7 @@ The content still carries the visual weight: messages, photos, and event cards.
 
 ### 7.4 Themes
 
-Five themes, picked in Settings or the account menu (SET-2), from 1.1:
+Five themes, picked in Profile → Themes (SET-2), from 1.1:
 
 - **Gumdrop Army**, the default (the owner's request, 2026-10-26, from the V1 Olive design, after the owner's team t-shirt, and renamed with a darker green on 2026-10-27): an army-green page (`#474C2B`) with cream text, cream cards and buttons (`#F4EAD0`) outlined in near-black on a hard near-black lip, coral (`#F45B5B`) for your messages, the sticker, and the back button, Candy's candies outlined in near-black, and cream headings outlined in near-black over a near-black shadow. It keeps its army-green page in every team.
 - **Gumdrop Pop Dark**: a navy page (`#0B1531`), navy cards a step lighter (`#16244A`), white text, and white headings with a blue shadow.

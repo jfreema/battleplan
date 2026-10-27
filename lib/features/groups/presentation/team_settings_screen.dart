@@ -208,9 +208,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     final theme = Theme.of(context);
     final group = ref.watch(groupProvider(widget.groupId)).value;
     if (group == null) {
-      return Scaffold(
-        appBar: gumdropAppBar(context, title: l10n.teamSettingsMenu),
-      );
+      return Scaffold(appBar: gumdropAppBar(context, title: l10n.teamAdmin));
     }
     if (!_loaded) {
       _name.text = group.name;
@@ -284,7 +282,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     );
 
     return Scaffold(
-      appBar: gumdropAppBar(context, title: l10n.teamSettingsMenu),
+      appBar: gumdropAppBar(context, title: l10n.teamAdmin),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),

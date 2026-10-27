@@ -199,7 +199,7 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
           ),
           const SizedBox(height: Space.xl),
           FilledButton(
-            onPressed: () => context.go(signedIn ? '/' : '/sign-in'),
+            onPressed: () => context.go(signedIn ? '/teams' : '/sign-in'),
             child: Text(signedIn ? l10n.goToMyTeams : l10n.signIn),
           ),
         ],

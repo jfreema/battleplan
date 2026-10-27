@@ -403,8 +403,8 @@ mainScreens = {
 const wideSize = Size(1280, 800);
 
 /// Every key screen with a golden in both themes (SPEC §7.4): the main
-/// screens, and welcome, the team switcher, roster, settings, invite, and
-/// the wide rail layout.
+/// screens, and welcome, Teams, Profile, Team info, the team switcher,
+/// roster, settings, invite, and the wide rail layout.
 final Map<
   String,
   Future<void> Function(WidgetTester, {required ThemePreference theme})
@@ -418,6 +418,19 @@ goldenScreens = {
     users: FakeUserRepository()..themeMode = theme,
     size: phoneSize,
   ),
+  // The top (SPEC §5.1), and a team's info (§5.2).
+  'teams': (tester, {required theme}) async {
+    await pumpTeam(tester, theme: theme);
+    await goTo(tester, '/teams');
+  },
+  'profile': (tester, {required theme}) async {
+    await pumpTeam(tester, theme: theme);
+    await goTo(tester, '/profile');
+  },
+  'team_info': (tester, {required theme}) async {
+    await pumpTeam(tester, theme: theme);
+    await goTo(tester, '/g/a/info');
+  },
   'team_switcher': (tester, {required theme}) async {
     await pumpTeam(tester, theme: theme);
     await tester.tap(find.bySemanticsLabel('Switch team: Thunder U14'));

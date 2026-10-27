@@ -171,7 +171,7 @@ void main() {
     expect(top('Gumdrop Arena'), top('Gumdrop Pop Dark'));
   });
 
-  testWidgets('the account menu switches to it', (tester) async {
+  testWidgets("Profile's Themes switches to it", (tester) async {
     final users = FakeUserRepository();
     await pumpApp(
       tester,
@@ -180,11 +180,10 @@ void main() {
       memberships: [testMembership('a', 'coach')],
       users: users,
     );
-    await tester.tap(find.byTooltip('Account'));
+    await openProfile(tester);
+    await tester.tap(find.text('Themes'));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.widgetWithText(CheckedPopupMenuItem<String>, 'Gumdrop Arena'),
-    );
+    await tester.tap(find.text('Gumdrop Arena'));
     await tester.pumpAndSettle();
     expect(users.themeMode, ThemePreference.arena);
     // The app is in Arena now: its page and its leaning sticker.

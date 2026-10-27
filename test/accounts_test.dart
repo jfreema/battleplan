@@ -452,9 +452,8 @@ void main() {
         users: users,
         photoPicker: picker,
       );
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Jordan Coach'));
+      // On Profile, beside Teams (SET-1).
+      await tester.tap(find.text('Profile'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Change photo'));
       await _openCrop(tester);

@@ -182,6 +182,18 @@ Membership? myMembership(Ref ref, GroupId groupId) {
   return ref.watch(memberProvider(groupId, UserId(me))).value;
 }
 
+/// Where I last was in each team this run, by its tab's route (SPEC §5.2),
+/// so Teams opens a team where I left it. The router keeps it.
+@Riverpod(keepAlive: true)
+class LastTeamTabs extends _$LastTeamTabs {
+  @override
+  Map<GroupId, String> build() => const {};
+
+  void remember(GroupId groupId, String route) {
+    if (state[groupId] != route) state = {...state, groupId: route};
+  }
+}
+
 /// True while a super admin looks at a team they aren't on (ADMIN-3 View
 /// team): its tabs, read-only, with the "Viewing as super admin" banner and
 /// moderation. False until their memberships have loaded.

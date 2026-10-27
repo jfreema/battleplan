@@ -43,7 +43,7 @@ void main() {
       calendarLinks: repo,
       linkOpener: opener,
     );
-    await tester.tap(find.byTooltip('Team menu'));
+    await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Calendar link'));
     await tester.pumpAndSettle();

@@ -8,7 +8,7 @@ What has to happen before Apple's App Store and Google Play will approve Battlep
 
 Required, and doable now.
 
-- ✅ 1.1 **Delete account** in the app (Settings → Delete account) and on the web (getbattleplan.app/delete-account).
+- ✅ 1.1 **Delete account** in the app (Profile → Settings → Delete account) and on the web (getbattleplan.app/delete-account).
 - ✅ 1.2 **Report and block** for messages, documents, and people. The Terms, accepted at sign-up, say zero tolerance for objectionable content and abusive behavior.
 - ✅ 1.3 **Privacy Policy, Terms, and support** live on getbattleplan.app, the Privacy Policy and Terms linked in the app, and support@getbattleplan.app published.
 - ✅ 1.4 **iPhone permission prompts** give a clear reason each: camera, photo library, saving photos, calendar, contacts.
