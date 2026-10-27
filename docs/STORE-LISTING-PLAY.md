@@ -54,7 +54,7 @@ MORE FOR COACHES
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS
-• Five looks: Gumdrop Olive, Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
+• Five looks: Gumdrop Army, Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
 • Each team picks its color, and in all but Olive the team's screens take it on
 • Coaches pick the chat's message color and background
 

@@ -273,7 +273,7 @@ void main() {
     // Olive is the default, so it's the one checked.
     final olive = find.widgetWithText(
       CheckedPopupMenuItem<String>,
-      'Gumdrop Olive',
+      'Gumdrop Army',
     );
     expect(tester.widget<CheckedPopupMenuItem<String>>(olive).checked, isTrue);
     await tester.tap(

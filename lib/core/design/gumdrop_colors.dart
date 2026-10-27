@@ -118,7 +118,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   static const olive = GumdropColors(
     flavor: GumdropFlavor.olive,
     coloredPage: true,
-    page: Color(0xFF6E6B4E),
+    page: Color(0xFF474C2B),
     surface: Color(0xFFF4EAD0),
     surfaceBorder: Color(0xFFF4EAD0),
     surfaceBorderWidth: 1,
@@ -145,7 +145,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     pageShadow: Color(0xFF1A1A18),
     selectedRingOuter: Color(0xFFFFF9EC),
     swatchInsetRing: Color(0xFF1A1A18),
-    badgeRing: Color(0xFF6E6B4E),
+    badgeRing: Color(0xFF474C2B),
     you: GumdropAccent(
       face: Color(0xFFF45B5B),
       lip: Color(0xFF1A1A18),

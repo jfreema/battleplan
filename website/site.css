@@ -1,5 +1,5 @@
 /* Battleplan website (WEB-1, WEB-5). Plain CSS, no build step.
-   One theme: Gumdrop Olive, the app's default (an olive page with cream
+   One theme: Gumdrop Army, the app's default (an army-green page with cream
    text, cream cards and gumdrop buttons outlined in ink on a hard ink lip,
    coral accents, and cream headings outlined in ink over an ink shadow). Fonts are bundled in
    fonts/ (SIL OFL), so the site makes no third-party requests. */
@@ -26,12 +26,12 @@
 :root {
   color-scheme: dark;
   /* Neutrals: text on the olive page is cream; on cream cards, ink. */
-  --page: #6e6b4e;
-  --page-rgb: 110, 107, 78;
+  --page: #474c2b;
+  --page-rgb: 71, 76, 43;
   --surface: #f4ead0;
   --raised: #f4ead0;
   --raised-lip: #1a1a18;
-  --well: #5f5c42;
+  --well: #3d4124;
   --card-well: #e6dcbf;
   --divider: #dbd0b0;
   --card-divider: #ddd2b3;

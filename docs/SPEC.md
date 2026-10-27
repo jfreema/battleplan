@@ -208,7 +208,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 - **WEB-2 · MVP · Support and legal pages.** `/privacy`, `/terms`, and `/delete-account` (LEGAL-1, LEGAL-3), and `/support` with the support email. These are the URLs the store listings and Firebase settings use.
 - **WEB-3 · MVP · The web app at `/app`.** The Flutter web app is served under `/app/` and linked from every page of the site. Signed-in people who open `/app` go straight to their teams.
 - **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app. So does email sign-in's address, `getbattleplan.app/emaillogin` (AUTH-2).
-- **WEB-5 · MVP · Fast and plain.** Static pages with no ads, no tracking, and no cookie banner needed; one look, Gumdrop Olive's olive, cream, and coral (§7.4), with no light version; the fonts served from the site itself, not Google Fonts (LEGAL-2); readable on phones; indexed by search engines, while `/app` isn't.
+- **WEB-5 · MVP · Fast and plain.** Static pages with no ads, no tracking, and no cookie banner needed; one look, Gumdrop Army's army green, cream, and coral (§7.4), with no light version; the fonts served from the site itself, not Google Fonts (LEGAL-2); readable on phones; indexed by search engines, while `/app` isn't.
 
 ### 4.2 The parity rule
 
@@ -922,7 +922,7 @@ Players that others answer for never get accounts, and every account belongs to 
 ### 6.10 Profile and settings (SET)
 
 - **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. Email is shown read-only.
-- **SET-2 · MVP · Appearance.** Five themes, each shown as a small preview: **Gumdrop Olive** (the default), **Gumdrop Pop Dark**, **Gumdrop Pop Light**, **Gumdrop Candy**, and **Gumdrop Arena** (§7.4, 1.1). Settings lays the previews out five across where they fit, otherwise in rows of three. They're in Settings and, one tap away, at the top of the account menu (the profile button). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it, or never set, gets the default, Gumdrop Olive; new accounts start on it.
+- **SET-2 · MVP · Appearance.** Five themes, each shown as a small preview: **Gumdrop Army** (the default), **Gumdrop Pop Dark**, **Gumdrop Pop Light**, **Gumdrop Candy**, and **Gumdrop Arena** (§7.4, 1.1). Settings lays the previews out five across where they fit, otherwise in rows of three. They're in Settings and, one tap away, at the top of the account menu (the profile button). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it, or never set, gets the default, Gumdrop Army; new accounts start on it.
 - **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
@@ -1183,7 +1183,7 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 ### 7.1 Brand
 
 - **Name:** Battleplan.
-- **Logo:** the Sticker Crest (owner's pick, 2026-10-26, for 1.1): a fat lemon shield tilted 7° to the left, outlined in navy on a navy hard shadow, with a white chat bubble saying B, on a blue raspberry gradient tile, plus the wordmark. The same mark is the website's favicon and header mark, the web app's tab icon and loading screen, the app icons (Android's themed icon is the shield as one shape), and the splash screens on Gumdrop Olive's olive. The favicon draws the crest 10% bigger so it reads at 32 px. Before 1.1 the mark was a white flag on a pole with an angular B cut out of it (2026-10-14); the 1.0 App Store build keeps it.
+- **Logo:** the Sticker Crest (owner's pick, 2026-10-26, for 1.1): a fat lemon shield tilted 7° to the left, outlined in navy on a navy hard shadow, with a white chat bubble saying B, on a blue raspberry gradient tile, plus the wordmark. The same mark is the website's favicon and header mark, the web app's tab icon and loading screen, the app icons (Android's themed icon is the shield as one shape), and the splash screens on Gumdrop Army's army green. The favicon draws the crest 10% bigger so it reads at 32 px. Before 1.1 the mark was a white flag on a pole with an angular B cut out of it (2026-10-14); the 1.0 App Store build keeps it.
 - **Primary color:** blue raspberry `#4D9BFF`, the app icon's background (a gradient from `#6DB3FF` to `#2F6FDE`) and Gumdrop Pop's main accent (§7.3). Deep blue `#2F5BEA` (Q9) was the 1.0 mark's color and is still the first team color.
 - **Team colors** make each team's screens its own: the color shows in the background of every screen inside the team (§7.4), and shows on the team's logo or initials badge, the switcher, and calendar dots in the all-teams view. Buttons and the candy accents keep the theme's colors, and so do my chat bubbles unless the chat look picks the team color (CHAT-18).
 
@@ -1191,7 +1191,7 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 
 **Gumdrop Pop**, from 1.1 (the owner's pick, 2026-10-25): bright and playful, like candy, and still clean:
 
-- an olive page in the default theme (Gumdrop Olive), with cream cards;
+- an army-green page in the default theme (Gumdrop Army), with cream cards;
 - gumdrop buttons: a rounded face on a hard lip in a darker shade, with a thin highlight along the top, that sinks onto its lip when pressed;
 - candy accents, each with a meaning: blue raspberry for you and the main action, mint for Going, lemon for Maybe and pins, cherry for Not going and unread, tangerine for games, grape for practices, and bubblegum for polls, other events, and your reactions;
 - chunky headings with a stacked hard shadow;
@@ -1217,13 +1217,13 @@ The content still carries the visual weight: messages, photos, and event cards.
 
 Five themes, picked in Settings or the account menu (SET-2), from 1.1:
 
-- **Gumdrop Olive**, the default (the owner's request, 2026-10-26, from the V1 Olive design, after the owner's team t-shirt): an olive page (`#6E6B4E`) with cream text, cream cards and buttons (`#F4EAD0`) outlined in near-black on a hard near-black lip, coral (`#F45B5B`) for your messages, the sticker, and the back button, Candy's candies outlined in near-black, and cream headings outlined in near-black over a near-black shadow. It keeps its olive page in every team.
+- **Gumdrop Army**, the default (the owner's request, 2026-10-26, from the V1 Olive design, after the owner's team t-shirt, and renamed with a darker green on 2026-10-27): an army-green page (`#474C2B`) with cream text, cream cards and buttons (`#F4EAD0`) outlined in near-black on a hard near-black lip, coral (`#F45B5B`) for your messages, the sticker, and the back button, Candy's candies outlined in near-black, and cream headings outlined in near-black over a near-black shadow. It keeps its army-green page in every team.
 - **Gumdrop Pop Dark**: a navy page (`#0B1531`), navy cards a step lighter (`#16244A`), white text, and white headings with a blue shadow.
 - **Gumdrop Pop Light**: a pale blue-gray page (`#F2F5FD`), white cards with a thin outline, navy text, and navy headings with a light blue shadow.
 - **Gumdrop Candy**: a bright blue page (`#305AF6`) with white text and headings, white cards with navy text, and lemon as your color.
 - **Gumdrop Arena** (the owner's request, 2026-10-26, from the V3 design): Gumdrop Pop's layout with a game-day feel. A deep violet page (`#0F0D24`), violet cards (`#221D45`), white text, the same candies, headings and labels in a condensed bold italic over one blue shadow, gumdrops that lean, and cards with two corners cut. It's kept apart in the code, so it can be taken out cleanly; an account set to it would then get Gumdrop Pop Dark.
 
-**Team colors.** In every theme but Gumdrop Olive, every screen inside a team takes the team's color (TEAM-1) in its background (owner's requests, 2026-10-26). Screens outside a team keep the theme's own. Gumdrop Olive keeps its olive page and cream cards in every team, as its design does; the team's color shows in its logo.
+**Team colors.** In every theme but Gumdrop Army, every screen inside a team takes the team's color (TEAM-1) in its background (owner's requests, 2026-10-26). Screens outside a team keep the theme's own. Gumdrop Army keeps its army-green page and cream cards in every team, as its design does; the team's color shows in its logo.
 
 - **Gumdrop Pop Light** stays a light off-white page, shaded slightly toward the team color (a pale blush for Red, cream for Yellow, a gray off-white for Gray and Black), with its lines and button edges in the same hue. Its white cards, text, headings, and candies don't change.
 - **Gumdrop Pop Dark, Gumdrop Arena, and Gumdrop Candy** take the team color itself as the page, not a blend, as in the Rounded Candy Pop design the picker comes from; it's a little darker only where neither white nor navy text would read on it (Green). In Dark and Arena, the cards, chat bubbles, event cards, tab bar, buttons, and inputs are a muted, dark version of the team color (a deep red for Red, a dark brown for Orange, grays for Black), each as dark as the navy (or violet) it replaces, with its text tinted to match, so every contrast stays as designed. Candy keeps its white cards. The candies don't change.

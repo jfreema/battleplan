@@ -9,7 +9,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Appearance (SET-2): the Gumdrop themes as small previews, Gumdrop Olive,
+/// Appearance (SET-2): the Gumdrop themes as small previews, Gumdrop Army,
 /// Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena: all
 /// five across where they fit, else rows of three. The old "system" setting
 /// shows as Olive, the default, which it now is.

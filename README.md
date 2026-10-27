@@ -10,7 +10,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 - **Plays:** directly below Documents in the main navigation, the coach's whiteboard, made for an iPad and good with a mouse, with real baseball, basketball, soccer, and football fields: drag players and the ball to show how a play unfolds, draw routes, play the steps back, and save the plays worth keeping for the team.
 - **Players and parents:** adult players answer for themselves; parents and guardians answer for their kids, who don't need accounts.
 - **Sign-in:** Continue with Google or Apple; an email and password, or an emailed link, for whoever needs one.
-- **Themes:** Gumdrop Olive (the default), Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena; in all but Olive, each team's color shows in the background of every screen in the team.
+- **Themes:** Gumdrop Army (the default), Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena; in all but Olive, each team's color shows in the background of every screen in the team.
 - **Import:** bring a team over from GroupMe (messages, photos, files, and events) or TeamSnap (schedule, players, and files), and schedules from TeamReach, GameChanger, or Google Calendar.
 
 ## Sites
