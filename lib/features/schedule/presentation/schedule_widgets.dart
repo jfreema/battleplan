@@ -17,11 +17,14 @@ import 'package:material_ui/material_ui.dart';
 /// block, the going bar, answer discs, stat tiles, and the RSVP gumdrops.
 
 /// A tappable card (design §3.5): the surface, the theme's outline, no
-/// shadow, and its [child] in the card's colors ([GumdropSurface]).
+/// shadow, and its [child] in the card's colors ([GumdropSurface]). A
+/// [footer] sits under it on the card, outside what a tap opens: buttons
+/// of its own, like the schedule's answers.
 class TapCard extends StatelessWidget {
   const new({
     required this.child,
     this.onTap,
+    this.footer,
     this.radius = Corners.card,
     this.padding = const EdgeInsets.fromLTRB(9, 9, 12, 9),
     super.key,
@@ -29,6 +32,7 @@ class TapCard extends StatelessWidget {
 
   final Widget child;
   final VoidCallback? onTap;
+  final Widget? footer;
   final double radius;
   final EdgeInsetsGeometry padding;
 
@@ -46,10 +50,32 @@ class TapCard extends StatelessWidget {
         color: c.surface,
         shape: shape,
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(padding: padding, child: child),
-        ),
+        child: switch (footer) {
+          null => InkWell(
+            onTap: onTap,
+            child: Padding(padding: padding, child: child),
+          ),
+          final footer => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: padding
+                      .resolve(Directionality.of(context))
+                      .copyWith(bottom: Space.xs),
+                  child: child,
+                ),
+              ),
+              Padding(
+                padding: padding
+                    .resolve(Directionality.of(context))
+                    .copyWith(top: 0),
+                child: footer,
+              ),
+            ],
+          ),
+        },
       ),
     );
   }
@@ -423,6 +449,7 @@ class RsvpChoice extends StatelessWidget {
     required this.current,
     required this.onChanged,
     this.compact = false,
+    this.onCleared,
     super.key,
   });
 
@@ -432,6 +459,10 @@ class RsvpChoice extends StatelessWidget {
   /// Null when it can't be changed (past the deadline, say).
   final ValueChanged<RsvpStatus>? onChanged;
   final bool compact;
+
+  /// A tap on the chosen answer: clears it, where given (the schedule
+  /// list); otherwise the answer stays.
+  final VoidCallback? onCleared;
 
   static const double _gap = 9;
 
@@ -488,8 +519,11 @@ class RsvpChoice extends StatelessWidget {
         ),
         onSelectionChanged: enabled
             ? (s) {
-                // Tapping the chosen answer again keeps it.
-                if (s.isEmpty) return;
+                // Tapping the chosen answer again keeps it, or clears it.
+                if (s.isEmpty) {
+                  onCleared?.call();
+                  return;
+                }
                 onChanged!(s.first);
               }
             : null,

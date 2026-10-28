@@ -43,7 +43,7 @@ Also new:
 • Teams and Profile at the top: all your teams in one list, a back arrow from each team, and Team info for its roster, invites, and Team admin
 • Assignments on events: snacks, drinks, scorekeeper, or anything else, that families volunteer for or coaches assign
 • Photos: every photo shared in the team's chat, in one place under Documents
-• Answer an RSVP right from the schedule by tapping your answer
+• Answer an RSVP right from the schedule: Going, Maybe, or Not going on each event, and tap it again to clear it
 • Plays: post a play to the chat, where it opens the play, or save or share it as an animated GIF
 • Shared invite links show the team's name and logo
 • Time zones by name, like Central Time (Chicago)

@@ -26,6 +26,13 @@ void main() {
   // The main screens, and the sheets and screens most used from them.
   final screens = {
     ...mainScreens,
+    // The answer buttons on the schedule's cards (SCHED-4) scroll under the
+    // + button, which the contrast check would read as their colors: the
+    // list moves until none is under it, as a person would scroll.
+    'schedule': (WidgetTester tester, {required ThemePreference theme}) async {
+      await pumpSchedule(tester, theme: theme);
+      await clearOfAddButton(tester);
+    },
     'team switcher':
         (WidgetTester tester, {required ThemePreference theme}) async {
           await pumpChat(tester, theme: theme);
@@ -75,6 +82,7 @@ void main() {
             await pumpTeam(tester, theme: theme, teamColor: argb);
             await tester.tap(find.text('Schedule'));
             await tester.pumpAndSettle();
+            await clearOfAddButton(tester);
           },
       'team settings, $color team':
           (WidgetTester tester, {required ThemePreference theme}) async {
@@ -332,4 +340,24 @@ void main() {
       );
     });
   });
+}
+
+/// Scrolls the schedule until no answer button sits under its + button.
+Future<void> clearOfAddButton(WidgetTester tester) async {
+  final add = find.byType(FloatingActionButton);
+  if (add.evaluate().isEmpty) return;
+  final covered = tester.getRect(add).inflate(8);
+  for (var i = 0; i < 20; i++) {
+    final under = find
+        .byType(SegmentedButton<RsvpStatus>)
+        .evaluate()
+        .any((e) => tester.getRect(find.byWidget(e.widget)).overlaps(covered));
+    if (!under) return;
+    await tester.drag(
+      find.byType(Scrollable).last,
+      const Offset(0, -40),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+  }
 }

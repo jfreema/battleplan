@@ -17,15 +17,16 @@ import 'package:material_ui/material_ui.dart';
 /// answer (one per player I answer for), and the counts. In "All my
 /// teams" it also names the team and, for guardians, their players
 /// (SCHED-2, PLAYER-9). Canceled events are struck through with a badge (SCHED-7).
-/// Where I can answer now, my answer is a button of its own ([onAnswer]),
-/// and the rest of the card opens the event.
+/// Where I can answer now, Going, Maybe, and Not going sit under the
+/// counts across the card ([answerButtons]), and the rest of the card
+/// opens the event.
 class EventRow extends StatelessWidget {
   const new({
     required this.event,
     required this.group,
     required this.viewerZone,
     required this.onTap,
-    this.onAnswer,
+    this.answerButtons,
     this.day,
     this.participants = const [],
     this.answers = const {},
@@ -41,10 +42,10 @@ class EventRow extends StatelessWidget {
   final String viewerZone;
   final VoidCallback onTap;
 
-  /// Answers without opening the event (the answer sheet), given the
-  /// answer that was tapped; null where I can't answer now (past, closed,
-  /// or no RSVPs).
-  final void Function(BuildContext answer)? onAnswer;
+  /// The answer buttons for each person I answer for, to answer without
+  /// opening the event; null where I can't answer now (past, closed, or no
+  /// RSVPs), and then my answers show as discs.
+  final Widget? answerButtons;
 
   /// The day on the date block; the event's own day in the viewer's zone
   /// when null.
@@ -73,7 +74,8 @@ class EventRow extends StatelessWidget {
     final soloLabel = participants.length == 1
         ? answerLabel(l10n, participants.single, participants)
         : '';
-    final solo = event.takesRsvps && soloLabel == null;
+    final buttons = event.takesRsvps ? answerButtons : null;
+    final solo = event.takesRsvps && soloLabel == null && buttons == null;
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -82,6 +84,7 @@ class EventRow extends StatelessWidget {
       ),
       child: TapCard(
         onTap: onTap,
+        footer: buttons,
         child: Builder(
           builder: (context) {
             final theme = Theme.of(context);
@@ -173,22 +176,19 @@ class EventRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       if (event.takesRsvps) ...[
-                        if (participants.isNotEmpty && !solo)
-                          _AnswerButton(
-                            onAnswer: onAnswer,
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: Space.xs),
-                              child: Wrap(
-                                spacing: Space.md,
-                                runSpacing: Space.xs,
-                                children: [
-                                  for (final p in participants)
-                                    _MyAnswer(
-                                      label: answerLabel(l10n, p, participants),
-                                      status: answers[p.id]?.status,
-                                    ),
-                                ],
-                              ),
+                        if (participants.isNotEmpty && !solo && buttons == null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: Space.xs),
+                            child: Wrap(
+                              spacing: Space.md,
+                              runSpacing: Space.xs,
+                              children: [
+                                for (final p in participants)
+                                  _MyAnswer(
+                                    label: answerLabel(l10n, p, participants),
+                                    status: answers[p.id]?.status,
+                                  ),
+                              ],
                             ),
                           ),
                         Padding(
@@ -215,59 +215,11 @@ class EventRow extends StatelessWidget {
                 ),
                 if (solo) ...[
                   const SizedBox(width: 12),
-                  _AnswerButton(
-                    onAnswer: onAnswer,
-                    round: true,
-                    child: _SoloAnswer(
-                      status: answers[participants.single.id]?.status,
-                    ),
-                  ),
+                  _SoloAnswer(status: answers[participants.single.id]?.status),
                 ],
               ],
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-/// My answer on a row as a button that opens the answer sheet, a 48-point
-/// target at least (SPEC §7.6); just [child] when I can't answer now.
-class _AnswerButton extends StatelessWidget {
-  const new({required this.onAnswer, required this.child, this.round = false});
-
-  final void Function(BuildContext answer)? onAnswer;
-  final Widget child;
-
-  /// The trailing disc, with a round ink splash.
-  final bool round;
-
-  @override
-  Widget build(BuildContext context) {
-    final onAnswer = this.onAnswer;
-    if (onAnswer == null) return child;
-    final l10n = AppLocalizations.of(context);
-    return Semantics(
-      button: true,
-      hint: l10n.rsvpChangeHint,
-      child: Tooltip(
-        message: l10n.rsvpChangeHint,
-        child: InkWell(
-          onTap: () => onAnswer(context),
-          customBorder: round ? const CircleBorder() : null,
-          borderRadius: round ? null : BorderRadius.circular(Corners.chip),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-            child: Align(
-              alignment: round
-                  ? Alignment.center
-                  : AlignmentDirectional.centerStart,
-              widthFactor: 1,
-              heightFactor: 1,
-              child: child,
-            ),
-          ),
         ),
       ),
     );

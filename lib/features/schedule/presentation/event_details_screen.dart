@@ -826,7 +826,8 @@ class _RsvpSection extends ConsumerWidget {
 
 /// Big Going / Maybe / Not going buttons for one person, with an optional
 /// note ("Leaving at halftime") and Clear, back to "No response" (SCHED-5).
-/// Tapping the chosen answer again keeps it.
+/// Tapping the chosen answer again keeps it, or with [clearOnRepeat] (the
+/// schedule list) clears it.
 class RsvpButtons extends ConsumerWidget {
   const new({
     required this.event,
@@ -836,6 +837,7 @@ class RsvpButtons extends ConsumerWidget {
     this.label,
     this.allowMaybe = true,
     this.compact = false,
+    this.clearOnRepeat = false,
     super.key,
   });
 
@@ -851,6 +853,9 @@ class RsvpButtons extends ConsumerWidget {
   /// The chat card's smaller buttons (SPEC §5.4): no icons and no note,
   /// which the event's page has.
   final bool compact;
+
+  /// A tap on the chosen answer clears it, back to "No response".
+  final bool clearOnRepeat;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -882,6 +887,11 @@ class RsvpButtons extends ConsumerWidget {
                   Haptics.selection();
                   unawaited(_answer(context, ref, s, answer?.note ?? ''));
                 }
+              : null,
+          onCleared: enabled && clearOnRepeat
+              ? () => unawaited(
+                  clearRsvpWithFeedback(context, ref, event, participant),
+                )
               : null,
         ),
         if (!compact &&

@@ -13,7 +13,7 @@ import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
-import 'package:battleplan/features/schedule/presentation/rsvp_sheet.dart';
+import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -150,7 +150,8 @@ void main() {
       expect(find.text('6:00 PM – 7:30 PM'), findsNWidgets(2));
       expect(find.text('Riverside Park'), findsNWidgets(3));
       expect(find.text('12 going · 3 maybe · 2 no'), findsOneWidget);
-      expect(find.text('No response'), findsNWidgets(3));
+      // Each upcoming event has the answer buttons.
+      expect(find.byType(RsvpChoice), findsNWidgets(3));
       // Each card has its date block, so tomorrow's two show the day twice.
       expect(find.text('${addDays(today(), 1).day}'), findsNWidgets(2));
 
@@ -165,7 +166,11 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Going'), findsOneWidget);
+      // e1's Going is the chosen one.
+      final chosen = tester.widget<SegmentedButton<RsvpStatus>>(
+        find.byType(SegmentedButton<RsvpStatus>).first,
+      );
+      expect(chosen.selected, {RsvpStatus.going});
       expect(find.text('1 going'), findsOneWidget);
     });
 
@@ -236,42 +241,47 @@ void main() {
   });
 
   group('answering from the list (SCHED-4)', () {
-    Finder inSheet(String text) =>
-        find.descendant(of: find.byType(RsvpSheet), matching: find.text(text));
+    /// The answer [label] on the row's buttons.
+    Finder answer(String label) => find.descendant(
+      of: find.byType(RsvpChoice),
+      matching: find.text(label),
+    );
 
-    testWidgets('my answer on a row opens the answer sheet; See event opens '
-        'the event', (tester) async {
+    testWidgets('Going, Maybe, and Not going are on the row; a second tap '
+        'on the chosen one clears it', (tester) async {
       final rsvps = await openSchedule(tester, events: [event('e1')]);
-      await tester.tap(find.byTooltip('Answer here'));
-      await tester.pumpAndSettle();
-      expect(inSheet('Are you going?'), findsOneWidget);
-      expect(inSheet('Practice'), findsOneWidget);
-      await tester.tap(inSheet('Going'));
+      expect(answer('Going'), findsOneWidget);
+      expect(answer('Maybe'), findsOneWidget);
+      expect(answer('Not going'), findsOneWidget);
+      await tester.tap(answer('Going'));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
       expect(rsvps.rsvps.single.participantId, 'coach');
-      // The note, as on the event's page.
-      await tester.tap(inSheet('Add a note'));
+      // Another answer replaces it.
+      await tester.tap(answer('Maybe'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).last, 'Leaving early');
-      await tester.tap(find.text('Save'));
+      expect(rsvps.rsvps.single.status, RsvpStatus.maybe);
+      // The chosen one again: back to no answer.
+      await tester.tap(answer('Maybe'));
       await tester.pumpAndSettle();
-      expect(rsvps.rsvps.single.note, 'Leaving early');
-      await tester.tap(inSheet('See event'));
-      await tester.pumpAndSettle();
-      expect(find.byType(RsvpSheet), findsNothing);
-      expect(find.text('100 River Rd'), findsOneWidget);
-    });
-
-    testWidgets('the rest of the card still opens the event', (tester) async {
-      await openSchedule(tester, events: [event('e1')]);
+      expect(rsvps.rsvps, isEmpty);
+      // The rest of the card opens the event.
       await tester.tap(find.text('Practice'));
       await tester.pumpAndSettle();
-      expect(find.byType(RsvpSheet), findsNothing);
       expect(find.text('100 River Rd'), findsOneWidget);
     });
 
-    testWidgets('guardians answer for all their players at once', (
+    testWidgets('Maybe only where the team allows it', (tester) async {
+      await openSchedule(
+        tester,
+        events: [event('e1')],
+        settings: const GroupSettings(allowMaybe: false),
+      );
+      expect(answer('Going'), findsOneWidget);
+      expect(answer('Maybe'), findsNothing);
+    });
+
+    testWidgets('guardians answer for each of their players on the row', (
       tester,
     ) async {
       final players =
@@ -305,21 +315,24 @@ void main() {
         players: players,
         events: [event('e1')],
       );
-      await tester.tap(find.byTooltip('Answer here'));
+      expect(find.text('Emma'), findsOneWidget);
+      expect(find.text('Liam'), findsOneWidget);
+      expect(answer('Going'), findsNWidgets(2));
+      await tester.tap(answer('Going').first);
       await tester.pumpAndSettle();
-      expect(inSheet('All my players'), findsOneWidget);
-      expect(inSheet('Emma #7'), findsOneWidget);
-      await tester.tap(inSheet('Going').first);
+      await tester.tap(answer('Not going').last);
       await tester.pumpAndSettle();
       expect(
         {for (final r in rsvps.rsvps) r.participantId: r.status},
-        {'p1': RsvpStatus.going, 'p2': RsvpStatus.going},
+        {'p1': RsvpStatus.going, 'p2': RsvpStatus.notGoing},
       );
-      // The list behind the sheet has them too.
-      Navigator.of(tester.element(find.byType(RsvpSheet))).pop();
+      // Emma's again clears hers only.
+      await tester.tap(answer('Going').first);
       await tester.pumpAndSettle();
-      expect(find.text('Emma: Going'), findsOneWidget);
-      expect(find.text('Liam: Going'), findsOneWidget);
+      expect(
+        {for (final r in rsvps.rsvps) r.participantId: r.status},
+        {'p2': RsvpStatus.notGoing},
+      );
     });
 
     testWidgets('only where I can answer now: not past, canceled, or closed', (
@@ -334,11 +347,13 @@ void main() {
           event('p', days: -2, title: 'Last game'),
         ],
       );
-      expect(find.byTooltip('Answer here'), findsNothing);
+      expect(find.byType(RsvpChoice), findsNothing);
+      // My answer still shows where it can't change.
+      expect(find.text('No response'), findsOneWidget);
       await tester.tap(find.text('Past'));
       await tester.pumpAndSettle();
       expect(find.text('Last game'), findsOneWidget);
-      expect(find.byTooltip('Answer here'), findsNothing);
+      expect(find.byType(RsvpChoice), findsNothing);
     });
   });
 
@@ -667,9 +682,10 @@ void main() {
         players: players,
         events: [event('e1')],
       );
-      // The list shows an answer per player.
-      expect(find.text('Emma: No response'), findsOneWidget);
-      expect(find.text('Liam: No response'), findsOneWidget);
+      // The list has the answer buttons per player.
+      expect(find.byType(RsvpChoice), findsNWidgets(2));
+      expect(find.text('Emma'), findsOneWidget);
+      expect(find.text('Liam'), findsOneWidget);
       await openDetails(tester, 'Practice');
       // All my players first (PLAYER-11), then one row per player.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(3));
@@ -921,7 +937,9 @@ void main() {
         players: players,
         events: [event('e1')],
       );
-      expect(find.text('You: No response'), findsOneWidget);
+      // One set of buttons on the list, with no name: only theirs.
+      expect(find.byType(RsvpChoice), findsOneWidget);
+      expect(find.text('You'), findsNothing);
       await openDetails(tester, 'Practice');
       // One set of buttons: their player's. The pending player isn't there.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
@@ -979,8 +997,8 @@ void main() {
       expect(find.text('Pat #12 (you)'), findsOneWidget);
       await tester.tap(find.text('Schedule'));
       await tester.pumpAndSettle();
-      // Never "You: No response" twice.
-      expect(find.text('You: No response'), findsOneWidget);
+      // Never two answers of their own.
+      expect(find.byType(RsvpChoice), findsOneWidget);
       await openDetails(tester, 'Practice');
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
       expect(find.text('Pat #12 (you)'), findsOneWidget);
@@ -1760,8 +1778,16 @@ void main() {
       expect(find.text('Jamboree'), findsOneWidget);
       expect(find.text('Tournament'), findsOneWidget);
       expect(find.text('Camp'), findsNothing);
-      // Its answer is read too, though it starts before today here.
-      expect(find.text('Going'), findsOneWidget);
+      // Its answer is read too, though it starts before today here
+      // (Practice's Going is a button).
+      expect(find.text('Going'), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byType(RsvpChoice),
+          matching: find.text('Going'),
+        ),
+        findsOneWidget,
+      );
       // By day: the tournament began two days ago, then today, then
       // tomorrow.
       final y = [
