@@ -1942,6 +1942,7 @@
   "playMakingGif": "Making the GIF…",
   "playGifSaved": "GIF saved to your photos.",
   "playGifFailed": "Couldn't make the GIF. Try again.",
+  "playShareFailed": "Couldn't share the play. Try again.",
   "playGifSaveFailed": "Couldn't save the GIF. Check that Battleplan may add photos in your phone's settings.",
   "prefDirectMessages": "Direct messages",
   "messagesTitle": "Messages",

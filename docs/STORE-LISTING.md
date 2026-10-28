@@ -44,7 +44,7 @@ Also new:
 • Assignments on events: snacks, drinks, scorekeeper, or anything else, that families volunteer for or coaches assign
 • Photos: every photo shared in the team's chat, in one place under Documents
 • Answer an RSVP right from the schedule by tapping your answer
-• Plays: post a play to the chat, where it opens the play, or save it as an animated GIF
+• Plays: post a play to the chat, where it opens the play, or save or share it as an animated GIF
 • Shared invite links show the team's name and logo
 • Time zones by name, like Central Time (Chicago)
 • A new app icon
@@ -83,7 +83,7 @@ PLAYERS AND PARENTS
 MORE FOR COACHES
 • Polls for quick decisions
 • Documents: lineups, rules, waivers, and links
-• Plays: a whiteboard with real baseball, basketball, soccer, and football fields. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping, then post them to the chat or save them as animated GIFs
+• Plays: a whiteboard with real baseball, basketball, soccer, and football fields. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping, then post them to the chat, or save or share them as animated GIFs
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS

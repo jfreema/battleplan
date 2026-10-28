@@ -1183,13 +1183,14 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 - **BOARD-5 · Sharing a play.** Under a saved play's steps, for everyone on the team (owner's request 2026-10-27, ROADMAP task 315):
   - **Post to chat** posts a picture of the play's last step to the team's chat, with the play's name, and goes to the chat. The picture carries an **Open play** sticker: a tap opens that play in Plays, where anyone can play its steps and stop them. A deleted play opens to "This play was deleted." The switcher's preview reads "Play: Relay", and the push "Alex posted a play: Relay". Photos (DOC-7) leaves posted plays out. Versions of the app before 1.1 show the picture and name as a photo. Archived teams don't post.
   - **Save as GIF** makes an animated GIF of the play: the first step for 1.5 seconds, each later step gliding into place over 1.5 seconds (20 frames a second), and the last step held for 3 seconds before it starts over, forever. 720 pixels on its longer side. On a phone it's saved to the photo library (asking for add-only access the first time); in a browser it's shared where the browser can, or downloaded. It's named for the play.
+  - **Share** makes the same GIF and opens the share sheet with it, to send in a text, an email, or another app (owner's request 2026-10-28, ROADMAP task 318). A browser without a share sheet downloads it. A public link to a play, and importing someone's play, are on hold.
 
 **Acceptance**
 
 - Each board looks like its field or court, with its starting positions and the ball, on a tablet, a laptop, and a phone. On a phone the board, and a saved play for the team, run the screen's width.
 - A coach drags players and the ball to show a play unfolding, draws arrows, adds steps, plays them back, and saves only when they want to keep one.
 - Members view saved plays but can't change them; people not on the team can't read them; archived teams' plays are read-only.
-- Anyone on the team posts a saved play to the chat, where its picture opens the play, and saves it as a GIF that plays its steps, holds the last for 3 seconds, and repeats.
+- Anyone on the team posts a saved play to the chat, where its picture opens the play, and saves it as a GIF that plays its steps, holds the last for 3 seconds, and repeats, or shares that GIF through the share sheet.
 
 ## 7. Design system and UI
 

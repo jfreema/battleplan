@@ -543,15 +543,20 @@ void main() {
       ],
     );
 
-    /// Taps Save as GIF on the crossing play, and waits until [done].
-    Future<void> saveGif(WidgetTester tester, bool Function() done) async {
+    /// Taps Save as GIF (or [button]) on the crossing play, and waits
+    /// until [done].
+    Future<void> saveGif(
+      WidgetTester tester,
+      bool Function() done, {
+      String button = 'Save as GIF',
+    }) async {
       unawaited(
         GoRouter.of(tester.element(find.byType(Scaffold).first))
             .push('/g/a/plays/${crossing.id.value}'),
       );
       await tester.pumpAndSettle();
       await tester.runAsync(() async {
-        await tester.tap(find.widgetWithText(OutlinedButton, 'Save as GIF'));
+        await tester.tap(find.widgetWithText(OutlinedButton, button));
         await tester.pump();
         expect(find.text('Making the GIF…'), findsOneWidget);
         for (var i = 0; i < 300 && !done(); i++) {
@@ -605,6 +610,28 @@ void main() {
       await saveGif(tester, () => sharer.shared.isNotEmpty);
       expect(sharer.shared, ['file Bunt defense.gif image/gif']);
       expect(String.fromCharCodes(sharer.files.single.sublist(0, 6)), 'GIF89a');
+    });
+
+    testWidgets('anyone shares the play: its GIF, through the share sheet '
+        '(BOARD-5)', (tester) async {
+      final sharer = FakeSharer();
+      final saver = FakePhotoSaver();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [testMembership('a', 'coach')],
+        playRepo: FakePlayRepository([crossing]),
+        sharer: sharer,
+        size: const Size(1024, 1366),
+        overrides: [photoSaverProvider.overrideWithValue(saver)],
+      );
+      await saveGif(tester, () => sharer.shared.isNotEmpty, button: 'Share');
+      expect(sharer.shared, ['file Bunt defense.gif image/gif']);
+      expect(String.fromCharCodes(sharer.files.single.sublist(0, 6)), 'GIF89a');
+      // Shared, not saved to the phone.
+      expect(saver.saved, isEmpty);
+      expect(find.widgetWithText(OutlinedButton, 'Share'), findsOneWidget);
     });
 
     testWidgets('a member views a play step by step, without edit tools', (

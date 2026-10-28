@@ -26,7 +26,8 @@ import 'package:material_ui/material_ui.dart';
 
 /// One play, for everyone on the team (BOARD-3, BOARD-4): the board, step
 /// by step, and its notes, with Post to chat and Save as GIF under it
-/// (BOARD-5). Admins edit, duplicate, and delete it.
+/// (BOARD-5), and Share, which sends the GIF through the share sheet.
+/// Admins edit, duplicate, and delete it.
 class PlayScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, required this.playId, super.key});
 
@@ -47,6 +48,9 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
 
   /// While the GIF is being made: how far along, 0 to 1.
   double? _gifProgress;
+
+  /// The GIF being made is to share rather than save.
+  bool _gifToShare = false;
 
   @override
   void dispose() {
@@ -126,7 +130,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
     final l10n = AppLocalizations.of(context);
     final saver = ref.read(photoSaverProvider);
     final sharer = ref.read(sharerProvider);
-    setState(() => _gifProgress = 0);
+    setState(() {
+      _gifProgress = 0;
+      _gifToShare = false;
+    });
     try {
       final gif = await playGif(
         play,
@@ -152,6 +159,37 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
       }
     } on Object {
       if (mounted) showAppSnackBar(context, l10n.playGifFailed);
+    } finally {
+      if (mounted) setState(() => _gifProgress = null);
+    }
+  }
+
+  /// Makes the play's GIF and sends it through the share sheet (BOARD-5),
+  /// to a text, an email, or another app; a browser without one downloads
+  /// it.
+  Future<void> _shareGif(Play play) async {
+    if (_gifProgress != null) return;
+    final l10n = AppLocalizations.of(context);
+    final sharer = ref.read(sharerProvider);
+    setState(() {
+      _gifProgress = 0;
+      _gifToShare = true;
+    });
+    try {
+      final gif = await playGif(
+        play,
+        onProgress: (p) {
+          if (mounted) setState(() => _gifProgress = p);
+        },
+      );
+      final shared = await sharer.shareFile(
+        gif,
+        name: '${playGifName(play.title)}.gif',
+        mimeType: 'image/gif',
+      );
+      if (!shared && mounted) showAppSnackBar(context, l10n.playShareFailed);
+    } on Object {
+      if (mounted) showAppSnackBar(context, l10n.playShareFailed);
     } finally {
       if (mounted) setState(() => _gifProgress = null);
     }
@@ -322,9 +360,16 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                       ),
                     ],
                   );
-            // Post to chat for the team's members, and Save as GIF for
-            // everyone (BOARD-5).
+            // Post to chat for the team's members, and Save as GIF and
+            // Share for everyone (BOARD-5).
             final making = _gifProgress != null;
+            final progress = SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                value: _gifProgress,
+              ),
+            );
             final actions = Padding(
               padding: const EdgeInsets.fromLTRB(
                 Space.md,
@@ -347,16 +392,23 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                     ),
                   OutlinedButton.icon(
                     onPressed: making ? null : () => unawaited(_saveGif(play)),
-                    icon: making
-                        ? SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              value: _gifProgress,
-                            ),
-                          )
+                    icon: making && !_gifToShare
+                        ? progress
                         : const Icon(AppIcons.download),
-                    label: Text(making ? l10n.playMakingGif : l10n.playSaveGif),
+                    label: Text(
+                      making && !_gifToShare
+                          ? l10n.playMakingGif
+                          : l10n.playSaveGif,
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: making ? null : () => unawaited(_shareGif(play)),
+                    icon: making && _gifToShare
+                        ? progress
+                        : const Icon(AppIcons.share),
+                    label: Text(
+                      making && _gifToShare ? l10n.playMakingGif : l10n.share,
+                    ),
                   ),
                 ],
               ),
