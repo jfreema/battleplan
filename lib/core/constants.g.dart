@@ -34,6 +34,7 @@ abstract final class Collections {
   static const String teamCalendars = 'teamCalendars';
   static const String answerLinks = 'answerLinks';
   static const String assignments = 'assignments';
+  static const String sharedPlays = 'sharedPlays';
 }
 
 /// Limits shared with the server and security rules.
@@ -64,6 +65,8 @@ abstract final class Limits {
   static const int playNoteMax = 1000;
   static const int playStepsMax = 10;
   static const int playElementsMax = 150;
+  static const int playSharesPerUserPerHour = 30;
+  static const int sharedPlayImageBytesMax = 1000000;
   static const int playPointsMax = 64;
   static const int playLabelMax = 12;
   static const int playTextMax = 200;

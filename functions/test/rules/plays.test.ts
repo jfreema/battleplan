@@ -1,5 +1,7 @@
 // Security rules for plays (SPEC §6.16 BOARD-4, ARCH §6.14): everyone on
 // the team reads them; admins, and super admins, write them on open teams.
+// Shared plays (BOARD-6) are read by anyone with the link and written only
+// by sharePlay.
 // Run against the emulator: npm --prefix functions run emulators:test
 import {
   assertFails,
@@ -18,6 +20,7 @@ let env: RulesTestEnvironment;
 const now = () => firebase.firestore.FieldValue.serverTimestamp();
 const ts = (iso: string) => firebase.firestore.Timestamp.fromDate(new Date(iso));
 const as = (uid: string): Db => env.authenticatedContext(uid).firestore();
+const anon = (): Db => env.unauthenticatedContext().firestore();
 const root = (): Db => env.authenticatedContext('root', { superAdmin: true }).firestore();
 
 const marker = { k: 'm', id: 'a', x: 0.5, y: 0.5, s: 'team', l: 'P' };
@@ -51,6 +54,21 @@ async function seed(group: object = {}) {
     await member('teamA', 'bob', 'member');
     await member('teamB', 'gina', 'admin');
     await db.doc('plays/pl1').set({ ...play('alice'), createdAt: ts('2026-10-01T00:00:00Z'), updatedAt: ts('2026-10-01T00:00:00Z') });
+    // pl2 is shared (BOARD-6).
+    await db.doc('plays/pl2').set({
+      ...play('alice'),
+      shareId: 'Ab3_x-9Kq2Zw',
+      createdAt: ts('2026-10-01T00:00:00Z'),
+      updatedAt: ts('2026-10-01T00:00:00Z'),
+    });
+    await db.doc('sharedPlays/Ab3_x-9Kq2Zw').set({
+      board: 'baseball',
+      variant: 'full',
+      title: 'Bunt defense',
+      note: '',
+      steps: [{ elements: [marker] }],
+      hasImage: false,
+    });
   });
 }
 
@@ -122,5 +140,33 @@ describe('drawing plays (BOARD-2, BOARD-4)', () => {
     await assertFails(root().doc('plays/pl1').update({ title: 'Late', updatedAt: now() }));
     await assertFails(as('alice').doc('plays/pl1').delete());
     await assertSucceeds(as('bob').doc('plays/pl1').get());
+  });
+});
+
+describe('shared plays (BOARD-6)', () => {
+  it('anyone with the link reads one, signed in or not, but nobody lists them', async () => {
+    await assertSucceeds(anon().doc('sharedPlays/Ab3_x-9Kq2Zw').get());
+    await assertSucceeds(as('gina').doc('sharedPlays/Ab3_x-9Kq2Zw').get());
+    await assertSucceeds(anon().doc('sharedPlays/Zz3_x-9Kq2Zw').get());
+    await assertFails(anon().collection('sharedPlays').limit(10).get());
+    await assertFails(as('alice').collection('sharedPlays').limit(10).get());
+  });
+
+  it('only sharePlay writes them', async () => {
+    const copy = { board: 'blank', variant: 'full', title: 'Mine', note: '', steps: [{ elements: [] }] };
+    await assertFails(anon().doc('sharedPlays/Yy3_x-9Kq2Zw').set(copy));
+    await assertFails(as('alice').doc('sharedPlays/Yy3_x-9Kq2Zw').set(copy));
+    await assertFails(root().doc('sharedPlays/Yy3_x-9Kq2Zw').set(copy));
+    await assertFails(as('alice').doc('sharedPlays/Ab3_x-9Kq2Zw').update({ title: 'Mine' }));
+    await assertFails(root().doc('sharedPlays/Ab3_x-9Kq2Zw').delete());
+  });
+
+  it("a play's link is sharePlay's to set; a shared play still changes", async () => {
+    await assertFails(as('alice').collection('plays').add(play('alice', { shareId: 'Ab3_x-9Kq2Zw' })));
+    await assertFails(as('alice').doc('plays/pl1').update({ shareId: 'Ab3_x-9Kq2Zw', updatedAt: now() }));
+    await assertFails(as('alice').doc('plays/pl2').update({ shareId: 'Yy3_x-9Kq2Zw', updatedAt: now() }));
+    await assertSucceeds(as('carol').doc('plays/pl2').update({ title: 'Squeeze', updatedAt: now() }));
+    await assertSucceeds(as('bob').doc('plays/pl2').get());
+    await assertSucceeds(as('carol').doc('plays/pl2').delete());
   });
 });

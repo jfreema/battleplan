@@ -1183,6 +1183,7 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 - **BOARD-5 · Sharing a play.** Under a saved play's steps, for everyone on the team (owner's request 2026-10-27, ROADMAP task 315):
   - **Post to chat** posts a picture of the play's last step to the team's chat, with the play's name, and goes to the chat. The picture carries an **Open play** sticker: a tap opens that play in Plays, where anyone can play its steps and stop them. A deleted play opens to "This play was deleted." The switcher's preview reads "Play: Relay", and the push "Alex posted a play: Relay". Photos (DOC-7) leaves posted plays out. Versions of the app before 1.1 show the picture and name as a photo. Archived teams don't post.
   - **Save as GIF** makes an animated GIF of the play: the first step for 1.5 seconds, each later step gliding into place over 1.5 seconds (20 frames a second), and the last step held for 3 seconds before it starts over, forever. 720 pixels on its longer side. On a phone it's saved to the photo library (asking for add-only access the first time); in a browser it's shared where the browser can, or downloaded. It's named for the play.
+- **BOARD-6 · A play's public link.** (Owner's request 2026-10-27, ROADMAP task 318.) **Share link**, under a saved play's steps for the team's admins and super admins, makes the play's public link, `getbattleplan.app/p/<12 characters>`. A phone opens the share sheet with it; a browser shows the link with Share and Copy link. The link shows only the play, to anyone, signed in or not: its name, its note, and the board step by step, to play and stop. It never shows the team, who drew it, or any roster player: a marker labeled with a roster player keeps its spot but loses the label. Sharing again keeps the same link and brings it up to date, with a new picture; changing the play updates what the link shows. **Stop sharing** (in the play's More, also on an archived team) takes the link down, and so does deleting the play or the team. A link preview in a messaging app shows the play's name, its note, and a picture of its last step (drawn without roster players' labels). Importing a shared play onto another team's whiteboard is on hold (owner, 2026-10-28).
 
 **Acceptance**
 
@@ -1190,6 +1191,7 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 - A coach drags players and the ball to show a play unfolding, draws arrows, adds steps, plays them back, and saves only when they want to keep one.
 - Members view saved plays but can't change them; people not on the team can't read them; archived teams' plays are read-only.
 - Anyone on the team posts a saved play to the chat, where its picture opens the play, and saves it as a GIF that plays its steps, holds the last for 3 seconds, and repeats.
+- An admin shares a play's link; anyone opens it, signed in or not, and sees only the play, with no team or player names; Stop sharing or deleting the play takes the link down.
 
 ## 7. Design system and UI
 

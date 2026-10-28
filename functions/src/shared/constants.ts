@@ -32,6 +32,7 @@ export const Collections = {
   teamCalendars: 'teamCalendars',
   answerLinks: 'answerLinks',
   assignments: 'assignments',
+  sharedPlays: 'sharedPlays',
 } as const;
 
 export const Limits = {
@@ -61,6 +62,8 @@ export const Limits = {
   playNoteMax: 1000,
   playStepsMax: 10,
   playElementsMax: 150,
+  playSharesPerUserPerHour: 30,
+  sharedPlayImageBytesMax: 1000000,
   playPointsMax: 64,
   playLabelMax: 12,
   playTextMax: 200,

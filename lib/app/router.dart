@@ -56,6 +56,7 @@ import 'package:battleplan/features/players/presentation/who_are_you_screen.dart
 import 'package:battleplan/features/plays/presentation/play_routes.dart';
 import 'package:battleplan/features/plays/presentation/play_screen.dart';
 import 'package:battleplan/features/plays/presentation/plays_screen.dart';
+import 'package:battleplan/features/plays/presentation/shared_play_screen.dart';
 import 'package:battleplan/features/safety/presentation/blocked_people_screen.dart';
 import 'package:battleplan/features/safety/presentation/reports_screen.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
@@ -148,7 +149,10 @@ GoRouter router(Ref ref) {
 
       if (user == null) {
         // Invite links work signed out (ARCH §5.4).
-        if (_publicPaths.contains(path) || path.startsWith('/join')) {
+        // So do shared plays' (BOARD-6).
+        if (_publicPaths.contains(path) ||
+            path.startsWith('/join') ||
+            path.startsWith('/p/')) {
           return null;
         }
         // Signing out starts over at sign-in, not back where they were
@@ -336,6 +340,12 @@ GoRouter router(Ref ref) {
           builder: (_, state) => ActivateScreen(link: state.uri),
         ),
       GoRoute(path: '/join', builder: (_, _) => const EnterCodeScreen()),
+      // A shared play (BOARD-6), signed in or not.
+      GoRoute(
+        path: '/p/:shareId',
+        builder: (_, state) =>
+            SharedPlayScreen(shareId: state.pathParameters['shareId']!),
+      ),
       GoRoute(
         path: '/join/:code',
         builder: (_, state) => JoinScreen(

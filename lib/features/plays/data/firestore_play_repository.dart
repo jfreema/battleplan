@@ -1,16 +1,24 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 import 'package:battleplan/features/plays/domain/play_repository.dart';
+import 'package:battleplan/features/plays/domain/shared_play.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 /// Plays in Firestore (ARCH §6.2 `plays`, §6.14), written directly under
-/// the rules. Elements are kept compact: a play is a few kilobytes.
+/// the rules. Elements are kept compact: a play is a few kilobytes. The
+/// `sharePlay` callable shares them, and anyone reads `sharedPlays`
+/// (BOARD-6).
 class FirestorePlayRepository implements PlayRepository {
-  const new(this._db);
+  const new(this._db, [this._functions]);
 
   final FirebaseFirestore _db;
+  final FirebaseFunctions? _functions;
 
   CollectionReference<Map<String, dynamic>> get _plays =>
       _db.collection(Collections.plays);
@@ -62,6 +70,50 @@ class FirestorePlayRepository implements PlayRepository {
   Future<void> delete(PlayId id) async {
     try {
       await _plays.doc(id.value).delete();
+    } on FirebaseException catch (e) {
+      throw _failure(e);
+    }
+  }
+
+  @override
+  Future<String> share(PlayId id, {Uint8List? image}) async {
+    final data = await _callShare({
+      'playId': id.value,
+      'action': 'share',
+      'image': image == null ? null : base64Encode(image),
+    });
+    return data['shareId'] as String;
+  }
+
+  @override
+  Future<void> stopSharing(PlayId id) =>
+      _callShare({'playId': id.value, 'action': 'stop'});
+
+  Future<Map<String, dynamic>> _callShare(Map<String, Object?> input) async {
+    try {
+      final result = await _functions!
+          .httpsCallable('sharePlay')
+          .call<Map<String, dynamic>>(input);
+      return result.data;
+    } on FirebaseFunctionsException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        'unavailable' || 'deadline-exceeded' => Offline(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
+  Future<PlayDraft?> sharedPlay(String shareId) async {
+    if (!isShareId(shareId)) return null;
+    try {
+      final snap = await _db
+          .collection(Collections.sharedPlays)
+          .doc(shareId)
+          .get();
+      final data = snap.data();
+      return data == null ? null : sharedPlayFromFirestore(data);
     } on FirebaseException catch (e) {
       throw _failure(e);
     }
@@ -185,5 +237,19 @@ Play playFromFirestore(String id, Map<String, dynamic> x) {
     createdBy: x['createdBy'] as String?,
     createdAt: (x['createdAt'] as Timestamp?)?.toDate(),
     updatedAt: (x['updatedAt'] as Timestamp?)?.toDate(),
+    shareId: x['shareId'] as String?,
+  );
+}
+
+/// A shared play (BOARD-6) as the app draws it: a play's own fields, as
+/// [playFromFirestore] reads them, with no team.
+PlayDraft sharedPlayFromFirestore(Map<String, dynamic> x) {
+  final play = playFromFirestore('', x);
+  return (
+    board: play.board,
+    variant: play.variant,
+    title: play.title,
+    note: play.note,
+    steps: play.steps,
   );
 }

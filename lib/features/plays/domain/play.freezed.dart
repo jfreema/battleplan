@@ -795,7 +795,8 @@ as List<BoardElement>,
 /// @nodoc
 mixin _$Play {
 
- PlayId get id; GroupId get groupId; PlayBoard get board; BoardVariant get variant; String get title; String get note; List<PlayStep> get steps; String? get createdBy; DateTime? get createdAt; DateTime? get updatedAt;
+ PlayId get id; GroupId get groupId; PlayBoard get board; BoardVariant get variant; String get title; String get note; List<PlayStep> get steps; String? get createdBy; DateTime? get createdAt; DateTime? get updatedAt;/// Its public link's ID while it's shared (BOARD-6): `/p/<shareId>`.
+ String? get shareId;
 /// Create a copy of Play
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -807,20 +808,20 @@ $PlayCopyWith<Play> get copyWith => _$PlayCopyWithImpl<Play>(this as Play, _$ide
 @override
 bool operator ==(Object other) {
   final _this = this as Play;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Play&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.board, _this.board) || other.board == _this.board)&&(identical(other.variant, _this.variant) || other.variant == _this.variant)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.note, _this.note) || other.note == _this.note)&&const DeepCollectionEquality().equals(other.steps, _this.steps)&&(identical(other.createdBy, _this.createdBy) || other.createdBy == _this.createdBy)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Play&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.board, _this.board) || other.board == _this.board)&&(identical(other.variant, _this.variant) || other.variant == _this.variant)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.note, _this.note) || other.note == _this.note)&&const DeepCollectionEquality().equals(other.steps, _this.steps)&&(identical(other.createdBy, _this.createdBy) || other.createdBy == _this.createdBy)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt)&&(identical(other.shareId, _this.shareId) || other.shareId == _this.shareId));
 }
 
 
 @override
 int get hashCode {
   final _this = this as Play;
-  return Object.hash(runtimeType,_this.id,_this.groupId,_this.board,_this.variant,_this.title,_this.note,const DeepCollectionEquality().hash(_this.steps),_this.createdBy,_this.createdAt,_this.updatedAt);
+  return Object.hash(runtimeType,_this.id,_this.groupId,_this.board,_this.variant,_this.title,_this.note,const DeepCollectionEquality().hash(_this.steps),_this.createdBy,_this.createdAt,_this.updatedAt,_this.shareId);
 }
 
 @override
 String toString() {
   final _this = this as Play;
-  return 'Play(id: ${_this.id}, groupId: ${_this.groupId}, board: ${_this.board}, variant: ${_this.variant}, title: ${_this.title}, note: ${_this.note}, steps: ${_this.steps}, createdBy: ${_this.createdBy}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
+  return 'Play(id: ${_this.id}, groupId: ${_this.groupId}, board: ${_this.board}, variant: ${_this.variant}, title: ${_this.title}, note: ${_this.note}, steps: ${_this.steps}, createdBy: ${_this.createdBy}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt}, shareId: ${_this.shareId})';
 }
 
 
@@ -831,7 +832,7 @@ abstract mixin class $PlayCopyWith<$Res>  {
   factory $PlayCopyWith(Play value, $Res Function(Play) _then) = _$PlayCopyWithImpl;
 @useResult
 $Res call({
- PlayId id, GroupId groupId, PlayBoard board, BoardVariant variant, String title, String note, List<PlayStep> steps, String? createdBy, DateTime? createdAt, DateTime? updatedAt
+ PlayId id, GroupId groupId, PlayBoard board, BoardVariant variant, String title, String note, List<PlayStep> steps, String? createdBy, DateTime? createdAt, DateTime? updatedAt, String? shareId
 });
 
 
@@ -848,7 +849,7 @@ class _$PlayCopyWithImpl<$Res>
 
 /// Create a copy of Play
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? board = null,Object? variant = null,Object? title = null,Object? note = null,Object? steps = null,Object? createdBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? board = null,Object? variant = null,Object? title = null,Object? note = null,Object? steps = null,Object? createdBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,Object? shareId = freezed,}) {
   return _then(Play(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as PlayId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -860,7 +861,8 @@ as String,steps: null == steps ? _self.steps : steps // ignore: cast_nullable_to
 as List<PlayStep>,createdBy: freezed == createdBy ? _self.createdBy : createdBy // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,shareId: freezed == shareId ? _self.shareId : shareId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -945,10 +947,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayId id,  GroupId groupId,  PlayBoard board,  BoardVariant variant,  String title,  String note,  List<PlayStep> steps,  String? createdBy,  DateTime? createdAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayId id,  GroupId groupId,  PlayBoard board,  BoardVariant variant,  String title,  String note,  List<PlayStep> steps,  String? createdBy,  DateTime? createdAt,  DateTime? updatedAt,  String? shareId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Play() when $default != null:
-return $default(_that.id,_that.groupId,_that.board,_that.variant,_that.title,_that.note,_that.steps,_that.createdBy,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.board,_that.variant,_that.title,_that.note,_that.steps,_that.createdBy,_that.createdAt,_that.updatedAt,_that.shareId);case _:
   return orElse();
 
 }
@@ -966,10 +968,10 @@ return $default(_that.id,_that.groupId,_that.board,_that.variant,_that.title,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayId id,  GroupId groupId,  PlayBoard board,  BoardVariant variant,  String title,  String note,  List<PlayStep> steps,  String? createdBy,  DateTime? createdAt,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayId id,  GroupId groupId,  PlayBoard board,  BoardVariant variant,  String title,  String note,  List<PlayStep> steps,  String? createdBy,  DateTime? createdAt,  DateTime? updatedAt,  String? shareId)  $default,) {final _that = this;
 switch (_that) {
 case _Play():
-return $default(_that.id,_that.groupId,_that.board,_that.variant,_that.title,_that.note,_that.steps,_that.createdBy,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.board,_that.variant,_that.title,_that.note,_that.steps,_that.createdBy,_that.createdAt,_that.updatedAt,_that.shareId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -986,10 +988,10 @@ return $default(_that.id,_that.groupId,_that.board,_that.variant,_that.title,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayId id,  GroupId groupId,  PlayBoard board,  BoardVariant variant,  String title,  String note,  List<PlayStep> steps,  String? createdBy,  DateTime? createdAt,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayId id,  GroupId groupId,  PlayBoard board,  BoardVariant variant,  String title,  String note,  List<PlayStep> steps,  String? createdBy,  DateTime? createdAt,  DateTime? updatedAt,  String? shareId)?  $default,) {final _that = this;
 switch (_that) {
 case _Play() when $default != null:
-return $default(_that.id,_that.groupId,_that.board,_that.variant,_that.title,_that.note,_that.steps,_that.createdBy,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.board,_that.variant,_that.title,_that.note,_that.steps,_that.createdBy,_that.createdAt,_that.updatedAt,_that.shareId);case _:
   return null;
 
 }
@@ -1001,7 +1003,7 @@ return $default(_that.id,_that.groupId,_that.board,_that.variant,_that.title,_th
 
 
 class _Play implements Play {
-  const _Play({required this.id, required this.groupId, required this.board, required this.variant, required this.title, this.note = '',  List<PlayStep> steps = const <PlayStep>[PlayStep()], this.createdBy, this.createdAt, this.updatedAt}): _steps = steps;
+  const _Play({required this.id, required this.groupId, required this.board, required this.variant, required this.title, this.note = '',  List<PlayStep> steps = const <PlayStep>[PlayStep()], this.createdBy, this.createdAt, this.updatedAt, this.shareId}): _steps = steps;
   
 
 @override final  PlayId id;
@@ -1020,6 +1022,8 @@ class _Play implements Play {
 @override final  String? createdBy;
 @override final  DateTime? createdAt;
 @override final  DateTime? updatedAt;
+/// Its public link's ID while it's shared (BOARD-6): `/p/<shareId>`.
+@override final  String? shareId;
 
 /// Create a copy of Play
 /// with the given fields replaced by the non-null parameter values.
@@ -1031,18 +1035,18 @@ _$PlayCopyWith<_Play> get copyWith => __$PlayCopyWithImpl<_Play>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Play&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.board, board) || other.board == board)&&(identical(other.variant, variant) || other.variant == variant)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.steps, _steps)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Play&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.board, board) || other.board == board)&&(identical(other.variant, variant) || other.variant == variant)&&(identical(other.title, title) || other.title == title)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.steps, _steps)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.shareId, shareId) || other.shareId == shareId));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,groupId,board,variant,title,note,const DeepCollectionEquality().hash(_steps),createdBy,createdAt,updatedAt);
+    return Object.hash(runtimeType,id,groupId,board,variant,title,note,const DeepCollectionEquality().hash(_steps),createdBy,createdAt,updatedAt,shareId);
 }
 
 @override
 String toString() {
-    return 'Play(id: $id, groupId: $groupId, board: $board, variant: $variant, title: $title, note: $note, steps: $steps, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'Play(id: $id, groupId: $groupId, board: $board, variant: $variant, title: $title, note: $note, steps: $steps, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, shareId: $shareId)';
 }
 
 
@@ -1053,7 +1057,7 @@ abstract mixin class _$PlayCopyWith<$Res> implements $PlayCopyWith<$Res> {
   factory _$PlayCopyWith(_Play value, $Res Function(_Play) _then) = __$PlayCopyWithImpl;
 @override @useResult
 $Res call({
- PlayId id, GroupId groupId, PlayBoard board, BoardVariant variant, String title, String note, List<PlayStep> steps, String? createdBy, DateTime? createdAt, DateTime? updatedAt
+ PlayId id, GroupId groupId, PlayBoard board, BoardVariant variant, String title, String note, List<PlayStep> steps, String? createdBy, DateTime? createdAt, DateTime? updatedAt, String? shareId
 });
 
 
@@ -1070,7 +1074,7 @@ class __$PlayCopyWithImpl<$Res>
 
 /// Create a copy of Play
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? board = null,Object? variant = null,Object? title = null,Object? note = null,Object? steps = null,Object? createdBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? board = null,Object? variant = null,Object? title = null,Object? note = null,Object? steps = null,Object? createdBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,Object? shareId = freezed,}) {
   return _then(_Play(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as PlayId,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -1082,7 +1086,8 @@ as String,steps: null == steps ? _self._steps : steps // ignore: cast_nullable_t
 as List<PlayStep>,createdBy: freezed == createdBy ? _self.createdBy : createdBy // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,shareId: freezed == shareId ? _self.shareId : shareId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

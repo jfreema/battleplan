@@ -62,6 +62,10 @@ class LinkService {
     path: page.startsWith('/') ? page : '/$page',
   );
 
+  /// A shared play's public link (BOARD-6): `https://<host>/p/<shareId>`,
+  /// which Hosting hands to the `playPage` function.
+  Uri play(String shareId) => site('/p/$shareId');
+
   /// A calendar link's feed (SCHED-11): `https://<host>/cal/<token>.ics`,
   /// which Hosting hands to the `calendarFeed` function (ARCH §6.15).
   Uri calendarFeed(String token) => site('/cal/$token.ics');

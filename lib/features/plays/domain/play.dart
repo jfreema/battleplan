@@ -118,6 +118,9 @@ abstract class Play with _$Play {
     String? createdBy,
     DateTime? createdAt,
     DateTime? updatedAt,
+
+    /// Its public link's ID while it's shared (BOARD-6): `/p/<shareId>`.
+    String? shareId,
   }) = _Play;
 }
 

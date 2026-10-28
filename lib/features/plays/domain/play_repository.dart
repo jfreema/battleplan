@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 
@@ -18,4 +20,16 @@ abstract interface class PlayRepository {
   Future<void> update(PlayId id, PlayDraft draft);
 
   Future<void> delete(PlayId id);
+
+  /// Shares a play by a public link (BOARD-6), with [image], a PNG of its
+  /// last step, for the link's preview. Returns the link's ID, the same
+  /// each time for the same play.
+  Future<String> share(PlayId id, {Uint8List? image});
+
+  /// Takes a play's link down.
+  Future<void> stopSharing(PlayId id);
+
+  /// A shared play by its link's ID, signed in or not; null if it isn't
+  /// shared (anymore).
+  Future<PlayDraft?> sharedPlay(String shareId);
 }

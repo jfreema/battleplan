@@ -86,3 +86,5 @@ export {
   resolvePlayerClaim,
 } from './players/handlers.js';
 export { onPlayerUpdated } from './players/triggers.js';
+export { playPage, sharePlay } from './plays/handlers.js';
+export { onPlayWritten } from './plays/triggers.js';

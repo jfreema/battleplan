@@ -891,7 +891,7 @@ service cloud.firestore {
     }
     function validPlay(p) {
       return p.keys().hasOnly(['groupId', 'board', 'variant', 'title', 'note', 'steps',
-            'createdBy', 'createdAt', 'updatedAt'])
+            'createdBy', 'createdAt', 'updatedAt', 'shareId'])
         && p.board in ['baseball', 'basketball', 'soccer', 'football', 'blank']
         && p.variant in ['full', 'half']
         && p.title is string && p.title.trim().size() > 0 && p.title.size() <= 80
@@ -910,11 +910,20 @@ service cloud.firestore {
       allow create: if playEditorOk(incoming().groupId)
         && incoming().createdBy == uid()
         && incoming().createdAt == request.time
+        // Only sharePlay shares a play (BOARD-6).
+        && !('shareId' in incoming())
         && validPlay(incoming());
       allow update: if playEditorOk(resource.data.groupId)
         && onlyChanges(['board', 'variant', 'title', 'note', 'steps', 'updatedAt'])
         && validPlay(incoming());
       allow delete: if playEditorOk(resource.data.groupId);
+    }
+
+    // A shared play (BOARD-6): a public copy of a play's drawing, name, and
+    // note, which anyone with its link reads, signed in or not. Only the
+    // sharePlay function writes it; its ID is the key, so it's never listed.
+    match /sharedPlays/{shareId} {
+      allow get: if true;
     }
 
     // ---- Documents, notifications, safety, admin --------------------------
