@@ -79,6 +79,11 @@ gcloud projects add-iam-policy-binding "$PROJECT" \
   --member="serviceAccount:service-$NUMBER@gcp-sa-firebasestorage.iam.gserviceaccount.com" \
   --role=roles/firebaserules.firestoreServiceAgent --condition=None >/dev/null
 
+# The web app loads photos with fetch, so the bucket must allow our sites
+# (CORS); without it every photo in the browser is a black box.
+say "Storage CORS for the web app (tools/storage-cors.json)"
+gcloud storage buckets update "gs://$BUCKET" --cors-file=tools/storage-cors.json >/dev/null
+
 say "Resend API key in Secret Manager (copied from dev)"
 if ! gcloud secrets describe RESEND_API_KEY --project "$PROJECT" >/dev/null 2>&1; then
   gcloud secrets versions access latest --secret=RESEND_API_KEY --project "$DEV" |
