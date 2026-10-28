@@ -70,7 +70,6 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https" android:host="${appLinkHost}"/>
                 <data android:pathPrefix="/join/"/>
-                <data android:pathPrefix="/p/"/>
                 <data android:pathPrefix="/activate"/>
                 <data android:pathPrefix="/emaillogin"/>
                 <data android:pathPrefix="/g/"/>

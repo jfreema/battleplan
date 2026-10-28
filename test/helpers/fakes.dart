@@ -3763,49 +3763,4 @@ class FakePlayRepository implements PlayRepository {
     plays.removeWhere((p) => p.id == id);
     _changes.add(null);
   }
-
-  /// Shared plays by their link's ID (BOARD-6), as anyone reads them.
-  final Map<String, PlayDraft> shared = {};
-
-  /// The pictures sent with each share.
-  final List<Uint8List?> shareImages = [];
-
-  @override
-  Future<String> share(PlayId id, {Uint8List? image}) async {
-    calls.add('share ${id.value}');
-    if (failure case final f?) throw f;
-    shareImages.add(image);
-    final i = plays.indexWhere((p) => p.id == id);
-    final play = plays[i];
-    final shareId = play.shareId ?? 'share${id.value}'.padRight(12, '0');
-    shared[shareId] = (
-      board: play.board,
-      variant: play.variant,
-      title: play.title,
-      note: play.note,
-      steps: play.steps,
-    );
-    plays[i] = play.copyWith(shareId: shareId);
-    _changes.add(null);
-    return shareId;
-  }
-
-  @override
-  Future<void> stopSharing(PlayId id) async {
-    calls.add('stop sharing ${id.value}');
-    if (failure case final f?) throw f;
-    final i = plays.indexWhere((p) => p.id == id);
-    shared.remove(plays[i].shareId);
-    plays[i] = plays[i].copyWith(shareId: null);
-    _changes.add(null);
-  }
-
-  /// Fails reading a shared play, as offline.
-  AppFailure? sharedFailure;
-
-  @override
-  Future<PlayDraft?> sharedPlay(String shareId) async {
-    if (sharedFailure case final f?) throw f;
-    return shared[shareId];
-  }
 }

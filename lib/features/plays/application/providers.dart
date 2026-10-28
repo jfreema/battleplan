@@ -33,9 +33,3 @@ class WhiteboardRevision extends _$WhiteboardRevision {
 
   void bump() => state++;
 }
-
-/// A shared play by its link's ID (BOARD-6), for anyone with the link;
-/// null if it isn't shared (anymore).
-@riverpod
-Future<PlayDraft?> sharedPlay(Ref ref, String shareId) =>
-    ref.watch(playRepositoryProvider).sharedPlay(shareId);

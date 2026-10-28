@@ -29,8 +29,7 @@
     "calendarLinks": "calendarLinks",
     "teamCalendars": "teamCalendars",
     "answerLinks": "answerLinks",
-    "assignments": "assignments",
-    "sharedPlays": "sharedPlays"
+    "assignments": "assignments"
   },
   "enums": {
     "userStatus": [
@@ -225,8 +224,6 @@
     "playNoteMax": 1000,
     "playStepsMax": 10,
     "playElementsMax": 150,
-    "playSharesPerUserPerHour": 30,
-    "sharedPlayImageBytesMax": 1000000,
     "playPointsMax": 64,
     "playLabelMax": 12,
     "playTextMax": 200,

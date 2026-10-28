@@ -98,9 +98,7 @@ List<Override> buildOverrides({
   importRepositoryProvider.overrideWithValue(
     FunctionsImportRepository(functions, storage),
   ),
-  playRepositoryProvider.overrideWithValue(
-    FirestorePlayRepository(firestore, functions),
-  ),
+  playRepositoryProvider.overrideWithValue(FirestorePlayRepository(firestore)),
   whiteboardStoreProvider.overrideWithValue(PrefsWhiteboardStore(prefs)),
   linkServiceProvider.overrideWithValue(LinkService.forEnv(isProd: env.isProd)),
   browserInfoProvider.overrideWithValue(

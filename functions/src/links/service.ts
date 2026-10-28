@@ -32,8 +32,3 @@ export function teamUrl(groupId: string): string {
 export function activateUrl(): string {
   return appUrl('/activate');
 }
-
-/** https://<host>/p/<shareId> (BOARD-6): a shared play's public link. */
-export function playShareUrl(shareId: string): string {
-  return `https://${linkHost()}/p/${shareId}`;
-}

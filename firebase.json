@@ -88,13 +88,6 @@
         }
       },
       {
-        "source": "/p/**",
-        "function": {
-          "functionId": "playPage",
-          "region": "us-central1"
-        }
-      },
-      {
         "source": "/app/**",
         "destination": "/app/index.html"
       }

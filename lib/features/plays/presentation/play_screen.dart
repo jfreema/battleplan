@@ -16,21 +16,17 @@ import 'package:battleplan/features/plays/application/providers.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 import 'package:battleplan/features/plays/domain/play_gif.dart';
 import 'package:battleplan/features/plays/domain/play_rules.dart';
-import 'package:battleplan/features/plays/domain/shared_play.dart';
 import 'package:battleplan/features/plays/presentation/play_board.dart';
 import 'package:battleplan/features/plays/presentation/play_image.dart';
 import 'package:battleplan/features/plays/presentation/step_player.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// One play, for everyone on the team (BOARD-3, BOARD-4): the board, step
 /// by step, and its notes, with Post to chat and Save as GIF under it
-/// (BOARD-5). Admins edit, duplicate, and delete it, and share it by a
-/// public link (BOARD-6).
+/// (BOARD-5). Admins edit, duplicate, and delete it.
 class PlayScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, required this.playId, super.key});
 
@@ -51,9 +47,6 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
 
   /// While the GIF is being made: how far along, 0 to 1.
   double? _gifProgress;
-
-  /// While sharing: the picture is drawn and the link made.
-  bool _sharing = false;
 
   @override
   void dispose() {
@@ -164,95 +157,6 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
     }
   }
 
-  /// Shares the play by its public link (BOARD-6), which shows only the
-  /// play, with a picture of its last step for the link's preview (drawn
-  /// without roster players' names). A phone opens the share sheet; a
-  /// browser shows the link with Share and Copy link, since it shares and
-  /// copies only straight from a tap.
-  Future<void> _share(Play play) async {
-    if (_sharing) return;
-    final l10n = AppLocalizations.of(context);
-    setState(() => _sharing = true);
-    try {
-      final image = await playImage(publicPlay(play));
-      final shareId = await ref
-          .read(playRepositoryProvider)
-          .share(play.id, image: image.bytes);
-      final link = ref.read(linkServiceProvider).play(shareId);
-      final subject = l10n.playShareSubject(play.title);
-      if (!kIsWeb &&
-          await ref.read(sharerProvider).shareLink(link, subject: subject)) {
-        return;
-      }
-      if (mounted) await _showLink(link, subject);
-    } on Object {
-      if (mounted) showAppSnackBar(context, l10n.playShareFailed);
-    } finally {
-      if (mounted) setState(() => _sharing = false);
-    }
-  }
-
-  /// The play's link, to share or copy with a tap.
-  Future<void> _showLink(Uri link, String subject) {
-    final l10n = AppLocalizations.of(context);
-    return showDialog<void>(
-      context: context,
-      builder: (dialog) => AlertDialog(
-        title: Text(l10n.playShareLink),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SelectableText(link.toString()),
-            const SizedBox(height: Space.sm),
-            Text(l10n.playShareReady),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              Navigator.of(dialog).pop();
-              final shared = await ref
-                  .read(sharerProvider)
-                  .shareLink(link, subject: subject);
-              if (shared) return;
-              await Clipboard.setData(ClipboardData(text: link.toString()));
-              if (mounted) showAppSnackBar(context, l10n.linkCopied);
-            },
-            child: Text(l10n.share),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.of(dialog).pop();
-              await Clipboard.setData(ClipboardData(text: link.toString()));
-              if (mounted) showAppSnackBar(context, l10n.linkCopied);
-            },
-            child: Text(l10n.copyLink),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _stopSharing(Play play) async {
-    final l10n = AppLocalizations.of(context);
-    final ok = await showConfirmDialog(
-      context,
-      title: l10n.playStopSharingTitle(play.title),
-      message: l10n.playStopSharingBody,
-      confirmLabel: l10n.playStopSharing,
-      cancelLabel: l10n.cancel,
-      destructive: true,
-    );
-    if (!ok || !mounted) return;
-    try {
-      await ref.read(playRepositoryProvider).stopSharing(play.id);
-      if (mounted) showAppSnackBar(context, l10n.playStoppedSharing);
-    } on AppFailure {
-      if (mounted) showAppSnackBar(context, l10n.playStopSharingFailed);
-    }
-  }
-
   Future<void> _duplicate(Play play) async {
     final l10n = AppLocalizations.of(context);
     final uid = ref.read(authUserProvider).value?.uid;
@@ -336,7 +240,6 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
               onSelected: (v) => unawaited(switch (v) {
                 'board' => _toWhiteboard(play),
                 'copy' => _duplicate(play),
-                'unshare' => _stopSharing(play),
                 _ => _delete(play),
               }),
               itemBuilder: (_) => [
@@ -345,11 +248,6 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                   child: Text(l10n.playToWhiteboard),
                 ),
                 PopupMenuItem(value: 'copy', child: Text(l10n.playDuplicate)),
-                if (play.shareId != null)
-                  PopupMenuItem(
-                    value: 'unshare',
-                    child: Text(l10n.playStopSharing),
-                  ),
                 PopupMenuItem(value: 'delete', child: Text(l10n.playDelete)),
               ],
             ),
@@ -424,8 +322,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                       ),
                     ],
                   );
-            // Post to chat for the team's members, Save as GIF for
-            // everyone (BOARD-5), and Share link for admins (BOARD-6).
+            // Post to chat for the team's members, and Save as GIF for
+            // everyone (BOARD-5).
             final making = _gifProgress != null;
             final actions = Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -460,16 +358,6 @@ class _PlayScreenState extends ConsumerState<PlayScreen>
                         : const Icon(AppIcons.download),
                     label: Text(making ? l10n.playMakingGif : l10n.playSaveGif),
                   ),
-                  if (canEdit)
-                    OutlinedButton.icon(
-                      onPressed: _sharing
-                          ? null
-                          : () => unawaited(_share(play)),
-                      icon: const Icon(AppIcons.share),
-                      label: Text(
-                        _sharing ? l10n.playSharing : l10n.playShareLink,
-                      ),
-                    ),
                 ],
               ),
             );
