@@ -71,6 +71,14 @@ if ! gcloud storage buckets describe "gs://$BUCKET" >/dev/null 2>&1; then
   echo
 fi
 
+# Storage rules check team membership in Firestore (DEVELOPMENT.md): without
+# this role every chat photo, team logo, and document upload is refused.
+say "Storage rules may read Firestore"
+NUMBER=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
+gcloud projects add-iam-policy-binding "$PROJECT" \
+  --member="serviceAccount:service-$NUMBER@gcp-sa-firebasestorage.iam.gserviceaccount.com" \
+  --role=roles/firebaserules.firestoreServiceAgent --condition=None >/dev/null
+
 say "Resend API key in Secret Manager (copied from dev)"
 if ! gcloud secrets describe RESEND_API_KEY --project "$PROJECT" >/dev/null 2>&1; then
   gcloud secrets versions access latest --secret=RESEND_API_KEY --project "$DEV" |
