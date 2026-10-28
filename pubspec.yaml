@@ -82,6 +82,7 @@ flutter:
     - assets/fonts/fredoka/OFL.txt
     - assets/fonts/nunito/OFL.txt
     - assets/fonts/barlow_condensed/OFL.txt
+    - assets/fonts/black_ops_one/OFL.txt
     # Jared's Venmo card, for Buy Jared a coffee (TEAM-5, About).
     - assets/about/venmo.png
   fonts:
@@ -107,6 +108,9 @@ flutter:
           weight: 800
         - asset: assets/fonts/nunito/Nunito-Black.ttf
           weight: 900
+    - family: Black Ops One
+      fonts:
+        - asset: assets/fonts/black_ops_one/BlackOpsOne-Regular.ttf
     - family: Barlow Condensed
       fonts:
         - asset: assets/fonts/barlow_condensed/BarlowCondensed-ExtraBoldItalic.ttf

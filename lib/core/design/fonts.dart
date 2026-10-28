@@ -12,6 +12,10 @@ abstract final class AppFonts {
 
   /// Body text, messages, and inputs.
   static const String body = 'Nunito';
+
+  /// Stencil stickers, like the tag under the team's name: capitals only,
+  /// never under 12 px.
+  static const String sticker = 'Black Ops One';
 }
 
 /// Each bundled family and where its license ships (pubspec `assets`).
@@ -19,6 +23,7 @@ const Map<String, String> fontLicenseAssets = {
   AppFonts.display: 'assets/fonts/lilita_one/OFL.txt',
   AppFonts.label: 'assets/fonts/fredoka/OFL.txt',
   AppFonts.body: 'assets/fonts/nunito/OFL.txt',
+  AppFonts.sticker: 'assets/fonts/black_ops_one/OFL.txt',
   arenaFont: 'assets/fonts/barlow_condensed/OFL.txt',
 };
 
