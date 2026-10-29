@@ -87,9 +87,9 @@ class _TeamShellState extends ConsumerState<TeamShell> {
       builder: (sheetContext) => TeamSwitcherList(
         currentGroupId: groupId,
         onSelect: (id) => Navigator.of(sheetContext).pop(id),
-        onCreateTeam: () {
+        onCreate: (kind) {
           Navigator.of(sheetContext).pop();
-          unawaited(context.push('/g/new'));
+          unawaited(context.push(createPath(kind)));
         },
         onJoinTeam: () {
           Navigator.of(sheetContext).pop();
@@ -148,7 +148,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
             TeamSwitcherList(
               currentGroupId: groupId,
               onSelect: (id) => context.go('/g/${id.value}/chat'),
-              onCreateTeam: () => unawaited(context.push('/g/new')),
+              onCreate: (kind) => unawaited(context.push(createPath(kind))),
               onJoinTeam: () => unawaited(context.push('/join')),
             ),
           ],

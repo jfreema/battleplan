@@ -106,7 +106,7 @@ Check the counts after any edit: the short description must stay at 80 character
 Battleplan is team chat and scheduling for sports teams. Teams are invite-only, so the demo account above already owns a team with players, events, chat, a poll, documents, and a play.
 
 How to get in:
-• Sign in with Google on the sign-in screen, then tap Join a team and enter the demo team's code: [the demo team's code, typed here in the Play Console only].
+• Sign in with Google on the sign-in screen, then tap Join a Team or Group and enter the demo team's code: [the demo team's code, typed here in the Play Console only].
 • Or use the demo account above. Email sign-in isn't on the sign-in screen, which offers Google and Apple; it's at getbattleplan.app/emaillogin. On the device, tap that address (for example from a note or an email) and the app opens its email sign-in.
 
 Where things are:

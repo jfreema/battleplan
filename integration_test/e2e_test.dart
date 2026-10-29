@@ -187,7 +187,7 @@ void main() {
     await tap(tester, find.widgetWithText(FilledButton, 'Continue'));
 
     // Joins with the code (INV-6), as a coach or another adult (PLAYER-3).
-    await tap(tester, find.text('Join a team'));
+    await tap(tester, find.text('Join a Team or Group'));
     await type(tester, find.byType(TextField), code);
     await tap(tester, find.widgetWithText(FilledButton, 'Join team'));
     await tap(tester, find.widgetWithText(FilledButton, 'Join team'));

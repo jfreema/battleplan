@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -56,7 +57,13 @@ class TeamsScreen extends ConsumerWidget {
         SettingsRow(
           icon: AppIcons.add,
           title: l10n.createTeam,
-          onTap: () => unawaited(context.push('/g/new')),
+          onTap: () => unawaited(context.push(createPath(GroupKind.team))),
+        ),
+        // A basic group (TEAM-14), below teams.
+        SettingsRow(
+          icon: AppIcons.group,
+          title: l10n.createGroupTitle,
+          onTap: () => unawaited(context.push(createPath(GroupKind.group))),
         ),
       ],
     );

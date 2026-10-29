@@ -226,9 +226,9 @@ void main() {
     ) async {
       await pumpChat(tester, theme: ThemePreference.dark);
       await press(tester, LogicalKeyboardKey.keyK, control: true);
-      expect(find.text('Join a team'), findsOneWidget);
+      expect(find.text('Join a Team or Group'), findsOneWidget);
       await press(tester, LogicalKeyboardKey.escape);
-      expect(find.text('Join a team'), findsNothing);
+      expect(find.text('Join a Team or Group'), findsNothing);
     });
 
     testWidgets('Esc closes dialogs and menus', (tester) async {

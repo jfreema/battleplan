@@ -71,7 +71,7 @@ void main() {
         groupRepo: groupRepo,
         photoPicker: FakePhotoPicker()..profilePhoto = tinyPng,
       );
-      await tester.tap(find.text('Create a team'));
+      await tester.tap(find.text('Create a Team'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).first, 'Thunder');
       await tester.tap(find.text('Add logo'));
@@ -79,7 +79,7 @@ void main() {
       expect(find.text('Change logo'), findsOneWidget);
       await tester.tap(find.bySemanticsLabel('No color'));
       await tester.pump();
-      final create = find.widgetWithText(FilledButton, 'Create a team');
+      final create = find.widgetWithText(FilledButton, 'Create a Team');
       await tester.ensureVisible(create);
       await tester.tap(create);
       await tester.pumpAndSettle();
@@ -99,10 +99,10 @@ void main() {
         auth: FakeAuthRepository(user: coach),
         groupRepo: groupRepo,
       );
-      await tester.tap(find.text('Create a team'));
+      await tester.tap(find.text('Create a Team'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).first, 'Hawks');
-      final create = find.widgetWithText(FilledButton, 'Create a team');
+      final create = find.widgetWithText(FilledButton, 'Create a Team');
       await tester.ensureVisible(create);
       await tester.tap(create);
       await tester.pumpAndSettle();
@@ -118,10 +118,10 @@ void main() {
         auth: FakeAuthRepository(user: coach),
         groupRepo: groupRepo,
       );
-      await tester.tap(find.text('Create a team'));
+      await tester.tap(find.text('Create a Team'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).first, 'Hawks');
-      final create = find.widgetWithText(FilledButton, 'Create a team');
+      final create = find.widgetWithText(FilledButton, 'Create a Team');
       await tester.ensureVisible(create);
       await tester.tap(create);
       await tester.pump();

@@ -18,13 +18,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// TEAM-1 at `/g/new`: a team or a basic group (TEAM-14), the name, the
-/// sport (teams only), an optional logo, an optional color, time zone, and
-/// an optional description. The creator becomes the owner and goes on to
+/// TEAM-1 at `/g/new`: a team's name, sport, an optional logo, an optional
+/// color, time zone, and an optional description; or, at
+/// `/g/new?kind=group` (TEAM-14), a basic group's name and color only, kept
+/// as simple as it can be: the time zone is the device's, and the rest can
+/// be added in Group admin. The creator becomes the owner and goes on to
 /// "Invite your team". A team has players, guardians, and Plays (§6.3); a
 /// group is everyone answering for themselves.
 class CreateTeamScreen extends ConsumerStatefulWidget {
-  const new({super.key});
+  const new({this.kind = GroupKind.team, super.key});
+
+  /// A team, from Create a Team, or a group, from Create a Group.
+  final GroupKind kind;
 
   @override
   ConsumerState<CreateTeamScreen> createState() => _CreateTeamScreenState();
@@ -43,8 +48,7 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _description = TextEditingController();
-  // A team unless Group is picked (TEAM-14).
-  GroupKind _kind = GroupKind.team;
+  GroupKind get _kind => widget.kind;
   // Baseball is the default; any sport can be picked.
   Sport _sport = Sport.baseball;
   // Optional (TEAM-1): null is no color.
@@ -185,30 +189,15 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Team or Group (TEAM-14), with what each is for.
-                          SegmentedButton<GroupKind>(
-                            showSelectedIcon: false,
-                            segments: [
-                              ButtonSegment(
-                                value: GroupKind.team,
-                                label: Text(l10n.kindTeam),
-                              ),
-                              ButtonSegment(
-                                value: GroupKind.group,
-                                label: Text(l10n.kindGroup),
-                              ),
-                            ],
-                            selected: {_kind},
-                            onSelectionChanged: (k) =>
-                                setState(() => _kind = k.first),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            group ? l10n.kindGroupHelp : l10n.kindTeamHelp,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: card.textMuted),
-                          ),
-                          const SizedBox(height: 9),
+                          // What a group is for (TEAM-14).
+                          if (group) ...[
+                            Text(
+                              l10n.kindGroupHelp,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: card.textMuted),
+                            ),
+                            const SizedBox(height: 9),
+                          ],
                           LabeledField(
                             label: group
                                 ? l10n.groupNameLabel
@@ -256,96 +245,106 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 9),
-                          LabeledField(
-                            label: l10n.timeZoneLabel,
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _timeZone,
-                              isExpanded: true,
-                              style: field?.copyWith(color: card.textPrimary),
-                              decoration: gumdropField(),
-                              icon: Icon(
-                                AppIcons.expand,
-                                size: 24,
-                                color: card.textMuted,
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                Corners.input,
-                              ),
-                              items: [
-                                for (final z in _zones)
-                                  DropdownMenuItem(
-                                    value: z,
-                                    child: Text(
-                                      TimeZoneNames.label(z),
-                                      overflow: TextOverflow.ellipsis,
+                          // A group takes the device's time zone (TEAM-14).
+                          if (!group) ...[
+                            const SizedBox(height: 9),
+                            LabeledField(
+                              label: l10n.timeZoneLabel,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: _timeZone,
+                                isExpanded: true,
+                                style: field?.copyWith(color: card.textPrimary),
+                                decoration: gumdropField(),
+                                icon: Icon(
+                                  AppIcons.expand,
+                                  size: 24,
+                                  color: card.textMuted,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  Corners.input,
+                                ),
+                                items: [
+                                  for (final z in _zones)
+                                    DropdownMenuItem(
+                                      value: z,
+                                      child: Text(
+                                        TimeZoneNames.label(z),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                              ],
-                              onChanged: (z) => setState(() => _timeZone = z),
+                                ],
+                                onChanged: (z) => setState(() => _timeZone = z),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 9),
-                          LabeledField(
-                            label: l10n.teamDescriptionLabel,
-                            child: TextFormField(
-                              controller: _description,
-                              maxLength: 500,
-                              maxLines: 3,
-                              minLines: 1,
-                              style: field,
-                              decoration: gumdropField(),
+                            const SizedBox(height: 9),
+                            LabeledField(
+                              label: l10n.teamDescriptionLabel,
+                              child: TextFormField(
+                                controller: _description,
+                                maxLength: 500,
+                                maxLines: 3,
+                                minLines: 1,
+                                style: field,
+                                decoration: gumdropField(),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       );
                     },
                   ),
                 ),
-                const SizedBox(height: 12),
-                PageHeading(l10n.teamLogoLabel),
-                const SizedBox(height: 10),
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: Space.sm,
-                  runSpacing: Space.sm,
-                  children: [
-                    if (_logo != null) ...[
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(color: c.divider, spreadRadius: 2),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
-                          child: Image.memory(
-                            _logo!,
-                            width: 58,
-                            height: 58,
-                            fit: BoxFit.cover,
-                            semanticLabel: l10n.teamLogoLabel,
+                // A group's logo can be added later (TEAM-14).
+                if (_kind == GroupKind.team) ...[
+                  const SizedBox(height: 12),
+                  PageHeading(l10n.teamLogoLabel),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: Space.sm,
+                    runSpacing: Space.sm,
+                    children: [
+                      if (_logo != null) ...[
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(color: c.divider, spreadRadius: 2),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: Image.memory(
+                              _logo!,
+                              width: 58,
+                              height: 58,
+                              fit: BoxFit.cover,
+                              semanticLabel: l10n.teamLogoLabel,
+                            ),
                           ),
                         ),
+                      ],
+                      OutlinedButton.icon(
+                        onPressed: () => unawaited(_pickLogo()),
+                        icon: const Icon(AppIcons.photo),
+                        label: Text(
+                          _logo == null ? l10n.addLogo : l10n.changeLogo,
+                        ),
                       ),
+                      if (_logo != null)
+                        TextButton(
+                          onPressed: () => setState(() => _logo = null),
+                          child: Text(l10n.removeLogo),
+                        ),
                     ],
-                    OutlinedButton.icon(
-                      onPressed: () => unawaited(_pickLogo()),
-                      icon: const Icon(AppIcons.photo),
-                      label: Text(
-                        _logo == null ? l10n.addLogo : l10n.changeLogo,
-                      ),
-                    ),
-                    if (_logo != null)
-                      TextButton(
-                        onPressed: () => setState(() => _logo = null),
-                        child: Text(l10n.removeLogo),
-                      ),
-                  ],
-                ),
+                  ),
+                ],
                 const SizedBox(height: 12),
-                PageHeading(l10n.teamColorLabel),
+                PageHeading(
+                  _kind == GroupKind.group
+                      ? l10n.groupColorLabel
+                      : l10n.teamColorLabel,
+                ),
                 const SizedBox(height: 10),
                 // Optional (TEAM-1): "No color" first.
                 TeamColorGrid(
@@ -355,7 +354,9 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  l10n.teamColorTintNote,
+                  _kind == GroupKind.group
+                      ? l10n.groupColorTintNote
+                      : l10n.teamColorTintNote,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: c.textMutedOnPage,
                   ),

@@ -244,8 +244,8 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 Sign in
  ├─ First time → Profile setup (name, photo, 18+ confirmation, terms)
  ├─ The top: tabs Teams | Profile
- │    ├─ Teams:    your teams (each opens where you left it) · Join a team ·
- │    │            Create a team · Messages · notification bell
+ │    ├─ Teams:    your teams (each opens where you left it) · Join a Team or
+ │    │            Group · Create a Team · Create a Group · Messages · bell
  │    │            (no team yet: a welcome with Join and Create)
  │    └─ Profile:  your photo and name · Themes · Settings ·
  │                 Admin panel** · Sign out              (** super admins)
@@ -272,7 +272,7 @@ Sign in
   - Your teams, most recent activity first.
   - Each team shows its logo, name, sport icon, last-message preview, unread message count, and muted icon.
   - Archived teams collapse into an "Archived" section.
-  - At the bottom: **Join a team** (code or QR) and **Create a team**.
+  - At the bottom: **Join a Team or Group** (code or QR), **Create a Team**, and below it **Create a Group** (TEAM-14); the team switcher has the same three.
 - **Switching** keeps you on the same tab: from one team's Schedule to the other team's Schedule.
 - **Memory.** The app remembers the last team and tab on each device, or Teams when you left from there, and opens there. Teams opens each team at the tab you last had in it.
 
@@ -421,7 +421,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).
   - **Create a team** shows a spinner while it saves. One that fails, or gets no answer within 30 seconds, says so ("Couldn't create the team. Check your connection and try again."), and is reported. Trying again is safe: a first request that arrives late and the retry make one team between them.
-  - First, **Team** or **Group** (TEAM-14). A team has a roster of players and works for adult and youth teams alike (§6.3); a group is for anything else, with no players. Group hides Sport, and the screen says Create a group.
+  - **Create a Team** and **Create a Group** (TEAM-14) are separate entries. A team has a roster of players and works for adult and youth teams alike (§6.3); a group is for anything else, with no players. Create a Group asks only for the name and an optional color, as simply as it can: the time zone is the device's, and a logo and description can be added in Group admin.
   - **Goal:** create a team and share an invite in under 2 minutes.
 - **TEAM-2 · MVP · Many teams per person.**
   - A person can be on up to 100 teams and switches between them with the team switcher (§5.2).
@@ -473,7 +473,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Optional contact sharing: on their own card, members share a phone number and email with that team ("Share my phone and email"; the account's email is offered), and change them or stop sharing at any time. They appear on their card for everyone on the team with call, text, and email buttons. Each team is separate. Sharing needs an open team; stopping works even on an archived or suspended one. Leaving the team or deleting the account removes them.
 - **TEAM-11 · MVP · Players on every team.** Players, guardians, and claims are specified in §6.3 (PLAYER).
 - **TEAM-12 · v1.1 · Announcement-only mode.** Only admins can post in chat. Everyone can still react, vote, and RSVP.
-- **TEAM-14 · v1.1 · Groups beside teams.** (Owner's request 2026-10-29.) Created as **Team** or **Group** (TEAM-1); a group stays a group. A group has every feature a team has (chat, schedule and RSVPs, assignments, polls, documents and photos, invites, admins, notifications, imports, calendar links) except what's about players: no roster players, guardians, claims, "Who are you here for?", coaches, player details, or **Plays**, and no sport. Everyone in a group chats and answers RSVPs for themselves, and counts are of its members ("4 going · 1 maybe"). Its roster is **People** (admins and members), its Team info says "Group · 8 members" with a group icon in Teams and the switcher, joining one goes straight to its chat, and its tabs are Chat, Schedule, and Documents. The TeamSnap import has no Players box for a group. Versions of the app before groups show a group as a team, so the server and rules refuse players, guardians, player answers, coaches, a sport, and plays in a group whatever app asks.
+- **TEAM-14 · v1.1 · Groups beside teams.** (Owner's request 2026-10-29.) Created from **Create a Team** or **Create a Group** (TEAM-1). Its owner (or a super admin) can **Make it a team** in Group admin, picking its sport: it gets players, the parents who answer for them, coaches, and Plays, keeps its people, chat, schedule, answers, and documents, its owner coaches from then on, and the chat says "Pat made this group a team" (owner's request 2026-10-29). A team can't become a group. A group is for extreme simplicity; a team has everything. A group has every feature a team has (chat, schedule and RSVPs, assignments, polls, documents and photos, invites, admins, notifications, imports, calendar links) except what's about players: no roster players, guardians, claims, "Who are you here for?", coaches, player details, or **Plays**, and no sport. Everyone in a group chats and answers RSVPs for themselves, and counts are of its members ("4 going · 1 maybe"). Its roster is **People** (admins and members), **Group info** says "Group · 8 members" and **Group admin** has no sport with a group icon in Teams and the switcher, joining one (Join group) goes straight to its chat, and its tabs are Chat, Schedule, and Documents. The TeamSnap import has no Players box for a group. Versions of the app before groups show a group as a team, so the server and rules refuse players, guardians, player answers, coaches, a sport, and plays in a group whatever app asks.
 - **TEAM-13 · Later.**
   - Join requests that need admin approval.
   - Copying a team for a new season (members and settings).

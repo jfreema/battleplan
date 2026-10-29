@@ -39,24 +39,33 @@ void main() {
   String path(WidgetTester tester) =>
       GoRouter.of(tester.element(find.byType(Scaffold).first)).state.uri.path;
 
-  testWidgets('creating a group: no sport to pick', (tester) async {
+  testWidgets('Create a Group, below Create a Team, asks only for a name '
+      'and a color', (tester) async {
     final groupRepo = FakeGroupRepository({});
     await pumpApp(
       tester,
       auth: FakeAuthRepository(user: coach),
       groupRepo: groupRepo,
     );
-    await tester.tap(find.text('Create a team'));
+    expect(find.text('Join a Team or Group'), findsOneWidget);
+    final team = tester.getTopLeft(find.text('Create a Team')).dy;
+    expect(
+      tester.getTopLeft(find.text('Create a Group')).dy,
+      greaterThan(team),
+    );
+    await tester.tap(find.text('Create a Group'));
     await tester.pumpAndSettle();
-    expect(find.text('SPORT'), findsOneWidget);
-    await tester.tap(find.text('Group'));
-    await tester.pumpAndSettle();
-    expect(find.text('Create a group'), findsNWidgets(2));
+    expect(find.text('Create a Group'), findsNWidgets(2));
     expect(find.text('GROUP NAME'), findsOneWidget);
-    expect(find.text('SPORT'), findsNothing);
+    expect(find.text('Color'), findsOneWidget);
+    // The rest waits for Group admin; the time zone is the device's.
+    for (final field in ['SPORT', 'TIME ZONE', 'DESCRIPTION (OPTIONAL)']) {
+      expect(find.text(field), findsNothing, reason: field);
+    }
+    expect(find.text('Add logo'), findsNothing);
     await tester.enterText(find.byType(TextFormField).first, 'Book club');
     await tester.pumpAndSettle();
-    final create = find.widgetWithText(FilledButton, 'Create a group');
+    final create = find.widgetWithText(FilledButton, 'Create a Group');
     await tester.ensureVisible(create);
     await tester.tap(create);
     await tester.pumpAndSettle();
@@ -98,6 +107,8 @@ void main() {
     );
     await tester.tap(find.byTooltip('Team info'));
     await tester.pumpAndSettle();
+    expect(find.widgetWithText(AppBar, 'Group info'), findsOneWidget);
+    expect(find.text('Group admin'), findsOneWidget);
     expect(find.text('Group · 3 members'), findsOneWidget);
     await tester.tap(find.text('People'));
     await tester.pumpAndSettle();
@@ -206,16 +217,71 @@ void main() {
       auth: FakeAuthRepository(user: coach),
       invites: invites,
     );
-    await tester.tap(find.text('Join a team'));
+    await tester.tap(find.text('Join a Team or Group'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'k7xp-m2qr');
     await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
     await tester.pumpAndSettle();
     expect(find.text('8 members'), findsOneWidget);
     expect(find.textContaining('Other'), findsNothing);
-    await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Join group'));
     await tester.pumpAndSettle();
     expect(invites.redeemed, ['K7XPM2QR']);
     expect(find.text('Who are you here for?'), findsNothing);
+  });
+
+  testWidgets("a group's owner makes it a team, with a sport; then it has "
+      'Plays and players', (tester) async {
+    final groupRepo = FakeGroupRepository({'c': club});
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groupRepo: groupRepo,
+      memberships: memberships,
+      size: const Size(1024, 1366),
+    );
+    expect(find.text('Plays'), findsNothing);
+    await go(tester, '/g/c/settings');
+    expect(find.widgetWithText(AppBar, 'Group admin'), findsOneWidget);
+    final make = find.text('Make it a team');
+    await tester.ensureVisible(make);
+    await tester.tap(make);
+    await tester.pumpAndSettle();
+    expect(find.text('Make Book club a team?'), findsOneWidget);
+    // Cancel changes nothing.
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(groupRepo.updates, isEmpty);
+    await tester.tap(make);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Baseball').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Soccer').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Make it a team'));
+    await tester.pumpAndSettle();
+    expect(groupRepo.updates, ['convert soccer']);
+    expect(find.text('Book club is a team now.'), findsOneWidget);
+    // Team admin now, with its sport, and no way back.
+    expect(find.widgetWithText(AppBar, 'Team admin'), findsOneWidget);
+    expect(find.text('SPORT'), findsOneWidget);
+    expect(find.text('Make it a team'), findsNothing);
+    await go(tester, '/g/c/chat');
+    expect(find.text('Plays'), findsOneWidget);
+  });
+
+  testWidgets("a group's admin who isn't its owner can't make it a team", (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'c': club},
+      memberships: [
+        testMembership('c', 'coach', role: MemberRole.admin, name: 'Coach Lee'),
+      ],
+    );
+    await go(tester, '/g/c/settings');
+    expect(find.text('Make it a team'), findsNothing);
   });
 }

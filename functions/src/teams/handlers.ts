@@ -33,6 +33,7 @@ import {
   canChangeRole,
   canRemove,
   clearTeamNotifications,
+  convertGroupToTeam,
   createGroup as create,
   deleteGroupNamed,
   teamIdFor,
@@ -283,6 +284,31 @@ export const archiveGroup = onCall(async (request) => {
     before,
     after: { archived: input.archived },
   });
+  return { ok: true };
+});
+
+/**
+ * Makes a basic group a team (TEAM-14), by its owner or a super admin, on
+ * an open group: it gets players, guardians, coaches, Plays, and [sport],
+ * keeping everything it had. Says so in the chat, and is audited. One way
+ * only: `not-a-group` for a team.
+ */
+export const convertToTeam = onCall(async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(GroupOnly.extend({ sport: z.enum(sportValues) }), request.data);
+  await requireTeamOwner(input.groupId, uid, request.auth?.token.superAdmin === true);
+  await convertGroupToTeam(input.groupId, input.sport);
+  await audit({
+    actorId: uid,
+    action: 'convertToTeam',
+    groupId: input.groupId,
+    targetType: 'group',
+    targetId: input.groupId,
+    before: { kind: 'group' },
+    after: { kind: 'team', sport: input.sport },
+  });
+  const name = await displayNameOf(uid, 'The owner');
+  await postSystemMessage(input.groupId, 'madeTeam', `${name} made this group a team`, uid);
   return { ok: true };
 });
 

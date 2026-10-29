@@ -452,6 +452,15 @@ class FakeGroupRepository implements GroupRepository {
       updates.add(archived ? 'archive' : 'restore');
 
   @override
+  Future<void> convertToTeam(GroupId id, Sport sport) async {
+    updates.add('convert ${sport.value}');
+    final group = groups[id.value];
+    if (group != null) {
+      setGroup(group.copyWith(kind: GroupKind.team, sport: sport));
+    }
+  }
+
+  @override
   Future<void> deleteGroup(GroupId id, String confirmName) async =>
       updates.add('delete $confirmName');
 

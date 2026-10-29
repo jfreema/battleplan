@@ -205,6 +205,10 @@ class FirestoreGroupRepository implements GroupRepository {
       _call('archiveGroup', {'groupId': id.value, 'archived': archived});
 
   @override
+  Future<void> convertToTeam(GroupId id, Sport sport) =>
+      _call('convertToTeam', {'groupId': id.value, 'sport': sport.value});
+
+  @override
   Future<void> deleteGroup(GroupId id, String confirmName) =>
       _call('deleteGroup', {'groupId': id.value, 'confirmName': confirmName});
 

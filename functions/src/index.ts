@@ -41,6 +41,7 @@ export {
   addMemberByEmail,
   adminSetGroupQuota,
   archiveGroup,
+  convertToTeam,
   createGroup,
   deleteGroup,
   deleteTeamMedia,

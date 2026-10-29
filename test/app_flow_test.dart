@@ -295,7 +295,7 @@ void main() {
       users: users,
     );
     expect(find.text("Welcome! Let's set up your profile"), findsOneWidget);
-    expect(find.text('Create a team'), findsNothing);
+    expect(find.text('Create a Team'), findsNothing);
     // The sign-in's name starts the name field, with no profile to read.
     expect(find.widgetWithText(TextField, 'Pat Apple'), findsOneWidget);
     // Continue makes the profile with the answers, then the app opens.
@@ -418,14 +418,14 @@ void main() {
       auth: FakeAuthRepository(user: coach),
       groupRepo: groupRepo,
     );
-    await tester.tap(find.text('Create a team'));
+    await tester.tap(find.text('Create a Team'));
     await tester.pumpAndSettle();
-    // A team unless Group is picked (TEAM-1, TEAM-14).
-    expect(find.text('Team'), findsOneWidget);
-    expect(find.text('Group'), findsOneWidget);
+    // A team's form: its sport, time zone, and logo (TEAM-1).
+    expect(find.text('SPORT'), findsOneWidget);
+    expect(find.text('TIME ZONE'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).first, 'Thunder U14');
     await tester.pumpAndSettle();
-    final create = find.widgetWithText(FilledButton, 'Create a team');
+    final create = find.widgetWithText(FilledButton, 'Create a Team');
     await tester.ensureVisible(create);
     await tester.tap(create);
     await tester.pumpAndSettle();
@@ -828,7 +828,7 @@ void main() {
       auth: FakeAuthRepository(user: coach),
       invites: invites,
     );
-    await tester.tap(find.text('Join a team'));
+    await tester.tap(find.text('Join a Team or Group'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'k7xp-m2qr');
     await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
@@ -853,7 +853,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       invites: invites,
     );
-    await tester.tap(find.text('Join a team'));
+    await tester.tap(find.text('Join a Team or Group'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'k7xp-m2qr');
     await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
@@ -899,7 +899,7 @@ void main() {
 
   testWidgets('a wrong code explains what to do', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository(user: coach));
-    await tester.tap(find.text('Join a team'));
+    await tester.tap(find.text('Join a Team or Group'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'ZZZZ-ZZZZ');
     await tester.tap(find.widgetWithText(FilledButton, 'Join team'));

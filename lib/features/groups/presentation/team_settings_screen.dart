@@ -149,6 +149,66 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     );
   }
 
+  /// Makes this basic group a team (TEAM-14), with the sport picked here.
+  /// It can't be undone, so it says what changes first.
+  Future<void> _convert(Group group) async {
+    final l10n = AppLocalizations.of(context);
+    var sport = Sport.baseball;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => StatefulBuilder(
+        builder: (dialog, setDialog) => AlertDialog(
+          title: Text(l10n.convertToTeamTitle(group.name)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l10n.convertToTeamBody),
+              const SizedBox(height: Space.md),
+              DropdownButtonFormField<Sport>(
+                initialValue: sport,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: l10n.sportLabel),
+                items: [
+                  for (final s in Sport.values)
+                    DropdownMenuItem(
+                      value: s,
+                      child: Text(
+                        sportName(l10n, s),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+                onChanged: (s) => setDialog(() => sport = s ?? sport),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialog).pop(true),
+              child: Text(l10n.convertToTeam),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await ref.read(groupRepositoryProvider).convertToTeam(group.id, sport);
+      if (mounted) showAppSnackBar(context, l10n.convertedToTeam(group.name));
+    } on AppFailure catch (e) {
+      if (!mounted) return;
+      showAppSnackBar(
+        context,
+        e is PermissionDenied ? l10n.notAllowed : l10n.convertToTeamFailed,
+      );
+    }
+  }
+
   Future<void> _delete(Group group) async {
     final l10n = AppLocalizations.of(context);
     final typed = await askText(
@@ -282,7 +342,10 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     );
 
     return Scaffold(
-      appBar: gumdropAppBar(context, title: l10n.teamAdmin),
+      appBar: gumdropAppBar(
+        context,
+        title: group.isGroup ? l10n.groupAdmin : l10n.teamAdmin,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -672,6 +735,16 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                   headingGap,
                   SettingsCard(
                     children: [
+                      // A basic group can become a team (TEAM-14); not
+                      // back.
+                      if (group.isGroup && !group.isArchived)
+                        SettingsRow(
+                          icon: AppIcons.roster,
+                          title: l10n.convertToTeam,
+                          subtitle: l10n.convertToTeamHelp,
+                          subtitleLines: 2,
+                          onTap: () => unawaited(_convert(group)),
+                        ),
                       SettingsRow(
                         icon: AppIcons.key,
                         title: l10n.transferOwnership,

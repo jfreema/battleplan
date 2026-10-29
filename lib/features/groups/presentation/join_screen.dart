@@ -264,7 +264,9 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
             onPressed: _joining ? null : () => unawaited(_join()),
             child: Text(
               signedIn
-                  ? l10n.joinTeamButton
+                  ? (preview.kind == GroupKind.group
+                        ? l10n.joinGroupButton
+                        : l10n.joinTeamButton)
                   : widget.inBrowser
                   ? l10n.continueInBrowser
                   : l10n.signInToJoin,

@@ -47,6 +47,10 @@ abstract interface class GroupRepository {
   /// Archives (read-only) or restores the team (TEAM-9). Owner only.
   Future<void> setArchived(GroupId id, {required bool archived});
 
+  /// Makes a basic group a team with [sport] (TEAM-14): players,
+  /// guardians, coaches, and Plays. Owner only; there's no way back.
+  Future<void> convertToTeam(GroupId id, Sport sport);
+
   /// Permanently deletes the team; [confirmName] must match (TEAM-9).
   Future<void> deleteGroup(GroupId id, String confirmName);
 

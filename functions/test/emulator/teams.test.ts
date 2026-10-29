@@ -164,6 +164,38 @@ describe('a basic group has no players or guardians (TEAM-14)', () => {
     expect((await members().doc('club_sam').get()).get('title')).toBe('Treasurer');
   });
 
+  it('its owner makes it a team, with a sport: one way, said in the chat, and audited', async () => {
+    await members().doc('club_pat').update({ coach: false });
+    await expect(run(teams.convertToTeam, 'ada', { groupId: 'club', sport: 'soccer' })).rejects
+      .toMatchObject({ code: 'permission-denied' });
+    await expect(run(teams.convertToTeam, 'pat', { groupId: 'club', sport: 'chess' })).rejects
+      .toMatchObject({ code: 'invalid-argument' });
+    await run(teams.convertToTeam, 'pat', { groupId: 'club', sport: 'soccer' });
+    const club = await groups().doc('club').get();
+    expect(club.get('kind')).toBe('team');
+    expect(club.get('sport')).toBe('soccer');
+    // The owner coaches now, as a team's does by default.
+    expect((await members().doc('club_pat').get()).get('coach')).toBeUndefined();
+    const lines = await db().collection(Collections.messages).where('groupId', '==', 'club').get();
+    expect(lines.docs.map((d) => d.get('text'))).toContain('Pat Owner made this group a team');
+    const audits = await db().collection(Collections.auditLogs).where('action', '==', 'convertToTeam').get();
+    expect(audits.docs[0]?.get('after')).toEqual({ kind: 'team', sport: 'soccer' });
+    // Now it takes players; and a team can't be made a team again.
+    await run(players.addPlayers, 'pat', { groupId: 'club', players: [{ name: 'Leo', guardians: [] }] });
+    await expect(run(teams.convertToTeam, 'pat', { groupId: 'club', sport: 'soccer' })).rejects
+      .toMatchObject({ code: 'failed-precondition', message: 'not-a-group' });
+    await expect(run(teams.convertToTeam, 'pat', { groupId: 'open', sport: 'soccer' })).rejects
+      .toMatchObject({ message: 'not-a-group' });
+  });
+
+  it('a super admin can make one a team; an archived one waits to be restored', async () => {
+    await run(teams.convertToTeam, 'root', { groupId: 'club', sport: 'baseball' }, ROOT);
+    expect((await groups().doc('club').get()).get('kind')).toBe('team');
+    await team('closed', { kind: 'group', sport: 'other', archivedAt: Timestamp.now() });
+    await expect(run(teams.convertToTeam, 'pat', { groupId: 'closed', sport: 'soccer' })).rejects
+      .toMatchObject({ message: 'team-archived' });
+  });
+
   it("an invite's preview says it's a group", async () => {
     const link = await run<{ code: string }>(invites.getTeamInvite, 'pat', { groupId: 'club' });
     expect(await previewInvite(link.code)).toMatchObject({ name: 'club', kind: 'group' });

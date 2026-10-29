@@ -510,7 +510,15 @@ GoRouter router(Ref ref) {
           ),
         ],
       ),
-      GoRoute(path: '/g/new', builder: (_, _) => const CreateTeamScreen()),
+      // Create a Team, or with `?kind=group`, Create a Group (TEAM-14).
+      GoRoute(
+        path: '/g/new',
+        builder: (_, state) => CreateTeamScreen(
+          kind: state.uri.queryParameters['kind'] == 'group'
+              ? GroupKind.group
+              : GroupKind.team,
+        ),
+      ),
       GoRoute(
         path: '/g/:groupId',
         redirect: (_, state) {

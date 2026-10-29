@@ -54,8 +54,8 @@ void main() {
     expect(find.text('Thunder'), findsOneWidget);
     expect(find.text('Cyclone'), findsOneWidget);
     expect(find.text('Sam: Field 3 is open'), findsOneWidget);
-    expect(find.text('Join a team'), findsOneWidget);
-    expect(find.text('Create a team'), findsOneWidget);
+    expect(find.text('Join a Team or Group'), findsOneWidget);
+    expect(find.text('Create a Team'), findsOneWidget);
     // The inbox and notifications cover every team, so they're here too.
     expect(find.byTooltip('Notifications'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -104,7 +104,7 @@ void main() {
       memberships: memberships,
       prefs: prefs,
     );
-    expect(find.text('Join a team'), findsOneWidget);
+    expect(find.text('Join a Team or Group'), findsOneWidget);
     await tester.tap(find.text('Cyclone'));
     await tester.pumpAndSettle();
     expect(prefs.lastTeamRoute, '/g/b/chat');
@@ -119,12 +119,12 @@ void main() {
   testWidgets('Teams welcomes someone with no team yet', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository(user: coach));
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
-    expect(find.text('Join a team'), findsOneWidget);
-    expect(find.text('Create a team'), findsOneWidget);
+    expect(find.text('Join a Team or Group'), findsOneWidget);
+    expect(find.text('Create a Team'), findsOneWidget);
     // The old welcome page's address lands here too.
     await go(tester, '/welcome');
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
-    await tester.tap(find.text('Create a team'));
+    await tester.tap(find.text('Create a Team'));
     await tester.pumpAndSettle();
     expect(find.byType(CreateTeamScreen), findsOneWidget);
   });

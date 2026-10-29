@@ -1,3 +1,4 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -42,7 +43,7 @@ class TeamSwitcherList extends ConsumerWidget {
   const new({
     required this.currentGroupId,
     required this.onSelect,
-    required this.onCreateTeam,
+    required this.onCreate,
     required this.onJoinTeam,
     super.key,
   });
@@ -50,10 +51,11 @@ class TeamSwitcherList extends ConsumerWidget {
   final GroupId? currentGroupId;
   final ValueChanged<GroupId> onSelect;
 
-  /// Opens Create a team (the caller closes the sheet first).
-  final VoidCallback onCreateTeam;
+  /// Opens Create a Team or Create a Group (TEAM-14), [createPath] (the
+  /// caller closes the sheet first).
+  final ValueChanged<GroupKind> onCreate;
 
-  /// Opens Join a team (the caller closes the sheet first).
+  /// Opens Join a Team or Group (the caller closes the sheet first).
   final VoidCallback onJoinTeam;
 
   @override
@@ -168,10 +170,19 @@ class TeamSwitcherList extends ConsumerWidget {
         ListTile(
           leading: const Icon(AppIcons.add),
           title: Text(l10n.createTeam),
-          onTap: onCreateTeam,
+          onTap: () => onCreate(GroupKind.team),
+        ),
+        ListTile(
+          leading: const Icon(AppIcons.group),
+          title: Text(l10n.createGroupTitle),
+          onTap: () => onCreate(GroupKind.group),
         ),
         const SizedBox(height: Space.lg),
       ],
     );
   }
 }
+
+/// Where Create a Team or Create a Group (TEAM-14) opens.
+String createPath(GroupKind kind) =>
+    kind == GroupKind.group ? '/g/new?kind=group' : '/g/new';

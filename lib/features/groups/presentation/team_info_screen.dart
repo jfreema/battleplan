@@ -42,7 +42,10 @@ class TeamInfoScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: gumdropAppBar(context, title: l10n.teamInfo),
+      appBar: gumdropAppBar(
+        context,
+        title: group?.isGroup ?? false ? l10n.groupInfo : l10n.teamInfo,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -115,7 +118,13 @@ class TeamInfoScreen extends ConsumerWidget {
                 const SizedBox(height: 10),
                 SettingsCard(
                   children: [
-                    row('settings', AppIcons.settings, l10n.teamAdmin),
+                    row(
+                      'settings',
+                      AppIcons.settings,
+                      group?.isGroup ?? false
+                          ? l10n.groupAdmin
+                          : l10n.teamAdmin,
+                    ),
                     row('media', AppIcons.media, l10n.mediaMenu),
                     row('reports', AppIcons.report, l10n.reportsMenu),
                     // Bringing the schedule over from another app (SPEC

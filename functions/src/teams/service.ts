@@ -282,6 +282,32 @@ export async function setMemberRole(groupId: string, uid: string, role: 'admin' 
 }
 
 /**
+ * Makes a basic group a team (TEAM-14): it gets players, guardians,
+ * coaches, Plays, and [sport]. Its people, chat, schedule, answers, and
+ * documents stay as they are, and everyone's answers so far stay their
+ * own. Its owner coaches from now on, as a team's does by default. A
+ * team can't become a group (its players would have nowhere to go), so
+ * anything but a group is `failed-precondition`, `not-a-group`.
+ */
+export async function convertGroupToTeam(groupId: string, sport: string): Promise<void> {
+  const ref = db().collection(Collections.groups).doc(groupId);
+  await db().runTransaction(async (tx) => {
+    const group = await tx.get(ref);
+    if (!group.exists) throw new HttpsError('not-found', 'No such team.');
+    if (group.get('kind') !== 'group') throw new HttpsError('failed-precondition', 'not-a-group');
+    // A group's owner was made with coach: false; a team's coaches unless
+    // it says otherwise (TEAM-3).
+    const ownerId = group.get('ownerId') as string | undefined;
+    const owner = ownerId ? db().collection(Collections.groupMembers).doc(groupMemberId(groupId, ownerId)) : null;
+    const ownerDoc = owner ? await tx.get(owner) : null;
+    tx.update(ref, { kind: 'team', sport, updatedAt: FieldValue.serverTimestamp() });
+    if (owner && ownerDoc?.exists && ownerDoc.get('coach') === false) {
+      tx.update(owner, { coach: FieldValue.delete() });
+    }
+  });
+}
+
+/**
  * Archives (read-only) or restores a team (TEAM-9). Archiving a team that's
  * already archived keeps the date it was first archived. Returns whether it
  * was archived before, and since when (ISO 8601), for the audit log
