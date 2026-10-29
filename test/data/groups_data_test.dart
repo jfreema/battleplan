@@ -105,6 +105,28 @@ void main() {
       }
     });
 
+    test(
+      'creates a basic group through createGroup, saying so (TEAM-14)',
+      () async {
+        functions.handlers['createGroup'] = (_) => {'groupId': 'g1'};
+        final repo = FirestoreGroupRepository(db, functions, storage);
+        await repo.createGroup(
+          name: 'Book club',
+          sport: Sport.other,
+          timeZone: 'UTC',
+          kind: GroupKind.group,
+        );
+        expect(functions.lastData('createGroup'), {
+          'name': 'Book club',
+          'kind': 'group',
+          'sport': 'other',
+          'timeZone': 'UTC',
+        });
+        expect(groupFromFirestore('g1', {'kind': 'group'}).isGroup, isTrue);
+        expect(groupFromFirestore('t1', {}).hasPlayers, isTrue);
+      },
+    );
+
     test('creates a team through createGroup', () async {
       functions.handlers['createGroup'] = (_) => {'groupId': 'new1'};
       final repo = FirestoreGroupRepository(db, functions, storage);

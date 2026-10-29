@@ -81,7 +81,9 @@ const AddPlayersInput = z.object({
 export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(AddPlayersInput, request.data);
-  const role = await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true);
+  const role = await requireTeamAdmin(input.groupId, uid, request.auth?.token.superAdmin === true, {
+    players: true,
+  });
   // Super admins see player details but never change them (PLAYER-12),
   // unless they're an admin of this team themselves.
   if (role === 'superAdmin' && input.players.some((p) => p.dateOfBirth)) {
@@ -157,7 +159,8 @@ async function requireTeamMember(
 ): Promise<{ role: string; teamName: string }> {
   const role = (await roleOf(groupId, uid)) ?? (superAdmin && !onTeam ? 'superAdmin' : null);
   if (!role) throw new HttpsError('permission-denied', 'Not a member.');
-  const group = await requireOpenTeam(groupId, superAdmin);
+  // Claims, new players, and guardians: never in a basic group (TEAM-14).
+  const group = await requireOpenTeam(groupId, superAdmin, { players: true });
   return { role, teamName: group.get('name') as string };
 }
 

@@ -41,7 +41,8 @@ List<SharedTeam> sharedTeamsOf(
     if (theirsOn(t) case final theirs?)
       if (isMe ||
           t.group.settings.membersCanSeePeople ||
-          theirs.isCoach ||
+          // Nobody coaches a basic group (TEAM-14).
+          (t.group.hasPlayers && theirs.isCoach) ||
           t.membership.isAdmin ||
           t.group.id == fromTeam)
         (team: t, theirs: theirs),
@@ -49,9 +50,14 @@ List<SharedTeam> sharedTeamsOf(
 
 /// What someone is on one team (TEAM-15): Coach, Owner or Admin, their
 /// title, and who's who from their players (PLAYER-8), or Member.
-String roleLineOf(AppLocalizations l10n, Membership m) {
+String roleLineOf(
+  AppLocalizations l10n,
+  Membership m, {
+  bool hasPlayers = true,
+}) {
   final parts = [
-    if (m.isCoach) l10n.memberCoach,
+    // Nobody coaches a basic group (TEAM-14).
+    if (hasPlayers && m.isCoach) l10n.memberCoach,
     ?roleBadge(l10n, m.role),
     if (m.title?.trim().isNotEmpty ?? false) m.title!.trim(),
     ?whoFromSummary(l10n, m.playerSummary),
@@ -104,8 +110,8 @@ class PersonScreen extends ConsumerWidget {
     );
     // Coaches first, then the rest as the switcher orders them.
     final rows = [
-      ...shared.where((s) => s.theirs.isCoach),
-      ...shared.where((s) => !s.theirs.isCoach),
+      ...shared.where((s) => s.team.group.hasPlayers && s.theirs.isCoach),
+      ...shared.where((s) => !(s.team.group.hasPlayers && s.theirs.isCoach)),
     ];
 
     // Their name and photo: from any team we share, else from a
@@ -264,7 +270,13 @@ class PersonScreen extends ConsumerWidget {
                               size: 40,
                             ),
                             title: Text(row.team.group.name),
-                            subtitle: Text(roleLineOf(l10n, row.theirs)),
+                            subtitle: Text(
+                              roleLineOf(
+                                l10n,
+                                row.theirs,
+                                hasPlayers: row.team.group.hasPlayers,
+                              ),
+                            ),
                             // Their card on that team: its contact info and
                             // the actions I have there (TEAM-3, TEAM-10).
                             onTap: () => unawaited(

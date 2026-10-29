@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
@@ -165,13 +166,21 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     // the one that's showing (design §3.2).
     Widget Function({required bool selected}) glyph(IconData icon) =>
         ({required selected}) => Icon(icon);
+    // A basic group has no Plays (TEAM-14); it's the last tab, so the
+    // others keep their places. A link to a group's Plays goes to its chat.
+    final plays = (viewing ? viewed : team?.group)?.hasPlayers ?? true;
+    if (!plays && navigationShell.currentIndex == teamTabs.indexOf('plays')) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.go('/g/${groupId.value}/chat');
+      });
+    }
     final destinations = <(Widget Function({required bool selected}), String)>[
       (({required selected}) => const ChatIcon(), l10n.tabChat),
       (glyph(AppIcons.schedule), l10n.tabSchedule),
       (glyph(AppIcons.documents), l10n.tabDocuments),
       // Drawn: no icon font has a coach's play, an O, its route, and an X
       // (BOARD-1).
-      (({required selected}) => const PlaysIcon(), l10n.tabPlays),
+      if (plays) (({required selected}) => const PlaysIcon(), l10n.tabPlays),
     ];
     // The Chat tab shows this team's unread count (CHAT-9).
     final unread = viewing
@@ -228,7 +237,10 @@ class _TeamShellState extends ConsumerState<TeamShell> {
               FloatingRail(
                 child: NavigationRail(
                   backgroundColor: Colors.transparent,
-                  selectedIndex: navigationShell.currentIndex,
+                  selectedIndex: math.min(
+                    navigationShell.currentIndex,
+                    destinations.length - 1,
+                  ),
                   onDestinationSelected: navigationShell.goBranch,
                   destinations: [
                     for (final (i, (icon, label)) in destinations.indexed)
@@ -286,7 +298,10 @@ class _TeamShellState extends ConsumerState<TeamShell> {
           bottomNavigationBar: FloatingTabBar(
             child: NavigationBar(
               backgroundColor: Colors.transparent,
-              selectedIndex: navigationShell.currentIndex,
+              selectedIndex: math.min(
+                navigationShell.currentIndex,
+                destinations.length - 1,
+              ),
               onDestinationSelected: (i) => navigationShell.goBranch(
                 i,
                 initialLocation: i == navigationShell.currentIndex,

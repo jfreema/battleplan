@@ -253,13 +253,18 @@ class _CardRsvps extends ConsumerWidget {
                   .watch(myRsvpsProvider(groupId, from: startOfDay(zone, now)))
                   .value?[event.id.value] ??
               const <String, Rsvp>{};
-    final players = ref.watch(playersProvider(groupId)).value?.length ?? 0;
+    // A basic group's members answer for themselves (TEAM-14): who hasn't
+    // answered is out of everyone, not the players.
+    final players = group.hasPlayers
+        ? ref.watch(playersProvider(groupId)).value?.length ?? 0
+        : 0;
     final allowMaybe = group.settings.allowMaybe;
-    final counts = event.rsvpCounts;
-    final unanswered = math.max(
-      0,
-      players - counts.going - counts.maybe - counts.notGoing,
-    );
+    final unanswered = group.hasPlayers
+        ? math.max(0, players - event.rsvpCounts.answered)
+        : math.max(
+            0,
+            group.memberCount - (event.rsvpCounts + event.staffCounts).answered,
+          );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,

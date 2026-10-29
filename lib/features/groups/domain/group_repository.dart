@@ -69,6 +69,7 @@ abstract interface class GroupRepository {
     required String name,
     required Sport sport,
     required String timeZone,
+    GroupKind kind = GroupKind.team,
     String? color,
     String? description,
     String? requestId,

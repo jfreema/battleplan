@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -159,10 +160,12 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
           .read(inviteRepositoryProvider)
           .redeem(widget.code);
       // Every team asks "Who are you here for?" next (PLAYER-3); people an
-      // admin already linked to a player skip it there.
+      // admin already linked to a player skip it there. A basic group has
+      // no players (TEAM-14): its chat.
+      final group = _preview?.kind == GroupKind.group;
       if (mounted) {
         context.go(
-          !result.alreadyMember
+          !result.alreadyMember && !group
               ? '/g/${result.groupId}/who'
               : '/g/${result.groupId}/chat',
         );
@@ -218,7 +221,12 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
           Text(preview.name, style: theme.textTheme.headlineMedium),
           const SizedBox(height: Space.xs),
           Text(
-            '${sportName(l10n, preview.sport)} · ${l10n.membersCount(preview.memberCount)}',
+            [
+              // A group has no sport (TEAM-14).
+              if (preview.kind != GroupKind.group)
+                sportName(l10n, preview.sport),
+              l10n.membersCount(preview.memberCount),
+            ].join(' · '),
             style: theme.textTheme.bodyLarge,
           ),
           if (preview.invitedBy != null) ...[

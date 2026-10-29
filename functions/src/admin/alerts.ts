@@ -47,10 +47,11 @@ export async function alertNewAccount(account: {
   );
 }
 
-/** Someone created a team (TEAM-1). */
+/** Someone created a team (TEAM-1) or a basic group (TEAM-14). */
 export async function alertTeamCreated(team: {
   groupId: string;
   name: string;
+  kind?: string;
   sport: string;
   ownerName: string;
   ownerEmail: string;

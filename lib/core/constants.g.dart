@@ -204,6 +204,7 @@ enum ThemePreference {
 
 enum GroupKind {
   team('team'),
+  group('group'),
   direct('direct');
 
   const GroupKind(this.value);

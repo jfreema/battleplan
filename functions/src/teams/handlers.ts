@@ -46,6 +46,8 @@ import { setGroupQuota, updateStorageAlert } from './storage.js';
 
 const CreateGroupInput = z.object({
   name: z.string().trim().min(1).max(Limits.groupNameMax),
+  // A team (the default, and all older apps send) or a basic group (TEAM-14).
+  kind: z.enum(['team', 'group']).optional(),
   sport: z.enum(sportValues),
   color: teamColor.optional(),
   timeZone: z.string().min(1).max(64),
@@ -109,6 +111,7 @@ export const createGroup = onCall({ secrets: [resendApiKey] }, async (request) =
   await alertTeamCreated({
     groupId,
     name: input.name,
+    kind: input.kind ?? 'team',
     sport: input.sport,
     ownerName: (profile?.displayName as string | undefined) ?? user.displayName ?? 'Someone',
     ownerEmail: user.email ?? '',
@@ -142,7 +145,11 @@ export const updateGroupMember = onCall(async (request) => {
     update.role = input.role;
   }
   if (input.title !== undefined) update.title = input.title || null;
-  if (input.coach !== undefined) update.coach = input.coach;
+  // Nobody coaches a basic group (TEAM-14); an older app may still ask.
+  if (input.coach !== undefined) {
+    const group = await db().collection(Collections.groups).doc(input.groupId).get();
+    if (group.get('kind') !== 'group') update.coach = input.coach;
+  }
   if (Object.keys(update).length === 0) return { ok: true };
   await ref.update(update);
   await audit({

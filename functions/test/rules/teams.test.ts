@@ -194,6 +194,11 @@ describe('pending players (PLAYER-3, PLAYER-4)', () => {
     await assertFails(as('frank').doc('players/new').set({ groupId: 'teamB', displayName: 'X', displayNameLower: 'x', status: 'active' }));
   });
 
+  it("a basic group's stray player can't be changed (TEAM-14)", async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamB').update({ kind: 'group' }));
+    await assertFails(as('carol').doc('players/zoe').update({ displayName: 'Zoey', displayNameLower: 'zoey' }));
+  });
+
   it("lets a member who is the player edit their own details, not their link's relation", async () => {
     await env.withSecurityRulesDisabled((ctx) =>
       ctx.firestore().doc('playerGuardians/liam_frank').set({ playerId: 'liam', groupId: 'teamB', uid: 'frank', relation: 'self' }),

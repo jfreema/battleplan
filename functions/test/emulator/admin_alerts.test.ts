@@ -99,6 +99,24 @@ describe('teams (ADMIN-9)', () => {
     expect(alerts()[0].text).toContain(`/admin/audit?group=${groupId}`);
   });
 
+  it('says when it is a basic group, which has no sport (TEAM-14)', async () => {
+    await run(ensureUserProfile, 'pat', { setup });
+    mail.sent.length = 0;
+    const { groupId } = await run<{ groupId: string }>(createGroup, 'pat', {
+      name: 'Book club',
+      kind: 'group',
+      sport: 'soccer',
+      timeZone: 'America/Chicago',
+    });
+    expect(alerts().map((m) => m.subject)).toEqual(['New group: Book club']);
+    expect(alerts()[0].text).toContain('created Book club, a group.');
+    const group = await db().collection(Collections.groups).doc(groupId).get();
+    expect(group.get('kind')).toBe('group');
+    expect(group.get('sport')).toBe('other');
+    // Its owner isn't a coach.
+    expect((await db().collection(Collections.groupMembers).doc(`${groupId}_pat`).get()).get('coach')).toBe(false);
+  });
+
   it('says when a super admin deleted it', async () => {
     const groupId = await create();
     mail.sent.length = 0;

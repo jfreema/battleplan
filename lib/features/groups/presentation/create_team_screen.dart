@@ -18,10 +18,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// TEAM-1 at `/g/new`: name, sport, an optional logo, an
-/// optional color, time zone, and an optional description. The creator
-/// becomes the owner and goes on to "Invite your team". There's one kind
-/// of team, so there's no type to pick: every team has players (§6.3).
+/// TEAM-1 at `/g/new`: a team or a basic group (TEAM-14), the name, the
+/// sport (teams only), an optional logo, an optional color, time zone, and
+/// an optional description. The creator becomes the owner and goes on to
+/// "Invite your team". A team has players, guardians, and Plays (§6.3); a
+/// group is everyone answering for themselves.
 class CreateTeamScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -42,6 +43,8 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _description = TextEditingController();
+  // A team unless Group is picked (TEAM-14).
+  GroupKind _kind = GroupKind.team;
   // Baseball is the default; any sport can be picked.
   Sport _sport = Sport.baseball;
   // Optional (TEAM-1): null is no color.
@@ -98,7 +101,8 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
           .read(groupRepositoryProvider)
           .createGroup(
             name: _name.text.trim(),
-            sport: _sport,
+            kind: _kind,
+            sport: _kind == GroupKind.group ? Sport.other : _sport,
             timeZone: _timeZone ?? 'America/Chicago',
             color: _color == null ? null : _hex(_color!),
             description: _description.text.trim(),
@@ -156,7 +160,12 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     final error = _error;
     final c = GumdropColors.of(context);
     return Scaffold(
-      appBar: gumdropAppBar(context, title: l10n.createTeam),
+      appBar: gumdropAppBar(
+        context,
+        title: _kind == GroupKind.group
+            ? l10n.createGroupTitle
+            : l10n.createTeam,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
@@ -172,11 +181,38 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                     builder: (context) {
                       final card = GumdropColors.of(context);
                       final field = gumdropFieldText(context);
+                      final group = _kind == GroupKind.group;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // Team or Group (TEAM-14), with what each is for.
+                          SegmentedButton<GroupKind>(
+                            showSelectedIcon: false,
+                            segments: [
+                              ButtonSegment(
+                                value: GroupKind.team,
+                                label: Text(l10n.kindTeam),
+                              ),
+                              ButtonSegment(
+                                value: GroupKind.group,
+                                label: Text(l10n.kindGroup),
+                              ),
+                            ],
+                            selected: {_kind},
+                            onSelectionChanged: (k) =>
+                                setState(() => _kind = k.first),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            group ? l10n.kindGroupHelp : l10n.kindTeamHelp,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: card.textMuted),
+                          ),
+                          const SizedBox(height: 9),
                           LabeledField(
-                            label: l10n.teamNameLabel,
+                            label: group
+                                ? l10n.groupNameLabel
+                                : l10n.teamNameLabel,
                             child: TextFormField(
                               controller: _name,
                               maxLength: Limits.groupNameMax,
@@ -188,36 +224,38 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                                   : null,
                             ),
                           ),
-                          const SizedBox(height: 9),
-                          LabeledField(
-                            label: l10n.sportLabel,
-                            child: DropdownButtonFormField<Sport>(
-                              initialValue: _sport,
-                              isExpanded: true,
-                              style: field?.copyWith(color: card.textPrimary),
-                              decoration: gumdropField(),
-                              icon: Icon(
-                                AppIcons.expand,
-                                size: 24,
-                                color: card.textMuted,
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                Corners.input,
-                              ),
-                              items: [
-                                for (final s in Sport.values)
-                                  DropdownMenuItem(
-                                    value: s,
-                                    child: Text(
-                                      sportName(l10n, s),
-                                      overflow: TextOverflow.ellipsis,
+                          if (!group) ...[
+                            const SizedBox(height: 9),
+                            LabeledField(
+                              label: l10n.sportLabel,
+                              child: DropdownButtonFormField<Sport>(
+                                initialValue: _sport,
+                                isExpanded: true,
+                                style: field?.copyWith(color: card.textPrimary),
+                                decoration: gumdropField(),
+                                icon: Icon(
+                                  AppIcons.expand,
+                                  size: 24,
+                                  color: card.textMuted,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  Corners.input,
+                                ),
+                                items: [
+                                  for (final s in Sport.values)
+                                    DropdownMenuItem(
+                                      value: s,
+                                      child: Text(
+                                        sportName(l10n, s),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                              ],
-                              onChanged: (s) =>
-                                  setState(() => _sport = s ?? _sport),
+                                ],
+                                onChanged: (s) =>
+                                    setState(() => _sport = s ?? _sport),
+                              ),
                             ),
-                          ),
+                          ],
                           const SizedBox(height: 9),
                           LabeledField(
                             label: l10n.timeZoneLabel,
@@ -336,7 +374,11 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
                   onPressed: _saving || _timeZone == null
                       ? null
                       : () => unawaited(_create()),
-                  child: Text(l10n.createTeam),
+                  child: Text(
+                    _kind == GroupKind.group
+                        ? l10n.createGroupTitle
+                        : l10n.createTeam,
+                  ),
                 ),
               ],
             ),

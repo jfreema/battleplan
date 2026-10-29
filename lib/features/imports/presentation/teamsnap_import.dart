@@ -56,8 +56,14 @@ class _TeamSnapImportState extends ConsumerState<TeamSnapImportForm> {
   static const ImportSource _source = ImportSource.teamsnap;
 
   bool _events = true;
-  bool _players = true;
   bool _documents = true;
+
+  /// Players, unless unticked; a basic group has none (TEAM-14).
+  bool _playersChosen = true;
+  bool get _players =>
+      _playersChosen &&
+      (ref.read(groupProvider(widget.groupId)).value?.hasPlayers ?? true);
+  set _players(bool v) => _playersChosen = v;
 
   final _link = TextEditingController();
   CalendarFile? _ics;
@@ -400,12 +406,13 @@ class _TeamSnapImportState extends ConsumerState<TeamSnapImportForm> {
           title: l10n.importEvents,
           subtitle: l10n.importEventsHelp,
         ),
-        box(
-          value: _players,
-          onChanged: (v) => _players = v,
-          title: l10n.importPlayers,
-          subtitle: l10n.importPlayersHelp,
-        ),
+        if (ref.watch(groupProvider(widget.groupId)).value?.hasPlayers ?? true)
+          box(
+            value: _players,
+            onChanged: (v) => _players = v,
+            title: l10n.importPlayers,
+            subtitle: l10n.importPlayersHelp,
+          ),
         box(
           value: _documents,
           onChanged: (v) => _documents = v,

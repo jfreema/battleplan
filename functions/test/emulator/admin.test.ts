@@ -468,6 +468,15 @@ describe('editing a team the super admin is not on (ADMIN-3)', () => {
     });
   });
 
+  it("keeps a basic group without a sport (TEAM-14)", async () => {
+    await groups().doc('thunder').update({ kind: 'group', sport: 'other' });
+    await expect(asRoot(admin.adminUpdateGroup, { groupId: 'thunder', sport: 'soccer' })).rejects.toMatchObject({
+      message: 'no-sport',
+    });
+    await asRoot(admin.adminUpdateGroup, { groupId: 'thunder', name: 'Book club', sport: 'other' });
+    expect((await groups().doc('thunder').get()).get('name')).toBe('Book club');
+  });
+
   it('saves an uploaded logo and chat background', async () => {
     await upload('groups/thunder/avatar/1.jpg');
     await upload('groups/thunder/theme/1.jpg');

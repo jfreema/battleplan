@@ -24,6 +24,7 @@ class FunctionsInviteRepository implements InviteRepository {
       groupId: d['groupId'] as String,
       name: d['name'] as String,
       sport: Sport.tryParse(d['sport'] as String?) ?? Sport.other,
+      kind: GroupKind.tryParse(d['kind'] as String?) ?? GroupKind.team,
       memberCount: (d['memberCount'] as num?)?.toInt() ?? 0,
       color: _color(d['color'] as String?),
       logoUrl: d['logoUrl'] as String?,

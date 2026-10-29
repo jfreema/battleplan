@@ -85,8 +85,8 @@ abstract class Group with _$Group {
     required Sport sport,
     required int memberCount,
 
-    /// One kind of team (TEAM-1); a missing kind reads as a team, so a
-    /// basic group can be added later (TEAM-14).
+    /// A team, with players (TEAM-1), or a basic group without players,
+    /// guardians, or Plays (TEAM-14); a missing kind reads as a team.
     @Default(GroupKind.team) GroupKind kind,
     String? description,
 
@@ -134,6 +134,13 @@ abstract class Group with _$Group {
 
   /// A direct conversation between two people, not a team (CHAT-19).
   bool get isDirect => kind == GroupKind.direct;
+
+  /// A basic group (TEAM-14): everyone is here for themselves, with no
+  /// players, guardians, or Plays.
+  bool get isGroup => kind == GroupKind.group;
+
+  /// It has a roster of players, with guardians and Plays: a team.
+  bool get hasPlayers => kind == GroupKind.team;
 
   /// In a direct conversation, the person who isn't [me].
   String? otherThan(String? me) => uids.where((u) => u != me).firstOrNull;

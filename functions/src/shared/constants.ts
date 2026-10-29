@@ -163,7 +163,7 @@ export type UserStatus = (typeof userStatusValues)[number];
 export const themePreferenceValues = ['system', 'light', 'dark', 'candy', 'arena', 'olive'] as const;
 export type ThemePreference = (typeof themePreferenceValues)[number];
 
-export const groupKindValues = ['team', 'direct'] as const;
+export const groupKindValues = ['team', 'group', 'direct'] as const;
 export type GroupKind = (typeof groupKindValues)[number];
 
 export const sportValues = ['baseball', 'basketball', 'football', 'hockey', 'lacrosse', 'soccer', 'softball', 'volleyball', 'other'] as const;

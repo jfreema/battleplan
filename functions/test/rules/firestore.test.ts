@@ -519,6 +519,15 @@ describe('one RSVP per event and participant', () => {
   });
 });
 
+describe('a team or a basic group (TEAM-1, TEAM-14)', () => {
+  it('a group keeps its kind, and has no sport to set', async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ kind: 'group', sport: 'other' }));
+    await assertFails(as('alice').doc('groups/teamA').update({ sport: 'soccer', updatedAt: now() }));
+    await assertFails(as('alice').doc('groups/teamA').update({ kind: 'team', updatedAt: now() }));
+    await assertSucceeds(as('alice').doc('groups/teamA').update({ name: 'Book club', nameLower: 'book club', updatedAt: now() }));
+  });
+});
+
 describe('one team type (TEAM-1)', () => {
   it('has no type to switch: admins set neither teamType nor kind', async () => {
     await assertFails(as('alice').doc('groups/teamA').update({ teamType: 'youth', updatedAt: now() }));

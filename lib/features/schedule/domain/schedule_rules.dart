@@ -71,7 +71,9 @@ bool canEmailRsvpReminder(
   DateTime? now,
 }) {
   final at = now ?? DateTime.now();
-  return canRepost(event, group, me, superAdmin: superAdmin, now: at) &&
+  // It emails players' people, so not in a basic group yet (TEAM-14).
+  return group.hasPlayers &&
+      canRepost(event, group, me, superAdmin: superAdmin, now: at) &&
       event.takesRsvps &&
       event.startAt.isAfter(at) &&
       !event.deadlinePassedAt(at);

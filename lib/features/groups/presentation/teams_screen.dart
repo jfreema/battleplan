@@ -185,10 +185,13 @@ class _TeamCard extends ConsumerWidget {
             ),
             const SizedBox(width: Space.xs),
             Icon(
-              AppIcons.sport(group.sport),
+              // A basic group's own icon (TEAM-14).
+              group.hasPlayers ? AppIcons.sport(group.sport) : AppIcons.group,
               size: 16,
               color: c.textMuted,
-              semanticLabel: sportName(l10n, group.sport),
+              semanticLabel: group.hasPlayers
+                  ? sportName(l10n, group.sport)
+                  : l10n.kindGroup,
             ),
           ],
         ),

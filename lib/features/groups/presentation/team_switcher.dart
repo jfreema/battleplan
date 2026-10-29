@@ -84,9 +84,14 @@ class TeamSwitcherList extends ConsumerWidget {
             ),
             const SizedBox(width: Space.xs),
             Icon(
-              AppIcons.sport(t.group.sport),
+              // A basic group's own icon (TEAM-14).
+              t.group.hasPlayers
+                  ? AppIcons.sport(t.group.sport)
+                  : AppIcons.group,
               size: 16,
-              semanticLabel: sportName(l10n, t.group.sport),
+              semanticLabel: t.group.hasPlayers
+                  ? sportName(l10n, t.group.sport)
+                  : l10n.kindGroup,
             ),
           ],
         ),

@@ -20,6 +20,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/players/application/providers.dart';
+import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
@@ -669,8 +670,15 @@ class _RsvpSection extends ConsumerWidget {
     final rsvps =
         ref.watch(eventRsvpsProvider(group.id, event.id)).value ?? const [];
     final roster = ref.watch(rosterProvider(group.id)).value ?? const [];
-    final players = ref.watch(playersProvider(group.id)).value ?? const [];
-    final links = ref.watch(guardianLinksProvider(group.id)).value ?? const [];
+    // A basic group has no players: everyone answers for themselves
+    // (TEAM-14).
+    final players = group.hasPlayers
+        ? ref.watch(playersProvider(group.id)).value ?? const <Player>[]
+        : const <Player>[];
+    final links = group.hasPlayers
+        ? ref.watch(guardianLinksProvider(group.id)).value ??
+              const <GuardianLink>[]
+        : const <GuardianLink>[];
     final viewer = me;
     final answering = ref.watch(myParticipantsProvider(group.id));
     final mine = viewer == null
@@ -1286,7 +1294,9 @@ Future<void> _setRsvpForSomeone(
 ) async {
   final l10n = AppLocalizations.of(context);
   final roster = ref.read(rosterProvider(group.id)).value ?? const [];
-  final players = ref.read(playersProvider(group.id)).value ?? const [];
+  final players = group.hasPlayers
+      ? ref.read(playersProvider(group.id)).value ?? const <Player>[]
+      : const <Player>[];
   // Admins set anyone's answer, members included (SCHED-4).
   final everyone = (
     main: [for (final p in players) playerParticipant(p)],

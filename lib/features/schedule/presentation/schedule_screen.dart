@@ -333,7 +333,10 @@ class ScheduleEventRow extends ConsumerWidget {
     final g = event.groupId;
     final group = ref.watch(groupProvider(g)).value;
     final participants = ref.watch(myParticipantsProvider(g));
-    final players = ref.watch(playersProvider(g)).value?.length ?? 0;
+    // A basic group counts its members (TEAM-14).
+    final players = (group?.hasPlayers ?? true)
+        ? ref.watch(playersProvider(g)).value?.length ?? 0
+        : 0;
     final answers =
         ref
             .watch(

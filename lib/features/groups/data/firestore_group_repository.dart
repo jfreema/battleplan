@@ -38,6 +38,7 @@ class FirestoreGroupRepository implements GroupRepository {
     required String name,
     required Sport sport,
     required String timeZone,
+    GroupKind kind = GroupKind.team,
     String? color,
     String? description,
     String? requestId,
@@ -47,6 +48,7 @@ class FirestoreGroupRepository implements GroupRepository {
           .httpsCallable('createGroup')
           .call<Map<String, dynamic>>({
             'name': name,
+            if (kind != GroupKind.team) 'kind': kind.value,
             'sport': sport.value,
             'timeZone': timeZone,
             'color': ?color,

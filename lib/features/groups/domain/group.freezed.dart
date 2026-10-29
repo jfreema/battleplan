@@ -858,8 +858,8 @@ as String?,
 /// @nodoc
 mixin _$Group {
 
- GroupId get id; String get name; Sport get sport; int get memberCount;/// One kind of team (TEAM-1); a missing kind reads as a team, so a
-/// basic group can be added later (TEAM-14).
+ GroupId get id; String get name; Sport get sport; int get memberCount;/// A team, with players (TEAM-1), or a basic group without players,
+/// guardians, or Plays (TEAM-14); a missing kind reads as a team.
  GroupKind get kind; String? get description;/// ARGB team color (one of `teamColorValues`).
  int? get color; DateTime? get lastMessageAt; String? get lastMessagePreview; DateTime? get archivedAt; DateTime? get suspendedAt; String? get ownerId; String? get photoPath; String get timeZone; GroupSettings get settings;/// Bytes stored under `groups/{id}/`, kept by the Storage triggers.
  int get storageBytes;/// The team's limit: the platform's default, 200 MB unless platform
@@ -1121,8 +1121,8 @@ class _Group extends Group {
 @override final  String name;
 @override final  Sport sport;
 @override final  int memberCount;
-/// One kind of team (TEAM-1); a missing kind reads as a team, so a
-/// basic group can be added later (TEAM-14).
+/// A team, with players (TEAM-1), or a basic group without players,
+/// guardians, or Plays (TEAM-14); a missing kind reads as a team.
 @override@JsonKey() final  GroupKind kind;
 @override final  String? description;
 /// ARGB team color (one of `teamColorValues`).

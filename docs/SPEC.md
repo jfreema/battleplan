@@ -421,7 +421,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).
   - **Create a team** shows a spinner while it saves. One that fails, or gets no answer within 30 seconds, says so ("Couldn't create the team. Check your connection and try again."), and is reported. Trying again is safe: a first request that arrives late and the retry make one team between them.
-  - There's one kind of team, with no team type to pick. Every team has a roster of players, and works for adult and youth teams alike (§6.3). Teams are stored with kind `team`, so a basic group without players can be added later (TEAM-14).
+  - First, **Team** or **Group** (TEAM-14). A team has a roster of players and works for adult and youth teams alike (§6.3); a group is for anything else, with no players. Group hides Sport, and the screen says Create a group.
   - **Goal:** create a team and share an invite in under 2 minutes.
 - **TEAM-2 · MVP · Many teams per person.**
   - A person can be on up to 100 teams and switches between them with the team switcher (§5.2).
@@ -473,6 +473,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Optional contact sharing: on their own card, members share a phone number and email with that team ("Share my phone and email"; the account's email is offered), and change them or stop sharing at any time. They appear on their card for everyone on the team with call, text, and email buttons. Each team is separate. Sharing needs an open team; stopping works even on an archived or suspended one. Leaving the team or deleting the account removes them.
 - **TEAM-11 · MVP · Players on every team.** Players, guardians, and claims are specified in §6.3 (PLAYER).
 - **TEAM-12 · v1.1 · Announcement-only mode.** Only admins can post in chat. Everyone can still react, vote, and RSVP.
+- **TEAM-14 · v1.1 · Groups beside teams.** (Owner's request 2026-10-29.) Created as **Team** or **Group** (TEAM-1); a group stays a group. A group has every feature a team has (chat, schedule and RSVPs, assignments, polls, documents and photos, invites, admins, notifications, imports, calendar links) except what's about players: no roster players, guardians, claims, "Who are you here for?", coaches, player details, or **Plays**, and no sport. Everyone in a group chats and answers RSVPs for themselves, and counts are of its members ("4 going · 1 maybe"). Its roster is **People** (admins and members), its Team info says "Group · 8 members" with a group icon in Teams and the switcher, joining one goes straight to its chat, and its tabs are Chat, Schedule, and Documents. The TeamSnap import has no Players box for a group. Versions of the app before groups show a group as a team, so the server and rules refuse players, guardians, player answers, coaches, a sport, and plays in a group whatever app asks.
 - **TEAM-13 · Later.**
   - Join requests that need admin approval.
   - Copying a team for a new season (members and settings).
@@ -1502,7 +1503,7 @@ The web parts are built before the Phase 1 go-live (ROADMAP). Native-only parts,
 10. Attendance history and CSV exports of RSVPs and the roster for admins
 11. A branded invite page with the team's logo and color (`/join`)
 
-**After v1.1:** group types beyond Team (TEAM-14). Keep the standard **Team** and add a more basic **Group** for general use (no roster, players, or RSVP counts by default), chosen at creation. Teams store `kind: 'team'` from the one-type change on, so adding Group needs no migration.
+**Built 2026-10-29:** groups beside teams (TEAM-14).
 
 ---
 

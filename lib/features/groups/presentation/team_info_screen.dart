@@ -61,8 +61,14 @@ class TeamInfoScreen extends ConsumerWidget {
                           children: [
                             CardHeading(group.name),
                             Text(
-                              '${sportName(l10n, group.sport)} · '
-                              '${l10n.membersCount(group.memberCount)}',
+                              [
+                                // A basic group has no sport (TEAM-14).
+                                if (group.hasPlayers)
+                                  sportName(l10n, group.sport)
+                                else
+                                  l10n.kindGroup,
+                                l10n.membersCount(group.memberCount),
+                              ].join(' · '),
                               style: text.bodyMedium?.copyWith(
                                 color: c.card.textMuted,
                               ),
@@ -77,7 +83,13 @@ class TeamInfoScreen extends ConsumerWidget {
               ],
               SettingsCard(
                 children: [
-                  row('roster', AppIcons.roster, l10n.rosterMenu),
+                  row(
+                    'roster',
+                    AppIcons.roster,
+                    group?.hasPlayers ?? true
+                        ? l10n.rosterMenu
+                        : l10n.groupPeople,
+                  ),
                   row('invite', AppIcons.invite, l10n.inviteMenu),
                   if (!viewing) ...[
                     row(

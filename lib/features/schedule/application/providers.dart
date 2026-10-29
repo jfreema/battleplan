@@ -105,11 +105,15 @@ Stream<List<Rsvp>> eventRsvps(Ref ref, GroupId groupId, EventId eventId) =>
 
 /// The people the signed-in person answers for on a team (PLAYER-6): the
 /// players they're linked to, and themselves when they're an admin or
-/// aren't linked to any player ([participantsFor]).
+/// aren't linked to any player ([participantsFor]). In a basic group
+/// (TEAM-14) it's only themselves.
 @riverpod
 List<Participant> myParticipants(Ref ref, GroupId groupId) {
   final me = ref.watch(myMembershipProvider(groupId));
   if (me == null) return const [];
+  if (ref.watch(groupProvider(groupId)).value?.isGroup ?? false) {
+    return participantsFor(me: me);
+  }
   return participantsFor(
     me: me,
     players: ref.watch(playersProvider(groupId)).value ?? const [],

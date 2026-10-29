@@ -124,3 +124,13 @@ describe('drawing plays (BOARD-2, BOARD-4)', () => {
     await assertSucceeds(as('bob').doc('plays/pl1').get());
   });
 });
+
+describe('basic groups (TEAM-14)', () => {
+  it('have no plays, for admins and super admins too', async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ kind: 'group' }));
+    await assertFails(as('alice').collection('plays').add(play('alice')));
+    await assertFails(root().collection('plays').add(play('root')));
+    await assertFails(as('carol').doc('plays/pl1').update({ title: 'Squeeze', updatedAt: now() }));
+    await assertFails(as('carol').doc('plays/pl1').delete());
+  });
+});

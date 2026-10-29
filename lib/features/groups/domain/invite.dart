@@ -39,6 +39,9 @@ abstract class InvitePreview with _$InvitePreview {
     required String name,
     required Sport sport,
     required int memberCount,
+
+    /// A team, or a basic group without players (TEAM-14).
+    @Default(GroupKind.team) GroupKind kind,
     int? color,
 
     /// The team's logo, readable signed out (INV-5), or null.

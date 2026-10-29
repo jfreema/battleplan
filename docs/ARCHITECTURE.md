@@ -528,7 +528,7 @@ userBlocks/{uid}_{blockedUid}
 
 groups/{groupId}
   name, nameLower, description, photoPath, color?, sport
-  kind: 'team' | 'direct'                               # written by createGroup and the migration; a missing kind reads as 'team'; leaves room for a basic 'group' kind (TEAM-14). Old docs may still carry teamType, which readers ignore. 'direct': a conversation between two people (CHAT-19, D65), made by openDirectChat
+  kind: 'team' | 'group' | 'direct'                     # written by createGroup and the migration; a missing (or, in older apps, unknown) kind reads as 'team'; 'group' (TEAM-14) has no players, guardians, coaches, sport ('other'), or plays: the rules' isGroupKind refuses plays, player RSVPs, player updates, and a sport change, and requireOpenTeam({ players: true }) and updateGroupMember refuse player and guardian callables ('no-players') and ignore coach; the app hides those (Group.hasPlayers), drops the Plays tab (the last branch, so the others keep their indices), and redirects a group's /plays, /who, and /players/add to its chat. Old docs may still carry teamType, which readers ignore. 'direct': a conversation between two people (CHAT-19, D65), made by openDirectChat
   uids?: [uid, uid]                                     # direct only: its two people, sorted; the rules read the other one from it
   people?: { <uid>: { name, photoPath } }               # direct only (cache ← users): what Messages and the conversation's header show; "Deleted user" once an account is gone
   ownerId, createdBy, timeZone, orgId?                  # orgId reserved for leagues (later)

@@ -52,6 +52,10 @@ service cloud.firestore {
     // A direct conversation between two people (CHAT-19): a group of kind
     // 'direct' whose uids are the two of them, made by openDirectChat.
     function isDirect(g) { return get(groupPath(g)).data.get('kind', 'team') == 'direct'; }
+    // A basic group (TEAM-14): no players, guardians, or plays; everyone
+    // answers for themselves. Older apps show it as a team, so these rules
+    // refuse what it doesn't have.
+    function isGroupKind(g) { return get(groupPath(g)).data.get('kind', 'team') == 'group'; }
     // The other person in direct conversation g.
     function otherIn(g) {
       let people = get(groupPath(g)).data.uids;
@@ -148,12 +152,14 @@ service cloud.firestore {
       // storageBytes, storageQuotaBytes, and storageAlert are left out on
       // purpose: Functions keep them (STORE-1, STORE-3, STORE-6), so no team
       // can give itself more room or silence its warning.
-      // One team type (TEAM-1): kind is set by Functions and isn't
-      // changed here; an old team's teamType is left alone.
+      // A team or a basic group (TEAM-1, TEAM-14): kind is set by Functions
+      // and isn't changed here; an old team's teamType is left alone. A
+      // group has no sport.
       allow update: if isAdmin(g) && active(g)
         && onlyChanges(['name', 'nameLower', 'description', 'photoPath', 'color',
                         'sport', 'timeZone', 'settings', 'chatTheme', 'updatedAt'])
         && validGroup(incoming(), g)
+        && (resource.data.get('kind', 'team') != 'group' || incoming().sport == resource.data.sport)
         && (!('chatTheme' in changed()) || validChatTheme(incoming().chatTheme, g));
       // Created and deleted by Functions (createGroup, deleteGroup).
     }
@@ -275,6 +281,7 @@ service cloud.firestore {
       allow update: if (isGuardian(playerId) && isMember(resource.data.groupId)
                         || isAdmin(resource.data.groupId))
         && active(resource.data.groupId)
+        && !isGroupKind(resource.data.groupId)
         && onlyChanges(['displayName', 'displayNameLower', 'jerseyNumber', 'position',
                         'walkUpSong', 'updatedAt'])
         && validPlayer(incoming());
@@ -759,6 +766,8 @@ service cloud.firestore {
         // others, SCHED-5, D34), on every event. An old event's rsvpFor
         // is ignored.
         && r.participantType in ['member', 'player']
+        // A basic group has no players (TEAM-14).
+        && (r.participantType == 'member' || !isGroupKind(g))
         && rsvpWriterOk(g, r)
         && (rsvpAdmin(g) || event.get('rsvpDeadline', null) == null
             || request.time < event.rsvpDeadline)
@@ -881,7 +890,7 @@ service cloud.firestore {
 
     // Everyone on the team reads its plays; admins draw, change, and delete
     // them (BOARD-4), and super admins (§3), on an open team (TEAM-9).
-    function playEditorOk(g) { return active(g) && (superAdmin() || isAdmin(g)); }
+    function playEditorOk(g) { return active(g) && !isGroupKind(g) && (superAdmin() || isAdmin(g)); }
     // A play's own fields: a known board, a title, a note, and 1 to 10 steps
     // (Limits.playStepsMax) of at most 150 elements each (playElementsMax).
     function playStepOk(steps, i) {

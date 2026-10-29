@@ -157,6 +157,8 @@ export function problemWith(
 export interface InvitePreview {
   groupId: string;
   name: string;
+  /** 'team' or a basic 'group' (TEAM-14); older apps ignore it. */
+  kind: string;
   sport: string;
   memberCount: number;
   color: string | null;
@@ -198,6 +200,7 @@ export async function previewInvite(code: string): Promise<InvitePreview | Invit
   return {
     groupId,
     name: group.get('name') as string,
+    kind: (group.get('kind') as string | undefined) ?? 'team',
     sport: group.get('sport') as string,
     memberCount: (group.get('memberCount') as number) ?? 0,
     color: (group.get('color') as string | null) ?? null,

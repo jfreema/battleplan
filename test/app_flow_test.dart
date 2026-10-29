@@ -420,8 +420,9 @@ void main() {
     );
     await tester.tap(find.text('Create a team'));
     await tester.pumpAndSettle();
-    // One team type: nothing to pick (TEAM-1).
-    expect(find.text('Team type'), findsNothing);
+    // A team unless Group is picked (TEAM-1, TEAM-14).
+    expect(find.text('Team'), findsOneWidget);
+    expect(find.text('Group'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).first, 'Thunder U14');
     await tester.pumpAndSettle();
     final create = find.widgetWithText(FilledButton, 'Create a team');

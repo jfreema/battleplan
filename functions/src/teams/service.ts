@@ -110,6 +110,8 @@ export async function updateMemberSnapshots(
 
 export interface NewGroup {
   name: string;
+  /** A team, or a basic group: no players, guardians, or Plays (TEAM-14). */
+  kind?: 'team' | 'group';
   sport: string;
   color?: string;
   timeZone: string;
@@ -161,10 +163,11 @@ export async function createGroup(
       description: input.description?.trim() ?? '',
       photoPath: null,
       color: input.color ?? null,
-      sport: input.sport,
-      // One team type (TEAM-1): every team has players. kind leaves room
-      // for a basic 'group' later (TEAM-14) without another migration.
-      kind: 'team',
+      // A group has no sport (TEAM-14).
+      sport: input.kind === 'group' ? 'other' : input.sport,
+      // A team has players; a basic group doesn't, and has no Plays
+      // (TEAM-14).
+      kind: input.kind ?? 'team',
       ownerId: uid,
       createdBy: uid,
       timeZone: input.timeZone,
@@ -190,6 +193,9 @@ export async function createGroup(
       uid,
       role: 'owner',
       title: null,
+      // Nobody coaches a basic group (TEAM-14); a team's owner does unless
+      // it says otherwise.
+      ...(input.kind === 'group' ? { coach: false } : {}),
       displayName: owner.displayName,
       photoPath: owner.photoPath,
       playerSummary: null,
@@ -332,6 +338,10 @@ export async function updateGroupProfile(
     const after: Record<string, unknown> = {};
     for (const key of ['name', 'description', 'color', 'sport', 'timeZone', 'photoPath'] as const) {
       if (edit[key] !== undefined) after[key] = edit[key];
+    }
+    // A basic group has no sport (TEAM-14).
+    if (group.get('kind') === 'group' && after.sport !== undefined && after.sport !== group.get('sport')) {
+      throw new HttpsError('failed-precondition', 'no-sport');
     }
     if (edit.settings) {
       after.settings = { ...((group.get('settings') as Record<string, unknown> | undefined) ?? {}), ...edit.settings };

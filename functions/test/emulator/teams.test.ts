@@ -139,6 +139,37 @@ describe('a suspended team takes no changes from anyone on it (§3)', () => {
   });
 });
 
+describe('a basic group has no players or guardians (TEAM-14)', () => {
+  beforeEach(async () => {
+    await team('club', { kind: 'group', sport: 'other', playerCount: 0 });
+    await db().collection(Collections.players).doc('club-p1').delete();
+  });
+
+  it('refuses adding, claiming, and proposing players, and guardians', async () => {
+    const refused = { code: 'failed-precondition', message: 'no-players' };
+    await expect(run(players.addPlayers, 'pat', { groupId: 'club', players: [{ name: 'Leo', guardians: [] }] })).rejects
+      .toMatchObject(refused);
+    await expect(run(players.proposePlayer, 'sam', { groupId: 'club', displayName: 'Leo', relation: 'guardian' })).rejects
+      .toMatchObject(refused);
+    await expect(run(players.addPlayers, 'root', { groupId: 'club', players: [{ name: 'Leo', guardians: [] }] }, ROOT))
+      .rejects.toMatchObject(refused);
+    expect((await db().collection(Collections.players).where('groupId', '==', 'club').get()).empty).toBe(true);
+  });
+
+  it('has no coaches: an older app asking makes no change', async () => {
+    await run(teams.updateGroupMember, 'pat', { groupId: 'club', uid: 'sam', coach: true });
+    expect((await members().doc('club_sam').get()).get('coach')).toBeUndefined();
+    // Its title still changes.
+    await run(teams.updateGroupMember, 'pat', { groupId: 'club', uid: 'sam', title: 'Treasurer' });
+    expect((await members().doc('club_sam').get()).get('title')).toBe('Treasurer');
+  });
+
+  it("an invite's preview says it's a group", async () => {
+    const link = await run<{ code: string }>(invites.getTeamInvite, 'pat', { groupId: 'club' });
+    expect(await previewInvite(link.code)).toMatchObject({ name: 'club', kind: 'group' });
+  });
+});
+
 describe('an archived team is read-only (TEAM-9)', () => {
   it('refuses roster and invite changes, even from a super admin', async () => {
     for (const [fn, data] of [

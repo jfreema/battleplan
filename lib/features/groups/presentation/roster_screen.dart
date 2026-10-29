@@ -58,39 +58,49 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
     final roster = ref.watch(rosterProvider(widget.groupId));
     final me = ref.watch(myMembershipProvider(widget.groupId));
     final group = ref.watch(groupProvider(widget.groupId)).value;
-    final players =
-        ref.watch(playersProvider(widget.groupId)).value ?? const <Player>[];
+    // A basic group has no players, guardians, or coaches (TEAM-14): its
+    // people are its admins and members.
+    final hasPlayers = group?.hasPlayers ?? true;
+    final players = hasPlayers
+        ? ref.watch(playersProvider(widget.groupId)).value ?? const <Player>[]
+        : const <Player>[];
     // Super admins act as the owner here, from the admin panel (ADMIN-3).
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final isAdmin = (me?.isAdmin ?? false) || superAdmin;
     // Pending players: all of them for admins, and the ones I added for
     // everyone else (PLAYER-4).
-    final pending =
-        (isAdmin
-                ? ref.watch(pendingPlayersProvider(widget.groupId))
-                : ref.watch(myPendingPlayersProvider(widget.groupId)))
-            .value ??
-        const <Player>[];
+    final pending = !hasPlayers
+        ? const <Player>[]
+        : (isAdmin
+                      ? ref.watch(pendingPlayersProvider(widget.groupId))
+                      : ref.watch(myPendingPlayersProvider(widget.groupId)))
+                  .value ??
+              const <Player>[];
     // Claims sit at the top for admins (PLAYER-4).
-    final requests = isAdmin
+    final requests = isAdmin && hasPlayers
         ? ref.watch(pendingGuardianRequestsProvider(widget.groupId)).value ??
               const <GuardianRequest>[]
         : const <GuardianRequest>[];
     final myUid = ref.watch(authUserProvider).value?.uid;
-    final links =
-        ref.watch(guardianLinksProvider(widget.groupId)).value ??
-        const <GuardianLink>[];
+    final links = hasPlayers
+        ? ref.watch(guardianLinksProvider(widget.groupId)).value ??
+              const <GuardianLink>[]
+        : const <GuardianLink>[];
     final linked = links.any((l) => l.uid.value == myUid);
     final waiting =
         pending.any((p) => p.proposedBy == myUid) ||
-        (ref.watch(myGuardianRequestsProvider(widget.groupId)).value ??
-                const <GuardianRequest>[])
-            .any((r) => r.status == GuardianRequestStatus.pending);
+        (hasPlayers &&
+            (ref.watch(myGuardianRequestsProvider(widget.groupId)).value ??
+                    const <GuardianRequest>[])
+                .any((r) => r.status == GuardianRequestStatus.pending));
     // Not on an archived team, which is read-only for everyone (TEAM-9).
-    final canAdd = (superAdmin || me != null) && !(group?.isArchived ?? false);
+    final canAdd =
+        hasPlayers &&
+        (superAdmin || me != null) &&
+        !(group?.isArchived ?? false);
     // Ages for the team's admins and super admins, from one list of the
     // team's player details (PLAYER-12); nobody else's app asks for it.
-    final details = isAdmin
+    final details = isAdmin && hasPlayers
         ? ref.watch(teamPlayerDetailsProvider(widget.groupId)).value ??
               const <PlayerId, PlayerDetails>{}
         : const <PlayerId, PlayerDetails>{};
@@ -99,27 +109,29 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
     return Scaffold(
       appBar: gumdropAppBar(
         context,
-        title: l10n.rosterMenu,
+        title: hasPlayers ? l10n.rosterMenu : l10n.groupPeople,
         actions: [
           // By number or by name (TEAM-10).
-          PopupMenuButton<RosterOrder>(
-            tooltip: l10n.sortRoster,
-            icon: const Icon(AppIcons.sort),
-            initialValue: order,
-            onSelected: (o) => ref.read(rosterViewProvider.notifier).order = o,
-            itemBuilder: (_) => [
-              CheckedPopupMenuItem(
-                value: RosterOrder.number,
-                checked: order == RosterOrder.number,
-                child: Text(l10n.sortByNumber),
-              ),
-              CheckedPopupMenuItem(
-                value: RosterOrder.name,
-                checked: order == RosterOrder.name,
-                child: Text(l10n.sortByName),
-              ),
-            ],
-          ),
+          if (hasPlayers)
+            PopupMenuButton<RosterOrder>(
+              tooltip: l10n.sortRoster,
+              icon: const Icon(AppIcons.sort),
+              initialValue: order,
+              onSelected: (o) =>
+                  ref.read(rosterViewProvider.notifier).order = o,
+              itemBuilder: (_) => [
+                CheckedPopupMenuItem(
+                  value: RosterOrder.number,
+                  checked: order == RosterOrder.number,
+                  child: Text(l10n.sortByNumber),
+                ),
+                CheckedPopupMenuItem(
+                  value: RosterOrder.name,
+                  checked: order == RosterOrder.name,
+                  child: Text(l10n.sortByName),
+                ),
+              ],
+            ),
           // Anyone can add a player; a member's waits for an admin (PLAYER-4).
           // With large text, a plus with its name as a tooltip, so the
           // title still fits beside it.
@@ -150,15 +162,17 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                     .toList();
           // By name (the roster comes that way), the owner first. Coaches
           // have their own section (TEAM-3), their role on its chip.
+          // A group has no coaches (TEAM-14).
+          bool coach(Membership m) => hasPlayers && m.isCoach;
           final coaches = [
-            ...shown.where((m) => m.isCoach && m.role == MemberRole.owner),
-            ...shown.where((m) => m.isCoach && m.role != MemberRole.owner),
+            ...shown.where((m) => coach(m) && m.role == MemberRole.owner),
+            ...shown.where((m) => coach(m) && m.role != MemberRole.owner),
           ];
           final admins = [
-            ...shown.where((m) => !m.isCoach && m.role == MemberRole.owner),
-            ...shown.where((m) => !m.isCoach && m.role == MemberRole.admin),
+            ...shown.where((m) => !coach(m) && m.role == MemberRole.owner),
+            ...shown.where((m) => !coach(m) && m.role == MemberRole.admin),
           ];
-          final others = shown.where((m) => !m.isAdmin && !m.isCoach).toList();
+          final others = shown.where((m) => !m.isAdmin && !coach(m)).toList();
           // A team can keep its people to its admins (TEAM-3): members
           // still see the players, the coaches, and their own card, which
           // has Leave team.
@@ -228,7 +242,11 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                     ),
                 ]),
               ],
-              if (!isAdmin && me != null && !linked && !waiting) ...[
+              if (hasPlayers &&
+                  !isAdmin &&
+                  me != null &&
+                  !linked &&
+                  !waiting) ...[
                 const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -247,8 +265,10 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                   ),
                 ),
               ],
-              _Section(title: l10n.rosterPlayers),
-              if (players.isEmpty && mine.isEmpty)
+              if (hasPlayers) _Section(title: l10n.rosterPlayers),
+              if (!hasPlayers)
+                const SizedBox.shrink()
+              else if (players.isEmpty && mine.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: Space.lg,
@@ -669,6 +689,10 @@ class MemberCard extends ConsumerWidget {
     }
 
     final badge = roleBadge(l10n, member.role);
+    // Nobody coaches a basic group (TEAM-14).
+    final hasPlayers =
+        ref.watch(groupProvider(member.groupId)).value?.hasPlayers ?? true;
+    final coach = hasPlayers && member.isCoach;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(Space.xl),
@@ -682,12 +706,12 @@ class MemberCard extends ConsumerWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             if (member.title?.isNotEmpty ?? false) Text(member.title!),
-            if (badge != null || member.isCoach) ...[
+            if (badge != null || coach) ...[
               const SizedBox(height: Space.sm),
               Wrap(
                 spacing: Space.sm,
                 children: [
-                  if (member.isCoach) Chip(label: Text(l10n.memberCoach)),
+                  if (coach) Chip(label: Text(l10n.memberCoach)),
                   if (badge != null) Chip(label: Text(badge)),
                 ],
               ),
@@ -777,7 +801,7 @@ class MemberCard extends ConsumerWidget {
               ),
             // A parent who also coaches (TEAM-3): with the coaches on the
             // roster, and answering for themselves on events (PLAYER-6).
-            if (canEditTitle)
+            if (canEditTitle && hasPlayers)
               SwitchListTile(
                 title: Text(l10n.memberCoach),
                 subtitle: Text(l10n.memberCoachHelp),

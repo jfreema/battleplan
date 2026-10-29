@@ -38,6 +38,17 @@ export interface OpenTeamOptions {
    * message and reporting. Everything else is for teams. Default false.
    */
   allowDirect?: boolean;
+  /**
+   * The call is about players or guardians: a basic group, which has none
+   * (TEAM-14), refuses it (`failed-precondition`, `no-players`). Default
+   * false.
+   */
+  players?: boolean;
+}
+
+/** Throws `no-players` for a basic group (TEAM-14), which has no players or guardians. */
+export function requirePlayersTeam(group: FirebaseFirestore.DocumentSnapshot): void {
+  if (group.get('kind') === 'group') throw new HttpsError('failed-precondition', 'no-players');
 }
 
 /**
@@ -68,6 +79,7 @@ export async function requireOpenTeam(
   if (!options.allowArchived && group.get('archivedAt') != null) {
     throw new HttpsError('failed-precondition', 'team-archived');
   }
+  if (options.players) requirePlayersTeam(group);
   return group;
 }
 

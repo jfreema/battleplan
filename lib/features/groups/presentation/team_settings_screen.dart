@@ -347,7 +347,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                                       ),
                                     ),
                                     Text(
-                                      sportName(l10n, group.sport),
+                                      group.hasPlayers
+                                          ? sportName(l10n, group.sport)
+                                          : l10n.kindGroup,
                                       style: text.bodyMedium?.copyWith(
                                         color: card.textMuted,
                                       ),
@@ -412,41 +414,44 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                                   : _save(() => repo.update(group.id, name: v)),
                             ),
                           ),
-                          const SizedBox(height: 9),
-                          LabeledField(
-                            label: l10n.sportLabel,
-                            child: DropdownButtonFormField<Sport>(
-                              initialValue: group.sport,
-                              // The sport's name gets the room, and shortens
-                              // at large text sizes.
-                              isExpanded: true,
-                              style: field?.copyWith(color: card.textPrimary),
-                              decoration: gumdropField(),
-                              icon: Icon(
-                                AppIcons.expand,
-                                size: 24,
-                                color: card.textMuted,
-                              ),
-                              borderRadius: BorderRadius.circular(
-                                Corners.input,
-                              ),
-                              items: [
-                                for (final sp in Sport.values)
-                                  DropdownMenuItem(
-                                    value: sp,
-                                    child: Text(
-                                      sportName(l10n, sp),
-                                      overflow: TextOverflow.ellipsis,
+                          // A basic group has no sport (TEAM-14).
+                          if (group.hasPlayers) ...[
+                            const SizedBox(height: 9),
+                            LabeledField(
+                              label: l10n.sportLabel,
+                              child: DropdownButtonFormField<Sport>(
+                                initialValue: group.sport,
+                                // The sport's name gets the room, and shortens
+                                // at large text sizes.
+                                isExpanded: true,
+                                style: field?.copyWith(color: card.textPrimary),
+                                decoration: gumdropField(),
+                                icon: Icon(
+                                  AppIcons.expand,
+                                  size: 24,
+                                  color: card.textMuted,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  Corners.input,
+                                ),
+                                items: [
+                                  for (final sp in Sport.values)
+                                    DropdownMenuItem(
+                                      value: sp,
+                                      child: Text(
+                                        sportName(l10n, sp),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                              ],
-                              onChanged: (sp) => sp == null
-                                  ? null
-                                  : _save(
-                                      () => repo.update(group.id, sport: sp),
-                                    ),
+                                ],
+                                onChanged: (sp) => sp == null
+                                    ? null
+                                    : _save(
+                                        () => repo.update(group.id, sport: sp),
+                                      ),
+                              ),
                             ),
-                          ),
+                          ],
                           const SizedBox(height: 9),
                           LabeledField(
                             label: l10n.teamDescriptionLabel,

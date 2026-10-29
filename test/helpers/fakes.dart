@@ -464,6 +464,9 @@ class FakeGroupRepository implements GroupRepository {
   /// server does for a retry (TEAM-1).
   final Map<String, GroupId> createRequests = {};
 
+  /// What each create made: a team or a group (TEAM-14).
+  final List<GroupKind> createdKinds = [];
+
   /// The next create never answers, as a request stuck on a phone wouldn't.
   bool createHangs = false;
 
@@ -472,6 +475,7 @@ class FakeGroupRepository implements GroupRepository {
     required String name,
     required Sport sport,
     required String timeZone,
+    GroupKind kind = GroupKind.team,
     String? color,
     String? description,
     String? requestId,
@@ -483,8 +487,9 @@ class FakeGroupRepository implements GroupRepository {
     if (createRequests[requestId] case final made?) return made;
     created.add(name);
     createdColors.add(color);
+    createdKinds.add(kind);
     final id = 'new${created.length}';
-    groups[id] = testGroup(id, name);
+    groups[id] = testGroup(id, name).copyWith(kind: kind, sport: sport);
     if (requestId != null) createRequests[requestId] = GroupId(id);
     return GroupId(id);
   }

@@ -76,7 +76,8 @@ List<MessageablePerson> messageablePeople(Ref ref) {
             const <Membership>[]) {
       final uid = m.uid.value;
       if (uid == me || m.pending || blocked.contains(uid)) continue;
-      if (!seeAll && !m.isCoach) continue;
+      // A basic group has no coaches (TEAM-14).
+      if (!seeAll && !(t.group.hasPlayers && m.isCoach)) continue;
       final known = people[uid];
       people[uid] = (
         uid: m.uid,

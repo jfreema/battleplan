@@ -501,4 +501,12 @@ describe('RSVPs (SCHED-5, PLAYER-6, Q14)', () => {
     await assertFails(as('alice').doc('rsvps/eGone_alice').delete());
     await assertSucceeds(as('alice').doc('rsvps/eA_bob').delete());
   });
+
+  it('in a basic group, everyone answers for themselves: no players (TEAM-14)', async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ kind: 'group' }));
+    await assertSucceeds(answer('bob', 'eA', 'member', 'bob'));
+    await assertSucceeds(answer('alice', 'eA', 'member', 'bob', { status: 'maybe' }));
+    await assertFails(answer('bob', 'eA', 'player', 'jared'));
+    await assertFails(answer('alice', 'eA', 'player', 'jared'));
+  });
 });

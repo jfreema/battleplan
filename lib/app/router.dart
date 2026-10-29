@@ -513,9 +513,21 @@ GoRouter router(Ref ref) {
       GoRoute(path: '/g/new', builder: (_, _) => const CreateTeamScreen()),
       GoRoute(
         path: '/g/:groupId',
-        redirect: (_, state) => state.uri.pathSegments.length == 2
-            ? '/g/${state.pathParameters['groupId']}/chat'
-            : null,
+        redirect: (_, state) {
+          final id = state.pathParameters['groupId']!;
+          final s = state.uri.pathSegments;
+          if (s.length == 2) return '/g/$id/chat';
+          // A basic group has no Plays, players, or "who are you here
+          // for" (TEAM-14): its chat instead.
+          final group = ref.read(groupProvider(GroupId(id))).value;
+          final playersOnly = switch (s.sublist(2)) {
+            ['plays', ...] || ['who', ...] || ['players', 'add', ...] => true,
+            _ => false,
+          };
+          return (group?.isGroup ?? false) && playersOnly
+              ? '/g/$id/chat'
+              : null;
+        },
         routes: _inTeamColors([
           // The Documents tab was `docs` before M7; a device may still
           // remember that as its last tab.

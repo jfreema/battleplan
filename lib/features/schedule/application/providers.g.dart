@@ -708,14 +708,16 @@ final class EventRsvpsFamily extends $Family
 
 /// The people the signed-in person answers for on a team (PLAYER-6): the
 /// players they're linked to, and themselves when they're an admin or
-/// aren't linked to any player ([participantsFor]).
+/// aren't linked to any player ([participantsFor]). In a basic group
+/// (TEAM-14) it's only themselves.
 
 @ProviderFor(myParticipants)
 final myParticipantsProvider = MyParticipantsFamily._();
 
 /// The people the signed-in person answers for on a team (PLAYER-6): the
 /// players they're linked to, and themselves when they're an admin or
-/// aren't linked to any player ([participantsFor]).
+/// aren't linked to any player ([participantsFor]). In a basic group
+/// (TEAM-14) it's only themselves.
 
 final class MyParticipantsProvider
     extends
@@ -727,7 +729,8 @@ final class MyParticipantsProvider
     with $Provider<List<Participant>> {
   /// The people the signed-in person answers for on a team (PLAYER-6): the
   /// players they're linked to, and themselves when they're an admin or
-  /// aren't linked to any player ([participantsFor]).
+  /// aren't linked to any player ([participantsFor]). In a basic group
+  /// (TEAM-14) it's only themselves.
   MyParticipantsProvider._({
     required MyParticipantsFamily super.from,
     required GroupId super.argument,
@@ -780,11 +783,12 @@ final class MyParticipantsProvider
   }
 }
 
-String _$myParticipantsHash() => r'e4bc8d03ddb584ac157844284ba8ec478e5322e6';
+String _$myParticipantsHash() => r'013e50d7bc0bf6810fb376a36d4e87d90ec72bb2';
 
 /// The people the signed-in person answers for on a team (PLAYER-6): the
 /// players they're linked to, and themselves when they're an admin or
-/// aren't linked to any player ([participantsFor]).
+/// aren't linked to any player ([participantsFor]). In a basic group
+/// (TEAM-14) it's only themselves.
 
 final class MyParticipantsFamily extends $Family
     with $FunctionalFamilyOverride<List<Participant>, GroupId> {
@@ -799,7 +803,8 @@ final class MyParticipantsFamily extends $Family
 
   /// The people the signed-in person answers for on a team (PLAYER-6): the
   /// players they're linked to, and themselves when they're an admin or
-  /// aren't linked to any player ([participantsFor]).
+  /// aren't linked to any player ([participantsFor]). In a basic group
+  /// (TEAM-14) it's only themselves.
 
   MyParticipantsProvider call(GroupId groupId) =>
       MyParticipantsProvider._(argument: groupId, from: this);

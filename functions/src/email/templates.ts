@@ -165,17 +165,21 @@ export function newAccountEmail(
   };
 }
 
-/** ADMIN-9: someone created a team, for every super admin. */
+/** ADMIN-9: someone created a team or a basic group (TEAM-14), for every super admin. */
 export function teamCreatedEmail(
   to: string,
-  team: { name: string; sport: string; ownerName: string; ownerEmail: string },
+  team: { name: string; kind?: string; sport: string; ownerName: string; ownerEmail: string },
   url: string,
 ): Email {
   const owner = team.ownerEmail ? `${team.ownerName} (${team.ownerEmail})` : team.ownerName;
+  const group = team.kind === 'group';
   return {
     to,
-    subject: `New team: ${team.name}`,
-    ...layout([`${owner} created ${team.name}, ${aTeam(team.sport)}.`], { label: 'Open in the admin panel', url }),
+    subject: `${group ? 'New group' : 'New team'}: ${team.name}`,
+    ...layout([`${owner} created ${team.name}, ${group ? 'a group' : aTeam(team.sport)}.`], {
+      label: 'Open in the admin panel',
+      url,
+    }),
   };
 }
 
