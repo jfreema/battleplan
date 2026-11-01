@@ -131,6 +131,9 @@ abstract final class Limits {
   static const int calendarCacheHours = 6;
   static const int calendarFetchedEveryMinutes = 60;
   static const int rsvpEmailPeopleMax = 100;
+  static const int rsvpEmailsPerTeamPerDay = 15;
+  static const int rsvpEmailsPerDay = 80;
+  static const int rsvpEmailRepeatDays = 7;
   static const int answerLinkTriesPerHour = 20;
 }
 

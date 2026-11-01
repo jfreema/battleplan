@@ -17,6 +17,7 @@ import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
+import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/players/presentation/date_of_birth_field.dart';
 import 'package:battleplan/features/players/presentation/guardian_picker.dart';
 import 'package:battleplan/features/players/presentation/player_details_section.dart';
@@ -382,10 +383,11 @@ class PlayerCardScreen extends ConsumerWidget {
             name: name.text.trim().isEmpty ? null : name.text.trim(),
           );
       if (context.mounted) {
-        showAppSnackBar(
-          context,
-          invited ? l10n.guardianInvited : l10n.guardianAdded,
-        );
+        showAppSnackBar(context, switch (invited) {
+          GuardianInvite.added => l10n.guardianAdded,
+          GuardianInvite.invited => l10n.guardianInvited,
+          GuardianInvite.emailFailed => l10n.guardianEmailFailed,
+        });
       }
     } on AppFailure catch (e) {
       if (context.mounted) {

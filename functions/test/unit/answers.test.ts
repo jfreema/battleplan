@@ -10,7 +10,7 @@ import {
   namesOf,
   questionOf,
 } from '../../src/answers/page.js';
-import { answerLinkId, answerToken, newAnswerToken } from '../../src/answers/service.js';
+import { answerLinkId, answerToken, newAnswerToken, planRsvpEmails } from '../../src/answers/service.js';
 import { rsvpReminderEmail } from '../../src/email/templates.js';
 
 const emma = { name: 'Emma', self: false };
@@ -147,5 +147,34 @@ describe('answer links', () => {
     expect(answerToken(`/${token}`)).toBe(token);
     expect(answerToken('/a/short')).toBeNull();
     expect(answerToken(`/a/${token}/more`)).toBeNull();
+  });
+});
+
+describe("who an RSVP email goes to today (today's limits, once a week)", () => {
+  const DAY = 86_400_000;
+  const none = { team: 0, all: 0 };
+  it('everyone, the first time', () => {
+    expect(planRsvpEmails(['a', 'b'], null, none, 0)).toEqual({ send: ['a', 'b'], skipped: 0, thisWeek: false });
+  });
+
+  it('only people not emailed this week; a week on, everyone', () => {
+    const log = { firstAtMs: 0, emailed: ['a'] };
+    expect(planRsvpEmails(['a', 'b'], log, none, 6 * DAY).send).toEqual(['b']);
+    expect(() => planRsvpEmails(['a'], log, none, 6 * DAY)).toThrow('emailed-this-week');
+    expect(planRsvpEmails(['a', 'b'], log, none, 7 * DAY)).toEqual({ send: ['a', 'b'], skipped: 0, thisWeek: false });
+  });
+
+  it("15 a team and 80 in all a day, whichever is less", () => {
+    const want = Array.from({ length: 20 }, (_, i) => `u${i}`);
+    expect(planRsvpEmails(want, null, none, 0)).toMatchObject({ skipped: 5 });
+    expect(planRsvpEmails(want, null, none, 0).send).toHaveLength(15);
+    expect(planRsvpEmails(want, null, { team: 10, all: 0 }, 0).send).toHaveLength(5);
+    expect(planRsvpEmails(want, null, { team: 0, all: 78 }, 0).send).toEqual(['u0', 'u1']);
+    expect(() => planRsvpEmails(want, null, { team: 15, all: 0 }, 0)).toThrow('email-limit');
+    expect(() => planRsvpEmails(want, null, { team: 0, all: 80 }, 0)).toThrow('email-limit');
+  });
+
+  it('nobody to email is no error', () => {
+    expect(planRsvpEmails([], null, { team: 15, all: 80 }, 0)).toEqual({ send: [], skipped: 0, thisWeek: false });
   });
 });

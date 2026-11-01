@@ -1197,6 +1197,7 @@ void main() {
         players: 2,
         unreachable: 0,
         failed: 0,
+        skipped: 0,
       );
       await openDetails(tester, 'Practice');
       await menu(tester, "Email people who haven't RSVP'd");
@@ -1209,13 +1210,55 @@ void main() {
         containsAllInOrder(['count rsvps e1', 'email rsvps e1']),
       );
       expect(find.text('Emailed 3 people.'), findsOneWidget);
-      // Again within the hour: it says so.
-      rsvps.events.rsvpEmailLimited = true;
+      // Again within the week: it says so, without asking.
+      rsvps.events.rsvpEmailLimited = 'emailed-this-week';
       await menu(tester, "Email people who haven't RSVP'd");
+      expect(
+        find.text(
+          "Everyone who hasn't RSVP'd got an email about this in the last "
+          'week.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Send'), findsNothing);
+    });
+
+    testWidgets("today's email limits: some wait for tomorrow, then none "
+        'go (SCHED-14)', (tester) async {
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [event('e1')],
+      );
+      rsvps.events.rsvpEmailCount = (
+        people: 15,
+        players: 15,
+        unreachable: 0,
+        failed: 0,
+        skipped: 4,
+      );
+      await openDetails(tester, 'Practice');
+      await menu(tester, "Email people who haven't RSVP'd");
+      expect(find.text("Email 15 people who haven't RSVP'd?"), findsOneWidget);
+      const rest =
+          'Try again tomorrow when the limits are reset to email 4 more.';
+      expect(
+        find.text('They can RSVP right from the email. $rest'),
+        findsOneWidget,
+      );
       await tester.tap(find.text('Send'));
       await tester.pumpAndSettle();
+      expect(find.text('Emailed 15 people. $rest'), findsOneWidget);
+      // Nothing left today.
+      rsvps.events.rsvpEmailLimited = 'email-limit';
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      await menu(tester, "Email people who haven't RSVP'd");
       expect(
-        find.text('You emailed them in the last hour. Try again later.'),
+        find.text(
+          "Today's RSVP emails are used up. Try again tomorrow when the "
+          'limits are reset.',
+        ),
         findsOneWidget,
       );
     });
@@ -1237,6 +1280,7 @@ void main() {
         players: 0,
         unreachable: 2,
         failed: 0,
+        skipped: 0,
       );
       await menu(tester, "Email people who haven't RSVP'd");
       expect(

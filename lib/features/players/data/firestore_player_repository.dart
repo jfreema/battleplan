@@ -230,7 +230,7 @@ class FirestorePlayerRepository implements PlayerRepository {
   }
 
   @override
-  Future<bool> inviteGuardian(
+  Future<GuardianInvite> inviteGuardian(
     GroupId groupId,
     PlayerId playerId, {
     required String email,
@@ -242,7 +242,10 @@ class FirestorePlayerRepository implements PlayerRepository {
       'email': email,
       'name': name,
     });
-    return d['invited'] as bool? ?? false;
+    if (d['invited'] != true) return GuardianInvite.added;
+    return d['emailFailed'] == true
+        ? GuardianInvite.emailFailed
+        : GuardianInvite.invited;
   }
 
   @override

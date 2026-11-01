@@ -612,12 +612,24 @@ class FakeMemberRepository implements MemberRepository {
       invitedPeople: [
         for (final e in entries) (name: e.name ?? e.email, email: e.email),
       ],
+      emailFailed: [
+        for (final e in entries)
+          if (emailFails.contains(e.email)) e.email,
+      ],
     );
   }
 
+  /// Emails whose setup email doesn't send, as past the day's limit.
+  final Set<String> emailFails = {};
+
+  /// Set to make resending a setup email fail, as past the day's limit.
+  bool resendLimited = false;
+
   @override
-  Future<void> resendSetupEmail(GroupId groupId, UserId uid) async =>
-      calls.add('resend ${uid.value}');
+  Future<void> resendSetupEmail(GroupId groupId, UserId uid) async {
+    calls.add('resend ${uid.value}');
+    if (resendLimited) throw const RateLimited('email-not-sent');
+  }
 
   @override
   Stream<List<Membership>> watchMyMemberships(UserId uid) async* {
@@ -1375,15 +1387,18 @@ class FakePlayerRepository implements PlayerRepository {
   }
 
   @override
-  Future<bool> inviteGuardian(
+  Future<GuardianInvite> inviteGuardian(
     GroupId groupId,
     PlayerId playerId, {
     required String email,
     String? name,
   }) async {
     calls.add('inviteGuardian ${playerId.value} $email');
-    return true;
+    return guardianInvite;
   }
+
+  /// How the next inviteGuardian goes.
+  GuardianInvite guardianInvite = GuardianInvite.invited;
 
   @override
   Future<void> addTeamMemberAsGuardian(
@@ -2256,10 +2271,12 @@ class FakeEventRepository implements EventRepository {
     players: 0,
     unreachable: 0,
     failed: 0,
+    skipped: 0,
   );
 
-  /// Set to make the next RSVP email say it went out too recently.
-  bool rsvpEmailLimited = false;
+  /// Set to refuse the next RSVP email, counting too, the way the server
+  /// does: 'emailed-this-week' or 'email-limit'.
+  String? rsvpEmailLimited;
 
   @override
   Future<RsvpEmailCount> emailRsvpReminder(
@@ -2267,9 +2284,7 @@ class FakeEventRepository implements EventRepository {
     bool dryRun = false,
   }) async {
     calls.add('${dryRun ? 'count' : 'email'} rsvps ${eventId.value}');
-    if (!dryRun && rsvpEmailLimited) {
-      throw const RateLimited('Slow down, try again later.');
-    }
+    if (rsvpEmailLimited case final limit?) throw RateLimited(limit);
     return rsvpEmailCount;
   }
 
@@ -3456,7 +3471,7 @@ class RefusingPlayerRepository extends FakePlayerRepository {
       throw failure;
 
   @override
-  Future<bool> inviteGuardian(
+  Future<GuardianInvite> inviteGuardian(
     GroupId groupId,
     PlayerId playerId, {
     required String email,

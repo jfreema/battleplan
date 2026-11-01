@@ -680,10 +680,12 @@ class MemberCard extends ConsumerWidget {
         if (context.mounted) showAppSnackBar(context, done);
       } on AppFailure catch (e) {
         if (context.mounted) {
-          showAppSnackBar(
-            context,
-            e is PermissionDenied ? l10n.notAllowed : l10n.errorMemberAction,
-          );
+          showAppSnackBar(context, switch (e) {
+            PermissionDenied() => l10n.notAllowed,
+            // Resending a setup email past the day's email limit.
+            RateLimited() => l10n.setupEmailNotSent,
+            _ => l10n.errorMemberAction,
+          });
         }
       }
     }

@@ -218,7 +218,8 @@ Future<void> _emailRsvpReminder(
   }
 
   String failure(AppFailure e) => switch (e) {
-    RateLimited() => l10n.eventEmailRsvpTooSoon,
+    RateLimited(message: 'emailed-this-week') => l10n.eventEmailRsvpThisWeek,
+    RateLimited() => l10n.eventEmailRsvpLimit,
     PermissionDenied() => l10n.notAllowed,
     _ => l10n.eventEmailRsvpFailed,
   };
@@ -235,7 +236,11 @@ Future<void> _emailRsvpReminder(
     final ok = await showConfirmDialog(
       context,
       title: l10n.eventEmailRsvpTitle(count.people),
-      message: l10n.eventEmailRsvpBody,
+      message: [
+        l10n.eventEmailRsvpBody,
+        // Today's limits can leave some for another day (SCHED-14).
+        if (count.skipped > 0) l10n.eventEmailRsvpRest(count.skipped),
+      ].join(' '),
       confirmLabel: l10n.eventEmailRsvpConfirm,
       cancelLabel: l10n.cancel,
     );
@@ -244,7 +249,10 @@ Future<void> _emailRsvpReminder(
     final emailed = sent.people - sent.failed;
     say(
       emailed > 0
-          ? l10n.eventEmailRsvpSent(emailed)
+          ? [
+              l10n.eventEmailRsvpSent(emailed),
+              if (sent.skipped > 0) l10n.eventEmailRsvpRest(sent.skipped),
+            ].join(' ')
           : sent.people == 0
           ? l10n.eventEmailRsvpEveryone
           : l10n.eventEmailRsvpFailed,

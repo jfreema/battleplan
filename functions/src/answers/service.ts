@@ -14,7 +14,7 @@ import { eventRoute, eventView, locationLabel, whenLabel } from '../schedule/ser
 import { db } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { groupMemberId, rsvpId } from '../shared/ids.js';
-import { consumeRateLimit } from '../shared/rate_limit.js';
+import { consumeRateLimit, rateLimitDocId } from '../shared/rate_limit.js';
 import { requireOpenTeam } from '../shared/roles.js';
 import {
   answeredPage,
@@ -108,13 +108,40 @@ export interface RsvpEmailResult {
   unreachable: number;
   /** Emails the provider refused. */
   failed: number;
+  /** People left out by today's email limits, to email another day. */
+  skipped: number;
+}
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Who [want] can email now (SCHED-14): each person at most once a week per
+ * event ([log] is the week's record), and within today's limits: 15 RSVP
+ * emails a team and 80 in all, which leaves the rest of the platform's 100
+ * a day for setup and account emails. Throws `emailed-this-week` when
+ * everyone was already emailed, and `email-limit` when today's are used up.
+ */
+export function planRsvpEmails(
+  want: string[],
+  log: { firstAtMs: number; emailed: string[] } | null,
+  used: { team: number; all: number },
+  nowMs: number,
+): { send: string[]; skipped: number; thisWeek: boolean } {
+  const thisWeek = log != null && nowMs - log.firstAtMs < Limits.rsvpEmailRepeatDays * DAY_MS;
+  const emailed = new Set(thisWeek ? log.emailed : []);
+  const due = want.filter((uid) => !emailed.has(uid));
+  if (want.length && !due.length) throw new HttpsError('resource-exhausted', 'emailed-this-week');
+  const room = Math.max(0, Math.min(Limits.rsvpEmailsPerTeamPerDay - used.team, Limits.rsvpEmailsPerDay - used.all));
+  if (due.length && !room) throw new HttpsError('resource-exhausted', 'email-limit');
+  const send = due.slice(0, room);
+  return { send, skipped: due.length - send.length, thisWeek };
 }
 
 /**
  * "Email people who haven't RSVP'd" (SCHED-14): team admins and the
  * event's creator, on an event that takes RSVPs, isn't canceled, hasn't
- * started, and is before its deadline; once an hour per event. Each person
- * gets one email, naming their players, with a link for each answer that
+ * started, and is before its deadline; each person once a week per event,
+ * within today's limits ([planRsvpEmails]). Each person gets one email, naming their players, with a link for each answer that
  * works until the event starts or its deadline passes. [dryRun] counts
  * without sending, for the app's question.
  */
@@ -150,10 +177,55 @@ export async function emailRsvpReminder(
     .filter((u) => u.exists && u.get('status') !== 'disabled' && typeof u.get('email') === 'string' && u.get('email'))
     .slice(0, Limits.rsvpEmailPeopleMax);
   const asked = new Set(reachable.flatMap((u) => people.get(u.id)!.map((p) => p.id)));
-  const result: RsvpEmailResult = { people: reachable.length, players: asked.size, unreachable: open - asked.size, failed: 0 };
-  if (dryRun || !reachable.length) return result;
+  if (!reachable.length) return { people: 0, players: 0, unreachable: open, failed: 0, skipped: 0 };
 
-  await consumeRateLimit(eventId, 'eventRsvpEmail', 1, 'hour');
+  // The week's record for this event, and today's counts for the team and in all.
+  const now = new Date(nowMs);
+  const limits = db().collection(Collections.rateLimits);
+  const logRef = limits.doc(`${eventId}_eventRsvpEmail_week`);
+  const teamRef = limits.doc(rateLimitDocId({ key: groupId, action: 'rsvpEmail', max: 0 }, now));
+  const allRef = limits.doc(rateLimitDocId({ key: 'all', action: 'rsvpEmail', max: 0 }, now));
+  type Get = (ref: FirebaseFirestore.DocumentReference) => Promise<FirebaseFirestore.DocumentSnapshot>;
+  const plan = async (get: Get) => {
+    const [log, team, all] = await Promise.all([get(logRef), get(teamRef), get(allRef)]);
+    const count = (s: FirebaseFirestore.DocumentSnapshot) => (s.get('count') as number | undefined) ?? 0;
+    const firstAtMs = msOf(log.get('firstAt'));
+    const emailed = (log.get('emailed') as string[] | undefined) ?? [];
+    return {
+      firstAtMs,
+      ...planRsvpEmails(
+        reachable.map((u) => u.id),
+        log.exists ? { firstAtMs, emailed } : null,
+        { team: count(team), all: count(all) },
+        nowMs,
+      ),
+    };
+  };
+  const { send, skipped } = dryRun
+    ? await plan((ref) => ref.get())
+    : await db().runTransaction(async (tx) => {
+        const p = await plan((ref) => tx.get(ref));
+        const counted = {
+          count: FieldValue.increment(p.send.length),
+          expiresAt: Timestamp.fromMillis(nowMs + Limits.rateLimitTtlDays * DAY_MS),
+        };
+        tx.set(teamRef, counted, { merge: true });
+        tx.set(allRef, counted, { merge: true });
+        const firstAtMs = p.thisWeek ? p.firstAtMs : nowMs;
+        const log = {
+          firstAt: Timestamp.fromMillis(firstAtMs),
+          emailed: p.thisWeek ? FieldValue.arrayUnion(...p.send) : p.send,
+          expiresAt: Timestamp.fromMillis(firstAtMs + Limits.rsvpEmailRepeatDays * DAY_MS),
+        };
+        tx.set(logRef, log, { merge: true });
+        return p;
+      });
+  const sending = new Set(send);
+  const recipients = reachable.filter((u) => sending.has(u.id));
+  const players = new Set(recipients.flatMap((u) => people.get(u.id)!.map((p) => p.id))).size;
+  const result: RsvpEmailResult = { people: recipients.length, players, unreachable: open - asked.size, failed: 0, skipped };
+  if (dryRun) return result;
+
   const expiresAt = Timestamp.fromMillis(deadlineMs ? Math.min(deadlineMs, view.startMs) : view.startMs);
   const allowMaybe = team.get('settings.allowMaybe') !== false;
   const eventUrl = appUrl(eventRoute(groupId, eventId));
@@ -163,7 +235,7 @@ export async function emailRsvpReminder(
   const teamName = String(team.get('name') ?? '').trim();
 
   const batch = db().batch();
-  const emails = reachable.map((u) => {
+  const emails = recipients.map((u) => {
     const token = newAnswerToken();
     const asking = people.get(u.id)!;
     batch.set(db().collection(Collections.answerLinks).doc(answerLinkId(token)), {
@@ -195,7 +267,7 @@ export async function emailRsvpReminder(
     const sent = (await sendEmail(email)) || process.env.FUNCTIONS_EMULATOR === 'true';
     if (!sent) result.failed++;
   }
-  logger.info('rsvp_email_sent', { eventId, people: result.people, failed: result.failed });
+  logger.info('rsvp_email_sent', { eventId, people: result.people, failed: result.failed, skipped });
   return result;
 }
 

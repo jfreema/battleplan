@@ -79,9 +79,9 @@ abstract interface class PlayerRepository {
   });
 
   /// Adds a guardian by email (PLAYER-5). Linked members (the player
-  /// themselves included) and admins. Returns
-  /// true if they got a setup email for a new account.
-  Future<bool> inviteGuardian(
+  /// themselves included) and admins. Says whether they got a setup email
+  /// for a new account.
+  Future<GuardianInvite> inviteGuardian(
     GroupId groupId,
     PlayerId playerId, {
     required String email,
@@ -115,3 +115,8 @@ abstract interface class PlayerRepository {
   /// Removes a player's details (PLAYER-12). Admins and linked members.
   Future<void> deletePlayerDetails(PlayerId playerId);
 }
+
+/// How adding a guardian by email went (PLAYER-5): added to an account
+/// they had, invited with a setup email for a new one, or invited but the
+/// setup email didn't send (most often past the day's email limit).
+enum GuardianInvite { added, invited, emailFailed }

@@ -5,19 +5,22 @@ import 'package:material_ui/material_ui.dart';
 
 /// One part of a results screen: a heading with its count, and the lines
 /// under it. [problem] parts are drawn in the error color; [counted] puts
-/// the number of lines after the heading.
+/// the number of lines after the heading; a [note] under the heading says
+/// what to do about them.
 class ResultSection {
   const new(
     this.heading,
     this.lines, {
     this.problem = false,
     this.counted = true,
+    this.note,
   });
 
   final String heading;
   final List<String> lines;
   final bool problem;
   final bool counted;
+  final String? note;
 }
 
 /// What happened after adding people (TEAM-7) or players (PLAYER-1): who
@@ -72,6 +75,11 @@ class AddResultsScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (s.note case final note?)
+                  Padding(
+                    padding: const EdgeInsets.only(top: Space.xs),
+                    child: Text(note, style: theme.textTheme.bodyMedium),
+                  ),
                 for (final line in s.lines)
                   ListTile(
                     dense: true,

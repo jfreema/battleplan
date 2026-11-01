@@ -14,6 +14,7 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
@@ -1602,6 +1603,28 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Add'));
       await tester.pumpAndSettle();
       expect(playerRepo.calls, ['inviteGuardian emma leo@example.com']);
+      expect(
+        find.text(
+          "Guardian added. They'll get an email to set up their account.",
+        ),
+        findsOneWidget,
+      );
+      // Their setup email didn't send: it says so.
+      playerRepo.guardianInvite = GuardianInvite.emailFailed;
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add a guardian'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'mo@example.com');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          "Guardian added, but the setup email didn't send. Try again "
+          'tomorrow when the limits are reset.',
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a guardian picks a co-parent already on the team, or invites '
@@ -1754,6 +1777,22 @@ void main() {
     await tester.tap(find.text('Resend setup email'));
     await tester.pumpAndSettle();
     expect(members.calls, ['resend ann']);
+    expect(find.text('Setup email sent.'), findsOneWidget);
+    // Past the day's email limit, it says when to try again.
+    members.resendLimited = true;
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ann Lee'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Resend setup email'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        "Couldn't send the setup email. Try again tomorrow when the limits "
+        'are reset.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('wrong password shows an error and stays put', (tester) async {

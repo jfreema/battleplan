@@ -440,10 +440,14 @@ export async function setupLink(email: string): Promise<string> {
   });
 }
 
-/** Sends the setup email for an added account. Returns false if not sent. */
+/**
+ * Sends the setup email for an added account. Returns false if not sent,
+ * for example past the day's email limit. The emulators log emails instead
+ * of sending them; that counts as sent.
+ */
 export async function sendSetupEmail(email: string, teamName: string, addedBy: string): Promise<boolean> {
   const link = await setupLink(email);
-  return sendEmail(setupEmail(email, teamName, addedBy, link));
+  return (await sendEmail(setupEmail(email, teamName, addedBy, link))) || process.env.FUNCTIONS_EMULATOR === 'true';
 }
 
 /** When an added account signs in, its memberships stop showing "Not joined yet". */

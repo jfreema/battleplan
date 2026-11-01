@@ -63,7 +63,7 @@ class _AddMembersScreenState extends ConsumerState<AddMembersScreen> {
           .addByEmail(widget.groupId, parsed.entries);
       if (!mounted) return;
       // TEAM-7: a results screen lists who was added, who was invited,
-      // and any problems.
+      // whose setup email didn't send, and any problems.
       String person(({String name, String email}) p) =>
           p.name.isEmpty || p.name == p.email
           ? p.email
@@ -76,8 +76,18 @@ class _AddMembersScreenState extends ConsumerState<AddMembersScreen> {
             for (final p in r.addedPeople) person(p),
           ]),
           ResultSection(l10n.resultsInvited, [
-            for (final p in r.invitedPeople) person(p),
+            for (final p in r.invitedPeople)
+              if (!r.emailFailed.contains(p.email)) person(p),
           ]),
+          ResultSection(
+            l10n.resultsEmailFailed,
+            [
+              for (final p in r.invitedPeople)
+                if (r.emailFailed.contains(p.email)) person(p),
+            ],
+            problem: true,
+            note: l10n.resultsEmailFailedNote,
+          ),
           ResultSection(l10n.resultsAlreadyMembers, [
             if (r.alreadyMembers > 0)
               l10n.alreadyMembersCount(r.alreadyMembers),

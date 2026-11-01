@@ -159,6 +159,7 @@ class AddMembersResult {
     this.addedPeople = const [],
     this.invitedPeople = const [],
     this.problems = const [],
+    this.emailFailed = const [],
   });
 
   final int added;
@@ -173,4 +174,8 @@ class AddMembersResult {
   /// Emails that couldn't be added; "email (too-many-teams)" for someone on
   /// 100 teams already (TEAM-2).
   final List<String> problems;
+
+  /// Emails of invited people whose setup email didn't send, most often
+  /// past the day's email limit; they're on the team all the same.
+  final List<String> emailFailed;
 }

@@ -6,7 +6,7 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { answerPage as pageHandler, emailRsvpReminder } from '../../src/answers/handlers.js';
-import { answerLinkId, answerPage } from '../../src/answers/service.js';
+import { answerLinkId, answerPage, emailRsvpReminder as emailService } from '../../src/answers/service.js';
 import type { Email } from '../../src/email/service.js';
 import { db } from '../../src/shared/admin.js';
 import { Collections } from '../../src/shared/constants.js';
@@ -27,7 +27,13 @@ const NOW = Date.now();
 type CallRequest = Parameters<typeof emailRsvpReminder.run>[0];
 const send = async (uid: string, eventId = 'game', dryRun = false) => {
   const req = { data: { eventId, dryRun }, auth: { uid, token: {} }, rawRequest: {} } as unknown as CallRequest;
-  return (await emailRsvpReminder.run(req)) as { people: number; players: number; unreachable: number; failed: number };
+  return (await emailRsvpReminder.run(req)) as {
+    people: number;
+    players: number;
+    unreachable: number;
+    failed: number;
+    skipped: number;
+  };
 };
 
 async function person(uid: string, name: string, role = 'member', extra: object = {}): Promise<void> {
@@ -97,11 +103,11 @@ beforeEach(async () => {
 
 describe("Email people who haven't RSVP'd", () => {
   it('counts first, then emails each person once, about their players', async () => {
-    expect(await send('coach', 'game', true)).toEqual({ people: 3, players: 2, unreachable: 1, failed: 0 });
+    expect(await send('coach', 'game', true)).toEqual({ people: 3, players: 2, unreachable: 1, failed: 0, skipped: 0 });
     expect(outbox).toHaveLength(0);
     expect((await db().collection(Collections.answerLinks).get()).size).toBe(0);
 
-    expect(await send('coach')).toEqual({ people: 3, players: 2, unreachable: 1, failed: 0 });
+    expect(await send('coach')).toEqual({ people: 3, players: 2, unreachable: 1, failed: 0, skipped: 0 });
     expect(outbox.map((e) => e.to).sort()).toEqual(['dan@example.com', 'maria@example.com', 'sam@example.com']);
     const maria = outbox.find((e) => e.to === 'maria@example.com')!;
     expect(maria.subject).toMatch(/^Thunder: RSVP for vs\. Eagles, \w{3}, \w{3} \d+ at \d+:\d\d [AP]M$/);
@@ -115,9 +121,45 @@ describe("Email people who haven't RSVP'd", () => {
     expect(links.docs.every((d) => (d.get('expiresAt') as Timestamp).toMillis() === NOW + 2 * 24 * HOUR)).toBe(true);
   });
 
-  it('once an hour per event', async () => {
-    await send('coach');
-    await expect(send('coach')).rejects.toMatchObject({ code: 'resource-exhausted' });
+  it('emails each person once a week per event, counting first too', async () => {
+    await game('later', { startAt: Timestamp.fromMillis(NOW + 30 * 24 * HOUR), endAt: Timestamp.fromMillis(NOW + 30 * 24 * HOUR + HOUR) });
+    const coach = { uid: 'coach', superAdmin: false };
+    await emailService('later', coach, false, NOW);
+    const thisWeek = { code: 'resource-exhausted', message: 'emailed-this-week' };
+    await expect(emailService('later', coach, true, NOW + HOUR)).rejects.toMatchObject(thisWeek);
+    await expect(emailService('later', coach, false, NOW + 6 * 24 * HOUR)).rejects.toMatchObject(thisWeek);
+    // Someone new to email that week gets theirs; the others don't again.
+    await person('kim', 'Kim Park');
+    await player('ava', 'Ava Park', [['kim', 'guardian']]);
+    outbox.length = 0;
+    expect((await emailService('later', coach, false, NOW + 2 * HOUR)).people).toBe(1);
+    expect(outbox.map((e) => e.to)).toEqual(['kim@example.com']);
+    // A week on, everyone again.
+    expect((await emailService('later', coach, false, NOW + 7 * 24 * HOUR)).people).toBe(4);
+  });
+
+  it("15 a day per team and 80 in all; the rest go another day (SCHED-14)", async () => {
+    const coach = { uid: 'coach', superAdmin: false };
+    const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+    const counter = (key: string, ms = NOW) => db().collection(Collections.rateLimits).doc(`${key}_rsvpEmail_${day(ms)}`);
+    await counter(G).set({ count: 14 });
+    expect(await emailService('game', coach, true, NOW)).toMatchObject({ people: 1, skipped: 2 });
+    expect(await emailService('game', coach, false, NOW)).toMatchObject({ people: 1, skipped: 2 });
+    expect(outbox).toHaveLength(1);
+    expect((await counter(G).get()).get('count')).toBe(15);
+    expect((await counter('all').get()).get('count')).toBe(1);
+    const limit = { code: 'resource-exhausted', message: 'email-limit' };
+    await expect(emailService('game', coach, true, NOW)).rejects.toMatchObject(limit);
+    await expect(emailService('game', coach, false, NOW)).rejects.toMatchObject(limit);
+    // Tomorrow, the two left out, and only them.
+    const tomorrow = NOW + 24 * HOUR;
+    await counter('all', tomorrow).set({ count: 79 });
+    expect(await emailService('game', coach, false, tomorrow)).toMatchObject({ people: 1, skipped: 1 });
+    await expect(emailService('game', coach, false, tomorrow)).rejects.toMatchObject(limit);
+    await counter('all', tomorrow).set({ count: 0 });
+    expect(await emailService('game', coach, false, tomorrow)).toMatchObject({ people: 1, skipped: 0 });
+    expect(new Set(outbox.map((e) => e.to)).size).toBe(3);
+    await expect(emailService('game', coach, false, tomorrow)).rejects.toMatchObject({ message: 'emailed-this-week' });
   });
 
   it('is for team admins and whoever made the event', async () => {

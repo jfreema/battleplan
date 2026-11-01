@@ -290,6 +290,44 @@ void main() {
     expect(find.text('Nia Park · nia@example.com'), findsNothing);
   });
 
+  testWidgets("adding by email lists whose setup email didn't send, and "
+      'says to try again tomorrow', (tester) async {
+    final members = FakeMemberRepository([
+      testMembership('a', 'coach', role: MemberRole.owner, name: 'Jordan'),
+    ])..emailFails.add('lee@example.com');
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberRepo: members,
+    );
+    await push(tester, '/g/a/members/add');
+    await tester.enterText(
+      find.byType(TextField),
+      'Nia Park, nia@example.com\nLee Chen, lee@example.com',
+    );
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Add 2 people'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Invited (new accounts, sent a setup email) (1)'),
+      findsOneWidget,
+    );
+    expect(find.text('Nia Park · nia@example.com'), findsOneWidget);
+    expect(
+      find.text("Added, but the setup email didn't send (1)"),
+      findsOneWidget,
+    );
+    expect(find.text('Lee Chen · lee@example.com'), findsOneWidget);
+    expect(
+      find.text(
+        'Try again tomorrow when the limits are reset, with Resend setup '
+        'email on their card.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   group('adding players (PLAYER-1)', () {
     Future<FakePlayerRepository> openAdd(WidgetTester tester) async {
       final playerRepo = FakePlayerRepository();

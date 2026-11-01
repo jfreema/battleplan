@@ -396,6 +396,9 @@ class FirestoreMemberRepository implements MemberRepository {
         addedPeople: _people(d['addedPeople']),
         invitedPeople: _people(d['invitedPeople']),
         problems: [for (final p in (d['problems'] as List?) ?? const []) '$p'],
+        emailFailed: [
+          for (final e in (d['emailFailed'] as List?) ?? const []) '$e',
+        ],
       );
     } on FirebaseFunctionsException catch (e) {
       final message = serverMessage(e.message);
@@ -423,6 +426,7 @@ class FirestoreMemberRepository implements MemberRepository {
         'permission-denied' => PermissionDenied(message),
         'not-found' => NotFound(message),
         'invalid-argument' => InvalidInput(message),
+        'resource-exhausted' => RateLimited(message),
         'unavailable' || 'deadline-exceeded' => Offline(message),
         _ => UnknownFailure('${e.code}: $message'),
       };

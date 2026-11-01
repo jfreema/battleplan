@@ -128,6 +128,9 @@ export const Limits = {
   calendarCacheHours: 6,
   calendarFetchedEveryMinutes: 60,
   rsvpEmailPeopleMax: 100,
+  rsvpEmailsPerTeamPerDay: 15,
+  rsvpEmailsPerDay: 80,
+  rsvpEmailRepeatDays: 7,
   answerLinkTriesPerHour: 20,
 } as const;
 

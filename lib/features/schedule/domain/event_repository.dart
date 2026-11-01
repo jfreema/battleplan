@@ -127,10 +127,12 @@ abstract interface class EventRepository {
 /// What "Email people who haven't RSVP'd" did, or would do (SCHED-14):
 /// how many `people` it emails about how many `players`; players with no
 /// answer and nobody to email (`unreachable`); emails that didn't go
-/// through (`failed`).
+/// through (`failed`); people left for another day by today's email
+/// limits (`skipped`).
 typedef RsvpEmailCount = ({
   int people,
   int players,
   int unreachable,
   int failed,
+  int skipped,
 });

@@ -5,6 +5,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/players/data/firestore_player_repository.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
+import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/schedule/data/firestore_event_repository.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_draft.dart';
@@ -291,7 +292,7 @@ void main() {
           const PlayerId('emma'),
           email: 'l@example.com',
         ),
-        isTrue,
+        GuardianInvite.invited,
       );
       await repo.removeGuardian(
         _g,
@@ -315,7 +316,19 @@ void main() {
           const PlayerId('emma'),
           email: 'l@example.com',
         ),
-        isFalse,
+        GuardianInvite.added,
+      );
+      functions.handlers['inviteGuardian'] = (_) => {
+        'invited': true,
+        'emailFailed': true,
+      };
+      expect(
+        await repo.inviteGuardian(
+          _g,
+          const PlayerId('emma'),
+          email: 'l@example.com',
+        ),
+        GuardianInvite.emailFailed,
       );
       // Someone already on the team: by uid, with no email (PLAYER-5).
       await repo.addTeamMemberAsGuardian(
@@ -817,12 +830,19 @@ void main() {
         'players': 2,
         'unreachable': 1,
         'failed': 0,
+        'skipped': 0,
       };
       final count = await repo.emailRsvpReminder(
         const EventId('e1'),
         dryRun: true,
       );
-      expect(count, (people: 3, players: 2, unreachable: 1, failed: 0));
+      expect(count, (
+        people: 3,
+        players: 2,
+        unreachable: 1,
+        failed: 0,
+        skipped: 0,
+      ));
       expect(functions.lastData('emailRsvpReminder'), {
         'eventId': 'e1',
         'dryRun': true,
@@ -834,6 +854,7 @@ void main() {
         players: 0,
         unreachable: 0,
         failed: 0,
+        skipped: 0,
       ));
       expect(
         (functions.lastData('emailRsvpReminder')! as Map)['dryRun'],

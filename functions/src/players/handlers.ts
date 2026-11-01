@@ -116,11 +116,13 @@ export const addPlayers = onCall({ secrets: [resendApiKey] }, async (request) =>
   // First, since it never throws and a failed email below must not skip it.
   await notifyAddedToTeam(input.groupId, group.get('name') as string, { uid, name: actorName }, newMembers);
   // AUTH-6: new people get a setup email. One failure doesn't stop the
-  // rest; the admin can resend from the roster.
+  // rest; the results list them, and the admin can resend from the roster.
   for (const email of result.invitedEmails) {
-    await sendSetupEmail(email, group.get('name') as string, actorName).catch((e: unknown) =>
-      logger.error('setup_email_failed', { groupId: input.groupId, error: String(e) }),
-    );
+    const sent = await sendSetupEmail(email, group.get('name') as string, actorName).catch((e: unknown) => {
+      logger.error('setup_email_failed', { groupId: input.groupId, error: String(e) });
+      return false;
+    });
+    if (!sent) result.emailFailed.push(email);
   }
   return result;
 });
@@ -483,13 +485,17 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
   // The notification first: it never throws, and a failed email must not
   // skip it or the audit entry.
   if (!wasMember) await notifyAddedToTeam(input.groupId, teamName, { uid: actor, name: actorName }, [user.uid]);
+  // The setup email can fail, most often past the day's email limit: the
+  // app says so, and they can be sent another from the roster.
+  let emailFailed = false;
   try {
     if (user.provisioned) {
-      await sendSetupEmail(email, teamName, actorName);
+      emailFailed = !(await sendSetupEmail(email, teamName, actorName));
     } else if (!wasMember) {
       await sendEmail(addedToTeamEmail(email.trim().toLowerCase(), teamName, actorName, teamUrl(input.groupId)));
     }
   } catch (e) {
+    emailFailed = user.provisioned;
     logger.error('guardian_email_failed', { groupId: input.groupId, error: String(e) });
   }
   await audit({
@@ -500,7 +506,7 @@ export const inviteGuardian = onCall({ secrets: [resendApiKey] }, async (request
     targetId: input.playerId,
     after: { uid: user.uid },
   });
-  return { uid: user.uid, invited: user.provisioned };
+  return { uid: user.uid, invited: user.provisioned, emailFailed };
 });
 
 /**

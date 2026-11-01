@@ -264,6 +264,7 @@ class FirestoreEventRepository implements EventRepository {
         players: count('players'),
         unreachable: count('unreachable'),
         failed: count('failed'),
+        skipped: count('skipped'),
       );
     } on FirebaseFunctionsException catch (e) {
       final message = serverMessage(e.message);

@@ -394,11 +394,13 @@ export const resendSetupEmail = onCall({ secrets: [resendApiKey] }, async (reque
   await consumeRateLimit(input.groupId, 'addByEmail', Limits.addByEmailPerGroupPerDay);
   const group = await db().collection(Collections.groups).doc(input.groupId).get();
   const actor = await db().collection(Collections.users).doc(uid).get();
-  await sendSetupEmail(
+  const sent = await sendSetupEmail(
     target.get('email') as string,
     group.get('name') as string,
     (actor.get('displayName') as string | undefined) ?? 'A team admin',
   );
+  // Most often the day's email limit: the app says to try again tomorrow.
+  if (!sent) throw new HttpsError('resource-exhausted', 'email-not-sent');
   return { ok: true };
 });
 

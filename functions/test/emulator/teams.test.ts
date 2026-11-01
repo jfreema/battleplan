@@ -22,10 +22,12 @@ import { Collections, Limits } from '../../src/shared/constants.js';
 import * as teams from '../../src/teams/handlers.js';
 import { setMemberRole } from '../../src/teams/service.js';
 
-const mail = vi.hoisted(() => ({ sent: [] as Email[] }));
+// Emails to an address in `fail` don't send, as past the day's limit.
+const mail = vi.hoisted(() => ({ sent: [] as Email[], fail: new Set<string>() }));
 vi.mock('../../src/email/service.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/email/service.js')>()),
   sendEmail: async (email: Email) => {
+    if (mail.fail.has(email.to)) return false;
     mail.sent.push(email);
     return true;
   },
@@ -91,6 +93,7 @@ beforeEach(async () => {
   await clear(`http://${process.env.FIRESTORE_EMULATOR_HOST}/emulator/v1/projects/${project()}/databases/(default)/documents`);
   await clear(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/emulator/v1/projects/${project()}/accounts`);
   mail.sent.length = 0;
+  mail.fail.clear();
   for (const [uid, name] of [['pat', 'Pat Owner'], ['ada', 'Ada Admin'], ['sam', 'Sam Rivera'], ['lee', 'Lee Kim'], ['root', 'Root']]) {
     await person(uid, name);
   }
@@ -263,6 +266,50 @@ describe('the 100-team limit on every way in (TEAM-2)', () => {
     await expect(run(players.inviteGuardian, 'pat', { groupId: 'open', playerId: 'open-p1', email: 'lee@example.com' }))
       .rejects.toMatchObject({ message: 'too-many-teams' });
     expect(await isMember('open', 'lee')).toBe(false);
+  });
+});
+
+describe("setup emails that don't send (AUTH-6), as past the day's email limit", () => {
+  it('adds them all the same, and lists them for the results screen', async () => {
+    mail.fail.add('nia@example.com');
+    const result = await run<{ invited: number; emailFailed: string[] }>(teams.addMemberByEmail, 'pat', {
+      groupId: 'open',
+      entries: [{ email: 'Nia@example.com' }, { email: 'omar@example.com' }],
+    });
+    expect(result.invited).toBe(2);
+    expect(result.emailFailed).toEqual(['nia@example.com']);
+    expect(mail.sent.map((e) => e.to)).toEqual(['omar@example.com']);
+  });
+
+  it('from addPlayers and inviteGuardian too', async () => {
+    mail.fail.add('nia@example.com');
+    const result = await run<{ emailFailed: string[] }>(players.addPlayers, 'pat', {
+      groupId: 'open',
+      players: [{ name: 'Leo', guardians: [{ email: 'nia@example.com' }, { email: 'omar@example.com' }] }],
+    });
+    expect(result.emailFailed).toEqual(['nia@example.com']);
+    mail.fail.add('zoe@example.com');
+    const data = { groupId: 'open', playerId: 'open-p1' };
+    expect(await run(players.inviteGuardian, 'pat', { ...data, email: 'zoe@example.com' })).toMatchObject({
+      invited: true,
+      emailFailed: true,
+    });
+    expect(await run(players.inviteGuardian, 'pat', { ...data, email: 'kai@example.com' })).toMatchObject({
+      invited: true,
+      emailFailed: false,
+    });
+  });
+
+  it('a resend that does not send says so', async () => {
+    await run(teams.addMemberByEmail, 'pat', { groupId: 'open', entries: [{ email: 'nia@example.com' }] });
+    const uid = (await auth().getUserByEmail('nia@example.com')).uid;
+    mail.fail.add('nia@example.com');
+    await expect(run(teams.resendSetupEmail, 'pat', { groupId: 'open', uid })).rejects.toMatchObject({
+      code: 'resource-exhausted',
+      message: 'email-not-sent',
+    });
+    mail.fail.clear();
+    expect(await run(teams.resendSetupEmail, 'pat', { groupId: 'open', uid })).toEqual({ ok: true });
   });
 });
 
@@ -513,7 +560,7 @@ describe('claims and pending players (PLAYER-3, PLAYER-4)', () => {
     await members().doc('open_lee').set({ groupId: 'open', uid: 'lee', role: 'member', displayName: 'Lee' });
     await db().collection(Collections.playerGuardians).doc('open-p1_lee').set({ groupId: 'open', playerId: 'open-p1', uid: 'lee', relation: 'self' });
     expect(await run(players.inviteGuardian, 'lee', { groupId: 'open', playerId: 'open-p1', email: 'sam@example.com' }))
-      .toEqual({ uid: 'sam', invited: false });
+      .toEqual({ uid: 'sam', invited: false, emailFailed: false });
     expect(await link('open-p1', 'sam')).toMatchObject({ relation: 'guardian', via: 'guardian', addedBy: 'lee' });
   });
 });

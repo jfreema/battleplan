@@ -423,6 +423,7 @@ void main() {
           'invited': 2,
           'alreadyMembers': 0,
           'problems': ['bad@'],
+          'emailFailed': ['pat@example.com'],
         };
         final repo = FirestoreMemberRepository(db, functions);
         await repo.updateMember(
@@ -450,10 +451,12 @@ void main() {
         ]);
         expect(added.invited, 2);
         expect(added.problems, ['bad@']);
+        expect(added.emailFailed, ['pat@example.com']);
         for (final (code, type) in [
           ('permission-denied', isA<PermissionDenied>()),
           ('not-found', isA<NotFound>()),
           ('invalid-argument', isA<InvalidInput>()),
+          ('resource-exhausted', isA<RateLimited>()),
           ('unavailable', isA<Offline>()),
           ('internal', isA<UnknownFailure>()),
         ]) {

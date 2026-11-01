@@ -484,6 +484,8 @@ export interface AddMembersResult {
   invitedPeople: AddedPerson[];
   /** Emails that couldn't be added; "email (too-many-teams)" when the person is on 100 teams (TEAM-2). */
   problems: string[];
+  /** Invited people whose setup email didn't send, often past the day's email limit; the admin can resend. */
+  emailFailed: string[];
 }
 
 /**
@@ -529,6 +531,7 @@ export async function addMembersByEmail(
     addedPeople: [],
     invitedPeople: [],
     problems: [],
+    emailFailed: [],
   };
   const group = await db().collection(Collections.groups).doc(groupId).get();
   const teamName = group.get('name') as string;
@@ -566,9 +569,10 @@ export async function addMembersByEmail(
       addedUids.push(user.uid);
       const person = { name: user.displayName, email: entry.email.trim().toLowerCase() };
       if (user.provisioned) {
-        await sendSetupEmail(entry.email, teamName, actor.name);
         result.invited++;
         result.invitedPeople.push(person);
+        const sent = await sendSetupEmail(person.email, teamName, actor.name).catch(() => false);
+        if (!sent) result.emailFailed.push(person.email);
       } else {
         // An added account joins when it first signs in (clearPendingMemberships).
         await postSystemMessage(groupId, 'joined', joinedLine(user.displayName), user.uid);

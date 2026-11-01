@@ -98,6 +98,8 @@ export interface AddPlayersResult {
   selfInvited: number;
   /** Emails of people (guardians or players) who got a new added account (for setup emails). */
   invitedEmails: string[];
+  /** Of those, the ones whose setup email didn't send, often past the day's email limit. */
+  emailFailed: string[];
   /**
    * Guardians given a name but no email, "Emma: Maria R." (PLAYER-1: both
    * are optional). Nobody can be linked without an email, so the results
@@ -136,6 +138,7 @@ export async function addPlayers(
     selfLinked: 0,
     selfInvited: 0,
     invitedEmails: [],
+    emailFailed: [],
     guardiansWithoutEmail: [],
     problems: [],
   };

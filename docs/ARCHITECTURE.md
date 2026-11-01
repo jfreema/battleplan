@@ -1068,7 +1068,7 @@ Phase 1 sends email three ways, each the cheapest for its job (D61).
 | Email invites (INV-4), added to a team (TEAM-7), security notices (AUTH-7, AUTH-8) | Functions, through Resend |
 | A new report, and the daily reminder of reports open more than 12 hours, to every super admin (SAFE-4) | Functions, through Resend |
 | A new account (first-run setup finished), a new team, and a deleted team, to every super admin while `config/app.emailAdminAlerts` isn't false (ADMIN-9; `admin/alerts.ts`, from `ensureUserProfile`, `createGroup`, `deleteGroup`, and `adminDeleteGroup`, which now carry the Resend secret). They count toward Resend's 100 a day | Functions, through Resend |
-| RSVP emails an admin sends to people who haven't answered (SCHED-14, §6.15) | Functions, through Resend |
+| RSVP emails an admin sends to people who haven't answered (SCHED-14, §6.15). At most 80 a day in all (§6.9), so setup emails still go | Functions, through Resend |
 | Reminder emails sent on their own to people who can't get notifications (SCHED-14, planned, §6.15) | Functions, through Cloudflare Email Sending: Resend Free's 100 a day can't carry them |
 | Mail to `support@` and `privacy@` | Cloudflare Email Routing, forwarded to the owner's Gmail |
 
@@ -1125,7 +1125,7 @@ groups/{groupId}/documents/{docId}/{originalFileName}
 | Imports (§6.13) | 30 schedule imports and 1,000 chat-import calls per team per day | `importEvents`, `importMessages`, `importDocuments` |
 | Web error reports, which work signed out | 30 per IP address per hour; the rest are dropped quietly | `logClientError` |
 | Calendar links (SCHED-11) | One per person per team, and one for all teams; no limit on reads: a fetch costs a handful of reads, and `maxInstances` caps a runaway calendar | `setCalendarLink`, `calendarFeed` |
-| RSVP emails (SCHED-14) | Once an hour per event, up to 100 people | `emailRsvpReminder` |
+| RSVP emails (SCHED-14) | Each person once a week per event (`{eventId}_eventRsvpEmail_week`, the week's start and who was emailed); 15 a day per team and 80 a day in all (`{groupId}_rsvpEmail_{day}`, `all_rsvpEmail_{day}`), counted in one transaction, so the platform's other 20 of Resend's 100 a day stay for setup and account emails. The dry run counts the same way; a send cut short emails only the rest on a later day | `emailRsvpReminder` (`planRsvpEmails`) |
 | Answers from an email's links (SCHED-14) | 20 per link per hour | `answerPage` |
 | Security notice emails (AUTH-7) | 10 per person per day; the change is still recorded | `recordSignInMethodChange` |
 | Email to super admins: report alerts (SAFE-4) and ADMIN-9's | 50 a day in all, so a flood of sign-ups or reports can't use up the day's email; the daily report reminder always goes | `emailSuperAdmins` |
