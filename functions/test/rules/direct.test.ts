@@ -135,6 +135,16 @@ describe('writing in a conversation (CHAT-19)', () => {
     await assertSucceeds(send('bob', 'Bob', 'n2', { type: 'image', attachments: [photo] }));
   });
 
+  it('takes ten photos with every field (the costliest path)', async () => {
+    const ten = Array.from({ length: 10 }, (_, i) => ({
+      path: `groups/${DM}/messages/n10/${i}.jpg`, contentType: 'image/jpeg', width: 2048, height: 1536, size: 345678,
+    }));
+    await assertSucceeds(send('bob', 'Bob', 'n10', { type: 'image', text: 'From the game', attachments: ten }));
+    await assertFails(
+      send('bob', 'Bob', 'n11', { type: 'image', attachments: [{ path: `groups/${DM}/messages/n11/0.jpg`, width: '10' }] }),
+    );
+  });
+
   it('refuses everyone else, a teammate included', async () => {
     await assertFails(send('carol', 'Carol', 'n3'));
   });

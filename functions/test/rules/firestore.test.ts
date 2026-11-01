@@ -286,6 +286,23 @@ describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
     return batch.commit();
   };
 
+  it('takes ten photos with every field, from someone who has posted before (the costliest path)', async () => {
+    // Each photo's checks run per photo against the 1,000 expressions a
+    // write gets; ten full ones must still fit, with a caption and mentions.
+    const ten = Array.from({ length: 10 }, (_, i) => ({
+      path: `groups/teamA/messages/p10/${i}.jpg`, contentType: 'image/jpeg', width: 2048, height: 1536, size: 345678,
+    }));
+    await assertSucceeds(
+      send('bob', 'Bob', 'p10', {
+        type: 'image', text: 'Game day photos @Alice', attachments: ten, mentions: ['alice'], replyToId: 'm1',
+      }),
+    );
+    const eleven = [...ten, { ...ten[0], path: 'groups/teamA/messages/p11/10.jpg' }].map((p, i) => ({
+      ...p, path: `groups/teamA/messages/p11/${i}.jpg`,
+    }));
+    await assertFails(send('bob', 'Bob', 'p11', { type: 'image', attachments: eleven }));
+  });
+
   it('lets anyone name up to 20 people, on text and photos', async () => {
     await assertSucceeds(send('bob', 'Bob', 'n1', { mentions: ['alice'] }));
     await assertSucceeds(send('alice', 'Alice', 'n2', { mentions: Array.from({ length: 20 }, (_, i) => `u${i}`) }));

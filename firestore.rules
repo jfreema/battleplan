@@ -430,9 +430,11 @@ service cloud.firestore {
 
     // One photo: stored under this message's own folder, with each field
     // the app reads of the type it reads, so one bad message can't stop the
-    // chat for everyone.
+    // chat for everyone. Kept lean: a write gets 1,000 expressions, and ten
+    // photos run this ten times. A photo that isn't a map, or a path that
+    // isn't text, fails x.path.matches, which refuses the write.
     function attachmentOk(x, folder) {
-      return x is map && x.get('path', null) is string && x.path.matches(folder)
+      return x.path.matches(folder)
         && x.get('contentType', '') is string
         && x.get('width', 0) is number && x.get('height', 0) is number
         && x.get('size', 0) is number;
@@ -442,19 +444,21 @@ service cloud.firestore {
     // folder, so a message can't point at another team's files.
     function attachmentsOk(m, messageId) {
       let a = m.get('attachments', []);
+      // Counted once, for the same budget; anything but a list is refused.
+      let n = a is list ? a.size() : 99;
       let folder = 'groups/' + m.groupId + '/messages/' + messageId + '/[^/]+';
-      return a is list && a.size() <= 10
-        && (m.type == 'image' ? a.size() >= 1 : a.size() == 0)
-        && (a.size() < 1 || attachmentOk(a[0], folder))
-        && (a.size() < 2 || attachmentOk(a[1], folder))
-        && (a.size() < 3 || attachmentOk(a[2], folder))
-        && (a.size() < 4 || attachmentOk(a[3], folder))
-        && (a.size() < 5 || attachmentOk(a[4], folder))
-        && (a.size() < 6 || attachmentOk(a[5], folder))
-        && (a.size() < 7 || attachmentOk(a[6], folder))
-        && (a.size() < 8 || attachmentOk(a[7], folder))
-        && (a.size() < 9 || attachmentOk(a[8], folder))
-        && (a.size() < 10 || attachmentOk(a[9], folder));
+      return n <= 10
+        && (m.type == 'image' ? n >= 1 : n == 0)
+        && (n < 1 || attachmentOk(a[0], folder))
+        && (n < 2 || attachmentOk(a[1], folder))
+        && (n < 3 || attachmentOk(a[2], folder))
+        && (n < 4 || attachmentOk(a[3], folder))
+        && (n < 5 || attachmentOk(a[4], folder))
+        && (n < 6 || attachmentOk(a[5], folder))
+        && (n < 7 || attachmentOk(a[6], folder))
+        && (n < 8 || attachmentOk(a[7], folder))
+        && (n < 9 || attachmentOk(a[8], folder))
+        && (n < 10 || attachmentOk(a[9], folder));
     }
 
     // @mentions (CHAT-14): up to 20 people, named by ID on a text or photo
