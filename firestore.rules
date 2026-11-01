@@ -104,11 +104,14 @@ service cloud.firestore {
 
     // The global notification switches (NOTIF-4): known keys, true or false.
     // 'events' is the key before New events and Event changes were split.
+    // Keep the keys in step with notificationPref in shared/constants.json
+    // (users.test.ts checks), plus the old 'events'.
     function validPrefs(n) {
       return n is map
-        && n.keys().hasOnly(['messages', 'replies', 'mentions', 'polls', 'eventsNew',
-                             'eventsChanged', 'reminders', 'documents', 'events'])
-        && n.get('messages', true) is bool && n.get('replies', true) is bool
+        && n.keys().hasOnly(['messages', 'directMessages', 'replies', 'mentions', 'polls',
+                             'eventsNew', 'eventsChanged', 'reminders', 'documents', 'events'])
+        && n.get('messages', true) is bool && n.get('directMessages', true) is bool
+        && n.get('replies', true) is bool
         && n.get('mentions', true) is bool && n.get('polls', true) is bool
         && n.get('eventsNew', true) is bool && n.get('eventsChanged', true) is bool
         && n.get('reminders', true) is bool && n.get('documents', true) is bool

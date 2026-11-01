@@ -9,7 +9,9 @@ import {
 import firebase from 'firebase/compat/app';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { defaultNotificationPrefs } from '../../src/accounts/service.js';
+import { notificationPrefValues } from '../../src/shared/constants.js';
 
 let env: RulesTestEnvironment;
 const now = () => firebase.firestore.FieldValue.serverTimestamp();
@@ -23,7 +25,8 @@ const profile = (name: string) => ({
   status: 'active',
   signInMethods: ['password'],
   themeMode: 'system',
-  notificationPrefs: { messages: true, replies: true, eventsNew: true },
+  // As the server makes a new account's (ensureUserProfile), every switch.
+  notificationPrefs: defaultNotificationPrefs(),
   acceptedTermsAt: firebase.firestore.Timestamp.now(),
   adultConfirmedAt: firebase.firestore.Timestamp.now(),
 });
@@ -134,5 +137,26 @@ describe('profile photos in Storage', () => {
     );
     await assertSucceeds(env.authenticatedContext('bob').storage().ref('users/alice/avatar/2.jpg').getDownloadURL());
     await assertFails(env.unauthenticatedContext().storage().ref('users/alice/avatar/2.jpg').getDownloadURL());
+  });
+});
+
+describe('users: the rules keep up with constants.json', () => {
+  it('lets a new account change its name, photo, theme, and every notification switch', async () => {
+    await assertSucceeds(
+      as('alice').doc('users/alice').update({ displayName: 'Ally', displayNameLower: 'ally', updatedAt: now() }),
+    );
+    await assertSucceeds(as('alice').doc('users/alice').update({ themeMode: 'dark', updatedAt: now() }));
+    for (const key of notificationPrefValues) {
+      await assertSucceeds(as('alice').doc('users/alice').update({ [`notificationPrefs.${key}`]: false, updatedAt: now() }));
+    }
+  });
+
+  it("lists every notification switch and theme the app knows, as the rules can't read constants.json", () => {
+    const rules = readFileSync(resolve(process.cwd(), '../firestore.rules'), 'utf8');
+    const prefs = rules.slice(rules.indexOf('function validPrefs'), rules.indexOf('}', rules.indexOf('function validPrefs')));
+    for (const key of notificationPrefValues) expect(prefs, key).toContain(`'${key}'`);
+    const constants = JSON.parse(readFileSync(resolve(process.cwd(), '../shared/constants.json'), 'utf8'));
+    const themes = rules.match(/p\.themeMode in \[([^\]]*)\]/)?.[1] ?? '';
+    for (const theme of constants.enums.themePreference as string[]) expect(themes, theme).toContain(`'${theme}'`);
   });
 });
