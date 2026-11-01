@@ -66,19 +66,35 @@ function sameCounts(a: RsvpCounts, b: unknown): boolean {
 }
 
 /**
- * rsvps written → the event's counts (ARCH §6.4 trigger map). Recounts
- * every answer in a transaction, like recountPoll, so a trigger that runs
- * twice or out of order still leaves the right numbers. An event has at
- * most 500 members and 200 players answering.
+ * rsvps written → the event's counts (ARCH §6.4 trigger map). Recounts in
+ * a transaction, like recountPoll, so a trigger that runs twice or out of
+ * order still leaves the right numbers: with six count() queries (players
+ * and members by answer), a read each however many answered, rather than
+ * reading every answer (ARCH §10.2). The rules allow only these statuses
+ * and participant types, so the counts match [countsOf].
  */
 export async function recountEventRsvps(eventId: string): Promise<void> {
   const eventRef = db().collection(Collections.events).doc(eventId);
   const rsvps = db().collection(Collections.rsvps).where('eventId', '==', eventId);
+  const kinds = [
+    ['player', 'going'],
+    ['player', 'maybe'],
+    ['player', 'not_going'],
+    ['member', 'going'],
+    ['member', 'maybe'],
+    ['member', 'not_going'],
+  ] as const;
   await db().runTransaction(async (tx) => {
     const event = await tx.get(eventRef);
     if (!event.exists) return; // Deleted; its RSVPs go with it.
-    const snap = await tx.get(rsvps);
-    const { rsvpCounts, staffCounts } = countsOf(snap.docs.map((d) => d.data()));
+    const [pg, pm, pn, mg, mm, mn] = await Promise.all(
+      kinds.map(async ([type, status]) => {
+        const q = rsvps.where('participantType', '==', type).where('status', '==', status).count();
+        return (await tx.get(q)).data().count;
+      }),
+    );
+    const rsvpCounts = { going: pg, maybe: pm, notGoing: pn };
+    const staffCounts = { going: mg, maybe: mm, notGoing: mn };
     if (sameCounts(rsvpCounts, event.get('rsvpCounts')) && sameCounts(staffCounts, event.get('staffCounts'))) return;
     tx.update(eventRef, { rsvpCounts, staffCounts });
   });

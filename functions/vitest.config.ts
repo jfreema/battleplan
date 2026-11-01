@@ -4,6 +4,8 @@ export default defineConfig({
   test: {
     // Rules tests share one emulator database, so run files one at a time.
     fileParallelism: false,
+    // Every read fresh: tests change data between calls (ttl_cache.ts).
+    setupFiles: ['test/setup.ts'],
     testTimeout: 15000,
     // The first emulator call in a file can be slow, more so with coverage.
     hookTimeout: 30000,

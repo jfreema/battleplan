@@ -45,9 +45,12 @@ function sameTally(a: PollTally, b: Partial<PollTally>): boolean {
 
 /**
  * pollVotes written → the poll's counts (ARCH §6.4 trigger map). Recounts
- * every vote in a transaction rather than adding the change, so a trigger
- * that runs twice or out of order still leaves the right numbers. A team
- * has at most 500 members, so a poll has at most 500 votes.
+ * in a transaction rather than adding the change, so a trigger that runs
+ * twice or out of order still leaves the right numbers: with count()
+ * queries, one for the voters and one per option, a read each however
+ * many voted (up to 500 in a group), rather than reading every vote (ARCH
+ * §10.2). The counts match [tallyOf]: choices that aren't options count
+ * for nothing, and a vote with none of them isn't a voter.
  */
 export async function recountPoll(pollId: string): Promise<void> {
   const pollRef = db().collection(Collections.polls).doc(pollId);
@@ -55,8 +58,17 @@ export async function recountPoll(pollId: string): Promise<void> {
   await db().runTransaction(async (tx) => {
     const poll = await tx.get(pollRef);
     if (!poll.exists) return; // Deleted with its message (POLL-5).
-    const snap = await tx.get(votes);
-    const tally = tallyOf((poll.get('options') as PollOption[] | undefined) ?? [], snap.docs.map((d) => d.data()));
+    const options = (poll.get('options') as PollOption[] | undefined) ?? [];
+    // A voter is a vote with at least one of the poll's options (up to 10).
+    const ids = options.map((o) => o.id);
+    const [voterCount, ...perOption] = await Promise.all([
+      ids.length ? tx.get(votes.where('optionIds', 'array-contains-any', ids).count()).then((s) => s.data().count) : 0,
+      ...options.map((o) => tx.get(votes.where('optionIds', 'array-contains', o.id).count()).then((s) => s.data().count)),
+    ]);
+    const tally: PollTally = {
+      voteCounts: Object.fromEntries(options.map((o, i) => [o.id, perOption[i]])),
+      voterCount,
+    };
     if (sameTally(tally, poll.data() as Partial<PollTally>)) return;
     tx.update(pollRef, { voteCounts: tally.voteCounts, voterCount: tally.voterCount });
   });
