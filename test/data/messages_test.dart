@@ -304,15 +304,19 @@ void main() {
       '@everyone and @Sam Rivera',
       id: 'm9',
       mentions: ['sam'],
+      mentionNames: {'sam': 'Sam Rivera', 'pat': 'Not named'},
       mentionsEveryone: true,
       announcement: true,
     );
     final m = (await db.doc('messages/m9').get()).data()!;
     expect(m['mentions'], ['sam']);
+    // Only the names of the people it names.
+    expect(m['mentionNames'], {'sam': 'Sam Rivera'});
     expect(m['mentionsEveryone'], isTrue);
     expect(m['announcement'], isTrue);
     final read = await repo.watchMessage(_g, 'm9').first;
     expect(read?.mentions, ['sam']);
+    expect(read?.mentionNames, {'sam': 'Sam Rivera'});
     expect(read?.mentionsEveryone, isTrue);
     expect(read?.announcement, isTrue);
     expect(read?.mentionsMe('sam'), isTrue);
@@ -322,7 +326,13 @@ void main() {
     final plain = (await db.doc('messages/m10').get()).data()!;
     expect(
       plain.keys,
-      isNot(anyOf(contains('mentions'), contains('mentionsEveryone'))),
+      isNot(
+        anyOf(
+          contains('mentions'),
+          contains('mentionNames'),
+          contains('mentionsEveryone'),
+        ),
+      ),
     );
     expect(plain.containsKey('announcement'), isFalse);
     expect(

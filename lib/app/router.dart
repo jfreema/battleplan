@@ -68,6 +68,8 @@ import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/settings_screen.dart';
 import 'package:battleplan/features/settings/presentation/themes_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ProviderListenableSelect;
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -101,13 +103,38 @@ const _publicPaths = {
 /// Universal/App Links, and notification taps.
 @Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
-  // Re-run redirects when sign-in or memberships change.
+  // Re-run redirects when sign-in changes, or what they read: which teams
+  // I'm on, and my account's status. Not on every read marker, message, or
+  // upload, which change those documents all the time.
   final refresh = ValueNotifier<int>(0);
+  String ids(Iterable<GroupId>? list) =>
+      ((list?.map((id) => id.value).toList() ?? [])..sort()).join(',');
   ref
     ..listen(authUserProvider, (_, _) => refresh.value++)
-    ..listen(myMembershipsProvider, (_, _) => refresh.value++)
-    ..listen(myProfileProvider, (_, _) => refresh.value++)
-    ..listen(myTeamsProvider, (_, _) => refresh.value++)
+    ..listen(
+      myMembershipsProvider.select(
+        (v) => (v.isLoading, v.hasValue, ids(v.value?.map((m) => m.groupId))),
+      ),
+      (_, _) => refresh.value++,
+    )
+    ..listen(
+      myProfileProvider.select(
+        (v) => (
+          v.isLoading,
+          v.hasValue,
+          v.value?.status,
+          v.value?.chooseSignIn,
+          v.value?.needsSetup,
+        ),
+      ),
+      (_, _) => refresh.value++,
+    )
+    ..listen(
+      myTeamsProvider.select(
+        (v) => (v.hasValue, ids(v.value?.map((t) => t.group.id))),
+      ),
+      (_, _) => refresh.value++,
+    )
     ..onDispose(refresh.dispose);
 
   final env = ref.read(appEnvProvider);

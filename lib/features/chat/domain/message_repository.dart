@@ -47,8 +47,9 @@ abstract interface class MessageRepository {
   /// Sends a text message as the signed-in person (CHAT-2). It appears in
   /// [watchNewest] at once as pending; the future completes when the server
   /// has it (offline, when the connection returns) and throws if the server
-  /// refuses it. [mentions] are the people it names with @, and
-  /// [mentionsEveryone] an admin's @everyone (CHAT-14); [announcement]
+  /// refuses it. [mentions] are the people it names with @, with
+  /// [mentionNames] their names, and [mentionsEveryone] an admin's
+  /// @everyone (CHAT-14); [announcement]
   /// makes it an admin's announcement (CHAT-15).
   Future<void> sendText(
     GroupId groupId,
@@ -57,6 +58,7 @@ abstract interface class MessageRepository {
     String? id,
     String? replyToId,
     List<String> mentions = const [],
+    Map<String, String> mentionNames = const {},
     bool mentionsEveryone = false,
     bool announcement = false,
   });

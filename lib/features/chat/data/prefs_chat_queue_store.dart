@@ -39,6 +39,11 @@ class PrefsChatQueueStore implements ChatQueueStore {
               for (final uid in (e['mentions'] as List?) ?? const [])
                 if (uid is String) uid,
             ],
+            mentionNames: {
+              for (final n in ((e['mentionNames'] as Map?) ?? const {}).entries)
+                if (n.key is String && n.value is String)
+                  n.key as String: n.value as String,
+            },
             mentionsEveryone: e['mentionsEveryone'] == true,
             announcement: e['announcement'] == true,
           ),
@@ -58,6 +63,7 @@ class PrefsChatQueueStore implements ChatQueueStore {
             'text': i.text,
             'replyToId': i.replyToId,
             if (i.mentions.isNotEmpty) 'mentions': i.mentions,
+            if (i.mentionNames.isNotEmpty) 'mentionNames': i.mentionNames,
             if (i.mentionsEveryone) 'mentionsEveryone': true,
             if (i.announcement) 'announcement': true,
           },

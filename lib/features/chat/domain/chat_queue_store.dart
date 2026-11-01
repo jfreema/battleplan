@@ -12,6 +12,7 @@ abstract class SavedText with _$SavedText {
     required String text,
     String? replyToId,
     @Default(<String>[]) List<String> mentions,
+    @Default(<String, String>{}) Map<String, String> mentionNames,
     @Default(false) bool mentionsEveryone,
     @Default(false) bool announcement,
   }) = _SavedText;

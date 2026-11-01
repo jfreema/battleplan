@@ -50,6 +50,10 @@ abstract class Message with _$Message {
     /// The people it names with @, by ID, up to 20 (CHAT-14).
     @Default(<String>[]) List<String> mentions,
 
+    /// Their names when it was sent, by ID, so the chat shows the mention
+    /// without reading the team's roster. Older messages have none.
+    @Default(<String, String>{}) Map<String, String> mentionNames,
+
     /// An admin's @everyone (CHAT-14).
     @Default(false) bool mentionsEveryone,
 

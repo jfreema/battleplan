@@ -308,6 +308,25 @@ class FirestoreMemberRepository implements MemberRepository {
   }
 
   @override
+  Future<List<Membership>> fetchRoster(GroupId groupId) async {
+    final q = _db
+        .collection(Collections.groupMembers)
+        .where('groupId', isEqualTo: groupId.value)
+        .orderBy(FieldPath.documentId);
+    final all = <Membership>[];
+    for (String? after; ;) {
+      final page = await (after == null ? q : q.startAfter([after]))
+          .limit(Limits.queryLimitMax)
+          .get();
+      all.addAll([
+        for (final d in page.docs) membershipFromFirestore(d.data()),
+      ]);
+      if (page.docs.length < Limits.queryLimitMax) return all;
+      after = page.docs.last.id;
+    }
+  }
+
+  @override
   Future<void> updateMember(
     GroupId groupId,
     UserId uid, {

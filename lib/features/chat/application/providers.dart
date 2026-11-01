@@ -9,7 +9,6 @@ import 'package:battleplan/features/chat/domain/mentions.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
-import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/domain/strong_language.dart';
@@ -93,8 +92,10 @@ abstract class OutgoingText with _$OutgoingText {
     required String text,
     String? replyToId,
 
-    /// Who it names with @, and an admin's @everyone (CHAT-14).
+    /// Who it names with @, their names, and an admin's @everyone
+    /// (CHAT-14).
     @Default(<String>[]) List<String> mentions,
+    @Default(<String, String>{}) Map<String, String> mentionNames,
     @Default(false) bool mentionsEveryone,
 
     /// An admin's announcement (CHAT-15).
@@ -246,6 +247,7 @@ class ChatMessages extends _$ChatMessages {
             text: s.text,
             replyToId: s.replyToId,
             mentions: s.mentions,
+            mentionNames: s.mentionNames,
             mentionsEveryone: s.mentionsEveryone,
             announcement: s.announcement,
           ),
@@ -269,6 +271,7 @@ class ChatMessages extends _$ChatMessages {
               text: q.text,
               replyToId: q.replyToId,
               mentions: q.mentions,
+              mentionNames: q.mentionNames,
               mentionsEveryone: q.mentionsEveryone,
               announcement: q.announcement,
             ),
@@ -495,6 +498,7 @@ class ChatMessages extends _$ChatMessages {
     String text, {
     String? replyToId,
     List<String> mentions = const [],
+    Map<String, String> mentionNames = const {},
     bool mentionsEveryone = false,
     bool announcement = false,
   }) {
@@ -505,6 +509,7 @@ class ChatMessages extends _$ChatMessages {
       text: _filtered(trimmed),
       replyToId: replyToId,
       mentions: mentions,
+      mentionNames: mentionNames,
       mentionsEveryone: mentionsEveryone,
       announcement: announcement,
     );
@@ -599,6 +604,7 @@ class ChatMessages extends _$ChatMessages {
           id: item.id,
           replyToId: item.replyToId,
           mentions: item.mentions,
+          mentionNames: item.mentionNames,
           mentionsEveryone: item.mentionsEveryone,
           announcement: item.announcement,
         ),
@@ -664,13 +670,17 @@ class ChatMessages extends _$ChatMessages {
   Future<void> delete(Message message) =>
       ref.read(messageRepositoryProvider).deleteMessage(message.id);
 
+  /// How often the read marker is written at most (ARCH §10.2): every
+  /// write is read by everyone listening to the team's memberships.
+  static const readMarkerSpacing = Duration(seconds: 10);
+
   DateTime _lastMarked = DateTime.fromMillisecondsSinceEpoch(0);
   Timer? _markAgain;
   DateTime? _markUpTo;
 
   /// Marks messages read as they come on screen (CHAT-9): all of them when
   /// the newest is on screen, or up to [upTo], the newest one on screen,
-  /// while reading partway up. At most every 2 seconds, and only when it
+  /// while reading partway up. At most every [readMarkerSpacing], and only when it
   /// moves the marker forward.
   Future<void> markRead({DateTime? upTo}) async {
     final uid = ref.read(authUserProvider).value?.uid;
@@ -683,10 +693,10 @@ class ChatMessages extends _$ChatMessages {
     final read = ref.read(myMembershipProvider(groupId))?.lastReadAt;
     if (read != null && !(partial ?? newestAt).isAfter(read)) return;
     final since = DateTime.now().difference(_lastMarked);
-    if (since < const Duration(seconds: 2)) {
-      // Try again once the 2 seconds are up, so the last message counts.
+    if (since < readMarkerSpacing) {
+      // Try again once the time is up, so the last message counts.
       _markUpTo = partial;
-      _markAgain ??= Timer(const Duration(seconds: 2) - since, () {
+      _markAgain ??= Timer(readMarkerSpacing - since, () {
         _markAgain = null;
         unawaited(markRead(upTo: _markUpTo).catchError((Object _) {}));
       });
@@ -729,13 +739,21 @@ List<String> pinnedMessageIds(Ref ref, GroupId groupId) => [
       ?.reversed,
 ];
 
-/// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+/// Everyone's name on a team, by ID, read once while the chat is open
+/// (CHAT-14), not live: a live roster is re-read on every member's read
+/// marker. Read only when something needs it: typing @, an older message
+/// with mentions but no names of its own, or opening an author's page.
 @riverpod
-Map<String, String> memberNames(Ref ref, GroupId groupId) => {
+Future<Map<String, String>> teamNames(Ref ref, GroupId groupId) async => {
   for (final m
-      in ref.watch(rosterProvider(groupId)).value ?? const <Membership>[])
+      in await ref.watch(memberRepositoryProvider).fetchRoster(groupId))
     if (m.displayName.trim().isNotEmpty) m.uid.value: m.displayName.trim(),
 };
+
+/// [teamNames], empty until it arrives.
+@riverpod
+Map<String, String> memberNames(Ref ref, GroupId groupId) =>
+    ref.watch(teamNamesProvider(groupId)).value ?? const {};
 
 /// Who can be named with @ in a team's chat (CHAT-14): everyone on the
 /// team but me, by name.

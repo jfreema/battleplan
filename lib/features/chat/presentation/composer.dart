@@ -33,6 +33,7 @@ class Composer extends StatefulWidget {
     this.onCancelReply,
     this.teamName = '',
     this.mentionCandidates = const [],
+    this.onMentionTyped,
     this.canMentionEveryone = false,
     this.onAnnounce,
     this.announcing = false,
@@ -66,6 +67,10 @@ class Composer extends StatefulWidget {
   final List<MentionCandidate> mentionCandidates;
   final bool canMentionEveryone;
 
+  /// Called when the text first has an @, so the screen can read who
+  /// [mentionCandidates] are; the suggestions show once they arrive.
+  final VoidCallback? onMentionTyped;
+
   /// Admins: the + menu's Announcement (CHAT-15). While [announcing], a
   /// banner says the next message notifies everyone, with ✕
   /// ([onCancelAnnouncement]).
@@ -98,6 +103,13 @@ class _ComposerState extends State<Composer> {
   }
 
   @override
+  void didUpdateWidget(Composer old) {
+    super.didUpdateWidget(old);
+    // The names arrived after the @ was typed: suggest them now.
+    if (old.mentionCandidates != widget.mentionCandidates) _suggest();
+  }
+
+  @override
   void dispose() {
     _text.dispose();
     _focus.dispose();
@@ -106,6 +118,7 @@ class _ComposerState extends State<Composer> {
 
   /// Looks for an @ being typed at the cursor and lists who it could be.
   void _suggest() {
+    if (_text.text.contains('@')) widget.onMentionTyped?.call();
     final sel = _text.selection;
     final q = sel.isValid && sel.isCollapsed
         ? mentionQueryAt(_text.text, sel.baseOffset)

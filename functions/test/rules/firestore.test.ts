@@ -293,6 +293,13 @@ describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
     await assertSucceeds(send('bob', 'Bob', 'n6', { type: 'image', attachments: [photo], mentions: ['alice'] }));
   });
 
+  it('takes the names of the people it names, and only theirs', async () => {
+    await assertSucceeds(send('bob', 'Bob', 'mn1', { mentions: ['alice'], mentionNames: { alice: 'Alice' } }));
+    await assertFails(send('bob', 'Bob', 'mn2', { mentions: ['alice'], mentionNames: { carol: 'Carol' } }));
+    await assertFails(send('bob', 'Bob', 'mn3', { mentionNames: { alice: 'Alice' } }));
+    await assertFails(send('bob', 'Bob', 'mn4', { mentions: ['alice'], mentionNames: ['Alice'] }));
+  });
+
   it('refuses more than 20, and a list that is not a list', async () => {
     await assertFails(send('bob', 'Bob', 'n3', { mentions: Array.from({ length: 21 }, (_, i) => `u${i}`) }));
     await assertFails(send('bob', 'Bob', 'n4', { mentions: 'alice' }));

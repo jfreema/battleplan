@@ -88,6 +88,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   DateTime? _openedReadAt;
   bool _openedMarkerTaken = false;
 
+  /// Set once someone types @: the team's names are read then (CHAT-14).
+  bool _mentionsWanted = false;
+
   /// True once the chat has opened at the first unread message.
   bool _positioned = false;
 
@@ -439,15 +442,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final l10n = AppLocalizations.of(context);
     final chat = ref.watch(chatMessagesProvider(widget.groupId));
     final me = ref.watch(authUserProvider).value?.uid;
-    final group = ref.watch(groupProvider(widget.groupId)).value;
-    final archived = group?.isArchived ?? false;
+    // Only the team's fields the chat shows: the team document changes
+    // with every message and upload, which mustn't rebuild the chat.
+    final group = ref.watch(
+      groupProvider(widget.groupId).select((v) {
+        final g = v.value;
+        final other = (g?.isDirect ?? false) ? g?.otherThan(me) : null;
+        return (
+          name: g?.name ?? '',
+          archived: g?.isArchived ?? false,
+          direct: g?.isDirect ?? false,
+          otherUid: other,
+          otherName: other == null ? '' : g?.people[other]?.name ?? '',
+          look: g?.chatTheme,
+          storageFull: g?.storageFull ?? false,
+          membersCanCreatePolls: g?.settings.membersCanCreatePolls ?? false,
+        );
+      }),
+    );
+    final archived = group.archived;
     // A direct conversation (CHAT-19): the other person, and whether I
     // blocked them, which stops me messaging them (SAFE-2).
-    final direct = group?.isDirect ?? false;
-    final otherUid = direct ? group?.otherThan(me) : null;
-    final otherName = otherUid == null
-        ? ''
-        : group?.people[otherUid]?.name ?? '';
+    final direct = group.direct;
+    final otherUid = group.otherUid;
+    final otherName = group.otherName;
     final blockedOther =
         otherUid != null && ref.watch(blockedIdsProvider).contains(otherUid);
     // A super admin viewing the team reads it and moderates, nothing more
@@ -457,23 +475,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // No color chosen means the theme's "you" color (lemon in Gumdrop
     // Candy), so changing only the background never changes the bubbles;
     // a team with neither has a plain chat.
-    final look = group?.chatTheme;
+    final look = group.look;
     // A candy color (Chat look) is drawn in this theme's shade of it.
     final bubbleColor = chatBubbleColor(
       GumdropColors.of(context),
       look?.bubbleColor,
     );
     // Full storage stops photos, not text (STORE-4).
-    final storageFull = group?.storageFull ?? false;
+    final storageFull = group.storageFull;
     final messages = chat.messages;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
     final picker = ref.watch(photoPickerProvider);
-    // Nobody to @mention in a conversation for two.
-    final candidates = direct
+    // Nobody to @mention in a conversation for two. The team's names are
+    // read once someone types @ (CHAT-14), not kept live.
+    final candidates = direct || !_mentionsWanted
         ? const <MentionCandidate>[]
         : ref.watch(mentionCandidatesProvider(widget.groupId));
     final byId = {for (final m in messages) m.id: m};
-    final membership = ref.watch(myMembershipProvider(widget.groupId));
+    // Only what the chat shows of my membership: whether I'm on it, an
+    // admin, and my read marker.
+    final membership = ref.watch(
+      myMembershipProvider(widget.groupId).select(
+        (m) =>
+            m == null ? null : (isAdmin: m.isAdmin, lastReadAt: m.lastReadAt),
+      ),
+    );
     // Team admins, and super admins on the team (§3): @everyone,
     // announcements, and polls. Nobody is one in a conversation.
     final isAdmin =
@@ -782,10 +808,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         else
           Composer(
             // "Message Thunder…", or the other person's name.
-            teamName: direct ? otherName : group?.name ?? '',
+            teamName: direct ? otherName : group.name,
             replyingTo: _replyTo,
             onCancelReply: () => setState(() => _replyTo = null),
             mentionCandidates: candidates,
+            onMentionTyped: direct || _mentionsWanted
+                ? null
+                : () => setState(() => _mentionsWanted = true),
             // @everyone is for admins (CHAT-14).
             canMentionEveryone: isAdmin,
             onAnnounce: isAdmin
@@ -805,6 +834,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   text,
                   replyToId: _replyTo?.id,
                   mentions: named.uids,
+                  mentionNames: {
+                    for (final c in candidates)
+                      if (named.uids.contains(c.uid)) c.uid: c.name,
+                  },
                   mentionsEveryone: named.everyone,
                   announcement: _announcing && isAdmin,
                 ),
@@ -821,10 +854,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 : null,
             // Polls (POLL-1) for admins, and for members if the team allows
             // it (TEAM-5). Full storage doesn't stop them (STORE-4).
-            onCreatePoll:
-                !direct &&
-                    (isAdmin ||
-                        (group?.settings.membersCanCreatePolls ?? false))
+            onCreatePoll: !direct && (isAdmin || group.membersCanCreatePolls)
                 ? () => unawaited(_createPoll(controller))
                 : null,
             onAttachBlocked: storageFull ? _showFull : null,

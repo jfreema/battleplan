@@ -526,9 +526,16 @@ void main() {
       tester,
     ) async {
       final repo = FakeMessageRepository([msg(1)]);
-      await openChat(tester, repo, readAt: msg(1).createdAt);
+      final members = FakeMemberRepository([
+        testMembership('a', 'coach', role: MemberRole.owner),
+        testMembership('a', 'sam', name: 'Sam Rivera'),
+      ]);
+      await openChat(tester, repo, readAt: msg(1).createdAt, members: members);
+      // The chat doesn't read the roster until someone types @.
+      expect(members.rosterFetches, 0);
       await tester.enterText(composer(), 'Thanks @sa');
       await tester.pumpAndSettle();
+      expect(members.rosterFetches, 1);
       final suggestion = find.widgetWithText(ListTile, 'Sam Rivera');
       expect(suggestion, findsOneWidget);
       // Nobody is offered themselves.
@@ -541,6 +548,8 @@ void main() {
       expect(repo.sent, ['Thanks @Sam Rivera']);
       expect(repo.sentDetails.single.mentions, ['sam']);
       expect(repo.sentDetails.single.everyone, isFalse);
+      // The message keeps the name, so it shows without the roster.
+      expect(repo.messages.first.mentionNames, {'sam': 'Sam Rivera'});
     });
 
     testWidgets('a name typed out in full counts too, and Escape closes the '

@@ -399,7 +399,7 @@ service cloud.firestore {
         && incoming().createdAt == request.time
         && incoming().keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
             'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',
-            'mentions', 'mentionsEveryone', 'announcement', 'playId', 'createdAt'])
+            'mentions', 'mentionNames', 'mentionsEveryone', 'announcement', 'playId', 'createdAt'])
         && rateLimitOk(incoming().groupId, messageId);
 
       // Reactions: a member may set or clear only their own, any of the 16,
@@ -465,6 +465,11 @@ service cloud.firestore {
     function mentionsOk(m) {
       return (!('mentions' in m)
               || (m.mentions is list && m.mentions.size() <= 20 && m.type in ['text', 'image']))
+        // The names of the people it names, by ID, as sent, so the chat
+        // needn't read the roster to show them; only people it names.
+        && (!('mentionNames' in m)
+            || (m.mentionNames is map && 'mentions' in m && m.mentionNames.size() <= 20
+                && m.mentionNames.keys().hasOnly(m.mentions)))
         && (m.get('mentionsEveryone', false) == false
             || (m.mentionsEveryone == true && m.type in ['text', 'image']
                 && (isAdmin(m.groupId) || superAdmin())));

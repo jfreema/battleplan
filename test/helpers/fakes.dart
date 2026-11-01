@@ -549,6 +549,15 @@ class FakeMemberRepository implements MemberRepository {
   }
 
   @override
+  Future<List<Membership>> fetchRoster(GroupId groupId) async {
+    rosterFetches++;
+    return memberships.where((m) => m.groupId == groupId).toList();
+  }
+
+  /// How many times the roster was read once (fetchRoster).
+  int rosterFetches = 0;
+
+  @override
   Stream<List<Membership>> watchRoster(GroupId groupId) async* {
     List<Membership> team() =>
         memberships.where((m) => m.groupId == groupId).toList();
@@ -1772,6 +1781,7 @@ class FakeMessageRepository implements MessageRepository {
     String? id,
     String? replyToId,
     List<String> mentions = const [],
+    Map<String, String> mentionNames = const {},
     bool mentionsEveryone = false,
     bool announcement = false,
   }) async {
@@ -1794,6 +1804,7 @@ class FakeMessageRepository implements MessageRepository {
         replyToId: replyToId,
         replyPreview: replyToId == null ? null : _previewOf(replyToId),
         mentions: mentions,
+        mentionNames: mentionNames,
         mentionsEveryone: mentionsEveryone,
         announcement: announcement,
         createdAt: DateTime.now(),

@@ -148,6 +148,11 @@ class FirestoreMessageRepository implements MessageRepository {
         for (final uid in (x['mentions'] as List?) ?? const [])
           if (uid is String) uid,
       ],
+      mentionNames: {
+        for (final e in ((x['mentionNames'] as Map?) ?? const {}).entries)
+          if (e.key is String && e.value is String)
+            e.key as String: e.value as String,
+      },
       mentionsEveryone: x['mentionsEveryone'] == true,
       announcement: x['announcement'] == true,
       playId: x['playId'] as String?,
@@ -192,6 +197,7 @@ class FirestoreMessageRepository implements MessageRepository {
     String? id,
     String? replyToId,
     List<String> mentions = const [],
+    Map<String, String> mentionNames = const {},
     bool mentionsEveryone = false,
     bool announcement = false,
   }) => _post(
@@ -205,6 +211,12 @@ class FirestoreMessageRepository implements MessageRepository {
       // Only when set, as the rules allow them (CHAT-14, CHAT-15).
       if (mentions.isNotEmpty)
         'mentions': mentions.take(Limits.mentionsMax).toList(),
+      // Their names, so the chat needn't read the roster to show them.
+      if (mentions.isNotEmpty && mentionNames.isNotEmpty)
+        'mentionNames': {
+          for (final uid in mentions.take(Limits.mentionsMax))
+            uid: ?mentionNames[uid],
+        },
       if (mentionsEveryone) 'mentionsEveryone': true,
       if (announcement) 'announcement': true,
     },

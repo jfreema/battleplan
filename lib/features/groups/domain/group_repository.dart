@@ -97,6 +97,10 @@ abstract interface class MemberRepository {
   /// A team's roster (TEAM-3). Readable by its members.
   Stream<List<Membership>> watchRoster(GroupId groupId);
 
+  /// The roster once, not live: for the chat's names (CHAT-14), which a
+  /// live roster would re-read on every member's read marker.
+  Future<List<Membership>> fetchRoster(GroupId groupId);
+
   /// Makes someone an admin or a member, sets their title (TEAM-4), or
   /// makes them a coach or not (TEAM-3). Only the owner (or a super admin)
   /// can take admin away.

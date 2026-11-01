@@ -670,7 +670,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **CHAT-14 · v1.1 · @mentions.** Built (task 135).
   - Typing @ suggests team members whose name, or a word of it, starts with what's typed, up to 5, never yourself. Tap one, or use the arrow keys and Enter or Tab on a keyboard; Escape closes the list. Picking one puts "@Full Name " in the message.
   - A message names whoever's full name follows an @, matched without regard to case, with the longest name winning ("@Mary Ann Lee" over "Mary Ann"). An @ inside an email address never counts. Up to 20 people per message, on text messages and photo captions.
-  - Mentions are shown in bold, and a mention of you, or @everyone, is highlighted. They reach the person even at "Important only", with a notification-center item ("Alex mentioned you: …"). Someone who is both replied to and mentioned gets only the reply. The Mentions switch (NOTIF-4) turns the push off; the message then reaches them like any other.
+  - Mentions are shown in bold, with the name the person had when it was sent, and a mention of you, or @everyone, is highlighted. They reach the person even at "Important only", with a notification-center item ("Alex mentioned you: …"). Someone who is both replied to and mentioned gets only the reply. The Mentions switch (NOTIF-4) turns the push off; the message then reaches them like any other.
   - @everyone is for admins only, and reaches everyone on the team as a mention. A member typing "@everyone" names nobody.
   - Editing a message doesn't notify anyone new.
 - **CHAT-15 · Edit (MVP), pin and announce (v1.1).** All built: editing in the MVP, pins and announcements in task 135.

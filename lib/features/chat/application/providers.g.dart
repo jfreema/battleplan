@@ -337,7 +337,7 @@ final class ChatMessagesProvider
   }
 }
 
-String _$chatMessagesHash() => r'59ea04ce159fd2a70cc02a9254965d8b137b0cde';
+String _$chatMessagesHash() => r'7449738b65aee6b0b03d199e0ebc59e4d772fc98';
 
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out
@@ -565,12 +565,113 @@ final class PinnedMessageIdsFamily extends $Family
   String toString() => r'pinnedMessageIdsProvider';
 }
 
-/// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+/// Everyone's name on a team, by ID, read once while the chat is open
+/// (CHAT-14), not live: a live roster is re-read on every member's read
+/// marker. Read only when something needs it: typing @, an older message
+/// with mentions but no names of its own, or opening an author's page.
+
+@ProviderFor(teamNames)
+final teamNamesProvider = TeamNamesFamily._();
+
+/// Everyone's name on a team, by ID, read once while the chat is open
+/// (CHAT-14), not live: a live roster is re-read on every member's read
+/// marker. Read only when something needs it: typing @, an older message
+/// with mentions but no names of its own, or opening an author's page.
+
+final class TeamNamesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, String>>,
+          Map<String, String>,
+          FutureOr<Map<String, String>>
+        >
+    with
+        $FutureModifier<Map<String, String>>,
+        $FutureProvider<Map<String, String>> {
+  /// Everyone's name on a team, by ID, read once while the chat is open
+  /// (CHAT-14), not live: a live roster is re-read on every member's read
+  /// marker. Read only when something needs it: typing @, an older message
+  /// with mentions but no names of its own, or opening an author's page.
+  TeamNamesProvider._({
+    required TeamNamesFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamNamesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamNamesHash();
+
+  @override
+  String toString() {
+    return r'teamNamesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, String>> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return teamNames(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamNamesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamNamesHash() => r'7bf6d8c9ad2177460f2d4d68970343e1198ea981';
+
+/// Everyone's name on a team, by ID, read once while the chat is open
+/// (CHAT-14), not live: a live roster is re-read on every member's read
+/// marker. Read only when something needs it: typing @, an older message
+/// with mentions but no names of its own, or opening an author's page.
+
+final class TeamNamesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Map<String, String>>, GroupId> {
+  TeamNamesFamily._()
+    : super(
+        retry: null,
+        name: r'teamNamesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Everyone's name on a team, by ID, read once while the chat is open
+  /// (CHAT-14), not live: a live roster is re-read on every member's read
+  /// marker. Read only when something needs it: typing @, an older message
+  /// with mentions but no names of its own, or opening an author's page.
+
+  TeamNamesProvider call(GroupId groupId) =>
+      TeamNamesProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'teamNamesProvider';
+}
+
+/// [teamNames], empty until it arrives.
 
 @ProviderFor(memberNames)
 final memberNamesProvider = MemberNamesFamily._();
 
-/// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+/// [teamNames], empty until it arrives.
 
 final class MemberNamesProvider
     extends
@@ -580,7 +681,7 @@ final class MemberNamesProvider
           Map<String, String>
         >
     with $Provider<Map<String, String>> {
-  /// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+  /// [teamNames], empty until it arrives.
   MemberNamesProvider._({
     required MemberNamesFamily super.from,
     required GroupId super.argument,
@@ -633,9 +734,9 @@ final class MemberNamesProvider
   }
 }
 
-String _$memberNamesHash() => r'756491b6172439944284984d6da8897572e986ed';
+String _$memberNamesHash() => r'f9f2d495c346d6cf02a9347f47d0ef36d9541062';
 
-/// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+/// [teamNames], empty until it arrives.
 
 final class MemberNamesFamily extends $Family
     with $FunctionalFamilyOverride<Map<String, String>, GroupId> {
@@ -648,7 +749,7 @@ final class MemberNamesFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Everyone's name on a team now, by ID, for showing @mentions (CHAT-14).
+  /// [teamNames], empty until it arrives.
 
   MemberNamesProvider call(GroupId groupId) =>
       MemberNamesProvider._(argument: groupId, from: this);

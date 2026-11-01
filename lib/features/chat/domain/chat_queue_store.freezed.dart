@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SavedText {
 
- String get id; String get text; String? get replyToId; List<String> get mentions; bool get mentionsEveryone; bool get announcement;
+ String get id; String get text; String? get replyToId; List<String> get mentions; Map<String, String> get mentionNames; bool get mentionsEveryone; bool get announcement;
 /// Create a copy of SavedText
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $SavedTextCopyWith<SavedText> get copyWith => _$SavedTextCopyWithImpl<SavedText>
 @override
 bool operator ==(Object other) {
   final _this = this as SavedText;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedText&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.replyToId, _this.replyToId) || other.replyToId == _this.replyToId)&&const DeepCollectionEquality().equals(other.mentions, _this.mentions)&&(identical(other.mentionsEveryone, _this.mentionsEveryone) || other.mentionsEveryone == _this.mentionsEveryone)&&(identical(other.announcement, _this.announcement) || other.announcement == _this.announcement));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedText&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.text, _this.text) || other.text == _this.text)&&(identical(other.replyToId, _this.replyToId) || other.replyToId == _this.replyToId)&&const DeepCollectionEquality().equals(other.mentions, _this.mentions)&&const DeepCollectionEquality().equals(other.mentionNames, _this.mentionNames)&&(identical(other.mentionsEveryone, _this.mentionsEveryone) || other.mentionsEveryone == _this.mentionsEveryone)&&(identical(other.announcement, _this.announcement) || other.announcement == _this.announcement));
 }
 
 
 @override
 int get hashCode {
   final _this = this as SavedText;
-  return Object.hash(runtimeType,_this.id,_this.text,_this.replyToId,const DeepCollectionEquality().hash(_this.mentions),_this.mentionsEveryone,_this.announcement);
+  return Object.hash(runtimeType,_this.id,_this.text,_this.replyToId,const DeepCollectionEquality().hash(_this.mentions),const DeepCollectionEquality().hash(_this.mentionNames),_this.mentionsEveryone,_this.announcement);
 }
 
 @override
 String toString() {
   final _this = this as SavedText;
-  return 'SavedText(id: ${_this.id}, text: ${_this.text}, replyToId: ${_this.replyToId}, mentions: ${_this.mentions}, mentionsEveryone: ${_this.mentionsEveryone}, announcement: ${_this.announcement})';
+  return 'SavedText(id: ${_this.id}, text: ${_this.text}, replyToId: ${_this.replyToId}, mentions: ${_this.mentions}, mentionNames: ${_this.mentionNames}, mentionsEveryone: ${_this.mentionsEveryone}, announcement: ${_this.announcement})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $SavedTextCopyWith<$Res>  {
   factory $SavedTextCopyWith(SavedText value, $Res Function(SavedText) _then) = _$SavedTextCopyWithImpl;
 @useResult
 $Res call({
- String id, String text, String? replyToId, List<String> mentions, bool mentionsEveryone, bool announcement
+ String id, String text, String? replyToId, List<String> mentions, Map<String, String> mentionNames, bool mentionsEveryone, bool announcement
 });
 
 
@@ -68,13 +68,14 @@ class _$SavedTextCopyWithImpl<$Res>
 
 /// Create a copy of SavedText
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? text = null,Object? replyToId = freezed,Object? mentions = null,Object? mentionsEveryone = null,Object? announcement = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? text = null,Object? replyToId = freezed,Object? mentions = null,Object? mentionNames = null,Object? mentionsEveryone = null,Object? announcement = null,}) {
   return _then(SavedText(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,replyToId: freezed == replyToId ? _self.replyToId : replyToId // ignore: cast_nullable_to_non_nullable
 as String?,mentions: null == mentions ? _self.mentions : mentions // ignore: cast_nullable_to_non_nullable
-as List<String>,mentionsEveryone: null == mentionsEveryone ? _self.mentionsEveryone : mentionsEveryone // ignore: cast_nullable_to_non_nullable
+as List<String>,mentionNames: null == mentionNames ? _self.mentionNames : mentionNames // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,mentionsEveryone: null == mentionsEveryone ? _self.mentionsEveryone : mentionsEveryone // ignore: cast_nullable_to_non_nullable
 as bool,announcement: null == announcement ? _self.announcement : announcement // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -161,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String text,  String? replyToId,  List<String> mentions,  bool mentionsEveryone,  bool announcement)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String text,  String? replyToId,  List<String> mentions,  Map<String, String> mentionNames,  bool mentionsEveryone,  bool announcement)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SavedText() when $default != null:
-return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mentionsEveryone,_that.announcement);case _:
+return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mentionNames,_that.mentionsEveryone,_that.announcement);case _:
   return orElse();
 
 }
@@ -182,10 +183,10 @@ return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mention
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String text,  String? replyToId,  List<String> mentions,  bool mentionsEveryone,  bool announcement)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String text,  String? replyToId,  List<String> mentions,  Map<String, String> mentionNames,  bool mentionsEveryone,  bool announcement)  $default,) {final _that = this;
 switch (_that) {
 case _SavedText():
-return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mentionsEveryone,_that.announcement);case _:
+return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mentionNames,_that.mentionsEveryone,_that.announcement);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +203,10 @@ return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mention
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String text,  String? replyToId,  List<String> mentions,  bool mentionsEveryone,  bool announcement)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String text,  String? replyToId,  List<String> mentions,  Map<String, String> mentionNames,  bool mentionsEveryone,  bool announcement)?  $default,) {final _that = this;
 switch (_that) {
 case _SavedText() when $default != null:
-return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mentionsEveryone,_that.announcement);case _:
+return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mentionNames,_that.mentionsEveryone,_that.announcement);case _:
   return null;
 
 }
@@ -217,7 +218,7 @@ return $default(_that.id,_that.text,_that.replyToId,_that.mentions,_that.mention
 
 
 class _SavedText implements SavedText {
-  const _SavedText({required this.id, required this.text, this.replyToId,  List<String> mentions = const <String>[], this.mentionsEveryone = false, this.announcement = false}): _mentions = mentions;
+  const _SavedText({required this.id, required this.text, this.replyToId,  List<String> mentions = const <String>[],  Map<String, String> mentionNames = const <String, String>{}, this.mentionsEveryone = false, this.announcement = false}): _mentions = mentions,_mentionNames = mentionNames;
   
 
 @override final  String id;
@@ -228,6 +229,13 @@ class _SavedText implements SavedText {
   if (_mentions is EqualUnmodifiableListView) return _mentions;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_mentions);
+}
+
+ final  Map<String, String> _mentionNames;
+@override@JsonKey() Map<String, String> get mentionNames {
+  if (_mentionNames is EqualUnmodifiableMapView) return _mentionNames;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_mentionNames);
 }
 
 @override@JsonKey() final  bool mentionsEveryone;
@@ -243,18 +251,18 @@ _$SavedTextCopyWith<_SavedText> get copyWith => __$SavedTextCopyWithImpl<_SavedT
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedText&&(identical(other.id, id) || other.id == id)&&(identical(other.text, text) || other.text == text)&&(identical(other.replyToId, replyToId) || other.replyToId == replyToId)&&const DeepCollectionEquality().equals(other.mentions, _mentions)&&(identical(other.mentionsEveryone, mentionsEveryone) || other.mentionsEveryone == mentionsEveryone)&&(identical(other.announcement, announcement) || other.announcement == announcement));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SavedText&&(identical(other.id, id) || other.id == id)&&(identical(other.text, text) || other.text == text)&&(identical(other.replyToId, replyToId) || other.replyToId == replyToId)&&const DeepCollectionEquality().equals(other.mentions, _mentions)&&const DeepCollectionEquality().equals(other.mentionNames, _mentionNames)&&(identical(other.mentionsEveryone, mentionsEveryone) || other.mentionsEveryone == mentionsEveryone)&&(identical(other.announcement, announcement) || other.announcement == announcement));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,text,replyToId,const DeepCollectionEquality().hash(_mentions),mentionsEveryone,announcement);
+    return Object.hash(runtimeType,id,text,replyToId,const DeepCollectionEquality().hash(_mentions),const DeepCollectionEquality().hash(_mentionNames),mentionsEveryone,announcement);
 }
 
 @override
 String toString() {
-    return 'SavedText(id: $id, text: $text, replyToId: $replyToId, mentions: $mentions, mentionsEveryone: $mentionsEveryone, announcement: $announcement)';
+    return 'SavedText(id: $id, text: $text, replyToId: $replyToId, mentions: $mentions, mentionNames: $mentionNames, mentionsEveryone: $mentionsEveryone, announcement: $announcement)';
 }
 
 
@@ -265,7 +273,7 @@ abstract mixin class _$SavedTextCopyWith<$Res> implements $SavedTextCopyWith<$Re
   factory _$SavedTextCopyWith(_SavedText value, $Res Function(_SavedText) _then) = __$SavedTextCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String text, String? replyToId, List<String> mentions, bool mentionsEveryone, bool announcement
+ String id, String text, String? replyToId, List<String> mentions, Map<String, String> mentionNames, bool mentionsEveryone, bool announcement
 });
 
 
@@ -282,13 +290,14 @@ class __$SavedTextCopyWithImpl<$Res>
 
 /// Create a copy of SavedText
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? text = null,Object? replyToId = freezed,Object? mentions = null,Object? mentionsEveryone = null,Object? announcement = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? text = null,Object? replyToId = freezed,Object? mentions = null,Object? mentionNames = null,Object? mentionsEveryone = null,Object? announcement = null,}) {
   return _then(_SavedText(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,replyToId: freezed == replyToId ? _self.replyToId : replyToId // ignore: cast_nullable_to_non_nullable
 as String?,mentions: null == mentions ? _self._mentions : mentions // ignore: cast_nullable_to_non_nullable
-as List<String>,mentionsEveryone: null == mentionsEveryone ? _self.mentionsEveryone : mentionsEveryone // ignore: cast_nullable_to_non_nullable
+as List<String>,mentionNames: null == mentionNames ? _self._mentionNames : mentionNames // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,mentionsEveryone: null == mentionsEveryone ? _self.mentionsEveryone : mentionsEveryone // ignore: cast_nullable_to_non_nullable
 as bool,announcement: null == announcement ? _self.announcement : announcement // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

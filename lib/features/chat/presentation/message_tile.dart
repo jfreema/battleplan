@@ -367,18 +367,21 @@ class _MessageTileState extends ConsumerState<MessageTile> {
   /// Opens the author's page (TEAM-15), when they're someone on the team,
   /// or in the conversation, now: not for system lines, imported messages,
   /// or a deleted account. From a team's chat it names the team, which the
-  /// page then lists (they've been seen there).
+  /// page then lists (they've been seen there). Who's on the team is read
+  /// on the tap, not watched, so the chat needn't keep the roster live.
   VoidCallback? _authorTap(Message m) {
     if (m.isSystem || m.importedFrom != null) return null;
-    if (!ref.watch(memberNamesProvider(m.groupId)).containsKey(m.authorId)) {
-      return null;
-    }
-    final direct = ref.watch(groupProvider(m.groupId)).value?.isDirect ?? false;
-    return () => openPersonPage(
-      context,
-      UserId(m.authorId),
-      teamId: direct ? null : m.groupId,
-    );
+    return () async {
+      final names = await ref.read(teamNamesProvider(m.groupId).future);
+      if (!names.containsKey(m.authorId) || !mounted) return;
+      final direct =
+          ref.read(groupProvider(m.groupId)).value?.isDirect ?? false;
+      openPersonPage(
+        context,
+        UserId(m.authorId),
+        teamId: direct ? null : m.groupId,
+      );
+    };
   }
 
   @override
@@ -389,7 +392,9 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final web = ref.watch(browserInfoProvider).isWeb;
     // A direct conversation (CHAT-19) is laid out as iMessage lays out one:
     // no photo or name beside the other person's messages.
-    final direct = ref.watch(groupProvider(m.groupId)).value?.isDirect ?? false;
+    final direct = ref.watch(
+      groupProvider(m.groupId).select((g) => g.value?.isDirect ?? false),
+    );
     final c = GumdropColors.of(context);
     if (m.isSystem) {
       // CHAT-10: small centered lines like "Sam joined", on the page.
@@ -465,10 +470,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         : MaterialLocalizations.of(context)
               .formatTimeOfDay(TimeOfDay.fromDateTime(m.createdAt!.toLocal()));
     // @mentions (CHAT-14) in bold, and the ones naming me (or everyone)
-    // stand out, by the mentioned people's current names. In my bubble a
-    // mention is a white pill, as the design has it.
+    // stand out, by the names the message was sent with; an older message
+    // without them reads the team's names once. In my bubble a mention is
+    // a white pill, as the design has it.
     final names = m.mentions.isEmpty
         ? const <String, String>{}
+        : m.mentionNames.isNotEmpty
+        ? m.mentionNames
         : ref.watch(memberNamesProvider(m.groupId));
     final highlights = <TextHighlight>[
       for (final r in mentionRanges(
