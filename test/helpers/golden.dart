@@ -29,7 +29,7 @@ Future<void> loadAppFonts() async {
     await loader.load();
   }
   // Arena's font is an asset, not in the manifest (loadArenaFont).
-  await loadArenaFont();
+  await loadArenaFontFile();
 
   final fonts = Directory(
     '${_flutterRoot()}/bin/cache/artifacts/material_fonts',
