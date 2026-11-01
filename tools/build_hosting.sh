@@ -82,6 +82,43 @@ flutter build web --wasm -t "lib/main_$flavor.dart" --base-href /app/ -o "$PWD/$
   --build-number="$build_number" --dart-define=APP_COMMIT="$commit" "$@"
 
 rm -f "$app/.last_build_id"
+
+# Long-cached app files (ARCH §6.6): the big files get names with a hash of
+# their contents, so firebase.json's hashed-file rule lets browsers keep them
+# for a year, and a new release has new names. flutter_bootstrap.js, which
+# names them, stays no-cache. dart2js's deferred parts first, since
+# main.dart.js names them.
+hashed() { # file -> name with an 8-character content hash before the extension
+  local dir name stem ext
+  dir=$(dirname "$1"); name=$(basename "$1")
+  case "$name" in
+    *.part.js) stem="${name%.js}"; ext=js ;;
+    *) stem="${name%.*}"; ext="${name##*.}" ;;
+  esac
+  echo "$stem.$(shasum -a 256 "$1" | cut -c1-8).$ext"
+}
+rename_in() { # file old new: replaces the quoted name old with new in file
+  python3 - "$@" <<'PY'
+import sys
+path, old, new = sys.argv[1:]
+text = open(path).read()
+if f'"{old}"' not in text:
+    sys.exit(f"{path} doesn't name {old}")
+open(path, "w").write(text.replace(f'"{old}"', f'"{new}"'))
+PY
+}
+for part in "$app"/main.dart.js_*.part.js; do
+  [ -f "$part" ] || continue
+  new=$(hashed "$part")
+  mv "$part" "$app/$new"
+  rename_in "$app/main.dart.js" "$(basename "$part")" "$new"
+done
+for main in main.dart.wasm main.dart.mjs main.dart.js; do
+  [ -f "$app/$main" ] || continue
+  new=$(hashed "$app/$main")
+  mv "$app/$main" "$app/$new"
+  rename_in "$app/flutter_bootstrap.js" "$main" "$new"
+done
 grep -q '<base href="/app/">' "$app/index.html" || {
   echo "$app/index.html doesn't have base href /app/." >&2
   exit 1

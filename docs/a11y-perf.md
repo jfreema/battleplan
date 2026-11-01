@@ -63,7 +63,7 @@ These numbers come from `flutter build web` with Flutter 3.47.6, built from `lib
 
 | | Size |
 |---|---|
-| `main.dart.wasm` (`--wasm` build) | 5.39 MB raw, 1.87 MB gzipped |
+| `main.dart.wasm` (`--wasm` build) | 6.12 MB raw, 2.16 MB gzipped (2026-11-01; served as `main.dart.<hash>.wasm`) |
 | `main.dart.js` (JS fallback) | 6.32 MB raw, 1.61 MB gzipped, plus a 156 KB deferred part (the admin panel, D42) |
 | `main.dart.mjs` | 59 KB |
 | Engine, from gstatic: `skwasm.wasm` / `canvaskit.wasm` | 3.6 MB / 7.3 MB raw |

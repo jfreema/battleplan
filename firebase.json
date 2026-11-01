@@ -138,6 +138,15 @@
         ]
       },
       {
+        "regex": "^/app/assets/.+\\.(ttf|otf|woff2?)$",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400"
+          }
+        ]
+      },
+      {
         "regex": "^/.+\\.[0-9a-f]{8,}\\.(css|js|mjs|wasm|png|jpe?g|webp|avif|svg|woff2?)$",
         "headers": [
           {
