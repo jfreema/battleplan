@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/url_cache.dart';
 import 'package:battleplan/features/chat/domain/message.dart' show PageCursor;
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/domain/document_repository.dart';
@@ -231,13 +232,16 @@ class FirestoreDocumentRepository implements DocumentRepository {
   }
 
   @override
-  Future<String?> fileUrl(String path) async {
+  Future<String?> fileUrl(String path) => _urls.get(path, () async {
     try {
       return await _storage.ref(path).getDownloadURL();
     } on FirebaseException {
       return null;
     }
-  }
+  });
+
+  /// File links, kept for the run (ARCH §5.6).
+  final _urls = UrlCache();
 
   @override
   Future<Uint8List?> fileBytes(String path) async {

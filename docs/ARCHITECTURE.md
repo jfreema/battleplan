@@ -316,7 +316,7 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 - Firestore offline persistence is on: the default on mobile, enabled explicitly on web.
 - Sent messages appear instantly (latency compensation) with a "sending" state. Writes made offline queue and sync when the connection returns. File uploads need a connection and offer retry.
 - Pending server timestamps are read as local estimates (Firestore's `estimate` server-timestamp behavior), so pending messages sort correctly.
-- Lists show **thumbnails**. Full-resolution images load only when tapped. Images load through Flutter's image cache and the platform's HTTP cache (D50).
+- Lists show **thumbnails**. Full-resolution images load only when tapped. Images load through Flutter's image cache and the platform's HTTP cache (D50). Their Storage download links are kept for the run (`UrlCache`, in each repository that hands them out): every upload gets a new path, so a link never goes stale, and each image starts loading a round trip sooner.
 - Web:
   - Build with `flutter build web --wasm`, falling back to JS/CanvasKit if a plugin isn't WASM-compatible.
   - `index.html` shows a branded loading screen.

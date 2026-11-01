@@ -5,6 +5,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/live_pages.dart';
+import 'package:battleplan/core/url_cache.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
@@ -250,13 +251,16 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<String?> photoUrl(String path) async {
+  Future<String?> photoUrl(String path) => _urls.get(path, () async {
     try {
       return await _storage.ref(path).getDownloadURL();
     } on FirebaseException {
       return null;
     }
-  }
+  });
+
+  /// Logo and background links, kept for the run (ARCH §5.6).
+  final _urls = UrlCache();
 
   @override
   Stream<Group?> watchGroup(GroupId id) => _db

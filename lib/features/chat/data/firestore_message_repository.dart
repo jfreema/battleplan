@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/url_cache.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
@@ -455,13 +456,16 @@ class FirestoreMessageRepository implements MessageRepository {
   }
 
   @override
-  Future<String?> attachmentUrl(String path) async {
+  Future<String?> attachmentUrl(String path) => _urls.get(path, () async {
     try {
       return await _storage.ref(path).getDownloadURL();
     } on FirebaseException {
       return null;
     }
-  }
+  });
+
+  /// Photo links, kept for the run (ARCH §5.6).
+  final _urls = UrlCache();
 
   @override
   Future<Uint8List?> attachmentBytes(String path) async {

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/url_cache.dart';
 import 'package:battleplan/features/auth/domain/user_profile.dart';
 import 'package:battleplan/features/auth/domain/user_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,7 +17,7 @@ class FirestoreUserRepository implements UserRepository {
   final FirebaseFirestore _db;
   final FirebaseFunctions _functions;
   final FirebaseStorage _storage;
-  final _urls = <String, String>{};
+  final _urls = UrlCache();
 
   DocumentReference<Map<String, dynamic>> _doc(String uid) =>
       _db.collection(Collections.users).doc(uid);
@@ -107,15 +108,13 @@ class FirestoreUserRepository implements UserRepository {
   }
 
   @override
-  Future<String?> photoUrl(String path) async {
-    final cached = _urls[path];
-    if (cached != null) return cached;
+  Future<String?> photoUrl(String path) => _urls.get(path, () async {
     try {
-      return _urls[path] = await _storage.ref(path).getDownloadURL();
+      return await _storage.ref(path).getDownloadURL();
     } on FirebaseException {
       return null;
     }
-  }
+  });
 }
 
 extension on FirestoreUserRepository {
