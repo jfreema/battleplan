@@ -196,6 +196,10 @@ export async function emailRsvpReminder(
     const emailedAt = Object.fromEntries(
       Object.entries((log.get('emailedAt') as Record<string, unknown> | undefined) ?? {}).map(([uid, at]) => [uid, msOf(at)]),
     );
+    // A week's record from before per-person times (one start for everyone)
+    // counts each person from that start, so nobody is emailed twice.
+    const firstAtMs = msOf(log.get('firstAt'));
+    for (const uid of (log.get('emailed') as string[] | undefined) ?? []) emailedAt[uid] ??= firstAtMs;
     return planRsvpEmails(
       reachable.map((u) => u.id),
       emailedAt,
@@ -281,7 +285,8 @@ export async function emailRsvpReminder(
   const failed: string[] = [];
   for (const [i, email] of emails.entries()) {
     // The emulators log emails instead of sending them; that counts as sent.
-    const sent = (await sendEmail(email)) || process.env.FUNCTIONS_EMULATOR === 'true';
+    // A send that throws (the network) is a failure too, given back below.
+    const sent = (await sendEmail(email).catch(() => false)) || process.env.FUNCTIONS_EMULATOR === 'true';
     if (!sent) failed.push(recipients[i].id);
   }
   result.failed = failed.length;

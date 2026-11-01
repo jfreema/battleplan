@@ -8,6 +8,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/about_battleplan.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
+import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
@@ -18,6 +19,7 @@ import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -2113,6 +2115,38 @@ void main() {
       // The newest messages are on screen, so the chat is marked read.
       await tester.pump(const Duration(seconds: 3));
       expect(members.reads, contains('a'));
+    });
+
+    testWidgets('leaving the chat sends a read marker still waiting its '
+        'turn', (tester) async {
+      final members = FakeMemberRepository([
+        testMembership('a', 'coach', role: MemberRole.owner),
+        testMembership('a', 'sam', name: 'Sam Rivera'),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberRepo: members,
+        messageRepo: FakeMessageRepository([msg(1)]),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(Scaffold).first),
+      );
+      final chat = container.read(
+        chatMessagesProvider(const GroupId('a')).notifier,
+      );
+      final before = members.reads.length;
+      // A second mark within the spacing waits its turn...
+      await chat.markRead(upTo: DateTime.now());
+      await chat.markRead(upTo: DateTime.now().add(const Duration(seconds: 1)));
+      final waiting = members.reads.length;
+      // ...and leaving the chat sends it rather than dropping it.
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/teams');
+      await tester.pumpAndSettle();
+      expect(members.reads.length, greaterThan(waiting));
+      expect(waiting, lessThanOrEqualTo(before + 1));
     });
 
     testWidgets(

@@ -387,39 +387,23 @@ interface Device {
 }
 
 /**
- * Each person's devices, kept a minute per instance like their profiles.
- * A device that FCM says is gone is forgotten at once; one signed out in
- * that minute has had its token deleted, so FCM refuses it.
+ * Every device of [uids], one entry per token. Always read fresh, unlike
+ * profiles: signing out everywhere deletes devices, and a cached one could
+ * still get a preview for a minute.
  */
-const deviceCache = new TtlCache<Device[]>();
-
-/** Every device of [uids], one entry per token. */
 async function devicesOf(uids: string[]): Promise<Device[]> {
-  const byUid = await deviceCache.getMany(uids, async (missing) => {
-    const snaps = await Promise.all(
-      chunk(missing, 30).map((part) =>
-        db().collection(Collections.devices).where('uid', 'in', part).select('uid', 'token').get(),
-      ),
-    );
-    const found = new Map<string, Device[]>(missing.map((uid) => [uid, []]));
-    for (const d of snaps.flatMap((s) => s.docs)) {
-      const token = d.get('token') as string | undefined;
-      if (!token) continue;
-      const uid = d.get('uid') as string;
-      const mine = found.get(uid) ?? [];
-      const known = mine.find((x) => x.token === token);
-      if (known) known.refs.push(d.ref);
-      else mine.push({ uid, token, refs: [d.ref] });
-      found.set(uid, mine);
-    }
-    return found;
-  });
-  // One entry per token: the same browser can be two people's.
+  const snaps = await Promise.all(
+    chunk(uids, 30).map((part) =>
+      db().collection(Collections.devices).where('uid', 'in', part).select('uid', 'token').get(),
+    ),
+  );
   const byToken = new Map<string, Device>();
-  for (const d of [...byUid.values()].flat()) {
-    const known = byToken.get(d.token);
-    if (known) known.refs.push(...d.refs);
-    else byToken.set(d.token, { ...d, refs: [...d.refs] });
+  for (const d of snaps.flatMap((s) => s.docs)) {
+    const token = d.get('token') as string | undefined;
+    if (!token) continue;
+    const known = byToken.get(token);
+    if (known) known.refs.push(d.ref);
+    else byToken.set(token, { uid: d.get('uid') as string, token, refs: [d.ref] });
   }
   return [...byToken.values()];
 }
@@ -458,9 +442,7 @@ async function deliver(input: NotifyInput, uids: string[], teamName: string): Pr
     const res = await messaging().sendEach(part.map((d) => ({ ...payload(bodyFor(input, d.uid)), token: d.token })));
     sent += res.successCount;
     failed += res.failureCount;
-    const gone = tokensToDelete(res.responses).map((i) => part[i]);
-    for (const d of gone) deviceCache.forget(d.uid);
-    const dead = gone.flatMap((d) => d.refs);
+    const dead = tokensToDelete(res.responses).flatMap((i) => part[i].refs);
     for (const refs of chunk(dead, 400)) {
       const batch = db().batch();
       refs.forEach((ref) => batch.delete(ref));
@@ -473,7 +455,6 @@ async function deliver(input: NotifyInput, uids: string[], teamName: string): Pr
 
 /** Signing out everywhere (AUTH-9, NOTIF-10) or deleting the account stops every device's pushes. */
 export async function removeDevices(uid: string): Promise<number> {
-  deviceCache.forget(uid);
   return forEachPage(db().collection(Collections.devices).where('uid', '==', uid), (b, d) => b.delete(d.ref));
 }
 

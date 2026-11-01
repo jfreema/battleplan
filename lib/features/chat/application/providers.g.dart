@@ -337,7 +337,7 @@ final class ChatMessagesProvider
   }
 }
 
-String _$chatMessagesHash() => r'7449738b65aee6b0b03d199e0ebc59e4d772fc98';
+String _$chatMessagesHash() => r'65e4c302eae9a7561015a0a594ba15f57adcdd3c';
 
 /// One team's chat: the live newest page plus any older pages loaded by
 /// scrolling up, merged by message ID (ARCH §5.3). Messages that slide out

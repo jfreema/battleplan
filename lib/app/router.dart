@@ -69,7 +69,7 @@ import 'package:battleplan/features/settings/presentation/settings_screen.dart';
 import 'package:battleplan/features/settings/presentation/themes_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
-    show ProviderListenableSelect;
+    show Provider, ProviderListenableSelect;
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -98,6 +98,18 @@ const _publicPaths = {
   // Firebase's email-link path; App Links deliver it to the app.
   '/__/auth/links',
 };
+
+/// How many of my teams are still loading, for the router's '/' redirect,
+/// which waits for them all.
+final _teamsLoading = Provider<int>(
+  (ref) =>
+      ref
+          .watch(myMembershipsProvider)
+          .value
+          ?.where((m) => ref.watch(groupProvider(m.groupId)).isLoading)
+          .length ??
+      0,
+);
 
 /// go_router with its guards (ARCH §5.4). The same paths serve web URLs,
 /// Universal/App Links, and notification taps.
@@ -135,6 +147,9 @@ GoRouter router(Ref ref) {
       ),
       (_, _) => refresh.value++,
     )
+    // '/' waits for each of my teams to load; one that loads as unreadable
+    // (suspended) never joins myTeams, so watch the loading itself.
+    ..listen(_teamsLoading, (_, _) => refresh.value++)
     ..onDispose(refresh.dispose);
 
   final env = ref.read(appEnvProvider);

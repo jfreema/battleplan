@@ -13,12 +13,15 @@ import { Collections } from '../../src/shared/constants.js';
 import { groupMemberId } from '../../src/shared/ids.js';
 
 const outbox = vi.hoisted(() => [] as Email[]);
-// Emails to an address in `refused` don't send, as when the provider is over its limit.
+// Emails to an address in `refused` don't send, as when the provider is over
+// its limit; to one in `broken`, the send throws, as on a network error.
 const refused = vi.hoisted(() => new Set<string>());
+const broken = vi.hoisted(() => new Set<string>());
 vi.mock('../../src/email/service.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/email/service.js')>()),
   sendEmail: async (email: Email) => {
     if (refused.has(email.to)) return false;
+    if (broken.has(email.to)) throw new Error('fetch failed');
     outbox.push(email);
     return true;
   },
@@ -81,6 +84,7 @@ beforeAll(() => {
 beforeEach(async () => {
   outbox.length = 0;
   refused.clear();
+  broken.clear();
   const project = process.env.GCLOUD_PROJECT ?? 'demo-battleplan';
   const res = await fetch(
     `http://${process.env.FIRESTORE_EMULATOR_HOST}/emulator/v1/projects/${project}/databases/(default)/documents`,
@@ -155,6 +159,28 @@ describe("Email people who haven't RSVP'd", () => {
     outbox.length = 0;
     expect(await emailService('game', coach, false, NOW + HOUR)).toMatchObject({ people: 1, failed: 0 });
     expect(outbox.map((e) => e.to)).toEqual(['maria@example.com']);
+  });
+
+  it('a send that throws is a failure too, and given back', async () => {
+    const coach = { uid: 'coach', superAdmin: false };
+    broken.add('dan@example.com');
+    expect(await emailService('game', coach, false, NOW)).toMatchObject({ people: 3, failed: 1 });
+    broken.clear();
+    outbox.length = 0;
+    expect(await emailService('game', coach, false, NOW + HOUR)).toMatchObject({ people: 1 });
+    expect(outbox.map((e) => e.to)).toEqual(['dan@example.com']);
+  });
+
+  it("keeps a week's record from before per-person times", async () => {
+    const coach = { uid: 'coach', superAdmin: false };
+    // As the first version wrote it: one start, and who was emailed.
+    await db().collection(Collections.rateLimits).doc('game_eventRsvpEmail_week').set({
+      firstAt: Timestamp.fromMillis(NOW - 24 * HOUR),
+      emailed: ['maria', 'dan'],
+    });
+    expect(await emailService('game', coach, false, NOW)).toMatchObject({ people: 1 });
+    expect(outbox.map((e) => e.to)).toEqual(['sam@example.com']);
+    await expect(emailService('game', coach, false, NOW + HOUR)).rejects.toMatchObject({ message: 'emailed-this-week' });
   });
 
   it("15 a day per team and 80 in all; the rest go another day (SCHED-14)", async () => {

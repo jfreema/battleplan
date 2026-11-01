@@ -87,7 +87,16 @@ export async function removeAccountFromTeams(uid: string, newOwners: Record<stri
     const count = await db().collection(Collections.groupMembers).where('groupId', '==', groupId).count().get();
     await groupRef.update({ memberCount: count.data().count }).catch(() => undefined);
   }
-  await leaveDirectChats(uid, deleteGroupData);
+  // A conversation left empty is deleted, marked first so a Storage error
+  // leaves it for finishTeamDeletions rather than half gone (TEAM-9).
+  await leaveDirectChats(uid, async (groupId) => {
+    await db()
+      .collection(Collections.groups)
+      .doc(groupId)
+      .update({ deletingAt: FieldValue.serverTimestamp(), deletingBy: uid })
+      .catch(() => undefined);
+    await deleteGroupData(groupId);
+  });
 }
 
 

@@ -1401,7 +1401,7 @@ Assumptions for one active team: 25 members; 50 messages and 10 photos a day; ea
 
 | Driver | Per team per month | Approx. cost |
 |---|---|---|
-| Firestore reads, up to ~300k:<br>• delivering messages, ~1.3k/day<br>• opening chats, up to ~7.5k/day (a listener re-reads the latest 50 messages after 30 minutes away)<br>• schedules, polls, docs, and member lists, ~1k/day<br>• sending pushes, ~1.3–3.5k/day (each message's push reads the team's memberships, about 25, plus recipients' profiles and devices, which an instance keeps a minute, so a conversation's later messages skip them; added 2026-11-01) | up to ~300k reads | $0.10–0.20 |
+| Firestore reads, up to ~300k:<br>• delivering messages, ~1.3k/day<br>• opening chats, up to ~7.5k/day (a listener re-reads the latest 50 messages after 30 minutes away)<br>• schedules, polls, docs, and member lists, ~1k/day<br>• sending pushes, ~1.3–3.5k/day (each message's push reads the team's memberships, about 25, plus recipients' profiles, which an instance keeps a minute, so a conversation's later messages skip them, and their devices; added 2026-11-01) | up to ~300k reads | $0.10–0.20 |
 | Firestore writes: messages, reactions, read markers, RSVPs | ~10k writes | ~$0.01 |
 | Photo downloads: thumbnails for everyone, full size for ~30% | ~1.2 GB | ~$0.15 |
 | Photo storage, growing ~135 MB a month | | ~$0.04 after a year |

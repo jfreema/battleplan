@@ -222,8 +222,19 @@ class ChatMessages extends _$ChatMessages {
             state = state.copyWith(loading: false, failed: true);
           },
         );
+    // Leaving the chat sends a read marker still waiting its turn, so what
+    // was read in the last few seconds doesn't stay unread.
+    final members = ref.read(memberRepositoryProvider);
+    final uid = ref.read(authUserProvider).value?.uid;
     ref.onDispose(() {
       unawaited(sub.cancel());
+      if (_markAgain != null && uid != null) {
+        unawaited(
+          members
+              .markRead(groupId, UserId(uid), upTo: _markUpTo)
+              .catchError((Object _) {}),
+        );
+      }
       _markAgain?.cancel();
       _photoRetry?.cancel();
     });
