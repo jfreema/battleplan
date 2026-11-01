@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/app_theme.dart';
+import 'package:battleplan/core/design/arena/arena_font.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
@@ -21,6 +24,8 @@ class ThemePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Arena's preview is in its own font, loaded only when shown.
+    unawaited(loadArenaFont());
     final l10n = AppLocalizations.of(context);
     final current = AppTheme.flavorOf(selected);
     final choices = themeChoices(l10n);

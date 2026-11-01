@@ -10,10 +10,7 @@ class UrlCache {
   Future<String?> get(String path, Future<String?> Function() fetch) =>
       _urls[path] ??= _fetch(path, fetch);
 
-  Future<String?> _fetch(
-    String path,
-    Future<String?> Function() fetch,
-  ) async {
+  Future<String?> _fetch(String path, Future<String?> Function() fetch) async {
     try {
       final url = await fetch();
       if (url == null) _forget(path);

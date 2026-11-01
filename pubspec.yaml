@@ -39,7 +39,6 @@ dependencies:
   material_ui: ^1.6.0
   mobile_scanner: ^7.4.2
   open_filex: ^4.7.0
-  package_info_plus: ^10.2.2
   path_provider: ^2.1.6
   pdfrx: ^2.6.5
   qr_flutter: ^4.1.0
@@ -75,13 +74,16 @@ flutter:
   # offline (SPEC §7.3, ARCH §5.5): Lilita One for headings, Fredoka for
   # buttons, labels, and names, Nunito for body text and messages, and
   # Barlow Condensed ExtraBold Italic for Gumdrop Arena's headings and labels
-  # (lib/core/design/arena/). Static instances from Google Fonts; each is OFL
-  # 1.1, whose text ships with it and shows under Licenses.
+  # (lib/core/design/arena/; an asset, not a font, so the web app doesn't
+  # download it before the first frame: loadArenaFont loads it when Arena is
+  # used). Static instances from Google Fonts; each is OFL 1.1, whose text
+  # ships with it and shows under Licenses.
   assets:
     - assets/fonts/lilita_one/OFL.txt
     - assets/fonts/fredoka/OFL.txt
     - assets/fonts/nunito/OFL.txt
     - assets/fonts/barlow_condensed/OFL.txt
+    - assets/fonts/barlow_condensed/BarlowCondensed-ExtraBoldItalic.ttf
     - assets/fonts/black_ops_one/OFL.txt
     # Jared's Venmo card, for Buy Jared a coffee (TEAM-5, About).
     - assets/about/venmo.png
@@ -111,11 +113,6 @@ flutter:
     - family: Black Ops One
       fonts:
         - asset: assets/fonts/black_ops_one/BlackOpsOne-Regular.ttf
-    - family: Barlow Condensed
-      fonts:
-        - asset: assets/fonts/barlow_condensed/BarlowCondensed-ExtraBoldItalic.ttf
-          weight: 800
-          style: italic
 
 # App icons and splash screens from the placeholder mark on #2F5BEA (SPEC
 # §7.1, Q9). Regenerate with tools/brand_icons.sh.

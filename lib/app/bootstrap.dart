@@ -31,10 +31,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show appBuildName, appBuildNumber;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _useEmulators = bool.fromEnvironment('USE_EMULATORS');
@@ -88,13 +88,15 @@ Future<void> bootstrap({
   // Offline cache: default on mobile, explicit on web (ARCH §5.6).
   firestore.settings = const Settings(persistenceEnabled: true);
 
-  final info = await PackageInfo.fromPlatform();
-  final version = info.version;
-  // The build number and commit tools/build_hosting.sh stamps in (ARCH §9).
-  final build = AppBuild(
+  // The version and build number compiled in (pubspec, or --build-name and
+  // --build-number), and the commit tools/build_hosting.sh stamps in (ARCH
+  // §9). Compiled in rather than read at startup, which on the web is a
+  // round trip for version.json before the first frame.
+  const version = appBuildName ?? '';
+  const build = AppBuild(
     version: version,
-    number: info.buildNumber,
-    commit: const String.fromEnvironment('APP_COMMIT'),
+    number: appBuildNumber ?? '',
+    commit: String.fromEnvironment('APP_COMMIT'),
   );
   final prefs = await SharedPreferencesWithCache.create(
     cacheOptions: const SharedPreferencesWithCacheOptions(

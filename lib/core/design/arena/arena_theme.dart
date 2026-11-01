@@ -4,8 +4,10 @@
 // cut off, and headings and labels in Barlow Condensed ExtraBold Italic.
 //
 // It's kept apart so it can come out cleanly (ARCH §5.5). To remove it:
-// delete this folder, assets/fonts/barlow_condensed/ (and its pubspec and
-// fontLicenseAssets entries), test/arena_theme_test.dart, and
+// delete this folder (and loadArenaFont's calls in app.dart,
+// theme_picker.dart, and test/helpers/golden.dart),
+// assets/fonts/barlow_condensed/ (and its pubspec and fontLicenseAssets
+// entries), test/arena_theme_test.dart, and
 // test/goldens/arena_golden_test.dart with its *_arena.png images; remove
 // `arena` from GumdropFlavor and from themePreference in
 // shared/constants.json (then run tools/gen_constants.dart); and follow the

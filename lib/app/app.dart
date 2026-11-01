@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/push_handler.dart';
 import 'package:battleplan/app/router.dart';
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
+import 'package:battleplan/core/design/arena/arena_font.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/presentation/verify_email_banner.dart';
@@ -29,6 +33,9 @@ class BattleplanApp extends ConsumerWidget {
       // Signs out when this account's sessions were ended elsewhere (AUTH-9).
       ..watch(sessionRevocationWatcherProvider);
     final banner = ref.watch(appEnvProvider).bannerLabel;
+    final theme = ref.watch(themePreferenceControllerProvider);
+    // Arena's font is loaded only for Arena (ARCH §5.5).
+    if (theme == ThemePreference.arena) unawaited(loadArenaFont());
     final app = MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appName,
       debugShowCheckedModeBanner: false,
@@ -36,9 +43,7 @@ class BattleplanApp extends ConsumerWidget {
       // Light, or Candy. Candy and Dark aren't a Material light and dark
       // pair, so the theme is picked here and never by the system's mode.
       // Built once each and cached (AppTheme.of).
-      theme: AppTheme.forPreference(
-        ref.watch(themePreferenceControllerProvider),
-      ),
+      theme: AppTheme.forPreference(theme),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         ...GlobalMaterialLocalizations.delegates,

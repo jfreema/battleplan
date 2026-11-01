@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:battleplan/core/design/arena/arena_font.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +28,8 @@ Future<void> loadAppFonts() async {
     }
     await loader.load();
   }
+  // Arena's font is an asset, not in the manifest (loadArenaFont).
+  await loadArenaFont();
 
   final fonts = Directory(
     '${_flutterRoot()}/bin/cache/artifacts/material_fonts',
