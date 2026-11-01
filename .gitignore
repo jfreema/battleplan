@@ -78,3 +78,6 @@ lib/l10n/gen/
 
 # Golden diff images from a failed run (flutter test writes them here)
 test/goldens/failures/
+
+# Local notes that stay on this machine and never go in the repo
+/local/
