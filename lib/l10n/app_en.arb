@@ -119,6 +119,7 @@
   },
   "loadError": "Couldn't load this. Check your connection and try again.",
   "retry": "Retry",
+  "chatLoadFailed": "Couldn't load the chat. Check your connection and try again.",
   "cancel": "Cancel",
   "inviteCodeLabel": "Invite code",
   "emailMeLink": "Email me a sign-in link instead",

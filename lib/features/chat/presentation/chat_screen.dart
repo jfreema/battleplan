@@ -637,6 +637,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     Widget list;
     if (chat.loading) {
       list = const SkeletonList();
+    } else if (chat.failed) {
+      // The live page stopped (CHAT-1): say so, rather than show a chat
+      // that no longer updates.
+      list = EmptyState(
+        icon: AppIcons.warning,
+        message: l10n.chatLoadFailed,
+        actionLabel: l10n.retry,
+        onAction: () =>
+            ref.read(chatMessagesProvider(widget.groupId).notifier).retry(),
+      );
     } else if (messages.isEmpty && pending.isEmpty) {
       list = EmptyState(
         icon: direct ? AppIcons.directMessage : AppIcons.chat,

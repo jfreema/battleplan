@@ -49,7 +49,11 @@ class NotificationCenter extends _$NotificationCenter {
     final sub = ref
         .watch(notificationRepositoryProvider)
         .watchNewest(UserId(uid))
-        .listen(_onLivePage);
+        .listen(
+          _onLivePage,
+          // A failed page mustn't leave the center loading for good.
+          onError: (Object _) => state = state.copyWith(loading: false),
+        );
     ref.onDispose(() => unawaited(sub.cancel()));
     return const NotificationCenterState();
   }

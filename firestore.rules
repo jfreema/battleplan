@@ -388,7 +388,7 @@ service cloud.firestore {
             ? incoming().get('pollId', null) == messageId
               && getAfter(/databases/$(database)/documents/polls/$(messageId)).data.messageId == messageId
             : !('pollId' in incoming()))
-        && incoming().get('text', '').size() <= 4000
+        && incoming().get('text', '') is string && incoming().get('text', '').size() <= 4000
         && attachmentsOk(incoming(), messageId)
         && (incoming().get('replyToId', null) == null
             || (incoming().replyToId is string && incoming().replyToId.size() <= 64))
@@ -428,23 +428,33 @@ service cloud.firestore {
       // Deletion goes through the deleteMessage callable.
     }
 
+    // One photo: stored under this message's own folder, with each field
+    // the app reads of the type it reads, so one bad message can't stop the
+    // chat for everyone.
+    function attachmentOk(x, folder) {
+      return x is map && x.get('path', null) is string && x.path.matches(folder)
+        && x.get('contentType', '') is string
+        && x.get('width', 0) is number && x.get('height', 0) is number
+        && x.get('size', 0) is number;
+    }
+
     // Photos (CHAT-3): at most 10, each stored under this message's own
     // folder, so a message can't point at another team's files.
     function attachmentsOk(m, messageId) {
       let a = m.get('attachments', []);
       let folder = 'groups/' + m.groupId + '/messages/' + messageId + '/[^/]+';
-      return a.size() <= 10
+      return a is list && a.size() <= 10
         && (m.type == 'image' ? a.size() >= 1 : a.size() == 0)
-        && (a.size() < 1 || a[0].path.matches(folder))
-        && (a.size() < 2 || a[1].path.matches(folder))
-        && (a.size() < 3 || a[2].path.matches(folder))
-        && (a.size() < 4 || a[3].path.matches(folder))
-        && (a.size() < 5 || a[4].path.matches(folder))
-        && (a.size() < 6 || a[5].path.matches(folder))
-        && (a.size() < 7 || a[6].path.matches(folder))
-        && (a.size() < 8 || a[7].path.matches(folder))
-        && (a.size() < 9 || a[8].path.matches(folder))
-        && (a.size() < 10 || a[9].path.matches(folder));
+        && (a.size() < 1 || attachmentOk(a[0], folder))
+        && (a.size() < 2 || attachmentOk(a[1], folder))
+        && (a.size() < 3 || attachmentOk(a[2], folder))
+        && (a.size() < 4 || attachmentOk(a[3], folder))
+        && (a.size() < 5 || attachmentOk(a[4], folder))
+        && (a.size() < 6 || attachmentOk(a[5], folder))
+        && (a.size() < 7 || attachmentOk(a[6], folder))
+        && (a.size() < 8 || attachmentOk(a[7], folder))
+        && (a.size() < 9 || attachmentOk(a[8], folder))
+        && (a.size() < 10 || attachmentOk(a[9], folder));
     }
 
     // @mentions (CHAT-14): up to 20 people, named by ID on a text or photo

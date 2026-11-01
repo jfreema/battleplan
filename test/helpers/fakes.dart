@@ -1477,6 +1477,9 @@ class FakePlayerRepository implements PlayerRepository {
 class FakeMessageRepository implements MessageRepository {
   new([List<Message>? messages]) : messages = messages ?? [];
 
+  /// Thrown by the next watchNewest.
+  Error? watchError;
+
   /// Newest first.
   final List<Message> messages;
   final List<String> sent = [];
@@ -1493,6 +1496,11 @@ class FakeMessageRepository implements MessageRepository {
 
   @override
   Stream<MessagePage> watchNewest(GroupId groupId, {int limit = 50}) async* {
+    // Set to make the next live page fail, as a message that can't be read once did.
+    if (watchError case final error?) {
+      watchError = null;
+      throw error;
+    }
     MessagePage page() {
       final all = messages.where((m) => m.groupId == groupId).toList();
       return MessagePage(

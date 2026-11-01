@@ -225,6 +225,29 @@ describe('message rate limit and create rule', () => {
     await assertFails(send(as('bob'), 'bob', 'teamA', 'long', 'Bob', { text: 'x'.repeat(4001) }));
   });
 
+  it('rejects text that is not text, and photo fields of the wrong type, so one message cannot stop the chat', async () => {
+    const db = as('bob');
+    await assertFails(send(db, 'bob', 'teamA', 't1', 'Bob', { text: [] }));
+    await assertFails(send(db, 'bob', 'teamA', 't2', 'Bob', { text: { a: 1 } }));
+    const path = (id: string) => `groups/teamA/messages/${id}/0.jpg`;
+    for (const [id, bad] of [
+      ['b1', { path: path('b1'), contentType: 7 }],
+      ['b2', { path: path('b2'), width: '10' }],
+      ['b3', { path: path('b3'), height: true }],
+      ['b4', { path: path('b4'), size: [] }],
+      ['b5', 'not a photo'],
+    ] as const) {
+      await assertFails(send(db, 'bob', 'teamA', id, 'Bob', { type: 'image', attachments: [bad] }));
+    }
+    await assertFails(send(db, 'bob', 'teamA', 'b6', 'Bob', { type: 'image', attachments: { 0: { path: path('b6') } } }));
+    await assertSucceeds(
+      send(db, 'bob', 'teamA', 'b7', 'Bob', {
+        type: 'image',
+        attachments: [{ path: path('b7'), contentType: 'image/jpeg', width: 10, height: 10, size: 1234 }],
+      }),
+    );
+  });
+
   it('rejects posting into another team', async () => {
     await assertFails(send(as('bob'), 'bob', 'teamB', 'cross', 'Bob'));
   });

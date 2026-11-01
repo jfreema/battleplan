@@ -58,6 +58,36 @@ void main() {
     },
   );
 
+  test('skips and reports a message that cannot be read, so the rest of '
+      'the chat still shows', () async {
+    final reported = <Object>[];
+    final repo = FirestoreMessageRepository(
+      db,
+      storage,
+      functions,
+      onBadMessage: (e, _) => reported.add(e),
+    );
+    for (final (id, text, at) in [
+      ('good1', 'Hi' as Object, 1),
+      ('bad', <Object>[], 2),
+      ('good2', 'Bye', 3),
+    ]) {
+      await db.doc('messages/$id').set({
+        'groupId': 'g1',
+        'authorId': 'alex',
+        'type': 'text',
+        'text': text,
+        'createdAt': Timestamp.fromDate(DateTime.utc(2026, 10, 1, 0, at)),
+      });
+    }
+    final page = await repo.watchNewest(_g).first;
+    expect(page.messages.map((m) => m.id), ['good2', 'good1']);
+    expect(reported.single.toString(), contains('bad'));
+    final newer = await repo.loadNewer(_g, after: DateTime.utc(2026));
+    expect(newer.messages.map((m) => m.id), ['good2', 'good1']);
+    expect(await repo.watchMessage(_g, 'bad').first, isNull);
+  });
+
   test('posts a poll and its message in one batch', () async {
     await repo.sendPoll(
       _g,

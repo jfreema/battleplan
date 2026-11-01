@@ -40,6 +40,9 @@ abstract class ChatState with _$ChatState {
 
     /// True until the newest page first arrives.
     @Default(true) bool loading,
+
+    /// The live page failed (CHAT-1); the chat shows Retry.
+    @Default(false) bool failed,
     @Default(false) bool loadingOlder,
 
     /// True once the first message of the chat is loaded.
@@ -189,29 +192,35 @@ class ChatMessages extends _$ChatMessages {
     final sub = ref
         .watch(messageRepositoryProvider)
         .watchNewest(groupId)
-        .listen((page) {
-          final ids = {for (final m in page.messages) m.id};
-          // A message that leaves the live page has either slid out as newer
-          // ones arrived (keep it) or was a local write the server refused
-          // (drop it; the send queue shows it as failed).
-          for (final gone in _liveIds.difference(ids)) {
-            if (_known[gone]?.pending ?? false) _known.remove(gone);
-          }
-          _liveIds = ids;
-          for (final m in page.messages) {
-            _known[m.id] = m;
-          }
-          _liveCursor = page.next;
-          final wasOnline = state.online;
-          _publish(
-            reachedStart:
-                (!_loadedOlder && page.next == null) || state.reachedStart,
-          );
-          state = state.copyWith(online: !page.fromCache);
-          // Back online: photos waiting for the connection go now.
-          if (!wasOnline && state.online) _retryWaitingPhotos();
-          _restoreQueue();
-        });
+        .listen(
+          (page) {
+            final ids = {for (final m in page.messages) m.id};
+            // A message that leaves the live page has either slid out as newer
+            // ones arrived (keep it) or was a local write the server refused
+            // (drop it; the send queue shows it as failed).
+            for (final gone in _liveIds.difference(ids)) {
+              if (_known[gone]?.pending ?? false) _known.remove(gone);
+            }
+            _liveIds = ids;
+            for (final m in page.messages) {
+              _known[m.id] = m;
+            }
+            _liveCursor = page.next;
+            final wasOnline = state.online;
+            _publish(
+              reachedStart:
+                  (!_loadedOlder && page.next == null) || state.reachedStart,
+            );
+            state = state.copyWith(online: !page.fromCache);
+            // Back online: photos waiting for the connection go now.
+            if (!wasOnline && state.online) _retryWaitingPhotos();
+            _restoreQueue();
+          },
+          onError: (Object e, StackTrace stack) {
+            // Without this the chat stays loading, or stops updating, for good.
+            state = state.copyWith(loading: false, failed: true);
+          },
+        );
     ref.onDispose(() {
       unawaited(sub.cancel());
       _markAgain?.cancel();
@@ -219,6 +228,9 @@ class ChatMessages extends _$ChatMessages {
     });
     return const ChatState();
   }
+
+  /// Listens for the newest page again after it failed.
+  void retry() => ref.invalidateSelf();
 
   /// Sends texts saved from an earlier run (CHAT-4). One already in the
   /// chat (the server has it, or the offline cache will send it) is done.

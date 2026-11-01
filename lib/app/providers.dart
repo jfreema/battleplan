@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/services/browser_photo_drops.dart';
 import 'package:battleplan/app/services/device_calendar_adder.dart';
@@ -112,7 +114,13 @@ List<Override> buildOverrides({
     FirestoreSafetyRepository(firestore, functions),
   ),
   messageRepositoryProvider.overrideWithValue(
-    FirestoreMessageRepository(firestore, storage, functions),
+    FirestoreMessageRepository(
+      firestore,
+      storage,
+      functions,
+      onBadMessage: (e, stack) =>
+          unawaited(crashReporter.recordError(e, stack)),
+    ),
   ),
   chatQueueStoreProvider.overrideWithValue(PrefsChatQueueStore(prefs)),
   pollRepositoryProvider.overrideWithValue(

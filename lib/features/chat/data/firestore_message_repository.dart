@@ -15,7 +15,11 @@ import 'package:firebase_storage/firebase_storage.dart';
 /// Messages in the flat `messages` collection, queried by groupId and
 /// createdAt (ARCH §6.2).
 class FirestoreMessageRepository implements MessageRepository {
-  new(this._db, this._storage, this._functions);
+  new(this._db, this._storage, this._functions, {this.onBadMessage});
+
+  /// Told about a message that can't be read (a field of the wrong type),
+  /// which is skipped so the rest of the page still shows: Crashlytics.
+  final void Function(Object error, StackTrace stack)? onBadMessage;
 
   final FirebaseFirestore _db;
   final FirebaseStorage _storage;
@@ -51,7 +55,7 @@ class FirestoreMessageRepository implements MessageRepository {
     GroupId groupId,
     int limit,
   ) => MessagePage(
-    messages: [for (final d in q.docs) _message(d, groupId)],
+    messages: [for (final d in q.docs) ?_read(d, groupId)],
     next: q.docs.length < limit ? null : PageCursor(q.docs.last),
     fromCache: q.metadata.isFromCache,
   );
@@ -76,7 +80,7 @@ class FirestoreMessageRepository implements MessageRepository {
     }
     final s = await q.limit(limit).get();
     return MessagePage(
-      messages: [for (final d in s.docs.reversed) _message(d, groupId)],
+      messages: [for (final d in s.docs.reversed) ?_read(d, groupId)],
       next: s.docs.length < limit ? null : PageCursor(s.docs.last),
       // The descending query continues older from the oldest of them.
       older: s.docs.isEmpty ? null : PageCursor(s.docs.first),
@@ -100,6 +104,17 @@ class FirestoreMessageRepository implements MessageRepository {
       q = q.startAfterDocument(before.handle as DocumentSnapshot<Object?>);
     }
     return _page(await q.limit(limit).get(), groupId, limit);
+  }
+
+  /// [d] as a message, or null, reported, when it can't be read: one bad
+  /// message mustn't stop a team's chat for everyone.
+  Message? _read(DocumentSnapshot<Map<String, dynamic>> d, GroupId groupId) {
+    try {
+      return _message(d, groupId);
+    } on Object catch (e, stack) {
+      onBadMessage?.call(StateError('Unreadable message ${d.id}: $e'), stack);
+      return null;
+    }
   }
 
   Message _message(DocumentSnapshot<Map<String, dynamic>> d, GroupId groupId) {
@@ -202,7 +217,7 @@ class FirestoreMessageRepository implements MessageRepository {
       .snapshots()
       .map(
         (d) => d.exists && d.data()?['groupId'] == groupId.value
-            ? _message(d, groupId)
+            ? _read(d, groupId)
             : null,
       )
       // A message I can no longer read (I left, the team was suspended)
