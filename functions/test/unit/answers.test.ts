@@ -154,27 +154,29 @@ describe("who an RSVP email goes to today (today's limits, once a week)", () => 
   const DAY = 86_400_000;
   const none = { team: 0, all: 0 };
   it('everyone, the first time', () => {
-    expect(planRsvpEmails(['a', 'b'], null, none, 0)).toEqual({ send: ['a', 'b'], skipped: 0, thisWeek: false });
+    expect(planRsvpEmails(['a', 'b'], {}, none, 0)).toEqual({ send: ['a', 'b'], skipped: 0, recent: {} });
   });
 
-  it('only people not emailed this week; a week on, everyone', () => {
-    const log = { firstAtMs: 0, emailed: ['a'] };
-    expect(planRsvpEmails(['a', 'b'], log, none, 6 * DAY).send).toEqual(['b']);
-    expect(() => planRsvpEmails(['a'], log, none, 6 * DAY)).toThrow('emailed-this-week');
-    expect(planRsvpEmails(['a', 'b'], log, none, 7 * DAY)).toEqual({ send: ['a', 'b'], skipped: 0, thisWeek: false });
+  it('only people not emailed in the last week, each counted from their own email', () => {
+    const emailedAt = { a: 0, b: 5 * DAY };
+    expect(planRsvpEmails(['a', 'b', 'c'], emailedAt, none, 6 * DAY).send).toEqual(['c']);
+    expect(() => planRsvpEmails(['a', 'b'], emailedAt, none, 6 * DAY)).toThrow('emailed-this-week');
+    // A week after a's email, a is due; b, emailed later, isn't yet.
+    const later = planRsvpEmails(['a', 'b'], emailedAt, none, 7 * DAY);
+    expect(later).toEqual({ send: ['a'], skipped: 0, recent: { b: 5 * DAY } });
   });
 
   it("15 a team and 80 in all a day, whichever is less", () => {
     const want = Array.from({ length: 20 }, (_, i) => `u${i}`);
-    expect(planRsvpEmails(want, null, none, 0)).toMatchObject({ skipped: 5 });
-    expect(planRsvpEmails(want, null, none, 0).send).toHaveLength(15);
-    expect(planRsvpEmails(want, null, { team: 10, all: 0 }, 0).send).toHaveLength(5);
-    expect(planRsvpEmails(want, null, { team: 0, all: 78 }, 0).send).toEqual(['u0', 'u1']);
-    expect(() => planRsvpEmails(want, null, { team: 15, all: 0 }, 0)).toThrow('email-limit');
-    expect(() => planRsvpEmails(want, null, { team: 0, all: 80 }, 0)).toThrow('email-limit');
+    expect(planRsvpEmails(want, {}, none, 0)).toMatchObject({ skipped: 5 });
+    expect(planRsvpEmails(want, {}, none, 0).send).toHaveLength(15);
+    expect(planRsvpEmails(want, {}, { team: 10, all: 0 }, 0).send).toHaveLength(5);
+    expect(planRsvpEmails(want, {}, { team: 0, all: 78 }, 0).send).toEqual(['u0', 'u1']);
+    expect(() => planRsvpEmails(want, {}, { team: 15, all: 0 }, 0)).toThrow('email-limit');
+    expect(() => planRsvpEmails(want, {}, { team: 0, all: 80 }, 0)).toThrow('email-limit');
   });
 
   it('nobody to email is no error', () => {
-    expect(planRsvpEmails([], null, { team: 15, all: 80 }, 0)).toEqual({ send: [], skipped: 0, thisWeek: false });
+    expect(planRsvpEmails([], {}, { team: 15, all: 80 }, 0)).toEqual({ send: [], skipped: 0, recent: {} });
   });
 });

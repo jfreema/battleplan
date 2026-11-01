@@ -13,9 +13,12 @@ import { Collections } from '../../src/shared/constants.js';
 import { groupMemberId } from '../../src/shared/ids.js';
 
 const outbox = vi.hoisted(() => [] as Email[]);
+// Emails to an address in `refused` don't send, as when the provider is over its limit.
+const refused = vi.hoisted(() => new Set<string>());
 vi.mock('../../src/email/service.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/email/service.js')>()),
   sendEmail: async (email: Email) => {
+    if (refused.has(email.to)) return false;
     outbox.push(email);
     return true;
   },
@@ -77,6 +80,7 @@ beforeAll(() => {
 
 beforeEach(async () => {
   outbox.length = 0;
+  refused.clear();
   const project = process.env.GCLOUD_PROJECT ?? 'demo-battleplan';
   const res = await fetch(
     `http://${process.env.FIRESTORE_EMULATOR_HOST}/emulator/v1/projects/${project}/databases/(default)/documents`,
@@ -134,8 +138,23 @@ describe("Email people who haven't RSVP'd", () => {
     outbox.length = 0;
     expect((await emailService('later', coach, false, NOW + 2 * HOUR)).people).toBe(1);
     expect(outbox.map((e) => e.to)).toEqual(['kim@example.com']);
-    // A week on, everyone again.
-    expect((await emailService('later', coach, false, NOW + 7 * 24 * HOUR)).people).toBe(4);
+    // A week after each person's email, they're due again: Kim, emailed later, a little after the rest.
+    expect((await emailService('later', coach, false, NOW + 7 * 24 * HOUR)).people).toBe(3);
+    expect((await emailService('later', coach, false, NOW + 7 * 24 * HOUR + 2 * HOUR)).people).toBe(1);
+  });
+
+  it("an email that didn't send doesn't count: they can be emailed again, and the limits get it back", async () => {
+    const coach = { uid: 'coach', superAdmin: false };
+    refused.add('maria@example.com');
+    expect(await emailService('game', coach, false, NOW)).toMatchObject({ people: 3, failed: 1 });
+    const day = new Date(NOW).toISOString().slice(0, 10);
+    const counter = (key: string) => db().collection(Collections.rateLimits).doc(`${key}_rsvpEmail_${day}`).get();
+    expect((await counter(G)).get('count')).toBe(2);
+    expect((await counter('all')).get('count')).toBe(2);
+    refused.clear();
+    outbox.length = 0;
+    expect(await emailService('game', coach, false, NOW + HOUR)).toMatchObject({ people: 1, failed: 0 });
+    expect(outbox.map((e) => e.to)).toEqual(['maria@example.com']);
   });
 
   it("15 a day per team and 80 in all; the rest go another day (SCHED-14)", async () => {
