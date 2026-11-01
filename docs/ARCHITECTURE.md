@@ -939,6 +939,8 @@ Unit tests cover every early-exit condition.
 |---|---|---|
 | `tick` | 5 min | Auto-close polls past `closesAt` (`closedAt == null`, `closesAt <= now`, one index) and notify voters. Send due event reminders (`nextReminderAt <= now`, pages of 100): the latest reminder whose time has come, skipping canceled and started events, to members who didn't say Not going by their own answer, plus each player's `self` member and guardians for players who didn't, named per player (no name prefix for a member's own player). "Reminder: Practice today at 6:00 PM · Riverside Park", with today and tomorrow worked out from dates in the event's time zone. The dedupe key is `{eventId}_r{offset}_{startSeconds}`, so a moved event gets its reminders again. Then `nextReminderAt` moves to the next reminder in a transaction, left alone if the event changed since it was read. One step failing doesn't stop the other. Lives in `ops/jobs.ts` |
 | `dailyCleanup` | 24 h | Expire invites; prune device tokens not updated in 60 days; delete orphan document files (under `groups/{g}/documents/{docId}/`, over a day old, whose `groupDocuments/{docId}` doesn't exist or points at another file; before the recount, so it counts them); reconcile `storageBytes`; update each team's storage warning (§6.11) Last, when any report has been open more than 12 hours, one email to each super admin with how many and the oldest's age (SAFE-4, `remindOpenReports`). |
+| `finishTeamDeletions` | 60 min | Finish team deletes that stopped partway: teams marked `deletingAt` more than 15 minutes ago, 20 a run, with 9 minutes (TEAM-9). Delete team marks the team (and `deletingBy`, who may retry), deletes every team collection, then its files (a Storage error throws, to try again), then its memberships and the team. |
+| `sweepTeamFiles` | Sundays | Delete files under `groups/{id}/` whose team or conversation is gone (TEAM-9, LEGAL-6). |
 
 **Operations**
 
@@ -1420,7 +1422,7 @@ Assumptions for one active team: 25 members; 50 messages and 10 photos a day; ea
 - **Cloud SQL adds a fixed cost on top.** The smallest instances run **24/7** and cost roughly **$10–30/month**, or **$50+** for a production-grade instance, before storage and backups. That fixed cost is why we wait (§12).
 - **The dev project adds about $0.** It costs nothing while on Spark, and most development runs on the emulators.
   - On Blaze, Firestore and Hosting have free quotas per project, so testing in dev doesn't use prod's.
-  - The Functions, Cloud Scheduler (3 jobs), and Secret Manager free tiers are shared across the billing account. `tick` and `dailyCleanup` in both projects make 4 jobs, so the fourth costs about $0.10/month.
+  - The Functions, Cloud Scheduler (3 jobs), and Secret Manager free tiers are shared across the billing account. `tick`, `dailyCleanup`, `finishTeamDeletions`, and `sweepTeamFiles` in both projects make 8 jobs, so the five past the free three cost about $0.50/month.
   - Set the function-image cleanup policy (`firebase functions:artifacts:setpolicy`) in both projects, so deploy images don't pile up in Artifact Registry.
 - **Phase 1 proves it.** After two weeks of our team on prod, the real bill per service goes here, next to the estimates above (ROADMAP task 192).
 

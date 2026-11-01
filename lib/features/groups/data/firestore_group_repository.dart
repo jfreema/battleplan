@@ -209,16 +209,31 @@ class FirestoreGroupRepository implements GroupRepository {
       _call('convertToTeam', {'groupId': id.value, 'sport': sport.value});
 
   @override
-  Future<void> deleteGroup(GroupId id, String confirmName) =>
-      _call('deleteGroup', {'groupId': id.value, 'confirmName': confirmName});
+  Future<void> deleteGroup(GroupId id, String confirmName) => _call(
+    'deleteGroup',
+    {'groupId': id.value, 'confirmName': confirmName},
+    // A big team can take minutes; the server allows nine (TEAM-9).
+    timeout: const Duration(minutes: 9),
+  );
 
   @override
   Future<void> setStorageQuota(GroupId id, int? quotaMb) =>
       _call('adminSetGroupQuota', {'groupId': id.value, 'quotaMb': quotaMb});
 
-  Future<void> _call(String name, Map<String, Object?> data) async {
+  Future<void> _call(
+    String name,
+    Map<String, Object?> data, {
+    Duration? timeout,
+  }) async {
     try {
-      await _functions.httpsCallable(name).call<void>(data);
+      await _functions
+          .httpsCallable(
+            name,
+            options: timeout == null
+                ? null
+                : HttpsCallableOptions(timeout: timeout),
+          )
+          .call<void>(data);
     } on FirebaseFunctionsException catch (e) {
       final message = serverMessage(e.message);
       throw switch ((e.code, message)) {

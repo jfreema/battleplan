@@ -245,12 +245,12 @@ export const adminUpdatePlayer = onCall(async (request) => {
 });
 
 /** Permanently deletes any team once its name is typed (ADMIN-3, TEAM-9): `name-mismatch` otherwise. */
-export const adminDeleteGroup = onCall({ secrets: [resendApiKey] }, async (request) => {
+export const adminDeleteGroup = onCall({ secrets: [resendApiKey], timeoutSeconds: 540 }, async (request) => {
   const actor = requireSuperAdmin(request);
   const input = parse(DeleteGroupInput, request.data);
   await requireTeam(input.groupId);
   const deleted: { before?: { name: string; memberCount: number } } = {};
-  await deleteGroupNamed(input.groupId, input.confirmName, (before) => {
+  await deleteGroupNamed(input.groupId, input.confirmName, actor, (before) => {
     deleted.before = before;
     return audit({
       actorId: actor,

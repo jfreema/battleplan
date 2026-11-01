@@ -10,6 +10,24 @@ import { pruneDevices } from '../notify/service.js';
 import { pruneAvatars } from '../accounts/service.js';
 import { resendApiKey } from '../email/service.js';
 import { remindOpenReports } from '../safety/alerts.js';
+import { finishTeamDeletions as finishDeletions, sweepOrphanTeamFiles } from './service.js';
+
+/**
+ * Every hour, finishes team deletions that stopped partway (TEAM-9), with
+ * the longest time a function can run.
+ */
+export const finishTeamDeletions = onSchedule({ schedule: 'every 60 minutes', timeoutSeconds: 540 }, async () => {
+  const finished = await finishDeletions();
+  if (finished) logger.info('team_deletes_finished', { finished });
+});
+
+/** Every week, deletes files left behind by a team that's gone (TEAM-9, LEGAL-6). */
+export const sweepTeamFiles = onSchedule(
+  { schedule: 'every sunday 05:00', timeZone: 'America/Chicago', timeoutSeconds: 540 },
+  async () => {
+    await sweepOrphanTeamFiles();
+  },
+);
 
 /**
  * A file landed under `groups/{g}/`: count it toward the team's limit, and

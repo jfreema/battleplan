@@ -27,9 +27,17 @@ class FunctionsAdminRepository implements AdminRepository {
   Future<Map<String, dynamic>> _call(
     String name, [
     Map<String, Object?> data = const {},
+    Duration? timeout,
   ]) async {
     try {
-      final r = await _functions.httpsCallable(name).call<Object?>(data);
+      final r = await _functions
+          .httpsCallable(
+            name,
+            options: timeout == null
+                ? null
+                : HttpsCallableOptions(timeout: timeout),
+          )
+          .call<Object?>(data);
       return _map(r.data);
     } on FirebaseFunctionsException catch (e) {
       final message = serverMessage(e.message);
@@ -186,6 +194,8 @@ class FunctionsAdminRepository implements AdminRepository {
   Future<void> deleteGroup(GroupId id, String confirmName) => _call(
     'adminDeleteGroup',
     {'groupId': id.value, 'confirmName': confirmName},
+    // A big team can take minutes; the server allows nine (TEAM-9).
+    const Duration(minutes: 9),
   );
 
   @override

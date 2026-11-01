@@ -1,5 +1,5 @@
 // Teams domain service: owns groups and groupMembers (ARCH §6.4).
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { createHash, randomUUID } from 'node:crypto';
@@ -420,6 +420,7 @@ export async function setGroupSuspended(groupId: string, suspended: boolean): Pr
 export async function deleteGroupNamed(
   groupId: string,
   confirmName: string,
+  actorUid: string,
   beforeDelete: (before: { name: string; memberCount: number }) => Promise<void>,
 ): Promise<void> {
   const group = await db().collection(Collections.groups).doc(groupId).get();
@@ -428,7 +429,13 @@ export async function deleteGroupNamed(
   if (confirmName.trim() !== name.trim()) {
     throw new HttpsError('invalid-argument', 'name-mismatch');
   }
-  await beforeDelete({ name, memberCount: (group.get('memberCount') as number | undefined) ?? 0 });
+  // Marked first, so a delete that runs out of time is finished by
+  // finishTeamDeletions, and whoever started it can try again even once
+  // their membership is gone. A retry isn't audited or announced again.
+  if (group.get('deletingAt') == null) {
+    await beforeDelete({ name, memberCount: (group.get('memberCount') as number | undefined) ?? 0 });
+    await group.ref.update({ deletingAt: FieldValue.serverTimestamp(), deletingBy: actorUid });
+  }
   await deleteGroupData(groupId);
 }
 
@@ -455,19 +462,75 @@ const TEAM_COLLECTIONS = [
   // events, whose triggers only mark a cache that still exists.
   Collections.calendarLinks,
   Collections.teamCalendars,
-  Collections.groupMembers,
 ];
 
 /**
  * Permanently deletes a team: every document that carries its groupId, its
- * files in Storage, and the team itself (TEAM-9). Safe to retry.
+ * files in Storage, then its memberships and the team itself (TEAM-9). Safe
+ * to retry: a Storage error throws, so the team is left to try again rather
+ * than gone with its files still shared.
  */
 export async function deleteGroupData(groupId: string): Promise<void> {
-  for (const collection of TEAM_COLLECTIONS) {
-    await forEachPage(db().collection(collection).where('groupId', '==', groupId), (b, d) => b.delete(d.ref));
-  }
-  await storage().bucket().deleteFiles({ prefix: `groups/${groupId}/` }).catch(() => undefined);
+  const deleteAll = (collection: string) =>
+    forEachPage(db().collection(collection).where('groupId', '==', groupId), (b, d) => b.delete(d.ref));
+  for (const collection of TEAM_COLLECTIONS) await deleteAll(collection);
+  await storage().bucket().deleteFiles({ prefix: `groups/${groupId}/` });
+  // Memberships last: they're how the owner can try again.
+  await deleteAll(Collections.groupMembers);
   await db().collection(Collections.groups).doc(groupId).delete();
+}
+
+/**
+ * Finishes team deletions that stopped partway, from a timeout or an error
+ * (TEAM-9): teams marked `deletingAt` more than 15 minutes ago, oldest
+ * first. Returns how many it finished; one that fails again waits for the
+ * next run.
+ */
+export async function finishTeamDeletions(nowMs = Date.now(), max = 20): Promise<number> {
+  const stuck = await db()
+    .collection(Collections.groups)
+    .where('deletingAt', '<=', Timestamp.fromMillis(nowMs - 15 * 60_000))
+    .orderBy('deletingAt')
+    .limit(max)
+    .get();
+  let finished = 0;
+  for (const team of stuck.docs) {
+    try {
+      await deleteGroupData(team.id);
+      finished++;
+    } catch (e) {
+      logger.error('team_delete_unfinished', { groupId: team.id, error: String(e) });
+    }
+  }
+  return finished;
+}
+
+/**
+ * Deletes files under `groups/{id}/` whose team (or direct conversation)
+ * is gone, for any a delete left behind (TEAM-9, LEGAL-6). Returns the
+ * team IDs it cleared.
+ */
+export async function sweepOrphanTeamFiles(): Promise<string[]> {
+  const bucket = storage().bucket();
+  const prefixes: string[] = [];
+  let pageToken: string | undefined;
+  do {
+    const [, next, response] = await bucket.getFiles({ prefix: 'groups/', delimiter: '/', autoPaginate: false, pageToken });
+    prefixes.push(...(((response as { prefixes?: string[] } | undefined)?.prefixes) ?? []));
+    pageToken = (next as { pageToken?: string } | null)?.pageToken;
+  } while (pageToken);
+  const ids = prefixes.map((p) => p.split('/')[1]).filter((id) => id);
+  const cleared: string[] = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    const part = ids.slice(i, i + 100);
+    const teams = await db().getAll(...part.map((id) => db().collection(Collections.groups).doc(id)));
+    for (const team of teams.filter((t) => !t.exists)) {
+      await bucket.deleteFiles({ prefix: `groups/${team.id}/` });
+      cleared.push(team.id);
+    }
+  }
+  if (cleared.length) logger.info('orphan_team_files_deleted', { teams: cleared.length });
+  return cleared;
 }
 
 export interface AddedPerson {

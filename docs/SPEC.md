@@ -467,7 +467,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - The owner must transfer ownership first. If they're the only member, they archive or delete the team instead.
 - **TEAM-9 · MVP · Archive or delete (owner, super admins).**
   - **Archive** makes the team read-only and moves it to "Archived" in the switcher. It can be restored.
-  - **Delete** requires typing the team name. It permanently removes all messages, events, documents, and files.
+  - **Delete** requires typing the team name. It permanently removes all messages, events, documents, and files. A big team can take minutes; if it stops partway, whoever started it can try again, and the server finishes it within the hour either way.
 - **TEAM-10 · v1.1 · Roster details.** Built (task 136).
   - Sort the roster's players by jersey number (the default; players without one come last) or by name, from the sort button. (Numbers live on players, PLAYER-1, and a member who is a player shows theirs.) Admins and members are listed by name, the owner first.
   - Optional contact sharing: on their own card, members share a phone number and email with that team ("Share my phone and email"; the account's email is offered), and change them or stop sharing at any time. They appear on their card for everyone on the team with call, text, and email buttons. Each team is separate. Sharing needs an open team; stopping works even on an archived or suspended one. Leaving the team or deleting the account removes them.

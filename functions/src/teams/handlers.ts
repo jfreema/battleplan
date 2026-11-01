@@ -317,19 +317,21 @@ export const convertToTeam = onCall(async (request) => {
  * archived team can be deleted; a suspended one only by a super admin, so
  * its owner can't erase what it was suspended for (§3).
  */
-export const deleteGroup = onCall({ secrets: [resendApiKey] }, async (request) => {
+export const deleteGroup = onCall({ secrets: [resendApiKey], timeoutSeconds: 540 }, async (request) => {
   const uid = requireAuth(request);
   const input = parse(GroupOnly.extend({ confirmName: z.string() }), request.data);
   const superAdmin = request.auth?.token.superAdmin === true;
-  const owner = (await roleOf(input.groupId, uid)) === 'owner';
+  const group = await db().collection(Collections.groups).doc(input.groupId).get();
+  // The owner, or whoever started a delete that stopped partway, after
+  // their membership went with it.
+  const owner = (await roleOf(input.groupId, uid)) === 'owner' || (group.exists && group.get('deletingBy') === uid);
   if (!superAdmin && !owner) {
     throw new HttpsError('permission-denied', 'Only the team owner can do that.');
   }
   // A team that's already gone is left alone (deleteGroupNamed).
-  const group = await db().collection(Collections.groups).doc(input.groupId).get();
   if (group.exists) await requireOpenTeam(input.groupId, superAdmin, { allowArchived: true });
   const deleted: { before?: { name: string; memberCount: number } } = {};
-  await deleteGroupNamed(input.groupId, input.confirmName, (before) => {
+  await deleteGroupNamed(input.groupId, input.confirmName, uid, (before) => {
     deleted.before = before;
     return audit({
       actorId: uid,

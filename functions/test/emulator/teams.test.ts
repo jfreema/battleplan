@@ -20,7 +20,7 @@ import { resolveReport } from '../../src/safety/handlers.js';
 import { auth, db, storage } from '../../src/shared/admin.js';
 import { Collections, Limits } from '../../src/shared/constants.js';
 import * as teams from '../../src/teams/handlers.js';
-import { setMemberRole } from '../../src/teams/service.js';
+import { finishTeamDeletions, setMemberRole, sweepOrphanTeamFiles } from '../../src/teams/service.js';
 
 // Emails to an address in `fail` don't send, as past the day's limit.
 const mail = vi.hoisted(() => ({ sent: [] as Email[], fail: new Set<string>() }));
@@ -266,6 +266,51 @@ describe('the 100-team limit on every way in (TEAM-2)', () => {
     await expect(run(players.inviteGuardian, 'pat', { groupId: 'open', playerId: 'open-p1', email: 'lee@example.com' }))
       .rejects.toMatchObject({ message: 'too-many-teams' });
     expect(await isMember('open', 'lee')).toBe(false);
+  });
+});
+
+describe('deleting a team finishes, even when it stops partway (TEAM-9)', () => {
+  const file = (path: string) => storage().bucket().file(path);
+  const audits = async () => (await db().collection(Collections.auditLogs).where('action', '==', 'deleteGroup').get()).size;
+
+  it('deletes its files before its memberships, and everything', async () => {
+    await file('groups/open/logo.jpg').save(Buffer.from('logo'));
+    await run(teams.deleteGroup, 'pat', { groupId: 'open', confirmName: 'open' });
+    expect((await groups().doc('open').get()).exists).toBe(false);
+    expect(await isMember('open', 'pat')).toBe(false);
+    expect((await file('groups/open/logo.jpg').exists())[0]).toBe(false);
+    expect(await audits()).toBe(1);
+  });
+
+  it('whoever started it can try again after their membership went, without a second audit', async () => {
+    // It stopped after the memberships, before the team.
+    await groups().doc('open').update({ deletingAt: Timestamp.now(), deletingBy: 'pat' });
+    await members().doc('open_pat').delete();
+    await expect(run(teams.deleteGroup, 'sam', { groupId: 'open', confirmName: 'open' })).rejects.toMatchObject({
+      code: 'permission-denied',
+    });
+    await run(teams.deleteGroup, 'pat', { groupId: 'open', confirmName: 'open' });
+    expect((await groups().doc('open').get()).exists).toBe(false);
+    expect(await audits()).toBe(0);
+  });
+
+  it('the hourly job finishes deletes marked more than 15 minutes ago', async () => {
+    const now = Date.now();
+    await groups().doc('open').update({ deletingAt: Timestamp.fromMillis(now - 20 * 60_000), deletingBy: 'pat' });
+    await groups().doc('archived').update({ deletingAt: Timestamp.fromMillis(now - 5 * 60_000), deletingBy: 'pat' });
+    expect(await finishTeamDeletions(now)).toBe(1);
+    expect((await groups().doc('open').get()).exists).toBe(false);
+    expect(await isMember('open', 'sam')).toBe(false);
+    // Still running, maybe: left for the next run.
+    expect((await groups().doc('archived').get()).exists).toBe(true);
+  });
+
+  it('the weekly sweep deletes files whose team is gone, and keeps the rest', async () => {
+    await file('groups/ghost/messages/m1/0.jpg').save(Buffer.from('x'));
+    await file('groups/open/logo.jpg').save(Buffer.from('logo'));
+    expect(await sweepOrphanTeamFiles()).toContain('ghost');
+    expect((await file('groups/ghost/messages/m1/0.jpg').exists())[0]).toBe(false);
+    expect((await file('groups/open/logo.jpg').exists())[0]).toBe(true);
   });
 });
 
