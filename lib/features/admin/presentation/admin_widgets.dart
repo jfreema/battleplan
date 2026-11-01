@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
@@ -358,7 +359,8 @@ class LoadMoreButton extends StatelessWidget {
       child: Center(
         child: loading
             ? const CircularProgressIndicator()
-            : OutlinedButton(
+            : TextButton(
+                style: GumdropButtons.of(context).link(),
                 onPressed: () => unawaited(
                   onPressed().catchError((Object e) {
                     if (context.mounted) {

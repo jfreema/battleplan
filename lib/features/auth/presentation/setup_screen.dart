@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/button_spinner.dart';
@@ -222,6 +223,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                   const SizedBox(height: Space.sm),
                   // Back to the sign-in choices, for another account.
                   TextButton(
+                    style: GumdropButtons.of(context).link(),
                     onPressed: _saving
                         ? null
                         : () => unawaited(

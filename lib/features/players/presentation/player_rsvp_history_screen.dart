@@ -3,6 +3,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/info_tag.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
@@ -161,16 +162,15 @@ class _PlayerRsvpHistoryScreenState
           runSpacing: Space.sm,
           children: [
             for (final (status, n) in totals)
-              Chip(
-                avatar: Icon(
-                  statusIcon(status),
-                  color: statusColor(context, status),
-                ),
-                label: Text('${statusLabel(l10n, status)} · $n'),
+              InfoTag(
+                icon: statusIcon(status),
+                iconColor: statusColor(context, status),
+                text: '${statusLabel(l10n, status)} · $n',
               ),
-            Chip(
-              avatar: Icon(AppIcons.rsvp, color: scheme.outline),
-              label: Text('${l10n.rsvpNoAnswer} · ${history.count(null)}'),
+            InfoTag(
+              icon: AppIcons.rsvp,
+              iconColor: scheme.outline,
+              text: '${l10n.rsvpNoAnswer} · ${history.count(null)}',
             ),
           ],
         ),

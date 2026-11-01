@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/haptics.dart';
@@ -13,6 +14,7 @@ import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/info_tag.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -341,7 +343,8 @@ class _Details extends ConsumerWidget {
                   label: Text(l10n.eventDirections),
                 ),
               if (reminders.isNotEmpty)
-                InfoPill(
+                // Information, not a button: a flat tag.
+                InfoTag(
                   icon: AppIcons.reminder,
                   text: event.allDay
                       ? l10n.eventRemindersAllDayLine(
@@ -813,16 +816,7 @@ class _RsvpSection extends ConsumerWidget {
             ],
           ),
         ],
-        const SizedBox(height: Space.md),
-        Text(
-          eventCountsText(
-            l10n,
-            event,
-            players: players.length,
-            allowMaybe: allowMaybe,
-          ),
-          style: muted,
-        ),
+        // The tiles say the counts; the groups below say who.
         _AttendeeGroups(
           people: everyone.main,
           rsvps: rsvps,
@@ -1209,16 +1203,17 @@ class _AttendeeGroups extends StatelessWidget {
                 ],
               ),
             ),
-            for (final (i, (p, r)) in list.indexed)
-              Padding(
-                padding: EdgeInsets.only(top: i == 0 ? 0 : Space.sm),
-                child: _AttendeeRow(
-                  participant: p,
-                  status: s,
-                  subtitle: _subtitle(l10n, p, r),
-                  onTap: onTap?.call(p),
-                ),
-              ),
+            // One card per answer, with a row each, as the roster has.
+            _AttendeeCard(
+              rows: [
+                for (final (p, r) in list)
+                  _AttendeeRow(
+                    participant: p,
+                    subtitle: _subtitle(l10n, p, r),
+                    onTap: onTap?.call(p),
+                  ),
+              ],
+            ),
           ],
       ],
     );
@@ -1237,68 +1232,93 @@ class _AttendeeGroups extends StatelessWidget {
   }
 }
 
-/// One person on the event (design §3.16): their candy initials, name, who
-/// answered or their note, and their answer's disc, on a card. Admins tap
-/// it to set the answer (SCHED-4).
+/// The people with one answer, on one card, a divider between rows.
+class _AttendeeCard extends StatelessWidget {
+  const new({required this.rows});
+
+  final List<Widget> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    return GumdropSurface(
+      child: Material(
+        color: c.surface,
+        shape: GumdropStyle.of(context).cardShape(
+          Corners.card,
+          side: c.surfaceBorderWidth == 0
+              ? BorderSide.none
+              : BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final (i, row) in rows.indexed) ...[
+              if (i > 0) Container(height: 2, color: c.divider),
+              row,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One person on the event (design §3.16): their candy initials, name, and
+/// who answered or their note; the group's heading says the answer. Admins
+/// tap it to set the answer (SCHED-4).
 class _AttendeeRow extends StatelessWidget {
   const new({
     required this.participant,
-    required this.status,
     required this.subtitle,
     required this.onTap,
   });
 
   final Participant participant;
-  final RsvpStatus? status;
   final String? subtitle;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return TapCard(
+    final theme = Theme.of(context);
+    final c = GumdropColors.of(context);
+    return InkWell(
       onTap: onTap,
-      radius: Corners.tile,
-      padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
-      child: Builder(
-        builder: (context) {
-          final theme = Theme.of(context);
-          final c = GumdropColors.of(context);
-          return Row(
-            children: [
-              CandyInitials(
-                name: participant.shownName,
-                colorKey: participant.id,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
+        child: Row(
+          children: [
+            CandyInitials(
+              name: participant.shownName,
+              colorKey: participant.id,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    participant.shownName,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      height: 1.2,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                  if (subtitle case final text?)
                     Text(
-                      participant.shownName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        height: 1.2,
-                        color: c.textPrimary,
+                      text,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: c.textMuted,
                       ),
                     ),
-                    if (subtitle case final text?)
-                      Text(
-                        text,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: c.textMuted,
-                        ),
-                      ),
-                  ],
-                ),
+                ],
               ),
-              const SizedBox(width: 12),
-              // The group heading above says the answer in words.
-              AnswerDisc(status: status, size: 28),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       ),
     );
   }

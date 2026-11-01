@@ -1,3 +1,4 @@
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -14,10 +15,9 @@ class LegalLinks extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final site = ref.read(linkServiceProvider);
     final links = ref.read(linkOpenerProvider);
-    final style = TextButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: Space.sm),
-      textStyle: Theme.of(context).textTheme.bodySmall,
-    );
+    // Quiet links, not gumdrops: they aren't the screen's action.
+    final style = GumdropButtons.of(context)
+        .link(textStyle: Theme.of(context).textTheme.bodySmall);
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: Space.sm,

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -221,6 +222,7 @@ class _InviteBody extends ConsumerWidget {
                 child: Text(l10n.resetLink),
               ),
               TextButton(
+                style: GumdropButtons.of(context).link(),
                 onPressed: () => unawaited(_turnOff(context, ref)),
                 child: Text(l10n.linkTurnOff),
               ),

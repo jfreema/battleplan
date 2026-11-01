@@ -665,7 +665,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
       expect(rsvps.rsvps.single.participantId, 'coach');
-      expect(find.text('1 going'), findsOneWidget);
+      expect(find.text('Going · 1'), findsOneWidget);
 
       await tester.tap(find.text('Add a note'));
       await tester.pumpAndSettle();
@@ -771,7 +771,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p1');
       expect(rsvps.rsvps.single.participantType, ParticipantType.player);
-      expect(find.text('1 of 3 players going'), findsOneWidget);
+      // The tiles say the counts, the headings who (no summary line).
+      expect(find.text('Going · 1'), findsOneWidget);
+      expect(find.text('1 of 3 players going'), findsNothing);
       expect(find.text('Answered by Coach L.'), findsOneWidget);
     });
 
@@ -849,7 +851,7 @@ void main() {
       expect(emma.note, 'Might be late');
       expect(rsvps.rsvps.any((r) => r.participantId == 'coach'), isFalse);
       expect(allSelected(), {RsvpStatus.going});
-      expect(find.text('2 of 2 players going'), findsOneWidget);
+      expect(find.text('Going · 2'), findsOneWidget);
 
       // One player changed alone: the shared answer clears, and the next
       // tap writes only the player who needs it. Liam's is the third row.
@@ -1026,7 +1028,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p1');
       expect(rsvps.rsvps.single.participantType, ParticipantType.player);
-      expect(find.text('1 of 1 players going'), findsOneWidget);
+      expect(find.text('Going · 1'), findsOneWidget);
     });
 
     testWidgets('an admin who is a player has one answer of their own, on '
@@ -1824,7 +1826,7 @@ void main() {
       );
       await openDetails(tester, 'Practice');
       expect(find.text('Coaches and others'), findsOneWidget);
-      expect(find.text('0 of 1 players going'), findsOneWidget);
+      expect(find.text('No response · 1'), findsWidgets);
       // Another coach's row sets their answer, as the rules allow admins.
       await tester.ensureVisible(find.text('Pat Kim'));
       await tester.tap(find.text('Pat Kim'));
@@ -1833,7 +1835,7 @@ void main() {
       await tester.tap(find.text('Going').last);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'pat');
-      expect(find.text('0 of 1 players going · 1 other'), findsOneWidget);
+      expect(find.text('Going · 1'), findsOneWidget);
       // "Set RSVP for someone" lists the players and every member.
       await menu(tester, 'Set RSVP for someone');
       expect(find.textContaining('Emma'), findsWidgets);

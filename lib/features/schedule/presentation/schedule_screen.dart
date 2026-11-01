@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
@@ -253,6 +254,7 @@ class EventList extends ConsumerWidget {
               child: state.loadingMore
                   ? const CircularProgressIndicator()
                   : TextButton(
+                      style: GumdropButtons.of(context).link(),
                       onPressed: () => unawaited(_loadMore(ref, options)),
                       child: Text(l10n.scheduleLoadMore),
                     ),

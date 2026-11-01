@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
@@ -135,6 +136,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 child: state.loadingMore || searching
                     ? const CircularProgressIndicator()
                     : TextButton(
+                        style: GumdropButtons.of(context).link(),
                         onPressed: () => unawaited(_loadMore(view.sort)),
                         child: Text(l10n.documentsLoadMore),
                       ),

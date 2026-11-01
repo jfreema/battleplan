@@ -102,6 +102,53 @@ class GumdropButtons {
     minimumSize: minimumSize,
   );
 
+  /// A quiet text link for small actions (Terms of Use, Load more, Use a
+  /// different account, Turn off link): underlined text in the text color,
+  /// with no face or lip, so it reads as less important than the gumdrops
+  /// beside it. Its tap target stays 48 by 44.
+  ButtonStyle link({TextStyle? textStyle}) {
+    final foreground = colors.onCard ? colors.textPrimary : colors.textOnPage;
+    final muted = colors.onCard ? colors.textMuted : colors.textMutedOnPage;
+    return ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+      foregroundColor: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.disabled) ? muted : foreground,
+      ),
+      iconColor: WidgetStatePropertyAll(foreground),
+      overlayColor: WidgetStateProperty.resolveWith(
+        (s) =>
+            s.contains(WidgetState.pressed) || s.contains(WidgetState.focused)
+            ? foreground.withValues(alpha: 0.10)
+            : s.contains(WidgetState.hovered)
+            ? foreground.withValues(alpha: 0.06)
+            : null,
+      ),
+      elevation: const WidgetStatePropertyAll(0),
+      shadowColor: const WidgetStatePropertyAll(Colors.transparent),
+      surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+      shape: const WidgetStatePropertyAll(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+      ),
+      side: WidgetStateProperty.resolveWith(
+        (s) => s.contains(WidgetState.focused)
+            ? BorderSide(color: focusRing, width: 3)
+            : BorderSide.none,
+      ),
+      minimumSize: const WidgetStatePropertyAll(Size(48, 44)),
+      padding: const WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: 8),
+      ),
+      textStyle: WidgetStatePropertyAll(
+        (textStyle ?? const TextStyle()).copyWith(
+          decoration: TextDecoration.underline,
+          decorationColor: foreground,
+        ),
+      ),
+    );
+  }
+
   /// A round gumdrop icon button [size] px across (38 in headers, 46 in
   /// the composer), secondary, or in [accent]. Its tap target stays 48.
   ButtonStyle icon({double size = 38, GumdropAccent? accent}) {

@@ -10,6 +10,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/info_tag.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -621,7 +622,7 @@ class _MemberRow extends StatelessWidget {
       leading: _MemberAvatar(member: member),
       title: Text(member.displayName),
       subtitle: details.isEmpty ? null : Text(details.join(' · ')),
-      trailing: badge == null ? null : Chip(label: Text(badge)),
+      trailing: badge == null ? null : InfoTag(text: badge),
       onTap: () => showAdaptiveSheet<void>(
         context,
         builder: (_) => MemberCard(member: member, me: me, who: who),
@@ -713,8 +714,8 @@ class MemberCard extends ConsumerWidget {
               Wrap(
                 spacing: Space.sm,
                 children: [
-                  if (coach) Chip(label: Text(l10n.memberCoach)),
-                  if (badge != null) Chip(label: Text(badge)),
+                  if (coach) InfoTag(text: l10n.memberCoach),
+                  if (badge != null) InfoTag(text: badge),
                 ],
               ),
             ],

@@ -379,64 +379,6 @@ class CandyInitials extends StatelessWidget {
   }
 }
 
-/// A small pill that isn't a button (the reminder beside Directions),
-/// drawn as the secondary gumdrop Directions is (a 40 px face on a 4 px
-/// lip) so the two match; it has no tap.
-class InfoPill extends StatelessWidget {
-  const new({required this.icon, required this.text, super.key});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = GumdropColors.of(context);
-    return GumdropSurface(
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 44),
-        // The label rides on the face, above the lip.
-        padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
-        decoration: ShapeDecoration(
-          color: c.raisedFace,
-          shape: GumdropStyle.of(context).styled(
-            GumdropShape(
-              lipColor: c.raisedLip,
-              highlight: 1.5,
-              highlightColor: c.raisedHighlight,
-              radius: BorderRadius.circular(20),
-              side: c.raisedBorderWidth == 0
-                  ? BorderSide.none
-                  : BorderSide(
-                      color: c.raisedBorder,
-                      width: c.raisedBorderWidth,
-                    ),
-            ),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: c.textPrimary),
-            const SizedBox(width: 7),
-            Flexible(
-              child: Text(
-                text,
-                style: GumdropStyle.of(context).label(
-                  TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: c.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// The RSVP choice (design §3.16): Going, Maybe, and Not going as three
 /// 54 px gumdrops with a gap between, built on [SegmentedButton] so it keeps
 /// its selection semantics and keyboard behavior. The chosen answer is its
