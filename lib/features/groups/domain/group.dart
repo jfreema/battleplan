@@ -23,8 +23,9 @@ abstract class GroupSettings with _$GroupSettings {
     /// masked, "f***" (SAFE-7).
     @Default(true) bool filterLanguage,
 
-    /// Minutes before an event (1440 = 1 day).
-    @Default(<int>[1440]) List<int> defaultReminderOffsets,
+    /// Minutes before an event (1440 = 1 day); none unless the team turns
+    /// some on (owner's request 2026-11-01).
+    @Default(<int>[]) List<int> defaultReminderOffsets,
   }) = _GroupSettings;
 }
 

@@ -584,7 +584,7 @@ GroupSettings settingsFromFirestore(Map<String, dynamic>? d) {
     membersCanSeePeople: flag('membersCanSeePeople', fallback: true),
     filterLanguage: flag('filterLanguage', fallback: true),
     defaultReminderOffsets: [
-      for (final m in (d['defaultReminderOffsets'] as List?) ?? const [1440])
+      for (final m in (d['defaultReminderOffsets'] as List?) ?? const [])
         (m as num).toInt(),
     ],
   );

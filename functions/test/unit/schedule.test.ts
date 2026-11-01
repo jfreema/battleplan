@@ -29,6 +29,7 @@ import {
   eventNeedsFollowUp,
   eventView,
   nextReminderAtMs,
+  reminderTimes,
   reminderBody,
   reminderDedupeKey,
   rsvpCountChanged,
@@ -301,6 +302,50 @@ describe('reminders (SCHED-8)', () => {
     expect(dueReminderOffset(view(), start - 10 * min)).toBe(60);
     expect(dueReminderOffset(view(), start)).toBeNull();
     expect(dueReminderOffset(view({ canceled: true }), start - 10 * min)).toBeNull();
+  });
+
+  it('sends an all-day event\'s at 6 PM the evening before, never at midnight', () => {
+    // Sat, Oct 17, 2026, all day in Chicago: midnight CDT is 05:00Z.
+    const tournament = view({
+      title: 'Tournament',
+      allDay: true,
+      startMs: Date.parse('2026-10-17T05:00:00Z'),
+      endMs: Date.parse('2026-10-18T05:00:00Z'),
+      startDate: '2026-10-17',
+      location: null,
+      reminderOffsets: [15, 60, 120, 1440, 2880, 10080],
+    });
+    // Fri 6 PM CDT is 23:00Z, once for 15 min to 1 day; Thu's and the
+    // week before's at 6 PM too.
+    expect(reminderTimes(tournament).map((r) => [r.offset, new Date(r.atMs).toISOString()])).toEqual([
+      [10080, '2026-10-10T23:00:00.000Z'],
+      [2880, '2026-10-15T23:00:00.000Z'],
+      [15, '2026-10-16T23:00:00.000Z'],
+    ]);
+    const friday6pm = Date.parse('2026-10-16T23:00:00Z');
+    expect(nextReminderAtMs(tournament, friday6pm - 60 * min)).toBe(friday6pm);
+    expect(dueReminderOffset(tournament, friday6pm - min)).toBe(2880);
+    expect(dueReminderOffset(tournament, friday6pm)).toBe(15);
+    expect(reminderBody(tournament, friday6pm)).toBe('Reminder: Tournament tomorrow');
+    // Midnight, when the old reminder went: nothing new is due.
+    expect(nextReminderAtMs(tournament, friday6pm + min)).toBeNull();
+    // An hour before, from the 1.0 app or an import: 6 PM the evening before.
+    expect(nextReminderAtMs({ ...tournament, reminderOffsets: [60] }, 0)).toBe(friday6pm);
+  });
+
+  it('keeps 6 PM across a time change: the evening before the fall-back day', () => {
+    // Sun, Nov 1, 2026 all day in Chicago; Sat 6 PM is still CDT (23:00Z).
+    const fall = view({
+      allDay: true,
+      startMs: Date.parse('2026-11-01T05:00:00Z'),
+      endMs: Date.parse('2026-11-02T06:00:00Z'),
+      startDate: '2026-11-01',
+      reminderOffsets: [1440, 10080],
+    });
+    expect(reminderTimes(fall).map((r) => new Date(r.atMs).toISOString())).toEqual([
+      '2026-10-25T23:00:00.000Z',
+      '2026-10-31T23:00:00.000Z',
+    ]);
   });
 
   it("says tomorrow by the calendar, the evening before a spring-forward day", () => {

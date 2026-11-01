@@ -695,7 +695,7 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                   spacing: Space.sm,
                   runSpacing: Space.xs,
                   children: [
-                    for (final m in reminderOffsetsMinutes)
+                    for (final m in reminderChoicesFor(allDay: d.allDay))
                       FilterChip(
                         label: Text(reminderLabel(l10n, m)),
                         selected: d.reminderOffsets.contains(m),
@@ -713,7 +713,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                   ],
                 ),
                 Text(
-                  l10n.eventRemindersHelp,
+                  d.allDay
+                      ? l10n.eventRemindersAllDayHelp
+                      : l10n.eventRemindersHelp,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),

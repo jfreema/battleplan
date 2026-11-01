@@ -416,7 +416,8 @@ void main() {
       expect(saved.title, '@ Eagles');
       expect(saved.homeAway, HomeAway.away);
       expect(saved.location?.name, 'Riverside Park');
-      expect(saved.reminderOffsets, [1440]);
+      // Off unless the team or the event turns them on.
+      expect(saved.reminderOffsets, isEmpty);
       expect(saved.seriesId, isNull);
       expect(saved.rsvpEnabled, isTrue);
       expect(saved.notifyTeam, isTrue);
@@ -448,6 +449,82 @@ void main() {
       expect(saved.rsvpEnabled, isFalse);
       expect(saved.notifyTeam, isFalse);
       expect(saved.postToChat, isFalse);
+    });
+
+    testWidgets('an all-day event offers only whole-day reminders, sent at '
+        '6 PM', (tester) async {
+      final rsvps = await openSchedule(tester, role: MemberRole.admin);
+      await tester.tap(find.byTooltip('New event'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Title'),
+        'Tournament',
+      );
+      Finder chip(String label) => find.widgetWithText(FilterChip, label);
+      // A timed event: every choice, none on.
+      await tester.ensureVisible(chip('15 min'));
+      expect(chip('15 min'), findsOneWidget);
+      expect(chip('2 h'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<FilterChip>(find.byType(FilterChip))
+            .where((c) => c.selected),
+        isEmpty,
+      );
+      await tester.tap(chip('1 h'));
+      await tester.pumpAndSettle();
+      await tester.tap(chip('1 day'));
+      await tester.pumpAndSettle();
+      final allDay = find.byType(SwitchListTile);
+      await tester.ensureVisible(allDay);
+      await tester.tap(allDay);
+      await tester.pumpAndSettle();
+      // All day: whole days only, and when they go out.
+      expect(chip('15 min'), findsNothing);
+      expect(chip('1 h'), findsNothing);
+      expect(chip('1 day'), findsOneWidget);
+      expect(chip('1 week'), findsOneWidget);
+      expect(find.textContaining('At 6 PM the day before'), findsOneWidget);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      final saved = rsvps.events.events.values.single;
+      expect(saved.allDay, isTrue);
+      // The hour picked before it was all day is dropped.
+      expect(saved.reminderOffsets, [1440]);
+    });
+
+    testWidgets("an older all-day event's hour reminder shows, and edits, "
+        'as the evening before at 6 PM', (tester) async {
+      final start = ZonedTime.instantOf(zone, addDays(today(), 3), 0);
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [
+          event('t').copyWith(
+            title: 'Tournament',
+            allDay: true,
+            startAt: start,
+            endAt: start.add(const Duration(days: 1)),
+            reminderOffsets: const [60, 2880],
+          ),
+        ],
+      );
+      await openDetails(tester, 'Tournament');
+      expect(
+        find.text('Reminders 1 day and 2 days before, at 6 PM'),
+        findsOneWidget,
+      );
+      await menu(tester, 'Edit');
+      expect(
+        tester
+            .widgetList<FilterChip>(find.byType(FilterChip))
+            .where((c) => c.selected)
+            .map((c) => (c.label as Text).data),
+        ['1 day', '2 days'],
+      );
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(rsvps.events.events['t']!.reminderOffsets, [1440, 2880]);
     });
 
     testWidgets('weekly practices with a skipped date make one series', (

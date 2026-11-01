@@ -452,7 +452,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - allow "Maybe" RSVPs [on]
     - everyone can see who's on the team [on]: off, only admins see all the people on the roster (TEAM-3)
   - **Language:** filter strong language [on] (SAFE-7).
-  - Default event reminders: 1 day before.
+  - Default event reminders: none, so reminders are off until a team or an event turns them on (owner's request 2026-11-01).
   - Manage the invite link.
   - See storage used, e.g. "112 MB of 200 MB", and open Media to free space (STORE-2, STORE-5).
   - **About**, at the end, at the owner's request: the version and build, "Developed by Jared Freeman", that Battleplan is free and Jared builds it as a volunteer, and **Buy Jared a coffee**, which shows his Venmo card (a QR code to scan) and **Open Venmo** for paying from the same phone. A tip is voluntary and unlocks nothing.
@@ -789,6 +789,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - **Delete** removes the event without notifying anyone. Its confirmation suggests canceling instead if the event is within 7 days.
   - For repeating events, both ask "This event" or "This and following events". Canceling or deleting the rest of a series notifies the team once.
 - **SCHED-8 · MVP · Reminders.** A push at each reminder time to people who said Going or Maybe or haven't answered, but not Not going: "Reminder: Practice today at 6:00 PM · Riverside Park". For players, reminders go to the member who is the player and to the player's guardians (PLAYER-7).
+  - **All-day events** start at midnight, so their reminders go out at **6 PM** in the event's time zone instead: 1 day before is 6 PM the evening before, and 2 days or a week before, 6 PM that day. The form offers them only 1 day, 2 days, and 1 week. A minute or hour reminder an all-day event carries anyway (from the 1.0 app, an import, or an older event) goes out at 6 PM the evening before too, once, and its page says "Reminders 1 day before, at 6 PM" (owner's request 2026-11-01).
   - **A reminder by hand:** the event's menu has **Post a reminder in chat** for team admins and the event's creator, after asking. It posts the event in the chat again, marked Reminder, with its live RSVPs, the answer buttons, and how many players haven't answered, and the same people get the reminder push. Not on a canceled or finished event; once an hour per event.
 - **SCHED-9 · MVP · Time zones.**
   - Times show in the viewer's local time.

@@ -20,7 +20,8 @@ mixin _$GroupSettings {
 /// coaches, and themselves.
  bool get membersCanSeePeople;/// Swear words and slurs in new chat messages, captions, and polls are
 /// masked, "f***" (SAFE-7).
- bool get filterLanguage;/// Minutes before an event (1440 = 1 day).
+ bool get filterLanguage;/// Minutes before an event (1440 = 1 day); none unless the team turns
+/// some on (owner's request 2026-11-01).
  List<int> get defaultReminderOffsets;
 /// Create a copy of GroupSettings
 /// with the given fields replaced by the non-null parameter values.
@@ -225,7 +226,7 @@ return $default(_that.membersCanCreateEvents,_that.membersCanCreatePolls,_that.m
 
 
 class _GroupSettings implements GroupSettings {
-  const _GroupSettings({this.membersCanCreateEvents = false, this.membersCanCreatePolls = true, this.membersCanUploadDocs = true, this.membersCanInvite = true, this.allowMaybe = true, this.membersCanSeePeople = true, this.filterLanguage = true,  List<int> defaultReminderOffsets = const <int>[1440]}): _defaultReminderOffsets = defaultReminderOffsets;
+  const _GroupSettings({this.membersCanCreateEvents = false, this.membersCanCreatePolls = true, this.membersCanUploadDocs = true, this.membersCanInvite = true, this.allowMaybe = true, this.membersCanSeePeople = true, this.filterLanguage = true,  List<int> defaultReminderOffsets = const <int>[]}): _defaultReminderOffsets = defaultReminderOffsets;
   
 
 @override@JsonKey() final  bool membersCanCreateEvents;
@@ -240,9 +241,11 @@ class _GroupSettings implements GroupSettings {
 /// Swear words and slurs in new chat messages, captions, and polls are
 /// masked, "f***" (SAFE-7).
 @override@JsonKey() final  bool filterLanguage;
-/// Minutes before an event (1440 = 1 day).
+/// Minutes before an event (1440 = 1 day); none unless the team turns
+/// some on (owner's request 2026-11-01).
  final  List<int> _defaultReminderOffsets;
-/// Minutes before an event (1440 = 1 day).
+/// Minutes before an event (1440 = 1 day); none unless the team turns
+/// some on (owner's request 2026-11-01).
 @override@JsonKey() List<int> get defaultReminderOffsets {
   if (_defaultReminderOffsets is EqualUnmodifiableListView) return _defaultReminderOffsets;
   // ignore: implicit_dynamic_type

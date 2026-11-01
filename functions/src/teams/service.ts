@@ -127,7 +127,9 @@ export const DEFAULT_SETTINGS = {
   allowMaybe: true,
   membersCanSeePeople: true,
   filterLanguage: true,
-  defaultReminderOffsets: [1440],
+  // Reminders are off until a team or an event turns them on (owner's
+  // request 2026-11-01).
+  defaultReminderOffsets: [],
 };
 
 /**

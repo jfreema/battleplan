@@ -113,7 +113,9 @@ abstract class EventDraft with _$EventDraft {
       deadlineMinutes: duplicate && deadline != null
           ? deadline.hour * 60 + deadline.minute
           : null,
-      reminderOffsets: event.reminderOffsets,
+      reminderOffsets: event.allDay
+          ? allDayReminders(event.reminderOffsets)
+          : event.reminderOffsets,
       notifyTeam: event.notifyTeam,
       postToChat: event.postToChat,
     );
@@ -223,10 +225,12 @@ abstract class EventDraft with _$EventDraft {
     opponent: isGame && opponent.trim().isNotEmpty ? opponent.trim() : null,
     homeAway: isGame ? homeAway : null,
     rsvpEnabled: rsvpEnabled,
-    reminderOffsets: [
-      for (final o in reminderOffsetsMinutes)
-        if (reminderOffsets.contains(o)) o,
-    ],
+    reminderOffsets: allDay
+        ? allDayReminders(reminderOffsets)
+        : [
+            for (final o in reminderOffsetsMinutes)
+              if (reminderOffsets.contains(o)) o,
+          ],
     notifyTeam: notifyTeam,
     postToChat: postToChat,
   );
@@ -340,3 +344,25 @@ String hhmm(int minutes) =>
 /// Whether [text] is over [max] characters as the rules count them (code
 /// points).
 bool tooLong(String text, int max) => text.trim().runes.length > max;
+
+/// The reminders an event offers (SCHED-8): every choice for a timed one;
+/// whole days for an all-day one, whose reminders go out at 6 PM in the
+/// event's zone on the day they're before (the server does the same).
+List<int> reminderChoicesFor({required bool allDay}) => [
+  for (final o in reminderOffsetsMinutes)
+    if (!allDay || o % 1440 == 0) o,
+];
+
+/// An all-day event's [offsets] as the whole days they go out, as the
+/// server sends them: anything under a day (from the 1.0 app, an import,
+/// or before it was all day) is the evening before.
+List<int> allDayReminders(Iterable<int> offsets) {
+  final days = {
+    for (final o in offsets)
+      if (o > 0) (o < 1440 ? 1 : (o + 1439) ~/ 1440) * 1440,
+  };
+  return [
+    for (final o in reminderChoicesFor(allDay: true))
+      if (days.contains(o)) o,
+  ];
+}

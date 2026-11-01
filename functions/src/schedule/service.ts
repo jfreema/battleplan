@@ -10,7 +10,7 @@ import { chunk, trySend } from '../notify/service.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireOpenTeam } from '../shared/roles.js';
 import { deleteEventAssignments } from './assignments.js';
-import { addDays, dateInZone, type Recurrence } from './recurrence.js';
+import { addDays, dateInZone, wallTimeToMs, type Recurrence } from './recurrence.js';
 
 const MINUTE_MS = 60_000;
 
@@ -338,6 +338,36 @@ export function seriesCanceledBody(first: EventView, count: number): string {
 
 // ---- Reminders (SCHED-8) --------------------------------------------------
 
+/** When an all-day event's reminders go out, in the team's zone: the evening before, not midnight. */
+export const ALL_DAY_REMINDER_TIME = '18:00';
+
+const DAY_MINUTES = 1440;
+
+/** The whole days before an all-day event a reminder of [offset] minutes goes out: anything under a day is the day before. */
+export function allDayReminderDays(offset: number): number {
+  return Math.max(1, Math.ceil(offset / DAY_MINUTES));
+}
+
+/**
+ * Each reminder's offset and when it's due. A timed event's is its start
+ * minus the offset. An all-day event starts at midnight, so its reminders
+ * go out at [ALL_DAY_REMINDER_TIME] in the event's zone on the day they're
+ * before (1 day before: 6 PM the evening before). A shorter one, from the
+ * 1.0 app, an import, or an older event, goes out the evening before too,
+ * and reminders landing at the same time go out once, as the shortest.
+ */
+export function reminderTimes(e: EventView): { offset: number; atMs: number }[] {
+  if (!e.allDay) return e.reminderOffsets.map((o) => ({ offset: o, atMs: e.startMs - o * MINUTE_MS }));
+  const first = e.startDate ?? dateInZone(e.startMs, e.timeZone);
+  const byTime = new Map<number, number>();
+  for (const o of e.reminderOffsets) {
+    if (!(o > 0)) continue;
+    const atMs = wallTimeToMs(addDays(first, -allDayReminderDays(o)), ALL_DAY_REMINDER_TIME, e.timeZone);
+    byTime.set(atMs, Math.min(byTime.get(atMs) ?? o, o));
+  }
+  return [...byTime].map(([atMs, offset]) => ({ offset, atMs })).sort((a, b) => a.atMs - b.atMs);
+}
+
 /**
  * When the next reminder is due: the earliest reminder time still after
  * [nowMs] - [graceMs], or null when the event is canceled, has no
@@ -345,7 +375,9 @@ export function seriesCanceledBody(first: EventView, count: number): string {
  */
 export function nextReminderAtMs(e: EventView, nowMs: number, graceMs = 0): number | null {
   if (e.canceled) return null;
-  const times = e.reminderOffsets.map((o) => e.startMs - o * MINUTE_MS).filter((t) => t > nowMs - graceMs);
+  const times = reminderTimes(e)
+    .map((r) => r.atMs)
+    .filter((t) => t > nowMs - graceMs);
   return times.length ? Math.min(...times) : null;
 }
 
@@ -355,7 +387,9 @@ export function nextReminderAtMs(e: EventView, nowMs: number, graceMs = 0): numb
  */
 export function dueReminderOffset(e: EventView, nowMs: number): number | null {
   if (e.canceled || e.startMs <= nowMs) return null;
-  const due = e.reminderOffsets.filter((o) => e.startMs - o * MINUTE_MS <= nowMs);
+  const due = reminderTimes(e)
+    .filter((r) => r.atMs <= nowMs)
+    .map((r) => r.offset);
   return due.length ? Math.min(...due) : null;
 }
 

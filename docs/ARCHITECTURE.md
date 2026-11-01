@@ -638,7 +638,7 @@ events/{eventId}
   rsvpEnabled                                           # every event takes player RSVPs and members' own (PLAYER-6); old docs may carry rsvpFor, which readers ignore
   rsvpDeadline?, reminderOffsets: [minutes]            # deadline before startAt (null on series events); ≤ 6 of 15, 60, 120, 1440, 2880, 10080
   notifyTeam, postToChat                                # read on create only; can't change afterwards
-  nextReminderAt?                                       # computed; drives the reminder job
+  nextReminderAt?                                       # computed; drives the reminder job (reminderTimes: start minus each offset; all day: 6 PM in the event's zone on the day it's before, anything under a day the evening before, one send per time)
   rsvpCounts: { going, maybe, notGoing }                # cache ← rsvps; players only
   staffCounts: { going, maybe, notGoing }               # cache ← rsvps; everyone else (members answering for themselves), shown as "others" (D34, D59)
   messageId?                                            # the event card: the event's ID, or the series' ID for a series

@@ -23,6 +23,7 @@ import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
+import 'package:battleplan/features/schedule/domain/event_draft.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
@@ -302,11 +303,16 @@ class _Details extends ConsumerWidget {
         ? null
         : ref.watch(eventSeriesProvider(event.seriesId!)).value;
 
+    // When the reminders go: an all-day event's as the days before, at 6 PM.
+    final reminders = event.allDay
+        ? allDayReminders(event.reminderOffsets)
+        : event.reminderOffsets;
+
     return ListView(
       padding: EdgeInsets.fromLTRB(gutter, Space.lg, gutter, Space.xxl),
       children: [
         _GameCard(event: event, zone: zone, series: series),
-        if (event.location != null || event.reminderOffsets.isNotEmpty) ...[
+        if (event.location != null || reminders.isNotEmpty) ...[
           const SizedBox(height: Space.md),
           // Directions, and when the reminders go (design §3.5).
           Wrap(
@@ -326,15 +332,20 @@ class _Details extends ConsumerWidget {
                   icon: const Icon(AppIcons.directions, size: 18),
                   label: Text(l10n.eventDirections),
                 ),
-              if (event.reminderOffsets.isNotEmpty)
+              if (reminders.isNotEmpty)
                 InfoPill(
                   icon: AppIcons.reminder,
-                  text: l10n.eventRemindersLine(
-                    joinAnd(l10n, [
-                      for (final o in event.reminderOffsets)
-                        reminderLabel(l10n, o),
-                    ]),
-                  ),
+                  text: event.allDay
+                      ? l10n.eventRemindersAllDayLine(
+                          joinAnd(l10n, [
+                            for (final o in reminders) reminderLabel(l10n, o),
+                          ]),
+                        )
+                      : l10n.eventRemindersLine(
+                          joinAnd(l10n, [
+                            for (final o in reminders) reminderLabel(l10n, o),
+                          ]),
+                        ),
                 ),
             ],
           ),
