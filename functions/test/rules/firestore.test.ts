@@ -292,15 +292,26 @@ describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
     const ten = Array.from({ length: 10 }, (_, i) => ({
       path: `groups/teamA/messages/p10/${i}.jpg`, contentType: 'image/jpeg', width: 2048, height: 1536, size: 345678,
     }));
+    // A full 100 search words too (CHAT-20).
+    const words = Array.from({ length: 100 }, (_, i) => `word${i}`);
     await assertSucceeds(
       send('bob', 'Bob', 'p10', {
-        type: 'image', text: 'Game day photos @Alice', attachments: ten, mentions: ['alice'], replyToId: 'm1',
+        type: 'image', text: 'Game day photos @Alice', attachments: ten, mentions: ['alice'], replyToId: 'm1', words,
       }),
     );
     const eleven = [...ten, { ...ten[0], path: 'groups/teamA/messages/p11/10.jpg' }].map((p, i) => ({
       ...p, path: `groups/teamA/messages/p11/${i}.jpg`,
     }));
     await assertFails(send('bob', 'Bob', 'p11', { type: 'image', attachments: eleven }));
+  });
+
+  it('takes up to 100 search words, as a list (CHAT-20)', async () => {
+    await assertSucceeds(send('bob', 'Bob', 'w1', { text: 'Tournament Saturday', words: ['tournament', 'saturday'] }));
+    await assertSucceeds(
+      send('bob', 'Bob', 'w2', { words: Array.from({ length: 100 }, (_, i) => `w${i}`) }),
+    );
+    await assertFails(send('bob', 'Bob', 'w3', { words: Array.from({ length: 101 }, (_, i) => `w${i}`) }));
+    await assertFails(send('bob', 'Bob', 'w4', { words: 'tournament' }));
   });
 
   it('lets anyone name up to 20 people, on text and photos', async () => {
@@ -442,6 +453,17 @@ describe('editing messages (CHAT-15)', () => {
   it('never empties a message with no photos', async () => {
     await assertFails(edit('alice', 'm1', ''));
     await assertFails(edit('bob', 'bare', ''));
+  });
+
+  it('takes the new text\'s search words with it, up to 100 (CHAT-20)', async () => {
+    const msg = as('alice').doc('messages/m1');
+    await assertSucceeds(msg.update({ text: 'Tournament moved', words: ['tournament', 'moved'], editedAt: now() }));
+    await assertSucceeds(msg.update({ text: 'Moved', words: firebase.firestore.FieldValue.delete(), editedAt: now() }));
+    await assertFails(
+      msg.update({ text: 'x', words: Array.from({ length: 101 }, (_, i) => `w${i}`), editedAt: now() }),
+    );
+    // Only the author's own.
+    await assertFails(as('bob').doc('messages/m1').update({ text: 'x', words: ['x'], editedAt: now() }));
   });
 });
 

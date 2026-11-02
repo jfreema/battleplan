@@ -46,13 +46,23 @@ const _groupGap = Duration(minutes: 5);
 /// what's a team's: polls, announcements, @mentions, pins, and the chat
 /// look.
 class ChatScreen extends ConsumerStatefulWidget {
-  const new({required this.groupId, this.initialMessageId, super.key});
+  const new({
+    required this.groupId,
+    this.initialMessageId,
+    this.initialMessageAt,
+    super.key,
+  });
 
   final GroupId groupId;
 
   /// Opens scrolled to this message, briefly highlighted, instead of at the
-  /// first unread one (a notification tap, NOTIF-6).
+  /// first unread one (a notification tap, NOTIF-6; a search result,
+  /// CHAT-20).
   final String? initialMessageId;
+
+  /// When [initialMessageId] was sent, if known (a search result): one older
+  /// than everything loaded opens the chat there, in one page.
+  final DateTime? initialMessageAt;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -137,12 +147,43 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   /// Scrolls to [messageId], loading older pages first if needed (CHAT-13).
-  Future<void> _jumpTo(String messageId) async {
+  /// A search result comes with its time, [at] (CHAT-20): one older than
+  /// everything loaded opens the chat there instead, below the center as a
+  /// first unread message is, so a result from last season costs a page,
+  /// not a season of pages.
+  Future<void> _jumpTo(String messageId, {DateTime? at}) async {
     _heldAt = null;
     final controller = ref.read(chatMessagesProvider(widget.groupId).notifier);
+    if (at != null && _olderThanLoaded(messageId, at)) {
+      final split = at.subtract(const Duration(milliseconds: 1));
+      if (await controller.anchorAt(split)) {
+        if (!mounted) return;
+        setState(() => _split = split);
+        _stick = false;
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) return;
+        if (_scroll.hasClients) _scroll.jumpTo(_firstUnreadOffset);
+        await _scrollToRow(messageId, alignment: 0.5, highlight: true);
+        return;
+      }
+      // Couldn't read that page (offline): page toward it from what's here.
+      if (!mounted) return;
+    }
     final found = await controller.loadUntil(messageId);
     if (!found || !mounted) return;
     await _scrollToRow(messageId, alignment: 0.5, highlight: true);
+  }
+
+  /// Whether [messageId], sent at [at], isn't loaded and is older than
+  /// every message that is.
+  bool _olderThanLoaded(String messageId, DateTime at) {
+    final messages = ref.read(chatMessagesProvider(widget.groupId)).messages;
+    if (messages.any((m) => m.id == messageId)) return false;
+    final oldest = messages
+        .where((m) => !m.pending && m.createdAt != null)
+        .lastOrNull
+        ?.createdAt;
+    return oldest == null || at.isBefore(oldest);
   }
 
   /// Rows are built lazily, so step toward older messages until the row
@@ -256,13 +297,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void didUpdateWidget(ChatScreen old) {
     super.didUpdateWidget(old);
-    // Another notification for this chat while it's open.
+    // Another notification or search result for this chat while it's open.
     final target = widget.initialMessageId;
     if (target != null && target != old.initialMessageId && _positioned) {
       // After this frame: jumping loads older pages, which changes
       // providers, and that can't happen while the tree is building.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_jumpTo(target));
+        if (mounted) {
+          unawaited(_jumpTo(target, at: widget.initialMessageAt));
+        }
       });
     }
   }
@@ -336,7 +379,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (unread) _toFirstUnread(scroll: target == null);
-      if (target != null) unawaited(_jumpTo(target));
+      if (target != null) {
+        unawaited(_jumpTo(target, at: widget.initialMessageAt));
+      }
     });
   }
 
@@ -407,13 +452,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
   }
 
-  /// Down to the newest messages ("↓ 12 new").
+  /// Down to the newest messages ("↓ 12 new", "Newest messages").
   void _toBottom() {
     _heldAt = null;
-    if (Motion.reduced(context)) {
+    final moved = Motion.reduced(context)
+        ? Future<void>.sync(() => _scroll.jumpTo(_bottom))
+        : _scroll.animateTo(
+            _bottom,
+            duration: Motion.slow,
+            curve: Motion.curve,
+          );
+    unawaited(moved.then((_) => _settleAtBottom()));
+  }
+
+  /// Rows lay out as the list moves past them, so the bottom it aimed for
+  /// can move further down on the way, far more over a long way (from a
+  /// search result, CHAT-20): lands on where it is now.
+  Future<void> _settleAtBottom() async {
+    for (var i = 0; i < 10 && mounted && _scroll.hasClients; i++) {
+      if (_scroll.offset == _bottom) return;
       _scroll.jumpTo(_bottom);
-    } else {
-      _scroll.animateTo(_bottom, duration: Motion.slow, curve: Motion.curve);
+      await WidgetsBinding.instance.endOfFrame;
     }
   }
 
@@ -548,6 +607,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ? 0
         : ref.watch(unreadCountProvider(widget.groupId)).value ?? 0;
     final newBelow = _atBottom ? 0 : (unread > loadedNew ? unread : loadedNew);
+    // Opened at an older message (a search result, CHAT-20) with nothing
+    // new below: the button still goes back down to the newest.
+    final newestBelow = !_atBottom && newBelow == 0 && chat.gapAfter != null;
     // Stay at the first unread message while that holds, else at the
     // bottom as messages arrive, if that's where the person is.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -755,7 +817,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             children: [
               if (look != null) Positioned.fill(child: _Backdrop(look: look)),
               list,
-              if (newBelow > 0)
+              if (newBelow > 0 || newestBelow)
                 Positioned(
                   right: Space.lg,
                   bottom: Space.sm,
@@ -763,7 +825,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     heroTag: null,
                     onPressed: _toBottom,
                     icon: const Icon(AppIcons.arrowDown),
-                    label: Text(l10n.newMessagesBelow(newBelow)),
+                    label: Text(
+                      newBelow > 0
+                          ? l10n.newMessagesBelow(newBelow)
+                          : l10n.newestMessagesBelow,
+                    ),
                   ),
                 ),
               // Files dragged over the page (web): where they'll go.

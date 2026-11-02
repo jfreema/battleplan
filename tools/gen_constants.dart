@@ -1,6 +1,7 @@
-// Generates the Dart and TypeScript copies of shared/constants.json and
-// the words in shared/strong_language.json (SPEC ENG-8, SAFE-7), so the app
-// and Functions can't drift.
+// Generates the Dart and TypeScript copies of shared/constants.json, the
+// words in shared/strong_language.json, and chat search's letters and
+// skipped words in shared/search_words.json (SPEC ENG-8, SAFE-7, CHAT-20),
+// so the app and Functions can't drift.
 //
 //   dart run tools/gen_constants.dart          # write both files
 //   dart run tools/gen_constants.dart --check  # exit 1 if either is stale (CI)
@@ -11,6 +12,7 @@ import 'dart:io';
 
 const _source = 'shared/constants.json';
 const _languageSource = 'shared/strong_language.json';
+const _searchSource = 'shared/search_words.json';
 const _dartOut = 'lib/core/constants.g.dart';
 const _tsOut = 'functions/src/shared/constants.ts';
 const _header =
@@ -26,6 +28,12 @@ void main(List<String> args) {
     File(_languageSource).readAsStringSync(),
   ) as Map<String, dynamic>;
   json['strongLanguage'] = language['words'];
+  // Chat search's letters and skipped words (CHAT-20) too.
+  final search = jsonDecode(
+    File(_searchSource).readAsStringSync(),
+  ) as Map<String, dynamic>;
+  json['searchFolds'] = search['folds'];
+  json['searchStopWords'] = search['stopWords'];
   final outputs = {_dartOut: _formatDart(_dart(json)), _tsOut: _ts(json)};
 
   var stale = false;
@@ -164,7 +172,29 @@ String _dart(Map<String, dynamic> json) {
   for (final w in (json['strongLanguage'] as List).cast<String>()) {
     b.writeln("  '$w',");
   }
-  b.writeln('];');
+  b
+    ..writeln('];')
+    ..writeln()
+    ..writeln(
+      '/// The letters chat search reads as plain ones (CHAT-20), from '
+      'shared/search_words.json.',
+    )
+    ..writeln('const Map<String, String> searchFolds = {');
+  (json['searchFolds'] as Map<String, dynamic>).forEach((k, v) {
+    b.writeln("  '$k': '$v',");
+  });
+  b
+    ..writeln('};')
+    ..writeln()
+    ..writeln(
+      '/// The words chat search skips (CHAT-20), from '
+      'shared/search_words.json.',
+    )
+    ..writeln('const Set<String> searchStopWords = {');
+  for (final w in (json['searchStopWords'] as List).cast<String>()) {
+    b.writeln("  '$w',");
+  }
+  b.writeln('};');
   return b.toString();
 }
 
@@ -295,6 +325,30 @@ String _ts(Map<String, dynamic> json) {
   for (final w in (json['strongLanguage'] as List).cast<String>()) {
     b.writeln("  '$w',");
   }
-  b.writeln('];');
+  b
+    ..writeln('];')
+    ..writeln()
+    ..writeln(
+      '/** The letters chat search reads as plain ones (CHAT-20), from shared/search_words.json. */',
+    )
+    ..writeln(
+      'export const SEARCH_FOLDS: Readonly<Record<string, string>> = {',
+    );
+  (json['searchFolds'] as Map<String, dynamic>).forEach((k, v) {
+    b.writeln("  '$k': '$v',");
+  });
+  b
+    ..writeln('};')
+    ..writeln()
+    ..writeln(
+      '/** The words chat search skips (CHAT-20), from shared/search_words.json. */',
+    )
+    ..writeln(
+      'export const SEARCH_STOP_WORDS: ReadonlySet<string> = new Set([',
+    );
+  for (final w in (json['searchStopWords'] as List).cast<String>()) {
+    b.writeln("  '$w',");
+  }
+  b.writeln(']);');
   return b.toString();
 }

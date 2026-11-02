@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 import { Timestamp, type DocumentData } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { audit } from '../audit/service.js';
+import { searchWordsOf } from '../chat/search_words.js';
 import { filtersLanguage, replyPreviewOf, touchLastMessage } from '../chat/service.js';
 import { maskStrongLanguage } from '../safety/strong_language.js';
 import { db, storage } from '../shared/admin.js';
@@ -207,13 +208,18 @@ export async function importMessages(input: MessageImportInput, caller: Caller, 
     const raw = m.text.slice(0, Limits.messageTextMax);
     const text = filter ? maskStrongLanguage(raw) : raw;
     if (!text.trim() && photos.length === 0) continue;
+    const type = photos.length ? 'image' : 'text';
+    // What chat search finds it by (CHAT-20); the messages trigger skips
+    // imported history.
+    const words = searchWordsOf(type, text);
     docs.set(id, {
       groupId: g,
       authorId: importedAuthorId(input.source, m.authorSourceId),
       authorName: m.authorName.trim().slice(0, 60) || 'Imported member',
       authorPhotoPath: null,
-      type: photos.length ? 'image' : 'text',
+      type,
       text,
+      ...(words.length ? { words } : {}),
       attachments: photos,
       mentions: [],
       reactions: {},

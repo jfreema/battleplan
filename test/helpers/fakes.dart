@@ -20,6 +20,7 @@ import 'package:battleplan/features/auth/domain/user_profile.dart';
 import 'package:battleplan/features/auth/domain/user_repository.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
+import 'package:battleplan/features/chat/domain/search_words.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/domain/document_repository.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
@@ -1566,6 +1567,37 @@ class FakeMessageRepository implements MessageRepository {
     return MessagePage(
       messages: all.sublist(start, end),
       next: end < all.length ? PageCursor(end) : null,
+    );
+  }
+
+  /// Every search, by its words (CHAT-20), in the order asked.
+  final List<List<String>> searches = [];
+
+  /// When set, searches fail with this, as offline with nothing cached.
+  AppFailure? failSearch;
+
+  @override
+  Future<MessagePage> searchMessages(
+    GroupId groupId,
+    List<String> terms, {
+    PageCursor? after,
+    int limit = Limits.searchPageSize,
+  }) async {
+    searches.add(terms);
+    if (failSearch case final error?) throw error;
+    final all = [
+      for (final m in messages)
+        if (m.groupId == groupId &&
+            m.deletedAt == null &&
+            hasSearchWords(m.text, terms))
+          m,
+    ];
+    final start = (after?.handle as int?) ?? 0;
+    final end = (start + limit).clamp(0, all.length);
+    return MessagePage(
+      messages: all.sublist(start, end),
+      next: end < all.length ? PageCursor(end) : null,
+      fromCache: offline,
     );
   }
 

@@ -6,6 +6,7 @@ import { db } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
 import { Collections } from '../shared/constants.js';
 import { groupMemberId, rsvpId } from '../shared/ids.js';
+import { searchWords } from '../chat/search_words.js';
 import { chunk, trySend } from '../notify/service.js';
 import { consumeRateLimit } from '../shared/rate_limit.js';
 import { requireOpenTeam } from '../shared/roles.js';
@@ -572,6 +573,8 @@ export async function postEventCard(card: {
   reminder?: boolean;
 }): Promise<boolean> {
   const author = await authorSnapshot(card.groupId, card.authorId);
+  // Chat search finds the card by its title, time, and place (CHAT-20).
+  const words = searchWords(card.text);
   try {
     await db()
       .collection(Collections.messages)
@@ -582,6 +585,7 @@ export async function postEventCard(card: {
         ...author,
         type: 'event',
         text: card.text,
+        ...(words.length ? { words } : {}),
         eventId: card.eventId,
         seriesId: card.seriesId,
         ...(card.reminder ? { reminder: true } : {}),

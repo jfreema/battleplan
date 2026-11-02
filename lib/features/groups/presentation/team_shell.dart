@@ -218,12 +218,17 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     final loading = viewing ? viewed == null : team == null && teams.isLoading;
     final body = loading ? const SkeletonList() : navigationShell;
 
-    // Ctrl/⌘+K opens the team switcher on web and desktop (SPEC §4.2).
+    // Ctrl/⌘+K opens the team switcher on web and desktop (SPEC §4.2), and
+    // on the Chat tab, Ctrl/⌘+F its search (CHAT-20).
     final shortcuts = <ShortcutActivator, VoidCallback>{
       const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
           _openSwitcher(context),
       const SingleActivator(LogicalKeyboardKey.keyK, meta: true): () =>
           _openSwitcher(context),
+      if (!viewing && navigationShell.currentIndex == teamTabs.indexOf('chat'))
+        ...chatSearchShortcuts(
+          () => openChatSearch(context, groupId, direct: false),
+        ),
     };
 
     final Widget shell;
@@ -410,10 +415,35 @@ class _TeamHeader extends StatelessWidget {
               _TeamInfoButton(groupId: group?.id),
             ],
           ),
-          Padding(
-            padding: EdgeInsets.only(left: showBack ? 6 : 2, bottom: 2),
-            child: TeamSticker(
-              TeamSticker.labelFor(l10n, tabIndex, DateTime.now()),
+          // The tab's sticker, and on the Chat tab its search (CHAT-20), in
+          // the room beside the sticker rather than in the name's row. The
+          // row keeps the button's height on every tab, so the header
+          // doesn't jump as the tabs change.
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: kMinInteractiveDimension,
+            ),
+            child: Row(
+              children: [
+                // The room the button leaves, so a long sticker (large
+                // text) is cut off rather than pushing the row off screen.
+                Expanded(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: showBack ? 6 : 2,
+                        bottom: 2,
+                      ),
+                      child: TeamSticker(
+                        TeamSticker.labelFor(l10n, tabIndex, DateTime.now()),
+                      ),
+                    ),
+                  ),
+                ),
+                if (tabIndex == teamTabs.indexOf('chat') && group != null)
+                  ChatSearchButton(groupId: group.id),
+              ],
             ),
           ),
         ],

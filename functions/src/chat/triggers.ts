@@ -2,6 +2,7 @@
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import type { Timestamp } from 'firebase-admin/firestore';
 import { touchParticipants } from '../teams/direct.js';
+import { syncSearchWords } from './search.js';
 import {
   filterMessageLanguage,
   notifyDirectMessage,
@@ -19,15 +20,18 @@ import {
  * message push for everyone else. The client sends only replyToId; the
  * server copies the quote from the original so it can't be faked. First,
  * the team's language filter masks anything an older app sent unmasked
- * (SAFE-7), so the preview and the push read masked too.
+ * (SAFE-7), so the preview and the push read masked too, and a message
+ * whose search words don't match its text gets the right ones (CHAT-20).
  */
 export const onMessageCreated = onDocumentCreated('messages/{messageId}', async (event) => {
   const created = event.data?.data();
-  // Imported history (IMPORT-9) carries its own quotes and notifies no one;
-  // importMessages moves the team's last message and masks it itself.
+  // Imported history (IMPORT-9) carries its own quotes and words and
+  // notifies no one; importMessages moves the team's last message and
+  // masks it itself.
   if (!created || created.imported) return;
   const messageId = event.params.messageId;
   const data = await filterMessageLanguage(messageId, created);
+  await syncSearchWords(messageId, data);
   const group = await touchLastMessage(data.groupId as string, data);
   let repliedTo: string | null = null;
   if (typeof data.replyToId === 'string') {
@@ -47,11 +51,12 @@ export const onMessageCreated = onDocumentCreated('messages/{messageId}', async 
 });
 
 /**
- * messages updated → replies' quotes follow an edit (CHAT-15). Exits early
- * unless the text changed on a message that isn't deleted (reactions and
- * deletions don't count; deleteMessage updates quotes itself). An edit
- * with strong language on a team that filters it is masked first (SAFE-7);
- * that update runs this again, which then refreshes the quotes.
+ * messages updated → replies' quotes and the search words follow an edit
+ * (CHAT-15, CHAT-20). Exits early unless the text changed on a message
+ * that isn't deleted (reactions, deletions, and words alone don't count;
+ * deleteMessage updates quotes itself). An edit with strong language on a
+ * team that filters it is masked first (SAFE-7); that update runs this
+ * again, which then refreshes the quotes.
  */
 export const onMessageUpdated = onDocumentUpdated('messages/{messageId}', async (event) => {
   const before = event.data?.before.data();
@@ -61,5 +66,6 @@ export const onMessageUpdated = onDocumentUpdated('messages/{messageId}', async 
     const filtered = await filterMessageLanguage(event.params.messageId, after);
     if (filtered.text !== after.text) return;
   }
+  await syncSearchWords(event.params.messageId, after);
   await refreshReplyPreviews(event.params.messageId, after);
 });

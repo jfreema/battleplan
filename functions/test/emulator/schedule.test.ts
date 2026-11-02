@@ -566,6 +566,8 @@ describe('the events trigger (ARCH §6.4)', () => {
     const card = await db().collection(Collections.messages).doc('e1').get();
     expect(card.data()).toMatchObject({ type: 'event', eventId: 'e1', seriesId: null, authorId: 'alex', authorName: 'Alex' });
     expect(card.get('text')).toMatch(/^Practice · \w{3}, \w{3} \d+ at .+ · Riverside Park$/);
+    // Search finds the card by its title and place (CHAT-20).
+    expect(card.get('words')).toEqual(expect.arrayContaining(['practice', 'riverside', 'park']));
     const event = await eventData('e1');
     expect(event?.messageId).toBe('e1');
     expect(ms(event?.nextReminderAt)).toBe(ms(data.startAt) - 1440 * 60_000);

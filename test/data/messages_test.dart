@@ -6,6 +6,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/chat/data/firestore_message_repository.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/chat/domain/search_words.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
@@ -266,6 +267,101 @@ void main() {
     final rest = await repo.photoMessages(_g, before: first.next, limit: 2);
     expect([for (final m in rest.messages) m.id], ['a']);
     expect(rest.next, isNull);
+  });
+
+  test('a message keeps the words search finds it by, and an edit its new '
+      'ones (CHAT-20)', () async {
+    final id = repo.newMessageId();
+    await repo.sendText(_g, _me, 'Tournament brackets are up!', id: id);
+    var m = (await db.doc('messages/$id').get()).data()!;
+    expect(m['words'], ['tournament', 'bracket']);
+
+    await repo.sendPoll(
+      _g,
+      _me,
+      const NewPoll(question: 'Pizza or tacos?', options: ['Pizza', 'Tacos']),
+      id: 'p1',
+    );
+    expect((await db.doc('messages/p1').get()).data()!['words'], [
+      'pizza',
+      'taco',
+    ]);
+
+    // A photo without a caption has none, and keeps no field.
+    await repo.sendPhotos(_g, _me, (
+      messageId: 'ph1',
+      attachments: const [Attachment(path: 'groups/g1/messages/ph1/0.jpg')],
+    ));
+    expect(
+      (await db.doc('messages/ph1').get()).data(),
+      isNot(contains('words')),
+    );
+
+    await repo.editText(id, 'Brackets moved to Sunday');
+    m = (await db.doc('messages/$id').get()).data()!;
+    expect(m['words'], ['bracket', 'moved', 'sunday']);
+    await repo.editText('ph1', '');
+    expect(
+      (await db.doc('messages/ph1').get()).data(),
+      isNot(contains('words')),
+    );
+  });
+
+  test("searches a team's messages by their words, newest first, checking "
+      'each against its own text (CHAT-20)', () async {
+    Future<void> add(
+      String id,
+      String text,
+      int minute, {
+      String g = 'g1',
+      List<String>? words,
+      bool deleted = false,
+    }) => db.doc('messages/$id').set({
+      'groupId': g,
+      'type': 'text',
+      'authorId': 'alex',
+      'authorName': 'Alex Kim',
+      'text': text,
+      'words': words ?? searchWords(text),
+      'attachments': <Object>[],
+      if (deleted) 'deletedAt': Timestamp.now(),
+      'createdAt': Timestamp.fromDate(DateTime.utc(2026, 10, 1, 9, minute)),
+    });
+    await add('a', 'Tournament at Riverside Park', 1);
+    await add('b', 'Tournament bracket is posted', 2);
+    await add('c', 'Riverside tournament parking', 3);
+    await add('d', 'Tournament for the other team', 4, g: 'g2');
+    await add('e', 'Old tournament note', 5, deleted: true);
+    // Words planted that its text doesn't have: never a result.
+    await add('f', 'Free pizza', 6, words: ['tournament', 'riverside']);
+    await add('g', 'Tournament at Riverside again', 7);
+
+    final page = await repo.searchMessages(_g, ['riverside', 'tournament']);
+    expect([for (final m in page.messages) m.id], ['g', 'c', 'a']);
+    expect(page.next, isNull);
+
+    // A page at a time: the server's page of the longest word, checked
+    // here, can hold fewer than it read (g, then the planted f and the
+    // deleted e).
+    final first = await repo.searchMessages(_g, ['tournament'], limit: 3);
+    expect([for (final m in first.messages) m.id], ['g']);
+    final second = await repo.searchMessages(
+      _g,
+      ['tournament'],
+      after: first.next,
+      limit: 3,
+    );
+    expect([for (final m in second.messages) m.id], ['c', 'b', 'a']);
+    final last = await repo.searchMessages(
+      _g,
+      ['tournament'],
+      after: second.next,
+      limit: 3,
+    );
+    expect(last.messages, isEmpty);
+    expect(last.next, isNull);
+
+    expect((await repo.searchMessages(_g, const [])).messages, isEmpty);
   });
 
   test('edits, reacts, and deletes', () async {

@@ -8,6 +8,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/url_cache.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/chat/domain/message_repository.dart';
+import 'package:battleplan/features/chat/domain/search_words.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -105,6 +106,35 @@ class FirestoreMessageRepository implements MessageRepository {
       q = q.startAfterDocument(before.handle as DocumentSnapshot<Object?>);
     }
     return _page(await q.limit(limit).get(), groupId, limit);
+  }
+
+  @override
+  Future<MessagePage> searchMessages(
+    GroupId groupId,
+    List<String> terms, {
+    PageCursor? after,
+    int limit = Limits.searchPageSize,
+  }) async {
+    if (terms.isEmpty) return const MessagePage(messages: []);
+    // The longest word is likely the rarest: the server finds the messages
+    // with it (the groupId + words + createdAt descending index), and each
+    // is checked against every word of its own text, which is what it shows.
+    final key = terms.reduce((a, b) => b.length > a.length ? b : a);
+    var q = _chat(groupId).where('words', arrayContains: key);
+    if (after != null) {
+      q = q.startAfterDocument(after.handle as DocumentSnapshot<Object?>);
+    }
+    final s = await q.limit(limit).get();
+    return MessagePage(
+      messages: [
+        for (final d in s.docs)
+          if (_read(d, groupId) case final m?
+              when m.deletedAt == null && hasSearchWords(m.text, terms))
+            m,
+      ],
+      next: s.docs.length < limit ? null : PageCursor(s.docs.last),
+      fromCache: s.metadata.isFromCache,
+    );
   }
 
   /// [d] as a message, or null, reported, when it can't be read: one bad
@@ -414,6 +444,8 @@ class FirestoreMessageRepository implements MessageRepository {
     final memberRef = _db
         .collection(Collections.groupMembers)
         .doc(CompositeIds.groupMember(groupId, uid));
+    // What chat search finds it by (CHAT-20).
+    final words = searchWords(text);
     try {
       // The author snapshot must equal the membership doc (rules check it).
       // The roster listener keeps it cached, so this works offline too.
@@ -428,6 +460,7 @@ class FirestoreMessageRepository implements MessageRepository {
           'authorPlayerSummary': m['playerSummary'],
           'type': type.value,
           'text': text,
+          if (words.isNotEmpty) 'words': words,
           'attachments': attachments,
           'replyToId': ?replyToId,
           'pollId': ?pollId,
@@ -533,10 +566,13 @@ class FirestoreMessageRepository implements MessageRepository {
 
   @override
   Future<void> editText(String messageId, String text) async {
+    final words = searchWords(text);
     try {
-      // Rules allow it for the author only (CHAT-15).
+      // Rules allow it for the author only (CHAT-15). Search finds it by
+      // its new words (CHAT-20).
       await _db.collection(Collections.messages).doc(messageId).update({
         'text': text,
+        'words': words.isEmpty ? FieldValue.delete() : words,
         'editedAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {

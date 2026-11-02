@@ -400,10 +400,12 @@ service cloud.firestore {
         && announcementOk(incoming())
         && directOk(incoming())
         && playLinkOk(incoming())
+        && wordsOk(incoming())
         && incoming().createdAt == request.time
         && incoming().keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
             'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',
-            'mentions', 'mentionNames', 'mentionsEveryone', 'announcement', 'playId', 'createdAt'])
+            'mentions', 'mentionNames', 'mentionsEveryone', 'announcement', 'playId', 'words',
+            'createdAt'])
         && rateLimitOk(incoming().groupId, messageId);
 
       // Reactions: a member may set or clear only their own, any of the 16,
@@ -418,16 +420,17 @@ service cloud.firestore {
                  'fire', 'clap', 'party', 'hundred', 'pray', 'wow', 'sad', 'angry',
                  'baseball', 'basketball', 'soccer', 'trophy']);
       // Editing (CHAT-15), on every team: the author may change only the
-      // text, of a text or photo message that isn't deleted. The text may be
-      // emptied only while photos remain; an admin may have removed them all
-      // in Media (STORE-5).
+      // text, and its search words, of a text or photo message that isn't
+      // deleted. The text may be emptied only while photos remain; an admin
+      // may have removed them all in Media (STORE-5).
       allow update: if isMember(resource.data.groupId) && active(resource.data.groupId)
         && resource.data.authorId == uid()
         && resource.data.get('deletedAt', null) == null
         && resource.data.type in ['text', 'image']
-        && onlyChanges(['text', 'editedAt'])
+        && onlyChanges(['text', 'editedAt', 'words'])
         && incoming().text is string && incoming().text.size() <= 4000
         && (incoming().text.size() > 0 || resource.data.get('attachments', []).size() > 0)
+        && wordsOk(incoming())
         && incoming().editedAt == request.time;
       // Deletion goes through the deleteMessage callable.
     }
@@ -498,6 +501,14 @@ service cloud.firestore {
       return !('playId' in m)
         || (m.type == 'image' && m.playId is string && m.playId.size() <= 64
             && get(/databases/$(database)/documents/plays/$(m.playId)).data.groupId == m.groupId);
+    }
+
+    // The words search finds a message by (CHAT-20), which the app works out
+    // from its text: a list of at most 100. Only their number is checked;
+    // the messages trigger puts right any that don't match the text, and
+    // the app checks every result against the text it shows.
+    function wordsOk(m) {
+      return !('words' in m) || (m.words is list && m.words.size() <= 100);
     }
 
     // A direct conversation (CHAT-19) takes text and photos, without

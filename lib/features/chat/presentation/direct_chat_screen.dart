@@ -10,6 +10,7 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
+import 'package:battleplan/features/chat/presentation/chat_search_screen.dart';
 import 'package:battleplan/features/chat/presentation/direct_actions.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
@@ -23,12 +24,21 @@ import 'package:material_ui/material_ui.dart';
 /// (TEAM-15), and a menu to see their profile, mute the conversation, or
 /// block them.
 class DirectChatScreen extends ConsumerWidget {
-  const new({required this.groupId, this.initialMessageId, super.key});
+  const new({
+    required this.groupId,
+    this.initialMessageId,
+    this.initialMessageAt,
+    super.key,
+  });
 
   final GroupId groupId;
 
-  /// Opens at this message (a notification tap, NOTIF-6).
+  /// Opens at this message (a notification tap, NOTIF-6; a search result,
+  /// CHAT-20).
   final String? initialMessageId;
+
+  /// When [initialMessageId] was sent, if known (ChatScreen).
+  final DateTime? initialMessageAt;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -82,7 +92,7 @@ class DirectChatScreen extends ConsumerWidget {
       }
     }
 
-    return Scaffold(
+    final scaffold = Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
         title: Semantics(
@@ -126,6 +136,13 @@ class DirectChatScreen extends ConsumerWidget {
           ),
         ),
         actions: [
+          // Search this conversation (CHAT-20), closed or not.
+          if (g != null)
+            IconButton(
+              tooltip: l10n.searchConversation,
+              icon: const Icon(AppIcons.search),
+              onPressed: () => openChatSearch(context, groupId, direct: true),
+            ),
           if (otherUid != null && !closed)
             PopupMenuButton<String>(
               tooltip: l10n.directMenuTooltip,
@@ -161,9 +178,17 @@ class DirectChatScreen extends ConsumerWidget {
             key: ValueKey('dm-${groupId.value}'),
             groupId: groupId,
             initialMessageId: initialMessageId,
+            initialMessageAt: initialMessageAt,
           ),
         ),
       ),
+    );
+    // Ctrl/⌘+F searches the conversation on web and desktop (SPEC §4.2).
+    return CallbackShortcuts(
+      bindings: chatSearchShortcuts(
+        () => openChatSearch(context, groupId, direct: true),
+      ),
+      child: scaffold,
     );
   }
 }

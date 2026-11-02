@@ -3,7 +3,7 @@
 Team chat and scheduling for sports teams, free for every team and with no ads. Battleplan does in one app what GroupMe (chat) and TeamReach (schedules and RSVPs) do separately. It runs in any modern browser today; iPhone and Android apps are on the way.
 
 - **Teams and Profile:** every team you're on in one list, each with a back arrow home and Team info for its roster, invites, and Team admin; your photo, name, themes, a time zone that stays put when you travel, and settings on Profile.
-- **Team chat:** photos, reactions, replies, @mentions, pinned messages, and announcements.
+- **Team chat:** photos, reactions, replies, @mentions, pinned messages, announcements, and search by the words in a message.
 - **Direct messages:** one-to-one conversations with anyone you share a team with, from the Messages button or their profile.
 - **Profiles:** tap someone's photo to see the teams you share with them, and whether they coach.
 - **Schedule and RSVPs:** games, practices, and events with opponents, places, and reminders; Going, Maybe, or Not going in one tap, or from an email a coach sends to whoever hasn't answered; assignments like snacks, drinks, and scorekeeper that families volunteer for; and a private calendar link that keeps Google, Apple, or Outlook Calendar in sync.

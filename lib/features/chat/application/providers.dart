@@ -319,6 +319,41 @@ class ChatMessages extends _$ChatMessages {
     }
   }
 
+  /// Opens the chat just after [after] instead, for jumping to a message
+  /// older than everything loaded, such as a search result (CHAT-20): the
+  /// 50 messages after [after] replace the older pages loaded so far, older
+  /// ones load from there as the person scrolls up, and newer ones fill the
+  /// gap up to the newest page as they scroll down, as when the chat opens
+  /// at its first unread message ([openAt]). One page, however far back
+  /// [after] is. False when the page couldn't be read; the chat stays as
+  /// it was.
+  Future<bool> anchorAt(DateTime after) async {
+    if (_anchoring case final anchoring?) await anchoring;
+    if (_newerLoad case final load?) await load.catchError((Object _) {});
+    final done = Completer<void>();
+    _anchoring = done.future;
+    try {
+      final page = await ref
+          .read(messageRepositoryProvider)
+          .loadNewer(groupId, after: after);
+      if (!ref.mounted) return false;
+      _anchored = true;
+      // Only the live page stays: the page at [after] replaces the rest.
+      _known.removeWhere((id, _) => !_liveIds.contains(id));
+      _newerCursor = null;
+      _addNewer(page);
+      _loadedOlder = true;
+      _olderCursor = page.older;
+      _publish(reachedStart: page.older == null);
+      return true;
+    } on Object {
+      return false;
+    } finally {
+      _anchoring = null;
+      done.complete();
+    }
+  }
+
   /// The newer page loading now, so a second caller waits for it instead
   /// of returning before it's in ([loadUntil]).
   Future<void>? _newerLoad;

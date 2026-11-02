@@ -54,6 +54,21 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.text('Copy text'), findsOneWidget, reason: 'menu open');
         },
+    // Search in the chat (CHAT-20), with a result.
+    'chat search':
+        (WidgetTester tester, {required ThemePreference theme}) async {
+          await pumpChat(tester, theme: theme);
+          await tester.tap(find.byTooltip('Search the chat'));
+          await tester.pumpAndSettle();
+          await tester.enterText(find.byType(TextField).last, 'hustle');
+          await tester.testTextInput.receiveAction(TextInputAction.search);
+          await tester.pumpAndSettle();
+          expect(
+            find.textContaining('hustle', findRichText: true),
+            findsWidgets,
+            reason: 'a result',
+          );
+        },
     // The top (SPEC §5.1), and a team's info (§5.2).
     for (final (name, route) in [
       ('teams', '/teams'),

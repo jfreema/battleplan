@@ -2,6 +2,8 @@
 /// import this file, never chat's presentation/ files.
 library;
 
+export 'presentation/chat_search_screen.dart'
+    show ChatSearchButton, chatSearchShortcuts, openChatSearch;
 export 'presentation/direct_actions.dart'
     show MessageButton, openDirectChatWith, openPersonPage, personPageLocation;
 export 'presentation/messages_button.dart' show MessagesButton;

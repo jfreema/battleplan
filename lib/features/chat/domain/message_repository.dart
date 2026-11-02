@@ -40,6 +40,19 @@ abstract interface class MessageRepository {
     int limit = 30,
   });
 
+  /// The messages whose words (searchWords) include every one of [terms], a
+  /// search's words (CHAT-20), newest first, [limit] messages read at a time
+  /// from [after] (a page's [MessagePage.next]). The server finds those with
+  /// the longest of [terms]; each is checked against its own text here, so
+  /// a page can hold fewer than [limit] while [MessagePage.next] continues.
+  /// Deleted messages are left out.
+  Future<MessagePage> searchMessages(
+    GroupId groupId,
+    List<String> terms, {
+    PageCursor? after,
+    int limit = Limits.searchPageSize,
+  });
+
   /// A fresh message ID, so a queued message keeps one identity from the
   /// moment it's typed until the server has it.
   String newMessageId();

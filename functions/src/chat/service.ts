@@ -9,6 +9,7 @@ import { groupMemberId } from '../shared/ids.js';
 import { removeTargetNotifications, trySend } from '../notify/service.js';
 import { deletePoll, pollCreatedBody } from '../polls/service.js';
 import { maskStrongLanguage } from '../safety/strong_language.js';
+import { searchWordsOf } from './search_words.js';
 
 export const DELETED_USER_NAME = 'Deleted user';
 
@@ -200,6 +201,8 @@ function erasedFields(deletedBy: string, reason: 'author' | 'admin' | 'media'): 
     reactions: {},
     replyPreview: FieldValue.delete(),
     playId: FieldValue.delete(),
+    // Search no longer finds it (CHAT-20).
+    words: FieldValue.delete(),
     deletedAt: FieldValue.serverTimestamp(),
     deletedBy,
     deletedReason: reason,
@@ -436,7 +439,8 @@ export async function filtersLanguage(groupId: string): Promise<boolean> {
  * app masks strong language before it sends, so this catches what gets
  * past an older app. Masks the text (a caption, or a poll's question) and
  * a poll's question and options, when the team filters and anything
- * changes. Returns the message as it now reads.
+ * changes, and gives the text its search words again in the same update
+ * (CHAT-20). Returns the message as it now reads.
  */
 export async function filterMessageLanguage(
   messageId: string,
@@ -456,9 +460,15 @@ export async function filterMessageLanguage(
     poll?.exists === true && (maskStrongLanguage(question) !== question || maskedOptions.some((o, i) => o.text !== options[i].text));
   if (masked === text && !pollChanged) return message;
   if (!(await filtersLanguage(String(message.groupId)))) return message;
-  if (masked !== text) await db().collection(Collections.messages).doc(messageId).update({ text: masked });
+  const words = searchWordsOf(message.type, masked);
+  if (masked !== text) {
+    await db()
+      .collection(Collections.messages)
+      .doc(messageId)
+      .update({ text: masked, words: words.length ? words : FieldValue.delete() });
+  }
   if (pollChanged && pollRef) await pollRef.update({ question: maskStrongLanguage(question), options: maskedOptions });
-  return { ...message, text: masked };
+  return masked === text ? message : { ...message, text: masked, words };
 }
 
 /** What a new message's follow-up needs to know of its team. */

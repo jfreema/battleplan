@@ -81,6 +81,9 @@ describe('messages (IMPORT-9)', () => {
     expect(m2).toMatchObject({
       groupId: G, authorId: 'groupme:u2', authorName: 'Riley', authorPhotoPath: null, type: 'text', text: 'See you there',
       attachments: [], reactions: {}, imported: { source: 'groupme', sourceId: '2', importedBy: 'alex' },
+      // Search finds imported history too (CHAT-20); "you" and "there" are
+      // too everyday to keep.
+      words: ['see'],
     });
     expect((m2.createdAt as Timestamp).toMillis()).toBe(T0 + 2 * 60_000);
     // The team list shows the newest.

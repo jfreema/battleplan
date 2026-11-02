@@ -679,7 +679,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Admins can send **announcements**: + → Announcement, then the next text message is one ("Announcement: notifies everyone on the team, even at Important only", with ✕ to cancel). It shows with a megaphone and "Announcement" in the chat, and notifies everyone who hasn't turned the team off or muted it, even at "Important only", with a notification-center item ("Announcement from Coach: …"). It stands in for the reply and mention notifications. There's no switch to turn announcements off; muting the team or setting it to Off does.
 - **CHAT-16 · v1.1 · Files in chat.** Attach any document type; it's also saved to the Documents tab.
 - **CHAT-17 · Later.**
-  - Message search, which needs a search service or SQL (ARCH §12).
+  - Searching all of a person's chats at once, or for part of a word, which needs a search service or SQL (ARCH §12). Searching one chat by whole words is built (CHAT-20).
   - Link previews, GIFs, video, voice notes.
   - Typing indicators and read receipts.
 
@@ -694,6 +694,13 @@ Players that others answer for never get accounts, and every account belongs to 
   - **A deleted account (AUTH-10).** The other person keeps the conversation, read-only, with the messages from "Deleted user", and can still delete their own. A conversation nobody is left in is deleted with everything in it.
   - **Photos:** a conversation holds up to 50 MB of photos, apart from any team's storage (STORE-1). Once full it says so, and text still sends.
   - **Limits (SAFE-5):** 20 new conversations per person per day; sending is spaced as in team chat, 1 message a second.
+- **CHAT-20 · v1.1 · Search.** Owner's request (2026-11-02, from the list of features to add: "implement feature #5, search in the chat"). A chat's messages, found by the words in them, in a team's chat and in a direct conversation.
+  - **Where:** the magnifier beside the Chat tab's sticker in the team's header (the sticker's row is that tall on every tab, so the header doesn't jump), the magnifier in a conversation's header, or Ctrl/⌘+F on web and desktop.
+  - **Searching:** type words and press Enter (Search on a phone's keyboard). The results are the messages with every word, newest first, 20 at a time with more as the list nears its end: who sent each, its day ("Today", "Mon, Oct 6"), a mark for a photo, poll, or event, and its text from a little before the first word found, with the words found in bold. It searches text, photo captions, poll questions, and event cards (their title, time, and place), not system lines, and leaves out deleted messages and messages from people I blocked (SAFE-2). Nothing found: `No messages with "pizza".`
+  - **Words, not letters:** "tournament" finds "Tournament!", "tournaments", and "TOURNAMENT"; accents don't matter ("jose" finds "José"), nor apostrophes ("obrien" finds "O'Brien's"). Part of a word doesn't ("tourn"). One letter and everyday words ("the", "and") aren't searched; a search of only those says to try a longer word. The steps and the list of everyday words are in `shared/search_words.json`.
+  - **Opening a result:** tapping one opens the chat at that message, briefly highlighted. One from long ago opens the chat there in a page: newer messages load as you scroll down, older ones as you scroll up, and **Newest messages** goes back down.
+  - **Coming back:** search keeps the last search and its results while the app is open; Clear starts over.
+  - **Offline:** it searches the messages the device has, and says so.
 
 **Acceptance (MVP)**
 
@@ -1506,7 +1513,7 @@ The web parts are built before the Phase 1 go-live (ROADMAP). Native-only parts,
 10. Attendance history and CSV exports of RSVPs and the roster for admins
 11. A branded invite page with the team's logo and color (`/join`)
 
-**Built 2026-10-29:** groups beside teams (TEAM-14).
+**Built 2026-10-29:** groups beside teams (TEAM-14). **Built 2026-11-02:** search in the chat (CHAT-20).
 
 ---
 
@@ -1568,7 +1575,7 @@ Not in v1; some may come later:
 - Sub-chats or channels within a team
 - Organizations and leagues
 - A public team directory
-- Message search
+- Searching all chats at once, or for part of a word (searching one chat by its words is CHAT-20)
 - Link previews in chat, GIFs, video, voice notes
 - Voice and video calls
 - SMS

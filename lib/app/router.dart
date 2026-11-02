@@ -23,6 +23,7 @@ import 'package:battleplan/features/auth/presentation/setup_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_methods_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
+import 'package:battleplan/features/chat/presentation/chat_search_screen.dart';
 import 'package:battleplan/features/chat/presentation/direct_chat_screen.dart';
 import 'package:battleplan/features/chat/presentation/messages_screen.dart';
 import 'package:battleplan/features/chat/presentation/team_photos_screen.dart';
@@ -420,9 +421,11 @@ GoRouter router(Ref ref) {
         builder: (_, _) => const NotificationsScreen(),
       ),
       // Messages: direct conversations (CHAT-19), one of them, and one
-      // opened at a message from a notification (NOTIF-6). Siblings rather
-      // than children, so opening a conversation from a profile goes back
-      // to the profile, and a jump doesn't stack a second copy of it.
+      // opened at a message from a notification (NOTIF-6) or a search
+      // (CHAT-20, `?at=` its time). Siblings rather than children, so
+      // opening a conversation from a profile goes back to the profile, and
+      // a jump doesn't stack a second copy of it. Search covers the
+      // conversation.
       GoRoute(path: '/messages', builder: (_, _) => const MessagesScreen()),
       GoRoute(
         path: '/messages/:groupId',
@@ -430,6 +433,17 @@ GoRouter router(Ref ref) {
           key: ValueKey('dm-${state.pathParameters['groupId']}'),
           groupId: GroupId(state.pathParameters['groupId']!),
         ),
+        routes: [
+          GoRoute(
+            path: 'search',
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: ChatSearchScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/messages/:groupId/m/:messageId',
@@ -437,6 +451,7 @@ GoRouter router(Ref ref) {
           key: ValueKey('dm-${state.pathParameters['groupId']}'),
           groupId: GroupId(state.pathParameters['groupId']!),
           initialMessageId: state.pathParameters['messageId'],
+          initialMessageAt: _messageAt(state),
         ),
       ),
       // A person's page (TEAM-15); `?team=` is the team it was opened from.
@@ -755,6 +770,20 @@ GoRouter router(Ref ref) {
                       // its edit form (`?scope=this|following`, SCHED-6).
                       // They cover the tabs.
                       routes: [
+                        // Search in the chat (CHAT-20), covering the tabs.
+                        if (tab == 'chat')
+                          GoRoute(
+                            path: 'search',
+                            parentNavigatorKey: rootKey,
+                            pageBuilder: (_, state) => PanelPage(
+                              key: state.pageKey,
+                              child: ChatSearchScreen(
+                                groupId: GroupId(
+                                  state.pathParameters['groupId']!,
+                                ),
+                              ),
+                            ),
+                          ),
                         if (tab == 'schedule') ...[
                           GoRoute(
                             path: 'new',
@@ -891,9 +920,10 @@ GoRouter router(Ref ref) {
                         ],
                       ],
                     ),
-                    // A message from a notification tap (NOTIF-6): the
-                    // chat, scrolled to it. A sibling rather than a child,
-                    // so it doesn't stack a second chat on the first.
+                    // A message from a notification tap (NOTIF-6) or a
+                    // search (CHAT-20, `?at=` its time): the chat, scrolled
+                    // to it. A sibling rather than a child, so it doesn't
+                    // stack a second chat on the first.
                     if (tab == 'chat')
                       GoRoute(
                         path: 'chat/m/:messageId',
@@ -905,6 +935,7 @@ GoRouter router(Ref ref) {
                           ),
                           groupId: GroupId(state.pathParameters['groupId']!),
                           initialMessageId: state.pathParameters['messageId'],
+                          initialMessageAt: _messageAt(state),
                         ),
                       ),
                   ]),
@@ -943,6 +974,14 @@ GoRouter router(Ref ref) {
   ref.onDispose(router.dispose);
   return router;
 }
+
+/// When a message a link opens at was sent (`?at=`, milliseconds), which
+/// a search result gives (CHAT-20) so one from long ago opens in a page.
+DateTime? _messageAt(GoRouterState state) =>
+    switch (int.tryParse(state.uri.queryParameters['at'] ?? '')) {
+      final ms? => DateTime.fromMillisecondsSinceEpoch(ms),
+      null => null,
+    };
 
 /// Loads the admin panel's code the first time it's opened, then shows
 /// [page] (ARCH §5.6: deferred-loaded, so regular users never download
