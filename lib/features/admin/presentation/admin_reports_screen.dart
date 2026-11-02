@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -168,7 +169,7 @@ class _ReportCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${reportReasonLabel(l10n, r.reason)} · ${adminDateTime(l10n, r.createdAt)}',
+                    '${reportReasonLabel(l10n, r.reason)} · ${adminDateTime(l10n, r.createdAt, zone: ViewerZone.of(context))}',
                     style: theme.textTheme.labelLarge,
                   ),
                 ),

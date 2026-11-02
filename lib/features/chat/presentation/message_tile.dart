@@ -20,6 +20,7 @@ import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/linkified_text.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/mentions.dart';
@@ -467,8 +468,9 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         : (deleted ? c.textMutedOnPage : c.textMuted);
     final time = m.createdAt == null
         ? null
-        : MaterialLocalizations.of(context)
-              .formatTimeOfDay(TimeOfDay.fromDateTime(m.createdAt!.toLocal()));
+        : MaterialLocalizations.of(context).formatTimeOfDay(
+            TimeOfDay.fromDateTime(ViewerZone.wallClock(context, m.createdAt!)),
+          );
     // @mentions (CHAT-14) in bold, and the ones naming me (or everyone)
     // stand out, by the names the message was sent with; an older message
     // without them reads the team's names once. In my bubble a mention is

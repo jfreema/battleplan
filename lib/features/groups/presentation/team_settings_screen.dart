@@ -14,6 +14,7 @@ import 'package:battleplan/core/widgets/about_battleplan.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
+import 'package:battleplan/core/widgets/time_zone_picker.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/auth.dart';
@@ -88,7 +89,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     if (!mounted) return;
     final picked = await showDialog<String>(
       context: context,
-      builder: (context) => _TimeZonePicker(
+      builder: (context) => TimeZonePicker(
         zones: TimeZoneNames.ordered(zones, keep: [group.timeZone]),
         current: group.timeZone,
       ),
@@ -785,65 +786,6 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// A searchable list of time zones (TEAM-5).
-class _TimeZonePicker extends StatefulWidget {
-  const new({required this.zones, required this.current});
-
-  final List<String> zones;
-  final String current;
-
-  @override
-  State<_TimeZonePicker> createState() => _TimeZonePickerState();
-}
-
-class _TimeZonePickerState extends State<_TimeZonePicker> {
-  String _query = '';
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final shown = [
-      for (final z in widget.zones)
-        if (TimeZoneNames.matches(z, _query)) z,
-    ];
-    return AlertDialog(
-      title: Text(l10n.timeZoneLabel),
-      content: SizedBox(
-        width: 400,
-        height: 420,
-        child: Column(
-          children: [
-            TextField(
-              autofocus: true,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(AppIcons.search),
-                hintText: l10n.timeZoneSearch,
-              ),
-              onChanged: (v) => setState(() => _query = v.trim()),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: shown.length,
-                itemBuilder: (context, i) => ListTile(
-                  title: Text(TimeZoneNames.label(shown[i])),
-                  selected: shown[i] == widget.current,
-                  onTap: () => Navigator.of(context).pop(shown[i]),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel),
-        ),
-      ],
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -117,8 +118,24 @@ class _Profile extends StatelessWidget {
                     ),
                   const SizedBox(height: Space.sm),
                   Text(l10n.adminSignInMethods(methods)),
-                  Text(l10n.adminJoinedOn(adminDate(l10n, u.createdAt))),
-                  Text(l10n.adminLastActive(adminDate(l10n, u.lastActiveAt))),
+                  Text(
+                    l10n.adminJoinedOn(
+                      adminDate(
+                        l10n,
+                        u.createdAt,
+                        zone: ViewerZone.of(context),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    l10n.adminLastActive(
+                      adminDate(
+                        l10n,
+                        u.lastActiveAt,
+                        zone: ViewerZone.of(context),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

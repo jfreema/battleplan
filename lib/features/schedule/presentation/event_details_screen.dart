@@ -404,7 +404,7 @@ class _GameCard extends StatelessWidget {
     final otherZone = otherZoneLine(l10n, event, zone);
     final start = ZonedTime.wallClock(zone, event.startAt);
     final opponent = event.isGame ? event.opponent?.trim() ?? '' : '';
-    final soon = _soonLabel(l10n, start);
+    final soon = _soonLabel(l10n, event, zone);
     final subtitle = [
       if (event.isGame && event.homeAway == HomeAway.home) l10n.eventHome,
       if (event.isGame && event.homeAway == HomeAway.away) l10n.eventAway,
@@ -604,12 +604,12 @@ class _GameCard extends StatelessWidget {
     );
   }
 
-  /// "Today", "Tomorrow", "In 3 days" for an event in the next two weeks.
-  static String? _soonLabel(AppLocalizations l10n, DateTime start) {
-    final now = DateTime.now();
+  /// "Today", "Tomorrow", "In 3 days" for an event in the next two weeks,
+  /// counted in the viewer's [zone] (SET-7).
+  static String? _soonLabel(AppLocalizations l10n, Event event, String zone) {
+    final now = ZonedTime.wallClock(zone, DateTime.now());
     final today = DateTime.utc(now.year, now.month, now.day);
-    final day = DateTime.utc(start.year, start.month, start.day);
-    final days = day.difference(today).inDays;
+    final days = dayOf(event, zone).difference(today).inDays;
     if (days < 0 || days > 14) return null;
     return l10n.eventInDays(days);
   }

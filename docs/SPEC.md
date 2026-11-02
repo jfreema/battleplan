@@ -259,7 +259,7 @@ Sign in
                      (Leave team is on your own card in the Roster, TEAM-8)
 ```
 
-- **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name, sport, last message, unread count), then Join a team and Create a team; someone with no team yet sees a welcome with the same two. Profile has your photo (Change photo) and the name your teams see, then **Themes** (SET-2), **Settings**, the **Admin panel** for super admins, and **Sign out**, each its own rounded card.
+- **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name, sport, last message, unread count), then Join a team and Create a team; someone with no team yet sees a welcome with the same two. Profile has your photo (Change photo) and the name your teams see, then **Themes** (SET-2), **Time zone** (SET-7), **Settings**, the **Admin panel** for super admins, and **Sign out**, each its own rounded card.
 - **A team's back arrow** (‹ at the top left of the header) goes to Teams. Inside a tab, on a page with its own back button (Saved plays, a play), the header leaves its arrow out, so only one back shows.
 - **Team info** (ⓘ in the header) is a page: the team's logo, name, sport, and member count, then what the team menu had. **Team admin** was called Team settings.
 - **Your avatar** left the team's header: what it held is on Profile.
@@ -792,7 +792,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - **All-day events** start at midnight, so their reminders go out at **6 PM** in the event's time zone instead: 1 day before is 6 PM the evening before, and 2 days or a week before, 6 PM that day. The form offers them only 1 day, 2 days, and 1 week. A minute or hour reminder an all-day event carries anyway (from the 1.0 app, an import, or an older event) goes out at 6 PM the evening before too, once, and its page says "Reminders 1 day before, at 6 PM" (owner's request 2026-11-01).
   - **A reminder by hand:** the event's menu has **Post a reminder in chat** for team admins and the event's creator, after asking. It posts the event in the chat again, marked Reminder, with its live RSVPs, the answer buttons, and how many players haven't answered, and the same people get the reminder push. Not on a canceled or finished event; once an hour per event.
 - **SCHED-9 · MVP · Time zones.**
-  - Times show in the viewer's local time.
+  - Times show in the viewer's time zone: the one they picked under **Profile → Time zone** (SET-7), or, on Automatic (the default), the device's.
   - If the event's time zone is different, both appear: "6:00 PM CDT · 7:00 PM your time".
   - All-day events never shift to another day.
   - Time zones are shown by the names people know them by (the owner's request, 2026-10-26): the US and Canada's first, as "Central Time (Chicago)" or "Mountain Time (Phoenix)", then the rest of the world by city and offset from GMT, "Berlin (GMT+1)", in Create team, Team settings, and the event form. Search finds a zone by its name, city, or ID. What's stored is still the IANA ID ("America/Chicago").
@@ -942,6 +942,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - App version, Terms, Privacy Policy, open-source licenses.
   - Contact support.
   - Sign out; Delete account (AUTH-10).
+- **SET-7 · v1.1 · Time zone.** (The owner's request, 2026-11-01: "i want the user to be able to select their timezone and it always adhere to that instead of adjusting automatically as they travel".) A card on Profile, under Themes: **Automatic: Central Time (Chicago)**, following the device as it does today, or a zone picked from the same list as Create team's, which stays put wherever the person is. It's saved to the account, so it follows them to every device. Every time the app shows uses it: the schedule and events (with the event's own time beside it when that differs, SCHED-9), message times and the chat's day lines, poll close times, mute and notification times, document, media, play, report, and invite dates, a player's events, import previews, and the admin panel. Times picked in the app (a poll's close time, an announcement's end, the audit log's days) are in it too. A new team starts in it. New events still start in their team's zone, and push notifications still give the event's time in its own zone.
 
 ### 6.11 God admin panel (ADMIN)
 

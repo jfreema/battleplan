@@ -14,6 +14,11 @@ abstract class UserProfile with _$UserProfile {
     String? email,
     String? photoPath,
     @Default(ThemePreference.system) ThemePreference themeMode,
+
+    /// The time zone every time shows in, wherever the person is (SET-7),
+    /// an IANA ID such as "America/Chicago". Null is Automatic: the
+    /// device's zone, which follows them as they travel.
+    String? timeZone,
     @Default(<String>[]) List<String> signInMethods,
     DateTime? adultConfirmedAt,
     DateTime? acceptedTermsAt,

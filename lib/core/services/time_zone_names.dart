@@ -1,3 +1,4 @@
+import 'package:battleplan/core/services/time_zone_links.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 
 /// Time zones by the names people know them by (the owner's request,
@@ -106,7 +107,9 @@ abstract final class TimeZoneNames {
   };
 
   /// Old names for zones listed under their current ones, left out so no
-  /// place is listed twice.
+  /// place is listed twice. Where a list has only the old name, as
+  /// browsers' and iOS's do for some (Asia/Calcutta, Europe/Kiev), the
+  /// zone it links to is listed instead (Asia/Kolkata, Europe/Kyiv).
   static const _oldNames = {
     'Africa/Asmera',
     'Africa/Timbuktu',
@@ -199,9 +202,10 @@ abstract final class TimeZoneNames {
   }
 
   /// [zones] in the order to list them: the US and Canada's first, then the
-  /// rest by their offset at [at] (now when null) and city. Old names and
-  /// plain offsets are left out, except any in [keep] (the zone a team or
-  /// event already has), which is always listed.
+  /// rest by their offset at [at] (now when null) and city. Old names,
+  /// plain offsets, and zones the database doesn't know are left out,
+  /// except any in [keep] (the zone a team or event already has), which is
+  /// always listed.
   static List<String> ordered(
     Iterable<String> zones, {
     Iterable<String> keep = const [],
@@ -211,7 +215,11 @@ abstract final class TimeZoneNames {
     final kept = keep.toSet();
     final all = {
       for (final z in [...zones, ...kept])
-        if (kept.contains(z) || _listed(z)) z,
+        if (kept.contains(z) || _listed(z))
+          z
+        else if (timeZoneLinks[z] case final current?
+            when _oldNames.contains(z) && _listed(current))
+          current,
     };
     final first = [
       for (final group in _northAmerica.values)
@@ -238,9 +246,12 @@ abstract final class TimeZoneNames {
         zone.toLowerCase().contains(q.replaceAll(' ', '_'));
   }
 
+  /// Whether [zone] is listed: a current name the database knows, so a
+  /// zone picked from the list always applies.
   static bool _listed(String zone) =>
-      zone == 'UTC' ||
-      (zone.contains('/') &&
-          _regions.contains(zone.split('/').first) &&
-          !_oldNames.contains(zone));
+      (zone == 'UTC' ||
+          (zone.contains('/') &&
+              _regions.contains(zone.split('/').first) &&
+              !_oldNames.contains(zone))) &&
+      ZonedTime.isKnown(zone);
 }

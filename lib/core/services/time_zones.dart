@@ -1,3 +1,4 @@
+import 'package:battleplan/core/services/time_zone_links.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -22,6 +23,12 @@ class FixedTimeZones implements TimeZones {
   Future<List<String>> available() async => [zone];
 }
 
+/// [instant] as wall-clock time in [zone], the viewer's (SET-7), or in the
+/// device's zone while [zone] isn't known yet. Its fields read in that
+/// zone, for formatting and for telling which day something was.
+DateTime wallClockIn(String? zone, DateTime instant) =>
+    zone == null ? instant.toLocal() : ZonedTime.wallClock(zone, instant);
+
 /// Wall-clock time in a named zone (SCHED-9, ARCH §6.2): an event's "6:00
 /// PM in America/Chicago" turned into an instant, and back, with the
 /// `timezone` database. Pure Dart, so domain code uses it too. The database
@@ -29,11 +36,20 @@ class FixedTimeZones implements TimeZones {
 abstract final class ZonedTime {
   static bool _loaded = false;
 
-  /// Loads the zone database. Called at startup; every method below also
-  /// calls it, so tests and early callers never see an empty database.
+  /// Loads the zone database, with the older names phones still report
+  /// ([timeZoneLinks]). Called at startup; every method below also calls
+  /// it, so tests and early callers never see an empty database.
   static void ensureInitialized() {
     if (_loaded) return;
     tzdata.initializeTimeZones();
+    final zones = tz.timeZoneDatabase.locations;
+    for (final MapEntry(key: link, value: name) in timeZoneLinks.entries) {
+      final zone = zones[name];
+      if (zone == null || zones.containsKey(link)) continue;
+      tz.timeZoneDatabase.add(
+        tz.Location(link, zone.transitionAt, zone.transitionZone, zone.zones),
+      );
+    }
     _loaded = true;
   }
 
@@ -50,6 +66,12 @@ abstract final class ZonedTime {
   static bool isKnown(String zone) {
     ensureInitialized();
     return tz.timeZoneDatabase.locations.containsKey(zone);
+  }
+
+  /// Every zone the database knows.
+  static Iterable<String> get names {
+    ensureInitialized();
+    return tz.timeZoneDatabase.locations.keys;
   }
 
   /// The instant [minutes] after midnight on [date] (only its year, month,

@@ -10,6 +10,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
@@ -238,8 +239,9 @@ class _InviteBody extends ConsumerWidget {
     final expires = invite.expiresAt == null
         ? l10n.linkNeverExpires
         : l10n.linkExpires(
-            MaterialLocalizations.of(context)
-                .formatShortDate(invite.expiresAt!.toLocal()),
+            MaterialLocalizations.of(
+              context,
+            ).formatShortDate(ViewerZone.wallClock(context, invite.expiresAt!)),
           );
     final uses = invite.maxUses == null
         ? l10n.linkUses(invite.useCount)

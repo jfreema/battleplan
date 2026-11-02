@@ -6,11 +6,14 @@ import 'package:battleplan/app/router.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/arena/arena_font.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/presentation/verify_email_banner.dart';
 import 'package:battleplan/features/notifications/application/push_registration.dart';
 import 'package:battleplan/features/notifications/presentation/push_banner.dart';
+import 'package:battleplan/features/schedule/application/providers.dart'
+    show viewerTimeZoneProvider;
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,6 +37,7 @@ class BattleplanApp extends ConsumerWidget {
       ..watch(sessionRevocationWatcherProvider);
     final banner = ref.watch(appEnvProvider).bannerLabel;
     final theme = ref.watch(themePreferenceControllerProvider);
+    final zone = ref.watch(viewerTimeZoneProvider).value;
     // Arena's font is loaded only for Arena (ARCH §5.5).
     if (theme == ThemePreference.arena) unawaited(loadArenaFont());
     final app = MaterialApp.router(
@@ -53,10 +57,14 @@ class BattleplanApp extends ConsumerWidget {
       // The email verification banner sits above every screen (AUTH-3),
       // the super admins' announcement above it (ADMIN-7), and in-app push
       // banners above that (NOTIF-7).
-      builder: (context, child) => PushBannerHost(
-        onOpen: (m) => ref.read(pushHandlerProvider.notifier).open(m),
-        child: AnnouncementBanner.wrap(
-          VerifyEmailBanner.wrap(child ?? const SizedBox.shrink()),
+      // Every time shows in the viewer's zone (SET-7), below all of it.
+      builder: (context, child) => ViewerZone(
+        zone: zone,
+        child: PushBannerHost(
+          onOpen: (m) => ref.read(pushHandlerProvider.notifier).open(m),
+          child: AnnouncementBanner.wrap(
+            VerifyEmailBanner.wrap(child ?? const SizedBox.shrink()),
+          ),
         ),
       ),
     );

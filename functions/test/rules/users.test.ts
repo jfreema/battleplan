@@ -89,6 +89,18 @@ describe('users: writing', () => {
     await assertSucceeds(db.doc('users/alice').update({ 'notificationPrefs.eventsChanged': false }));
   });
 
+  it('takes a time zone (SET-7): an IANA ID, or null for Automatic', async () => {
+    const db = as('alice');
+    for (const zone of ['America/Chicago', 'America/Argentina/Buenos_Aires', 'America/Port-au-Prince', 'Etc/GMT+5', 'UTC']) {
+      await assertSucceeds(db.doc('users/alice').update({ timeZone: zone, updatedAt: now() }));
+    }
+    await assertSucceeds(db.doc('users/alice').update({ timeZone: null, updatedAt: now() }));
+    for (const bad of ['', '../x', 'America/Chicago; drop', 'x'.repeat(65), 42, ['UTC']]) {
+      await assertFails(db.doc('users/alice').update({ timeZone: bad }));
+    }
+    await assertFails(as('bob').doc('users/alice').update({ timeZone: 'UTC' }));
+  });
+
   it('rejects server-only fields', async () => {
     const db = as('alice');
     await assertFails(db.doc('users/alice').update({ status: 'disabled' }));

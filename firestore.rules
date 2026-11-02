@@ -86,7 +86,7 @@ service cloud.firestore {
       // written by Functions only.
       allow update: if signedIn() && uid() == userId
         && onlyChanges(['displayName', 'displayNameLower', 'photoPath', 'themeMode',
-                        'notificationPrefs', 'updatedAt'])
+                        'timeZone', 'notificationPrefs', 'updatedAt'])
         && validProfile(incoming(), userId);
       // Created by ensureUserProfile and deleted by deleteAccount (Functions).
     }
@@ -99,6 +99,10 @@ service cloud.firestore {
         && (p.photoPath == null
             || (p.photoPath is string && p.photoPath.matches('users/' + userId + '/avatar/[^/]+')))
         && validPrefs(p.notificationPrefs)
+        // The time zone times show in (SET-7): an IANA ID, or null for the
+        // device's.
+        && (p.get('timeZone', null) == null
+            || (p.timeZone is string && p.timeZone.matches('[A-Za-z][A-Za-z0-9_+/-]{0,63}')))
         && (!('updatedAt' in changed()) || p.updatedAt == request.time);
     }
 

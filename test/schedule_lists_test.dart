@@ -109,6 +109,8 @@ Future<void> _settle() async {
 }
 
 void main() {
+  // The device's time zone is asked again on each return to the app.
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Load more (ARCH §5.3)', () {
     List<String> ids(ProviderContainer c) => [
       for (final e in c.read(teamEventsProvider(_g, past: false)).events)

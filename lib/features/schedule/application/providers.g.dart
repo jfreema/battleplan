@@ -341,17 +341,67 @@ final class MyCalendarLinksProvider
 
 String _$myCalendarLinksHash() => r'aa7d23a070fb6e6ad8d20dccc22dcdc6d54ac05a';
 
-/// The viewer's own time zone: times show in it (SCHED-9).
+/// This device's time zone, which Automatic follows (SET-7). Asked again
+/// on each return to the app and each minute while it's open, so a trip
+/// shows whether the app was in the background or on screen.
+
+@ProviderFor(deviceTimeZone)
+final deviceTimeZoneProvider = DeviceTimeZoneProvider._();
+
+/// This device's time zone, which Automatic follows (SET-7). Asked again
+/// on each return to the app and each minute while it's open, so a trip
+/// shows whether the app was in the background or on screen.
+
+final class DeviceTimeZoneProvider
+    extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
+    with $FutureModifier<String>, $FutureProvider<String> {
+  /// This device's time zone, which Automatic follows (SET-7). Asked again
+  /// on each return to the app and each minute while it's open, so a trip
+  /// shows whether the app was in the background or on screen.
+  DeviceTimeZoneProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'deviceTimeZoneProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$deviceTimeZoneHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<String> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<String> create(Ref ref) {
+    return deviceTimeZone(ref);
+  }
+}
+
+String _$deviceTimeZoneHash() => r'ce912516f32d5b9f6bb12f98c18e176ce0c0138c';
+
+/// The viewer's time zone: every time shows in it (SCHED-9). The one they
+/// picked under Profile → Time zone (SET-7), which stays put as they
+/// travel, or this device's (Automatic, and until the profile arrives).
 
 @ProviderFor(viewerTimeZone)
 final viewerTimeZoneProvider = ViewerTimeZoneProvider._();
 
-/// The viewer's own time zone: times show in it (SCHED-9).
+/// The viewer's time zone: every time shows in it (SCHED-9). The one they
+/// picked under Profile → Time zone (SET-7), which stays put as they
+/// travel, or this device's (Automatic, and until the profile arrives).
 
 final class ViewerTimeZoneProvider
     extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
     with $FutureModifier<String>, $FutureProvider<String> {
-  /// The viewer's own time zone: times show in it (SCHED-9).
+  /// The viewer's time zone: every time shows in it (SCHED-9). The one they
+  /// picked under Profile → Time zone (SET-7), which stays put as they
+  /// travel, or this device's (Automatic, and until the profile arrives).
   ViewerTimeZoneProvider._()
     : super(
         from: null,
@@ -377,7 +427,7 @@ final class ViewerTimeZoneProvider
   }
 }
 
-String _$viewerTimeZoneHash() => r'73cbf660c75001d4b5b8460f7b66a9db9ea85e3c';
+String _$viewerTimeZoneHash() => r'73dafcca1d587286929c257f5e5bc245c64ec726';
 
 /// One event, live (SCHED-4). Null once it's deleted.
 

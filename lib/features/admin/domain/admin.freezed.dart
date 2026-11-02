@@ -3520,7 +3520,9 @@ as DateTime?,
 /// @nodoc
 mixin _$AuditFilter {
 
- String? get actorId; String? get action; GroupId? get groupId;/// From the start of [from] through the end of [until], local days.
+ String? get actorId; String? get action; GroupId? get groupId;/// From the instant [from] up to [until]: the start of the first day
+/// picked and the start of the day after the last, in the viewer's
+/// zone (SET-7).
  DateTime? get from; DateTime? get until;
 /// Create a copy of AuditFilter
 /// with the given fields replaced by the non-null parameter values.
@@ -3728,7 +3730,9 @@ class _AuditFilter extends AuditFilter {
 @override final  String? actorId;
 @override final  String? action;
 @override final  GroupId? groupId;
-/// From the start of [from] through the end of [until], local days.
+/// From the instant [from] up to [until]: the start of the first day
+/// picked and the start of the day after the last, in the viewer's
+/// zone (SET-7).
 @override final  DateTime? from;
 @override final  DateTime? until;
 

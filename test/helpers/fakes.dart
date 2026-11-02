@@ -854,6 +854,9 @@ class FakeUserRepository implements UserRepository {
   final _changes = StreamController<void>.broadcast();
   String? savedName;
   ThemePreference themeMode = ThemePreference.system;
+
+  /// The picked time zone (SET-7); null is Automatic.
+  String? timeZone;
   int photosUploaded = 0;
 
   final Map<NotificationPref, bool> notificationPrefs = {};
@@ -886,6 +889,7 @@ class FakeUserRepository implements UserRepository {
     adultConfirmedAt: needsSetup ? null : DateTime(2026),
     acceptedTermsAt: needsSetup ? null : DateTime(2026),
     themeMode: themeMode,
+    timeZone: timeZone,
     notificationPrefs: {...notificationPrefs},
   );
 
@@ -916,6 +920,12 @@ class FakeUserRepository implements UserRepository {
   @override
   Future<void> setThemeMode(String uid, ThemePreference mode) async {
     themeMode = mode;
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> setTimeZone(String uid, String? zone) async {
+    timeZone = zone;
     _changes.add(null);
   }
 

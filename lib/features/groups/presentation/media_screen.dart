@@ -9,6 +9,7 @@ import 'package:battleplan/core/widgets/cover_image.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
@@ -162,7 +163,7 @@ class _MediaRow extends ConsumerWidget {
     final date = item.createdAt == null
         ? null
         : MaterialLocalizations.of(context)
-              .formatShortDate(item.createdAt!.toLocal());
+              .formatShortDate(ViewerZone.wallClock(context, item.createdAt!));
     final placeholder = Icon(
       item.isImage ? AppIcons.photo : AppIcons.file,
       color: scheme.onSurfaceVariant,

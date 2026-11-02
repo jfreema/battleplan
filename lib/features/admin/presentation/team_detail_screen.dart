@@ -8,6 +8,7 @@ import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -120,8 +121,12 @@ class _Summary extends ConsumerWidget {
       if (detail?.ownerName.isNotEmpty ?? false)
         l10n.adminOwnedBy(detail!.ownerName),
       l10n.membersCount(group.memberCount),
-      l10n.adminCreatedOn(adminDate(l10n, detail?.createdAt)),
-      l10n.adminLastActive(adminDate(l10n, group.lastMessageAt)),
+      l10n.adminCreatedOn(
+        adminDate(l10n, detail?.createdAt, zone: ViewerZone.of(context)),
+      ),
+      l10n.adminLastActive(
+        adminDate(l10n, group.lastMessageAt, zone: ViewerZone.of(context)),
+      ),
     ];
     return AdminSectionCard(
       title: group.name,
@@ -563,7 +568,9 @@ class _Invites extends ConsumerWidget {
                 else
                   l10n.linkUses(i.useCount),
                 if (i.expiresAt != null)
-                  l10n.linkExpires(adminDate(l10n, i.expiresAt)),
+                  l10n.linkExpires(
+                    adminDate(l10n, i.expiresAt, zone: ViewerZone.of(context)),
+                  ),
               ].join(' · '),
             ),
             trailing: TextButton(
@@ -652,7 +659,7 @@ class _Content extends ConsumerWidget {
                 m.authorName,
                 if (m.text.isNotEmpty && m.photoCount > 0)
                   l10n.adminPhotosCount(m.photoCount),
-                adminDateTime(l10n, m.createdAt),
+                adminDateTime(l10n, m.createdAt, zone: ViewerZone.of(context)),
               ].join(' · '),
             ),
             trailing: IconButton(

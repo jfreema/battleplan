@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/presentation/document_actions.dart';
@@ -196,7 +197,11 @@ class _Details extends ConsumerWidget {
             Text(
               l10n.documentAddedBy(
                 doc.uploaderName,
-                documentDate(doc.createdAt, DateTime.now()),
+                documentDate(
+                  doc.createdAt,
+                  DateTime.now(),
+                  zone: ViewerZone.of(context),
+                ),
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

@@ -7,6 +7,7 @@ import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/chat/application/direct_chats.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/direct_chat.dart';
@@ -107,7 +108,12 @@ class _ChatRow extends ConsumerWidget {
         children: [
           if (at != null)
             Text(
-              relativeTime(l10n, at, DateTime.now()),
+              relativeTime(
+                l10n,
+                at,
+                DateTime.now(),
+                zone: ViewerZone.of(context),
+              ),
               style: theme.textTheme.labelSmall,
             ),
           const SizedBox(height: Space.xs),

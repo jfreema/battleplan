@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/polls/presentation/poll_card.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -70,18 +72,22 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   void _removeOption(int i) =>
       setState(() => _options.removeAt(i).text.dispose());
 
-  /// Picks the close date, then the time. Defaults to this time tomorrow,
-  /// on the hour.
+  /// Picks the close date, then the time, in the viewer's zone (SET-7).
+  /// Defaults to this time tomorrow, on the hour.
   Future<void> _pickCloseTime() async {
-    final now = DateTime.now();
-    final initial =
-        _closesAt ?? DateTime(now.year, now.month, now.day + 1, now.hour + 1);
+    final zone = ViewerZone.read(context);
+    final now = wallClockIn(zone, DateTime.now());
+    final initial = _closesAt == null
+        ? DateTime(now.year, now.month, now.day + 1, now.hour + 1)
+        : wallClockIn(zone, _closesAt!);
+    final today = DateTime(now.year, now.month, now.day);
     final date = await showDatePicker(
       context: context,
-      initialDate: initial,
-      firstDate: DateTime(now.year, now.month, now.day),
+      initialDate: DateTime(initial.year, initial.month, initial.day),
+      firstDate: today,
       // The rules allow up to a year ahead.
-      lastDate: now.add(const Duration(days: 365)),
+      lastDate: DateTime(now.year, now.month, now.day + 365),
+      currentDate: today,
     );
     if (date == null || !mounted) return;
     final time = await showTimePicker(
@@ -89,14 +95,15 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
       initialTime: TimeOfDay.fromDateTime(initial),
     );
     if (time == null) return;
+    // The picked day and time are wall-clock time in the viewer's zone.
     setState(
-      () => _closesAt = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        time.hour,
-        time.minute,
-      ),
+      () => _closesAt = zone == null
+          ? DateTime(date.year, date.month, date.day, time.hour, time.minute)
+          : ZonedTime.instantOf(
+              zone,
+              DateTime.utc(date.year, date.month, date.day),
+              time.hour * 60 + time.minute,
+            ),
     );
   }
 
@@ -265,7 +272,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                     leading: const Icon(AppIcons.schedule),
                     title: Text(l10n.pollClosesOn),
                     subtitle: Text(
-                      closesLabel(l10n, at, now),
+                      closesLabel(l10n, at, now, zone: ViewerZone.of(context)),
                       style: closesPast
                           ? TextStyle(color: theme.colorScheme.error)
                           : null,

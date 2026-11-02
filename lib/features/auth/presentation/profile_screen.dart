@@ -6,12 +6,18 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/theme_choices.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/time_zone_picker.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
+import 'package:battleplan/features/auth/domain/user_profile.dart';
 import 'package:battleplan/features/auth/presentation/profile_photo.dart';
 import 'package:battleplan/features/groups/groups.dart';
+import 'package:battleplan/features/schedule/application/providers.dart'
+    show deviceTimeZoneProvider;
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,6 +69,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await changeProfilePhoto(context, ref, uid);
     } finally {
       if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  /// Picks the zone times show in (SET-7): Automatic, the device's, or
+  /// one that stays put while traveling.
+  Future<void> _pickTimeZone(UserProfile profile) async {
+    final l10n = AppLocalizations.of(context);
+    final device = await ref.read(deviceTimeZoneProvider.future);
+    final zones = await ref.read(timeZonesProvider).available();
+    if (!mounted) return;
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (context) => TimeZonePicker(
+        zones: TimeZoneNames.ordered(zones, keep: [device, ?profile.timeZone]),
+        current: profile.timeZone,
+        automatic: l10n.timeZoneAutomatic(TimeZoneNames.label(device)),
+        help: l10n.timeZoneMineHelp,
+      ),
+    );
+    if (picked == null || !mounted) return;
+    final zone = picked == TimeZonePicker.automaticChoice ? null : picked;
+    if (zone == profile.timeZone) return;
+    try {
+      await ref.read(userRepositoryProvider).setTimeZone(profile.uid, zone);
+    } on Object {
+      if (mounted) showAppSnackBar(context, l10n.timeZoneSaveFailed);
     }
   }
 
@@ -211,6 +243,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           title: l10n.themes,
                           subtitle: themeName,
                           onTap: () => unawaited(context.push('/themes')),
+                        ),
+                      ),
+                      // The zone every time shows in, wherever I am (SET-7).
+                      box(
+                        SettingsRow(
+                          icon: AppIcons.timeZone,
+                          title: l10n.timeZoneLabel,
+                          subtitle: switch (profile?.timeZone) {
+                            final zone? => TimeZoneNames.label(zone),
+                            null => l10n.timeZoneAutomatic(
+                              TimeZoneNames.label(
+                                ref.watch(deviceTimeZoneProvider).value ?? '',
+                              ),
+                            ),
+                          },
+                          onTap: profile == null
+                              ? null
+                              : () => unawaited(_pickTimeZone(profile)),
                         ),
                       ),
                       box(

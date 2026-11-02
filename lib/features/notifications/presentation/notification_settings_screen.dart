@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
@@ -117,7 +118,12 @@ class _NotificationSettingsScreenState
               subtitle: Text(
                 [
                   notificationLevelLabel(l10n, t.membership.notificationLevel),
-                  ?muteLabel(l10n, t.membership, now),
+                  ?muteLabel(
+                    l10n,
+                    t.membership,
+                    now,
+                    zone: ViewerZone.of(context),
+                  ),
                 ].join(' · '),
               ),
               trailing: t.membership.isMutedAt(now)

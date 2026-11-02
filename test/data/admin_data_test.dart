@@ -376,7 +376,7 @@ void main() {
         actorId: 'admin',
         action: 'user.disable',
         from: DateTime(2026, 10),
-        until: DateTime(2026, 10),
+        until: DateTime(2026, 10, 2),
       ),
     );
     expect(filtered.items.map((e) => e.id), ['a0']);

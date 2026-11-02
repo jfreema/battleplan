@@ -1,5 +1,6 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -49,16 +50,22 @@ String notificationLevelHelp(AppLocalizations l10n, NotificationLevel l) =>
     };
 
 /// "Muted until 3:45 PM", "Muted until Tue, Oct 14 9:00 AM", "Muted until
-/// you unmute", or null when not muted.
-String? muteLabel(AppLocalizations l10n, Membership m, DateTime now) {
+/// you unmute", or null when not muted; in the viewer's [zone] (SET-7).
+String? muteLabel(
+  AppLocalizations l10n,
+  Membership m,
+  DateTime now, {
+  String? zone,
+}) {
   final until = m.mutedUntil;
   if (until == null || !m.isSnoozedAt(now)) return null;
   if (m.isMutedForever) return l10n.mutedUntilUnmuted;
-  final local = until.toLocal();
+  final local = wallClockIn(zone, until);
+  final today = wallClockIn(zone, now);
   final sameDay =
-      local.year == now.year &&
-      local.month == now.month &&
-      local.day == now.day;
+      local.year == today.year &&
+      local.month == today.month &&
+      local.day == today.day;
   final format = sameDay
       ? DateFormat.jm(l10n.localeName)
       : DateFormat.MMMEd(l10n.localeName).add_jm();
@@ -85,15 +92,21 @@ IconData notificationIcon(NotifyKind? kind) => switch (kind) {
   NotifyKind.directMessage => AppIcons.directMessage,
 };
 
-/// "now", "5m", "3h", "2d", then the date: short, for a list row.
-String relativeTime(AppLocalizations l10n, DateTime at, DateTime now) {
+/// "now", "5m", "3h", "2d", then the date in the viewer's [zone] (SET-7):
+/// short, for a list row.
+String relativeTime(
+  AppLocalizations l10n,
+  DateTime at,
+  DateTime now, {
+  String? zone,
+}) {
   final diff = now.difference(at);
   if (diff.inMinutes < 1) return l10n.timeNow;
   if (diff.inHours < 1) return l10n.timeMinutes(diff.inMinutes);
   if (diff.inDays < 1) return l10n.timeHours(diff.inHours);
   if (diff.inDays < 7) return l10n.timeDays(diff.inDays);
-  final local = at.toLocal();
-  return local.year == now.year
+  final local = wallClockIn(zone, at);
+  return local.year == wallClockIn(zone, now).year
       ? DateFormat.MMMd(l10n.localeName).format(local)
       : DateFormat.yMMMd(l10n.localeName).format(local);
 }

@@ -10,9 +10,11 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -629,7 +631,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       final afterGap = older != null && older.id == chat.gapAfter;
       final newDay = older == null
           ? chat.reachedStart
-          : !_sameDay(older.createdAt, m.createdAt);
+          : !_sameDay(older.createdAt, m.createdAt, ViewerZone.of(context));
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -921,10 +923,11 @@ extension on _ChatScreenState {
   }
 }
 
-bool _sameDay(DateTime? a, DateTime? b) {
+/// Whether [a] and [b] fall on the same day in the viewer's [zone] (SET-7).
+bool _sameDay(DateTime? a, DateTime? b, String? zone) {
   if (a == null || b == null) return true;
-  final x = a.toLocal();
-  final y = b.toLocal();
+  final x = wallClockIn(zone, a);
+  final y = wallClockIn(zone, b);
   return x.year == y.year && x.month == y.month && x.day == y.day;
 }
 
@@ -939,8 +942,9 @@ bool _continues(Message? prev, Message next) {
 
 /// "Today", "Yesterday", or "Mon, Oct 6" (CHAT-1).
 String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
-  final d = DateTime(day.year, day.month, day.day);
-  final today = DateTime(now.year, now.month, now.day);
+  // UTC dates, so a day that's 23 hours long here still counts as one.
+  final d = DateTime.utc(day.year, day.month, day.day);
+  final today = DateTime.utc(now.year, now.month, now.day);
   final diff = today.difference(d).inDays;
   if (diff == 0) return l10n.today;
   if (diff == 1) return l10n.yesterday;
@@ -1239,7 +1243,11 @@ class _DateSeparator extends StatelessWidget {
     final c = GumdropColors.of(context);
     return _RuledLabel(
       child: Text(
-        dayLabel(AppLocalizations.of(context), day.toLocal(), DateTime.now()),
+        dayLabel(
+          AppLocalizations.of(context),
+          ViewerZone.wallClock(context, day),
+          ViewerZone.wallClock(context, DateTime.now()),
+        ),
         textAlign: TextAlign.center,
         style: GumdropStyle.of(context).label(
           TextStyle(

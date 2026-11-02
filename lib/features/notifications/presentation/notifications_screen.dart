@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/notifications/application/notification_center.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
@@ -217,7 +218,7 @@ class _NotificationRow extends StatelessWidget {
         trailing: at == null
             ? null
             : Text(
-                relativeTime(l10n, at, now),
+                relativeTime(l10n, at, now, zone: ViewerZone.of(context)),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: unread ? scheme.primary : scheme.onSurfaceVariant,
                 ),

@@ -5,6 +5,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/about_battleplan.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
@@ -1839,16 +1840,28 @@ void main() {
     testWidgets('shows messages grouped by sender with a date separator', (
       tester,
     ) async {
+      // Moments apart, and all today in the viewer's zone (Chicago in
+      // tests), even just after midnight, when a day line would split them.
       final now = DateTime.now();
+      const zone = 'America/Chicago';
+      final today = ZonedTime.instantOf(
+        zone,
+        ZonedTime.wallClock(zone, now),
+        0,
+      );
+      final early = now.subtract(const Duration(minutes: 3)).isBefore(today);
+      DateTime at(int i) => early
+          ? today.add(Duration(seconds: i))
+          : now.subtract(Duration(minutes: 4 - i));
       final repo = FakeMessageRepository([
-        msg(3, at: now.subtract(const Duration(minutes: 1))),
-        msg(2, at: now.subtract(const Duration(minutes: 2))),
+        msg(3, at: at(3)),
+        msg(2, at: at(2)),
         msg(
           1,
           type: MessageType.system,
           author: 'system',
           name: '',
-          at: now.subtract(const Duration(minutes: 3)),
+          at: at(1),
         ).copyWith(text: 'Sam joined'),
       ]);
       await openChat(tester, repo);

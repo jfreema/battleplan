@@ -267,7 +267,9 @@ abstract class AuditFilter with _$AuditFilter {
     String? action,
     GroupId? groupId,
 
-    /// From the start of [from] through the end of [until], local days.
+    /// From the instant [from] up to [until]: the start of the first day
+    /// picked and the start of the day after the last, in the viewer's
+    /// zone (SET-7).
     DateTime? from,
     DateTime? until,
   }) = _AuditFilter;

@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart';
@@ -155,7 +156,7 @@ class _PlayCard extends StatelessWidget {
                     l10n.playStepCount(play.steps.length),
                   if (updated != null)
                     DateFormat.MMMd(Localizations.localeOf(context).toString())
-                        .format(updated.toLocal()),
+                        .format(ViewerZone.wallClock(context, updated)),
                 ].join(' · '),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: GumdropColors.of(context).textMuted,

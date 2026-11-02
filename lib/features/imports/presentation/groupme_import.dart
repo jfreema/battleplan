@@ -7,6 +7,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/button_spinner.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart' show formatBytes;
 import 'package:battleplan/features/imports/application/groupme_import.dart';
@@ -398,8 +399,8 @@ class _GroupMeImportState extends ConsumerState<GroupMeImportForm> {
         subtitle: first == null || last == null
             ? l10n.importNoMessages
             : '${l10n.importMessageCount(group.messages.length)} · '
-                  '${dates.formatMediumDate(first.toLocal())} – '
-                  '${dates.formatMediumDate(last.toLocal())}',
+                  '${dates.formatMediumDate(ViewerZone.wallClock(context, first))} – '
+                  '${dates.formatMediumDate(ViewerZone.wallClock(context, last))}',
       ),
       if (group.messages.isNotEmpty)
         box(

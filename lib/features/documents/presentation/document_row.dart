@@ -2,6 +2,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/cover_image.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/presentation/document_actions.dart';
@@ -78,7 +79,11 @@ class DocumentRow extends ConsumerWidget {
             l10n.documentRowLine(
               what,
               doc.uploaderName,
-              documentDate(doc.createdAt, DateTime.now()),
+              documentDate(
+                doc.createdAt,
+                DateTime.now(),
+                zone: ViewerZone.of(context),
+              ),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

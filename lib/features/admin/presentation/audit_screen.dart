@@ -4,9 +4,11 @@ import 'dart:convert';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -49,12 +51,16 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
     String? text(TextEditingController c) =>
         c.text.trim().isEmpty ? null : c.text.trim();
     final group = text(_group);
+    final range = switch (_dates) {
+      final dates? => auditRange(dates, ViewerZone.read(context)),
+      null => null,
+    };
     return AuditFilter(
       actorId: text(_actor),
       action: text(_action),
       groupId: group == null ? null : GroupId(group),
-      from: _dates?.start,
-      until: _dates?.end,
+      from: range?.from,
+      until: range?.until,
     );
   }
 
@@ -69,13 +75,25 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
   }
 
   Future<void> _pickDates() async {
-    final now = DateTime.now();
+    // Days in the viewer's zone (SET-7), up to its today.
+    final now = wallClockIn(ViewerZone.read(context), DateTime.now());
+    final today = DateTime(now.year, now.month, now.day);
+    // Entries are kept for a year (ADMIN-6).
+    final first = DateTime(today.year - 1, today.month, today.day);
+    final dates = _dates;
     final picked = await showDateRangePicker(
       context: context,
-      // Entries are kept for a year (ADMIN-6).
-      firstDate: DateTime(now.year - 1, now.month, now.day),
-      lastDate: now,
-      initialDateRange: _dates,
+      firstDate: first,
+      lastDate: today,
+      currentDate: today,
+      // A range picked before today moved (past midnight, or a new zone)
+      // can fall outside it, which the picker doesn't allow.
+      initialDateRange:
+          dates == null ||
+              dates.start.isBefore(first) ||
+              dates.end.isAfter(today)
+          ? null
+          : dates,
     );
     if (picked == null) return;
     _dates = picked;
@@ -174,6 +192,23 @@ class _Actor extends ConsumerWidget {
 Future<void> _showEntry(BuildContext context, AuditEntry e) =>
     showAdaptiveSheet<void>(context, builder: (_) => _EntryDetails(entry: e));
 
+/// The instants a filter by the picked [dates] runs between: the start of
+/// the first day and the start of the day after the last, in [zone] (the
+/// viewer's, SET-7), or on this device while that's unknown.
+({DateTime from, DateTime until}) auditRange(
+  DateTimeRange dates,
+  String? zone,
+) {
+  DateTime start(int year, int month, int day) => zone == null
+      ? DateTime(year, month, day)
+      : ZonedTime.instantOf(zone, DateTime.utc(year, month, day), 0);
+  final DateTimeRange(start: first, end: last) = dates;
+  return (
+    from: start(first.year, first.month, first.day),
+    until: start(last.year, last.month, last.day + 1),
+  );
+}
+
 class _AuditTable extends StatelessWidget {
   const new({required this.entries});
 
@@ -198,7 +233,15 @@ class _AuditTable extends StatelessWidget {
             DataRow(
               onSelectChanged: (_) => unawaited(_showEntry(context, e)),
               cells: [
-                DataCell(Text(adminDateTime(l10n, e.createdAt))),
+                DataCell(
+                  Text(
+                    adminDateTime(
+                      l10n,
+                      e.createdAt,
+                      zone: ViewerZone.of(context),
+                    ),
+                  ),
+                ),
                 DataCell(_Actor(uid: e.actorId)),
                 DataCell(Text(e.action)),
                 DataCell(Text(e.groupId?.value ?? '—')),
@@ -228,7 +271,11 @@ class _AuditTile extends StatelessWidget {
           _Actor(uid: entry.actorId),
           Text(
             [
-              adminDateTime(l10n, entry.createdAt),
+              adminDateTime(
+                l10n,
+                entry.createdAt,
+                zone: ViewerZone.of(context),
+              ),
               ?entry.groupId?.value,
             ].join(' · '),
           ),
@@ -272,7 +319,12 @@ class _EntryDetails extends StatelessWidget {
           children: [
             Text(e.action, style: theme.textTheme.titleLarge),
             const SizedBox(height: Space.md),
-            row(l10n.adminColWhen, Text(adminDateTime(l10n, e.createdAt))),
+            row(
+              l10n.adminColWhen,
+              Text(
+                adminDateTime(l10n, e.createdAt, zone: ViewerZone.of(context)),
+              ),
+            ),
             row(
               l10n.adminColWho,
               Row(

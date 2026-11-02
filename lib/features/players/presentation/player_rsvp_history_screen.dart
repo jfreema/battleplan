@@ -2,6 +2,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -62,7 +63,17 @@ class _PlayerRsvpHistoryScreenState
         .value
         ?.where((p) => p.id == widget.playerId)
         .firstOrNull;
-    final from = DateTime(_now.year, _now.month - _months, _now.day);
+    // The window starts at midnight in the viewer's zone (SET-7), as the
+    // rows show days.
+    final zone = ref.watch(viewerTimeZoneProvider).value;
+    final today = wallClockIn(zone, _now);
+    final from = zone == null
+        ? DateTime(today.year, today.month - _months, today.day)
+        : ZonedTime.instantOf(
+            zone,
+            DateTime.utc(today.year, today.month - _months, today.day),
+            0,
+          );
     return Scaffold(
       appBar: AppBar(title: Text(l10n.rsvpHistoryTitle)),
       body: !allowed

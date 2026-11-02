@@ -8,6 +8,7 @@ import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -92,8 +93,9 @@ class _ReportCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final when = report.createdAt == null
         ? ''
-        : MaterialLocalizations.of(context)
-              .formatShortDate(report.createdAt!.toLocal());
+        : MaterialLocalizations.of(
+            context,
+          ).formatShortDate(ViewerZone.wallClock(context, report.createdAt!));
     final isMember =
         ref
             .watch(rosterProvider(report.groupId))

@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -22,11 +23,12 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// "2:15 PM" today, "Oct 6" this year, "Oct 6, 2025" before (DOC-1).
-String documentDate(DateTime? when, DateTime now) {
+/// "2:15 PM" today, "Oct 6" this year, "Oct 6, 2025" before (DOC-1), in
+/// the viewer's [zone] (SET-7).
+String documentDate(DateTime? when, DateTime now, {String? zone}) {
   if (when == null) return '';
-  final t = when.toLocal();
-  final n = now.toLocal();
+  final t = wallClockIn(zone, when);
+  final n = wallClockIn(zone, now);
   if (t.year == n.year && t.month == n.month && t.day == n.day) {
     return DateFormat.jm().format(t);
   }

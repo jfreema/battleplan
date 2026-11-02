@@ -8,6 +8,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/calendar_link.dart';
@@ -108,7 +109,10 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
       // The name a new calendar gets: the team's, or the server's own name
       // for all teams.
       final name = _allTeams ? 'Battleplan' : team;
-      final fetched = link.fetchedAt?.toLocal();
+      final fetched = switch (link.fetchedAt) {
+        final at? => ViewerZone.wallClock(context, at),
+        null => null,
+      };
       final adds = [
         (l10n.calendarLinkGoogle, service.googleCalendarAdd(link.token)),
         if (apple) (l10n.calendarLinkApple, service.calendarWebcal(link.token)),

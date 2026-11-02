@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/notifications/presentation/notification_labels.dart';
@@ -83,7 +84,12 @@ class TeamNotificationsScreen extends ConsumerWidget {
       child: Text(title, style: Theme.of(context).textTheme.titleSmall),
     );
 
-    final muted = muteLabel(l10n, membership, now);
+    final muted = muteLabel(
+      l10n,
+      membership,
+      now,
+      zone: ViewerZone.of(context),
+    );
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.teamNotificationsMenu),

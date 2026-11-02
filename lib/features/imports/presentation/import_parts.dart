@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/file_chooser.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/imports/domain/event_import.dart';
 import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -49,7 +50,7 @@ String _when(BuildContext context, ImportedEventSample e) {
   }
   final wall = ZonedTime.isKnown(e.timeZone)
       ? ZonedTime.wallClock(e.timeZone, e.start)
-      : e.start.toLocal();
+      : ViewerZone.wallClock(context, e.start);
   return DateFormat.MMMEd(locale).add_jm().format(wall);
 }
 
@@ -81,9 +82,9 @@ class EventPreview extends StatelessWidget {
         if (r.first case final first?)
           Text(
             r.last == null || r.last == first
-                ? dates.formatMediumDate(first.toLocal())
-                : '${dates.formatMediumDate(first.toLocal())} – '
-                      '${dates.formatMediumDate(r.last!.toLocal())}',
+                ? dates.formatMediumDate(ViewerZone.wallClock(context, first))
+                : '${dates.formatMediumDate(ViewerZone.wallClock(context, first))} – '
+                      '${dates.formatMediumDate(ViewerZone.wallClock(context, r.last!))}',
           ),
         if (lines.isNotEmpty) Text(lines.join(' · ')),
         const SizedBox(height: Space.sm),

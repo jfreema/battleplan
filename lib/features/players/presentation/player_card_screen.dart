@@ -9,6 +9,7 @@ import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -602,9 +603,11 @@ class _UpcomingRsvps extends ConsumerWidget {
             title: Text(e.title),
             subtitle: Text(
               e.allDay
-                  ? dates.formatMediumDate(e.startAt)
-                  : '${dates.formatMediumDate(e.startAt.toLocal())} · '
-                        '${dates.formatTimeOfDay(TimeOfDay.fromDateTime(e.startAt.toLocal()))}',
+                  ? dates.formatMediumDate(
+                      dayOf(e, ViewerZone.of(context) ?? e.timeZone),
+                    )
+                  : '${dates.formatMediumDate(ViewerZone.wallClock(context, e.startAt))} · '
+                        '${dates.formatTimeOfDay(TimeOfDay.fromDateTime(ViewerZone.wallClock(context, e.startAt)))}',
             ),
             trailing: Text(switch (answers[e.id.value]?.status) {
               RsvpStatus.going => l10n.rsvpGoing,

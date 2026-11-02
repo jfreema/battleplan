@@ -13,6 +13,8 @@ import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
+import 'package:battleplan/features/schedule/application/providers.dart'
+    show viewerTimeZoneProvider;
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -65,14 +67,15 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     unawaited(_loadZones());
   }
 
+  /// A new team starts in the creator's zone (SET-7): the one they
+  /// picked, which stays put while they travel, or this device's.
   Future<void> _loadZones() async {
-    final tz = ref.read(timeZonesProvider);
-    final device = await tz.deviceTimeZone();
-    final zones = await tz.available();
+    final mine = await ref.read(viewerTimeZoneProvider.future);
+    final zones = await ref.read(timeZonesProvider).available();
     if (!mounted) return;
     setState(() {
-      _timeZone = device;
-      _zones = TimeZoneNames.ordered(zones, keep: [device]);
+      _timeZone = mine;
+      _zones = TimeZoneNames.ordered(zones, keep: [mine]);
     });
   }
 

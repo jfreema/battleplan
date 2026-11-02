@@ -24,6 +24,10 @@ abstract interface class UserRepository {
   /// Saves the theme to the account so it follows the person (SET-2).
   Future<void> setThemeMode(String uid, ThemePreference mode);
 
+  /// Saves the time zone times show in (SET-7), on every device; null is
+  /// Automatic, the device's zone.
+  Future<void> setTimeZone(String uid, String? zone);
+
   /// Turns one global notification switch on or off for every team
   /// (NOTIF-4). The server reads it before each push.
   Future<void> setNotificationPref(

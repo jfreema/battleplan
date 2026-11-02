@@ -376,18 +376,11 @@ class FunctionsAdminRepository implements AdminRepository {
     if (filter.from case final from?) {
       q = q.where(
         'createdAt',
-        isGreaterThanOrEqualTo: Timestamp.fromDate(
-          DateTime(from.year, from.month, from.day),
-        ),
+        isGreaterThanOrEqualTo: Timestamp.fromDate(from),
       );
     }
     if (filter.until case final until?) {
-      q = q.where(
-        'createdAt',
-        isLessThan: Timestamp.fromDate(
-          DateTime(until.year, until.month, until.day + 1),
-        ),
-      );
+      q = q.where('createdAt', isLessThan: Timestamp.fromDate(until));
     }
     q = q.orderBy('createdAt', descending: true);
     if (after != null) {

@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -180,7 +181,15 @@ class _TeamsTable extends StatelessWidget {
                 DataCell(Text(sportName(l10n, t.sport))),
                 DataCell(Text(t.ownerName)),
                 DataCell(Text('${t.memberCount}')),
-                DataCell(Text(adminDate(l10n, t.lastMessageAt))),
+                DataCell(
+                  Text(
+                    adminDate(
+                      l10n,
+                      t.lastMessageAt,
+                      zone: ViewerZone.of(context),
+                    ),
+                  ),
+                ),
                 DataCell(Text(formatBytes(t.storageBytes))),
                 DataCell(TeamStatusChip(status: t.status)),
               ],
@@ -210,7 +219,9 @@ class _TeamTile extends StatelessWidget {
           if (team.ownerName.isNotEmpty) team.ownerName,
           l10n.membersCount(team.memberCount),
           formatBytes(team.storageBytes),
-          l10n.adminLastActive(adminDate(l10n, team.lastMessageAt)),
+          l10n.adminLastActive(
+            adminDate(l10n, team.lastMessageAt, zone: ViewerZone.of(context)),
+          ),
         ].join(' · '),
       ),
       trailing: TeamStatusChip(status: team.status),

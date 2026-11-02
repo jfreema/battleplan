@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
@@ -215,14 +216,17 @@ Future<bool> confirmAndRun(
   return await runAdminAction(context, action, done: done);
 }
 
-/// "Oct 6, 2026", or a dash for no date.
-String adminDate(AppLocalizations l10n, DateTime? d) =>
-    d == null ? '—' : DateFormat.yMMMd(l10n.localeName).format(d.toLocal());
-
-/// "Oct 6, 2026, 3:04 PM", or a dash.
-String adminDateTime(AppLocalizations l10n, DateTime? d) => d == null
+/// "Oct 6, 2026", or a dash for no date; in the viewer's [zone] (SET-7).
+String adminDate(AppLocalizations l10n, DateTime? d, {String? zone}) =>
+    d == null
     ? '—'
-    : DateFormat.yMMMd(l10n.localeName).add_jm().format(d.toLocal());
+    : DateFormat.yMMMd(l10n.localeName).format(wallClockIn(zone, d));
+
+/// "Oct 6, 2026, 3:04 PM", or a dash; in the viewer's [zone] (SET-7).
+String adminDateTime(AppLocalizations l10n, DateTime? d, {String? zone}) =>
+    d == null
+    ? '—'
+    : DateFormat.yMMMd(l10n.localeName).add_jm().format(wallClockIn(zone, d));
 
 /// A small colored label: a team's or a person's status.
 class StatusChip extends StatelessWidget {

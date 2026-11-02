@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart' show PageCursor;
@@ -18,6 +19,7 @@ import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/rsvp_repository.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ProviderListenableSelect;
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -62,10 +64,57 @@ Stream<List<CalendarLink>> myCalendarLinks(Ref ref) {
   return ref.watch(calendarLinkRepositoryProvider).watchMine(UserId(uid));
 }
 
-/// The viewer's own time zone: times show in it (SCHED-9).
+/// This device's time zone, which Automatic follows (SET-7). Asked again
+/// on each return to the app and each minute while it's open, so a trip
+/// shows whether the app was in the background or on screen.
 @Riverpod(keepAlive: true)
-Future<String> viewerTimeZone(Ref ref) =>
-    ref.watch(timeZonesProvider).deviceTimeZone();
+Future<String> deviceTimeZone(Ref ref) async {
+  final zones = ref.watch(timeZonesProvider);
+  String? seen;
+  Future<void> check() async {
+    final zone = await zones.deviceTimeZone();
+    if (ref.mounted && seen != null && zone != seen) ref.invalidateSelf();
+  }
+
+  final lifecycle = AppLifecycleListener(onResume: () => unawaited(check()));
+  final timer = Timer.periodic(
+    const Duration(minutes: 1),
+    (_) => unawaited(check()),
+  );
+  ref.onDispose(() {
+    lifecycle.dispose();
+    timer.cancel();
+  });
+  final zone = seen = await zones.deviceTimeZone();
+  return ZonedTime.isKnown(zone) ? zone : zoneLikeDevice(DateTime.now());
+}
+
+/// A zone with this device's offset every day of the coming year, for a
+/// device zone the database doesn't know ("Etc/Unknown"), so times still
+/// show in the device's time and not in UTC. US and Canadian zones come
+/// first. [offsetAt] is the device's offset at an instant.
+String zoneLikeDevice(
+  DateTime now, {
+  Duration Function(DateTime instant) offsetAt = _deviceOffsetAt,
+}) {
+  final days = [for (var d = 0; d <= 365; d++) now.add(Duration(days: d))];
+  return TimeZoneNames.ordered(ZonedTime.names, at: now).firstWhere(
+    (zone) => days.every((t) => ZonedTime.offsetAt(zone, t) == offsetAt(t)),
+    orElse: () => 'Etc/UTC',
+  );
+}
+
+Duration _deviceOffsetAt(DateTime instant) => instant.toLocal().timeZoneOffset;
+
+/// The viewer's time zone: every time shows in it (SCHED-9). The one they
+/// picked under Profile → Time zone (SET-7), which stays put as they
+/// travel, or this device's (Automatic, and until the profile arrives).
+@Riverpod(keepAlive: true)
+Future<String> viewerTimeZone(Ref ref) async {
+  final picked = ref.watch(myProfileProvider.select((p) => p.value?.timeZone));
+  if (picked != null && ZonedTime.isKnown(picked)) return picked;
+  return await ref.watch(deviceTimeZoneProvider.future);
+}
 
 /// The instant today began in [zone]: Upcoming starts here, Past ends here.
 DateTime startOfDay(String zone, DateTime now) {

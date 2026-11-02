@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/admin/presentation/admin_widgets.dart';
@@ -114,14 +116,23 @@ class _PlatformSettingsScreenState
     if (mounted) setState(() => _saving = false);
   }
 
+  /// The day and time it ends, in the viewer's zone (SET-7).
   Future<void> _pickEnd() async {
-    final now = DateTime.now();
-    final initial = _expiresAt ?? now.add(const Duration(days: 7));
+    final zone = ViewerZone.read(context);
+    final now = wallClockIn(zone, DateTime.now());
+    final initial = wallClockIn(
+      zone,
+      _expiresAt ?? DateTime.now().add(const Duration(days: 7)),
+    );
+    final today = DateTime(now.year, now.month, now.day);
     final day = await showDatePicker(
       context: context,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: now.add(const Duration(days: 366)),
-      initialDate: initial.isBefore(now) ? now : initial,
+      firstDate: today,
+      lastDate: DateTime(now.year, now.month, now.day + 366),
+      initialDate: initial.isBefore(now)
+          ? today
+          : DateTime(initial.year, initial.month, initial.day),
+      currentDate: today,
     );
     if (day == null || !mounted) return;
     final time = await showTimePicker(
@@ -130,13 +141,13 @@ class _PlatformSettingsScreenState
     );
     if (time == null || !mounted) return;
     setState(
-      () => _expiresAt = DateTime(
-        day.year,
-        day.month,
-        day.day,
-        time.hour,
-        time.minute,
-      ),
+      () => _expiresAt = zone == null
+          ? DateTime(day.year, day.month, day.day, time.hour, time.minute)
+          : ZonedTime.instantOf(
+              zone,
+              DateTime.utc(day.year, day.month, day.day),
+              time.hour * 60 + time.minute,
+            ),
     );
   }
 
@@ -302,7 +313,11 @@ class _PlatformSettingsScreenState
                         subtitle: Text(
                           _expiresAt == null
                               ? l10n.adminBannerNoEnd
-                              : adminDateTime(l10n, _expiresAt),
+                              : adminDateTime(
+                                  l10n,
+                                  _expiresAt,
+                                  zone: ViewerZone.of(context),
+                                ),
                           style: _problems.contains(ConfigProblem.bannerExpiry)
                               ? TextStyle(color: theme.colorScheme.error)
                               : null,

@@ -73,6 +73,10 @@ class FirestoreUserRepository implements UserRepository {
       _update(uid, {'themeMode': mode.value});
 
   @override
+  Future<void> setTimeZone(String uid, String? zone) =>
+      _update(uid, {'timeZone': zone});
+
+  @override
   Future<void> setNotificationPref(
     String uid,
     NotificationPref pref, {
@@ -144,6 +148,10 @@ UserProfile userProfileFromFirestore(String uid, Map<String, dynamic> d) =>
       themeMode:
           ThemePreference.tryParse(d['themeMode'] as String?) ??
           ThemePreference.system,
+      timeZone: switch (d['timeZone']) {
+        final String zone when zone.isNotEmpty => zone,
+        _ => null,
+      },
       signInMethods: [
         for (final m in (d['signInMethods'] as List?) ?? const []) '$m',
       ],

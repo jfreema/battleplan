@@ -10,9 +10,11 @@ import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
+import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/polls/application/providers.dart';
@@ -137,7 +139,14 @@ class _PollCardState extends ConsumerState<PollCard> {
         ? l10n.pollClosed
         : value.closesAt == null
         ? null
-        : l10n.pollClosesAt(closesLabel(l10n, value.closesAt!, DateTime.now()));
+        : l10n.pollClosesAt(
+            closesLabel(
+              l10n,
+              value.closesAt!,
+              DateTime.now(),
+              zone: ViewerZone.of(context),
+            ),
+          );
 
     return frame(
       Builder(
@@ -317,11 +326,18 @@ class _PollCardState extends ConsumerState<PollCard> {
 }
 
 /// When a poll closes, short: "5:00 PM" today, "Fri 5:00 PM" this week,
-/// "Fri, Oct 23 5:00 PM" further out.
-String closesLabel(AppLocalizations l10n, DateTime at, DateTime now) {
-  final local = at.toLocal();
-  final today = DateTime(now.year, now.month, now.day);
-  final day = DateTime(local.year, local.month, local.day);
+/// "Fri, Oct 23 5:00 PM" further out; in the viewer's [zone] (SET-7).
+String closesLabel(
+  AppLocalizations l10n,
+  DateTime at,
+  DateTime now, {
+  String? zone,
+}) {
+  final local = wallClockIn(zone, at);
+  final wallNow = wallClockIn(zone, now);
+  // UTC dates, so a day that's 23 hours long here still counts as one.
+  final today = DateTime.utc(wallNow.year, wallNow.month, wallNow.day);
+  final day = DateTime.utc(local.year, local.month, local.day);
   final days = day.difference(today).inDays;
   final format = days == 0
       ? DateFormat.jm(l10n.localeName)
