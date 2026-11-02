@@ -1168,6 +1168,8 @@ class _AuthorAvatar extends ConsumerWidget {
       container: true,
       button: true,
       label: AppLocalizations.of(context).openProfile(message.authorName),
+      // Its own tap, which leaving out the photo's parts would leave out.
+      onTap: tap,
       excludeSemantics: true,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,

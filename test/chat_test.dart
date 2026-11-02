@@ -704,6 +704,13 @@ void main() {
       expect(repo.pins, ['m1 pinned']);
       expect(find.text('Pinned message'), findsOneWidget);
       expect(find.text('Sam Rivera: Message 1'), findsOneWidget);
+      // A screen reader can open it too.
+      final semantics = tester.ensureSemantics();
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Pinned message'))),
+        isSemantics(isButton: true, hasTapAction: true),
+      );
+      semantics.dispose();
       expect(find.textContaining('Pinned', findRichText: true), findsWidgets);
 
       await tester.longPress(find.text('Message 1').last);

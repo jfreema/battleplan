@@ -85,20 +85,23 @@ class TeamPhotosScreen extends ConsumerWidget {
               }
               final p = photos[i];
               final label = l10n.photoFrom(p.message.authorName);
+              void open() => unawaited(
+                PhotoViewer.open(context, [for (final q in photos) q.photo], i),
+              );
               return Semantics(
                 button: true,
                 label: label,
+                // Its own tap: leaving out the square's parts leaves out
+                // the InkWell's tap too, and a screen reader couldn't open
+                // the photo.
+                onTap: open,
                 excludeSemantics: true,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(Corners.chip),
                   child: Material(
                     type: MaterialType.transparency,
                     child: InkWell(
-                      onTap: () => unawaited(
-                        PhotoViewer.open(context, [
-                          for (final q in photos) q.photo,
-                        ], i),
-                      ),
+                      onTap: open,
                       child: StoredPhoto(
                         attachment: p.photo,
                         decodeWidth: tile,

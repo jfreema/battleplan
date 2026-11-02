@@ -294,6 +294,8 @@ class _Tile extends StatelessWidget {
       selected: selected,
       inMutuallyExclusiveGroup: true,
       label: label,
+      // Its own tap, which leaving out the choice's parts would leave out.
+      onTap: onTap,
       excludeSemantics: true,
       child: Material(
         color: filled ? c.surface : Colors.transparent,

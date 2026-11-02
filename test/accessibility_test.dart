@@ -187,6 +187,13 @@ void main() {
         tester.getSemantics(find.bySemanticsLabel('Switch team: Thunder U14')),
         isSemantics(isButton: true, hasTapAction: true),
       );
+      // So does an author's photo, which opens their page (TEAM-15).
+      expect(
+        tester.getSemantics(
+          find.bySemanticsLabel(RegExp(r"^Open .*'s profile$")).first,
+        ),
+        isSemantics(isButton: true, hasTapAction: true),
+      );
       handle.dispose();
     });
 

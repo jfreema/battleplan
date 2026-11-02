@@ -85,6 +85,13 @@ void main() {
       ],
     );
     expect(find.bySemanticsLabel('Photo from Coach Lee'), findsOneWidget);
+    // A screen reader can open it too.
+    final semantics = tester.ensureSemantics();
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Photo from Coach Lee')),
+      isSemantics(isButton: true, hasTapAction: true),
+    );
+    semantics.dispose();
     await tester.tap(find.byType(StoredPhoto).last);
     await tester.pumpAndSettle();
     expect(find.byType(PhotoViewer), findsOneWidget);

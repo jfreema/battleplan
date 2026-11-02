@@ -2805,6 +2805,14 @@ void main() {
       await tester.ensureVisible(pattern);
       await tester.pumpAndSettle();
       expect(find.text('Plus'), findsNothing);
+      // A screen reader can pick one too.
+      final semantics = tester.ensureSemantics();
+      await tester.pump();
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Sprinkles')),
+        isSemantics(isButton: true, hasTapAction: true, isSelected: false),
+      );
+      semantics.dispose();
       await tester.tap(pattern);
       await tester.pumpAndSettle();
       expect(groupRepo.savedTheme?.background, ChatBackground.pattern);

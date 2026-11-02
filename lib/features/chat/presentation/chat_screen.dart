@@ -1089,11 +1089,19 @@ class _PinnedBarState extends ConsumerState<_PinnedBar> {
             if (message.authorName.isNotEmpty) message.authorName,
             quoteText(l10n, message.type, message.text),
           ].where((p) => p.isNotEmpty).join(': ');
+    void open() {
+      widget.onOpen(id);
+      setState(() => _index = index + 1);
+    }
+
     // A card (§3.5): a lemon pin disc, the label in lemon caps type, the
     // message on one line, and a chevron.
     return Semantics(
       button: true,
       label: l10n.pinnedBarLabel(label, preview),
+      // Its own tap: leaving out the bar's parts leaves out the InkWell's
+      // tap too, and a screen reader couldn't open the pin.
+      onTap: open,
       excludeSemantics: true,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, 0),
@@ -1114,10 +1122,7 @@ class _PinnedBarState extends ConsumerState<_PinnedBar> {
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
-                  onTap: () {
-                    widget.onOpen(id);
-                    setState(() => _index = index + 1);
-                  },
+                  onTap: open,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(7, 7, 12, 7),
                     child: Row(
