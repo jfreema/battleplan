@@ -11,9 +11,11 @@ import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
+import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -469,6 +471,22 @@ void main() {
           hasLength(1),
           reason: family,
         );
+      }
+    });
+
+    test('every sticker is in the letters Black Ops One is cut to', () {
+      // tools/cut_fonts.sh keeps A–Z and the space; any other letter would
+      // draw in another font.
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      for (var tab = 0; tab < 4; tab++) {
+        for (var month = 1; month <= 12; month++) {
+          final label = TeamSticker.labelFor(l10n, tab, DateTime(2026, month));
+          expect(
+            label.toUpperCase(),
+            matches(RegExp(r'^[A-Z ]+$')),
+            reason: label,
+          );
+        }
       }
     });
   });

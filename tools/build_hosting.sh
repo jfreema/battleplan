@@ -124,6 +124,11 @@ grep -q '<base href="/app/">' "$app/index.html" || {
   exit 1
 }
 
+# Firebase's own scripts, which the app loads from www.gstatic.com once it
+# runs and its first frame waits for, get modulepreload links in index.html,
+# so browsers fetch them alongside the app (ARCH §5.6).
+dart run tools/preload_firebase.dart "$app/index.html"
+
 # The web engine's fallback fonts (Roboto, the emoji, and Noto for other
 # scripts), served from /app/fonts/fallback/ so browsers never fetch them
 # from fonts.gstatic.com; web/flutter_bootstrap.js points the engine there

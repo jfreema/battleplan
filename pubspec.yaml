@@ -77,7 +77,8 @@ flutter:
   # (lib/core/design/arena/; an asset, not a font, so the web app doesn't
   # download it before the first frame: loadArenaFont loads it when Arena is
   # used). Static instances from Google Fonts; each is OFL 1.1, whose text
-  # ships with it and shows under Licenses.
+  # ships with it and shows under Licenses. Black Ops One and Nunito are cut
+  # to the letters the app draws in them (tools/cut_fonts.sh).
   assets:
     - assets/fonts/lilita_one/OFL.txt
     - assets/fonts/fredoka/OFL.txt

@@ -10,11 +10,12 @@ abstract final class AppFonts {
   /// Buttons, labels, tabs, chips, and people's names.
   static const String label = 'Fredoka';
 
-  /// Body text, messages, and inputs.
+  /// Body text, messages, and inputs. Cut without Cyrillic, which draws in
+  /// the fallback fonts (tools/cut_fonts.sh).
   static const String body = 'Nunito';
 
   /// Stencil stickers, like the tag under the team's name: capitals only,
-  /// never under 12 px.
+  /// never under 12 px. Cut to A–Z and the space (tools/cut_fonts.sh).
   static const String sticker = 'Black Ops One';
 }
 
