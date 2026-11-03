@@ -117,6 +117,12 @@ void main() {
       await pumpTeam(tester, theme: theme);
       await goTo(tester, '/g/a/roster');
     },
+    // Start a new season (TEAM-16), from Team admin.
+    'new season':
+        (WidgetTester tester, {required ThemePreference theme}) async {
+          await pumpTeam(tester, theme: theme);
+          await goTo(tester, '/g/a/season');
+        },
     'settings': (WidgetTester tester, {required ThemePreference theme}) async {
       await pumpTeam(tester, theme: theme);
       await goTo(tester, '/settings');

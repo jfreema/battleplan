@@ -37,6 +37,7 @@ import 'package:battleplan/features/groups/presentation/enter_code_screen.dart';
 import 'package:battleplan/features/groups/presentation/invite_screen.dart';
 import 'package:battleplan/features/groups/presentation/join_screen.dart';
 import 'package:battleplan/features/groups/presentation/media_screen.dart';
+import 'package:battleplan/features/groups/presentation/new_season_screen.dart';
 import 'package:battleplan/features/groups/presentation/person_screen.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_colors.dart';
@@ -640,6 +641,13 @@ GoRouter router(Ref ref) {
             path: 'media',
             builder: (_, state) =>
                 MediaScreen(groupId: GroupId(state.pathParameters['groupId']!)),
+          ),
+          // Start a new season (TEAM-16), from Team admin's owner actions.
+          GoRoute(
+            path: 'season',
+            builder: (_, state) => NewSeasonScreen(
+              groupId: GroupId(state.pathParameters['groupId']!),
+            ),
           ),
           GoRoute(
             path: 'roster',

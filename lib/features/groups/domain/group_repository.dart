@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/domain/season.dart';
 
 abstract interface class GroupRepository {
   /// A single team. Emits null if it's gone or the caller can't read it.
@@ -50,6 +51,17 @@ abstract interface class GroupRepository {
   /// Makes a basic group a team with [sport] (TEAM-14): players,
   /// guardians, coaches, and Plays. Owner only; there's no way back.
   Future<void> convertToTeam(GroupId id, Sport sport);
+
+  /// Starts a new season from team [id] (TEAM-16): a new team named
+  /// [name] with this one's look and settings and the people [choices]
+  /// bring, already on it; then this team is archived. Owner only, held to
+  /// [createGroup]'s checks. [requestId] works as it does there.
+  Future<NewSeason> startNewSeason(
+    GroupId id, {
+    required String name,
+    required SeasonChoices choices,
+    String? requestId,
+  });
 
   /// Permanently deletes the team; [confirmName] must match (TEAM-9).
   Future<void> deleteGroup(GroupId id, String confirmName);

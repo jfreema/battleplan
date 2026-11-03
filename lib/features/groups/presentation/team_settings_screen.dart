@@ -746,6 +746,18 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                           subtitleLines: 2,
                           onTap: () => unawaited(_convert(group)),
                         ),
+                      // A new team for the next season (TEAM-16): the
+                      // owner's, since the new team is theirs.
+                      if (isOwner && !group.isArchived)
+                        SettingsRow(
+                          icon: AppIcons.newSeason,
+                          title: l10n.newSeason,
+                          subtitle: l10n.newSeasonHelp,
+                          subtitleLines: 2,
+                          onTap: () => unawaited(
+                            context.push('/g/${group.id.value}/season'),
+                          ),
+                        ),
                       SettingsRow(
                         icon: AppIcons.key,
                         title: l10n.transferOwnership,

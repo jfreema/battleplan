@@ -58,7 +58,7 @@ export async function anonymizeAuthor(uid: string): Promise<void> {
   }
 }
 
-export type SystemEventKind = 'joined' | 'left' | 'removed' | 'madeAdmin' | 'renamed' | 'madeTeam';
+export type SystemEventKind = 'joined' | 'left' | 'removed' | 'madeAdmin' | 'renamed' | 'madeTeam' | 'newSeason';
 
 /**
  * Posts a small centered line in a team's chat (CHAT-10): "Sam joined",

@@ -30,6 +30,7 @@ import 'package:battleplan/features/groups/domain/invite_repository.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
 import 'package:battleplan/features/groups/domain/media_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/domain/season.dart';
 import 'package:battleplan/features/imports/domain/chat_import.dart';
 import 'package:battleplan/features/imports/domain/event_import.dart';
 import 'package:battleplan/features/notifications/domain/device_repository.dart';
@@ -465,6 +466,40 @@ class FakeGroupRepository implements GroupRepository {
   Future<void> deleteGroup(GroupId id, String confirmName) async =>
       updates.add('delete $confirmName');
 
+  /// Each new season started: from which team, its name, and what came
+  /// (TEAM-16).
+  final List<({String from, String name, SeasonChoices choices})> seasons = [];
+
+  /// Set to refuse starting a season the way the server would.
+  AppFailure? seasonFailure;
+
+  /// How many people the next season can't bring (TEAM-2).
+  int seasonLeftOut = 0;
+
+  /// Makes the new team, the caller on it, and archives the old one
+  /// pointing to it, as `startNewSeason` does (TEAM-16).
+  @override
+  Future<NewSeason> startNewSeason(
+    GroupId id, {
+    required String name,
+    required SeasonChoices choices,
+    String? requestId,
+  }) async {
+    final failure = seasonFailure;
+    if (failure != null) throw failure;
+    seasons.add((from: id.value, name: name, choices: choices));
+    final made = GroupId('season${seasons.length}');
+    final old = groups[id.value] ?? testGroup(id.value, name);
+    setGroup(old.copyWith(id: made, name: name));
+    setGroup(old.copyWith(archivedAt: DateTime(2026, 11), nextSeasonId: made));
+    final uid = me?.call() ?? 'me';
+    final mine = members?.memberships
+        .where((m) => m.groupId == id && m.uid.value == uid)
+        .firstOrNull;
+    if (mine != null) members?.join(mine.copyWith(groupId: made));
+    return (groupId: made, leftOut: seasonLeftOut);
+  }
+
   final List<String> created = [];
 
   /// The color each created team was given, null for none (TEAM-1).
@@ -674,6 +709,12 @@ class FakeMemberRepository implements MemberRepository {
     await for (final _ in _changes.stream) {
       yield theirs();
     }
+  }
+
+  /// Someone is on a team now, as the server writes it.
+  void join(Membership membership) {
+    memberships.add(membership);
+    _changes.add(null);
   }
 
   /// Both people's memberships of a new conversation, as openDirectChat

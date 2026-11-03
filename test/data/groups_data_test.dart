@@ -6,6 +6,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/data/firestore_group_repository.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/groups/domain/season.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_storage_mocks/firebase_storage_mocks.dart';
@@ -305,6 +306,67 @@ void main() {
         functions.fail('leaveGroup', code, message);
         await expectLater(repo.leave(_g), throwsA(type));
       }
+    });
+
+    test('starts a new season through startNewSeason (TEAM-16)', () async {
+      final repo = FirestoreGroupRepository(db, functions, storage);
+      functions.handlers['startNewSeason'] = (_) => {
+        'groupId': 'spring',
+        'leftOut': 2,
+      };
+      final made = await repo.startNewSeason(
+        _g,
+        name: 'Thunder Spring',
+        choices: const SeasonChoices(staff: false, documents: true),
+        requestId: 'attempt-0001',
+      );
+      expect(made, (groupId: const GroupId('spring'), leftOut: 2));
+      expect(functions.lastData('startNewSeason'), {
+        'groupId': 'g1',
+        'name': 'Thunder Spring',
+        'players': true,
+        'staff': false,
+        'members': true,
+        'documents': true,
+        'plays': false,
+        'requestId': 'attempt-0001',
+      });
+      // A retry of one that finished says nothing of who was left out.
+      functions.handlers['startNewSeason'] = (_) => {'groupId': 'spring'};
+      expect(
+        (await repo.startNewSeason(
+          _g,
+          name: 'Thunder Spring',
+          choices: const SeasonChoices(),
+        )).leftOut,
+        0,
+      );
+      for (final (code, message, type) in [
+        ('failed-precondition', 'email-not-verified', isA<EmailNotVerified>()),
+        ('failed-precondition', 'too-many-teams', isA<TooManyTeams>()),
+        ('failed-precondition', 'team-archived', isA<PermissionDenied>()),
+        ('resource-exhausted', 'slow', isA<RateLimited>()),
+        ('permission-denied', 'no', isA<PermissionDenied>()),
+        ('invalid-argument', 'bad', isA<InvalidInput>()),
+        ('unavailable', 'offline', isA<Offline>()),
+        ('internal', 'boom', isA<UnknownFailure>()),
+      ]) {
+        functions.fail('startNewSeason', code, message);
+        await expectLater(
+          repo.startNewSeason(_g, name: 'X', choices: const SeasonChoices()),
+          throwsA(type),
+        );
+      }
+    });
+
+    test('reads the team its next season is (TEAM-16)', () async {
+      final repo = FirestoreGroupRepository(db, functions, storage);
+      expect((await repo.watchGroup(_g).first)!.nextSeasonId, isNull);
+      await db.doc('groups/g1').update({'nextSeasonId': 'spring'});
+      expect(
+        (await repo.watchGroup(_g).first)!.nextSeasonId,
+        const GroupId('spring'),
+      );
     });
   });
 

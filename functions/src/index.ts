@@ -49,6 +49,7 @@ export {
   listTeamMedia,
   removeMember,
   resendSetupEmail,
+  startNewSeason,
   transferOwnership,
   updateGroupMember,
 } from './teams/handlers.js';

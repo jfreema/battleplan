@@ -81,6 +81,9 @@ abstract final class AppIcons {
   static const IconData suspend = Symbols.pause_circle_rounded;
   static const IconData archive = Symbols.archive_rounded;
   static const IconData unarchive = Symbols.unarchive_rounded;
+
+  /// Start a new season (TEAM-16): a calendar going round again.
+  static const IconData newSeason = Symbols.event_repeat_rounded;
   static const IconData key = Symbols.key_rounded;
   static const IconData homeScreen = Symbols.add_to_home_screen_rounded;
   static const IconData location = Symbols.location_on_rounded;

@@ -42,6 +42,7 @@ import {
   setGroupArchived,
 } from './service.js';
 import { deleteMedia, listMedia } from './media.js';
+import { copyTeamForSeason, seasonCopyId } from './season.js';
 import { removeGuardianFromTeam } from '../players/service.js';
 import { setGroupQuota, updateStorageAlert } from './storage.js';
 
@@ -118,6 +119,126 @@ export const createGroup = onCall({ secrets: [resendApiKey] }, async (request) =
     ownerEmail: user.email ?? '',
   });
   return { groupId };
+});
+
+const StartNewSeasonInput = z.object({
+  groupId: z.string().min(1),
+  name: z.string().trim().min(1).max(Limits.groupNameMax),
+  // Who comes along (TEAM-16): the players with their links, the admins and
+  // coaches, and everyone else; and whether the documents and plays do.
+  players: z.boolean(),
+  staff: z.boolean(),
+  members: z.boolean(),
+  documents: z.boolean(),
+  plays: z.boolean(),
+  // The app's ID for this attempt, as for createGroup.
+  requestId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional(),
+});
+
+/**
+ * Starts a new season from a team (TEAM-16), by its owner, on an open team:
+ * a new team named [name] that copies the old one's look and settings, with
+ * the people the owner brings already on it, told it's ready; then a line
+ * in each chat, the old team archived (TEAM-9), and an audit entry. It
+ * makes a team, so it's held to createGroup's checks. With a requestId,
+ * a retry of an attempt that stopped partway finishes it, and one of an
+ * attempt that finished gets its team back.
+ */
+export const startNewSeason = onCall({ secrets: [resendApiKey], timeoutSeconds: 540 }, async (request) => {
+  const uid = requireAuth(request);
+  const input = parse(StartNewSeasonInput, request.data);
+  const groups = db().collection(Collections.groups);
+  const newId = teamIdFor(uid, input.requestId ?? randomUUID());
+  const made = await groups.doc(newId).get();
+  const retry = made.exists && made.get('createdBy') === uid && made.get('previousSeasonId') === input.groupId;
+  if (made.exists && !retry) throw new HttpsError('invalid-argument', 'Use a new requestId.');
+  if (retry && (await groups.doc(input.groupId).get()).get('nextSeasonId') === newId) {
+    return { groupId: newId, leftOut: 0 };
+  }
+  // Only the owner: the new team is theirs. An attempt that stopped after
+  // archiving the old team finishes on the archived team.
+  await requireTeamOwner(input.groupId, uid, false, { allowArchived: retry });
+
+  const config = await groupCreationConfig();
+  const superAdmin = request.auth?.token.superAdmin === true;
+  const user = await auth().getUser(uid);
+  if (!retry) {
+    if (!user.emailVerified) throw new HttpsError('failed-precondition', 'email-not-verified');
+    if (!config.allowUserGroupCreation && !superAdmin) {
+      throw new HttpsError('permission-denied', 'group-creation-off');
+    }
+    if (!superAdmin) await consumeRateLimit(uid, 'createGroup', config.maxGroupsCreatedPerUserPerDay);
+    await requireRoomForAnotherTeam(uid, Limits.groupsPerUserMax);
+  }
+
+  const old = await groups.doc(input.groupId).get();
+  const oldName = String(old.get('name') ?? '');
+  const copy = await copyTeamForSeason(input.groupId, newId, uid, input.name, input, config.defaultStorageQuotaMb);
+  const name = await displayNameOf(uid, 'The owner');
+  const newName = input.name.trim();
+  // The lines' IDs come from the new team's, so a retry posts each once.
+  await postSystemMessage(
+    input.groupId,
+    'newSeason',
+    `${name} started the next season: ${newName}`,
+    uid,
+    newId,
+    seasonCopyId(newId, `line:${input.groupId}`),
+  );
+  await postSystemMessage(
+    newId,
+    'newSeason',
+    `${name} started this season from ${oldName}`,
+    uid,
+    input.groupId,
+    seasonCopyId(newId, `line:${newId}`),
+  );
+  const before = await setGroupArchived(input.groupId, true);
+  await audit({
+    actorId: uid,
+    action: 'startNewSeason',
+    groupId: input.groupId,
+    targetType: 'group',
+    targetId: newId,
+    before: { name: oldName, ...before },
+    after: {
+      groupId: newId,
+      name: newName,
+      archived: true,
+      members: copy.uids.length,
+      players: copy.players,
+      documents: copy.documents,
+      plays: copy.plays,
+      leftOut: copy.leftOut.length,
+    },
+  });
+  // Everyone it brought, not its owner, who did it (NOTIF-2).
+  await trySend({
+    kind: 'addedToTeam',
+    groupId: newId,
+    recipients: { members: true },
+    actor: { uid, name },
+    target: { type: 'group', id: newId },
+    route: `/g/${newId}/chat`,
+    params: { actorName: name },
+    body: `${name} started the new season, and you're on the team`,
+    dedupeKey: `${newId}_season`,
+    teamName: newName,
+  });
+  // Last: a retry that finds it knows the season finished.
+  await groups.doc(input.groupId).update({ nextSeasonId: newId });
+  // ADMIN-9: super admins hear about every new team.
+  if (!retry) {
+    await alertTeamCreated({
+      groupId: newId,
+      name: newName,
+      kind: String(old.get('kind') ?? 'team'),
+      sport: String(old.get('sport') ?? 'other'),
+      ownerName: name,
+      ownerEmail: user.email ?? '',
+    });
+  }
+  return { groupId: newId, leftOut: copy.leftOut.length };
 });
 
 const UpdateMemberInput = z.object({

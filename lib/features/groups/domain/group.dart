@@ -129,6 +129,9 @@ abstract class Group with _$Group {
     /// without the name ("Photo" for photos), for Messages (CHAT-19).
     String? lastMessageAuthorId,
     String? lastMessageText,
+
+    /// The team this one's next season is (TEAM-16), set as it's archived.
+    GroupId? nextSeasonId,
   }) = _Group;
 
   const new _();

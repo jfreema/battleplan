@@ -34,6 +34,7 @@ import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -518,6 +519,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           look: g?.chatTheme,
           storageFull: g?.storageFull ?? false,
           membersCanCreatePolls: g?.settings.membersCanCreatePolls ?? false,
+          nextSeasonId: g?.nextSeasonId,
         );
       }),
     );
@@ -848,11 +850,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         else if (archived)
           Padding(
             padding: const EdgeInsets.all(Space.lg),
-            // A conversation closes when the other person deletes their
-            // account (CHAT-19).
-            child: Text(
-              direct ? l10n.directClosed : l10n.chatArchived,
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // A conversation closes when the other person deletes
+                // their account (CHAT-19).
+                Text(
+                  direct ? l10n.directClosed : l10n.chatArchived,
+                  textAlign: TextAlign.center,
+                ),
+                if (group.nextSeasonId case final next?) _NextSeason(next),
+              ],
             ),
           )
         else if (blockedOther)
@@ -1372,6 +1380,28 @@ class _DropHint extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// On an archived team, the way to its next season (TEAM-16), when I'm on
+/// that team; nothing when I'm not, as I can't read it.
+class _NextSeason extends ConsumerWidget {
+  const new(this.groupId);
+
+  final GroupId groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final next = ref.watch(groupProvider(groupId)).value;
+    if (next == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: Space.sm),
+      child: FilledButton.tonalIcon(
+        onPressed: () => context.go('/g/${groupId.value}/chat'),
+        icon: const Icon(AppIcons.newSeason),
+        label: Text(AppLocalizations.of(context).newSeasonGoTo(next.name)),
       ),
     );
   }

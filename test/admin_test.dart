@@ -519,6 +519,8 @@ void main() {
       await tester.ensureVisible(transfer);
       expect(find.text('Owner actions'), findsOneWidget);
       expect(transfer, findsOneWidget);
+      // A new season would be the super admin's team (TEAM-16).
+      expect(find.text('Start a new season'), findsNothing);
     });
 
     testWidgets('Invite: reset the link', (tester) async {

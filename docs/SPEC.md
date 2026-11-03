@@ -178,6 +178,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | See and act on reports in the team | — | ✓ | ✓ | ✓ |
 | Transfer ownership | — | — | ✓ | ✓ |
 | Archive or delete the team | — | — | ✓ | ✓ |
+| Start a new season from the team (TEAM-16) | — | — | ✓ | — |
 | Leave the team | ✓ | ✓ | after transferring | — |
 | See all teams and users; suspend teams; disable users; create users anywhere | — | — | — | ✓ |
 | Grant or revoke super admin | — | — | — | ✓ |
@@ -476,7 +477,6 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **TEAM-14 · v1.1 · Groups beside teams.** (Owner's request 2026-10-29.) Created from **Create a Team** or **Create a Group** (TEAM-1). Its owner (or a super admin) can **Make it a team** in Group admin, picking its sport: it gets players, the parents who answer for them, coaches, and Plays, keeps its people, chat, schedule, answers, and documents, its owner coaches from then on, and the chat says "Pat made this group a team" (owner's request 2026-10-29). A team can't become a group. A group is for extreme simplicity; a team has everything. A group has every feature a team has (chat, schedule and RSVPs, assignments, polls, documents and photos, invites, admins, notifications, imports, calendar links) except what's about players: no roster players, guardians, claims, "Who are you here for?", coaches, player details, or **Plays**, and no sport. Everyone in a group chats and answers RSVPs for themselves, and counts are of its members ("4 going · 1 maybe"). Its roster is **People** (admins and members), **Group info** says "Group · 8 members" and **Group admin** has no sport with a group icon in Teams and the switcher, joining one (Join group) goes straight to its chat, and its tabs are Chat, Schedule, and Documents. The TeamSnap import has no Players box for a group. Versions of the app before groups show a group as a team, so the server and rules refuse players, guardians, player answers, coaches, a sport, and plays in a group whatever app asks.
 - **TEAM-13 · Later.**
   - Join requests that need admin approval.
-  - Copying a team for a new season (members and settings).
   - Organizations and leagues with club admins.
   - Sub-chats within a team ("Parents", "Coaches").
 
@@ -487,6 +487,19 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Its menu has **Block** or **Unblock** (SAFE-2), and **Report** on a team you share (SAFE-1).
   - **Your own page** lists all your teams, with **Edit profile** (SET-1).
   - Someone you share no team or conversation with shows only "This person isn't on any of your teams."
+- **TEAM-16 · v1.1 · Start a new season.** A team starts its next season without inviting everyone again, which is where families drop off between seasons.
+  - **Who:** the owner, on an open team, from **Start a new season** in Team admin's owner actions. A super admin can't: the new team would be theirs.
+  - **The screen:** the new team's name (it starts as this team's, and must change, "Thunder U15 · Spring 2027"), then **Who comes along**, all checked to start, each with its count:
+    - **Players and their parents:** the active players, with their links, so parents and players answer as before without claiming them again. Their details (PLAYER-12) come too. Players waiting for approval stay behind.
+    - **Coaches and admins**, keeping their roles, Coach, and titles. A coach who's also a parent comes as a parent when this box is off and the players' is on.
+    - **Everyone else**, people added by email who haven't joined yet included.
+  - **Also copy**, both off to start: **Documents** (files and links, without notifying anyone) and **Saved plays**. A group (TEAM-14) has no players or plays to bring.
+  - The new team gets this team's logo, color, sport, description, time zone, settings, chat look, and default reminders, and a storage limit a super admin gave it (STORE-6). Everyone brought along keeps their notification level and what they share (TEAM-10).
+  - After a confirmation, everyone brought along is on the new team at once, with nothing to accept, and gets a notification: "Pat started the new season, and you're on the team." The owner lands in its chat, which says "Pat started this season from Thunder".
+  - This team is archived (TEAM-9), its chat, photos, schedule, and results kept. Its chat says "Pat started the next season: Thunder U15 · Spring 2027", and its archived footer has **Go to Thunder U15 · Spring 2027** for people on the new team.
+  - It counts as creating a team: a verified email, the day's limit and the on/off switch (TEAM-1, ADMIN-7), and the 100-team limit (TEAM-2). Someone already on 100 teams stays behind, and the owner is told how many.
+  - Calendar links for this team go empty, as for any archived team; links for all my teams pick up the new one (SCHED-11).
+  - It's audited, and super admins hear about the new team (ADMIN-9).
 
 ### 6.3 Players, guardians, and claims (PLAYER)
 
@@ -1513,7 +1526,7 @@ The web parts are built before the Phase 1 go-live (ROADMAP). Native-only parts,
 10. Attendance history and CSV exports of RSVPs and the roster for admins
 11. A branded invite page with the team's logo and color (`/join`)
 
-**Built 2026-10-29:** groups beside teams (TEAM-14). **Built 2026-11-02:** search in the chat (CHAT-20).
+**Built 2026-10-29:** groups beside teams (TEAM-14). **Built 2026-11-02:** search in the chat (CHAT-20), and starting a new season from a team (TEAM-16).
 
 ---
 

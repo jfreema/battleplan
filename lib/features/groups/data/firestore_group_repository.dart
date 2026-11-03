@@ -9,6 +9,7 @@ import 'package:battleplan/core/url_cache.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/domain/season.dart';
 import 'package:battleplan/features/groups/domain/team_palette.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -208,6 +209,52 @@ class FirestoreGroupRepository implements GroupRepository {
   @override
   Future<void> convertToTeam(GroupId id, Sport sport) =>
       _call('convertToTeam', {'groupId': id.value, 'sport': sport.value});
+
+  @override
+  Future<NewSeason> startNewSeason(
+    GroupId id, {
+    required String name,
+    required SeasonChoices choices,
+    String? requestId,
+  }) async {
+    try {
+      final result = await _functions
+          .httpsCallable(
+            'startNewSeason',
+            // A big team, its files with it, can take minutes; the server
+            // allows nine.
+            options: HttpsCallableOptions(timeout: const Duration(minutes: 9)),
+          )
+          .call<Map<String, dynamic>>({
+            'groupId': id.value,
+            'name': name,
+            'players': choices.players,
+            'staff': choices.staff,
+            'members': choices.members,
+            'documents': choices.documents,
+            'plays': choices.plays,
+            'requestId': ?requestId,
+          });
+      return (
+        groupId: GroupId(result.data['groupId'] as String),
+        leftOut: (result.data['leftOut'] as num?)?.toInt() ?? 0,
+      );
+    } on FirebaseFunctionsException catch (e) {
+      final message = serverMessage(e.message);
+      throw switch ((e.code, message)) {
+        ('failed-precondition', 'email-not-verified') => EmailNotVerified(
+          message,
+        ),
+        ('failed-precondition', 'too-many-teams') => TooManyTeams(message),
+        ('failed-precondition', 'team-archived') => PermissionDenied(message),
+        ('resource-exhausted', _) => RateLimited(message),
+        ('permission-denied', _) => PermissionDenied(message),
+        ('invalid-argument', _) => InvalidInput(message),
+        ('unavailable' || 'deadline-exceeded', _) => Offline(message),
+        _ => UnknownFailure('${e.code}: $message'),
+      };
+    }
+  }
 
   @override
   Future<void> deleteGroup(GroupId id, String confirmName) => _call(
@@ -575,6 +622,10 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
             name: value['name'] as String? ?? '',
             photoPath: value['photoPath'] as String?,
           ),
+    },
+    nextSeasonId: switch (d['nextSeasonId']) {
+      final String id => GroupId(id),
+      _ => null,
     },
   );
 }
