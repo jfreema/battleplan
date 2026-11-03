@@ -21,7 +21,7 @@ on:
 
 env:
   # The same Flutter as ci.yml and release.yml.
-  FLUTTER_VERSION: 3.47.7
+  FLUTTER_VERSION: 3.47.9
   # The Apple Developer team (individual membership).
   TEAM_ID: 885XHF7XLL
 
