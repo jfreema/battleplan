@@ -4,6 +4,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/schedule/domain/calendar_link.dart';
 import 'package:flutter/foundation.dart';
@@ -127,7 +128,13 @@ void main() {
           CalendarLink(
             token: token,
             groupId: const GroupId('a'),
-            fetchedAt: DateTime(2026, 10, 16, 15, 40),
+            // 3:40 PM in the viewer's zone (Chicago in tests), whatever the
+            // machine's.
+            fetchedAt: ZonedTime.instantOf(
+              'America/Chicago',
+              DateTime.utc(2026, 10, 16),
+              15 * 60 + 40,
+            ),
           ),
         ],
       ),
