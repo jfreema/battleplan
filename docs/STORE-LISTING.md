@@ -46,7 +46,12 @@ Also new:
 • Answer an RSVP right from the schedule: Going, Maybe, or Not going on each event, and tap it again to clear it
 • Plays: post a play to the chat, where it opens the play, or save or share it as an animated GIF
 • Shared invite links show the team's name and logo
-• Time zones by name, like Central Time (Chicago)
+• Search in the chat: find any message by its words and jump to it
+• Start a new season from a team, bringing along the players, parents, coaches, documents, and plays you pick
+• Groups beside teams, for anything that isn't a team
+• Your own time zone in Profile, which stays put when you travel; time zones by name, like Central Time (Chicago)
+• A faster chat that loads less and works better with screen readers
+• A security update for the app's connection to its servers
 • A new app icon
 ```
 
