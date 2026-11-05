@@ -69,6 +69,7 @@ Battleplan is team chat and scheduling for sports teams, free for every team and
 TEAM CHAT
 • Photos, reactions, replies, @mentions, and pinned messages
 • Every photo shared in the chat, in one place
+• Search the chat for any message
 • Announcements from coaches that everyone sees
 • Direct messages with anyone you share a team with
 
@@ -90,11 +91,14 @@ MORE FOR COACHES
 • Documents: lineups, rules, waivers, and links
 • Plays: a whiteboard with real baseball, basketball, soccer, and football fields. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping, then post them to the chat, or save or share them as animated GIFs
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
+• Start a new season from a team, bringing along the players, parents, and coaches you pick
+• Groups for anything that isn't a team, with the same chat, schedule, and RSVPs
 
 MAKE IT YOURS
 • Five looks: Gumdrop Army, Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
 • Each team picks its color, and in all but Gumdrop Army the team's screens take it on
 • Coaches pick the chat's message color and background
+• Your own time zone, which stays put when you travel
 
 SAFE AND PRIVATE
 • Teams are invite-only, by link, QR code, or code
@@ -125,7 +129,7 @@ coach,sports,roster,attendance,practice,league,parents,baseball,softball,soccer,
 | `store/app-store/iphone-6.3/` | iPhone 6.3-inch, only if App Store Connect asks for it | 1206 × 2622 | the same six, scaled down |
 | `store/app-store/ipad-13/` | iPad 13-inch | 2064 × 2752 | chat, schedule, an event's RSVPs, a play, documents |
 
-They're captures of the app in Gumdrop Army, the default, retaken for 1.1 on 2026-10-27 in the iOS Simulator (iPhone 18 Pro Max and iPad Pro 13-inch (M5)) against the Firebase emulators, with the seed data plus the sample players, events, documents, and photos `tools/seed/store-shots.ts` adds (no real people). Retake them when the screens they show change: start the emulators, then run `npm --prefix tools/seed run seed` and `npm --prefix tools/seed run store-shots` (add `-- --ipad` for the iPad's); build from a scratch copy with `bannerLabel` returning null (as website/README.md describes); set the Simulator's status bar to 9:41 with full bars, and the iPad to Full Screen Apps so its status bar shows no app name; sign in as `coach@example.com`; and capture with `xcrun simctl io <device> screenshot`. The iPhone captures have a 3 × 3 black speck in the top-left corner to paint over. The roster is Cyclone's; the rest is Thunder's, with the iPad's schedule on All my teams.
+They're captures of the app in Gumdrop Army, the default, retaken for 1.1 on 2026-11-04 in the iOS Simulator (iPhone 18 Pro Max and iPad Pro 13-inch (M5)) against the Firebase emulators, with the seed data plus the sample players, events, documents, and photos `tools/seed/store-shots.ts` adds (no real people). Retake them when the screens they show change: start the emulators, then run `npm --prefix tools/seed run seed` and `npm --prefix tools/seed run store-shots` (add `-- --ipad` for the iPad's); build from a scratch copy with `bannerLabel` returning null (as website/README.md describes); set the Simulator's status bar to 9:41 with full bars, and the iPad to Full Screen Apps so its status bar shows no app name; sign in as `coach@example.com`; and capture with `xcrun simctl io <device> screenshot`. The iPhone captures have a 3 × 3 black speck in the top-left corner to paint over. The roster is Cyclone's; the rest is Thunder's, with the iPad's schedule on All my teams.
 
 ## App Review information (store checklist 1.14, 1.17, 3.8)
 
@@ -143,7 +147,7 @@ How to get in:
 Where things are:
 • Report: press and hold someone's message, then Report.
 • Block: press and hold their message and choose Block, or tap their photo to open their page and use the menu at the top (Block, Report).
-• Delete account: Profile (at the bottom of the Teams screen; from a team, tap the back arrow at the top left first), then Settings, then Delete account. Accounts that use Sign in with Apple sign in with Apple once more, and the app revokes Apple's tokens before deleting.
+• Delete account: Profile (the tab at the bottom of the Teams screen; from a team, tap the back arrow at the top left first), then Settings, then Delete account. Accounts that use Sign in with Apple sign in with Apple once more, and the app revokes Apple's tokens before deleting.
 • A language filter is on for every team.
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.
