@@ -171,6 +171,7 @@ export const joinPage = onRequest({ invoker: 'public' }, async (req, res) => {
     joinUrl: joinUrl(raw),
     appJoinUrl: `https://${linkHost()}${appJoinUrl}`,
     siteImage: `https://${linkHost()}/images/og.jpg`,
+    appStoreBadge: `https://${linkHost()}/images/app-store-badge.svg`,
   });
   res.status(200).type('text/html; charset=utf-8').send(req.method === 'HEAD' ? '' : html);
 });

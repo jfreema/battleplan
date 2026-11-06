@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/live_pages.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/app_store_badge.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -1006,10 +1008,66 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Continue in browser'), findsOneWidget);
+      // Android (the tests' platform) waits for Google Play: no App Store.
+      expect(find.byType(AppStoreBadge), findsNothing);
       await tester.tap(find.text('Open in app'));
       await tester.pump();
       expect(opener.opened.single.path, '/join/K7XPM2QR');
     });
+
+    testWidgets(
+      "other browsers get Apple's App Store badge and its credit line",
+      (tester) async {
+        final opener = FakeLinkOpener();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
+              inviteRepositoryProvider.overrideWithValue(
+                FakeInviteRepository()
+                  ..previewed = const InvitePreview(
+                    groupId: 'a',
+                    name: 'Thunder',
+                    sport: Sport.softball,
+                    memberCount: 12,
+                  ),
+              ),
+              linkOpenerProvider.overrideWithValue(opener),
+            ],
+            child: const MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: JoinScreen(code: 'K7XPM2QR', inBrowser: true),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.bySemanticsLabel('Download on the App Store'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('App Store is a service mark of Apple Inc.'),
+          findsOneWidget,
+        );
+        final art = find.descendant(
+          of: find.byType(AppStoreBadge),
+          matching: find.byType(Image),
+        );
+        // Apple's minimum is 40 points tall.
+        expect(tester.widget<Image>(art).height, greaterThanOrEqualTo(40));
+        final link = find.descendant(
+          of: find.byType(AppStoreBadge),
+          matching: find.byType(InkWell),
+        );
+        await tester.ensureVisible(link);
+        await tester.tap(link);
+        await tester.pump();
+        expect(opener.opened.single.toString(), contains('apps.apple.com'));
+        expect(opener.opened.single, LinkService.appStoreListing);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+    );
 
     test('Open in app uses the app link, or an intent on Android', () {
       final page = Uri.parse('https://getbattleplan.app/app/join/K7XPM2QR');

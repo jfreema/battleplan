@@ -1708,6 +1708,14 @@
   "linkTurnOnBody": "A new link and QR code. The old ones stay off.",
   "openInApp": "Open in app",
   "continueInBrowser": "Continue in browser",
+  "appStoreBadgeLabel": "Download on the App Store",
+  "@appStoreBadgeLabel": {
+    "description": "What screen readers say for Apple's App Store badge, the badge's own words (Apple's guidelines). Don't translate App Store."
+  },
+  "appleCredit": "Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc.",
+  "@appleCredit": {
+    "description": "Apple's credit line, required under its App Store badge (Apple's marketing guidelines)."
+  },
   "teamLogoLabel": "Logo or photo (optional)",
   "addLogo": "Add logo",
   "removeLogo": "Remove",

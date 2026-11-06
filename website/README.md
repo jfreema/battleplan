@@ -16,6 +16,7 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 | `fonts/` | Lilita One (titles), Fredoka (buttons, labels, chips, questions), Nunito (body), and Black Ops One (the stencil eyebrows, capitals only) as Latin `woff2` files from Google Fonts, served from this site so it makes no third-party requests, with each font's `*-OFL.txt` license. Fredoka and Nunito are variable fonts (one file covers every weight) |
 | `favicon.svg`, `favicon-small.svg`, `favicon-32.png`, `apple-touch-icon.png` | Icons: the brand mark, the Stencil Crest (SPEC §7.1). `favicon-small.svg` is the browser-tab icon, drawn on the 16 px grid, which every page links as `rel=icon`; `favicon.svg` is the header mark; `tools/brand_icons.sh` makes the PNGs from it and `assets/brand/icon.svg` |
 | `images/*.webp` | App screenshots in Open Field, 600 × 1298, each named for its screen and color scheme (Screenshots, below) |
+| `images/app-store-badge.svg` | Apple's official black **Download on the App Store** badge (US English), exactly as Apple's marketing tools supply it (The App Store and Google Play, below) |
 | `images/og.jpg` | Open Graph and Twitter card image, 1200 × 630, a JPEG under 300 KB so messaging apps show it (the invite links' preview uses it too). `firebase.json` redirects the old `og.png` here |
 | `robots.txt` | Everything may be crawled, and AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, and others) are welcomed by name. `/app/` stays crawlable so crawlers see its `noindex` |
 | `sitemap.xml` | The six pages, each with its `lastmod`: the date the page's text last changed. Change it with the text, not for edits to the `<head>` alone |
@@ -27,8 +28,8 @@ Hosting serves `support.html` at `/support` because `firebase.json` sets `cleanU
 
 Short on words: a headline, one line under it, and feature tiles with a two-to-four-word title and one short sentence. In order:
 
-1. **Hero:** "Every team needs a Battleplan.", **Get Started** and **Login**, and the color scheme picker: Thunder's schedule on five phones, one per scheme, in a fan. Picking a scheme's chip (Army green, Light, Dark, Navy, Light blue, the app's names) brings its phone to the front and re-colors the whole page in that scheme. Phones narrower than 600 px show the front phone and its two neighbors.
-2. **Features** (`#features`), "Built for game day.": tiles for Team chat, Games and RSVPs, Polls, Documents, and All my teams, each with a phone rising out of it, and an And more tile of chips.
+1. **Hero:** "For Groups and Sports Teams" over "Every team needs a Battleplan.", **Get Started** and **Login**, the App Store badge, and the color scheme picker: Thunder's schedule on five phones, one per scheme, in a fan. Picking a scheme's chip (Army green, Light, Dark, Navy, Light blue, the app's names) brings its phone to the front and re-colors the whole page in that scheme. Phones narrower than 600 px show the front phone and its two neighbors.
+2. **Features** (`#features`), "Built for game day.": tiles for Group chat, Games and RSVPs, Polls, Documents, and All my teams, each with a phone rising out of it, and an And more tile of chips.
 3. **Dues** (`#dues`), "Dues, sorted.": the admin's view and What you owe, side by side.
 4. **Players and guardians** (`#players`), "Players first."
 5. **The coach's whiteboard** (`#whiteboard`).
@@ -59,14 +60,22 @@ The `<head>` has the title, description, canonical link, Open Graph and Twitter 
 
 ## The App Store and Google Play
 
-The iPhone and iPad app is on the App Store at `https://apps.apple.com/app/id6823884728` (Apple ID 6823884728, bundle `app.getbattleplan`). The landing page (a line under the hero, and the FAQ), the support page (Getting the app), `llms.txt`, and the JSON-LD link to it in plain text; `/ios` in `firebase.json` redirects to it, and the web app's iPhone notification tip opens it (NOTIF-9, `LinkService.iosApp`). Android is "on the way" everywhere until it's on Google Play.
+The iPhone and iPad app is on the App Store at `https://apps.apple.com/app/id6823884728` (Apple ID 6823884728, bundle `app.getbattleplan`). The landing page's hero and the support page's Getting the app show Apple's **Download on the App Store** badge linking there (ROADMAP task 353, with the owner's OK to use Apple's artwork, 2026-11-06), and so does the web app's invite page, `/join/<code>`, in a browser that isn't on Android (INV-7). The landing page's FAQ, `llms.txt`, and the JSON-LD link to the listing in plain text; `/ios` in `firebase.json` redirects to it, and the web app's iPhone notification tip opens it (NOTIF-9, `LinkService.iosApp`). Android is "on the way" everywhere until it's on Google Play.
 
-The badges wait (ROADMAP tasks 179 and 214). They're already in `index.html` (hero) and `support.html` (Getting the app) inside a `<template data-store-badges>`, which the browser never renders or loads. To turn one on:
+Apple's rules for the badge ([App Store marketing guidelines](https://developer.apple.com/app-store/marketing/guidelines/), "App Store badges"), which the pages follow:
 
-1. Add the official badge artwork to `images/` (`app-store-badge.svg`, `google-play-badge.png`) following Apple's and Google's badge guidelines. Apple's needs the owner's OK to download.
-2. For Google Play, check the package (`app.getbattleplan`).
-3. Move that badge's `<a>` out of the `<template>` into a `div.store-badges`, in both files, and take out the plain line it replaces.
-4. Once Google Play is live: change the copy that says the Android app is "on the way" (the FAQ and its JSON-LD copy, the support page, `llms.txt`, the README) and set the JSON-LD `operatingSystem` to "iOS, iPadOS, Android, Web".
+- **The artwork as Apple supplies it.** `images/app-store-badge.svg` is the black US-English badge from Apple's marketing tools (`https://toolbox.marketingtools.apple.com/api/v2/badges/download-on-the-app-store/black/en-us`), byte for byte: never recolor, crop, angle, or animate it, and never translate "App Store". The app's copy, `assets/store/app-store-badge.png`, is the same artwork rendered at 3×.
+- **The black badge, on every scheme.** Apple prefers it in all marketing, and requires it once another store's badge sits beside it; its gray rim is part of the artwork and keeps it clear on Army green, Dark, and Navy. The white badge is only an alternative, so the page doesn't load it.
+- **Size and space.** At least 40 px tall on screen (48 px here, 44 in the app), with a quarter of its height clear all round (12 px), in a subordinate spot under the main message, and one badge per page (the FAQ keeps its plain link).
+- **Order.** The App Store badge comes first in a row of badges.
+- **Credit line.** Each page that shows the badge ends its footer with "Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc." (`.credit`).
+
+Google Play's badge waits (ROADMAP task 214) in a `<template data-store-badges>` after Apple's, in `index.html` and `support.html`, which the browser never renders or loads. To turn it on:
+
+1. Add the official "Get it on Google Play" artwork to `images/` as `google-play-badge.png`, following Google's badge guidelines, at the same height as Apple's.
+2. Check the package (`app.getbattleplan`).
+3. Move its `<a>` out of the `<template>` into the `div.store-badges`, after Apple's, in both files, and on the web app's `/join` page for Android browsers.
+4. Change the copy that says the Android app is "on the way" (the FAQ and its JSON-LD copy, the support page, `llms.txt`, the README) and set the JSON-LD `operatingSystem` to "iOS, iPadOS, Android, Web".
 
 ## Screenshots
 
@@ -75,7 +84,7 @@ The screenshots show the app with the seeded sample teams (Thunder, Cyclone, and
 | Image | Scheme | Signed in as | Screen |
 |---|---|---|---|
 | `schedule-army`, `-light`, `-dark`, `-navy`, `-skyblue` (hero) | all five | `jim@example.com` | Thunder's schedule as a player: their own Going, Maybe, and Not going on the cards and a practice still to answer, the same screen in each scheme |
-| `chat-navy` | Navy | `coach@example.com` | Thunder's chat, opened at the first unread message |
+| `group-chat-navy` | Navy | a member of the group | A group's chat: messages from several people and a small photo only, with no event cards or polls in view |
 | `event-skyblue` | Light blue | `coach@example.com` | Thunder's game against the Eagles, with the RSVPs |
 | `poll-dark` | Dark | `rachel@example.com` | Rally Possums' tournament poll |
 | `documents-navy` | Navy | `coach@example.com` | Thunder's documents |
@@ -89,7 +98,7 @@ The current set (Open Field, all five schemes, 2026-11-06, the owner's request) 
 
 - **Schemes:** after signing in, PATCH `users/<uid>` with `colorScheme` (`army`, `light`, `dark`, `navy`, or `skyblue`) through the emulator's REST API (`Authorization: Bearer owner`, `updateMask.fieldPaths=colorScheme`). The app recolors live, so the five `schedule-*` shots come from one sign-in. Per-team picks (`groupMembers/<groupId>_<uid>.colorScheme`) aren't seeded, so the default applies everywhere.
 - **Schedule:** Jim's account is linked to the player Jim Halpert on Thunder, so every card on that schedule has an answer row; the seed answers Going, Maybe, and Not going and leaves the third practice unanswered. The coach has no player, so the coach's cards only count who's going. Open `/g/thunder/schedule` (Upcoming).
-- **Chat:** coach lands in Thunder's chat at the first unread message, so take `chat-navy` first after seeding.
+- **Group chat:** open the seeded group's chat (`/g/<groupId>/chat`) and check that only messages and the small photo are in view: no event cards or polls. Chat opens at the first unread message, so take it first after seeding, or as someone who has read it.
 - **Dues:** open `/g/<team>/info`, then press **Dues** (going there directly leaves the app bar without its back button). The seed's dues are on Thunder and Cyclone.
 - **All my teams:** press **Filter**, the **All my teams** switch, then **Dismiss**.
 - **Whiteboard:** open `/g/thunder/plays/thunder-relay-home`, press **Next step**, and wait about 4 seconds.
@@ -101,4 +110,4 @@ Regenerate `images/og.jpg` at 1200 × 630 when the hero's heading or its schedul
 
 ## Checking it
 
-Serve the folder with clean URLs (for example `firebase emulators:start --only hosting` after `tools/build_hosting.sh`, or any static server that maps `/support` to `support.html`), then check each page at 320, 375, 390, 768, 1024, and 1440 px: no console errors, no broken links or images, no horizontal scrolling, and no axe (WCAG 2 AA) violations. On the landing page, check all five schemes, with and without JavaScript, and that the JSON-LD parses and its FAQ matches the page.
+Serve the folder with clean URLs (for example `firebase emulators:start --only hosting` after `tools/build_hosting.sh`, or any static server that maps `/support` to `support.html`), then check each page at 320, 375, 390, 768, 1024, and 1440 px: no console errors, no broken links or images, no horizontal scrolling, and no axe (WCAG 2 AA) violations. On the landing page, check all five schemes, with and without JavaScript, and that the JSON-LD parses and its FAQ matches the page. Where the App Store badge shows, check it's at least 40 px tall with 12 px clear around it.

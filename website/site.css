@@ -228,9 +228,13 @@ p, ul, ol { margin: 0 0 1em; }
 .btn-lg { min-height: 56px; padding: 0 30px; font-size: 1.2rem; }
 .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
 
-/* Store badges: kept in a <template> until the apps are listed (ROADMAP tasks 130, 179). */
-.store-badges { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+/* Store badges (ROADMAP tasks 179, 214, 353), as Apple's guidelines ask:
+   the official artwork unchanged, at least 40 px tall, a quarter of its
+   height clear all round (12 px at 48), and the App Store badge first.
+   Google Play's waits in a <template> for its listing. */
+.store-badges { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0 12px; }
 .store-badges img { height: 48px; width: auto; }
+.hero-copy .store-badges { justify-content: center; }
 
 /* ---------- Phones ---------- */
 .phone {
@@ -347,7 +351,7 @@ label[for="s-skyblue"] { --sw-page: #bcd9f5; --sw-card: #ffffff; --sw-text: #0b1
   .hero-grid { grid-template-columns: 0.95fr 1.05fr; gap: 24px; }
   .hero-copy { text-align: left; }
   .hero-copy .lead { margin-left: 0; }
-  .hero-copy .actions { justify-content: flex-start; }
+  .hero-copy .actions, .hero-copy .store-badges { justify-content: flex-start; }
   /* Close enough that the outer phones stay on a 1024 px screen (13-inch iPad). */
   .stage { --pw: 226px; --step: calc(var(--pw) * 0.32); }
 }
@@ -550,9 +554,11 @@ kbd, .ui {
 }
 .made-by .battle-baseball { width: 168px; height: auto; flex: none; overflow: visible; }
 .made-by p { flex: 1 1 220px; color: var(--text); font: 600 1.05rem/1.4 var(--label); }
+/* Apple's credit line, on the pages that show the App Store badge. */
+.site-footer .credit { font-size: 0.85rem; }
 @media (min-width: 760px) {
   .site-footer .wrap { grid-template-columns: 1fr auto; align-items: center; }
-  .site-footer .made-by { grid-column: 1 / -1; }
+  .site-footer :is(.made-by, .credit) { grid-column: 1 / -1; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -48,6 +48,7 @@ describe("an invite link's preview (task 140)", () => {
     joinUrl: 'https://getbattleplan.app/join/K7XPM2QR',
     appJoinUrl: 'https://getbattleplan.app/app/join/K7XPM2QR',
     siteImage: 'https://getbattleplan.app/images/og.jpg',
+    appStoreBadge: 'https://getbattleplan.app/images/app-store-badge.svg',
   };
 
   it('is for link-preview fetchers, not people', () => {
@@ -94,6 +95,15 @@ describe("an invite link's preview (task 140)", () => {
     expect(noLogo).toContain("The team&#39;s chat, schedule, and RSVPs, in one app.");
     const none = invitePreviewPage(null, urls);
     expect(none).toContain('<title>Join your team on Battleplan</title>');
+  });
+
+  it("links the App Store with Apple's badge and its credit line (task 353)", () => {
+    const html = invitePreviewPage(null, urls);
+    expect(html).toContain(
+      '<a href="https://apps.apple.com/app/id6823884728"><img src="https://getbattleplan.app/images/app-store-badge.svg" alt="Download on the App Store" width="120" height="40"></a>',
+    );
+    expect(html).toContain('Apple and the Apple logo are trademarks of Apple Inc.');
+    expect(html).toContain('App Store is a service mark of Apple Inc.');
   });
 
   it('escapes what people typed', () => {

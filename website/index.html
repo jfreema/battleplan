@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Battleplan: free team chat, schedules, and RSVPs for sports teams</title>
-  <meta name="description" content="Free app for sports teams: team chat, schedule and RSVPs, polls, dues, documents, and a coach's whiteboard. Guardians answer for their players. No ads.">
+  <meta name="description" content="Free app for groups and sports teams: chat, schedule and RSVPs, polls, dues, documents, and a coach's whiteboard. Guardians answer for their players. No ads.">
   <link rel="canonical" href="https://getbattleplan.app/">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#474c2b">
@@ -14,7 +14,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Battleplan">
   <meta property="og:title" content="Battleplan: free team chat, schedules, and RSVPs for sports teams">
-  <meta property="og:description" content="Chat, schedule and RSVPs, polls, dues, documents, and plays for adult and youth teams. Free, with no ads.">
+  <meta property="og:description" content="Chat, schedule and RSVPs, polls, dues, documents, and plays for groups and sports teams. Free, with no ads.">
   <meta property="og:url" content="https://getbattleplan.app/">
   <meta property="og:image" content="https://getbattleplan.app/images/og.jpg">
   <meta property="og:image:width" content="1200">
@@ -22,7 +22,7 @@
   <meta property="og:image:alt" content="Every team needs a Battleplan: Thunder's schedule on five phones, one in each color scheme.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Battleplan: free team chat, schedules, and RSVPs for sports teams">
-  <meta name="twitter:description" content="Chat, schedule and RSVPs, polls, dues, documents, and plays for adult and youth teams. Free, with no ads.">
+  <meta name="twitter:description" content="Chat, schedule and RSVPs, polls, dues, documents, and plays for groups and sports teams. Free, with no ads.">
   <meta name="twitter:image" content="https://getbattleplan.app/images/og.jpg">
   <meta name="twitter:image:alt" content="Every team needs a Battleplan: Thunder's schedule on five phones, one in each color scheme.">
   <link rel="preload" href="/fonts/lilita-one.woff2" as="font" type="font/woff2" crossorigin>
@@ -59,7 +59,7 @@
         "@type": "SoftwareApplication",
         "@id": "https://getbattleplan.app/#app",
         "name": "Battleplan",
-        "description": "Team chat and scheduling for sports teams: chat, schedule and RSVPs, polls, dues tracking, documents, and a coach's whiteboard. Guardians answer RSVPs for their players. Free, with no ads.",
+        "description": "Team chat and scheduling for groups and sports teams: chat, schedule and RSVPs, polls, dues tracking, documents, and a coach's whiteboard. Guardians answer RSVPs for their players. Free, with no ads.",
         "url": "https://getbattleplan.app/",
         "applicationCategory": "SportsApplication",
         "operatingSystem": "iOS, iPadOS, Web",
@@ -69,12 +69,12 @@
         "image": "https://getbattleplan.app/images/og.jpg",
         "screenshot": [
           "https://getbattleplan.app/images/schedule-army.webp",
-          "https://getbattleplan.app/images/chat-navy.webp",
+          "https://getbattleplan.app/images/group-chat-navy.webp",
           "https://getbattleplan.app/images/event-skyblue.webp",
           "https://getbattleplan.app/images/dues-army.webp"
         ],
         "featureList": [
-          "Team chat with photos, replies, reactions, mentions, and pinned announcements",
+          "Group chat with photos, replies, reactions, mentions, and pinned announcements",
           "Schedule of games and practices with Going, Maybe, and Not going RSVPs",
           "Private calendar link that keeps Google Calendar, Apple Calendar, or Outlook in sync",
           "Assignments like snacks, drinks, and scorekeeper",
@@ -160,7 +160,7 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <span class="eyebrow">For adult and youth teams</span>
+          <span class="eyebrow">For Groups and Sports Teams</span>
           <h1 id="hero-title">Every team needs a Battleplan.</h1>
           <p class="lead">Team chat, schedules, RSVPs, polls, dues, and plays for sports teams. Free, with no ads.</p>
           <div class="actions">
@@ -168,23 +168,22 @@
             <a class="btn btn-secondary btn-lg" href="/app/">Login</a>
           </div>
           <p class="switch-note">Coming from GroupMe or TeamSnap? <a href="#switch">Bring your history.</a></p>
-          <p class="switch-note">On iPhone or iPad? Get it <a href="https://apps.apple.com/app/id6823884728">on the App Store</a>.</p>
           <!--
-            App Store and Google Play badges (WEB-1, ROADMAP tasks 133, 179, and 214).
-            The iPhone and iPad app is listed, and the line above links to it in
-            plain text until Apple's badge artwork is added. To turn a badge on:
-            put the official artwork in images/ (Apple: "Download on the App
-            Store"; Google: "Get it on Google Play"), move its <a> out of the
-            <template> into a div.store-badges here, and replace the plain line.
-            Google Play waits for its listing; then set the JSON-LD
-            operatingSystem to "iOS, iPadOS, Android, Web". Do the same on the
-            support page.
+            Store badges (WEB-1, ROADMAP tasks 179, 214, and 353). Apple's
+            official black badge, unmodified, on every scheme: Apple prefers
+            it, and its gray rim keeps it clear on the dark ones. At least
+            40 px tall, with a quarter of its height clear around it, and the
+            only one on this page. Its credit line is in the footer.
+            Google Play's waits in the <template> for its listing: then add
+            the artwork to images/, move its <a> after Apple's (the App Store
+            badge comes first), set the JSON-LD operatingSystem to "iOS,
+            iPadOS, Android, Web", and do the same on the support page.
           -->
+          <div class="store-badges">
+            <a href="https://apps.apple.com/app/id6823884728"><img src="/images/app-store-badge.svg" alt="Download on the App Store" width="144" height="48"></a>
+          </div>
           <template data-store-badges>
-            <div class="store-badges">
-              <a href="https://apps.apple.com/app/id6823884728"><img src="/images/app-store-badge.svg" alt="Download on the App Store" width="144" height="48"></a>
-              <a href="https://play.google.com/store/apps/details?id=app.getbattleplan"><img src="/images/google-play-badge.png" alt="Get it on Google Play" width="162" height="48"></a>
-            </div>
+            <a href="https://play.google.com/store/apps/details?id=app.getbattleplan"><img src="/images/google-play-badge.png" alt="Get it on Google Play" width="162" height="48"></a>
           </template>
         </div>
 
@@ -226,9 +225,9 @@
         </div>
         <ul class="tiles">
           <li class="tile">
-            <h3>Team chat</h3>
+            <h3>Group chat</h3>
             <p>Photos, replies, mentions, and pinned announcements.</p>
-            <div class="shot"><div class="phone"><img src="/images/chat-navy.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's team chat in the Navy color scheme: a pinned message, reactions, a player's @mention of the coach, a card for the game against the Eagles, and a poll about the team dinner."><span class="tag" data-s="navy" aria-hidden="true">Navy</span></div></div>
+            <div class="shot"><div class="phone"><img src="/images/group-chat-navy.webp" width="600" height="1298" loading="lazy" decoding="async" alt="A group's chat in the Navy color scheme: messages from several people and a small photo."><span class="tag" data-s="navy" aria-hidden="true">Navy</span></div></div>
           </li>
           <li class="tile">
             <h3>Games and RSVPs</h3>
@@ -446,6 +445,7 @@
         <li><a href="/delete-account">Delete your account</a></li>
       </ul>
       <p>© 2026 Battleplan · <a href="mailto:support@getbattleplan.app">support@getbattleplan.app</a></p>
+      <p class="credit">Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc.</p>
     </div>
   </footer>
   <script>

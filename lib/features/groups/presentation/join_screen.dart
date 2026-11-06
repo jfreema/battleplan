@@ -4,7 +4,9 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/links.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/app_store_badge.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -36,7 +38,8 @@ String inviteProblemMessage(AppLocalizations l10n, AppFailure failure) =>
 /// automatically (`?join=1` on the way back). People already on the team
 /// go straight to it. In a browser it also offers Open in app, with Join
 /// as Continue in browser. The code is shown large so it can be typed into
-/// the app after installing it.
+/// the app after installing it, and browsers not on Android get the App
+/// Store badge under it (task 353).
 class JoinScreen extends ConsumerStatefulWidget {
   const new({
     required this.code,
@@ -283,6 +286,16 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall,
           ),
+          // Android waits for Google Play (task 214).
+          if (widget.inBrowser &&
+              defaultTargetPlatform != TargetPlatform.android) ...[
+            const SizedBox(height: Space.lg),
+            AppStoreBadge(
+              onPressed: () => unawaited(
+                ref.read(linkOpenerProvider).open(LinkService.appStoreListing),
+              ),
+            ),
+          ],
         ],
       );
     }

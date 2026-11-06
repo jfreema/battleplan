@@ -84,6 +84,8 @@ flutter:
     - assets/fonts/black_ops_one/OFL.txt
     # Jared's Venmo card, for Buy Jared a coffee (TEAM-5, About).
     - assets/about/venmo.png
+    # Apple's App Store badge, for the web app's invite page (INV-7).
+    - assets/store/app-store-badge.png
   fonts:
     - family: Lilita One
       fonts:

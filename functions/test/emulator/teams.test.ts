@@ -1075,6 +1075,8 @@ describe("the team's link (INV-2, §3)", () => {
     expect(preview.body).toContain('<meta property="og:title" content="Join Thunder U14 on Battleplan">');
     expect(preview.body).toContain('Ada Admin invited you');
     expect(preview.body).toMatch(/og:image" content="[^"]*tok/);
+    // Apple's badge from the website's own images, on to the App Store (task 353).
+    expect(preview.body).toMatch(/<a href="https:\/\/apps\.apple\.com\/app\/id6823884728"><img src="https:\/\/[^"]+\/images\/app-store-badge\.svg"/);
     expect((await open(`/join/${link.code}`, 'WhatsApp/2', 'HEAD')).body).toBe('');
     // A link that doesn't work, or no code: Battleplan's own preview.
     await run(invites.revokeGroupInvite, 'ada', { groupId: 'open' });

@@ -39,15 +39,25 @@ export function inviteDescription(card: InviteCard | null): string {
     : "The team's chat, schedule, and RSVPs, in one app.";
 }
 
+/** The iPhone and iPad app's App Store listing (ROADMAP task 133). */
+export const APP_STORE_URL = 'https://apps.apple.com/app/id6823884728';
+
+/** Apple's credit line, wherever its App Store badge shows (task 353). */
+export const APPLE_CREDIT =
+  'Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries. ' +
+  'App Store is a service mark of Apple Inc.';
+
 /**
  * The page for [card] (null for a code that doesn't work now): its tags
- * for the preview, and a link on to the invite at [appJoinUrl] for anyone
- * who sees it. [joinUrl] is the link itself; [siteImage] the website's
- * 1200 × 630 card, for teams without a logo.
+ * for the preview, and for anyone who sees it, a link on to the invite at
+ * [appJoinUrl] and Apple's App Store badge ([appStoreBadge], the website's
+ * copy of Apple's artwork) with its credit line. [joinUrl] is the link
+ * itself; [siteImage] the website's 1200 × 630 card, for teams without a
+ * logo.
  */
 export function invitePreviewPage(
   card: InviteCard | null,
-  urls: { joinUrl: string; appJoinUrl: string; siteImage: string },
+  urls: { joinUrl: string; appJoinUrl: string; siteImage: string; appStoreBadge: string },
 ): string {
   const title = inviteTitle(card);
   const description = inviteDescription(card);
@@ -75,6 +85,10 @@ export function invitePreviewPage(
     '<meta name="robots" content="noindex">' +
     `<title>${escapeHtml(title)}</title>${tags.join('')}</head>` +
     `<body><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p>` +
-    `<p><a href="${escapeHtml(urls.appJoinUrl)}">Open the invite</a></p></body></html>`
+    `<p><a href="${escapeHtml(urls.appJoinUrl)}">Open the invite</a></p>` +
+    // Apple's black badge at its 40 px minimum, a quarter of its height clear around it.
+    `<p style="margin:10px 0"><a href="${APP_STORE_URL}"><img src="${escapeHtml(urls.appStoreBadge)}" ` +
+    'alt="Download on the App Store" width="120" height="40"></a></p>' +
+    `<p><small>${escapeHtml(APPLE_CREDIT)}</small></p></body></html>`
   );
 }
