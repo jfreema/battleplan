@@ -215,11 +215,17 @@ void main() {
 
   testWidgets('a result from long ago opens the chat there in one page, '
       'with a way back to the newest', (tester) async {
-    // 500 messages; the one found is the 5th.
+    // 500 messages, Sam and Jo taking turns, so a page of 50 more than
+    // fills the screen; the one found is the 5th.
     final repo = FakeMessageRepository(
       newestFirst([
         for (var i = 1; i <= 500; i++)
-          msg(i, i == 5 ? 'The trophy is in my trunk' : 'Message $i'),
+          msg(
+            i,
+            i == 5 ? 'The trophy is in my trunk' : 'Message $i',
+            author: i.isOdd ? 'sam' : 'jo',
+            name: i.isOdd ? 'Sam Rivera' : 'Jo Park',
+          ),
       ]),
     );
     await openChat(tester, repo);

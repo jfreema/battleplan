@@ -112,13 +112,19 @@ class _PollCardState extends ConsumerState<PollCard> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final poll = ref.watch(pollProvider(pollId));
-    // Others' polls are cards; mine is my coral bubble.
+    // Others' polls are cards; mine is my coral bubble, with an ink edge on
+    // a page close to its color, as my text bubbles have (CHAT-18).
+    final page = GumdropColors.of(context);
+    final fill = widget.bubbleColor ?? page.you.face;
     Widget frame(Widget child) => ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),
       child: widget.mine
           ? DecoratedBox(
               decoration: BoxDecoration(
-                color: widget.bubbleColor ?? GumdropColors.of(context).you.face,
+                color: fill,
+                border: ColorMath.contrast(fill, page.page) < 2
+                    ? Border.all(color: page.ink, width: 2)
+                    : null,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(Corners.bubble),
                   topRight: Radius.circular(Corners.bubble),
@@ -510,49 +516,62 @@ class _OptionRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      marker,
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          option.text,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: AppFonts.body,
-                            fontWeight: chosen || leading
-                                ? FontWeight.w800
-                                : FontWeight.w700,
-                            fontSize: 16,
-                            height: 22 / 16,
-                            color: ink,
-                          ),
+                  // The count at its own width, so the option's text has
+                  // the rest of the row; never over half of it, so big text
+                  // wraps the count rather than overflowing.
+                  LayoutBuilder(
+                    builder: (context, box) {
+                      final countBox = BoxConstraints(
+                        maxWidth: (box.maxWidth / 2).clamp(
+                          48.0,
+                          double.infinity,
                         ),
-                      ),
-                      const SizedBox(width: Space.sm),
-                      if (onShowVoters case final show?)
-                        // Its own tap target: the count shows who chose
-                        // it, the rest of the row votes.
-                        Flexible(
-                          child: Tooltip(
-                            message: l10n.pollSeeWhoChose(option.text),
-                            child: InkWell(
-                              onTap: show,
-                              borderRadius: BorderRadius.circular(Corners.chip),
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  minHeight: 36,
-                                  minWidth: 48,
-                                ),
-                                child: Center(widthFactor: 1, child: count),
+                      );
+                      return Row(
+                        children: [
+                          marker,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              option.text,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: AppFonts.body,
+                                fontWeight: chosen || leading
+                                    ? FontWeight.w800
+                                    : FontWeight.w700,
+                                fontSize: 16,
+                                height: 22 / 16,
+                                color: ink,
                               ),
                             ),
                           ),
-                        )
-                      else
-                        Flexible(child: count),
-                    ],
+                          const SizedBox(width: Space.sm),
+                          if (onShowVoters case final show?)
+                            // Its own tap target: the count shows who chose
+                            // it, the rest of the row votes.
+                            Tooltip(
+                              message: l10n.pollSeeWhoChose(option.text),
+                              child: InkWell(
+                                onTap: show,
+                                borderRadius: BorderRadius.circular(
+                                  Corners.chip,
+                                ),
+                                child: ConstrainedBox(
+                                  constraints: countBox.copyWith(
+                                    minHeight: 36,
+                                    minWidth: 48,
+                                  ),
+                                  child: Center(widthFactor: 1, child: count),
+                                ),
+                              ),
+                            )
+                          else
+                            ConstrainedBox(constraints: countBox, child: count),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 4),
                   Padding(

@@ -154,7 +154,7 @@ void main() {
     ) async {
       await pumpChat(tester, scheme: TeamScheme.army);
       final avatars = tester
-          .widgetList<Avatar>(find.byType(Avatar))
+          .widgetList<Avatar>(find.byType(Avatar, skipOffstage: false))
           .where((a) => a.name == 'Sam Rivera');
       expect(avatars, isNotEmpty);
       expect(avatars.first.color, AvatarColor.mint);

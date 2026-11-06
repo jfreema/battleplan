@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/fonts.dart';
@@ -10,7 +11,7 @@ import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -184,75 +185,85 @@ class ReactionChips extends StatelessWidget {
     }
     final mine = me == null ? null : message.reactions[me];
     final l10n = AppLocalizations.of(context);
-    // Plain emoji with counts (SPEC §7.3), each in a 48 tall tap area that
-    // doesn't move the layout; my reaction's count is underlined.
-    return Wrap(
-      spacing: 10,
-      alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
-      children: [
-        for (final r in reactionOrder)
-          if (counts[r] case final n?)
-            // Read as "Like, 2" rather than the emoji.
-            Semantics(
-              container: true,
-              button: true,
-              selected: r == mine,
-              label: l10n.reactionChipLabel(reactionName(l10n, r), n),
-              hint: onReact == null
-                  ? null
-                  : r == mine
-                  ? l10n.reactionChipRemoveHint
-                  : l10n.reactionChipAddHint,
-              excludeSemantics: true,
-              onTap: onReact == null ? onShowWho : () => onReact!(r),
-              onLongPress: onShowWho,
-              customSemanticsActions: {
-                CustomSemanticsAction(label: l10n.whoReacted): onShowWho,
-              },
-              child: GestureDetector(
-                onSecondaryTap: onShowWho,
+    // Plain emoji with counts (SPEC §5.4.6), 18 apart and lined up with
+    // the message's edge, each in a 48 tall tap area that doesn't move the
+    // layout: the areas reach up over the message's bottom, so the emoji
+    // sit just under it. My reaction's count is underlined.
+    return _RaisedBy(
+      by: _raise,
+      child: Wrap(
+        alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
+        children: [
+          for (final r in reactionOrder)
+            if (counts[r] case final n?)
+              // Read as "Like, 2" rather than the emoji.
+              Semantics(
+                container: true,
+                button: true,
+                selected: r == mine,
+                label: l10n.reactionChipLabel(reactionName(l10n, r), n),
+                hint: onReact == null
+                    ? null
+                    : r == mine
+                    ? l10n.reactionChipRemoveHint
+                    : l10n.reactionChipAddHint,
+                excludeSemantics: true,
+                onTap: onReact == null ? onShowWho : () => onReact!(r),
                 onLongPress: onShowWho,
-                child: FocusRingInk(
-                  onTap: onReact == null ? onShowWho : () => onReact!(r),
-                  radius: BorderRadius.circular(12),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minHeight: 48,
-                      minWidth: 48,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Center(
+                customSemanticsActions: {
+                  CustomSemanticsAction(label: l10n.whoReacted): onShowWho,
+                },
+                child: GestureDetector(
+                  onSecondaryTap: onShowWho,
+                  onLongPress: onShowWho,
+                  child: FocusRingInk(
+                    onTap: onReact == null ? onShowWho : () => onReact!(r),
+                    radius: BorderRadius.circular(12),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: 48,
+                        minWidth: 48,
+                      ),
+                      child: Align(
+                        alignment: alignEnd
+                            ? AlignmentDirectional.centerEnd
+                            : AlignmentDirectional.centerStart,
                         widthFactor: 1,
-                        child: Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                children: [
-                                  reactionSpan(r, heart: c.cherry.face),
-                                ],
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              const TextSpan(text: ' '),
-                              // My reaction's count is underlined.
-                              TextSpan(
-                                text: '$n',
-                                style: r == mine
-                                    ? TextStyle(
-                                        decoration: TextDecoration.underline,
-                                        decorationColor: c.accentMark,
-                                        decorationThickness: 2,
-                                      )
-                                    : null,
-                              ),
-                            ],
+                        child: Padding(
+                          padding: EdgeInsetsDirectional.only(
+                            start: alignEnd ? _gap : 0,
+                            end: alignEnd ? 0 : _gap,
                           ),
-                          style: TextStyle(
-                            fontFamily: AppFonts.body,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                            height: 20 / 15,
-                            color: c.textOnPage,
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  children: [
+                                    reactionSpan(r, heart: c.cherry.face),
+                                  ],
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                const TextSpan(text: ' '),
+                                // My reaction's count is underlined.
+                                TextSpan(
+                                  text: '$n',
+                                  style: r == mine
+                                      ? TextStyle(
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: c.accentMark,
+                                          decorationThickness: 2,
+                                        )
+                                      : null,
+                                ),
+                              ],
+                            ),
+                            style: TextStyle(
+                              fontFamily: AppFonts.body,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                              height: 20 / 15,
+                              color: c.textOnPage,
+                            ),
                           ),
                         ),
                       ),
@@ -260,8 +271,108 @@ class ReactionChips extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  /// Between one reaction and the next.
+  static const double _gap = 18;
+
+  /// How far the tap areas reach up over the message: the emoji sit 4 px
+  /// under it.
+  static const double _raise = 10;
+}
+
+/// Draws [child] [by] px higher than it's laid out, and takes that much
+/// less room, so the reactions' 48 px tap areas overlap the message's
+/// bottom edge instead of pushing everything under them down. A tap in the
+/// overlap goes to the reactions, which are tested first.
+class _RaisedBy extends SingleChildRenderObjectWidget {
+  const new({required this.by, required Widget super.child});
+
+  final double by;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderRaisedBy(by);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    covariant _RenderRaisedBy renderObject,
+  ) => renderObject.by = by;
+}
+
+class _RenderRaisedBy extends RenderProxyBox {
+  new(this._by);
+
+  double get by => _by;
+  double _by;
+  set by(double value) {
+    if (_by == value) return;
+    _by = value;
+    markNeedsLayout();
+  }
+
+  double _less(double height) => math.max(0, height - _by);
+
+  @override
+  double computeMinIntrinsicHeight(double width) =>
+      _less(super.computeMinIntrinsicHeight(width));
+
+  @override
+  double computeMaxIntrinsicHeight(double width) =>
+      _less(super.computeMaxIntrinsicHeight(width));
+
+  @override
+  Size computeDryLayout(covariant BoxConstraints constraints) {
+    final s = child?.getDryLayout(constraints.widthConstraints()) ?? Size.zero;
+    return constraints.constrain(Size(s.width, _less(s.height)));
+  }
+
+  @override
+  void performLayout() {
+    final child = this.child;
+    if (child == null) {
+      size = constraints.smallest;
+      return;
+    }
+    child.layout(constraints.widthConstraints(), parentUsesSize: true);
+    size = constraints.constrain(
+      Size(child.size.width, _less(child.size.height)),
+    );
+  }
+
+  @override
+  Rect get paintBounds =>
+      Rect.fromLTWH(0, -_by, size.width, child?.size.height ?? 0);
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final child = this.child;
+    if (child != null) context.paintChild(child, offset.translate(0, -_by));
+  }
+
+  @override
+  void applyPaintTransform(RenderBox child, Matrix4 transform) =>
+      transform.translateByDouble(0, -_by, 0, 1);
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final child = this.child;
+    if (child == null) return false;
+    if (!Rect.fromLTWH(
+      0,
+      -_by,
+      size.width,
+      child.size.height,
+    ).contains(position)) {
+      return false;
+    }
+    return result.addWithPaintOffset(
+      offset: Offset(0, -_by),
+      position: position,
+      hitTest: (result, position) => child.hitTest(result, position: position),
     );
   }
 }

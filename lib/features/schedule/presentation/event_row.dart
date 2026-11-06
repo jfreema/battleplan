@@ -230,7 +230,7 @@ class EventRow extends StatelessWidget {
                         Text(z, style: muted),
                       if (count != null) ...[
                         const SizedBox(height: 6),
-                        _Attendance(
+                        EventAttendance(
                           count: count,
                           // In words for screen readers: "7 of 12 players
                           // going", not "7 slash 12".
@@ -264,13 +264,15 @@ class EventRow extends StatelessWidget {
 
 /// The attendance line on a card (SPEC §7.3): a 40 × 5 mini bar, "7/12
 /// going", and, in the accent color, who I answer for that hasn't answered.
-/// Screen readers hear the count as [spoken].
-class _Attendance extends StatelessWidget {
+/// The schedule's cards and the chat's event cards share it. Screen
+/// readers hear the count as [spoken].
+class EventAttendance extends StatelessWidget {
   const new({
     required this.count,
     required this.spoken,
     required this.fraction,
     this.note,
+    super.key,
   });
 
   final String count;

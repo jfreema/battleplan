@@ -2075,7 +2075,10 @@ void main() {
         messages: FakeMessageRepository([card('e1').copyWith(reminder: true)]),
       );
       expect(find.text('Reminder'), findsOneWidget);
-      expect(find.text("1/3 going · 2 haven't answered"), findsOneWidget);
+      // The attendance line as the schedule's, and the team's count
+      // under it.
+      expect(find.text('1/3 going', findRichText: true), findsOneWidget);
+      expect(find.text("2 haven't answered"), findsOneWidget);
     });
 
     testWidgets('answers Going right on the card, with live counts', (
@@ -2089,12 +2092,15 @@ void main() {
         messages: FakeMessageRepository([card('e1')]),
       );
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
-      expect(find.text('0/20 going'), findsOneWidget);
+      expect(
+        find.text("0/20 going · You haven't answered", findRichText: true),
+        findsOneWidget,
+      );
       await tester.tap(find.text('Going'));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
       expect(rsvps.rsvps.single.participantId, 'coach');
-      expect(find.text('1/20 going'), findsOneWidget);
+      expect(find.text('1/20 going', findRichText: true), findsOneWidget);
       // Still in the chat: answering doesn't open the event.
       expect(find.text('Directions'), findsNothing);
     });
@@ -2142,7 +2148,11 @@ void main() {
       await tester.tap(find.text('Going').last);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p2');
-      expect(find.text('1/2 going'), findsOneWidget);
+      // Who's still waiting, as the schedule's card says it (SPEC §6.2).
+      expect(
+        find.text("1/2 going · Emma hasn't answered", findRichText: true),
+        findsOneWidget,
+      );
     });
 
     testWidgets('one tap answers for all my players on the card (PLAYER-11)', (

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
@@ -28,6 +29,7 @@ import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/features/chat/presentation/sprinkles.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
+import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/polls/polls.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
@@ -1032,8 +1034,42 @@ String dayLabel(AppLocalizations l10n, DateTime day, DateTime now) {
       : DateFormat.yMMMEd(l10n.localeName).format(d);
 }
 
-/// The team's chat background (CHAT-18): the page color, Gumdrop Pop's
-/// sprinkles over it, or a photo under a page-colored scrim so messages
+/// How much of the page color covers a Chat look's sprinkles or photo
+/// (CHAT-18), since others' messages sit right on it: the least, in steps
+/// of 0.02, that keeps the scheme's text and muted text (names, times) at
+/// 4.5:1 (WCAG AA) over the worst that can be under a letter: any sprinkle,
+/// or a photo's white or black. A photo is never covered less than 0.78,
+/// so it stays a quiet background.
+double chatBackdropScrim(GumdropColors c, {required bool photo}) {
+  final under = photo
+      ? const [Color(0xFFFFFFFF), Color(0xFF000000)]
+      : [
+          for (final candy in Sprinkles.paletteOf(c))
+            Color.alphaBlend(
+              candy.withValues(alpha: Sprinkles.opacity),
+              c.page,
+            ),
+        ];
+  bool readable(double scrim) {
+    for (final u in under) {
+      final ground = Color.alphaBlend(c.page.withValues(alpha: scrim), u);
+      final muted = Color.alphaBlend(c.textMutedOnPage, ground);
+      if (ColorMath.contrast(c.textOnPage, ground) < 4.5 ||
+          ColorMath.contrast(muted, ground) < 4.5) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  for (var step = photo ? 39 : 0; step < 50; step++) {
+    if (readable(step / 50)) return step / 50;
+  }
+  return 1;
+}
+
+/// The team's chat background (CHAT-18): the page color, or the sprinkles
+/// or a photo under a page-colored scrim (chatBackdropScrim) so messages
 /// stay readable.
 class _Backdrop extends ConsumerWidget {
   const new({required this.look});
@@ -1047,7 +1083,17 @@ class _Backdrop extends ConsumerWidget {
       case ChatBackground.plain:
         return const SizedBox.shrink();
       case ChatBackground.pattern:
-        return Sprinkles(colors: c);
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Sprinkles(colors: c),
+            ColoredBox(
+              color: c.page.withValues(
+                alpha: chatBackdropScrim(c, photo: false),
+              ),
+            ),
+          ],
+        );
       case ChatBackground.photo:
         final path = look.backgroundPath;
         final url = path == null
@@ -1062,7 +1108,11 @@ class _Backdrop extends ConsumerWidget {
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) => const SizedBox.shrink(),
             ),
-            ColoredBox(color: c.page.withValues(alpha: 0.78)),
+            ColoredBox(
+              color: c.page.withValues(
+                alpha: chatBackdropScrim(c, photo: true),
+              ),
+            ),
           ],
         );
     }
@@ -1196,9 +1246,11 @@ class _PinnedRowState extends ConsumerState<_PinnedRow> {
                           child: Text.rich(
                             TextSpan(
                               children: [
+                                // Short, so a long name leaves room for
+                                // the text; screen readers get it in full.
                                 if (author.isNotEmpty)
                                   TextSpan(
-                                    text: '$author: ',
+                                    text: '${shortNameOf(author)}: ',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w800,
                                     ),

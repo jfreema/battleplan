@@ -3,6 +3,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/polls/application/providers.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -26,12 +27,10 @@ class PollVotersSheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final votes = ref.watch(pollVotesProvider(poll.id));
     final roster = ref.watch(rosterProvider(poll.groupId)).value ?? const [];
+    Membership? memberOf(String uid) =>
+        roster.where((m) => m.uid == UserId(uid)).firstOrNull;
     String nameOf(String uid) =>
-        roster
-            .where((m) => m.uid == UserId(uid))
-            .firstOrNull
-            ?.nameWithPlayers ??
-        l10n.formerMember;
+        memberOf(uid)?.nameWithPlayers ?? l10n.formerMember;
 
     Widget heading(String text) => Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -44,13 +43,11 @@ class PollVotersSheet extends ConsumerWidget {
     );
     Widget person(String uid) => ListTile(
       dense: true,
+      // Initials from the name alone, not "A#" from "Andy D. #12".
       leading: Avatar(
-        name: nameOf(uid),
+        name: memberOf(uid)?.displayName ?? nameOf(uid),
         colorKey: uid,
-        color: roster
-            .where((m) => m.uid == UserId(uid))
-            .firstOrNull
-            ?.avatarColor,
+        color: memberOf(uid)?.avatarColor,
         size: 32,
       ),
       title: Text(nameOf(uid)),

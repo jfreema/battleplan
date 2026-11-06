@@ -8,9 +8,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A message's photos (CHAT-3): one photo at its own shape, or several as a
-/// grid of squares. Tapping one opens the viewer.
+/// grid of squares in my bubble. On the page ([onPage], others' photos,
+/// which have no bubble) several sit side by side, 100 tall, each with its
+/// own corners and 6 apart (SPEC §5.4.6). Tapping one opens the viewer.
 class PhotoGrid extends StatelessWidget {
-  const new({required this.count, required this.tile, this.single, super.key});
+  const new({
+    required this.count,
+    required this.tile,
+    this.single,
+    this.onPage = false,
+    super.key,
+  });
 
   final int count;
 
@@ -20,15 +28,25 @@ class PhotoGrid extends StatelessWidget {
   /// Width over height of a lone photo, when known.
   final double? single;
 
+  /// Others' photos, straight on the page.
+  final bool onPage;
+
   /// The widest a grid is drawn, in logical pixels.
   static const double maxWidth = 280;
+
+  /// On the page: the tiles' height, the gap between them, and their
+  /// corners.
+  static const double rowHeight = 100;
+  static const double pageGap = 6;
+  static const double pageCorner = 14;
 
   @override
   Widget build(BuildContext context) {
     const gap = 3.0;
+    final corner = BorderRadius.circular(onPage ? pageCorner : Corners.card);
     if (count == 1) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(Corners.card),
+        borderRadius: corner,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: maxWidth, maxHeight: 360),
           child: AspectRatio(
@@ -39,9 +57,43 @@ class PhotoGrid extends StatelessWidget {
       );
     }
     final columns = count == 2 || count == 4 ? 2 : 3;
+    if (onPage) {
+      final rows = (count / columns).ceil();
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: maxWidth),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var r = 0; r < rows; r++) ...[
+              if (r > 0) const SizedBox(height: pageGap),
+              SizedBox(
+                height: rowHeight,
+                child: Row(
+                  children: [
+                    for (var col = 0; col < columns; col++) ...[
+                      if (col > 0) const SizedBox(width: pageGap),
+                      Expanded(
+                        child: r * columns + col < count
+                            ? ClipRRect(
+                                borderRadius: corner,
+                                child: SizedBox.expand(
+                                  child: tile(r * columns + col),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
     // As wide as it may be, within a narrower bubble (CHAT-1).
     return ClipRRect(
-      borderRadius: BorderRadius.circular(Corners.card),
+      borderRadius: corner,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: maxWidth),
         child: GridView.count(

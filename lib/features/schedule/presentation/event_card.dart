@@ -219,10 +219,12 @@ class EventCard extends ConsumerWidget {
   }
 }
 
-/// The card's answer buttons, one set per person I answer for (PLAYER-6),
-/// while I can still answer, and the live counts (CHAT-11, SPEC §5.4,
-/// §7.5, SCHED-5): the same answers as the event's page, without the
-/// notes. Canceled and started events take no answers.
+/// The card's attendance line and answer buttons, as the schedule's card
+/// has them (CHAT-11, SPEC §5.4.6, §7.5, SCHED-5): the mini bar, "2/4
+/// going" and who I answer for that hasn't answered, then one set of
+/// buttons per person I answer for (PLAYER-6) while I can still answer:
+/// the same answers as the event's page, without the notes. Canceled and
+/// started events take no answers.
 class _CardRsvps extends ConsumerWidget {
   const new({
     required this.event,
@@ -242,7 +244,6 @@ class _CardRsvps extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (!event.rsvpEnabled) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final group = ref.watch(groupProvider(groupId)).value;
     if (group == null) return const SizedBox.shrink();
     final me = ref.watch(myMembershipProvider(groupId));
@@ -253,28 +254,76 @@ class _CardRsvps extends ConsumerWidget {
         ? ref.watch(myParticipantsProvider(groupId))
         : const <Participant>[];
     // My answers from today on, one listener for every card in the chat.
-    final answers = mine.isEmpty
-        ? const <String, Rsvp>{}
+    final mineAnswered = mine.isEmpty
+        ? null
         : ref
-                  .watch(myRsvpsProvider(groupId, from: startOfDay(zone, now)))
-                  .value?[event.id.value] ??
-              const <String, Rsvp>{};
+              .watch(myRsvpsProvider(groupId, from: startOfDay(zone, now)))
+              .value;
+    final answers = mineAnswered?[event.id.value] ?? const <String, Rsvp>{};
     // A basic group's members answer for themselves (TEAM-14): who hasn't
     // answered is out of everyone, not the players.
     final players = group.hasPlayers
         ? ref.watch(playersProvider(groupId)).value?.length ?? 0
         : 0;
     final allowMaybe = group.settings.allowMaybe;
+    final total = group.hasPlayers ? players : group.memberCount;
+    final count = eventCountsText(
+      l10n,
+      event,
+      isTeam: group.hasPlayers,
+      total: total,
+    );
+    // Only while the buttons show, and once my answers have loaded.
+    final note = mineAnswered == null
+        ? null
+        : unansweredText(l10n, [
+            for (final p in mine)
+              if (answers[p.id] == null) p,
+          ]);
     final unanswered = group.hasPlayers
         ? math.max(0, players - event.rsvpCounts.answered)
         : math.max(
             0,
             group.memberCount - (event.rsvpCounts + event.staffCounts).answered,
           );
+    final muted = TextStyle(
+      fontFamily: AppFonts.body,
+      fontWeight: FontWeight.w700,
+      fontSize: 14,
+      height: 18 / 14,
+      color: GumdropColors.of(context).textMuted,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (count != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: EventAttendance(
+              count: count,
+              spoken: group.hasPlayers
+                  ? l10n.rsvpPlayersGoing(
+                      goingOf(event, isTeam: true),
+                      total,
+                    )
+                  : l10n.rsvpMembersGoing(
+                      goingOf(event, isTeam: false),
+                      total,
+                    ),
+              fraction: total <= 0
+                  ? 0
+                  : goingOf(event, isTeam: group.hasPlayers) / total,
+              note: note,
+            ),
+          ),
+        // A reminder also says how many on the team haven't answered
+        // (SCHED-8).
+        if (reminder && unanswered > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(l10n.rsvpNotAnswered(unanswered), style: muted),
+          ),
         // One answer for all my players first (PLAYER-11).
         if (mine.where((p) => p.isPlayer).length > 1)
           Padding(
@@ -302,25 +351,6 @@ class _CardRsvps extends ConsumerWidget {
               enabled: true,
               allowMaybe: allowMaybe,
               compact: true,
-            ),
-          ),
-        if ([
-              ?eventCountsText(
-                l10n,
-                event,
-                isTeam: group.hasPlayers,
-                total: group.hasPlayers ? players : group.memberCount,
-              ),
-              if (reminder && unanswered > 0) l10n.rsvpNotAnswered(unanswered),
-            ]
-            case final parts when parts.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: Space.xs),
-            child: Text(
-              parts.join(' · '),
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
             ),
           ),
       ],

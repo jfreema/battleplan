@@ -47,6 +47,14 @@ void main() {
   /// Messages 1 to [count], newest first, as the repository keeps them.
   List<Message> chat(int count) => [for (var i = count; i >= 1; i--) msg(i)];
 
+  /// The same, with Sam and Jo taking turns: each message has its name and
+  /// icon, so a page of 50 is taller than the screen and the cards' layout
+  /// margin, as a page of a real chat is.
+  List<Message> turns(int count) => [
+    for (var i = count; i >= 1; i--)
+      if (i.isOdd) msg(i) else msg(i, author: 'jo', name: 'Jo Park'),
+  ];
+
   Future<void> openChat(
     WidgetTester tester,
     FakeMessageRepository repo, {
@@ -89,7 +97,7 @@ void main() {
     testWidgets('with more unread than one page holds, it opens at the '
         'first unread and loads the rest scrolling down', (tester) async {
       // 100 unread after message 20: twice what the newest page holds.
-      final repo = FakeMessageRepository(chat(120));
+      final repo = FakeMessageRepository(turns(120));
       await openChat(tester, repo, readAt: msg(20).createdAt);
       await tester.pumpAndSettle();
       // It read the 50 after the marker, as well as the newest 50.
@@ -251,13 +259,13 @@ void main() {
     testWidgets('a stale offline page first still opens at the first unread '
         'once the server page arrives', (tester) async {
       // The cache has only what was seen last time, up to the marker.
-      final repo = FakeMessageRepository(chat(30))..offline = true;
+      final repo = FakeMessageRepository(turns(30))..offline = true;
       await openChat(tester, repo, readAt: msg(30).createdAt);
       await tester.pumpAndSettle();
       expect(repo.newerReads, isEmpty);
       // The server has 120 more since.
       repo
-        ..messages.insertAll(0, [for (var i = 150; i > 30; i--) msg(i)])
+        ..messages.insertAll(0, turns(150).take(120))
         ..offline = false
         ..refresh();
       await tester.pumpAndSettle();
@@ -330,7 +338,7 @@ void main() {
 
   testWidgets('a chat with 10,000 messages opens with one page (CHAT '
       'acceptance)', (tester) async {
-    final repo = FakeMessageRepository(chat(10000));
+    final repo = FakeMessageRepository(turns(10000));
     await openChat(tester, repo, readAt: msg(10000).createdAt);
     await tester.pumpAndSettle();
     expect(repo.olderReads, isEmpty);
@@ -703,7 +711,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.pins, ['m1 pinned']);
       // The pinned row: the author and the message, by the pin.
-      expect(find.text('Sam Rivera: Message 1'), findsOneWidget);
+      expect(find.text('Sam R.: Message 1'), findsOneWidget);
       // A screen reader can open it too.
       final semantics = tester.ensureSemantics();
       expect(
@@ -719,7 +727,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.pins, ['m1 pinned', 'm1 unpinned']);
       // Back to the search entry.
-      expect(find.text('Sam Rivera: Message 1'), findsNothing);
+      expect(find.text('Sam R.: Message 1'), findsNothing);
       expect(find.text('Search Thunder'), findsOneWidget);
     });
 
@@ -759,11 +767,11 @@ void main() {
         ).copyWith(pinnedMessageIds: ['m1', 'm2']),
       );
       expect(find.bySemanticsLabel(RegExp('^Pinned 1 of 2')), findsOneWidget);
-      expect(find.text('Sam Rivera: Message 2'), findsOneWidget);
-      await tester.tap(find.text('Sam Rivera: Message 2'));
+      expect(find.text('Sam R.: Message 2'), findsOneWidget);
+      await tester.tap(find.text('Sam R.: Message 2'));
       await tester.pumpAndSettle();
       expect(find.bySemanticsLabel(RegExp('^Pinned 2 of 2')), findsOneWidget);
-      expect(find.text('Sam Rivera: Message 1'), findsWidgets);
+      expect(find.text('Sam R.: Message 1'), findsWidgets);
       semantics.dispose();
     });
 

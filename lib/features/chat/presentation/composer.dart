@@ -355,6 +355,8 @@ class _ComposerState extends State<Composer> {
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       hintText: hint,
+                      // One line, ending "…", however long the team's name.
+                      hintMaxLines: 1,
                       hintStyle: TextStyle(
                         fontFamily: AppFonts.body,
                         fontWeight: FontWeight.w500,

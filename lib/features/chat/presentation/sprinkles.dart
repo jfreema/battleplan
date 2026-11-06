@@ -15,17 +15,23 @@ class Sprinkles extends StatelessWidget {
   /// The design's 96 × 64 thumbnail tile, scaled up for the chat.
   final double scale;
 
+  /// The dashes' colors, in turn, in [colors]' scheme.
+  static List<Color> paletteOf(GumdropColors colors) => [
+    colors.blueRaspberry.face,
+    colors.bubblegum.face,
+    colors.lemon.face,
+    colors.mint.face,
+    colors.tangerine.face,
+    colors.grape.face,
+  ];
+
+  /// How opaque the dashes are, all as one layer.
+  static const double opacity = 0.8;
+
   @override
   Widget build(BuildContext context) => RepaintBoundary(
     child: CustomPaint(
-      painter: SprinklesPainter([
-        colors.blueRaspberry.face,
-        colors.bubblegum.face,
-        colors.lemon.face,
-        colors.mint.face,
-        colors.tangerine.face,
-        colors.grape.face,
-      ], scale: scale),
+      painter: SprinklesPainter(paletteOf(colors), scale: scale),
       child: const SizedBox.expand(),
     ),
   );
@@ -80,7 +86,7 @@ class SprinklesPainter extends CustomPainter {
       // The whole scatter at 80%, as one layer, so overlaps don't darken.
       ..saveLayer(
         Offset.zero & size,
-        Paint()..color = Colors.black.withValues(alpha: 0.8),
+        Paint()..color = Colors.black.withValues(alpha: Sprinkles.opacity),
       );
     // Rows offset by half a tile, and every other tile turned half way
     // round, so the repeat doesn't line up in columns.

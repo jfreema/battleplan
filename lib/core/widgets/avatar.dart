@@ -115,6 +115,9 @@ class Avatar extends StatelessWidget {
         child: Text(
           initialsOf(name),
           maxLines: 1,
+          // The circle doesn't grow with the text size, so its initials
+          // don't either, or big text would clip them.
+          textScaler: TextScaler.noScaling,
           style: GumdropStyle.of(context).label(
             TextStyle(
               fontWeight: FontWeight.w700,

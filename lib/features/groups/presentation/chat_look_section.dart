@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/color_math.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -482,8 +485,9 @@ class _BackgroundTile extends StatelessWidget {
   }
 }
 
-/// The preview (design §3.17): a coach's message and your answer in the
-/// picked color, on the page inside a dashed outline.
+/// The preview (design §3.17): a coach's message as the chat shows others'
+/// (no bubble), and your answer in the picked color, on the page inside a
+/// dashed outline.
 class _Preview extends StatelessWidget {
   const new({required this.bubble});
 
@@ -519,94 +523,69 @@ class _Preview extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Someone else's message as the chat draws it (SPEC
+              // §5.4.6): no bubble, their icon, their name, the text on the
+              // page.
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ExcludeSemantics(
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: c.tangerine.face,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        name.characters.first.toUpperCase(),
-                        style: text.labelSmall?.copyWith(color: c.ink),
-                      ),
+                    child: Avatar(
+                      name: name,
+                      color: AvatarColor.tangerine,
+                      size: 36,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: GumdropSurface(
-                      child: Builder(
-                        builder: (context) {
-                          final card = GumdropColors.of(context);
-                          return Container(
-                            padding: const EdgeInsets.fromLTRB(12, 7, 12, 8),
-                            decoration: BoxDecoration(
-                              color: card.surface,
-                              border: card.surfaceBorderWidth == 0
-                                  ? null
-                                  : Border.all(
-                                      color: card.surfaceBorder,
-                                      width: card.surfaceBorderWidth,
-                                    ),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(5),
-                                topRight: Radius.circular(16),
-                                bottomLeft: Radius.circular(16),
-                                bottomRight: Radius.circular(16),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  name,
-                                  style: text.labelMedium?.copyWith(
-                                    color: card.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  l10n.chatLookPreviewOther,
-                                  style: text.bodyMedium?.copyWith(
-                                    fontSize: 15,
-                                    color: card.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: TextStyle(
+                            fontFamily: AppFonts.body,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            height: 20 / 16,
+                            color: c.textOnPage,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          l10n.chatLookPreviewOther,
+                          style: ChatText.of(text.bodyLarge)
+                              .copyWith(color: c.textOnPage),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 9),
+              const SizedBox(height: 12),
+              // Mine, in the picked color.
               Align(
                 alignment: Alignment.centerRight,
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(13, 7, 13, 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: bubble,
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                      bottomLeft: Radius.circular(16),
-                      bottomRight: Radius.circular(5),
+                      topLeft: Radius.circular(Corners.bubble),
+                      topRight: Radius.circular(Corners.bubble),
+                      bottomLeft: Radius.circular(Corners.bubble),
+                      bottomRight: Radius.circular(Corners.bubbleTail),
                     ),
                   ),
                   child: Text(
                     l10n.chatLookPreviewMine,
-                    style: text.bodyMedium?.copyWith(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: onBubble,
-                    ),
+                    style: ChatText.of(
+                      text.bodyLarge,
+                      mine: true,
+                    ).copyWith(color: onBubble),
                   ),
                 ),
               ),

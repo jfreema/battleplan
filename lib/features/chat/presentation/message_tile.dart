@@ -37,6 +37,7 @@ import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -533,6 +534,10 @@ class _MessageTileState extends ConsumerState<MessageTile> {
               deleted:
                   (preview?.deleted ?? false) || original?.deletedAt != null,
               onTap: widget.onOpenQuote,
+              // In my bubble or an announcement it takes the bubble's
+              // colors; others' sit on the page.
+              bubble: background,
+              bubbleText: background == null ? null : foreground,
             ),
           );
     // A poll shows as its card (POLL-2, CHAT-11); its text is the question,
@@ -580,11 +585,14 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     // posted from Plays opens the play instead, to play its steps
     // (BOARD-5).
     final playId = m.playId;
+    // Others' photos have no bubble to sit in, so no frame or inset.
+    final bubbled = mine || announcement;
     final photos = deleted || m.attachments.isEmpty
         ? null
         : PhotoGrid(
             count: m.attachments.length,
             single: m.attachments.first.aspectRatio,
+            onPage: !bubbled,
             tile: (i) {
               void open() => playId != null
                   ? context.go('/g/${m.groupId.value}/plays/$playId')
@@ -593,8 +601,10 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                 attachment: m.attachments[i],
                 decodeWidth: PhotoGrid.maxWidth,
               );
-              // "Photo from Alex", or "Open the play Relay": a button.
+              // "Photo from Alex", or "Open the play Relay": a button of
+              // its own.
               return Semantics(
+                container: true,
                 button: true,
                 label: playId == null
                     ? l10n.photoFrom(m.authorName)
@@ -624,8 +634,6 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           );
     // Around photos the bubble is a thin frame, and what's above and below
     // them is inset to line up with a text bubble's.
-    // Others' photos have no bubble to sit in, so no frame or inset.
-    final bubbled = mine || announcement;
     final photoInset = bubbled ? Space.xs + 2.0 : 0.0;
     final side = bubbled ? 16.0 : 0.0;
     Widget inset(Widget child) => photos == null || !bubbled
@@ -670,14 +678,21 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           ),
         if (photos != null)
           Padding(
+            // On the page, 6 under the head line (whose own padding is 1).
             padding: EdgeInsets.only(
-              top: innerHeader == null ? 0 : Space.xs,
+              top: innerHeader == null
+                  ? 0
+                  : bubbled
+                  ? Space.xs
+                  : 5,
               bottom: hasText || quote != null ? Space.xs + 2 : 0,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: photos,
-            ),
+            child: bubbled
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: photos,
+                  )
+                : photos,
           ),
         if (quote != null) inset(quote),
         if (hasText)
@@ -699,11 +714,13 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           ),
       ],
     ];
-    // Each message is its own bubble, fitted to its text and no wider than
-    // the design's (bubbleMaxWidth), rounded with a small tail corner: at
-    // the top left of the first of others' messages, at the bottom right of
-    // the last of mine (§3.14). A one-line bubble is still 48 tall, a full
-    // tap target (SPEC §7.6), with its text centered.
+    // Each of mine is its own bubble, fitted to its text and no wider than
+    // the design's (bubbleMaxWidth), rounded with a small tail corner at
+    // the bottom right (§3.14). A one-line bubble is still 48 tall, a full
+    // tap target (SPEC §7.6), with its text centered. Others' text has no
+    // bubble, so it takes only its lines, and a run of short messages
+    // reads as one.
+    final shaped = card || background != null;
     final besideAvatar = !mine && !direct;
     final radius = announcement
         ? BorderRadius.circular(18)
@@ -722,8 +739,8 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final content = ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: bubbleMaxWidth(context, besideAvatar: besideAvatar),
-        // Each message is a 48 px target for its menu (SPEC §7.6).
-        minHeight: kMinInteractiveDimension,
+        // Each bubble is a 48 px target for its menu (SPEC §7.6).
+        minHeight: shaped ? kMinInteractiveDimension : 0,
       ),
       child: Padding(
         padding: padding,
@@ -795,30 +812,22 @@ class _MessageTileState extends ConsumerState<MessageTile> {
       color: c.textMutedOnPage,
       fontWeight: FontWeight.w800,
     );
-    // Event cards keep the name and time above them, on the page. A poll
-    // card says who asked inside it.
+    // Event cards keep the name and time above them, on the page, in the
+    // head line others' messages have. A poll card says who asked inside
+    // it.
     final header = !isEvent
         ? null
         : widget.startsGroup && !mine
         ? Padding(
-            padding: const EdgeInsets.only(left: 2, bottom: Space.xs),
+            padding: const EdgeInsets.only(bottom: Space.xs),
             child: Text.rich(
               TextSpan(
                 children: [
-                  TextSpan(
-                    text: nameWithPlayersOf(
-                      m.authorName,
-                      m.authorPlayerSummary,
-                    ),
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: c.textOnPage,
-                    ),
-                  ),
-                  if (time != null) TextSpan(text: '  $time'),
-                  if (headerMarks.isNotEmpty) TextSpan(text: ' · $headerMarks'),
+                  ..._nameSpans(m, c.textOnPage, c.textMutedOnPage),
+                  if (meta.isNotEmpty) TextSpan(text: ' $meta'),
                 ],
               ),
-              style: pageMeta,
+              style: metaStyle,
             ),
           )
         : widget.startsGroup && time != null
@@ -840,6 +849,20 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           )
         : null;
 
+    // Text on the page is only as tall as its lines, too small a target
+    // for a screen reader's tap and long-press: there the menu is one of
+    // its actions instead (SPEC §7.6). Touch, the mouse, and the keyboard
+    // work on it as on any message.
+    Widget menuAction(Widget child) => shaped || deleted
+        ? child
+        : Semantics(
+            container: true,
+            customSemanticsActions: {
+              CustomSemanticsAction(label: l10n.messageMenu): () =>
+                  unawaited(_openMenu()),
+            },
+            child: child,
+          );
     final column = Column(
       crossAxisAlignment: mine
           ? CrossAxisAlignment.end
@@ -849,103 +872,108 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         MouseRegion(
           onEnter: (_) => setState(() => _hovering = true),
           onExit: (_) => setState(() => _hovering = false),
-          child: GestureDetector(
-            onTap: () => setState(() => _showTime = !_showTime),
-            // Swipe right to reply (CHAT-13, phones).
-            onHorizontalDragUpdate: widget.onReply == null || web
-                ? null
-                : (d) => setState(
-                    () => _swipe = (_swipe + d.delta.dx).clamp(0, 96),
+          child: menuAction(
+            GestureDetector(
+              excludeFromSemantics: !shaped,
+              onTap: () => setState(() => _showTime = !_showTime),
+              // Swipe right to reply (CHAT-13, phones).
+              onHorizontalDragUpdate: widget.onReply == null || web
+                  ? null
+                  : (d) => setState(
+                      () => _swipe = (_swipe + d.delta.dx).clamp(0, 96),
+                    ),
+              onHorizontalDragEnd: widget.onReply == null || web
+                  ? null
+                  : (_) {
+                      if (_swipe >= _swipeToReply) {
+                        Haptics.selection();
+                        widget.onReply!();
+                      }
+                      setState(() => _swipe = 0);
+                    },
+              // The message menu (CHAT-7): long-press on phones, right-click
+              // on the web. Double-tap loves it (CHAT-6).
+              onLongPress: deleted
+                  ? null
+                  : () {
+                      Haptics.medium();
+                      unawaited(_openMenu());
+                    },
+              onSecondaryTap: deleted ? null : () => unawaited(_openMenu()),
+              // Not on polls: waiting for a second tap would hold up voting.
+              onDoubleTap:
+                  deleted ||
+                      web ||
+                      isPoll ||
+                      isEvent ||
+                      ref.watch(viewingAsSuperAdminProvider(m.groupId))
+                  ? null
+                  : () {
+                      Haptics.light();
+                      fireAndForget(_react(Reaction.love));
+                    },
+              // Full keyboard navigation (SPEC §7.6): Tab reaches each
+              // message, and Enter, Space, the menu key, or Shift+F10 opens
+              // its menu, as long-press and right-click do.
+              child: FocusableActionDetector(
+                enabled: !deleted,
+                onShowFocusHighlight: (on) => setState(() => _focused = on),
+                shortcuts: const {
+                  SingleActivator(LogicalKeyboardKey.contextMenu):
+                      ActivateIntent(),
+                  SingleActivator(LogicalKeyboardKey.f10, shift: true):
+                      ActivateIntent(),
+                },
+                actions: {
+                  ActivateIntent: CallbackAction<ActivateIntent>(
+                    onInvoke: (_) => unawaited(_openMenu()),
                   ),
-            onHorizontalDragEnd: widget.onReply == null || web
-                ? null
-                : (_) {
-                    if (_swipe >= _swipeToReply) {
-                      Haptics.selection();
-                      widget.onReply!();
-                    }
-                    setState(() => _swipe = 0);
-                  },
-            // The message menu (CHAT-7): long-press on phones, right-click
-            // on the web. Double-tap loves it (CHAT-6).
-            onLongPress: deleted
-                ? null
-                : () {
-                    Haptics.medium();
-                    unawaited(_openMenu());
-                  },
-            onSecondaryTap: deleted ? null : () => unawaited(_openMenu()),
-            // Not on polls: waiting for a second tap would hold up voting.
-            onDoubleTap:
-                deleted ||
-                    web ||
-                    isPoll ||
-                    isEvent ||
-                    ref.watch(viewingAsSuperAdminProvider(m.groupId))
-                ? null
-                : () {
-                    Haptics.light();
-                    fireAndForget(_react(Reaction.love));
-                  },
-            // Full keyboard navigation (SPEC §7.6): Tab reaches each
-            // message, and Enter, Space, the menu key, or Shift+F10 opens
-            // its menu, as long-press and right-click do.
-            child: FocusableActionDetector(
-              enabled: !deleted,
-              onShowFocusHighlight: (on) => setState(() => _focused = on),
-              shortcuts: const {
-                SingleActivator(LogicalKeyboardKey.contextMenu):
-                    ActivateIntent(),
-                SingleActivator(LogicalKeyboardKey.f10, shift: true):
-                    ActivateIntent(),
-              },
-              actions: {
-                ActivateIntent: CallbackAction<ActivateIntent>(
-                  onInvoke: (_) => unawaited(_openMenu()),
-                ),
-              },
-              child: Transform.translate(
-                offset: Offset(_swipe, 0),
-                child: Row(
-                  mainAxisSize: isPoll ? MainAxisSize.max : MainAxisSize.min,
-                  children: [
-                    if (mine && _hovering && !deleted) _hoverButton(),
-                    Flexible(
-                      fit: isPoll ? FlexFit.tight : FlexFit.loose,
-                      // The visible focus ring (SPEC §7.6): around the
-                      // bubble or card, or a little outside text that's on
-                      // the page, so it doesn't cross the letters.
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          bubble,
-                          if (_focused)
-                            Positioned(
-                              left: card || background != null ? 0 : -6,
-                              right: card || background != null ? 0 : -6,
-                              top: 0,
-                              bottom: 0,
-                              child: IgnorePointer(
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: c.textOnPage,
-                                      width: 2,
+                },
+                child: Transform.translate(
+                  offset: Offset(_swipe, 0),
+                  child: Row(
+                    // Fitted to the bubble or card, so mine sit on the right
+                    // at any width; a poll card is as wide as it may be, up
+                    // to its own cap.
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (mine && _hovering && !deleted) _hoverButton(),
+                      Flexible(
+                        // The visible focus ring (SPEC §7.6): around the
+                        // bubble or card, or a little outside text that's on
+                        // the page, so it doesn't cross the letters.
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            bubble,
+                            if (_focused)
+                              Positioned(
+                                left: shaped ? 0 : -6,
+                                right: shaped ? 0 : -6,
+                                top: shaped ? 0 : -3,
+                                bottom: shaped ? 0 : -3,
+                                child: IgnorePointer(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: c.textOnPage,
+                                        width: 2,
+                                      ),
+                                      borderRadius: card
+                                          ? BorderRadius.circular(18)
+                                          : background == null
+                                          ? BorderRadius.circular(10)
+                                          : radius,
                                     ),
-                                    borderRadius: card
-                                        ? BorderRadius.circular(18)
-                                        : background == null
-                                        ? BorderRadius.circular(10)
-                                        : radius,
                                   ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    if (!mine && _hovering && !deleted) _hoverButton(),
-                  ],
+                      if (!mine && _hovering && !deleted) _hoverButton(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1002,11 +1030,12 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     // card takes the whole width and names who asked.
     final avatarSlot = SizedBox(
       width: kMinInteractiveDimension,
-      // Level with the bubble's top, where the name is; a card has its
-      // name above it.
+      // Level with the head line; an event card has its head line above
+      // it (20 tall and 4 over the card), so the icon is level with the
+      // card.
       child: widget.startsGroup
           ? Padding(
-              padding: EdgeInsets.only(top: isEvent ? 20 : 0),
+              padding: EdgeInsets.only(top: isEvent ? 24 : 0),
               child: _AuthorAvatar(message: m, onTap: openAuthor),
             )
           : null,

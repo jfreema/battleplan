@@ -283,6 +283,8 @@ Message _msg(
   Map<String, Reaction> reactions = const {},
   String? pollId,
   String? eventId,
+  ReplyPreview? replyTo,
+  String? replyToId,
 }) => Message(
   id: id,
   groupId: _team,
@@ -295,6 +297,8 @@ Message _msg(
   reactions: reactions,
   pollId: pollId,
   eventId: eventId,
+  replyToId: replyToId,
+  replyPreview: replyTo,
   createdAt: at,
 );
 
@@ -306,6 +310,12 @@ List<Message> get sceneMessages => [
     'Coach Lee',
     _chatAt(8, 9, 41),
     text: 'See everyone Monday!',
+    // A reply of mine, its quote in my bubble (CHAT-13).
+    replyToId: 'm3',
+    replyTo: const ReplyPreview(
+      authorName: 'Sam Rivera',
+      text: 'Running 5 minutes late, save me a cone',
+    ),
   ),
   _msg(
     'm6',
@@ -322,6 +332,13 @@ List<Message> get sceneMessages => [
     'Alex Kim',
     _chatAt(8, 9, 12),
     text: 'Great hustle today',
+    // Someone else's reply, its quote on the page.
+    replyToId: 'm2',
+    replyTo: const ReplyPreview(
+      authorName: 'Coach Lee',
+      text: 'Team dinner after the game?',
+      type: MessageType.poll,
+    ),
     reactions: const {
       'coach': Reaction.like,
       'sam': Reaction.like,
