@@ -503,4 +503,8 @@ goldenScreens = {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/teams/scheme');
   },
+  'your_icon': (tester, {required scheme}) async {
+    await pumpTeam(tester, scheme: scheme);
+    await goTo(tester, '/profile/icon');
+  },
 };

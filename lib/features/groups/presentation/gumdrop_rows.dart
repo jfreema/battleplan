@@ -6,7 +6,10 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/back_chevron.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The pieces of the Gumdrop settings screens (design §3.2, §3.5, §3.8,
@@ -15,69 +18,261 @@ import 'package:material_ui/material_ui.dart';
 /// color grid. Shared by Settings, Team settings, Create team, Invite,
 /// Roster, Documents, and Plays.
 
-/// The detail screens' bar: the round lemon back button (when there's
-/// somewhere to go back to) and the screen's title in Lilita One 32.
+/// The pushed-screen bar (SPEC §7.3): a 48 px back row with the chevron
+/// and [backLabel] (the screen it goes back to) when there's somewhere to
+/// go back to, and [actions] on its right as 48 px icon buttons; then the
+/// title in Lilita 32 with the scheme's drop, 20 px from the left. The
+/// title row grows with the text size.
 PreferredSizeWidget gumdropAppBar(
   BuildContext context, {
   required String title,
+  String? backLabel,
   List<Widget>? actions,
   PreferredSizeWidget? bottom,
 }) {
   final canPop = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
+  final scaler = MediaQuery.textScalerOf(context);
+  final titleStyle = Theme.of(context).textTheme.headlineMedium
+      ?.copyWith(fontSize: 32, height: 36 / 32);
+  final titleHeight = 6 + scaler.scale(36) + 4;
+  final under = bottom?.preferredSize.height ?? 0;
   return AppBar(
-    toolbarHeight: 68,
+    toolbarHeight: 48,
     automaticallyImplyLeading: false,
-    leadingWidth: canPop ? 14 + 48 + 12 : null,
-    titleSpacing: canPop ? 0 : 16,
-    leading: canPop
-        ? const Padding(
-            padding: EdgeInsets.only(left: 14, right: 12),
-            child: Center(child: GumdropBackButton()),
+    // The back row isn't the heading; the title below it is, and names
+    // the route.
+    excludeHeaderSemantics: true,
+    titleSpacing: 4,
+    title: canPop
+        ? Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: BackChevron(label: backLabel),
           )
         : null,
-    title: Text(
-      title,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: Theme.of(context).textTheme.headlineMedium,
-    ),
     actions: actions,
-    actionsPadding: const EdgeInsets.only(right: 8),
-    bottom: bottom,
+    actionsPadding: const EdgeInsets.only(right: 4),
+    bottom: PreferredSize(
+      preferredSize: Size.fromHeight(titleHeight + under),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
+            child: Semantics(
+              header: true,
+              namesRoute: true,
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: titleStyle,
+              ),
+            ),
+          ),
+          ?bottom,
+        ],
+      ),
+    ),
   );
 }
 
-/// The round back button (design §3.2): a 48 px lemon circle with an ink
-/// outline and a hard offset shadow, and a chevron.
-class GumdropBackButton extends StatelessWidget {
-  const new({this.onPressed, super.key});
+/// What a pushed screen's back label says, passed as GoRouter `extra` by
+/// an opener other than the usual one ([label] null: the chevron alone).
+@immutable
+class BackLabel {
+  const new(this.label);
 
-  /// Defaults to popping the route.
-  final VoidCallback? onPressed;
+  final String? label;
+}
+
+/// The back label for the screen at [context]: its opener's [BackLabel],
+/// else [usual] (the screen it's normally opened from).
+String? backLabelFrom(BuildContext context, String usual) {
+  // A screen outside a GoRouter page (a test pumping it alone) has none.
+  if (ModalRoute.of(context)?.settings is! Page<Object?>) return usual;
+  final extra = GoRouterState.of(context).extra;
+  return extra is BackLabel ? extra.label : usual;
+}
+
+/// The top bar of Teams and Profile (SPEC §7.3): 52 px, the [title] in
+/// Lilita 27 with the scheme's drop, 20 px from the left, and [actions]
+/// (48 px icon buttons) on the right.
+class TopLevelBar extends StatelessWidget {
+  const new({required this.title, this.actions = const [], super.key});
+
+  final String title;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 52),
+    child: Padding(
+      padding: const EdgeInsets.only(left: 20, right: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Padding(
+                // Level with the icons' center.
+                padding: const EdgeInsets.only(top: 3),
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  // From the 32 px style, for its 2 px drop.
+                  style: Theme.of(context).textTheme.headlineMedium
+                      ?.copyWith(fontSize: 27, height: 30 / 27),
+                ),
+              ),
+            ),
+          ),
+          ...actions,
+        ],
+      ),
+    ),
+  );
+}
+
+/// Rows straight on the page (SPEC §7.3): a 1 px hairline above the first
+/// and under each.
+class PageRows extends StatelessWidget {
+  const new({required this.children, super.key});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final line = Container(height: 1, color: GumdropColors.of(context).divider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        line,
+        for (final child in children) ...[child, line],
+      ],
+    );
+  }
+}
+
+/// A row on the page (SPEC §7.3): at least 50 tall, a 22 px [icon] (or
+/// [leading]) in the text color, the title in Nunito 700 16/21, the
+/// subtitle in Nunito 600 14/19 muted, and a 20 px chevron when it opens
+/// something. [destructive] puts the icon and title in the accent text.
+class PageRow extends StatelessWidget {
+  const new({
+    required this.title,
+    this.icon,
+    this.leading,
+    this.subtitle,
+    this.onTap,
+    this.trailing,
+    this.chevron = true,
+    this.destructive = false,
+    super.key,
+  });
+
+  final String title;
+  final IconData? icon;
+  final Widget? leading;
+  final String? subtitle;
+  final VoidCallback? onTap;
+
+  /// In place of the chevron.
+  final Widget? trailing;
+  final bool chevron;
+  final bool destructive;
 
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: c.pageShadow, offset: const Offset(4, 4))],
-      ),
-      child: IconButton(
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        onPressed: onPressed ?? () => Navigator.of(context).maybePop(),
-        icon: const Icon(AppIcons.chevronLeft, size: 30, weight: 700),
-        style: IconButton.styleFrom(
-          fixedSize: const Size(48, 48),
-          minimumSize: const Size(48, 48),
-          padding: EdgeInsets.zero,
-          backgroundColor: c.sticker.face,
-          foregroundColor: c.ink,
-          shape: CircleBorder(side: BorderSide(color: c.ink, width: 2.5)),
+    final text = Theme.of(context).textTheme;
+    final color = destructive ? c.cherry.text : c.textOnPage;
+    final sub = subtitle;
+    final lead =
+        leading ?? (icon == null ? null : Icon(icon, size: 22, color: color));
+    final end =
+        trailing ??
+        (onTap != null && chevron
+            ? Icon(
+                AppIcons.chevronRight,
+                size: 20,
+                weight: 700,
+                color: c.textMutedOnPage,
+              )
+            : null);
+    return MergeSemantics(
+      child: Semantics(
+        button: onTap != null,
+        child: FocusRingInk(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 50),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  if (lead != null) ...[lead, const SizedBox(width: 14)],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: text.bodyLarge?.copyWith(
+                            fontSize: 16,
+                            height: 21 / 16,
+                            fontWeight: FontWeight.w700,
+                            color: color,
+                          ),
+                        ),
+                        if (sub != null && sub.isNotEmpty)
+                          Text(
+                            sub,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: text.bodyMedium?.copyWith(
+                              fontSize: 14,
+                              height: 19 / 14,
+                              fontWeight: FontWeight.w600,
+                              color: c.textMutedOnPage,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (end != null) ...[const SizedBox(width: 14), end],
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
+}
+
+/// A section label on the page (SPEC §7.3): Fredoka 600 13/16, spaced
+/// 0.12 em, capitals, muted. Screen readers hear it in plain case.
+class SectionLabel extends StatelessWidget {
+  const new(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    header: true,
+    child: Text(
+      text.toUpperCase(),
+      semanticsLabel: text,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        fontSize: 13,
+        height: 16 / 13,
+        letterSpacing: 13 * 0.12,
+        color: GumdropColors.of(context).textMutedOnPage,
+      ),
+    ),
+  );
 }
 
 /// A card (design §3.5): the surface, the theme's card outline, rounded

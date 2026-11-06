@@ -160,7 +160,11 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
     );
 
     return Scaffold(
-      appBar: gumdropAppBar(context, title: l10n.newSeason),
+      appBar: gumdropAppBar(
+        context,
+        title: l10n.newSeason,
+        backLabel: l10n.teamAdmin,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),

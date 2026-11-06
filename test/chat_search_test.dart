@@ -87,6 +87,36 @@ void main() {
           .uri
           .toString();
 
+  testWidgets('with nothing pinned the row is the search entry; with a pin '
+      'the search is a button at its end', (tester) async {
+    await openChat(tester, FakeMessageRepository([msg(1, 'Hi')]));
+    // The quiet entry, "Search Thunder", which opens the search.
+    expect(find.text('Search Thunder'), findsOneWidget);
+    await tester.tap(find.text('Search Thunder'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ChatSearchScreen), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {
+        'a': testGroup('a', 'Thunder').copyWith(pinnedMessageIds: ['m1']),
+      },
+      memberRepo: FakeMemberRepository([
+        testMembership('a', 'coach', role: MemberRole.owner),
+      ]),
+      messageRepo: FakeMessageRepository([msg(1, 'Hi')]),
+      size: phoneSize,
+    );
+    expect(find.text('Search Thunder'), findsNothing);
+    expect(find.byType(ChatSearchButton), findsOneWidget);
+    await tester.tap(find.byTooltip('Search the chat'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ChatSearchScreen), findsOneWidget);
+  });
+
   testWidgets("the Chat tab's search finds messages by their words, newest "
       'first, and says when it finds none', (tester) async {
     final repo = FakeMessageRepository(

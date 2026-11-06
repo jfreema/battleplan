@@ -24,29 +24,24 @@ class HomeShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final destinations = [
-      (AppIcons.group, l10n.tabTeams),
-      (AppIcons.profile, l10n.tabProfile),
+    final tabs = <OpenFieldTab>[
+      for (final (icon, label) in [
+        (AppIcons.group, l10n.tabTeams),
+        (AppIcons.person, l10n.tabProfile),
+      ])
+        (
+          icon: Icon(icon),
+          selectedIcon: Icon(icon, fill: 1),
+          label: label,
+          badge: null,
+        ),
     ];
     void select(int i) => context.go(paths[i]);
     if (MediaQuery.sizeOf(context).width >= Breakpoints.wide) {
       return Scaffold(
         body: Row(
           children: [
-            FloatingRail(
-              child: NavigationRail(
-                backgroundColor: Colors.transparent,
-                selectedIndex: tab,
-                onDestinationSelected: select,
-                destinations: [
-                  for (final (icon, label) in destinations)
-                    NavigationRailDestination(
-                      icon: Icon(icon),
-                      label: Text(label),
-                    ),
-                ],
-              ),
-            ),
+            OpenFieldRail(tabs: tabs, selectedIndex: tab, onSelect: select),
             Expanded(child: child),
           ],
         ),
@@ -54,17 +49,10 @@ class HomeShell extends StatelessWidget {
     }
     return Scaffold(
       body: child,
-      // A floating rounded panel (design §3.12).
-      bottomNavigationBar: FloatingTabBar(
-        child: NavigationBar(
-          backgroundColor: Colors.transparent,
-          selectedIndex: tab,
-          onDestinationSelected: select,
-          destinations: [
-            for (final (icon, label) in destinations)
-              NavigationDestination(icon: Icon(icon), label: label),
-          ],
-        ),
+      bottomNavigationBar: OpenFieldTabBar(
+        tabs: tabs,
+        selectedIndex: tab,
+        onSelect: select,
       ),
     );
   }

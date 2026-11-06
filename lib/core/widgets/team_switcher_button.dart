@@ -1,59 +1,75 @@
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The team switcher in the header (SPEC §5.2, §7.5; Gumdrop Pop design
-/// §3.3): the team's name in the big Lilita One heading with its stacked
-/// shadow, and a chevron, with a dot when another team has unread
-/// messages. A team's uploaded logo shows before the name; initials on the
-/// team color don't, as the name says it. [compact] is the badge alone,
-/// for the top of the rail.
+/// The team switcher in the header (SPEC §5.2, §7.3): the tab's stencil
+/// [eyebrow] over the team's [name] in Lilita One with the scheme's drop,
+/// and a small chevron, with a coral dot when another team has unread
+/// messages. One button, at least 48 tall.
 class TeamSwitcherButton extends StatelessWidget {
   const new({
     required this.name,
     required this.onPressed,
-    this.badge,
+    this.eyebrow,
     this.showDot = false,
-    this.compact = false,
     super.key,
   });
 
   final String name;
 
-  /// The team's logo (a `TeamBadge`), or null for the name alone.
-  final Widget? badge;
+  /// What the tab is ("Team chat"), or null for the name alone.
+  final String? eyebrow;
   final VoidCallback onPressed;
   final bool showDot;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = GumdropColors.of(context);
-    final logo = badge;
-    if (compact) {
-      return IconButton(
-        tooltip: l10n.switchTeamTooltip,
-        onPressed: onPressed,
-        icon: Badge(
-          isLabelVisible: showDot,
-          smallSize: 10,
-          child: logo ?? const Icon(AppIcons.expand),
-        ),
-      );
-    }
-    // The chevron: 22 px of thick stroke with a hard 2 px drop shadow.
-    final chevron = Badge(
-      isLabelVisible: showDot,
-      smallSize: 10,
-      child: Icon(
-        AppIcons.expand,
-        size: 30,
-        weight: 700,
-        color: c.headingText,
-        shadows: [Shadow(color: c.headingShadow, offset: const Offset(2, 2))],
+    final above = eyebrow;
+    // The chevron, 18 px in a 24 × 30 box, 1 px low, with the dot at its
+    // top right.
+    final chevron = SizedBox(
+      width: 24,
+      height: 30,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            top: 1,
+            child: Icon(
+              AppIcons.expand,
+              size: 18,
+              weight: 700,
+              color: c.textOnPage,
+            ),
+          ),
+          if (showDot)
+            Positioned(
+              top: 3,
+              right: -3,
+              child: Container(
+                width: 13,
+                height: 13,
+                decoration: BoxDecoration(
+                  color: c.badgeRing,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: c.cherry.face,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
     return Semantics(
@@ -68,19 +84,34 @@ class TeamSwitcherButton extends StatelessWidget {
         onTap: onPressed,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 48),
-          child: Row(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (logo != null) ...[logo, const SizedBox(width: Space.sm)],
-              // Room for the heading's 4 px shadow.
-              Flexible(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 4, bottom: 4),
-                  child: _FittedName(name),
+              if (above != null)
+                Text(
+                  above.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontFamily: AppFonts.sticker,
+                    fontWeight: FontWeight.w400,
+                    fontSize: 12,
+                    height: 14 / 12,
+                    letterSpacing: 12 * 0.18,
+                    color: c.you.text,
+                  ),
                 ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(child: TeamName(name)),
+                  const SizedBox(width: 3),
+                  chevron,
+                ],
               ),
-              const SizedBox(width: 1),
-              chevron,
             ],
           ),
         ),
@@ -89,24 +120,25 @@ class TeamSwitcherButton extends StatelessWidget {
   }
 }
 
-/// The team's name on one line in the team-name heading (36 px): a few
-/// sizes smaller when it doesn't fit (a phone's header has four buttons
-/// beside it), and cut with "…" only when even the smallest doesn't fit.
-class _FittedName extends StatelessWidget {
-  const new(this.name);
+/// The team's name on one line in Lilita 27 with the scheme's drop: 23, 21
+/// or 19 when it doesn't fit, and cut with "…" only when even 19 doesn't.
+class TeamName extends StatelessWidget {
+  const new(this.name, {super.key});
 
   final String name;
 
   /// The sizes tried, largest first.
-  static const List<double> _sizes = [TypeScale.teamName, 30.0, 26.0, 22.0];
+  static const List<double> sizes = [27, 23, 21, 19];
 
   @override
   Widget build(BuildContext context) {
-    final heading = Theme.of(context).textTheme.headlineLarge!;
+    // From the 32 px style, for its 2 px drop.
+    final heading = Theme.of(context).textTheme.headlineMedium!
+        .copyWith(height: 30 / 27, letterSpacing: 27 * 0.005);
     return LayoutBuilder(
       builder: (context, constraints) {
-        var style = heading.copyWith(fontSize: _sizes.last);
-        for (final size in _sizes) {
+        var style = heading.copyWith(fontSize: sizes.last);
+        for (final size in sizes) {
           final candidate = heading.copyWith(fontSize: size);
           final painter = TextPainter(
             text: TextSpan(text: name, style: candidate),
@@ -121,11 +153,15 @@ class _FittedName extends StatelessWidget {
             break;
           }
         }
-        return Text(
-          name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: style,
+        return Padding(
+          // Room for the 2 px drop.
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          ),
         );
       },
     );

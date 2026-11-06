@@ -1,98 +1,102 @@
-import 'dart:math' as math;
-
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
-import 'package:battleplan/core/design/team_theme.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The lemon sticker under the team name (Gumdrop Pop design §3.4): what
-/// the tab is, in capitals, tilted a little, with an ink outline and a hard
-/// shadow. Screen readers hear it in plain case.
-class TeamSticker extends StatelessWidget {
-  const new(this.label, {super.key});
+/// The stencil eyebrow over the team name (SPEC §7.3): what the tab is
+/// ("Team chat", "Fall schedule"), in Black Ops One capitals. Screen
+/// readers hear it in plain case.
+abstract final class HeaderEyebrow {
+  /// The eyebrow for tab [index] (Chat, Schedule, Documents, Plays) of a
+  /// team, or of a group ([group]); a team's schedule names the season it's
+  /// in on [now].
+  static String labelFor(
+    AppLocalizations l10n,
+    int index,
+    DateTime now, {
+    bool group = false,
+  }) => switch (index) {
+    0 => group ? l10n.stickerGroupChat : l10n.stickerChat,
+    1 when group => l10n.stickerGroupSchedule,
+    1 => switch (now.month) {
+      12 || 1 || 2 => l10n.stickerScheduleWinter,
+      3 || 4 || 5 => l10n.stickerScheduleSpring,
+      6 || 7 || 8 => l10n.stickerScheduleSummer,
+      _ => l10n.stickerScheduleFall,
+    },
+    2 => group ? l10n.stickerGroupDocuments : l10n.stickerDocuments,
+    _ => l10n.stickerPlays,
+  };
 
-  final String label;
-
-  /// The sticker for tab [index] (Chat, Schedule, Documents, Plays); the
-  /// schedule's names the season it's in on [now].
-  static String labelFor(AppLocalizations l10n, int index, DateTime now) =>
-      switch (index) {
-        0 => l10n.stickerChat,
-        1 => switch (now.month) {
-          12 || 1 || 2 => l10n.stickerScheduleWinter,
-          3 || 4 || 5 => l10n.stickerScheduleSpring,
-          6 || 7 || 8 => l10n.stickerScheduleSummer,
-          _ => l10n.stickerScheduleFall,
-        },
-        2 => l10n.stickerDocuments,
-        _ => l10n.stickerPlays,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    final c = GumdropColors.of(context);
-    // Stenciled (SPEC §7.3).
-    final text = Text(
-      label.toUpperCase(),
-      maxLines: 1,
-      style: TextStyle(
-        fontFamily: AppFonts.sticker,
-        fontWeight: FontWeight.w400,
-        fontSize: 15,
-        height: 1.25,
-        letterSpacing: 0.75,
-        color: c.ink,
-      ),
-    );
-    return Semantics(
-      container: true,
-      label: label,
-      excludeSemantics: true,
-      child: Transform.rotate(
-        angle: -2 * math.pi / 180,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(11, 3, 11, 4),
-          decoration: BoxDecoration(
-            color: c.sticker.face,
-            border: Border.all(color: c.ink, width: 2.5),
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(color: c.pageShadow, offset: const Offset(3, 3)),
-            ],
-          ),
-          child: text,
-        ),
-      ),
-    );
-  }
+  /// The eyebrow's text style: Black Ops One 12/14, spaced 0.18 em, in the
+  /// scheme's accent text.
+  static TextStyle style(GumdropColors c) => TextStyle(
+    fontFamily: AppFonts.sticker,
+    fontWeight: FontWeight.w400,
+    fontSize: 12,
+    height: 14 / 12,
+    letterSpacing: 12 * 0.18,
+    color: c.you.text,
+  );
 }
 
-/// The floating tab bar (design §3.12): a rounded surface panel, 16 px in
-/// from the sides and 18 above the bottom (and the home indicator), holding
-/// [child], the Material [NavigationBar] the theme draws with gumdrop
-/// indicators.
-class FloatingTabBar extends StatelessWidget {
-  const new({required this.child, super.key});
+/// One tab of `OpenFieldTabBar` or `OpenFieldRail`: its icon (and the icon
+/// when it's the current tab), and its label.
+///
+/// `badge` is what the tab's count says to a screen reader ("3 unread
+/// messages"), or null.
+typedef OpenFieldTab = ({
+  Widget icon,
+  Widget selectedIcon,
+  String label,
+  String? badge,
+});
 
-  final Widget child;
+/// The docked tab bar (SPEC §7.3): full width, 48 px plus the bottom safe
+/// area, in the scheme's tab bar color with a 1 px rule on top. The tabs
+/// share the width; the current one has a coral icon, a text-colored label
+/// and a 40 × 3 coral bar on the bar's top edge.
+class OpenFieldTabBar extends StatelessWidget {
+  const new({
+    required this.tabs,
+    required this.selectedIndex,
+    required this.onSelect,
+    super.key,
+  });
+
+  final List<OpenFieldTab> tabs;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
 
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
     final bottom = MediaQuery.paddingOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, math.max(18, bottom)),
-      child: _Panel(
-        colors: c,
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      // A Material, so the tabs' ink draws over the fill.
+      child: Material(
+        color: c.tabBar,
+        shape: Border(top: BorderSide(color: c.tabBarLine)),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          // The bar's own safe area is this panel's margin.
-          child: MediaQuery.removePadding(
-            context: context,
-            removeBottom: true,
-            child: child,
+          padding: EdgeInsets.fromLTRB(6, 0, 6, bottom),
+          child: Row(
+            children: [
+              for (final (i, tab) in tabs.indexed)
+                Expanded(
+                  child: _Tab(
+                    tab: tab,
+                    index: i,
+                    count: tabs.length,
+                    selected: i == selectedIndex,
+                    onTap: () => onSelect(i),
+                    marker: Alignment.topCenter,
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -100,55 +104,156 @@ class FloatingTabBar extends StatelessWidget {
   }
 }
 
-/// The wide layout's rail as a floating rounded surface panel, as the tab
-/// bar is (design §3.12).
-class FloatingRail extends StatelessWidget {
-  const new({required this.child, super.key});
+/// The wide layout's rail (840 px and up), as [OpenFieldTabBar]: a 1 px
+/// rule along its inner edge, and the current tab marked by a 3 × 40 coral
+/// bar on the outer edge.
+class OpenFieldRail extends StatelessWidget {
+  const new({
+    required this.tabs,
+    required this.selectedIndex,
+    required this.onSelect,
+    super.key,
+  });
 
-  final Widget child;
+  final List<OpenFieldTab> tabs;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
 
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    return SafeArea(
-      right: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 0, 18),
-        child: _Panel(colors: c, child: child),
+    return Material(
+      color: c.tabBar,
+      shape: Border(right: BorderSide(color: c.tabBarLine)),
+      child: SafeArea(
+        right: false,
+        child: SizedBox(
+          width: 88,
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              for (final (i, tab) in tabs.indexed)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: _Tab(
+                    tab: tab,
+                    index: i,
+                    count: tabs.length,
+                    selected: i == selectedIndex,
+                    onTap: () => onSelect(i),
+                    marker: Alignment.centerLeft,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-/// The surface panel behind the tab bar and the rail, with the card
-/// outline and a 26 px radius.
-class _Panel extends StatelessWidget {
-  const new({required this.colors, required this.child});
+class _Tab extends StatelessWidget {
+  const new({
+    required this.tab,
+    required this.index,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+    required this.marker,
+  });
 
-  final GumdropColors colors;
-  final Widget child;
+  final OpenFieldTab tab;
+  final int index;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  /// Where the current tab's coral bar sits: the top edge, or the left.
+  final Alignment marker;
 
   @override
   Widget build(BuildContext context) {
-    const radius = 26.0;
-    final style = GumdropStyle.of(context);
-    // The panel is a card: in Candy its text and icons are the card's
-    // ink, not the page's white.
-    final surface = GumdropSurface(child: child);
-    return DecoratedBox(
-      decoration: style.cardDecoration(
-        colors.surface,
-        radius,
-        side: colors.surfaceBorderWidth == 0
-            ? BorderSide.none
-            : BorderSide(
-                color: colors.surfaceBorder,
-                width: colors.surfaceBorderWidth,
+    final c = GumdropColors.of(context);
+    final color = selected ? c.textOnPage : c.textMutedOnPage;
+    final top = marker == Alignment.topCenter;
+    // As a NavigationBar destination reads: the label, its count, and
+    // "Tab 1 of 4".
+    final label = [
+      tab.label,
+      ?tab.badge,
+      MaterialLocalizations.of(context)
+          .tabLabel(tabIndex: index + 1, tabCount: count),
+    ].join(', ');
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      excludeSemantics: true,
+      onTap: onTap,
+      child: FocusRingInk(
+        onTap: onTap,
+        radius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: 48,
+                minWidth: double.infinity,
               ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(radius),
-        child: surface,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: top ? 4 : 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconTheme.merge(
+                      data: IconThemeData(
+                        size: 24,
+                        color: selected ? c.you.face : c.textMutedOnPage,
+                      ),
+                      child: selected ? tab.selectedIcon : tab.icon,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tab.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: GumdropStyle.of(context).label(
+                        TextStyle(
+                          fontSize: 13,
+                          height: 1.1,
+                          fontWeight: FontWeight.w600,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (selected)
+              Positioned.fill(
+                child: Align(
+                  alignment: marker,
+                  child: Container(
+                    width: top ? 40 : 3,
+                    height: top ? 3 : 40,
+                    decoration: BoxDecoration(
+                      color: c.you.face,
+                      borderRadius: top
+                          ? const BorderRadius.vertical(
+                              bottom: Radius.circular(3),
+                            )
+                          : const BorderRadius.horizontal(
+                              right: Radius.circular(3),
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

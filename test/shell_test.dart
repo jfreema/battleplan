@@ -77,8 +77,10 @@ void main() {
   }
 
   group('team switcher (SPEC §5.2)', () {
-    testWidgets('shows the team logo in the header and the list, with '
-        'translated sport and muted labels', (tester) async {
+    testWidgets('shows the eyebrow over the name, no logo in the header, '
+        'and logos, translated sports and muted labels in the list', (
+      tester,
+    ) async {
       final groups = {
         'a': testGroup(
           'a',
@@ -99,13 +101,19 @@ void main() {
           ).copyWith(notificationLevel: NotificationLevel.none),
         ],
       );
-      final header = tester.widget<TeamBadge>(
+      // The header names the tab over the team, in one row, with no logo.
+      expect(
         find.descendant(
           of: find.byType(TeamSwitcherButton),
           matching: find.byType(TeamBadge),
         ),
+        findsNothing,
       );
-      expect(header.imageUrl, 'https://example.com/groups/a/avatar/logo.jpg');
+      expect(find.text('TEAM CHAT'), findsOneWidget);
+      expect(
+        tester.getCenter(find.text('TEAM CHAT')).dy,
+        lessThan(tester.getCenter(find.text('Thunder')).dy),
+      );
 
       await tester.tap(find.byType(TeamSwitcherButton));
       await tester.pumpAndSettle();
@@ -172,11 +180,31 @@ void main() {
     );
     expect(
       find.descendant(
-        of: find.byType(NavigationBar),
+        of: find.byType(OpenFieldTabBar),
         matching: find.byType(Badge),
       ),
       findsNothing,
     );
+  });
+
+  testWidgets('a long team name steps down and fits a 360 px phone', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder Parents Association')},
+      memberships: [testMembership('a', 'coach')],
+      size: const Size(360, 780),
+    );
+    expect(tester.takeException(), isNull);
+    final name = tester.widget<Text>(find.text('Thunder Parents Association'));
+    expect(name.style!.fontSize, lessThan(27));
+    expect(name.style!.fontSize, greaterThanOrEqualTo(19));
+    // One row: the back, the eyebrow over the name, and the three icons.
+    final back = tester.getCenter(find.byTooltip('Back'));
+    final info = tester.getCenter(find.byTooltip('Team info'));
+    expect((back.dy - info.dy).abs(), lessThan(2));
   });
 
   group('wide screens (SPEC §5.5)', () {
@@ -190,17 +218,14 @@ void main() {
         memberships: [testMembership('a', 'coach')],
         size: wide,
       );
-      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
-      expect(rail.destinations[2].label, isA<Text>());
-      expect((rail.destinations[2].label as Text).data, 'Documents');
-      expect((rail.destinations[3].label as Text).data, 'Plays');
+      final rail = tester.widget<OpenFieldRail>(find.byType(OpenFieldRail));
+      expect(rail.tabs[2].label, 'Documents');
+      expect(rail.tabs[3].label, 'Plays');
       await tester.tap(find.text('Plays'));
       await tester.pumpAndSettle();
-      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(OpenFieldRail), findsOneWidget);
       expect(
-        tester
-            .widget<NavigationRail>(find.byType(NavigationRail))
-            .selectedIndex,
+        tester.widget<OpenFieldRail>(find.byType(OpenFieldRail)).selectedIndex,
         3,
       );
       expect(
@@ -210,9 +235,7 @@ void main() {
       await tester.tap(find.text('Documents'));
       await tester.pumpAndSettle();
       expect(
-        tester
-            .widget<NavigationRail>(find.byType(NavigationRail))
-            .selectedIndex,
+        tester.widget<OpenFieldRail>(find.byType(OpenFieldRail)).selectedIndex,
         2,
       );
     });
@@ -233,7 +256,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(EventDetailsScreen), findsOneWidget);
       // The rail is still there under the dialog.
-      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(OpenFieldRail), findsOneWidget);
       final panel = tester.getRect(find.byType(Scaffold).last);
       expect(panel.width, lessThanOrEqualTo(720));
       await tester.tapAt(const Offset(1190, 10));
@@ -252,7 +275,7 @@ void main() {
       await openProfile(tester);
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
-      expect(find.byType(NavigationRail), findsOneWidget);
+      expect(find.byType(OpenFieldRail), findsOneWidget);
       expect(
         tester.getRect(find.byType(Scaffold).last).width,
         lessThanOrEqualTo(720),
@@ -530,18 +553,25 @@ void main() {
       }
     });
 
-    test('every sticker is in the letters Black Ops One is cut to', () {
-      // tools/cut_fonts.sh keeps A–Z and the space; any other letter would
-      // draw in another font.
+    test('every eyebrow is in the letters Black Ops One is cut to', () {
+      // tools/cut_fonts.sh keeps A–Z, the space and "·"; any other letter
+      // would draw in another font.
       final l10n = lookupAppLocalizations(const Locale('en'));
-      for (var tab = 0; tab < 4; tab++) {
-        for (var month = 1; month <= 12; month++) {
-          final label = TeamSticker.labelFor(l10n, tab, DateTime(2026, month));
-          expect(
-            label.toUpperCase(),
-            matches(RegExp(r'^[A-Z ]+$')),
-            reason: label,
-          );
+      for (final group in [false, true]) {
+        for (var tab = 0; tab < 4; tab++) {
+          for (var month = 1; month <= 12; month++) {
+            final label = HeaderEyebrow.labelFor(
+              l10n,
+              tab,
+              DateTime(2026, month),
+              group: group,
+            );
+            expect(
+              label.toUpperCase(),
+              matches(RegExp(r'^[A-Z ·]+$')),
+              reason: label,
+            );
+          }
         }
       }
     });

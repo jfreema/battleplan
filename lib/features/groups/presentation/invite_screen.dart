@@ -45,7 +45,14 @@ class InviteScreen extends ConsumerWidget {
     // way into the new team (its chat) sits at the bottom.
     final dead = !context.canPop();
     return Scaffold(
-      appBar: gumdropAppBar(context, title: l10n.inviteMenu),
+      appBar: gumdropAppBar(
+        context,
+        title: l10n.inviteMenu,
+        backLabel: backLabelFrom(
+          context,
+          group?.isGroup ?? false ? l10n.groupInfo : l10n.teamInfo,
+        ),
+      ),
       bottomNavigationBar: dead
           ? SafeArea(
               minimum: const EdgeInsets.all(Space.lg),

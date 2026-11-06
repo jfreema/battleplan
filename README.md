@@ -27,7 +27,7 @@ Every push to `main` updates dev's web app once CI passes; **Release to dev** in
 
 ## Built with
 
-Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS, with one small script for its slider. The app and the website use the same fonts, Lilita One, Fredoka, and Nunito, with Black Ops One on stickers, bundled with the app and served from the site, as are the web app's fonts for emoji and other scripts: never from Google Fonts.
+Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS, with one small script for its slider. The app and the website use the same fonts, Lilita One, Fredoka, and Nunito, with Black Ops One on the app's header eyebrows and the site's sticker, bundled with the app and served from the site, as are the web app's fonts for emoji and other scripts: never from Google Fonts.
 
 ## Docs
 

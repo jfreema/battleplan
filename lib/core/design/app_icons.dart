@@ -79,6 +79,7 @@ abstract final class AppIcons {
   static const IconData tune = Symbols.tune_rounded;
   static const IconData back = Symbols.arrow_back_rounded;
   static const IconData suspend = Symbols.pause_circle_rounded;
+  static const IconData expandLess = Symbols.expand_less_rounded;
   static const IconData archive = Symbols.archive_rounded;
   static const IconData unarchive = Symbols.unarchive_rounded;
 

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
-import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
@@ -36,8 +35,8 @@ void openChatSearch(
   ),
 );
 
-/// Search in a team's chat (CHAT-20), beside the Chat tab's sticker in the
-/// team's header.
+/// Search in a team's chat (CHAT-20), at the end of the Chat tab's pinned
+/// row: a 24 px search icon in a 48 × 48 box.
 class ChatSearchButton extends StatelessWidget {
   const new({required this.groupId, super.key});
 
@@ -46,9 +45,10 @@ class ChatSearchButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => IconButton(
     tooltip: AppLocalizations.of(context).searchChat,
-    style: GumdropButtons.of(context).icon(),
-    iconSize: 19,
-    color: GumdropColors.of(context).textPrimary,
+    constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+    padding: EdgeInsets.zero,
+    iconSize: 24,
+    color: GumdropColors.of(context).textOnPage,
     icon: const Icon(AppIcons.search),
     onPressed: () => openChatSearch(context, groupId, direct: false),
   );

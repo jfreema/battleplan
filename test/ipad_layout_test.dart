@@ -54,6 +54,7 @@ const teamRoutes = [
   '/g/a/who',
   '/teams',
   '/profile',
+  '/profile/icon',
   '/teams/scheme',
   '/notifications',
   '/settings',

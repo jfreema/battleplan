@@ -455,7 +455,9 @@ void main() {
       // On Profile, beside Teams (SET-1).
       await tester.tap(find.text('Profile'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Change photo'));
+      await tester.tap(find.text('Your icon'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add a photo'));
       await _openCrop(tester);
       expect(find.text('Crop photo'), findsOneWidget);
       await tester.tap(find.byType(CloseButton));

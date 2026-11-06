@@ -7,7 +7,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
-import 'package:battleplan/core/widgets/gumdrop_back_button.dart';
+import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -140,9 +140,9 @@ abstract final class AppTheme {
       dividerColor: g.divider,
       textTheme: base.textTheme.merge(textTheme),
       iconTheme: IconThemeData(color: text),
-      // Every automatic back button is the round lemon one (design §3.2).
+      // Every automatic back button is the 28 px chevron (SPEC §7.3).
       actionIconTheme: const ActionIconThemeData(
-        backButtonIconBuilder: GumdropBackButton.iconBuilder,
+        backButtonIconBuilder: BackChevron.iconBuilder,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: background,

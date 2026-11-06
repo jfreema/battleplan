@@ -23,14 +23,23 @@ class TeamBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = imageUrl;
-    // A rounded square, 18 on the 58 px logo (Gumdrop Pop design §3.9).
-    final radius = BorderRadius.circular(size * 0.31);
+    // A rounded square: corner 14 on the 48 px badge.
+    final radius = BorderRadius.circular(size * 14 / 48);
+    final ring = GumdropColors.of(context).avatarRing;
     return Semantics(
       label: name,
       image: true,
       excludeSemantics: true,
-      child: SizedBox.square(
-        dimension: size,
+      child: Container(
+        width: size,
+        height: size,
+        // The scheme's thin inset ring (Light blue's), over logo or color.
+        foregroundDecoration: ring.a == 0
+            ? null
+            : BoxDecoration(
+                borderRadius: radius,
+                border: Border.all(color: ring, width: 1.5),
+              ),
         child: ClipRRect(
           borderRadius: radius,
           child: url != null
@@ -59,7 +68,7 @@ class TeamBadge extends StatelessWidget {
       child: Center(
         child: Text(
           Avatar.initialsOf(name),
-          style: GumdropStyle.of(context).label(
+          style: GumdropStyle.of(context).display(
             TextStyle(
               // White or black, whichever reads better on the team's color
               // (Carolina blue and gold are light), as chat bubbles do.
@@ -67,8 +76,8 @@ class TeamBadge extends StatelessWidget {
                   ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
                   ? Colors.white
                   : GumdropColors.of(context).ink,
-              fontWeight: FontWeight.w600,
-              fontSize: size * 0.42,
+              fontWeight: FontWeight.w400,
+              fontSize: size * 0.54,
               height: 1,
             ),
           ),

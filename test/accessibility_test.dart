@@ -104,6 +104,10 @@ void main() {
       await pumpTeam(tester, scheme: scheme);
       await goTo(tester, '/g/a/scheme');
     },
+    'your icon': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpTeam(tester, scheme: scheme);
+      await goTo(tester, '/profile/icon');
+    },
     'calendar': (WidgetTester tester, {required TeamScheme scheme}) async {
       await pumpSchedule(tester, scheme: scheme);
       await tester.tap(find.text('Calendar'));
@@ -311,7 +315,9 @@ void main() {
                 .findAncestorWidgetOfExactType<Semantics>()
                 ?.properties
                 .label;
-        if (label != null && !reached.contains(label)) reached.add(label);
+        // A tab reads "Chat, Tab 1 of 4".
+        final name = label?.split(', Tab ').first;
+        if (name != null && !reached.contains(name)) reached.add(name);
       }
       expect(
         FocusManager.instance.highlightMode,
@@ -335,6 +341,38 @@ void main() {
           'Documents',
         ]),
       );
+    });
+
+    testWidgets('Tab reaches the Teams cards, rows, the default scheme row '
+        'and the tab bar', (tester) async {
+      await pumpTeam(tester, scheme: TeamScheme.navy);
+      await goTo(tester, '/teams');
+      final reached = <String>[];
+      for (var i = 0; i < 30; i++) {
+        await press(tester, LogicalKeyboardKey.tab);
+        final context = FocusManager.instance.primaryFocus?.context;
+        if (context == null) continue;
+        final label =
+            context.findAncestorWidgetOfExactType<Tooltip>()?.message ??
+            context
+                .findAncestorWidgetOfExactType<Semantics>()
+                ?.properties
+                .label ??
+            _textIn(context);
+        if (label != null && !reached.contains(label)) reached.add(label);
+      }
+      for (final want in [
+        'Thunder U14',
+        'Join a Team or Group',
+        'Default color scheme',
+        'Profile',
+      ]) {
+        expect(
+          reached.any((l) => l.contains(want)),
+          isTrue,
+          reason: '$want in $reached',
+        );
+      }
     });
   });
 }
@@ -360,4 +398,22 @@ Future<void> clearOfAddButton(WidgetTester tester) async {
     );
     await tester.pumpAndSettle();
   }
+}
+
+/// The texts under [context]'s widget, for a focused row or card whose
+/// label is its text.
+String? _textIn(BuildContext context) {
+  final found = <String>[];
+  void visit(Element e) {
+    final w = e.widget;
+    if (w is Text) {
+      final t = w.data ?? w.textSpan?.toPlainText();
+      if (t != null) found.add(t);
+      return;
+    }
+    e.visitChildren(visit);
+  }
+
+  (context as Element).visitChildren(visit);
+  return found.isEmpty ? null : found.join(' ');
 }

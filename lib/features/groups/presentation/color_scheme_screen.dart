@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/logging.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
@@ -79,7 +80,15 @@ class ColorSchemeScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: gumdropAppBar(context, title: title),
+      appBar: gumdropAppBar(
+        context,
+        title: title,
+        backLabel: id == null
+            ? l10n.tabTeams
+            : group?.isGroup ?? false
+            ? l10n.groupInfo
+            : l10n.teamInfo,
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -157,7 +166,7 @@ class SchemeRow extends StatelessWidget {
     final c = GumdropColors.of(context);
     final text = Theme.of(context).textTheme;
     final picked = selected;
-    final row = InkWell(
+    final row = FocusRingInk(
       onTap: onTap,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 69),

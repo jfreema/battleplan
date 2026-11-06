@@ -4,12 +4,12 @@ import 'dart:math' as math;
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
-import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
+import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/chat_icon.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/gumdrop_icon_button.dart';
@@ -22,7 +22,6 @@ import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
-import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
@@ -140,7 +139,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           leading: Center(
-            child: GumdropBackButton(onPressed: () => context.go('/teams')),
+            child: BackChevron(onPressed: () => context.go('/teams')),
           ),
         ),
         body: ListView(
@@ -163,8 +162,8 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         teams.value?.any((t) => t.group.id != groupId && t.hasUnread) ?? false;
     final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
 
-    // Each tab's icon, outlined on every tab: the gumdrop indicator marks
-    // the one that's showing (design §3.2).
+    // Each tab's icon, outlined on every tab: the coral color and bar mark
+    // the one that's showing.
     Widget Function({required bool selected}) glyph(IconData icon) =>
         ({required selected}) => Icon(icon);
     // A basic group has no Plays (TEAM-14); it's the last tab, so the
@@ -187,8 +186,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     final unread = viewing
         ? 0
         : ref.watch(unreadCountProvider(groupId)).value ?? 0;
-    // The count sits at the tab icon's top right, 6 px out from its
-    // 21 px glyph (design §3.6, §3.12).
+    // The count sits at the tab icon's top right.
     Widget tabIcon(int index, Widget icon) => switch (index) {
       0 when unread > 0 => unreadBadge(
         context,
@@ -202,12 +200,13 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     };
 
     final Widget header = viewing
-        ? _ViewingHeader(group: viewed)
+        ? _ViewingHeader(group: viewed, tabIndex: navigationShell.currentIndex)
         : _TeamHeader(
             team: team,
             switcherKey: _switcherKey,
             showOtherUnreadDot: otherUnread,
             tabIndex: navigationShell.currentIndex,
+            isGroup: team?.group.isGroup ?? false,
             showBack: !widget.inTab,
             onOpenSwitcher: (anchor) => _openSwitcher(context, anchor: anchor),
           );
@@ -232,6 +231,20 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         ),
     };
 
+    final tabs = <OpenFieldTab>[
+      for (final (i, (icon, label)) in destinations.indexed)
+        (
+          icon: tabIcon(i, icon(selected: false)),
+          selectedIcon: tabIcon(i, icon(selected: true)),
+          label: label,
+          badge: i == 0 && unread > 0 ? l10n.unreadCount(unread) : null,
+        ),
+    ];
+    final selected = math.min(
+      navigationShell.currentIndex,
+      destinations.length - 1,
+    );
+
     final Widget shell;
     if (wide) {
       shell = CallbackShortcuts(
@@ -239,24 +252,10 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         child: Scaffold(
           body: Row(
             children: [
-              // A floating rounded panel, as the phone's tab bar is.
-              FloatingRail(
-                child: NavigationRail(
-                  backgroundColor: Colors.transparent,
-                  selectedIndex: math.min(
-                    navigationShell.currentIndex,
-                    destinations.length - 1,
-                  ),
-                  onDestinationSelected: navigationShell.goBranch,
-                  destinations: [
-                    for (final (i, (icon, label)) in destinations.indexed)
-                      NavigationRailDestination(
-                        icon: tabIcon(i, icon(selected: false)),
-                        selectedIcon: tabIcon(i, icon(selected: true)),
-                        label: Text(label),
-                      ),
-                  ],
-                ),
+              OpenFieldRail(
+                tabs: tabs,
+                selectedIndex: selected,
+                onSelect: navigationShell.goBranch,
               ),
               // Below the status bar on an iPad, as the narrow layout is;
               // the rail keeps the left edge, and screens their own bottom.
@@ -300,26 +299,12 @@ class _TeamShellState extends ConsumerState<TeamShell> {
               ],
             ),
           ),
-          // A floating rounded panel (design §3.12).
-          bottomNavigationBar: FloatingTabBar(
-            child: NavigationBar(
-              backgroundColor: Colors.transparent,
-              selectedIndex: math.min(
-                navigationShell.currentIndex,
-                destinations.length - 1,
-              ),
-              onDestinationSelected: (i) => navigationShell.goBranch(
-                i,
-                initialLocation: i == navigationShell.currentIndex,
-              ),
-              destinations: [
-                for (final (i, (icon, label)) in destinations.indexed)
-                  NavigationDestination(
-                    icon: tabIcon(i, icon(selected: false)),
-                    selectedIcon: tabIcon(i, icon(selected: true)),
-                    label: label,
-                  ),
-              ],
+          bottomNavigationBar: OpenFieldTabBar(
+            tabs: tabs,
+            selectedIndex: selected,
+            onSelect: (i) => navigationShell.goBranch(
+              i,
+              initialLocation: i == navigationShell.currentIndex,
             ),
           ),
         ),
@@ -337,12 +322,16 @@ class _TeamShellState extends ConsumerState<TeamShell> {
   }
 }
 
+/// The team header (SPEC §7.3): one 52 px row with the chevron back to
+/// Teams, the tab's stencil eyebrow over the team name (the switcher), and
+/// Messages, notifications and Team info.
 class _TeamHeader extends StatelessWidget {
   const new({
     required this.team,
     required this.switcherKey,
     required this.showOtherUnreadDot,
     required this.tabIndex,
+    required this.isGroup,
     required this.showBack,
     required this.onOpenSwitcher,
   });
@@ -354,8 +343,11 @@ class _TeamHeader extends StatelessWidget {
   /// The arrow back to Teams.
   final bool showBack;
 
-  /// The tab showing, which the sticker names.
+  /// The tab showing, which the eyebrow names.
   final int tabIndex;
+
+  /// A group, whose eyebrows say "Group".
+  final bool isGroup;
 
   /// Opens the switcher from the button given.
   final void Function(BuildContext anchor) onOpenSwitcher;
@@ -363,132 +355,107 @@ class _TeamHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final width = MediaQuery.sizeOf(context).width;
-    final wide = width >= Breakpoints.wide;
+    final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
     final group = team?.group;
-    // The back arrow to Teams, the team name with its chevron, then the
-    // round buttons, and the tab's sticker under the name (Gumdrop Pop
-    // design §3.2, §3.3, §3.4).
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        Space.gutter(width) - (showBack ? 6 : 2),
-        Space.xs,
-        Space.gutter(width) - 5,
-        0,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (showBack)
-                Padding(
-                  // Room for the button's hard shadow.
-                  padding: const EdgeInsets.only(
-                    right: Space.sm + 2,
-                    bottom: 4,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 52),
+      child: Padding(
+        padding: EdgeInsets.only(left: showBack ? 4 : 18, right: 8),
+        child: Row(
+          children: [
+            if (showBack) ...[
+              Padding(
+                // On the optical center of the two-line name.
+                padding: const EdgeInsets.only(top: 3),
+                child: BackChevron(onPressed: () => context.go('/teams')),
+              ),
+              const SizedBox(width: 2),
+            ],
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: TeamSwitcherButton(
+                  key: switcherKey,
+                  name: group?.name ?? '',
+                  eyebrow: HeaderEyebrow.labelFor(
+                    l10n,
+                    tabIndex,
+                    DateTime.now(),
+                    group: isGroup,
                   ),
-                  child: GumdropBackButton(
-                    onPressed: () => context.go('/teams'),
-                  ),
-                ),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: TeamSwitcherButton(
-                    key: switcherKey,
-                    name: group?.name ?? '',
-                    // An uploaded logo; initials would repeat the name.
-                    badge: group?.photoPath == null
-                        ? null
-                        : GroupBadge(group: group, size: 36),
-                    showDot: showOtherUnreadDot && !wide,
-                    onPressed: () {
-                      final anchor = switcherKey.currentContext;
-                      if (anchor != null) onOpenSwitcher(anchor);
-                    },
-                  ),
+                  showDot: showOtherUnreadDot && !wide,
+                  onPressed: () {
+                    final anchor = switcherKey.currentContext;
+                    if (anchor != null) onOpenSwitcher(anchor);
+                  },
                 ),
               ),
-              // Direct conversations, with how many are unread (CHAT-19).
-              const MessagesButton(),
-              // Unread notification-center items across all teams (NOTIF-11).
-              const NotificationBell(),
-              _TeamInfoButton(groupId: group?.id),
-            ],
-          ),
-          // The tab's sticker, and on the Chat tab its search (CHAT-20), in
-          // the room beside the sticker rather than in the name's row. The
-          // row keeps the button's height on every tab, so the header
-          // doesn't jump as the tabs change.
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: kMinInteractiveDimension,
             ),
-            child: Row(
-              children: [
-                // The room the button leaves, so a long sticker (large
-                // text) is cut off rather than pushing the row off screen.
-                Expanded(
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        left: showBack ? 6 : 2,
-                        bottom: 2,
-                      ),
-                      child: TeamSticker(
-                        TeamSticker.labelFor(l10n, tabIndex, DateTime.now()),
-                      ),
-                    ),
-                  ),
-                ),
-                if (tabIndex == teamTabs.indexOf('chat') && group != null)
-                  ChatSearchButton(groupId: group.id),
-              ],
-            ),
-          ),
-        ],
+            // Direct conversations, with how many are unread (CHAT-19).
+            const _Low(child: MessagesButton()),
+            // Unread notification-center items across all teams (NOTIF-11).
+            const _Low(child: NotificationBell()),
+            _Low(child: _TeamInfoButton(groupId: group?.id)),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// The header while viewing as a super admin (ADMIN-3): the team's badge
-/// and name, without the switcher, and Team info to manage it.
+/// A header icon 3 px low, level with the back chevron.
+class _Low extends StatelessWidget {
+  const new({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      Padding(padding: const EdgeInsets.only(top: 3), child: child);
+}
+
+/// The header while viewing as a super admin (ADMIN-3): the eyebrow and
+/// the team's name, without the switcher, and Team info to manage it.
 class _ViewingHeader extends StatelessWidget {
-  const new({required this.group});
+  const new({required this.group, required this.tabIndex});
 
   final Group? group;
+  final int tabIndex;
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        Space.gutter(width) - 2,
-        Space.xs,
-        Space.gutter(width) - 5,
-        Space.xs,
-      ),
-      child: Row(
-        children: [
-          GroupBadge(group: group, size: 36),
-          const SizedBox(width: Space.sm),
-          Expanded(
-            child: Padding(
-              // Room for the heading's 4 px shadow.
-              padding: const EdgeInsets.only(right: 4, bottom: 4),
-              child: Text(
-                group?.name ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.headlineMedium,
+    final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
+    final eyebrow = HeaderEyebrow.labelFor(
+      l10n,
+      tabIndex,
+      DateTime.now(),
+      group: group?.isGroup ?? false,
+    );
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 52),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 20, right: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    eyebrow.toUpperCase(),
+                    semanticsLabel: eyebrow,
+                    maxLines: 1,
+                    style: HeaderEyebrow.style(c),
+                  ),
+                  TeamName(group?.name ?? ''),
+                ],
               ),
             ),
-          ),
-          _TeamInfoButton(groupId: group?.id),
-        ],
+            _Low(child: _TeamInfoButton(groupId: group?.id)),
+          ],
+        ),
       ),
     );
   }
@@ -563,27 +530,21 @@ class _StorageBanner extends ConsumerWidget {
   }
 }
 
-/// Team info (SPEC §5.2): a 38 px round gumdrop that opens the team's
-/// page of Roster, Invite, Notifications, Calendar link, and the admin
-/// rows.
+/// Team info (SPEC §5.2): a 48 px header icon button that opens the
+/// team's page of Roster, Invite, Notifications, Calendar link, and the
+/// admin rows.
 class _TeamInfoButton extends StatelessWidget {
   const new({required this.groupId});
 
   final GroupId? groupId;
 
   @override
-  Widget build(BuildContext context) {
-    final c = GumdropColors.of(context);
-    return IconButton(
-      tooltip: AppLocalizations.of(context).teamInfo,
-      style: GumdropButtons.of(context).icon(),
-      iconSize: 19,
-      color: c.textPrimary,
-      icon: const Icon(AppIcons.info),
-      onPressed: () {
-        final id = groupId;
-        if (id != null) unawaited(context.push('/g/${id.value}/info'));
-      },
-    );
-  }
+  Widget build(BuildContext context) => GumdropIconButton(
+    tooltip: AppLocalizations.of(context).teamInfo,
+    icon: AppIcons.info,
+    onPressed: () {
+      final id = groupId;
+      if (id != null) unawaited(context.push('/g/${id.value}/info'));
+    },
+  );
 }

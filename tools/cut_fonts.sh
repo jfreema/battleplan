@@ -2,11 +2,11 @@
 # Cuts two bundled fonts down to the letters the app draws in them, so the
 # web app downloads less before its first frame (ARCH §5.5):
 #
-#   Black Ops One  A–Z and the space (166 KB to 11 KB). It only draws the
-#                  stickers, in capitals, from the English strings
-#                  (TeamSticker; shell_test checks every sticker fits). Add
-#                  the letters a new language's stickers need and run this
-#                  again.
+#   Black Ops One  A–Z, the space and "·" (166 KB to about 11 KB). It only
+#                  draws the header and event eyebrows, in capitals, from
+#                  the English strings ("GAME · HOME"; shell_test checks
+#                  every eyebrow fits). Add the letters a new language's
+#                  eyebrows need and run this again.
 #   Nunito         every character but Cyrillic (125 KB to 69 KB a weight).
 #                  Cyrillic draws in a fallback font instead, as Greek and
 #                  other scripts Nunito never had already do: on the web,
@@ -49,7 +49,7 @@ def cut(name, family, keep):
     print(f"{out}: {len(font.getBestCmap())} of {before} characters")
 
 cut("BlackOpsOne-Regular.ttf", "black_ops_one",
-    lambda c: c == 0x20 or 0x41 <= c <= 0x5A)
+    lambda c: c == 0x20 or c == 0xB7 or 0x41 <= c <= 0x5A)
 for weight in ["Regular", "SemiBold", "Bold", "ExtraBold", "Black"]:
     cut(f"Nunito-{weight}.ttf", "nunito",
         lambda c: not any(lo <= c <= hi for lo, hi in CYRILLIC))

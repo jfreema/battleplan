@@ -5,7 +5,6 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
-import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
@@ -21,6 +20,8 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/mentions.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/chat/presentation/chat_search_screen.dart'
+    show ChatSearchButton, openChatSearch;
 import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/chat/presentation/message_tile.dart';
 import 'package:battleplan/features/chat/presentation/quote_block.dart';
@@ -808,10 +809,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Column(
       children: [
-        if (pinnedIds.isNotEmpty)
-          _PinnedBar(
+        // The pinned row, which is the search entry when nothing is pinned
+        // (CHAT-15, CHAT-20): a team's chat only; a conversation has its
+        // search in its header.
+        if (pinnedIds.isNotEmpty || (!direct && !viewing))
+          _PinnedRow(
             groupId: widget.groupId,
             ids: pinnedIds,
+            search: !direct && !viewing,
             onOpen: (id) => unawaited(_jumpTo(id)),
           ),
         Expanded(
@@ -1064,141 +1069,171 @@ class _Backdrop extends ConsumerWidget {
   }
 }
 
-/// The pinned messages at the top of the chat (CHAT-15): one at a time,
-/// newest pin first, "Pinned 1 of 3" when there are more. Tapping opens
-/// the message, loading older pages if needed, and moves on to the next.
-class _PinnedBar extends ConsumerStatefulWidget {
-  const new({required this.groupId, required this.ids, required this.onOpen});
+/// The row at the top of a chat (CHAT-15, CHAT-20), 48 tall with a
+/// hairline along its top. With something pinned: the pin, the newest pin's
+/// text ("Andy: …"), a chevron that opens it (and moves on to the next,
+/// loading older pages if needed), and the search button. With nothing
+/// pinned it's a quiet search entry, "Search Thunder".
+class _PinnedRow extends ConsumerStatefulWidget {
+  const new({
+    required this.groupId,
+    required this.ids,
+    required this.search,
+    required this.onOpen,
+  });
 
   final GroupId groupId;
   final List<String> ids;
+
+  /// Whether it has the chat's search (a team's chat, not a conversation).
+  final bool search;
   final void Function(String messageId) onOpen;
 
   @override
-  ConsumerState<_PinnedBar> createState() => _PinnedBarState();
+  ConsumerState<_PinnedRow> createState() => _PinnedRowState();
 }
 
-class _PinnedBarState extends ConsumerState<_PinnedBar> {
+class _PinnedRowState extends ConsumerState<_PinnedRow> {
   int _index = 0;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
+    final width = MediaQuery.sizeOf(context).width;
+    final gutter = Space.gutter(width);
     final count = widget.ids.length;
-    final index = _index % count;
-    final id = widget.ids[index];
-    final message = ref.watch(pinnedMessageProvider(widget.groupId, id)).value;
-    final label = count > 1
-        ? l10n.pinnedOf(index + 1, count)
-        : l10n.pinnedMessage;
-    final preview = message == null
-        ? ''
-        : [
-            if (message.authorName.isNotEmpty) message.authorName,
-            quoteText(l10n, message.type, message.text),
-          ].where((p) => p.isNotEmpty).join(': ');
-    void open() {
-      widget.onOpen(id);
-      setState(() => _index = index + 1);
-    }
+    void search() => openChatSearch(context, widget.groupId, direct: false);
 
-    // A card (§3.5): a lemon pin disc, the label in lemon caps type, the
-    // message on one line, and a chevron.
-    return Semantics(
-      button: true,
-      label: l10n.pinnedBarLabel(label, preview),
-      // Its own tap: leaving out the bar's parts leaves out the InkWell's
-      // tap too, and a screen reader couldn't open the pin.
-      onTap: open,
-      excludeSemantics: true,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, 0),
-        child: GumdropSurface(
-          child: Builder(
-            builder: (context) {
-              final c = GumdropColors.of(context);
-              return Material(
-                color: c.surface,
-                shape: GumdropStyle.of(context).cardShape(
-                  Corners.tile,
-                  side: c.surfaceBorderWidth == 0
-                      ? BorderSide.none
-                      : BorderSide(
-                          color: c.surfaceBorder,
-                          width: c.surfaceBorderWidth,
+    final Widget row;
+    if (count == 0) {
+      final name = ref.watch(groupProvider(widget.groupId)).value?.name ?? '';
+      row = Semantics(
+        button: true,
+        label: l10n.searchChat,
+        onTap: search,
+        excludeSemantics: true,
+        child: Tooltip(
+          message: l10n.searchChat,
+          child: InkWell(
+            onTap: search,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: gutter),
+                child: Row(
+                  children: [
+                    Icon(AppIcons.search, size: 20, color: c.textMutedOnPage),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.chatSearchHint(name),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: AppFonts.body,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          height: 20 / 15,
+                          color: c.textMutedOnPage,
                         ),
+                      ),
+                    ),
+                  ],
                 ),
-                clipBehavior: Clip.antiAlias,
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      final index = _index % count;
+      final id = widget.ids[index];
+      final message = ref
+          .watch(pinnedMessageProvider(widget.groupId, id))
+          .value;
+      final label = count > 1
+          ? l10n.pinnedOf(index + 1, count)
+          : l10n.pinnedMessage;
+      final author = message?.authorName ?? '';
+      final text = message == null
+          ? ''
+          : quoteText(l10n, message.type, message.text);
+      final preview = [author, text].where((p) => p.isNotEmpty).join(': ');
+      void open() {
+        widget.onOpen(id);
+        setState(() => _index = index + 1);
+      }
+
+      final body = TextStyle(
+        fontFamily: AppFonts.body,
+        fontWeight: FontWeight.w600,
+        fontSize: 15,
+        height: 20 / 15,
+        color: c.textOnPage,
+      );
+      row = Padding(
+        padding: EdgeInsets.only(left: gutter, right: gutter - 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: l10n.pinnedBarLabel(label, preview),
+                // Its own tap: leaving out the row's parts leaves out the
+                // InkWell's tap too, and a screen reader couldn't open it.
+                onTap: open,
+                excludeSemantics: true,
                 child: InkWell(
                   onTap: open,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(7, 7, 12, 7),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 48),
                     child: Row(
                       children: [
-                        Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: c.lemon.face,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            AppIcons.pin,
-                            size: 18,
-                            weight: 600,
-                            color: c.ink,
-                          ),
-                        ),
+                        Icon(AppIcons.pin, size: 20, color: c.accentMark),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                label,
-                                style: GumdropStyle.of(context).label(
-                                  TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                    height: 1.2,
-                                    letterSpacing: 0.84,
-                                    color: c.lemon.text,
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                if (author.isNotEmpty)
+                                  TextSpan(
+                                    text: '$author: ',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 1),
-                              Text(
-                                preview,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.body,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                  height: 1.25,
-                                  color: c.textPrimary,
-                                ),
-                              ),
-                            ],
+                                TextSpan(text: text),
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: body,
                           ),
                         ),
-                        const SizedBox(width: Space.sm),
+                        const SizedBox(width: 6),
                         Icon(
                           AppIcons.chevronRight,
-                          size: 22,
+                          size: 20,
                           weight: 700,
-                          color: c.textMuted,
+                          color: c.textMutedOnPage,
                         ),
                       ],
                     ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+            if (widget.search) ChatSearchButton(groupId: widget.groupId),
+          ],
         ),
+      );
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: c.divider)),
       ),
+      child: row,
     );
   }
 }

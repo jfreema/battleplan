@@ -702,7 +702,7 @@ void main() {
       await tester.tap(find.text('Pin'));
       await tester.pumpAndSettle();
       expect(repo.pins, ['m1 pinned']);
-      expect(find.text('Pinned message'), findsOneWidget);
+      // The pinned row: the author and the message, by the pin.
       expect(find.text('Sam Rivera: Message 1'), findsOneWidget);
       // A screen reader can open it too.
       final semantics = tester.ensureSemantics();
@@ -718,7 +718,9 @@ void main() {
       await tester.tap(find.text('Unpin'));
       await tester.pumpAndSettle();
       expect(repo.pins, ['m1 pinned', 'm1 unpinned']);
-      expect(find.text('Pinned message'), findsNothing);
+      // Back to the search entry.
+      expect(find.text('Sam Rivera: Message 1'), findsNothing);
+      expect(find.text('Search Thunder'), findsOneWidget);
     });
 
     testWidgets('an imported message says where it came from; it can be '
@@ -742,9 +744,10 @@ void main() {
       expect(find.text('Block Riley'), findsNothing);
     });
 
-    testWidgets('the bar shows the newest pin first and steps through them', (
+    testWidgets('the row shows the newest pin first and steps through them', (
       tester,
     ) async {
+      final semantics = tester.ensureSemantics();
       final repo = FakeMessageRepository(chat(3));
       await openChat(
         tester,
@@ -755,12 +758,13 @@ void main() {
           'Thunder',
         ).copyWith(pinnedMessageIds: ['m1', 'm2']),
       );
-      expect(find.text('Pinned 1 of 2'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('^Pinned 1 of 2')), findsOneWidget);
       expect(find.text('Sam Rivera: Message 2'), findsOneWidget);
-      await tester.tap(find.text('Pinned 1 of 2'));
+      await tester.tap(find.text('Sam Rivera: Message 2'));
       await tester.pumpAndSettle();
-      expect(find.text('Pinned 2 of 2'), findsOneWidget);
-      expect(find.text('Sam Rivera: Message 1'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('^Pinned 2 of 2')), findsOneWidget);
+      expect(find.text('Sam Rivera: Message 1'), findsWidgets);
+      semantics.dispose();
     });
 
     testWidgets('a full bar says to unpin one first; members get no Pin', (

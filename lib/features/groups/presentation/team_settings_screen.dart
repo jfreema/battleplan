@@ -347,6 +347,10 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
       appBar: gumdropAppBar(
         context,
         title: group.isGroup ? l10n.groupAdmin : l10n.teamAdmin,
+        backLabel: backLabelFrom(
+          context,
+          group.isGroup ? l10n.groupInfo : l10n.teamInfo,
+        ),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -604,7 +608,12 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                       title: l10n.manageInviteLink,
                       subtitle: l10n.manageInviteLinkSubtitle,
                       onTap: () => unawaited(
-                        context.push('/g/${group.id.value}/invite'),
+                        context.push(
+                          '/g/${group.id.value}/invite',
+                          extra: BackLabel(
+                            group.isGroup ? l10n.groupAdmin : l10n.teamAdmin,
+                          ),
+                        ),
                       ),
                     ),
                   ],

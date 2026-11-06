@@ -38,7 +38,7 @@ class _NotificationBellState extends ConsumerState<NotificationBell> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final count = ref.watch(unreadNotificationCountProvider).value ?? 0;
-    // A 38 px round gumdrop (Gumdrop Pop design §3.1).
+    // A 48 px header icon button (SPEC §7.3).
     return GumdropIconButton(
       tooltip: l10n.notificationsTooltip,
       icon: AppIcons.notifications,

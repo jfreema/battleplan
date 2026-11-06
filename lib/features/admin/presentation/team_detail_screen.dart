@@ -252,8 +252,12 @@ class _Actions extends ConsumerWidget {
               label: Text(l10n.adminViewTeam),
             ),
             OutlinedButton.icon(
-              onPressed: () =>
-                  unawaited(context.push('/g/${id.value}/settings')),
+              onPressed: () => unawaited(
+                context.push(
+                  '/g/${id.value}/settings',
+                  extra: const BackLabel(null),
+                ),
+              ),
               icon: const Icon(AppIcons.edit),
               label: Text(l10n.adminEditTeam),
             ),
@@ -435,8 +439,12 @@ class _People extends ConsumerWidget {
               label: Text(l10n.addByEmail),
             ),
             OutlinedButton.icon(
-              onPressed: () =>
-                  unawaited(context.push('/g/${group.id.value}/roster')),
+              onPressed: () => unawaited(
+                context.push(
+                  '/g/${group.id.value}/roster',
+                  extra: const BackLabel(null),
+                ),
+              ),
               icon: const Icon(AppIcons.roster),
               label: Text(l10n.adminRosterPlayers),
             ),
@@ -550,7 +558,12 @@ class _Invites extends ConsumerWidget {
     return AdminSectionCard(
       title: l10n.adminInvites,
       trailing: TextButton(
-        onPressed: () => unawaited(context.push('/g/${group.id.value}/invite')),
+        onPressed: () => unawaited(
+          context.push(
+            '/g/${group.id.value}/invite',
+            extra: const BackLabel(null),
+          ),
+        ),
         child: Text(l10n.linkSettings),
       ),
       children: [

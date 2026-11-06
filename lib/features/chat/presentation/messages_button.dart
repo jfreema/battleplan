@@ -19,7 +19,7 @@ class MessagesButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final count = ref.watch(directUnreadCountProvider);
-    // A 38 px round gumdrop (Gumdrop Pop design §3.1).
+    // A 48 px header icon button (SPEC §7.3).
     return GumdropIconButton(
       tooltip: count > 0
           ? l10n.messagesButtonUnread(count)

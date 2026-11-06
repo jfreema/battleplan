@@ -112,6 +112,10 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
       appBar: gumdropAppBar(
         context,
         title: hasPlayers ? l10n.rosterMenu : l10n.groupPeople,
+        backLabel: backLabelFrom(
+          context,
+          group?.isGroup ?? false ? l10n.groupInfo : l10n.teamInfo,
+        ),
         actions: [
           // By number or by name (TEAM-10).
           if (hasPlayers)

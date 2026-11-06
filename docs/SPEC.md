@@ -249,7 +249,7 @@ Sign in
  │    │            Group · Create a Team · Create a Group · Default color
  │    │            scheme · Messages · bell
  │    │            (no team yet: a welcome with Join and Create)
- │    └─ Profile:  your photo and name · Time zone · Settings ·
+ │    └─ Profile:  Your icon · Name · Time zone · Settings ·
  │                 Admin panel** · Sign out              (** super admins)
  └─ Team view (the app opens where you left it: the last team and tab, or Teams)
       ├─ Header:     ‹ back to Teams · team switcher ▾ · Messages · notification bell · Team info ⓘ
@@ -261,14 +261,15 @@ Sign in
                      (Leave team is on your own card in the Roster, TEAM-8)
 ```
 
-- **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name, sport, last message, unread count), then Join a team and Create a team, then **Default color scheme** under a Color scheme label (SET-2); someone with no team yet sees a welcome with the same. Profile has your photo (Change photo) and the name your teams see, then **Time zone** (SET-7), **Settings**, the **Admin panel** for super admins, and **Sign out**, each its own rounded card.
-- **A team's back arrow** (‹ at the top left of the header) goes to Teams. Inside a tab, on a page with its own back button (Saved plays, a play), the header leaves its arrow out, so only one back shows.
+- **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name with Team or Group, last message, unread count), with archived teams under an **Archived** row that expands, then Join a team and Create a team as plain rows, then **Default color scheme** under a Color scheme label (SET-2); someone with no team yet sees a welcome with the same. Profile is plain rows: **Your icon** (your photo: add, change, or remove it), **Name** (the name your teams see, changed in a dialog), **Time zone** (SET-7), **Settings**, the **Admin panel** for super admins, and **Sign out**.
+- **A team's back arrow** (‹ at the top left of the header) goes to Teams. Inside a tab, on a page with its own back button (Saved plays, a play), the header leaves its arrow out, so only one back shows. Every back is a plain chevron; on a pushed page it's followed by the name of the page it returns to ("‹ Team info") when that's known, with the page's title on its own line below.
+- **Tabs** are a bar docked along the bottom, full width under a thin rule, the current tab's icon in coral with a coral bar above it; from 840 px wide they're a rail down the side.
 - **Team info** (ⓘ in the header) is a page: the team's logo, name, sport, and member count, then what the team menu had, and **Color scheme**, the scheme you see this team in (SET-2). **Team admin** was called Team settings.
 - **Your avatar** left the team's header: what it held is on Profile.
 
 ### 5.2 Team switcher
 
-- **Header.** Shows the current team's logo (or initials on its color), the team name, and ▾. A dot appears on it when another team has unread messages.
+- **Header.** One row: the tab's stencil eyebrow ("TEAM CHAT", "FALL SCHEDULE", "TEAM DOCUMENTS", "PLAYBOOK"; a group's "GROUP CHAT", "GROUP SCHEDULE", "GROUP DOCUMENTS") over the team name, which steps down in size to fit before it ends in an ellipsis, and ▾. A dot appears on ▾ when another team has unread messages. The header has no logo; logos are on the Teams cards, in the switcher, and in Team info.
 - **Opening it.** A bottom sheet on phones; a dropdown panel on wide screens.
 - **Contents.**
   - Your teams, most recent activity first.
@@ -709,7 +710,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - **Photos:** a conversation holds up to 50 MB of photos, apart from any team's storage (STORE-1). Once full it says so, and text still sends.
   - **Limits (SAFE-5):** 20 new conversations per person per day; sending is spaced as in team chat, 1 message a second.
 - **CHAT-20 · v1.1 · Search.** Owner's request (2026-11-02, from the list of features to add: "implement feature #5, search in the chat"). A chat's messages, found by the words in them, in a team's chat and in a direct conversation.
-  - **Where:** the magnifier beside the Chat tab's sticker in the team's header (the sticker's row is that tall on every tab, so the header doesn't jump), the magnifier in a conversation's header, or Ctrl/⌘+F on web and desktop.
+  - **Where:** the magnifier on the Chat tab's pinned row, at the top of the chat (with nothing pinned, the row is a quiet "Search {team}" entry that opens the search), the magnifier in a conversation's header, or Ctrl/⌘+F on web and desktop.
   - **Searching:** type words and press Enter (Search on a phone's keyboard). The results are the messages with every word, newest first, 20 at a time with more as the list nears its end: who sent each, its day ("Today", "Mon, Oct 6"), a mark for a photo, poll, or event, and its text from a little before the first word found, with the words found in bold. It searches text, photo captions, poll questions, and event cards (their title, time, and place), not system lines, and leaves out deleted messages and messages from people I blocked (SAFE-2). Nothing found: `No messages with "pizza".`
   - **Words, not letters:** "tournament" finds "Tournament!", "tournaments", and "TOURNAMENT"; accents don't matter ("jose" finds "José"), nor apostrophes ("obrien" finds "O'Brien's"). Part of a word doesn't ("tourn"). One letter and everyday words ("the", "and") aren't searched; a search of only those says to try a longer word. The steps and the list of everyday words are in `shared/search_words.json`.
   - **Opening a result:** tapping one opens the chat at that message, briefly highlighted. One from long ago opens the chat there in a page: newer messages load as you scroll down, older ones as you scroll up, and **Newest messages** goes back down.
@@ -954,7 +955,7 @@ Players that others answer for never get accounts, and every account belongs to 
 
 ### 6.10 Profile and settings (SET)
 
-- **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team, at the top of **Profile** (§5.1). The email shows on Sign out ("Signed in as …"); it changes in Sign-in methods.
+- **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. The photo is on **Profile → Your icon**, at 96 px with Add a photo, or Change photo and Remove photo; the name changes in **Name**'s dialog on Profile (§5.1). The email shows on Sign out ("Signed in as …"); it changes in Sign-in methods.
 - **SET-2 · MVP · Color schemes.** The app has one look, **Open Field**, in five color schemes: **Army green** (the default), **Light**, **Dark**, **Navy**, and **Light blue** (§7.4). Each person picks their own for each team or group in **Team info → Color scheme**, a list of the five with a short line under each; it changes only how that team looks for them, and everyone else keeps theirs. A **Default color scheme** on Teams themes Teams, Profile, Messages, and settings, and every team or group they haven't picked one for, including ones they join later. A super admin looking at a team they aren't on has no Color scheme row there and sees it in their default. Accounts from before 1.1 start from their old theme: Gumdrop Army (or System, or nothing set) becomes Army green, Gumdrop Pop Dark becomes Navy, Gumdrop Pop Light and Gumdrop Candy become Light, and Gumdrop Arena becomes Dark; new accounts start on Army green. A change applies instantly, is remembered on the device so the app opens in it, and syncs to the account. Signed-out screens (sign-in and setup) are Army green.
 - **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
@@ -1228,12 +1229,15 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 
 ### 7.2 Look and feel
 
-**Gumdrop Pop**, from 1.1 (the owner's pick, 2026-10-25): bright and playful, like candy, and still clean:
+**Open Field**, from 1.1 (the owner's pick, 2026-11-06, after Gumdrop Pop): bright and playful, like candy, and still clean:
 
-- an army-green page in the default color scheme (Army green), with lighter olive cards;
-- gumdrop buttons: a rounded face on a hard lip in a darker shade, with a thin highlight along the top, that sinks onto its lip when pressed;
-- candy accents, each with a meaning: blue raspberry for you and the main action, mint for Going, lemon for Maybe and pins, cherry for Not going and unread, tangerine for games, grape for practices, and bubblegum for polls, other events, and your reactions;
-- chunky headings with a stacked hard shadow;
+- a slim top bar: a team's name under its stencil eyebrow, with plain icons; pushed pages have a chevron back row and a big title;
+- an army-green page in the default color scheme (Army green), with cards that have a rim and a hard lip;
+- gumdrop buttons: a rounded face on a hard lip in a darker shade, that sinks onto its lip when pressed;
+- coral for you: your messages, the current tab, and unread;
+- candy accents, each with a meaning: mint for Going, lemon for Maybe and pins, cherry for Not going, tangerine for games, grape for practices, blue raspberry for meetings, and bubblegum for polls and other events;
+- chunky headings with one hard drop;
+- plain rows on the page for lists and settings, and a tab bar docked along the bottom;
 - generous rounding and whitespace;
 - quick motion.
 
@@ -1243,12 +1247,12 @@ The content still carries the visual weight: messages, photos, and event cards.
 
 | Token | Values |
 |---|---|
-| **Color** | Five color schemes (§7.4), each with the same 32 roles: page, cards and their rims, the tab bar, fields, lines, text, headings' drop, and the candies' lips and text shades. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is the scheme's candy ink. Every text color is contrast-checked in all five schemes. |
-| **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages, in Latin letters (Cyrillic, like Greek and other scripts, draws in the platform's fallback font). **Black Ops One**, a stencil, is for stickers only, like the tag under the team's name and the website's coral sticker: capitals only, never under 12 px. Sizes 36 / 32 / 24 / 22 / 17 / 16 / 14 / 12 (team name, screen title, section, title, subtitle, body, secondary, label); chat messages are 16 (CHAT-1). Headings carry a stacked hard shadow: four steps on screen titles and the team name, three on sections. Layouts survive system text scaling up to 200%. |
+| **Color** | Five color schemes (§7.4), each with the same 32 color roles: page, cards and their rims, the tab bar, fields, lines, text, headings' drop, and the candies' lips and text shades. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is the scheme's candy ink. Every text color is contrast-checked in all five schemes. |
+| **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages, in Latin letters (Cyrillic, like Greek and other scripts, draws in the platform's fallback font). **Black Ops One**, a stencil, is for eyebrows only, like the one over the team's name, and the website's coral sticker: capitals only, never under 12 px. Sizes 32 / 27 / 25 / 18 / 17 / 16 / 14 / 13 (screen title, team name, section, card title, chat message, row title, secondary, label); the team name steps down to 23, 21, then 19 to fit. Headings carry one hard drop (none in Light and Dark). Layouts survive system text scaling up to 200%. |
 | **Buttons** | Gumdrops: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above, with a highlight along its top. The main action is a candy gumdrop (the theme's own color, or a candy for its meaning); the rest are raised gumdrops in the card color. Pressed, the face sinks onto the lip; disabled, it's flat and muted. Chips, segmented buttons, the + button, and the navigation indicator are gumdrops too. |
 | **Spacing** | 4-point grid: 4, 8, 12, 16, 24, 32, 48. Side padding is 16 on phones and 24 on wide screens. |
-| **Corners** | 14 for inputs, 18 for tiles, 20 for cards and chat bubbles (6 at a bubble's tail), 22 for panels, 26 for sheets, fully round for avatars, pills, and buttons. |
-| **Elevation** | No soft shadows on cards. Depth comes from the lips under buttons and the hard shadows under headings, the back button, and stickers. |
+| **Corners** | 14 for inputs and badges, 18 for cards, 22 for chat bubbles (6 at a bubble's tail), 26 for sheets, fully round for avatars, pills, and buttons. |
+| **Elevation** | No soft shadows. Depth comes from the hard lips under cards and buttons and the hard drop under headings. |
 | **Icons** | Material Symbols Rounded, the same set on every platform |
 | **Motion** | 150–250 ms with standard easing. Respect the system "reduce motion" setting. |
 

@@ -6,14 +6,19 @@ export 'presentation/chat_bubble_colors.dart' show chatBubbleColor;
 export 'presentation/create_team_screen.dart' show sportName;
 export 'presentation/gumdrop_rows.dart'
     show
+        BackLabel,
         CardHeading,
-        GumdropBackButton,
         LabeledField,
         PageHeading,
+        PageRow,
+        PageRows,
         RowDisc,
+        SectionLabel,
         SettingsCard,
         SettingsPanel,
         SettingsRow,
+        TopLevelBar,
+        backLabelFrom,
         gumdropAppBar,
         gumdropField,
         gumdropFieldText,

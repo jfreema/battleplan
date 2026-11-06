@@ -22,6 +22,7 @@ import 'package:battleplan/features/auth/presentation/reset_password_screen.dart
 import 'package:battleplan/features/auth/presentation/setup_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_methods_screen.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
+import 'package:battleplan/features/auth/presentation/your_icon_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_search_screen.dart';
 import 'package:battleplan/features/chat/presentation/direct_chat_screen.dart';
@@ -420,6 +421,14 @@ GoRouter router(Ref ref) {
           key: state.pageKey,
           child: const HomeShell(tab: 1, child: ProfileScreen()),
         ),
+        routes: [
+          // My photo, and later my icon's color (SET-1).
+          GoRoute(
+            path: 'icon',
+            pageBuilder: (_, state) =>
+                PanelPage(key: state.pageKey, child: const YourIconScreen()),
+          ),
+        ],
       ),
       // The old themes screen's address, from bookmarks and old builds'
       // links: the default color scheme replaced it (SET-2).

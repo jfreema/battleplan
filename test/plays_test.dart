@@ -11,6 +11,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
+import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/plays/data/firestore_play_repository.dart';
 import 'package:battleplan/features/plays/data/prefs_whiteboard_store.dart';
 import 'package:battleplan/features/plays/domain/board_edit.dart';
@@ -405,17 +406,17 @@ void main() {
         groups: team,
         memberships: [testMembership('a', 'coach')],
       );
-      final navigation = tester.widget<NavigationBar>(
-        find.byType(NavigationBar),
+      final navigation = tester.widget<OpenFieldTabBar>(
+        find.byType(OpenFieldTabBar),
       );
-      expect(
-        navigation.destinations.cast<NavigationDestination>().map(
-          (d) => d.label,
-        ),
-        ['Chat', 'Schedule', 'Documents', 'Plays'],
-      );
+      expect(navigation.tabs.map((t) => t.label), [
+        'Chat',
+        'Schedule',
+        'Documents',
+        'Plays',
+      ]);
       // The drawn chalkboard, outlined, also while its tab is showing: the
-      // gumdrop indicator marks the tab (Gumdrop Pop design §3.2).
+      // coral color and bar mark the tab.
       expect(tester.widget<PlaysIcon>(find.byType(PlaysIcon)).filled, isFalse);
       await tester.tap(find.text('Plays'));
       await tester.pumpAndSettle();
@@ -423,7 +424,7 @@ void main() {
         tester
             .widget<PlaysIcon>(
               find.descendant(
-                of: find.byType(NavigationBar),
+                of: find.byType(OpenFieldTabBar),
                 matching: find.byType(PlaysIcon),
               ),
             )
@@ -450,7 +451,7 @@ void main() {
       final tab = tester.widget<CustomPaint>(
         find.descendant(
           of: find.descendant(
-            of: find.byType(NavigationBar),
+            of: find.byType(OpenFieldTabBar),
             matching: find.byType(PlaysIcon),
           ),
           matching: find.byType(CustomPaint),

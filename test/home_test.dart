@@ -5,6 +5,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
+import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -58,7 +59,7 @@ void main() {
     expect(find.text('Create a Team'), findsOneWidget);
     // The inbox and notifications cover every team, so they're here too.
     expect(find.byTooltip('Notifications'), findsOneWidget);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(OpenFieldTabBar), findsOneWidget);
 
     // Thunder opens where I was; Cyclone at its chat.
     await tester.tap(find.text('Thunder'));
@@ -182,8 +183,8 @@ void main() {
     expect(find.text('Media'), findsNothing);
   });
 
-  testWidgets('Profile: my photo and name, then Themes, Settings, and Sign '
-      'out, each its own card', (tester) async {
+  testWidgets('Profile: Your icon, Name in a dialog, Time zone, Settings, '
+      'and Sign out, as rows', (tester) async {
     final users = FakeUserRepository();
     final auth = FakeAuthRepository(user: coach);
     await pumpApp(
@@ -194,9 +195,12 @@ void main() {
       users: users,
     );
     await openProfile(tester);
-    expect(find.text('Change photo'), findsOneWidget);
+    expect(find.text('Your icon'), findsOneWidget);
+    expect(find.text('Themes'), findsNothing);
     expect(find.text('Admin panel'), findsNothing);
-    // The name my teams see, saved when it changes.
+    // The name my teams see, in a dialog, saved when it changes.
+    await tester.tap(find.text('Your name'));
+    await tester.pumpAndSettle();
     final save = find.widgetWithText(FilledButton, 'Save');
     expect(tester.widget<FilledButton>(save).onPressed, isNull);
     await tester.enterText(find.byType(TextField), 'Coach Jordan');
@@ -209,7 +213,6 @@ void main() {
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
     expect(find.text('Sign-in methods'), findsOneWidget);
-    // Themes and the photo moved out of Settings.
     expect(find.text('Appearance'), findsNothing);
     await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
@@ -217,6 +220,33 @@ void main() {
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
     expect(auth.currentUser, isNull);
+  });
+
+  testWidgets('Your icon adds a photo, then changes or removes it (SET-1)', (
+    tester,
+  ) async {
+    final users = FakeUserRepository();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: teams,
+      memberships: memberships,
+      users: users,
+    );
+    await openProfile(tester);
+    await tester.tap(find.text('Your icon'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add a photo'), findsOneWidget);
+    expect(find.text('Remove photo'), findsNothing);
+    users
+      ..photoPath = 'users/coach/avatar/1.jpg'
+      ..changed();
+    await tester.pumpAndSettle();
+    expect(find.text('Change photo'), findsOneWidget);
+    await tester.tap(find.text('Remove photo'));
+    await tester.pumpAndSettle();
+    expect(users.photosRemoved, 1);
+    expect(find.text('Add a photo'), findsOneWidget);
   });
 
   testWidgets('super admins find the Admin panel on Profile', (tester) async {
@@ -238,7 +268,7 @@ void main() {
       memberships: memberships,
     );
     await go(tester, '/settings/profile');
-    expect(find.text('Change photo'), findsOneWidget);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.text('Your icon'), findsOneWidget);
+    expect(find.byType(OpenFieldTabBar), findsOneWidget);
   });
 }
