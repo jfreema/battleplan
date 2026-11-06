@@ -7,7 +7,7 @@ part 'rsvp.freezed.dart';
 /// One answer to an event (`rsvps/{eventId}_{participantId}`, SCHED-5).
 /// There's exactly one per event and participant: two guardians, or a
 /// player and their guardian, write the same player's record, and the
-/// latest answer counts (PLAYER-6). No record means "No response".
+/// latest answer counts (PLAYER-6). No record means "No reply".
 @freezed
 abstract class Rsvp with _$Rsvp {
   const factory({

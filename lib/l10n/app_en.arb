@@ -1371,7 +1371,7 @@
   "rsvpNotAnswered": "{count, plural, =1{1 hasn't answered} other{{count} haven't answered}}",
   "@rsvpNotAnswered": {"placeholders": {"count": {"type": "int"}}},
   "eventClearAnswer": "Clear",
-  "@eventClearAnswer": {"description": "Takes back an RSVP answer, back to No response."},
+  "@eventClearAnswer": {"description": "Takes back an RSVP answer, back to No reply."},
   "eventAddNote": "Add a note",
   "eventEditNote": "Edit note",
   "eventNoteTitle": "Note",

@@ -31,7 +31,7 @@ abstract interface class RsvpRepository {
     required UserId by,
   });
 
-  /// Clears [participant]'s answer (SCHED-5), back to "No response": no
+  /// Clears [participant]'s answer (SCHED-5), back to "No reply": no
   /// answer is no document. Whoever may give the answer may clear it; it
   /// throws if the rules refuse, as [setRsvp] does.
   Future<void> clearRsvp(Event event, Participant participant);

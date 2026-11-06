@@ -638,8 +638,11 @@ class _RsvpSection extends ConsumerWidget {
     // Until a team's players and links are in, who I answer for and
     // whether it has players aren't known: nothing shows yet, so no empty
     // state flashes by (an admin's Add players, a guardian's "only
-    // players").
-    if (isTeam && !(playersAsync!.hasValue && linksAsync!.hasValue)) {
+    // players"). A stream that fails falls back to no players or links, so
+    // the section still shows.
+    bool loading(AsyncValue<Object?>? v) =>
+        v != null && v.isLoading && !v.hasValue && !v.hasError;
+    if (loading(playersAsync) || loading(linksAsync)) {
       return const SizedBox.shrink();
     }
     final players = playersAsync?.value ?? const <Player>[];
@@ -683,10 +686,12 @@ class _RsvpSection extends ConsumerWidget {
         activePlayers > 0 &&
         !event.isCanceled;
     // A team with no players takes no answers yet: its admins are told how
-    // to start, unless it's archived (PLAYER-6). Others see no section,
-    // unless their claim waits (spec 6.3).
+    // to start (PLAYER-6). Others, and everyone on an archived team, see no
+    // section, unless their claim waits (spec 6.3).
     final noPlayers = isTeam && activePlayers == 0;
-    if (noPlayers && !isAdmin && !waiting) return const SizedBox.shrink();
+    if (noPlayers && !waiting && (!isAdmin || group.isArchived)) {
+      return const SizedBox.shrink();
+    }
     final addPlayers =
         noPlayers && isAdmin && !group.isArchived && !event.isCanceled;
 
@@ -916,7 +921,7 @@ class _RsvpSection extends ConsumerWidget {
 }
 
 /// Big Going / Maybe / Not going buttons for one person, with an optional
-/// note ("Leaving at halftime") and Clear, back to "No response" (SCHED-5).
+/// note ("Leaving at halftime") and Clear, back to "No reply" (SCHED-5).
 /// Tapping the chosen answer again keeps it, or with [clearOnRepeat] (the
 /// schedule list) clears it.
 class RsvpButtons extends ConsumerWidget {
@@ -945,7 +950,7 @@ class RsvpButtons extends ConsumerWidget {
   /// which the event's page has.
   final bool compact;
 
-  /// A tap on the chosen answer clears it, back to "No response".
+  /// A tap on the chosen answer clears it, back to "No reply".
   final bool clearOnRepeat;
 
   @override
@@ -1218,7 +1223,7 @@ Future<void> clearRsvpWithFeedback(
   }
 }
 
-/// Going, Maybe, Not going, and No response, each with its people and
+/// Going, Maybe, Not going, and No reply, each with its people and
 /// One count on the event screen (SPEC §7.3): the number in Lilita 40 in
 /// its answer's color, and its label in small capitals under it.
 class _Count extends StatelessWidget {

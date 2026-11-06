@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -317,15 +318,18 @@ void main() {
     testWidgets('canceled events are struck through with a badge (SCHED-7)', (
       tester,
     ) async {
+      // In a group, where I answer for myself, so an open event would have
+      // buttons on its card.
       await openSchedule(
         tester,
+        basicGroup: true,
         events: [event('c', canceledAt: DateTime.now())],
       );
       expect(find.text('Canceled'), findsOneWidget);
       final title = tester.widget<Text>(find.text('Practice'));
       expect(title.style?.decoration, TextDecoration.lineThrough);
-      // RSVPs are closed: no answer or counts on the row.
-      expect(find.text('No response'), findsNothing);
+      // RSVPs are closed: no answer buttons on the card.
+      expect(find.byType(RsvpButtons), findsNothing);
     });
 
     testWidgets('a long title has the row up to the type word, which sits at '
@@ -956,6 +960,8 @@ void main() {
       await openDetails(tester, 'Practice');
       expect(find.text('Add players to take RSVPs'), findsNothing);
       expect(find.widgetWithText(TextButton, 'Add players'), findsNothing);
+      // Nor a bare heading: there's nothing to do there.
+      expect(find.text('RSVPs'), findsNothing);
     });
 
     testWidgets('a member of a team with no players sees no RSVP section '
@@ -1070,6 +1076,22 @@ void main() {
       links.add(const []);
       await tester.pumpAndSettle();
       expect(find.text('Add players to take RSVPs'), findsOneWidget);
+    });
+
+    testWidgets('the section still shows when the links fail to load', (
+      tester,
+    ) async {
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        players: emma()
+          ..linksStream = Stream.error(const PermissionDenied('links')),
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('RSVPs'), findsOneWidget);
+      expect(find.text("Who's going"), findsOneWidget);
+      expect(find.text('RSVP for a player'), findsOneWidget);
     });
 
     testWidgets('an adult player who answered for themselves has no '
@@ -1370,7 +1392,7 @@ void main() {
       expect(rsvps.rsvps.single.participantId, 'p1');
     });
 
-    testWidgets('Clear takes an answer back to No response (SCHED-5)', (
+    testWidgets('Clear takes an answer back to No reply (SCHED-5)', (
       tester,
     ) async {
       final rsvps = await openSchedule(

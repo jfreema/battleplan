@@ -137,7 +137,7 @@ Participant playerParticipant(Player p) => Participant(
 /// Everyone who can be answered for on an event (SCHED-4, PLAYER-6). On
 /// a team ([isTeam]), the active players, in `main`; members' own answers,
 /// as from before RSVPs were players only, are hidden. In a group,
-/// everyone in `staff`, each answering for themselves. "No response" lists
+/// everyone in `staff`, each answering for themselves. "No reply" lists
 /// those without an answer.
 ({List<Participant> main, List<Participant> staff}) eventParticipants(
   List<Membership> roster,
