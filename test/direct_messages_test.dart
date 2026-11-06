@@ -14,6 +14,7 @@ import 'package:battleplan/features/chat/presentation/direct_chat_screen.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/person_screen.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
 import 'package:flutter/foundation.dart';
@@ -476,6 +477,20 @@ void main() {
         tester.getTopLeft(find.text('Alex Kim')).dy,
         lessThan(tester.getTopLeft(find.text('Sam Rivera')).dy),
       );
+      // Plain rows between hairlines (SPEC §7.3), the unread one bolder.
+      expect(find.byType(PageListRow), findsNWidgets(2));
+      FontWeight? weight(String text) => tester
+          .widget<RichText>(
+            find.descendant(
+              of: find.text(text),
+              matching: find.byType(RichText),
+            ),
+          )
+          .text
+          .style
+          ?.fontWeight;
+      expect(weight('Alex Kim'), FontWeight.w800);
+      expect(weight('Sam Rivera'), FontWeight.w700);
       await tester.tap(find.text('Alex Kim'));
       await tester.pumpAndSettle();
       expect(find.text('Message Alex Kim…'), findsOneWidget);
