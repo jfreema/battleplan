@@ -64,6 +64,8 @@ class EventRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final canceled = event.isCanceled;
     final allowMaybe = group?.settings.allowMaybe ?? true;
+    // A team counts players only; a group, everyone (PLAYER-6).
+    final isTeam = group?.hasPlayers ?? true;
     // The players I'm here for; my own player needs no name (PLAYER-9).
     final players = [
       for (final p in participants)
@@ -191,24 +193,32 @@ class EventRow extends StatelessWidget {
                               ],
                             ),
                           ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 5),
-                          child: _GoingRow(
-                            text: eventCountsText(
+                        // Players only on a team, none while it has no
+                        // players; everyone in a group (PLAYER-6).
+                        if (eventCountsText(
                               l10n,
                               event,
-                              players: playerCount,
+                              isTeam: isTeam,
+                              total: isTeam
+                                  ? playerCount
+                                  : group?.memberCount ?? 0,
                               allowMaybe: allowMaybe,
+                            )
+                            case final text?)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 5),
+                            child: _GoingRow(
+                              text: text,
+                              going: isTeam
+                                  ? event.rsvpCounts.going
+                                  : (event.rsvpCounts + event.staffCounts)
+                                        .going,
+                              of: isTeam
+                                  ? playerCount
+                                  : group?.memberCount ?? 0,
+                              color: card.mint.text,
                             ),
-                            going: playerCount > 0
-                                ? event.rsvpCounts.going
-                                : (event.rsvpCounts + event.staffCounts).going,
-                            of: playerCount > 0
-                                ? playerCount
-                                : group?.memberCount ?? 0,
-                            color: card.mint.text,
                           ),
-                        ),
                       ],
                     ],
                   ),
@@ -303,19 +313,15 @@ class _SoloAnswer extends StatelessWidget {
 }
 
 /// The label on one of my answers in a schedule row (PLAYER-9): "Emma"
-/// for a player I'm here for, "You" for me or my own player, and "Jared #12
-/// (you)" for my own player beside an answer of my own as a member, so the
-/// two never read the same. Null when it's only me as a member.
+/// for a player I'm here for, "You" for my own player. Null when it's only
+/// me in a group.
 String? answerLabel(
   AppLocalizations l10n,
   Participant p,
   List<Participant> participants,
 ) {
   if (!p.isPlayer) return participants.length > 1 ? l10n.eventYou : null;
-  if (!p.isMe) return p.name.split(' ').first;
-  return participants.any((o) => !o.isPlayer)
-      ? l10n.eventYouAsPlayer(p.shownName)
-      : l10n.eventYou;
+  return p.isMe ? l10n.eventYou : p.firstName;
 }
 
 /// My answer on a row: "Emma: Going", or "No response", after its disc.

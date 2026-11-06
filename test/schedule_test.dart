@@ -83,6 +83,9 @@ void main() {
     FakeMessageRepository? messages,
     List<Membership> extraMembers = const [],
     bool tapSchedule = true,
+    // A basic group, where everyone answers for themselves (TEAM-14); on a
+    // team only players have answers (PLAYER-6).
+    bool basicGroup = false,
   }) async {
     final eventRepo = FakeEventRepository(events);
     final rsvps = FakeRsvpRepository(eventRepo);
@@ -91,6 +94,7 @@ void main() {
       auth: FakeAuthRepository(user: coach),
       groups: {
         'a': testGroup('a', 'Thunder').copyWith(
+          kind: basicGroup ? GroupKind.group : GroupKind.team,
           settings: settings,
           storageBytes: storageFull ? 500 * bytesPerMb : 0,
           storageQuotaBytes: 500 * bytesPerMb,
@@ -133,6 +137,7 @@ void main() {
         'my answer', (tester) async {
       final rsvps = await openSchedule(
         tester,
+        basicGroup: true,
         events: [
           event('e1', title: 'vs. Eagles', type: EventType.game),
           event('e2', hour: 20, title: 'Team dinner'),
@@ -249,7 +254,11 @@ void main() {
 
     testWidgets('Going, Maybe, and Not going are on the row; a second tap '
         'on the chosen one clears it', (tester) async {
-      final rsvps = await openSchedule(tester, events: [event('e1')]);
+      final rsvps = await openSchedule(
+        tester,
+        basicGroup: true,
+        events: [event('e1')],
+      );
       expect(answer('Going'), findsOneWidget);
       expect(answer('Maybe'), findsOneWidget);
       expect(answer('Not going'), findsOneWidget);
@@ -274,6 +283,7 @@ void main() {
     testWidgets('Maybe only where the team allows it', (tester) async {
       await openSchedule(
         tester,
+        basicGroup: true,
         events: [event('e1')],
         settings: const GroupSettings(allowMaybe: false),
       );
@@ -341,6 +351,7 @@ void main() {
       final passed = DateTime.now().subtract(const Duration(hours: 1));
       await openSchedule(
         tester,
+        basicGroup: true,
         events: [
           event('c', canceledAt: DateTime.now()),
           event('d', days: 2, title: 'Closed', rsvpDeadline: passed),
@@ -656,7 +667,11 @@ void main() {
 
   group('event details and RSVPs (SCHED-4, SCHED-5)', () {
     testWidgets('a member answers Going with a note', (tester) async {
-      final rsvps = await openSchedule(tester, events: [event('e1')]);
+      final rsvps = await openSchedule(
+        tester,
+        basicGroup: true,
+        events: [event('e1')],
+      );
       await openDetails(tester, 'Practice');
       expect(find.text('Riverside Park'), findsOneWidget);
       expect(find.text('100 River Rd'), findsOneWidget);
@@ -680,6 +695,7 @@ void main() {
     testWidgets('Maybe is hidden when the team turns it off', (tester) async {
       await openSchedule(
         tester,
+        basicGroup: true,
         events: [event('e1')],
         settings: const GroupSettings(allowMaybe: false),
       );
@@ -690,7 +706,11 @@ void main() {
 
     testWidgets('after the deadline only admins can answer', (tester) async {
       final past = DateTime.now().subtract(const Duration(hours: 1));
-      await openSchedule(tester, events: [event('e1', rsvpDeadline: past)]);
+      await openSchedule(
+        tester,
+        basicGroup: true,
+        events: [event('e1', rsvpDeadline: past)],
+      );
       await openDetails(tester, 'Practice');
       expect(find.textContaining('deadline has passed'), findsOneWidget);
       final buttons = tester.widget<SegmentedButton<RsvpStatus>>(
@@ -700,6 +720,7 @@ void main() {
 
       await openSchedule(
         tester,
+        basicGroup: true,
         role: MemberRole.admin,
         events: [event('e1', rsvpDeadline: past)],
       );
@@ -778,7 +799,7 @@ void main() {
     });
 
     testWidgets('one tap gives all my players the same answer, keeping their '
-        'notes; my own answer stays apart (PLAYER-11)', (tester) async {
+        'notes (PLAYER-11)', (tester) async {
       final players =
           FakePlayerRepository(const [
               Player(
@@ -805,8 +826,7 @@ void main() {
                 uid: UserId('coach'),
               ),
             ]);
-      // The owner, who coaches: a Me row too, which "All my players" leaves
-      // alone.
+      // The owner, who coaches, has no answer of their own (PLAYER-6).
       final rsvps = await openSchedule(
         tester,
         role: MemberRole.owner,
@@ -827,8 +847,8 @@ void main() {
       );
       await openDetails(tester, 'Practice');
       expect(find.text('All my players'), findsOneWidget);
-      // All my players, then each player, then Me.
-      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(4));
+      // All my players, then each player.
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(3));
       Finder allButtons() => find.descendant(
         of: find.ancestor(
           of: find.text('All my players'),
@@ -901,8 +921,8 @@ void main() {
       expect(find.text('You'), findsNothing);
     });
 
-    testWidgets('a coach who is a parent answers for their player, then for '
-        'themselves (PLAYER-6)', (tester) async {
+    testWidgets('a coach who is a parent answers only for their player '
+        '(PLAYER-6)', (tester) async {
       final players =
           FakePlayerRepository(const [
               Player(
@@ -926,26 +946,27 @@ void main() {
         events: [event('e1')],
       );
       await openDetails(tester, 'Practice');
-      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
-      // Emma's row first, then mine.
-      final emmaRow = tester.getTopLeft(find.text('Emma #7').first);
-      final myRow = tester.getTopLeft(find.text('You'));
-      expect(emmaRow.dy, lessThan(myRow.dy));
-      // My row's buttons (the count tiles below say Going too).
+      // One row, Emma's: on a team, coaches have no answer of their own.
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      expect(find.text('Is Emma going?'), findsOneWidget);
       await tester.tap(
         find.descendant(
-          of: find.byType(RsvpButtons).last,
+          of: find.byType(RsvpButtons),
           matching: find.text('Going'),
         ),
       );
       await tester.pumpAndSettle();
-      expect(rsvps.rsvps.single.participantId, 'coach');
+      expect(rsvps.rsvps.single.participantId, 'p1');
     });
 
     testWidgets('Clear takes an answer back to No response (SCHED-5)', (
       tester,
     ) async {
-      final rsvps = await openSchedule(tester, events: [event('e1')]);
+      final rsvps = await openSchedule(
+        tester,
+        basicGroup: true,
+        events: [event('e1')],
+      );
       await openDetails(tester, 'Practice');
       expect(find.text('Clear'), findsNothing);
       await tester.tap(find.text('Going').first);
@@ -1022,7 +1043,8 @@ void main() {
       await openDetails(tester, 'Practice');
       // One set of buttons: their player's. The pending player isn't there.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
-      expect(find.text('Coach #12 (you)'), findsOneWidget);
+      expect(find.text('You'), findsOneWidget);
+      expect(find.text('Are you going?'), findsOneWidget);
       expect(find.textContaining('Noah'), findsNothing);
       await tester.tap(find.text('Going').first);
       await tester.pumpAndSettle();
@@ -1073,24 +1095,23 @@ void main() {
       );
       // The chat card: one set of buttons, the player's.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
-      expect(find.text('Pat #12 (you)'), findsOneWidget);
+      expect(find.text('You'), findsOneWidget);
       await tester.tap(find.text('Schedule'));
       await tester.pumpAndSettle();
       // Never two answers of their own.
       expect(find.byType(RsvpChoice), findsOneWidget);
       await openDetails(tester, 'Practice');
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
-      expect(find.text('Pat #12 (you)'), findsOneWidget);
-      // Not also listed under "coaches and others" with no way to answer.
-      expect(find.text('Coaches and others'), findsOneWidget);
+      expect(find.text('You'), findsOneWidget);
+      // Nobody but players is listed on a team.
       expect(find.text('Coach Lee'), findsNothing);
       await tester.tap(find.text('Going').first);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p1');
     });
 
-    testWidgets('an answer of my own from before I was a player is listed '
-        'and still mine to change (PLAYER-6)', (tester) async {
+    testWidgets('an answer of my own from before RSVPs were players only '
+        'is hidden on a team, and left as it was (PLAYER-6)', (tester) async {
       final players =
           FakePlayerRepository(const [
               Player(
@@ -1127,23 +1148,26 @@ void main() {
       await tester.tap(find.text('Schedule'));
       await tester.pumpAndSettle();
       await openDetails(tester, 'Practice');
-      // The old answer has its own row, after the player's.
-      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
-      expect(find.text('You'), findsOneWidget);
-      expect(find.text('Coach #12 (you)'), findsOneWidget);
-      // My row's buttons (the count tiles below say Not going too).
+      // Only the player's row; the old answer isn't shown or counted.
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      expect(find.text('Going · 1'), findsNothing);
       await tester.tap(
         find.descendant(
-          of: find.byType(RsvpButtons).last,
+          of: find.byType(RsvpButtons),
           matching: find.text('Not going'),
         ),
       );
       await tester.pumpAndSettle();
       expect(
+        rsvps.rsvps.singleWhere((r) => r.participantId == 'p1').status,
+        RsvpStatus.notGoing,
+      );
+      // The old one is still there, untouched.
+      expect(
         rsvps.rsvps
             .singleWhere((r) => r.participantType == ParticipantType.member)
             .status,
-        RsvpStatus.notGoing,
+        RsvpStatus.going,
       );
     });
 
@@ -1346,6 +1370,7 @@ void main() {
     testWidgets('admins set an answer for someone else', (tester) async {
       final rsvps = await openSchedule(
         tester,
+        basicGroup: true,
         role: MemberRole.admin,
         events: [event('e1')],
       );
@@ -1624,6 +1649,7 @@ void main() {
     ) async {
       final rsvps = await openSchedule(
         tester,
+        basicGroup: true,
         tapSchedule: false,
         events: [event('e1', title: 'vs. Eagles', type: EventType.game)],
         messages: FakeMessageRepository([card('e1')]),
@@ -1675,9 +1701,10 @@ void main() {
         events: [event('e1')],
         messages: FakeMessageRepository([card('e1')]),
       );
-      // All my players first (PLAYER-11), then one row per player.
+      // All my players first (PLAYER-11), then one row per player, by first
+      // name.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(3));
-      expect(find.text('Emma #7'), findsOneWidget);
+      expect(find.text('Emma'), findsOneWidget);
       await tester.tap(find.text('Going').last);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p2');
@@ -1806,8 +1833,8 @@ void main() {
   });
 
   group('review fixes', () {
-    testWidgets('admins set answers for players and for any member; '
-        'coaches and others are listed apart (SCHED-4, Q14)', (tester) async {
+    testWidgets('admins set answers for players only on a team; nobody '
+        'else is listed (SCHED-4, PLAYER-6)', (tester) async {
       final players = FakePlayerRepository(const [
         Player(
           id: PlayerId('p1'),
@@ -1825,28 +1852,24 @@ void main() {
         events: [event('e1')],
       );
       await openDetails(tester, 'Practice');
-      expect(find.text('Coaches and others'), findsOneWidget);
+      expect(find.text('Pat Kim'), findsNothing);
       expect(find.text('No response · 1'), findsWidgets);
-      // Another coach's row sets their answer, as the rules allow admins.
-      await tester.ensureVisible(find.text('Pat Kim'));
-      await tester.tap(find.text('Pat Kim'));
+      // A player's row sets their answer.
+      await tester.ensureVisible(find.text('Emma'));
+      await tester.tap(find.text('Emma'));
       await tester.pumpAndSettle();
-      expect(find.text('RSVP for Pat Kim'), findsOneWidget);
       await tester.tap(find.text('Going').last);
       await tester.pumpAndSettle();
-      expect(rsvps.rsvps.single.participantId, 'pat');
+      expect(rsvps.rsvps.single.participantId, 'p1');
       expect(find.text('Going · 1'), findsOneWidget);
-      // "Set RSVP for someone" lists the players and every member.
-      await menu(tester, 'Set RSVP for someone');
-      expect(find.textContaining('Emma'), findsWidgets);
+      // "RSVP for a player" lists the players, and no members.
+      await menu(tester, 'RSVP for a player');
+      expect(find.text('Pat Kim'), findsNothing);
       await tester.tap(find.text('Emma').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Not going').last);
       await tester.pumpAndSettle();
-      expect(
-        rsvps.rsvps.where((r) => r.participantId == 'p1').single.status,
-        RsvpStatus.notGoing,
-      );
+      expect(rsvps.rsvps.single.status, RsvpStatus.notGoing);
     });
 
     Event allDay(
@@ -1873,6 +1896,7 @@ void main() {
         'whatever their zone (SCHED-9)', (tester) async {
       final rsvps = await openSchedule(
         tester,
+        basicGroup: true,
         events: [
           // Midnight in New York is before midnight in Chicago.
           allDay(

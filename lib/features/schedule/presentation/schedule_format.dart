@@ -119,34 +119,45 @@ String countsText(
   return parts.isEmpty ? l10n.rsvpNoAnswers : parts.join(' · ');
 }
 
-/// An event's counts (PLAYER-6): "12 of 15 players going · 2 others",
-/// players first and everyone answering for themselves apart. A team with
-/// no players counts everyone together: "12 going · 3 maybe".
-String eventCountsText(
+/// An event's counts (PLAYER-6). On a team ([isTeam], true for every
+/// team, even one with no players yet), players only: "12 of 15 players
+/// going" out of the [total] active players, or null with none. In a
+/// group, everyone answering for themselves: "12 going · 3 maybe".
+String? eventCountsText(
   AppLocalizations l10n,
   Event event, {
-  required int players,
+  required bool isTeam,
+  required int total,
   bool allowMaybe = true,
 }) {
-  if (players == 0) {
+  if (!isTeam) {
     return countsText(
       l10n,
       event.rsvpCounts + event.staffCounts,
       allowMaybe: allowMaybe,
     );
   }
-  return [
-    l10n.rsvpPlayersGoing(event.rsvpCounts.going, players),
-    if (event.staffCounts.going > 0) l10n.rsvpOthers(event.staffCounts.going),
-  ].join(' · ');
+  if (total == 0) return null;
+  return l10n.rsvpPlayersGoing(event.rsvpCounts.going, total);
 }
 
-/// The label over one set of answer buttons (PLAYER-6): "Emma #7" for a
-/// player, "Jared #12 (you)" for the member's own player, and "You" beside
-/// players; null when it's only me ([count] rows in all).
+/// The label over one set of answer buttons (PLAYER-6): the player's first
+/// name ("Luke"), or "You" for the member's own player and for themselves
+/// beside others; null when it's only me in a group ([count] rows in all).
 String? rsvpRowLabel(AppLocalizations l10n, Participant p, int count) {
   if (!p.isPlayer) return count > 1 ? l10n.eventYou : null;
-  return p.isMe ? l10n.eventYouAsPlayer(p.shownName) : p.shownName;
+  return p.isMe ? l10n.eventYou : p.firstName;
+}
+
+/// The event screen's question over my answer buttons (PLAYER-6): "Are
+/// you going?" for myself (my own player, or in a group), "Is Luke
+/// going?" for one player, "Are your players going?" for several.
+String rsvpHeading(AppLocalizations l10n, List<Participant> mine) {
+  if (mine.length > 1) return l10n.eventArePlayersGoing;
+  final p = mine.single;
+  return p.isPlayer && !p.isMe
+      ? l10n.eventIsPlayerGoing(p.firstName)
+      : l10n.eventAreYouGoing;
 }
 
 /// "6:00 PM" in [zone].

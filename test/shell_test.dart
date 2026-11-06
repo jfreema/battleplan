@@ -344,7 +344,9 @@ void main() {
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
-        groups: {'a': testGroup('a', 'Thunder')},
+        groups: {
+          'a': testGroup('a', 'Thunder').copyWith(kind: GroupKind.group),
+        },
         memberships: [testMembership('a', 'coach')],
         messageRepo: FakeMessageRepository([
           Message(
@@ -538,7 +540,10 @@ void main() {
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
-        groups: {'a': testGroup('a', 'Thunder')},
+        // A basic group, where each member answers for themselves (TEAM-14).
+        groups: {
+          'a': testGroup('a', 'Thunder').copyWith(kind: GroupKind.group),
+        },
         memberships: [testMembership('a', 'coach', name: 'Coach Lee')],
         messageRepo: FakeMessageRepository([
           Message(

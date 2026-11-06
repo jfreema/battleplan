@@ -38,7 +38,7 @@ SCHEDULE AND RSVPS
 • Games, practices, and events with opponents, places, and reminders
 • Going, Maybe, or Not going in one tap, for yourself or for each of your players, right from the schedule
 • Assignments like snacks, drinks, and scorekeeper that families volunteer for
-• Coaches see how many players are coming, with coaches and others counted apart
+• Coaches see how many players are coming
 • Coaches can email everyone who hasn't answered, and they can answer right from the email
 • A private calendar link keeps your calendar app in sync
 

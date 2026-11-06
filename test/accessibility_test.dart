@@ -375,11 +375,14 @@ Future<void> clearOfAddButton(WidgetTester tester) async {
   final add = find.byType(FloatingActionButton);
   if (add.evaluate().isEmpty) return;
   final covered = tester.getRect(add).inflate(8);
+  // Nor half scrolled out at the top, where the check would read the page
+  // behind the cut-off card as their colors.
+  final top = tester.getRect(find.byType(Scrollable).last).top;
   for (var i = 0; i < 20; i++) {
-    final under = find
-        .byType(SegmentedButton<RsvpStatus>)
-        .evaluate()
-        .any((e) => tester.getRect(find.byWidget(e.widget)).overlaps(covered));
+    final under = find.byType(SegmentedButton<RsvpStatus>).evaluate().any((e) {
+      final r = tester.getRect(find.byWidget(e.widget));
+      return r.overlaps(covered) || (r.top < top && r.bottom > top);
+    });
     if (!under) return;
     await tester.drag(
       find.byType(Scrollable).last,

@@ -155,13 +155,18 @@ class EventDetailsScreen extends ConsumerWidget {
                     value: _Action.duplicate,
                     child: Text(l10n.eventDuplicate),
                   ),
-                // Team admins and super admins answer for anyone (§3).
+                // Team admins and super admins answer for a player, or for
+                // anyone in a group (§3, PLAYER-6).
                 if (canManage &&
                     event.takesRsvps &&
                     (superAdmin || (me?.isAdmin ?? false)))
                   PopupMenuItem(
                     value: _Action.setRsvp,
-                    child: Text(l10n.eventSetRsvpFor),
+                    child: Text(
+                      group.hasPlayers
+                          ? l10n.eventRsvpForPlayer
+                          : l10n.eventSetRsvpFor,
+                    ),
                   ),
                 // A reminder by hand, in the chat (SCHED-8).
                 if (canRepost(event, group, me, superAdmin: superAdmin))
@@ -701,23 +706,42 @@ class _RsvpSection extends ConsumerWidget {
         ? ref.watch(guardianLinksProvider(group.id)).value ??
               const <GuardianLink>[]
         : const <GuardianLink>[];
-    final viewer = me;
-    final answering = ref.watch(myParticipantsProvider(group.id));
-    final mine = viewer == null
-        ? answering
-        : withOwnAnswer(answering, viewer, rsvps);
+    // On a team only players have answers; in a group, everyone answers
+    // for themselves (PLAYER-6).
+    final isTeam = group.hasPlayers;
+    final mine = ref.watch(myParticipantsProvider(group.id));
     final open = canAnswerNow(event, group, me, now);
     // Super admins answer for anyone too, on any team (§3).
     final isAdmin =
         (me?.isAdmin ?? false) ||
         (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
     final allowMaybe = group.settings.allowMaybe;
-    final everyone = eventParticipants(
-      roster,
-      players,
-      links: links,
-      rsvps: rsvps,
-    );
+    final everyone = eventParticipants(roster, players, isTeam: isTeam);
+    final activePlayers = everyone.main.length;
+    // Someone on a team with players and nobody to answer for: pointed to
+    // "Who are you here for?" (PLAYER-3), or told their claim waits.
+    final myUid = ref.watch(authUserProvider).value?.uid;
+    final linked = links.any((l) => l.uid.value == myUid);
+    final waiting =
+        isTeam &&
+        !isAdmin &&
+        me != null &&
+        !linked &&
+        mine.isEmpty &&
+        ((ref.watch(myPendingPlayersProvider(group.id)).value ??
+                    const <Player>[])
+                .any((p) => p.proposedBy == myUid) ||
+            (ref.watch(myGuardianRequestsProvider(group.id)).value ??
+                    const <GuardianRequest>[])
+                .any((r) => r.status == GuardianRequestStatus.pending));
+    final pointToWho =
+        isTeam &&
+        activePlayers > 0 &&
+        !isAdmin &&
+        me != null &&
+        !linked &&
+        mine.isEmpty &&
+        !event.isCanceled;
 
     // Admins set anyone's answer (SCHED-4).
     final canSet = isAdmin && event.takesRsvps && !group.isArchived;
@@ -729,8 +753,9 @@ class _RsvpSection extends ConsumerWidget {
         roster.where((m) => m.uid.value == uid).firstOrNull?.shortName ??
         l10n.formerMember;
 
-    // The count tiles (design §3.16): the main group's answers.
-    final counted = everyone.main.isNotEmpty ? everyone.main : everyone.staff;
+    // The count tiles (design §3.16): the players' answers on a team,
+    // everyone's in a group.
+    final counted = isTeam ? everyone.main : everyone.staff;
     final tally = <RsvpStatus?, int>{};
     for (final p in counted) {
       final s = answerOf(rsvps, p.id)?.status;
@@ -744,10 +769,43 @@ class _RsvpSection extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.only(top: 2, bottom: Space.xs),
           child: Text(
-            asking ? l10n.eventAreYouGoing : l10n.eventRsvpTitle,
+            asking ? rsvpHeading(l10n, mine) : l10n.eventRsvpTitle,
             style: theme.textTheme.headlineSmall,
           ),
         ),
+        // A team with no players takes no answers yet: admins are told how
+        // to start (PLAYER-6).
+        if (isTeam && activePlayers == 0 && isAdmin && !event.isCanceled)
+          padded(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: Space.sm,
+              children: [
+                Text(l10n.rsvpAddPlayersFirst, style: muted),
+                TextButton(
+                  onPressed: () =>
+                      context.push('/g/${group.id.value}/players/add'),
+                  child: Text(l10n.rsvpAddPlayersAction),
+                ),
+              ],
+            ),
+          )
+        else if (waiting)
+          padded(Text(l10n.claimWaiting, style: muted))
+        else if (pointToWho)
+          padded(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: Space.sm,
+              children: [
+                Text(l10n.rsvpPlayersOnly, style: muted),
+                TextButton(
+                  onPressed: () => context.push('/g/${group.id.value}/who'),
+                  child: Text(l10n.whoAreYouHereFor),
+                ),
+              ],
+            ),
+          ),
         if (event.isCanceled)
           padded(Text(l10n.eventRsvpClosed, style: muted))
         else if (event.rsvpDeadline != null)
@@ -818,28 +876,12 @@ class _RsvpSection extends ConsumerWidget {
         ],
         // The tiles say the counts; the groups below say who.
         _AttendeeGroups(
-          people: everyone.main,
+          people: counted,
           rsvps: rsvps,
           allowMaybe: allowMaybe,
           nameOf: nameOf,
           onTap: setFor,
         ),
-        // Everyone answering for themselves, apart from the players (Q14).
-        // A team without players lists them on their own.
-        if (everyone.staff.isNotEmpty) ...[
-          if (everyone.main.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: Space.lg),
-              child: Text(l10n.eventOthers, style: theme.textTheme.titleLarge),
-            ),
-          _AttendeeGroups(
-            people: everyone.staff,
-            rsvps: rsvps,
-            allowMaybe: allowMaybe,
-            nameOf: nameOf,
-            onTap: setFor,
-          ),
-        ],
       ],
     );
   }
@@ -1336,18 +1378,10 @@ Future<void> _setRsvpForSomeone(
   final players = group.hasPlayers
       ? ref.read(playersProvider(group.id)).value ?? const <Player>[]
       : const <Player>[];
-  // Admins set anyone's answer, members included (SCHED-4).
-  final everyone = (
-    main: [for (final p in players) playerParticipant(p)],
-    staff: [
-      for (final m in roster)
-        Participant(
-          type: ParticipantType.member,
-          id: m.uid.value,
-          name: m.displayName,
-        ),
-    ],
-  );
+  // Admins set a player's answer on a team, anyone's in a group (SCHED-4,
+  // PLAYER-6).
+  final isTeam = group.hasPlayers;
+  final everyone = eventParticipants(roster, players, isTeam: isTeam);
   final picked = await showAdaptiveSheet<Participant>(
     context,
     builder: (context) => ListView(
@@ -1355,7 +1389,7 @@ Future<void> _setRsvpForSomeone(
       children: [
         ListTile(
           title: Text(
-            l10n.eventSetRsvpFor,
+            isTeam ? l10n.eventRsvpForPlayer : l10n.eventSetRsvpFor,
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),

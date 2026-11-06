@@ -237,7 +237,7 @@ async function runningSeries(createdBy = 'alex'): Promise<{ seriesId: string; pa
 }
 
 describe('"This event" (SCHED-6)', () => {
-  it('changes only that event and records what it changed', async () => {
+  it("changes only that event and records what it changed, and a member's own old answer on a team doesn't count", async () => {
     const { seriesId, upcoming } = await runningSeries();
     const [target, other] = upcoming.slice(-2);
     await rsvp(target, 'pat', 'not_going');
@@ -247,12 +247,13 @@ describe('"This event" (SCHED-6)', () => {
     expect(changed?.title).toBe('Scrimmage');
     expect(changed?.seriesOverrides).toEqual(['startAt', 'title']);
     expect((await eventData(other))?.title).toBe('Practice');
-    // RSVPs follow the new time, and everyone but Not going hears it.
+    // RSVPs follow the new time. On a team only players have answers
+    // (PLAYER-6), so Pat's own old Not going doesn't stop Pat hearing.
     const answer = await db().collection(Collections.rsvps).doc(`${target}_pat`).get();
     expect(ms(answer.get('eventStartAt'))).toBe(ms(changed?.startAt));
     const changes = await sends('eventChanged');
     expect(changes).toHaveLength(1);
-    expect(await centerFor(changes[0])).toEqual(['lee', 'sam']);
+    expect(await centerFor(changes[0])).toEqual(['lee', 'pat', 'sam']);
     expect(await body(changes[0], 'sam')).toMatch(/^Scrimmage moved to \w{3}, \w{3} \d+ at 6:30 PM$/);
   });
 
@@ -577,7 +578,7 @@ describe('the events trigger (ARCH §6.4)', () => {
     expect(await eventCards()).toHaveLength(1);
   });
 
-  it('tells everyone but Not going about a move, and moves the RSVPs', async () => {
+  it("tells everyone about a move, a member's own old Not going on a team included, and moves the RSVPs", async () => {
     const data = oneOff(3 * DAY, { messageId: 'e1' });
     await writeEvent('e1', data);
     await rsvp('e1', 'pat', 'not_going');
@@ -586,8 +587,9 @@ describe('the events trigger (ARCH §6.4)', () => {
     await writeEvent('e1', { ...data, startAt: later, endAt: Timestamp.fromMillis(ms(later) + 3_600_000), updatedAt: Timestamp.now() });
     const changes = await sends('eventChanged');
     expect(changes).toHaveLength(1);
-    // The trigger doesn't know who edited, so Alex hears too.
-    expect(await centerFor(changes[0])).toEqual(['alex', 'lee', 'sam']);
+    // The trigger doesn't know who edited, so Alex hears too; Pat's own
+    // answer doesn't count on a team (PLAYER-6).
+    expect(await centerFor(changes[0])).toEqual(['alex', 'lee', 'pat', 'sam']);
     expect(await body(changes[0], 'sam')).toMatch(/^Practice moved to /);
     expect(ms((await db().collection(Collections.rsvps).doc('e1_sam').get()).get('eventStartAt'))).toBe(ms(later));
   });
@@ -713,14 +715,14 @@ describe('RSVP counts (SCHED-1, PLAYER-6)', () => {
 describe('reminders on the tick (SCHED-8)', () => {
   const runTick = () => tick.run({ scheduleTime: new Date().toISOString() } as Parameters<typeof tick.run>[0]);
 
-  it('reminds everyone but Not going, once, then moves on', async () => {
+  it("reminds everyone, a member's own old Not going on a team included, once, then moves on", async () => {
     const data = oneOff(30 * 60_000, { reminderOffsets: [60, 1440], nextReminderAt: Timestamp.fromMillis(Date.now() - 60_000) });
     await db().collection(Collections.events).doc('e1').set(data);
     await rsvp('e1', 'pat', 'not_going');
     await runTick();
     const [key] = await sends('eventReminder');
     expect(key).toBe(`e1_r60_${Math.floor(ms(data.startAt) / 1000)}`);
-    expect(await centerFor(key)).toEqual(['alex', 'lee', 'sam']);
+    expect(await centerFor(key)).toEqual(['alex', 'lee', 'pat', 'sam']);
     expect(await body(key, 'sam')).toMatch(/^Reminder: Practice (today|tomorrow) at .+ · Riverside Park$/);
     expect((await eventData('e1'))?.nextReminderAt).toBeNull();
     await runTick();
@@ -768,14 +770,39 @@ describe('reminders on the tick (SCHED-8)', () => {
     await rsvp('e1', 'lee', 'not_going');
     await runTick();
     const [key] = await sends('eventReminder');
-    // Pat's own "member" answer doesn't matter: Pat answers on the player's row.
-    expect(await centerFor(key)).toEqual(['alex', 'pat', 'sam']);
+    // Members' own answers don't count on a team (PLAYER-6): neither Pat's,
+    // who answers on the player's row, nor Lee's.
+    expect(await centerFor(key)).toEqual(['alex', 'lee', 'pat', 'sam']);
     expect(await body(key, 'pat')).toMatch(/^Reminder: Practice /);
     await db().collection(Collections.events).doc('e2').set({ ...data, reminderOffsets: [60] });
     await rsvp('e2', 'pat-p', 'not_going', 'player');
     await runTick();
     const e2 = (await sends('eventReminder')).find((k) => k.startsWith('e2_'))!;
     expect(await centerFor(e2)).toEqual(['alex', 'lee', 'sam']);
+  });
+
+  it('in a group, goes by each member\'s own answer: Not going isn\'t reminded or told of a move (TEAM-14)', async () => {
+    await db().collection(Collections.groups).doc(G).update({ kind: 'group' });
+    const data = oneOff(30 * 60_000, { reminderOffsets: [60], nextReminderAt: Timestamp.fromMillis(Date.now() - 1000) });
+    await db().collection(Collections.events).doc('e1').set(data);
+    await rsvp('e1', 'pat', 'not_going');
+    await runTick();
+    const [key] = await sends('eventReminder');
+    expect(await centerFor(key)).toEqual(['alex', 'lee', 'sam']);
+    const later = Timestamp.fromMillis(ms(data.startAt) + 1_800_000);
+    await writeEvent('e1', { ...data, startAt: later, endAt: Timestamp.fromMillis(ms(later) + 3_600_000), updatedAt: Timestamp.now() });
+    const [change] = await sends('eventChanged');
+    expect(await centerFor(change)).toEqual(['alex', 'lee', 'sam']);
+  });
+
+  it("on a team, still reminds a coach whose own old answer is Not going (PLAYER-6)", async () => {
+    await db().collection(Collections.groupMembers).doc(`${G}_lee`).update({ coach: true });
+    const data = oneOff(30 * 60_000, { reminderOffsets: [60], nextReminderAt: Timestamp.fromMillis(Date.now() - 1000) });
+    await db().collection(Collections.events).doc('e1').set(data);
+    await rsvp('e1', 'lee', 'not_going');
+    await runTick();
+    const [key] = await sends('eventReminder');
+    expect(await centerFor(key)).toContain('lee');
   });
 });
 
@@ -795,7 +822,7 @@ describe('a reminder posted by hand (SCHED-8)', () => {
   const repost = (uid: string, eventId: string, token: object = {}) =>
     repostEvent.run(call(uid, { eventId }, token) as unknown as Parameters<typeof repostEvent.run>[0]);
 
-  it('posts the event again as a reminder card, and reminds everyone but Not going', async () => {
+  it("posts the event again as a reminder card, and reminds everyone, a member's own old Not going on a team included", async () => {
     await writeEvent('e1', oneOff(3 * DAY));
     await rsvp('e1', 'pat', 'not_going');
     const { messageId } = await repost('alex', 'e1');
@@ -803,9 +830,10 @@ describe('a reminder posted by hand (SCHED-8)', () => {
     const card = (await db().collection(Collections.messages).doc(messageId).get()).data();
     expect(card).toMatchObject({ type: 'event', eventId: 'e1', seriesId: null, reminder: true, authorId: 'alex', authorName: 'Alex' });
     expect(await eventCards()).toHaveLength(2);
-    // The one who posted it isn't reminded, nor Pat, who isn't going.
+    // The one who posted it isn't reminded; Pat's own answer doesn't count
+    // on a team (PLAYER-6).
     const key = `e1_repost_${messageId}`;
-    expect(await centerFor(key)).toEqual(['lee', 'sam']);
+    expect(await centerFor(key)).toEqual(['lee', 'pat', 'sam']);
     expect(await body(key, 'sam')).toMatch(/^Reminder: Practice on \w{3}, \w{3} \d+ at .+ · Riverside Park$/);
   });
 

@@ -482,7 +482,7 @@ void main() {
       expect(members.calls, ['update sam admin']);
     });
 
-    testWidgets('Event: Set RSVP for someone; Team settings: owner actions', (
+    testWidgets('Event: RSVP for a player; Team settings: owner actions', (
       tester,
     ) async {
       final start = now.add(const Duration(days: 1));
@@ -508,7 +508,8 @@ void main() {
       );
       await tester.tap(find.byTooltip('More actions'));
       await tester.pumpAndSettle();
-      expect(find.text('Set RSVP for someone'), findsOneWidget);
+      // On a team, for a player (PLAYER-6).
+      expect(find.text('RSVP for a player'), findsOneWidget);
       await tester.tapAt(Offset.zero);
       await tester.pumpAndSettle();
 

@@ -49,6 +49,7 @@ Also new:
 • Search in the chat: find any message by its words and jump to it
 • Start a new season from a team, bringing along the players, parents, coaches, documents, and plays you pick
 • Groups beside teams, for anything that isn't a team
+• On a team, RSVPs are for players: parents answer for their kids, and adult players answer for themselves
 • Your own time zone in Profile, which stays put when you travel; time zones by name, like Central Time (Chicago)
 • A faster chat that loads less and works better with screen readers
 • A security update for the app's connection to its servers
@@ -77,7 +78,7 @@ SCHEDULE AND RSVPS
 • Games, practices, and events with opponents, places, and reminders
 • Going, Maybe, or Not going in one tap, for yourself or for each of your players, right from the schedule
 • Assignments like snacks, drinks, and scorekeeper that families volunteer for
-• Coaches see how many players are coming, with coaches and others counted apart
+• Coaches see how many players are coming
 • Coaches can email everyone who hasn't answered, and they can answer right from the email
 • A private calendar link keeps your calendar app in sync
 

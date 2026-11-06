@@ -12,6 +12,7 @@ import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
@@ -98,7 +99,7 @@ List<Event> get sceneEvents => [
     type: EventType.game,
     counts: const RsvpCounts(going: 2, maybe: 1, notGoing: 1),
   ),
-  sceneEvent('e2', day: 15, counts: const RsvpCounts(going: 9, maybe: 2)),
+  sceneEvent('e2', day: 15, counts: const RsvpCounts(going: 3, maybe: 1)),
   sceneEvent(
     'e3',
     day: 15,
@@ -110,12 +111,54 @@ List<Event> get sceneEvents => [
   sceneEvent('e4', day: 18, title: 'Parents meeting', type: EventType.meeting),
 ];
 
-Rsvp _rsvp(String uid, String name, RsvpStatus status, {String note = ''}) =>
+/// The team's players (made up), each with one of the members as their
+/// guardian; the coach answers for Noah.
+List<Player> get scenePlayers => const [
+  Player(
+    id: PlayerId('noah'),
+    groupId: _team,
+    displayName: 'Noah Lee',
+    jerseyNumber: '4',
+  ),
+  Player(
+    id: PlayerId('mia'),
+    groupId: _team,
+    displayName: 'Mia Kim',
+    jerseyNumber: '7',
+  ),
+  Player(
+    id: PlayerId('leo'),
+    groupId: _team,
+    displayName: 'Leo Rivera',
+    jerseyNumber: '9',
+  ),
+  Player(
+    id: PlayerId('ava'),
+    groupId: _team,
+    displayName: 'Ava Park',
+    jerseyNumber: '12',
+  ),
+];
+
+List<GuardianLink> get sceneLinks => const [
+  GuardianLink(
+    playerId: PlayerId('noah'),
+    groupId: _team,
+    uid: UserId('coach'),
+  ),
+  GuardianLink(playerId: PlayerId('mia'), groupId: _team, uid: UserId('alex')),
+  GuardianLink(playerId: PlayerId('leo'), groupId: _team, uid: UserId('sam')),
+  GuardianLink(playerId: PlayerId('ava'), groupId: _team, uid: UserId('jo')),
+];
+
+/// A player's answer on the game: on a team, only players have answers
+/// (PLAYER-6).
+Rsvp _rsvp(String id, String name, RsvpStatus status, {String note = ''}) =>
     Rsvp(
       eventId: const EventId('e1'),
       groupId: _team,
-      participantType: ParticipantType.member,
-      participantId: uid,
+      participantType: ParticipantType.player,
+      participantId: id,
       participantName: name,
       status: status,
       note: note,
@@ -298,10 +341,10 @@ Future<void> pumpTeam(
   final events = FakeEventRepository(sceneEvents);
   final rsvps = FakeRsvpRepository(events)
     ..rsvps.addAll([
-      _rsvp('coach', 'Coach Lee', RsvpStatus.going),
-      _rsvp('alex', 'Alex Kim', RsvpStatus.going, note: 'Bringing snacks'),
-      _rsvp('sam', 'Sam Rivera', RsvpStatus.maybe),
-      _rsvp('jo', 'Jo Park', RsvpStatus.notGoing),
+      _rsvp('noah', 'Noah Lee', RsvpStatus.going),
+      _rsvp('mia', 'Mia Kim', RsvpStatus.going, note: 'Bringing snacks'),
+      _rsvp('leo', 'Leo Rivera', RsvpStatus.maybe),
+      _rsvp('ava', 'Ava Park', RsvpStatus.notGoing),
     ]);
   final polls = FakePollRepository()
     ..put(scenePoll)
@@ -325,6 +368,7 @@ Future<void> pumpTeam(
     pollRepo: polls,
     eventRepo: events,
     rsvpRepo: rsvps,
+    playerRepo: FakePlayerRepository(scenePlayers)..links.addAll(sceneLinks),
     assignmentRepo: assignments,
     documentRepo: FakeDocumentRepository(sceneDocuments),
     admin: FakeAdminRepository(

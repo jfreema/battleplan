@@ -432,16 +432,32 @@ export interface AudienceInput {
 }
 
 /**
- * Who hears about an event, each with the players to name (PLAYER-7), the
- * same on every team. A member linked to players hears for the ones who
- * didn't say Not going: a guardian named per player, the player themselves
- * plainly ("You" when they're also a guardian there). Coaches and members
- * not linked to any player go by their own answer (no answer counts), as
- * they're the ones with an answer of their own (the app's hasMeRow).
- * Linked members all of whose players said Not going hear nothing, unless
- * they're coaches who didn't say Not going themselves. [mode] is kept for
- * callers; both modes pick the same people now that everyone has an
- * answer of their own or their players'.
+ * The answers that decide who hears about an event (PLAYER-7), by
+ * participant ID. On a team (any kind but 'group'; a missing kind is a
+ * team) only players have answers, so members' own answers, as from
+ * before RSVPs were players only, are left out (PLAYER-6). In a group,
+ * everyone answers for themselves.
+ */
+export function statusesOf(
+  rsvps: { participantId: string; participantType: string; status: string }[],
+  kind: string | undefined,
+): Map<string, string> {
+  const team = kind !== 'group';
+  return new Map(
+    rsvps.filter((r) => !team || r.participantType === 'player').map((r) => [r.participantId, r.status]),
+  );
+}
+
+/**
+ * Who hears about an event, each with the players to name (PLAYER-7). A
+ * member linked to players hears for the ones who didn't say Not going: a
+ * guardian named per player, the player themselves plainly ("You" when
+ * they're also a guardian there). Coaches and members not linked to any
+ * player go by their own answer, and no answer counts: on a team they
+ * have none ([statusesOf]), so they always hear; in a group, a member who
+ * said Not going doesn't. Linked members all of whose players said Not
+ * going hear nothing, unless they're coaches. [mode] is kept for callers;
+ * both modes pick the same people.
  */
 export function audienceOf(a: AudienceInput): Map<string, string[]> {
   const out = new Map<string, string[]>();
@@ -477,9 +493,14 @@ export async function eventAudience(
   eventId: string,
   mode: AudienceInput['mode'],
 ): Promise<Map<string, string[]>> {
-  const [members, rsvps, links, players] = await Promise.all([
+  const [group, members, rsvps, links, players] = await Promise.all([
+    db().collection(Collections.groups).doc(groupId).get(),
     db().collection(Collections.groupMembers).where('groupId', '==', groupId).select('uid', 'role', 'coach').get(),
-    db().collection(Collections.rsvps).where('eventId', '==', eventId).select('participantId', 'status').get(),
+    db()
+      .collection(Collections.rsvps)
+      .where('eventId', '==', eventId)
+      .select('participantId', 'participantType', 'status')
+      .get(),
     db().collection(Collections.playerGuardians).where('groupId', '==', groupId).select('uid', 'playerId', 'relation').get(),
     db().collection(Collections.players).where('groupId', '==', groupId).select('displayName', 'status').get(),
   ]);
@@ -490,7 +511,14 @@ export async function eventAudience(
       // Set by the team's admins; unset, the owner coaches (TEAM-3).
       coach: typeof d.get('coach') === 'boolean' ? d.get('coach') === true : d.get('role') === 'owner',
     })),
-    statuses: new Map(rsvps.docs.map((d) => [String(d.get('participantId')), String(d.get('status'))])),
+    statuses: statusesOf(
+      rsvps.docs.map((d) => ({
+        participantId: String(d.get('participantId')),
+        participantType: String(d.get('participantType')),
+        status: String(d.get('status')),
+      })),
+      group.get('kind') as string | undefined,
+    ),
     links: links.docs.map((d) => ({
       uid: String(d.get('uid')),
       playerId: String(d.get('playerId')),

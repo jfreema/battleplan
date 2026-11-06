@@ -431,7 +431,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
 - **TEAM-3 · MVP · Roster screen.**
   - A **Players** section on every team (jersey number, name, and who's linked: "Player" or "Guardian"), then sections for **Coaches**, Admins, and Members. Each member shows their players: a guardian shows "Emma #7", and a member who is a player shows their number (PLAYER-8).
   - **Who sees the people:** with the team setting "Everyone can see who's on the team" off (TEAM-5), members see the players, the coaches, and their own card (which has Leave team), and a line saying the admins keep the rest private; admins see everyone. Names still show where people act, as authors in chat and on RSVPs.
-  - **Coaches:** team admins turn on **Coach** on a person's card, for a parent who coaches too, for example. Coaches are listed together, their Owner or Admin badge kept, and answer for themselves on events (PLAYER-6). Until someone sets it, the owner counts as a coach.
+  - **Coaches:** team admins turn on **Coach** on a person's card, for a parent who coaches too, for example. Coaches are listed together, their Owner or Admin badge kept. Until someone sets it, the owner counts as a coach.
   - Admins see pending players and claims at the top, with Approve and Decline (PLAYER-4).
   - Each person row shows a photo or initials, name, title, role badge (Owner/Admin), and "Not joined yet" for added accounts.
   - Search by name.
@@ -539,14 +539,14 @@ Players that others answer for never get accounts, and every account belongs to 
   - Approving checks the PLAYER-3 limits again when the link is made. If they no longer allow it (say the member became a player meanwhile, or someone else is already this player), a claim isn't approved and the app says why, so the admin can decline it. A pending player is still added, without the link, and the app says so.
 - **PLAYER-5 · MVP · Add another guardian.** From the player card, a linked member (the player themselves or a guardian) or an admin can add a guardian: someone already on the team, picked from a list, or anyone by email. An existing link is vouching for them, so no admin approval is needed. Someone picked from the team gets no email, only a notification that they're now the player's guardian. The list leaves out the people already linked to the player, and members of a team that keeps its people to its admins (TEAM-3) get only the email. New emails get an added account and a setup email. A player has up to 4 guardians, and the player can't also be their own guardian.
 - **PLAYER-6 · MVP · RSVPs per player, on every event.**
-  - **Exactly one RSVP per event and participant.** A participant is an active player or a member answering for themselves.
+  - **On a team, only players have RSVPs** (owner's request 2026-11-06: "Let's not even track status of parents or coaches for now. Let's focus on players."). **Exactly one RSVP per event and player.** In a group, which has no players, everyone answers for themselves (TEAM-14).
   - A player's RSVP can be answered by the member who is that player, by its guardians, or by admins. When two people answer, they update the same record instead of creating two. The latest answer counts and shows who gave it ("Answered by Maria"), so attendance never conflicts or double-counts.
-  - Linked members see one RSVP row per player, first: "Emma: Going · Liam: Not going". A member who is a player answers on their player's row.
-  - A **Me** row, below the players, is offered to coaches (TEAM-3) and to members who aren't linked to any player, such as other adults. A parent who isn't a coach answers only for their players, admin or not. A member who is a player, coaches included, has no Me row: they answer only on their player's row, so they never have two answers of their own.
+  - Guardians see one RSVP row per player, named by first name ("Luke"); an adult player answers on their own player's row, through their self link, named "You". There's no Me row: coaches and other adults have no answer of their own. Team admins and super admins can still answer for a player ("RSVP for a player").
+  - Someone on a team with players who has nobody to answer for (a coach, a parent not linked yet, an adult player who hasn't claimed themselves) is told "On a team, only players have RSVPs." and pointed to **Who are you here for?** (PLAYER-3), or told their claim is waiting. A team with no players shows its admins "Add players to take RSVPs" and nobody any buttons or counts.
   - When a member becomes linked as the player, their own answers to upcoming events move to the player's row. Where the player already has an answer, the player's answer stays and theirs is dropped.
-  - Counts show players going, with everyone else counted apart: "12 of 15 players going · 2 others" (Q14). A team with no players counts everyone together: "12 going · 3 maybe · 2 no".
-  - Events made before the one-type change count as per-player too. Members' own answers on them stay valid and count as others.
-- **PLAYER-7 · MVP · Reminders and changes.** Event reminders and event changes go to the member who is the player and to the guardians of the affected players, as one notification per person naming their players: "Emma, Liam: Practice today at 6:00 PM". For a member's own player, there's no name prefix. Coaches and members not linked to any player go by their own answer.
+  - Counts are players only: "12 of 15 players going". A team with no players shows none. A group counts everyone: "12 going · 3 maybe · 2 no".
+  - Members' own answers from before (2026-11-06) are hidden on teams, not deleted, and don't count or decide who hears (PLAYER-7). Old builds may still write them until task 349.
+- **PLAYER-7 · MVP · Reminders and changes.** Event reminders and event changes go to the member who is the player and to the guardians of the affected players, as one notification per person naming their players: "Emma, Liam: Practice today at 6:00 PM". For a member's own player, there's no name prefix. On a team, coaches and members not linked to any player have no answer, so they hear every change and reminder; in a group, members go by their own answer.
 - **PLAYER-8 · MVP · Who's who.** In chat and on the roster, each member's name shows their players. A guardian shows "Maria R. · Emma #7". A member who is a player shows their number when it's set: "Jared F. #12".
 - **PLAYER-9 · MVP · Players on several teams.** A person on two teams is a separate player on each team. In "All my teams" (SCHED-2), each event shows which of a member's players it's for.
 - **PLAYER-10 · MVP · Players' privacy.** This applies to every player record.
@@ -573,7 +573,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - An adult player who joins by link picks "I'm a player", claims themselves on the roster, and answers RSVPs for themselves once an admin approves.
 - A parent who scans the team's QR code at practice can claim their player, and is linked once an admin approves.
 - A member who adds a missing player sees it as pending; it shows on the roster for everyone only after an admin approves, and a decline removes it.
-- A parent with two players on the team answers for each one separately, and the coach sees accurate player counts with coaches counted apart.
+- A parent with two players on the team answers for each one separately, and the coach sees accurate player counts.
 
 ### 6.4 Invites and joining (INV)
 
@@ -751,7 +751,7 @@ Players that others answer for never get accounts, and every account belongs to 
 ### 6.7 Schedule and RSVPs (SCHED)
 
 - **SCHED-1 · MVP · Schedule tab.** Three views:
-  - **Upcoming** (default): a list grouped by day. Each row has a date block, an event-type color and icon, the title ("vs. Eagles"), time, location, your RSVP (one per linked player, plus a Me row for admins and members not linked to a player, but never for a member who is a player), and the counts: players going, with others counted apart ("12 of 15 players going · 2 others"), or everyone together on a team with no players ("12 going · 3 maybe · 2 no", PLAYER-6).
+  - **Upcoming** (default): a list grouped by day. Each row has a date block, an event-type color and icon, the title ("vs. Eagles"), time, location, your RSVP (on a team, one per player you answer for; in a group, your own), and the counts: players going on a team ("12 of 15 players going", none on a team with no players), everyone in a group ("12 going · 3 maybe · 2 no", PLAYER-6).
   - **Past**: the same list, newest first.
   - **Calendar**: a month grid with a dot for each event; tap a day to see its events.
 - **SCHED-2 · MVP · All my teams.**
@@ -783,11 +783,11 @@ Players that others answer for never get accounts, and every account belongs to 
     - Works on past and canceled events too, which covers "same game as last season".
 - **SCHED-4 · MVP · Event details.**
   - Every field from creation.
-  - Large **Going / Maybe / Not going** buttons, with an optional note ("Leaving at halftime"). Members linked to players get one set per player, and admins and members not linked to a player get a Me set, unless they're a player themselves (PLAYER-6).
+  - Large **Going / Maybe / Not going** buttons, with an optional note ("Leaving at halftime"). On a team, one set per player you answer for, under "Is Luke going?", "Are you going?" for your own player, or "Are your players going?"; in a group, your own (PLAYER-6). Someone with nobody to answer for gets the PLAYER-6 empty states instead.
   - The same buttons without opening the event (the owner's request, 2026-10-26; on the card since 2026-10-28): on the schedule list, an upcoming event I can still answer has **Going**, **Maybe** (where the team allows it), and **Not going** across the bottom of its card, under the counts, a set per person I answer for, named when there's more than one ("Emma", "You"). The chosen answer is filled in its color; tapping it again clears it, back to No response. Notes and All my players are on the event's page. The rest of the card opens the event.
-  - Attendee lists grouped by Going, Maybe, Not going, and No response, with notes. The lists show players and who answered for them, with coaches and others listed apart. The count tiles above say how many; each group is one card with a row per person (2026-11-01), and the tiles are the only counts on the page.
+  - Attendee lists grouped by Going, Maybe, Not going, and No response, with notes. On a team, the lists show players and who answered for them; in a group, everyone. The count tiles above say how many; each group is one card with a row per person (2026-11-01), and the tiles are the only counts on the page.
   - Actions for everyone: Add to calendar, Share, Directions.
-  - Admin actions: Edit, Cancel event, Delete, Set RSVP for a member or player.
+  - Admin actions: Edit, Cancel event, Delete, **RSVP for a player** (on a team) or **Set RSVP for someone** (in a group).
   - **Duplicate**, for anyone who can create events (SCHED-3).
   - Events in a series show "Repeats weekly on Tue and Thu until Dec 17".
 - **SCHED-5 · MVP · RSVPs.**
@@ -795,7 +795,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Change your answer any time before the deadline; after it, only admins can change answers.
   - The requirement was Going / Not going. **Maybe** is a recommended addition: on by default, and each team can turn it off (TEAM-5).
   - Not answering shows as "No response". **Clear**, beside the note, takes an answer back to No response; whoever may give the answer may clear it, under the same deadline.
-  - On every team, there's one RSVP per event and participant: each active player, answered by the member who is the player, its guardians, or admins, and members answering for themselves (PLAYER-6).
+  - On a team, there's one RSVP per event and player, answered by the member who is the player, its guardians, or admins; in a group, one per member, their own (PLAYER-6).
 - **SCHED-6 · MVP · Editing.**
   - Changing the date, time, or location notifies everyone except people who said Not going ("Practice moved to 6:30 PM").
   - For repeating events, admins choose "This event" or "This and following events".
@@ -808,7 +808,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - **Cancel** keeps the event on the schedule, struck through with a "Canceled" badge, closes RSVPs, and notifies the team.
   - **Delete** removes the event without notifying anyone. Its confirmation suggests canceling instead if the event is within 7 days.
   - For repeating events, both ask "This event" or "This and following events". Canceling or deleting the rest of a series notifies the team once.
-- **SCHED-8 · MVP · Reminders.** A push at each reminder time to people who said Going or Maybe or haven't answered, but not Not going: "Reminder: Practice today at 6:00 PM · Riverside Park". For players, reminders go to the member who is the player and to the player's guardians (PLAYER-7).
+- **SCHED-8 · MVP · Reminders.** A push at each reminder time to people who said Going or Maybe or haven't answered, but not Not going: "Reminder: Practice today at 6:00 PM · Riverside Park". On a team, reminders go to each player's member and guardians, and always to coaches and members not linked to a player; in a group, to members by their own answer (PLAYER-7).
   - **All-day events** start at midnight, so their reminders go out at **6 PM** in the event's time zone instead: 1 day before is 6 PM the evening before, and 2 days or a week before, 6 PM that day. The form offers them only 1 day, 2 days, and 1 week. A minute or hour reminder an all-day event carries anyway (from the 1.0 app, an import, or an older event) goes out at 6 PM the evening before too, once, and its page says "Reminders 1 day before, at 6 PM" (owner's request 2026-11-01).
   - **A reminder by hand:** the event's menu has **Post a reminder in chat** for team admins and the event's creator, after asking. It posts the event in the chat again, marked Reminder, with its live RSVPs, the answer buttons, and how many players haven't answered, and the same people get the reminder push. Not on a canceled or finished event; once an hour per event.
 - **SCHED-9 · MVP · Time zones.**
@@ -908,7 +908,7 @@ Players that others answer for never get accounts, and every account belongs to 
   | Direct message (CHAT-19) | The other person in the conversation | **Yes** | — | MVP |
   | RSVP nudge | People who haven't answered\* | **Yes** | ✓ | v1.1 |
 
-  \* For players, these go to the member who is the player and to the guardians of the matching players, plus members who answered for themselves (PLAYER-7).
+  \* For players, these go to the member who is the player and to the guardians of the matching players, and to coaches and unlinked members; in a group, to members who answered for themselves (PLAYER-7).
 
   Plain chat messages and direct messages don't appear in the notification center; unread counts and Messages cover them (CHAT-9, CHAT-19).
 
@@ -1443,7 +1443,7 @@ From here on, each feature ships with its own notifications.
 ### M6 · Schedule
 
 - [ ] Events with types and game fields.
-- [ ] RSVPs, including Maybe and admins answering for members; per-player RSVPs with others counted apart, and notifications to players and guardians (PLAYER-6, PLAYER-7, PLAYER-9).
+- [ ] RSVPs, including Maybe and admins answering for members; per-player RSVPs, and notifications to players and guardians (PLAYER-6, PLAYER-7, PLAYER-9).
 - [ ] Upcoming, Past, and Calendar views; All my teams.
 - [ ] Repeating events (daily and weekly, skip dates, this-and-following edits, cancel, and delete) and Duplicate.
 - [ ] Reminders; event cards in chat.
@@ -1625,7 +1625,7 @@ Each question has a default. The build follows the default until someone decides
 | Q11 | ~~Where are most teams located?~~ **Decided 2026-10-12:** the US, so prod's database is in `us-central1` (permanent). | — |
 | Q12 | ~~Can members create events by default?~~ **Decided 2026-10-12:** only admins create events by default; each team can let members create them in Team settings (TEAM-5). | — |
 | Q13 | ~~Apple developer account as an individual or an organization?~~ **Decided:** individual, for now. The LLC is no longer registered, so the apps are published under your own name in both stores. Both stores can upgrade the account to an organization in place later (it needs the LLC's D-U-N-S number) and keep the apps. | — |
-| Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). **2026-10-12:** on every team, admins and members not linked to a player answer for themselves, counted apart as "others". A member who is a player answers on their player's row instead, admins included. | — |
+| Q14 | ~~On youth teams, should coaches and staff also RSVP for themselves?~~ **Decided 2026-10-11:** yes. Team admins RSVP for themselves and are counted apart from players (PLAYER-6). **2026-10-12:** on every team, admins and members not linked to a player answer for themselves, counted apart as "others". A member who is a player answers on their player's row instead, admins included. **2026-11-06:** on a team, only players have RSVPs (PLAYER-6, task 347). | — |
 | Q15 | ~~When a parent picks an existing player, must an admin approve the link?~~ **Decided 2026-10-11:** yes (PLAYER-3). **2026-10-12:** this covers every claim, as the player or a guardian; an admin's own claim is approved at once. | — |
 | Q16 | ~~Is Facebook sign-in needed at launch?~~ **Decided 2026-10-11:** not for now. Launch with Google, Apple, and email. **2026-10-12:** Facebook sign-in was removed from the plan. **Later on 2026-10-12:** it returns as go-live Phase 6, with single sign-on (§9, ARCH D60). | — |
 | Q17 | ~~Should there be separate adult and youth team types?~~ **Decided 2026-10-12 (the owner's request):** no. There's one team type. Every team has players; any member can claim a player as "I am this player" or as a parent or guardian, and any member can add a player. Team admins approve or decline claims and members' new players (§6.3). | — |

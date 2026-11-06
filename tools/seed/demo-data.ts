@@ -261,13 +261,11 @@ export function demoDocs(demo: { uid: string; email: string }, now: Date): DemoD
       { id: `demo-lightning-practice-${week}`, groupId: DEMO_YOUTH_TEAM, type: 'practice', title: 'Practice', day: 1 + 7 * week, hour: 17 },
     );
   }
-  // [event, type, participant, status, respondedBy]. Players count in
-  // rsvpCounts, members answering for themselves in staffCounts (SCHED-5).
+  // [event, type, participant, status, respondedBy]. On a team only
+  // players have answers (PLAYER-6); they count in rsvpCounts.
   const rsvps: [string, string, string, string, string][] = [
-    ['demo-thunder-practice', 'member', 'demo-jordan', 'going', 'demo-jordan'],
     ['demo-thunder-practice', 'player', 'demo-sam-rivera', 'maybe', 'demo-sam'],
     ['demo-lightning-practice', 'player', 'demo-emma', 'going', 'demo-maria'],
-    ['demo-lightning-practice', 'member', 'demo-priya', 'going', 'demo-priya'],
   ];
   const countsOf = (answers: typeof rsvps) => ({
     going: answers.filter((r) => r[3] === 'going').length,

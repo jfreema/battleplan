@@ -184,8 +184,8 @@ async function main() {
     });
   }
 
-  // Answers: players for themselves; the coach answers as a member. The
-  // events trigger counts them.
+  // Answers: on a team only players have them (PLAYER-6). The events
+  // trigger counts them.
   const thunder: Record<string, [string, string][]> = {
     'thunder-practice': [['maria', 'going'], ['tasha', 'going'], ['chris', 'going'], ['sarah', 'maybe'], ['dan', 'going'], ['mike', 'not_going'], ['luis', 'going'], ['jess', 'going']],
     'thunder-cages': [['jim', 'going'], ['andy', 'going'], ['chris', 'going'], ['dan', 'going'], ['kevin', 'maybe']],
@@ -194,12 +194,10 @@ async function main() {
     'thunder-practice-2': [['jim', 'going'], ['maria', 'going'], ['chris', 'going'], ['tasha', 'maybe']],
     'thunder-bbq': [['jim', 'going'], ['andy', 'going'], ['maria', 'going'], ['tasha', 'going'], ['chris', 'going'], ['sarah', 'going'], ['dan', 'going'], ['jess', 'going'], ['luis', 'maybe']],
   };
-  const coachAnswers = ['thunder-cages', 'thunder-hawks', 'thunder-practice-2', 'thunder-bbq'];
   for (const [eventId, list] of Object.entries(thunder)) {
     await answer(
       eventId, 'thunder',
       list.map(([uid, status]) => [playerOf[uid].id, playerOf[uid].name, uid, status]),
-      coachAnswers.includes(eventId) ? [['coach', 'going']] : [],
     );
   }
   await db.doc('rsvps/thunder-game_jim-halpert').update({ note: 'Bringing the extra bats' });
@@ -357,7 +355,7 @@ async function main() {
     ['ava-martinez', 'Ava Martinez', 'elena', 'going'], ['lily-chen', 'Lily Chen', 'david', 'going'],
     ['marcus-hill', 'Marcus Hill', 'denise', 'going'], ['sophie-grant', 'Sophie Grant', 'laura', 'going'],
     ['ethan-nguyen', 'Ethan Nguyen', 'linh', 'maybe'], ['zoe-patel', 'Zoe Patel', 'raj', 'going'],
-  ], [['coach', 'going']]);
+  ]);
 
   // Let the message triggers finish, then set each team's last message and
   // the coach's read marks: Thunder all read, Cyclone's last line not.

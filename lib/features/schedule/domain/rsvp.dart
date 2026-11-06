@@ -54,6 +54,13 @@ abstract class Participant with _$Participant {
   bool get isPlayer => type == ParticipantType.player;
 
   String get shownName => label ?? name;
+
+  /// The first word of [name], for an RSVP row ("Luke"), as a player's
+  /// label takes it.
+  String get firstName {
+    final words = name.trim().split(RegExp(r'\s+'));
+    return words.first.isEmpty ? name : words.first;
+  }
 }
 
 /// An answer about to be written (SCHED-4, SCHED-5).

@@ -37,6 +37,7 @@ import {
   seriesChangedBody,
   seriesCreatedBody,
   seriesSummary,
+  statusesOf,
   type EventView,
 } from '../../src/schedule/service.js';
 
@@ -436,6 +437,37 @@ describe('who hears about an event (SCHED-6, SCHED-8, PLAYER-7, Q14)', () => {
   ];
   const playerNames = new Map([['emma', 'Emma'], ['liam', 'Liam'], ['ava', 'Ava']]);
   const sorted = (m: Map<string, string[]>) => Object.fromEntries([...m.entries()].sort());
+
+  it('on a team, only players\' answers decide (PLAYER-6); in a group, everyone\'s', () => {
+    const rsvps = [
+      { participantId: 'coach', participantType: 'member', status: 'not_going' },
+      { participantId: 'aunt', participantType: 'member', status: 'not_going' },
+      { participantId: 'ava', participantType: 'player', status: 'not_going' },
+    ];
+    expect([...statusesOf(rsvps, 'team')]).toEqual([['ava', 'not_going']]);
+    // A missing kind is a team.
+    expect([...statusesOf(rsvps, undefined)]).toEqual([['ava', 'not_going']]);
+    expect(statusesOf(rsvps, 'group').size).toBe(3);
+    // A coach and an unlinked member whose old member answer is Not going
+    // still hear on a team; Dan, whose player said Not going, doesn't.
+    for (const mode of ['change', 'reminder'] as const) {
+      expect(sorted(audienceOf({ members, links, playerNames, statuses: statusesOf(rsvps, 'team'), mode }))).toEqual({
+        aunt: [],
+        coach: [],
+        maria: ['Emma', 'Liam'],
+      });
+    }
+    // In a group, a member who said Not going doesn't.
+    const inGroup = audienceOf({
+      members,
+      links: [],
+      playerNames: new Map(),
+      statuses: statusesOf(rsvps, 'group'),
+      mode: 'reminder',
+    });
+    expect(inGroup.has('aunt')).toBe(false);
+    expect(inGroup.has('maria')).toBe(true);
+  });
 
   it('with no player links: everyone but Not going, no answer counting', () => {
     const statuses = new Map([['maria', 'not_going'], ['dan', 'maybe']]);

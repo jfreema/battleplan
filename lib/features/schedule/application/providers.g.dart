@@ -756,18 +756,16 @@ final class EventRsvpsFamily extends $Family
   String toString() => r'eventRsvpsProvider';
 }
 
-/// The people the signed-in person answers for on a team (PLAYER-6): the
-/// players they're linked to, and themselves when they're an admin or
-/// aren't linked to any player ([participantsFor]). In a basic group
-/// (TEAM-14) it's only themselves.
+/// The people the signed-in person answers for (PLAYER-6): on a team, the
+/// players they're linked to, as the player or a guardian; in a basic
+/// group (TEAM-14), only themselves ([participantsFor]).
 
 @ProviderFor(myParticipants)
 final myParticipantsProvider = MyParticipantsFamily._();
 
-/// The people the signed-in person answers for on a team (PLAYER-6): the
-/// players they're linked to, and themselves when they're an admin or
-/// aren't linked to any player ([participantsFor]). In a basic group
-/// (TEAM-14) it's only themselves.
+/// The people the signed-in person answers for (PLAYER-6): on a team, the
+/// players they're linked to, as the player or a guardian; in a basic
+/// group (TEAM-14), only themselves ([participantsFor]).
 
 final class MyParticipantsProvider
     extends
@@ -777,10 +775,9 @@ final class MyParticipantsProvider
           List<Participant>
         >
     with $Provider<List<Participant>> {
-  /// The people the signed-in person answers for on a team (PLAYER-6): the
-  /// players they're linked to, and themselves when they're an admin or
-  /// aren't linked to any player ([participantsFor]). In a basic group
-  /// (TEAM-14) it's only themselves.
+  /// The people the signed-in person answers for (PLAYER-6): on a team, the
+  /// players they're linked to, as the player or a guardian; in a basic
+  /// group (TEAM-14), only themselves ([participantsFor]).
   MyParticipantsProvider._({
     required MyParticipantsFamily super.from,
     required GroupId super.argument,
@@ -833,12 +830,11 @@ final class MyParticipantsProvider
   }
 }
 
-String _$myParticipantsHash() => r'013e50d7bc0bf6810fb376a36d4e87d90ec72bb2';
+String _$myParticipantsHash() => r'a0d881ac59507f60435f3a0f3d46409d92c7b85f';
 
-/// The people the signed-in person answers for on a team (PLAYER-6): the
-/// players they're linked to, and themselves when they're an admin or
-/// aren't linked to any player ([participantsFor]). In a basic group
-/// (TEAM-14) it's only themselves.
+/// The people the signed-in person answers for (PLAYER-6): on a team, the
+/// players they're linked to, as the player or a guardian; in a basic
+/// group (TEAM-14), only themselves ([participantsFor]).
 
 final class MyParticipantsFamily extends $Family
     with $FunctionalFamilyOverride<List<Participant>, GroupId> {
@@ -851,10 +847,9 @@ final class MyParticipantsFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// The people the signed-in person answers for on a team (PLAYER-6): the
-  /// players they're linked to, and themselves when they're an admin or
-  /// aren't linked to any player ([participantsFor]). In a basic group
-  /// (TEAM-14) it's only themselves.
+  /// The people the signed-in person answers for (PLAYER-6): on a team, the
+  /// players they're linked to, as the player or a guardian; in a basic
+  /// group (TEAM-14), only themselves ([participantsFor]).
 
   MyParticipantsProvider call(GroupId groupId) =>
       MyParticipantsProvider._(argument: groupId, from: this);
