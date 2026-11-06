@@ -26,6 +26,7 @@ class FirestoreDuesRepository implements DuesRepository {
   @override
   Stream<List<Due>> watchDues(GroupId groupId) => _dues
       .where('groupId', isEqualTo: groupId.value)
+      .orderBy('createdAt', descending: true)
       .limit(Limits.queryLimitMax)
       .snapshots()
       .map((snap) {

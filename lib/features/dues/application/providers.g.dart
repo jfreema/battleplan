@@ -218,19 +218,33 @@ final class DueChargesFamily extends $Family
 }
 
 /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-/// group, the same people I answer RSVPs for.
+/// group, the same people I answer RSVPs for ([participantsFor]). Loading
+/// until my membership, the team, and on a team its players and player
+/// links have loaded, and failing when any of them fails, so nobody is told
+/// they owe nothing before it's known whom they pay for.
 
 @ProviderFor(myPayers)
 final myPayersProvider = MyPayersFamily._();
 
 /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-/// group, the same people I answer RSVPs for.
+/// group, the same people I answer RSVPs for ([participantsFor]). Loading
+/// until my membership, the team, and on a team its players and player
+/// links have loaded, and failing when any of them fails, so nobody is told
+/// they owe nothing before it's known whom they pay for.
 
 final class MyPayersProvider
-    extends $FunctionalProvider<List<DuePayer>, List<DuePayer>, List<DuePayer>>
-    with $Provider<List<DuePayer>> {
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<DuePayer>>,
+          AsyncValue<List<DuePayer>>,
+          AsyncValue<List<DuePayer>>
+        >
+    with $Provider<AsyncValue<List<DuePayer>>> {
   /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-  /// group, the same people I answer RSVPs for.
+  /// group, the same people I answer RSVPs for ([participantsFor]). Loading
+  /// until my membership, the team, and on a team its players and player
+  /// links have loaded, and failing when any of them fails, so nobody is told
+  /// they owe nothing before it's known whom they pay for.
   MyPayersProvider._({
     required MyPayersFamily super.from,
     required GroupId super.argument,
@@ -254,20 +268,21 @@ final class MyPayersProvider
 
   @$internal
   @override
-  $ProviderElement<List<DuePayer>> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<AsyncValue<List<DuePayer>>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
-  List<DuePayer> create(Ref ref) {
+  AsyncValue<List<DuePayer>> create(Ref ref) {
     final argument = this.argument as GroupId;
     return myPayers(ref, argument);
   }
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<DuePayer> value) {
+  Override overrideWithValue(AsyncValue<List<DuePayer>> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<List<DuePayer>>(value),
+      providerOverride: $SyncValueProvider<AsyncValue<List<DuePayer>>>(value),
     );
   }
 
@@ -282,13 +297,16 @@ final class MyPayersProvider
   }
 }
 
-String _$myPayersHash() => r'def1a61ecde0632dc4df23720b1340b4f2c90512';
+String _$myPayersHash() => r'01e50d8f4c6b9e42be9cad6dcdec1713b1f3cf66';
 
 /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-/// group, the same people I answer RSVPs for.
+/// group, the same people I answer RSVPs for ([participantsFor]). Loading
+/// until my membership, the team, and on a team its players and player
+/// links have loaded, and failing when any of them fails, so nobody is told
+/// they owe nothing before it's known whom they pay for.
 
 final class MyPayersFamily extends $Family
-    with $FunctionalFamilyOverride<List<DuePayer>, GroupId> {
+    with $FunctionalFamilyOverride<AsyncValue<List<DuePayer>>, GroupId> {
   MyPayersFamily._()
     : super(
         retry: null,
@@ -299,7 +317,10 @@ final class MyPayersFamily extends $Family
       );
 
   /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-  /// group, the same people I answer RSVPs for.
+  /// group, the same people I answer RSVPs for ([participantsFor]). Loading
+  /// until my membership, the team, and on a team its players and player
+  /// links have loaded, and failing when any of them fails, so nobody is told
+  /// they owe nothing before it's known whom they pay for.
 
   MyPayersProvider call(GroupId groupId) =>
       MyPayersProvider._(argument: groupId, from: this);
@@ -308,12 +329,14 @@ final class MyPayersFamily extends $Family
   String toString() => r'myPayersProvider';
 }
 
-/// What I owe on [groupId] (DUES-2): my own share, or my players'.
+/// What I owe on [groupId] (DUES-2): my own share, or my players'. Loading
+/// until [myPayers] knows whom I pay for, and failing when it fails.
 
 @ProviderFor(myCharges)
 final myChargesProvider = MyChargesFamily._();
 
-/// What I owe on [groupId] (DUES-2): my own share, or my players'.
+/// What I owe on [groupId] (DUES-2): my own share, or my players'. Loading
+/// until [myPayers] knows whom I pay for, and failing when it fails.
 
 final class MyChargesProvider
     extends
@@ -323,7 +346,8 @@ final class MyChargesProvider
           Stream<List<DueCharge>>
         >
     with $FutureModifier<List<DueCharge>>, $StreamProvider<List<DueCharge>> {
-  /// What I owe on [groupId] (DUES-2): my own share, or my players'.
+  /// What I owe on [groupId] (DUES-2): my own share, or my players'. Loading
+  /// until [myPayers] knows whom I pay for, and failing when it fails.
   MyChargesProvider._({
     required MyChargesFamily super.from,
     required GroupId super.argument,
@@ -368,9 +392,10 @@ final class MyChargesProvider
   }
 }
 
-String _$myChargesHash() => r'69b619db6a29abb0a318e4747ef68bb971240bc2';
+String _$myChargesHash() => r'c95ac9bacabea0bdfce3600fbf8f74a3ff7b7dbd';
 
-/// What I owe on [groupId] (DUES-2): my own share, or my players'.
+/// What I owe on [groupId] (DUES-2): my own share, or my players'. Loading
+/// until [myPayers] knows whom I pay for, and failing when it fails.
 
 final class MyChargesFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<DueCharge>>, GroupId> {
@@ -383,7 +408,8 @@ final class MyChargesFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// What I owe on [groupId] (DUES-2): my own share, or my players'.
+  /// What I owe on [groupId] (DUES-2): my own share, or my players'. Loading
+  /// until [myPayers] knows whom I pay for, and failing when it fails.
 
   MyChargesProvider call(GroupId groupId) =>
       MyChargesProvider._(argument: groupId, from: this);

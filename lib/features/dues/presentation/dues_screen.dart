@@ -360,7 +360,7 @@ class _MyDues extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final mine = ref.watch(myChargesProvider(groupId));
-    final payers = ref.watch(myPayersProvider(groupId));
+    final payers = ref.watch(myPayersProvider(groupId)).value ?? const [];
     final list = mine.value;
     if (list == null) {
       return mine.hasError ? const _LoadError() : const SkeletonList();
@@ -929,6 +929,8 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
         ? l10n.duesAmountInvalid
         : !_isEdit && payers.isEmpty
         ? l10n.duesPickSomeone
+        : !_isEdit && payers.length > Limits.duesChargesMax
+        ? l10n.duesTooManyPayers(Limits.duesChargesMax)
         : null;
     setState(() => _error = error);
     if (error != null || cents == null) return;
@@ -950,7 +952,7 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
           amountCents: cents,
           dueOn: _dueOn,
           note: _note.text,
-          payers: payers.take(Limits.duesChargesMax).toList(),
+          payers: payers,
         );
       }
       if (mounted) context.pop();

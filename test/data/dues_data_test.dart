@@ -8,6 +8,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/dues/data/firestore_dues_repository.dart';
 import 'package:battleplan/features/dues/domain/due.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -114,6 +115,7 @@ void main() {
       'title': 'Uniform fee',
       'amountCents': 4500,
       'dueOn': '2026-11-30',
+      'createdAt': Timestamp.fromDate(DateTime.utc(2026, 11)),
     });
     final dues = await repo.watchDues(g).first;
     expect(dues.single.amountCents, 4500);
@@ -128,6 +130,28 @@ void main() {
         .firstWhere((c) => c.id == mine.first.id);
     expect(paid.status, DueStatus.paid);
     expect(paid.paidAt, isNotNull);
+  });
+
+  test('past the limit, the newest dues show, newest first', () async {
+    final db = FakeFirebaseFirestore();
+    final repo = FirestoreDuesRepository(db, FakeFunctions());
+    const n = Limits.queryLimitMax + 1;
+    // Written oldest first, so the store's own order starts with the oldest.
+    for (var i = 0; i < n; i++) {
+      await db.doc('dues/d$i').set({
+        'groupId': 'a',
+        'title': 'Due $i',
+        'amountCents': 100,
+        'createdAt': Timestamp.fromDate(
+          DateTime.utc(2026).add(Duration(hours: i)),
+        ),
+      });
+    }
+    final dues = await repo.watchDues(g).first;
+    expect(dues, hasLength(Limits.queryLimitMax));
+    expect(dues.first.id, 'd${n - 1}');
+    expect(dues.last.id, 'd1');
+    expect(dues.any((d) => d.id == 'd0'), isFalse);
   });
 
   group('mergePayerCharges', () {

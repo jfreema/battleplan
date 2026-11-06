@@ -1409,7 +1409,12 @@ class FakePlayerRepository implements PlayerRepository {
 
   @override
   Stream<List<GuardianLink>> watchGuardianLinks(GroupId groupId) =>
+      linksStream ??
       Stream.value(links.where((l) => l.groupId == groupId).toList());
+
+  /// Set to answer link reads from this instead, to hold them loading or
+  /// make them fail.
+  Stream<List<GuardianLink>>? linksStream;
 
   final List<GuardianLink> links = [];
 

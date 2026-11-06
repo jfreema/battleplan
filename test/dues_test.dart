@@ -1,8 +1,12 @@
 // Dues (DUES-1 to DUES-3): admins add a due for every player (or member in
 // a group), mark who paid, and share how to pay; everyone else sees only
 // what they or their players owe.
+import 'dart:async';
+
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/dues/domain/due.dart';
 import 'package:battleplan/features/dues/presentation/dues_screen.dart';
@@ -330,6 +334,94 @@ void main() {
     expect(dues.calls, ['create Snacks 1250 2']);
     expect(dues.charges.map((c) => c.participantType).toSet(), {
       ParticipantType.member,
+    });
+  });
+
+  testWidgets('a due for more people than it can charge is refused', (
+    tester,
+  ) async {
+    final dues = FakeDuesRepository();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {
+        'a': testGroup('a', 'Book club').copyWith(kind: GroupKind.group),
+      },
+      memberships: [
+        testMembership('a', 'coach', role: MemberRole.owner),
+        for (var i = 0; i < Limits.duesChargesMax; i++)
+          testMembership('a', 'm$i'),
+      ],
+      duesRepo: dues,
+    );
+    await go(tester, '/g/a/dues/new');
+    await tester.enterText(find.byType(TextField).at(0), 'Snacks');
+    await tester.enterText(find.byType(TextField).at(1), '5');
+    await tester.scrollUntilVisible(
+      find.text('Save'),
+      500,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'A due can charge at most ${Limits.duesChargesMax} people. '
+        'Uncheck some to continue.',
+      ),
+      findsOneWidget,
+    );
+    expect(dues.calls, isEmpty);
+  });
+
+  group("a parent isn't told they owe nothing until it's known", () {
+    DueCharge emmaShare() => share('emma', 'Emma #7');
+    const emmaLink = GuardianLink(
+      playerId: PlayerId('emma'),
+      groupId: GroupId('a'),
+      uid: UserId('coach'),
+    );
+
+    Future<void> pumpParent(WidgetTester tester, FakeDuesRepository dues) =>
+        pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: {'a': testGroup('a', 'Thunder')},
+          memberships: [testMembership('a', 'coach')],
+          playerRepo: players,
+          duesRepo: dues,
+        );
+
+    testWidgets('while their player links load', (tester) async {
+      final links = StreamController<List<GuardianLink>>();
+      players.linksStream = links.stream;
+      addTearDown(() => players.linksStream = null);
+      final dues = FakeDuesRepository()..charges.add(emmaShare());
+      await pumpParent(tester, dues);
+      await go(tester, '/g/a/dues');
+      expect(find.byType(SkeletonList), findsOneWidget);
+      expect(find.text('Nothing owed.'), findsNothing);
+      expect(find.text('All paid. Thanks!'), findsNothing);
+
+      links.add([emmaLink]);
+      await tester.pumpAndSettle();
+      expect(find.byType(SkeletonList), findsNothing);
+      expect(find.text(r'$45 owed'), findsOneWidget);
+      expect(find.text('Uniform fee'), findsOneWidget);
+      await links.close();
+    });
+
+    testWidgets("or when their links can't load", (tester) async {
+      players.linksStream = Stream.error(const PermissionDenied('links'));
+      addTearDown(() => players.linksStream = null);
+      final dues = FakeDuesRepository()..charges.add(emmaShare());
+      await pumpParent(tester, dues);
+      await go(tester, '/g/a/dues');
+      expect(
+        find.text("Couldn't load this. Check your connection and try again."),
+        findsOneWidget,
+      );
+      expect(find.text('Nothing owed.'), findsNothing);
     });
   });
 }

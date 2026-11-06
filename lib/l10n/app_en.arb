@@ -120,6 +120,8 @@
   "duesAmountInvalid": "Enter an amount up to $10,000.",
   "duesTitleRequired": "Say what it's for.",
   "duesPickSomeone": "Pick at least one person.",
+  "duesTooManyPayers": "A due can charge at most {max} people. Uncheck some to continue.",
+  "@duesTooManyPayers": {"placeholders": {"max": {"type": "int"}}},
   "duesSaveFailed": "Couldn't save. Try again.",
   "duesEdit": "Edit due",
   "duesDelete": "Delete due",
