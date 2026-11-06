@@ -6,6 +6,11 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'message.freezed.dart';
 
+/// The author name the server gives a deleted account's messages (AUTH-10),
+/// `DELETED_USER_NAME` in `functions/src/chat/service.ts`. It's a
+/// placeholder, not a person's name, so it's never shortened.
+const deletedUserName = 'Deleted user';
+
 /// One chat message (ARCH §6.2 `messages`). The author fields are a snapshot
 /// of the sender's membership when they posted.
 @freezed

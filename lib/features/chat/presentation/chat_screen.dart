@@ -1250,7 +1250,8 @@ class _PinnedRowState extends ConsumerState<_PinnedRow> {
                                 // the text; screen readers get it in full.
                                 if (author.isNotEmpty)
                                   TextSpan(
-                                    text: '${shortNameOf(author)}: ',
+                                    text:
+                                        '${author == deletedUserName ? author : shortNameOf(author)}: ',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w800,
                                     ),

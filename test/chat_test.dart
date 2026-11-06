@@ -752,6 +752,18 @@ void main() {
       expect(find.text('Block Riley'), findsNothing);
     });
 
+    testWidgets("a deleted account's pin keeps its full placeholder name", (
+      tester,
+    ) async {
+      await openChat(
+        tester,
+        FakeMessageRepository([msg(1, author: 'gone', name: 'Deleted user')]),
+        readAt: msg(1).createdAt,
+        group: testGroup('a', 'Thunder').copyWith(pinnedMessageIds: ['m1']),
+      );
+      expect(find.text('Deleted user: Message 1'), findsOneWidget);
+    });
+
     testWidgets('the row shows the newest pin first and steps through them', (
       tester,
     ) async {

@@ -258,6 +258,34 @@ void main() {
       handle.dispose();
     });
 
+    testWidgets("someone else's reply: the quote is its own button and the "
+        'text keeps the menu (CHAT-13)', (tester) async {
+      final handle = tester.ensureSemantics();
+      await openChat(tester, [
+        msg('r1', 2, text: 'I can drive').copyWith(
+          replyToId: 'q',
+          replyPreview: const ReplyPreview(
+            authorName: 'Jo Park',
+            text: 'Who is driving?',
+          ),
+        ),
+      ]);
+      final text = tester
+          .getSemantics(find.text('I can drive'))
+          .getSemanticsData();
+      expect(text.hasAction(SemanticsAction.customAction), isTrue);
+      expect(text.hasAction(SemanticsAction.tap), isFalse);
+      expect(text.label, isNot(contains('Who is driving?')));
+      final quote = tester
+          .getSemantics(
+            find.bySemanticsLabel('Reply to Jo Park: Who is driving?'),
+          )
+          .getSemanticsData();
+      expect(quote.hasAction(SemanticsAction.tap), isTrue);
+      expect(quote.label, isNot(contains('I can drive')));
+      handle.dispose();
+    });
+
     testWidgets('reactions start under the text, just below it, each a 48 px '
         'target (CHAT-6)', (tester) async {
       final handle = tester.ensureSemantics();

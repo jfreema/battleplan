@@ -86,6 +86,9 @@ class QuoteBlock extends StatelessWidget {
           ? l10n.quoteDeleted
           : l10n.quoteSemantics(authorName, text),
       excludeSemantics: true,
+      // Its own node: otherwise its tap and button flag merge into the
+      // message around it, and the whole message reads as the quote.
+      container: true,
       // The InkWell's own tap is excluded with its semantics.
       onTap: onTap,
       child: Material(
@@ -95,17 +98,28 @@ class QuoteBlock extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(10, 5, 10, 6),
+            // A tap target of its own, so at least 48 tall, its lines
+            // centered in it.
+            constraints: BoxConstraints(minHeight: onTap == null ? 0 : 48),
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
             decoration: BoxDecoration(
               border: Border(left: BorderSide(color: c.mint.face, width: 4)),
             ),
             child: deleted
-                ? Text(
-                    l10n.quoteDeleted,
-                    style: muted.copyWith(fontStyle: FontStyle.italic),
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.quoteDeleted,
+                        style: muted.copyWith(fontStyle: FontStyle.italic),
+                      ),
+                    ],
                   )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
