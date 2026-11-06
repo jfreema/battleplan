@@ -74,11 +74,21 @@ TeamScheme appScheme(Ref ref) {
 }
 
 /// The scheme I see [groupId] in: my pick on my membership, else my default.
+/// Read from my memberships alone, never the team itself, so this provider
+/// (kept for the session) keeps no reads of a team I've left or only
+/// viewed.
 @Riverpod(keepAlive: true)
 TeamScheme teamScheme(Ref ref, GroupId groupId) {
-  final mine = ref.watch(myMembershipProvider(groupId));
+  final (loaded, pick) = ref.watch(
+    myMembershipsProvider.select((a) {
+      final list = a.value;
+      if (list == null) return (false, null);
+      final mine = list.where((m) => m.groupId == groupId).firstOrNull;
+      return (true, mine?.colorScheme);
+    }),
+  );
   final fallback = ref.watch(defaultSchemeControllerProvider);
-  if (mine != null) return mine.colorScheme ?? fallback;
+  if (loaded) return pick ?? fallback;
   // Memberships still loading: this device's last copy, so a cold start into
   // a team paints in the right scheme on its first frame.
   final uid = ref.watch(authUserProvider.select((a) => a.value?.uid));

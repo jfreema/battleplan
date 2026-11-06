@@ -820,15 +820,21 @@ GoRouter router(Ref ref) {
             ),
           ),
           StatefulShellRoute.indexedStack(
-            builder: (context, state, shell) => TeamShell(
+            // The whole shell in the scheme I see the team in (SET-2), so
+            // what it opens itself (the switcher, the notification prompt)
+            // and its tab bar's badge are in that scheme too.
+            builder: (context, state, shell) => TeamSchemeTheme(
               groupId: GroupId(state.pathParameters['groupId']!),
-              navigationShell: shell,
-              // Deeper than the tab, as Saved plays and a play are; a
-              // message opened from a notification is the chat itself.
-              inTab: switch (state.uri.pathSegments) {
-                [_, _, 'chat', 'm', ...] => false,
-                final s => s.length > 3,
-              },
+              child: TeamShell(
+                groupId: GroupId(state.pathParameters['groupId']!),
+                navigationShell: shell,
+                // Deeper than the tab, as Saved plays and a play are; a
+                // message opened from a notification is the chat itself.
+                inTab: switch (state.uri.pathSegments) {
+                  [_, _, 'chat', 'm', ...] => false,
+                  final s => s.length > 3,
+                },
+              ),
             ),
             branches: [
               for (final tab in teamTabs)
@@ -1134,7 +1140,7 @@ class _AdminPanelState extends State<_AdminPanel> {
 /// [routes] and every route under them with their screens in the scheme I
 /// see the team in (SET-2, TeamSchemeTheme): the team's own pages, like its
 /// settings and roster, and its event and document pages over the tabs. The
-/// tabs themselves are inside the team shell, which themes itself.
+/// team shell, around the tabs, is wrapped the same way where it's built.
 List<RouteBase> _inTeamScheme(List<RouteBase> routes) => [
   for (final route in routes)
     if (route is GoRoute) _inTeamSchemeRoute(route) else route,

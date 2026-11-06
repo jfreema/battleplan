@@ -179,16 +179,25 @@ final class AppSchemeProvider
 String _$appSchemeHash() => r'bb3997be2386881a2761105ca5cdd3cd836b6eec';
 
 /// The scheme I see [groupId] in: my pick on my membership, else my default.
+/// Read from my memberships alone, never the team itself, so this provider
+/// (kept for the session) keeps no reads of a team I've left or only
+/// viewed.
 
 @ProviderFor(teamScheme)
 final teamSchemeProvider = TeamSchemeFamily._();
 
 /// The scheme I see [groupId] in: my pick on my membership, else my default.
+/// Read from my memberships alone, never the team itself, so this provider
+/// (kept for the session) keeps no reads of a team I've left or only
+/// viewed.
 
 final class TeamSchemeProvider
     extends $FunctionalProvider<TeamScheme, TeamScheme, TeamScheme>
     with $Provider<TeamScheme> {
   /// The scheme I see [groupId] in: my pick on my membership, else my default.
+  /// Read from my memberships alone, never the team itself, so this provider
+  /// (kept for the session) keeps no reads of a team I've left or only
+  /// viewed.
   TeamSchemeProvider._({
     required TeamSchemeFamily super.from,
     required GroupId super.argument,
@@ -240,9 +249,12 @@ final class TeamSchemeProvider
   }
 }
 
-String _$teamSchemeHash() => r'7aec7d1037c2c871b778895c7a4ee9770111b765';
+String _$teamSchemeHash() => r'452e1eb843c84170b38b65b654e833edcc2c780e';
 
 /// The scheme I see [groupId] in: my pick on my membership, else my default.
+/// Read from my memberships alone, never the team itself, so this provider
+/// (kept for the session) keeps no reads of a team I've left or only
+/// viewed.
 
 final class TeamSchemeFamily extends $Family
     with $FunctionalFamilyOverride<TeamScheme, GroupId> {
@@ -256,6 +268,9 @@ final class TeamSchemeFamily extends $Family
       );
 
   /// The scheme I see [groupId] in: my pick on my membership, else my default.
+  /// Read from my memberships alone, never the team itself, so this provider
+  /// (kept for the session) keeps no reads of a team I've left or only
+  /// viewed.
 
   TeamSchemeProvider call(GroupId groupId) =>
       TeamSchemeProvider._(argument: groupId, from: this);

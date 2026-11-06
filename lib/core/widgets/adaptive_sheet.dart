@@ -42,13 +42,15 @@ const _panelMaxHeight = 600.0;
 
 /// A panel dropped down from [anchor], over a clear barrier that closes it
 /// on a tap outside or Esc. It fades in quickly, or appears at once when
-/// the system reduces motion (SPEC §7.3).
+/// the system reduces motion (SPEC §7.3). It takes the themes at [context],
+/// as a sheet or dialog does: a team's panel is in the team's scheme.
 Future<T?> _showDropdownPanel<T>(
   BuildContext context, {
   required RenderBox anchor,
   required WidgetBuilder builder,
 }) {
-  final navigator = Navigator.of(context);
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final themes = InheritedTheme.capture(from: context, to: navigator.context);
   final overlay = navigator.overlay!.context.findRenderObject()! as RenderBox;
   final rect = Rect.fromPoints(
     anchor.localToGlobal(Offset.zero, ancestor: overlay),
@@ -67,19 +69,23 @@ Future<T?> _showDropdownPanel<T>(
       opacity: CurvedAnimation(parent: animation, curve: Motion.curve),
       child: child,
     ),
-    pageBuilder: (dialogContext, _, _) => CustomSingleChildLayout(
-      delegate: _BelowAnchor(rect),
-      child: Material(
-        elevation: 3,
-        // Shadows only on floating things (SPEC §7.3).
-        shadowColor: Theme.of(dialogContext).colorScheme.shadow,
-        color: Theme.of(dialogContext).colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(Corners.card),
-        clipBehavior: Clip.antiAlias,
-        child: Padding(
-          padding: const EdgeInsets.only(top: Space.md),
-          // On the panel, in the card context.
-          child: GumdropSurface(child: Builder(builder: builder)),
+    pageBuilder: (_, _, _) => themes.wrap(
+      CustomSingleChildLayout(
+        delegate: _BelowAnchor(rect),
+        child: Builder(
+          builder: (themed) => Material(
+            elevation: 3,
+            // Shadows only on floating things (SPEC §7.3).
+            shadowColor: Theme.of(themed).colorScheme.shadow,
+            color: Theme.of(themed).colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(Corners.card),
+            clipBehavior: Clip.antiAlias,
+            child: Padding(
+              padding: const EdgeInsets.only(top: Space.md),
+              // On the panel, in the card context.
+              child: GumdropSurface(child: Builder(builder: builder)),
+            ),
+          ),
         ),
       ),
     ),

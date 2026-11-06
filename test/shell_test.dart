@@ -3,6 +3,7 @@
 import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
@@ -11,14 +12,17 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
+import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -356,6 +360,95 @@ void main() {
       expect(members.calls, contains('scheme a skyblue'));
       // The team's screens re-theme at once.
       expect(page(tester), SchemeRoles.skyblue.page);
+    });
+
+    /// Thunder in Light while my default is Army green, on its Chat tab.
+    Future<void> pumpLightTeam(
+      WidgetTester tester, {
+      Size size = const Size(400, 1600),
+      FakePushRepository? push,
+      List<Override> overrides = const [],
+    }) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder'), 'b': testGroup('b', 'Comets')},
+        memberships: [
+          testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.light),
+          testMembership('b', 'coach'),
+        ],
+        size: size,
+        push: push,
+        overrides: overrides,
+      );
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/chat');
+      await tester.pumpAndSettle();
+    }
+
+    TeamScheme schemeOf(WidgetTester tester, Finder finder) =>
+        GumdropColors.of(tester.element(finder)).scheme;
+
+    testWidgets('the switcher opens in the team scheme, not my default', (
+      tester,
+    ) async {
+      // A bottom sheet on a phone.
+      await pumpLightTeam(tester);
+      expect(
+        schemeOf(tester, find.byType(TeamSwitcherButton)),
+        TeamScheme.light,
+      );
+      await tester.tap(find.byType(TeamSwitcherButton));
+      await tester.pumpAndSettle();
+      expect(schemeOf(tester, find.byType(TeamSwitcherList)), TeamScheme.light);
+      await tester.tapAt(const Offset(200, 20));
+      await tester.pumpAndSettle();
+      expect(find.byType(TeamSwitcherList), findsNothing);
+
+      // The dropdown panel on a wide screen, by a click and by Ctrl+K.
+      await pumpLightTeam(tester, size: wide);
+      await tester.tap(find.byType(TeamSwitcherButton));
+      await tester.pumpAndSettle();
+      expect(schemeOf(tester, find.byType(TeamSwitcherList)), TeamScheme.light);
+      final panel = tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.byType(TeamSwitcherList),
+              matching: find.byType(Material),
+            )
+            .last,
+      );
+      expect(panel.color, SchemeRoles.light.card);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byType(TeamSwitcherList), findsNothing);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(schemeOf(tester, find.byType(TeamSwitcherList)), TeamScheme.light);
+    });
+
+    testWidgets("the Chat tab's count and the notification prompt are in the "
+        'team scheme', (tester) async {
+      await pumpLightTeam(
+        tester,
+        push: FakePushRepository(permission: PushPermission.notDetermined),
+        overrides: [unreadCountProvider.overrideWith((ref, id) async => 3)],
+      );
+      final badge = tester.widget<Badge>(
+        find
+            .descendant(
+              of: find.byType(OpenFieldTabBar),
+              matching: find.byType(Badge),
+            )
+            .first,
+      );
+      // The ring is the team's page color, around the coral count.
+      expect(badge.backgroundColor, SchemeRoles.light.page);
+      expect(
+        schemeOf(tester, find.text('Turn on notifications?')),
+        TeamScheme.light,
+      );
     });
   });
 

@@ -5,7 +5,6 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
@@ -25,7 +24,6 @@ import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
-import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -310,15 +308,12 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         ),
       );
     }
-    // The whole shell, header and tabs, in the scheme I see the team in
-    // (SET-2).
-    final tinted = SchemeTheme(
-      scheme: ref.watch(teamSchemeProvider(groupId)),
-      child: shell,
-    );
+    // The router puts the whole shell, header and tabs, in the scheme I see
+    // the team in (SET-2, TeamSchemeTheme), around this widget, so the
+    // switcher and the prompt below open in it too.
     // Asks for notification permission once the person is in a team
     // (NOTIF-1); viewing someone else's team doesn't count.
-    return viewing ? tinted : NotificationPrePrompt(child: tinted);
+    return viewing ? shell : NotificationPrePrompt(child: shell);
   }
 }
 

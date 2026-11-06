@@ -112,6 +112,20 @@ void main() {
       expect(c.read(teamSchemeProvider(_a)), TeamScheme.navy);
     });
 
+    test("keeps no read of a team I'm not on once nothing shows it", () async {
+      final c = await container(
+        user: _boss,
+        memberships: [testMembership('b', 'boss')],
+      );
+      final sub = c.listen(teamSchemeProvider(_a), (_, _) {});
+      await _settle();
+      sub.close();
+      await _settle();
+      // Kept for the session, but not the team's own read.
+      expect(c.exists(teamSchemeProvider(_a)), isTrue);
+      expect(c.exists(groupProvider(_a)), isFalse);
+    });
+
     test('the device keeps a copy of my picks, and only mine', () async {
       final prefs = FakeLocalPrefs();
       final c = await container(
