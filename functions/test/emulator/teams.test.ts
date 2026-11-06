@@ -1088,6 +1088,17 @@ describe("the team's link (INV-2, §3)", () => {
 
 describe('the icon color on memberships (SET-8)', () => {
   const colorOf = async (g: string, uid: string) => (await members().doc(`${g}_${uid}`).get()).get('avatarColor');
+  const profile = { displayName: 'Lee Kim', photoPath: null };
+  // Runs onUserUpdated with an event's before and after, as Firestore would
+  // deliver it; after.ref is the live profile.
+  const userUpdated = (before: object, after: object) =>
+    (onUserUpdated as unknown as { run: (e: object) => Promise<void> }).run({
+      data: {
+        before: { data: () => before },
+        after: { data: () => after, ref: db().collection(Collections.users).doc('lee') },
+      },
+      params: { uid: 'lee' },
+    });
   beforeEach(async () => {
     await db().collection(Collections.users).doc('lee').update({ avatarColor: 'grape' });
   });
@@ -1095,16 +1106,19 @@ describe('the icon color on memberships (SET-8)', () => {
   it('a change reaches every membership', async () => {
     await members().doc('open_lee').set({ groupId: 'open', uid: 'lee', role: 'member', displayName: 'Lee Kim', photoPath: null });
     await members().doc('archived_lee').set({ groupId: 'archived', uid: 'lee', role: 'member', displayName: 'Lee Kim', photoPath: null });
-    const profile = { displayName: 'Lee Kim', photoPath: null };
-    const change = (before: object, after: object) => ({
-      data: { before: { data: () => before }, after: { data: () => after } },
-      params: { uid: 'lee' },
-    });
-    await (onUserUpdated as unknown as { run: (e: object) => Promise<void> }).run(
-      change({ ...profile, avatarColor: 'grape' }, { ...profile, avatarColor: 'mint' }),
-    );
+    await db().collection(Collections.users).doc('lee').update({ avatarColor: 'mint' });
+    await userUpdated({ ...profile, avatarColor: 'grape' }, { ...profile, avatarColor: 'mint' });
     expect(await colorOf('open', 'lee')).toBe('mint');
     expect(await colorOf('archived', 'lee')).toBe('mint');
+  });
+
+  it('a late run for an older change copies the newest color', async () => {
+    await members().doc('open_lee').set({ groupId: 'open', uid: 'lee', role: 'member', displayName: 'Lee Kim', photoPath: null });
+    // Mint, then cherry: cherry's run finished first, and mint's comes late.
+    await db().collection(Collections.users).doc('lee').update({ avatarColor: 'cherry' });
+    await userUpdated({ ...profile, avatarColor: 'mint' }, { ...profile, avatarColor: 'cherry' });
+    await userUpdated({ ...profile, avatarColor: 'grape' }, { ...profile, avatarColor: 'mint' });
+    expect(await colorOf('open', 'lee')).toBe('cherry');
   });
 
   it('joining with the team link copies it', async () => {

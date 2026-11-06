@@ -64,7 +64,10 @@ service firebase.storage {
 
     match /users/{uid}/avatar/{file} {
       allow read: if signedIn();
-      allow write: if signedIn() && request.auth.uid == uid && isImage(10);
+      allow create, update: if signedIn() && request.auth.uid == uid && isImage(10);
+      // Remove photo and a new photo delete the old file (SET-8). A delete
+      // has no request.resource, so it can't go through isImage.
+      allow delete: if signedIn() && request.auth.uid == uid;
     }
     match /groups/{g}/avatar/{file} {
       allow read: if canRead(g);

@@ -24,11 +24,16 @@ export const onUserUpdated = onDocumentUpdated('users/{uid}', async (event) => {
   const before = event.data?.before.data();
   const after = event.data?.after.data();
   // Exits early unless the name, photo, or icon color changed.
-  if (!snapshotChanged(before, after) || !after) return;
+  if (!snapshotChanged(before, after) || !event.data) return;
+  // Copies the profile as it is now, not this event's snapshot: quick
+  // changes (a few color taps) can run out of order or twice, and a late
+  // run must not put an older name, photo, or color back.
+  const current = (await event.data.after.ref.get()).data();
+  if (!current) return;
   await updateMemberSnapshots(
     event.params.uid,
-    String(after.displayName ?? ''),
-    (after.photoPath as string | null) ?? null,
-    (after.avatarColor as string | null) ?? null,
+    String(current.displayName ?? ''),
+    (current.photoPath as string | null) ?? null,
+    (current.avatarColor as string | null) ?? null,
   );
 });

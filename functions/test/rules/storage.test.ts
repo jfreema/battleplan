@@ -181,3 +181,16 @@ describe('uploads with room (STORE-1)', () => {
     await assertFails(put('alice', 'groups/roomy/theme/2.jpg', tooBig));
   });
 });
+
+describe('profile photos (SET-1, SET-8)', () => {
+  const del = (uid: string, path: string) => env.authenticatedContext(uid).storage().ref(path).delete().then(() => undefined);
+
+  it('the owner uploads and deletes their own photo; no one else can', async () => {
+    await assertSucceeds(put('alice', 'users/alice/avatar/1.jpg', jpeg));
+    await assertFails(put('bob', 'users/alice/avatar/2.jpg', jpeg));
+    await assertFails(put('alice', 'users/alice/avatar/3.txt', jpeg, 'text/plain'));
+    await assertFails(del('bob', 'users/alice/avatar/1.jpg'));
+    await assertFails(env.unauthenticatedContext().storage().ref('users/alice/avatar/1.jpg').delete());
+    await assertSucceeds(del('alice', 'users/alice/avatar/1.jpg'));
+  });
+});
