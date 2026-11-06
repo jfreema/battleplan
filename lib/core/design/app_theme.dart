@@ -266,7 +266,7 @@ abstract final class AppTheme {
           lipColor: g.you.lip,
           side: style.accentSide(g.you.lip),
         ),
-        sizeConstraints: const BoxConstraints.tightFor(width: 60, height: 64),
+        sizeConstraints: const BoxConstraints.tightFor(width: 56, height: 60),
         smallSizeConstraints: const BoxConstraints.tightFor(
           width: 44,
           height: 48,

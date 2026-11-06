@@ -353,14 +353,6 @@ void main() {
   group('text', () {
     final l10n = AppLocalizationsEn();
 
-    test('counts: "12 going · 3 maybe · 2 no" (SCHED-1)', () {
-      const c = RsvpCounts(going: 12, maybe: 3, notGoing: 2);
-      expect(countsText(l10n, c), '12 going · 3 maybe · 2 no');
-      expect(countsText(l10n, c, allowMaybe: false), '12 going · 2 no');
-      expect(countsText(l10n, const RsvpCounts(going: 4)), '4 going');
-      expect(countsText(l10n, const RsvpCounts()), 'No answers yet');
-    });
-
     test('event counts: players only on a team, everyone in a group '
         '(PLAYER-6)', () {
       final e = Event(
@@ -376,25 +368,37 @@ void main() {
         staffCounts: const RsvpCounts(going: 2, notGoing: 1),
       );
       // Old member answers on a team don't count.
-      expect(
-        eventCountsText(l10n, e, isTeam: true, total: 15),
-        '12 of 15 players going',
-      );
+      expect(eventCountsText(l10n, e, isTeam: true, total: 15), '12/15 going');
       // A team with no players has no count.
       expect(eventCountsText(l10n, e, isTeam: true, total: 0), isNull);
       // A group counts everyone together.
-      expect(
-        eventCountsText(l10n, e, isTeam: false, total: 9),
-        '14 going · 1 maybe · 1 no',
-      );
-      expect(
-        eventCountsText(l10n, e, isTeam: false, total: 9, allowMaybe: false),
-        '14 going · 1 no',
-      );
+      expect(eventCountsText(l10n, e, isTeam: false, total: 20), '14/20 going');
+      expect(goingOf(e, isTeam: true), 12);
+      expect(goingOf(e, isTeam: false), 14);
       expect(
         const RsvpCounts(going: 1) + const RsvpCounts(maybe: 2, notGoing: 3),
         const RsvpCounts(going: 1, maybe: 2, notGoing: 3),
       );
+    });
+
+    test("cards say who hasn't answered (6.2)", () {
+      const luke = Participant(
+        type: ParticipantType.player,
+        id: 'p1',
+        name: 'Luke Dunphy',
+      );
+      const mine = Participant(
+        type: ParticipantType.player,
+        id: 'p2',
+        name: 'Ann Lee',
+        isMe: true,
+      );
+      expect(unansweredText(l10n, const []), isNull);
+      expect(unansweredText(l10n, const [luke]), "Luke hasn't answered");
+      expect(unansweredText(l10n, const [mine]), "You haven't answered");
+      expect(unansweredText(l10n, const [luke, mine]), "2 haven't answered");
+      expect(cardRsvpLabel(l10n, luke), 'Luke');
+      expect(cardRsvpLabel(l10n, mine), 'You');
     });
 
     test('answer rows say whose they are (PLAYER-6)', () {

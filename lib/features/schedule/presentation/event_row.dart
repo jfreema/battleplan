@@ -1,7 +1,6 @@
-import 'dart:math' as math;
-
-import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
@@ -12,14 +11,13 @@ import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart'
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// One event in a schedule list (SCHED-1): the date block on the day's
-/// first row, the type's color and icon, the title, time, and place, my
-/// answer (one per player I answer for), and the counts. In "All my
-/// teams" it also names the team and, for guardians, their players
-/// (SCHED-2, PLAYER-9). Canceled events are struck through with a badge (SCHED-7).
-/// Where I can answer now, Going, Maybe, and Not going sit under the
-/// counts across the card ([answerButtons]), and the rest of the card
-/// opens the event.
+/// One event in a schedule list (SCHED-1), as an Open Field card: a 5 px
+/// edge in the type's candy, the date column, the title with the type word
+/// (left out when the title is the type's own name), the time and place,
+/// the attendance ("7/12 going" with a mini bar, and who I answer for that
+/// hasn't answered), and an RSVP row for each person I answer for. In "All
+/// my teams" it names the team beside its color (SCHED-2, PLAYER-9).
+/// Canceled events are struck through with a badge (SCHED-7).
 class EventRow extends StatelessWidget {
   const new({
     required this.event,
@@ -42,12 +40,11 @@ class EventRow extends StatelessWidget {
   final String viewerZone;
   final VoidCallback onTap;
 
-  /// The answer buttons for each person I answer for, to answer without
-  /// opening the event; null where I can't answer now (past, closed, or no
-  /// RSVPs), and then my answers show as discs.
+  /// The RSVP rows for each person I answer for, to answer without opening
+  /// the event; null where I can't answer now (past, closed, or no RSVPs).
   final Widget? answerButtons;
 
-  /// The day on the date block; the event's own day in the viewer's zone
+  /// The day on the date column; the event's own day in the viewer's zone
   /// when null.
   final DateTime? day;
 
@@ -56,54 +53,64 @@ class EventRow extends StatelessWidget {
   final Map<String, Rsvp> answers;
   final bool showTeam;
 
-  /// The team's active players, for "12 of 15 players going" (PLAYER-6).
+  /// The team's active players, for "7/12 going" (PLAYER-6).
   final int playerCount;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final canceled = event.isCanceled;
-    final allowMaybe = group?.settings.allowMaybe ?? true;
     // A team counts players only; a group, everyone (PLAYER-6).
     final isTeam = group?.hasPlayers ?? true;
+    final total = isTeam ? playerCount : group?.memberCount ?? 0;
     // The players I'm here for; my own player needs no name (PLAYER-9).
     final players = [
       for (final p in participants)
         if (p.isPlayer && !p.isMe) p,
     ];
     final date = day ?? dayOf(event, viewerZone);
-    // Just me, with no name to show: my answer is the disc at the end.
-    final soloLabel = participants.length == 1
-        ? answerLabel(l10n, participants.single, participants)
-        : '';
-    final buttons = event.takesRsvps ? answerButtons : null;
-    final solo = event.takesRsvps && soloLabel == null && buttons == null;
+    final buttons = event.takesRsvps && !canceled ? answerButtons : null;
+    final accent = typeAccent(context, event.type);
+    final type = typeLabel(l10n, event.type);
+    final waiting = [
+      for (final p in participants)
+        if (answers[p.id] == null) p,
+    ];
 
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: Space.gutter(MediaQuery.sizeOf(context).width),
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: TapCard(
         onTap: onTap,
+        edge: accent.face,
         footer: buttons,
         child: Builder(
           builder: (context) {
-            final theme = Theme.of(context);
             final card = GumdropColors.of(context);
-            final muted = theme.textTheme.bodyMedium?.copyWith(
+            final style = GumdropStyle.of(context);
+            final muted = TextStyle(
+              fontFamily: AppFonts.body,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              height: 19 / 15,
+              letterSpacing: -0.2,
               color: card.textMuted,
-              fontWeight: FontWeight.w700,
             );
+            final place = [
+              timeRange(l10n, event, viewerZone),
+              if (event.location case final loc?) loc.label,
+            ].join(' · ');
+            final count = event.takesRsvps
+                ? eventCountsText(l10n, event, isTeam: isTeam, total: total)
+                : null;
+            // Only where the rows show (not past, ended, or canceled).
+            final note = buttons != null ? unansweredText(l10n, waiting) : null;
+            final typeText = typeAccent(context, event.type).text;
             return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // The type is read out with the day, as it isn't written
-                // on the card.
-                DateBlock(
+                DateColumn(
                   day: date,
-                  accent: typeAccent(context, event.type),
-                  semanticLabel:
-                      '${typeLabel(l10n, event.type)}, ${dayLabel(l10n, date)}',
+                  semanticLabel: '$type, ${dayLabel(l10n, date)}',
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -123,7 +130,7 @@ class EventRow extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                             ),
-                            const SizedBox(width: Space.xs),
+                            const SizedBox(width: 6),
                             Flexible(
                               child: Text(
                                 [
@@ -131,102 +138,101 @@ class EventRow extends StatelessWidget {
                                   if (players.isNotEmpty)
                                     l10n.eventForPlayers(
                                       joinAnd(l10n, [
-                                        for (final p in players)
-                                          p.name.split(' ').first,
+                                        for (final p in players) p.firstName,
                                       ]),
                                     ),
                                 ].join(' · '),
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: card.textMuted,
+                                maxLines: 1,
+                                style: style.label(
+                                  TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    height: 16 / 13,
+                                    color: card.textMuted,
+                                  ),
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              event.title,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontSize: 19,
-                                height: 1.2,
-                                color: card.textPrimary,
-                                decoration: canceled
-                                    ? TextDecoration.lineThrough
-                                    : null,
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 22),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                event.title,
+                                maxLines: 1,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.body,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                  height: 22 / 18,
+                                  color: card.textPrimary,
+                                  decoration: canceled
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          if (canceled) ...[
-                            const SizedBox(width: Space.sm),
-                            const CanceledBadge(),
+                            if (canceled) ...[
+                              const SizedBox(width: 10),
+                              const CanceledBadge(),
+                            ],
+                            // The type word, unless the title says it.
+                            if (!canceled &&
+                                event.title.trim().toLowerCase() !=
+                                    type.toLowerCase()) ...[
+                              const SizedBox(width: 10),
+                              Flexible(
+                                child: ExcludeSemantics(
+                                  child: Text(
+                                    type.toUpperCase(),
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: style.label(
+                                      TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                        height: 16 / 13,
+                                        letterSpacing: 13 * 0.1,
+                                        color: typeText,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                       const SizedBox(height: 1),
-                      Text(timeRange(l10n, event, viewerZone), style: muted),
+                      Text(
+                        place,
+                        style: muted,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       // "6:00 PM CDT · 7:00 PM your time" (SCHED-9).
                       if (otherZoneLine(l10n, event, viewerZone) case final z?)
                         Text(z, style: muted),
-                      if (event.location case final loc?)
-                        Text(
-                          loc.label,
-                          style: muted,
-                          overflow: TextOverflow.ellipsis,
+                      if (count != null) ...[
+                        const SizedBox(height: 6),
+                        _Attendance(
+                          count: count,
+                          fraction: total <= 0
+                              ? 0
+                              : goingOf(event, isTeam: isTeam) / total,
+                          note: note,
                         ),
-                      if (event.takesRsvps) ...[
-                        if (participants.isNotEmpty && !solo && buttons == null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: Space.xs),
-                            child: Wrap(
-                              spacing: Space.md,
-                              runSpacing: Space.xs,
-                              children: [
-                                for (final p in participants)
-                                  _MyAnswer(
-                                    label: answerLabel(l10n, p, participants),
-                                    status: answers[p.id]?.status,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        // Players only on a team, none while it has no
-                        // players; everyone in a group (PLAYER-6).
-                        if (eventCountsText(
-                              l10n,
-                              event,
-                              isTeam: isTeam,
-                              total: isTeam
-                                  ? playerCount
-                                  : group?.memberCount ?? 0,
-                              allowMaybe: allowMaybe,
-                            )
-                            case final text?)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 5),
-                            child: _GoingRow(
-                              text: text,
-                              going: isTeam
-                                  ? event.rsvpCounts.going
-                                  : (event.rsvpCounts + event.staffCounts)
-                                        .going,
-                              of: isTeam
-                                  ? playerCount
-                                  : group?.memberCount ?? 0,
-                              color: card.mint.text,
-                            ),
-                          ),
                       ],
+                      SizedBox(height: buttons == null ? 8 : 2),
                     ],
                   ),
                 ),
-                if (solo) ...[
-                  const SizedBox(width: 12),
-                  _SoloAnswer(status: answers[participants.single.id]?.status),
-                ],
               ],
             );
           },
@@ -236,78 +242,45 @@ class EventRow extends StatelessWidget {
   }
 }
 
-/// The going bar and "7 of 12 going" beside it (design §3.15).
-class _GoingRow extends StatelessWidget {
-  const new({
-    required this.text,
-    required this.going,
-    required this.of,
-    required this.color,
-  });
+/// The attendance line on a card (SPEC §7.3): a 40 × 5 mini bar, "7/12
+/// going", and, in the accent color, who I answer for that hasn't answered.
+class _Attendance extends StatelessWidget {
+  const new({required this.count, required this.fraction, this.note});
 
-  final String text;
-  final int going;
-  final int of;
-  final Color color;
+  final String count;
+  final double fraction;
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final label = Text(
-      text,
-      style: theme.textTheme.labelMedium?.copyWith(
-        fontSize: 13,
-        color: going > 0 ? color : GumdropColors.of(context).textMuted,
-      ),
-    );
-    if (of <= 0) return label;
-    return LayoutBuilder(
-      builder: (context, constraints) => Row(
-        children: [
-          Expanded(child: GoingBar(fraction: going / of)),
-          const SizedBox(width: Space.sm),
-          ConstrainedBox(
-            // The counts take what they need, leaving the bar 40 px.
-            constraints: BoxConstraints(
-              maxWidth: math.max(0, constraints.maxWidth - 48),
-            ),
-            child: label,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// My answer as the card's trailing disc (design §3.15), with the answer
-/// in words under it for anyone who doesn't see the color.
-class _SoloAnswer extends StatelessWidget {
-  const new({required this.status});
-
-  final RsvpStatus? status;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final c = GumdropColors.of(context);
-    final s = status;
-    return MergeSemantics(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 72),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnswerDisc(status: s),
-            const SizedBox(height: 3),
-            Text(
-              s == null ? l10n.rsvpNoResponse : statusLabel(l10n, s),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelSmall
-                  ?.copyWith(color: c.textMuted, height: 1.1),
+    final style = TextStyle(
+      fontFamily: AppFonts.body,
+      fontWeight: FontWeight.w700,
+      fontSize: 14,
+      height: 18 / 14,
+      color: c.textMuted,
+    );
+    return Row(
+      children: [
+        GoingBar(fraction: fraction, width: 40, height: 5),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: count),
+                if (note != null)
+                  TextSpan(
+                    text: ' · $note',
+                    style: TextStyle(color: c.cherry.text),
+                  ),
+              ],
             ),
-          ],
+            style: style,
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -322,40 +295,6 @@ String? answerLabel(
 ) {
   if (!p.isPlayer) return participants.length > 1 ? l10n.eventYou : null;
   return p.isMe ? l10n.eventYou : p.firstName;
-}
-
-/// My answer on a row: "Emma: Going", or "No response", after its disc.
-class _MyAnswer extends StatelessWidget {
-  const new({required this.label, required this.status});
-
-  final String? label;
-  final RsvpStatus? status;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final c = GumdropColors.of(context);
-    final s = status;
-    final text = s == null ? l10n.rsvpNoResponse : statusLabel(l10n, s);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnswerDisc(status: s, size: 18),
-        const SizedBox(width: 5),
-        // Wraps rather than overflowing with large text (SPEC §7.6).
-        Flexible(
-          child: Text(
-            label == null ? text : '$label: $text',
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontSize: 13,
-              color: s == null ? c.textMuted : c.textPrimary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// The red "Canceled" badge (SCHED-7): a cherry tag chip with ink text

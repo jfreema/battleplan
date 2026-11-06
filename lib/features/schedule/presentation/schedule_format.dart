@@ -104,42 +104,35 @@ IconData statusIcon(RsvpStatus s) => switch (s) {
   RsvpStatus.notGoing => AppIcons.notGoing,
 };
 
-/// "12 going · 3 maybe · 2 no" (SCHED-1), leaving out what's zero, and
-/// Maybe when the team turned it off.
-String countsText(
-  AppLocalizations l10n,
-  RsvpCounts counts, {
-  bool allowMaybe = true,
-}) {
-  final parts = [
-    if (counts.going > 0) l10n.rsvpCountGoing(counts.going),
-    if (allowMaybe && counts.maybe > 0) l10n.rsvpCountMaybe(counts.maybe),
-    if (counts.notGoing > 0) l10n.rsvpCountNo(counts.notGoing),
-  ];
-  return parts.isEmpty ? l10n.rsvpNoAnswers : parts.join(' · ');
-}
-
-/// An event's counts (PLAYER-6). On a team ([isTeam], true for every
-/// team, even one with no players yet), players only: "12 of 15 players
-/// going" out of the [total] active players, or null with none. In a
-/// group, everyone answering for themselves: "12 going · 3 maybe".
+/// How many are going on a card (PLAYER-6): "7/12 going" out of [total],
+/// the active players on a team ([isTeam], true for every team, even one
+/// with no players yet) or the members of a group, who answer for
+/// themselves. Null on a team with no players.
 String? eventCountsText(
   AppLocalizations l10n,
   Event event, {
   required bool isTeam,
   required int total,
-  bool allowMaybe = true,
 }) {
-  if (!isTeam) {
-    return countsText(
-      l10n,
-      event.rsvpCounts + event.staffCounts,
-      allowMaybe: allowMaybe,
-    );
-  }
-  if (total == 0) return null;
-  return l10n.rsvpPlayersGoing(event.rsvpCounts.going, total);
+  if (isTeam && total == 0) return null;
+  return l10n.rsvpGoingShort(goingOf(event, isTeam: isTeam), total);
 }
+
+/// How many are going: players on a team, everyone in a group.
+int goingOf(Event event, {required bool isTeam}) => isTeam
+    ? event.rsvpCounts.going
+    : (event.rsvpCounts + event.staffCounts).going;
+
+/// Who I answer for that hasn't answered, on a card (6.2): "Luke hasn't
+/// answered", "You haven't answered", or "2 haven't answered". Null when
+/// all have.
+String? unansweredText(AppLocalizations l10n, List<Participant> waiting) =>
+    switch (waiting) {
+      [] => null,
+      [final p] when p.isMe || !p.isPlayer => l10n.rsvpYouNotAnswered,
+      [final p] => l10n.rsvpNameNotAnswered(p.firstName),
+      _ => l10n.rsvpNotAnswered(waiting.length),
+    };
 
 /// The label over one set of answer buttons (PLAYER-6): the player's first
 /// name ("Luke"), or "You" for the member's own player and for themselves
@@ -148,6 +141,11 @@ String? rsvpRowLabel(AppLocalizations l10n, Participant p, int count) {
   if (!p.isPlayer) return count > 1 ? l10n.eventYou : null;
   return p.isMe ? l10n.eventYou : p.firstName;
 }
+
+/// The name on a card's RSVP row (6.2): the player's first name ("Luke"),
+/// or "You" for my own player and in a group.
+String cardRsvpLabel(AppLocalizations l10n, Participant p) =>
+    p.isPlayer && !p.isMe ? p.firstName : l10n.eventYou;
 
 /// The event screen's question over my answer buttons (PLAYER-6): "Are
 /// you going?" for myself (my own player, or in a group), "Is Luke

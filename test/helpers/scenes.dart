@@ -412,6 +412,60 @@ Future<void> pumpEventDetails(
   await tester.pumpAndSettle();
 }
 
+/// A basic group's schedule (TEAM-14): Thunder Parents, 9 members who
+/// each answer for themselves, in the person's scheme.
+Future<void> pumpGroupSchedule(
+  WidgetTester tester, {
+  required TeamScheme scheme,
+}) async {
+  const p = GroupId('p');
+  final events = FakeEventRepository([
+    sceneEvent(
+      'g1',
+      day: 16,
+      hour: 19,
+      title: 'Snack schedule meeting',
+      type: EventType.meeting,
+      place: 'Library',
+    ).copyWith(groupId: p, staffCounts: const RsvpCounts(going: 4, maybe: 1)),
+    sceneEvent(
+      'g2',
+      day: 19,
+      title: 'Fall party',
+      type: EventType.social,
+      place: "Rosa's Pizza",
+    ).copyWith(groupId: p, staffCounts: const RsvpCounts(going: 6)),
+  ]);
+  await pumpApp(
+    tester,
+    auth: FakeAuthRepository(user: coach),
+    prefs: _prefs(scheme: scheme),
+    groups: {
+      'a': sceneTeam,
+      'p': testGroup(
+        'p',
+        'Thunder Parents',
+      ).copyWith(kind: GroupKind.group, color: 0xFF0F8A5F, memberCount: 9),
+    },
+    memberships: [
+      for (final m in sceneMembers)
+        if (m.uid.value == coach.uid) m.copyWith(colorScheme: scheme) else m,
+      testMembership(
+        'p',
+        coach.uid,
+        role: MemberRole.owner,
+        name: 'Coach Lee',
+      ).copyWith(colorScheme: scheme),
+      testMembership('p', 'sam', name: 'Sam Rivera'),
+    ],
+    users: FakeUserRepository()..colorScheme = scheme,
+    eventRepo: events,
+    rsvpRepo: FakeRsvpRepository(events),
+    size: phoneSize,
+  );
+  await goTo(tester, '/g/p/schedule');
+}
+
 Future<void> pumpDocuments(
   WidgetTester tester, {
   required TeamScheme scheme,
@@ -503,6 +557,7 @@ goldenScreens = {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/teams/scheme');
   },
+  'group_schedule': pumpGroupSchedule,
   'your_icon': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/profile/icon');

@@ -643,7 +643,10 @@ void main() {
         ]),
         rsvpRepo: rsvps,
       );
-      expect(find.text('12 going · 3 maybe · 2 no'), findsOneWidget);
+      expect(
+        find.textContaining(RegExp(r'^12/\d+ going'), findRichText: true),
+        findsOneWidget,
+      );
       await tester.tap(find.text('Going'));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);

@@ -95,6 +95,7 @@ void main() {
       groups: {
         'a': testGroup('a', 'Thunder').copyWith(
           kind: basicGroup ? GroupKind.group : GroupKind.team,
+          memberCount: 20,
           settings: settings,
           storageBytes: storageFull ? 500 * bytesPerMb : 0,
           storageQuotaBytes: 500 * bytesPerMb,
@@ -152,9 +153,14 @@ void main() {
       expect(find.text('vs. Eagles'), findsOneWidget);
       expect(find.text('Team dinner'), findsOneWidget);
       expect(find.text('Last game'), findsNothing);
-      expect(find.text('6:00 PM – 7:30 PM'), findsNWidgets(2));
-      expect(find.text('Riverside Park'), findsNWidgets(3));
-      expect(find.text('12 going · 3 maybe · 2 no'), findsOneWidget);
+      // The time and place on one line.
+      expect(find.text('6:00 PM – 7:30 PM · Riverside Park'), findsNWidgets(2));
+      expect(find.textContaining('Riverside Park'), findsNWidgets(3));
+      // Out of the group's 20 members, and that I haven't answered.
+      expect(
+        find.text("12/20 going · You haven't answered", findRichText: true),
+        findsOneWidget,
+      );
       // Each upcoming event has the answer buttons.
       expect(find.byType(RsvpChoice), findsNWidgets(3));
       // Each card has its date block, so tomorrow's two show the day twice.
@@ -176,7 +182,7 @@ void main() {
         find.byType(SegmentedButton<RsvpStatus>).first,
       );
       expect(chosen.selected, {RsvpStatus.going});
-      expect(find.text('1 going'), findsOneWidget);
+      expect(find.text('1/20 going', findRichText: true), findsOneWidget);
     });
 
     testWidgets('Past is newest first', (tester) async {
@@ -238,10 +244,21 @@ void main() {
           event('p', days: 2),
         ],
       );
+      // One filter icon opens the sheet, and its dot shows a filter is on.
+      await tester.tap(find.byTooltip('Filter'));
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilterChip, 'Games'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ModalBarrier).last);
       await tester.pumpAndSettle();
       expect(find.text('vs. Eagles'), findsOneWidget);
       expect(find.text('Practice'), findsNothing);
+      final semantics = tester.ensureSemantics();
+      expect(
+        tester.getSemantics(find.byTooltip('Filter')),
+        isSemantics(value: 'On', isButton: true, hasTapAction: true),
+      );
+      semantics.dispose();
     });
   });
 
@@ -358,9 +375,13 @@ void main() {
           event('p', days: -2, title: 'Last game'),
         ],
       );
-      expect(find.byType(RsvpChoice), findsNothing);
-      // My answer still shows where it can't change.
-      expect(find.text('No response'), findsOneWidget);
+      // Only the closed event keeps its row, to show my answer, which
+      // can't change; the canceled one has none.
+      expect(find.byType(RsvpChoice), findsOneWidget);
+      expect(
+        tester.widget<RsvpChoice>(find.byType(RsvpChoice)).onChanged,
+        isNull,
+      );
       await tester.tap(find.text('Past'));
       await tester.pumpAndSettle();
       expect(find.text('Last game'), findsOneWidget);
@@ -1037,9 +1058,9 @@ void main() {
         players: players,
         events: [event('e1')],
       );
-      // One set of buttons on the list, with no name: only theirs.
+      // One row on the list: theirs, as You.
       expect(find.byType(RsvpChoice), findsOneWidget);
-      expect(find.text('You'), findsNothing);
+      expect(find.text('You'), findsOneWidget);
       await openDetails(tester, 'Practice');
       // One set of buttons: their player's. The pending player isn't there.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
@@ -1577,7 +1598,11 @@ void main() {
       ],
     );
     expect(find.text('Lightning game'), findsNothing);
-    await tester.tap(find.widgetWithText(FilterChip, 'All my teams'));
+    await tester.tap(find.byTooltip('Filter'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('All my teams'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(ModalBarrier).last);
     await tester.pumpAndSettle();
     expect(find.text('Thunder practice'), findsOneWidget);
     expect(find.text('Lightning game'), findsOneWidget);
@@ -1638,10 +1663,7 @@ void main() {
         messages: FakeMessageRepository([card('e1').copyWith(reminder: true)]),
       );
       expect(find.text('Reminder'), findsOneWidget);
-      expect(
-        find.text("1 of 3 players going · 2 haven't answered"),
-        findsOneWidget,
-      );
+      expect(find.text("1/3 going · 2 haven't answered"), findsOneWidget);
     });
 
     testWidgets('answers Going right on the card, with live counts', (
@@ -1655,12 +1677,12 @@ void main() {
         messages: FakeMessageRepository([card('e1')]),
       );
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
-      expect(find.text('No answers yet'), findsOneWidget);
+      expect(find.text('0/20 going'), findsOneWidget);
       await tester.tap(find.text('Going'));
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
       expect(rsvps.rsvps.single.participantId, 'coach');
-      expect(find.text('1 going'), findsOneWidget);
+      expect(find.text('1/20 going'), findsOneWidget);
       // Still in the chat: answering doesn't open the event.
       expect(find.text('Directions'), findsNothing);
     });
@@ -1708,7 +1730,7 @@ void main() {
       await tester.tap(find.text('Going').last);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p2');
-      expect(find.text('1 of 2 players going'), findsOneWidget);
+      expect(find.text('1/2 going'), findsOneWidget);
     });
 
     testWidgets('one tap answers for all my players on the card (PLAYER-11)', (
@@ -1752,7 +1774,7 @@ void main() {
       expect(rsvps.batches, [
         ['p1:not_going', 'p2:not_going'],
       ]);
-      expect(find.text('0 of 2 players going'), findsOneWidget);
+      expect(find.text('0/2 going'), findsOneWidget);
     });
 
     testWidgets('canceled and RSVP-off cards take no answers', (tester) async {
@@ -1925,16 +1947,14 @@ void main() {
       expect(find.text('Jamboree'), findsOneWidget);
       expect(find.text('Tournament'), findsOneWidget);
       expect(find.text('Camp'), findsNothing);
-      // Its answer is read too, though it starts before today here
-      // (Practice's Going is a button).
-      expect(find.text('Going'), findsNWidgets(2));
-      expect(
-        find.descendant(
-          of: find.byType(RsvpChoice),
-          matching: find.text('Going'),
-        ),
-        findsOneWidget,
-      );
+      // Its answer is read too, though it starts before today here: the
+      // ongoing events show their rows, which can't change, and only
+      // Practice's can.
+      final choices = tester
+          .widgetList<RsvpChoice>(find.byType(RsvpChoice))
+          .toList();
+      expect(choices.where((c) => c.onChanged != null), hasLength(1));
+      expect(choices.where((c) => c.current == RsvpStatus.going), isNotEmpty);
       // By day: the tournament began two days ago, then today, then
       // tomorrow.
       final y = [

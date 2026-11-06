@@ -292,7 +292,7 @@ class _CardRsvps extends ConsumerWidget {
               event: event,
               participant: p,
               answer: answers[p.id],
-              label: rsvpRowLabel(l10n, p, mine.length),
+              label: cardRsvpLabel(l10n, p),
               enabled: true,
               allowMaybe: allowMaybe,
               compact: true,
@@ -304,7 +304,6 @@ class _CardRsvps extends ConsumerWidget {
                 event,
                 isTeam: group.hasPlayers,
                 total: group.hasPlayers ? players : group.memberCount,
-                allowMaybe: allowMaybe,
               ),
               if (reminder && unanswered > 0) l10n.rsvpNotAnswered(unanswered),
             ]

@@ -934,15 +934,36 @@ class RsvpButtons extends ConsumerWidget {
       if (allowMaybe || current == RsvpStatus.maybe) RsvpStatus.maybe,
       RsvpStatus.notGoing,
     ];
+    void pick(RsvpStatus s) {
+      Haptics.selection();
+      unawaited(_answer(context, ref, s, answer?.note ?? ''));
+    }
+
+    final onChanged = enabled ? pick : null;
+    final onCleared = enabled && clearOnRepeat
+        ? () =>
+              unawaited(clearRsvpWithFeedback(context, ref, event, participant))
+        : null;
+    if (compact) {
+      return _CardRsvpRow(
+        label: label,
+        semanticName: participant.shownName,
+        unanswered: current == null,
+        choice: RsvpChoice(
+          statuses: statuses,
+          current: current,
+          compact: true,
+          onChanged: onChanged,
+          onCleared: onCleared,
+        ),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (label != null)
           Padding(
-            padding: EdgeInsets.only(
-              top: compact ? Space.xs : Space.sm,
-              bottom: Space.xs,
-            ),
+            padding: const EdgeInsets.only(top: Space.sm, bottom: Space.xs),
             child: Text(label!, style: theme.textTheme.titleSmall),
           ),
         RsvpChoice(
@@ -1498,6 +1519,102 @@ class _NoteDialogState extends State<_NoteDialog> {
           child: Text(l10n.save),
         ),
       ],
+    );
+  }
+}
+
+/// An RSVP row on a card (SPEC §7.3): the name ([label], "Luke" or "You")
+/// in a column at least 46 wide, with a coral dot while it's unanswered,
+/// then the three pills. When the name needs more than 64 px, or the pills
+/// would be narrower than 84 px each, the name takes its own line above.
+class _CardRsvpRow extends StatelessWidget {
+  const new({
+    required this.label,
+    required this.semanticName,
+    required this.unanswered,
+    required this.choice,
+  });
+
+  final String? label;
+  final String semanticName;
+  final bool unanswered;
+  final Widget choice;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = label;
+    if (text == null) return choice;
+    final c = GumdropColors.of(context);
+    final style = GumdropStyle.of(context).label(
+      TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 15,
+        height: 1.2,
+        color: c.textMuted,
+      ),
+    );
+    final name = Semantics(
+      label: semanticName,
+      excludeSemantics: true,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Text(text, style: style, maxLines: 1),
+          ),
+          if (unanswered)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: c.cherry.face,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: style),
+          maxLines: 1,
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout();
+        final nameWidth = painter.width + 8;
+        painter.dispose();
+        final column = nameWidth < 46 ? 46.0 : nameWidth;
+        final narrow =
+            column > 64 || (constraints.maxWidth - column - 4) / 3 < 84;
+        if (narrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 20),
+                  child: name,
+                ),
+              ),
+              choice,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            SizedBox(width: column, child: name),
+            const SizedBox(width: 4),
+            Expanded(child: choice),
+          ],
+        );
+      },
     );
   }
 }

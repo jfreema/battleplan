@@ -4,9 +4,12 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
+import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -46,47 +49,7 @@ class ScheduleScreen extends ConsumerWidget {
     final full = group?.storageFull ?? false;
 
     final c = GumdropColors.of(context);
-    final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
-
-    Widget filter({
-      required String label,
-      required bool selected,
-      required GumdropAccent accent,
-      required ValueChanged<bool> onSelected,
-      bool? lit,
-    }) {
-      // The filter's own candy while its events show (design §3.7): when
-      // it's on, and for every kind while none is picked (all show).
-      // [selected] alone stays the chip's state for screen readers.
-      final on = lit ?? selected;
-      return FilterChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: onSelected,
-        showCheckmark: false,
-        labelStyle: TextStyle(color: on ? c.ink : c.textPrimary),
-        side: on ? BorderSide.none : null,
-        color: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.disabled)
-              ? c.well
-              : on
-              ? accent.face
-              : c.raisedFace,
-        ),
-        shape: WidgetStateOutlinedBorder.resolveWith(
-          (s) => GumdropShape(
-            lip: 3,
-            lipColor: on ? accent.lip : c.raisedLip,
-            highlight: on ? 2 : 1.5,
-            highlightColor: on
-                ? GumdropColors.accentHighlight
-                : c.raisedHighlight,
-          ),
-        ),
-        padding: const EdgeInsets.fromLTRB(11, 5, 11, 8),
-        labelPadding: EdgeInsets.zero,
-      );
-    }
+    final filtered = options.filters.isNotEmpty || options.allTeams;
 
     return DefaultTabController(
       length: 3,
@@ -107,77 +70,73 @@ class ScheduleScreen extends ConsumerWidget {
                     : unawaited(
                         context.push('/g/${groupId.value}/schedule/new'),
                       ),
-                child: const Icon(AppIcons.add, weight: 700),
+                child: const Icon(AppIcons.add, size: 28, weight: 700),
               )
             : null,
         body: Column(
           children: [
-            // Upcoming, Past, Calendar: a well with the chosen view as a
-            // gumdrop in it (design §3.7). Each tab stays 48 tall to tap.
-            Container(
-              margin: EdgeInsets.fromLTRB(gutter, 14, gutter, 0),
+            // Upcoming, Past, Calendar, and the filter, on a hairline.
+            DecoratedBox(
               decoration: BoxDecoration(
-                color: c.well,
-                borderRadius: BorderRadius.circular(23),
+                border: Border(bottom: BorderSide(color: c.divider)),
               ),
-              child: TabBar(
-                tabs: [
-                  for (final label in [
-                    l10n.scheduleUpcoming,
-                    l10n.schedulePast,
-                    l10n.scheduleCalendar,
-                  ])
-                    Tab(
-                      height: 48,
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Text(label),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20, right: 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _Segments(
+                        labels: [
+                          l10n.scheduleUpcoming,
+                          l10n.schedulePast,
+                          l10n.scheduleCalendar,
+                        ],
                       ),
                     ),
-                ],
-                indicator: ShapeDecoration(
-                  color: c.you.face,
-                  shape: GumdropShape(lip: 3, lipColor: c.you.lip),
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                indicatorPadding: const EdgeInsets.fromLTRB(4, 4, 4, 3),
-                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-                labelColor: c.ink,
-                unselectedLabelColor: c.textMuted,
-                dividerHeight: 0,
-                splashBorderRadius: BorderRadius.circular(23),
-              ),
-            ),
-            // The filters wrap onto a second line rather than hiding off
-            // the edge with large text.
-            Padding(
-              padding: EdgeInsets.fromLTRB(gutter, 6, gutter, 0),
-              child: SizedBox(
-                width: double.infinity,
-                child: Wrap(
-                  spacing: 6,
-                  children: [
-                    for (final f in EventFilter.values)
-                      filter(
-                        label: filterLabel(l10n, f),
-                        selected: options.filters.contains(f),
-                        lit:
-                            options.filters.isEmpty ||
-                            options.filters.contains(f),
-                        accent: filterAccent(context, f),
-                        onSelected: (_) => ref
-                            .read(scheduleViewProvider.notifier)
-                            .toggleFilter(f),
+                    MergeSemantics(
+                      child: Semantics(
+                        value: filtered ? l10n.scheduleFilterOn : null,
+                        child: IconButton(
+                          tooltip: l10n.scheduleFilter,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 48,
+                            height: 48,
+                          ),
+                          padding: EdgeInsets.zero,
+                          color: c.textOnPage,
+                          onPressed: () =>
+                              unawaited(_openFilters(context, teamCount)),
+                          icon: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              const Icon(AppIcons.filter, size: 24),
+                              if (filtered)
+                                Positioned(
+                                  top: -2,
+                                  right: -3,
+                                  child: Container(
+                                    width: 13,
+                                    height: 13,
+                                    decoration: BoxDecoration(
+                                      color: c.page,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Container(
+                                      width: 9,
+                                      height: 9,
+                                      decoration: BoxDecoration(
+                                        color: c.cherry.face,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
-                    if (teamCount > 1)
-                      filter(
-                        label: l10n.scheduleAllTeams,
-                        selected: options.allTeams,
-                        accent: c.you,
-                        onSelected: (on) => ref
-                            .read(scheduleViewProvider.notifier)
-                            .setAllTeams(on: on),
-                      ),
+                    ),
                   ],
                 ),
               ),
@@ -194,6 +153,162 @@ class ScheduleScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// The filter sheet (SCHED-2): the type chips and, with more than one
+  /// team, All my teams. Changes apply at once.
+  Future<void> _openFilters(BuildContext context, int teamCount) =>
+      showCardSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => _FilterSheet(teamCount: teamCount),
+      );
+}
+
+class _FilterSheet extends ConsumerWidget {
+  const new({required this.teamCount});
+
+  final int teamCount;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final options = ref.watch(scheduleViewProvider);
+    final notifier = ref.read(scheduleViewProvider.notifier);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionLabel(l10n.scheduleFilter),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final f in EventFilter.values)
+                  FilterChip(
+                    label: Text(filterLabel(l10n, f)),
+                    selected: options.filters.contains(f),
+                    showCheckmark: false,
+                    onSelected: (_) => notifier.toggleFilter(f),
+                  ),
+              ],
+            ),
+            if (teamCount > 1) ...[
+              const SizedBox(height: 12),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.scheduleAllTeams),
+                value: options.allTeams,
+                onChanged: (on) => notifier.setAllTeams(on: on),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Upcoming, Past and Calendar (SPEC §7.3): Fredoka 600 17, left-aligned,
+/// 24 px apart, the current one in the text color over a 4 px coral bar.
+/// Labels shrink rather than run under the filter at large text sizes.
+class _Segments extends StatefulWidget {
+  const new({required this.labels});
+
+  final List<String> labels;
+
+  @override
+  State<_Segments> createState() => _SegmentsState();
+}
+
+class _SegmentsState extends State<_Segments> {
+  TabController? _controller;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = DefaultTabController.of(context);
+    if (next != _controller) {
+      _controller?.removeListener(_changed);
+      _controller = next..addListener(_changed);
+    }
+  }
+
+  void _changed() => setState(() {});
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_changed);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    final controller = _controller!;
+    final style = GumdropStyle.of(context);
+    final n = widget.labels.length;
+    return Row(
+      children: [
+        for (final (i, label) in widget.labels.indexed) ...[
+          Flexible(
+            child: Semantics(
+              selected: controller.index == i,
+              button: true,
+              label: MaterialLocalizations.of(context)
+                  .tabLabel(tabIndex: i + 1, tabCount: n),
+              child: FocusRingInk(
+                onTap: () => controller.animateTo(i),
+                radius: BorderRadius.circular(8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          style: style.label(
+                            TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: controller.index == i
+                                  ? c.textOnPage
+                                  : c.textMutedOnPage,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (controller.index == i)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: -2,
+                          child: Container(
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: c.you.face,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (i < n - 1) const SizedBox(width: 24),
+        ],
+      ],
     );
   }
 }
@@ -238,7 +353,8 @@ class EventList extends ConsumerWidget {
     // pages loaded) doesn't build every row and its RSVP lookups at once
     // (SPEC §8.1).
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 5, bottom: Space.xxxl * 2),
+      // Clear of the + button and the tab bar.
+      padding: const EdgeInsets.only(top: 8, bottom: 96),
       itemCount: events.length + (more ? 1 : 0),
       itemBuilder: (context, i) {
         if (i == events.length) {
@@ -349,9 +465,16 @@ class ScheduleEventRow extends ConsumerWidget {
     // one clears it (owner's request 2026-10-28).
     final now = DateTime.now();
     final me = ref.watch(myMembershipProvider(g));
-    final canAnswer =
+    final upcoming =
         group != null &&
         participants.isNotEmpty &&
+        event.takesRsvps &&
+        !event.isCanceled &&
+        event.endAt.isAfter(now);
+    // Closed (past the deadline, say): the rows stay, to show my answers,
+    // but can't change.
+    final canAnswer =
+        upcoming &&
         !event.startedBefore(now) &&
         canAnswerNow(event, group, me, now);
     return EventRow(
@@ -364,7 +487,7 @@ class ScheduleEventRow extends ConsumerWidget {
       showTeam: showTeam,
       playerCount: players,
       onTap: () => openEvent(context, event),
-      answerButtons: canAnswer
+      answerButtons: upcoming
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -373,15 +496,8 @@ class ScheduleEventRow extends ConsumerWidget {
                     event: event,
                     participant: p,
                     answer: answers[p.id],
-                    // Named only beside someone else's.
-                    label: participants.length == 1
-                        ? null
-                        : answerLabel(
-                            AppLocalizations.of(context),
-                            p,
-                            participants,
-                          ),
-                    enabled: true,
+                    label: cardRsvpLabel(AppLocalizations.of(context), p),
+                    enabled: canAnswer,
                     allowMaybe: group.settings.allowMaybe,
                     compact: true,
                     clearOnRepeat: true,

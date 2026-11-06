@@ -1003,6 +1003,28 @@
   "schedulePast": "Past",
   "scheduleCalendar": "Calendar",
   "scheduleAllTeams": "All my teams",
+  "scheduleFilter": "Filter",
+  "scheduleFilterOn": "On",
+  "rsvpGoingShort": "{going}/{total} going",
+  "@rsvpGoingShort": {
+    "placeholders": {
+      "going": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "rsvpNameNotAnswered": "{name} hasn't answered",
+  "@rsvpNameNotAnswered": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rsvpYouNotAnswered": "You haven't answered",
   "scheduleEmptyUpcoming": "No upcoming events.",
   "scheduleEmptyPast": "No past events.",
   "scheduleEmptyDay": "Nothing on this day.",
