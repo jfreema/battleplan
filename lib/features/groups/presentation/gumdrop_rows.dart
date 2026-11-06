@@ -152,6 +152,28 @@ class PageRows extends StatelessWidget {
   }
 }
 
+/// Row [index] of a list of rows on the page built as it scrolls, like
+/// notifications and Messages (SPEC §7.3): [child] with a 1 px hairline
+/// under it, and one above it too when it's the first, as [PageRows] draws
+/// them.
+class PageListRow extends StatelessWidget {
+  const new({required this.index, required this.child, super.key});
+
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final line = BorderSide(color: GumdropColors.of(context).divider);
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(top: index == 0 ? line : BorderSide.none, bottom: line),
+      ),
+      child: child,
+    );
+  }
+}
+
 /// A row on the page (SPEC §7.3): at least 50 tall, a 22 px [icon] (or
 /// [leading]) in the text color, the title in Nunito 700 16/21, the
 /// subtitle in Nunito 600 14/19 muted, and a 20 px chevron when it opens

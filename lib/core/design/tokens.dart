@@ -19,6 +19,10 @@ abstract final class Space {
 
   /// Side padding on phones and on wide screens.
   static double gutter(double width) => width >= Breakpoints.wide ? xl : lg;
+
+  /// Open Field's page gutter: Teams, Profile, pushed screens and lists of
+  /// rows on the page sit 20 px from the edge, level with their titles.
+  static const double page = 20;
 }
 
 /// Chat messages' text (CHAT-1): Nunito on every platform, as Gumdrop Pop

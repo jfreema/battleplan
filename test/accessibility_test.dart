@@ -2,7 +2,9 @@
 // Flutter's guideline checks for tap targets, labels, and text contrast.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/features/notifications/domain/notification_item.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -91,9 +93,29 @@ void main() {
       await pumpTeam(tester, scheme: scheme);
       await goTo(tester, '/settings');
     },
+    // An unread item and a read one, so their text is checked too.
     'notifications': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpTeam(tester, scheme: scheme);
+      NotificationItem item(String id, {required bool read}) =>
+          NotificationItem(
+            id: id,
+            groupId: const GroupId('a'),
+            kind: NotifyKind.reply,
+            title: 'Thunder U14',
+            body: 'Sam replied to you: Sounds good',
+            route: '/g/a/chat',
+            read: read,
+            createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
+          );
+      await pumpTeam(
+        tester,
+        scheme: scheme,
+        notifications: FakeNotificationRepository([
+          item('n1', read: false),
+          item('n2', read: true),
+        ]),
+      );
       await goTo(tester, '/notifications');
+      expect(find.text('Sam replied to you: Sounds good'), findsNWidgets(2));
     },
     // Color scheme: my default, and how I see a team (SET-2).
     'default color scheme':

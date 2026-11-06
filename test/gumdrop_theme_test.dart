@@ -421,6 +421,35 @@ void main() {
     });
   });
 
+  testWidgets("a list tile's title is in the text color and its subtitle "
+      'muted, in every scheme', (tester) async {
+    for (final scheme in TeamScheme.values) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.of(scheme),
+          home: const Material(
+            child: ListTile(title: Text('Coach Lee'), subtitle: Text('Owner')),
+          ),
+        ),
+      );
+      // Past the theme's change from the last scheme.
+      await tester.pumpAndSettle();
+      Color? color(String text) => tester
+          .widget<RichText>(
+            find.descendant(
+              of: find.text(text),
+              matching: find.byType(RichText),
+            ),
+          )
+          .text
+          .style
+          ?.color;
+      final roles = SchemeRoles.of(scheme);
+      expect(color('Coach Lee'), roles.text, reason: scheme.value);
+      expect(color('Owner'), roles.pageMuted, reason: scheme.value);
+    }
+  });
+
   testWidgets('dialogs and sheets are in the card context', (tester) async {
     GumdropColors? seen;
     await tester.pumpWidget(

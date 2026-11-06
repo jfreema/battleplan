@@ -942,7 +942,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **NOTIF-10 · MVP · Multiple devices.** Every signed-in device gets notifications. Signing out stops them on that device.
 - **NOTIF-11 · MVP · Notification center.**
   - A **bell** in the header, on every platform, with a count of unread items (up to 99+).
-  - It opens a list of activity **across all your teams**, newest first, loading 30 at a time. Each item shows the team, an icon, a one-line summary, and the time. Unread items are highlighted.
+  - It opens a list of activity **across all your teams**, newest first, loading 30 at a time. Each item shows the team, an icon, a one-line summary, and the time, as plain rows between hairlines. Unread items have a coral icon disc, a bolder title, and the time in the accent text.
   - Tapping an item opens the exact place, switching teams if needed, and marks it read. "Mark all as read" clears the rest.
   - It lists everything marked "In notification center" in NOTIF-2. Plain chat messages aren't listed.
   - Items appear even when pushes are muted or off for that team. Activity from people you blocked never appears.

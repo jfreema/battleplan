@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
@@ -13,6 +14,7 @@ import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/direct_chat.dart';
 import 'package:battleplan/features/chat/presentation/direct_actions.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,10 +50,14 @@ class MessagesScreen extends ConsumerWidget {
           message: l10n.messagesEmpty,
         ),
         AsyncValue(value: final list?) => ListView.builder(
-          // Room under the last row for New message.
-          padding: const EdgeInsets.only(bottom: 96),
+          // Plain rows on the page between hairlines (SPEC §7.3), with room
+          // under the last for New message.
+          padding: const EdgeInsets.fromLTRB(Space.page, 0, Space.page, 96),
           itemCount: list.length,
-          itemBuilder: (_, i) => _ChatRow(chat: list[i]),
+          itemBuilder: (_, i) => PageListRow(
+            index: i,
+            child: _ChatRow(chat: list[i]),
+          ),
         ),
         AsyncError() => EmptyState(
           icon: AppIcons.error,
@@ -88,7 +94,9 @@ class _ChatRow extends ConsumerWidget {
         : 0;
     final muted = chat.membership.isMutedAt(DateTime.now());
     final at = chat.lastActivity;
+    final c = GumdropColors.of(context);
     return ListTile(
+      contentPadding: EdgeInsets.zero,
       leading: Avatar(
         name: name,
         colorKey: chat.otherUid,
@@ -100,7 +108,9 @@ class _ChatRow extends ConsumerWidget {
         name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: unread > 0 ? const TextStyle(fontWeight: FontWeight.w700) : null,
+        style: TextStyle(
+          fontWeight: unread > 0 ? FontWeight.w800 : FontWeight.w700,
+        ),
       ),
       subtitle: Text(preview, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: Column(
@@ -115,7 +125,9 @@ class _ChatRow extends ConsumerWidget {
                 DateTime.now(),
                 zone: ViewerZone.of(context),
               ),
-              style: theme.textTheme.labelSmall,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: c.textMutedOnPage,
+              ),
             ),
           const SizedBox(height: Space.xs),
           Row(

@@ -5,6 +5,8 @@ import 'dart:typed_data';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/color_math.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -1154,6 +1156,31 @@ void main() {
 
       await openWithBanner(tester, severity: BannerSeverity.warning);
       expect(find.byIcon(AppIcons.warning), findsOneWidget);
+
+      // A routine notice is blue raspberry, never the coral of a critical
+      // one, with readable text in every scheme.
+      await openWithBanner(tester);
+      final info = tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.text('Scheduled maintenance tonight'),
+              matching: find.byType(Material),
+            )
+            .last,
+      );
+      final c = GumdropColors.of(
+        tester.element(find.text('Scheduled maintenance tonight')),
+      );
+      expect(info.color, c.blueRaspberry.face);
+      expect(info.color, isNot(scheme.errorContainer));
+      for (final s in TeamScheme.values) {
+        final g = GumdropColors.forScheme(s);
+        expect(
+          ColorMath.contrast(g.ink, g.blueRaspberry.face),
+          greaterThanOrEqualTo(4.5),
+          reason: s.name,
+        );
+      }
     });
 
     testWidgets('it goes away when it ends, and an ended one never shows', (

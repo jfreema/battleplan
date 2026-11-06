@@ -464,6 +464,7 @@ Future<void> pumpTeam(
   FakeAssignmentRepository? assignments,
   FakeDuesRepository? dues,
   List<GuardianLink>? links,
+  FakeNotificationRepository? notifications,
 }) async {
   final events = FakeEventRepository(sceneEvents);
   final rsvps = FakeRsvpRepository(events)
@@ -500,6 +501,7 @@ Future<void> pumpTeam(
       ..links.addAll(links ?? sceneLinks),
     assignmentRepo: assignments,
     duesRepo: dues ?? sceneDues(),
+    notifications: notifications,
     documentRepo: FakeDocumentRepository(sceneDocuments),
     admin: FakeAdminRepository(
       totalsValue: const AdminTotals(

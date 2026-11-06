@@ -1,5 +1,6 @@
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
@@ -43,12 +44,11 @@ class AnnouncementBanner extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final c = GumdropColors.of(context);
     final (background, foreground, icon) = switch (banner.severity) {
-      BannerSeverity.info => (
-        scheme.primaryContainer,
-        scheme.onPrimaryContainer,
-        AppIcons.info,
-      ),
+      // Blue raspberry, so a routine notice never looks like the coral
+      // critical one.
+      BannerSeverity.info => (c.blueRaspberry.face, c.ink, AppIcons.info),
       // The amber semantic color, as the storage warning uses it.
       BannerSeverity.warning => (
         Color.alphaBlend(

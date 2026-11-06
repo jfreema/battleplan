@@ -10,6 +10,7 @@ export 'presentation/gumdrop_rows.dart'
         CardHeading,
         LabeledField,
         PageHeading,
+        PageListRow,
         PageRow,
         PageRows,
         SectionLabel,

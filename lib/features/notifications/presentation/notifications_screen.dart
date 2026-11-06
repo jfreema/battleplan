@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/notifications/application/notification_center.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
@@ -154,10 +156,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             );
           }
           final n = items[i];
-          return _NotificationRow(
-            item: n,
-            now: now,
-            onTap: () => unawaited(_open(n)),
+          // Plain rows on the page between hairlines (SPEC §7.3).
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Space.page),
+            child: PageListRow(
+              index: i,
+              child: _NotificationRow(
+                item: n,
+                now: now,
+                onTap: () => unawaited(_open(n)),
+              ),
+            ),
           );
         },
       );
@@ -167,7 +176,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       appBar: AppBar(
         title: Text(l10n.notificationsTooltip),
         actions: [
-          if (anyUnread)
+          // With large text, the icon with its name as a tooltip, so the
+          // title still fits beside it.
+          if (anyUnread && MediaQuery.textScalerOf(context).scale(10) > 15)
+            IconButton(
+              tooltip: l10n.markAllRead,
+              onPressed: () => unawaited(_markAll()),
+              icon: const Icon(AppIcons.markAllRead),
+            )
+          else if (anyUnread)
             TextButton.icon(
               onPressed: () => unawaited(_markAll()),
               icon: const Icon(AppIcons.markAllRead),
@@ -180,6 +197,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 }
 
+/// One notification: its kind's icon on a disc, coral while unread, the
+/// title (bolder while unread), the body, and when. No colored wash, so
+/// every text reads on the page in every scheme.
 class _NotificationRow extends StatelessWidget {
   const new({required this.item, required this.now, required this.onTap});
 
@@ -191,36 +211,39 @@ class _NotificationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final c = GumdropColors.of(context);
     final unread = !item.read;
     final at = item.createdAt;
     return Semantics(
       // Read out first, so unread items stand out without the color.
       label: unread ? l10n.unread : null,
       child: ListTile(
-        tileColor: unread
-            ? scheme.primaryContainer.withValues(alpha: 0.45)
-            : null,
+        contentPadding: EdgeInsets.zero,
         leading: CircleAvatar(
-          backgroundColor: unread
-              ? scheme.primary
-              : scheme.surfaceContainerHighest,
-          foregroundColor: unread ? scheme.onPrimary : scheme.onSurfaceVariant,
+          backgroundColor: unread ? c.you.face : c.well,
+          foregroundColor: unread ? c.ink : c.textOnPage,
           child: Icon(notificationIcon(item.kind), size: 20),
         ),
         title: Text(
           item.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: unread ? const TextStyle(fontWeight: FontWeight.w600) : null,
+          style: TextStyle(
+            fontWeight: unread ? FontWeight.w800 : FontWeight.w700,
+          ),
         ),
-        subtitle: Text(item.body, maxLines: 2, overflow: TextOverflow.ellipsis),
+        subtitle: Text(
+          item.body,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: c.textMutedOnPage),
+        ),
         trailing: at == null
             ? null
             : Text(
                 relativeTime(l10n, at, now, zone: ViewerZone.of(context)),
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: unread ? scheme.primary : scheme.onSurfaceVariant,
+                  color: unread ? c.you.text : c.textMutedOnPage,
                 ),
               ),
         onTap: onTap,

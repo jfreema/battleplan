@@ -394,11 +394,15 @@ abstract final class AppTheme {
         inactiveTrackColor: g.well,
         thumbColor: g.you.face,
       ),
+      // No textColor: ListTile puts it on the subtitle too, over the muted
+      // color below.
       listTileTheme: ListTileThemeData(
         iconColor: text,
-        textColor: text,
         selectedColor: primary,
-        titleTextStyle: textTheme.bodyLarge?.copyWith(fontSize: 16),
+        titleTextStyle: textTheme.bodyLarge?.copyWith(
+          fontSize: 16,
+          color: text,
+        ),
         subtitleTextStyle: textTheme.bodyMedium?.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w600,

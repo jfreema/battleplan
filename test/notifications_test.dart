@@ -1,4 +1,5 @@
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/data/firestore_user_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -612,6 +613,63 @@ void main() {
       // The chat, at the message.
       expect(find.text('Message 1'), findsOneWidget);
       expect(find.byType(Composer), findsOneWidget);
+    });
+
+    testWidgets('unread items are bolder and marked in coral, with no wash', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        notifications: FakeNotificationRepository([
+          item('n1', title: 'Unread one'),
+          item(
+            'n2',
+            title: 'Read one',
+            read: true,
+            age: const Duration(hours: 3),
+          ),
+        ]),
+      );
+      await tester.tap(find.byTooltip('Notifications'));
+      await tester.pumpAndSettle();
+      FontWeight? weight(String text) => tester
+          .widget<RichText>(
+            find.descendant(
+              of: find.text(text),
+              matching: find.byType(RichText),
+            ),
+          )
+          .text
+          .style
+          ?.fontWeight;
+      expect(weight('Unread one'), FontWeight.w800);
+      expect(weight('Read one'), FontWeight.w700);
+      final c = GumdropColors.of(tester.element(find.text('Unread one')));
+      for (final tile in tester.widgetList<ListTile>(find.byType(ListTile))) {
+        expect(tile.tileColor, isNull);
+      }
+      // The body is muted, and the unread time in the accent text.
+      Color? color(Finder f) => tester
+          .widget<RichText>(
+            find.descendant(of: f, matching: find.byType(RichText)),
+          )
+          .text
+          .style
+          ?.color;
+      expect(
+        color(find.text('Sam replied to you: Sounds good').first),
+        c.textMutedOnPage,
+      );
+      expect(color(find.text('5m')), c.you.text);
+      expect(color(find.text('3h')), c.textMutedOnPage);
+      final discs = tester
+          .widgetList<CircleAvatar>(find.byType(CircleAvatar))
+          .toList();
+      expect(discs.first.backgroundColor, c.you.face);
+      expect(discs.last.backgroundColor, c.well);
     });
 
     testWidgets('Mark all as read clears the rest', (tester) async {
