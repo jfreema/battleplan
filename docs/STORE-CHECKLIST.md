@@ -114,14 +114,16 @@ What the stores' rules say about Dues (DUES-1 to DUES-4), read on 2026-11-06 fro
 
 - **3.1.1:** in-app purchase is for unlocking features or content in the app. Paying dues unlocks nothing.
 - **3.1.3(e):** physical goods and services used outside the app must be paid for some other way than in-app purchase. Uniforms and team fees are exactly that, and they aren't even bought from us.
-- **3.1.1(a) and 3.1.3:** on the US storefront, apps may have buttons and links to other ways to pay. Elsewhere, the limit on pointing people away from in-app purchase is about things in-app purchase could sell, and 3.1.3(e) rules that out for dues. So the iPhone app could have **Open** too, in the US and Canada, which would match Android and the web and end a parity exception (SPEC §4.2). If it does, the App Review notes should say so and cite 3.1.3(e).
-- **3.2.2(iv):** a team can use a due for a fundraiser, since the money is collected outside the app.
-- **3.2.1(viii) and 5.1.1(ix):** banking, money management, and other financial services must come from a licensed institution or a company. Dues is a record, not a financial service, so the individual developer account is fine as long as Battleplan never moves money.
-- **App Privacy** ([data types](https://developer.apple.com/app-store/app-privacy-details/)): what people owe is Other Financial Info. The payment usernames aren't Payment Info, which means cards and bank accounts ([STORE-PRIVACY.md](STORE-PRIVACY.md)).
+- **3.1.1(a) and 3.1.3:** on the US storefront, apps may have buttons and links to other ways to pay. Elsewhere, the limit on pointing people away from in-app purchase is about what in-app purchase would sell, and 3.1.3(e) keeps real-world goods and services out of it. So, on our reading, the iPhone app could have **Open** too, in the US and Canada, which would match Android and the web and end the exception in SPEC §4.2's table. If it does, the App Review notes should say so and cite 3.1.3(e).
+- **3.2.2(iv):** apps that aren't approved nonprofits may not collect fundraising money in the app, only outside it, and must be free. Battleplan is free and collects nothing, so a team can use a due for a fundraiser.
+- **3.2.1(viii) and 5.1.1(ix):** money management must come from the licensed financial institution doing it, and banking and financial services from a legal entity, not an individual developer. Dues is a record, not a financial service, so the individual developer account is fine as long as Battleplan never moves money.
+- **2.3.1(a) and 2.3.3:** the App Review notes describe Dues, and a Dues screenshot for the App Store comes from the iPhone app, whose How to pay has Copy but no Open (the website's come from the web app).
+- **3.1.3(d), 3.2.1(vii), and 3.1.5** don't apply: they cover real-time services sold one to one (tutoring, for example), gifts between users, and cryptocurrency. How to pay has no crypto wallets.
+- **App Privacy** ([data types](https://developer.apple.com/app-store/app-privacy-details/)): what people owe, and whether it's paid, is Other Financial Info (debts). The team's payment usernames aren't Payment Info, which is a payer's form of payment, card, or bank account number: people pay in their own apps, and Battleplan never sees how ([STORE-PRIVACY.md](STORE-PRIVACY.md)).
 
 **Google Play**, [Payments policy](https://support.google.com/googleplay/android-developer/answer/9858738):
 
-- **Section 3:** Play billing must *not* be used for physical goods (3.1(a)), physical services (3.1(b)), or peer-to-peer payments (3.2). Dues are payments between members for real-world things, so no Play billing and no service fee.
+- **Section 3:** Play billing must *not* be used when a payment is mainly for physical goods or physical services, or is a peer-to-peer payment. Dues are payments between members for real-world things, so no Play billing and no service fee.
 - **Section 4:** apps may not lead people to other ways to pay, except in section 3's cases, so the Android app's **Open** buttons are allowed in every country.
 - **US programs** ([Play's US changes](https://support.google.com/googleplay/android-developer/answer/15582165)): the external links and alternative billing programs, with service fees since 2026-10-01, are other ways to sell what would otherwise need Play billing: digital goods and services. Battleplan sells none and doesn't enroll, and the Android app leaves out Buy Jared a coffee (5.8).
 - **Financial features declaration** ([help](https://support.google.com/googleplay/android-developer/answer/13849271)): every app files one. Battleplan's answer is "My app doesn't provide any financial features", since Dues isn't a payment app, a wallet, a money transfer service, or any other category on the form ([STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md) says what to do if review disagrees).
@@ -129,6 +131,6 @@ What the stores' rules say about Dues (DUES-1 to DUES-4), read on 2026-11-06 fro
 
 **What would change this:**
 
-- Charging teams for Dues or anything else, or Buy Jared a coffee in a native app: those are digital, so in-app purchase and Play billing (or, in the US only, a link out under each store's terms and fees then).
-- Taking payments in the app, with card entry or a payment service: still no store cut for real-world fees (3.1.3(e), Payments policy 3.1(a) and 3.1(b)), but it becomes a financial feature on Play, brings payment processor and money transmission rules, and Apple could ask for a company account (5.1.1(ix)).
+- Charging teams for Dues or anything else, or Buy Jared a coffee in a native app: those are payments to the developer for the app, so in-app purchase and Play billing (or, in the US only, a link out under each store's terms and fees then).
+- Taking payments in the app, with card entry or a payment service: still no store cut for real-world fees (3.1.3(e), Payments policy section 3), but it becomes a financial feature on Play, brings payment processor and money transmission rules, and Apple could ask for a company account (5.1.1(ix)).
 - Anything in the app that paying dues unlocks.

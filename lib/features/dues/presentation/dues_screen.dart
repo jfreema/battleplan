@@ -654,6 +654,8 @@ class _HowToPay extends ConsumerWidget {
     final c = GumdropColors.of(context);
     final async = ref.watch(duesPaymentsProvider(groupId));
     final pay = async.value;
+    // The iPhone app only copies, as a precaution (DUES-3, SPEC §4.2); the
+    // store checklist's Store payment rules say why Apple would allow Open.
     final links = kIsWeb || defaultTargetPlatform != TargetPlatform.iOS;
     Widget row(String app, String shown, Uri? link) => PageRow(
       title: app,

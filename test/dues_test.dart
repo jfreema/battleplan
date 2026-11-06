@@ -535,7 +535,8 @@ void main() {
           expect(find.byTooltip('Copy Venmo'), findsOneWidget);
           expect(find.byTooltip('Copy Cash App'), findsOneWidget);
           if (platform == TargetPlatform.iOS) {
-            // Apple's rules: the iPhone app never links out to pay.
+            // A precaution, not Apple's rule (store checklist, Store payment
+            // rules): the iPhone app never links out to pay.
             expect(find.byTooltip('Open Venmo'), findsNothing);
             expect(find.byTooltip('Open Cash App'), findsNothing);
           } else {

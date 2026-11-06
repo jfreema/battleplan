@@ -234,6 +234,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 | Invite links | Open the app (Universal Links) | Open the app (App Links) | Open the site |
 | Save files | Files or Photos | Downloads | Browser download |
 | Haptics | Yes | Yes | — |
+| Dues' How to pay (DUES-3) | Copy only: a precaution, not a store rule ([Store payment rules](STORE-CHECKLIST.md#store-payment-rules)) | Copy, or open Venmo and Cash App | Copy, or open Venmo and Cash App |
 | Keyboard | — | — | Enter sends, Shift+Enter new line, Esc closes, Ctrl/⌘+K opens the team switcher |
 | Offline | Full offline cache | Full offline cache | Offline cache in the browser (lost if site data is cleared) |
 

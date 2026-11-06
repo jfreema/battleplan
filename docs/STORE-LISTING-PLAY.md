@@ -146,7 +146,7 @@ Expect a rating with an "Users interact" notice. Don't pick anything aimed at ch
 - Encrypted in transit: yes. People can ask for their data to be deleted: yes.
 - Account deletion URL: `https://getbattleplan.app/delete-account` (also in the app: Profile, then Settings, then Delete account).
 - Data types and purposes: the table in STORE-PRIVACY.md, row for row (name, email, user IDs, phone number, other financial info, photos, files and docs, other in-app messages, app interactions, other user-generated content, approximate location, crash logs, diagnostics, device or other IDs). Nothing is processed ephemerally, and nothing is used for advertising.
-- **Financial info → Other financial info** is for Dues (2026-11-06): what each player or member owes and whether they paid, and the team's payment usernames under How to pay. Check it: collected, not shared, optional, for App functionality. Leave **User payment info** and **Purchase history** unchecked: Battleplan never sees a card, bank, or account number, and nobody buys anything in the app (STORE-PRIVACY.md, "Dues: what to change in the consoles").
+- **Financial info → Other financial info** is for Dues (2026-11-06): what each player or member owes and whether they paid, and the team's payment usernames under How to pay. Check it: collected, not shared, optional, for App functionality. Leave **User payment info** and **Purchase history** unchecked: Battleplan never sees a card, bank, or account number, nobody buys anything in or through the app, and a share marked paid is a debt settled outside it (STORE-PRIVACY.md, "Dues: what to change in the consoles").
 
 **Government apps:** No, it isn't developed by or for a government.
 
