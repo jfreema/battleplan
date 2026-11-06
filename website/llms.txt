@@ -1,0 +1,38 @@
+# Battleplan
+
+> Battleplan is a free team chat and scheduling app for sports teams, adult and youth. Teams chat, plan games and practices, take RSVPs, run polls, track dues, keep documents, and draw plays in one place. Every feature is free for every team, with no ads.
+
+Battleplan runs in any modern browser at https://getbattleplan.app/app/ (phone or computer). Apps for iPhone and Android are on the way. People sign in with Google or Apple. Accounts are for adults 18 and older; players who don't use the app are roster entries that their guardians answer for.
+
+## Features
+
+- Team chat: photos, replies, reactions, @mentions, pinned messages, announcements, chat search, and direct messages.
+- Schedule and RSVPs: games, practices, meetings, and team events with Going, Maybe, or Not going; opponent, home or away, directions, reminders, and add to calendar.
+- Players and guardians: on a team, RSVPs are for players. Guardians answer for each of their players, and adult players answer for themselves. Groups (not teams) have no players: everyone answers for themselves.
+- All my teams: every team someone is on in one schedule.
+- Polls: one choice or several, named or anonymous, with an optional closing time.
+- Dues: team admins track who has paid for uniforms, fees, and tournaments. Battleplan never processes payments: people pay the team directly with Venmo, Cash App, or Apple Cash. Only admins see what others owe.
+- Documents: files and links, like the lineup, league rules, and waivers, with pinning.
+- Coach's whiteboard: draw plays on a baseball diamond, basketball court, soccer pitch, football field, or blank board, add steps, and play them back.
+- Five color schemes: Army green (the default), Light, Dark, Navy, and Light blue. Each person picks their own for each team, plus a default.
+- Importing: bring a team over from GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar.
+- Joining: invite link, QR code, invite code, or add people by email.
+
+## Pricing
+
+Free. Every team gets every feature, with no ads and no paid tier. Each team has room for 200 MB of photos and files. Donations are voluntary and unlock nothing.
+
+## Privacy
+
+No ads, no selling data, and no tracking across other companies' apps and websites. The website uses no cookies, analytics, or third-party requests. The iPhone and Android apps use Google Analytics for Firebase and Crashlytics to see how the app is used and fix crashes. People can delete their account in the app (Settings, then Delete account) or by email.
+
+## Links
+
+- [Home](https://getbattleplan.app/): what Battleplan is, its features, and the FAQ
+- [Get started](https://getbattleplan.app/app/sign-up): create a free account in the web app
+- [Log in](https://getbattleplan.app/app/): the web app
+- [Switch to Battleplan](https://getbattleplan.app/switch): step-by-step imports from GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar
+- [Support](https://getbattleplan.app/support): common questions and the support email, support@getbattleplan.app
+- [Privacy Policy](https://getbattleplan.app/privacy)
+- [Terms of Use](https://getbattleplan.app/terms)
+- [Delete your account](https://getbattleplan.app/delete-account)

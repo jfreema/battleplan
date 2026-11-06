@@ -699,6 +699,69 @@ async function main() {
     updatedAt: minutesAgo(60 * 24 * 2),
   });
 
+  // Dues (DUES-1 to DUES-3), as the saveDue callable writes them: a due,
+  // and a charge for each player it's for (`<dueId>_<playerId>`), named
+  // as the app labels players ("Jim #3"). Thunder's admins see two dues
+  // with who's paid; on Cyclone, Claire sees what Luke and Alex owe. Each
+  // team shares how to pay (duesPayments).
+  const day = (d: number) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() + d);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+  const label = (id: string) => {
+    const p = players.find((x) => x.id === id)!;
+    return p.number ? `${p.name.split(' ')[0]} #${p.number}` : p.name.split(' ')[0];
+  };
+  const dues: { id: string; groupId: string; title: string; amountCents: number; dueOn: string | null; note: string; days: number; charges: [string, 'owed' | 'paid' | 'waived'][] }[] = [
+    {
+      id: 'thunder-uniforms', groupId: 'thunder', title: 'Uniforms', amountCents: 4500, dueOn: day(10), days: 6,
+      note: 'Jersey and hat. Sizes are in the chat.',
+      charges: [['jim-halpert', 'paid'], ['andy-dwyer', 'owed'], ['pam-beesly', 'paid']],
+    },
+    {
+      id: 'thunder-tournament', groupId: 'thunder', title: 'Tournament fee', amountCents: 3000, dueOn: day(4), days: 2,
+      note: 'Fall classic entry, split three ways.',
+      charges: [['jim-halpert', 'paid'], ['andy-dwyer', 'owed'], ['pam-beesly', 'waived']],
+    },
+    {
+      id: 'cyclone-league-fee', groupId: 'cyclone', title: 'Fall league fee', amountCents: 6000, dueOn: day(7), days: 8,
+      note: 'Covers referees and field time.',
+      charges: [['luke-dunphy', 'owed'], ['alex-dunphy', 'paid'], ['emma-green', 'paid'], ['noah-bennett', 'owed']],
+    },
+    {
+      id: 'cyclone-photos', groupId: 'cyclone', title: 'Team photos', amountCents: 1500, dueOn: day(12), days: 3,
+      note: '',
+      charges: [['luke-dunphy', 'owed'], ['alex-dunphy', 'owed'], ['emma-green', 'owed'], ['noah-bennett', 'owed']],
+    },
+  ];
+  for (const d of dues) {
+    const createdAt = minutesAgo(d.days * 60 * 24);
+    const terms = { title: d.title, amountCents: d.amountCents, dueOn: d.dueOn };
+    await db.doc(`dues/${d.id}`).set({ groupId: d.groupId, ...terms, note: d.note, createdBy: 'coach', createdAt, updatedAt: createdAt });
+    for (const [participantId, status] of d.charges) {
+      await db.doc(`dueCharges/${d.id}_${participantId}`).set({
+        groupId: d.groupId,
+        dueId: d.id,
+        ...terms,
+        participantType: 'player',
+        participantId,
+        participantName: label(participantId),
+        status,
+        paidAt: status === 'paid' ? minutesAgo((d.days - 1) * 60 * 24) : null,
+        updatedBy: 'coach',
+        updatedAt: status === 'owed' ? createdAt : minutesAgo((d.days - 1) * 60 * 24),
+      });
+    }
+  }
+  const payments = {
+    thunder: { venmo: '@thunder-softball', cashApp: '$ThunderSoftball', appleCash: '', note: 'Put your name in the note.' },
+    cyclone: { venmo: '@cyclone-soccer', cashApp: '$CycloneSoccer', appleCash: '', note: "Put your player's name in the note." },
+  };
+  for (const [groupId, p] of Object.entries(payments)) {
+    await db.doc(`duesPayments/${groupId}`).set({ groupId, ...p, updatedBy: 'coach', updatedAt: minutesAgo(60 * 24 * 6) });
+  }
+
   await db.doc('config/app').set({
     allowUserGroupCreation: true,
     maxGroupsCreatedPerUserPerDay: 5,
