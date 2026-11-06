@@ -621,6 +621,7 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
           key: DirectPerson(
             name: value['name'] as String? ?? '',
             photoPath: value['photoPath'] as String?,
+            avatarColor: AvatarColor.tryParse(value['avatarColor'] as String?),
           ),
     },
     nextSeasonId: switch (d['nextSeasonId']) {
@@ -642,6 +643,8 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   lastReadAt: _date(d['lastReadAt']),
   title: d['title'] as String?,
   photoPath: d['photoPath'] as String?,
+  avatarColor: AvatarColor.tryParse(d['avatarColor'] as String?),
+  colorScheme: TeamScheme.tryParse(d['colorScheme'] as String?),
   playerSummary: d['playerSummary'] as String?,
   pending: d['pending'] as bool? ?? false,
   contactPhone: _shared(d['contactPhone']),

@@ -24,6 +24,13 @@ abstract interface class UserRepository {
   /// Saves the theme to the account so it follows the person (SET-2).
   Future<void> setThemeMode(String uid, ThemePreference mode);
 
+  /// Saves the default color scheme (SET-2): the top screens' and every
+  /// team or group not picked for.
+  Future<void> setColorScheme(String uid, TeamScheme scheme);
+
+  /// Saves the candy color behind the icon's initials (SET-8).
+  Future<void> setAvatarColor(String uid, AvatarColor color);
+
   /// Saves the time zone times show in (SET-7), on every device; null is
   /// Automatic, the device's zone.
   Future<void> setTimeZone(String uid, String? zone);
@@ -39,6 +46,10 @@ abstract interface class UserRepository {
   /// Uploads a new profile photo (JPEG, or PNG from the crop step) and
   /// points the profile at it (SET-1).
   Future<void> uploadPhoto(String uid, Uint8List jpegBytes);
+
+  /// Takes the profile photo away, so the icon shows initials (SET-8),
+  /// and deletes the file.
+  Future<void> removePhoto(String uid);
 
   /// A URL to show a stored photo, or null if it can't be loaded.
   Future<String?> photoUrl(String path);

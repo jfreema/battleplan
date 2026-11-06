@@ -208,6 +208,48 @@ enum ThemePreference {
   }
 }
 
+enum TeamScheme {
+  army('army'),
+  light('light'),
+  dark('dark'),
+  navy('navy'),
+  skyblue('skyblue');
+
+  const TeamScheme(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static TeamScheme? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
+enum AvatarColor {
+  blueRaspberry('blueRaspberry'),
+  lemon('lemon'),
+  mint('mint'),
+  grape('grape'),
+  bubblegum('bubblegum'),
+  tangerine('tangerine'),
+  cherry('cherry');
+
+  const AvatarColor(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static AvatarColor? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
 enum GroupKind {
   team('team'),
   group('group'),

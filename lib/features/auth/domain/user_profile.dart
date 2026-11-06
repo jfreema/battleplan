@@ -1,4 +1,5 @@
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/scheme_defaults.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'user_profile.freezed.dart';
@@ -14,6 +15,14 @@ abstract class UserProfile with _$UserProfile {
     String? email,
     String? photoPath,
     @Default(ThemePreference.system) ThemePreference themeMode,
+
+    /// The color scheme for the top screens and every team or group not
+    /// picked for (SET-2). Null: the one [themeMode] maps to.
+    TeamScheme? colorScheme,
+
+    /// The candy color behind the icon's initials when there's no photo
+    /// (SET-8). Null: the hashed color from the name.
+    AvatarColor? avatarColor,
 
     /// The time zone every time shows in, wherever the person is (SET-7),
     /// an IANA ID such as "America/Chicago". Null is Automatic: the
@@ -38,6 +47,10 @@ abstract class UserProfile with _$UserProfile {
   }) = _UserProfile;
 
   const new _();
+
+  /// The default color scheme (SET-2): the one picked, else the old
+  /// theme's.
+  TeamScheme get defaultScheme => colorScheme ?? schemeForThemeMode(themeMode);
 
   /// First-run setup (18+ and Terms) is still to do (AUTH-5).
   bool get needsSetup => adultConfirmedAt == null || acceptedTermsAt == null;

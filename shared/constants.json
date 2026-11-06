@@ -45,6 +45,22 @@
       "arena",
       "olive"
     ],
+    "teamScheme": [
+      "army",
+      "light",
+      "dark",
+      "navy",
+      "skyblue"
+    ],
+    "avatarColor": [
+      "blueRaspberry",
+      "lemon",
+      "mint",
+      "grape",
+      "bubblegum",
+      "tangerine",
+      "cherry"
+    ],
     "groupKind": [
       "team",
       "group",

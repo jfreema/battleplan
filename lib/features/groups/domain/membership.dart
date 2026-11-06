@@ -21,6 +21,14 @@ abstract class Membership with _$Membership {
     /// the roster (TEAM-3).
     String? photoPath,
 
+    /// Their icon's candy color, copied from the profile (SET-8), or null
+    /// for the hashed one.
+    AvatarColor? avatarColor,
+
+    /// The color scheme this member picked for the team (SET-2), seen only
+    /// by them. Null follows their default.
+    TeamScheme? colorScheme,
+
     /// Who's who from their player links (PLAYER-8): "Emma #7, Liam #23"
     /// for a guardian, "#12" for a member who is a player (number first
     /// when both), or null.

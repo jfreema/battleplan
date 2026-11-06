@@ -73,6 +73,14 @@ class FirestoreUserRepository implements UserRepository {
       _update(uid, {'themeMode': mode.value});
 
   @override
+  Future<void> setColorScheme(String uid, TeamScheme scheme) =>
+      _update(uid, {'colorScheme': scheme.value});
+
+  @override
+  Future<void> setAvatarColor(String uid, AvatarColor color) =>
+      _update(uid, {'avatarColor': color.value});
+
+  @override
   Future<void> setTimeZone(String uid, String? zone) =>
       _update(uid, {'timeZone': zone});
 
@@ -107,6 +115,15 @@ class FirestoreUserRepository implements UserRepository {
     }
     await _update(uid, {'photoPath': path});
     if (previous != null && previous != path) {
+      await _storage.ref(previous).delete().catchError((Object _) {});
+    }
+  }
+
+  @override
+  Future<void> removePhoto(String uid) async {
+    final previous = (await _doc(uid).get()).data()?['photoPath'] as String?;
+    await _update(uid, {'photoPath': null});
+    if (previous != null) {
       await _storage.ref(previous).delete().catchError((Object _) {});
     }
   }
@@ -148,6 +165,8 @@ UserProfile userProfileFromFirestore(String uid, Map<String, dynamic> d) =>
       themeMode:
           ThemePreference.tryParse(d['themeMode'] as String?) ??
           ThemePreference.system,
+      colorScheme: TeamScheme.tryParse(d['colorScheme'] as String?),
+      avatarColor: AvatarColor.tryParse(d['avatarColor'] as String?),
       timeZone: switch (d['timeZone']) {
         final String zone when zone.isNotEmpty => zone,
         _ => null,

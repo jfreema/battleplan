@@ -73,7 +73,13 @@ StorageLevel storageLevelOf(int used, int quota) {
 /// their name and photo, kept up to date by the server.
 @freezed
 abstract class DirectPerson with _$DirectPerson {
-  const factory({required String name, String? photoPath}) = _DirectPerson;
+  const factory({
+    required String name,
+    String? photoPath,
+
+    /// Their icon's candy color (SET-8), or null for the hashed one.
+    AvatarColor? avatarColor,
+  }) = _DirectPerson;
 }
 
 /// A team (ARCH §6.2 `groups`), or a direct conversation between two
