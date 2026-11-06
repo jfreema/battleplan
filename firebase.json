@@ -61,8 +61,13 @@
       },
       {
         "source": "/ios",
-        "destination": "/",
+        "destination": "https://apps.apple.com/app/id6823884728",
         "type": 302
+      },
+      {
+        "source": "/images/og.png",
+        "destination": "/images/og.jpg",
+        "type": 301
       }
     ],
     "rewrites": [

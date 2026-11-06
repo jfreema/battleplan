@@ -262,13 +262,20 @@ p, ul, ol { margin: 0 0 1em; }
 .hero-copy .actions { justify-content: center; }
 .lead { font-size: clamp(1.12rem, 3.6vw, 1.32rem); line-height: 1.45; color: var(--muted); max-width: 32em; }
 .switch-note { margin: 10px 0 0; color: var(--muted); font-size: 1rem; }
-.switch-note a { color: var(--text); font-weight: 800; }
+.switch-note a { color: var(--text); font-weight: 800; white-space: nowrap; }
+/* Even lines, so no word sits alone on the last one (browsers without it ignore it). */
+h1, .hero-copy .lead, .section-head p { text-wrap: balance; }
 
 /* The scheme picker: five radio buttons (visually hidden), a fan of phones,
    and a chip for each scheme. The checked scheme's phone comes to the front
    and the middle; the others fan out around it in the app's order. */
 .schemes { border: 0; margin: 0; padding: 0; min-width: 0; }
-.scheme-input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.scheme-input {
+  /* Fixed, so focusing a radio when its chip is tapped never scrolls the page.
+     Keep transform, filter, and contain off the fieldset's ancestors, which
+     would pin the inputs to them instead. */
+  position: fixed; top: 50%; left: 50%; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none;
+}
 .stage {
   --pw: min(232px, 56vw);
   --step: calc(var(--pw) * 0.44);
@@ -341,7 +348,8 @@ label[for="s-skyblue"] { --sw-page: #bcd9f5; --sw-card: #ffffff; --sw-text: #0b1
   .hero-copy { text-align: left; }
   .hero-copy .lead { margin-left: 0; }
   .hero-copy .actions { justify-content: flex-start; }
-  .stage { --pw: 226px; --step: calc(var(--pw) * 0.36); }
+  /* Close enough that the outer phones stay on a 1024 px screen (13-inch iPad). */
+  .stage { --pw: 226px; --step: calc(var(--pw) * 0.32); }
 }
 @media (min-width: 1280px) {
   .stage { --pw: 240px; --step: calc(var(--pw) * 0.42); }
@@ -369,7 +377,7 @@ section { padding: 64px 0; }
 .tile h3 { margin-bottom: 6px; }
 .tile p { color: var(--card-muted); margin: 0 0 20px; }
 .tile .shot { margin-top: auto; height: 318px; padding-top: 18px; overflow: hidden; display: flex; justify-content: center; }
-.tile .phone { width: 230px; border-radius: 32px 32px 0 0; padding-bottom: 0; align-self: flex-start; }
+.tile .phone { width: min(230px, calc(100% - 40px)); border-radius: 32px 32px 0 0; padding-bottom: 0; align-self: flex-start; }
 .tile .phone img { border-radius: 25px 25px 0 0; }
 .tile .tag { bottom: auto; top: -14px; left: auto; right: -18px; transform: rotate(4deg); }
 .tiles li:nth-child(2) { --edge: var(--tangerine); }
@@ -416,6 +424,8 @@ section { padding: 64px 0; }
   .spot-media > .phone:only-child { width: 290px; }
   .spot-media.pair .phone { width: 250px; }
   .spot.flip .spot-media { order: -1; }
+  /* The disc spreads into half the gap at most, never over the copy beside it. */
+  .spot-media::before { width: min(600px, calc(100% + 64px)); }
 }
 
 /* Switching: a row of apps, each in a neutral badge (never their logos). */

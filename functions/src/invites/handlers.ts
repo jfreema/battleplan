@@ -170,7 +170,7 @@ export const joinPage = onRequest({ invoker: 'public' }, async (req, res) => {
   const html = invitePreviewPage(card, {
     joinUrl: joinUrl(raw),
     appJoinUrl: `https://${linkHost()}${appJoinUrl}`,
-    siteImage: `https://${linkHost()}/images/og.png`,
+    siteImage: `https://${linkHost()}/images/og.jpg`,
   });
   res.status(200).type('text/html; charset=utf-8').send(req.method === 'HEAD' ? '' : html);
 });

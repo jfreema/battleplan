@@ -47,7 +47,7 @@ describe("an invite link's preview (task 140)", () => {
   const urls = {
     joinUrl: 'https://getbattleplan.app/join/K7XPM2QR',
     appJoinUrl: 'https://getbattleplan.app/app/join/K7XPM2QR',
-    siteImage: 'https://getbattleplan.app/images/og.png',
+    siteImage: 'https://getbattleplan.app/images/og.jpg',
   };
 
   it('is for link-preview fetchers, not people', () => {
@@ -88,7 +88,7 @@ describe("an invite link's preview (task 140)", () => {
 
   it("is Battleplan's own without a logo, an inviter, or a team", () => {
     const noLogo = invitePreviewPage({ teamName: 'Cyclone', logoUrl: null, invitedBy: null }, urls);
-    expect(noLogo).toContain('<meta property="og:image" content="https://getbattleplan.app/images/og.png">');
+    expect(noLogo).toContain('<meta property="og:image" content="https://getbattleplan.app/images/og.jpg">');
     expect(noLogo).toContain('<meta property="og:image:width" content="1200">');
     expect(noLogo).toContain('<meta name="twitter:card" content="summary_large_image">');
     expect(noLogo).toContain("The team&#39;s chat, schedule, and RSVPs, in one app.");

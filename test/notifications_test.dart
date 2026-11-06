@@ -402,6 +402,27 @@ void main() {
       expect(push.permissionRequests, 0);
       expect(find.text('Notifications on iPhone and iPad'), findsNothing);
     });
+
+    testWidgets("the tip's Get the iPhone app opens the App Store (NOTIF-9)", (
+      tester,
+    ) async {
+      final opener = FakeLinkOpener();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        push: FakePushRepository(permission: PushPermission.unavailable),
+        browser: const FakeBrowserInfo(pushNeedsHomeScreen: true),
+        linkOpener: opener,
+      );
+      await tester.tap(find.text('Get the iPhone app'));
+      await tester.pumpAndSettle();
+      expect(opener.opened, [
+        Uri.parse('https://apps.apple.com/app/id6823884728'),
+      ]);
+      expect(find.text('Notifications on iPhone and iPad'), findsNothing);
+    });
   });
 
   group('settings (NOTIF-3, NOTIF-4, SET-3)', () {

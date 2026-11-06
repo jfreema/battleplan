@@ -16,17 +16,18 @@
   <meta property="og:title" content="Battleplan: free team chat, schedules, and RSVPs for sports teams">
   <meta property="og:description" content="Chat, schedule and RSVPs, polls, dues, documents, and plays for adult and youth teams. Free, with no ads.">
   <meta property="og:url" content="https://getbattleplan.app/">
-  <meta property="og:image" content="https://getbattleplan.app/images/og.png">
+  <meta property="og:image" content="https://getbattleplan.app/images/og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Battleplan, free team chat and scheduling for sports teams, on a phone.">
+  <meta property="og:image:alt" content="Every team needs a Battleplan: Thunder's schedule on five phones, one in each color scheme.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Battleplan: free team chat, schedules, and RSVPs for sports teams">
   <meta name="twitter:description" content="Chat, schedule and RSVPs, polls, dues, documents, and plays for adult and youth teams. Free, with no ads.">
-  <meta name="twitter:image" content="https://getbattleplan.app/images/og.png">
-  <meta name="twitter:image:alt" content="Battleplan, free team chat and scheduling for sports teams, on a phone.">
+  <meta name="twitter:image" content="https://getbattleplan.app/images/og.jpg">
+  <meta name="twitter:image:alt" content="Every team needs a Battleplan: Thunder's schedule on five phones, one in each color scheme.">
   <link rel="preload" href="/fonts/lilita-one.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/black-ops-one.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/site.css">
   <script type="application/ld+json">
   {
@@ -61,9 +62,11 @@
         "description": "Team chat and scheduling for sports teams: chat, schedule and RSVPs, polls, dues tracking, documents, and a coach's whiteboard. Guardians answer RSVPs for their players. Free, with no ads.",
         "url": "https://getbattleplan.app/",
         "applicationCategory": "SportsApplication",
-        "operatingSystem": "Web",
+        "operatingSystem": "iOS, iPadOS, Web",
         "browserRequirements": "Requires a modern browser: Chrome, Edge, Firefox, or Safari.",
-        "image": "https://getbattleplan.app/images/og.png",
+        "downloadUrl": "https://apps.apple.com/app/id6823884728",
+        "sameAs": ["https://apps.apple.com/app/id6823884728"],
+        "image": "https://getbattleplan.app/images/og.jpg",
         "screenshot": [
           "https://getbattleplan.app/images/schedule-army.webp",
           "https://getbattleplan.app/images/chat-navy.webp",
@@ -73,12 +76,16 @@
         "featureList": [
           "Team chat with photos, replies, reactions, mentions, and pinned announcements",
           "Schedule of games and practices with Going, Maybe, and Not going RSVPs",
+          "Private calendar link that keeps Google Calendar, Apple Calendar, or Outlook in sync",
+          "Assignments like snacks, drinks, and scorekeeper",
           "Guardians answer RSVPs for their players",
           "Polls",
           "Dues: track who has paid for uniforms and fees",
           "Team documents and links",
           "Coach's whiteboard for drawing plays",
           "All my teams in one schedule",
+          "New seasons that bring the roster along and archive the old season",
+          "Groups for anything that isn't a team",
           "Five color schemes: Army green, Light, Dark, Navy, and Light blue",
           "Import from GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar"
         ],
@@ -112,12 +119,12 @@
           {
             "@type": "Question",
             "name": "How do I move my team from another app?",
-            "acceptedAnswer": { "@type": "Answer", "text": "A team admin opens Import in the team's menu and picks GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar. You see a preview first, and nothing imported sends notifications. Switch to Battleplan has the steps for each app." }
+            "acceptedAnswer": { "@type": "Answer", "text": "A team admin opens Team info (ⓘ at the top), taps Import, and picks GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar. You see a preview first, and nothing imported sends notifications. Switch to Battleplan has the steps for each app." }
           },
           {
             "@type": "Question",
             "name": "Does it work on iPhone, Android, and computers?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Battleplan works in any modern browser on a phone or a computer, and you sign in with Google or Apple. Apps for iPhone and Android are on the way." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. The iPhone and iPad app is on the App Store, and Battleplan works in any modern browser on a phone or a computer. You sign in with Google or Apple. An Android app is on the way." }
           },
           {
             "@type": "Question",
@@ -161,17 +168,21 @@
             <a class="btn btn-secondary btn-lg" href="/app/">Login</a>
           </div>
           <p class="switch-note">Coming from GroupMe or TeamSnap? <a href="#switch">Bring your history.</a></p>
+          <p class="switch-note">On iPhone or iPad? Get it <a href="https://apps.apple.com/app/id6823884728">on the App Store</a>.</p>
           <!--
-            App Store and Google Play badges (WEB-1, ROADMAP tasks 130 and 179).
-            Hidden until the apps are listed. To turn them on: put the official
-            badge artwork in images/ (Apple: "Download on the App Store";
-            Google: "Get it on Google Play"), fill in the two store URLs, and
-            unwrap the <template> below (keep the div), and set the JSON-LD
-            operatingSystem back to "iOS, Android, Web". Do the same on the support page.
+            App Store and Google Play badges (WEB-1, ROADMAP tasks 133, 179, and 214).
+            The iPhone and iPad app is listed, and the line above links to it in
+            plain text until Apple's badge artwork is added. To turn a badge on:
+            put the official artwork in images/ (Apple: "Download on the App
+            Store"; Google: "Get it on Google Play"), move its <a> out of the
+            <template> into a div.store-badges here, and replace the plain line.
+            Google Play waits for its listing; then set the JSON-LD
+            operatingSystem to "iOS, iPadOS, Android, Web". Do the same on the
+            support page.
           -->
           <template data-store-badges>
             <div class="store-badges">
-              <a href="https://apps.apple.com/app/idAPP_STORE_ID"><img src="/images/app-store-badge.svg" alt="Download on the App Store" width="144" height="48"></a>
+              <a href="https://apps.apple.com/app/id6823884728"><img src="/images/app-store-badge.svg" alt="Download on the App Store" width="144" height="48"></a>
               <a href="https://play.google.com/store/apps/details?id=app.getbattleplan"><img src="/images/google-play-badge.png" alt="Get it on Google Play" width="162" height="48"></a>
             </div>
           </template>
@@ -245,8 +256,11 @@
             <ul class="chips">
               <li>Direct messages</li>
               <li>Reminders</li>
-              <li>Add to calendar</li>
+              <li>Calendar sync</li>
               <li>Chat search</li>
+              <li>Snack sign-ups</li>
+              <li>New seasons</li>
+              <li>Groups, not just teams</li>
               <li>Invite by QR code</li>
               <li>Reports and blocking</li>
             </ul>
@@ -371,11 +385,11 @@
           </details>
           <details id="faq-import">
             <summary>How do I move my team from another app?</summary>
-            <p>A team admin opens <span class="ui">Import</span> in the team's menu and picks GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar. You see a preview first, and nothing imported sends notifications. <a href="/switch">Switch to Battleplan</a> has the steps for each app.</p>
+            <p>A team admin opens <span class="ui">Team info</span> (<span class="ui">ⓘ</span> at the top), taps <span class="ui">Import</span>, and picks GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar. You see a preview first, and nothing imported sends notifications. <a href="/switch">Switch to Battleplan</a> has the steps for each app.</p>
           </details>
           <details>
             <summary>Does it work on iPhone, Android, and computers?</summary>
-            <p>Yes. Battleplan works in any modern browser on a phone or a computer, and you sign in with Google or Apple. Apps for iPhone and Android are on the way.</p>
+            <p>Yes. The iPhone and iPad app is <a href="https://apps.apple.com/app/id6823884728">on the App Store</a>, and Battleplan works in any modern browser on a phone or a computer. You sign in with Google or Apple. An Android app is on the way.</p>
           </details>
           <details>
             <summary>Can I change how my team looks?</summary>
@@ -425,9 +439,16 @@
     // itself is CSS (site.css) and works without this.
     const bar = document.querySelector('meta[name="theme-color"]');
     const pages = { army: '#474c2b', light: '#fbf5e6', dark: '#0e0e0d', navy: '#0b1531', skyblue: '#bcd9f5' };
+    const sync = () => {
+      const checked = document.querySelector('.scheme-input:checked');
+      if (checked) bar.setAttribute('content', pages[checked.value]);
+    };
     for (const input of document.querySelectorAll('.scheme-input')) {
-      input.addEventListener('change', () => bar.setAttribute('content', pages[input.value]));
+      input.addEventListener('change', sync);
     }
+    // Going Back restores the picked radio without a change event.
+    sync();
+    addEventListener('pageshow', sync);
   </script>
 </body>
 </html>

@@ -2,18 +2,23 @@
 
 > Battleplan is a free team chat and scheduling app for sports teams, adult and youth. Teams chat, plan games and practices, take RSVPs, run polls, track dues, keep documents, and draw plays in one place. Every feature is free for every team, with no ads.
 
-Battleplan runs in any modern browser at https://getbattleplan.app/app/ (phone or computer). Apps for iPhone and Android are on the way. People sign in with Google or Apple. Accounts are for adults 18 and older; players who don't use the app are roster entries that their guardians answer for.
+The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id6823884728), and Battleplan runs in any modern browser at https://getbattleplan.app/app/ (phone or computer). An Android app is on the way. People sign in with Google or Apple. Accounts are for adults 18 and older; players who don't use the app are roster entries that their guardians answer for.
 
 ## Features
 
 - Team chat: photos, replies, reactions, @mentions, pinned messages, announcements, chat search, and direct messages.
-- Schedule and RSVPs: games, practices, meetings, and team events with Going, Maybe, or Not going; opponent, home or away, directions, reminders, and add to calendar.
+- Schedule and RSVPs: games, practices, meetings, and team events with Going, Maybe, or Not going; opponent, home or away, directions, and reminders.
+- Calendar link: one private link keeps Google Calendar, Apple Calendar, or Outlook up to date with every team's schedule, including new times, new places, and cancellations.
+- Assignments: snacks, drinks, a scorekeeper, or anything else for an event. Members volunteer for open ones, and admins can assign anyone.
 - Players and guardians: on a team, RSVPs are for players. Guardians answer for each of their players, and adult players answer for themselves. Groups (not teams) have no players: everyone answers for themselves.
 - All my teams: every team someone is on in one schedule.
+- Groups: for anything that isn't a team, with the same chat, schedule, RSVPs, documents, and dues, and everyone answers for themselves. A group's owner can make it a team later.
+- New seasons: a team's owner starts next season as a new team with the people they choose; the old season is archived with its chat, photos, and schedule.
 - Polls: one choice or several, named or anonymous, with an optional closing time.
-- Dues: team admins track who has paid for uniforms, fees, and tournaments. Battleplan never processes payments: people pay the team directly with Venmo, Cash App, or Apple Cash. Only admins see what others owe.
+- Dues: admins track who has paid for uniforms, fees, and tournaments, for every player on a team or every member of a group. Battleplan never processes payments: people pay the team directly with Venmo, Cash App, or Apple Cash. Only admins see what others owe.
 - Documents: files and links, like the lineup, league rules, and waivers, with pinning.
 - Coach's whiteboard: draw plays on a baseball diamond, basketball court, soccer pitch, football field, or blank board, add steps, and play them back.
+- Sports: baseball, softball, soccer, basketball, football, hockey, lacrosse, volleyball, and others.
 - Five color schemes: Army green (the default), Light, Dark, Navy, and Light blue. Each person picks their own for each team, plus a default.
 - Importing: bring a team over from GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar.
 - Joining: invite link, QR code, invite code, or add people by email.
@@ -31,6 +36,7 @@ No ads, no selling data, and no tracking across other companies' apps and websit
 - [Home](https://getbattleplan.app/): what Battleplan is, its features, and the FAQ
 - [Get started](https://getbattleplan.app/app/sign-up): create a free account in the web app
 - [Log in](https://getbattleplan.app/app/): the web app
+- [iPhone and iPad app](https://apps.apple.com/app/id6823884728): Battleplan on the App Store
 - [Switch to Battleplan](https://getbattleplan.app/switch): step-by-step imports from GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar
 - [Support](https://getbattleplan.app/support): common questions and the support email, support@getbattleplan.app
 - [Privacy Policy](https://getbattleplan.app/privacy)

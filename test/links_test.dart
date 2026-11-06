@@ -88,8 +88,9 @@ void main() {
       );
     });
 
-    test('the iPhone app link goes through our domain (NOTIF-9)', () {
-      expect(prod.iosApp.toString(), 'https://getbattleplan.app/ios');
+    test('the iPhone app link opens the App Store listing (NOTIF-9)', () {
+      expect(prod.iosApp.toString(), 'https://apps.apple.com/app/id6823884728');
+      expect(LinkService.forEnv(isProd: false).iosApp, prod.iosApp);
     });
 
     test('website pages stay at the root', () {

@@ -85,10 +85,14 @@ class LinkService {
     {'url': calendarFeed(token).toString(), 'name': name},
   );
 
-  /// The iPhone app's App Store listing (NOTIF-9), through `/ios` on our
-  /// domain, which Hosting redirects to the listing (firebase.json), so the
-  /// link in installed apps never has to change.
-  Uri get iosApp => site('/ios');
+  /// The iPhone and iPad app's App Store listing (NOTIF-9). Hosting's `/ios`
+  /// redirects there too (firebase.json), for links already out.
+  Uri get iosApp => appStoreListing;
+
+  /// The App Store listing, the same for every flavor: only prod ships there.
+  static final Uri appStoreListing = Uri.parse(
+    'https://apps.apple.com/app/id6823884728',
+  );
 
   /// Whether [host] is a custom domain. Firebase accepts only a custom
   /// Hosting domain as an email link's `linkDomain` (M0 spike 2).

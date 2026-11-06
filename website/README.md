@@ -9,16 +9,16 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 | `index.html` | `/`: the landing page (below) |
 | `switch.html` | `/switch`: switching from GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar, the steps for each (the landing page's Switching section and FAQ link here). Other apps appear by name in a neutral badge, never their logos |
 | `support.html` | `/support`: support email, common questions, deleting your account |
-| `privacy.html`, `terms.html` | `/privacy`, `/terms`: the Privacy Policy and Terms of Use, in effect since 2026-10-13 (LEGAL-1, ROADMAP task 121) |
+| `privacy.html`, `terms.html` | `/privacy`, `/terms`: the Privacy Policy and Terms of Use, in effect since 2026-10-13 and last changed 2026-11-06, for dues (LEGAL-1, ROADMAP task 121). When the app starts collecting something new, change the policy, `docs/STORE-PRIVACY.md`, and the iPhone app's privacy manifest together |
 | `delete-account.html` | `/delete-account`: deletion in the app and by email (LEGAL-3) |
 | `404.html` | Hosting's not-found page |
 | `site.css` | All styles, in the app's Open Field look (below) |
 | `fonts/` | Lilita One (titles), Fredoka (buttons, labels, chips, questions), Nunito (body), and Black Ops One (the stencil eyebrows, capitals only) as Latin `woff2` files from Google Fonts, served from this site so it makes no third-party requests, with each font's `*-OFL.txt` license. Fredoka and Nunito are variable fonts (one file covers every weight) |
 | `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | Icons: the brand mark (SPEC §7.1). `favicon.svg` is also the header mark; `tools/brand_icons.sh` makes the PNGs from it and `assets/brand/icon.svg` |
 | `images/*.webp` | App screenshots in Open Field, 600 × 1298, each named for its screen and color scheme (Screenshots, below) |
-| `images/og.png` | Open Graph and Twitter card image, 1200 × 630 |
+| `images/og.jpg` | Open Graph and Twitter card image, 1200 × 630, a JPEG under 300 KB so messaging apps show it (the invite links' preview uses it too). `firebase.json` redirects the old `og.png` here |
 | `robots.txt` | Everything may be crawled, and AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, and others) are welcomed by name. `/app/` stays crawlable so crawlers see its `noindex` |
-| `sitemap.xml` | The six pages, each with its `lastmod`: update a page's date when its content changes |
+| `sitemap.xml` | The six pages, each with its `lastmod`: the date the page's text last changed. Change it with the text, not for edits to the `<head>` alone |
 | `llms.txt` | A short Markdown summary of Battleplan for language models ([llms.txt](https://llmstxt.org/)): what it is, features, pricing, platforms, privacy, and the key links. Hosting serves it as `text/plain`. Keep it in step with the landing page |
 
 Hosting serves `support.html` at `/support` because `firebase.json` sets `cleanUrls`. Links between pages use the clean paths (`/support`, not `/support.html`). Every page links to `/app/` (**Login**) in the header and footer; the landing page's hero and closing section link to `/app/sign-up` (**Get Started**). The site must not have an `app/` folder: `tools/build_hosting.sh` copies this folder (`llms.txt` and all) into `build/hosting/` and builds Flutter into `build/hosting/app/`.
@@ -37,7 +37,7 @@ Short on words: a headline, one line under it, and feature tiles with a two-to-f
 8. **FAQ** (`#faq`): eight short questions. The `FAQPage` in the page's JSON-LD repeats each question and answer word for word: change both together.
 9. **Closing call to action**, then **Donate to Support This Project** (WEB-1).
 
-The `<head>` has the title, description, canonical link, Open Graph and Twitter tags, and one JSON-LD `@graph`: `Organization`, `WebSite`, `SoftwareApplication` (`SportsApplication`, "Web" (until the store apps are listed), free), and `FAQPage`.
+The `<head>` has the title, description, canonical link, Open Graph and Twitter tags, and one JSON-LD `@graph`: `Organization`, `WebSite`, `SoftwareApplication` (`SportsApplication`, "iOS, iPadOS, Web", the App Store listing as its `downloadUrl`, free), and `FAQPage`.
 
 ## The look
 
@@ -57,14 +57,16 @@ The `<head>` has the title, description, canonical link, Open Graph and Twitter 
 - Text and UI paths should match the app's English strings (`lib/l10n/app_en.arb`), for example **Settings** → **Delete account**, and the schemes' names.
 - On the landing page, say **players** and **guardians**: never kids, children, or parents (the owner's rule, 2026-10-16). Accounts are for adults; players who don't use the app are roster entries their guardians answer for.
 
-## Store badges
+## The App Store and Google Play
 
-The App Store and Google Play badges wait for the listings (ROADMAP tasks 130 and 179). They're already in `index.html` (hero) and `support.html` (Getting the app) inside a `<template data-store-badges>`, which the browser never renders or loads. When the apps are listed:
+The iPhone and iPad app is on the App Store at `https://apps.apple.com/app/id6823884728` (Apple ID 6823884728, bundle `app.getbattleplan`). The landing page (a line under the hero, and the FAQ), the support page (Getting the app), `llms.txt`, and the JSON-LD link to it in plain text; `/ios` in `firebase.json` redirects to it, and the web app's iPhone notification tip opens it (NOTIF-9, `LinkService.iosApp`). Android is "on the way" everywhere until it's on Google Play.
 
-1. Add the official badge artwork to `images/` (`app-store-badge.svg`, `google-play-badge.png`) following Apple's and Google's badge guidelines.
-2. Replace `APP_STORE_ID` in the App Store URL, and check the Play package (`app.getbattleplan`). Point the `/ios` redirect in `firebase.json` at the same App Store URL: the web app's iPhone notification tip links there (NOTIF-9), and until then it lands on the home page.
-3. Remove the `<template>` wrapper around the `store-badges` div in both files.
-4. Update the copy that says the apps are "on the way" (landing page card, support page).
+The badges wait (ROADMAP tasks 179 and 214). They're already in `index.html` (hero) and `support.html` (Getting the app) inside a `<template data-store-badges>`, which the browser never renders or loads. To turn one on:
+
+1. Add the official badge artwork to `images/` (`app-store-badge.svg`, `google-play-badge.png`) following Apple's and Google's badge guidelines. Apple's needs the owner's OK to download.
+2. For Google Play, check the package (`app.getbattleplan`).
+3. Move that badge's `<a>` out of the `<template>` into a `div.store-badges`, in both files, and take out the plain line it replaces.
+4. Once Google Play is live: change the copy that says the Android app is "on the way" (the FAQ and its JSON-LD copy, the support page, `llms.txt`, the README) and set the JSON-LD `operatingSystem` to "iOS, iPadOS, Android, Web".
 
 ## Screenshots
 
@@ -90,12 +92,12 @@ The current set (Open Field, all five schemes, 2026-11-06, the owner's request) 
 - **Chat:** coach lands in Thunder's chat at the first unread message, so take `chat-navy` first after seeding.
 - **Dues:** open `/g/<team>/info`, then press **Dues** (going there directly leaves the app bar without its back button). The seed's dues are on Thunder and Cyclone.
 - **All my teams:** press **Filter**, the **All my teams** switch, then **Dismiss**.
-- **Whiteboard:** open `/g/cyclone/plays/cyclone-relay-home`, press **Next step**, and wait about 4 seconds.
+- **Whiteboard:** open `/g/thunder/plays/thunder-relay-home`, press **Next step**, and wait about 4 seconds.
 - **Focus rings:** run `document.activeElement.blur()` before each shot (the documents filter field and closed sheets leave focus behind).
 
 Convert each PNG to WebP at quality 80 (headless Chrome's `canvas.toDataURL('image/webp', 0.8)` works where `cwebp` isn't installed) as `images/<name>-<scheme>.webp`, using the names in the table.
 
-Regenerate `images/og.png` at 1200 × 630: the brand mark, the heading and one line of copy on the left, and a fan of the five `schedule-*` captures on the Army green page color on the right. It's a plain HTML page using `fonts/` and the PNG captures, screenshotted in headless Chrome at 1200 × 630.
+Regenerate `images/og.jpg` at 1200 × 630 when the hero's heading or its schedule shots change: the brand mark, the stencil eyebrow, the page's heading ("Every team needs a Battleplan."), and one line of copy on the left, and a fan of the five `images/schedule-*.webp` on the Army green page color on the right. It's a plain HTML page using `fonts/` and those images, outside this folder, screenshotted in headless Chrome at 1200 × 630 as a JPEG at quality 85 (about 140 KB).
 
 ## Checking it
 

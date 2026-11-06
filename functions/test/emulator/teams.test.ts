@@ -1081,7 +1081,7 @@ describe("the team's link (INV-2, §3)", () => {
     const revoked = await open(`/join/${link.code}`, 'Twitterbot/1.0');
     expect(revoked.body).toContain('Join your team on Battleplan');
     expect(revoked.body).not.toContain('Thunder');
-    expect((await open('/join/', 'Twitterbot/1.0')).body).toContain('images/og.png');
+    expect((await open('/join/', 'Twitterbot/1.0')).body).toContain('images/og.jpg');
     expect((await open('/join/', 'Mozilla/5.0')).location).toBe('/app/join');
   });
 });
