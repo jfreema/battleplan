@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Regenerates every icon and splash screen from the brand mark (SPEC §7.1:
-# the Sticker Crest, a tilted lemon shield with a B in a chat bubble, on
-# blue raspberry).
+# the Stencil Crest, an upright team-patch shield with a cream stencil B, on
+# an Army green tile).
 #
-#   assets/brand/icon.svg  the full icon: white mark on blue, square
+#   assets/brand/icon.svg  the full icon: the crest on its Army green tile, square
 #   assets/brand/mark.svg  the mark alone on transparent, inside the splash
 #                          screens' safe zones (Android 12 crops a circle)
 #   assets/brand/foreground.svg  the mark larger, for Android's adaptive icon
@@ -12,8 +12,10 @@
 #                          icon
 #   assets/brand/maskable.svg  the web app's maskable icon: the mark inside
 #                          the 80% circle any mask keeps
-#   website/favicon.svg    the website's favicon and header mark: the rounded
-#                          tile, also the web app's 32 px favicon
+#   website/favicon.svg    the website's header mark: the rounded tile, also
+#                          the web app's 32 px favicon PNG
+#   website/favicon-small.svg  the browser-tab icon, drawn on the 16 px grid
+#                          (also web/favicon-small.svg; not rendered here)
 #
 # Renders each to 1024 px PNGs with headless Chrome (set CHROME to another
 # Chromium binary if needed), runs flutter_launcher_icons and

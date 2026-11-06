@@ -1,13 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:material_ui/material_ui.dart';
 
-/// The Battleplan mark (SPEC §7.1), the Sticker Crest: a lemon shield,
-/// tilted and outlined in navy on a navy hard shadow, with a white chat
-/// bubble saying B, on a rounded blue raspberry tile. Drawn from the same
-/// shapes as `website/favicon.svg` and `assets/brand/*.svg`, so it's sharp
-/// at any size and needs no image to load. Decorative: screen readers skip
-/// it, as the app's name is always written next to it.
+/// The Battleplan mark (SPEC §7.1), the Stencil Crest: an upright team-patch
+/// shield with a cream rim, a cream B and a coral hem at its point, on a
+/// rounded army-green tile, with an ink edge and hard ink shadows like Open
+/// Field's stickers. Drawn from the same shapes as `website/favicon.svg` and
+/// `assets/brand/*.svg`, so it's sharp at any size and needs no image to load.
+/// Decorative: screen readers skip it, as the app's name is always written
+/// next to it.
 class BrandMark extends StatelessWidget {
   const new({this.size = 72, super.key});
 
@@ -24,107 +23,105 @@ class _MarkPainter extends CustomPainter {
   // The art is drawn in the SVGs' 1024 coordinates.
   static const _tile = 1024.0;
   static const _corner = 224.0;
-  static const _navy = Color(0xFF0B1531);
-  static const _lemon = Color(0xFFFFD84A);
-  static const _white = Color(0xFFFFFFFF);
+  static const _ink = Color(0xFF1A1A18);
+  static const _cream = Color(0xFFF4EAD0);
+  static const _olive = Color(0xFF575A3A);
+  static const _coral = Color(0xFFF45B5B);
 
+  // The shield's field: a flat top with cut corners (softened a little),
+  // straight sides, and a long curved point. The ink edge and the cream rim
+  // are this path stroked with miter joins.
   static final Path _shield = Path()
-    ..moveTo(240, 196)
-    ..lineTo(784, 196)
-    ..quadraticBezierTo(832, 196, 832, 244)
-    ..lineTo(832, 492)
-    ..cubicTo(832, 700, 694, 808, 512, 862)
-    ..cubicTo(330, 808, 192, 700, 192, 492)
-    ..lineTo(192, 244)
-    ..quadraticBezierTo(192, 196, 240, 196)
+    ..moveTo(277.6, 160)
+    ..lineTo(714.4, 160)
+    ..cubicTo(718.5, 160, 722.4, 161.6, 725.3, 164.5)
+    ..lineTo(795.5, 234.7)
+    ..cubicTo(798.4, 237.6, 800, 241.5, 800, 245.6)
+    ..lineTo(800, 549.4)
+    ..cubicTo(800, 674.8, 648, 758.4, 496, 848)
+    ..cubicTo(344, 758.4, 192, 674.8, 192, 549.4)
+    ..lineTo(192, 245.6)
+    ..cubicTo(192, 241.5, 193.6, 237.6, 196.5, 234.7)
+    ..lineTo(266.7, 164.5)
+    ..cubicTo(269.6, 161.6, 273.5, 160, 277.6, 160)
     ..close();
 
-  static final Path _bubble = Path()
-    ..moveTo(371, 337)
-    ..lineTo(653, 337)
-    ..quadraticBezierTo(725, 337, 725, 409)
-    ..lineTo(725, 539)
-    ..quadraticBezierTo(725, 611, 653, 611)
-    ..lineTo(476, 611)
-    ..lineTo(392, 688)
-    ..lineTo(406, 611)
-    ..lineTo(371, 611)
-    ..quadraticBezierTo(299, 611, 299, 539)
-    ..lineTo(299, 409)
-    ..quadraticBezierTo(299, 337, 371, 337)
+  // The coral hem: the field's point below y = 736.
+  static final Path _hem = Path()
+    ..moveTo(674.6, 736)
+    ..cubicTo(622.3, 774.6, 559.2, 810.8, 496, 848)
+    ..cubicTo(432.8, 810.8, 369.7, 774.6, 317.4, 736)
+    ..lineTo(674.6, 736)
     ..close();
 
-  // Lilita One's B, as a path.
+  // The B, Black Ops One's shape fitted to whole pixels at 32 px. Its two
+  // counters wind the other way, so they stay holes.
   static final Path _b = Path()
-    ..moveTo(565.7, 433.8)
-    ..quadraticBezierTo(565.7, 456.7, 545.9, 468.6)
-    ..quadraticBezierTo(556.7, 472.5, 563.9, 482.2)
-    ..quadraticBezierTo(571.2, 491.9, 571.2, 509.6)
-    ..quadraticBezierTo(571.2, 527.3, 558.1, 537.7)
-    ..quadraticBezierTo(545, 548, 520.6, 548)
-    ..lineTo(468.7, 548)
-    ..quadraticBezierTo(464.9, 548, 462.5, 545.5)
-    ..quadraticBezierTo(460.1, 542.9, 460.1, 538.8)
-    ..lineTo(460.1, 398)
-    ..quadraticBezierTo(460.1, 395.5, 460.8, 394.8)
-    ..quadraticBezierTo(461.6, 394, 464, 394)
-    ..lineTo(514.2, 394)
-    ..quadraticBezierTo(565.7, 394, 565.7, 433.8)
+    ..moveTo(256, 224)
+    ..lineTo(608, 224)
+    ..lineTo(704, 320)
+    ..lineTo(704, 400)
+    ..lineTo(656, 448)
+    ..lineTo(704, 496)
+    ..lineTo(704, 576)
+    ..lineTo(608, 672)
+    ..lineTo(256, 672)
     ..close()
-    ..moveTo(502.3, 429.6)
-    ..lineTo(502.3, 458.5)
-    ..lineTo(503.4, 458.5)
-    ..quadraticBezierTo(524.5, 458.5, 524.5, 444.4)
-    ..quadraticBezierTo(524.5, 436.7, 520.5, 433.2)
-    ..quadraticBezierTo(516.4, 429.6, 506.9, 429.6)
+    ..moveTo(416, 320)
+    ..lineTo(416, 416)
+    ..lineTo(544, 416)
+    ..lineTo(544, 320)
     ..close()
-    ..moveTo(502.3, 484.4)
-    ..lineTo(502.3, 513)
-    ..lineTo(506.3, 513)
-    ..quadraticBezierTo(515.7, 513, 520.1, 509.5)
-    ..quadraticBezierTo(524.5, 506, 524.5, 498.3)
-    ..quadraticBezierTo(524.5, 490.6, 520.5, 487.5)
-    ..quadraticBezierTo(516.4, 484.4, 506.9, 484.4)
+    ..moveTo(416, 480)
+    ..lineTo(416, 576)
+    ..lineTo(544, 576)
+    ..lineTo(544, 480)
     ..close();
 
   @override
   void paint(Canvas canvas, Size size) {
     const tile = Rect.fromLTWH(0, 0, _tile, _tile);
-    Paint stroke(double width) => Paint()
-      ..color = _navy
+    // Paint for an outline drawn centred on the shield's edge.
+    Paint stroke(Color color, double width) => Paint()
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = width
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.miter
+      ..strokeMiterLimit = 8;
+    final ink = Paint()..color = _ink;
     canvas
       ..save()
       ..scale(size.width / _tile, size.height / _tile)
+      // The tile: army green, lifted a little in the middle.
       ..drawRRect(
         RRect.fromRectAndRadius(tile, const Radius.circular(_corner)),
         Paint()
           ..shader = const RadialGradient(
-            center: Alignment(0, -0.4),
-            radius: 0.82,
-            colors: [Color(0xFF6DB3FF), Color(0xFF2F6FDE)],
+            center: Alignment(0, -0.140625),
+            radius: 0.72265625,
+            colors: [Color(0xFF50552F), Color(0xFF474C2B), Color(0xFF3D4124)],
+            stops: [0, 0.55, 1],
           ).createShader(tile),
       )
-      // As the favicon: the crest 10% bigger, then nudged and tilted 7°.
-      ..translate(512, 512)
-      ..scale(1.1)
-      ..translate(-512 - 16, -512 - 26)
-      ..translate(512, 512)
-      ..rotate(-7 * math.pi / 180)
-      ..translate(-512, -512)
-      // The hard shadow, then the shield, the bubble, and the B.
+      // The crest's hard shadow, down and to the right.
       ..save()
-      ..translate(40, 40)
-      ..drawPath(_shield, Paint()..color = _navy)
-      ..drawPath(_shield, stroke(36))
+      ..translate(24, 28)
+      ..drawPath(_shield, ink)
+      ..drawPath(_shield, stroke(_ink, 192))
       ..restore()
-      ..drawPath(_shield, Paint()..color = _lemon)
-      ..drawPath(_shield, stroke(36))
-      ..drawPath(_bubble, Paint()..color = _white)
-      ..drawPath(_bubble, stroke(26))
-      ..drawPath(_b, Paint()..color = _navy)
+      // The ink edge, the cream rim, the olive field and the coral hem.
+      ..drawPath(_shield, ink)
+      ..drawPath(_shield, stroke(_ink, 192))
+      ..drawPath(_shield, Paint()..color = _cream)
+      ..drawPath(_shield, stroke(_cream, 128))
+      ..drawPath(_shield, Paint()..color = _olive)
+      ..drawPath(_hem, Paint()..color = _coral)
+      // The B's hard shadow, then the B.
+      ..save()
+      ..translate(24, 24)
+      ..drawPath(_b, ink)
+      ..restore()
+      ..drawPath(_b, Paint()..color = _cream)
       ..restore();
   }
 

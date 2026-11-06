@@ -14,7 +14,7 @@ The static website at the root of `getbattleplan.app` (SPEC §4.3 WEB-1 to WEB-5
 | `404.html` | Hosting's not-found page |
 | `site.css` | All styles, in the app's Open Field look (below) |
 | `fonts/` | Lilita One (titles), Fredoka (buttons, labels, chips, questions), Nunito (body), and Black Ops One (the stencil eyebrows, capitals only) as Latin `woff2` files from Google Fonts, served from this site so it makes no third-party requests, with each font's `*-OFL.txt` license. Fredoka and Nunito are variable fonts (one file covers every weight) |
-| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` | Icons: the brand mark (SPEC §7.1). `favicon.svg` is also the header mark; `tools/brand_icons.sh` makes the PNGs from it and `assets/brand/icon.svg` |
+| `favicon.svg`, `favicon-small.svg`, `favicon-32.png`, `apple-touch-icon.png` | Icons: the brand mark, the Stencil Crest (SPEC §7.1). `favicon-small.svg` is the browser-tab icon, drawn on the 16 px grid, which every page links as `rel=icon`; `favicon.svg` is the header mark; `tools/brand_icons.sh` makes the PNGs from it and `assets/brand/icon.svg` |
 | `images/*.webp` | App screenshots in Open Field, 600 × 1298, each named for its screen and color scheme (Screenshots, below) |
 | `images/og.jpg` | Open Graph and Twitter card image, 1200 × 630, a JPEG under 300 KB so messaging apps show it (the invite links' preview uses it too). `firebase.json` redirects the old `og.png` here |
 | `robots.txt` | Everything may be crawled, and AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, and others) are welcomed by name. `/app/` stays crawlable so crawlers see its `noindex` |
