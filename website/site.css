@@ -543,8 +543,16 @@ kbd, .ui {
 }
 .footer-links a:hover { text-decoration: underline 2px var(--mark); }
 .site-footer p { margin: 0; }
+/* Who made it, with the Battle Baseball wordmark (owner's request 2026-11-06). */
+.made-by {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
+  padding-bottom: 20px; margin-bottom: 8px; border-bottom: 1px solid var(--hairline);
+}
+.made-by .battle-baseball { width: 168px; height: auto; flex: none; overflow: visible; }
+.made-by p { flex: 1 1 220px; color: var(--text); font: 600 1.05rem/1.4 var(--label); }
 @media (min-width: 760px) {
   .site-footer .wrap { grid-template-columns: 1fr auto; align-items: center; }
+  .site-footer .made-by { grid-column: 1 / -1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
