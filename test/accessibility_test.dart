@@ -728,6 +728,51 @@ void main() {
                 null,
       );
     });
+
+    testWidgets('a ring left on an RSVP pill or an event card goes away at '
+        'the first touch', (tester) async {
+      await pumpSchedule(tester, scheme: TeamScheme.skyblue);
+      final rings = find.byWidgetPredicate(
+        (w) =>
+            w is DecoratedBox &&
+            w.position == DecorationPosition.foreground &&
+            w.decoration is BoxDecoration &&
+            (w.decoration as BoxDecoration).border != null &&
+            (w.decoration as BoxDecoration).border!.top.width == 3,
+      );
+      Future<void> touch() async {
+        // A finger down and away again, so nothing is tapped and the
+        // focus stays where it was.
+        final finger = await tester.startGesture(const Offset(195, 400));
+        await finger.cancel();
+        await tester.pump();
+      }
+
+      await tabTo(
+        tester,
+        'Going',
+        (c) =>
+            c.findAncestorWidgetOfExactType<SegmentedButton<RsvpStatus>>() !=
+                null &&
+            _textIn(c) == 'Going',
+      );
+      final pill = FocusManager.instance.primaryFocus;
+      await touch();
+      expect(FocusManager.instance.highlightMode, FocusHighlightMode.touch);
+      expect(FocusManager.instance.primaryFocus, pill);
+      expect(rings, findsNothing, reason: 'the pill keeps no ring');
+
+      await tabTo(
+        tester,
+        'an event card',
+        (c) =>
+            c.findAncestorWidgetOfExactType<TapCard>() != null &&
+            c.findAncestorWidgetOfExactType<SegmentedButton<RsvpStatus>>() ==
+                null,
+      );
+      await touch();
+      expect(rings, findsNothing, reason: 'the card keeps no ring');
+    });
   });
 }
 

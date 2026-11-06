@@ -39,8 +39,10 @@ class _FocusRingInkState extends State<FocusRingInk> {
 
 /// The 3 px focus ring in the text color (SPEC §7.6), drawn over the edge
 /// of [child] in the shape [radius] gives, while [focused] and the keyboard
-/// is in use (no ring after a tap).
-class FocusRing extends StatelessWidget {
+/// is in use (no ring after a tap). It follows the highlight mode, so a
+/// ring left on a control goes away as soon as the person touches the
+/// screen.
+class FocusRing extends StatefulWidget {
   const new({
     required this.focused,
     required this.child,
@@ -68,22 +70,50 @@ class FocusRing extends StatelessWidget {
       );
 
   @override
+  State<FocusRing> createState() => _FocusRingState();
+}
+
+class _FocusRingState extends State<FocusRing> {
+  @override
+  void initState() {
+    super.initState();
+    FocusManager.instance.addHighlightModeListener(_modeChanged);
+  }
+
+  @override
+  void dispose() {
+    FocusManager.instance.removeHighlightModeListener(_modeChanged);
+    super.dispose();
+  }
+
+  void _modeChanged(FocusHighlightMode _) {
+    if (widget.focused) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) => DecoratedBox(
     position: DecorationPosition.foreground,
-    decoration: focused && showing
-        ? decoration(context, radius)
+    decoration: widget.focused && FocusRing.showing
+        ? FocusRing.decoration(context, widget.radius)
         : const BoxDecoration(),
-    child: child,
+    child: widget.child,
   );
 }
 
-/// The focus ring as a foreground decoration for the face of a button that
-/// [context] sits inside (an RSVP pill in a [SegmentedButton] segment), or
-/// null while that button, the nearest [Focus] above, doesn't have the
-/// keyboard focus. [context] rebuilds as that focus changes.
-Decoration? buttonFocusRing(BuildContext context, BorderRadius radius) {
-  final focused = Focus.maybeOf(context)?.hasPrimaryFocus ?? false;
-  return focused && FocusRing.showing
-      ? FocusRing.decoration(context, radius)
-      : null;
+/// The focus ring around the face of a button that this sits inside (an
+/// RSVP pill in a [SegmentedButton] segment), while that button, the
+/// nearest [Focus] above, has the keyboard focus.
+class ButtonFocusRing extends StatelessWidget {
+  const new({required this.radius, required this.child, super.key});
+
+  final BorderRadius radius;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => FocusRing(
+    // Rebuilds as that focus changes.
+    focused: Focus.maybeOf(context)?.hasPrimaryFocus ?? false,
+    radius: radius,
+    child: child,
+  );
 }

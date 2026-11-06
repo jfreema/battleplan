@@ -339,7 +339,7 @@ class RsvpChoice extends StatelessWidget {
         style: ButtonStyle(
           backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
           // The gumdrops and pills draw every state, the keyboard focus as
-          // a ring around themselves (buttonFocusRing).
+          // a ring around themselves (ButtonFocusRing).
           overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           side: const WidgetStatePropertyAll(BorderSide.none),
           shape: const WidgetStatePropertyAll(RoundedRectangleBorder()),
@@ -418,46 +418,45 @@ class _RsvpGumdrop extends StatelessWidget {
       child: Padding(
         // The lip's room below every button, picked or not.
         padding: const EdgeInsets.only(bottom: 4),
-        child: Container(
-          foregroundDecoration: buttonFocusRing(
-            context,
-            BorderRadius.circular(23),
-          ),
-          decoration: BoxDecoration(
-            color: selected ? accent.face : null,
-            borderRadius: BorderRadius.circular(23),
-            border: Border.all(
-              color: selected ? accent.lip : c.outline,
-              width: 2,
+        child: ButtonFocusRing(
+          radius: BorderRadius.circular(23),
+          child: Container(
+            decoration: BoxDecoration(
+              color: selected ? accent.face : null,
+              borderRadius: BorderRadius.circular(23),
+              border: Border.all(
+                color: selected ? accent.lip : c.outline,
+                width: 2,
+              ),
+              boxShadow: selected
+                  ? [BoxShadow(color: accent.lip, offset: const Offset(0, 4))]
+                  : null,
             ),
-            boxShadow: selected
-                ? [BoxShadow(color: accent.lip, offset: const Offset(0, 4))]
-                : null,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Center(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(glyph, size: size, weight: 700, color: icon),
-                  const SizedBox(width: 6),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    style: GumdropStyle.of(context).label(
-                      TextStyle(
-                        fontWeight: selected
-                            ? FontWeight.w700
-                            : FontWeight.w600,
-                        fontSize: selected ? 17 : 16,
-                        height: 1,
-                        color: text,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(glyph, size: size, weight: 700, color: icon),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      style: GumdropStyle.of(context).label(
+                        TextStyle(
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          fontSize: selected ? 17 : 16,
+                          height: 1,
+                          color: text,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -512,43 +511,45 @@ class _RsvpPill extends StatelessWidget {
       RsvpStatus.maybe => (AppIcons.maybe, 18.0),
       RsvpStatus.notGoing => (AppIcons.notGoing, 14.0),
     };
-    final pill = Container(
-      height: 36,
-      foregroundDecoration: buttonFocusRing(context, BorderRadius.circular(18)),
-      decoration: BoxDecoration(
-        color: selected ? accent.face : null,
-        borderRadius: BorderRadius.circular(18),
-        border: selected
-            ? Border.all(color: accent.lip, width: 2)
-            : unanswered && enabled
-            ? Border.all(color: c.cardOutline, width: 1.5)
-            : null,
-        boxShadow: selected
-            ? [BoxShadow(color: accent.lip, offset: const Offset(0, 3))]
-            : null,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(glyph, size: size, weight: 700, color: icon),
-              SizedBox(width: status == RsvpStatus.maybe ? 2 : 4),
-              Text(
-                label,
-                maxLines: 1,
-                style: GumdropStyle.of(context).label(
-                  TextStyle(
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    fontSize: 14,
-                    height: 1,
-                    color: text,
+    final pill = ButtonFocusRing(
+      radius: BorderRadius.circular(18),
+      child: Container(
+        height: 36,
+        decoration: BoxDecoration(
+          color: selected ? accent.face : null,
+          borderRadius: BorderRadius.circular(18),
+          border: selected
+              ? Border.all(color: accent.lip, width: 2)
+              : unanswered && enabled
+              ? Border.all(color: c.cardOutline, width: 1.5)
+              : null,
+          boxShadow: selected
+              ? [BoxShadow(color: accent.lip, offset: const Offset(0, 3))]
+              : null,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(glyph, size: size, weight: 700, color: icon),
+                SizedBox(width: status == RsvpStatus.maybe ? 2 : 4),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: GumdropStyle.of(context).label(
+                    TextStyle(
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                      fontSize: 14,
+                      height: 1,
+                      color: text,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

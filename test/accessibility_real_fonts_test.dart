@@ -1,8 +1,12 @@
 // Tap targets with the app's real fonts (SPEC §7.6), at a 390 px phone and
 // a 360 px one (many Android phones). The test font draws every letter
-// 1 em wide, so a tap area sized by its word ("Past") or squeezed by a
-// narrow screen (the icon colors) only shows up here. Fonts stay loaded
-// for the whole file, which is why this is a file of its own.
+// 1 em wide, so a tap area sized by its word or squeezed by a narrow
+// screen (the icon colors) only shows up here. Fonts stay loaded for the
+// whole file, which is why this is a file of its own.
+//
+// The schedule isn't here yet: its Upcoming/Past toggle sizes each tab by
+// its word, and "Past" is narrower than 44 px. The schedule's own fix
+// widens those tabs and adds the schedule to this list.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
