@@ -687,10 +687,10 @@ void main() {
       expect(bellBadge('2'), findsOneWidget);
       await tester.tap(find.byTooltip('Notifications'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Mark all as read'));
+      await tester.tap(find.byTooltip('Mark all as read'));
       await tester.pumpAndSettle();
       expect(notifications.markAllCalls, 1);
-      expect(find.text('Mark all as read'), findsNothing);
+      expect(find.byTooltip('Mark all as read'), findsNothing);
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(bellBadge('2'), findsNothing);

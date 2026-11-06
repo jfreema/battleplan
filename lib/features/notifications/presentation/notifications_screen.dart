@@ -177,9 +177,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         leading: upButton(context),
         title: Text(l10n.notificationsTooltip),
         actions: [
-          // With large text, the icon with its name as a tooltip, so the
-          // title still fits beside it.
-          if (anyUnread && MediaQuery.textScalerOf(context).scale(10) > 15)
+          // On a phone or with large text, the icon with its name as a
+          // tooltip, so the title still fits beside it.
+          if (anyUnread &&
+              (MediaQuery.sizeOf(context).width < 600 ||
+                  MediaQuery.textScalerOf(context).scale(10) > 15))
             IconButton(
               tooltip: l10n.markAllRead,
               onPressed: () => unawaited(_markAll()),
