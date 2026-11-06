@@ -12,8 +12,10 @@
 //   npm --prefix tools/seed run seed                      (in another)
 //   npm --prefix tools/seed run store-shots               (then this)
 //
-// The iPhone shots use it as it is. For the iPad's, run it (again, or in
-// its place) with `-- --ipad`: Thunder's earlier messages move to
+// After it the coach lands in the run club's chat, the chat shot on the
+// iPhone and the iPad; switch teams for the others (docs/STORE-LISTING.md
+// says whose each is). `-- --ipad` (run again, or in its place) changes only
+// Thunder's chat, which no shot shows now: its earlier messages move to
 // yesterday, so its wide chat has no date chip in the middle, and the
 // jerseys post loses its caption. The photos in store-shots/ were made
 // for this and the seed (no people); their .html files say how.

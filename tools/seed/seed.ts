@@ -574,14 +574,15 @@ async function main() {
   // functions/src/teams/service.ts): kind 'group', sport 'other', the
   // default settings, its owner not a coach, and no chat look, so each
   // person's own bubbles are the scheme's coral. No players, events, polls,
-  // dues, documents, or plays. Monica runs it with Rachel as an admin; the coach, Phil, and
-  // Chandler joined with its code. Claire and Jim aren't in it, so their
-  // screenshots stay as they were. Its chat is only messages (the website's
-  // group chat screenshot, as the coach): a reply, a few reactions, and one
-  // photo, 2:1 so the chat draws it small (a lone photo keeps its shape up
-  // to 2:1, at most 280 wide: 280 × 140). Everyone has read it all, so it
-  // opens at its newest message with nothing unread; that message is older
-  // than Thunder's, so the coach still lands on Thunder after signing in.
+  // dues, documents, or plays. Monica runs it with Rachel as an admin; the
+  // coach, Phil, and Chandler joined with its code. Claire and Jim aren't in
+  // it, so their screenshots stay as they were. Its chat is only messages
+  // (the website's group chat screenshot, as the coach): a reply, a few
+  // reactions, and one photo, 2:1 so the chat draws it small (a lone photo
+  // keeps its shape up to 2:1, at most 280 wide: 280 × 140). Everyone has
+  // read it all, so it opens at its newest message with nothing unread;
+  // that message is older than Thunder's, so the coach still lands on
+  // Thunder after signing in.
   const club = { id: 'run-club', name: 'Saturday Run Club', color: '#0F8A5F', owner: 'monica' };
   const clubMembers: [string, 'owner' | 'admin' | 'member'][] = [
     ['monica', 'owner'], ['rachel', 'admin'], ['coach', 'member'], ['phil', 'member'], ['chandler', 'member'],
