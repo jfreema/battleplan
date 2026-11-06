@@ -213,7 +213,7 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
           // Each group of rows on its own card (design §3.5).
           Widget card(List<Widget> rows) => Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: SettingsCard(padding: EdgeInsets.zero, children: rows),
+            child: SettingsCard(children: rows),
           );
           final memberRows = [
             (l10n.rosterCoaches, coaches),

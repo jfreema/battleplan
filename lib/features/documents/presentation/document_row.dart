@@ -43,7 +43,6 @@ class DocumentRow extends ConsumerWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(gutter, 5, gutter, 5),
       child: SettingsPanel(
-        radius: Corners.tile,
         padding: EdgeInsets.zero,
         child: ListTile(
           onTap: onTap,

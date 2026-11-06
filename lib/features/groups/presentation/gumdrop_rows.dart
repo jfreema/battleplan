@@ -3,9 +3,7 @@ import 'dart:math' as math;
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
-import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -169,10 +167,16 @@ class PageRow extends StatelessWidget {
     this.chevron = true,
     this.destructive = false,
     this.subtitleMaxLines = 1,
+    this.bold = false,
+    this.titleColor,
     super.key,
   });
 
   final String title;
+
+  /// The title at 800 (a highlighted row), and in [titleColor].
+  final bool bold;
+  final Color? titleColor;
 
   /// Null lets the subtitle wrap (an address).
   final int? subtitleMaxLines;
@@ -190,7 +194,7 @@ class PageRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
     final text = Theme.of(context).textTheme;
-    final color = destructive ? c.cherry.text : c.textOnPage;
+    final color = titleColor ?? (destructive ? c.cherry.text : c.textOnPage);
     final sub = subtitle;
     final lead =
         leading ?? (icon == null ? null : Icon(icon, size: 22, color: color));
@@ -226,7 +230,9 @@ class PageRow extends StatelessWidget {
                           style: text.bodyLarge?.copyWith(
                             fontSize: 16,
                             height: 21 / 16,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: bold
+                                ? FontWeight.w800
+                                : FontWeight.w700,
                             color: color,
                           ),
                         ),
@@ -291,13 +297,14 @@ class SectionLabel extends StatelessWidget {
   );
 }
 
-/// A card (design §3.5): the surface, the theme's card outline, rounded
-/// corners, no shadow, and its [child] in the card context. A [Material],
-/// so list tiles, switches, and ink inside draw on it.
+/// A true card (SPEC §7.3): the Team info header, a player card, drawn as
+/// the event card without its edge: the card color, a 2 px rim on a 4 px
+/// lip, corner 18, and its [child] in the card context. A [Material], so
+/// list tiles, switches, and ink inside draw on it.
 class SettingsPanel extends StatelessWidget {
   const new({
     required this.child,
-    this.radius = Corners.card,
+    this.radius = 18,
     this.padding = const EdgeInsets.all(12),
     super.key,
   });
@@ -309,28 +316,34 @@ class SettingsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    return Material(
-      color: c.surface,
-      clipBehavior: Clip.antiAlias,
-      shape: GumdropStyle.of(context).cardShape(
-        radius,
-        side: c.surfaceBorderWidth == 0
-            ? BorderSide.none
-            : BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth),
+    final rim = BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [BoxShadow(color: rim.color, offset: const Offset(0, 4))],
       ),
-      child: GumdropSurface(
-        child: Padding(padding: padding, child: child),
+      child: Material(
+        color: c.surface,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          side: rim,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+        child: GumdropSurface(
+          child: Padding(padding: padding, child: child),
+        ),
       ),
     );
   }
 }
 
-/// A card of rows (design §3.5 "Settings list section"): the surface, 20
-/// px corners, 12 px sides, and a 2 px divider between rows.
+/// A group of rows straight on the page (SPEC §7.3): a 1 px hairline above
+/// the first row and under each. [padding] insets the rows; [divided] is
+/// kept for callers and always on.
 class SettingsCard extends StatelessWidget {
   const new({
     required this.children,
-    this.padding = const EdgeInsets.symmetric(horizontal: 12),
+    this.padding = EdgeInsets.zero,
     this.divided = true,
     super.key,
   });
@@ -338,73 +351,21 @@ class SettingsCard extends StatelessWidget {
   final List<Widget> children;
   final EdgeInsetsGeometry padding;
 
-  /// A divider above every row but the first.
+  /// Always ruled now (SPEC §7.3).
   final bool divided;
 
   @override
-  Widget build(BuildContext context) {
-    return SettingsPanel(
-      padding: padding,
-      child: Builder(
-        builder: (context) {
-          final c = GumdropColors.of(context);
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final (i, child) in children.indexed) ...[
-                if (divided && i > 0) Container(height: 2, color: c.divider),
-                child,
-              ],
-            ],
-          );
-        },
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: padding,
+    child: PageRows(children: children),
+  );
 }
 
-/// A 36 px icon disc (design §3.8): the "you" candy with an ink icon for
-/// the [highlighted] row, otherwise the well with a text-colored icon.
-class RowDisc extends StatelessWidget {
-  const new({
-    required this.icon,
-    this.highlighted = false,
-    this.accent,
-    this.size = 36,
-    super.key,
-  });
-
-  final IconData icon;
-  final bool highlighted;
-
-  /// Another candy for the disc (red for delete, for one).
-  final GumdropAccent? accent;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = GumdropColors.of(context);
-    final candy = accent ?? (highlighted ? c.you : null);
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: candy?.face ?? c.well,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        size: size / 2,
-        weight: 600,
-        color: candy == null ? c.textPrimary : c.ink,
-      ),
-    );
-  }
-}
-
-/// A settings row (design §3.8): a disc, the title in Nunito 900 15, a
-/// muted subtitle, and a chevron when it opens something. A [ListTile] so
-/// it keeps the tile's semantics and tap target.
+/// A settings row (SPEC §7.3): at least 50 tall, a 22 px icon in the text
+/// color, the title in Nunito 700 16/21, the subtitle muted, and a chevron
+/// when it opens something. [highlighted] sets the title bold; a cherry
+/// [accent] (Delete) puts the icon and title in the accent text. A
+/// [ListTile]'s semantics, through [PageRow].
 class SettingsRow extends StatelessWidget {
   const new({
     required this.title,
@@ -438,43 +399,21 @@ class SettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    final text = Theme.of(context).textTheme;
-    final sub = subtitle;
-    return ListTile(
+    final color = titleColor ?? accent?.text;
+    return PageRow(
+      title: title,
+      icon: icon,
+      leading: icon != null && color != null
+          ? Icon(icon, size: 22, color: color)
+          : null,
+      subtitle: subtitle,
+      subtitleMaxLines: subtitleLines,
       onTap: onTap,
-      contentPadding: EdgeInsets.zero,
-      minTileHeight: 56,
-      horizontalTitleGap: 11,
-      minLeadingWidth: 36,
-      leading: icon == null
-          ? null
-          : RowDisc(icon: icon!, highlighted: highlighted, accent: accent),
-      title: Text(
-        title,
-        style: text.bodyMedium?.copyWith(
-          fontSize: 15,
-          fontWeight: FontWeight.w900,
-          color: titleColor ?? c.textPrimary,
-        ),
-      ),
-      subtitle: sub == null || sub.isEmpty
-          ? null
-          : Text(
-              sub,
-              maxLines: subtitleLines,
-              overflow: TextOverflow.ellipsis,
-              style: text.bodySmall?.copyWith(color: c.textMuted),
-            ),
-      trailing:
-          trailing ??
-          (onTap != null && chevron
-              ? Icon(
-                  AppIcons.chevronRight,
-                  size: 22,
-                  weight: 700,
-                  color: c.textMuted,
-                )
-              : null),
+      trailing: trailing,
+      chevron: chevron,
+      bold: highlighted,
+      titleColor: color,
+      destructive: accent == c.cherry,
     );
   }
 }
@@ -488,8 +427,8 @@ TextStyle? switchRowTitle(BuildContext context) =>
       color: GumdropColors.of(context).card.textPrimary,
     );
 
-/// A heading inside a card (design §3.3): Lilita One 20, 3-step shadow, in
-/// the card's heading colors.
+/// A heading inside a card (SPEC §7.3): Lilita One 20 in the text color,
+/// with no drop.
 class CardHeading extends StatelessWidget {
   const new(this.text, {super.key});
 
@@ -506,15 +445,15 @@ class CardHeading extends StatelessWidget {
           fontSize: 20,
           height: 1.1,
           color: c.headingTextOnCard,
-          shadows: GumdropColors.stackedShadow(c.headingShadowOnCard, 3),
+          shadows: const [],
         ),
       ),
     );
   }
 }
 
-/// A section heading on the page (design §3.3): Lilita One 22, 3-step
-/// shadow.
+/// A section heading on the page (SPEC §7.3): Lilita One 25/30 with the
+/// scheme's drop.
 class PageHeading extends StatelessWidget {
   const new(this.text, {super.key});
 
@@ -523,7 +462,11 @@ class PageHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     header: true,
-    child: Text(text, style: Theme.of(context).textTheme.titleLarge),
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.titleLarge
+          ?.copyWith(fontSize: 25, height: 30 / 25),
+    ),
   );
 }
 
@@ -547,8 +490,12 @@ class LabeledField extends StatelessWidget {
           Text(
             label.toUpperCase(),
             semanticsLabel: label,
-            style: Theme.of(context).textTheme.labelSmall
-                ?.copyWith(letterSpacing: 12 * 0.07, color: c.textMuted),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontSize: 13,
+              height: 16 / 13,
+              letterSpacing: 13 * 0.12,
+              color: c.onCard ? c.textMuted : c.textMutedOnPage,
+            ),
           ),
           const SizedBox(height: 4),
           child,
@@ -686,7 +633,7 @@ class _Swatch extends StatelessWidget {
             ),
             foregroundDecoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: c.swatchInsetRing, width: 2),
+              border: Border.all(color: c.outline, width: 2),
             ),
             child: argb == null
                 ? Icon(

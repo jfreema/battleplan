@@ -1233,7 +1233,7 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 
 - a slim top bar: a team's name under its stencil eyebrow, with plain icons; pushed pages have a chevron back row and a big title;
 - an army-green page in the default color scheme (Army green), with cards that have a rim and a hard lip;
-- gumdrop buttons: a rounded face on a hard lip in a darker shade, that sinks onto its lip when pressed;
+- a coral gumdrop for the main action: a rounded face on a hard lip in a darker shade, that sinks onto its lip when pressed;
 - coral for you: your messages, the current tab, and unread;
 - candy accents, each with a meaning: mint for Going, lemon for Maybe and pins, cherry for Not going, tangerine for games, grape for practices, blue raspberry for meetings, and bubblegum for polls and other events;
 - chunky headings with one hard drop;
@@ -1249,9 +1249,9 @@ The content still carries the visual weight: messages, photos, and event cards.
 |---|---|
 | **Color** | Five color schemes (§7.4), each with the same 32 color roles: page, cards and their rims, the tab bar, fields, lines, text, headings' drop, and the candies' lips and text shades. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is the scheme's candy ink. Every text color is contrast-checked in all five schemes. |
 | **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages, in Latin letters (Cyrillic, like Greek and other scripts, draws in the platform's fallback font). **Black Ops One**, a stencil, is for eyebrows only, like the one over the team's name, and the website's coral sticker: capitals only, never under 12 px. Sizes 32 / 27 / 25 / 18 / 17 / 16 / 14 / 13 (screen title, team name, section, card title, chat message, row title, secondary, label); the team name steps down to 23, 21, then 19 to fit. Headings carry one hard drop (none in Light and Dark). Layouts survive system text scaling up to 200%. |
-| **Buttons** | Gumdrops: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above, with a highlight along its top. The main action is a candy gumdrop (the theme's own color, or a candy for its meaning); the rest are raised gumdrops in the card color. Pressed, the face sinks onto the lip; disabled, it's flat and muted. Chips, segmented buttons, the + button, and the navigation indicator are gumdrops too. |
+| **Buttons** | The main action is the coral gumdrop: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above; pressed, it sinks onto the lip; disabled, it's flat and muted. The rest are outlined pills with no lip, or plain text. A selected chip or segment is coral; the others are outlined. |
 | **Spacing** | 4-point grid: 4, 8, 12, 16, 24, 32, 48. Side padding is 16 on phones and 24 on wide screens. |
-| **Corners** | 14 for inputs and badges, 18 for cards, 22 for chat bubbles (6 at a bubble's tail), 26 for sheets, fully round for avatars, pills, and buttons. |
+| **Corners** | 14 for inputs, menus, and badges, 18 for cards, 22 for dialogs and chat bubbles (6 at a bubble's tail), 26 for sheets, fully round for avatars, pills, and buttons. |
 | **Elevation** | No soft shadows. Depth comes from the hard lips under cards and buttons and the hard drop under headings. |
 | **Icons** | Material Symbols Rounded, the same set on every platform |
 | **Motion** | 150–250 ms with standard easing. Respect the system "reduce motion" setting. |
@@ -1288,11 +1288,15 @@ Build these once in `core/` and reuse them everywhere:
 - RSVP button group
 - Document row
 - Member row
-- Empty state (icon, one sentence, one action)
+- Settings rows: plain rows on the page between 1 px hairlines, each a 22 px icon, a title and muted subtitle, and a chevron, with no panel and no icon disc; a destructive row is in the accent text. A true card (the Team info header, a player card) is a card with a rim and a lip.
+- Headings: page headings in Lilita 25 with the scheme's drop, card headings in Lilita 20 with none, small capitals labels in the section label style
+- Empty state (a 64 px muted icon, one sentence, one coral button)
 - Skeleton loaders (no spinners for lists)
 - Snackbar
 - Confirm dialog (destructive actions in red, with the verb on the button: "Delete message")
 - Bottom sheet on phones, dialog or popover on wide screens
+
+Sheets, dialogs, menus, snack bars, inputs, buttons, chips, and switches take their look from the app theme, so every screen the Open Field mock doesn't draw follows the same rules; dialogs and sheets are cards.
 
 ### 7.6 Accessibility
 

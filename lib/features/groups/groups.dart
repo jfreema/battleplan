@@ -12,7 +12,6 @@ export 'presentation/gumdrop_rows.dart'
         PageHeading,
         PageRow,
         PageRows,
-        RowDisc,
         SectionLabel,
         SettingsCard,
         SettingsPanel,

@@ -1,7 +1,8 @@
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Icon, one sentence, and at most one action (SPEC §7.5).
+/// Icon, one sentence, and at most one action (SPEC §7.5): a 64 px icon
+/// and Nunito 600 15 text, both muted, and one coral button.
 class EmptyState extends StatelessWidget {
   const new({
     required this.message,
@@ -49,15 +50,19 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconTheme(
-              data: IconThemeData(size: 48, color: scheme.onSurfaceVariant),
+              data: IconThemeData(size: 64, color: scheme.onSurfaceVariant),
               child: art ?? Icon(icon),
             ),
             const SizedBox(height: Space.lg),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge
-                  ?.copyWith(color: scheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 15,
+                height: 21 / 15,
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurfaceVariant,
+              ),
             ),
             if (label != null && onAction != null) ...[
               const SizedBox(height: Space.xl),

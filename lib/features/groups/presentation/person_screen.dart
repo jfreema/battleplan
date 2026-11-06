@@ -261,7 +261,6 @@ class PersonScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: SettingsCard(
-                      padding: EdgeInsets.zero,
                       children: [
                         for (final row in rows)
                           ListTile(
