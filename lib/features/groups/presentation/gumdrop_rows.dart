@@ -94,9 +94,14 @@ String upFrom(Uri location) => switch (location.pathSegments) {
 
 /// Goes [upFrom] where the app is: the screen at [context], which has
 /// nothing under it. Null when it isn't a GoRouter page (a test pumping it
-/// alone).
+/// alone), or is a team tab's own page (Plays for a member), whose header
+/// already has the back to Teams.
 VoidCallback? _goUp(BuildContext context) {
   if (ModalRoute.of(context)?.settings is! Page<Object?>) return null;
+  if (Navigator.maybeOf(context) !=
+      Navigator.maybeOf(context, rootNavigator: true)) {
+    return null;
+  }
   final router = GoRouter.maybeOf(context);
   if (router == null) return null;
   // Read on the tap, when this screen is the one showing.

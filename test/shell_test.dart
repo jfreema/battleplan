@@ -712,6 +712,18 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(OpenFieldTabBar), findsOneWidget);
       expect(find.text('TEAM CHAT'), findsOneWidget);
+      // A team tab's own page has only the header's back, to Teams: the
+      // Plays tab for a member is Saved plays.
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [testMembership('a', 'coach', role: MemberRole.member)],
+      );
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/plays');
+      await tester.pumpAndSettle();
+      expect(find.text('PLAYBOOK'), findsOneWidget);
+      expect(find.byTooltip('Back'), findsOneWidget);
       // A plain app bar: the notification center, then Messages.
       for (final (route, back) in [
         ('/notifications', 'Teams'),
