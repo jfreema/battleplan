@@ -208,6 +208,17 @@ describe('message rate limit and create rule', () => {
     }));
   });
 
+  it("takes the author's icon color only as their member doc has it (SET-8), and none at all", async () => {
+    // Without it, as builds from before SET-8 post.
+    await assertSucceeds(send(as('bob'), 'bob', 'teamA', 'c0', 'Bob'));
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await ctx.firestore().doc('groupMembers/teamA_bob').update({ avatarColor: 'mint', lastPostedAt: ts('2026-01-01T00:00:00Z') });
+    });
+    await assertFails(send(as('bob'), 'bob', 'teamA', 'c1', 'Bob', { authorAvatarColor: 'grape' }));
+    await assertFails(send(as('bob'), 'bob', 'teamA', 'c2', 'Bob', { authorAvatarColor: null }));
+    await assertSucceeds(send(as('bob'), 'bob', 'teamA', 'c3', 'Bob', { authorAvatarColor: 'mint' }));
+  });
+
   it('rejects a forged author name or another author', async () => {
     await assertFails(send(as('bob'), 'bob', 'teamA', 'f1', 'Coach Alice'));
     await assertFails(send(as('bob'), 'bob', 'teamA', 'f2', 'Bob', { authorId: 'alice' }));
@@ -297,6 +308,8 @@ describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
     await assertSucceeds(
       send('bob', 'Bob', 'p10', {
         type: 'image', text: 'Game day photos @Alice', attachments: ten, mentions: ['alice'], replyToId: 'm1', words,
+        // The icon color snapshot too (SET-8): none on Bob's member doc.
+        authorAvatarColor: null,
       }),
     );
     const eleven = [...ten, { ...ten[0], path: 'groups/teamA/messages/p11/10.jpg' }].map((p, i) => ({
@@ -679,5 +692,30 @@ describe("kids' privacy (PLAYER-10)", () => {
 
   it('leaves creating players to Functions', async () => {
     await assertFails(as('carol').doc('players/new').set({ groupId: 'teamB', displayName: 'Liam', displayNameLower: 'liam' }));
+  });
+});
+
+describe('a member picks how a team looks to them (SET-2)', () => {
+  it('sets and clears their own color scheme, even on an archived team', async () => {
+    const db = as('bob');
+    for (const scheme of ['army', 'light', 'dark', 'navy', 'skyblue']) {
+      await assertSucceeds(db.doc('groupMembers/teamA_bob').update({ colorScheme: scheme }));
+    }
+    await assertSucceeds(db.doc('groupMembers/teamA_bob').update({ colorScheme: null }));
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('groups/teamA').update({ archivedAt: ts('2026-05-01T00:00:00Z') }),
+    );
+    await assertSucceeds(db.doc('groupMembers/teamA_bob').update({ colorScheme: 'navy' }));
+  });
+
+  it("checks the value, and nobody sets someone else's", async () => {
+    for (const bad of ['olive', '', 'Navy', 1]) {
+      await assertFails(as('bob').doc('groupMembers/teamA_bob').update({ colorScheme: bad }));
+    }
+    await assertFails(as('alice').doc('groupMembers/teamA_bob').update({ colorScheme: 'dark' }));
+  });
+
+  it('leaves the icon color to Functions (SET-8)', async () => {
+    await assertFails(as('bob').doc('groupMembers/teamA_bob').update({ avatarColor: 'mint' }));
   });
 });

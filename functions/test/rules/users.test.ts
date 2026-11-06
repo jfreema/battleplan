@@ -11,7 +11,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { defaultNotificationPrefs } from '../../src/accounts/service.js';
-import { notificationPrefValues } from '../../src/shared/constants.js';
+import {
+  avatarColorValues,
+  notificationPrefValues,
+  teamSchemeValues,
+  themePreferenceValues,
+} from '../../src/shared/constants.js';
 
 let env: RulesTestEnvironment;
 const now = () => firebase.firestore.FieldValue.serverTimestamp();
@@ -101,6 +106,30 @@ describe('users: writing', () => {
     await assertFails(as('bob').doc('users/alice').update({ timeZone: 'UTC' }));
   });
 
+  it('takes a default color scheme (SET-2) and an icon color (SET-8), or null', async () => {
+    const db = as('alice');
+    for (const scheme of teamSchemeValues) {
+      await assertSucceeds(db.doc('users/alice').update({ colorScheme: scheme, updatedAt: now() }));
+    }
+    await assertSucceeds(db.doc('users/alice').update({ colorScheme: null, updatedAt: now() }));
+    for (const bad of ['olive', '', 'Army', 3]) {
+      await assertFails(db.doc('users/alice').update({ colorScheme: bad }));
+    }
+    for (const color of avatarColorValues) {
+      await assertSucceeds(db.doc('users/alice').update({ avatarColor: color, updatedAt: now() }));
+    }
+    await assertSucceeds(db.doc('users/alice').update({ avatarColor: null, updatedAt: now() }));
+    for (const bad of ['red', '', 'Mint', 7]) {
+      await assertFails(db.doc('users/alice').update({ avatarColor: bad }));
+    }
+    await assertFails(as('bob').doc('users/alice').update({ colorScheme: 'navy' }));
+    await assertFails(as('bob').doc('users/alice').update({ avatarColor: 'mint' }));
+    // Shipped builds still write the old theme.
+    for (const theme of themePreferenceValues) {
+      await assertSucceeds(db.doc('users/alice').update({ themeMode: theme, updatedAt: now() }));
+    }
+  });
+
   it('rejects server-only fields', async () => {
     const db = as('alice');
     await assertFails(db.doc('users/alice').update({ status: 'disabled' }));
@@ -170,5 +199,17 @@ describe('users: the rules keep up with constants.json', () => {
     const constants = JSON.parse(readFileSync(resolve(process.cwd(), '../shared/constants.json'), 'utf8'));
     const themes = rules.match(/p\.themeMode in \[([^\]]*)\]/)?.[1] ?? '';
     for (const theme of constants.enums.themePreference as string[]) expect(themes, theme).toContain(`'${theme}'`);
+    // Every list, so a scheme added to one rule but not the other fails here
+    // and not in the app as permission-denied.
+    const lists = (field: string) =>
+      [...rules.matchAll(new RegExp(`${field} in \\[([^\\]]*)\\]`, 'g'))].map((m) =>
+        [...m[1].matchAll(/'([^']+)'/g)].map((q) => q[1]),
+      );
+    const schemeLists = lists('colorScheme');
+    expect(schemeLists).toHaveLength(2);
+    for (const list of schemeLists) expect(list).toEqual([...teamSchemeValues]);
+    const colorLists = lists('avatarColor');
+    expect(colorLists).toHaveLength(1);
+    for (const list of colorLists) expect(list).toEqual([...avatarColorValues]);
   });
 });

@@ -122,6 +122,28 @@ void main() {
       );
     });
 
+    test('saves and reads the default color scheme and the icon color '
+        '(SET-2, SET-8)', () async {
+      await repo.setColorScheme('u1', TeamScheme.skyblue);
+      await repo.setAvatarColor('u1', AvatarColor.grape);
+      final d = (await db.doc('users/u1').get()).data()!;
+      expect(d['colorScheme'], 'skyblue');
+      expect(d['avatarColor'], 'grape');
+      final p = userProfileFromFirestore('u1', d);
+      expect(p.colorScheme, TeamScheme.skyblue);
+      expect(p.defaultScheme, TeamScheme.skyblue);
+      expect(p.avatarColor, AvatarColor.grape);
+      // None picked: the old theme's scheme; an unknown value reads as none.
+      final old = userProfileFromFirestore('z', const {
+        'themeMode': 'dark',
+        'colorScheme': 'olive',
+        'avatarColor': 'red',
+      });
+      expect(old.colorScheme, isNull);
+      expect(old.defaultScheme, TeamScheme.navy);
+      expect(old.avatarColor, isNull);
+    });
+
     test('maps update refusals to failures', () async {
       for (final (code, type) in [
         ('permission-denied', isA<PermissionDenied>()),
@@ -154,6 +176,16 @@ void main() {
           (await db.doc('users/u1').get()).data()!['photoPath'] as String;
       expect(second, isNot(first));
       expect(await repo.photoUrl('users/u1/avatar/missing.jpg'), isNull);
+    });
+
+    test('removes the photo, so the icon shows initials (SET-8)', () async {
+      await repo.uploadPhoto('u1', Uint8List.fromList([1, 2, 3]));
+      expect((await db.doc('users/u1').get()).data()!['photoPath'], isNotNull);
+      await repo.removePhoto('u1');
+      expect((await db.doc('users/u1').get()).data()!['photoPath'], isNull);
+      // Nothing to remove is fine too.
+      await repo.removePhoto('u1');
+      expect((await db.doc('users/u1').get()).data()!['photoPath'], isNull);
     });
   });
 

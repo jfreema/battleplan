@@ -517,6 +517,8 @@ users/{uid}
   status: 'provisioned' | 'active' | 'disabled'
   signInMethods: ['password' | 'google.com' | 'apple.com']   # cache ← Firebase Auth
   themeMode: 'system' | 'light' | 'dark' | 'candy'          # SET-2; system (before 1.1) reads as dark
+  colorScheme?: 'army' | 'light' | 'dark' | 'navy' | 'skyblue'   # SET-2: the default color scheme (top screens, and every team or group not picked for); absent maps from themeMode, which old builds still write: olive and system → army, dark → navy, light and candy → light, arena → dark
+  avatarColor?: 'blueRaspberry' | 'lemon' | 'mint' | 'grape' | 'bubblegum' | 'tangerine' | 'cherry'   # SET-8: the icon's candy behind the initials when there's no photo; absent is the hashed color
   timeZone?                                              # SET-7: the IANA zone times show in; absent or null is Automatic (the device's)
   notificationPrefs: { messages, replies, mentions, polls, eventsNew, eventsChanged, reminders, documents }   # bools; a missing key is on (NOTIF-4)
   superAdmin?                                            # cache ← the superAdmin claim; adminSetSuperAdmin and the bootstrap script keep it; finds super admins for lists and the last-super-admin check
@@ -552,7 +554,8 @@ groupMembers/{groupId}_{uid}
   otherUid?, lastMessageAt?                             # direct only: the other person, and (cache ← messages) when it last had a message, which orders Messages
   coach?                                                # TEAM-3: set by admins (updateGroupMember); unset, the owner counts as a coach (Membership.isCoach). Coaches have a Me row (hasMeRow) and go by their own answer for reminders (audienceOf)
   jerseyNumber?, position?                              # unused; number and position live on the member's `self` player
-  displayName, photoPath                                # cache ← users
+  displayName, photoPath, avatarColor?                  # cache ← users (avatarColor: SET-8, Functions only)
+  colorScheme?                                          # SET-2: the scheme this member sees the team in, written only by them; absent follows their default (users.colorScheme)
   playerSummary?                                        # cache ← players + links: guardian "Emma #7, Liam #23"; self "#12" or empty
   notificationLevel: 'all' | 'important' | 'none', mutedUntil?   # "until unmuted" = 9999-12-31 (Limits.mutedForeverMs)
   lastReadAt                                            # unread counts
@@ -593,7 +596,7 @@ invites/{code}
   createdBy, expiresAt?, maxUses?, useCount, revokedAt?, createdAt
 
 messages/{messageId}
-  groupId, authorId, authorName, authorPhotoPath, authorPlayerSummary?   # snapshot; rules check it
+  groupId, authorId, authorName, authorPhotoPath, authorPlayerSummary?, authorAvatarColor?   # snapshot; rules check it (authorAvatarColor optional, for builds from before SET-8)
   type: 'text' | 'image' | 'poll' | 'event' | 'system'
   text (≤ 4000)
   words?: [string] (≤ 100)                              # CHAT-20: what search finds it by (searchWords of the text: lowercase, no accents, whole words, plurals as singulars, everyday words left out; shared/search_words.json); written by the app with the text, put right by the messages trigger, absent when there are none (system lines, a photo with no caption, a deleted message); index groupId + words (contains) + createdAt desc
@@ -790,11 +793,11 @@ function hasRoom(g)      { let t = get(/databases/$(database)/documents/groups/$
 
 | Collection | Read | Client write |
 |---|---|---|
-| `users/{uid}` | self, super admin | Self only, and only profile fields (`displayName`, `photoPath`, `themeMode`, `timeZone` as an IANA ID or null, `notificationPrefs`). Never `status`, `email`, or `signInMethods`. |
+| `users/{uid}` | self, super admin | Self only, and only profile fields (`displayName`, `photoPath`, `themeMode`, `colorScheme` and `avatarColor` as one of their values or null, `timeZone` as an IANA ID or null, `notificationPrefs`). Never `status`, `email`, or `signInMethods`. |
 | `devices/{id}` | owner | owner (`uid == auth.uid`) |
 | `userBlocks/{id}` | owner | owner; the ID must be `{auth.uid}_{blockedUid}` |
 | `groups/{g}` | members, super admin (not a direct conversation, CHAT-19) | Team admins, on `name`, `description`, `photoPath`, `color`, `sport`, `timeZone`, `settings`, `chatTheme` only (never `kind`, nor `pinnedMessageIds`, which `pinMessage` keeps) |
-| `groupMembers/{id}` | own memberships; members of that team, super admins | Self, on `notificationLevel`, `mutedUntil`, `lastReadAt`, `lastPostedAt`, `lastPostedMessageId`, `contactPhone`, `contactEmail` only (so `role`, `playerSummary`, and `linksUpdatedAt` are Functions only). Contact fields (TEAM-10, `sharedContactOk`): cleared any time; set only on an open team (not suspended or archived), a phone of up to 30 characters with a digit and an email of up to 254 that looks like one |
+| `groupMembers/{id}` | own memberships; members of that team, super admins | Self, on `notificationLevel`, `mutedUntil`, `lastReadAt`, `lastPostedAt`, `lastPostedMessageId`, `contactPhone`, `contactEmail`, `colorScheme` only (so `role`, `playerSummary`, `avatarColor`, and `linksUpdatedAt` are Functions only). `colorScheme` is one of the five schemes or null, on any team, archived ones too. Contact fields (TEAM-10, `sharedContactOk`): cleared any time; set only on an open team (not suspended or archived), a phone of up to 30 characters with a digit and an email of up to 254 that looks like one |
 | `players/{id}` | Active players (`status` missing or `active`): members, super admins. Pending players: the team's admins, the member in `proposedBy`, super admins. Members list with `status == 'active'` (or `proposedBy == auth.uid`) | Linked members (self or guardian) and admins, on `displayName`, `jerseyNumber`, `position` only. Links exist only for active players, so linked members edit active ones; admins can also correct a pending player before deciding. Never `status`, `proposedBy`, `proposedRelation`, the decision fields, or `linksUpdatedAt`. Creation, approval, and decline go through Functions. |
 | `playerGuardians` (links), `guardianRequests` (claims) | own links and claims; members (links), admins (claims); super admins | Functions only |
 | `playerDetails/{playerId}` | **Get:** the team's admins, members linked to the player (`isLinked`, either relation), super admins; checked against the player doc, so a player without details reads as not found. **List:** only `where('groupId','==',g)` (limit ≤ 100) by g's admins and super admins. Nobody else, not even that it exists | Admins and linked members, on an active player of an active team (not archived or suspended); never super admins (unless they're on the team in one of those roles). Keys limited to the schema; `groupId` equals the player's and never changes; `updatedBy == auth.uid`, `updatedAt == request.time`; sizes from `shared/constants.json`; `dateOfBirth` a real `YYYY-MM-DD` date before `request.time`; no medical notes or consent fields (no health data, D63). Delete: the same writers |
@@ -814,7 +817,7 @@ function hasRoom(g)      { let t = get(/databases/$(database)/documents/groups/$
 
 - The author is a member, and `authorId == auth.uid`.
 - **Players (PLAYER-10):** only Functions create, approve, or decline players. Linked members (self or guardian) may edit an active player's `displayName` (1 to 60 characters, with a matching `displayNameLower`), `jerseyNumber` (up to 4), `position` (up to 30), and `walkUpSong` (up to 100), and admins any player's, pending ones included (to correct them before deciding, PLAYER-4). Nothing else changes, so a player record can never gain a photo, birthdate, or contact field.
-- `authorName`, `authorPhotoPath`, and `authorPlayerSummary` equal the member's own `groupMembers` doc. The rule already fetches that doc, so this check costs nothing extra.
+- `authorName`, `authorPhotoPath`, and `authorPlayerSummary` equal the member's own `groupMembers` doc, and so does `authorAvatarColor` when it's sent (older builds don't send it). The rule already fetches that doc, so this check costs nothing extra.
 - `type` is `text`, `image`, or `poll`. A `poll` message must be written in the same batch as its poll (`getAfter()`). Event cards and system messages come only from Functions.
 - `text` is ≤ 4,000 characters, and `createdAt == request.time`.
 - **Search words (CHAT-20, `wordsOk`).** `words`, when set, is a list of at most 100, on create and on the author's edit. Only its size is checked, to keep within the 1,000 expressions a write gets (ten photos with every field and 100 words still fit); the messages trigger puts right words that don't match the text, and the app checks every result against its own text, so planted words find nothing.

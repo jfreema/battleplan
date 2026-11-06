@@ -86,6 +86,7 @@ service cloud.firestore {
       // written by Functions only.
       allow update: if signedIn() && uid() == userId
         && onlyChanges(['displayName', 'displayNameLower', 'photoPath', 'themeMode',
+                        'colorScheme', 'avatarColor',
                         'timeZone', 'notificationPrefs', 'updatedAt'])
         && validProfile(incoming(), userId);
       // Created by ensureUserProfile and deleted by deleteAccount (Functions).
@@ -103,6 +104,14 @@ service cloud.firestore {
         // device's.
         && (p.get('timeZone', null) == null
             || (p.timeZone is string && p.timeZone.matches('[A-Za-z][A-Za-z0-9_+/-]{0,63}')))
+        // The default color scheme (SET-2) and the icon color (SET-8). Keep
+        // the lists in step with teamScheme and avatarColor in
+        // shared/constants.json (users.test.ts checks).
+        && (p.get('colorScheme', null) == null
+            || p.colorScheme in ['army', 'light', 'dark', 'navy', 'skyblue'])
+        && (p.get('avatarColor', null) == null
+            || p.avatarColor in ['blueRaspberry', 'lemon', 'mint', 'grape', 'bubblegum',
+                                 'tangerine', 'cherry'])
         && (!('updatedAt' in changed()) || p.updatedAt == request.time);
     }
 
@@ -220,7 +229,7 @@ service cloud.firestore {
       allow update: if signedIn() && resource.data.uid == uid()
         && onlyChanges(['notificationLevel', 'mutedUntil', 'lastReadAt',
                         'lastPostedAt', 'lastPostedMessageId',
-                        'contactPhone', 'contactEmail'])
+                        'contactPhone', 'contactEmail', 'colorScheme'])
         // Contact sharing (TEAM-10): a phone with a digit, up to 30
         // characters, and an email, up to 254. Stopping (null) always
         // works; sharing needs an open team (not suspended or archived).
@@ -235,7 +244,13 @@ service cloud.firestore {
         // The read marker (CHAT-9): now, or the time of the newest message
         // read so far when only part of the chat was on screen. Never ahead.
         && (!('lastReadAt' in changed())
-            || (incoming().lastReadAt is timestamp && incoming().lastReadAt <= request.time));
+            || (incoming().lastReadAt is timestamp && incoming().lastReadAt <= request.time))
+        // How the team looks to this member (SET-2): a scheme, or null for
+        // their default. Any team, archived ones too, like the push level.
+        // (No changed() here: a send batch updates this doc too, and the
+        // ten-photo message must stay under the 1,000-expression budget.)
+        && (incoming().get('colorScheme', null) == null
+            || incoming().colorScheme in ['army', 'light', 'dark', 'navy', 'skyblue']);
     }
 
     // A contact field a member shares with their team (TEAM-10), unchanged,
@@ -380,33 +395,10 @@ service cloud.firestore {
       allow get: if canRead(resource.data.groupId);
       allow list: if boundedQuery() && canRead(resource.data.groupId);
 
-      // Message create rule (ARCH §6.3).
-      allow create: if isMember(incoming().groupId) && active(incoming().groupId)
-        && incoming().authorId == uid()
-        && authorSnapshotMatches(incoming())
-        && incoming().type in ['text', 'image', 'poll']
-        // A poll message shares its poll's ID and is written in the same
-        // batch; the poll rule checks the rest (POLL-1). Other messages
-        // carry no pollId.
-        && (incoming().type == 'poll'
-            ? incoming().get('pollId', null) == messageId
-              && getAfter(/databases/$(database)/documents/polls/$(messageId)).data.messageId == messageId
-            : !('pollId' in incoming()))
-        && incoming().get('text', '') is string && incoming().get('text', '').size() <= 4000
-        && attachmentsOk(incoming(), messageId)
-        && (incoming().get('replyToId', null) == null
-            || (incoming().replyToId is string && incoming().replyToId.size() <= 64))
-        && mentionsOk(incoming())
-        && announcementOk(incoming())
-        && directOk(incoming())
-        && playLinkOk(incoming())
-        && wordsOk(incoming())
-        && incoming().createdAt == request.time
-        && incoming().keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
-            'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',
-            'mentions', 'mentionNames', 'mentionsEveryone', 'announcement', 'playId', 'words',
-            'createdAt'])
-        && rateLimitOk(incoming().groupId, messageId);
+      // Message create rule (ARCH §6.3), in a function so the message is
+      // read once: a write gets 1,000 expressions, and a ten-photo message
+      // with every field comes close.
+      allow create: if messageCreateOk(incoming(), messageId);
 
       // Reactions: a member may set or clear only their own, any of the 16,
       // on every team (CHAT-6, D6).
@@ -433,6 +425,36 @@ service cloud.firestore {
         && wordsOk(incoming())
         && incoming().editedAt == request.time;
       // Deletion goes through the deleteMessage callable.
+    }
+
+    // The message create rule (ARCH §6.3); see the create rule above.
+    function messageCreateOk(m, messageId) {
+      return isMember(m.groupId) && active(m.groupId)
+        && m.authorId == uid()
+        && authorSnapshotMatches(m)
+        && m.type in ['text', 'image', 'poll']
+        // A poll message shares its poll's ID and is written in the same
+        // batch; the poll rule checks the rest (POLL-1). Other messages
+        // carry no pollId.
+        && (m.type == 'poll'
+            ? m.get('pollId', null) == messageId
+              && getAfter(/databases/$(database)/documents/polls/$(messageId)).data.messageId == messageId
+            : !('pollId' in m))
+        && m.get('text', '') is string && m.get('text', '').size() <= 4000
+        && attachmentsOk(m, messageId)
+        && (m.get('replyToId', null) == null
+            || (m.replyToId is string && m.replyToId.size() <= 64))
+        && mentionsOk(m)
+        && announcementOk(m)
+        && directOk(m)
+        && playLinkOk(m)
+        && wordsOk(m)
+        && m.createdAt == request.time
+        && m.keys().hasOnly(['groupId', 'authorId', 'authorName', 'authorPhotoPath',
+            'authorAvatarColor', 'authorPlayerSummary', 'type', 'text', 'attachments', 'replyToId', 'pollId',
+            'mentions', 'mentionNames', 'mentionsEveryone', 'announcement', 'playId', 'words',
+            'createdAt'])
+        && rateLimitOk(m.groupId, messageId);
     }
 
     // One photo: stored under this message's own folder, with each field
@@ -527,7 +549,10 @@ service cloud.firestore {
       let mem = member(m.groupId);
       return m.authorName == mem.displayName
         && m.get('authorPhotoPath', null) == mem.get('photoPath', null)
-        && m.get('authorPlayerSummary', null) == mem.get('playerSummary', null);
+        && m.get('authorPlayerSummary', null) == mem.get('playerSummary', null)
+        // The icon color (SET-8). Optional, so builds from before it still
+        // post (they don't send it).
+        && m.get('authorAvatarColor', mem.get('avatarColor', null)) == mem.get('avatarColor', null);
     }
 
     // 1 message per second per person per team (ARCH §6.9, D24). The same

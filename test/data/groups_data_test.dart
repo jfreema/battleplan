@@ -454,6 +454,29 @@ void main() {
       );
     });
 
+    test('saves the color scheme I see the team in, and reads my icon color '
+        '(SET-2, SET-8)', () async {
+      final repo = FirestoreMemberRepository(db, functions);
+      await repo.setMyColorScheme(_g, _me, TeamScheme.navy);
+      final d = (await db.doc('groupMembers/g1_alex').get()).data()!;
+      expect(d['colorScheme'], 'navy');
+      await db.doc('groupMembers/g1_alex').update({'avatarColor': 'mint'});
+      final alex = (await repo.watchRoster(_g).first).firstWhere(
+        (m) => m.uid == _me,
+      );
+      expect(alex.colorScheme, TeamScheme.navy);
+      expect(alex.avatarColor, AvatarColor.mint);
+      // An unknown value reads as none: follow the default, the hashed color.
+      final odd = membershipFromFirestore(const {
+        'groupId': 'g1',
+        'uid': 'x',
+        'colorScheme': 'olive',
+        'avatarColor': 'red',
+      });
+      expect(odd.colorScheme, isNull);
+      expect(odd.avatarColor, isNull);
+    });
+
     test(
       'maps my-settings refusals to failures, and ignores a missed read marker',
       () async {
