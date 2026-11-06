@@ -68,7 +68,7 @@ Apple's rules for the badge ([App Store marketing guidelines](https://developer.
 - **The black badge, on every scheme.** Apple prefers it in all marketing, and requires it once another store's badge sits beside it; its gray rim is part of the artwork and keeps it clear on Army green, Dark, and Navy. The white badge is only an alternative, so the page doesn't load it.
 - **Size and space.** At least 40 px tall on screen (48 px here, 44 in the app), with a quarter of its height clear all round (12 px), in a subordinate spot under the main message, and one badge per page (the FAQ keeps its plain link).
 - **Order.** The App Store badge comes first in a row of badges.
-- **Credit line.** Each page that shows the badge ends its footer with "Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc." (`.credit`).
+- **Credit line.** Apple asks for a credit line naming Apple, the Apple logo, and every other Apple trademark the page uses. Each page that shows the badge ends its footer with "Apple, the Apple logo, iPhone, and iPad are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc." (`.credit`); add any other Apple trademark the page comes to name. The web app's invite page names no other, so its line (`appleCredit`) credits Apple, the Apple logo, and the App Store.
 
 Google Play's badge waits (ROADMAP task 214) in a `<template data-store-badges>` after Apple's, in `index.html` and `support.html`, which the browser never renders or loads. To turn it on:
 
@@ -106,7 +106,7 @@ The current set (Open Field, all five schemes, 2026-11-06, the owner's request) 
 
 Convert each PNG to WebP at quality 80 (headless Chrome's `canvas.toDataURL('image/webp', 0.8)` works where `cwebp` isn't installed) as `images/<name>-<scheme>.webp`, using the names in the table.
 
-Regenerate `images/og.jpg` at 1200 × 630 when the hero's heading or its schedule shots change: the brand mark, the stencil eyebrow, the page's heading ("Every team needs a Battleplan."), and one line of copy on the left, and a fan of the five `images/schedule-*.webp` on the Army green page color on the right. It's a plain HTML page using `fonts/` and those images, outside this folder, screenshotted in headless Chrome at 1200 × 630 as a JPEG at quality 85 (about 140 KB).
+Regenerate `images/og.jpg` at 1200 × 630 when the hero's eyebrow, its heading, or its schedule shots change: the brand mark, the stencil eyebrow, the page's heading ("Every team needs a Battleplan."), and one line of copy on the left, and a fan of the five `images/schedule-*.webp` on the Army green page color on the right. It's a plain HTML page using `fonts/` and those images, outside this folder, screenshotted in headless Chrome at 1200 × 630 as a JPEG at quality 85 (about 140 KB).
 
 ## Checking it
 

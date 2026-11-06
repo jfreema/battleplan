@@ -1060,6 +1060,12 @@ void main() {
           of: find.byType(AppStoreBadge),
           matching: find.byType(InkWell),
         );
+        // The link has the artwork's full size before the image loads, as
+        // tests never load it.
+        expect(
+          tester.getSize(link).width,
+          greaterThan(AppStoreBadge.height * 2.9),
+        );
         await tester.ensureVisible(link);
         await tester.tap(link);
         await tester.pump();

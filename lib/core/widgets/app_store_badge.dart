@@ -20,6 +20,10 @@ class AppStoreBadge extends StatelessWidget {
   /// Its height on screen, over Apple's 40-point minimum.
   static const height = 44.0;
 
+  /// Its width at [height], from the artwork's own shape, so the link has
+  /// its full size before the image loads.
+  static const double width = height * 431 / 144;
+
   final VoidCallback onPressed;
 
   @override
@@ -41,6 +45,7 @@ class AppStoreBadge extends StatelessWidget {
               padding: const EdgeInsets.all(Space.xs),
               child: Image.asset(
                 asset,
+                width: width,
                 height: height,
                 excludeFromSemantics: true,
               ),
