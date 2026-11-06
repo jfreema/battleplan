@@ -571,6 +571,16 @@ class FakeMemberRepository implements MemberRepository {
     _updateMine(groupId, uid, (m) => m.copyWith(notificationLevel: level));
   }
 
+  @override
+  Future<void> setMyColorScheme(
+    GroupId groupId,
+    UserId uid,
+    TeamScheme scheme,
+  ) async {
+    calls.add('scheme ${groupId.value} ${scheme.value}');
+    _updateMine(groupId, uid, (m) => m.copyWith(colorScheme: scheme));
+  }
+
   DateTime? mutedUntil;
 
   @override
@@ -899,7 +909,17 @@ class FakeUserRepository implements UserRepository {
 
   /// The picked time zone (SET-7); null is Automatic.
   String? timeZone;
+
+  /// The default color scheme (SET-2); null maps from [themeMode].
+  TeamScheme? colorScheme;
+
+  /// The icon's candy color (SET-8); null is the hashed one.
+  AvatarColor? avatarColor;
+
+  /// The profile photo's path; [removePhoto] clears it.
+  String? photoPath;
   int photosUploaded = 0;
+  int photosRemoved = 0;
 
   final Map<NotificationPref, bool> notificationPrefs = {};
 
@@ -931,6 +951,9 @@ class FakeUserRepository implements UserRepository {
     adultConfirmedAt: needsSetup ? null : DateTime(2026),
     acceptedTermsAt: needsSetup ? null : DateTime(2026),
     themeMode: themeMode,
+    colorScheme: colorScheme,
+    avatarColor: avatarColor,
+    photoPath: photoPath,
     timeZone: timeZone,
     notificationPrefs: {...notificationPrefs},
   );
@@ -966,6 +989,18 @@ class FakeUserRepository implements UserRepository {
   }
 
   @override
+  Future<void> setColorScheme(String uid, TeamScheme scheme) async {
+    colorScheme = scheme;
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> setAvatarColor(String uid, AvatarColor color) async {
+    avatarColor = color;
+    _changes.add(null);
+  }
+
+  @override
   Future<void> setTimeZone(String uid, String? zone) async {
     timeZone = zone;
     _changes.add(null);
@@ -974,6 +1009,13 @@ class FakeUserRepository implements UserRepository {
   @override
   Future<void> uploadPhoto(String uid, Uint8List jpegBytes) async =>
       photosUploaded++;
+
+  @override
+  Future<void> removePhoto(String uid) async {
+    photosRemoved++;
+    photoPath = null;
+    _changes.add(null);
+  }
 
   @override
   Future<String?> photoUrl(String path) async => null;
