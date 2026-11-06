@@ -158,55 +158,64 @@ class EventRow extends StatelessWidget {
                         ),
                       ConstrainedBox(
                         constraints: const BoxConstraints(minHeight: 22),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                event.title,
-                                maxLines: 1,
-                                style: TextStyle(
-                                  fontFamily: AppFonts.body,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 18,
-                                  height: 22 / 18,
-                                  color: card.textPrimary,
-                                  decoration: canceled
-                                      ? TextDecoration.lineThrough
-                                      : null,
+                        child: LayoutBuilder(
+                          builder: (context, box) => Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  event.title,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.body,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 18,
+                                    height: 22 / 18,
+                                    color: card.textPrimary,
+                                    decoration: canceled
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            if (canceled) ...[
-                              const SizedBox(width: 10),
-                              const CanceledBadge(),
-                            ],
-                            // The type word, unless the title says it.
-                            if (!canceled &&
-                                event.title.trim().toLowerCase() !=
-                                    type.toLowerCase()) ...[
-                              const SizedBox(width: 10),
-                              Flexible(
-                                child: ExcludeSemantics(
-                                  child: Text(
-                                    type.toUpperCase(),
-                                    maxLines: 1,
-                                    softWrap: false,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: style.label(
-                                      TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                        height: 16 / 13,
-                                        letterSpacing: 13 * 0.1,
-                                        color: typeText,
+                              if (canceled) ...[
+                                const SizedBox(width: 10),
+                                const CanceledBadge(),
+                              ],
+                              // The type word, unless the title says it, at
+                              // its own width and pushed right, so the title
+                              // has the rest of the row before it's cut
+                              // short. Never over half the row, so big text
+                              // shortens it rather than overflowing.
+                              if (!canceled &&
+                                  event.title.trim().toLowerCase() !=
+                                      type.toLowerCase()) ...[
+                                const SizedBox(width: 10),
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: box.maxWidth / 2,
+                                  ),
+                                  child: ExcludeSemantics(
+                                    child: Text(
+                                      type.toUpperCase(),
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: style.label(
+                                        TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                          height: 16 / 13,
+                                          letterSpacing: 13 * 0.1,
+                                          color: typeText,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 1),

@@ -277,12 +277,16 @@ async function main() {
   // Upcoming events with a few RSVPs: per player on every team, and
   // members answering for themselves (coaches and others, SCHED-5). A few
   // past ones fill in each player's RSVP history (PLAYER-11). Thunder's
-  // game has its card in the chat (CHAT-11).
+  // game has its card in the chat (CHAT-11). Jim's answers on Thunder's
+  // are Going, Maybe, and Not going, with one practice still open, so his
+  // schedule shows each (the website's hero screenshots).
   const events: { id: string; groupId: string; type: string; title: string; day: number; hour: number; opponent?: string; homeAway?: string; card?: true }[] = [
     { id: 'thunder-practice', groupId: 'thunder', type: 'practice', title: 'Practice', day: 2, hour: 18 },
     { id: 'thunder-game', groupId: 'thunder', type: 'game', title: 'vs. Eagles', day: 5, hour: 10, opponent: 'Eagles', homeAway: 'home', card: true },
     { id: 'thunder-practice-2', groupId: 'thunder', type: 'practice', title: 'Practice', day: 9, hour: 18 },
     { id: 'thunder-bbq', groupId: 'thunder', type: 'social', title: 'Season kickoff BBQ', day: 12, hour: 17 },
+    { id: 'thunder-practice-3', groupId: 'thunder', type: 'practice', title: 'Practice', day: 16, hour: 18 },
+    { id: 'thunder-game-2', groupId: 'thunder', type: 'game', title: '@ Wildcats', day: 19, hour: 10, opponent: 'Wildcats', homeAway: 'away' },
     { id: 'cyclone-practice', groupId: 'cyclone', type: 'practice', title: 'Practice', day: 1, hour: 17 },
     { id: 'cyclone-game', groupId: 'cyclone', type: 'game', title: 'vs. Comets', day: 4, hour: 9, opponent: 'Comets', homeAway: 'home' },
     { id: 'possums-game', groupId: 'possums', type: 'game', title: '@ Bulls', day: 3, hour: 19, opponent: 'Bulls', homeAway: 'away' },
@@ -326,6 +330,9 @@ async function main() {
     ['thunder-game', 'player', 'jim-halpert', 'going', 'jim'],
     ['thunder-game', 'player', 'andy-dwyer', 'going', 'andy'],
     ['thunder-game', 'player', 'pam-beesly', 'maybe', 'coach'],
+    ['thunder-practice-2', 'player', 'jim-halpert', 'not_going', 'jim'],
+    ['thunder-bbq', 'player', 'jim-halpert', 'maybe', 'jim'],
+    ['thunder-game-2', 'player', 'jim-halpert', 'going', 'jim'],
     ['cyclone-practice', 'player', 'luke-dunphy', 'going', 'phil'],
     ['cyclone-practice', 'player', 'emma-green', 'not_going', 'rachel'],
     ['possums-game', 'player', 'haley-dunphy', 'going', 'claire'],

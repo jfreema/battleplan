@@ -237,6 +237,27 @@ void main() {
       expect(find.text('No response'), findsNothing);
     });
 
+    testWidgets('a long title has the row up to the type word, which sits at '
+        'the right end', (tester) async {
+      await openSchedule(
+        tester,
+        events: [
+          event('s', title: 'Season kickoff BBQ', type: EventType.social),
+        ],
+      );
+      final title = tester.getRect(find.text('Season kickoff BBQ'));
+      final word = tester.getRect(find.text('SOCIAL'));
+      final row = tester.getRect(
+        find
+            .ancestor(of: find.text('SOCIAL'), matching: find.byType(Row))
+            .first,
+      );
+      // Pushed right, 10 after the title, which has the rest of the row
+      // (the two used to split it in half, cutting titles short).
+      expect(word.right, moreOrLessEquals(row.right, epsilon: 0.5));
+      expect(word.left, moreOrLessEquals(title.right + 10, epsilon: 0.5));
+    });
+
     testWidgets('the type filter (SCHED-2)', (tester) async {
       await openSchedule(
         tester,
