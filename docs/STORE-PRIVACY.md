@@ -9,11 +9,12 @@ If the app starts collecting something new, change the Privacy Policy, the priva
 | Data | Where it comes from | Why | Required? |
 |---|---|---|---|
 | Name | Sign-in and setup; admins who add someone | Shown to the person's teams | Yes |
-| Email address | Sign-in; admins and members who invite or add someone | Sign-in, setup links, invites, security notices | Yes |
-| Phone number | A person who shares one with a team (TEAM-10); players' emergency contacts (PLAYER-12) | Shown to that team, or to the player's admins and linked people | No |
+| Email address | Sign-in; admins and members who invite or add someone; an admin's or coach's Apple Cash email in How to pay (DUES-3) | Sign-in, setup links, invites, security notices; showing the team how to pay | Yes |
+| Phone number | A person who shares one with a team (TEAM-10); players' emergency contacts (PLAYER-12); an admin's or coach's Apple Cash phone number in How to pay (DUES-3) | Shown to that team, or to the player's admins and linked people | No |
 | Photos | Chat photos, profile photos, team logos and backgrounds | Shown to the team | No |
 | Files and documents | Team documents | Shown to the team | No |
 | Messages | Team chat | Shown to the team | No |
+| Dues | Team admins add a due (what it's for, the amount, an optional date and note) and mark each player's or member's share paid, not paid, or waived, with the date it was paid; they and the team's coaches share how to pay (a Venmo username, a Cash App $cashtag, an Apple Cash phone or email, a note) (DUES-1 to DUES-4) | Tracking who owes and who paid team fees, seen only by admins and each share's own people; How to pay is seen by the team. Battleplan takes no payments | No |
 | Other content | Polls and votes, events, RSVPs and their notes, players' records (name, jersey number, walk-up song, and the optional details), reports | The team's schedule, roster, and moderation | No |
 | User ID | The account | Running the app; analytics and crash reports carry it | Yes |
 | Device IDs | A notification token per phone or browser; Analytics' app instance ID (never the advertising ID) | Notifications; analytics | Yes |
@@ -21,7 +22,7 @@ If the app starts collecting something new, change the Privacy Policy, the priva
 | Approximate location | Analytics infers the country from the IP address | Analytics | Yes |
 | Crash logs and diagnostics | Firebase Crashlytics on phones; sampled error reports from the web app | Fixing bugs | Yes |
 
-Not collected: health information (medical notes were removed on 2026-10-20), precise location, contacts (the system calendar sheet reads them, not Battleplan), browsing or search history, purchases, financial information, the advertising ID, and audio. Nothing is used for tracking or advertising, and nothing is sold.
+Not collected: health information (medical notes were removed on 2026-10-20), precise location, contacts (the system calendar sheet reads them, not Battleplan), browsing or search history, purchases, payment details (no card, bank, or payment account numbers: Battleplan takes no payments, and a due's amount and paid status are the only financial information), the advertising ID, and audio. Nothing is used for tracking or advertising, and nothing is sold.
 
 ## App Store: App Privacy
 
@@ -34,6 +35,7 @@ Not collected: health information (medical notes were removed on 2026-10-20), pr
 | Contact Info: Name | Yes | Yes | App Functionality |
 | Contact Info: Email Address | Yes | Yes | App Functionality |
 | Contact Info: Phone Number | Yes | Yes | App Functionality |
+| Financial Info: Other Financial Info | Yes | Yes | App Functionality |
 | User Content: Photos or Videos | Yes | Yes | App Functionality |
 | User Content: Other User Content | Yes | Yes | App Functionality |
 | Identifiers: User ID | Yes | Yes | App Functionality, Analytics |
@@ -59,6 +61,7 @@ Everything else: not collected. These match the manifest's `NSPrivacyCollectedDa
 | Personal info: Email address | Yes | Required | App functionality, Account management, Developer communications |
 | Personal info: User IDs | Yes | Required | App functionality, Analytics, Account management |
 | Personal info: Phone number | Yes | Optional | App functionality |
+| Financial info: Other financial info | Yes | Optional | App functionality |
 | Photos and videos: Photos | Yes | Optional | App functionality |
 | Files and docs: Files and docs | Yes | Optional | App functionality |
 | Messages: Other in-app messages | Yes | Optional | App functionality |
@@ -70,6 +73,13 @@ Everything else: not collected. These match the manifest's `NSPrivacyCollectedDa
 | Device or other IDs | Yes | Required | App functionality, Analytics |
 
 "Developer communications" is the security notices, setup links, and invites; there are no marketing emails.
+
+## Dues: what to change in the consoles
+
+Dues (2026-11-06, the web app now; iOS from 1.2, ROADMAP task 352) record what each player or member owes and whether they paid: Apple's "Other Financial Info" (which covers debts) and Play's "Other financial info". The ways to pay come under Contact Info (an Apple Cash phone or email) and Other User Content (usernames and the note), which are already declared. The manifest has the new type. Change the consoles by hand, before or with 1.2's submission:
+
+- **App Store Connect → the app → App Privacy → Edit:** check **Financial Info → Other Financial Info**, then answer: collected for **App Functionality** only; **linked to the user's identity: Yes**; **used for tracking: No**. Leave every other answer as it is, then **Publish**.
+- **Play Console → App content → Data safety** (when the Android app is set up, task 213): under **Financial info**, check **Other financial info**: collected, not shared, not processed ephemerally, **optional** (users can choose), for **App functionality**.
 
 ## Elsewhere in the consoles
 

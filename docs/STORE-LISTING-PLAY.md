@@ -13,7 +13,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 | Default language | English (United States), en-US |
 | App or game | App |
 | Free or paid | Free |
-| Countries | United States and Canada, as on the App Store. The Android app leaves out Buy Jared a coffee (it's only on the web), so there's nothing to pay for and no Play billing question |
+| Countries | United States and Canada, as on the App Store. The Android app leaves out Buy Jared a coffee (it's only on the web), so there's nothing to pay for and no Play billing question. Dues' **Open** buttons open the team's Venmo or Cash App page, for payments between members for things outside the app (uniforms, team fees), not purchases from us or in the app (store checklist 5.9) |
 
 ## Main store listing
 
@@ -23,7 +23,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 Free team chat, schedule, and RSVPs for sports teams. No ads, ever.
 ```
 
-**Full description** (4,000 characters at most; this one is about 2,000):
+**Full description** (4,000 characters at most; this one is about 2,200):
 
 ```
 Battleplan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
@@ -51,6 +51,7 @@ MORE FOR COACHES
 • Polls for quick decisions
 • Documents: lineups, rules, waivers, and links
 • Plays: a whiteboard with real baseball, basketball, soccer, and football fields. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping, then post them to the chat, or save or share them as animated GIFs
+• Dues: track who owes and who's paid for uniforms and fees, and show the team how to pay. Payments go person to person, outside the app
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS
@@ -143,11 +144,12 @@ Expect a rating with an "Users interact" notice. Don't pick anything aimed at ch
 - Collects or shares required user data types: yes. Shared with third parties: none (Google Firebase, Apple, and Resend are service providers).
 - Encrypted in transit: yes. People can ask for their data to be deleted: yes.
 - Account deletion URL: `https://getbattleplan.app/delete-account` (also in the app: Profile, then Settings, then Delete account).
-- Data types and purposes: the table in STORE-PRIVACY.md, row for row (name, email, user IDs, phone number, photos, files and docs, other in-app messages, app interactions, other user-generated content, approximate location, crash logs, diagnostics, device or other IDs). Nothing is processed ephemerally, and nothing is used for advertising.
+- Data types and purposes: the table in STORE-PRIVACY.md, row for row (name, email, user IDs, phone number, other financial info, photos, files and docs, other in-app messages, app interactions, other user-generated content, approximate location, crash logs, diagnostics, device or other IDs). Nothing is processed ephemerally, and nothing is used for advertising.
+- **Financial info → Other financial info** is for Dues (2026-11-06): what each player or member owes and whether they paid. Check it: collected, not shared, optional, for App functionality (STORE-PRIVACY.md, "Dues: what to change in the consoles").
 
 **Government apps:** No, it isn't developed by or for a government.
 
-**Financial features:** None (the app has no financial features).
+**Financial features:** "My app doesn't provide any financial features." Dues only record what members owe and whether they've paid; Battleplan never takes, sends, or holds money, and the **Open** buttons just open the team's Venmo or Cash App page, where people pay each other.
 
 **Health:** Not a health app (the Health apps declaration: none of the listed features). It stores no health data.
 

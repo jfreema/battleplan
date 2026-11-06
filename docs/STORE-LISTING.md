@@ -34,27 +34,15 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 
 ## Version information
 
-**What's New in This Version** (1.1, for the version after 1.0; 4,000 characters):
+**What's New in This Version** (1.2, the next version, ROADMAP task 352; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
 
 ```
 A whole new look, Open Field, with five color schemes: Army green, the default, plus Light, Dark, Navy, and Light blue. Everyone picks the scheme they see for each team, and a default for the rest.
 
 Also new:
+• Dues: track who owes and who's paid for uniforms and team fees, and show everyone how to pay the team. People pay each other directly, outside the app
 • Your icon: a photo, or your initials on a color you pick, beside your messages in chat
-• Teams and Profile at the top: all your teams in one list, a back arrow from each team, and Team info for its roster, invites, and Team admin
-• Assignments on events: snacks, drinks, scorekeeper, or anything else, that families volunteer for or coaches assign
-• Photos: every photo shared in the team's chat, in one place under Documents
-• Answer an RSVP right from the schedule: Going, Maybe, or Not going on each event, and tap it again to clear it
-• Plays: post a play to the chat, where it opens the play, or save or share it as an animated GIF
-• Shared invite links show the team's name and logo
-• Search in the chat: find any message by its words and jump to it
-• Start a new season from a team, bringing along the players, parents, coaches, documents, and plays you pick
-• Groups beside teams, for anything that isn't a team
 • On a team, RSVPs are for players: parents answer for their kids, and adult players answer for themselves
-• Your own time zone in Profile, which stays put when you travel; time zones by name, like Central Time (Chicago)
-• A faster chat that loads less and works better with screen readers
-• A security update for the app's connection to its servers
-• A new app icon
 ```
 
 **Promotional text** (170 characters; can change without a new version):
@@ -63,7 +51,7 @@ Also new:
 Free for every team, with no ads. Chat with the team, schedule games and practices, see who's coming for every player, and keep files and plays in one place.
 ```
 
-**Description** (4,000 characters):
+**Description** (4,000 characters; for 1.2, so it names Open Field's color schemes and Dues, which 1.1 doesn't have):
 
 ```
 Battleplan is team chat and scheduling for sports teams, free for every team and with no ads. Coaches, players, and parents get the whole team in one app: the chat, the schedule, who's coming, and the team's files.
@@ -92,6 +80,7 @@ MORE FOR COACHES
 • Polls for quick decisions
 • Documents: lineups, rules, waivers, and links
 • Plays: a whiteboard with real baseball, basketball, soccer, and football fields. Drag players and the ball, draw routes, play the steps back, and save the plays worth keeping, then post them to the chat, or save or share them as animated GIFs
+• Dues: track who owes and who's paid for uniforms and fees, and show the team how to pay. Payments go person to person, outside the app
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 • Start a new season from a team, bringing along the players, parents, and coaches you pick
 • Groups for anything that isn't a team, with the same chat, schedule, and RSVPs
@@ -152,6 +141,7 @@ Where things are:
 • Block: press and hold their message and choose Block, or tap their photo to open their page and use the menu at the top (Block, Report).
 • Delete account: Profile (the tab at the bottom of the Teams screen; from a team, tap the back arrow at the top left first), then Settings, then Delete account. Accounts that use Sign in with Apple sign in with Apple once more, and the app revokes Apple's tokens before deleting.
 • A language filter is on for every team.
+• Dues (Team info, then Dues): team admins record what players owe for things like uniforms and mark who has paid. Battleplan takes no payments and sells nothing. Admins and coaches can list the team's payment usernames under How to pay; the iPhone and iPad app only lets people copy them and never opens a payment app. People pay each other directly, outside the app.
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.
 ```

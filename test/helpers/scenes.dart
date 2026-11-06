@@ -657,7 +657,8 @@ const wideSize = Size(1280, 800);
 
 /// Every key screen with a golden in every color scheme (SPEC §7.4): the main
 /// screens, and welcome, Teams, Profile, Team info, the team switcher,
-/// roster, settings, invite, and the wide rail layout.
+/// roster, settings, invite, both Color scheme screens, a group's schedule,
+/// Dues, Your icon, and the wide rail layout.
 final Map<
   String,
   Future<void> Function(WidgetTester, {required TeamScheme scheme})

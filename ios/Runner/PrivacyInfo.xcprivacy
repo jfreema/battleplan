@@ -71,8 +71,8 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Phone numbers people share with a team, and players' emergency
-		     contacts. -->
+		<!-- Phone numbers people share with a team, players' emergency
+		     contacts, and an Apple Cash number in a team's How to pay. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypePhoneNumber</string>
@@ -97,7 +97,22 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Messages, polls, events, RSVPs, documents, reports. -->
+		<!-- Dues (DUES-1 to DUES-4): what each player or member owes and
+		     whether they paid. Battleplan takes no payments. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherFinancialInfo</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- Messages, polls, events, RSVPs, documents, reports, and the ways
+		     to pay a team's admins share. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeOtherUserContent</string>
