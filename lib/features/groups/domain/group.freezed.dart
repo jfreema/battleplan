@@ -594,7 +594,8 @@ as String?,
 /// @nodoc
 mixin _$DirectPerson {
 
- String get name; String? get photoPath;
+ String get name; String? get photoPath;/// Their icon's candy color (SET-8), or null for the hashed one.
+ AvatarColor? get avatarColor;
 /// Create a copy of DirectPerson
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -606,20 +607,20 @@ $DirectPersonCopyWith<DirectPerson> get copyWith => _$DirectPersonCopyWithImpl<D
 @override
 bool operator ==(Object other) {
   final _this = this as DirectPerson;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DirectPerson&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DirectPerson&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.photoPath, _this.photoPath) || other.photoPath == _this.photoPath)&&(identical(other.avatarColor, _this.avatarColor) || other.avatarColor == _this.avatarColor));
 }
 
 
 @override
 int get hashCode {
   final _this = this as DirectPerson;
-  return Object.hash(runtimeType,_this.name,_this.photoPath);
+  return Object.hash(runtimeType,_this.name,_this.photoPath,_this.avatarColor);
 }
 
 @override
 String toString() {
   final _this = this as DirectPerson;
-  return 'DirectPerson(name: ${_this.name}, photoPath: ${_this.photoPath})';
+  return 'DirectPerson(name: ${_this.name}, photoPath: ${_this.photoPath}, avatarColor: ${_this.avatarColor})';
 }
 
 
@@ -630,7 +631,7 @@ abstract mixin class $DirectPersonCopyWith<$Res>  {
   factory $DirectPersonCopyWith(DirectPerson value, $Res Function(DirectPerson) _then) = _$DirectPersonCopyWithImpl;
 @useResult
 $Res call({
- String name, String? photoPath
+ String name, String? photoPath, AvatarColor? avatarColor
 });
 
 
@@ -647,11 +648,12 @@ class _$DirectPersonCopyWithImpl<$Res>
 
 /// Create a copy of DirectPerson
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? photoPath = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? photoPath = freezed,Object? avatarColor = freezed,}) {
   return _then(DirectPerson(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,photoPath: freezed == photoPath ? _self.photoPath : photoPath // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,avatarColor: freezed == avatarColor ? _self.avatarColor : avatarColor // ignore: cast_nullable_to_non_nullable
+as AvatarColor?,
   ));
 }
 
@@ -736,10 +738,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? photoPath)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String? photoPath,  AvatarColor? avatarColor)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DirectPerson() when $default != null:
-return $default(_that.name,_that.photoPath);case _:
+return $default(_that.name,_that.photoPath,_that.avatarColor);case _:
   return orElse();
 
 }
@@ -757,10 +759,10 @@ return $default(_that.name,_that.photoPath);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? photoPath)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String? photoPath,  AvatarColor? avatarColor)  $default,) {final _that = this;
 switch (_that) {
 case _DirectPerson():
-return $default(_that.name,_that.photoPath);case _:
+return $default(_that.name,_that.photoPath,_that.avatarColor);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -777,10 +779,10 @@ return $default(_that.name,_that.photoPath);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? photoPath)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String? photoPath,  AvatarColor? avatarColor)?  $default,) {final _that = this;
 switch (_that) {
 case _DirectPerson() when $default != null:
-return $default(_that.name,_that.photoPath);case _:
+return $default(_that.name,_that.photoPath,_that.avatarColor);case _:
   return null;
 
 }
@@ -792,11 +794,13 @@ return $default(_that.name,_that.photoPath);case _:
 
 
 class _DirectPerson implements DirectPerson {
-  const _DirectPerson({required this.name, this.photoPath});
+  const _DirectPerson({required this.name, this.photoPath, this.avatarColor});
   
 
 @override final  String name;
 @override final  String? photoPath;
+/// Their icon's candy color (SET-8), or null for the hashed one.
+@override final  AvatarColor? avatarColor;
 
 /// Create a copy of DirectPerson
 /// with the given fields replaced by the non-null parameter values.
@@ -808,18 +812,18 @@ _$DirectPersonCopyWith<_DirectPerson> get copyWith => __$DirectPersonCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DirectPerson&&(identical(other.name, name) || other.name == name)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DirectPerson&&(identical(other.name, name) || other.name == name)&&(identical(other.photoPath, photoPath) || other.photoPath == photoPath)&&(identical(other.avatarColor, avatarColor) || other.avatarColor == avatarColor));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,name,photoPath);
+    return Object.hash(runtimeType,name,photoPath,avatarColor);
 }
 
 @override
 String toString() {
-    return 'DirectPerson(name: $name, photoPath: $photoPath)';
+    return 'DirectPerson(name: $name, photoPath: $photoPath, avatarColor: $avatarColor)';
 }
 
 
@@ -830,7 +834,7 @@ abstract mixin class _$DirectPersonCopyWith<$Res> implements $DirectPersonCopyWi
   factory _$DirectPersonCopyWith(_DirectPerson value, $Res Function(_DirectPerson) _then) = __$DirectPersonCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String? photoPath
+ String name, String? photoPath, AvatarColor? avatarColor
 });
 
 
@@ -847,11 +851,12 @@ class __$DirectPersonCopyWithImpl<$Res>
 
 /// Create a copy of DirectPerson
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? photoPath = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? photoPath = freezed,Object? avatarColor = freezed,}) {
   return _then(_DirectPerson(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,photoPath: freezed == photoPath ? _self.photoPath : photoPath // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,avatarColor: freezed == avatarColor ? _self.avatarColor : avatarColor // ignore: cast_nullable_to_non_nullable
+as AvatarColor?,
   ));
 }
 
