@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -16,8 +17,9 @@ import 'package:material_ui/material_ui.dart';
 /// 4 px lip, corner 18, and its [child] in the card's colors
 /// ([GumdropSurface]). [edge], when given, is a 5 px stripe down its left
 /// side (the event type's candy). A [footer] sits under it on the card,
-/// outside what a tap opens: buttons of its own, like the answers.
-class TapCard extends StatelessWidget {
+/// outside what a tap opens: buttons of its own, like the answers. The
+/// keyboard focus rings the whole card (SPEC §7.6).
+class TapCard extends StatefulWidget {
   const new({
     required this.child,
     this.onTap,
@@ -36,22 +38,32 @@ class TapCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
+  State<TapCard> createState() => _TapCardState();
+}
+
+class _TapCardState extends State<TapCard> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
     final rim = BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth);
-    final resolved = padding.resolve(Directionality.of(context));
-    final body = switch (footer) {
-      null => InkWell(
-        onTap: onTap,
-        child: Padding(padding: resolved, child: child),
-      ),
+    final resolved = widget.padding.resolve(Directionality.of(context));
+    final edge = widget.edge;
+    final radius = BorderRadius.circular(widget.radius);
+    Widget ink(EdgeInsets padding) => InkWell(
+      onTap: widget.onTap,
+      // The ring around the card shows the focus instead.
+      focusColor: Colors.transparent,
+      onFocusChange: (f) => setState(() => _focused = f),
+      child: Padding(padding: padding, child: widget.child),
+    );
+    final body = switch (widget.footer) {
+      null => ink(resolved),
       final footer => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          InkWell(
-            onTap: onTap,
-            child: Padding(padding: resolved.copyWith(bottom: 2), child: child),
-          ),
+          ink(resolved.copyWith(bottom: 2)),
           Padding(padding: resolved.copyWith(top: 0), child: footer),
         ],
       ),
@@ -60,30 +72,32 @@ class TapCard extends StatelessWidget {
       child: DecoratedBox(
         // The 4 px lip under the card, in the rim's color.
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(radius),
+          borderRadius: radius,
           boxShadow: [BoxShadow(color: rim.color, offset: const Offset(0, 4))],
         ),
-        child: Material(
-          color: c.surface,
-          shape: RoundedRectangleBorder(
-            side: rim,
-            borderRadius: BorderRadius.circular(radius),
+        // Outside the card, whose rim would cover a ring drawn on it.
+        child: FocusRing(
+          focused: _focused,
+          radius: radius,
+          child: Material(
+            color: c.surface,
+            shape: RoundedRectangleBorder(side: rim, borderRadius: radius),
+            clipBehavior: Clip.antiAlias,
+            child: edge == null
+                ? body
+                : Stack(
+                    children: [
+                      body,
+                      PositionedDirectional(
+                        start: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 5,
+                        child: ColoredBox(color: edge),
+                      ),
+                    ],
+                  ),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: edge == null
-              ? body
-              : Stack(
-                  children: [
-                    body,
-                    PositionedDirectional(
-                      start: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 5,
-                      child: ColoredBox(color: edge!),
-                    ),
-                  ],
-                ),
         ),
       ),
     );
@@ -324,12 +338,9 @@ class RsvpChoice extends StatelessWidget {
         selected: {?current},
         style: ButtonStyle(
           backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
-          // Only keyboard focus shows; the gumdrops draw the rest.
-          overlayColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.focused)
-                ? GumdropColors.of(context).textOnPage.withValues(alpha: 0.16)
-                : Colors.transparent,
-          ),
+          // The gumdrops and pills draw every state, the keyboard focus as
+          // a ring around themselves (buttonFocusRing).
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           side: const WidgetStatePropertyAll(BorderSide.none),
           shape: const WidgetStatePropertyAll(RoundedRectangleBorder()),
           padding: const WidgetStatePropertyAll(EdgeInsets.zero),
@@ -408,6 +419,10 @@ class _RsvpGumdrop extends StatelessWidget {
         // The lip's room below every button, picked or not.
         padding: const EdgeInsets.only(bottom: 4),
         child: Container(
+          foregroundDecoration: buttonFocusRing(
+            context,
+            BorderRadius.circular(23),
+          ),
           decoration: BoxDecoration(
             color: selected ? accent.face : null,
             borderRadius: BorderRadius.circular(23),
@@ -499,6 +514,7 @@ class _RsvpPill extends StatelessWidget {
     };
     final pill = Container(
       height: 36,
+      foregroundDecoration: buttonFocusRing(context, BorderRadius.circular(18)),
       decoration: BoxDecoration(
         color: selected ? accent.face : null,
         borderRadius: BorderRadius.circular(18),

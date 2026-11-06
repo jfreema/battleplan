@@ -117,6 +117,48 @@ void main() {
     expect(prefs.lastTeamRoute, '/teams');
   });
 
+  testWidgets('archived teams wait under Archived, which opens and closes', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: {
+        ...teams,
+        'c': testGroup(
+          'c',
+          'Spring Storm',
+        ).copyWith(archivedAt: DateTime(2026, 6)),
+      },
+      memberships: [...memberships, testMembership('c', 'coach')],
+    );
+    await go(tester, '/teams');
+    expect(find.text('Thunder'), findsOneWidget);
+    expect(find.text('Spring Storm'), findsNothing);
+    // How many, and that it opens.
+    expect(
+      tester.getSemantics(find.text('Archived')),
+      isSemantics(
+        label: 'Archived\n1',
+        isButton: true,
+        hasExpandedState: true,
+        isExpanded: false,
+      ),
+    );
+    await tester.tap(find.text('Archived'));
+    await tester.pumpAndSettle();
+    expect(find.text('Spring Storm'), findsOneWidget);
+    expect(
+      tester.getSemantics(find.text('Archived')),
+      isSemantics(hasExpandedState: true, isExpanded: true),
+    );
+    await tester.tap(find.text('Archived'));
+    await tester.pumpAndSettle();
+    expect(find.text('Spring Storm'), findsNothing);
+    handle.dispose();
+  });
+
   testWidgets('Teams welcomes someone with no team yet', (tester) async {
     await pumpApp(tester, auth: FakeAuthRepository(user: coach));
     expect(find.text('Welcome to Battleplan'), findsOneWidget);
@@ -270,6 +312,34 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Grape'), findsOneWidget);
     semantics.dispose();
+  });
+
+  testWidgets("Your icon's colors keep their 48 px tap areas on any phone: "
+      'one row reaching into the gutters, or two rows', (tester) async {
+    for (final (width, rows) in [(390.0, 1), (360.0, 1), (320.0, 2)]) {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: memberships,
+        users: FakeUserRepository(),
+        size: Size(width, 780),
+      );
+      await go(tester, '/profile/icon');
+      final rects = [
+        for (final name in ['Blue raspberry', 'Mint', 'Cherry'])
+          tester.getRect(find.bySemanticsLabel(name)),
+      ];
+      for (final r in rects) {
+        expect(r.width, moreOrLessEquals(48), reason: '$width');
+        expect(r.height, moreOrLessEquals(48), reason: '$width');
+        // Inside the screen, 8 px or more from its edges.
+        expect(r.left, greaterThanOrEqualTo(8), reason: '$width');
+        expect(r.right, lessThanOrEqualTo(width - 8), reason: '$width');
+      }
+      final tops = {for (final r in rects) r.top};
+      expect(tops, hasLength(rows), reason: '$width');
+    }
   });
 
   testWidgets('Your icon adds a photo, then changes or removes it (SET-1)', (

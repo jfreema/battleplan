@@ -10,11 +10,11 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The pieces of the Gumdrop settings screens (design §3.2, §3.5, §3.8,
-/// §3.13, §3.18): the round back button and big title, cards of rows with
-/// icon discs, card and page headings, caps field labels, and the team
-/// color grid. Shared by Settings, Team settings, Create team, Invite,
-/// Roster, Documents, and Plays.
+/// The pieces of the Open Field settings screens (SPEC §7.3): the
+/// pushed-screen bar with its back row and big title, rows on the page
+/// between hairlines, true cards, card and page headings, section labels,
+/// caps field labels, and the team color grid. Shared by Settings, Team
+/// admin, Create team, Invite, Roster, Dues, Documents, and Plays.
 
 /// The pushed-screen bar (SPEC §7.3): a 48 px back row with the chevron
 /// and [backLabel] (the screen it goes back to), and [actions] on its
@@ -233,6 +233,8 @@ class PageListRow extends StatelessWidget {
 /// something. [destructive] puts the icon and title in the accent text.
 /// Screen readers hear the row as one item; with [trailingActions], the
 /// buttons in [trailing] stay items of their own.
+/// At large text sizes a [trailing] widget other than an icon goes under
+/// the text, which keeps the row's width.
 class PageRow extends StatelessWidget {
   const new({
     required this.title,
@@ -302,6 +304,11 @@ class PageRow extends StatelessWidget {
     final endBox = BoxConstraints(
       maxWidth: MediaQuery.sizeOf(context).width * 0.45,
     );
+    final below =
+        !apart &&
+        end != null &&
+        end is! Icon &&
+        MediaQuery.textScalerOf(context).scale(1) > 1.5;
     final item = MergeSemantics(
       child: Semantics(
         button: onTap != null,
@@ -344,10 +351,15 @@ class PageRow extends StatelessWidget {
                               color: c.textMutedOnPage,
                             ),
                           ),
+                        if (below)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: end,
+                          ),
                       ],
                     ),
                   ),
-                  if (end != null && !apart) ...[
+                  if (end != null && !apart && !below) ...[
                     const SizedBox(width: 14),
                     ConstrainedBox(constraints: endBox, child: end),
                   ],
@@ -378,6 +390,8 @@ class SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
+    // Its own node, so the text after it isn't read as part of it.
+    container: true,
     header: true,
     child: Text(
       text.toUpperCase(),
@@ -537,6 +551,7 @@ class CardHeading extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context).card;
     return Semantics(
+      container: true,
       header: true,
       child: Text(
         text,
@@ -560,6 +575,7 @@ class PageHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
+    container: true,
     header: true,
     child: Text(
       text,

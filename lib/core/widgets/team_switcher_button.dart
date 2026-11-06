@@ -2,13 +2,16 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The team switcher in the header (SPEC §5.2, §7.3): the tab's stencil
 /// [eyebrow] over the team's [name] in Lilita One with the scheme's drop,
 /// and a small chevron, with a coral dot when another team has unread
-/// messages. One button, at least 48 tall.
+/// messages. One button, at least 48 tall, with the 3 px focus ring for the
+/// keyboard. Screen readers hear the eyebrow in plain case, then "Switch
+/// team: {name}", then the dot in words.
 class TeamSwitcherButton extends StatelessWidget {
   const new({
     required this.name,
@@ -75,12 +78,18 @@ class TeamSwitcherButton extends StatelessWidget {
     return Semantics(
       container: true,
       button: true,
-      label: '${l10n.switchTeamTooltip}: $name',
+      label: [
+        ?above,
+        [
+          '${l10n.switchTeamTooltip}: $name',
+          if (showDot) l10n.switchTeamOtherUnread,
+        ].join(', '),
+      ].join('. '),
       excludeSemantics: true,
       // The InkWell's own tap is excluded with its semantics.
       onTap: onPressed,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(Corners.tile),
+      child: FocusRingInk(
+        radius: BorderRadius.circular(Corners.tile),
         onTap: onPressed,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 48),

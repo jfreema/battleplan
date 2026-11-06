@@ -13,8 +13,9 @@ abstract final class AppFonts {
   /// the fallback fonts (tools/cut_fonts.sh).
   static const String body = 'Nunito';
 
-  /// Stencil stickers, like the tag under the team's name: capitals only,
-  /// never under 12 px. Cut to A–Z and the space (tools/cut_fonts.sh).
+  /// The stencil eyebrows over the team's name and on the event screen:
+  /// capitals only, never under 12 px. Cut to A–Z, the space and "·"
+  /// (tools/cut_fonts.sh).
   static const String sticker = 'Black Ops One';
 }
 

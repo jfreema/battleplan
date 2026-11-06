@@ -8,6 +8,9 @@ import 'package:material_ui/material_ui.dart';
 /// [offset] places the pill from the icon's top-right corner (Material
 /// [Badge.offset]). A Material [Badge], so tests and screen readers find it
 /// as before.
+///
+/// The pill grows with the text size, to 1.6 times, so the number is
+/// never cut off and the icon under it still shows.
 Widget unreadBadge(
   BuildContext context, {
   required String label,
@@ -16,15 +19,17 @@ Widget unreadBadge(
   Offset offset = const Offset(6, -4),
 }) {
   final c = GumdropColors.of(context);
+  final scaler = MediaQuery.textScalerOf(context)
+      .clamp(maxScaleFactor: maxBadgeTextScale);
   return Badge(
     isLabelVisible: visible,
     backgroundColor: c.badgeRing,
+    // At least; it grows with the pill.
     largeSize: 23,
     padding: const EdgeInsets.all(2),
     offset: offset,
     label: Container(
-      height: 19,
-      constraints: const BoxConstraints(minWidth: 19),
+      constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
       padding: const EdgeInsets.symmetric(horizontal: 5),
       alignment: Alignment.center,
       decoration: ShapeDecoration(
@@ -33,6 +38,7 @@ Widget unreadBadge(
       ),
       child: Text(
         label,
+        textScaler: scaler,
         style: GumdropStyle.of(context).label(
           TextStyle(
             fontSize: 12,
@@ -46,6 +52,9 @@ Widget unreadBadge(
     child: child,
   );
 }
+
+/// How far an unread count's text grows with the system text size.
+const double maxBadgeTextScale = 1.6;
 
 /// A header icon button (SPEC §7.3): a 24 px icon in the text color in a
 /// 48 × 48 tap area, with an optional unread count at its top right.

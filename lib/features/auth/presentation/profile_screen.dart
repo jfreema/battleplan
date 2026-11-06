@@ -104,11 +104,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         children: [
                           if (profile != null) ...[
                             PageRow(
-                              leading: Avatar(
-                                name: profile.displayName,
-                                colorKey: profile.uid,
-                                color: profile.avatarColor,
-                                imageUrl: photoUrl,
+                              // The Name row says the name.
+                              leading: ExcludeSemantics(
+                                child: Avatar(
+                                  name: profile.displayName,
+                                  colorKey: profile.uid,
+                                  color: profile.avatarColor,
+                                  imageUrl: photoUrl,
+                                ),
                               ),
                               title: l10n.yourIcon,
                               subtitle: profile.photoPath != null

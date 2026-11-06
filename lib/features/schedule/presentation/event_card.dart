@@ -303,14 +303,8 @@ class _CardRsvps extends ConsumerWidget {
             child: EventAttendance(
               count: count,
               spoken: group.hasPlayers
-                  ? l10n.rsvpPlayersGoing(
-                      goingOf(event, isTeam: true),
-                      total,
-                    )
-                  : l10n.rsvpMembersGoing(
-                      goingOf(event, isTeam: false),
-                      total,
-                    ),
+                  ? l10n.rsvpPlayersGoing(goingOf(event, isTeam: true), total)
+                  : l10n.rsvpMembersGoing(goingOf(event, isTeam: false), total),
               fraction: total <= 0
                   ? 0
                   : goingOf(event, isTeam: group.hasPlayers) / total,

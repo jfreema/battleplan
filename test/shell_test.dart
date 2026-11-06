@@ -21,6 +21,7 @@ import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
+import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -169,6 +170,36 @@ void main() {
       await tester.tapAt(const Offset(1150, 850));
       await tester.pumpAndSettle();
       expect(find.text('Your teams'), findsNothing);
+    });
+
+    testWidgets('screen readers hear the eyebrow in plain case, then the '
+        'switcher, then the dot in words (SPEC §5.4.2)', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        // Both unread, so whichever opens, the other has new messages.
+        groups: {
+          'a': testGroup('a', 'Thunder', lastMessageAt: DateTime(2026, 10)),
+          'b': testGroup('b', 'Lightning', lastMessageAt: DateTime(2026, 9)),
+        },
+        memberships: [
+          testMembership('a', 'coach'),
+          testMembership('b', 'coach'),
+        ],
+      );
+      final switcher = tester.getSemantics(find.byType(TeamSwitcherButton));
+      expect(switcher, isSemantics(isButton: true, hasTapAction: true));
+      expect(
+        switcher.label,
+        matches(
+          RegExp(
+            r'^Team chat\. Switch team: (Thunder|Lightning), '
+            r'new messages in another team$',
+          ),
+        ),
+      );
+      handle.dispose();
     });
   });
 
@@ -892,22 +923,29 @@ void main() {
       // tools/cut_fonts.sh keeps A–Z, the space and "·"; any other letter
       // would draw in another font.
       final l10n = lookupAppLocalizations(const Locale('en'));
-      for (final group in [false, true]) {
-        for (var tab = 0; tab < 4; tab++) {
-          for (var month = 1; month <= 12; month++) {
-            final label = HeaderEyebrow.labelFor(
-              l10n,
-              tab,
-              DateTime(2026, month),
-              group: group,
-            );
-            expect(
-              label.toUpperCase(),
-              matches(RegExp(r'^[A-Z ·]+$')),
-              reason: label,
-            );
-          }
-        }
+      final labels = [
+        // The header's, on teams and groups (SPEC §5.4.2).
+        for (final group in [false, true])
+          for (var tab = 0; tab < 4; tab++)
+            for (var month = 1; month <= 12; month++)
+              HeaderEyebrow.labelFor(
+                l10n,
+                tab,
+                DateTime(2026, month),
+                group: group,
+              ),
+        // The event screen's: the type, and home or away on a game, joined
+        // as event_details_screen.dart joins them (§5.4.5).
+        for (final type in EventType.values)
+          for (final side in [null, l10n.eventHome, l10n.eventAway])
+            [typeLabel(l10n, type), ?side].join(' · '),
+      ];
+      for (final label in labels) {
+        expect(
+          label.toUpperCase(),
+          matches(RegExp(r'^[A-Z ·]+$')),
+          reason: label,
+        );
       }
     });
   });

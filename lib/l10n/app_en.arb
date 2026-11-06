@@ -186,6 +186,10 @@
   "teamSwitcherTitle": "Your teams",
   "archivedTeams": "Archived",
   "switchTeamTooltip": "Switch team",
+  "switchTeamOtherUnread": "new messages in another team",
+  "@switchTeamOtherUnread": {
+    "description": "Read by screen readers after the team switcher's name when the coral dot shows that another team has unread messages."
+  },
   "notificationsTooltip": "Notifications",
   "teamInfo": "Team info",
   "backToTeams": "Back to teams",

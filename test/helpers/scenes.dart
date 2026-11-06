@@ -2,6 +2,8 @@
 // (ARCH §9, SPEC §7.6). Dates are fixed rather than relative to today, so
 // the screens draw the same every day: the chat is in 2025 (always shown
 // with its year), the schedule in 2030 (still upcoming).
+import 'dart:async';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/ids.dart';
@@ -523,6 +525,27 @@ Future<void> goTo(WidgetTester tester, String path) async {
   await tester.pumpAndSettle();
 }
 
+/// Pushes [path] over what's showing, as the app opens a pushed screen,
+/// so its bar has the back row ("‹ Team info", SPEC §5.4.1). [goTo] alone
+/// leaves nothing to go back to, so no back row.
+Future<void> pushTo(WidgetTester tester, String path) async {
+  unawaited(
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).push(path),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// A team screen opened from Team info, as its row there opens it.
+Future<void> pumpFromTeamInfo(
+  WidgetTester tester, {
+  required TeamScheme scheme,
+  required String path,
+}) async {
+  await pumpTeam(tester, scheme: scheme);
+  await goTo(tester, '/g/a/info');
+  await pushTo(tester, path);
+}
+
 Future<void> pumpChat(WidgetTester tester, {required TeamScheme scheme}) =>
     pumpTeam(tester, scheme: scheme);
 
@@ -657,43 +680,38 @@ goldenScreens = {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/profile');
   },
+  // From the chat's ⓘ, with the chevron alone.
   'team_info': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
-    await goTo(tester, '/g/a/info');
+    await pushTo(tester, '/g/a/info');
   },
   'team_switcher': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
-    await tester.tap(find.bySemanticsLabel('Switch team: Thunder U14'));
+    await tester.tap(find.bySemanticsLabel(RegExp('Switch team: Thunder U14')));
     await tester.pumpAndSettle();
   },
-  'roster': (tester, {required scheme}) async {
-    await pumpTeam(tester, scheme: scheme);
-    await goTo(tester, '/g/a/roster');
-  },
+  'roster': (tester, {required scheme}) =>
+      pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/roster'),
+  // From Profile.
   'settings': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
-    await goTo(tester, '/settings');
+    await goTo(tester, '/profile');
+    await pushTo(tester, '/settings');
   },
-  'invite': (tester, {required scheme}) async {
-    await pumpTeam(tester, scheme: scheme);
-    await goTo(tester, '/g/a/invite');
-  },
+  'invite': (tester, {required scheme}) =>
+      pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/invite'),
   'chat_wide': (tester, {required scheme}) =>
       pumpTeam(tester, scheme: scheme, size: wideSize),
   // Color scheme: how I see a team, and my default (SET-2).
-  'color_scheme': (tester, {required scheme}) async {
-    await pumpTeam(tester, scheme: scheme);
-    await goTo(tester, '/g/a/scheme');
-  },
+  'color_scheme': (tester, {required scheme}) =>
+      pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/scheme'),
   'color_scheme_default': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/teams/scheme');
   },
   'group_schedule': pumpGroupSchedule,
-  'dues': (tester, {required scheme}) async {
-    await pumpTeam(tester, scheme: scheme);
-    await goTo(tester, '/g/a/dues');
-  },
+  'dues': (tester, {required scheme}) =>
+      pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues'),
   // What a parent sees (DUES-2, DUES-3): Leo's dues, and how to pay.
   'dues_member': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme, user: sam, dues: sceneFamilyDues());

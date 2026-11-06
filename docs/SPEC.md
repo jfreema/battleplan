@@ -271,7 +271,7 @@ Sign in
 
 ### 5.2 Team switcher
 
-- **Header.** One row: the tab's stencil eyebrow ("TEAM CHAT", "FALL SCHEDULE", "TEAM DOCUMENTS", "PLAYBOOK"; a group's "GROUP CHAT", "GROUP SCHEDULE", "GROUP DOCUMENTS") over the team name, which steps down in size to fit before it ends in an ellipsis, and ▾. A dot appears on ▾ when another team has unread messages. The header has no logo; logos are on the Teams cards, in the switcher, and in Team info.
+- **Header.** One row: the tab's stencil eyebrow ("TEAM CHAT", "FALL SCHEDULE", "TEAM DOCUMENTS", "PLAYBOOK"; a group's "GROUP CHAT", "GROUP SCHEDULE", "GROUP DOCUMENTS") over the team name, which steps down in size to fit before it ends in an ellipsis, and ▾. A dot appears on ▾ when another team has unread messages; screen readers hear the eyebrow, then "Switch team: {name}", then "new messages in another team" while the dot shows. The header has no logo; logos are on the Teams cards, in the switcher, and in Team info.
 - **Opening it.** A bottom sheet on phones; a dropdown panel on wide screens.
 - **Contents.**
   - Your teams, most recent activity first.

@@ -2,9 +2,18 @@
 // Flutter's guideline checks for tap targets, labels, and text contrast.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/gumdrop_icon_button.dart';
+import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/auth/presentation/your_icon_screen.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/notifications/domain/notification_item.dart';
+import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
+import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -37,7 +46,9 @@ void main() {
     },
     'team switcher': (WidgetTester tester, {required TeamScheme scheme}) async {
       await pumpChat(tester, scheme: scheme);
-      await tester.tap(find.bySemanticsLabel('Switch team: Thunder U14'));
+      await tester.tap(
+        find.bySemanticsLabel(RegExp('Switch team: Thunder U14')),
+      );
       await tester.pumpAndSettle();
     },
     'message menu': (WidgetTester tester, {required TeamScheme scheme}) async {
@@ -68,30 +79,31 @@ void main() {
         reason: 'a result',
       );
     },
-    // The top (SPEC §5.1), and a team's info (§5.2).
-    for (final (name, route) in [
-      ('teams', '/teams'),
-      ('profile', '/profile'),
-      ('team info', '/g/a/info'),
-    ])
+    // The top (SPEC §5.1), and a team's info (§5.2), from the chat's ⓘ.
+    for (final (name, route) in [('teams', '/teams'), ('profile', '/profile')])
       name: (WidgetTester tester, {required TeamScheme scheme}) async {
         await pumpChat(tester, scheme: scheme);
         await goTo(tester, route);
       },
+    'team info': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpChat(tester, scheme: scheme);
+      await pushTo(tester, '/g/a/info');
+    },
     'wide chat': (WidgetTester tester, {required TeamScheme scheme}) =>
         pumpTeam(tester, scheme: scheme, size: wideSize),
-    'roster': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpTeam(tester, scheme: scheme);
-      await goTo(tester, '/g/a/roster');
-    },
+    // Pushed screens open as the app opens them, so the back row is
+    // checked too (SPEC §5.4.1).
+    'roster': (WidgetTester tester, {required TeamScheme scheme}) =>
+        pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/roster'),
     // Start a new season (TEAM-16), from Team admin.
     'new season': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpTeam(tester, scheme: scheme);
-      await goTo(tester, '/g/a/season');
+      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/settings');
+      await pushTo(tester, '/g/a/season');
     },
     'settings': (WidgetTester tester, {required TeamScheme scheme}) async {
       await pumpTeam(tester, scheme: scheme);
-      await goTo(tester, '/settings');
+      await goTo(tester, '/profile');
+      await pushTo(tester, '/settings');
     },
     // An unread item and a read one, so their text is checked too.
     'notifications': (WidgetTester tester, {required TeamScheme scheme}) async {
@@ -114,7 +126,7 @@ void main() {
           item('n2', read: true),
         ]),
       );
-      await goTo(tester, '/notifications');
+      await pushTo(tester, '/notifications');
       expect(find.text('Sam replied to you: Sounds good'), findsNWidgets(2));
     },
     // Color scheme: my default, and how I see a team (SET-2).
@@ -123,19 +135,45 @@ void main() {
           await pumpTeam(tester, scheme: scheme);
           await goTo(tester, '/teams/scheme');
         },
-    'color scheme': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpTeam(tester, scheme: scheme);
-      await goTo(tester, '/g/a/scheme');
-    },
+    'color scheme': (WidgetTester tester, {required TeamScheme scheme}) =>
+        pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/scheme'),
     'group schedule':
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpGroupSchedule(tester, scheme: scheme);
           await clearOfAddButton(tester);
         },
-    'dues': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpTeam(tester, scheme: scheme);
-      await goTo(tester, '/g/a/dues');
+    // Dues (DUES-1 to DUES-3): an admin's list, a due and its status
+    // sheet, the forms, and what a guardian owes.
+    'dues': (WidgetTester tester, {required TeamScheme scheme}) =>
+        pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues'),
+    'due': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+      await pushTo(tester, '/g/a/dues/d0');
     },
+    'due status sheet':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+          await pushTo(tester, '/g/a/dues/d0');
+          await tester.tap(find.text('Leo #9'));
+          await tester.pumpAndSettle();
+          expect(find.text('Mark paid'), findsOneWidget, reason: 'sheet');
+        },
+    'new due': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+      await pushTo(tester, '/g/a/dues/new');
+    },
+    'edit due': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+      await pushTo(tester, '/g/a/dues/d0');
+      await pushTo(tester, '/g/a/dues/d0/edit');
+    },
+    "a guardian's dues":
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpTeam(tester, scheme: scheme, user: _sam);
+          await goTo(tester, '/g/a/info');
+          await pushTo(tester, '/g/a/dues');
+          expect(find.text('What you owe'), findsOneWidget);
+        },
     'your icon': (WidgetTester tester, {required TeamScheme scheme}) async {
       await pumpTeam(tester, scheme: scheme);
       await goTo(tester, '/profile/icon');
@@ -145,6 +183,13 @@ void main() {
       await tester.tap(find.text('Calendar'));
       await tester.pumpAndSettle();
     },
+    'schedule filter':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpSchedule(tester, scheme: scheme);
+          await tester.tap(find.byTooltip('Filter'));
+          await tester.pumpAndSettle();
+          expect(find.byType(FilterChip), findsWidgets, reason: 'sheet');
+        },
   };
 
   // Every screen in every color scheme: their colors all differ.
@@ -199,9 +244,12 @@ void main() {
         tester.getSemantics(find.bySemanticsLabel('Like, 2')),
         isSemantics(isButton: true, hasTapAction: true),
       );
-      // The switcher's label replaces its contents but keeps its tap.
+      // The switcher's label replaces its contents but keeps its tap, and
+      // says the eyebrow in plain case first (SPEC §5.4.2).
       expect(
-        tester.getSemantics(find.bySemanticsLabel('Switch team: Thunder U14')),
+        tester.getSemantics(
+          find.bySemanticsLabel('Team chat. Switch team: Thunder U14'),
+        ),
         isSemantics(isButton: true, hasTapAction: true),
       );
       // So does an author's photo, which opens their page (TEAM-15).
@@ -231,6 +279,69 @@ void main() {
       expect(find.byIcon(AppIcons.maybe), findsWidgets);
       expect(find.byIcon(AppIcons.notGoing), findsWidgets);
     });
+
+    testWidgets("the team header's Back is a 48 px button of its own, not "
+        'the whole screen', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpChat(tester, scheme: TeamScheme.army);
+      for (final tab in ['Chat', 'Schedule']) {
+        await tester.tap(find.text(tab).last);
+        await tester.pumpAndSettle();
+        final back = tester.getSemantics(find.bySemanticsLabel('Back'));
+        expect(back, isSemantics(isButton: true, hasTapAction: true));
+        expect(back.rect.height, lessThan(60), reason: tab);
+        expect(back.rect.width, lessThan(100), reason: tab);
+        expect(back.childrenCount, 0, reason: tab);
+        // The switcher is beside it, not in it.
+        var node = tester.getSemantics(
+          find.bySemanticsLabel(RegExp('Switch team')),
+        );
+        while (node.parent != null) {
+          expect(node.parent, isNot(same(back)), reason: tab);
+          node = node.parent!;
+        }
+      }
+      handle.dispose();
+    });
+
+    testWidgets('headings are their own nodes, and a due is a button', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpFromTeamInfo(
+        tester,
+        scheme: TeamScheme.army,
+        path: '/g/a/dues',
+      );
+      // The heading, without the note under it.
+      await tester.scrollUntilVisible(
+        find.text('How to pay'),
+        100,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(
+        tester.getSemantics(find.text('How to pay')),
+        isSemantics(label: 'How to pay', isHeader: true),
+      );
+      // The due reads as one button, and New due stays its own.
+      final due = tester.getSemantics(find.text('Uniform fee'));
+      expect(due, isSemantics(isButton: true, hasTapAction: true));
+      expect(due.label, startsWith('Uniform fee'));
+      expect(due.label, isNot(contains('New due')));
+
+      // On Teams: the section label isn't the row's button, and a card
+      // says its team's name once.
+      await goTo(tester, '/teams');
+      expect(
+        tester.getSemantics(find.text('COLOR SCHEME')),
+        isSemantics(label: 'Color scheme', isHeader: true, isButton: false),
+      );
+      final card = tester.getSemantics(find.text('Thunder U14'));
+      expect(card, isSemantics(isButton: true));
+      expect(card.flagsCollection.isImage, isFalse);
+      expect('Thunder U14'.allMatches(card.label), hasLength(1));
+      handle.dispose();
+    });
   });
 
   // In Army green (the default) and Light blue (a light one).
@@ -248,6 +359,98 @@ void main() {
         });
       }
     }
+
+    testWidgets("a row's button goes under its text, which keeps the row's "
+        'width; an icon stays at the end', (tester) async {
+      Future<void> pumpRow(double scale) async {
+        tester.platformDispatcher.textScaleFactorTestValue = scale;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Column(
+                children: [
+                  PageRow(
+                    title: 'Riverside Park',
+                    subtitle: '100 River Rd',
+                    trailing: TextButton(
+                      onPressed: () {},
+                      child: const Text('Directions'),
+                    ),
+                  ),
+                  PageRow(
+                    title: 'Archived',
+                    onTap: () {},
+                    trailing: const Icon(AppIcons.expand),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await pumpRow(1);
+      expect(
+        tester.getTopLeft(find.text('Directions')).dy,
+        lessThan(tester.getBottomLeft(find.text('Riverside Park')).dy),
+      );
+      await pumpRow(2);
+      expect(
+        tester.getTopLeft(find.text('Directions')).dy,
+        greaterThanOrEqualTo(
+          tester.getBottomLeft(find.text('100 River Rd')).dy,
+        ),
+      );
+      // The title keeps the row's width, so it isn't broken mid-word.
+      expect(
+        tester
+            .renderObject<RenderParagraph>(find.text('Riverside Park'))
+            .getBoxesForSelection(
+              const TextSelection(baseOffset: 0, extentOffset: 14),
+            )
+            .map((b) => b.top)
+            .toSet(),
+        hasLength(1),
+      );
+      expect(
+        tester.getCenter(find.byIcon(AppIcons.expand)).dy,
+        moreOrLessEquals(
+          tester.getCenter(find.text('Archived')).dy,
+          epsilon: 2,
+        ),
+      );
+    });
+
+    testWidgets('unread counts grow with the text and are never cut off', (
+      tester,
+    ) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: GumdropIconButton(
+                icon: AppIcons.notifications,
+                tooltip: 'Notifications',
+                onPressed: () {},
+                badgeLabel: '12',
+              ),
+            ),
+          ),
+        ),
+      );
+      final text = tester.renderObject<RenderParagraph>(find.text('12'));
+      final pill = tester.getSize(
+        find
+            .ancestor(of: find.text('12'), matching: find.byType(Container))
+            .first,
+      );
+      expect(text.size.height, lessThanOrEqualTo(pill.height));
+      expect(text.size.height, greaterThan(19), reason: 'it grew');
+      expect(text.didExceedMaxLines, isFalse);
+    });
   });
 
   group('keyboard (SPEC §4.2, §7.6)', () {
@@ -340,6 +543,18 @@ void main() {
     testWidgets('Tab reaches the header, the composer, and the tabs, with a '
         'visible focus', (tester) async {
       await pumpChat(tester, scheme: TeamScheme.navy);
+      const ringed = [
+        'Back',
+        'Switch team: Thunder U14',
+        'Messages',
+        'Notifications',
+        'Team info',
+        'Add photos or a poll',
+        'Chat',
+        'Schedule',
+        'Documents',
+        'Plays',
+      ];
       final reached = <String>[];
       for (var i = 0; i < 40; i++) {
         await press(tester, LogicalKeyboardKey.tab);
@@ -360,7 +575,12 @@ void main() {
                 .label;
         // A tab reads "Chat, Tab 1 of 4".
         final name = label?.split(', Tab ').first;
-        if (name != null && !reached.contains(name)) reached.add(name);
+        if (name != null && !reached.contains(name)) {
+          reached.add(name);
+          // The header's and the tab bar's show the 3 px ring in the text
+          // color (SPEC §7.6).
+          if (ringed.any(name.endsWith)) expectFocusRing(tester, name);
+        }
       }
       expect(
         FocusManager.instance.highlightMode,
@@ -368,13 +588,14 @@ void main() {
       );
       // One lap of the Tab order, from the team switcher: the header, the
       // chat, the composer, then the tabs.
-      final start = reached.indexWhere((l) => l.startsWith('Switch team'));
+      final start = reached.indexWhere((l) => l.contains('Switch team'));
       expect(start, isNot(-1), reason: '$reached');
       final lap = [...reached.skip(start), ...reached.take(start)];
+      expect(reached, contains('Back'));
       expect(
         lap,
         containsAllInOrder([
-          'Switch team: Thunder U14',
+          'Team chat. Switch team: Thunder U14',
           'Notifications',
           'Team info',
           'Add photos or a poll',
@@ -402,7 +623,10 @@ void main() {
                 ?.properties
                 .label ??
             _textIn(context);
-        if (label != null && !reached.contains(label)) reached.add(label);
+        if (label != null && !reached.contains(label)) {
+          reached.add(label);
+          expectFocusRing(tester, label);
+        }
       }
       for (final want in [
         'Thunder U14',
@@ -417,8 +641,132 @@ void main() {
         );
       }
     });
+
+    /// Presses Tab until what has the focus is what [wanted] picks, and
+    /// checks it shows the ring; [what] names it for a failure.
+    Future<void> tabTo(
+      WidgetTester tester,
+      String what,
+      bool Function(BuildContext focused) wanted,
+    ) async {
+      for (var i = 0; i < 60; i++) {
+        await press(tester, LogicalKeyboardKey.tab);
+        final context = FocusManager.instance.primaryFocus?.context;
+        if (context != null && wanted(context)) {
+          expectFocusRing(tester, what);
+          return;
+        }
+      }
+      fail('Tab never reached $what');
+    }
+
+    String? labelOf(BuildContext context) =>
+        context.findAncestorWidgetOfExactType<Semantics>()?.properties.label;
+
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    for (final (name, open) in [
+      (
+        'a team',
+        (WidgetTester tester) => pumpFromTeamInfo(
+          tester,
+          scheme: TeamScheme.navy,
+          path: '/g/a/scheme',
+        ),
+      ),
+      (
+        'my default',
+        (WidgetTester tester) async {
+          await pumpTeam(tester, scheme: TeamScheme.navy);
+          await goTo(tester, '/teams');
+          await pushTo(tester, '/teams/scheme');
+        },
+      ),
+    ]) {
+      testWidgets('Tab reaches each color scheme row for $name, with the '
+          'ring', (tester) async {
+        await open(tester);
+        for (final scheme in TeamScheme.values) {
+          final title = scheme.label(l10n);
+          await tabTo(
+            tester,
+            title,
+            (c) => labelOf(c)?.startsWith('$title, ') ?? false,
+          );
+        }
+      });
+    }
+
+    testWidgets('Tab reaches each icon color, with the ring', (tester) async {
+      await pumpTeam(tester, scheme: TeamScheme.light);
+      await goTo(tester, '/profile');
+      await pushTo(tester, '/profile/icon');
+      for (final color in AvatarColor.values) {
+        final name = candyName(l10n, color);
+        await tabTo(tester, name, (c) => labelOf(c) == name);
+      }
+    });
+
+    testWidgets('Tab reaches the RSVP pills and the event cards, with the '
+        'ring', (tester) async {
+      await pumpSchedule(tester, scheme: TeamScheme.skyblue);
+      for (final answer in ['Going', 'Maybe', 'Not going']) {
+        await tabTo(
+          tester,
+          answer,
+          (c) =>
+              c.findAncestorWidgetOfExactType<SegmentedButton<RsvpStatus>>() !=
+                  null &&
+              _textIn(c) == answer,
+        );
+      }
+      await tabTo(
+        tester,
+        'an event card',
+        (c) =>
+            c.findAncestorWidgetOfExactType<TapCard>() != null &&
+            c.findAncestorWidgetOfExactType<SegmentedButton<RsvpStatus>>() ==
+                null,
+      );
+    });
   });
 }
+
+/// Checks that what has the keyboard focus shows the 3 px ring in the text
+/// color (SPEC §7.6): as its button's own border (icon and text buttons),
+/// or drawn around it (FocusRing, an RSVP pill's face), and nowhere else.
+void expectFocusRing(WidgetTester tester, String what) {
+  final node = FocusManager.instance.primaryFocus!;
+  final context = node.context!;
+  final text = GumdropColors.of(context).textOnPage;
+  bool ring(BorderSide side) => side.width == 3 && side.color == text;
+  final button = context.findAncestorWidgetOfExactType<Material>()?.shape;
+  if (button is OutlinedBorder && ring(button.side)) return;
+  final rings = find.byWidgetPredicate(
+    (w) =>
+        w is DecoratedBox &&
+        w.position == DecorationPosition.foreground &&
+        switch (w.decoration) {
+          BoxDecoration(border: Border(:final top)) => ring(top),
+          _ => false,
+        },
+  );
+  expect(rings, findsOneWidget, reason: '$what shows one focus ring');
+  final drawn = tester.getRect(rings);
+  final focused = node.rect;
+  expect(
+    drawn.contains(focused.center) || focused.contains(drawn.center),
+    isTrue,
+    reason: '$what: the ring is around it ($drawn, focus $focused)',
+  );
+}
+
+/// Leo's guardian, a member who isn't an admin.
+const _sam = AuthUser(
+  uid: 'sam',
+  email: 'sam@example.com',
+  displayName: 'Sam Rivera',
+  emailVerified: true,
+);
 
 /// Scrolls the schedule until no answer button sits under its + button.
 Future<void> clearOfAddButton(WidgetTester tester) async {

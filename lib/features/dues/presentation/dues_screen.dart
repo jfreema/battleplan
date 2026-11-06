@@ -249,7 +249,7 @@ class _DueCard extends ConsumerWidget {
                   if (totals.owedCents > 0)
                     l10n.duesTotalOwed(formatDues(l10n, totals.owedCents)),
                 ].join(' · ');
-          return FocusRingInk(
+          final card = FocusRingInk(
             onTap: onTap,
             radius: BorderRadius.circular(18),
             child: Padding(
@@ -309,6 +309,8 @@ class _DueCard extends ConsumerWidget {
               ),
             ),
           );
+          // One button that reads the whole card, as a row does.
+          return MergeSemantics(child: Semantics(button: true, child: card));
         },
       ),
     );

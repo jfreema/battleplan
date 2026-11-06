@@ -59,6 +59,24 @@ void main() {
     },
   );
 
+  test("the author's icon color goes on the message, and comes back on it "
+      '(SET-8)', () async {
+    await db.doc('groupMembers/g1_alex').update({'avatarColor': 'tangerine'});
+    final id = repo.newMessageId();
+    await repo.sendText(_g, _me, 'Hi team', id: id);
+    final m = (await db.doc('messages/$id').get()).data()!;
+    expect(m['authorAvatarColor'], 'tangerine');
+    final read = await repo.watchMessage(_g, id).first;
+    expect(read?.authorAvatarColor, AvatarColor.tangerine);
+    // Someone who never picked one has none, and shows the hashed color.
+    await db.doc('groupMembers/g1_alex').update({
+      'avatarColor': FieldValue.delete(),
+    });
+    final plain = repo.newMessageId();
+    await repo.sendText(_g, _me, 'Again', id: plain);
+    expect((await repo.watchMessage(_g, plain).first)?.authorAvatarColor, null);
+  });
+
   test('skips and reports a message that cannot be read, so the rest of '
       'the chat still shows', () async {
     final reported = <Object>[];

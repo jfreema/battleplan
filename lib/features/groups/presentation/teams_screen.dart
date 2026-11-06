@@ -168,22 +168,25 @@ class _ArchivedState extends State<_Archived> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Semantics(
-          expanded: _open,
-          // On the rows' 20 px gutter, like Join and Create below; the cards
-          // reach 4 px past it.
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: PageRow(
-              icon: AppIcons.archive,
-              title: l10n.archivedTeams,
-              subtitle: '${widget.count}',
-              onTap: () => setState(() => _open = !_open),
-              trailing: Icon(
-                _open ? AppIcons.expandLess : AppIcons.expand,
-                size: 20,
-                weight: 700,
-                color: c.textMutedOnPage,
+        // On the rows' 20 px gutter, like Join and Create below; the cards
+        // reach 4 px past it.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          // On the row's own node, which PageRow merges.
+          child: MergeSemantics(
+            child: Semantics(
+              expanded: _open,
+              child: PageRow(
+                icon: AppIcons.archive,
+                title: l10n.archivedTeams,
+                subtitle: '${widget.count}',
+                onTap: () => setState(() => _open = !_open),
+                trailing: Icon(
+                  _open ? AppIcons.expandLess : AppIcons.expand,
+                  size: 20,
+                  weight: 700,
+                  color: c.textMutedOnPage,
+                ),
               ),
             ),
           ),
@@ -219,8 +222,8 @@ class _TeamCard extends ConsumerWidget {
         ? null
         : count != null && count > 0
         ? Container(
-            height: 21,
-            constraints: const BoxConstraints(minWidth: 21),
+            // At least 21 tall, growing with the text size.
+            constraints: const BoxConstraints(minWidth: 21, minHeight: 21),
             padding: const EdgeInsets.symmetric(horizontal: 6),
             alignment: Alignment.center,
             decoration: BoxDecoration(
@@ -268,7 +271,8 @@ class _TeamCard extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
                 child: Row(
                   children: [
-                    GroupBadge(group: group, size: 48),
+                    // The card says the name.
+                    ExcludeSemantics(child: GroupBadge(group: group, size: 48)),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

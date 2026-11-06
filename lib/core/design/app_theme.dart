@@ -418,7 +418,8 @@ abstract final class AppTheme {
       badgeTheme: BadgeThemeData(
         backgroundColor: g.cherry.face,
         textColor: g.ink,
-        textStyle: label.copyWith(fontSize: 11),
+        // Nothing under 12 px (SPEC §7.3).
+        textStyle: label.copyWith(fontSize: 12),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: low,
