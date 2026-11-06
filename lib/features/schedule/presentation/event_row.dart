@@ -232,6 +232,17 @@ class EventRow extends StatelessWidget {
                         const SizedBox(height: 6),
                         _Attendance(
                           count: count,
+                          // In words for screen readers: "7 of 12 players
+                          // going", not "7 slash 12".
+                          spoken: isTeam
+                              ? l10n.rsvpPlayersGoing(
+                                  goingOf(event, isTeam: isTeam),
+                                  total,
+                                )
+                              : l10n.rsvpMembersGoing(
+                                  goingOf(event, isTeam: isTeam),
+                                  total,
+                                ),
                           fraction: total <= 0
                               ? 0
                               : goingOf(event, isTeam: isTeam) / total,
@@ -253,10 +264,17 @@ class EventRow extends StatelessWidget {
 
 /// The attendance line on a card (SPEC §7.3): a 40 × 5 mini bar, "7/12
 /// going", and, in the accent color, who I answer for that hasn't answered.
+/// Screen readers hear the count as [spoken].
 class _Attendance extends StatelessWidget {
-  const new({required this.count, required this.fraction, this.note});
+  const new({
+    required this.count,
+    required this.spoken,
+    required this.fraction,
+    this.note,
+  });
 
   final String count;
+  final String spoken;
   final double fraction;
   final String? note;
 
@@ -286,6 +304,7 @@ class _Attendance extends StatelessWidget {
                   ),
               ],
             ),
+            semanticsLabel: [spoken, ?note].join(', '),
             style: style,
           ),
         ),

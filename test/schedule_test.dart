@@ -1,6 +1,10 @@
 // The schedule in the app (SPEC SCHED-1 to SCHED-10, PLAYER-6, PLAYER-9,
 // CHAT-11, STORE-4, Q12).
+import 'dart:async';
+
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -87,6 +91,7 @@ void main() {
     // A basic group, where everyone answers for themselves (TEAM-14); on a
     // team only players have answers (PLAYER-6).
     bool basicGroup = false,
+    bool archived = false,
   }) async {
     final eventRepo = FakeEventRepository(events);
     final rsvps = FakeRsvpRepository(eventRepo);
@@ -100,6 +105,7 @@ void main() {
           settings: settings,
           storageBytes: storageFull ? 500 * bytesPerMb : 0,
           storageQuotaBytes: 500 * bytesPerMb,
+          archivedAt: archived ? DateTime.utc(2026) : null,
         ),
         ...extraGroups,
       },
@@ -125,6 +131,37 @@ void main() {
   Future<void> openDetails(WidgetTester tester, String title) async {
     await tester.tap(find.text(title).first);
     await tester.pumpAndSettle();
+  }
+
+  /// Where the router is, pushed screens included.
+  String location(WidgetTester tester) =>
+      GoRouter.of(tester.element(find.byType(Navigator).first)).state.uri
+          .toString();
+
+  /// Emma Rivera #7, an active player on team a, linked to [linkedTo].
+  FakePlayerRepository emma({
+    String? linkedTo,
+    PlayerRelation relation = PlayerRelation.guardian,
+  }) {
+    final repo = FakePlayerRepository([
+      const Player(
+        id: PlayerId('p1'),
+        groupId: GroupId('a'),
+        displayName: 'Emma Rivera',
+        jerseyNumber: '7',
+      ),
+    ]);
+    if (linkedTo != null) {
+      repo.links.add(
+        GuardianLink(
+          playerId: const PlayerId('p1'),
+          groupId: const GroupId('a'),
+          uid: UserId(linkedTo),
+          relation: relation,
+        ),
+      );
+    }
+    return repo;
   }
 
   Future<void> menu(WidgetTester tester, String item) async {
@@ -155,7 +192,7 @@ void main() {
       expect(find.text('Team dinner'), findsOneWidget);
       expect(find.text('Last game'), findsNothing);
       // The time and place on one line.
-      expect(find.text('6:00 PM – 7:30 PM · Riverside Park'), findsNWidgets(2));
+      expect(find.text('6:00–7:30 PM · Riverside Park'), findsNWidgets(2));
       expect(find.textContaining('Riverside Park'), findsNWidgets(3));
       // Out of the group's 20 members, and that I haven't answered.
       expect(
@@ -184,6 +221,34 @@ void main() {
       );
       expect(chosen.selected, {RsvpStatus.going});
       expect(find.text('1/20 going', findRichText: true), findsOneWidget);
+    });
+
+    testWidgets('screen readers hear the card count in words, not "7/12"', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await openSchedule(
+        tester,
+        players: emma(),
+        events: [event('e1', counts: const RsvpCounts(going: 1))],
+      );
+      expect(find.text('1/1 going', findRichText: true), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(RegExp('1 of 1 players going')),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel(RegExp('1/1')), findsNothing);
+
+      await openSchedule(
+        tester,
+        basicGroup: true,
+        events: [event('e1', counts: const RsvpCounts(going: 12))],
+      );
+      expect(
+        find.bySemanticsLabel(RegExp("12 of 20 going, You haven't answered")),
+        findsOneWidget,
+      );
+      semantics.dispose();
     });
 
     testWidgets('Past is newest first', (tester) async {
@@ -215,12 +280,38 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Late practice'), findsOneWidget);
       expect(find.byKey(const ValueKey('dot-t')), findsOneWidget);
+      // Today is picked: its number and dot in candy ink on coral, as on
+      // every candy face.
+      final dot = find.byKey(const ValueKey('dot-t'));
+      final c = GumdropColors.of(tester.element(dot));
+      Color dotColor() =>
+          (tester.widget<Container>(dot).decoration! as BoxDecoration).color!;
+      // The number on the dot's day.
+      Color? number() => tester
+          .widget<Text>(
+            find
+                .descendant(
+                  of: find
+                      .ancestor(of: dot, matching: find.byType(Column))
+                      .first,
+                  matching: find.byType(Text),
+                )
+                .first,
+          )
+          .style
+          ?.color;
+      expect(dotColor(), c.ink);
+      expect(number(), c.ink);
       // Another day of the month has nothing.
       final other = today().day == 1 ? 2 : 1;
       await tester.tap(find.text('$other').first);
       await tester.pumpAndSettle();
       expect(find.text('Late practice'), findsNothing);
       expect(find.text('Nothing on this day.'), findsOneWidget);
+      // Not picked, the dot is the practice color on the page (SPEC A.3),
+      // not washed out to white.
+      expect(dotColor(), c.grape.text);
+      expect(number(), isNot(c.ink));
     });
 
     testWidgets('canceled events are struck through with a badge (SCHED-7)', (
@@ -328,6 +419,47 @@ void main() {
       );
       expect(answer('Going'), findsOneWidget);
       expect(answer('Maybe'), findsNothing);
+    });
+
+    testWidgets('on a narrow phone the name stays beside two pills, and '
+        'moves above three (SPEC §7.3)', (tester) async {
+      // A short name, 46 wide with the test font, and a 360 wide screen:
+      // three pills would be under 84 each, two aren't.
+      FakePlayerRepository al() =>
+          FakePlayerRepository([
+              const Player(
+                id: PlayerId('p1'),
+                groupId: GroupId('a'),
+                displayName: 'Al Kim',
+              ),
+            ])
+            ..links.add(
+              const GuardianLink(
+                playerId: PlayerId('p1'),
+                groupId: GroupId('a'),
+                uid: UserId('coach'),
+              ),
+            );
+      bool beside() =>
+          tester.getCenter(find.text('Al')).dy >
+          tester.getTopLeft(find.byType(RsvpChoice)).dy;
+
+      await openSchedule(
+        tester,
+        players: al(),
+        events: [event('e1')],
+        settings: const GroupSettings(allowMaybe: false),
+      );
+      tester.view.physicalSize = const Size(360, 1600);
+      await tester.pumpAndSettle();
+      expect(answer('Maybe'), findsNothing);
+      expect(beside(), isTrue);
+
+      await openSchedule(tester, players: al(), events: [event('e1')]);
+      tester.view.physicalSize = const Size(360, 1600);
+      await tester.pumpAndSettle();
+      expect(answer('Maybe'), findsOneWidget);
+      expect(beside(), isFalse);
     });
 
     testWidgets('guardians answer for each of their players on the row', (
@@ -745,7 +877,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.note, 'Leaving early');
       // Sam hasn't answered.
-      expect(find.text('NO RESPONSE · 1'), findsOneWidget);
+      expect(find.text('NO REPLY · 1'), findsOneWidget);
     });
 
     testWidgets('Maybe is hidden when the team turns it off', (tester) async {
@@ -790,12 +922,235 @@ void main() {
     testWidgets('canceled events close RSVPs', (tester) async {
       await openSchedule(
         tester,
+        basicGroup: true,
         events: [event('e1', canceledAt: DateTime.now())],
       );
       await openDetails(tester, 'Practice');
       expect(find.text('Canceled'), findsOneWidget);
       expect(find.text('RSVPs are closed.'), findsOneWidget);
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNothing);
+    });
+
+    testWidgets('an admin of a team with no players is told to add them '
+        '(PLAYER-6, spec 6.3)', (tester) async {
+      await openSchedule(tester, role: MemberRole.admin, events: [event('e1')]);
+      await openDetails(tester, 'Practice');
+      expect(find.text('RSVPs'), findsOneWidget);
+      expect(find.text('Add players to take RSVPs'), findsOneWidget);
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNothing);
+      expect(find.text("Who's going"), findsNothing);
+      await tester.tap(find.widgetWithText(TextButton, 'Add players'));
+      await tester.pumpAndSettle();
+      expect(location(tester), '/g/a/players/add');
+    });
+
+    testWidgets('an archived team gets no Add players (TEAM-9)', (
+      tester,
+    ) async {
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        archived: true,
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('Add players to take RSVPs'), findsNothing);
+      expect(find.widgetWithText(TextButton, 'Add players'), findsNothing);
+    });
+
+    testWidgets('a member of a team with no players sees no RSVP section '
+        '(spec 6.3)', (tester) async {
+      final soon = DateTime.now().add(const Duration(hours: 6));
+      await openSchedule(tester, events: [event('e1', rsvpDeadline: soon)]);
+      await openDetails(tester, 'Practice');
+      expect(find.text('Riverside Park'), findsOneWidget);
+      expect(find.text('RSVPs'), findsNothing);
+      expect(find.textContaining('RSVP by'), findsNothing);
+
+      await openSchedule(
+        tester,
+        events: [event('e1', canceledAt: DateTime.now())],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('Canceled'), findsOneWidget);
+      expect(find.text('RSVPs'), findsNothing);
+      expect(find.text('RSVPs are closed.'), findsNothing);
+    });
+
+    testWidgets('a member with nobody to answer for is pointed to Who are '
+        'you here for? (PLAYER-3, spec 6.3)', (tester) async {
+      await openSchedule(tester, players: emma(), events: [event('e1')]);
+      await openDetails(tester, 'Practice');
+      expect(find.text('RSVPs'), findsOneWidget);
+      expect(find.text('On a team, only players have RSVPs.'), findsOneWidget);
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNothing);
+      // The counts and the people show as for everyone.
+      expect(find.text('0 of 1 players going'), findsOneWidget);
+      await tester.tap(
+        find.widgetWithText(TextButton, 'Who are you here for?'),
+      );
+      await tester.pumpAndSettle();
+      expect(location(tester), '/g/a/who');
+    });
+
+    testWidgets('a member whose claim waits is told so instead (spec 6.3)', (
+      tester,
+    ) async {
+      // A claim on Emma.
+      final claimed = emma()
+        ..requests.add(
+          const GuardianRequest(
+            playerId: PlayerId('p1'),
+            groupId: GroupId('a'),
+            uid: UserId('coach'),
+            status: GuardianRequestStatus.pending,
+          ),
+        );
+      await openSchedule(tester, players: claimed, events: [event('e1')]);
+      await openDetails(tester, 'Practice');
+      expect(
+        find.text('Your claim is waiting for a team admin.'),
+        findsOneWidget,
+      );
+      expect(find.text('On a team, only players have RSVPs.'), findsNothing);
+      expect(find.text('Who are you here for?'), findsNothing);
+
+      // A player they added, waiting, on a team with no players yet: the
+      // section stays, to say so.
+      await openSchedule(
+        tester,
+        players: FakePlayerRepository([
+          const Player(
+            id: PlayerId('p2'),
+            groupId: GroupId('a'),
+            displayName: 'Noah Park',
+            status: PlayerStatus.pending,
+            proposedBy: 'coach',
+          ),
+        ]),
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('RSVPs'), findsOneWidget);
+      expect(
+        find.text('Your claim is waiting for a team admin.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('an admin with nobody to answer for sees only the heading, '
+        'and RSVP for a player (spec 6.3)', (tester) async {
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        players: emma(),
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('RSVPs'), findsOneWidget);
+      expect(find.text('On a team, only players have RSVPs.'), findsNothing);
+      expect(find.text('Add players to take RSVPs'), findsNothing);
+      expect(find.text('RSVP for a player'), findsOneWidget);
+    });
+
+    testWidgets('nothing shows under RSVPs until the players and links are '
+        'in', (tester) async {
+      final links = StreamController<List<GuardianLink>>.broadcast();
+      addTearDown(links.close);
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        players: FakePlayerRepository()..linksStream = links.stream,
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('Riverside Park'), findsOneWidget);
+      expect(find.text('RSVPs'), findsNothing);
+      expect(find.text('Add players to take RSVPs'), findsNothing);
+      links.add(const []);
+      await tester.pumpAndSettle();
+      expect(find.text('Add players to take RSVPs'), findsOneWidget);
+    });
+
+    testWidgets('an adult player who answered for themselves has no '
+        '"Answered by" (PLAYER-6)', (tester) async {
+      final players = emma(linkedTo: 'sam', relation: PlayerRelation.self)
+        ..players.add(
+          const Player(
+            id: PlayerId('p2'),
+            groupId: GroupId('a'),
+            displayName: 'Liam Rivera',
+          ),
+        );
+      final rsvps = await openSchedule(
+        tester,
+        players: players,
+        events: [event('e1')],
+      );
+      for (final (id, name) in [('p1', 'Emma Rivera'), ('p2', 'Liam Rivera')]) {
+        rsvps.put(
+          Rsvp(
+            eventId: const EventId('e1'),
+            groupId: const GroupId('a'),
+            participantType: ParticipantType.player,
+            participantId: id,
+            participantName: name,
+            status: RsvpStatus.going,
+            respondedBy: id == 'p1' ? 'sam' : 'coach',
+          ),
+        );
+      }
+      await openDetails(tester, 'Practice');
+      expect(find.text('GOING · 2'), findsOneWidget);
+      // The coach answered for Liam; Emma is Sam, who answered.
+      expect(find.text('Answered by Coach L.'), findsOneWidget);
+      expect(find.text('Answered by Sam R.'), findsNothing);
+    });
+
+    testWidgets("Who's going shows people's picked icon colors (§7.2)", (
+      tester,
+    ) async {
+      Color fillOf(String id) {
+        final icon = find.byWidgetPredicate(
+          (w) => w is CandyInitials && w.colorKey == id,
+        );
+        final box = tester.widget<Container>(
+          find.descendant(of: icon, matching: find.byType(Container)).first,
+        );
+        return (box.decoration! as BoxDecoration).color!;
+      }
+
+      // A player: their self-linked member's color.
+      await openSchedule(
+        tester,
+        players: emma(linkedTo: 'jim', relation: PlayerRelation.self),
+        extraMembers: [
+          testMembership(
+            'a',
+            'jim',
+            name: 'Emma Rivera',
+          ).copyWith(avatarColor: AvatarColor.grape),
+        ],
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(fillOf('p1'), CandyFaces.grape);
+
+      // A group member: their own.
+      await openSchedule(
+        tester,
+        basicGroup: true,
+        extraMembers: [
+          testMembership(
+            'a',
+            'mia',
+            name: 'Mia Kim',
+          ).copyWith(avatarColor: AvatarColor.lemon),
+        ],
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(fillOf('mia'), CandyFaces.lemon);
     });
 
     testWidgets('guardians answer once per player; counts are players '
@@ -1910,7 +2265,7 @@ void main() {
       );
       await openDetails(tester, 'Practice');
       expect(find.text('Pat Kim'), findsNothing);
-      expect(find.text('NO RESPONSE · 1'), findsWidgets);
+      expect(find.text('NO REPLY · 1'), findsWidgets);
       // A player's row sets their answer.
       await tester.ensureVisible(find.text('Emma'));
       await tester.tap(find.text('Emma'));

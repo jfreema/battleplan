@@ -2,8 +2,12 @@
 // its list: volunteering, dropping out, and an admin adding, assigning,
 // editing, and removing tasks.
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/schedule/domain/assignment.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -124,6 +128,39 @@ void main() {
     await tester.pumpAndSettle();
     expect(repo.assignments.first.isOpen, isTrue);
     expect(find.text('Volunteer'), findsOneWidget);
+  });
+
+  testWidgets('the row is one of the detail rows, with "open" marked '
+      '(SPEC §7.3)', (tester) async {
+    final repo = FakeAssignmentRepository([
+      task('t1', AssignmentKind.snacks),
+      task('t2', AssignmentKind.drinks),
+    ]);
+    await openEvent(tester, user: alex, assignments: repo);
+    await scrollToRow(tester);
+    // A plain row on the page with a chevron, not a card with a disc.
+    final row = find.ancestor(
+      of: find.text('Assignments'),
+      matching: find.byType(PageRow),
+    );
+    expect(row, findsOneWidget);
+    expect(
+      find.ancestor(of: row, matching: find.byType(GumdropCard)),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: row, matching: find.byIcon(AppIcons.chevronRight)),
+      findsOneWidget,
+    );
+    // "2 open", the word in the text color at 800 over an accent-mark line.
+    final c = GumdropColors.of(tester.element(row));
+    final span = tester.widget<Text>(find.text('2 open')).textSpan! as TextSpan;
+    final open = span.children!.last as TextSpan;
+    expect(open.text, 'open');
+    expect(open.style?.decoration, TextDecoration.underline);
+    expect(open.style?.decorationColor, c.accentMark);
+    expect(open.style?.fontWeight, FontWeight.w800);
+    expect(open.style?.color, c.textOnPage);
   });
 
   testWidgets("the row shows what's mine", (tester) async {

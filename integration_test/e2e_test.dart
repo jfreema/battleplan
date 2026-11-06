@@ -210,11 +210,12 @@ void main() {
     );
 
     // Answers an RSVP (SCHED-5) on the first upcoming event, found by its
-    // time ("6:00 PM – 7:30 PM", with a narrow space before PM).
+    // time ("6:00–7:30 PM", with a narrow space before PM).
     await tap(tester, find.text('Schedule'));
     final event = find.byWidgetPredicate(
       (w) =>
-          w is Text && RegExp(r'^\d{1,2}:\d{2}.[AP]M').hasMatch(w.data ?? ''),
+          w is Text &&
+          RegExp(r'^\d{1,2}:\d{2}\S*\s[AP]M').hasMatch(w.data ?? ''),
     );
     await tap(tester, event);
     await tap(tester, find.text('Going'));

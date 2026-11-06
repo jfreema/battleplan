@@ -22,6 +22,8 @@ import 'package:battleplan/l10n/gen/app_localizations_en.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+const _ninetyMinutes = Duration(minutes: 90);
+
 void main() {
   setUpAll(() => initializeDateFormatting('en'));
 
@@ -156,7 +158,45 @@ void main() {
       expect(otherZoneLine(l10n, e, 'America/Chicago'), isNull);
       expect(
         timeRange(l10n, e, 'America/Chicago', withDay: true),
-        'Tue, Oct 13 · 6:00 PM – 7:30 PM',
+        'Tue, Oct 13 · 6:00–7:30 PM',
+      );
+    });
+
+    test('a time range says AM or PM once when both times share it, '
+        'with a closed-up dash (SPEC §7.3)', () {
+      final l10n = AppLocalizationsEn();
+      Event at(DateTime start, Duration length) => Event(
+        id: const EventId('e'),
+        groupId: const GroupId('a'),
+        type: EventType.game,
+        title: 'Game',
+        startAt: start,
+        endAt: start.add(length),
+        timeZone: 'America/Chicago',
+        createdBy: 'coach',
+      );
+      const zone = 'America/Chicago';
+      // 10:00 AM CDT is 15:00 UTC.
+      expect(
+        timeRange(
+          l10n,
+          at(DateTime.utc(2026, 10, 31, 15), _ninetyMinutes),
+          zone,
+        ),
+        '10:00–11:30 AM',
+      );
+      expect(
+        timeRange(
+          l10n,
+          at(DateTime.utc(2026, 10, 31, 16), _ninetyMinutes),
+          zone,
+        ),
+        '11:00 AM–12:30 PM',
+      );
+      // Past midnight: the day is said, as before.
+      expect(
+        timeRange(l10n, at(DateTime.utc(2026, 11, 1, 4), _ninetyMinutes), zone),
+        '11:00 PM – Sun, Nov 1 12:30 AM',
       );
     });
 

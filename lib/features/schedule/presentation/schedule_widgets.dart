@@ -192,19 +192,21 @@ class GoingBar extends StatelessWidget {
   }
 }
 
-/// A person's initials on a candy circle (design §3.9), the candy picked
-/// from [colorKey] as [Avatar] picks it, so a person has one color
-/// everywhere.
+/// A person's initials on a candy circle (design §3.9): their picked
+/// [color], or else the candy picked from [colorKey], as [Avatar] picks it,
+/// so a person has one color everywhere.
 class CandyInitials extends StatelessWidget {
   const new({
     required this.name,
     required this.colorKey,
+    this.color,
     this.size = 40,
     super.key,
   });
 
   final String name;
   final String colorKey;
+  final AvatarColor? color;
   final double size;
 
   static String initialsOf(String name) {
@@ -228,7 +230,7 @@ class CandyInitials extends StatelessWidget {
         height: size,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Avatar.colorFor(c, colorKey),
+          color: Avatar.fillOf(c, color, colorKey),
           shape: BoxShape.circle,
         ),
         child: Text(

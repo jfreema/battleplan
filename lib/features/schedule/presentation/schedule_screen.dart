@@ -216,7 +216,8 @@ class _FilterSheet extends ConsumerWidget {
 
 /// Upcoming, Past and Calendar (SPEC §7.3): Fredoka 600 17, left-aligned,
 /// 24 px apart, the current one in the text color over a 4 px coral bar.
-/// Labels shrink rather than run under the filter at large text sizes.
+/// Each is at least 48 × 48 to tap, and the space between them is tappable
+/// too. Labels shrink rather than run under the filter at large text sizes.
 class _Segments extends StatefulWidget {
   const new({required this.labels});
 
@@ -253,61 +254,83 @@ class _SegmentsState extends State<_Segments> {
     final controller = _controller!;
     final style = GumdropStyle.of(context);
     final n = widget.labels.length;
+    // As a tab reads: its name, then "Tab 2 of 3".
+    final where = MaterialLocalizations.of(context);
+    String spoken(int i, String label) =>
+        '$label, ${where.tabLabel(tabIndex: i + 1, tabCount: n)}';
     return Row(
       children: [
-        for (final (i, label) in widget.labels.indexed) ...[
+        for (final (i, label) in widget.labels.indexed)
           Flexible(
             child: Semantics(
               selected: controller.index == i,
               button: true,
-              label: MaterialLocalizations.of(context)
-                  .tabLabel(tabIndex: i + 1, tabCount: n),
+              label: spoken(i, label),
+              excludeSemantics: true,
+              onTap: () => controller.animateTo(i),
               child: FocusRingInk(
                 onTap: () => controller.animateTo(i),
                 radius: BorderRadius.circular(8),
+                // At least 48 × 48 to tap. The 24 between the words is
+                // half each neighbor's, so a tap there counts too.
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 48),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          style: style.label(
-                            TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              color: controller.index == i
-                                  ? c.textOnPage
-                                  : c.textMutedOnPage,
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
+                  child: Padding(
+                    padding: EdgeInsetsDirectional.only(
+                      start: i == 0 ? 0 : 12,
+                      end: i == n - 1 ? 0 : 12,
+                    ),
+                    // The bar stays the word's width.
+                    child: Center(
+                      widthFactor: 1,
+                      heightFactor: 1,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 48),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.center,
+                          children: [
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                style: style.label(
+                                  TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w600,
+                                    color: controller.index == i
+                                        ? c.textOnPage
+                                        : c.textMutedOnPage,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                            if (controller.index == i)
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: -2,
+                                child: Container(
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: c.you.face,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      if (controller.index == i)
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: -2,
-                          child: Container(
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: c.you.face,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-          if (i < n - 1) const SizedBox(width: 24),
-        ],
       ],
     );
   }

@@ -1,4 +1,5 @@
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
@@ -214,6 +215,7 @@ class _DayCell extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final c = GumdropColors.of(context);
     return Semantics(
       button: true,
       selected: isSelected,
@@ -229,9 +231,11 @@ class _DayCell extends StatelessWidget {
           // At least 48 tall, taller with large text (SPEC §7.6).
           constraints: const BoxConstraints(minHeight: 48),
           margin: const EdgeInsets.all(1),
+          // The picked day on coral with its number and dots in candy ink,
+          // as on every candy face; today ringed in the text color.
           decoration: BoxDecoration(
-            color: isSelected ? scheme.primaryContainer : null,
-            border: isToday ? Border.all(color: scheme.primary) : null,
+            color: isSelected ? c.you.face : null,
+            border: isToday ? Border.all(color: c.textOnPage) : null,
             borderRadius: BorderRadius.circular(Corners.chip),
           ),
           child: Column(
@@ -241,7 +245,11 @@ class _DayCell extends StatelessWidget {
               Text(
                 '${day.day}',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: inMonth ? null : scheme.outline,
+                  color: isSelected
+                      ? c.ink
+                      : inMonth
+                      ? null
+                      : scheme.outline,
                   fontWeight: isToday ? FontWeight.w700 : null,
                 ),
               ),
@@ -258,10 +266,14 @@ class _DayCell extends StatelessWidget {
                       width: 6,
                       height: 6,
                       margin: const EdgeInsets.symmetric(horizontal: 1),
+                      // The type's color on the page (SPEC A.3), so the
+                      // types stay apart in every scheme.
                       decoration: BoxDecoration(
-                        color: e.isCanceled
+                        color: isSelected
+                            ? c.ink
+                            : e.isCanceled
                             ? scheme.outline
-                            : typeColor(context, e.type),
+                            : typeAccent(context, e.type).text,
                         shape: BoxShape.circle,
                       ),
                     ),

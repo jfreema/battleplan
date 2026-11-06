@@ -404,11 +404,11 @@ class _Details extends ConsumerWidget {
                       title: event.description,
                     ),
                   ),
+                // Snacks, drinks, a scorekeeper (SCHED-15).
+                if (hasAssignmentsRow(ref, event, group, me))
+                  AssignmentsRow(event: event, group: group, me: me),
               ],
             ),
-            // Snacks, drinks, a scorekeeper (SCHED-15).
-            AssignmentsRow(event: event, group: group, me: me),
-            const SizedBox(height: 14),
             _RsvpSection(event: event, group: group, me: me),
           ],
         ),
@@ -617,7 +617,10 @@ class _RsvpSection extends ConsumerWidget {
     );
 
     if (!event.rsvpEnabled) {
-      return padded(Text(l10n.eventRsvpsOff, style: muted));
+      return Padding(
+        padding: const EdgeInsets.only(top: 14),
+        child: padded(Text(l10n.eventRsvpsOff, style: muted)),
+      );
     }
 
     final now = DateTime.now();
@@ -625,18 +628,22 @@ class _RsvpSection extends ConsumerWidget {
     final rsvps =
         ref.watch(eventRsvpsProvider(group.id, event.id)).value ?? const [];
     final roster = ref.watch(rosterProvider(group.id)).value ?? const [];
-    // A basic group has no players: everyone answers for themselves
-    // (TEAM-14).
-    final players = group.hasPlayers
-        ? ref.watch(playersProvider(group.id)).value ?? const <Player>[]
-        : const <Player>[];
-    final links = group.hasPlayers
-        ? ref.watch(guardianLinksProvider(group.id)).value ??
-              const <GuardianLink>[]
-        : const <GuardianLink>[];
-    // On a team only players have answers; in a group, everyone answers
-    // for themselves (PLAYER-6).
+    // On a team only players have answers; in a group, which has no
+    // players, everyone answers for themselves (PLAYER-6, TEAM-14).
     final isTeam = group.hasPlayers;
+    final playersAsync = isTeam ? ref.watch(playersProvider(group.id)) : null;
+    final linksAsync = isTeam
+        ? ref.watch(guardianLinksProvider(group.id))
+        : null;
+    // Until a team's players and links are in, who I answer for and
+    // whether it has players aren't known: nothing shows yet, so no empty
+    // state flashes by (an admin's Add players, a guardian's "only
+    // players").
+    if (isTeam && !(playersAsync!.hasValue && linksAsync!.hasValue)) {
+      return const SizedBox.shrink();
+    }
+    final players = playersAsync?.value ?? const <Player>[];
+    final links = linksAsync?.value ?? const <GuardianLink>[];
     final mine = ref.watch(myParticipantsProvider(group.id));
     final open = canAnswerNow(event, group, me, now);
     // Super admins answer for anyone too, on any team (§3).
@@ -646,30 +653,42 @@ class _RsvpSection extends ConsumerWidget {
     final allowMaybe = group.settings.allowMaybe;
     final everyone = eventParticipants(roster, players, isTeam: isTeam);
     final activePlayers = everyone.main.length;
-    // Someone on a team with players and nobody to answer for: pointed to
-    // "Who are you here for?" (PLAYER-3), or told their claim waits.
+    // Someone on a team with nobody to answer for, as the roster's "Who
+    // are you here for?" row tests it: told their claim waits, or, once
+    // their claims are in and there are players, pointed to "Who are you
+    // here for?" (PLAYER-3, spec 6.3).
     final myUid = ref.watch(authUserProvider).value?.uid;
     final linked = links.any((l) => l.uid.value == myUid);
+    final unlinked =
+        isTeam && !isAdmin && me != null && !linked && mine.isEmpty;
+    final myPending = unlinked
+        ? ref.watch(myPendingPlayersProvider(group.id))
+        : null;
+    final myRequests = unlinked
+        ? ref.watch(myGuardianRequestsProvider(group.id))
+        : null;
     final waiting =
-        isTeam &&
-        !isAdmin &&
-        me != null &&
-        !linked &&
-        mine.isEmpty &&
-        ((ref.watch(myPendingPlayersProvider(group.id)).value ??
-                    const <Player>[])
-                .any((p) => p.proposedBy == myUid) ||
-            (ref.watch(myGuardianRequestsProvider(group.id)).value ??
-                    const <GuardianRequest>[])
-                .any((r) => r.status == GuardianRequestStatus.pending));
+        unlinked &&
+        ((myPending!.value ?? const <Player>[]).any(
+              (p) => p.proposedBy == myUid,
+            ) ||
+            (myRequests!.value ?? const <GuardianRequest>[]).any(
+              (r) => r.status == GuardianRequestStatus.pending,
+            ));
     final pointToWho =
-        isTeam &&
+        unlinked &&
+        !waiting &&
+        myPending!.hasValue &&
+        myRequests!.hasValue &&
         activePlayers > 0 &&
-        !isAdmin &&
-        me != null &&
-        !linked &&
-        mine.isEmpty &&
         !event.isCanceled;
+    // A team with no players takes no answers yet: its admins are told how
+    // to start, unless it's archived (PLAYER-6). Others see no section,
+    // unless their claim waits (spec 6.3).
+    final noPlayers = isTeam && activePlayers == 0;
+    if (noPlayers && !isAdmin && !waiting) return const SizedBox.shrink();
+    final addPlayers =
+        noPlayers && isAdmin && !group.isArchived && !event.isCanceled;
 
     // Admins set anyone's answer (SCHED-4).
     final canSet =
@@ -681,9 +700,13 @@ class _RsvpSection extends ConsumerWidget {
         ? () => unawaited(_setRsvpFor(context, ref, event, group, p))
         : null;
 
-    String nameOf(String uid) =>
-        roster.where((m) => m.uid.value == uid).firstOrNull?.shortName ??
-        l10n.formerMember;
+    Membership? memberOf(String uid) =>
+        roster.where((m) => m.uid.value == uid).firstOrNull;
+    String nameOf(String uid) => memberOf(uid)?.shortName ?? l10n.formerMember;
+    // The member who is [p]: themselves in a group, a player's self link on
+    // a team (PLAYER-3).
+    String? selfOf(Participant p) =>
+        p.isPlayer ? selfLinkOf(PlayerId(p.id), links)?.uid.value : p.id;
 
     // The count tiles (design §3.16): the players' answers on a team,
     // everyone's in a group.
@@ -699,7 +722,8 @@ class _RsvpSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          // 14 above the heading (SPEC §7.3), only when there's a section.
+          padding: const EdgeInsets.only(top: 14, bottom: 10),
           child: Semantics(
             header: true,
             child: Text(
@@ -711,9 +735,7 @@ class _RsvpSection extends ConsumerWidget {
             ),
           ),
         ),
-        // A team with no players takes no answers yet: admins are told how
-        // to start (PLAYER-6).
-        if (isTeam && activePlayers == 0 && isAdmin && !event.isCanceled)
+        if (addPlayers)
           padded(
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -880,6 +902,12 @@ class _RsvpSection extends ConsumerWidget {
           rsvps: rsvps,
           allowMaybe: allowMaybe,
           nameOf: nameOf,
+          selfOf: selfOf,
+          // Their picked icon color, from the member who is them (§7.2).
+          colorOf: (p) => switch (selfOf(p)) {
+            final uid? => memberOf(uid)?.avatarColor,
+            null => null,
+          },
           onTap: setFor,
         ),
       ],
@@ -945,6 +973,7 @@ class RsvpButtons extends ConsumerWidget {
         label: label,
         semanticName: participant.shownName,
         unanswered: current == null,
+        pills: statuses.length,
         choice: RsvpChoice(
           statuses: statuses,
           current: current,
@@ -1240,6 +1269,8 @@ class _AttendeeGroups extends StatelessWidget {
     required this.rsvps,
     required this.allowMaybe,
     required this.nameOf,
+    required this.selfOf,
+    required this.colorOf,
     this.onTap,
   });
 
@@ -1247,6 +1278,12 @@ class _AttendeeGroups extends StatelessWidget {
   final List<Rsvp> rsvps;
   final bool allowMaybe;
   final String Function(String uid) nameOf;
+
+  /// The uid of the member who is this person, if any.
+  final String? Function(Participant) selfOf;
+
+  /// This person's picked icon color, if any.
+  final AvatarColor? Function(Participant) colorOf;
 
   /// Admins: what tapping this person does (set their answer, SCHED-4),
   /// or null when their row isn't tappable.
@@ -1289,8 +1326,9 @@ class _AttendeeGroups extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Flexible(
+                    // "No reply", as the count above it says.
                     child: SectionLabel(
-                      '${s == null ? l10n.rsvpNoResponse : statusLabel(l10n, s)}'
+                      '${s == null ? l10n.rsvpNoReply : statusLabel(l10n, s)}'
                       ' · ${list.length}',
                     ),
                   ),
@@ -1302,6 +1340,7 @@ class _AttendeeGroups extends StatelessWidget {
               _AttendeeRow(
                 participant: p,
                 rsvp: r,
+                color: colorOf(p),
                 answeredBy: _answeredBy(l10n, p, r),
                 onTap: onTap?.call(p),
               ),
@@ -1311,9 +1350,11 @@ class _AttendeeGroups extends StatelessWidget {
     );
   }
 
+  /// "Answered by Tasha R.", unless they answered for themselves: a member
+  /// in a group, or an adult player through their self link (PLAYER-6).
   String? _answeredBy(AppLocalizations l10n, Participant p, Rsvp? r) {
     if (r == null || r.respondedBy.isEmpty) return null;
-    if (!p.isPlayer && r.respondedBy == p.id) return null;
+    if (r.respondedBy == selfOf(p)) return null;
     return l10n.eventAnsweredBy(nameOf(r.respondedBy));
   }
 }
@@ -1327,12 +1368,16 @@ class _AttendeeRow extends StatelessWidget {
     required this.rsvp,
     required this.answeredBy,
     required this.onTap,
+    this.color,
   });
 
   final Participant participant;
   final Rsvp? rsvp;
   final String? answeredBy;
   final VoidCallback? onTap;
+
+  /// Their picked icon color; null keeps the one picked from their ID.
+  final AvatarColor? color;
 
   @override
   Widget build(BuildContext context) {
@@ -1356,7 +1401,7 @@ class _AttendeeRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 11),
         child: Row(
           children: [
-            CandyInitials(name: full, colorKey: participant.id),
+            CandyInitials(name: full, colorKey: participant.id, color: color),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -1544,20 +1589,26 @@ class _NoteDialogState extends State<_NoteDialog> {
 
 /// An RSVP row on a card (SPEC §7.3): the name ([label], "Luke" or "You")
 /// in a column at least 46 wide, with a coral dot while it's unanswered,
-/// then the three pills. When the name needs more than 64 px, or the pills
-/// would be narrower than 84 px each, the name takes its own line above.
+/// then the [pills] (three, or two without Maybe). When the name needs more
+/// than 64 px, or a pill would be narrower than 84 px, the name takes its
+/// own line above.
 class _CardRsvpRow extends StatelessWidget {
   const new({
     required this.label,
     required this.semanticName,
     required this.unanswered,
+    required this.pills,
     required this.choice,
   });
 
   final String? label;
   final String semanticName;
   final bool unanswered;
+  final int pills;
   final Widget choice;
+
+  /// The room between a card's pills, as [RsvpChoice] leaves it.
+  static const double _pillGap = 4;
 
   @override
   Widget build(BuildContext context) {
@@ -1609,8 +1660,12 @@ class _CardRsvpRow extends StatelessWidget {
         final nameWidth = painter.width + 8;
         painter.dispose();
         final column = nameWidth < 46 ? 46.0 : nameWidth;
-        final narrow =
-            column > 64 || (constraints.maxWidth - column - 4) / 3 < 84;
+        // Each pill's width beside the name: the rest of the row, less the
+        // gaps between the pills, shared.
+        final pill =
+            (constraints.maxWidth - column - 4 - _pillGap * (pills - 1)) /
+            pills;
+        final narrow = column > 64 || pill < 84;
         if (narrow) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -170,6 +170,7 @@ class PageRow extends StatelessWidget {
     this.chevron = true,
     this.destructive = false,
     this.subtitleMaxLines = 1,
+    this.subtitleSpan,
     this.bold = false,
     this.titleColor,
     super.key,
@@ -186,6 +187,10 @@ class PageRow extends StatelessWidget {
   final IconData? icon;
   final Widget? leading;
   final String? subtitle;
+
+  /// [subtitle] with a part styled ("3 open", SPEC §7.3), drawn in its
+  /// place.
+  final InlineSpan? subtitleSpan;
   final VoidCallback? onTap;
 
   /// In place of the chevron.
@@ -251,8 +256,8 @@ class PageRow extends StatelessWidget {
                           ),
                         ),
                         if (sub != null && sub.isNotEmpty)
-                          Text(
-                            sub,
+                          Text.rich(
+                            subtitleSpan ?? TextSpan(text: sub),
                             maxLines: subtitleMaxLines,
                             overflow: subtitleMaxLines == null
                                 ? null

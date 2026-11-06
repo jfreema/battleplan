@@ -1147,7 +1147,6 @@
   "rsvpGoing": "Going",
   "rsvpMaybe": "Maybe",
   "rsvpNotGoing": "Not going",
-  "rsvpNoResponse": "No response",
   "rsvpCountGoing": "{count} going",
   "rsvpCountMaybe": "{count} maybe",
   "rsvpCountNo": "{count} no",

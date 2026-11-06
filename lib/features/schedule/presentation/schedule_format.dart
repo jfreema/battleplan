@@ -170,9 +170,31 @@ String dayLabel(AppLocalizations l10n, DateTime date) =>
 String shortDate(AppLocalizations l10n, DateTime date) =>
     DateFormat.MMMd(l10n.localeName).format(date);
 
-/// When an event happens, in the viewer's zone (SCHED-9): "6:00 PM –
-/// 7:30 PM", or "All day". Without [withDay] the day is left to the row's
-/// date block.
+/// "6:00–7:30 PM" (SPEC §7.3): the times of one day joined by a closed-up
+/// en dash, with AM or PM said once when both share it; "11:00 AM–12:30
+/// PM" when they don't. A 24-hour locale gives "18:00–19:30".
+String _sameDayRange(AppLocalizations l10n, DateTime start, DateTime end) {
+  final full = DateFormat.jm(l10n.localeName);
+  final pattern = full.pattern ?? '';
+  // The pattern without its AM/PM field and the space beside it (a narrow
+  // no-break space in English, which \s covers); only for a plain
+  // pattern, with no quoted text that could hold an "a".
+  final bare = pattern.replaceAll(RegExp(r'\s*a\s*'), '');
+  final period = DateFormat('a', l10n.localeName);
+  final shared =
+      pattern.contains('a') &&
+      !pattern.contains("'") &&
+      bare.isNotEmpty &&
+      period.format(start) == period.format(end);
+  final first = shared
+      ? DateFormat(bare, l10n.localeName).format(start)
+      : full.format(start);
+  return '$first–${full.format(end)}';
+}
+
+/// When an event happens, in the viewer's zone (SCHED-9): "6:00–7:30 PM",
+/// or "All day". Without [withDay] the day is left to the row's date
+/// block.
 String timeRange(
   AppLocalizations l10n,
   Event e,
@@ -196,8 +218,7 @@ String timeRange(
       start.month == end.month &&
       start.day == end.day;
   final range = sameDay
-      ? '${timeIn(l10n, e.startAt, viewerZone)} – '
-            '${timeIn(l10n, e.endAt, viewerZone)}'
+      ? _sameDayRange(l10n, start, end)
       : '${timeIn(l10n, e.startAt, viewerZone)} – '
             '${dayLabel(l10n, end)} ${timeIn(l10n, e.endAt, viewerZone)}';
   return withDay ? '${dayLabel(l10n, start)} · $range' : range;

@@ -17,6 +17,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/assignment.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
@@ -60,10 +61,27 @@ GumdropAccent _kindAccent(GumdropColors c, AssignmentKind kind) =>
       AssignmentKind.other => c.mint,
     };
 
-/// The Assignments row near the bottom of an event's page (SCHED-15): a
-/// secondary part of the event, so it's one line that opens the list.
-/// Members see it once the event has assignments; admins always, to add
-/// the first.
+/// Whether an event's page has the Assignments row (SCHED-15): members see
+/// it once the event has assignments; admins always, to add the first.
+bool hasAssignmentsRow(
+  WidgetRef ref,
+  Event event,
+  Group group,
+  Membership? me,
+) {
+  final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+  if (canManageAssignments(group, me, superAdmin: superAdmin)) return true;
+  return ref
+          .watch(eventAssignmentsProvider(event.groupId, event.id))
+          .value
+          ?.isNotEmpty ??
+      false;
+}
+
+/// The Assignments row among an event's detail rows (SCHED-15, SPEC
+/// §7.3): a secondary part of the event, so it's one row that opens the
+/// list, with an open slot's "open" marked. Shown where
+/// [hasAssignmentsRow] says.
 class AssignmentsRow extends ConsumerWidget {
   const new({
     required this.event,
@@ -100,48 +118,39 @@ class AssignmentsRow extends ConsumerWidget {
         ? l10n.assignmentsRowAllOpen(list.length)
         : l10n.assignmentsRowSummary(taken, list.length);
 
-    final c = GumdropColors.of(context);
-    final text = Theme.of(context).textTheme;
-    return GumdropCard(
-      padding: EdgeInsets.zero,
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => unawaited(
-            context.push(
-              '/g/${event.groupId.value}/schedule/e/${event.id.value}/assignments',
+    // "3 open": the word marked in the text color at 800 over a 2 px
+    // accent-mark underline (SPEC §7.3).
+    InlineSpan? marked;
+    final count = '${list.length}';
+    final at = summary.indexOf(count);
+    if (list.isNotEmpty && mine.isEmpty && taken == 0 && at >= 0) {
+      final c = GumdropColors.of(context);
+      final word = summary.substring(at + count.length).trimLeft();
+      marked = TextSpan(
+        children: [
+          TextSpan(text: summary.substring(0, summary.length - word.length)),
+          TextSpan(
+            text: word,
+            style: TextStyle(
+              color: c.textOnPage,
+              fontWeight: FontWeight.w800,
+              decoration: TextDecoration.underline,
+              decorationColor: c.accentMark,
+              decorationThickness: 2,
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-            child: Row(
-              children: [
-                _Disc(icon: AppIcons.assignments, color: c.card.well),
-                const SizedBox(width: Space.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.assignmentsTitle,
-                        style: text.titleSmall?.copyWith(
-                          color: c.card.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        summary,
-                        style: text.bodySmall?.copyWith(
-                          color: c.card.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(AppIcons.chevronRight, color: c.card.textMuted),
-              ],
-            ),
-          ),
+        ],
+      );
+    }
+    return PageRow(
+      icon: AppIcons.assignments,
+      title: l10n.assignmentsTitle,
+      subtitle: summary,
+      subtitleSpan: marked,
+      subtitleMaxLines: null,
+      onTap: () => unawaited(
+        context.push(
+          '/g/${event.groupId.value}/schedule/e/${event.id.value}/assignments',
         ),
       ),
     );
