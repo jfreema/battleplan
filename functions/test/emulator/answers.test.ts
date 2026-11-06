@@ -1,6 +1,7 @@
 // Answering from an email on the server (SPEC SCHED-14, ARCH §6.15): who
-// "Email people who haven't RSVP'd" emails, what each email asks, and the
-// answer page its links open, from the form to the saved RSVP. Runs
+// "Email people who haven't RSVP'd" emails, what each email asks (each
+// player on their own, PLAYER-11), and the answer page its links open, from
+// the form to the saved RSVPs. Runs
 // against the Firestore emulator, with email captured:
 //   npm --prefix functions run emulators:test
 import { Timestamp } from 'firebase-admin/firestore';
@@ -237,11 +238,11 @@ describe('the answer page', () => {
     const shown = await answerPage(`/a/${token}`, 'GET', { s: 'going' }, {});
     expect(shown.status).toBe(200);
     expect(shown.html).toContain('Is Emma going?');
-    expect(shown.html).toContain('value="going" required checked');
+    expect(shown.html).toContain('name="status-0" value="going" required checked');
     expect(shown.html).toContain('Answering as Maria Ruiz.');
     expect((await rsvp('game', 'emma')).exists).toBe(false);
 
-    const sent = await answerPage(`/a/${token}`, 'POST', {}, { status: 'maybe', note: '  Late from school ' });
+    const sent = await answerPage(`/a/${token}`, 'POST', {}, { 'status-0': 'maybe', 'note-0': '  Late from school ' });
     expect(sent.status).toBe(200);
     expect(sent.html).toContain('Thanks! Emma might go.');
     const saved = (await rsvp('game', 'emma')).data()!;
@@ -257,13 +258,67 @@ describe('the answer page', () => {
       respondedBy: 'maria',
     });
     // Changed from the same link.
-    await answerPage(`/a/${token}`, 'POST', {}, { status: 'not_going' });
+    await answerPage(`/a/${token}`, 'POST', {}, { 'status-0': 'not_going', 'note-0': 'Late from school' });
     expect((await rsvp('game', 'emma')).get('status')).toBe('not_going');
+    // Opened again, it shows the saved answer and note.
+    const again = await answerPage(`/a/${token}`, 'GET', {}, {});
+    expect(again.html).toContain('name="status-0" value="not_going" required checked');
+    expect(again.html).toContain('>Late from school</textarea>');
+    // Send with nothing picked saves nothing, and says so.
+    const empty = await answerPage(`/a/${token}`, 'POST', {}, {});
+    expect(empty.status).toBe(400);
+    expect(empty.html).toContain('Pick an answer, then Send.');
+    expect((await rsvp('game', 'emma')).get('status')).toBe('not_going');
+  });
+
+  it("asks about each of a guardian's players on their own, and answers each alone (PLAYER-11)", async () => {
+    await db().collection(Collections.rsvps).doc('game_liam').delete();
+    await send('coach');
+    const email = outbox.find((e) => e.to === 'maria@example.com')!;
+    expect(email.text).toContain('Is Emma going?');
+    expect(email.text).toContain('Is Liam going?');
+    expect(email.text).not.toContain('Emma and Liam');
+    const token = tokenFor('maria@example.com');
+    expect(email.text).toContain(`/a/${token}?s=going&p=0`);
+    expect(email.text).toContain(`/a/${token}?s=not_going&p=1`);
+
+    // Liam's Not going picks Liam's alone.
+    const shown = await answerPage(`/a/${token}`, 'GET', { s: 'not_going', p: '1' }, {});
+    expect(shown.html).toContain('<legend>Is Emma going?</legend>');
+    expect(shown.html).toContain('<legend>Is Liam going?</legend>');
+    expect(shown.html).toContain('name="status-1" value="not_going" checked');
+    expect(shown.html).not.toMatch(/name="status-0" value="\w+" checked/);
+    expect(shown.html).not.toContain(' required');
+
+    // Sent with only Liam's answer: Liam's is saved, Emma's left alone.
+    const sent = await answerPage(`/a/${token}`, 'POST', {}, { 'status-1': 'not_going', 'note-1': ' Sick ', 'note-0': '' });
+    expect(sent.status).toBe(200);
+    expect(sent.html).toContain('Thanks! Liam isn&#39;t going.');
+    expect((await rsvp('game', 'liam')).data()).toMatchObject({ status: 'not_going', note: 'Sick', respondedBy: 'maria' });
+    expect((await rsvp('game', 'emma')).exists).toBe(false);
+
+    // Each with their own answer.
+    const both = await answerPage(`/a/${token}`, 'POST', {}, { 'status-0': 'going', 'status-1': 'maybe', 'note-1': 'Sick' });
+    expect(both.html).toContain('Thanks! Emma is going. Liam might go.');
+    expect((await rsvp('game', 'emma')).get('status')).toBe('going');
+    expect((await rsvp('game', 'liam')).data()).toMatchObject({ status: 'maybe', note: 'Sick' });
+
+    // Opened again, each shows their own saved answer and note.
+    const again = await answerPage(`/a/${token}`, 'GET', {}, {});
+    expect(again.html).toContain('name="status-0" value="going" checked');
+    expect(again.html).toContain('name="status-1" value="maybe" checked');
+    expect(again.html).toContain('>Sick</textarea>');
+
+    // Nothing picked saves nothing.
+    const empty = await answerPage(`/a/${token}`, 'POST', {}, { 'note-0': 'x' });
+    expect(empty.status).toBe(400);
+    expect(empty.html).toContain('Pick an answer for at least one of them, then Send.');
+    expect((await rsvp('game', 'emma')).get('note')).toBe('');
   });
 
   it('answers for a player who is the person', async () => {
     await send('coach');
-    await answerPage(`/a/${tokenFor('sam@example.com')}`, 'POST', {}, { status: 'going' });
+    await answerPage(`/a/${tokenFor('sam@example.com')}`, 'POST', {}, { 'status-0': 'going' });
     expect((await rsvp('game', 'sam-p')).get('respondedBy')).toBe('sam');
   });
 
@@ -272,7 +327,7 @@ describe('the answer page', () => {
     await db().collection(Collections.groups).doc(G).update({ 'settings.allowMaybe': false });
     const token = tokenFor('dan@example.com');
     expect((await answerPage(`/a/${token}`, 'GET', { s: 'maybe' }, {})).html).not.toContain('value="maybe"');
-    expect((await answerPage(`/a/${token}`, 'POST', {}, { status: 'maybe' })).status).toBe(400);
+    expect((await answerPage(`/a/${token}`, 'POST', {}, { 'status-0': 'maybe' })).status).toBe(400);
     expect((await rsvp('game', 'emma')).exists).toBe(false);
   });
 
@@ -283,7 +338,7 @@ describe('the answer page', () => {
     expect((await answerPage(`/a/${token}`, 'GET', {}, {}, NOW + 3 * 24 * HOUR)).status).toBe(410);
 
     await db().collection(Collections.events).doc('game').update({ rsvpDeadline: Timestamp.fromMillis(NOW - 1000) });
-    expect((await answerPage(`/a/${token}`, 'POST', {}, { status: 'going' })).status).toBe(410);
+    expect((await answerPage(`/a/${token}`, 'POST', {}, { 'status-0': 'going' })).status).toBe(410);
     await db().collection(Collections.events).doc('game').update({ rsvpDeadline: null, canceledAt: Timestamp.now() });
     const canceled = await answerPage(`/a/${token}`, 'GET', {}, {});
     expect(canceled.status).toBe(410);
@@ -291,7 +346,7 @@ describe('the answer page', () => {
 
     await db().collection(Collections.events).doc('game').update({ canceledAt: null });
     await db().collection(Collections.playerGuardians).doc(groupMemberId('emma', 'maria')).delete();
-    const unlinked = await answerPage(`/a/${token}`, 'POST', {}, { status: 'going' });
+    const unlinked = await answerPage(`/a/${token}`, 'POST', {}, { 'status-0': 'going' });
     expect(unlinked.status).toBe(403);
     expect((await rsvp('game', 'emma')).exists).toBe(false);
   });
@@ -300,9 +355,9 @@ describe('the answer page', () => {
     await send('coach');
     const token = tokenFor('dan@example.com');
     for (let i = 0; i < 20; i++) {
-      expect((await answerPage(`/a/${token}`, 'POST', {}, { status: 'going' })).status).toBe(200);
+      expect((await answerPage(`/a/${token}`, 'POST', {}, { 'status-0': 'going' })).status).toBe(200);
     }
-    expect((await answerPage(`/a/${token}`, 'POST', {}, { status: 'going' })).status).toBe(429);
+    expect((await answerPage(`/a/${token}`, 'POST', {}, { 'status-0': 'going' })).status).toBe(429);
   });
 
   it('serves the page privately, and only to GET and POST', async () => {
@@ -341,7 +396,7 @@ describe('the answer page', () => {
     expect(page.headers['referrer-policy']).toBe('no-referrer');
     expect(page.headers['content-security-policy']).toContain("default-src 'none'");
     expect(page.body).toContain('Is Emma going?');
-    expect((await reply('POST', { status: 'going' })).body).toContain('Thanks! Emma is going.');
+    expect((await reply('POST', { 'status-0': 'going' })).body).toContain('Thanks! Emma is going.');
     expect((await reply('DELETE')).status).toBe(405);
   });
 });

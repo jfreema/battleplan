@@ -1,44 +1,28 @@
-// Answering from an email (SPEC SCHED-14): the wording for one player,
-// several, or yourself; the RSVP email with a link per answer; the answer
-// page's form; and the link helpers.
+// Answering from an email (SPEC SCHED-14): the wording for a player or
+// yourself, each asked on their own (PLAYER-11); the RSVP email with a link
+// per answer for each player; the answer page's form; and the link helpers.
 import { describe, expect, it } from 'vitest';
-import {
-  answeredLine,
-  answeredPage,
-  answerFormPage,
-  answerProblemPage,
-  namesOf,
-  questionOf,
-} from '../../src/answers/page.js';
+import { answeredLine, answeredPage, answerFormPage, answerProblemPage, questionOf } from '../../src/answers/page.js';
 import { answerLinkId, answerToken, newAnswerToken, planRsvpEmails } from '../../src/answers/service.js';
 import { rsvpReminderEmail } from '../../src/email/templates.js';
 
 const emma = { name: 'Emma', self: false };
 const liam = { name: 'Liam', self: false };
-const ava = { name: 'Ava', self: false };
 const me = { name: 'Sam', self: true };
 
 describe('the wording', () => {
-  it('names the players, "you" first for your own', () => {
-    expect(namesOf([emma])).toBe('Emma');
-    expect(namesOf([emma, liam])).toBe('Emma and Liam');
-    expect(namesOf([emma, liam, ava])).toBe('Emma, Liam, and Ava');
-    expect(namesOf([me])).toBe('you');
-    expect(namesOf([emma, me])).toBe('you and Emma');
-  });
-
-  it('asks who is going', () => {
-    expect(questionOf([emma])).toBe('Is Emma going?');
-    expect(questionOf([emma, liam])).toBe('Are Emma and Liam going?');
-    expect(questionOf([me])).toBe('Are you going?');
-    expect(questionOf([me, emma])).toBe('Are you and Emma going?');
+  it('asks about one player at a time, or you', () => {
+    expect(questionOf(emma)).toBe('Is Emma going?');
+    expect(questionOf(me)).toBe('Are you going?');
   });
 
   it('says what was saved', () => {
-    expect(answeredLine([emma], 'going')).toBe('Emma is going.');
-    expect(answeredLine([emma, liam], 'not_going')).toBe("Emma and Liam aren't going.");
-    expect(answeredLine([me], 'going')).toBe('You are going.');
-    expect(answeredLine([me, emma], 'maybe')).toBe('You and Emma might go.');
+    expect(answeredLine(emma, 'going')).toBe('Emma is going.');
+    expect(answeredLine(liam, 'not_going')).toBe("Liam isn't going.");
+    expect(answeredLine(emma, 'maybe')).toBe('Emma might go.');
+    expect(answeredLine(me, 'going')).toBe('You are going.');
+    expect(answeredLine(me, 'not_going')).toBe("You aren't going.");
+    expect(answeredLine(me, 'maybe')).toBe('You might go.');
   });
 });
 
@@ -49,10 +33,14 @@ describe('the RSVP email', () => {
     title: 'vs. Eagles',
     when: 'Sat, Oct 24 at 10:00 AM',
     place: 'Field <3>',
-    question: 'Is Emma going?',
-    going: 'https://getbattleplan.app/a/t?s=going',
-    maybe: 'https://getbattleplan.app/a/t?s=maybe',
-    notGoing: 'https://getbattleplan.app/a/t?s=not_going',
+    asks: [
+      {
+        question: 'Is Emma going?',
+        going: 'https://getbattleplan.app/a/t?s=going',
+        maybe: 'https://getbattleplan.app/a/t?s=maybe',
+        notGoing: 'https://getbattleplan.app/a/t?s=not_going',
+      },
+    ],
     sentBy: 'Andy Bernard',
     eventUrl: 'https://getbattleplan.app/app/g/thunder/schedule/e/game',
   });
@@ -69,6 +57,28 @@ describe('the RSVP email', () => {
     expect(email.html).not.toContain('Field <3>');
   });
 
+  it('asks about each player on their own, with their own buttons (PLAYER-11)', () => {
+    const two = rsvpReminderEmail({
+      to: 'maria@example.com',
+      team: 'Thunder',
+      title: 'vs. Eagles',
+      when: 'Sat',
+      place: '',
+      asks: [
+        { question: 'Is Emma going?', going: 'u?s=going&p=0', maybe: null, notGoing: 'u?s=not_going&p=0' },
+        { question: 'Is Liam going?', going: 'u?s=going&p=1', maybe: null, notGoing: 'u?s=not_going&p=1' },
+      ],
+      sentBy: '',
+      eventUrl: 'e',
+    });
+    expect(two.text).toContain('Is Emma going?\n\nGoing: u?s=going&p=0\nNot going: u?s=not_going&p=0');
+    expect(two.text).toContain('Is Liam going?\n\nGoing: u?s=going&p=1\nNot going: u?s=not_going&p=1');
+    expect(two.text).not.toContain(' and ');
+    expect(two.html).toContain('href="u?s=going&amp;p=1"');
+    expect(two.html.indexOf('Is Emma going?')).toBeLessThan(two.html.indexOf('href="u?s=going&amp;p=0"'));
+    expect(two.html.indexOf('href="u?s=not_going&amp;p=0"')).toBeLessThan(two.html.indexOf('Is Liam going?'));
+  });
+
   it('leaves Maybe out when the team does', () => {
     const noMaybe = rsvpReminderEmail({
       to: 'x@example.com',
@@ -76,10 +86,7 @@ describe('the RSVP email', () => {
       title: 'Practice',
       when: 'Tue',
       place: '',
-      question: 'Are you going?',
-      going: 'g',
-      maybe: null,
-      notGoing: 'n',
+      asks: [{ question: 'Are you going?', going: 'g', maybe: null, notGoing: 'n' }],
       sentBy: '',
       eventUrl: 'e',
     });
@@ -94,28 +101,57 @@ describe('the answer page', () => {
   it('asks with the tapped answer picked, a note, and Send, and never answers by itself', () => {
     const html = answerFormPage({
       event,
-      people: [emma, liam],
-      picked: 'not_going',
+      rows: [{ person: emma, index: 0, picked: 'not_going', note: '' }],
       allowMaybe: true,
       answeringAs: 'Maria <Ruiz>',
       eventUrl: 'https://getbattleplan.app/app/g/thunder/schedule/e/game',
     });
     expect(html).toContain('<form method="post">');
-    expect(html).toContain('Are Emma and Liam going?');
-    expect(html).toContain('value="not_going" required checked');
-    expect(html).toContain('value="going" required>');
+    expect(html).toContain('<legend>Is Emma going?</legend>');
+    expect(html).toContain('name="status-0" value="not_going" required checked');
+    expect(html).toContain('name="status-0" value="going" required>');
     expect(html).toContain('value="maybe"');
-    expect(html).toContain('maxlength="200"');
+    expect(html).toContain('>Note (optional)</label>');
+    expect(html).toContain('name="note-0" maxlength="200"');
     expect(html).toContain('>Send</button>');
     expect(html).toContain('Answering as Maria &lt;Ruiz&gt;.');
+    expect(html).not.toContain('class="error"');
     expect(html).not.toContain('<script');
+  });
+
+  it("asks about each player on their own, each with their own answers and note (PLAYER-11)", () => {
+    const html = answerFormPage({
+      event,
+      rows: [
+        { person: me, index: 0, picked: null, note: '' },
+        { person: emma, index: 1, picked: 'maybe', note: 'Late <from> school' },
+        { person: liam, index: 2, picked: 'going', note: '' },
+      ],
+      allowMaybe: true,
+      answeringAs: 'Sam',
+      eventUrl: 'e',
+      error: 'Pick an answer for at least one of them, then Send.',
+    });
+    expect(html.match(/<fieldset>/g)).toHaveLength(3);
+    expect(html).toContain('<legend>Are you going?</legend>');
+    expect(html).toContain('<legend>Is Emma going?</legend>');
+    expect(html).toContain('<legend>Is Liam going?</legend>');
+    expect(html).not.toContain('Emma and Liam');
+    // Each answers alone, so none is required.
+    expect(html).not.toContain(' required');
+    expect(html).toContain('id="s1-maybe" name="status-1" value="maybe" checked');
+    expect(html).toContain('id="s2-going" name="status-2" value="going" checked');
+    expect(html).not.toMatch(/name="status-0" value="\w+" checked/);
+    expect(html).toContain('>Your note (optional)</label>');
+    expect(html).toContain('>Note for Emma (optional)</label>');
+    expect(html).toContain('name="note-1" maxlength="200" placeholder="Leaving at halftime">Late &lt;from&gt; school</textarea>');
+    expect(html).toContain('<p class="error" role="alert">Pick an answer for at least one of them, then Send.</p>');
   });
 
   it('has no Maybe for a team without it', () => {
     const html = answerFormPage({
       event,
-      people: [emma],
-      picked: null,
+      rows: [{ person: emma, index: 0, picked: null, note: '' }],
       allowMaybe: false,
       answeringAs: 'Maria',
       eventUrl: 'e',
@@ -124,10 +160,20 @@ describe('the answer page', () => {
     expect(html).not.toContain(' checked');
   });
 
-  it('thanks them, with a way to change it', () => {
-    const html = answeredPage({ event, people: [emma], status: 'going', changeUrl: '/a/t?s=going', eventUrl: 'e' });
+  it('thanks them, with each answer saved and a way to change it', () => {
+    const html = answeredPage({ event, answers: [{ person: emma, status: 'going' }], changeUrl: '/a/t', eventUrl: 'e' });
     expect(html).toContain('Thanks! Emma is going.');
-    expect(html).toContain('href="/a/t?s=going"');
+    expect(html).toContain('href="/a/t"');
+    const two = answeredPage({
+      event,
+      answers: [
+        { person: emma, status: 'going' },
+        { person: liam, status: 'not_going' },
+      ],
+      changeUrl: '/a/t',
+      eventUrl: 'e',
+    });
+    expect(two).toContain('Thanks! Emma is going. Liam isn&#39;t going.');
   });
 
   it('explains a link that can\'t answer', () => {

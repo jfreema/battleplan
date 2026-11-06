@@ -1,7 +1,7 @@
 // Answering from an email (SPEC SCHED-14, ARCH §6.15, D67): an admin's
 // "Email people who haven't RSVP'd" emails everyone linked to a player
-// with no answer, with a link for each answer; the link opens a page where
-// Send records it. A link is a secret for one person, one event, and the
+// with no answer, with a link for each answer for each of their players
+// (PLAYER-11); the link opens a page where Send records it. A link is a secret for one person, one event, and the
 // players it names, kept hashed in `answerLinks`.
 import { createHash, randomBytes } from 'node:crypto';
 import { FieldPath, FieldValue, Timestamp, type DocumentData } from 'firebase-admin/firestore';
@@ -22,6 +22,7 @@ import {
   answerProblemPage,
   questionOf,
   type AnswerFor,
+  type AnswerRow,
   type AnswerStatus,
   type EventLines,
 } from './page.js';
@@ -44,9 +45,12 @@ export function answerToken(path: string): string | null {
   return match ? match[1] : null;
 }
 
-/** The answer page for [token], picking [status]. */
-export function answerUrl(token: string, status: AnswerStatus): string {
-  return `https://${linkHost()}/a/${token}?s=${status}`;
+/**
+ * The answer page for [token], picking [status] for the player at [player]
+ * in the link's list, or for its one player when it names one.
+ */
+export function answerUrl(token: string, status: AnswerStatus, player?: number): string {
+  return `https://${linkHost()}/a/${token}?s=${status}${player === undefined ? '' : `&p=${player}`}`;
 }
 
 function msOf(v: unknown): number {
@@ -144,8 +148,10 @@ export function planRsvpEmails(
  * "Email people who haven't RSVP'd" (SCHED-14): team admins and the
  * event's creator, on an event that takes RSVPs, isn't canceled, hasn't
  * started, and is before its deadline; each person once a week per event,
- * within today's limits ([planRsvpEmails]). Each person gets one email, naming their players, with a link for each answer that
- * works until the event starts or its deadline passes. [dryRun] counts
+ * within today's limits ([planRsvpEmails]). Each person gets one email
+ * that asks about each of their players on their own (PLAYER-11), with a
+ * link for each answer that works until the event starts or its deadline
+ * passes. [dryRun] counts
  * without sending, for the app's question.
  */
 export async function emailRsvpReminder(
@@ -268,10 +274,16 @@ export async function emailRsvpReminder(
       title: view.title,
       when,
       place,
-      question: questionOf(asking),
-      going: answerUrl(token, 'going'),
-      maybe: allowMaybe ? answerUrl(token, 'maybe') : null,
-      notGoing: answerUrl(token, 'not_going'),
+      // Each player on their own, with their own buttons (PLAYER-11).
+      asks: asking.map((p, i) => {
+        const at = asking.length > 1 ? i : undefined;
+        return {
+          question: questionOf(p),
+          going: answerUrl(token, 'going', at),
+          maybe: allowMaybe ? answerUrl(token, 'maybe', at) : null,
+          notGoing: answerUrl(token, 'not_going', at),
+        };
+      }),
       sentBy,
       eventUrl,
     });
@@ -307,10 +319,13 @@ function problem(status: number, heading: string, body: string, url = appUrl('/'
 }
 
 /**
- * The answer page at [path] (GET shows the form, POST records the answer
+ * The answer page at [path] (GET shows the form, POST records the answers
  * from [form]): the link must still exist and be in time, the event must
- * take answers, and the person must still be linked to each player. The
- * answer is written as theirs, like an answer in the app (SCHED-5).
+ * take answers, and the person must still be linked to each player. Each
+ * player is answered on their own (PLAYER-11): `status-<i>` and `note-<i>`
+ * for the player at i in the link's list, and a player given no answer is
+ * left as they were. The answers are written as theirs, like answers in the
+ * app (SCHED-5).
  */
 export async function answerPage(
   path: string,
@@ -376,32 +391,71 @@ export async function answerPage(
     title: view.title,
     when: [whenLabel(view), locationLabel(view.location)].filter(Boolean).join(' · '),
   };
-  const showForm = (picked: AnswerStatus | null, status = 200): PageResponse => ({
+  const rowOf = (p: AskedPlayer, picked: AnswerStatus | null, note: string): AnswerRow => ({
+    person: p,
+    index: asked.indexOf(p),
+    picked,
+    note,
+  });
+  const showForm = (rows: AnswerRow[], status = 200, error?: string): PageResponse => ({
     status,
     html: answerFormPage({
       event: lines,
-      people,
-      picked,
+      rows,
       allowMaybe,
       answeringAs: String(user.get('displayName') ?? '').trim() || 'you',
       eventUrl,
+      error,
     }),
   });
 
   const askedFor = (value: unknown): AnswerStatus | null =>
     typeof value === 'string' && (allowed as string[]).includes(value) ? (value as AnswerStatus) : null;
-  if (method !== 'POST') return showForm(askedFor(query.s));
+  if (method !== 'POST') {
+    // Each player's saved answer and note, with the one tapped in the email
+    // picked for its player (`p`), or for the one player a link names.
+    const saved = await db().getAll(...people.map((p) => db().collection(Collections.rsvps).doc(rsvpId(eventId, p.id))));
+    const tapped = askedFor(query.s);
+    const tappedAt = query.p === undefined ? null : typeof query.p === 'string' && /^\d+$/.test(query.p) ? Number(query.p) : -1;
+    return showForm(
+      people.map((p, i) => {
+        const mine = tappedAt === null ? people.length === 1 : tappedAt === asked.indexOf(p);
+        return rowOf(p, (mine ? tapped : null) ?? askedFor(saved[i].get('status')), String(saved[i].get('note') ?? ''));
+      }),
+    );
+  }
 
-  const status = askedFor(form.status);
-  if (!status) return showForm(null, 400);
+  const noteOf = (i: number) => {
+    const value = form[`note-${i}`];
+    return typeof value === 'string' ? value.trim().slice(0, Limits.rsvpNoteMax) : '';
+  };
+  const answers: { player: AskedPlayer; status: AnswerStatus; note: string }[] = [];
+  let refused = false;
+  for (const p of people) {
+    const i = asked.indexOf(p);
+    const value = form[`status-${i}`];
+    if (value === undefined || value === '') continue;
+    const status = askedFor(value);
+    if (status) answers.push({ player: p, status, note: noteOf(i) });
+    else refused = true;
+  }
+  if (refused || !answers.length) {
+    return showForm(
+      people.map((p) => {
+        const i = asked.indexOf(p);
+        return rowOf(p, askedFor(form[`status-${i}`]), noteOf(i));
+      }),
+      400,
+      people.length === 1 ? 'Pick an answer, then Send.' : 'Pick an answer for at least one of them, then Send.',
+    );
+  }
   try {
     await consumeRateLimit(linkId!.slice(0, 32), 'answerLink', Limits.answerLinkTriesPerHour, 'hour');
   } catch {
     return problem(429, 'Too many tries', 'Wait a bit and try again.', eventUrl, 'Open in Battleplan');
   }
-  const note = typeof form.note === 'string' ? form.note.trim().slice(0, Limits.rsvpNoteMax) : '';
   const batch = db().batch();
-  for (const p of people) {
+  for (const { player: p, status, note } of answers) {
     const player = checks[2 * asked.indexOf(p)];
     batch.set(db().collection(Collections.rsvps).doc(rsvpId(eventId, p.id)), {
       eventId,
@@ -422,9 +476,8 @@ export async function answerPage(
     status: 200,
     html: answeredPage({
       event: lines,
-      people,
-      status,
-      changeUrl: `/a/${token}?s=${status}`,
+      answers: answers.map((a) => ({ person: a.player, status: a.status })),
+      changeUrl: `/a/${token}`,
       eventUrl,
     }),
   };

@@ -207,10 +207,20 @@ export function methodName(id: string): string {
 }
 
 
+/** One player an RSVP email asks about, with a link for each answer. */
+export interface RsvpAsk {
+  /** "Is Emma going?", or "Are you going?" for one's own player. */
+  question: string;
+  going: string;
+  /** Null when the team doesn't allow Maybe. */
+  maybe: string | null;
+  notGoing: string;
+}
+
 /**
- * SCHED-14: an admin's "Email people who haven't RSVP'd": the event, who
- * it asks about, and an answer link for each answer. [maybe] is null when
- * the team doesn't allow Maybe.
+ * SCHED-14: an admin's "Email people who haven't RSVP'd": the event, then
+ * each player it asks about on their own (PLAYER-11), with an answer link
+ * for each answer.
  */
 export function rsvpReminderEmail(input: {
   to: string;
@@ -218,26 +228,21 @@ export function rsvpReminderEmail(input: {
   title: string;
   when: string;
   place: string;
-  /** "Is Emma going?" */
-  question: string;
-  going: string;
-  maybe: string | null;
-  notGoing: string;
+  asks: RsvpAsk[];
   sentBy: string;
   /** The event in Battleplan. */
   eventUrl: string;
 }): Email {
-  const answers: [string, string, boolean][] = [
-    ['Going', input.going, true],
-    ...(input.maybe ? [['Maybe', input.maybe, false] as [string, string, boolean]] : []),
-    ['Not going', input.notGoing, false],
+  const answersOf = (ask: RsvpAsk): [string, string, boolean][] => [
+    ['Going', ask.going, true],
+    ...(ask.maybe ? [['Maybe', ask.maybe, false] as [string, string, boolean]] : []),
+    ['Not going', ask.notGoing, false],
   ];
   const by = `${input.sentBy || 'Your coach'} sent this to everyone who hasn't RSVP'd.`;
   const text = [
     input.team,
     [input.title, input.when, input.place].filter(Boolean).join('\n'),
-    input.question,
-    answers.map(([label, url]) => `${label}: ${url}`).join('\n'),
+    ...input.asks.flatMap((ask) => [ask.question, answersOf(ask).map(([label, url]) => `${label}: ${url}`).join('\n')]),
     `${by} You can also answer in Battleplan: ${input.eventUrl}`,
     '— Battleplan',
   ].join('\n\n');
@@ -250,8 +255,13 @@ export function rsvpReminderEmail(input: {
     `<p style="margin:0;color:#5b5f6b;font-size:14px">${escapeHtml(input.team)}</p>` +
     `<p style="margin:4px 0 0;font-size:22px;font-weight:700">${escapeHtml(input.title)}</p>` +
     `<p style="margin:4px 0 16px">${[input.when, input.place].filter(Boolean).map(escapeHtml).join('<br>')}</p>` +
-    `<p style="font-weight:600">${escapeHtml(input.question)}</p>` +
-    `<p>${answers.map(([label, url, primary]) => button(label, url, primary)).join('')}</p>` +
+    input.asks
+      .map(
+        (ask) =>
+          `<p style="font-weight:600">${escapeHtml(ask.question)}</p>` +
+          `<p>${answersOf(ask).map(([label, url, primary]) => button(label, url, primary)).join('')}</p>`,
+      )
+      .join('') +
     `<p style="color:#5b5f6b;font-size:14px">${escapeHtml(by)} You can also <a href="${escapeHtml(input.eventUrl)}" style="color:#2549c4">answer in Battleplan</a>.</p>` +
     '<p style="color:#5b5f6b;font-size:14px">— Battleplan</p></div>';
   return { to: input.to, subject: `${input.team}: RSVP for ${input.title}, ${input.when}`, text, html };
