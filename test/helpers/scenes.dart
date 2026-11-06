@@ -34,6 +34,22 @@ const coach = AuthUser(
   emailVerified: true,
 );
 
+/// Alex, a parent: Mia's guardian, and in the guardian scene Ava's too.
+const alex = AuthUser(
+  uid: 'alex',
+  email: 'alex@example.com',
+  displayName: 'Alex Kim',
+  emailVerified: true,
+);
+
+/// Sam, a parent: Leo's guardian.
+const sam = AuthUser(
+  uid: 'sam',
+  email: 'sam@example.com',
+  displayName: 'Sam Rivera',
+  emailVerified: true,
+);
+
 const boss = AuthUser(
   uid: 'boss',
   email: 'boss@example.com',
@@ -135,6 +151,7 @@ FakeDuesRepository sceneDues() {
       venmo: '@thunder-u14',
       appleCash: '(555) 010-0144',
       note: "Put your player's name in the note.",
+      updatedBy: 'coach',
     )
     ..dues.add(
       const Due(
@@ -158,6 +175,44 @@ FakeDuesRepository sceneDues() {
         participantId: p.id.value,
         participantName: p.label,
         status: i < 2 ? DueStatus.paid : DueStatus.owed,
+      ),
+    );
+  }
+  return repo;
+}
+
+/// What the parents see (DUES-2): the uniform fee, and a tournament fee
+/// with a note for everyone who owes it, Mia's paid and Ava's owed.
+FakeDuesRepository sceneFamilyDues() {
+  final repo = sceneDues();
+  repo.dues.add(
+    const Due(
+      id: 'd1',
+      groupId: _team,
+      title: 'Tournament fee',
+      amountCents: 3000,
+      dueOn: '2030-10-20',
+      note: 'Fall classic entry.',
+    ),
+  );
+  for (final (id, name, status) in [
+    ('mia', 'Mia #7', DueStatus.paid),
+    ('leo', 'Leo #9', DueStatus.owed),
+    ('ava', 'Ava #12', DueStatus.owed),
+  ]) {
+    repo.charges.add(
+      DueCharge(
+        id: 'd1_$id',
+        groupId: _team,
+        dueId: 'd1',
+        title: 'Tournament fee',
+        amountCents: 3000,
+        dueOn: '2030-10-20',
+        note: 'Fall classic entry.',
+        participantType: ParticipantType.player,
+        participantId: id,
+        participantName: name,
+        status: status,
       ),
     );
   }
@@ -391,6 +446,7 @@ Future<void> pumpTeam(
   FakeMessageRepository? messages,
   FakeAssignmentRepository? assignments,
   FakeDuesRepository? dues,
+  List<GuardianLink>? links,
 }) async {
   final events = FakeEventRepository(sceneEvents);
   final rsvps = FakeRsvpRepository(events)
@@ -414,7 +470,7 @@ Future<void> pumpTeam(
     memberships: [
       for (final m in sceneMembers)
         if (m.uid.value == user.uid) m.copyWith(colorScheme: scheme) else m,
-      if (user.uid != 'coach')
+      if (!sceneMembers.any((m) => m.uid.value == user.uid))
         testMembership('a', user.uid).copyWith(colorScheme: scheme),
     ],
     // The account's default wins over this device's once the profile loads.
@@ -423,7 +479,8 @@ Future<void> pumpTeam(
     pollRepo: polls,
     eventRepo: events,
     rsvpRepo: rsvps,
-    playerRepo: FakePlayerRepository(scenePlayers)..links.addAll(sceneLinks),
+    playerRepo: FakePlayerRepository(scenePlayers)
+      ..links.addAll(links ?? sceneLinks),
     assignmentRepo: assignments,
     duesRepo: dues ?? sceneDues(),
     documentRepo: FakeDocumentRepository(sceneDocuments),
@@ -616,6 +673,29 @@ goldenScreens = {
   'group_schedule': pumpGroupSchedule,
   'dues': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
+    await goTo(tester, '/g/a/dues');
+  },
+  // What a parent sees (DUES-2, DUES-3): Leo's dues, and how to pay.
+  'dues_member': (tester, {required scheme}) async {
+    await pumpTeam(tester, scheme: scheme, user: sam, dues: sceneFamilyDues());
+    await goTo(tester, '/g/a/dues');
+  },
+  // A guardian of two players: each share says whose it is.
+  'dues_guardian': (tester, {required scheme}) async {
+    await pumpTeam(
+      tester,
+      scheme: scheme,
+      user: alex,
+      dues: sceneFamilyDues(),
+      links: [
+        ...sceneLinks,
+        const GuardianLink(
+          playerId: PlayerId('ava'),
+          groupId: _team,
+          uid: UserId('alex'),
+        ),
+      ],
+    );
     await goTo(tester, '/g/a/dues');
   },
   'your_icon': (tester, {required scheme}) async {

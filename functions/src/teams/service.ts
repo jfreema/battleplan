@@ -6,6 +6,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { findOrProvisionUser, sendSetupEmail } from '../accounts/service.js';
 import { tryDeleteCalendarLinksOf } from '../calendar/service.js';
 import { joinedLine, postSystemMessage } from '../chat/service.js';
+import { renameDueCharges } from '../dues/service.js';
 import { sendEmail } from '../email/service.js';
 import { addedToTeamEmail } from '../email/templates.js';
 import { teamUrl } from '../links/service.js';
@@ -118,7 +119,8 @@ export function memberSnapshotOf(p: {
  * cache the roster and message author snapshots read (ARCH §6.2
  * `groupMembers`), and onto their direct conversations, for the other
  * person (CHAT-19). Every membership, teams and conversations alike, a
- * page at a time.
+ * page at a time. Their own shares of a group's dues take the new name
+ * too (DUES-2).
  */
 export async function updateMemberSnapshots(
   uid: string,
@@ -130,6 +132,7 @@ export async function updateMemberSnapshots(
     batch.update(d.ref, { displayName, photoPath, avatarColor }),
   );
   await updateDirectPeople(uid, { name: displayName.trim(), photoPath, avatarColor });
+  await renameDueCharges('member', uid, displayName);
 }
 
 export interface NewGroup {

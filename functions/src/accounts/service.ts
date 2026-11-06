@@ -11,6 +11,7 @@ import { teamMembershipsOf } from '../shared/roles.js';
 import { anonymizeAuthor, joinedLine, postSystemMessage } from '../chat/service.js';
 import { deleteCalendarLinksOf } from '../calendar/service.js';
 import { anonymizeUploader } from '../documents/service.js';
+import { removeAccountFromDues } from '../dues/service.js';
 import { removeAccountNotifications, removeDevices } from '../notify/service.js';
 import { removeAccountFromPlayers } from '../players/service.js';
 import { removeAccountBlocks } from '../safety/service.js';
@@ -354,6 +355,9 @@ export async function deleteAccount(uid: string, newOwners: Record<string, strin
   await clearAssignmentsOf(uid);
   await anonymizeAuthor(uid);
   await anonymizeUploader(uid);
+  // Their shares of a group's dues read "Deleted user"; how to pay they
+  // saved goes.
+  await removeAccountFromDues(uid);
   await removeAccountNotifications(uid);
   await removeAccountBlocks(uid);
   await deleteCalendarLinksOf(uid);

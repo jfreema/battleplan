@@ -6,7 +6,7 @@ part 'due.freezed.dart';
 
 /// A due or fee a team's admins track (DUES-1): uniforms, the league fee,
 /// tournament entry. Only admins read it; each person reads their own
-/// [DueCharge], which copies its title, amount and date.
+/// [DueCharge], which copies its title, amount, date and note.
 @freezed
 abstract class Due with _$Due {
   const factory({
@@ -40,6 +40,9 @@ abstract class DueCharge with _$DueCharge {
     required String participantId,
     required String participantName,
     String? dueOn,
+
+    /// The due's note, for everyone who owes it (DUES-2).
+    @Default('') String note,
     @Default(DueStatus.owed) DueStatus status,
     DateTime? paidAt,
     DateTime? updatedAt,
@@ -56,8 +59,8 @@ abstract class DueCharge with _$DueCharge {
 /// Who a new due is for (DUES-1): a player, or a member of a group.
 typedef DuePayer = ({ParticipantType type, String id, String name});
 
-/// How to pay the team (DUES-3): handles the admins share. Payments happen
-/// between people in those apps, never through Battleplan.
+/// How to pay the team (DUES-3): handles the admins or coaches share.
+/// Payments happen between people in those apps, never through Battleplan.
 @freezed
 abstract class DuesPayments with _$DuesPayments {
   const factory({
@@ -65,6 +68,9 @@ abstract class DuesPayments with _$DuesPayments {
     @Default('') String cashApp,
     @Default('') String appleCash,
     @Default('') String note,
+
+    /// Who saved it last, which everyone sees ("Updated by Coach Lee").
+    @Default('') String updatedBy,
   }) = _DuesPayments;
 
   const new _();
@@ -91,11 +97,38 @@ DueTotals dueTotals(Iterable<DueCharge> charges) {
   return (paid: paid, count: count, owedCents: owed);
 }
 
-/// [handle] as a Venmo username, without a leading "@".
-String venmoUser(String handle) => handle.trim().replaceFirst(RegExp('^@'), '');
+/// [s] without "https://", "www." or anything after "?" or "#", for a
+/// pasted profile link.
+String _bareLink(String s) => s
+    .trim()
+    .replaceFirst(RegExp('^https?://', caseSensitive: false), '')
+    .replaceFirst(RegExp(r'^www\.', caseSensitive: false), '')
+    .split(RegExp('[?#]'))
+    .first;
 
-/// [handle] as a Cash App cashtag, without a leading "$".
-String cashTag(String handle) => handle.trim().replaceFirst(RegExp(r'^\$'), '');
+/// [handle] as a Venmo username, without a leading "@" or the rest of a
+/// pasted profile link ("https://venmo.com/u/Thunder-U14").
+String venmoUser(String handle) => _bareLink(handle)
+    .replaceFirst(RegExp(r'^(account\.)?venmo\.com/', caseSensitive: false), '')
+    .replaceFirst(RegExp('^u/', caseSensitive: false), '')
+    .replaceAll(RegExp(r'/+$'), '')
+    .replaceFirst(RegExp('^@'), '')
+    .replaceAll(RegExp(r'\s'), '');
+
+/// [handle] as a Cash App cashtag, without a leading "$" or the rest of a
+/// pasted profile link ("https://cash.app/$ThunderU14").
+String cashTag(String handle) =>
+    _bareLink(handle)
+        .replaceFirst(RegExp(r'^cash\.app/', caseSensitive: false), '')
+        .replaceAll(RegExp(r'/+$'), '')
+        .replaceFirst(RegExp(r'^\$'), '')
+        .replaceAll(RegExp(r'\s'), '');
+
+/// [dueOn] ("2026-11-30") is before [today]'s date: past due.
+bool duePassed(String dueOn, DateTime today) {
+  final d = DateTime.tryParse(dueOn);
+  return d != null && d.isBefore(DateTime(today.year, today.month, today.day));
+}
 
 /// [text] as an amount in cents, 1 to [Limits.dueAmountMaxCents], or null
 /// when it isn't one (DUES-1). "$" and spaces are ignored. With both "."

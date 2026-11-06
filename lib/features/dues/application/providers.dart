@@ -27,7 +27,9 @@ Stream<List<DueCharge>> dueCharges(Ref ref, GroupId groupId, String dueId) =>
     ref.watch(duesRepositoryProvider).watchDueCharges(groupId, dueId);
 
 /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-/// group, the same people I answer RSVPs for ([participantsFor]). Loading
+/// group, the same people I answer RSVPs for ([participantsFor]). On a team
+/// I'm also there myself, last, for any shares of mine from before it was
+/// a group made a team (TEAM-14); there are none on other teams. Loading
 /// until my membership, the team, and on a team its players and player
 /// links have loaded, and failing when any of them fails, so nobody is told
 /// they owe nothing before it's known whom they pay for.
@@ -56,6 +58,8 @@ AsyncValue<List<DuePayer>> myPayers(Ref ref, GroupId groupId) {
   }
   return AsyncData([
     for (final p in people) (type: p.type, id: p.id, name: p.name),
+    if (!(group.value?.isGroup ?? false))
+      (type: ParticipantType.member, id: me.uid.value, name: me.displayName),
   ]);
 }
 

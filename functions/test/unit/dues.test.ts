@@ -2,7 +2,7 @@
 // trimmed and clipped, and a player's name as the app shows it.
 import { HttpsError } from 'firebase-functions/v2/https';
 import { describe, expect, it } from 'vitest';
-import { DeleteDueInput, dueTerms, playerLabel, SaveDueInput } from '../../src/dues/service.js';
+import { DeleteDueInput, dueIdFor, dueTerms, playerLabel, SaveDueInput } from '../../src/dues/service.js';
 import { Limits } from '../../src/shared/constants.js';
 
 const input = { groupId: 'teamA', title: 'Fee', amountCents: 4500, dueOn: '2026-11-30', note: '' };
@@ -11,6 +11,7 @@ describe('SaveDueInput', () => {
   it('takes a whole amount of cents up to the cap, and a calendar day or none', () => {
     expect(SaveDueInput.safeParse(input).success).toBe(true);
     expect(SaveDueInput.safeParse({ ...input, dueOn: null, participantIds: ['emma'] }).success).toBe(true);
+    expect(SaveDueInput.safeParse({ ...input, requestId: 'a1B2c3D4e5_-' }).success).toBe(true);
     expect(SaveDueInput.safeParse({ ...input, amountCents: Limits.dueAmountMaxCents }).success).toBe(true);
     for (const bad of [
       { amountCents: 0 },
@@ -23,6 +24,8 @@ describe('SaveDueInput', () => {
       { dueId: 'a_b' },
       { participantIds: ['x_y'] },
       { title: 5 },
+      { requestId: 'short' },
+      { requestId: 'has spaces in it' },
     ]) {
       expect(SaveDueInput.safeParse({ ...input, ...bad }).success).toBe(false);
     }
@@ -50,5 +53,14 @@ describe('playerLabel', () => {
     expect(playerLabel('Emma Rivera', '7')).toBe('Emma #7');
     expect(playerLabel(' Liam  Park ', '')).toBe('Liam');
     expect(playerLabel(undefined, null)).toBe('');
+  });
+});
+
+describe('dueIdFor', () => {
+  it("is the same for a person's retries of one add, and differs otherwise", () => {
+    expect(dueIdFor('carol', 'req-1234')).toBe(dueIdFor('carol', 'req-1234'));
+    expect(dueIdFor('carol', 'req-1234')).toMatch(/^[0-9a-f]{20}$/);
+    expect(dueIdFor('carol', 'req-1234')).not.toBe(dueIdFor('carol', 'req-5678'));
+    expect(dueIdFor('carol', 'req-1234')).not.toBe(dueIdFor('alice', 'req-1234'));
   });
 });

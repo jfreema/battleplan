@@ -86,6 +86,7 @@ class FirestoreDuesRepository implements DuesRepository {
     required String? dueOn,
     required String note,
     required List<DuePayer> payers,
+    String? requestId,
   }) => _call('saveDue', {
     'groupId': groupId.value,
     'title': _clip(title, Limits.dueTitleMax),
@@ -93,6 +94,7 @@ class FirestoreDuesRepository implements DuesRepository {
     'dueOn': dueOn,
     'note': _clip(note, Limits.dueNoteMax),
     'participantIds': [for (final p in payers) p.id],
+    'requestId': ?requestId,
   });
 
   @override
@@ -102,6 +104,7 @@ class FirestoreDuesRepository implements DuesRepository {
     required int amountCents,
     required String? dueOn,
     required String note,
+    List<DuePayer> add = const [],
   }) => _call('saveDue', {
     'groupId': due.groupId.value,
     'dueId': due.id,
@@ -109,6 +112,7 @@ class FirestoreDuesRepository implements DuesRepository {
     'amountCents': amountCents,
     'dueOn': dueOn,
     'note': _clip(note, Limits.dueNoteMax),
+    if (add.isNotEmpty) 'participantIds': [for (final p in add) p.id],
   });
 
   @override
@@ -252,6 +256,7 @@ DueCharge dueChargeFromFirestore(String id, Map<String, dynamic> x) =>
       title: x['title'] as String? ?? '',
       amountCents: (x['amountCents'] as num?)?.toInt() ?? 0,
       dueOn: x['dueOn'] as String?,
+      note: x['note'] as String? ?? '',
       participantType:
           ParticipantType.tryParse(x['participantType'] as String?) ??
           ParticipantType.member,
@@ -268,4 +273,5 @@ DuesPayments duesPaymentsFromFirestore(Map<String, dynamic>? x) => DuesPayments(
   cashApp: x?['cashApp'] as String? ?? '',
   appleCash: x?['appleCash'] as String? ?? '',
   note: x?['note'] as String? ?? '',
+  updatedBy: x?['updatedBy'] as String? ?? '',
 );

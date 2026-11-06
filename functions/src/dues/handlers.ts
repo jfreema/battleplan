@@ -6,8 +6,10 @@ import { createDue, DeleteDueInput, deleteDueAndCharges, dueTerms, editDue, Save
 
 /**
  * Adds a due with a charge for each person on it, or, with a dueId, edits
- * one and copies its terms to every charge (DUES-1, DUES-2): team admins
- * and super admins, on a team that isn't archived. Returns the due's ID.
+ * one, copies its terms to every charge, and adds a charge for each of
+ * participantIds not on it yet (DUES-1, DUES-2): team admins and super
+ * admins, on a team that isn't archived. With a requestId, a retried add
+ * gets back the due it made (TEAM-1's pattern). Returns the due's ID.
  */
 export const saveDue = onCall(async (request) => {
   const uid = requireAuth(request);
@@ -15,10 +17,10 @@ export const saveDue = onCall(async (request) => {
   const actor = { uid, superAdmin: request.auth?.token.superAdmin === true };
   const terms = dueTerms(input);
   if (input.dueId) {
-    await editDue(input.groupId, input.dueId, terms, actor);
+    await editDue(input.groupId, input.dueId, terms, actor, input.participantIds ?? []);
     return { dueId: input.dueId };
   }
-  return { dueId: await createDue(input.groupId, terms, input.participantIds ?? [], actor) };
+  return { dueId: await createDue(input.groupId, terms, input.participantIds ?? [], actor, input.requestId) };
 });
 
 /** Deletes a due and all its charges (DUES-1): team admins and super admins. */

@@ -46,6 +46,7 @@ void main() {
       dueOn: '2026-11-30',
       note: 'Cash is fine too',
       payers: const [emma, liam],
+      requestId: 'req-12345678',
     );
     expect(fns.lastData('saveDue'), {
       'groupId': 'a',
@@ -54,6 +55,7 @@ void main() {
       'dueOn': '2026-11-30',
       'note': 'Cash is fine too',
       'participantIds': ['emma', 'liam'],
+      'requestId': 'req-12345678',
     });
     const due = Due(
       id: 'd1',
@@ -76,6 +78,16 @@ void main() {
       'dueOn': null,
       'note': '',
     });
+    // Adding people to it sends only them.
+    await repo.edit(
+      due,
+      title: 'Uniforms',
+      amountCents: 5000,
+      dueOn: null,
+      note: '',
+      add: const [liam],
+    );
+    expect(fns.lastData('saveDue'), containsPair('participantIds', ['liam']));
     await repo.remove(due);
     expect(fns.lastData('deleteDue'), {'dueId': 'd1'});
     // Nothing written from the app: the server writes the due and charges.
@@ -220,6 +232,8 @@ void main() {
     expect(p.cashApp, '');
     final doc = await db.doc('duesPayments/a').get();
     expect(doc.data(), containsPair('updatedBy', 'coach'));
+    // Everyone sees who saved it last.
+    expect(p.updatedBy, 'coach');
   });
 
   test('reads unknown values safely', () {
@@ -228,5 +242,10 @@ void main() {
     expect(c.participantType, ParticipantType.member);
     expect(dueFromFirestore('d', const {}).title, '');
     expect(duesPaymentsFromFirestore(null).isEmpty, isTrue);
+    expect(dueChargeFromFirestore('x', const {}).note, '');
+    expect(
+      dueChargeFromFirestore('x', const {'note': 'Jersey and hat.'}).note,
+      'Jersey and hat.',
+    );
   });
 }

@@ -1,8 +1,9 @@
 // Accounts (SPEC §6.1): the contact email following a verified change
 // (AUTH-8, AUTH-12), security notices (AUTH-7), the sign-in choice for
 // added accounts (AUTH-6), signing out everywhere at once (AUTH-9), the
-// owner's pick of a new owner (AUTH-10), and verified email for adding
-// guardians by email (AUTH-3). Runs against the Auth, Firestore, and
+// owner's pick of a new owner (AUTH-10), what deleting an account does to
+// dues (AUTH-10, DUES-2), and verified email for adding guardians by email
+// (AUTH-3). Runs against the Auth, Firestore, and
 // Storage emulators with email faked:
 //   npm --prefix functions run emulators:test
 import { Timestamp } from 'firebase-admin/firestore';
@@ -239,6 +240,35 @@ describe("deleting an account takes its player links, claims, and unapproved pla
     expect(await exists(Collections.playerGuardians, 'kept_max')).toBe(false);
     expect(await exists(Collections.guardianRequests, 'others_max')).toBe(false);
     expect(await exists(Collections.playerGuardians, 'kept_pat')).toBe(true);
+  });
+});
+
+describe('deleting an account and dues (AUTH-10, DUES-2)', () => {
+  it("renames their own shares, keeps what was paid, and removes how to pay they saved", async () => {
+    await person('pat');
+    await db().collection(Collections.groups).doc('club').set({ name: 'Club', kind: 'group', ownerId: 'ana', memberCount: 2, archivedAt: null });
+    await db().collection(Collections.groups).doc('cubs').set({ name: 'Cubs', kind: 'team', ownerId: 'ana', memberCount: 2, archivedAt: null });
+    await member('club', 'ana', 'owner', 30);
+    await member('club', 'pat', 'admin', 10);
+    await member('cubs', 'ana', 'owner', 30);
+    await member('cubs', 'pat', 'admin', 10);
+    const charges = db().collection(Collections.dueCharges);
+    const share = { groupId: 'club', dueId: 'd1', title: 'Lanes', amountCents: 1200, dueOn: null, updatedBy: 'ana' };
+    await charges.doc('d1_pat').set({ ...share, participantType: 'member', participantId: 'pat', participantName: 'Pat Doe', status: 'paid' });
+    await charges.doc('d1_ana').set({ ...share, participantType: 'member', participantId: 'ana', participantName: 'Ana', status: 'owed' });
+    await charges.doc('d2_emma').set({ ...share, groupId: 'cubs', dueId: 'd2', participantType: 'player', participantId: 'emma', participantName: 'Emma #7', status: 'owed' });
+    const payments = db().collection(Collections.duesPayments);
+    await payments.doc('club').set({ groupId: 'club', venmo: '@pat-doe', appleCash: '555-0100', updatedBy: 'pat' });
+    await payments.doc('cubs').set({ groupId: 'cubs', venmo: '@cubs', updatedBy: 'ana' });
+
+    await deleteAccount('pat', {});
+
+    const mine = (await charges.doc('d1_pat').get()).data()!;
+    expect(mine).toMatchObject({ participantName: 'Deleted user', status: 'paid', amountCents: 1200, participantId: 'pat' });
+    expect((await charges.doc('d1_ana').get()).get('participantName')).toBe('Ana');
+    expect((await charges.doc('d2_emma').get()).get('participantName')).toBe('Emma #7');
+    expect((await payments.doc('club').get()).exists).toBe(false);
+    expect((await payments.doc('cubs').get()).get('venmo')).toBe('@cubs');
   });
 });
 

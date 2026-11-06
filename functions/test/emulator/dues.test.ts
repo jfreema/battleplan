@@ -1,16 +1,18 @@
 // Dues on the server (SPEC DUES-1 to DUES-3): the saveDue and deleteDue
 // callables create, edit, and delete a due with all its charges in one
-// batch, for team admins and super admins only; and Functions delete dues
-// with their team (TEAM-9). Runs against the Firestore and Storage
-// emulators:
+// batch, for team admins and super admins only, and add people to a due;
+// the names on charges follow renames; and Functions delete dues with
+// their team (TEAM-9). Runs against the Firestore and Storage emulators:
 //   npm --prefix functions run emulators:test
 import { HttpsError } from 'firebase-functions/v2/https';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { deleteDue, saveDue } from '../../src/dues/handlers.js';
+import { createDue, dueTerms } from '../../src/dues/service.js';
+import { followUpPlayerUpdate } from '../../src/players/service.js';
 import { db } from '../../src/shared/admin.js';
 import { Collections, Limits } from '../../src/shared/constants.js';
 import { groupMemberId } from '../../src/shared/ids.js';
-import { deleteGroupData } from '../../src/teams/service.js';
+import { deleteGroupData, updateMemberSnapshots } from '../../src/teams/service.js';
 
 const project = () => process.env.GCLOUD_PROJECT ?? 'demo-battleplan';
 const G = 'teamA';
@@ -93,7 +95,29 @@ describe('saveDue creates a due with its charges (DUES-1)', () => {
     expect(first).toMatchObject({
       groupId: G, dueId, title: 'Uniform fee', amountCents: 4500, participantType: 'player',
       participantId: ids[0], participantName: 'Kid #7', status: 'owed', paidAt: null, updatedBy: 'carol',
+      // The note reaches everyone who owes it (DUES-2).
+      note: 'Cash is fine',
     });
+  });
+
+  it('a retry of the same add gets back the due it made, never a second one', async () => {
+    const participantIds = players(3).map((p) => p.id);
+    const add = { ...terms, participantIds, requestId: 'req-12345678' };
+    const { dueId } = await save('carol', add);
+    // The reply was lost, and the app tries again.
+    expect((await save('carol', add)).dueId).toBe(dueId);
+    expect((await db().collection(Collections.dues).get()).size).toBe(1);
+    expect(await charges(dueId)).toHaveLength(3);
+    // Two copies at the same moment: one makes it, the other gets it back.
+    const both = await Promise.all([
+      createDue(G, dueTerms(terms), participantIds, { uid: 'carol', superAdmin: false }, 'req-same-time'),
+      createDue(G, dueTerms(terms), participantIds, { uid: 'carol', superAdmin: false }, 'req-same-time'),
+    ]);
+    expect(both[0]).toBe(both[1]);
+    // Another attempt, or someone else's with the same ID, is a new due.
+    expect((await save('carol', { ...add, requestId: 'req-87654321' })).dueId).not.toBe(dueId);
+    expect((await save('alice', add)).dueId).not.toBe(dueId);
+    expect((await db().collection(Collections.dues).get()).size).toBe(4);
   });
 
   it('charges up to duesChargesMax, and no more', async () => {
@@ -178,7 +202,7 @@ describe('saveDue edits a due and every charge (DUES-1)', () => {
     expect(due).toMatchObject({ title: 'Jerseys', amountCents: 5000, dueOn: null, note: '', createdBy: 'carol' });
     const list = await charges(dueId);
     expect(list).toHaveLength(40);
-    expect(list.every((d) => d.get('title') === 'Jerseys' && d.get('amountCents') === 5000 && d.get('dueOn') === null)).toBe(true);
+    expect(list.every((d) => d.get('title') === 'Jerseys' && d.get('amountCents') === 5000 && d.get('dueOn') === null && d.get('note') === '')).toBe(true);
     expect(list.find((d) => d.id === `${dueId}_${ids[5]}`)!.get('status')).toBe('paid');
     expect((await charges(other)).every((d) => d.get('title') === 'Other')).toBe(true);
   });
@@ -190,6 +214,82 @@ describe('saveDue edits a due and every charge (DUES-1)', () => {
     expect(await refusal(save('gina', { ...edit, groupId: 'teamB' }))).toBe('not-found');
     expect(await refusal(save('carol', { ...edit, dueId: 'nope' }))).toBe('not-found');
     expect((await charges(dueId)).every((d) => d.get('title') === 'Uniform fee')).toBe(true);
+  });
+});
+
+describe('saveDue adds people to a due (DUES-1)', () => {
+  it('a player who joins later gets an owed share with the new terms; nobody is taken off', async () => {
+    const ids = players(5).map((p) => p.id);
+    const { dueId } = await save('carol', { ...terms, participantIds: ids.slice(0, 3) });
+    await db().collection(Collections.dueCharges).doc(`${dueId}_${ids[0]}`).update({ status: 'paid', paidAt: new Date() });
+    await save('alice', {
+      groupId: G, dueId, title: 'Uniforms', amountCents: 5000, dueOn: null, note: 'Hat too',
+      // ids[0] is already on it, and stays paid.
+      participantIds: [ids[0], ids[3], ids[4], ids[4]],
+    });
+    const list = await charges(dueId);
+    expect(list).toHaveLength(5);
+    const added = list.find((d) => d.id === `${dueId}_${ids[3]}`)!.data();
+    expect(added).toMatchObject({
+      participantType: 'player', participantName: 'Kid #7', status: 'owed', paidAt: null,
+      title: 'Uniforms', amountCents: 5000, dueOn: null, note: 'Hat too', updatedBy: 'alice',
+    });
+    expect(list.find((d) => d.id === `${dueId}_${ids[0]}`)!.get('status')).toBe('paid');
+    // Editing without anyone to add leaves who's on it alone.
+    await save('alice', { groupId: G, dueId, title: 'Uniforms', amountCents: 5000, dueOn: null, note: '' });
+    expect(await charges(dueId)).toHaveLength(5);
+  });
+
+  it('refuses someone not on the team, a pending player, past the cap, and members', async () => {
+    const ids = players(Limits.duesChargesMax + 1).map((p) => p.id);
+    const { dueId } = await save('carol', { ...terms, participantIds: ids.slice(0, Limits.duesChargesMax - 1) });
+    const edit = { groupId: G, dueId, title: 'Fee', amountCents: 100, dueOn: null, note: '' };
+    for (const participantIds of [[players(1, 'teamB')[0].id], ['newbie'], ['bob'], ids.slice(Limits.duesChargesMax - 1)]) {
+      expect(await refusal(save('carol', { ...edit, participantIds }))).toBe('invalid-argument');
+    }
+    expect(await refusal(save('bob', { ...edit, participantIds: [ids[Limits.duesChargesMax - 1]] }))).toBe('permission-denied');
+    // Nothing changed: not the terms, and nobody added.
+    const list = await charges(dueId);
+    expect(list).toHaveLength(Limits.duesChargesMax - 1);
+    expect(list.every((d) => d.get('title') === 'Uniform fee')).toBe(true);
+    // One more fits.
+    await save('carol', { ...edit, participantIds: [ids[Limits.duesChargesMax - 1]] });
+    expect(await charges(dueId)).toHaveLength(Limits.duesChargesMax);
+  });
+
+  it('in a basic group, adds members who have joined', async () => {
+    const { dueId } = await save('hana', { ...terms, groupId: 'clubC', participantIds: ['hana'] });
+    const edit = { groupId: 'clubC', dueId, title: 'Snacks', amountCents: 500, dueOn: null, note: '' };
+    expect(await refusal(save('hana', { ...edit, participantIds: ['jo'] }))).toBe('invalid-argument');
+    await save('hana', { ...edit, participantIds: ['ivan'] });
+    expect((await charges(dueId)).map((d) => [d.get('participantType'), d.get('participantName')]).sort()).toEqual([
+      ['member', 'Hana'], ['member', 'Ivan'],
+    ]);
+  });
+});
+
+describe('the names on charges follow renames (DUES-2)', () => {
+  it("a player's new name or number, on every due, paid ones too", async () => {
+    const [id] = players(1).map((p) => p.id);
+    const { dueId } = await save('carol', { ...terms, participantIds: [id] });
+    const { dueId: other } = await save('carol', { ...terms, title: 'Photos', participantIds: [id] });
+    await db().collection(Collections.dueCharges).doc(`${other}_${id}`).update({ status: 'paid' });
+    const before = { groupId: G, displayName: `Kid ${id}`, jerseyNumber: '7', status: 'active' };
+    await followUpPlayerUpdate(id, before, { ...before, jerseyNumber: '12' });
+    for (const d of [dueId, other]) {
+      expect((await db().collection(Collections.dueCharges).doc(`${d}_${id}`).get()).get('participantName')).toBe('Kid #12');
+    }
+    await followUpPlayerUpdate(id, { ...before, jerseyNumber: '12' }, { ...before, displayName: 'Emma Stone', jerseyNumber: '12' });
+    expect((await db().collection(Collections.dueCharges).doc(`${dueId}_${id}`).get()).get('participantName')).toBe('Emma #12');
+  });
+
+  it("a member's new name, on their own shares", async () => {
+    const { dueId } = await save('hana', { ...terms, groupId: 'clubC', participantIds: ['hana', 'ivan'] });
+    await updateMemberSnapshots('ivan', 'Ivan Petrov', null, null);
+    const list = await charges(dueId);
+    expect(Object.fromEntries(list.map((d) => [d.get('participantId'), d.get('participantName')]))).toEqual({
+      hana: 'Hana', ivan: 'Ivan Petrov',
+    });
   });
 });
 

@@ -1385,9 +1385,15 @@ class FakePlayerRepository implements PlayerRepository {
   final List<List<NewPlayer>> added = [];
 
   @override
-  Stream<List<Player>> watchPlayers(GroupId groupId) => Stream.value(
-    players.where((p) => p.groupId == groupId && !p.isPending).toList(),
-  );
+  Stream<List<Player>> watchPlayers(GroupId groupId) =>
+      playersStream ??
+      Stream.value(
+        players.where((p) => p.groupId == groupId && !p.isPending).toList(),
+      );
+
+  /// Set to answer the roster's players from this instead, to hold them
+  /// loading or make them fail.
+  Stream<List<Player>>? playersStream;
 
   @override
   Stream<List<Player>> watchPendingPlayers(GroupId groupId) => Stream.value(
@@ -3976,6 +3982,12 @@ class FakeDuesRepository implements DuesRepository {
   DuesPayments payments = const DuesPayments();
   final List<String> calls = [];
 
+  /// Each create's requestId, in order.
+  final List<String?> requestIds = [];
+
+  /// Set to hold how to pay loading, or to make it fail, until it emits.
+  Stream<DuesPayments>? paymentsStream;
+
   /// Set to refuse writes, as the rules or the callables would.
   AppFailure? failWrites;
 
@@ -4025,7 +4037,8 @@ class FakeDuesRepository implements DuesRepository {
       );
 
   @override
-  Stream<DuesPayments> watchPayments(GroupId groupId) => _live(() => payments);
+  Stream<DuesPayments> watchPayments(GroupId groupId) =>
+      paymentsStream ?? _live(() => payments);
 
   void _check() {
     final f = failWrites;
@@ -4040,7 +4053,10 @@ class FakeDuesRepository implements DuesRepository {
     required String? dueOn,
     required String note,
     required List<DuePayer> payers,
+    String? requestId,
   }) async {
+    // Every try, the ones that fail too.
+    requestIds.add(requestId);
     _check();
     final id = 'd${_next++}';
     calls.add('create $title $amountCents ${payers.length}');
@@ -4064,6 +4080,7 @@ class FakeDuesRepository implements DuesRepository {
           title: title.trim(),
           amountCents: amountCents,
           dueOn: dueOn,
+          note: note.trim(),
           participantType: p.type,
           participantId: p.id,
           participantName: p.name,
@@ -4080,9 +4097,13 @@ class FakeDuesRepository implements DuesRepository {
     required int amountCents,
     required String? dueOn,
     required String note,
+    List<DuePayer> add = const [],
   }) async {
     _check();
-    calls.add('edit ${due.id} $title $amountCents');
+    calls.add(
+      'edit ${due.id} $title $amountCents'
+      '${add.isEmpty ? '' : ' +${[for (final p in add) p.id].join(',')}'}',
+    );
     final i = dues.indexWhere((d) => d.id == due.id);
     dues[i] = due.copyWith(
       title: title.trim(),
@@ -4097,8 +4118,28 @@ class FakeDuesRepository implements DuesRepository {
           title: title.trim(),
           amountCents: amountCents,
           dueOn: dueOn,
+          note: note.trim(),
         );
       }
+    }
+    for (final p in add) {
+      if (charges.any((c) => c.dueId == due.id && c.participantId == p.id)) {
+        continue;
+      }
+      charges.add(
+        DueCharge(
+          id: '${due.id}_${p.id}',
+          groupId: due.groupId,
+          dueId: due.id,
+          title: title.trim(),
+          amountCents: amountCents,
+          dueOn: dueOn,
+          note: note.trim(),
+          participantType: p.type,
+          participantId: p.id,
+          participantName: p.name,
+        ),
+      );
     }
     _changed();
   }
@@ -4136,7 +4177,7 @@ class FakeDuesRepository implements DuesRepository {
   }) async {
     _check();
     calls.add('payments');
-    this.payments = payments;
+    this.payments = payments.copyWith(updatedBy: by.value);
     _changed();
   }
 }

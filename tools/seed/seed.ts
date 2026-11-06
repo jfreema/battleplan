@@ -751,6 +751,8 @@ async function main() {
         groupId: d.groupId,
         dueId: d.id,
         ...terms,
+        // The note reaches everyone who owes it (DUES-2).
+        note: d.note,
         participantType: 'player',
         participantId,
         participantName: label(participantId),

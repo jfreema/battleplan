@@ -24,7 +24,8 @@ abstract interface class DuesRepository {
 
   /// Adds a due and a charge for each of [payers] (up to
   /// [Limits.duesChargesMax]), on the server. The server names each payer
-  /// from the roster.
+  /// from the roster. [requestId] ([newRequestId], one per New due) makes
+  /// trying again after a lost reply safe: it never adds a second due.
   Future<void> create(
     GroupId groupId, {
     required String title,
@@ -32,16 +33,19 @@ abstract interface class DuesRepository {
     required String? dueOn,
     required String note,
     required List<DuePayer> payers,
+    String? requestId,
   });
 
-  /// Changes a due, and the server copies its title, amount and date to
-  /// every one of its charges.
+  /// Changes a due, and the server copies its title, amount, date and note
+  /// to every one of its charges, and adds an owed charge for each of [add]
+  /// not on it yet (a player who joined later). Nobody is taken off.
   Future<void> edit(
     Due due, {
     required String title,
     required int amountCents,
     required String? dueOn,
     required String note,
+    List<DuePayer> add = const [],
   });
 
   /// Removes a due and all its charges, on the server.
@@ -54,7 +58,7 @@ abstract interface class DuesRepository {
     required UserId by,
   });
 
-  /// Saves how to pay the team.
+  /// Saves how to pay the team, in [by]'s name.
   Future<void> savePayments(
     GroupId groupId,
     DuesPayments payments, {

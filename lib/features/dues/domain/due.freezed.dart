@@ -304,7 +304,8 @@ as DateTime?,
 /// @nodoc
 mixin _$DueCharge {
 
- String get id; GroupId get groupId; String get dueId; String get title; int get amountCents; ParticipantType get participantType; String get participantId; String get participantName; String? get dueOn; DueStatus get status; DateTime? get paidAt; DateTime? get updatedAt;
+ String get id; GroupId get groupId; String get dueId; String get title; int get amountCents; ParticipantType get participantType; String get participantId; String get participantName; String? get dueOn;/// The due's note, for everyone who owes it (DUES-2).
+ String get note; DueStatus get status; DateTime? get paidAt; DateTime? get updatedAt;
 /// Create a copy of DueCharge
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -316,20 +317,20 @@ $DueChargeCopyWith<DueCharge> get copyWith => _$DueChargeCopyWithImpl<DueCharge>
 @override
 bool operator ==(Object other) {
   final _this = this as DueCharge;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DueCharge&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.dueId, _this.dueId) || other.dueId == _this.dueId)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.amountCents, _this.amountCents) || other.amountCents == _this.amountCents)&&(identical(other.participantType, _this.participantType) || other.participantType == _this.participantType)&&(identical(other.participantId, _this.participantId) || other.participantId == _this.participantId)&&(identical(other.participantName, _this.participantName) || other.participantName == _this.participantName)&&(identical(other.dueOn, _this.dueOn) || other.dueOn == _this.dueOn)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.paidAt, _this.paidAt) || other.paidAt == _this.paidAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DueCharge&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.dueId, _this.dueId) || other.dueId == _this.dueId)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.amountCents, _this.amountCents) || other.amountCents == _this.amountCents)&&(identical(other.participantType, _this.participantType) || other.participantType == _this.participantType)&&(identical(other.participantId, _this.participantId) || other.participantId == _this.participantId)&&(identical(other.participantName, _this.participantName) || other.participantName == _this.participantName)&&(identical(other.dueOn, _this.dueOn) || other.dueOn == _this.dueOn)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.paidAt, _this.paidAt) || other.paidAt == _this.paidAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
 }
 
 
 @override
 int get hashCode {
   final _this = this as DueCharge;
-  return Object.hash(runtimeType,_this.id,_this.groupId,_this.dueId,_this.title,_this.amountCents,_this.participantType,_this.participantId,_this.participantName,_this.dueOn,_this.status,_this.paidAt,_this.updatedAt);
+  return Object.hash(runtimeType,_this.id,_this.groupId,_this.dueId,_this.title,_this.amountCents,_this.participantType,_this.participantId,_this.participantName,_this.dueOn,_this.note,_this.status,_this.paidAt,_this.updatedAt);
 }
 
 @override
 String toString() {
   final _this = this as DueCharge;
-  return 'DueCharge(id: ${_this.id}, groupId: ${_this.groupId}, dueId: ${_this.dueId}, title: ${_this.title}, amountCents: ${_this.amountCents}, participantType: ${_this.participantType}, participantId: ${_this.participantId}, participantName: ${_this.participantName}, dueOn: ${_this.dueOn}, status: ${_this.status}, paidAt: ${_this.paidAt}, updatedAt: ${_this.updatedAt})';
+  return 'DueCharge(id: ${_this.id}, groupId: ${_this.groupId}, dueId: ${_this.dueId}, title: ${_this.title}, amountCents: ${_this.amountCents}, participantType: ${_this.participantType}, participantId: ${_this.participantId}, participantName: ${_this.participantName}, dueOn: ${_this.dueOn}, note: ${_this.note}, status: ${_this.status}, paidAt: ${_this.paidAt}, updatedAt: ${_this.updatedAt})';
 }
 
 
@@ -340,7 +341,7 @@ abstract mixin class $DueChargeCopyWith<$Res>  {
   factory $DueChargeCopyWith(DueCharge value, $Res Function(DueCharge) _then) = _$DueChargeCopyWithImpl;
 @useResult
 $Res call({
- String id, GroupId groupId, String dueId, String title, int amountCents, ParticipantType participantType, String participantId, String participantName, String? dueOn, DueStatus status, DateTime? paidAt, DateTime? updatedAt
+ String id, GroupId groupId, String dueId, String title, int amountCents, ParticipantType participantType, String participantId, String participantName, String? dueOn, String note, DueStatus status, DateTime? paidAt, DateTime? updatedAt
 });
 
 
@@ -357,7 +358,7 @@ class _$DueChargeCopyWithImpl<$Res>
 
 /// Create a copy of DueCharge
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? dueId = null,Object? title = null,Object? amountCents = null,Object? participantType = null,Object? participantId = null,Object? participantName = null,Object? dueOn = freezed,Object? status = null,Object? paidAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? dueId = null,Object? title = null,Object? amountCents = null,Object? participantType = null,Object? participantId = null,Object? participantName = null,Object? dueOn = freezed,Object? note = null,Object? status = null,Object? paidAt = freezed,Object? updatedAt = freezed,}) {
   return _then(DueCharge(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -368,7 +369,8 @@ as int,participantType: null == participantType ? _self.participantType : partic
 as ParticipantType,participantId: null == participantId ? _self.participantId : participantId // ignore: cast_nullable_to_non_nullable
 as String,participantName: null == participantName ? _self.participantName : participantName // ignore: cast_nullable_to_non_nullable
 as String,dueOn: freezed == dueOn ? _self.dueOn : dueOn // ignore: cast_nullable_to_non_nullable
-as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String?,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as DueStatus,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -456,10 +458,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  String note,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DueCharge() when $default != null:
-return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.status,_that.paidAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.note,_that.status,_that.paidAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -477,10 +479,10 @@ return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  String note,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _DueCharge():
-return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.status,_that.paidAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.note,_that.status,_that.paidAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -497,10 +499,10 @@ return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  String note,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _DueCharge() when $default != null:
-return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.status,_that.paidAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.note,_that.status,_that.paidAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -512,7 +514,7 @@ return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents
 
 
 class _DueCharge extends DueCharge {
-  const _DueCharge({required this.id, required this.groupId, required this.dueId, required this.title, required this.amountCents, required this.participantType, required this.participantId, required this.participantName, this.dueOn, this.status = DueStatus.owed, this.paidAt, this.updatedAt}): super._();
+  const _DueCharge({required this.id, required this.groupId, required this.dueId, required this.title, required this.amountCents, required this.participantType, required this.participantId, required this.participantName, this.dueOn, this.note = '', this.status = DueStatus.owed, this.paidAt, this.updatedAt}): super._();
   
 
 @override final  String id;
@@ -524,6 +526,8 @@ class _DueCharge extends DueCharge {
 @override final  String participantId;
 @override final  String participantName;
 @override final  String? dueOn;
+/// The due's note, for everyone who owes it (DUES-2).
+@override@JsonKey() final  String note;
 @override@JsonKey() final  DueStatus status;
 @override final  DateTime? paidAt;
 @override final  DateTime? updatedAt;
@@ -538,18 +542,18 @@ _$DueChargeCopyWith<_DueCharge> get copyWith => __$DueChargeCopyWithImpl<_DueCha
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DueCharge&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.dueId, dueId) || other.dueId == dueId)&&(identical(other.title, title) || other.title == title)&&(identical(other.amountCents, amountCents) || other.amountCents == amountCents)&&(identical(other.participantType, participantType) || other.participantType == participantType)&&(identical(other.participantId, participantId) || other.participantId == participantId)&&(identical(other.participantName, participantName) || other.participantName == participantName)&&(identical(other.dueOn, dueOn) || other.dueOn == dueOn)&&(identical(other.status, status) || other.status == status)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DueCharge&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.dueId, dueId) || other.dueId == dueId)&&(identical(other.title, title) || other.title == title)&&(identical(other.amountCents, amountCents) || other.amountCents == amountCents)&&(identical(other.participantType, participantType) || other.participantType == participantType)&&(identical(other.participantId, participantId) || other.participantId == participantId)&&(identical(other.participantName, participantName) || other.participantName == participantName)&&(identical(other.dueOn, dueOn) || other.dueOn == dueOn)&&(identical(other.note, note) || other.note == note)&&(identical(other.status, status) || other.status == status)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,groupId,dueId,title,amountCents,participantType,participantId,participantName,dueOn,status,paidAt,updatedAt);
+    return Object.hash(runtimeType,id,groupId,dueId,title,amountCents,participantType,participantId,participantName,dueOn,note,status,paidAt,updatedAt);
 }
 
 @override
 String toString() {
-    return 'DueCharge(id: $id, groupId: $groupId, dueId: $dueId, title: $title, amountCents: $amountCents, participantType: $participantType, participantId: $participantId, participantName: $participantName, dueOn: $dueOn, status: $status, paidAt: $paidAt, updatedAt: $updatedAt)';
+    return 'DueCharge(id: $id, groupId: $groupId, dueId: $dueId, title: $title, amountCents: $amountCents, participantType: $participantType, participantId: $participantId, participantName: $participantName, dueOn: $dueOn, note: $note, status: $status, paidAt: $paidAt, updatedAt: $updatedAt)';
 }
 
 
@@ -560,7 +564,7 @@ abstract mixin class _$DueChargeCopyWith<$Res> implements $DueChargeCopyWith<$Re
   factory _$DueChargeCopyWith(_DueCharge value, $Res Function(_DueCharge) _then) = __$DueChargeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, GroupId groupId, String dueId, String title, int amountCents, ParticipantType participantType, String participantId, String participantName, String? dueOn, DueStatus status, DateTime? paidAt, DateTime? updatedAt
+ String id, GroupId groupId, String dueId, String title, int amountCents, ParticipantType participantType, String participantId, String participantName, String? dueOn, String note, DueStatus status, DateTime? paidAt, DateTime? updatedAt
 });
 
 
@@ -577,7 +581,7 @@ class __$DueChargeCopyWithImpl<$Res>
 
 /// Create a copy of DueCharge
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? dueId = null,Object? title = null,Object? amountCents = null,Object? participantType = null,Object? participantId = null,Object? participantName = null,Object? dueOn = freezed,Object? status = null,Object? paidAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? dueId = null,Object? title = null,Object? amountCents = null,Object? participantType = null,Object? participantId = null,Object? participantName = null,Object? dueOn = freezed,Object? note = null,Object? status = null,Object? paidAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_DueCharge(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -588,7 +592,8 @@ as int,participantType: null == participantType ? _self.participantType : partic
 as ParticipantType,participantId: null == participantId ? _self.participantId : participantId // ignore: cast_nullable_to_non_nullable
 as String,participantName: null == participantName ? _self.participantName : participantName // ignore: cast_nullable_to_non_nullable
 as String,dueOn: freezed == dueOn ? _self.dueOn : dueOn // ignore: cast_nullable_to_non_nullable
-as String?,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String?,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as DueStatus,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
@@ -601,7 +606,8 @@ as DateTime?,
 /// @nodoc
 mixin _$DuesPayments {
 
- String get venmo; String get cashApp; String get appleCash; String get note;
+ String get venmo; String get cashApp; String get appleCash; String get note;/// Who saved it last, which everyone sees ("Updated by Coach Lee").
+ String get updatedBy;
 /// Create a copy of DuesPayments
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -613,20 +619,20 @@ $DuesPaymentsCopyWith<DuesPayments> get copyWith => _$DuesPaymentsCopyWithImpl<D
 @override
 bool operator ==(Object other) {
   final _this = this as DuesPayments;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DuesPayments&&(identical(other.venmo, _this.venmo) || other.venmo == _this.venmo)&&(identical(other.cashApp, _this.cashApp) || other.cashApp == _this.cashApp)&&(identical(other.appleCash, _this.appleCash) || other.appleCash == _this.appleCash)&&(identical(other.note, _this.note) || other.note == _this.note));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DuesPayments&&(identical(other.venmo, _this.venmo) || other.venmo == _this.venmo)&&(identical(other.cashApp, _this.cashApp) || other.cashApp == _this.cashApp)&&(identical(other.appleCash, _this.appleCash) || other.appleCash == _this.appleCash)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.updatedBy, _this.updatedBy) || other.updatedBy == _this.updatedBy));
 }
 
 
 @override
 int get hashCode {
   final _this = this as DuesPayments;
-  return Object.hash(runtimeType,_this.venmo,_this.cashApp,_this.appleCash,_this.note);
+  return Object.hash(runtimeType,_this.venmo,_this.cashApp,_this.appleCash,_this.note,_this.updatedBy);
 }
 
 @override
 String toString() {
   final _this = this as DuesPayments;
-  return 'DuesPayments(venmo: ${_this.venmo}, cashApp: ${_this.cashApp}, appleCash: ${_this.appleCash}, note: ${_this.note})';
+  return 'DuesPayments(venmo: ${_this.venmo}, cashApp: ${_this.cashApp}, appleCash: ${_this.appleCash}, note: ${_this.note}, updatedBy: ${_this.updatedBy})';
 }
 
 
@@ -637,7 +643,7 @@ abstract mixin class $DuesPaymentsCopyWith<$Res>  {
   factory $DuesPaymentsCopyWith(DuesPayments value, $Res Function(DuesPayments) _then) = _$DuesPaymentsCopyWithImpl;
 @useResult
 $Res call({
- String venmo, String cashApp, String appleCash, String note
+ String venmo, String cashApp, String appleCash, String note, String updatedBy
 });
 
 
@@ -654,12 +660,13 @@ class _$DuesPaymentsCopyWithImpl<$Res>
 
 /// Create a copy of DuesPayments
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? venmo = null,Object? cashApp = null,Object? appleCash = null,Object? note = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? venmo = null,Object? cashApp = null,Object? appleCash = null,Object? note = null,Object? updatedBy = null,}) {
   return _then(DuesPayments(
 venmo: null == venmo ? _self.venmo : venmo // ignore: cast_nullable_to_non_nullable
 as String,cashApp: null == cashApp ? _self.cashApp : cashApp // ignore: cast_nullable_to_non_nullable
 as String,appleCash: null == appleCash ? _self.appleCash : appleCash // ignore: cast_nullable_to_non_nullable
 as String,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String,updatedBy: null == updatedBy ? _self.updatedBy : updatedBy // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -745,10 +752,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String venmo,  String cashApp,  String appleCash,  String note)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String venmo,  String cashApp,  String appleCash,  String note,  String updatedBy)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DuesPayments() when $default != null:
-return $default(_that.venmo,_that.cashApp,_that.appleCash,_that.note);case _:
+return $default(_that.venmo,_that.cashApp,_that.appleCash,_that.note,_that.updatedBy);case _:
   return orElse();
 
 }
@@ -766,10 +773,10 @@ return $default(_that.venmo,_that.cashApp,_that.appleCash,_that.note);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String venmo,  String cashApp,  String appleCash,  String note)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String venmo,  String cashApp,  String appleCash,  String note,  String updatedBy)  $default,) {final _that = this;
 switch (_that) {
 case _DuesPayments():
-return $default(_that.venmo,_that.cashApp,_that.appleCash,_that.note);case _:
+return $default(_that.venmo,_that.cashApp,_that.appleCash,_that.note,_that.updatedBy);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -786,10 +793,10 @@ return $default(_that.venmo,_that.cashApp,_that.appleCash,_that.note);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String venmo,  String cashApp,  String appleCash,  String note)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String venmo,  String cashApp,  String appleCash,  String note,  String updatedBy)?  $default,) {final _that = this;
 switch (_that) {
 case _DuesPayments() when $default != null:
-return $default(_that.venmo,_that.cashApp,_that.appleCash,_that.note);case _:
+return $default(_that.venmo,_that.cashApp,_that.appleCash,_that.note,_that.updatedBy);case _:
   return null;
 
 }
@@ -801,13 +808,15 @@ return $default(_that.venmo,_that.cashApp,_that.appleCash,_that.note);case _:
 
 
 class _DuesPayments extends DuesPayments {
-  const _DuesPayments({this.venmo = '', this.cashApp = '', this.appleCash = '', this.note = ''}): super._();
+  const _DuesPayments({this.venmo = '', this.cashApp = '', this.appleCash = '', this.note = '', this.updatedBy = ''}): super._();
   
 
 @override@JsonKey() final  String venmo;
 @override@JsonKey() final  String cashApp;
 @override@JsonKey() final  String appleCash;
 @override@JsonKey() final  String note;
+/// Who saved it last, which everyone sees ("Updated by Coach Lee").
+@override@JsonKey() final  String updatedBy;
 
 /// Create a copy of DuesPayments
 /// with the given fields replaced by the non-null parameter values.
@@ -819,18 +828,18 @@ _$DuesPaymentsCopyWith<_DuesPayments> get copyWith => __$DuesPaymentsCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DuesPayments&&(identical(other.venmo, venmo) || other.venmo == venmo)&&(identical(other.cashApp, cashApp) || other.cashApp == cashApp)&&(identical(other.appleCash, appleCash) || other.appleCash == appleCash)&&(identical(other.note, note) || other.note == note));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DuesPayments&&(identical(other.venmo, venmo) || other.venmo == venmo)&&(identical(other.cashApp, cashApp) || other.cashApp == cashApp)&&(identical(other.appleCash, appleCash) || other.appleCash == appleCash)&&(identical(other.note, note) || other.note == note)&&(identical(other.updatedBy, updatedBy) || other.updatedBy == updatedBy));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,venmo,cashApp,appleCash,note);
+    return Object.hash(runtimeType,venmo,cashApp,appleCash,note,updatedBy);
 }
 
 @override
 String toString() {
-    return 'DuesPayments(venmo: $venmo, cashApp: $cashApp, appleCash: $appleCash, note: $note)';
+    return 'DuesPayments(venmo: $venmo, cashApp: $cashApp, appleCash: $appleCash, note: $note, updatedBy: $updatedBy)';
 }
 
 
@@ -841,7 +850,7 @@ abstract mixin class _$DuesPaymentsCopyWith<$Res> implements $DuesPaymentsCopyWi
   factory _$DuesPaymentsCopyWith(_DuesPayments value, $Res Function(_DuesPayments) _then) = __$DuesPaymentsCopyWithImpl;
 @override @useResult
 $Res call({
- String venmo, String cashApp, String appleCash, String note
+ String venmo, String cashApp, String appleCash, String note, String updatedBy
 });
 
 
@@ -858,12 +867,13 @@ class __$DuesPaymentsCopyWithImpl<$Res>
 
 /// Create a copy of DuesPayments
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? venmo = null,Object? cashApp = null,Object? appleCash = null,Object? note = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? venmo = null,Object? cashApp = null,Object? appleCash = null,Object? note = null,Object? updatedBy = null,}) {
   return _then(_DuesPayments(
 venmo: null == venmo ? _self.venmo : venmo // ignore: cast_nullable_to_non_nullable
 as String,cashApp: null == cashApp ? _self.cashApp : cashApp // ignore: cast_nullable_to_non_nullable
 as String,appleCash: null == appleCash ? _self.appleCash : appleCash // ignore: cast_nullable_to_non_nullable
 as String,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String,updatedBy: null == updatedBy ? _self.updatedBy : updatedBy // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

@@ -4,6 +4,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { findOrProvisionUser } from '../accounts/service.js';
 import { joinedLine, postSystemMessage } from '../chat/service.js';
+import { playerLabel, renameDueCharges } from '../dues/service.js';
 import { db } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { forEachPage } from '../shared/batch.js';
@@ -379,9 +380,10 @@ export async function refreshPlayerSummary(groupId: string, uid: string): Promis
 /**
  * players updated → the labels that copy a player's name and number (ARCH
  * §6.4 trigger map): each linked member's "Who's who" (PLAYER-8, "Emma #7"
- * or "#12") and, after a rename, participantName on upcoming RSVPs. Exits
- * early unless an active player's name or number changed (playerLabelChanged),
- * so link writes (linksUpdatedAt) and approvals cost nothing.
+ * or "#12"), the name on the player's dues (DUES-2, "Emma #7"), and, after
+ * a rename, participantName on upcoming RSVPs. Exits early unless an active
+ * player's name or number changed (playerLabelChanged), so link writes
+ * (linksUpdatedAt) and approvals cost nothing.
  */
 export async function followUpPlayerUpdate(
   playerId: string,
@@ -393,6 +395,7 @@ export async function followUpPlayerUpdate(
   if (!groupId) return;
   const links = await db().collection(Collections.playerGuardians).where('playerId', '==', playerId).limit(50).get();
   for (const uid of new Set(links.docs.map((d) => String(d.get('uid'))))) await refreshPlayerSummary(groupId, uid);
+  await renameDueCharges('player', playerId, playerLabel(after.displayName, after.jerseyNumber));
   if (before?.displayName !== after.displayName && typeof after.displayName === 'string') {
     await renameUpcomingRsvps(playerId, after.displayName);
   }

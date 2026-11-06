@@ -952,21 +952,29 @@ service cloud.firestore {
 
     // Dues and fees, such as uniforms or the team fee: what a team's admins
     // ask its players, or a basic group's members, to pay, and who paid.
-    // No money moves through the app: admins share how to pay
-    // (duesPayments) and mark each charge paid or waived themselves. The
+    // No money moves through the app: admins, and coaches, share how to
+    // pay (duesPayments); admins mark each charge paid or waived. The
     // team's admins, and super admins (§3), see every due and charge;
     // everyone else sees only their own charge, or their player's, so
     // nobody learns what someone else owes or paid. Dues and their charges
     // are created, edited, and deleted only by the saveDue and deleteDue
     // callables, which check the team, its admins, who's charged, and the
-    // cap (Limits.duesChargesMax); admins mark charges paid here, and write
-    // how to pay. Archived teams are read-only (TEAM-9), and a direct
-    // conversation has no dues.
+    // cap (Limits.duesChargesMax); admins mark charges paid here, and they
+    // and coaches write how to pay. Archived teams are read-only (TEAM-9),
+    // and a direct conversation has no dues.
     function duesReader(g) { return superAdmin() || isAdmin(g); }
     function duesAdmin(g) { return active(g) && duesReader(g); }
+    // Who edits how to pay (DUES-3): admins, and on a team a member its
+    // admins marked Coach (TEAM-3; an owner coaches unless marked
+    // otherwise, and is an admin anyway). Dues and who paid stay the
+    // admins'.
+    function duesPayEditor(g) {
+      return duesAdmin(g)
+        || (active(g) && !isGroupKind(g) && isMember(g) && member(g).get('coach', false) == true);
+    }
 
     // A due: its title, amount, date, and note. Members read their charges
-    // instead, which copy what they need.
+    // instead, which copy what they need, the note too.
     match /dues/{dueId} {
       allow get: if duesReader(resource.data.groupId);
       allow list: if boundedQuery() && duesReader(resource.data.groupId);
@@ -1014,12 +1022,15 @@ service cloud.firestore {
 
     // A charge's own fields, every one always there: the due's terms as
     // the charge has them, a name of up to 80 characters, a known status,
-    // and when it was paid, set only on a paid charge.
+    // and when it was paid, set only on a paid charge. The due's note
+    // (up to 280, Limits.dueNoteMax) is there on charges made since it was
+    // copied to them.
     function validDueCharge(c) {
       let fields = ['groupId', 'dueId', 'title', 'amountCents', 'dueOn', 'participantType',
                     'participantId', 'participantName', 'status', 'paidAt',
                     'updatedBy', 'updatedAt'];
-      return c.keys().hasAll(fields) && c.keys().hasOnly(fields)
+      return c.keys().hasAll(fields) && c.keys().hasOnly(fields.concat(['note']))
+        && (!('note' in c) || (c.note is string && c.note.size() <= 280))
         && dueTermsOk(c)
         && c.participantId is string
         && c.participantName is string && c.participantName.size() <= 80
@@ -1032,11 +1043,12 @@ service cloud.firestore {
     // How to pay the team, one doc per team named by its ID: Venmo, Cash
     // App, and Apple Cash handles of up to 60 characters each
     // (Limits.duePayHandleMax), any of them empty, and a note of up to 280.
-    // Everyone on the team reads it; its admins, and super admins, write it.
+    // Everyone on the team reads it, and who saved it last (updatedBy);
+    // its admins, its coaches, and super admins write it.
     match /duesPayments/{g} {
       allow get: if canRead(g);
       allow list: if boundedQuery() && canRead(resource.data.groupId);
-      allow create, update: if duesAdmin(g) && !isDirect(g) && validDuesPayments(incoming(), g);
+      allow create, update: if duesPayEditor(g) && !isDirect(g) && validDuesPayments(incoming(), g);
       allow delete: if duesAdmin(g);
     }
 

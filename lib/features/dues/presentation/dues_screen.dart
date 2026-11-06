@@ -19,12 +19,12 @@ import 'package:battleplan/features/dues/application/providers.dart';
 import 'package:battleplan/features/dues/domain/due.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
-import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -47,6 +47,13 @@ String _dueDate(AppLocalizations l10n, String dueOn) {
   return d == null ? dueOn : DateFormat.MMMd(l10n.localeName).format(d);
 }
 
+/// "Due Nov 30", or "Overdue since Nov 30" once the day has passed with
+/// something still [owed] (DUES-2).
+String _dueLine(AppLocalizations l10n, String dueOn, {required bool owed}) =>
+    owed && duePassed(dueOn, DateTime.now())
+    ? l10n.duesOverdue(_dueDate(l10n, dueOn))
+    : l10n.duesDueOn(_dueDate(l10n, dueOn));
+
 String statusName(AppLocalizations l10n, DueStatus s) => switch (s) {
   DueStatus.owed => l10n.duesStatusOwed,
   DueStatus.paid => l10n.duesStatusPaid,
@@ -68,11 +75,45 @@ bool _isAdmin(WidgetRef ref, GroupId groupId) =>
     (ref.watch(myMembershipProvider(groupId))?.isAdmin ?? false) ||
     (ref.watch(authUserProvider).value?.isSuperAdmin ?? false);
 
+/// Who a due can be for on [group] (DUES-1): every active player on a team,
+/// every member who has joined a group. The list is null until it has loaded;
+/// failed is true when its read failed.
+({List<DuePayer>? list, bool failed}) _everyone(WidgetRef ref, Group group) {
+  if (group.hasPlayers) {
+    final players = ref.watch(playersProvider(group.id));
+    return (
+      list: players.value == null
+          ? null
+          : [
+              for (final p in players.value!)
+                if (!p.isPending)
+                  (type: ParticipantType.player, id: p.id.value, name: p.label),
+            ],
+      failed: players.hasError,
+    );
+  }
+  final roster = ref.watch(rosterProvider(group.id));
+  return (
+    list: roster.value == null
+        ? null
+        : [
+            for (final m in roster.value!)
+              if (!m.pending)
+                (
+                  type: ParticipantType.member,
+                  id: m.uid.value,
+                  name: m.displayName,
+                ),
+          ],
+    failed: roster.hasError,
+  );
+}
+
 /// Dues at `/g/:groupId/dues` (DUES-1 to DUES-3). Admins see every due with
 /// how many have paid and what's still owed, and add new ones; everyone
 /// else sees only what they, or their players, owe. Under it, how to pay
-/// the team: Venmo, Cash App or Apple Cash handles the admins share. No
-/// money goes through Battleplan.
+/// the team: Venmo, Cash App or Apple Cash handles the admins or coaches
+/// share. No money goes through Battleplan.
 class DuesScreen extends ConsumerWidget {
   const new({required this.groupId, super.key});
 
@@ -86,6 +127,10 @@ class DuesScreen extends ConsumerWidget {
     final admin = _isAdmin(ref, groupId);
     final isGroup = group?.isGroup ?? false;
     final archived = group?.isArchived ?? false;
+    // Coaches share how to pay too (DUES-3, TEAM-3); dues stay the admins'.
+    final coach =
+        (group?.hasPlayers ?? false) &&
+        (ref.watch(myMembershipProvider(groupId))?.isCoach ?? false);
     final lede = TextStyle(
       fontFamily: AppFonts.body,
       fontWeight: FontWeight.w600,
@@ -113,11 +158,15 @@ class DuesScreen extends ConsumerWidget {
               Text(isGroup ? l10n.duesGroupLede : l10n.duesLede, style: lede),
               const SizedBox(height: 18),
               if (admin)
-                _AdminDues(groupId: groupId, canAdd: !archived)
+                _AdminDues(groupId: groupId, archived: archived)
               else
                 _MyDues(groupId: groupId),
               const SizedBox(height: 24),
-              _HowToPay(groupId: groupId, canEdit: admin && !archived),
+              _HowToPay(
+                groupId: groupId,
+                isGroup: isGroup,
+                canEdit: (admin || coach) && group != null && !archived,
+              ),
             ],
           ),
         ),
@@ -128,10 +177,12 @@ class DuesScreen extends ConsumerWidget {
 
 /// The admins' list: each due with how many have paid.
 class _AdminDues extends ConsumerWidget {
-  const new({required this.groupId, required this.canAdd});
+  const new({required this.groupId, required this.archived});
 
   final GroupId groupId;
-  final bool canAdd;
+
+  /// Read-only (TEAM-9): no New due.
+  final bool archived;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -141,7 +192,7 @@ class _AdminDues extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (canAdd)
+        if (!archived)
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: FilledButton.icon(
@@ -157,7 +208,7 @@ class _AdminDues extends ConsumerWidget {
         else if (list == null)
           const SkeletonList()
         else if (list.isEmpty)
-          _Quiet(l10n.duesEmptyAdmin)
+          _Quiet(archived ? l10n.duesEmptyArchived : l10n.duesEmptyAdmin)
         else
           for (final due in list) ...[
             _DueCard(
@@ -191,11 +242,13 @@ class _DueCard extends ConsumerWidget {
       child: Builder(
         builder: (context) {
           final c = GumdropColors.of(context);
-          final summary = [
-            l10n.duesPaidOf(totals.paid, totals.count),
-            if (totals.owedCents > 0)
-              l10n.duesTotalOwed(formatDues(l10n, totals.owedCents)),
-          ].join(' · ');
+          final summary = totals.count == 0
+              ? l10n.duesAllWaived
+              : [
+                  l10n.duesPaidOf(totals.paid, totals.count),
+                  if (totals.owedCents > 0)
+                    l10n.duesTotalOwed(formatDues(l10n, totals.owedCents)),
+                ].join(' · ');
           return FocusRingInk(
             onTap: onTap,
             radius: BorderRadius.circular(18),
@@ -213,7 +266,7 @@ class _DueCard extends ConsumerWidget {
                         ),
                         if (due.dueOn case final on?)
                           Text(
-                            l10n.duesDueOn(_dueDate(l10n, on)),
+                            _dueLine(l10n, on, owed: totals.owedCents > 0),
                             style: _muted(c),
                           ),
                         const SizedBox(height: 6),
@@ -270,7 +323,9 @@ TextStyle _muted(GumdropColors c) => TextStyle(
   color: c.textMuted,
 );
 
-/// The title in Nunito 800 18 with the amount on the right.
+/// The title in Nunito 800 18 with the amount on the right, or under it
+/// when the two don't fit side by side without breaking a word (large
+/// text, SPEC §7.6).
 class _TitleLine extends StatelessWidget {
   const new({required this.title, required this.amount});
 
@@ -287,12 +342,40 @@ class _TitleLine extends StatelessWidget {
       height: 22 / 18,
       color: c.textPrimary,
     );
-    return Row(
-      children: [
-        Expanded(child: Text(title, style: style)),
-        const SizedBox(width: 10),
-        Text(amount, style: style),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double width(String text, {bool word = false}) {
+          final painter = TextPainter(
+            text: TextSpan(text: text, style: style),
+            textDirection: Directionality.of(context),
+            textScaler: MediaQuery.textScalerOf(context),
+          )..layout();
+          final w = word ? painter.minIntrinsicWidth : painter.width;
+          painter.dispose();
+          return w;
+        }
+
+        final side =
+            width(title, word: true) + 10 + width(amount) <=
+            constraints.maxWidth;
+        if (!side) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: style),
+              Text(amount, style: style),
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: Text(title, style: style)),
+            const SizedBox(width: 10),
+            Text(amount, style: style),
+          ],
+        );
+      },
     );
   }
 }
@@ -350,7 +433,9 @@ class _Quiet extends StatelessWidget {
 }
 
 /// What I owe (DUES-2): my own share, or each of my players', with what's
-/// still owed in all.
+/// still owed in all. On a team, someone not linked to a player yet is
+/// pointed to "Who are you here for?" (PLAYER-3), or told their claim
+/// waits, rather than told they owe nothing.
 class _MyDues extends ConsumerWidget {
   const new({required this.groupId});
 
@@ -359,14 +444,20 @@ class _MyDues extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
     final mine = ref.watch(myChargesProvider(groupId));
     final payers = ref.watch(myPayersProvider(groupId)).value ?? const [];
+    final group = ref.watch(groupProvider(groupId)).value;
     final list = mine.value;
     if (list == null) {
       return mine.hasError ? const _LoadError() : const SkeletonList();
     }
     final owed = list.fold(0, (sum, x) => sum + x.owedCents);
-    final several = payers.length > 1;
+    // "For Emma" once the shares are for more than one person.
+    final several =
+        {for (final x in list) '${x.participantType.value}/${x.participantId}'}
+            .length >
+        1;
     final sorted = [...list]
       ..sort((a, b) {
         final byStatus = (a.owedCents == 0 ? 1 : 0).compareTo(
@@ -376,51 +467,121 @@ class _MyDues extends ConsumerWidget {
             ? byStatus
             : (a.dueOn ?? '~').compareTo(b.dueOn ?? '~');
       });
+
+    // On a team with players, linked to none of them: as on an event
+    // (PLAYER-3, PLAYER-6).
+    final uid = ref.watch(authUserProvider).value?.uid;
+    final unlinked =
+        (group?.hasPlayers ?? false) &&
+        !payers.any((p) => p.type == ParticipantType.player);
+    final waiting =
+        unlinked &&
+        ((ref.watch(myPendingPlayersProvider(groupId)).value ??
+                    const <Player>[])
+                .any((p) => p.proposedBy == uid) ||
+            (ref.watch(myGuardianRequestsProvider(groupId)).value ??
+                    const <GuardianRequest>[])
+                .any((r) => r.status == GuardianRequestStatus.pending));
+    final pointToWho =
+        unlinked &&
+        !waiting &&
+        (ref.watch(playersProvider(groupId)).value ?? const <Player>[]).any(
+          (p) => !p.isPending,
+        );
+    final muted = TextStyle(
+      fontFamily: AppFonts.body,
+      fontWeight: FontWeight.w600,
+      fontSize: 15,
+      color: c.textMutedOnPage,
+    );
+    final pointer = waiting
+        ? _Quiet(l10n.claimWaiting)
+        : pointToWho
+        ? Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              children: [
+                Text(l10n.duesPlayersOnly, style: muted),
+                if (!(group?.isArchived ?? false))
+                  TextButton(
+                    onPressed: () =>
+                        unawaited(context.push('/g/${groupId.value}/who')),
+                    child: Text(l10n.whoAreYouHereFor),
+                  ),
+              ],
+            ),
+          )
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PageHeading(l10n.duesYours),
         const SizedBox(height: 4),
-        _Quiet(
-          list.isEmpty
-              ? l10n.duesEmptyMember
-              : owed == 0
-              ? l10n.duesAllPaid
-              : l10n.duesTotalOwed(formatDues(l10n, owed)),
-        ),
-        if (list.isNotEmpty)
+        if (list.isEmpty && pointer != null)
+          pointer
+        else
+          _Quiet(
+            owed > 0
+                ? l10n.duesTotalOwed(formatDues(l10n, owed))
+                // Only waived shares, or none: nothing to thank them for.
+                : list.any((x) => x.paid)
+                ? l10n.duesAllPaid
+                : l10n.duesEmptyMember,
+          ),
+        if (list.isNotEmpty) ...[
           PageRows(
             children: [
               for (final x in sorted) _ChargeRow(charge: x, showName: several),
             ],
           ),
+          ?pointer,
+        ],
       ],
     );
   }
 }
 
-/// One share, on the page: what it's for (and for whom), the amount, and
-/// whether it's paid. Admins tap it to change that.
+/// One share, on the page: what it's for (and for whom), the amount, when
+/// it's due, the due's note, and whether it's paid. Admins tap it to change
+/// that.
 class _ChargeRow extends StatelessWidget {
-  const new({required this.charge, this.showName = true, this.onTap});
+  const new({
+    required this.charge,
+    this.showName = true,
+    this.admin = false,
+    this.onTap,
+  });
 
   final DueCharge charge;
   final bool showName;
+
+  /// On the due's own screen: named by whose share it is, which [onTap]
+  /// changes (null on an archived team).
+  final bool admin;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = GumdropColors.of(context);
+    final mine = !admin;
     final sub = [
-      if (showName && onTap == null) l10n.duesFor(charge.participantName),
-      formatDues(l10n, charge.amountCents),
-      if (charge.dueOn case final on? when charge.status == DueStatus.owed)
-        l10n.duesDueOn(_dueDate(l10n, on)),
-    ].join(' · ');
+      [
+        if (showName && mine) l10n.duesFor(charge.participantName),
+        formatDues(l10n, charge.amountCents),
+        if (charge.dueOn case final on? when charge.status == DueStatus.owed)
+          _dueLine(l10n, on, owed: true),
+      ].join(' · '),
+      // Admins read the note once, at the top of the due.
+      if (mine && charge.note.isNotEmpty) charge.note,
+    ].join('\n');
     return PageRow(
-      title: onTap == null ? charge.title : charge.participantName,
+      title: mine ? charge.title : charge.participantName,
       subtitle: sub,
+      // Never cut off: the amount and date are what it's for (SPEC §7.6).
+      subtitleMaxLines: null,
       onTap: onTap,
       trailing: _StatusPill(status: charge.status),
       leading: Icon(
@@ -471,23 +632,35 @@ class _StatusPill extends StatelessWidget {
 
 /// How to pay the team (DUES-3): each handle with Copy, and on the web and
 /// Android an Open link. The iPhone app copies only: these are payments
-/// between people, outside the app.
+/// between people, outside the app. Who saved it last shows under it.
 class _HowToPay extends ConsumerWidget {
-  const new({required this.groupId, required this.canEdit});
+  const new({
+    required this.groupId,
+    required this.isGroup,
+    required this.canEdit,
+  });
 
   final GroupId groupId;
+  final bool isGroup;
+
+  /// Admins, or a team's coaches, on a team that isn't archived.
   final bool canEdit;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final c = GumdropColors.of(context);
-    final pay = ref.watch(duesPaymentsProvider(groupId)).value;
+    final async = ref.watch(duesPaymentsProvider(groupId));
+    final pay = async.value;
     final links = kIsWeb || defaultTargetPlatform != TargetPlatform.iOS;
     Widget row(String app, String shown, Uri? link) => PageRow(
       title: app,
       subtitle: shown,
+      // The handle is what people pay to: never cut off (SPEC §7.6).
+      subtitleMaxLines: null,
       icon: AppIcons.payments,
+      // Copy and Open are buttons of their own for screen readers.
+      trailingActions: true,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -509,47 +682,69 @@ class _HowToPay extends ConsumerWidget {
         ],
       ),
     );
-    final p = pay ?? const DuesPayments();
+    final venmo = venmoUser(pay?.venmo ?? '');
+    final cash = cashTag(pay?.cashApp ?? '');
+    final apple = pay?.appleCash.trim() ?? '';
+    // Who saved it last, from the roster: "a former member" once they've
+    // left (or deleted their account, which removes what they saved).
+    final by = pay == null || pay.isEmpty || pay.updatedBy.isEmpty
+        ? null
+        : ref.watch(memberProvider(groupId, UserId(pay.updatedBy)));
+    final byName = by == null || !by.hasValue
+        ? null
+        : by.value == null
+        ? l10n.duesPaymentsUpdatedByFormer
+        : l10n.duesPaymentsUpdatedBy(by.value!.displayName);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
+        // The button goes under the heading when both don't fit.
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          alignment: WrapAlignment.spaceBetween,
+          spacing: 8,
           children: [
-            Expanded(child: PageHeading(l10n.duesHowToPay)),
-            if (canEdit)
+            PageHeading(l10n.duesHowToPay),
+            // Only once it has loaded, so saving never empties what's there.
+            if (canEdit && pay != null)
               TextButton.icon(
-                onPressed: () => unawaited(_edit(context, ref, p)),
+                onPressed: () => unawaited(_edit(context, ref, pay)),
                 icon: const Icon(AppIcons.edit, size: 18),
                 label: Text(l10n.duesEditPayments),
               ),
           ],
         ),
         const SizedBox(height: 4),
-        if (p.isEmpty)
-          _Quiet(l10n.duesHowToPayEmpty)
+        if (pay == null && async.hasError)
+          const _LoadError()
+        else if (pay == null)
+          const SkeletonList(rows: 1)
+        else if (pay.isEmpty)
+          _Quiet(
+            canEdit ? l10n.duesHowToPayEmptyEditor : l10n.duesHowToPayEmpty,
+          )
         else ...[
           PageRows(
             children: [
-              if (p.venmo.isNotEmpty)
+              if (venmo.isNotEmpty)
                 row(
                   l10n.duesVenmo,
-                  '@${venmoUser(p.venmo)}',
-                  Uri.https('venmo.com', '/u/${venmoUser(p.venmo)}'),
+                  '@$venmo',
+                  Uri.https('venmo.com', '/u/$venmo'),
                 ),
-              if (p.cashApp.isNotEmpty)
+              if (cash.isNotEmpty)
                 row(
                   l10n.duesCashApp,
-                  '\$${cashTag(p.cashApp)}',
-                  Uri.https('cash.app', '/\$${cashTag(p.cashApp)}'),
+                  '\$$cash',
+                  Uri.https('cash.app', '/\$$cash'),
                 ),
-              if (p.appleCash.isNotEmpty)
-                row(l10n.duesAppleCash, p.appleCash.trim(), null),
+              if (apple.isNotEmpty) row(l10n.duesAppleCash, apple, null),
             ],
           ),
-          if (p.note.isNotEmpty) ...[
+          if (pay.note.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              p.note,
+              pay.note,
               style: TextStyle(
                 fontFamily: AppFonts.body,
                 fontWeight: FontWeight.w600,
@@ -558,9 +753,10 @@ class _HowToPay extends ConsumerWidget {
               ),
             ),
           ],
+          if (byName != null) _Quiet(byName),
         ],
         const SizedBox(height: 8),
-        _Quiet(l10n.duesHowToPayNote),
+        _Quiet(isGroup ? l10n.duesGroupHowToPayNote : l10n.duesHowToPayNote),
       ],
     );
   }
@@ -573,7 +769,7 @@ class _HowToPay extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final next = await showCardDialog<DuesPayments>(
       context: context,
-      builder: (_) => _PaymentsDialog(initial: p),
+      builder: (_) => _PaymentsDialog(initial: p, isGroup: isGroup),
     );
     if (next == null || !context.mounted) return;
     final uid = ref.read(authUserProvider).value?.uid;
@@ -589,9 +785,10 @@ class _HowToPay extends ConsumerWidget {
 }
 
 class _PaymentsDialog extends StatefulWidget {
-  const new({required this.initial});
+  const new({required this.initial, required this.isGroup});
 
   final DuesPayments initial;
+  final bool isGroup;
 
   @override
   State<_PaymentsDialog> createState() => _PaymentsDialogState();
@@ -621,6 +818,8 @@ class _PaymentsDialogState extends State<_PaymentsDialog> {
       String hint, {
       int max = Limits.duePayHandleMax,
       int lines = 1,
+      bool handle = true,
+      TextInputType? keyboard,
     }) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: LabeledField(
@@ -630,6 +829,10 @@ class _PaymentsDialogState extends State<_PaymentsDialog> {
           maxLength: max,
           minLines: 1,
           maxLines: lines,
+          // A handle is typed exactly: no corrections or capitals.
+          autocorrect: !handle,
+          enableSuggestions: !handle,
+          keyboardType: keyboard,
           style: gumdropFieldText(context),
           decoration: gumdropField(hint: hint),
         ),
@@ -644,13 +847,19 @@ class _PaymentsDialogState extends State<_PaymentsDialog> {
           children: [
             field(l10n.duesVenmo, _venmo, l10n.duesVenmoHint),
             field(l10n.duesCashApp, _cash, l10n.duesCashAppHint),
-            field(l10n.duesAppleCash, _apple, l10n.duesAppleCashHint),
+            field(
+              l10n.duesAppleCash,
+              _apple,
+              l10n.duesAppleCashHint,
+              keyboard: TextInputType.emailAddress,
+            ),
             field(
               l10n.duesPayNote,
               _note,
-              l10n.duesPayNoteHint,
+              widget.isGroup ? l10n.duesGroupPayNoteHint : l10n.duesPayNoteHint,
               max: Limits.dueNoteMax,
               lines: 3,
+              handle: false,
             ),
           ],
         ),
@@ -661,14 +870,19 @@ class _PaymentsDialogState extends State<_PaymentsDialog> {
           child: Text(l10n.cancel),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(
-            DuesPayments(
-              venmo: _venmo.text.trim(),
-              cashApp: _cash.text.trim(),
-              appleCash: _apple.text.trim(),
-              note: _note.text.trim(),
-            ),
-          ),
+          onPressed: () {
+            // A pasted profile link is saved as the handle it names.
+            final venmo = venmoUser(_venmo.text);
+            final cash = cashTag(_cash.text);
+            Navigator.of(context).pop(
+              DuesPayments(
+                venmo: venmo.isEmpty ? '' : '@$venmo',
+                cashApp: cash.isEmpty ? '' : '\$$cash',
+                appleCash: _apple.text.trim(),
+                note: _note.text.trim(),
+              ),
+            );
+          },
           child: Text(l10n.save),
         ),
       ],
@@ -677,7 +891,8 @@ class _PaymentsDialogState extends State<_PaymentsDialog> {
 }
 
 /// One due at `/g/:groupId/dues/:dueId` (admins, DUES-2): everyone's share,
-/// and a tap marks it paid or not, or waives it.
+/// who still owes first, and a tap marks it paid or not, or waives it.
+/// Admins add people a due left out, such as a player who joined later.
 class DueDetailScreen extends ConsumerWidget {
   const new({required this.groupId, required this.dueId, super.key});
 
@@ -692,10 +907,23 @@ class DueDetailScreen extends ConsumerWidget {
     final dues = duesAsync.value;
     final due = dues?.where((d) => d.id == dueId).firstOrNull;
     final chargesAsync = ref.watch(dueChargesProvider(groupId, dueId));
+    // Who still owes first, then who paid, then who's waived; by name.
+    int rank(DueCharge x) => switch (x.status) {
+      DueStatus.owed => 0,
+      DueStatus.paid => 1,
+      DueStatus.waived => 2,
+    };
     final charges = [...?chargesAsync.value]
-      ..sort((a, b) => a.participantName.compareTo(b.participantName));
-    final archived =
-        ref.watch(groupProvider(groupId)).value?.isArchived ?? false;
+      ..sort((a, b) {
+        final byStatus = rank(a).compareTo(rank(b));
+        return byStatus != 0
+            ? byStatus
+            : a.participantName.toLowerCase().compareTo(
+                b.participantName.toLowerCase(),
+              );
+      });
+    final group = ref.watch(groupProvider(groupId)).value;
+    final archived = group?.isArchived ?? false;
     final canEdit = _isAdmin(ref, groupId) && !archived;
     final totals = dueTotals(charges);
     return Scaffold(
@@ -730,11 +958,26 @@ class DueDetailScreen extends ConsumerWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 6, 20, 32),
                   children: [
+                    // The bar's title is one line: a long one in full here.
+                    if (_titleCut(context, due.title))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          due.title,
+                          style: TextStyle(
+                            fontFamily: AppFonts.body,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            height: 22 / 18,
+                            color: c.textOnPage,
+                          ),
+                        ),
+                      ),
                     Text(
                       [
                         formatDues(l10n, due.amountCents),
                         if (due.dueOn case final on?)
-                          l10n.duesDueOn(_dueDate(l10n, on)),
+                          _dueLine(l10n, on, owed: totals.owedCents > 0),
                       ].join(' · '),
                       style: TextStyle(
                         fontFamily: AppFonts.body,
@@ -751,13 +994,15 @@ class DueDetailScreen extends ConsumerWidget {
                       const SkeletonList()
                     else ...[
                       _Quiet(
-                        [
-                          l10n.duesPaidOf(totals.paid, totals.count),
-                          if (totals.owedCents > 0)
-                            l10n.duesTotalOwed(
-                              formatDues(l10n, totals.owedCents),
-                            ),
-                        ].join(' · '),
+                        totals.count == 0
+                            ? l10n.duesAllWaived
+                            : [
+                                l10n.duesPaidOf(totals.paid, totals.count),
+                                if (totals.owedCents > 0)
+                                  l10n.duesTotalOwed(
+                                    formatDues(l10n, totals.owedCents),
+                                  ),
+                              ].join(' · '),
                       ),
                       const SizedBox(height: 8),
                       PageRows(
@@ -765,18 +1010,49 @@ class DueDetailScreen extends ConsumerWidget {
                           for (final x in charges)
                             _ChargeRow(
                               charge: x,
+                              admin: true,
                               onTap: canEdit
                                   ? () => unawaited(_setStatus(context, ref, x))
                                   : null,
                             ),
                         ],
                       ),
+                      if (canEdit && group != null) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: TextButton.icon(
+                            onPressed: () => unawaited(
+                              _addPeople(context, ref, due, group, charges),
+                            ),
+                            icon: const Icon(AppIcons.invite, size: 20),
+                            label: Text(l10n.duesAddPeople),
+                          ),
+                        ),
+                      ],
                     ],
                   ],
                 ),
               ),
             ),
     );
+  }
+
+  /// Whether [title] is cut short in the bar's one-line title.
+  static bool _titleCut(BuildContext context, String title) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: title,
+        style: Theme.of(context).textTheme.headlineMedium
+            ?.copyWith(fontSize: 32, height: 36 / 32),
+      ),
+      maxLines: 1,
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout(maxWidth: MediaQuery.sizeOf(context).width - 40);
+    final cut = painter.didExceedMaxLines;
+    painter.dispose();
+    return cut;
   }
 
   Future<void> _setStatus(
@@ -787,27 +1063,59 @@ class DueDetailScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final picked = await showCardSheet<DueStatus>(
       context: context,
-      builder: (sheet) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(charge.participantName),
-              subtitle: Text(formatDues(l10n, charge.amountCents)),
-            ),
-            for (final (s, label) in [
-              (DueStatus.paid, l10n.duesMarkPaid),
-              (DueStatus.owed, l10n.duesMarkOwed),
-              (DueStatus.waived, l10n.duesWaive),
-            ])
-              if (s != charge.status)
-                ListTile(
-                  title: Text(label),
-                  onTap: () => Navigator.of(sheet).pop(s),
+      builder: (sheet) {
+        final c = GumdropColors.of(sheet);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Whose share, and where it stands: a heading, not a choice.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: MergeSemantics(
+                  child: Semantics(
+                    header: true,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          charge.participantName,
+                          style: TextStyle(
+                            fontFamily: AppFonts.body,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                            height: 22 / 18,
+                            color: c.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          [
+                            formatDues(l10n, charge.amountCents),
+                            statusName(l10n, charge.status),
+                          ].join(' · '),
+                          style: _muted(c),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-          ],
-        ),
-      ),
+              ),
+              for (final (s, label, icon) in [
+                (DueStatus.paid, l10n.duesMarkPaid, AppIcons.check),
+                (DueStatus.owed, l10n.duesMarkOwed, AppIcons.payments),
+                (DueStatus.waived, l10n.duesWaive, AppIcons.block),
+              ])
+                if (s != charge.status)
+                  ListTile(
+                    leading: Icon(icon),
+                    title: Text(label),
+                    onTap: () => Navigator.of(sheet).pop(s),
+                  ),
+            ],
+          ),
+        );
+      },
     );
     if (picked == null || !context.mounted) return;
     final uid = ref.read(authUserProvider).value?.uid;
@@ -816,6 +1124,54 @@ class DueDetailScreen extends ConsumerWidget {
       await ref
           .read(duesRepositoryProvider)
           .setStatus(charge, picked, by: UserId(uid));
+      // The row changes where the sheet was; screen readers hear it.
+      if (context.mounted) {
+        unawaited(
+          SemanticsService.sendAnnouncement(
+            View.of(context),
+            l10n.duesStatusAnnounce(
+              charge.participantName,
+              statusName(l10n, picked),
+            ),
+            Directionality.of(context),
+          ),
+        );
+      }
+    } on AppFailure {
+      if (context.mounted) showAppSnackBar(context, l10n.duesSaveFailed);
+    }
+  }
+
+  /// Adds people [due] left out (DUES-1): each starts owing it.
+  Future<void> _addPeople(
+    BuildContext context,
+    WidgetRef ref,
+    Due due,
+    Group group,
+    List<DueCharge> charges,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final onIt = {for (final x in charges) x.participantId};
+    final picked = await showCardDialog<List<DuePayer>>(
+      context: context,
+      builder: (_) => _AddPeopleDialog(group: group, onIt: onIt),
+    );
+    if (picked == null || picked.isEmpty || !context.mounted) return;
+    if (onIt.length + picked.length > Limits.duesChargesMax) {
+      showAppSnackBar(context, l10n.duesTooManyPayers(Limits.duesChargesMax));
+      return;
+    }
+    try {
+      await ref
+          .read(duesRepositoryProvider)
+          .edit(
+            due,
+            title: due.title,
+            amountCents: due.amountCents,
+            dueOn: due.dueOn,
+            note: due.note,
+            add: picked,
+          );
     } on AppFailure {
       if (context.mounted) showAppSnackBar(context, l10n.duesSaveFailed);
     }
@@ -841,10 +1197,85 @@ class DueDetailScreen extends ConsumerWidget {
   }
 }
 
+/// Who a due could still add (DUES-1): everyone who can owe one and isn't
+/// on it, none checked to start. Returns who was checked.
+class _AddPeopleDialog extends ConsumerStatefulWidget {
+  const new({required this.group, required this.onIt});
+
+  final Group group;
+
+  /// The participant IDs already on the due.
+  final Set<String> onIt;
+
+  @override
+  ConsumerState<_AddPeopleDialog> createState() => _AddPeopleDialogState();
+}
+
+class _AddPeopleDialogState extends ConsumerState<_AddPeopleDialog> {
+  final Set<String> _picked = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final everyone = _everyone(ref, widget.group);
+    final others = [
+      for (final p in everyone.list ?? const <DuePayer>[])
+        if (!widget.onIt.contains(p.id)) p,
+    ];
+    final loaded = everyone.list != null;
+    return AlertDialog(
+      title: Text(l10n.duesAddPeople),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: !loaded
+              ? (everyone.failed
+                    ? const _LoadError()
+                    : const SizedBox(height: 48))
+              : others.isEmpty
+              ? Text(l10n.duesAddNone)
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final p in others)
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        value: _picked.contains(p.id),
+                        title: Text(p.name),
+                        onChanged: (on) => setState(
+                          () => on ?? false
+                              ? _picked.add(p.id)
+                              : _picked.remove(p.id),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(loaded && others.isEmpty ? l10n.done : l10n.cancel),
+        ),
+        if (others.isNotEmpty)
+          FilledButton(
+            onPressed: _picked.isEmpty
+                ? null
+                : () => Navigator.of(context).pop([
+                    for (final p in others)
+                      if (_picked.contains(p.id)) p,
+                  ]),
+            child: Text(l10n.add),
+          ),
+      ],
+    );
+  }
+}
+
 /// A new due at `/g/:groupId/dues/new`, or a due's edit (admins, DUES-1):
-/// what it's for, the amount, a date, a note, and, when new, who owes it:
-/// every active player on a team, or every member of a group, with any
-/// left out by unchecking.
+/// what it's for, the amount, a date, a note everyone on it sees, and,
+/// when new, who owes it: every active player on a team, or every member
+/// of a group, with any left out by unchecking.
 class NewDueScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, this.dueId, super.key});
 
@@ -861,6 +1292,10 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
   final _title = TextEditingController();
   final _amount = TextEditingController();
   final _note = TextEditingController();
+
+  /// One per new due, the same on every try, so trying again after a lost
+  /// reply never adds it twice (DUES-1).
+  final String _requestId = newRequestId();
   String? _dueOn;
   final Set<String> _left = {};
   bool _loaded = false;
@@ -880,30 +1315,17 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
 
   bool get _isEdit => widget.dueId != null;
 
-  List<DuePayer> _everyone(Group group) {
-    if (group.hasPlayers) {
-      return [
-        for (final p
-            in ref.watch(playersProvider(group.id)).value ?? const <Player>[])
-          if (!p.isPending)
-            (type: ParticipantType.player, id: p.id.value, name: p.label),
-      ];
-    }
-    return [
-      for (final m
-          in ref.watch(rosterProvider(group.id)).value ?? const <Membership>[])
-        if (!m.pending)
-          (type: ParticipantType.member, id: m.uid.value, name: m.displayName),
-    ];
-  }
-
   Future<void> _pickDate() async {
     final now = DateTime.now();
+    final initial = DateTime.tryParse(_dueOn ?? '') ?? now;
+    // A due from an older season still opens on its own date.
+    final first = DateTime(now.year - 1);
+    final last = DateTime(now.year + 3);
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.tryParse(_dueOn ?? '') ?? now,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 3),
+      initialDate: initial,
+      firstDate: initial.isBefore(first) ? initial : first,
+      lastDate: initial.isAfter(last) ? initial : last,
     );
     if (picked == null) return;
     setState(
@@ -914,13 +1336,18 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
     );
   }
 
-  Future<void> _save(Group group, Due? editing) async {
+  Future<void> _save(
+    Group group,
+    Due? editing,
+    List<DuePayer> everyone,
+    List<DueCharge> charges,
+  ) async {
     final l10n = AppLocalizations.of(context);
     // Editing needs the due; never fall back to adding a new one.
     if (_isEdit && editing == null) return;
     final cents = _cents;
     final payers = [
-      for (final p in _everyone(group))
+      for (final p in everyone)
         if (!_left.contains(p.id)) p,
     ];
     final error = _title.text.trim().isEmpty
@@ -934,6 +1361,18 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
         : null;
     setState(() => _error = error);
     if (error != null || cents == null) return;
+    // Shares already paid take the new amount too: say so first.
+    final paid = charges.where((x) => x.paid).length;
+    if (editing != null && cents != editing.amountCents && paid > 0) {
+      final ok = await showConfirmDialog(
+        context,
+        title: l10n.duesAmountChangedTitle,
+        message: l10n.duesAmountChangedBody(paid, formatDues(l10n, cents)),
+        confirmLabel: l10n.save,
+        cancelLabel: l10n.cancel,
+      );
+      if (!ok || !mounted) return;
+    }
     setState(() => _saving = true);
     final repo = ref.read(duesRepositoryProvider);
     try {
@@ -953,6 +1392,7 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
           dueOn: _dueOn,
           note: _note.text,
           payers: payers,
+          requestId: _requestId,
         );
       }
       if (mounted) context.pop();
@@ -974,6 +1414,11 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
     final editing = duesAsync?.value
         ?.where((d) => d.id == widget.dueId)
         .firstOrNull;
+    // Who has paid, for the warning when the amount changes.
+    final charges = _isEdit
+        ? ref.watch(dueChargesProvider(widget.groupId, widget.dueId!)).value ??
+              const <DueCharge>[]
+        : const <DueCharge>[];
     if (editing != null && !_loaded) {
       _loaded = true;
       _title.text = editing.title;
@@ -983,6 +1428,8 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
       _note.text = editing.note;
       _dueOn = editing.dueOn;
     }
+    // Edit goes back to the due it came from; New due to Dues.
+    final back = _isEdit ? editing?.title : l10n.duesTitle;
     if (group == null || (_isEdit && editing == null)) {
       // On the edit route, nothing to save until the due loads: a list
       // that failed, or a due that's gone, says so.
@@ -997,19 +1444,19 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
         appBar: gumdropAppBar(
           context,
           title: _isEdit ? l10n.duesEdit : l10n.duesNew,
-          backLabel: l10n.duesTitle,
+          backLabel: back,
         ),
         body: body,
       );
     }
-    final everyone = widget.dueId == null
-        ? _everyone(group)
-        : const <DuePayer>[];
+    // Who it can be for, on a new due: nothing to save until it's known.
+    final everyoneAsync = _isEdit ? null : _everyone(ref, group);
+    final everyone = everyoneAsync?.list;
     return Scaffold(
       appBar: gumdropAppBar(
         context,
-        title: widget.dueId == null ? l10n.duesNew : l10n.duesEdit,
-        backLabel: l10n.duesTitle,
+        title: _isEdit ? l10n.duesEdit : l10n.duesNew,
+        backLabel: back,
       ),
       body: Align(
         alignment: Alignment.topCenter,
@@ -1040,7 +1487,7 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.,$]')),
                   ],
                   style: gumdropFieldText(context),
-                  decoration: gumdropField(hint: r'$45'),
+                  decoration: gumdropField(hint: l10n.duesFieldAmountHint),
                 ),
               ),
               const SizedBox(height: 12),
@@ -1053,10 +1500,12 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
                         ? l10n.duesNoDate
                         : _dueDate(l10n, _dueOn!),
                     onTap: () => unawaited(_pickDate()),
+                    // Clear date is a button of its own for screen readers.
+                    trailingActions: true,
                     trailing: _dueOn == null
                         ? null
                         : IconButton(
-                            tooltip: l10n.duesNoDate,
+                            tooltip: l10n.duesClearDate,
                             icon: const Icon(AppIcons.close, size: 20),
                             onPressed: () => setState(() => _dueOn = null),
                           ),
@@ -1071,16 +1520,21 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
                   maxLength: Limits.dueNoteMax,
                   minLines: 1,
                   maxLines: 4,
+                  textCapitalization: TextCapitalization.sentences,
                   style: gumdropFieldText(context),
-                  decoration: gumdropField(),
+                  decoration: gumdropField(hint: l10n.duesFieldNoteHint),
                 ),
               ),
-              if (widget.dueId == null) ...[
+              if (!_isEdit) ...[
                 const SizedBox(height: 16),
                 SectionLabel(l10n.duesWho),
                 const SizedBox(height: 6),
-                if (everyone.isEmpty)
-                  _Quiet(l10n.duesNoPlayers)
+                if (everyone == null && (everyoneAsync?.failed ?? false))
+                  const _LoadError()
+                else if (everyone == null)
+                  const SkeletonList(rows: 3)
+                else if (everyone.isEmpty)
+                  _Quiet(group.hasPlayers ? l10n.duesNoPlayers : l10n.duesNoOne)
                 else ...[
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
@@ -1117,9 +1571,19 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
               Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: FilledButton(
-                  onPressed: _saving || (_isEdit && editing == null)
+                  onPressed:
+                      _saving ||
+                          (_isEdit && editing == null) ||
+                          (!_isEdit && everyone == null)
                       ? null
-                      : () => unawaited(_save(group, editing)),
+                      : () => unawaited(
+                          _save(
+                            group,
+                            editing,
+                            everyone ?? const <DuePayer>[],
+                            charges,
+                          ),
+                        ),
                   child: Text(l10n.save),
                 ),
               ),

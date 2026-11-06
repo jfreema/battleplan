@@ -218,7 +218,9 @@ final class DueChargesFamily extends $Family
 }
 
 /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-/// group, the same people I answer RSVPs for ([participantsFor]). Loading
+/// group, the same people I answer RSVPs for ([participantsFor]). On a team
+/// I'm also there myself, last, for any shares of mine from before it was
+/// a group made a team (TEAM-14); there are none on other teams. Loading
 /// until my membership, the team, and on a team its players and player
 /// links have loaded, and failing when any of them fails, so nobody is told
 /// they owe nothing before it's known whom they pay for.
@@ -227,7 +229,9 @@ final class DueChargesFamily extends $Family
 final myPayersProvider = MyPayersFamily._();
 
 /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-/// group, the same people I answer RSVPs for ([participantsFor]). Loading
+/// group, the same people I answer RSVPs for ([participantsFor]). On a team
+/// I'm also there myself, last, for any shares of mine from before it was
+/// a group made a team (TEAM-14); there are none on other teams. Loading
 /// until my membership, the team, and on a team its players and player
 /// links have loaded, and failing when any of them fails, so nobody is told
 /// they owe nothing before it's known whom they pay for.
@@ -241,7 +245,9 @@ final class MyPayersProvider
         >
     with $Provider<AsyncValue<List<DuePayer>>> {
   /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-  /// group, the same people I answer RSVPs for ([participantsFor]). Loading
+  /// group, the same people I answer RSVPs for ([participantsFor]). On a team
+  /// I'm also there myself, last, for any shares of mine from before it was
+  /// a group made a team (TEAM-14); there are none on other teams. Loading
   /// until my membership, the team, and on a team its players and player
   /// links have loaded, and failing when any of them fails, so nobody is told
   /// they owe nothing before it's known whom they pay for.
@@ -297,10 +303,12 @@ final class MyPayersProvider
   }
 }
 
-String _$myPayersHash() => r'01e50d8f4c6b9e42be9cad6dcdec1713b1f3cf66';
+String _$myPayersHash() => r'5e67f27342616c1ee2f415e71de2f769e6973d25';
 
 /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-/// group, the same people I answer RSVPs for ([participantsFor]). Loading
+/// group, the same people I answer RSVPs for ([participantsFor]). On a team
+/// I'm also there myself, last, for any shares of mine from before it was
+/// a group made a team (TEAM-14); there are none on other teams. Loading
 /// until my membership, the team, and on a team its players and player
 /// links have loaded, and failing when any of them fails, so nobody is told
 /// they owe nothing before it's known whom they pay for.
@@ -317,7 +325,9 @@ final class MyPayersFamily extends $Family
       );
 
   /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
-  /// group, the same people I answer RSVPs for ([participantsFor]). Loading
+  /// group, the same people I answer RSVPs for ([participantsFor]). On a team
+  /// I'm also there myself, last, for any shares of mine from before it was
+  /// a group made a team (TEAM-14); there are none on other teams. Loading
   /// until my membership, the team, and on a team its players and player
   /// links have loaded, and failing when any of them fails, so nobody is told
   /// they owe nothing before it's known whom they pay for.

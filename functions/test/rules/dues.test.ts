@@ -4,8 +4,8 @@
 // everyone else sees only their own charge, or their player's. Dues and
 // charges are created, edited, and deleted only by the saveDue and deleteDue
 // callables (test/emulator/dues.test.ts). Everyone on the team reads how
-// to pay (duesPayments); only admins write it. Archived teams are read-only
-// (TEAM-9).
+// to pay (duesPayments); admins and the team's coaches write it. Archived
+// teams are read-only (TEAM-9).
 // Run against the emulator: npm --prefix functions run emulators:test
 import {
   assertFails,
@@ -97,12 +97,14 @@ const listOwn = (db: Db, type: string, id: string, g = 'teamA') =>
     .limit(50)
     .get();
 
-// teamA (a team): alice owner, carol admin, bob, dan, and erin members.
-// Players emma (dan is her guardian), finn (erin is the player, 'self'),
-// and gus (nobody's). Due d1 with charges d1_emma, d1_finn, d1_gus.
-// clubC (a basic group): hana owner, ivan and jo members; due dC with
-// charges dC_ivan and dC_jo. teamB: gina admin, player zed. teamA has a
-// duesPayments doc. root is a super admin on no team.
+// teamA (a team): alice owner, carol admin, bob, dan, and erin members,
+// and kim a member its admins marked Coach. Players emma (dan is her
+// guardian), finn (erin is the player, 'self'), and gus (nobody's). Due d1
+// with charges d1_emma, d1_finn, d1_gus, and dO with dO_bob, bob's own from
+// before teamA was a group made a team (TEAM-14). clubC (a basic group):
+// hana owner, ivan and jo members; due dC with charges dC_ivan and dC_jo.
+// teamB: gina admin, player zed. teamA has a duesPayments doc. root is a
+// super admin on no team.
 async function seed() {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
@@ -112,13 +114,14 @@ async function seed() {
     await group('teamB', 'team');
     await group('clubC', 'group');
     await db.doc('groups/dm1').set({ name: '', nameLower: '', kind: 'direct', uids: ['alice', 'bob'], settings: {} });
-    const member = (g: string, uid: string, role: string) =>
-      db.doc(`groupMembers/${g}_${uid}`).set({ groupId: g, uid, role, displayName: uid, photoPath: null });
+    const member = (g: string, uid: string, role: string, extra: object = {}) =>
+      db.doc(`groupMembers/${g}_${uid}`).set({ groupId: g, uid, role, displayName: uid, photoPath: null, ...extra });
     await member('teamA', 'alice', 'owner');
     await member('teamA', 'carol', 'admin');
     await member('teamA', 'bob', 'member');
     await member('teamA', 'dan', 'member');
     await member('teamA', 'erin', 'member');
+    await member('teamA', 'kim', 'member', { coach: true });
     await member('teamB', 'gina', 'admin');
     await member('clubC', 'hana', 'owner');
     await member('clubC', 'ivan', 'member');
@@ -146,6 +149,9 @@ async function seed() {
       }));
     await memberCharge('ivan');
     await memberCharge('jo');
+    await db.doc('dueCharges/dO_bob').set(storedCharge({
+      dueId: 'dO', title: 'Snacks', participantType: 'member', participantId: 'bob', participantName: 'bob',
+    }));
     await db.doc('duesPayments/teamA').set({ ...payments('alice'), updatedAt: OLD });
   });
 }
@@ -229,11 +235,23 @@ describe('charges', () => {
     await assertSucceeds(editCharge(root(), 'root', 'd1_emma', { status: 'waived', paidAt: null }));
   });
 
+  it("keep the due's note, up to 280 characters, when marked paid", async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('dueCharges/d1_emma').update({ note: 'n'.repeat(Limits.dueNoteMax) }));
+    await assertSucceeds(editCharge(as('carol'), 'carol', 'd1_emma', { status: 'paid', paidAt: now() }));
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('dueCharges/d1_gus').update({ note: 'n'.repeat(Limits.dueNoteMax + 1) }));
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_gus', { status: 'owed' }));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('dueCharges/d1_finn').update({ note: 5 }));
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_finn', { status: 'owed', paidAt: null }));
+  });
+
   it("never change a charge's terms, name, or person in the app", async () => {
     for (const changes of [
       { title: 'Jerseys' },
       { amountCents: 2000 },
       { dueOn: null },
+      { note: 'Pay me instead' },
       { participantName: 'Gus B' },
       { participantId: 'gus' },
       { participantType: 'member' },
@@ -285,6 +303,15 @@ describe('reading charges: nobody sees what someone else owes', () => {
     await assertFails(listAll(as('ivan'), 'dueCharges', 'clubC'));
   });
 
+  it('on a team that was a group, a member still reads their own from then', async () => {
+    await assertSucceeds(as('bob').doc('dueCharges/dO_bob').get());
+    await assertSucceeds(listOwn(as('bob'), 'member', 'bob'));
+    await assertFails(as('dan').doc('dueCharges/dO_bob').get());
+    await assertFails(listOwn(as('dan'), 'member', 'bob'));
+    // With nothing to show, the list still works: it can show only mine.
+    await assertSucceeds(listOwn(as('dan'), 'member', 'dan'));
+  });
+
   it("a guardian reads only their player's, and so does a player linked as themselves", async () => {
     await assertSucceeds(as('dan').doc('dueCharges/d1_emma').get());
     await assertSucceeds(listOwn(as('dan'), 'player', 'emma'));
@@ -332,6 +359,32 @@ describe('how to pay (duesPayments)', () => {
     await assertSucceeds(as('ivan').doc('duesPayments/clubC').get());
     await assertFails(as('gina').doc('duesPayments/teamA').get());
     await assertFails(as('gina').collection('duesPayments').where('groupId', '==', 'teamA').limit(10).get());
+  });
+
+  it("a team's coaches write it too, on an open team, and nothing else of the dues", async () => {
+    await assertSucceeds(as('kim').doc('duesPayments/teamA').set(payments('kim', { venmo: '@coach-kim' })));
+    await assertSucceeds(as('kim').doc('duesPayments/teamA').update({ cashApp: '$KimsTeam', updatedBy: 'kim', updatedAt: now() }));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('duesPayments/teamA').delete());
+    await assertSucceeds(as('kim').doc('duesPayments/teamA').set(payments('kim')));
+    // Only admins delete it, read the dues, or mark who paid.
+    await assertFails(as('kim').doc('duesPayments/teamA').delete());
+    await assertFails(as('kim').doc('dues/d1').get());
+    await assertFails(as('kim').doc('dueCharges/d1_emma').get());
+    await assertFails(editCharge(as('kim'), 'kim', 'd1_emma', { status: 'paid', paidAt: now() }));
+    // Still in their own name, with good values.
+    await assertFails(as('kim').doc('duesPayments/teamA').set(payments('alice')));
+    await assertFails(as('kim').doc('duesPayments/teamA').set(payments('kim', { venmo: 'x'.repeat(Limits.duePayHandleMax + 1) })));
+    // Not once the admins unmark them, or on an archived team.
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groupMembers/teamA_kim').update({ coach: false }));
+    await assertFails(as('kim').doc('duesPayments/teamA').set(payments('kim')));
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groupMembers/teamA_kim').update({ coach: true }));
+    await setGroup('teamA', { archivedAt: OLD });
+    await assertFails(as('kim').doc('duesPayments/teamA').set(payments('kim')));
+  });
+
+  it('a basic group has no coaches: a coach flag there writes nothing', async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groupMembers/clubC_ivan').update({ coach: true }));
+    await assertFails(as('ivan').doc('duesPayments/clubC').set(payments('ivan', { groupId: 'clubC' })));
   });
 
   it('admins and super admins write it, and members never do', async () => {

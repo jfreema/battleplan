@@ -2,12 +2,16 @@
 // (SPEC DUES-1, DUES-2, ARCH §6.2). A due and its charges change together,
 // in one batch, so nobody sees a due without its charges, or charges with
 // another due's terms. Marking a charge paid, and how to pay the team, stay
-// in the app under the rules.
+// in the app under the rules. The names on charges follow renames, and a
+// deleted account's own charges read "Deleted user" (AUTH-10).
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { audit } from '../audit/service.js';
+import { DELETED_USER_NAME } from '../chat/service.js';
 import { db } from '../shared/admin.js';
+import { forEachPage } from '../shared/batch.js';
 import { Collections, ID_SEPARATOR, Limits } from '../shared/constants.js';
 import { dueChargeId, groupMemberId } from '../shared/ids.js';
 import { requireTeamAdmin } from '../shared/roles.js';
@@ -30,7 +34,8 @@ const docId = z
 
 /**
  * saveDue's input: a new due when there's no dueId, with who owes it, or
- * an edit of one. Titles and notes longer than their limits are clipped.
+ * an edit of one, with anyone to add to it. Titles and notes longer than
+ * their limits are clipped.
  */
 export const SaveDueInput = z.object({
   groupId: docId,
@@ -40,6 +45,9 @@ export const SaveDueInput = z.object({
   dueOn: z.string().regex(DAY).nullable(),
   note: z.string().max(5000).default(''),
   participantIds: z.array(docId).max(Limits.duesChargesMax * 2).optional(),
+  // The app's ID for one new due, the same on every retry of it, so a
+  // retry after a lost reply gets back that due, not a second one.
+  requestId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional(),
 });
 export type SaveDueInput = z.infer<typeof SaveDueInput>;
 
@@ -107,40 +115,71 @@ async function payersOf(groupId: string, isGroup: boolean, ids: string[]): Promi
 }
 
 /**
+ * The due ID for one create attempt: the same for every retry of it by the
+ * same person, and unguessable without their requestId. Twenty hex
+ * characters, like Firestore's own IDs in length.
+ */
+export function dueIdFor(uid: string, requestId: string): string {
+  return createHash('sha256').update(`due:${uid}:${requestId}`).digest('hex').slice(0, 20);
+}
+
+/** A new owed charge of [dueId] for [p], with the due's terms (the note too, DUES-2). */
+function newCharge(groupId: string, dueId: string, terms: DueTerms, p: Payer, uid: string) {
+  return {
+    groupId,
+    dueId,
+    title: terms.title,
+    amountCents: terms.amountCents,
+    dueOn: terms.dueOn,
+    note: terms.note,
+    participantType: p.type,
+    participantId: p.id,
+    participantName: p.name,
+    status: 'owed',
+    paidAt: null,
+    updatedBy: uid,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+}
+
+/**
  * Adds a due and a charge, owed, for each of [participantIds], in one
  * batch (up to 101 writes). Team admins and super admins, on a team that
  * isn't archived; never in a direct conversation. Returns the due's ID.
+ * With a [requestId], the due's ID comes from it, so a retry of an attempt
+ * whose reply was lost gets back the due it made, not a second one.
  */
 export async function createDue(
   groupId: string,
   terms: DueTerms,
   participantIds: string[],
   actor: Actor,
+  requestId?: string,
 ): Promise<string> {
   await requireTeamAdmin(groupId, actor.uid, actor.superAdmin);
+  const dues = db().collection(Collections.dues);
+  const due = requestId ? dues.doc(dueIdFor(actor.uid, requestId)) : dues.doc();
+  const alreadyMade = async () => {
+    if (!requestId) return false;
+    const d = await due.get();
+    return d.exists && d.get('groupId') === groupId && d.get('createdBy') === actor.uid;
+  };
+  if (await alreadyMade()) return due.id;
   const group = await db().collection(Collections.groups).doc(groupId).get();
   const payers = await payersOf(groupId, group.get('kind') === 'group', participantIds);
-  const due = db().collection(Collections.dues).doc();
   const now = FieldValue.serverTimestamp();
   const batch = db().batch();
   batch.create(due, { groupId, ...terms, createdBy: actor.uid, createdAt: now, updatedAt: now });
   for (const p of payers) {
-    batch.create(db().collection(Collections.dueCharges).doc(dueChargeId(due.id, p.id)), {
-      groupId,
-      dueId: due.id,
-      title: terms.title,
-      amountCents: terms.amountCents,
-      dueOn: terms.dueOn,
-      participantType: p.type,
-      participantId: p.id,
-      participantName: p.name,
-      status: 'owed',
-      paidAt: null,
-      updatedBy: actor.uid,
-      updatedAt: now,
-    });
+    batch.create(db().collection(Collections.dueCharges).doc(dueChargeId(due.id, p.id)), newCharge(groupId, due.id, terms, p, actor.uid));
   }
-  await batch.commit();
+  try {
+    await batch.commit();
+  } catch (e) {
+    // Two copies of one attempt at the same moment: the other made it.
+    if ((e as { code?: number }).code === 6 && (await alreadyMade())) return due.id;
+    throw e;
+  }
   return due.id;
 }
 
@@ -159,13 +198,33 @@ function chargesOf(groupId: string, dueId: string): FirebaseFirestore.Query {
 }
 
 /**
- * Changes a due's terms and copies its title, amount, and date to every
- * one of its charges, in one batch. Whether each is paid stays.
+ * Changes a due's terms and copies its title, amount, date, and note to
+ * every one of its charges, in one batch. Whether each is paid stays.
+ * [addIds] are people to add to it (a player who joined after it was made),
+ * each with a new owed charge, checked as a new due's are; anyone already
+ * on it is skipped, nobody is taken off, and the due still charges at most
+ * duesChargesMax people.
  */
-export async function editDue(groupId: string, dueId: string, terms: DueTerms, actor: Actor): Promise<void> {
+export async function editDue(
+  groupId: string,
+  dueId: string,
+  terms: DueTerms,
+  actor: Actor,
+  addIds: string[] = [],
+): Promise<void> {
   await requireTeamAdmin(groupId, actor.uid, actor.superAdmin);
   const due = await dueOn(groupId, dueId);
   const charges = await chargesOf(groupId, dueId).get();
+  const onIt = new Set(charges.docs.map((c) => String(c.get('participantId'))));
+  const newIds = [...new Set(addIds)].filter((id) => !onIt.has(id));
+  let added: Payer[] = [];
+  if (newIds.length) {
+    if (onIt.size + newIds.length > Limits.duesChargesMax) {
+      throw new HttpsError('invalid-argument', 'due-payers');
+    }
+    const group = await db().collection(Collections.groups).doc(groupId).get();
+    added = await payersOf(groupId, group.get('kind') === 'group', newIds);
+  }
   const now = FieldValue.serverTimestamp();
   const batch = db().batch();
   batch.update(due.ref, { ...terms, updatedAt: now });
@@ -174,9 +233,13 @@ export async function editDue(groupId: string, dueId: string, terms: DueTerms, a
       title: terms.title,
       amountCents: terms.amountCents,
       dueOn: terms.dueOn,
+      note: terms.note,
       updatedBy: actor.uid,
       updatedAt: now,
     });
+  }
+  for (const p of added) {
+    batch.create(db().collection(Collections.dueCharges).doc(dueChargeId(dueId, p.id)), newCharge(groupId, dueId, terms, p, actor.uid));
   }
   await batch.commit();
 }
@@ -206,4 +269,34 @@ export async function deleteDueAndCharges(dueId: string, actor: Actor): Promise<
       before: { title: due.get('title') ?? null, createdBy: createdBy || null },
     });
   }
+}
+
+/**
+ * Keeps the name on [type] [id]'s charges (dueCharges.participantName,
+ * cache ← players or the member's profile) in step after a rename or a new
+ * jersey number, on every due, paid ones too, so admins and families see
+ * who it is now ("Emma #12", not "Emma #7").
+ */
+export async function renameDueCharges(type: 'player' | 'member', id: string, name: string): Promise<number> {
+  const clipped = clip(name, 80);
+  if (!clipped) return 0;
+  return forEachPage(
+    db().collection(Collections.dueCharges).where('participantType', '==', type).where('participantId', '==', id),
+    (b, d) => {
+      if (d.get('participantName') !== clipped) b.update(d.ref, { participantName: clipped });
+    },
+  );
+}
+
+/**
+ * A deleted account's dues (AUTH-10). Their own charges in a group stay
+ * with its admins as part of its record, what was owed and paid, but read
+ * "Deleted user"; a player's charges keep the player's name, as the player
+ * stays on the roster. How to pay that they saved last is removed, so
+ * nobody is pointed at the payment handles of someone who's gone; the
+ * team's admins can add it again.
+ */
+export async function removeAccountFromDues(uid: string): Promise<void> {
+  await renameDueCharges('member', uid, DELETED_USER_NAME);
+  await forEachPage(db().collection(Collections.duesPayments).where('updatedBy', '==', uid), (b, d) => b.delete(d.ref));
 }

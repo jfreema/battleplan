@@ -156,6 +156,8 @@ class PageRows extends StatelessWidget {
 /// [leading]) in the text color, the title in Nunito 700 16/21, the
 /// subtitle in Nunito 600 14/19 muted, and a 20 px chevron when it opens
 /// something. [destructive] puts the icon and title in the accent text.
+/// Screen readers hear the row as one item; with [trailingActions], the
+/// buttons in [trailing] stay items of their own.
 class PageRow extends StatelessWidget {
   const new({
     required this.title,
@@ -164,6 +166,7 @@ class PageRow extends StatelessWidget {
     this.subtitle,
     this.onTap,
     this.trailing,
+    this.trailingActions = false,
     this.chevron = true,
     this.destructive = false,
     this.subtitleMaxLines = 1,
@@ -187,6 +190,11 @@ class PageRow extends StatelessWidget {
 
   /// In place of the chevron.
   final Widget? trailing;
+
+  /// [trailing] has buttons of its own (Copy, Clear date): they stay out of
+  /// the row's one screen-reader item, which taps the row, so each can be
+  /// reached and pressed. The row's ink and tap then end where they start.
+  final bool trailingActions;
   final bool chevron;
   final bool destructive;
 
@@ -208,7 +216,13 @@ class PageRow extends StatelessWidget {
                 color: c.textMutedOnPage,
               )
             : null);
-    return MergeSemantics(
+    final apart = trailingActions && end != null;
+    // Gives way to the title at large text sizes, at most under half the
+    // row.
+    final endBox = BoxConstraints(
+      maxWidth: MediaQuery.sizeOf(context).width * 0.45,
+    );
+    final item = MergeSemantics(
       child: Semantics(
         button: onTap != null,
         child: FocusRingInk(
@@ -253,16 +267,9 @@ class PageRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (end != null) ...[
+                  if (end != null && !apart) ...[
                     const SizedBox(width: 14),
-                    // Gives way to the title at large text sizes, at most
-                    // under half the row.
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.sizeOf(context).width * 0.45,
-                      ),
-                      child: end,
-                    ),
+                    ConstrainedBox(constraints: endBox, child: end),
                   ],
                 ],
               ),
@@ -270,6 +277,14 @@ class PageRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+    if (!apart) return item;
+    return Row(
+      children: [
+        Expanded(child: item),
+        const SizedBox(width: 14),
+        ConstrainedBox(constraints: endBox, child: end),
+      ],
     );
   }
 }
