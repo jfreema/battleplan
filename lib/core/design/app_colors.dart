@@ -1,3 +1,4 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:material_ui/material_ui.dart';
@@ -49,11 +50,13 @@ class AppColors extends ThemeExtension<AppColors> {
     );
   }
 
-  /// Gumdrop Pop Dark's, for a bare MaterialApp (some tests).
+  /// Army green's, for a bare MaterialApp (some tests).
   static final fallback = AppColors.fromGumdrop(
-    GumdropColors.dark,
-    backgrounds: [GumdropColors.dark.page, GumdropColors.dark.surface],
+    _army,
+    backgrounds: [_army.page, _army.surface],
   );
+
+  static final GumdropColors _army = GumdropColors.forScheme(TeamScheme.army);
 
   final Color going;
   final Color maybe;

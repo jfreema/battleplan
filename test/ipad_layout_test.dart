@@ -45,6 +45,7 @@ const teamRoutes = [
   '/g/a/notifications',
   '/g/a/info',
   '/g/a/settings',
+  '/g/a/scheme',
   '/g/a/media',
   '/g/a/reports',
   '/g/a/import',
@@ -53,7 +54,7 @@ const teamRoutes = [
   '/g/a/who',
   '/teams',
   '/profile',
-  '/themes',
+  '/teams/scheme',
   '/notifications',
   '/settings',
   '/settings/sign-in-methods',
@@ -87,7 +88,7 @@ void main() {
       ..viewPadding = const FakeViewPadding(top: 24);
     await pumpTeam(
       tester,
-      theme: ThemePreference.dark,
+      scheme: TeamScheme.navy,
       size: ipadSizes['iPad Pro 13-inch, portrait']!,
     );
     expect(
@@ -112,7 +113,7 @@ void main() {
       });
 
       testWidgets("every team member's screen", (tester) async {
-        await pumpTeam(tester, theme: ThemePreference.dark, size: size);
+        await pumpTeam(tester, scheme: TeamScheme.navy, size: size);
         expect(tester.takeException(), isNull);
         for (final route in teamRoutes) {
           await visit(tester, route, name);
@@ -120,12 +121,7 @@ void main() {
       });
 
       testWidgets("the super admin's panel", (tester) async {
-        await pumpTeam(
-          tester,
-          theme: ThemePreference.dark,
-          size: size,
-          user: boss,
-        );
+        await pumpTeam(tester, scheme: TeamScheme.navy, size: size, user: boss);
         for (final route in adminRoutes) {
           await visit(tester, route, name);
         }

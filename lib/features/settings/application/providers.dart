@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
@@ -13,34 +16,90 @@ part 'providers.g.dart';
 LocalPrefsRepository localPrefsRepository(Ref ref) =>
     throw UnimplementedError('Wired in app/providers.dart');
 
-/// System, light, or dark (SPEC SET-2). Applies instantly and is remembered.
+/// My default color scheme (SET-2): this device's copy at once, then the
+/// account's, which wins (another device may have changed it). The profile is
+/// watched, not listened to, so a profile that loaded before this provider was
+/// first read still counts.
 @Riverpod(keepAlive: true)
-class ThemePreferenceController extends _$ThemePreferenceController {
+class DefaultSchemeController extends _$DefaultSchemeController {
   @override
-  ThemePreference build() {
-    // The account's setting follows the person to new devices (SET-2): when
-    // the profile arrives or changes, it wins over this device's copy.
-    ref.listen(myProfileProvider, (_, next) {
-      final synced = next.value?.themeMode;
-      if (synced != null && synced != state) unawaited(_saveLocal(synced));
-    });
-    return ref.watch(localPrefsRepositoryProvider).themePreference;
+  TeamScheme build() {
+    final uid = ref.watch(authUserProvider.select((a) => a.value?.uid));
+    final prefs = ref.watch(localPrefsRepositoryProvider);
+    final local = prefs.defaultScheme(uid: uid);
+    // Only the signed-in account's profile: right after a switch, the
+    // previous one may still be the last value.
+    final synced = ref.watch(
+      myProfileProvider.select(
+        (p) => p.value?.uid == uid ? p.value?.defaultScheme : null,
+      ),
+    );
+    if (uid != null && synced != null && synced != local) {
+      unawaited(prefs.setDefaultScheme(uid, synced));
+    }
+    return synced ?? local;
   }
 
-  Future<void> _saveLocal(ThemePreference value) async {
+  /// Applies at once, is remembered on this device, and syncs to
+  /// users.colorScheme. The profile stream then carries the same value; if
+  /// the write fails, the old value comes back and the error is rethrown.
+  Future<void> set(TeamScheme value) async {
+    final old = state;
+    if (value == old) return;
     state = value;
-    await ref.read(localPrefsRepositoryProvider).setThemePreference(value);
-  }
-
-  /// Applies at once, is remembered on this device, and syncs to the account.
-  Future<void> set(ThemePreference value) async {
-    await _saveLocal(value);
     final uid = ref.read(authUserProvider).value?.uid;
     if (uid == null) return;
+    final prefs = ref.read(localPrefsRepositoryProvider);
+    await prefs.setDefaultScheme(uid, value);
     try {
-      await ref.read(userRepositoryProvider).setThemeMode(uid, value);
+      await ref.read(userRepositoryProvider).setColorScheme(uid, value);
     } on Object catch (e) {
-      Log.warn('Theme sync failed', e);
+      Log.warn('Color scheme sync failed', e);
+      if (ref.mounted) state = old;
+      await prefs.setDefaultScheme(uid, old);
+      rethrow;
     }
   }
+}
+
+/// The scheme outside a team: Army green signed out, else my default.
+@Riverpod(keepAlive: true)
+TeamScheme appScheme(Ref ref) {
+  // Watched always and first, so the controller exists from the first frame.
+  final mine = ref.watch(defaultSchemeControllerProvider);
+  final auth = ref.watch(authUserProvider);
+  // Army green only once auth has loaded with nobody signed in. While it
+  // restores, `mine` is the cached default, so a cold start doesn't flash.
+  return auth.hasValue && auth.value == null ? TeamScheme.army : mine;
+}
+
+/// The scheme I see [groupId] in: my pick on my membership, else my default.
+@Riverpod(keepAlive: true)
+TeamScheme teamScheme(Ref ref, GroupId groupId) {
+  final mine = ref.watch(myMembershipProvider(groupId));
+  final fallback = ref.watch(defaultSchemeControllerProvider);
+  if (mine != null) return mine.colorScheme ?? fallback;
+  // Memberships still loading: this device's last copy, so a cold start into
+  // a team paints in the right scheme on its first frame.
+  final uid = ref.watch(authUserProvider.select((a) => a.value?.uid));
+  return ref
+          .watch(localPrefsRepositoryProvider)
+          .teamScheme(groupId.value, uid: uid) ??
+      fallback;
+}
+
+/// Keeps this device's copy of my team picks current (for [teamScheme] on
+/// a cold start): watched at the app root.
+@Riverpod(keepAlive: true)
+void teamSchemeCache(Ref ref) {
+  ref.listen(myMembershipsProvider, (_, next) {
+    final uid = ref.read(authUserProvider).value?.uid;
+    final list = next.value;
+    if (uid == null || list == null) return;
+    unawaited(
+      ref.read(localPrefsRepositoryProvider).setTeamSchemes(uid, {
+        for (final m in list) m.groupId.value: ?m.colorScheme,
+      }),
+    );
+  }, fireImmediately: true);
 }

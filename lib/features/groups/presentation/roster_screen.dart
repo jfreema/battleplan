@@ -9,6 +9,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
@@ -1003,7 +1004,7 @@ class _SharedContact extends ConsumerWidget {
 
   Future<void> _edit(BuildContext context, WidgetRef ref, String team) async {
     final account = ref.read(authUserProvider).value?.email;
-    final result = await showDialog<({String? phone, String? email})>(
+    final result = await showCardDialog<({String? phone, String? email})>(
       context: context,
       builder: (_) => _ContactDialog(
         team: team,

@@ -464,6 +464,22 @@ void main() {
       ),
     ]);
 
+    testWidgets('Team info has no Color scheme, and its route goes back', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        '/g/t1/info',
+        groupRepo: youthTeam(),
+        memberRepo: thunderPeople(),
+      );
+      expect(find.text('Color scheme'), findsNothing);
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/t1/scheme');
+      await tester.pumpAndSettle();
+      expect(find.text('Light blue'), findsNothing);
+    });
+
     testWidgets('Roster and Member card: owner powers', (tester) async {
       final members = thunderPeople();
       await open(

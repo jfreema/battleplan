@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
@@ -175,7 +176,7 @@ class _PlayCard extends StatelessWidget {
 Future<NewPlayChoice?> showNewPlaySheet(
   BuildContext context,
   PlayBoard suggested,
-) => showModalBottomSheet<NewPlayChoice>(
+) => showCardSheet<NewPlayChoice>(
   context: context,
   isScrollControlled: true,
   showDragHandle: true,

@@ -11,6 +11,7 @@ import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/about_battleplan.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
@@ -87,7 +88,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
   Future<void> _changeTimeZone(Group group, TeamEditor repo) async {
     final zones = await ref.read(timeZonesProvider).available();
     if (!mounted) return;
-    final picked = await showDialog<String>(
+    final picked = await showCardDialog<String>(
       context: context,
       builder: (context) => TimeZonePicker(
         zones: TimeZoneNames.ordered(zones, keep: [group.timeZone]),
@@ -103,7 +104,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     final members = await ref.read(rosterProvider(group.id).future);
     final others = members.where((m) => m.role != MemberRole.owner).toList();
     if (!mounted) return;
-    final picked = await showDialog<Membership>(
+    final picked = await showCardDialog<Membership>(
       context: context,
       builder: (context) => SimpleDialog(
         title: Text(l10n.transferTo),
@@ -155,7 +156,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
   Future<void> _convert(Group group) async {
     final l10n = AppLocalizations.of(context);
     var sport = Sport.baseball;
-    final ok = await showDialog<bool>(
+    final ok = await showCardDialog<bool>(
       context: context,
       builder: (dialog) => StatefulBuilder(
         builder: (dialog, setDialog) => AlertDialog(
@@ -299,7 +300,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     const headingGap = SizedBox(height: 10);
     final look = group.chatTheme ?? const ChatTheme();
     final candy = look.bubbleColor == null
-        ? chatCandyOrder(c.flavor).first
+        ? chatCandyOrder.first
         : ChatCandy.fromStored(look.bubbleColor);
     final lookColor = candy == null
         ? l10n.teamColorOption

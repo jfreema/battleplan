@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
@@ -10,6 +11,7 @@ import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:battleplan/features/groups/presentation/color_scheme_screen.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
@@ -68,11 +70,23 @@ class TeamsScreen extends ConsumerWidget {
       ],
     );
 
+    // My default color scheme (SET-2): Teams, Profile, and every team I
+    // haven't picked for.
+    final defaultScheme = ref.watch(defaultSchemeControllerProvider);
+    final schemeSection = _SchemeSection(
+      child: SchemeRow(
+        scheme: defaultScheme,
+        title: l10n.defaultColorScheme,
+        subtitle: l10n.defaultColorSchemeSubtitle(defaultScheme.label(l10n)),
+        onTap: () => unawaited(context.push('/teams/scheme')),
+      ),
+    );
+
     final Widget body;
     if (teams.isLoading && !teams.hasValue) {
       body = const SkeletonList();
     } else if (mine.isEmpty) {
-      body = _Welcome(joinOrCreate: joinOrCreate);
+      body = _Welcome(joinOrCreate: joinOrCreate, schemes: schemeSection);
     } else {
       body = ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, Space.xl),
@@ -94,6 +108,7 @@ class TeamsScreen extends ConsumerWidget {
             ),
           const SizedBox(height: Space.sm),
           joinOrCreate,
+          schemeSection,
         ],
       );
     }
@@ -247,9 +262,10 @@ class _TeamCard extends ConsumerWidget {
 /// No team yet (SPEC §5.1): what the app is for, then Join a team and
 /// Create a team.
 class _Welcome extends StatelessWidget {
-  const new({required this.joinOrCreate});
+  const new({required this.joinOrCreate, required this.schemes});
 
   final Widget joinOrCreate;
+  final Widget schemes;
 
   @override
   Widget build(BuildContext context) {
@@ -275,8 +291,50 @@ class _Welcome extends StatelessWidget {
           ),
           const SizedBox(height: Space.xl),
           joinOrCreate,
+          schemes,
         ],
       ),
+    );
+  }
+}
+
+/// The Color scheme section under the rows: its caps label, then the
+/// Default color scheme row between hairlines.
+class _SchemeSection extends StatelessWidget {
+  const new({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
+    final label = l10n.colorSchemeSection;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            label.toUpperCase(),
+            semanticsLabel: label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontSize: 13,
+              height: 16 / 13,
+              letterSpacing: 13 * 0.12,
+              color: c.textMutedOnPage,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(height: 1, color: c.divider),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: child,
+        ),
+        Container(height: 1, color: c.divider),
+      ],
     );
   }
 }

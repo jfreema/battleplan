@@ -3,6 +3,7 @@
 import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/fonts.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/haptics.dart';
@@ -19,6 +20,7 @@ import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'helpers/fakes.dart';
@@ -258,28 +260,80 @@ void main() {
     });
   });
 
-  testWidgets("Profile's Themes switches the theme in one tap (SET-2)", (
-    tester,
-  ) async {
-    final users = FakeUserRepository();
-    await pumpApp(
+  group('color schemes (SET-2)', () {
+    Color page(WidgetTester tester) =>
+        Theme.of(tester.element(find.byType(Scaffold).last))
+            .scaffoldBackgroundColor;
+
+    testWidgets('Teams shows my default and the picker changes it', (
       tester,
-      auth: FakeAuthRepository(user: coach),
-      groups: {'a': testGroup('a', 'Thunder')},
-      memberships: [testMembership('a', 'coach')],
-      users: users,
-    );
-    await openProfile(tester);
-    // Olive is the default, so it's the one Themes names.
-    expect(find.text('Gumdrop Army'), findsOneWidget);
-    await tester.tap(find.text('Themes'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Gumdrop Candy'));
-    await tester.pumpAndSettle();
-    expect(users.themeMode, ThemePreference.candy);
-    await tester.tap(find.byTooltip('Back'));
-    await tester.pumpAndSettle();
-    expect(find.text('Gumdrop Candy'), findsOneWidget);
+    ) async {
+      final users = FakeUserRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberships: [testMembership('a', 'coach')],
+        users: users,
+      );
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/teams');
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Default color scheme'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      // A new account starts on Army green.
+      expect(find.text('Army green · new teams start here'), findsOneWidget);
+      await tester.tap(find.text('Default color scheme'));
+      await tester.pumpAndSettle();
+      expect(page(tester), SchemeRoles.army.page);
+      // The checked row writes nothing.
+      await tester.tap(find.text('Army green'));
+      await tester.pumpAndSettle();
+      expect(users.colorScheme, isNull);
+      await tester.tap(find.text('Navy'));
+      await tester.pumpAndSettle();
+      expect(users.colorScheme, TeamScheme.navy);
+      expect(page(tester), SchemeRoles.navy.page);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Navy, '))),
+        isSemantics(isSelected: true, isButton: true, hasTapAction: true),
+      );
+      // Teams follows the new default.
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(page(tester), SchemeRoles.navy.page);
+      expect(find.text('Navy · new teams start here'), findsOneWidget);
+    });
+
+    testWidgets('Team info → Color scheme saves my pick for the team', (
+      tester,
+    ) async {
+      final members = FakeMemberRepository([testMembership('a', 'coach')]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', 'Thunder')},
+        memberRepo: members,
+      );
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/info');
+      await tester.pumpAndSettle();
+      expect(find.text('Color scheme'), findsOneWidget);
+      await tester.tap(find.text('Color scheme'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('How Thunder looks for you.'), findsOneWidget);
+      await tester.tap(find.text('Army green'));
+      await tester.pumpAndSettle();
+      expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
+      await tester.tap(find.text('Light blue'));
+      await tester.pumpAndSettle();
+      expect(members.calls, contains('scheme a skyblue'));
+      // The team's screens re-theme at once.
+      expect(page(tester), SchemeRoles.skyblue.page);
+    });
   });
 
   group('web parity (SPEC §4.2)', () {

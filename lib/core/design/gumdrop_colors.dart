@@ -1,29 +1,7 @@
-import 'package:battleplan/core/design/arena/arena_theme.dart';
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/color_math.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// The Gumdrop themes (SPEC SET-2).
-enum GumdropFlavor {
-  /// Gumdrop Pop Olive: an olive page, cream cards, coral accents, the
-  /// default.
-  olive,
-
-  /// Gumdrop Pop Dark: navy page.
-  dark,
-
-  /// Gumdrop Pop Light: pale page, white cards.
-  light,
-
-  /// Gumdrop Candy: blue page, white cards, navy ink.
-  candy,
-
-  /// Gumdrop Arena: a deep violet page with a game-day feel
-  /// (arena/arena_theme.dart).
-  arena;
-
-  /// Whether its page and cards are dark, with light text.
-  bool get isDark => this == dark || this == arena;
-}
 
 /// One candy color: the gumdrop's [face], the hard [lip] under it, and
 /// [text], the color for writing in this hue on the theme's cards.
@@ -55,20 +33,19 @@ class GumdropAccent {
   int get hashCode => Object.hash(face, lip, text);
 }
 
-/// Every color role of a Gumdrop theme, as the theme extension screens read
-/// with [GumdropColors.of]. The values are the design's tokens (Gumdrop Pop
-/// design tokens §1a to §1c); a team's color tints the page and the
-/// surfaces under it (team_tint.dart).
+/// Every color role of an Open Field color scheme (SPEC SET-2, §7.4), as
+/// the theme extension screens read with [GumdropColors.of]. The values
+/// come from the scheme's [SchemeRoles] ([forScheme]).
 ///
-/// Two contexts: on the page (the default), and on a card ([onCard]). They
-/// differ where the page is a color of its own ([coloredPage]): Candy's
-/// blue page with white text and white cards with navy text, or a team's
-/// color behind a team's screens in any theme. [card] gives the card
-/// context, and `GumdropSurface` applies it to a subtree.
+/// Two contexts: on the page (the default), and on a card ([onCard]),
+/// where a few roles differ (muted text, outlines, the candies' text
+/// shades). [card] gives the card context, and `GumdropSurface` applies it
+/// to a subtree.
 @immutable
 class GumdropColors extends ThemeExtension<GumdropColors> {
   const new({
-    required this.flavor,
+    required this.scheme,
+    required this.roles,
     required this.page,
     required this.surface,
     required this.surfaceBorder,
@@ -97,6 +74,15 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     required this.selectedRingOuter,
     required this.swatchInsetRing,
     required this.badgeRing,
+    required this.outline,
+    required this.tabBar,
+    required this.tabBarLine,
+    required this.fieldRim,
+    required this.cardTrack,
+    required this.cardOutline,
+    required this.avatarRing,
+    required this.accentMark,
+    required this.notGoingIcon,
     required this.you,
     required this.blueRaspberry,
     required this.lemon,
@@ -105,345 +91,115 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     required this.tangerine,
     required this.grape,
     required this.bubblegum,
-    this._sticker,
-    this.teamColor,
+    required this.sticker,
     this.onCard = false,
-    this.coloredPage = false,
   });
 
-  /// Gumdrop Pop Olive (design V1 Olive, from the owner's team t-shirt), the
-  /// default: an olive page with cream text, cream cards and buttons with ink
-  /// outlines and lips, coral for your messages, the sticker, and the back
-  /// button, and Candy's candies, every one on an ink lip.
-  static const olive = GumdropColors(
-    flavor: GumdropFlavor.olive,
-    coloredPage: true,
-    page: Color(0xFF474C2B),
-    surface: Color(0xFFF4EAD0),
-    surfaceBorder: Color(0xFFF4EAD0),
-    surfaceBorderWidth: 1,
-    raisedFace: Color(0xFFF4EAD0),
-    raisedBorder: Color(0xFF1A1A18),
-    raisedBorderWidth: 2,
-    raisedHighlight: Color(0x99FFFFFF),
-    raisedLip: Color(0xFF1A1A18),
-    well: Color(0xFFE6DCBF),
-    inputFill: Color(0xFFE6DCBF),
-    inputBorder: Color(0xFF1A1A18),
-    divider: Color(0xFFDDD2B3),
-    switchOffTrack: Color(0xFFE6DCBF),
-    textPrimary: Color(0xFF1A1A18),
-    textMuted: Color(0xFF5B5840),
-    textOnPage: Color(0xFFF4EAD0),
-    textMutedOnPage: Color(0xFFF4EAD0),
-    successOnPage: Color(0xFFB5FAD0),
-    ink: Color(0xFF1A1A18),
-    headingText: Color(0xFFF4EAD0),
-    headingShadow: Color(0xFF1A1A18),
-    headingTextOnCard: Color(0xFF1A1A18),
-    // Plain ink on the cards: a coral shadow under it looked smudged
-    // (owner, 2026-10-27).
-    headingShadowOnCard: Color(0x00000000),
-    pageShadow: Color(0xFF1A1A18),
-    selectedRingOuter: Color(0xFFFFF9EC),
-    swatchInsetRing: Color(0xFF1A1A18),
-    badgeRing: Color(0xFF474C2B),
-    you: GumdropAccent(
-      face: Color(0xFFF45B5B),
-      lip: Color(0xFF1A1A18),
-      text: Color(0xFFC0262F),
-    ),
-    blueRaspberry: GumdropAccent(
-      face: Color(0xFF79BBFF),
-      lip: Color(0xFF1A1A18),
-      text: Color(0xFF2A63C9),
-    ),
-    lemon: GumdropAccent(
-      face: Color(0xFFF8D84A),
-      lip: Color(0xFF1A1A18),
-      text: Color(0xFF755A00),
-    ),
-    mint: GumdropAccent(
-      face: Color(0xFF58C173),
-      lip: Color(0xFF1A1A18),
-      text: Color(0xFF137236),
-    ),
-    cherry: GumdropAccent(
-      face: Color(0xFFF45B5B),
-      lip: Color(0xFF1A1A18),
-      text: Color(0xFFC0262F),
-    ),
-    tangerine: GumdropAccent(
-      face: Color(0xFFEE8131),
-      lip: Color(0xFF1A1A18),
-      text: Color(0xFF9E4B0A),
-    ),
-    grape: GumdropAccent(
-      face: Color(0xFFA57CF5),
-      lip: Color(0xFF1A1A18),
-      text: Color(0xFF6C46CC),
-    ),
-    bubblegum: GumdropAccent(
-      face: Color(0xFFEB50A2),
-      lip: Color(0xFF1A1A18),
-      text: Color(0xFFAE2770),
-    ),
-    sticker: GumdropAccent(
-      face: Color(0xFFF45B5B),
-      lip: Color(0xFF1A1A18),
-      text: Color(0xFFC0262F),
-    ),
-  );
+  /// The colors of [scheme], on the page or ([onCard]) on a card.
+  // A static, not a factory: the name reads as what it picks (spec 4.3).
+  // ignore: prefer_constructors_over_static_methods
+  static GumdropColors forScheme(TeamScheme scheme, {bool onCard = false}) {
+    final r = SchemeRoles.of(scheme);
+    GumdropAccent candy(
+      Color face,
+      Color lip,
+      Color pageText,
+      Color cardText,
+    ) =>
+        GumdropAccent(face: face, lip: lip, text: onCard ? cardText : pageText);
+    final coral = candy(
+      CandyFaces.coral,
+      r.candyLipCoral,
+      r.accentText,
+      r.cardAccentText,
+    );
+    return GumdropColors(
+      scheme: scheme,
+      roles: r,
+      onCard: onCard,
+      page: r.page,
+      surface: r.card,
+      surfaceBorder: r.cardRim,
+      surfaceBorderWidth: 2,
+      raisedFace: const Color(0x00000000),
+      raisedBorder: onCard ? r.cardOutline : r.outline,
+      raisedBorderWidth: 2,
+      raisedHighlight: const Color(0x00000000),
+      raisedLip: const Color(0x00000000),
+      well: onCard ? r.cardTrack : r.field,
+      inputFill: r.field,
+      inputBorder: onCard ? r.cardOutline : r.outline,
+      divider: onCard ? r.cardTrack : r.hairline,
+      switchOffTrack: onCard ? r.cardTrack : r.field,
+      textPrimary: r.text,
+      textMuted: r.cardMuted,
+      textOnPage: r.text,
+      textMutedOnPage: onCard ? r.cardMuted : r.pageMuted,
+      successOnPage: onCard ? r.cardGoingText : r.goingText,
+      ink: r.candyInk,
+      headingText: r.text,
+      headingShadow: onCard ? const Color(0x00000000) : r.titleDrop,
+      headingTextOnCard: r.text,
+      headingShadowOnCard: const Color(0x00000000),
+      pageShadow: r.cardRim,
+      selectedRingOuter: r.text,
+      swatchInsetRing: onCard ? r.cardOutline : r.outline,
+      badgeRing: onCard ? r.card : r.page,
+      outline: onCard ? r.cardOutline : r.outline,
+      tabBar: r.tabbar,
+      tabBarLine: r.tabbarLine,
+      fieldRim: r.fieldRim,
+      cardTrack: r.cardTrack,
+      cardOutline: r.cardOutline,
+      avatarRing: r.avatarRing,
+      accentMark: r.accentMark,
+      notGoingIcon: onCard ? r.cardAccentText : r.notGoingIcon,
+      you: coral,
+      cherry: coral,
+      sticker: coral,
+      mint: candy(
+        CandyFaces.mint,
+        r.candyLipMint,
+        r.goingText,
+        r.cardGoingText,
+      ),
+      lemon: candy(CandyFaces.lemon, r.candyLipLemon, r.maybeText, r.maybeText),
+      tangerine: candy(
+        CandyFaces.tangerine,
+        r.candyLipTangerine,
+        r.gameText,
+        r.typeGame,
+      ),
+      grape: candy(
+        CandyFaces.grape,
+        r.grapeLip,
+        r.grapePageText,
+        r.typePractice,
+      ),
+      bubblegum: candy(
+        CandyFaces.bubblegum,
+        r.bubblegumLip,
+        r.bubblegumPageText,
+        r.typeOther,
+      ),
+      blueRaspberry: candy(
+        CandyFaces.blueRaspberry,
+        r.blueRaspberryLip,
+        r.blueRaspberryPageText,
+        r.blueRaspberryCardText,
+      ),
+    );
+  }
 
-  /// Gumdrop Pop Dark (tokens "Navy").
-  static const dark = GumdropColors(
-    flavor: GumdropFlavor.dark,
-    page: Color(0xFF0B1531),
-    surface: Color(0xFF16244A),
-    surfaceBorder: Color(0x0FFFFFFF),
-    surfaceBorderWidth: 1,
-    raisedFace: Color(0xFF22355F),
-    raisedBorder: Color(0x00000000),
-    raisedBorderWidth: 0,
-    raisedHighlight: Color(0x1AFFFFFF),
-    raisedLip: Color(0xFF050C1F),
-    well: Color(0xFF07102A),
-    inputFill: Color(0xFF07102A),
-    inputBorder: Color(0xFF2D4274),
-    divider: Color(0xFF2D4274),
-    switchOffTrack: Color(0xFF22355F),
-    textPrimary: Color(0xFFF2F6FF),
-    textMuted: Color(0xFFB2BFE0),
-    textOnPage: Color(0xFFF2F6FF),
-    textMutedOnPage: Color(0xFFB2BFE0),
-    successOnPage: Color(0xFF5FE69A),
-    ink: Color(0xFF0B1531),
-    headingText: Color(0xFFFFFFFF),
-    headingShadow: Color(0xFF2A63C9),
-    headingTextOnCard: Color(0xFFFFFFFF),
-    headingShadowOnCard: Color(0xFF2A63C9),
-    pageShadow: Color(0xFF2A63C9),
-    selectedRingOuter: Color(0xFFF2F6FF),
-    swatchInsetRing: Color(0x2EFFFFFF),
-    badgeRing: Color(0xFF0B1531),
-    you: GumdropAccent(
-      face: Color(0xFF4D9BFF),
-      lip: Color(0xFF2A63C9),
-      text: Color(0xFF4D9BFF),
-    ),
-    blueRaspberry: GumdropAccent(
-      face: Color(0xFF4D9BFF),
-      lip: Color(0xFF2A63C9),
-      text: Color(0xFF4D9BFF),
-    ),
-    lemon: GumdropAccent(
-      face: Color(0xFFFFD84A),
-      lip: Color(0xFFC2950B),
-      text: Color(0xFFFFD84A),
-    ),
-    mint: GumdropAccent(
-      face: Color(0xFF4DDC8C),
-      lip: Color(0xFF1F9A55),
-      text: Color(0xFF5FE69A),
-    ),
-    cherry: GumdropAccent(
-      face: Color(0xFFFF5D73),
-      lip: Color(0xFFC42A45),
-      text: Color(0xFFFF7A8C),
-    ),
-    tangerine: GumdropAccent(
-      face: Color(0xFFFF9B42),
-      lip: Color(0xFFC7600C),
-      text: Color(0xFFFF9B42),
-    ),
-    grape: GumdropAccent(
-      face: Color(0xFFA88BFF),
-      lip: Color(0xFF6E4FD6),
-      text: Color(0xFFA88BFF),
-    ),
-    bubblegum: GumdropAccent(
-      face: Color(0xFFFF7AC8),
-      lip: Color(0xFFC93E91),
-      text: Color(0xFFFF7AC8),
-    ),
-  );
-
-  /// Gumdrop Pop Light.
-  static const light = GumdropColors(
-    flavor: GumdropFlavor.light,
-    page: Color(0xFFF2F5FD),
-    surface: Color(0xFFFFFFFF),
-    surfaceBorder: Color(0xFFDEE4F4),
-    surfaceBorderWidth: 1.5,
-    raisedFace: Color(0xFFFFFFFF),
-    raisedBorder: Color(0xFFD2DBF1),
-    raisedBorderWidth: 2,
-    raisedHighlight: Color(0xE6FFFFFF),
-    raisedLip: Color(0xFFC7D2EC),
-    well: Color(0xFFE6ECF9),
-    inputFill: Color(0xFFF6F8FE),
-    inputBorder: Color(0xFFD2DBF1),
-    divider: Color(0xFFD2DBF1),
-    switchOffTrack: Color(0xFFE6ECF9),
-    textPrimary: Color(0xFF121A35),
-    textMuted: Color(0xFF515C7C),
-    textOnPage: Color(0xFF121A35),
-    textMutedOnPage: Color(0xFF515C7C),
-    successOnPage: Color(0xFF0A7540),
-    ink: Color(0xFF0D1633),
-    headingText: Color(0xFF0D1633),
-    headingShadow: Color(0xFF4D9BFF),
-    headingTextOnCard: Color(0xFF0D1633),
-    headingShadowOnCard: Color(0xFF4D9BFF),
-    pageShadow: Color(0xFF4D9BFF),
-    selectedRingOuter: Color(0xFF121A35),
-    swatchInsetRing: Color(0x240D1633),
-    badgeRing: Color(0xFFF2F5FD),
-    // The accents' text colors on white cards; the faces are too light to
-    // read as text, so blue, tangerine, grape, and bubblegum use their lips.
-    you: GumdropAccent(
-      face: Color(0xFF4D9BFF),
-      lip: Color(0xFF2A63C9),
-      text: Color(0xFF2A63C9),
-    ),
-    blueRaspberry: GumdropAccent(
-      face: Color(0xFF4D9BFF),
-      lip: Color(0xFF2A63C9),
-      text: Color(0xFF2A63C9),
-    ),
-    lemon: GumdropAccent(
-      face: Color(0xFFFFD84A),
-      lip: Color(0xFFC2950B),
-      text: Color(0xFF7A5E00),
-    ),
-    mint: GumdropAccent(
-      face: Color(0xFF4DDC8C),
-      lip: Color(0xFF1F9A55),
-      text: Color(0xFF0A7540),
-    ),
-    cherry: GumdropAccent(
-      face: Color(0xFFFF5D73),
-      lip: Color(0xFFC42A45),
-      text: Color(0xFFBD1D3A),
-    ),
-    tangerine: GumdropAccent(
-      face: Color(0xFFFF9B42),
-      lip: Color(0xFFC7600C),
-      text: Color(0xFFA34B00),
-    ),
-    grape: GumdropAccent(
-      face: Color(0xFFA88BFF),
-      lip: Color(0xFF6E4FD6),
-      text: Color(0xFF6E4FD6),
-    ),
-    bubblegum: GumdropAccent(
-      face: Color(0xFFFF7AC8),
-      lip: Color(0xFFC93E91),
-      text: Color(0xFFB0307C),
-    ),
-  );
-
-  /// Gumdrop Candy. Its "you" color is lemon, so you and maybe match.
-  static const candy = GumdropColors(
-    flavor: GumdropFlavor.candy,
-    coloredPage: true,
-    page: Color(0xFF305AF6),
-    surface: Color(0xFFFFFFFF),
-    surfaceBorder: Color(0xFFFFFFFF),
-    surfaceBorderWidth: 1,
-    raisedFace: Color(0xFFFFFFFF),
-    raisedBorder: Color(0xFF0D163D),
-    raisedBorderWidth: 2,
-    raisedHighlight: Color(0xE6FFFFFF),
-    raisedLip: Color(0xFF0D163D),
-    well: Color(0xFFDFE8FD),
-    inputFill: Color(0xFFDFE8FD),
-    inputBorder: Color(0xFF0D163D),
-    divider: Color(0xFFD3DEFB),
-    switchOffTrack: Color(0xFFDFE8FD),
-    textPrimary: Color(0xFF0D163D),
-    textMuted: Color(0xFF555B77),
-    textOnPage: Color(0xFFFFFFFF),
-    textMutedOnPage: Color(0xFFEEF3FF),
-    successOnPage: Color(0xFFB5FAD0),
-    ink: Color(0xFF0D163D),
-    headingText: Color(0xFFFFFFFF),
-    headingShadow: Color(0xFF0D163D),
-    headingTextOnCard: Color(0xFF0D163D),
-    headingShadowOnCard: Color(0xFF305AF6),
-    pageShadow: Color(0xFF0D163D),
-    selectedRingOuter: Color(0xFFFFFFFF),
-    swatchInsetRing: Color(0xFF0D163D),
-    badgeRing: Color(0xFF305AF6),
-    you: GumdropAccent(
-      face: Color(0xFFF8D84A),
-      lip: Color(0xFFC29E0E),
-      text: Color(0xFF755A00),
-    ),
-    blueRaspberry: GumdropAccent(
-      face: Color(0xFF79BBFF),
-      lip: Color(0xFF3D84D6),
-      text: Color(0xFF2A63C9),
-    ),
-    lemon: GumdropAccent(
-      face: Color(0xFFF8D84A),
-      lip: Color(0xFFC29E0E),
-      text: Color(0xFF755A00),
-    ),
-    mint: GumdropAccent(
-      face: Color(0xFF58C173),
-      lip: Color(0xFF2F8A4C),
-      text: Color(0xFF137236),
-    ),
-    cherry: GumdropAccent(
-      face: Color(0xFFF45B5B),
-      lip: Color(0xFFBE2F37),
-      text: Color(0xFFC0262F),
-    ),
-    tangerine: GumdropAccent(
-      face: Color(0xFFEE8131),
-      lip: Color(0xFFB45810),
-      text: Color(0xFF9E4B0A),
-    ),
-    grape: GumdropAccent(
-      face: Color(0xFFA57CF5),
-      lip: Color(0xFF6C46CC),
-      text: Color(0xFF6C46CC),
-    ),
-    bubblegum: GumdropAccent(
-      face: Color(0xFFEB50A2),
-      lip: Color(0xFFAE2770),
-      text: Color(0xFFAE2770),
-    ),
-  );
-
-  /// The untinted colors of [flavor].
-  static GumdropColors forFlavor(GumdropFlavor flavor) => switch (flavor) {
-    GumdropFlavor.olive => olive,
-    GumdropFlavor.dark => dark,
-    GumdropFlavor.light => light,
-    GumdropFlavor.candy => candy,
-    GumdropFlavor.arena => arenaColors,
-  };
-
-  /// The colors in effect at [context]: the theme's, or Gumdrop Pop Dark
-  /// under a bare MaterialApp (some tests).
+  /// The colors in effect at [context]: the theme's, or Army green under a
+  /// bare MaterialApp (some tests).
   static GumdropColors of(BuildContext context) =>
-      Theme.of(context).extension<GumdropColors>() ?? dark;
+      Theme.of(context).extension<GumdropColors>() ?? _army;
 
-  // Fixed in every theme (tokens §1a).
+  static final GumdropColors _army = forScheme(TeamScheme.army);
 
-  /// The top inset on every accent gumdrop: `inset 0 2px 0`.
+  /// The top inset on every candy gumdrop: `inset 0 2px 0`.
   static const accentHighlight = Color(0x59FFFFFF);
-
-  /// Ink at 14%: the disc behind a check on a selected accent button.
-  static const inkTint14 = Color(0x2414112B);
-
-  /// Ink at 16%: a poll bar's track inside the selected option.
-  static const inkTint16 = Color(0x2914112B);
-
-  /// Ink at 30%: the dashed rule inside the game card.
-  static const inkTint30 = Color(0x4D14112B);
 
   /// The @mention pill inside your own bubble.
   static const mentionBg = Color(0xFFFFFFFF);
@@ -451,91 +207,136 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// The switch's knob.
   static const switchKnob = Color(0xFFFFFFFF);
 
-  final GumdropFlavor flavor;
+  /// The color scheme these come from.
+  final TeamScheme scheme;
 
-  /// The team color these were tinted with (ARGB), or null outside a team.
-  final Color? teamColor;
+  /// Its roles, for what the fields above don't name.
+  final SchemeRoles roles;
 
   /// Whether these are the card context (see [card]).
   final bool onCard;
 
-  /// Whether the page is a color of its own, with its own text colors
-  /// ([textOnPage] and the rest): Candy's blue, or a team's color
-  /// (team_tint.dart). Material's surfaces on such a page take their colors
-  /// from it, and cards keep the theme's own.
-  final bool coloredPage;
-
   /// The screen's background.
   final Color page;
 
-  /// Cards, sheets, others' bubbles, the tab bar.
+  /// Cards, sheets, dialogs.
   final Color surface;
+
+  /// A card's 2 px rim, and its hard lip.
   final Color surfaceBorder;
+
+  /// 2 in every scheme.
   final double surfaceBorderWidth;
 
-  /// The secondary gumdrop button: face, outline, top highlight, and lip.
+  /// The secondary button's face: none, it's an outlined pill.
   final Color raisedFace;
+
+  /// The outlined pill's border.
   final Color raisedBorder;
 
-  /// 0 in Dark (no outline), 2 in Light and Candy.
+  /// 2 in every scheme.
   final double raisedBorderWidth;
+
+  /// The top inset on the secondary button: none.
   final Color raisedHighlight;
+
+  /// The secondary button's lip: none.
   final Color raisedLip;
 
   /// A recessed fill: tracks, quotes, the segmented control, icon discs.
   final Color well;
+
+  /// Text fields and the composer.
   final Color inputFill;
 
-  /// 2 px around text fields.
+  /// Around text fields.
   final Color inputBorder;
 
-  /// Hairlines, list-row rules, dashed outlines.
+  /// Hairlines and list-row rules.
   final Color divider;
+
+  /// An off switch's track.
   final Color switchOffTrack;
 
-  /// Text on [surface] (and on the page, unless it's a [coloredPage]).
+  /// Text on cards and on the page.
   final Color textPrimary;
+
+  /// Secondary text on a card.
   final Color textMuted;
 
-  /// Text straight on the [page]. Differs from [textPrimary] only on a
-  /// [coloredPage].
+  /// Text straight on the page.
   final Color textOnPage;
+
+  /// Secondary text straight on the page.
   final Color textMutedOnPage;
 
-  /// A success check or note straight on the page.
+  /// A success check or count straight on the page.
   final Color successOnPage;
 
-  /// Text and icons on every accent face; the outline ink.
+  /// Text, icons, and marks on every candy face.
   final Color ink;
 
-  /// Lilita headings on the page, and their stacked hard shadow.
+  /// Lilita titles.
   final Color headingText;
+
+  /// The hard drop under Lilita titles, or transparent for none.
   final Color headingShadow;
 
-  /// Lilita headings inside a card.
+  /// Lilita titles inside a card.
   final Color headingTextOnCard;
+
+  /// No drop inside a card.
   final Color headingShadowOnCard;
 
-  /// Hard offset shadows on the page: the back button, the sticker tag, an
-  /// on switch.
+  /// Hard lips of things on the page.
   final Color pageShadow;
 
-  /// The outer ring around a selected swatch, and the inset ring on every
-  /// team-color swatch.
+  /// The ring around a picked swatch.
   final Color selectedRingOuter;
+
+  /// The inset ring on swatches.
   final Color swatchInsetRing;
 
-  /// The cutout ring around an unread badge.
+  /// The cutout ring around an unread badge or dot.
   final Color badgeRing;
 
-  /// Your bubble, send, the FAB, the active tab: blue, or lemon in Candy.
+  /// Outlines on the page: unpicked choices, Add a photo, previews.
+  final Color outline;
+
+  /// The bottom tab bar's fill.
+  final Color tabBar;
+
+  /// The rule along the top of the tab bar.
+  final Color tabBarLine;
+
+  /// A thin inset ring around fields, or transparent for none.
+  final Color fieldRim;
+
+  /// The empty part of a bar on a card.
+  final Color cardTrack;
+
+  /// Outlines on a card.
+  final Color cardOutline;
+
+  /// A thin inset ring on icons and badges, or transparent for none.
+  final Color avatarRing;
+
+  /// Coral marks on the page: the pin, underlines, the Directions icon.
+  final Color accentMark;
+
+  /// The x on an unpicked Not going button.
+  final Color notGoingIcon;
+
+  /// Your messages, send, the + button, the picked tab: coral.
   final GumdropAccent you;
+
+  /// Meetings.
   final GumdropAccent blueRaspberry;
 
   /// Maybe; pinned.
   final GumdropAccent lemon;
 
-  /// Going; switches on; progress.
+  /// Going; switches on.
   final GumdropAccent mint;
 
   /// Can't go; unread; errors.
@@ -550,41 +351,19 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Other events, your reactions, polls.
   final GumdropAccent bubblegum;
 
-  final GumdropAccent? _sticker;
+  /// The stencil eyebrow and the back button: coral.
+  final GumdropAccent sticker;
 
-  /// The round back button and the sticker under the team name: lemon, or
-  /// coral in Gumdrop Pop Olive.
-  GumdropAccent get sticker => _sticker ?? lemon;
-
-  /// Light, or dark, for Material and the status bar: the brightness of
-  /// what text sits on in this context. A [coloredPage] is "dark" under
-  /// white text (Candy's blue, a red team) and "light" under ink (a Yellow
-  /// team); cards are dark in Dark and light in Light and Candy.
-  Brightness get brightness {
-    if (coloredPage && !onCard) {
-      return ColorMath.luminance(textOnPage) > 0.5
-          ? Brightness.dark
-          : Brightness.light;
-    }
-    return flavor.isDark ? Brightness.dark : Brightness.light;
-  }
+  /// Light, or dark, for Material and the status bar: the page and the
+  /// cards agree in every scheme.
+  Brightness get brightness =>
+      scheme.isDark ? Brightness.dark : Brightness.light;
 
   /// What text sits on in this context: the page, or a card.
   Color get background => onCard ? surface : page;
 
-  /// The card context: text, headings, and success colors for a [surface],
-  /// as `GumdropSurface` applies them. The same colors as the page's unless
-  /// it's a [coloredPage].
-  GumdropColors get card => onCard
-      ? this
-      : copyWith(
-          onCard: true,
-          textOnPage: textPrimary,
-          textMutedOnPage: textMuted,
-          headingText: headingTextOnCard,
-          headingShadow: headingShadowOnCard,
-          successOnPage: mint.text,
-        );
+  /// The card context, as `GumdropSurface` applies it.
+  GumdropColors get card => onCard ? this : forScheme(scheme, onCard: true);
 
   /// The candy color that marks the event type, by the event type's name
   /// (game, practice, meeting, social, other): tangerine, grape, blue
@@ -598,11 +377,11 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   };
 
   /// The hard text-shadow under a Lilita heading: [steps] copies of [color]
-  /// one pixel further down and right each (4 for screen titles and the
-  /// team name, 3 for section headings).
+  /// one pixel further down each, or none when [color] is transparent.
   static List<Shadow> stackedShadow(Color color, int steps) => [
-    for (var i = 1; i <= steps; i++)
-      Shadow(color: color, offset: Offset(i.toDouble(), i.toDouble())),
+    if (color.a > 0)
+      for (var i = 1; i <= steps; i++)
+        Shadow(color: color, offset: Offset(0, i.toDouble())),
   ];
 
   /// Checks [a] against [b] for 4.5:1 (for tests and asserts).
@@ -610,10 +389,9 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
 
   @override
   GumdropColors copyWith({
-    GumdropFlavor? flavor,
-    Color? teamColor,
+    TeamScheme? scheme,
+    SchemeRoles? roles,
     bool? onCard,
-    bool? coloredPage,
     Color? page,
     Color? surface,
     Color? surfaceBorder,
@@ -642,6 +420,15 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     Color? selectedRingOuter,
     Color? swatchInsetRing,
     Color? badgeRing,
+    Color? outline,
+    Color? tabBar,
+    Color? tabBarLine,
+    Color? fieldRim,
+    Color? cardTrack,
+    Color? cardOutline,
+    Color? avatarRing,
+    Color? accentMark,
+    Color? notGoingIcon,
     GumdropAccent? you,
     GumdropAccent? blueRaspberry,
     GumdropAccent? lemon,
@@ -652,10 +439,9 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     GumdropAccent? bubblegum,
     GumdropAccent? sticker,
   }) => GumdropColors(
-    flavor: flavor ?? this.flavor,
-    teamColor: teamColor ?? this.teamColor,
+    scheme: scheme ?? this.scheme,
+    roles: roles ?? this.roles,
     onCard: onCard ?? this.onCard,
-    coloredPage: coloredPage ?? this.coloredPage,
     page: page ?? this.page,
     surface: surface ?? this.surface,
     surfaceBorder: surfaceBorder ?? this.surfaceBorder,
@@ -684,6 +470,15 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     selectedRingOuter: selectedRingOuter ?? this.selectedRingOuter,
     swatchInsetRing: swatchInsetRing ?? this.swatchInsetRing,
     badgeRing: badgeRing ?? this.badgeRing,
+    outline: outline ?? this.outline,
+    tabBar: tabBar ?? this.tabBar,
+    tabBarLine: tabBarLine ?? this.tabBarLine,
+    fieldRim: fieldRim ?? this.fieldRim,
+    cardTrack: cardTrack ?? this.cardTrack,
+    cardOutline: cardOutline ?? this.cardOutline,
+    avatarRing: avatarRing ?? this.avatarRing,
+    accentMark: accentMark ?? this.accentMark,
+    notGoingIcon: notGoingIcon ?? this.notGoingIcon,
     you: you ?? this.you,
     blueRaspberry: blueRaspberry ?? this.blueRaspberry,
     lemon: lemon ?? this.lemon,
@@ -692,7 +487,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     tangerine: tangerine ?? this.tangerine,
     grape: grape ?? this.grape,
     bubblegum: bubblegum ?? this.bubblegum,
-    sticker: sticker ?? _sticker,
+    sticker: sticker ?? this.sticker,
   );
 
   @override
@@ -702,10 +497,9 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
     double d(double a, double b) => a + (b - a) * t;
     final near = t < 0.5 ? this : other;
     return GumdropColors(
-      flavor: near.flavor,
-      teamColor: near.teamColor,
+      scheme: near.scheme,
+      roles: near.roles,
       onCard: near.onCard,
-      coloredPage: near.coloredPage,
       page: c(page, other.page),
       surface: c(surface, other.surface),
       surfaceBorder: c(surfaceBorder, other.surfaceBorder),
@@ -734,6 +528,15 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       selectedRingOuter: c(selectedRingOuter, other.selectedRingOuter),
       swatchInsetRing: c(swatchInsetRing, other.swatchInsetRing),
       badgeRing: c(badgeRing, other.badgeRing),
+      outline: c(outline, other.outline),
+      tabBar: c(tabBar, other.tabBar),
+      tabBarLine: c(tabBarLine, other.tabBarLine),
+      fieldRim: c(fieldRim, other.fieldRim),
+      cardTrack: c(cardTrack, other.cardTrack),
+      cardOutline: c(cardOutline, other.cardOutline),
+      avatarRing: c(avatarRing, other.avatarRing),
+      accentMark: c(accentMark, other.accentMark),
+      notGoingIcon: c(notGoingIcon, other.notGoingIcon),
       you: you.lerp(other.you, t),
       blueRaspberry: blueRaspberry.lerp(other.blueRaspberry, t),
       lemon: lemon.lerp(other.lemon, t),
@@ -742,9 +545,7 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       tangerine: tangerine.lerp(other.tangerine, t),
       grape: grape.lerp(other.grape, t),
       bubblegum: bubblegum.lerp(other.bubblegum, t),
-      sticker: _sticker == null && other._sticker == null
-          ? null
-          : sticker.lerp(other.sticker, t),
+      sticker: sticker.lerp(other.sticker, t),
     );
   }
 }

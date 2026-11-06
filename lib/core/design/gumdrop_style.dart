@@ -1,50 +1,24 @@
-import 'dart:math' as math;
-
-import 'package:battleplan/core/design/arena/arena_theme.dart';
 import 'package:battleplan/core/design/fonts.dart';
-import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The parts of a Gumdrop theme that aren't colors (SPEC §7.4): the heading
-/// and label fonts, how a heading's hard shadow sits, and the shapes of
-/// gumdrops and cards. Every theme uses the Gumdrop Pop style but Gumdrop
-/// Arena ([arenaStyle]), which slants its buttons, cuts two corners off its
-/// cards, and sets headings and labels in a condensed italic.
+/// The parts of the Open Field theme that aren't colors (SPEC §7.4): the
+/// heading and label fonts, the hard drop under titles, the 2 px outline on
+/// candy gumdrops, and the cards' shape. Every color scheme shares it.
 @immutable
 class GumdropStyle extends ThemeExtension<GumdropStyle> {
   const new({
     this.displayFont = AppFonts.display,
     this.labelFont = AppFonts.label,
-    this.fontWeight,
-    this.fontStyle = FontStyle.normal,
-    this.headingShadowOffset,
-    this.slant = 0,
-    this.buttonRadius,
-    this.cardCut = 0,
-    this.headingOutline = 0,
     this.accentOutline = 0,
   });
 
-  /// Gumdrop Pop's style: Lilita One headings with stacked shadows, Fredoka
-  /// labels, pill gumdrops, and rounded cards.
-  static const gumdrop = GumdropStyle();
+  /// Open Field: Lilita One titles with a hard drop, Fredoka labels, pill
+  /// gumdrops outlined in their lip color, and rounded cards with a lip.
+  static const openField = GumdropStyle(accentOutline: 2);
 
-  /// Gumdrop Pop Olive's style: Gumdrop Pop's, with headings outlined in
-  /// the shadow's color and every candy gumdrop outlined in ink (design V1
-  /// Olive).
-  static const olive = GumdropStyle(headingOutline: 1.5, accentOutline: 2);
-
-  /// The style of [flavor].
-  static GumdropStyle forFlavor(GumdropFlavor flavor) => switch (flavor) {
-    GumdropFlavor.arena => arenaStyle,
-    GumdropFlavor.olive => olive,
-    _ => gumdrop,
-  };
-
-  /// The style in effect at [context]: the theme's, or Gumdrop Pop's.
+  /// The style in effect at [context]: the theme's, or Open Field.
   static GumdropStyle of(BuildContext context) =>
-      Theme.of(context).extension<GumdropStyle>() ?? gumdrop;
+      Theme.of(context).extension<GumdropStyle>() ?? openField;
 
   /// Headings: screen titles, the team name, section headings.
   final String displayFont;
@@ -52,134 +26,61 @@ class GumdropStyle extends ThemeExtension<GumdropStyle> {
   /// Buttons, labels, tabs, chips, and people's names.
   final String labelFont;
 
-  /// The one weight [displayFont] and [labelFont] are set in, or null for
-  /// each text style's own (Lilita One's 400, Fredoka's 500 to 700).
-  final FontWeight? fontWeight;
-
-  /// Whether [displayFont] and [labelFont] are italic.
-  final FontStyle fontStyle;
-
-  /// A heading's hard shadow as one copy this far down and right; null for
-  /// Gumdrop Pop's stack of 1 px steps.
-  final double? headingShadowOffset;
-
-  /// How far a gumdrop leans, in degrees (Arena's 11); 0 stands it upright.
-  final double slant;
-
-  /// A gumdrop's corner radius; null for a pill.
-  final BorderRadius? buttonRadius;
-
-  /// How far a card's top right and bottom left corners are cut off, in
-  /// pixels; 0 rounds all four.
-  final double cardCut;
-
-  /// How thick an outline a heading has, in its shadow's color, around its
-  /// letters (Olive's 1.5); 0 for none.
-  final double headingOutline;
-
-  /// How thick an ink outline candy gumdrops have (Olive's 2); 0 for none.
+  /// How thick an outline candy gumdrops have, in their lip color.
   final double accentOutline;
 
-  /// [shape] in this style: leaning [slant] degrees, with [buttonRadius]
-  /// corners when the style has them. Gumdrop Pop's leaves it as it is.
-  GumdropShape styled(GumdropShape shape) => slant == 0 && buttonRadius == null
-      ? shape
-      : shape.copyWith(radius: buttonRadius, slant: slant);
+  /// The outline of a candy gumdrop whose lip is [lip].
+  BorderSide accentSide(Color lip) => accentOutline == 0
+      ? BorderSide.none
+      : BorderSide(color: lip, width: accentOutline);
 
   /// [style] in [labelFont], for a label styled by hand.
-  TextStyle label(TextStyle style) => style.copyWith(
-    fontFamily: labelFont,
-    fontWeight: fontWeight,
-    fontStyle: fontStyle,
-  );
+  TextStyle label(TextStyle style) => style.copyWith(fontFamily: labelFont);
 
   /// [style] in [displayFont], for a heading styled by hand.
-  TextStyle display(TextStyle style) => style.copyWith(
-    fontFamily: displayFont,
-    fontWeight: fontWeight,
-    fontStyle: fontStyle,
-  );
+  TextStyle display(TextStyle style) => style.copyWith(fontFamily: displayFont);
 
-  /// The hard shadow under a heading in [color], [steps] deep in Gumdrop
-  /// Pop's stack.
-  List<Shadow> headingShadow(Color color, int steps) {
-    final o = headingShadowOffset;
-    final w = headingOutline;
-    return [
-      // The outline: copies all around the letters, as a stroke would be.
-      if (w > 0)
-        for (var i = 0; i < 16; i++)
-          Shadow(
-            color: color,
-            offset: Offset(
-              w * math.cos(i * math.pi / 8),
-              w * math.sin(i * math.pi / 8),
-            ),
-          ),
-      ...o == null
-          ? GumdropColors.stackedShadow(color, steps)
-          : [Shadow(color: color, offset: Offset(o, o))],
-    ];
-  }
+  /// The hard drop under a title in [color]: one copy 2 px straight down,
+  /// or 3 px under a [big] (48 px) one, and none when [color] is
+  /// transparent (Light and Dark have no drop).
+  List<Shadow> headingShadow(Color color, {bool big = false}) => [
+    if (color.a > 0) Shadow(color: color, offset: Offset(0, big ? 3 : 2)),
+  ];
 
-  /// A card's outline: rounded, or with two corners cut off ([cardCut]).
+  /// A card's outline: rounded, with [side] as its rim.
   ShapeBorder cardShape(double radius, {BorderSide side = BorderSide.none}) =>
-      cardCut > 0
-      ? BeveledRectangleBorder(
-          side: side,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(3),
-            topRight: Radius.circular(cardCut),
-            bottomLeft: Radius.circular(cardCut),
-            bottomRight: const Radius.circular(3),
-          ),
-        )
-      : RoundedRectangleBorder(
-          side: side,
-          borderRadius: BorderRadius.circular(radius),
-        );
+      RoundedRectangleBorder(
+        side: side,
+        borderRadius: BorderRadius.circular(radius),
+      );
 
-  /// [cardShape] filled with [color], as a decoration: a plain rounded box
-  /// when no corner is cut.
+  /// [cardShape] filled with [color], as a decoration: with a rim ([side]),
+  /// it sits on a hard lip of the rim's color, [lip] px deep.
   Decoration cardDecoration(
     Color color,
     double radius, {
     BorderSide side = BorderSide.none,
-  }) => cardCut > 0
-      ? ShapeDecoration(
-          color: color,
-          shape: cardShape(radius, side: side),
-        )
-      : BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(radius),
-          border: side.style == BorderStyle.none || side.width == 0
-              ? null
-              : Border.fromBorderSide(side),
-        );
+    double lip = 4,
+  }) {
+    final rimmed = side.style != BorderStyle.none && side.width > 0;
+    return BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(radius),
+      border: rimmed ? Border.fromBorderSide(side) : null,
+      boxShadow: rimmed && lip > 0
+          ? [BoxShadow(color: side.color, offset: Offset(0, lip))]
+          : null,
+    );
+  }
 
   @override
   GumdropStyle copyWith({
     String? displayFont,
     String? labelFont,
-    FontWeight? fontWeight,
-    FontStyle? fontStyle,
-    double? headingShadowOffset,
-    double? slant,
-    BorderRadius? buttonRadius,
-    double? cardCut,
-    double? headingOutline,
     double? accentOutline,
   }) => GumdropStyle(
     displayFont: displayFont ?? this.displayFont,
     labelFont: labelFont ?? this.labelFont,
-    fontWeight: fontWeight ?? this.fontWeight,
-    fontStyle: fontStyle ?? this.fontStyle,
-    headingShadowOffset: headingShadowOffset ?? this.headingShadowOffset,
-    slant: slant ?? this.slant,
-    buttonRadius: buttonRadius ?? this.buttonRadius,
-    cardCut: cardCut ?? this.cardCut,
-    headingOutline: headingOutline ?? this.headingOutline,
     accentOutline: accentOutline ?? this.accentOutline,
   );
 

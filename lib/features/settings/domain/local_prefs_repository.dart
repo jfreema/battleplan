@@ -8,12 +8,22 @@ typedef DeviceRegistration = ({String uid, String token, DateTime at});
 /// (AUTH-7): `google.com` or `apple.com`.
 typedef PendingLink = ({String providerId, String email});
 
-/// Preferences kept on this device (SPEC SET-2, §5.2 "Memory"). The theme
-/// also syncs to the profile once `users` exists (M1).
+/// Preferences kept on this device (SPEC SET-2, §5.2 "Memory"). The color
+/// schemes are a start-up copy of the account's (users.colorScheme and each
+/// membership's pick), so the first frame paints in the right scheme.
 abstract interface class LocalPrefsRepository {
-  ThemePreference get themePreference;
+  /// Account [uid]'s default color scheme on this device, or this device's
+  /// last one while [uid] is null (auth still restoring). Otherwise the old
+  /// theme setting's scheme (a one-time carry-over), else Army green.
+  TeamScheme defaultScheme({String? uid});
 
-  Future<void> setThemePreference(ThemePreference value);
+  Future<void> setDefaultScheme(String uid, TeamScheme scheme);
+
+  /// Account [uid]'s pick for [groupId] on this device, or null.
+  TeamScheme? teamScheme(String groupId, {String? uid});
+
+  /// Replaces account [uid]'s picks on this device.
+  Future<void> setTeamSchemes(String uid, Map<String, TeamScheme> schemes);
 
   /// The last team and tab used on this device, as a route like
   /// `/g/abc/schedule`.

@@ -26,6 +26,7 @@ import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
+import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -324,9 +325,10 @@ class _TeamShellState extends ConsumerState<TeamShell> {
         ),
       );
     }
-    // The whole shell, header and tabs, in the team's colors (TEAM-1).
-    final tinted = TeamTheme(
-      teamColor: viewing ? viewed?.color : team?.group.color,
+    // The whole shell, header and tabs, in the scheme I see the team in
+    // (SET-2).
+    final tinted = SchemeTheme(
+      scheme: ref.watch(teamSchemeProvider(groupId)),
       child: shell,
     );
     // Asks for notification permission once the person is in a team

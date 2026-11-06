@@ -1,4 +1,5 @@
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
@@ -90,7 +91,7 @@ Future<String?> askText(
 }) {
   final l10n = AppLocalizations.of(context);
   final controller = TextEditingController();
-  return showDialog<String>(
+  return showCardDialog<String>(
     context: context,
     builder: (context) => AlertDialog(
       title: Text(title),

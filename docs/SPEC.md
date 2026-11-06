@@ -75,7 +75,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | 11 | Password reset by email | AUTH-4 |
 | 12 | Email invites | INV-4 |
 | 13 | Shareable invite links and QR codes | INV-1 to INV-3, INV-6, INV-7 |
-| 14 | Light mode and dark mode | SET-2; §7.4 |
+| 14 | Light mode and dark mode | SET-2; §7.4 (Open Field's five color schemes) |
 | 15 | God admin panel for managing all teams | §6.11 (ADMIN) |
 | 16 | Admins in each team | §3; TEAM-4 |
 | 17 | Admins can delete messages | CHAT-8 |
@@ -209,7 +209,7 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 - **WEB-2 · MVP · Support and legal pages.** `/privacy`, `/terms`, and `/delete-account` (LEGAL-1, LEGAL-3), and `/support` with the support email. These are the URLs the store listings and Firebase settings use.
 - **WEB-3 · MVP · The web app at `/app`.** The Flutter web app is served under `/app/` and linked from every page of the site. Signed-in people who open `/app` go straight to their teams.
 - **WEB-4 · MVP · Short links still work.** Invite links and QR codes keep the short form `getbattleplan.app/join/K7XP-M2QR`. With the app installed they open it; otherwise the browser lands in the web app's join page under `/app`. Email and notification links also open the app if installed, or the web app. So does email sign-in's address, `getbattleplan.app/emaillogin` (AUTH-2).
-- **WEB-5 · MVP · Fast and plain.** Static pages with no ads, no tracking, and no cookie banner needed; one look, Gumdrop Army's army green, cream, and coral (§7.4), with no light version; the fonts served from the site itself, not Google Fonts (LEGAL-2); readable on phones; indexed by search engines, while `/app` isn't.
+- **WEB-5 · MVP · Fast and plain.** Static pages with no ads, no tracking, and no cookie banner needed; one look, Gumdrop Army's army green, cream, and coral (the app's look before Open Field, §7.4), with no light version; the fonts served from the site itself, not Google Fonts (LEGAL-2); readable on phones; indexed by search engines, while `/app` isn't.
 
 ### 4.2 The parity rule
 
@@ -246,23 +246,24 @@ Sign in
  ├─ First time → Profile setup (name, photo, 18+ confirmation, terms)
  ├─ The top: tabs Teams | Profile
  │    ├─ Teams:    your teams (each opens where you left it) · Join a Team or
- │    │            Group · Create a Team · Create a Group · Messages · bell
+ │    │            Group · Create a Team · Create a Group · Default color
+ │    │            scheme · Messages · bell
  │    │            (no team yet: a welcome with Join and Create)
- │    └─ Profile:  your photo and name · Themes · Settings ·
+ │    └─ Profile:  your photo and name · Time zone · Settings ·
  │                 Admin panel** · Sign out              (** super admins)
  └─ Team view (the app opens where you left it: the last team and tab, or Teams)
       ├─ Header:     ‹ back to Teams · team switcher ▾ · Messages · notification bell · Team info ⓘ
       ├─ Messages:   your direct conversations → one of them (CHAT-19)
       ├─ A person:   their page, from their photo in chat or the roster (TEAM-15)
       ├─ Tabs:       Chat | Schedule | Documents | Plays
-      └─ Team info:  the team · Roster · Invite · Notifications for this team · Calendar link ·
-                     Team admin* · Media* · Reports* · Import*    (* admins)
+      └─ Team info:  the team · Roster · Invite · Notifications for this team · Color scheme ·
+                     Calendar link · Team admin* · Media* · Reports* · Import*    (* admins)
                      (Leave team is on your own card in the Roster, TEAM-8)
 ```
 
-- **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name, sport, last message, unread count), then Join a team and Create a team; someone with no team yet sees a welcome with the same two. Profile has your photo (Change photo) and the name your teams see, then **Themes** (SET-2), **Time zone** (SET-7), **Settings**, the **Admin panel** for super admins, and **Sign out**, each its own rounded card.
+- **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name, sport, last message, unread count), then Join a team and Create a team, then **Default color scheme** under a Color scheme label (SET-2); someone with no team yet sees a welcome with the same. Profile has your photo (Change photo) and the name your teams see, then **Time zone** (SET-7), **Settings**, the **Admin panel** for super admins, and **Sign out**, each its own rounded card.
 - **A team's back arrow** (‹ at the top left of the header) goes to Teams. Inside a tab, on a page with its own back button (Saved plays, a play), the header leaves its arrow out, so only one back shows.
-- **Team info** (ⓘ in the header) is a page: the team's logo, name, sport, and member count, then what the team menu had. **Team admin** was called Team settings.
+- **Team info** (ⓘ in the header) is a page: the team's logo, name, sport, and member count, then what the team menu had, and **Color scheme**, the scheme you see this team in (SET-2). **Team admin** was called Team settings.
 - **Your avatar** left the team's header: what it held is on Profile.
 
 ### 5.2 Team switcher
@@ -417,7 +418,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Name (required, ≤ 50 characters).
     - Sport: Baseball, Basketball, Football, Hockey, Lacrosse, Soccer, Softball, Volleyball, or Other.
     - Logo or photo (optional).
-    - Team color (optional). Chosen from 15 colors, navy and gold among them. It shows in the background of every screen inside the team, in every theme (§7.4); badges show white or black text on it, whichever reads better.
+    - Team color (optional). Chosen from 15 colors, navy and gold among them. It's on the team's badge, in the team switcher, and as its dot in All my teams, and doesn't tint the pages (§7.4); badges show white or black text on it, whichever reads better.
     - Time zone (defaults to the device's).
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).
@@ -444,7 +445,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Every team has exactly one owner.
 - **TEAM-5 · MVP · Team admin (admins).** Called Team settings until 2026-10-27; it opens from Team info.
   - Edit name, sport, logo, color, description, and time zone.
-  - **Team color:** the 15 colors as swatches, in this order: Blue (new teams start on it), Light blue, Navy, Teal, Green, Olive, Yellow, Mustard, Orange, Red, Maroon, Pink, Purple, Gray, and Black, under "Your team color shows in the background of every screen in the team." (TEAM-1, §7.4). Royal blue and Violet were taken out in 1.1 as too close to Blue and Purple: a team still set to one keeps it, and the app shows it as Blue or Purple (its swatch picked, its badge and backgrounds in that color).
+  - **Team color:** the 15 colors as swatches, in this order: Blue (new teams start on it), Light blue, Navy, Teal, Green, Olive, Yellow, Mustard, Orange, Red, Maroon, Pink, Purple, Gray, and Black, under "Your team color is on the team's badge and in the team switcher." (TEAM-1, §7.4); a group's says "The color is on the group's badge and in the switcher." Royal blue and Violet were taken out in 1.1 as too close to Blue and Purple: a team still set to one keeps it, and the app shows it as Blue or Purple (its swatch picked and its badge in that color).
   - **Member permissions** (defaults in brackets):
     - create events [off]
     - create polls [on]
@@ -474,7 +475,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Optional contact sharing: on their own card, members share a phone number and email with that team ("Share my phone and email"; the account's email is offered), and change them or stop sharing at any time. They appear on their card for everyone on the team with call, text, and email buttons. Each team is separate. Sharing needs an open team; stopping works even on an archived or suspended one. Leaving the team or deleting the account removes them.
 - **TEAM-11 · MVP · Players on every team.** Players, guardians, and claims are specified in §6.3 (PLAYER).
 - **TEAM-12 · v1.1 · Announcement-only mode.** Only admins can post in chat. Everyone can still react, vote, and RSVP.
-- **TEAM-14 · v1.1 · Groups beside teams.** (Owner's request 2026-10-29.) Created from **Create a Team** or **Create a Group** (TEAM-1). Its owner (or a super admin) can **Make it a team** in Group admin, picking its sport: it gets players, the parents who answer for them, coaches, and Plays, keeps its people, chat, schedule, answers, and documents, its owner coaches from then on, and the chat says "Pat made this group a team" (owner's request 2026-10-29). A team can't become a group. A group is for extreme simplicity; a team has everything. A group has every feature a team has (chat, schedule and RSVPs, assignments, polls, documents and photos, invites, admins, notifications, imports, calendar links) except what's about players: no roster players, guardians, claims, "Who are you here for?", coaches, player details, or **Plays**, and no sport. Everyone in a group chats and answers RSVPs for themselves, and counts are of its members ("4 going · 1 maybe"). Its roster is **People** (admins and members), **Group info** says "Group · 8 members" and **Group admin** has no sport with a group icon in Teams and the switcher, joining one (Join group) goes straight to its chat, and its tabs are Chat, Schedule, and Documents. The TeamSnap import has no Players box for a group. Versions of the app before groups show a group as a team, so the server and rules refuse players, guardians, player answers, coaches, a sport, and plays in a group whatever app asks.
+- **TEAM-14 · v1.1 · Groups beside teams.** (Owner's request 2026-10-29.) Created from **Create a Team** or **Create a Group** (TEAM-1). Its owner (or a super admin) can **Make it a team** in Group admin, picking its sport: it gets players, the parents who answer for them, coaches, and Plays, keeps its people, chat, schedule, answers, and documents, its owner coaches from then on, and the chat says "Pat made this group a team" (owner's request 2026-10-29). A team can't become a group. A group is for extreme simplicity; a team has everything. A group has every feature a team has (chat, schedule and RSVPs, assignments, polls, documents and photos, invites, admins, notifications, imports, calendar links) except what's about players: no roster players, guardians, claims, "Who are you here for?", coaches, player details, or **Plays**, and no sport. Everyone in a group chats and answers RSVPs for themselves, and counts are of its members ("4 going · 1 maybe"). In a group, as on a team, each person picks the scheme they see (SET-2). Its roster is **People** (admins and members), **Group info** says "Group · 8 members" and **Group admin** has no sport with a group icon in Teams and the switcher, joining one (Join group) goes straight to its chat, and its tabs are Chat, Schedule, and Documents. The TeamSnap import has no Players box for a group. Versions of the app before groups show a group as a team, so the server and rules refuse players, guardians, player answers, coaches, a sport, and plays in a group whatever app asks.
 - **TEAM-13 · Later.**
   - Join requests that need admin approval.
   - Organizations and leagues with club admins.
@@ -494,7 +495,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - **Coaches and admins**, keeping their roles, Coach, and titles. A coach who's also a parent comes as a parent when this box is off and the players' is on.
     - **Everyone else**, people added by email who haven't joined yet included.
   - **Also copy**, both off to start: **Documents** (files and links, without notifying anyone) and **Saved plays**. A group (TEAM-14) has no players or plays to bring.
-  - The new team gets this team's logo, color, sport, description, time zone, settings, chat look, and default reminders, and a storage limit a super admin gave it (STORE-6). Everyone brought along keeps their notification level and what they share (TEAM-10).
+  - The new team gets this team's logo, color, sport, description, time zone, settings, chat look, and default reminders, and a storage limit a super admin gave it (STORE-6). Everyone brought along keeps their notification level, what they share (TEAM-10), and their color scheme (SET-2).
   - After a confirmation, everyone brought along is on the new team at once, with nothing to accept, and gets a notification: "Pat started the new season, and you're on the team." The owner lands in its chat, which says "Pat started this season from Thunder".
   - This team is archived (TEAM-9), its chat, photos, schedule, and results kept. Its chat says "Pat started the next season: Thunder U15 · Spring 2027", and its archived footer has **Go to Thunder U15 · Spring 2027** for people on the new team.
   - It counts as creating a team: a verified email, the day's limit and the on/off switch (TEAM-1, ADMIN-7), and the 100-team limit (TEAM-2). Someone already on 100 teams stays behind, and the owner is told how many.
@@ -633,7 +634,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - With unread messages, the chat opens at the first unread message and loads newer ones as you scroll down.
   - Date separators, as small pills: Today, Yesterday, Mon Oct 6.
   - Each message is its own bubble, compact as GroupMe's (the owner's request, 2026-10-16). A person's run of messages (within 5 minutes) has their photo beside the first bubble, and their name and time inside it at the top; my own bubbles show just the time there. Photos sit inside the bubble, above the caption, and "edited" and "Pinned" go inside too. Polls and event cards keep the name and time above them. A member's name shows their players ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8).
-  - Laid out as iMessage lays them out (the owner's request, 2026-10-16): others' messages sit on the left on a neutral background, mine on the right in the theme's own color (blue raspberry, or lemon in Gumdrop Candy) or the one the chat look picks (CHAT-18). Each bubble fits its text, its longest line setting its width, and grows to about four fifths of the chat's width (at most 520 px) before the text wraps, so the two sides stay apart. In a direct conversation (CHAT-19) the other person's messages have no photo or name beside them.
+  - Laid out as iMessage lays them out (the owner's request, 2026-10-16): others' messages sit on the left on a neutral background, mine on the right in coral, every scheme's "you" color, or the one the chat look picks (CHAT-18). Each bubble fits its text, its longest line setting its width, and grows to about four fifths of the chat's width (at most 520 px) before the text wraps, so the two sides stay apart. In a direct conversation (CHAT-19) the other person's messages have no photo or name beside them.
   - Message text is Nunito, 16 points, bold on others' messages and extra bold on mine, the same on every platform (§7.3; 1.1 replaced iMessage's type, San Francisco on Apple's platforms and Inter elsewhere).
   - Times appear on tap (phones), on hover (web), and at the start of each group.
 - **CHAT-2 · MVP · Composer.**
@@ -696,7 +697,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Link previews, GIFs, video, voice notes.
   - Typing indicators and read receipts.
 
-- **CHAT-18 · MVP · Chat look.** Team admins choose the chat's message color and background (Plain; Sprinkles, small candy-colored dashes; or a photo), which everyone on the team sees, with text kept readable (WCAG AA). The colors are seven candies, Blue raspberry, Bubblegum, Grape, Mint, Lemon, Tangerine, and Cherry, and the team color last. Each theme draws a candy in its own shade, with dark text on it; the team color has white or dark text, whichever reads better. Nothing picked is the theme's own color, the first candy: Blue raspberry, or Lemon in Gumdrop Candy, which lists Lemon first. A color picked from the old 13-color palette before 1.1 still shows as it was, with Team color marked.
+- **CHAT-18 · MVP · Chat look.** Team admins choose the chat's message color and background (Plain; Sprinkles, small candy-colored dashes; or a photo), which everyone on the team sees, with text kept readable (WCAG AA). The colors are seven candies, Blue raspberry, Bubblegum, Grape, Mint, Lemon, Tangerine, and Cherry, and the team color last. Each color scheme draws a candy in its own shade, with dark text on it; the team color has white or dark text, whichever reads better. Nothing picked is coral (Cherry), every scheme's "you" color, listed first. A color picked from the old 13-color palette before 1.1 still shows as it was, with Team color marked.
 - **CHAT-19 · MVP · Direct messages.** Owner's request (2026-10-16): "add a direct messaging feature that allows users to directly message each other." Q5 had put them after launch.
   - **The same chat, for two.** A conversation works as a team's chat does: text, photos (CHAT-3), replies (CHAT-13), reactions (CHAT-6), editing and deleting your own (CHAT-8, CHAT-15), delivery states and the offline queue (CHAT-4), links (CHAT-5), the read position across devices, and the language filter (SAFE-7). What belongs to a team isn't there: polls, announcements, @mentions, pins, the chat look, and system lines.
   - **Who you can message:** anyone you share a team with who has joined (not "Not joined yet"), from **Message** on their page (TEAM-15) or their roster card (TEAM-3), or from **New message** in Messages, which lists the people your rosters show you (TEAM-3) with the teams you share, searchable by name. A suspended team doesn't count. Once started, a conversation stays, even when you no longer share a team.
@@ -954,7 +955,7 @@ Players that others answer for never get accounts, and every account belongs to 
 ### 6.10 Profile and settings (SET)
 
 - **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team, at the top of **Profile** (§5.1). The email shows on Sign out ("Signed in as …"); it changes in Sign-in methods.
-- **SET-2 · MVP · Appearance.** Five themes, each shown as a small preview: **Gumdrop Army** (the default), **Gumdrop Pop Dark**, **Gumdrop Pop Light**, **Gumdrop Candy**, and **Gumdrop Arena** (§7.4, 1.1). **Themes** lays the previews out five across where they fit, otherwise in rows of three. It's a card on Profile, which names the theme in use (§5.1). The change applies instantly, is remembered on the device, and syncs to the account. System is no longer offered: an account or device still set to it, or never set, gets the default, Gumdrop Army; new accounts start on it.
+- **SET-2 · MVP · Color schemes.** The app has one look, **Open Field**, in five color schemes: **Army green** (the default), **Light**, **Dark**, **Navy**, and **Light blue** (§7.4). Each person picks their own for each team or group in **Team info → Color scheme**, a list of the five with a short line under each; it changes only how that team looks for them, and everyone else keeps theirs. A **Default color scheme** on Teams themes Teams, Profile, Messages, and settings, and every team or group they haven't picked one for, including ones they join later. A super admin looking at a team they aren't on has no Color scheme row there and sees it in their default. Accounts from before 1.1 start from their old theme: Gumdrop Army (or System, or nothing set) becomes Army green, Gumdrop Pop Dark becomes Navy, Gumdrop Pop Light and Gumdrop Candy become Light, and Gumdrop Arena becomes Dark; new accounts start on Army green. A change applies instantly, is remembered on the device so the app opens in it, and syncs to the account. Signed-out screens (sign-in and setup) are Army green.
 - **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
 - **SET-5 · MVP · Blocked people.** View the list and unblock.
@@ -962,7 +963,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - App version, Terms, Privacy Policy, open-source licenses.
   - Contact support.
   - Sign out; Delete account (AUTH-10).
-- **SET-7 · v1.1 · Time zone.** (The owner's request, 2026-11-01: "i want the user to be able to select their timezone and it always adhere to that instead of adjusting automatically as they travel".) A card on Profile, under Themes: **Automatic: Central Time (Chicago)**, following the device as it does today, or a zone picked from the same list as Create team's, which stays put wherever the person is. It's saved to the account, so it follows them to every device. Every time the app shows uses it: the schedule and events (with the event's own time beside it when that differs, SCHED-9), message times and the chat's day lines, poll close times, mute and notification times, document, media, play, report, and invite dates, a player's events, import previews, and the admin panel. Times picked in the app (a poll's close time, an announcement's end, the audit log's days) are in it too. A new team starts in it. New events still start in their team's zone, and push notifications still give the event's time in its own zone.
+- **SET-7 · v1.1 · Time zone.** (The owner's request, 2026-11-01: "i want the user to be able to select their timezone and it always adhere to that instead of adjusting automatically as they travel".) On Profile: **Automatic: Central Time (Chicago)**, following the device as it does today, or a zone picked from the same list as Create team's, which stays put wherever the person is. It's saved to the account, so it follows them to every device. Every time the app shows uses it: the schedule and events (with the event's own time beside it when that differs, SCHED-9), message times and the chat's day lines, poll close times, mute and notification times, document, media, play, report, and invite dates, a player's events, import previews, and the admin panel. Times picked in the app (a poll's close time, an announcement's end, the audit log's days) are in it too. A new team starts in it. New events still start in their team's zone, and push notifications still give the event's time in its own zone.
 
 ### 6.11 God admin panel (ADMIN)
 
@@ -1221,15 +1222,15 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 ### 7.1 Brand
 
 - **Name:** Battleplan.
-- **Logo:** the Sticker Crest (owner's pick, 2026-10-26, for 1.1): a fat lemon shield tilted 7° to the left, outlined in navy on a navy hard shadow, with a white chat bubble saying B, on a blue raspberry gradient tile, plus the wordmark. The same mark is the website's favicon and header mark, the web app's tab icon and loading screen, the app icons (Android's themed icon is the shield as one shape), and the splash screens on Gumdrop Army's army green. The favicon draws the crest 10% bigger so it reads at 32 px. Before 1.1 the mark was a white flag on a pole with an angular B cut out of it (2026-10-14); the 1.0 App Store build keeps it.
+- **Logo:** the Sticker Crest (owner's pick, 2026-10-26, for 1.1): a fat lemon shield tilted 7° to the left, outlined in navy on a navy hard shadow, with a white chat bubble saying B, on a blue raspberry gradient tile, plus the wordmark. The same mark is the website's favicon and header mark, the web app's tab icon and loading screen, the app icons (Android's themed icon is the shield as one shape), and the splash screens on Army green's army-green page. The favicon draws the crest 10% bigger so it reads at 32 px. Before 1.1 the mark was a white flag on a pole with an angular B cut out of it (2026-10-14); the 1.0 App Store build keeps it.
 - **Primary color:** blue raspberry `#4D9BFF`, the app icon's background (a gradient from `#6DB3FF` to `#2F6FDE`) and Gumdrop Pop's main accent (§7.3). Deep blue `#2F5BEA` (Q9) was the 1.0 mark's color and is still the first team color.
-- **Team colors** make each team's screens its own: the color shows in the background of every screen inside the team (§7.4), and shows on the team's logo or initials badge, the switcher, and calendar dots in the all-teams view. Buttons and the candy accents keep the theme's colors, and so do my chat bubbles unless the chat look picks the team color (CHAT-18).
+- **Team colors** mark which team is which: the color is on the team's logo or initials badge, in the switcher, and as its dot in All my teams. It doesn't tint the pages, which follow each person's color scheme (SET-2, §7.4). My chat bubbles keep the scheme's coral unless the chat look picks the team color (CHAT-18).
 
 ### 7.2 Look and feel
 
 **Gumdrop Pop**, from 1.1 (the owner's pick, 2026-10-25): bright and playful, like candy, and still clean:
 
-- an army-green page in the default theme (Gumdrop Army), with cream cards;
+- an army-green page in the default color scheme (Army green), with lighter olive cards;
 - gumdrop buttons: a rounded face on a hard lip in a darker shade, with a thin highlight along the top, that sinks onto its lip when pressed;
 - candy accents, each with a meaning: blue raspberry for you and the main action, mint for Going, lemon for Maybe and pins, cherry for Not going and unread, tangerine for games, grape for practices, and bubblegum for polls, other events, and your reactions;
 - chunky headings with a stacked hard shadow;
@@ -1242,34 +1243,32 @@ The content still carries the visual weight: messages, photos, and event cards.
 
 | Token | Values |
 |---|---|
-| **Color** | Five themes (§7.4), each with a full set of roles: page, cards, raised buttons, wells, inputs, lines, text, and headings. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is ink, a dark navy. Every text color is contrast-checked in every theme, under every team color too. |
-| **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages, in Latin letters (Cyrillic, like Greek and other scripts, draws in the platform's fallback font). **Black Ops One**, a stencil, is for stickers only, like the tag under the team's name and the website's coral sticker: capitals only, never under 12 px; Gumdrop Arena's leaning sticker keeps Arena's font (owner's request 2026-10-28, ROADMAP task 319). Sizes 36 / 32 / 24 / 22 / 17 / 16 / 14 / 12 (team name, screen title, section, title, subtitle, body, secondary, label); chat messages are 16 (CHAT-1). Headings carry a stacked hard shadow: four steps on screen titles and the team name, three on sections. Gumdrop Arena sets headings and labels in **Barlow Condensed** ExtraBold Italic instead, over a single 3 px shadow; its body text is Nunito too. Layouts survive system text scaling up to 200%. |
-| **Buttons** | Gumdrops: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above, with a highlight along its top. The main action is a candy gumdrop (the theme's own color, or a candy for its meaning); the rest are raised gumdrops in the card color. Pressed, the face sinks onto the lip; disabled, it's flat and muted. Chips, segmented buttons, the + button, and the navigation indicator are gumdrops too. In Gumdrop Arena every gumdrop leans 11° (its label stays upright) and has 7 px corners. |
+| **Color** | Five color schemes (§7.4), each with the same 32 roles: page, cards and their rims, the tab bar, fields, lines, text, headings' drop, and the candies' lips and text shades. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is the scheme's candy ink. Every text color is contrast-checked in all five schemes. |
+| **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages, in Latin letters (Cyrillic, like Greek and other scripts, draws in the platform's fallback font). **Black Ops One**, a stencil, is for stickers only, like the tag under the team's name and the website's coral sticker: capitals only, never under 12 px. Sizes 36 / 32 / 24 / 22 / 17 / 16 / 14 / 12 (team name, screen title, section, title, subtitle, body, secondary, label); chat messages are 16 (CHAT-1). Headings carry a stacked hard shadow: four steps on screen titles and the team name, three on sections. Layouts survive system text scaling up to 200%. |
+| **Buttons** | Gumdrops: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above, with a highlight along its top. The main action is a candy gumdrop (the theme's own color, or a candy for its meaning); the rest are raised gumdrops in the card color. Pressed, the face sinks onto the lip; disabled, it's flat and muted. Chips, segmented buttons, the + button, and the navigation indicator are gumdrops too. |
 | **Spacing** | 4-point grid: 4, 8, 12, 16, 24, 32, 48. Side padding is 16 on phones and 24 on wide screens. |
-| **Corners** | 14 for inputs, 18 for tiles, 20 for cards and chat bubbles (6 at a bubble's tail), 22 for panels, 26 for sheets, fully round for avatars, pills, and buttons. Gumdrop Arena cuts 12 px off the top-right and bottom-left corners of cards, panels, and dialogs instead. |
-| **Elevation** | No soft shadows on cards: they're flat, with a thin outline in Gumdrop Pop Light. Depth comes from the lips under buttons and the hard shadows under headings, the back button, and stickers. |
+| **Corners** | 14 for inputs, 18 for tiles, 20 for cards and chat bubbles (6 at a bubble's tail), 22 for panels, 26 for sheets, fully round for avatars, pills, and buttons. |
+| **Elevation** | No soft shadows on cards. Depth comes from the lips under buttons and the hard shadows under headings, the back button, and stickers. |
 | **Icons** | Material Symbols Rounded, the same set on every platform |
 | **Motion** | 150–250 ms with standard easing. Respect the system "reduce motion" setting. |
 
-### 7.4 Themes
+### 7.4 Open Field and its color schemes
 
-Five themes, picked in Profile → Themes (SET-2), from 1.1:
+From 1.1 the app has one theme, **Open Field**, in five color schemes (owner's request 2026-11-06). They share every shape, font, and candy, and differ only in color. In list order, the first being the default:
 
-- **Gumdrop Army**, the default (the owner's request, 2026-10-26, from the V1 Olive design, after the owner's team t-shirt, and renamed with a darker green on 2026-10-27): an army-green page (`#474C2B`) with cream text, cream cards and buttons (`#F4EAD0`) outlined in near-black on a hard near-black lip, coral (`#F45B5B`) for your messages, the sticker, and the back button, Candy's candies outlined in near-black, and cream headings outlined in near-black over a near-black shadow. Headings on its cream cards are plain near-black, with no shadow: a coral one looked smudged (the owner's request, 2026-10-27). It keeps its army-green page in every team.
-- **Gumdrop Pop Dark**: a navy page (`#0B1531`), navy cards a step lighter (`#16244A`), white text, and white headings with a blue shadow.
-- **Gumdrop Pop Light**: a pale blue-gray page (`#F2F5FD`), white cards with a thin outline, navy text, and navy headings with a light blue shadow.
-- **Gumdrop Candy**: a bright blue page (`#305AF6`) with white text and headings, white cards with navy text, and lemon as your color.
-- **Gumdrop Arena** (the owner's request, 2026-10-26, from the V3 design): Gumdrop Pop's layout with a game-day feel. A deep violet page (`#0F0D24`), violet cards (`#221D45`), white text, the same candies, headings and labels in a condensed bold italic over one blue shadow, gumdrops that lean, and cards with two corners cut. It's kept apart in the code, so it can be taken out cleanly; an account set to it would then get Gumdrop Pop Dark.
+- **Army green** (army green page, cream type): an army-green page, lighter olive event cards with ink outlines and lips, cream type, and coral and candy accents.
+- **Light** (cream-white page, black type): a warm cream-white page, white event cards with ink outlines and lips, near-black type, and coral and candy accents.
+- **Dark** (near-black page, cream type): a near-black page, dark charcoal event cards with a lighter charcoal outline and lip, warm cream type, and coral and candy accents.
+- **Navy** (deep navy page, white type): a deep navy page, slightly lighter navy event cards with a paler navy outline and lip, cool white type, and coral and candy accents.
+- **Light blue** (sky-blue page, navy type): a clear sky-blue page, white event cards with navy outlines and lips, navy type, and coral and candy accents.
 
-**Team colors.** In every theme but Gumdrop Army, every screen inside a team takes the team's color (TEAM-1) in its background (owner's requests, 2026-10-26). Screens outside a team keep the theme's own. Gumdrop Army keeps its army-green page and cream cards in every team, as its design does; the team's color shows in its logo.
+**Who picks.** Each person picks the scheme they see, for each team or group, in Team info → Color scheme, plus a default on Teams for the top level and every team they haven't picked for (SET-2). Nobody picks for anyone else.
 
-- **Gumdrop Pop Light** stays a light off-white page, shaded slightly toward the team color (a pale blush for Red, cream for Yellow, a gray off-white for Gray and Black), with its lines and button edges in the same hue. Its white cards, text, headings, and candies don't change.
-- **Gumdrop Pop Dark, Gumdrop Arena, and Gumdrop Candy** take the team color itself as the page, not a blend, as in the Rounded Candy Pop design the picker comes from; it's a little darker only where neither white nor navy text would read on it (Green). In Dark and Arena, the cards, chat bubbles, event cards, tab bar, buttons, and inputs are a muted, dark version of the team color (a deep red for Red, a dark brown for Orange, grays for Black), each as dark as the navy (or violet) it replaces, with its text tinted to match, so every contrast stays as designed. Candy keeps its white cards. The candies don't change.
-- On those colored pages, text straight on the page is white, or navy on light colors (Light blue, Yellow), with a heading shadow in the other one. Hard shadows on the page (the back button, the sticker) are navy, or the team color lifted lighter where navy wouldn't show (Navy, Maroon, Gray, Black). A candy or a button too close to the page (lemon on Yellow, Dark's buttons on Gray or Black) gets a navy edge so it still stands out, and a red team's unread badge a navy ring.
-- Blue and Navy are the theme's own navy, so Dark, Light, and Arena keep their own colors for them; new teams start on Blue, so a new team looks as the theme was designed. Candy's page takes them as it takes every color.
+**Team colors** no longer tint the pages: a team's color is on its badge, in the switcher, and as its dot in All my teams (TEAM-1, §7.1). Open Field replaced the five Gumdrop themes (Gumdrop Army, Pop Dark, Pop Light, Candy, and Arena), the Themes screen, and their team-color backgrounds.
+
 - A team still on a retired color (Royal blue or Violet) shows as its replacement (Blue or Purple) everywhere (TEAM-5).
 
-Photos are never dimmed. Every theme meets **WCAG AA contrast** (4.5:1 for body text), under every team color too. Every key screen has golden images in Olive, Dark, Light, and Candy, and five of them in Arena, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in all five.
+Photos are never dimmed. Every scheme meets **WCAG AA contrast** (4.5:1 for body text). Every key screen has golden images in all five schemes, for reviewing changes by eye (they don't fail CI), and accessibility checks, including contrast, in all five.
 
 ### 7.5 Components
 
@@ -1297,6 +1296,7 @@ Build these once in `core/` and reuse them everywhere:
 - Logical focus order, a visible focus ring, and full keyboard navigation on web.
 - Touch targets at least 48 × 48.
 - Color is never the only signal: RSVP states also use icons and words.
+- Text contrast meets WCAG AA in all five color schemes (§7.4), checked by the accessibility tests.
 - Test with VoiceOver and TalkBack: in phone browsers before Phase 1, and in the native apps before Phases 4 and 5.
 
 ### 7.7 Writing

@@ -16,14 +16,13 @@ import 'package:material_ui/material_ui.dart';
 /// ```
 ///
 /// Pressed, the face sinks onto its lip; disabled, it sits flat in the
-/// well's color. In Gumdrop Arena ([style]) every gumdrop leans and has
-/// small corners.
+/// well's color.
 @immutable
 class GumdropButtons {
   const new(
     this.colors, {
     required this.focusRing,
-    this.style = GumdropStyle.gumdrop,
+    this.style = GumdropStyle.openField,
   });
 
   /// For the colors and style at [context].
@@ -38,16 +37,16 @@ class GumdropButtons {
 
   final GumdropColors colors;
 
-  /// The theme's shapes: how far a gumdrop leans, and its corners.
+  /// The theme's style: the candy outline's width.
   final GumdropStyle style;
 
   /// The keyboard focus ring's color: the text color, which shows on every
   /// face.
   final Color focusRing;
 
-  /// A candy-colored gumdrop: [accent]'s face and lip, ink text, and no
-  /// outline but in Gumdrop Pop Olive. [height] includes the lip, which is 3 px up to a 38 px face
-  /// and 4 above.
+  /// A candy-colored gumdrop: [accent]'s face, a 2 px outline and lip in
+  /// its lip color, and ink text. [height] includes the lip, which is 3 px
+  /// up to a 38 px face and 4 above.
   ButtonStyle accent(
     GumdropAccent accent, {
     double height = 48,
@@ -62,9 +61,7 @@ class GumdropButtons {
     foreground: colors.ink,
     highlight: 2,
     highlightColor: GumdropColors.accentHighlight,
-    side: style.accentOutline == 0
-        ? BorderSide.none
-        : BorderSide(color: colors.ink, width: style.accentOutline),
+    side: style.accentSide(accent.lip),
     height: height,
     width: width,
     radius: radius,
@@ -73,8 +70,8 @@ class GumdropButtons {
     minimumSize: minimumSize,
   );
 
-  /// The secondary gumdrop: the raised face, outlined in Light and Candy,
-  /// with text in the card's text color.
+  /// The secondary button: an outlined pill with no face or lip, in the
+  /// text color.
   ButtonStyle secondary({
     double height = 48,
     double? width,
@@ -213,15 +210,13 @@ class GumdropButtons {
       shadowColor: const WidgetStatePropertyAll(Colors.transparent),
       surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
       shape: WidgetStateProperty.resolveWith(
-        (s) => style.styled(
-          GumdropShape(
-            lip: lipHeight,
-            lipColor: lip,
-            highlight: s.contains(WidgetState.disabled) ? 0 : highlight,
-            highlightColor: highlightColor,
-            radius: radius,
-            pressed: down(s) ? 1 : 0,
-          ),
+        (s) => GumdropShape(
+          lip: lipHeight,
+          lipColor: lip,
+          highlight: s.contains(WidgetState.disabled) ? 0 : highlight,
+          highlightColor: highlightColor,
+          radius: radius,
+          pressed: down(s) ? 1 : 0,
         ),
       ),
       side: WidgetStateProperty.resolveWith(

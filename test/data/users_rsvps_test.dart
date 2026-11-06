@@ -62,7 +62,7 @@ void main() {
       expect(notificationPrefsFromFirestore(null), isEmpty);
       final sparse = userProfileFromFirestore('x', const {});
       expect(sparse.status, UserStatus.active);
-      // A profile with no theme yet is on the default, Gumdrop Pop Olive.
+      // A profile with no theme yet starts on Army green (schemeForThemeMode).
       expect(sparse.themeMode, ThemePreference.system);
       expect(
         userProfileFromFirestore('z', const {'themeMode': 'olive'}).themeMode,
@@ -99,9 +99,9 @@ void main() {
       },
     );
 
-    test('updates the name, theme, and notification switches', () async {
+    test('updates the name, scheme, and notification switches', () async {
       await repo.updateDisplayName('u1', '  Alex K  ');
-      await repo.setThemeMode('u1', ThemePreference.light);
+      await repo.setColorScheme('u1', TeamScheme.light);
       await repo.setNotificationPref(
         'u1',
         NotificationPref.reminders,
@@ -110,7 +110,7 @@ void main() {
       final d = (await db.doc('users/u1').get()).data()!;
       expect(d['displayName'], 'Alex K');
       expect(d['displayNameLower'], 'alex k');
-      expect(d['themeMode'], 'light');
+      expect(d['colorScheme'], 'light');
       expect((d['notificationPrefs'] as Map)['reminders'], isFalse);
       expect(
         () => repo.updateDisplayName('u1', '  '),
@@ -156,7 +156,7 @@ void main() {
             .on(db.doc('users/u1'))
             .thenThrow(_fs(code));
         await expectLater(
-          repo.setThemeMode('u1', ThemePreference.dark),
+          repo.setColorScheme('u1', TeamScheme.navy),
           throwsA(type),
         );
       }

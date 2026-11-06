@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -1245,7 +1246,7 @@ class _MarkerLabelSheet extends ConsumerStatefulWidget {
     BuildContext context,
     GroupId groupId,
     MarkerElement marker,
-  ) => showModalBottomSheet<MarkerElement>(
+  ) => showCardSheet<MarkerElement>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,

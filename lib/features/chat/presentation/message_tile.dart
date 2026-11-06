@@ -16,6 +16,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/linkified_text.dart';
 import 'package:battleplan/core/widgets/plays_icon.dart';
@@ -133,7 +134,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final l10n = AppLocalizations.of(context);
     final m = widget.message;
     final text = TextEditingController(text: m.text);
-    final save = await showDialog<bool>(
+    final save = await showCardDialog<bool>(
       context: context,
       builder: (dialog) => AlertDialog(
         title: Text(l10n.editMessage),
@@ -753,8 +754,8 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             : null,
         borderRadius: radius,
       ),
-      // Others' bubbles are white cards in Candy: their text and quotes
-      // take the card's colors.
+      // Others' bubbles are cards: their text and quotes take the card's
+      // colors.
       child: !mine && !announcement && !deleted
           ? GumdropSurface(child: content)
           : content,
@@ -1199,14 +1200,10 @@ class _OpenPlayBadge extends StatelessWidget {
     return DecoratedBox(
       decoration: ShapeDecoration(
         color: c.sticker.face,
-        shape: style.styled(
-          GumdropShape(
-            lip: 3,
-            lipColor: c.sticker.lip,
-            side: style.accentOutline == 0
-                ? BorderSide.none
-                : BorderSide(color: c.ink, width: style.accentOutline),
-          ),
+        shape: GumdropShape(
+          lip: 3,
+          lipColor: c.sticker.lip,
+          side: style.accentSide(c.sticker.lip),
         ),
       ),
       child: Padding(

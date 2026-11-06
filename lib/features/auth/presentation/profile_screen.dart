@@ -1,14 +1,13 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
-import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/theme_choices.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/services/time_zone_names.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/time_zone_picker.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -18,7 +17,6 @@ import 'package:battleplan/features/auth/presentation/profile_photo.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/schedule/application/providers.dart'
     show deviceTimeZoneProvider;
-import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -79,7 +77,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final device = await ref.read(deviceTimeZoneProvider.future);
     final zones = await ref.read(timeZonesProvider).available();
     if (!mounted) return;
-    final picked = await showDialog<String>(
+    final picked = await showCardDialog<String>(
       context: context,
       builder: (context) => TimeZonePicker(
         zones: TimeZoneNames.ordered(zones, keep: [device, ?profile.timeZone]),
@@ -104,13 +102,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final profile = ref.watch(myProfileProvider).value;
     final photoUrl = ref.watch(myPhotoUrlProvider).value;
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
-    final theme = AppTheme.flavorOf(
-      ref.watch(themePreferenceControllerProvider),
-    );
-    final themeName = themeChoices(l10n)
-        .where((t) => t.$2 == theme)
-        .map((t) => t.$3)
-        .firstOrNull;
     final width = MediaQuery.sizeOf(context).width;
     final c = GumdropColors.of(context);
 
@@ -237,14 +228,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         const SizedBox(height: 12),
                       ],
-                      box(
-                        SettingsRow(
-                          icon: AppIcons.themes,
-                          title: l10n.themes,
-                          subtitle: themeName,
-                          onTap: () => unawaited(context.push('/themes')),
-                        ),
-                      ),
                       // The zone every time shows in, wherever I am (SET-7).
                       box(
                         SettingsRow(

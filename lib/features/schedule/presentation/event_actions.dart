@@ -5,6 +5,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/calendar.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -25,7 +26,7 @@ import 'package:material_ui/material_ui.dart';
 /// "This event" or "This and following events"; null if dismissed.
 Future<SeriesScope?> askSeriesScope(BuildContext context, String title) {
   final l10n = AppLocalizations.of(context);
-  return showDialog<SeriesScope>(
+  return showCardDialog<SeriesScope>(
     context: context,
     builder: (context) => SimpleDialog(
       title: Text(title),
@@ -146,7 +147,7 @@ Future<bool> deleteEventFlow(
       !event.isCanceled &&
       event.startAt.isAfter(now) &&
       event.startAt.difference(now) <= const Duration(days: 7);
-  final choice = await showDialog<_DeleteChoice>(
+  final choice = await showCardDialog<_DeleteChoice>(
     context: context,
     builder: (context) {
       final scheme = Theme.of(context).colorScheme;

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/scheme_defaults.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,7 +13,10 @@ class SharedPrefsRepository implements LocalPrefsRepository {
 
   final SharedPreferencesWithCache _prefs;
 
+  /// The old theme setting, read once to seed the default scheme.
   static const _themeKey = 'themePreference';
+  static const _defaultSchemeKey = 'defaultColorScheme';
+  static const _teamSchemesKey = 'teamColorSchemes';
   static const _lastRouteKey = 'lastTeamRoute';
   static const _pendingEmailKey = 'pendingSignInEmail';
   static const _pendingLinkKey = 'pendingLink';
@@ -25,6 +29,8 @@ class SharedPrefsRepository implements LocalPrefsRepository {
   /// these, so stray keys from other code are never read.
   static const Set<String> keys = {
     _themeKey,
+    _defaultSchemeKey,
+    _teamSchemesKey,
     _lastRouteKey,
     _pendingEmailKey,
     _pendingLinkKey,
@@ -37,14 +43,51 @@ class SharedPrefsRepository implements LocalPrefsRepository {
   static const _idAlphabet =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
+  /// Stored as `uid scheme`; neither has a space.
   @override
-  ThemePreference get themePreference =>
-      ThemePreference.tryParse(_prefs.getString(_themeKey)) ??
-      ThemePreference.system;
+  TeamScheme defaultScheme({String? uid}) {
+    final parts = _prefs.getString(_defaultSchemeKey)?.split(' ');
+    if (parts != null &&
+        parts.length == 2 &&
+        (uid == null || parts[0] == uid)) {
+      final saved = TeamScheme.tryParse(parts[1]);
+      if (saved != null) return saved;
+    }
+    final old = ThemePreference.tryParse(_prefs.getString(_themeKey));
+    return schemeForThemeMode(old);
+  }
 
   @override
-  Future<void> setThemePreference(ThemePreference value) =>
-      _prefs.setString(_themeKey, value.value);
+  Future<void> setDefaultScheme(String uid, TeamScheme scheme) =>
+      _prefs.setString(_defaultSchemeKey, '$uid ${scheme.value}');
+
+  /// Stored as JSON: `{"uid": "...", "schemes": {"<groupId>": "navy"}}`.
+  @override
+  TeamScheme? teamScheme(String groupId, {String? uid}) {
+    final raw = _prefs.getString(_teamSchemesKey);
+    if (raw == null) return null;
+    final Object? saved;
+    try {
+      saved = jsonDecode(raw);
+    } on FormatException {
+      return null;
+    }
+    if (saved is! Map<String, dynamic>) return null;
+    if (uid != null && saved['uid'] != uid) return null;
+    final schemes = saved['schemes'];
+    final value = schemes is Map<String, dynamic> ? schemes[groupId] : null;
+    return value is String ? TeamScheme.tryParse(value) : null;
+  }
+
+  @override
+  Future<void> setTeamSchemes(String uid, Map<String, TeamScheme> schemes) =>
+      _prefs.setString(
+        _teamSchemesKey,
+        jsonEncode({
+          'uid': uid,
+          'schemes': {for (final e in schemes.entries) e.key: e.value.value},
+        }),
+      );
 
   @override
   String? get lastTeamRoute => _prefs.getString(_lastRouteKey);

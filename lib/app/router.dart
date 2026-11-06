@@ -31,6 +31,7 @@ import 'package:battleplan/features/documents/presentation/document_screen.dart'
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/add_members_screen.dart';
+import 'package:battleplan/features/groups/presentation/color_scheme_screen.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/email_invites_screen.dart';
 import 'package:battleplan/features/groups/presentation/enter_code_screen.dart';
@@ -40,8 +41,8 @@ import 'package:battleplan/features/groups/presentation/media_screen.dart';
 import 'package:battleplan/features/groups/presentation/new_season_screen.dart';
 import 'package:battleplan/features/groups/presentation/person_screen.dart';
 import 'package:battleplan/features/groups/presentation/roster_screen.dart';
-import 'package:battleplan/features/groups/presentation/team_colors.dart';
 import 'package:battleplan/features/groups/presentation/team_info_screen.dart';
+import 'package:battleplan/features/groups/presentation/team_scheme_theme.dart';
 import 'package:battleplan/features/groups/presentation/team_settings_screen.dart';
 import 'package:battleplan/features/groups/presentation/team_shell.dart';
 import 'package:battleplan/features/groups/presentation/teams_screen.dart';
@@ -68,7 +69,6 @@ import 'package:battleplan/features/schedule/presentation/event_form_screen.dart
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/settings_screen.dart';
-import 'package:battleplan/features/settings/presentation/themes_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show Provider, ProviderListenableSelect;
@@ -403,6 +403,16 @@ GoRouter router(Ref ref) {
           key: state.pageKey,
           child: const HomeShell(tab: 0, child: TeamsScreen()),
         ),
+        routes: [
+          // My default color scheme (SET-2).
+          GoRoute(
+            path: 'scheme',
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: const ColorSchemeScreen.defaultScheme(),
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/profile',
@@ -411,12 +421,9 @@ GoRouter router(Ref ref) {
           child: const HomeShell(tab: 1, child: ProfileScreen()),
         ),
       ),
-      // The themes, from Profile (SET-2).
-      GoRoute(
-        path: '/themes',
-        pageBuilder: (_, state) =>
-            PanelPage(key: state.pageKey, child: const ThemesScreen()),
-      ),
+      // The old themes screen's address, from bookmarks and old builds'
+      // links: the default color scheme replaced it (SET-2).
+      GoRoute(path: '/themes', redirect: (_, _) => '/teams/scheme'),
       GoRoute(
         path: '/notifications',
         builder: (_, _) => const NotificationsScreen(),
@@ -594,7 +601,7 @@ GoRouter router(Ref ref) {
               ? '/g/$id/chat'
               : null;
         },
-        routes: _inTeamColors([
+        routes: _inTeamScheme([
           // The Documents tab was `docs` before M7; a device may still
           // remember that as its last tab.
           GoRoute(
@@ -710,6 +717,23 @@ GoRouter router(Ref ref) {
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
           ),
+          // How I see this team (SET-2). A super admin viewing a team
+          // they aren't on has no membership to save it on.
+          GoRoute(
+            path: 'scheme',
+            redirect: (_, state) {
+              final id = state.pathParameters['groupId']!;
+              return ref.read(viewingAsSuperAdminProvider(GroupId(id)))
+                  ? '/g/$id/info'
+                  : null;
+            },
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: ColorSchemeScreen.team(
+                GroupId(state.pathParameters['groupId']!),
+              ),
+            ),
+          ),
           GoRoute(
             path: 'notifications',
             pageBuilder: (_, state) => PanelPage(
@@ -755,7 +779,7 @@ GoRouter router(Ref ref) {
             branches: [
               for (final tab in teamTabs)
                 StatefulShellBranch(
-                  routes: _inTeamColors([
+                  routes: _inTeamScheme([
                     GoRoute(
                       path: tab,
                       builder: (_, state) {
@@ -1053,17 +1077,17 @@ class _AdminPanelState extends State<_AdminPanel> {
   }
 }
 
-/// [routes] and every route under them with their screens in the team's
-/// colors (TEAM-1, TeamColors): the team's own pages, like its settings and
-/// roster, and its event and document pages over the tabs. The tabs
-/// themselves are inside the team shell, which tints itself.
-List<RouteBase> _inTeamColors(List<RouteBase> routes) => [
+/// [routes] and every route under them with their screens in the scheme I
+/// see the team in (SET-2, TeamSchemeTheme): the team's own pages, like its
+/// settings and roster, and its event and document pages over the tabs. The
+/// tabs themselves are inside the team shell, which themes itself.
+List<RouteBase> _inTeamScheme(List<RouteBase> routes) => [
   for (final route in routes)
-    if (route is GoRoute) _inTeamColor(route) else route,
+    if (route is GoRoute) _inTeamSchemeRoute(route) else route,
 ];
 
-GoRoute _inTeamColor(GoRoute route) {
-  Widget tinted(GoRouterState state, Widget child) => TeamColors(
+GoRoute _inTeamSchemeRoute(GoRoute route) {
+  Widget tinted(GoRouterState state, Widget child) => TeamSchemeTheme(
     groupId: GroupId(state.pathParameters['groupId']!),
     child: child,
   );
@@ -1093,6 +1117,6 @@ GoRoute _inTeamColor(GoRoute route) {
                   )
                 : page;
           },
-    routes: _inTeamColors(route.routes),
+    routes: _inTeamScheme(route.routes),
   );
 }

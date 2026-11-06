@@ -535,8 +535,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // (ADMIN-3): no composer, replies, or reactions.
     final viewing = ref.watch(viewingAsSuperAdminProvider(widget.groupId));
     // The team's chat look (CHAT-18): my bubble color and the background.
-    // No color chosen means the theme's "you" color (lemon in Gumdrop
-    // Candy), so changing only the background never changes the bubbles;
+    // No color chosen means the theme's "you" color (coral), so changing
+    // only the background never changes the bubbles;
     // a team with neither has a plain chat.
     final look = group.look;
     // A candy color (Chat look) is drawn in this theme's shade of it.

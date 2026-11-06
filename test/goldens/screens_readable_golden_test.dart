@@ -1,6 +1,6 @@
 // The key screens with real fonts (the bundled Lilita One, Fredoka, and
-// Nunito, Material Symbols for icons) in the Gumdrop themes but Arena
-// (Olive, Light, Dark, and Candy), at a phone size (one at a wide size), at 2x, to look at
+// Nunito, Material Symbols for icons) in the five color schemes, at a phone
+// size (one at a wide size), at 2x, to look at
 // in review (ARCH §9). Fonts rasterize a little differently on each operating
 // system, so these compare only on the one that made them
 // ([readableGoldensOs]), and CI (Linux) skips them: they're for looking at
@@ -31,16 +31,12 @@ void main() {
       : 'Readable goldens compare on $readableGoldensOs only';
 
   for (final MapEntry(key: name, value: pump) in goldenScreens.entries) {
-    // The Gumdrop themes (SET-2) but Arena, whose goldens are with it.
-    for (final preference in [
-      ThemePreference.olive,
-      ThemePreference.light,
-      ThemePreference.dark,
-      ThemePreference.candy,
-    ]) {
-      final theme = preference.value;
-      testWidgets('$name ($theme)', skip: skip != null, (tester) async {
-        await pump(tester, theme: preference);
+    // The five color schemes (SET-2).
+    for (final scheme in TeamScheme.values) {
+      testWidgets('$name (${scheme.value})', skip: skip != null, (
+        tester,
+      ) async {
+        await pump(tester, scheme: scheme);
         // The same layout, drawn at 2x so the text is sharp, with real
         // shadows rather than the test's solid outlines (reset before the
         // test ends, as the test framework checks).
@@ -53,7 +49,7 @@ void main() {
           await tester.pumpAndSettle();
           await expectLater(
             find.byType(MaterialApp),
-            matchesGoldenFile('readable/${name}_$theme.png'),
+            matchesGoldenFile('readable/${name}_${scheme.value}.png'),
           );
         } finally {
           debugDisableShadows = true;

@@ -1,4 +1,6 @@
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A bottom sheet on phones and a dialog on wide screens (SPEC §7.5). With
@@ -16,7 +18,7 @@ Future<T?> showAdaptiveSheet<T>(
     if (box is RenderBox && box.hasSize && box.attached) {
       return _showDropdownPanel<T>(context, anchor: box, builder: builder);
     }
-    return showDialog<T>(
+    return showCardDialog<T>(
       context: context,
       builder: (context) => Dialog(
         child: ConstrainedBox(
@@ -26,7 +28,7 @@ Future<T?> showAdaptiveSheet<T>(
       ),
     );
   }
-  return showModalBottomSheet<T>(
+  return showCardSheet<T>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -76,7 +78,8 @@ Future<T?> _showDropdownPanel<T>(
         clipBehavior: Clip.antiAlias,
         child: Padding(
           padding: const EdgeInsets.only(top: Space.md),
-          child: builder(dialogContext),
+          // On the panel, in the card context.
+          child: GumdropSurface(child: Builder(builder: builder)),
         ),
       ),
     ),

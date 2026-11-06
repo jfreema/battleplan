@@ -699,11 +699,8 @@ void main() {
       ),
     );
 
-    test('keeps theme, last team, pending email, and the pre-prompt', () async {
+    test('keeps last team, pending email, and the pre-prompt', () async {
       final repo = await open();
-      expect(repo.themePreference, ThemePreference.system);
-      await repo.setThemePreference(ThemePreference.dark);
-      expect(repo.themePreference, ThemePreference.dark);
       expect(repo.lastTeamRoute, isNull);
       await repo.setLastTeamRoute('/g/g1/chat');
       expect(repo.lastTeamRoute, '/g/g1/chat');
@@ -715,7 +712,42 @@ void main() {
       await repo.setPushPrePromptShown();
       expect(repo.pushPrePromptShown, isTrue);
       // Survives reopening.
-      expect((await open()).themePreference, ThemePreference.dark);
+      expect((await open()).lastTeamRoute, '/g/g1/chat');
+    });
+
+    test('keeps the color schemes per account (SET-2)', () async {
+      final repo = await open();
+      // Nothing yet: Army green.
+      expect(repo.defaultScheme(uid: 'u1'), TeamScheme.army);
+      await repo.setDefaultScheme('u1', TeamScheme.navy);
+      expect(repo.defaultScheme(uid: 'u1'), TeamScheme.navy);
+      // While auth restores, this device's last default.
+      expect(repo.defaultScheme(), TeamScheme.navy);
+      // Another account doesn't use it.
+      expect(repo.defaultScheme(uid: 'u2'), TeamScheme.army);
+      await repo.setTeamSchemes('u1', {'g1': TeamScheme.skyblue});
+      expect(repo.teamScheme('g1', uid: 'u1'), TeamScheme.skyblue);
+      expect(repo.teamScheme('g1', uid: 'u2'), isNull);
+      expect(repo.teamScheme('g2', uid: 'u1'), isNull);
+      expect((await open()).teamScheme('g1', uid: 'u1'), TeamScheme.skyblue);
+    });
+
+    test('seeds the default from the old theme setting', () async {
+      Future<TeamScheme> seeded(Map<String, Object> data) async {
+        SharedPreferencesAsyncPlatform.instance =
+            InMemorySharedPreferencesAsync.withData(data);
+        return (await open()).defaultScheme(uid: 'u1');
+      }
+
+      expect(await seeded({'themePreference': 'dark'}), TeamScheme.navy);
+      expect(await seeded({'themePreference': 'arena'}), TeamScheme.dark);
+      expect(
+        await seeded({
+          'themePreference': 'dark',
+          'defaultColorScheme': 'u1 skyblue',
+        }),
+        TeamScheme.skyblue,
+      );
     });
 
     test('remembers which accounts set a password here (AUTH-7)', () async {

@@ -2,7 +2,7 @@
 
 Team chat and scheduling for sports teams, free for every team and with no ads. Battleplan does in one app what GroupMe (chat) and TeamReach (schedules and RSVPs) do separately. It runs in any modern browser today; iPhone and Android apps are on the way.
 
-- **Teams and Profile:** every team you're on in one list, each with a back arrow home and Team info for its roster, invites, and Team admin; your photo, name, themes, a time zone that stays put when you travel, and settings on Profile.
+- **Teams and Profile:** every team you're on in one list, each with a back arrow home and Team info for its roster, invites, Team admin, and the color scheme you see it in; your default color scheme on Teams; your photo, name, a time zone that stays put when you travel, and settings on Profile.
 - **Team chat:** photos, reactions, replies, @mentions, pinned messages, announcements, and search by the words in a message.
 - **Direct messages:** one-to-one conversations with anyone you share a team with, from the Messages button or their profile.
 - **Profiles:** tap someone's photo to see the teams you share with them, and whether they coach.
@@ -13,7 +13,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 - **Groups:** besides teams, plain groups for anything else, as simple as they can be: the same chat, schedule, RSVPs, and documents, but no players or Plays, and everyone answers for themselves. A group's owner can make it a team later.
 - **New seasons:** a team's owner starts the next season as a new team, bringing the players, parents, coaches, and anyone else they choose, who are on it at once with nothing to accept; the old season is archived with its chat, photos, and schedule.
 - **Sign-in:** Continue with Google or Apple; an email and password, or an emailed link, for whoever needs one.
-- **Themes:** Gumdrop Army (the default), Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena; in all but Gumdrop Army, each team's color shows in the background of every screen in the team.
+- **Color schemes:** one look, Open Field, in five schemes: Army green (the default), Light, Dark, Navy, and Light blue. Each person picks the one they see for each team or group, and a default for the rest.
 - **Import:** bring a team over from GroupMe (messages, photos, files, and events) or TeamSnap (schedule, players, and files), and schedules from TeamReach, GameChanger, or Google Calendar.
 
 ## Sites
@@ -27,7 +27,7 @@ Every push to `main` updates dev's web app once CI passes; **Release to dev** in
 
 ## Built with
 
-Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS, with one small script for its slider. The app and the website use the same fonts, Lilita One, Fredoka, and Nunito, with Black Ops One on stickers (and the app's Gumdrop Arena theme also Barlow Condensed), bundled with the app and served from the site, as are the web app's fonts for emoji and other scripts: never from Google Fonts.
+Flutter (web, iOS, and Android from one codebase) and Firebase: Authentication, Firestore, Cloud Functions in TypeScript, Storage, and Hosting. The website in `website/` is plain HTML and CSS, with one small script for its slider. The app and the website use the same fonts, Lilita One, Fredoka, and Nunito, with Black Ops One on stickers, bundled with the app and served from the site, as are the web app's fonts for emoji and other scripts: never from Google Fonts.
 
 ## Docs
 

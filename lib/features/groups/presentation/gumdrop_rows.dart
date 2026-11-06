@@ -58,11 +58,6 @@ class GumdropBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    // Where the theme's gumdrops lean (Gumdrop Arena), the theme's own back
-    // button, a leaning lemon gumdrop.
-    if (GumdropStyle.of(context).slant != 0) {
-      return BackButton(onPressed: onPressed);
-    }
     return DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,

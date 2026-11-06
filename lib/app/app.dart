@@ -1,11 +1,7 @@
-import 'dart:async';
-
 import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/app/push_handler.dart';
 import 'package:battleplan/app/router.dart';
-import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
-import 'package:battleplan/core/design/arena/arena_font.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
@@ -34,20 +30,18 @@ class BattleplanApp extends ConsumerWidget {
       ..watch(pushRegistrationProvider)
       ..watch(pushHandlerProvider)
       // Signs out when this account's sessions were ended elsewhere (AUTH-9).
-      ..watch(sessionRevocationWatcherProvider);
+      ..watch(sessionRevocationWatcherProvider)
+      // This device's copy of my team schemes, for a cold start (SET-2).
+      ..watch(teamSchemeCacheProvider);
     final banner = ref.watch(appEnvProvider).bannerLabel;
-    final theme = ref.watch(themePreferenceControllerProvider);
+    final scheme = ref.watch(appSchemeProvider);
     final zone = ref.watch(viewerTimeZoneProvider).value;
-    // Arena's font is loaded only for Arena (ARCH §5.5).
-    if (theme == ThemePreference.arena) unawaited(loadArenaFont());
     final app = MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appName,
       debugShowCheckedModeBanner: false,
-      // One Gumdrop theme at a time (SET-2): Dark (also the old "system"),
-      // Light, or Candy. Candy and Dark aren't a Material light and dark
-      // pair, so the theme is picked here and never by the system's mode.
-      // Built once each and cached (AppTheme.of).
-      theme: AppTheme.forPreference(theme),
+      // Open Field in my default color scheme (SET-2), never the system's
+      // light or dark mode. A team's screens are in its own (router).
+      theme: AppTheme.of(scheme),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         ...GlobalMaterialLocalizations.delegates,

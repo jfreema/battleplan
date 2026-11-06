@@ -1,5 +1,6 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/tokens.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
@@ -22,7 +23,7 @@ List<MyTeam> ownedTeams(List<MyTeam> teams) => [
 Future<Map<String, String>?> pickNewOwners(
   BuildContext context,
   List<MyTeam> teams,
-) => showDialog<Map<String, String>>(
+) => showCardDialog<Map<String, String>>(
   context: context,
   builder: (_) => NewOwnersDialog(teams: teams),
 );

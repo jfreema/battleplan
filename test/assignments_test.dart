@@ -44,7 +44,7 @@ Future<void> openEvent(
 }) async {
   await pumpTeam(
     tester,
-    theme: ThemePreference.dark,
+    scheme: TeamScheme.navy,
     user: user,
     assignments: assignments,
   );

@@ -12,6 +12,7 @@ import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
@@ -463,7 +464,8 @@ class _GameCard extends StatelessWidget {
                   ),
                   if (soon != null && !event.isCanceled)
                     _HeroChip(
-                      background: GumdropColors.inkTint14,
+                      background: GumdropColors.of(context).ink
+                          .withValues(alpha: 0.14),
                       child: Text(
                         soon.toUpperCase(),
                         style: chip?.copyWith(color: ink),
@@ -526,7 +528,9 @@ class _GameCard extends StatelessWidget {
               ),
               const SizedBox(height: Space.md),
               CustomPaint(
-                painter: const _DashedLine(color: GumdropColors.inkTint30),
+                painter: _DashedLine(
+                  color: GumdropColors.of(context).ink.withValues(alpha: 0.3),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.only(top: 13),
                   child: Column(
@@ -678,7 +682,7 @@ class _RsvpSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final c = GumdropColors.of(context);
-    // Text straight on the page (Candy's differs from its cards').
+    // Text straight on the page (it differs from the cards').
     final muted = theme.textTheme.bodyMedium?.copyWith(
       color: c.textMutedOnPage,
       fontWeight: FontWeight.w800,
@@ -1035,7 +1039,7 @@ class RsvpButtons extends ConsumerWidget {
     WidgetRef ref,
     RsvpStatus status,
   ) async {
-    final note = await showDialog<String>(
+    final note = await showCardDialog<String>(
       context: context,
       builder: (_) => _NoteDialog(initial: answer?.note ?? ''),
     );

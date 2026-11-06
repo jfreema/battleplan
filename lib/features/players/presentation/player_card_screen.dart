@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -339,7 +340,7 @@ class PlayerCardScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final email = TextEditingController();
     final name = TextEditingController();
-    final ok = await showDialog<bool>(
+    final ok = await showCardDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.addGuardian),
@@ -448,7 +449,7 @@ class PlayerCardScreen extends ConsumerWidget {
       final d? => parseDateOfBirth(d),
       null => null,
     };
-    final save = await showDialog<bool>(
+    final save = await showCardDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(

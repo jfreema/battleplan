@@ -54,8 +54,8 @@ MORE FOR COACHES
 • Bring your team's messages, photos, files, and schedule over from the app or calendar you use now
 
 MAKE IT YOURS
-• Five looks: Gumdrop Army, Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
-• Each team picks its color, and in all but Gumdrop Army the team's screens take it on
+• Five color schemes: Army green, Light, Dark, Navy, and Light blue
+• Pick the scheme you see for each team, and a default
 • Coaches pick the chat's message color and background
 
 SAFE AND PRIVATE
@@ -75,7 +75,7 @@ Check the counts after any edit: the short description must stay at 80 character
 |---|---|---|
 | App icon | `store/google-play/icon-512.png` (from `assets/brand/icon.png`) | 512 × 512 PNG, no transparency |
 | Feature graphic | `store/google-play/feature-graphic.png` (source: `feature-graphic.html` beside it, rendered with headless Chrome; the command is at its top) | 1024 × 500 PNG, no transparency |
-| Phone screenshots | `store/google-play/phone/01-chat.jpg` to `06-roster.jpg`: chat, schedule, an event's RSVPs, a play, documents, and roster in Gumdrop Pop Dark, the same screens as the App Store set. Rendered from the app's widgets on sample data at 360 × 640 logical pixels × 3 (as website/README.md describes for the site's screenshots), with no device frame or status bar | 1080 × 1920 JPEG, 9:16 |
+| Phone screenshots | `store/google-play/phone/01-chat.jpg` to `06-roster.jpg`: chat, schedule, an event's RSVPs, a play, documents, and roster in Gumdrop Pop Dark, the same screens as the App Store set; they predate Open Field and need retaking in it. Rendered from the app's widgets on sample data at 360 × 640 logical pixels × 3 (as website/README.md describes for the site's screenshots), with no device frame or status bar | 1080 × 1920 JPEG, 9:16 |
 | Tablet screenshots | Optional (7-inch and 10-inch) | |
 
 ## Store settings

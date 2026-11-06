@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -9,6 +10,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
+import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -99,6 +101,16 @@ class TeamInfoScreen extends ConsumerWidget {
                       'notifications',
                       AppIcons.notifications,
                       l10n.teamNotificationsMenu,
+                    ),
+                    // How I see this team: everyone picks their own (SET-2).
+                    SettingsRow(
+                      icon: AppIcons.colorScheme,
+                      title: l10n.colorScheme,
+                      subtitle: ref
+                          .watch(teamSchemeProvider(groupId))
+                          .label(l10n),
+                      onTap: () =>
+                          unawaited(context.push('/g/${groupId.value}/scheme')),
                     ),
                     // The schedule in your own calendar, kept in sync
                     // (SCHED-11).

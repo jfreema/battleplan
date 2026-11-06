@@ -1,6 +1,7 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
@@ -52,7 +53,7 @@ const guardianPickerSearchAfter = 6;
 Future<GuardianPick?> pickGuardian(
   BuildContext context, {
   required List<Membership> candidates,
-}) => showDialog<GuardianPick>(
+}) => showCardDialog<GuardianPick>(
   context: context,
   builder: (context) => _GuardianPickerDialog(candidates: candidates),
 );

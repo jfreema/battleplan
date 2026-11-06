@@ -2,8 +2,8 @@ import 'dart:math' as math;
 import 'dart:ui' show Color;
 
 /// A color in CIE LCh (D65): lightness L* (0 to 100), chroma C, and hue h in
-/// degrees. Team colors tint the Gumdrop themes in this space, since keeping
-/// L* keeps every text contrast on the color (team_tint.dart).
+/// degrees: for lightness and hue comparisons that sRGB distances get
+/// wrong.
 typedef Lch = ({double l, double c, double h});
 
 /// Color arithmetic for the Gumdrop themes: WCAG contrast, and sRGB to and

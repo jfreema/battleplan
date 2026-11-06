@@ -1,12 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
-import 'package:battleplan/core/design/team_tint.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -36,71 +33,38 @@ class TeamSticker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    final style = GumdropStyle.of(context);
-    // Stenciled (SPEC §7.3), except in a theme whose gumdrops lean
-    // (Gumdrop Arena), which keeps its own font.
+    // Stenciled (SPEC §7.3).
     final text = Text(
       label.toUpperCase(),
       maxLines: 1,
-      style: style.slant != 0
-          ? style.display(
-              TextStyle(
-                fontWeight: FontWeight.w400,
-                fontSize: 15,
-                height: 1.2,
-                letterSpacing: 15 * 0.03,
-                color: c.ink,
-              ),
-            )
-          : TextStyle(
-              fontFamily: AppFonts.sticker,
-              fontWeight: FontWeight.w400,
-              fontSize: 15,
-              height: 1.25,
-              letterSpacing: 0.75,
-              color: c.ink,
-            ),
+      style: TextStyle(
+        fontFamily: AppFonts.sticker,
+        fontWeight: FontWeight.w400,
+        fontSize: 15,
+        height: 1.25,
+        letterSpacing: 0.75,
+        color: c.ink,
+      ),
     );
     return Semantics(
       container: true,
       label: label,
       excludeSemantics: true,
-      // In a theme whose gumdrops lean (Gumdrop Arena), the sticker leans
-      // with them, flat, with an ink outline only on a page it would melt
-      // into (a Yellow team's).
-      child: style.slant != 0
-          ? Container(
-              padding: const EdgeInsets.fromLTRB(15, 4, 15, 4),
-              decoration: ShapeDecoration(
-                color: c.sticker.face,
-                shape: GumdropShape(
-                  lip: 0,
-                  highlight: 0,
-                  radius: const BorderRadius.all(Radius.circular(3)),
-                  slant: style.slant,
-                  side:
-                      ColorMath.contrast(c.sticker.face, c.page) < edgeContrast
-                      ? BorderSide(color: c.ink, width: 2)
-                      : BorderSide.none,
-                ),
-              ),
-              child: text,
-            )
-          : Transform.rotate(
-              angle: -2 * math.pi / 180,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(11, 3, 11, 4),
-                decoration: BoxDecoration(
-                  color: c.sticker.face,
-                  border: Border.all(color: c.ink, width: 2.5),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(color: c.pageShadow, offset: const Offset(3, 3)),
-                  ],
-                ),
-                child: text,
-              ),
-            ),
+      child: Transform.rotate(
+        angle: -2 * math.pi / 180,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(11, 3, 11, 4),
+          decoration: BoxDecoration(
+            color: c.sticker.face,
+            border: Border.all(color: c.ink, width: 2.5),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(color: c.pageShadow, offset: const Offset(3, 3)),
+            ],
+          ),
+          child: text,
+        ),
+      ),
     );
   }
 }
@@ -182,15 +146,10 @@ class _Panel extends StatelessWidget {
                 width: colors.surfaceBorderWidth,
               ),
       ),
-      child: style.cardCut > 0
-          ? ClipPath(
-              clipper: ShapeBorderClipper(shape: style.cardShape(radius)),
-              child: surface,
-            )
-          : ClipRRect(
-              borderRadius: BorderRadius.circular(radius),
-              child: surface,
-            ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: surface,
+      ),
     );
   }
 }

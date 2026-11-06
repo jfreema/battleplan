@@ -1,7 +1,5 @@
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/gumdrop_shape.dart';
-import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The round lemon back button (Gumdrop Pop design §3.2): a 48 px lemon
@@ -78,9 +76,7 @@ class _FocusAwareDisc extends StatelessWidget {
   }
 }
 
-/// The back button's look alone, with no tap: the lemon disc and chevron,
-/// or, where the theme's gumdrops lean (Gumdrop Arena), a leaning lemon
-/// gumdrop.
+/// The back button's look alone, with no tap: the disc and chevron.
 class GumdropBackDisc extends StatelessWidget {
   const new({this.focused = false, super.key});
 
@@ -96,27 +92,6 @@ class GumdropBackDisc extends StatelessWidget {
       weight: 700,
       color: c.ink,
     );
-    final style = GumdropStyle.of(context);
-    if (style.slant != 0) {
-      return Container(
-        width: GumdropBackButton.size,
-        height: GumdropBackButton.size,
-        padding: const EdgeInsets.only(bottom: 4),
-        decoration: ShapeDecoration(
-          color: c.sticker.face,
-          shape: style.styled(
-            GumdropShape(
-              lipColor: c.sticker.lip,
-              side: focused
-                  ? BorderSide(color: c.textOnPage, width: 3)
-                  : BorderSide.none,
-            ),
-          ),
-        ),
-        alignment: Alignment.center,
-        child: chevron,
-      );
-    }
     return Container(
       width: GumdropBackButton.size,
       height: GumdropBackButton.size,

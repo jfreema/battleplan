@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/domain/admin.dart';
@@ -413,7 +414,7 @@ Future<String?> askNote(
   String? message,
   bool required = false,
   bool destructive = false,
-}) => showDialog<String>(
+}) => showCardDialog<String>(
   context: context,
   builder: (_) => _NoteDialog(
     title: title,
@@ -513,7 +514,7 @@ Future<bool> confirmByTyping(
   required String expected,
   required String confirmLabel,
 }) async =>
-    await showDialog<bool>(
+    await showCardDialog<bool>(
       context: context,
       builder: (_) => _TypeToConfirmDialog(
         title: title,

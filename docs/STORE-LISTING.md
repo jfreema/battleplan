@@ -37,7 +37,7 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 **What's New in This Version** (1.1, for the version after 1.0; 4,000 characters):
 
 ```
-A whole new look, Gumdrop Pop, with five themes to pick from in Profile: Gumdrop Army, the new default, plus Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena. In every theme but Gumdrop Army, each team's color fills the background of every screen in the team.
+A whole new look, Open Field, with five color schemes: Army green, the default, plus Light, Dark, Navy, and Light blue. Everyone picks the scheme they see for each team, and a default for the rest.
 
 Also new:
 • Teams and Profile at the top: all your teams in one list, a back arrow from each team, and Team info for its roster, invites, and Team admin
@@ -96,8 +96,8 @@ MORE FOR COACHES
 • Groups for anything that isn't a team, with the same chat, schedule, and RSVPs
 
 MAKE IT YOURS
-• Five looks: Gumdrop Army, Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop Arena
-• Each team picks its color, and in all but Gumdrop Army the team's screens take it on
+• Five color schemes: Army green, Light, Dark, Navy, and Light blue
+• Pick the scheme you see for each team, and a default
 • Coaches pick the chat's message color and background
 • Your own time zone, which stays put when you travel
 
@@ -130,7 +130,7 @@ coach,sports,roster,attendance,practice,league,parents,baseball,softball,soccer,
 | `store/app-store/iphone-6.3/` | iPhone 6.3-inch, only if App Store Connect asks for it | 1206 × 2622 | the same six, scaled down |
 | `store/app-store/ipad-13/` | iPad 13-inch | 2064 × 2752 | chat, schedule, an event's RSVPs, a play, documents |
 
-They're captures of the app in Gumdrop Army, the default, retaken for 1.1 on 2026-11-04 in the iOS Simulator (iPhone 18 Pro Max and iPad Pro 13-inch (M5)) against the Firebase emulators, with the seed data plus the sample players, events, documents, and photos `tools/seed/store-shots.ts` adds (no real people). Retake them when the screens they show change: start the emulators, then run `npm --prefix tools/seed run seed` and `npm --prefix tools/seed run store-shots` (add `-- --ipad` for the iPad's); build from a scratch copy with `bannerLabel` returning null (as website/README.md describes); set the Simulator's status bar to 9:41 with full bars, and the iPad to Full Screen Apps so its status bar shows no app name; sign in as `coach@example.com`; and capture with `xcrun simctl io <device> screenshot`. The iPhone captures have a 3 × 3 black speck in the top-left corner to paint over. The roster is Cyclone's; the rest is Thunder's, with the iPad's schedule on All my teams.
+They're captures of the app in Gumdrop Army, the default before Open Field, retaken for 1.1 on 2026-11-04 in the iOS Simulator (iPhone 18 Pro Max and iPad Pro 13-inch (M5)) against the Firebase emulators, with the seed data plus the sample players, events, documents, and photos `tools/seed/store-shots.ts` adds (no real people). Retake them when the screens they show change: start the emulators, then run `npm --prefix tools/seed run seed` and `npm --prefix tools/seed run store-shots` (add `-- --ipad` for the iPad's); build from a scratch copy with `bannerLabel` returning null (as website/README.md describes); set the Simulator's status bar to 9:41 with full bars, and the iPad to Full Screen Apps so its status bar shows no app name; sign in as `coach@example.com`; and capture with `xcrun simctl io <device> screenshot`. The iPhone captures have a 3 × 3 black speck in the top-left corner to paint over. The roster is Cyclone's; the rest is Thunder's, with the iPad's schedule on All my teams. Retake them in Open Field before the next submission.
 
 ## App Review information (store checklist 1.14, 1.17, 3.8)
 

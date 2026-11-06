@@ -21,9 +21,6 @@ abstract interface class UserRepository {
   /// Changes the display name shown on every team (SET-1).
   Future<void> updateDisplayName(String uid, String name);
 
-  /// Saves the theme to the account so it follows the person (SET-2).
-  Future<void> setThemeMode(String uid, ThemePreference mode);
-
   /// Saves the default color scheme (SET-2): the top screens' and every
   /// team or group not picked for.
   Future<void> setColorScheme(String uid, TeamScheme scheme);

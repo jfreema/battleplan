@@ -442,16 +442,14 @@ class _OptionRow extends StatelessWidget {
         ),
         foregroundColor: WidgetStatePropertyAll(ink),
         shape: WidgetStatePropertyAll(
-          buttons.style.styled(
-            GumdropShape(
-              lip: lip,
-              lipColor: chosen ? c.bubblegum.lip : c.raisedLip,
-              highlight: chosen ? 2 : 1.5,
-              highlightColor: chosen
-                  ? GumdropColors.accentHighlight
-                  : c.raisedHighlight,
-              radius: _radius,
-            ),
+          GumdropShape(
+            lip: lip,
+            lipColor: chosen ? c.bubblegum.lip : c.raisedLip,
+            highlight: chosen ? 2 : 1.5,
+            highlightColor: chosen
+                ? GumdropColors.accentHighlight
+                : c.raisedHighlight,
+            radius: _radius,
           ),
         ),
         side: WidgetStatePropertyAll(
@@ -480,7 +478,7 @@ class _OptionRow extends StatelessWidget {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: GumdropColors.inkTint14,
+              color: GumdropColors.of(context).ink.withValues(alpha: 0.14),
               shape: poll.allowMultiple ? BoxShape.rectangle : BoxShape.circle,
               borderRadius: poll.allowMultiple
                   ? BorderRadius.circular(7)
@@ -571,7 +569,9 @@ class _OptionRow extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(3),
                   child: ColoredBox(
-                    color: chosen ? GumdropColors.inkTint16 : c.well,
+                    color: chosen
+                        ? GumdropColors.of(context).ink.withValues(alpha: 0.18)
+                        : c.well,
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: FractionallySizedBox(

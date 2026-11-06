@@ -290,10 +290,13 @@ export async function copyTeamForSeason(
       displayName: m.displayName ?? '',
       photoPath: m.photoPath ?? null,
       playerSummary: playerSummaryOf(summaries.get(who) ?? []),
-      // Their own choices for the team carry on: notifications (NOTIF-3)
-      // and what they share (TEAM-10).
+      // Their own choices for the team carry on: notifications (NOTIF-3),
+      // what they share (TEAM-10), and the color scheme they see it in
+      // (SET-2).
       notificationLevel: m.notificationLevel ?? 'all',
       mutedUntil: m.mutedUntil ?? null,
+      colorScheme: m.colorScheme ?? null,
+      avatarColor: m.avatarColor ?? null,
       ...(m.contactPhone != null ? { contactPhone: m.contactPhone } : {}),
       ...(m.contactEmail != null ? { contactEmail: m.contactEmail } : {}),
       // Someone added by email who hasn't signed in yet (AUTH-6).

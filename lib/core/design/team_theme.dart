@@ -1,35 +1,30 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// [child] in the current Gumdrop theme tinted with a team's color (TEAM-1;
-/// team_tint.dart): wrap every screen inside a team. [teamColor] is the
-/// group's ARGB color; null (no color yet, or still loading) keeps the
-/// untinted theme.
-class TeamTheme extends StatelessWidget {
-  const new({required this.teamColor, required this.child, super.key});
+/// [child] in [scheme] (SET-2): a team's screens in the scheme you see it
+/// in. The new theme keeps the card context when nested on a card. It always
+/// wraps [child] the same way, so a change of scheme doesn't rebuild the
+/// subtree from scratch (and lose its state).
+class SchemeTheme extends StatelessWidget {
+  const new({required this.scheme, required this.child, super.key});
 
-  final int? teamColor;
+  final TeamScheme scheme;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final colors = GumdropColors.of(context);
-    final team = teamColor == null ? null : teamColor! | 0xFF000000;
-    if (colors.teamColor?.toARGB32() == team) return child;
-    return _Themed(
-      AppTheme.of(colors.flavor, teamColor: team, onCard: colors.onCard),
-      child,
-    );
+    return _Themed(AppTheme.of(scheme, onCard: colors.onCard), child);
   }
 }
 
 /// [child] on a card: the theme's card context, for what sits on a
-/// [GumdropColors.surface] (a card, a white sheet, the composer). It only
-/// changes anything in Candy, where text on the blue page is white and on a
-/// white card navy: Material widgets, text styles, and headings inside take
-/// the card's colors.
+/// [GumdropColors.surface] (a card, a sheet, the composer). Material
+/// widgets, text styles, and headings inside take the card's colors (muted
+/// text, outlines, and the candies' text shades differ from the page's).
 class GumdropSurface extends StatelessWidget {
   const new({required this.child, super.key});
 
@@ -39,14 +34,7 @@ class GumdropSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = GumdropColors.of(context);
     if (colors.onCard) return child;
-    return _Themed(
-      AppTheme.of(
-        colors.flavor,
-        teamColor: colors.teamColor?.toARGB32(),
-        onCard: true,
-      ),
-      child,
-    );
+    return _Themed(AppTheme.of(colors.scheme, onCard: true), child);
   }
 }
 
@@ -68,13 +56,13 @@ class _Themed extends StatelessWidget {
   );
 }
 
-/// A card in the Gumdrop recipe (design §3.5): the surface color, the
-/// theme's card outline, rounded corners, no shadow, and its [child] in the
-/// card context ([GumdropSurface]).
+/// An Open Field card: the card color, a 2 px rim on a 4 px lip in the rim
+/// color, corner 18, and its [child] in the card context
+/// ([GumdropSurface]).
 class GumdropCard extends StatelessWidget {
   const new({
     required this.child,
-    this.radius = 20,
+    this.radius = 18,
     this.padding = const EdgeInsets.all(12),
     this.color,
     super.key,

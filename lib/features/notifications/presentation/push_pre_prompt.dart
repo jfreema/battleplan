@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
@@ -89,7 +90,7 @@ Future<void> showHomeScreenTip(
   BuildContext context,
   AppLocalizations l10n, {
   VoidCallback? onGetApp,
-}) => showDialog<void>(
+}) => showCardDialog<void>(
   context: context,
   builder: (context) => AlertDialog(
     icon: const Icon(AppIcons.homeScreen),

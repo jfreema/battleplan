@@ -6,6 +6,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
@@ -185,7 +186,7 @@ class _Actions extends ConsumerWidget {
     Future<void> addToTeam() async {
       final team = await pickTeam(context);
       if (team == null || !context.mounted) return;
-      final role = await showDialog<MemberRole>(
+      final role = await showCardDialog<MemberRole>(
         context: context,
         builder: (_) => _RoleDialog(team: team.name),
       );

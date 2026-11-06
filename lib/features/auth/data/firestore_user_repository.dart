@@ -69,10 +69,6 @@ class FirestoreUserRepository implements UserRepository {
   }
 
   @override
-  Future<void> setThemeMode(String uid, ThemePreference mode) =>
-      _update(uid, {'themeMode': mode.value});
-
-  @override
   Future<void> setColorScheme(String uid, TeamScheme scheme) =>
       _update(uid, {'colorScheme': scheme.value});
 

@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'dart:ui' as ui show lerpDouble;
 
 import 'package:material_ui/material_ui.dart';
@@ -13,10 +12,8 @@ import 'package:material_ui/material_ui.dart';
 /// down onto the lip, as a pressed gumdrop sinks; Material animates it.
 ///
 /// [radius] null makes a pill (or a circle, when the box is square).
-/// [side] is the optional outline (Light and Candy's secondary buttons, and
-/// the keyboard focus ring), drawn inside the face. [slant] leans the face
-/// and its lip that many degrees, top to the right (Gumdrop Arena's 11),
-/// inside the same box; the label stays upright.
+/// [side] is the optional outline (the candy outline in its lip color, and
+/// the keyboard focus ring), drawn inside the face.
 @immutable
 class GumdropShape extends OutlinedBorder {
   const new({
@@ -26,7 +23,6 @@ class GumdropShape extends OutlinedBorder {
     this.highlightColor = const Color(0x59FFFFFF),
     this.radius,
     this.pressed = 0,
-    this.slant = 0,
     super.side,
   });
 
@@ -44,44 +40,17 @@ class GumdropShape extends OutlinedBorder {
   /// 0 at rest; 1 fully pressed (the face on the lip, no lip showing).
   final double pressed;
 
-  /// How far the face leans, in degrees; 0 stands it upright.
-  final double slant;
-
   /// The lip for a gumdrop whose face is [height] px tall (design §3.1).
   static double lipFor(double height) => height <= 38 ? 3 : 4;
 
-  /// The horizontal shift per pixel of height of a leaning face.
-  double get _shear => math.tan(slant * math.pi / 180);
-
-  /// [rect] narrowed so a leaning face stays inside it.
-  Rect _upright(Rect rect) {
-    final inset = _shear.abs() * rect.height / 2;
-    return inset == 0
-        ? rect
-        : Rect.fromLTRB(
-            rect.left + inset,
-            rect.top,
-            rect.right - inset,
-            rect.bottom,
-          );
-  }
-
-  /// [path] leaning [slant] degrees about [rect]'s center.
-  Path _lean(Path path, Rect rect) {
-    final k = _shear;
-    if (k == 0) return path;
-    final c = rect.center;
-    // x' = x - k (y - cy): the top moves right, the bottom left.
-    final m = Matrix4.identity()
-      ..setEntry(0, 1, -k)
-      ..setEntry(0, 3, k * c.dy);
-    return path.transform(m.storage);
-  }
-
   Rect _face(Rect rect) {
-    final r = _upright(rect);
     final drop = lip * pressed.clamp(0, 1);
-    return Rect.fromLTRB(r.left, r.top + drop, r.right, r.bottom - lip + drop);
+    return Rect.fromLTRB(
+      rect.left,
+      rect.top + drop,
+      rect.right,
+      rect.bottom - lip + drop,
+    );
   }
 
   RRect _rrect(Rect face) {
@@ -96,35 +65,31 @@ class GumdropShape extends OutlinedBorder {
   /// The face moved down to the box's bottom: the lip, where the face
   /// doesn't cover it.
   RRect _lipRRect(Rect rect) {
-    final r = _upright(rect);
-    return _rrect(Rect.fromLTRB(r.left, r.top + lip, r.right, r.bottom));
+    return _rrect(
+      Rect.fromLTRB(rect.left, rect.top + lip, rect.right, rect.bottom),
+    );
   }
 
   @override
   EdgeInsetsGeometry get dimensions => EdgeInsets.all(side.strokeInset);
 
   @override
-  Path getInnerPath(Rect rect, {TextDirection? textDirection}) => _lean(
-    Path()..addRRect(_rrect(_face(rect)).deflate(side.strokeInset)),
-    rect,
-  );
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) =>
+      Path()..addRRect(_rrect(_face(rect)).deflate(side.strokeInset));
 
   /// The face and the lip under it, which Material fills with the widget's
   /// color (the lip is painted over in [lipColor]).
   @override
-  Path getOuterPath(Rect rect, {TextDirection? textDirection}) => _lean(
-    Path()
-      ..addRRect(_rrect(_face(rect)))
-      ..addRRect(_lipRRect(rect)),
-    rect,
-  );
+  Path getOuterPath(Rect rect, {TextDirection? textDirection}) => Path()
+    ..addRRect(_rrect(_face(rect)))
+    ..addRRect(_lipRRect(rect));
 
   @override
   bool get preferPaintInterior => false;
 
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
-    Path lean(RRect r) => _lean(Path()..addRRect(r), rect);
+    Path lean(RRect r) => Path()..addRRect(r);
     final face = _rrect(_face(rect));
     final facePath = lean(face);
     if (lip * (1 - pressed) > 0.01 && lipColor.a > 0) {
@@ -158,7 +123,6 @@ class GumdropShape extends OutlinedBorder {
     Color? highlightColor,
     BorderRadius? radius,
     double? pressed,
-    double? slant,
   }) => GumdropShape(
     side: side ?? this.side,
     lip: lip ?? this.lip,
@@ -167,7 +131,6 @@ class GumdropShape extends OutlinedBorder {
     highlightColor: highlightColor ?? this.highlightColor,
     radius: radius ?? this.radius,
     pressed: pressed ?? this.pressed,
-    slant: slant ?? this.slant,
   );
 
   @override
@@ -188,7 +151,6 @@ class GumdropShape extends OutlinedBorder {
         ? null
         : BorderRadius.lerp(radius, other.radius, t),
     pressed: ui.lerpDouble(pressed, other.pressed, t)!,
-    slant: ui.lerpDouble(slant, other.slant, t)!,
   );
 
   @override
@@ -208,8 +170,7 @@ class GumdropShape extends OutlinedBorder {
       other.highlight == highlight &&
       other.highlightColor == highlightColor &&
       other.radius == radius &&
-      other.pressed == pressed &&
-      other.slant == slant;
+      other.pressed == pressed;
 
   @override
   int get hashCode => Object.hash(
@@ -220,7 +181,6 @@ class GumdropShape extends OutlinedBorder {
     highlightColor,
     radius,
     pressed,
-    slant,
   );
 
   @override

@@ -1,3 +1,4 @@
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Asks before anything destructive. The button names the verb ("Delete
@@ -11,7 +12,7 @@ Future<bool> showConfirmDialog(
   bool destructive = false,
 }) async {
   final scheme = Theme.of(context).colorScheme;
-  final result = await showDialog<bool>(
+  final result = await showCardDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
       title: Text(title),

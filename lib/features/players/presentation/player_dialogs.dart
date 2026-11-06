@@ -1,6 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/players/presentation/date_of_birth_field.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -23,7 +24,7 @@ Future<PlayerRelation?> askClaimRelation(
   required bool canBeSelf,
 }) {
   final l10n = AppLocalizations.of(context);
-  return showDialog<PlayerRelation>(
+  return showCardDialog<PlayerRelation>(
     context: context,
     builder: (context) => SimpleDialog(
       title: Text(l10n.claimPlayerTitle(playerName)),

@@ -249,12 +249,10 @@ class _ComposerState extends State<Composer> {
                 : c.ink,
           ),
           shape: WidgetStateProperty.resolveWith(
-            (s) => buttons.style.styled(
-              GumdropShape(
-                lip: sendLip,
-                lipColor: c.you.lip,
-                pressed: s.contains(WidgetState.pressed) ? 1 : 0,
-              ),
+            (s) => GumdropShape(
+              lip: sendLip,
+              lipColor: c.you.lip,
+              pressed: s.contains(WidgetState.pressed) ? 1 : 0,
             ),
           ),
           padding: WidgetStateProperty.resolveWith(
@@ -332,7 +330,7 @@ class _ComposerState extends State<Composer> {
             Expanded(
               child: Padding(
                 padding: EdgeInsets.only(bottom: sendLip),
-                // The box is in the card's colors (navy text in Candy).
+                // The box is in the card's colors.
                 child: GumdropSurface(
                   child: Builder(
                     builder: (context) => TextField(

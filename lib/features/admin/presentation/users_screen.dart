@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
@@ -46,7 +47,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
   Future<void> _create() async {
     final l10n = AppLocalizations.of(context);
-    final input = await showDialog<_NewUser>(
+    final input = await showCardDialog<_NewUser>(
       context: context,
       builder: (_) => const _CreateUserDialog(),
     );
@@ -408,7 +409,7 @@ class RolePicker extends StatelessWidget {
 
 /// Finds a team by name for adding someone to it (ADMIN-4).
 Future<AdminTeamRow?> pickTeam(BuildContext context) =>
-    showDialog<AdminTeamRow>(
+    showCardDialog<AdminTeamRow>(
       context: context,
       builder: (_) => const _TeamPickerDialog(),
     );

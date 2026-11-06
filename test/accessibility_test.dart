@@ -1,6 +1,5 @@
-// Accessibility of the main screens (SPEC §7.6) in each Gumdrop theme,
-// Dark, Light, Candy, and Arena: Flutter's guideline checks for tap
-// targets, labels, and text contrast.
+// Accessibility of the main screens (SPEC §7.6) in each color scheme:
+// Flutter's guideline checks for tap targets, labels, and text contrast.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:flutter/services.dart';
@@ -29,132 +28,97 @@ void main() {
     // The answer buttons on the schedule's cards (SCHED-4) scroll under the
     // + button, which the contrast check would read as their colors: the
     // list moves until none is under it, as a person would scroll.
-    'schedule': (WidgetTester tester, {required ThemePreference theme}) async {
-      await pumpSchedule(tester, theme: theme);
+    'schedule': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpSchedule(tester, scheme: scheme);
       await clearOfAddButton(tester);
     },
-    'team switcher':
-        (WidgetTester tester, {required ThemePreference theme}) async {
-          await pumpChat(tester, theme: theme);
-          await tester.tap(find.bySemanticsLabel('Switch team: Thunder U14'));
-          await tester.pumpAndSettle();
-        },
-    'message menu':
-        (WidgetTester tester, {required ThemePreference theme}) async {
-          await pumpChat(tester, theme: theme);
-          await tester.scrollUntilVisible(
-            find.text('Great hustle today'),
-            100,
-            scrollable: find.byType(Scrollable).first,
-          );
-          // At large text sizes the scroll can leave it just off screen.
-          await tester.ensureVisible(find.text('Great hustle today'));
-          await tester.pumpAndSettle();
-          await tester.longPress(find.text('Great hustle today'));
-          await tester.pumpAndSettle();
-          expect(find.text('Copy text'), findsOneWidget, reason: 'menu open');
-        },
+    'team switcher': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpChat(tester, scheme: scheme);
+      await tester.tap(find.bySemanticsLabel('Switch team: Thunder U14'));
+      await tester.pumpAndSettle();
+    },
+    'message menu': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpChat(tester, scheme: scheme);
+      await tester.scrollUntilVisible(
+        find.text('Great hustle today'),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      // At large text sizes the scroll can leave it just off screen.
+      await tester.ensureVisible(find.text('Great hustle today'));
+      await tester.pumpAndSettle();
+      await tester.longPress(find.text('Great hustle today'));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy text'), findsOneWidget, reason: 'menu open');
+    },
     // Search in the chat (CHAT-20), with a result.
-    'chat search':
-        (WidgetTester tester, {required ThemePreference theme}) async {
-          await pumpChat(tester, theme: theme);
-          await tester.tap(find.byTooltip('Search the chat'));
-          await tester.pumpAndSettle();
-          await tester.enterText(find.byType(TextField).last, 'hustle');
-          await tester.testTextInput.receiveAction(TextInputAction.search);
-          await tester.pumpAndSettle();
-          expect(
-            find.textContaining('hustle', findRichText: true),
-            findsWidgets,
-            reason: 'a result',
-          );
-        },
+    'chat search': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpChat(tester, scheme: scheme);
+      await tester.tap(find.byTooltip('Search the chat'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'hustle');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('hustle', findRichText: true),
+        findsWidgets,
+        reason: 'a result',
+      );
+    },
     // The top (SPEC §5.1), and a team's info (§5.2).
     for (final (name, route) in [
       ('teams', '/teams'),
       ('profile', '/profile'),
       ('team info', '/g/a/info'),
     ])
-      name: (WidgetTester tester, {required ThemePreference theme}) async {
-        await pumpChat(tester, theme: theme);
+      name: (WidgetTester tester, {required TeamScheme scheme}) async {
+        await pumpChat(tester, scheme: scheme);
         await goTo(tester, route);
       },
-    // The rail is a white card in Candy: its labels must use the card's ink.
-    'wide chat': (WidgetTester tester, {required ThemePreference theme}) =>
-        pumpTeam(tester, theme: theme, size: wideSize),
-    // A team's color is the page (TEAM-1): text on a light one (Yellow)
-    // and a dark one (Maroon) must read, on the page and on its cards.
-    for (final (color, argb) in [
-      ('Yellow', 0xFFD4A017),
-      ('Maroon', 0xFF7F1D1D),
-    ]) ...{
-      'chat, $color team': (
-        WidgetTester tester, {
-        required ThemePreference theme,
-      }) => pumpTeam(tester, theme: theme, teamColor: argb),
-      'schedule, $color team':
-          (WidgetTester tester, {required ThemePreference theme}) async {
-            await pumpTeam(tester, theme: theme, teamColor: argb);
-            await tester.tap(find.text('Schedule'));
-            await tester.pumpAndSettle();
-            await clearOfAddButton(tester);
-          },
-      'team settings, $color team':
-          (WidgetTester tester, {required ThemePreference theme}) async {
-            await pumpTeam(tester, theme: theme, teamColor: argb);
-            await goTo(tester, '/g/a/settings');
-          },
-      'event, $color team':
-          (WidgetTester tester, {required ThemePreference theme}) async {
-            await pumpTeam(tester, theme: theme, teamColor: argb);
-            await tester.tap(find.text('Schedule'));
-            await tester.pumpAndSettle();
-            await tester.tap(find.text('vs. Eagles').first);
-            await tester.pumpAndSettle();
-          },
-    },
-    'roster': (WidgetTester tester, {required ThemePreference theme}) async {
-      await pumpTeam(tester, theme: theme);
+    'wide chat': (WidgetTester tester, {required TeamScheme scheme}) =>
+        pumpTeam(tester, scheme: scheme, size: wideSize),
+    'roster': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpTeam(tester, scheme: scheme);
       await goTo(tester, '/g/a/roster');
     },
     // Start a new season (TEAM-16), from Team admin.
-    'new season':
-        (WidgetTester tester, {required ThemePreference theme}) async {
-          await pumpTeam(tester, theme: theme);
-          await goTo(tester, '/g/a/season');
-        },
-    'settings': (WidgetTester tester, {required ThemePreference theme}) async {
-      await pumpTeam(tester, theme: theme);
+    'new season': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpTeam(tester, scheme: scheme);
+      await goTo(tester, '/g/a/season');
+    },
+    'settings': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpTeam(tester, scheme: scheme);
       await goTo(tester, '/settings');
     },
-    'notifications':
-        (WidgetTester tester, {required ThemePreference theme}) async {
-          await pumpTeam(tester, theme: theme);
-          await goTo(tester, '/notifications');
+    'notifications': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpTeam(tester, scheme: scheme);
+      await goTo(tester, '/notifications');
+    },
+    // Color scheme: my default, and how I see a team (SET-2).
+    'default color scheme':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpTeam(tester, scheme: scheme);
+          await goTo(tester, '/teams/scheme');
         },
-    'calendar': (WidgetTester tester, {required ThemePreference theme}) async {
-      await pumpSchedule(tester, theme: theme);
+    'color scheme': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpTeam(tester, scheme: scheme);
+      await goTo(tester, '/g/a/scheme');
+    },
+    'calendar': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpSchedule(tester, scheme: scheme);
       await tester.tap(find.text('Calendar'));
       await tester.pumpAndSettle();
     },
   };
 
-  // Every screen in every theme: their colors are all different, and
-  // Candy's and Olive's pages and cards hold different text colors.
-  const themes = [
-    ThemePreference.olive,
-    ThemePreference.dark,
-    ThemePreference.light,
-    ThemePreference.candy,
-    ThemePreference.arena,
-  ];
-
+  // Every screen in every color scheme: their colors all differ.
   for (final MapEntry(key: name, value: pump) in screens.entries) {
-    for (final preference in themes) {
-      final theme = preference.value;
-      testWidgets('$name ($theme) meets the guidelines', (tester) async {
+    for (final scheme in TeamScheme.values) {
+      testWidgets('$name (${scheme.value}) meets the guidelines', (
+        tester,
+      ) async {
         final handle = tester.ensureSemantics();
-        await pump(tester, theme: preference);
+        await pump(tester, scheme: scheme);
         // Every guideline, so one failure doesn't hide the next.
         final failures = <String>[];
         for (final MapEntry(key: what, value: guideline)
@@ -173,7 +137,7 @@ void main() {
   group('screen reader labels (SPEC §7.6)', () {
     testWidgets('photos, reactions, and the team switcher', (tester) async {
       final handle = tester.ensureSemantics();
-      await pumpChat(tester, theme: ThemePreference.dark);
+      await pumpChat(tester, scheme: TeamScheme.navy);
       // Photos read "Photo from Alex Kim" and open the viewer.
       expect(
         tester.getSemantics(find.bySemanticsLabel('Photo from Alex Kim').first),
@@ -205,7 +169,7 @@ void main() {
 
     testWidgets('RSVP answers say their state in words with an icon, not '
         'color alone', (tester) async {
-      await pumpEventDetails(tester, theme: ThemePreference.dark);
+      await pumpEventDetails(tester, scheme: TeamScheme.navy);
       for (final word in ['Going', 'Maybe', 'Not going']) {
         final button = find.ancestor(
           of: find.text(word).first,
@@ -222,15 +186,20 @@ void main() {
     });
   });
 
+  // In Army green (the default) and Light blue (a light one).
   group('text at 200% (SPEC §7.6)', () {
-    for (final MapEntry(key: name, value: pump) in screens.entries) {
-      testWidgets('$name lays out without overflow', (tester) async {
-        tester.platformDispatcher.textScaleFactorTestValue = 2;
-        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-        await pump(tester, theme: ThemePreference.dark);
-        // An overflow is reported as an exception while laying out.
-        expect(tester.takeException(), isNull);
-      });
+    for (final scheme in [TeamScheme.army, TeamScheme.skyblue]) {
+      for (final MapEntry(key: name, value: pump) in screens.entries) {
+        testWidgets('$name lays out without overflow (${scheme.value})', (
+          tester,
+        ) async {
+          tester.platformDispatcher.textScaleFactorTestValue = 2;
+          addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+          await pump(tester, scheme: scheme);
+          // An overflow is reported as an exception while laying out.
+          expect(tester.takeException(), isNull);
+        });
+      }
     }
   });
 
@@ -252,7 +221,7 @@ void main() {
     testWidgets('Ctrl+K opens the team switcher sheet, and Esc closes it', (
       tester,
     ) async {
-      await pumpChat(tester, theme: ThemePreference.dark);
+      await pumpChat(tester, scheme: TeamScheme.navy);
       await press(tester, LogicalKeyboardKey.keyK, control: true);
       expect(find.text('Join a Team or Group'), findsOneWidget);
       await press(tester, LogicalKeyboardKey.escape);
@@ -260,7 +229,7 @@ void main() {
     });
 
     testWidgets('Esc closes dialogs and menus', (tester) async {
-      await pumpChat(tester, theme: ThemePreference.dark);
+      await pumpChat(tester, scheme: TeamScheme.navy);
       await tester.scrollUntilVisible(
         find.text('Close poll'),
         100,
@@ -283,7 +252,7 @@ void main() {
 
     testWidgets('Enter sends; Shift+Enter starts a new line', (tester) async {
       final messages = FakeMessageRepository(sceneMessages);
-      await pumpTeam(tester, theme: ThemePreference.dark, messages: messages);
+      await pumpTeam(tester, scheme: TeamScheme.navy, messages: messages);
       await tester.tap(find.byType(TextField));
       await tester.enterText(find.byType(TextField), 'On my way');
       await press(tester, LogicalKeyboardKey.enter, shift: true);
@@ -295,7 +264,7 @@ void main() {
     testWidgets('Enter picks the word an input method is composing, and '
         "doesn't send", (tester) async {
       final messages = FakeMessageRepository(sceneMessages);
-      await pumpTeam(tester, theme: ThemePreference.dark, messages: messages);
+      await pumpTeam(tester, scheme: TeamScheme.navy, messages: messages);
       await tester.tap(find.byType(TextField));
       await tester.pump();
       // Typing Japanese: 'にほ' is still a candidate, not yet confirmed.
@@ -323,7 +292,7 @@ void main() {
 
     testWidgets('Tab reaches the header, the composer, and the tabs, with a '
         'visible focus', (tester) async {
-      await pumpChat(tester, theme: ThemePreference.dark);
+      await pumpChat(tester, scheme: TeamScheme.navy);
       final reached = <String>[];
       for (var i = 0; i < 40; i++) {
         await press(tester, LogicalKeyboardKey.tab);

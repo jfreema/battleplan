@@ -778,8 +778,40 @@ class FakeMemberRepository implements MemberRepository {
 }
 
 class FakeLocalPrefs implements LocalPrefsRepository {
+  /// The default scheme on this device, and whose it is (null: anyone's).
+  TeamScheme defaultSchemeValue = TeamScheme.army;
+  String? defaultSchemeUid;
+
+  /// Team picks on this device, and whose they are.
+  Map<String, TeamScheme> teamSchemes = {};
+  String? teamSchemesUid;
+
   @override
-  ThemePreference themePreference = ThemePreference.system;
+  TeamScheme defaultScheme({String? uid}) =>
+      uid == null || defaultSchemeUid == null || defaultSchemeUid == uid
+      ? defaultSchemeValue
+      : TeamScheme.army;
+
+  @override
+  Future<void> setDefaultScheme(String uid, TeamScheme scheme) async {
+    defaultSchemeUid = uid;
+    defaultSchemeValue = scheme;
+  }
+
+  @override
+  TeamScheme? teamScheme(String groupId, {String? uid}) =>
+      uid != null && teamSchemesUid != null && teamSchemesUid != uid
+      ? null
+      : teamSchemes[groupId];
+
+  @override
+  Future<void> setTeamSchemes(
+    String uid,
+    Map<String, TeamScheme> schemes,
+  ) async {
+    teamSchemesUid = uid;
+    teamSchemes = Map.of(schemes);
+  }
 
   @override
   String? lastTeamRoute;
@@ -799,10 +831,6 @@ class FakeLocalPrefs implements LocalPrefsRepository {
 
   @override
   Future<void> setLastTeamRoute(String route) async => lastTeamRoute = route;
-
-  @override
-  Future<void> setThemePreference(ThemePreference value) async =>
-      themePreference = value;
 
   final Set<String> passwordSetUids = {};
 
@@ -979,12 +1007,6 @@ class FakeUserRepository implements UserRepository {
   @override
   Future<void> updateDisplayName(String uid, String name) async {
     savedName = name;
-    _changes.add(null);
-  }
-
-  @override
-  Future<void> setThemeMode(String uid, ThemePreference mode) async {
-    themeMode = mode;
     _changes.add(null);
   }
 

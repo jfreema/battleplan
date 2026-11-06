@@ -1,4 +1,5 @@
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/features/plays/domain/board_layout.dart';
 import 'package:battleplan/features/plays/domain/play.dart';
 import 'package:battleplan/features/plays/presentation/board_painter.dart';
@@ -77,7 +78,7 @@ Future<String?> askPlayText(
 }) {
   final l10n = AppLocalizations.of(context);
   final controller = TextEditingController(text: initial);
-  return showDialog<String>(
+  return showCardDialog<String>(
     context: context,
     builder: (dialog) => AlertDialog(
       title: Text(title),

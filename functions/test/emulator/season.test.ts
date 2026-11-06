@@ -72,7 +72,7 @@ async function fall(extra: object = {}): Promise<void> {
     ['ada', { role: 'admin', title: 'Manager' }],
     ['cole', { role: 'member', coach: true, title: 'Assistant coach' }],
     ['gia', { role: 'admin', title: 'Treasurer' }],
-    ['sam', { role: 'member', notificationLevel: 'important', contactPhone: '555-0100' }],
+    ['sam', { role: 'member', notificationLevel: 'important', contactPhone: '555-0100', colorScheme: 'navy', avatarColor: 'grape' }],
     ['lee', { role: 'member' }],
     ['una', { role: 'member', title: 'Team parent' }],
     ['pen', { role: 'member', pending: true }],
@@ -170,8 +170,11 @@ describe('starting a new season (TEAM-16)', () => {
     expect(await member(groupId, 'cole')).toMatchObject({ role: 'member', coach: true, title: 'Assistant coach' });
     expect(await member(groupId, 'gia')).toMatchObject({ role: 'admin', title: 'Treasurer', playerSummary: 'Emma #7' });
     // Their own choices for the team carry on.
-    expect(await member(groupId, 'sam')).toMatchObject({ role: 'member', playerSummary: 'Emma #7', notificationLevel: 'important', contactPhone: '555-0100' });
-    expect(await member(groupId, 'lee')).toMatchObject({ playerSummary: '#12' });
+    expect(await member(groupId, 'sam')).toMatchObject({
+      role: 'member', playerSummary: 'Emma #7', notificationLevel: 'important', contactPhone: '555-0100',
+      colorScheme: 'navy', avatarColor: 'grape',
+    });
+    expect(await member(groupId, 'lee')).toMatchObject({ playerSummary: '#12', colorScheme: null, avatarColor: null });
     expect(await member(groupId, 'una')).toMatchObject({ role: 'member', title: 'Team parent', playerSummary: null });
     expect(await member(groupId, 'pen')).toMatchObject({ pending: true });
 

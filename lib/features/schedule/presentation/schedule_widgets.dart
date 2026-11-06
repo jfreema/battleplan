@@ -527,14 +527,12 @@ class _RsvpGumdrop extends StatelessWidget {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: face,
-          shape: GumdropStyle.of(context).styled(
-            GumdropShape(
-              lip: lip,
-              lipColor: lipColor,
-              highlight: selected ? 2 : 1.5,
-              highlightColor: highlight,
-              side: side,
-            ),
+          shape: GumdropShape(
+            lip: lip,
+            lipColor: lipColor,
+            highlight: selected ? 2 : 1.5,
+            highlightColor: highlight,
+            side: side,
           ),
         ),
         child: Padding(
@@ -549,7 +547,10 @@ class _RsvpGumdrop extends StatelessWidget {
                     AnswerDisc(
                       status: status,
                       size: 24,
-                      face: selected ? GumdropColors.inkTint14 : null,
+                      face: selected
+                          ? GumdropColors.of(context).ink
+                                .withValues(alpha: 0.14)
+                          : null,
                     ),
                     const SizedBox(width: 7),
                   ],
@@ -587,14 +588,6 @@ class LemonBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    // Where the theme's gumdrops lean (Gumdrop Arena), the theme's own back
-    // button, a leaning lemon gumdrop.
-    if (GumdropStyle.of(context).slant != 0) {
-      return const Padding(
-        padding: EdgeInsetsDirectional.only(start: 14),
-        child: BackButton(),
-      );
-    }
     return Padding(
       padding: const EdgeInsetsDirectional.only(start: 14),
       child: DecoratedBox(

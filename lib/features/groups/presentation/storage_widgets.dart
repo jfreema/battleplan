@@ -2,6 +2,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -91,7 +92,7 @@ Future<bool> changeStorageQuota(
   final defaultMb =
       ref.read(appConfigProvider).value?.defaultStorageQuotaMb ??
       Limits.defaultStorageQuotaMb;
-  final choice = await showDialog<_QuotaChoice>(
+  final choice = await showCardDialog<_QuotaChoice>(
     context: context,
     builder: (_) => _QuotaDialog(
       initialMb: group.storageQuotaBytes ~/ bytesPerMb,

@@ -1,5 +1,46 @@
 {
   "@@locale": "en",
+  "colorScheme": "Color scheme",
+  "colorSchemeSection": "Color scheme",
+  "colorSchemeTeamLede": "How {team} looks for you.\nEveryone on the team picks their own.",
+  "@colorSchemeTeamLede": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
+  "colorSchemeGroupLede": "How {group} looks for you.\nEveryone in the group picks their own.",
+  "@colorSchemeGroupLede": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "colorSchemeNote": "New teams start with your default, set on the Teams screen.",
+  "defaultColorScheme": "Default color scheme",
+  "defaultColorSchemeSubtitle": "{scheme} · new teams start here",
+  "@defaultColorSchemeSubtitle": {
+    "placeholders": {
+      "scheme": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultColorSchemeLede": "How Teams and Profile look for you.\nEvery team or group starts with it.",
+  "defaultColorSchemeNote": "To change one team, use Color scheme in its Team info.",
+  "colorSchemeSaveFailed": "Couldn't save your color scheme. Try again.",
+  "schemeArmy": "Army green",
+  "schemeLight": "Light",
+  "schemeDark": "Dark",
+  "schemeNavy": "Navy",
+  "schemeSkyblue": "Light blue",
+  "schemeArmyShort": "Army green page, cream type",
+  "schemeLightShort": "Cream-white page, black type",
+  "schemeDarkShort": "Near-black page, cream type",
+  "schemeNavyShort": "Deep navy page, white type",
+  "schemeSkyblueShort": "Sky-blue page, navy type",
   "appName": "Battleplan",
   "tagline": "Chat, schedule, and RSVPs for your team",
   "tabChat": "Chat",
@@ -70,12 +111,6 @@
   "notificationsPlaceholder": "Activity from all your teams will appear here.",
   "notAMember": "You're not a member of this team.",
   "goToMyTeams": "Go to my teams",
-  "appearance": "Appearance",
-  "themeGumdropOlive": "Gumdrop Army",
-  "themeGumdropDark": "Gumdrop Pop Dark",
-  "themeGumdropLight": "Gumdrop Pop Light",
-  "themeGumdropCandy": "Gumdrop Candy",
-  "themeGumdropArena": "Gumdrop Arena",
   "about": "About",
   "versionLabel": "Version {version}",
   "versionBuildLabel": "Version {version} (build {build})",
@@ -238,7 +273,6 @@
   "deleteAccountFailed": "Couldn't delete your account. Check your connection and try again.",
   "profile": "Profile",
   "changePhoto": "Change photo",
-  "themes": "Themes",
   "signedInAs": "Signed in as {email}",
   "@signedInAs": {"placeholders": {"email": {"type": "String"}}},
   "save": "Save",
@@ -255,7 +289,7 @@
   "kindGroup": "Group",
   "kindGroupHelp": "Chat, events, and RSVPs, with everyone answering for themselves. Make it a team later for players and Plays.",
   "groupColorLabel": "Color",
-  "groupColorTintNote": "The color shows in the background of every screen in the group.",
+  "groupColorTintNote": "The color is on the group's badge and in the switcher.",
   "joinGroupButton": "Join group",
   "groupInfo": "Group info",
   "groupAdmin": "Group admin",
@@ -806,7 +840,7 @@
   "candyLemon": "Lemon",
   "candyTangerine": "Tangerine",
   "candyCherry": "Cherry",
-  "teamColorTintNote": "Your team color shows in the background of every screen in the team.",
+  "teamColorTintNote": "Your team color is on the team's badge and in the team switcher.",
   "chatLookIntro": "How the team chat looks for everyone on {team}. Only admins can change it.",
   "@chatLookIntro": {"placeholders": {"team": {"type": "String"}}},
   "chatLookTip": "Every color keeps its words easy to read: dark text on candy, white on your team color.",

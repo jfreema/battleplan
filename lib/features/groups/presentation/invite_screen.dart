@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
+import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
@@ -347,7 +348,7 @@ Future<({InviteExpiry expiry, int? maxUses})?> askLinkOptions(
   final l10n = AppLocalizations.of(context);
   var expiry = InviteExpiry.never;
   final usesController = TextEditingController(text: maxUses?.toString());
-  final ok = await showDialog<bool>(
+  final ok = await showCardDialog<bool>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(

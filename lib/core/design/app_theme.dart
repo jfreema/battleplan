@@ -6,105 +6,48 @@ import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
-import 'package:battleplan/core/design/team_tint.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/gumdrop_back_button.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The Gumdrop Pop themes (SPEC §7.3, §7.4, SET-2): Gumdrop Pop Olive (the
-/// default), Gumdrop Pop Dark, Gumdrop Pop Light, Gumdrop Candy, and Gumdrop
-/// Arena, each
-/// optionally in a team's color (team_tint.dart). Every Material widget is
-/// themed in the gumdrop style; screens read the full palette with
-/// [GumdropColors.of], and the fonts and shapes with [GumdropStyle.of].
+/// The Open Field theme (SPEC §7.3, §7.4, SET-2) in each of its five color
+/// schemes. Every Material widget is themed to match; screens read the full
+/// palette with [GumdropColors.of], and the fonts and shapes with
+/// [GumdropStyle.of].
 abstract final class AppTheme {
-  /// The theme a saved preference picks: system (no choice made) is the
-  /// default, Gumdrop Pop Olive.
-  static GumdropFlavor flavorOf(ThemePreference preference) =>
-      switch (preference) {
-        ThemePreference.system || ThemePreference.olive => GumdropFlavor.olive,
-        ThemePreference.dark => GumdropFlavor.dark,
-        ThemePreference.light => GumdropFlavor.light,
-        ThemePreference.candy => GumdropFlavor.candy,
-        ThemePreference.arena => GumdropFlavor.arena,
-      };
+  static final _cache = <(TeamScheme, bool), ThemeData>{};
 
-  /// The colors of [flavor], tinted with [teamColor] (ARGB), in the page or
-  /// card context.
-  static GumdropColors colorsFor(
-    GumdropFlavor flavor, {
-    int? teamColor,
-    bool onCard = false,
-  }) {
-    final tinted = teamTinted(GumdropColors.forFlavor(flavor), teamColor);
-    return onCard ? tinted.card : tinted;
-  }
+  /// The theme for [scheme], on the page or ([onCard]) on a card, built once
+  /// and kept: five schemes in two contexts.
+  static ThemeData of(TeamScheme scheme, {bool onCard = false}) =>
+      _cache.putIfAbsent((
+        scheme,
+        onCard,
+      ), () => build(GumdropColors.forScheme(scheme, onCard: onCard)));
 
-  static final _cache = <(GumdropFlavor, int?, bool), ThemeData>{};
-
-  /// The theme for [flavor] in [teamColor] (ARGB), built once and kept:
-  /// there are 5 flavors, 16 colors (none and the 15 team colors), and two
-  /// contexts.
-  static ThemeData of(
-    GumdropFlavor flavor, {
-    int? teamColor,
-    bool onCard = false,
-  }) {
-    final team = teamColor == null ? null : teamColor | 0xFF000000;
-    return _cache.putIfAbsent((
-      flavor,
-      team,
-      onCard,
-    ), () => build(colorsFor(flavor, teamColor: team, onCard: onCard)));
-  }
-
-  /// The theme for a saved [preference], in [teamColor] (ARGB) inside a
-  /// team.
-  static ThemeData forPreference(
-    ThemePreference preference, {
-    int? teamColor,
-  }) => of(flavorOf(preference), teamColor: teamColor);
-
-  /// The surfaces Material puts things on, from the page out: lowest (the
-  /// well), low (cards, sheets), container (menus), high (dialogs), and
-  /// highest (chips, others' old-style bubbles).
-  static List<Color> _containers(GumdropColors g) {
-    if (g.coloredPage && !g.onCard) {
-      // A colored page (Candy's blue, a team's color) has white (or ink)
-      // text, so the surfaces that hold that text sit a little further from
-      // it than the page does: darker under white text, lighter under ink.
-      // The theme's own cards, with their text, are GumdropSurface's.
-      final page = ColorMath.lch(g.page);
-      final sign = g.textOnPage == g.ink ? 1 : -1;
-      Color step(double by) =>
-          ColorMath.fromLch((page.l + sign * by).clamp(0, 100), page.c, page.h);
-      return [step(3), step(5), step(7), step(9), step(12)];
-    }
-    return switch (g.flavor) {
-      GumdropFlavor.dark || GumdropFlavor.arena => [
-        g.well,
-        g.surface,
-        g.surface,
-        g.surface,
-        g.raisedFace,
-      ],
-      _ => [g.surface, g.surface, g.surface, g.surface, g.well],
-    };
-  }
+  /// How many themes have been built (for a test).
+  @visibleForTesting
+  static int get cachedThemes => _cache.length;
 
   static ThemeData build(GumdropColors g) {
-    final style = GumdropStyle.forFlavor(g.flavor);
-    final colorPage = g.coloredPage && !g.onCard;
+    const style = GumdropStyle.openField;
     final background = g.background;
     final text = g.textOnPage;
     final muted = g.textMutedOnPage;
-    final [lowest, low, container, high, highest] = _containers(g);
+    // From the page out: lowest (the well), low (cards, sheets), container
+    // (menus), high (dialogs), and highest (chips).
+    final [lowest, low, container, high, highest] = [
+      g.inputFill,
+      g.surface,
+      g.surface,
+      g.surface,
+      g.inputFill,
+    ];
     // Text in a role's color must read on the page and on cards.
     final textBackgrounds = [background, low];
     Color readable(Color c) => ColorMath.readable(c, textBackgrounds);
-    // White or ink on a role's color; black where neither reads (error on
-    // the Black team's Candy page, lifted to a mid red).
+    // White or ink on a role's color; black where neither reads.
     Color on(Color c) {
       final o = ColorMath.onColor(c, dark: g.ink);
       return ColorMath.contrast(o, c) >= 4.5
@@ -112,7 +55,7 @@ abstract final class AppTheme {
           : ColorMath.onColor(c, dark: const Color(0xFF000000));
     }
 
-    // Where "you" is red (Olive's coral), Material's primary is the blue
+    // Where "you" is red (coral, in every scheme), Material's primary is the blue
     // raspberry, so selection, focus, and "normal" never look like an
     // error. Your bubbles, the FAB, and buttons keep the "you" color.
     final youIsRed =
@@ -125,12 +68,10 @@ abstract final class AppTheme {
     final secondary = readable(g.bubblegum.face);
     final tertiary = readable(g.grape.face);
     final error = readable(g.cherry.text);
-    final inverseSurface = g.brightness == Brightness.dark
-        ? const Color(0xFFF2F6FF)
-        : g.ink;
-    final onInverseSurface = g.brightness == Brightness.dark
-        ? g.ink
-        : const Color(0xFFFFFFFF);
+    // Snack bars and tooltips: the text color as the fill, the page as the
+    // label (7.5:1 or better in every scheme).
+    final inverseSurface = g.textOnPage;
+    final onInverseSurface = g.page;
     final scheme = ColorScheme(
       brightness: g.brightness,
       primary: primary,
@@ -139,7 +80,7 @@ abstract final class AppTheme {
       onPrimaryContainer: g.ink,
       secondary: secondary,
       onSecondary: on(secondary),
-      secondaryContainer: g.raisedFace,
+      secondaryContainer: g.inputFill,
       onSecondaryContainer: g.textPrimary,
       tertiary: tertiary,
       onTertiary: on(tertiary),
@@ -159,39 +100,29 @@ abstract final class AppTheme {
       surfaceContainer: container,
       surfaceContainerHigh: high,
       surfaceContainerHighest: highest,
-      outline: g.divider,
+      outline: g.outline,
       outlineVariant: g.divider,
       shadow: const Color(0xFF000000),
       scrim: const Color(0xFF000000),
       inverseSurface: inverseSurface,
       onInverseSurface: onInverseSurface,
-      inversePrimary: ColorMath.readable(g.you.face, [inverseSurface]),
+      inversePrimary: onInverseSurface,
       surfaceTint: const Color(0x00000000),
     );
     final appColors = AppColors.fromGumdrop(g, backgrounds: textBackgrounds);
     final textTheme = _textTheme(g, style, text);
-    final buttons = GumdropButtons(g, focusRing: text, style: style);
-    // Inputs on a colored page hold its text, so they're a step past the
-    // page (the deepest blue on Candy's); on a card (GumdropSurface) they're
-    // the theme's own.
-    final inputFill = colorPage ? highest : g.inputFill;
-    final inputBorder = colorPage ? g.pageShadow : g.inputBorder;
+    final buttons = GumdropButtons(g, focusRing: text);
+    final inputFill = g.inputFill;
+    final inputBorder = g.inputBorder;
     OutlineInputBorder outline(Color color, double width) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(Corners.input),
       borderSide: BorderSide(color: color, width: width),
     );
-    final cardSide = colorPage || g.surfaceBorderWidth == 0
-        ? BorderSide.none
-        : BorderSide(color: g.surfaceBorder, width: g.surfaceBorderWidth);
-    final label = textTheme.labelLarge!;
-    // The selected tab's gumdrop, in the tab bar and the rail.
-    final indicator = style.styled(
-      GumdropShape(
-        lip: 3,
-        lipColor: g.you.lip,
-        radius: BorderRadius.circular(16),
-      ),
+    final cardSide = BorderSide(
+      color: g.surfaceBorder,
+      width: g.surfaceBorderWidth,
     );
+    final label = textTheme.labelLarge!;
 
     final base = ThemeData(
       useMaterial3: true,
@@ -205,7 +136,7 @@ abstract final class AppTheme {
       extensions: [g, appColors, style],
       scaffoldBackgroundColor: background,
       canvasColor: background,
-      focusColor: g.you.face.withValues(alpha: 0.24),
+      focusColor: g.accentMark.withValues(alpha: 0.24),
       dividerColor: g.divider,
       textTheme: base.textTheme.merge(textTheme),
       iconTheme: IconThemeData(color: text),
@@ -220,13 +151,11 @@ abstract final class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        // Detail screens' headers (design §3.2, §3.18): the round lemon
-        // back button 12 px from the edge, then the title in Lilita One
-        // with the 4-step shadow, a size under the design's 32 so the
-        // app's longer titles fit beside their actions.
+        // Pushed screens' plain app bars: the title in Lilita 25 with the
+        // scheme's drop.
         leadingWidth: 72,
         titleSpacing: 12,
-        titleTextStyle: textTheme.headlineMedium?.copyWith(fontSize: 28),
+        titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 25),
         iconTheme: IconThemeData(color: text),
         actionsIconTheme: IconThemeData(color: text),
         systemOverlayStyle: g.brightness == Brightness.dark
@@ -238,23 +167,23 @@ abstract final class AppTheme {
         color: low,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.transparent,
-        shape: style.cardShape(Corners.card, side: cardSide),
+        shape: style.cardShape(18, side: cardSide),
         margin: EdgeInsets.zero,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: inputFill,
-        border: outline(inputBorder, 2),
-        enabledBorder: outline(inputBorder, 2),
-        disabledBorder: outline(inputBorder.withValues(alpha: 0.5), 2),
-        focusedBorder: outline(colorPage ? g.you.face : primary, 2.5),
-        errorBorder: outline(error, 2),
-        focusedErrorBorder: outline(error, 2.5),
+        border: outline(inputBorder, 1.5),
+        enabledBorder: outline(inputBorder, 1.5),
+        disabledBorder: outline(inputBorder.withValues(alpha: 0.5), 1.5),
+        focusedBorder: outline(text, 2),
+        errorBorder: outline(g.cherry.text, 1.5),
+        focusedErrorBorder: outline(g.cherry.text, 2),
         hintStyle: textTheme.bodyLarge?.copyWith(color: muted),
         labelStyle: textTheme.bodyLarge?.copyWith(color: muted),
         floatingLabelStyle: textTheme.bodyMedium?.copyWith(color: muted),
         helperStyle: textTheme.bodySmall?.copyWith(color: muted),
-        errorStyle: textTheme.bodySmall?.copyWith(color: error),
+        errorStyle: textTheme.bodySmall?.copyWith(color: g.cherry.text),
         prefixIconColor: muted,
         suffixIconColor: muted,
         contentPadding: const EdgeInsets.symmetric(
@@ -264,20 +193,52 @@ abstract final class AppTheme {
       ),
       chipTheme: _chipTheme(g, style, label),
       filledButtonTheme: FilledButtonThemeData(
-        style: buttons.accent(g.you, textStyle: label),
+        // The coral gumdrop: Fredoka 700 16 in ink.
+        style: buttons.accent(
+          g.you,
+          textStyle: label.copyWith(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
       ),
+      // The outlined pill: Fredoka 600 16.
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: buttons.secondary(textStyle: label),
+        style: buttons.secondary(textStyle: label.copyWith(fontSize: 16)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: buttons.secondary(textStyle: label),
+        style: buttons.secondary(textStyle: label.copyWith(fontSize: 16)),
       ),
+      // Text buttons are plain text: Fredoka 600 15 in the text color.
       textButtonTheme: TextButtonThemeData(
-        // The small secondary gumdrop (design §3.1: See votes, Add a note).
-        style: buttons.secondary(
-          textStyle: label.copyWith(fontSize: TypeScale.secondary),
-          minimumSize: const Size(48, 44),
-          padding: const EdgeInsets.symmetric(horizontal: Space.md),
+        style: ButtonStyle(
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.disabled) ? muted : text,
+          ),
+          iconColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.disabled) ? muted : text,
+          ),
+          backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+          overlayColor: WidgetStateProperty.resolveWith(
+            (s) =>
+                s.contains(WidgetState.pressed) ||
+                    s.contains(WidgetState.focused)
+                ? text.withValues(alpha: 0.10)
+                : s.contains(WidgetState.hovered)
+                ? text.withValues(alpha: 0.06)
+                : null,
+          ),
+          textStyle: WidgetStatePropertyAll(
+            label.copyWith(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
+          minimumSize: const WidgetStatePropertyAll(Size(48, 44)),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: Space.md),
+          ),
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
+          side: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.focused)
+                ? BorderSide(color: text, width: 3)
+                : BorderSide.none,
+          ),
+          elevation: const WidgetStatePropertyAll(0),
         ),
       ),
       // Every variant shares this theme, so only the focus ring is set:
@@ -301,7 +262,10 @@ abstract final class AppTheme {
         highlightElevation: 0,
         disabledElevation: 0,
         iconSize: 28,
-        shape: style.styled(GumdropShape(lipColor: g.you.lip)),
+        shape: GumdropShape(
+          lipColor: g.you.lip,
+          side: style.accentSide(g.you.lip),
+        ),
         sizeConstraints: const BoxConstraints.tightFor(width: 60, height: 64),
         smallSizeConstraints: const BoxConstraints.tightFor(
           width: 44,
@@ -327,11 +291,7 @@ abstract final class AppTheme {
             (s) => s.contains(WidgetState.selected) ? g.ink : g.textMuted,
           ),
           textStyle: WidgetStatePropertyAll(label.copyWith(fontSize: 16)),
-          shape: WidgetStatePropertyAll(
-            style.buttonRadius == null
-                ? const StadiumBorder()
-                : RoundedRectangleBorder(borderRadius: style.buttonRadius!),
-          ),
+          shape: const WidgetStatePropertyAll(StadiumBorder()),
           // The well around the segments and between them: the track the
           // selected pill sits in (design §3.7).
           side: WidgetStateProperty.resolveWith(
@@ -350,38 +310,34 @@ abstract final class AppTheme {
           ),
         ),
       ),
+      // The Open Field tab bar: a flat bar with a rule on top, no
+      // indicator, the picked tab's icon coral.
       navigationBarTheme: NavigationBarThemeData(
-        // The tab bar is a white (or card-colored) panel in every theme,
-        // so its labels use the card's text colors.
-        backgroundColor: g.surface,
+        backgroundColor: g.tabBar,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.transparent,
         elevation: 0,
-        height: 76,
-        indicatorColor: g.you.face,
-        indicatorShape: indicator,
+        height: 64,
+        indicatorColor: Colors.transparent,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith(
           (s) => IconThemeData(
-            size: 22,
-            color: s.contains(WidgetState.selected) ? g.ink : g.textMuted,
+            size: 24,
+            color: s.contains(WidgetState.selected) ? g.you.face : muted,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (s) => label.copyWith(
             fontSize: 13,
-            color: s.contains(WidgetState.selected)
-                ? g.textPrimary
-                : g.textMuted,
+            color: s.contains(WidgetState.selected) ? text : muted,
           ),
         ),
       ),
       navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: low,
-        indicatorColor: g.you.face,
-        indicatorShape: indicator,
-        selectedIconTheme: IconThemeData(color: g.ink, size: 22),
-        unselectedIconTheme: IconThemeData(color: muted, size: 22),
+        backgroundColor: g.tabBar,
+        indicatorColor: Colors.transparent,
+        selectedIconTheme: IconThemeData(color: g.you.face, size: 24),
+        unselectedIconTheme: IconThemeData(color: muted, size: 24),
         selectedLabelTextStyle: label.copyWith(fontSize: 13, color: text),
         unselectedLabelTextStyle: label.copyWith(fontSize: 13, color: muted),
         labelType: NavigationRailLabelType.all,
@@ -391,21 +347,25 @@ abstract final class AppTheme {
         unselectedLabelColor: muted,
         labelStyle: label.copyWith(fontSize: 16),
         unselectedLabelStyle: label.copyWith(fontSize: 16),
-        indicatorColor: g.you.face,
+        indicatorColor: g.accentMark,
         dividerColor: Colors.transparent,
       ),
       switchTheme: SwitchThemeData(
-        // As close to design §3.11 as Material's switch goes: a 3 px ink
-        // outline, mint when on, a white knob that's the same size on and
-        // off (the empty icon keeps it from shrinking when off).
-        thumbColor: const WidgetStatePropertyAll(GumdropColors.switchKnob),
-        thumbIcon: const WidgetStatePropertyAll(Icon(null)),
+        // On: the mint face with a white knob. Off: the field with a 2 px
+        // outline and a muted knob.
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? GumdropColors.switchKnob
+              : muted,
+        ),
         trackColor: WidgetStateProperty.resolveWith(
           (s) =>
               s.contains(WidgetState.selected) ? g.mint.face : g.switchOffTrack,
         ),
-        trackOutlineColor: WidgetStatePropertyAll(g.ink),
-        trackOutlineWidth: const WidgetStatePropertyAll(3),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? g.mint.lip : g.outline,
+        ),
+        trackOutlineWidth: const WidgetStatePropertyAll(2),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith(
@@ -425,7 +385,7 @@ abstract final class AppTheme {
         ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: g.you.face,
+        color: g.accentMark,
         linearTrackColor: g.well,
         circularTrackColor: Colors.transparent,
       ),
@@ -435,9 +395,20 @@ abstract final class AppTheme {
         thumbColor: g.you.face,
       ),
       listTileTheme: ListTileThemeData(
-        iconColor: muted,
+        iconColor: text,
         textColor: text,
         selectedColor: primary,
+        titleTextStyle: textTheme.bodyLarge?.copyWith(fontSize: 16),
+        subtitleTextStyle: textTheme.bodyMedium?.copyWith(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: muted,
+        ),
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: text,
+        selectionColor: g.accentMark.withValues(alpha: 0.3),
+        selectionHandleColor: g.accentMark,
       ),
       badgeTheme: BadgeThemeData(
         backgroundColor: g.cherry.face,
@@ -451,27 +422,30 @@ abstract final class AppTheme {
         elevation: 0,
         modalElevation: 0,
         showDragHandle: true,
-        dragHandleColor: g.divider,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(Corners.sheet),
-          ),
+        dragHandleColor: g.textMuted,
+        dragHandleSize: const Size(36, 4),
+        shape: RoundedRectangleBorder(
+          side: cardSide,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
         ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: high,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        titleTextStyle: textTheme.titleLarge,
-        contentTextStyle: textTheme.bodyMedium?.copyWith(color: muted),
-        shape: style.cardShape(Corners.panel, side: cardSide),
+        titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 25),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: style.cardShape(22, side: cardSide),
       ),
       popupMenuTheme: PopupMenuThemeData(
         color: container,
         surfaceTintColor: Colors.transparent,
-        textStyle: textTheme.bodyLarge,
+        textStyle: textTheme.bodyLarge?.copyWith(fontSize: 16),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Corners.tile),
+          borderRadius: BorderRadius.circular(14),
           side: cardSide,
         ),
       ),
@@ -482,7 +456,7 @@ abstract final class AppTheme {
           color: onInverseSurface,
           fontSize: 15,
         ),
-        actionTextColor: scheme.inversePrimary,
+        actionTextColor: onInverseSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Corners.tile),
@@ -495,29 +469,25 @@ abstract final class AppTheme {
         ),
         textStyle: textTheme.bodySmall?.copyWith(color: onInverseSurface),
       ),
-      dividerTheme: DividerThemeData(color: g.divider, space: 2, thickness: 2),
+      dividerTheme: DividerThemeData(color: g.divider, space: 1, thickness: 1),
     );
   }
 
   /// Nunito for text, Fredoka for labels, buttons, and names, and Lilita One
-  /// headings with a stacked hard shadow (design §2, §3.3): 4 steps on the
-  /// team name and screen titles, 3 on section headings. Gumdrop Arena sets
-  /// headings and labels in its condensed italic, over a single shadow.
+  /// headings with the scheme's hard drop.
   static TextTheme _textTheme(GumdropColors g, GumdropStyle style, Color text) {
-    TextStyle heading(double size, double height, int steps) => TextStyle(
+    TextStyle heading(double size, double height) => TextStyle(
       fontFamily: style.displayFont,
-      fontWeight: style.fontWeight ?? FontWeight.w400,
-      fontStyle: style.fontStyle,
+      fontWeight: FontWeight.w400,
       fontSize: size,
       height: height,
       letterSpacing: 0,
       color: g.headingText,
-      shadows: style.headingShadow(g.headingShadow, steps),
+      shadows: style.headingShadow(g.headingShadow, big: size > 32),
     );
     TextStyle fredoka(double size, {double height = 1.2}) => TextStyle(
       fontFamily: style.labelFont,
-      fontWeight: style.fontWeight ?? FontWeight.w600,
-      fontStyle: style.fontStyle,
+      fontWeight: FontWeight.w600,
       fontSize: size,
       height: height,
       letterSpacing: 0,
@@ -532,13 +502,13 @@ abstract final class AppTheme {
       color: text,
     );
     return TextTheme(
-      displayLarge: heading(57, 1, 4),
-      displayMedium: heading(45, 1, 4),
-      displaySmall: heading(TypeScale.teamName, 1, 4),
-      headlineLarge: heading(TypeScale.teamName, 1, 4),
-      headlineMedium: heading(TypeScale.headline, 1.1, 4),
-      headlineSmall: heading(TypeScale.section, 1.1, 3),
-      titleLarge: heading(TypeScale.title, 1.1, 3),
+      displayLarge: heading(57, 1),
+      displayMedium: heading(45, 1),
+      displaySmall: heading(TypeScale.teamName, 1),
+      headlineLarge: heading(TypeScale.teamName, 1),
+      headlineMedium: heading(TypeScale.headline, 1.1),
+      headlineSmall: heading(TypeScale.section, 1.1),
+      titleLarge: heading(TypeScale.title, 1.1),
       titleMedium: fredoka(TypeScale.subtitle),
       titleSmall: fredoka(15),
       bodyLarge: nunito(TypeScale.body),
@@ -550,8 +520,8 @@ abstract final class AppTheme {
     );
   }
 
-  /// Chips are 34 px gumdrops (design §3.6, §3.7): the secondary face, or
-  /// the "you" color when selected.
+  /// Chips: coral with a 2 px lip-colored outline when selected, a 1.5 px
+  /// outline otherwise.
   static ChipThemeData _chipTheme(
     GumdropColors g,
     GumdropStyle style,
@@ -564,30 +534,16 @@ abstract final class AppTheme {
             ? g.well
             : selected(s)
             ? g.you.face
-            : g.raisedFace,
+            : Colors.transparent,
       ),
-      shape: WidgetStateOutlinedBorder.resolveWith(
-        (s) => style.styled(
-          GumdropShape(
-            lip: 3,
-            lipColor: s.contains(WidgetState.disabled)
-                ? Colors.transparent
-                : selected(s)
-                ? g.you.lip
-                : g.raisedLip,
-            highlight: selected(s) ? 2 : 1.5,
-            highlightColor: selected(s)
-                ? GumdropColors.accentHighlight
-                : g.raisedHighlight,
-          ),
-        ),
-      ),
+      shape: const StadiumBorder(),
       side: WidgetStateBorderSide.resolveWith(
-        (s) => selected(s) || g.raisedBorderWidth == 0
-            ? BorderSide.none
-            : BorderSide(color: g.raisedBorder, width: g.raisedBorderWidth),
+        (s) => selected(s)
+            ? BorderSide(color: g.you.lip, width: 2)
+            : BorderSide(color: g.outline, width: 1.5),
       ),
       labelStyle: label.copyWith(
+        fontSize: 14,
         color: WidgetStateColor.resolveWith(
           (s) => selected(s) ? g.ink : g.textPrimary,
         ),
@@ -596,8 +552,7 @@ abstract final class AppTheme {
       checkmarkColor: g.ink,
       iconTheme: IconThemeData(color: g.textPrimary, size: 18),
       deleteIconColor: g.textMuted,
-      // The lip sits inside the chip's box, so the label rides 3 px high.
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 7),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       labelPadding: const EdgeInsets.symmetric(horizontal: 3),
       elevation: 0,
       pressElevation: 0,
