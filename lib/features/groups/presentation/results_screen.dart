@@ -50,7 +50,12 @@ class AddResultsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final shown = sections.where((s) => s.lines.isNotEmpty).toList();
     return Scaffold(
-      appBar: AppBar(title: Text(title), automaticallyImplyLeading: false),
+      // No back: the title on the page's gutter.
+      appBar: AppBar(
+        title: Text(title),
+        automaticallyImplyLeading: false,
+        titleSpacing: Space.page,
+      ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(Space.lg),
         child: FilledButton(

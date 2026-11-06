@@ -22,7 +22,10 @@ export 'presentation/gumdrop_rows.dart'
         gumdropAppBar,
         gumdropField,
         gumdropFieldText,
-        switchRowTitle;
+        openerLabel,
+        switchRowTitle,
+        upButton,
+        upFrom;
 export 'presentation/results_screen.dart'
     show AddResultsScreen, ResultSection, describeAddProblem;
 export 'presentation/roster_screen.dart' show roleBadge;

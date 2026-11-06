@@ -174,6 +174,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: upButton(context),
         title: Text(l10n.notificationsTooltip),
         actions: [
           // With large text, the icon with its name as a tooltip, so the

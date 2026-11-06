@@ -1,3 +1,4 @@
+import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -25,7 +26,16 @@ class TeamBadge extends StatelessWidget {
     final url = imageUrl;
     // A rounded square: corner 14 on the 48 px badge.
     final radius = BorderRadius.circular(size * 14 / 48);
-    final ring = GumdropColors.of(context).avatarRing;
+    final c = GumdropColors.of(context);
+    // The scheme's thin inset ring (Light blue's), or, for a team color
+    // close to what the badge sits on (a navy team on Navy's cards, a
+    // black one on Dark's), an outline, so the badge keeps its shape.
+    final fill = color ?? AppTokens.brand;
+    final ring = c.avatarRing.a != 0
+        ? c.avatarRing
+        : url == null && ColorMath.contrast(fill, c.background) < 1.5
+        ? c.outline
+        : c.avatarRing;
     return Semantics(
       label: name,
       image: true,
@@ -33,7 +43,7 @@ class TeamBadge extends StatelessWidget {
       child: Container(
         width: size,
         height: size,
-        // The scheme's thin inset ring (Light blue's), over logo or color.
+        // Over logo or color.
         foregroundDecoration: ring.a == 0
             ? null
             : BoxDecoration(

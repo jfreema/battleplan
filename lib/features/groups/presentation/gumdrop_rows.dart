@@ -17,10 +17,11 @@ import 'package:material_ui/material_ui.dart';
 /// Roster, Documents, and Plays.
 
 /// The pushed-screen bar (SPEC §7.3): a 48 px back row with the chevron
-/// and [backLabel] (the screen it goes back to) when there's somewhere to
-/// go back to, and [actions] on its right as 48 px icon buttons; then the
-/// title in Lilita 32 with the scheme's drop, 20 px from the left. The
-/// title row grows with the text size.
+/// and [backLabel] (the screen it goes back to), and [actions] on its
+/// right as 48 px icon buttons; then the title in Lilita 32 with the
+/// scheme's drop, 20 px from the left. The title row grows with the text
+/// size. With nothing under the screen (a link, a web reload, a
+/// notification on a cold start), the chevron alone goes [upFrom] it.
 PreferredSizeWidget gumdropAppBar(
   BuildContext context, {
   required String title,
@@ -46,7 +47,13 @@ PreferredSizeWidget gumdropAppBar(
             alignment: AlignmentDirectional.centerStart,
             child: BackChevron(label: backLabel),
           )
-        : null,
+        : switch (_goUp(context)) {
+            final up? => Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: BackChevron(onPressed: up),
+            ),
+            null => null,
+          },
     actions: actions,
     actionsPadding: const EdgeInsets.only(right: 4),
     bottom: PreferredSize(
@@ -74,6 +81,38 @@ PreferredSizeWidget gumdropAppBar(
   );
 }
 
+/// Where a screen goes back to when nothing is under it (SPEC §7.3), as
+/// when it was opened from a link, a web reload, or a notification on a
+/// cold start: a team's screens to its chat, Settings and Profile's pages
+/// to Profile, a direct conversation to Messages, and the rest to Teams.
+String upFrom(Uri location) => switch (location.pathSegments) {
+  ['g', final id, ...] when id != 'new' => '/g/$id/chat',
+  ['settings' || 'profile', ...] => '/profile',
+  ['messages', _, ...] => '/messages',
+  _ => '/teams',
+};
+
+/// Goes [upFrom] where the app is: the screen at [context], which has
+/// nothing under it. Null when it isn't a GoRouter page (a test pumping it
+/// alone).
+VoidCallback? _goUp(BuildContext context) {
+  if (ModalRoute.of(context)?.settings is! Page<Object?>) return null;
+  final router = GoRouter.maybeOf(context);
+  if (router == null) return null;
+  // Read on the tap, when this screen is the one showing.
+  return () => router.go(upFrom(router.state.uri));
+}
+
+/// A plain [AppBar]'s `leading`: when nothing is under the screen, the
+/// chevron that goes [upFrom] it; otherwise null, for the app bar's own
+/// back button.
+Widget? upButton(BuildContext context) {
+  if (ModalRoute.of(context)?.impliesAppBarDismissal ?? true) return null;
+  final up = _goUp(context);
+  if (up == null) return null;
+  return Center(child: BackChevron(onPressed: up));
+}
+
 /// What a pushed screen's back label says, passed as GoRouter `extra` by
 /// an opener other than the usual one ([label] null: the chevron alone).
 @immutable
@@ -82,6 +121,15 @@ class BackLabel {
 
   final String? label;
 }
+
+/// The back label of a screen with several ways in (SPEC §7.3), like a
+/// player card or a person's page: its opener's [BackLabel], or null for
+/// the chevron alone when the opener is unknown (a link, a notification).
+String? openerLabel(BuildContext context) =>
+    switch (backLabelFrom(context, '')) {
+      final from? when from.isNotEmpty => from,
+      _ => null,
+    };
 
 /// The back label for the screen at [context]: its opener's [BackLabel],
 /// else [usual] (the screen it's normally opened from).

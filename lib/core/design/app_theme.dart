@@ -151,10 +151,11 @@ abstract final class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        // Pushed screens' plain app bars: the title in Lilita 25 with the
-        // scheme's drop.
-        leadingWidth: 72,
-        titleSpacing: 12,
+        // Pushed screens' plain app bars: the 28 px chevron in a 48 px tap
+        // area by the edge, as on the pushed-screen bar, and the title in
+        // Lilita 25 with the scheme's drop just after it.
+        leadingWidth: 52,
+        titleSpacing: 8,
         titleTextStyle: textTheme.titleLarge?.copyWith(fontSize: 25),
         iconTheme: IconThemeData(color: text),
         actionsIconTheme: IconThemeData(color: text),

@@ -160,6 +160,8 @@ class PersonScreen extends ConsumerWidget {
       appBar: gumdropAppBar(
         context,
         title: l10n.personTitle,
+        // Its opener (the roster, a chat), or the chevron alone.
+        backLabel: openerLabel(context),
         actions: [
           if (!isMe && !unknown)
             PopupMenuButton<String>(
@@ -294,6 +296,7 @@ class PersonScreen extends ConsumerWidget {
                               showAdaptiveSheet<void>(
                                 context,
                                 builder: (_) => MemberCard(
+                                  openedFrom: l10n.personTitle,
                                   member: row.theirs,
                                   me: row.team.membership,
                                   who: whoFromSummary(

@@ -32,7 +32,10 @@ class MessagesScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final chats = ref.watch(myDirectChatsProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.messagesTitle)),
+      appBar: AppBar(
+        leading: upButton(context),
+        title: Text(l10n.messagesTitle),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
         onPressed: () async {

@@ -382,6 +382,8 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         context,
         UserId(m.authorId),
         teamId: direct ? null : m.groupId,
+        // Back to the team's Chat; a conversation's name is the person's.
+        from: direct ? null : AppLocalizations.of(context).tabChat,
       );
     };
   }

@@ -77,10 +77,12 @@ class OpenFieldTabBar extends StatelessWidget {
     return Semantics(
       container: true,
       explicitChildNodes: true,
-      // A Material, so the tabs' ink draws over the fill.
+      // A Material, so the tabs' ink draws over the fill. The rule goes
+      // under the tabs, so the current tab's coral bar covers it.
       child: Material(
         color: c.tabBar,
         shape: Border(top: BorderSide(color: c.tabBarLine)),
+        borderOnForeground: false,
         child: Padding(
           padding: EdgeInsets.fromLTRB(6, 0, 6, bottom),
           child: Row(

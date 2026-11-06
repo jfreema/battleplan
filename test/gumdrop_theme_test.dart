@@ -10,6 +10,7 @@ import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/schemes.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
+import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -448,6 +449,44 @@ void main() {
       expect(color('Coach Lee'), roles.text, reason: scheme.value);
       expect(color('Owner'), roles.pageMuted, reason: scheme.value);
     }
+  });
+
+  testWidgets('a team badge close to its card gets an outline', (tester) async {
+    Future<Color?> edge(TeamScheme scheme, int color) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.of(scheme, onCard: true),
+          home: TeamBadge(name: 'Thunder', color: Color(color), size: 48),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final box = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(TeamBadge),
+          matching: find.byType(Container),
+        ),
+      );
+      final border =
+          (box.foregroundDecoration as BoxDecoration?)?.border as Border?;
+      return border?.top.color;
+    }
+
+    // Navy on Navy's cards, black on Dark's: edged.
+    expect(
+      await edge(TeamScheme.navy, 0xFF1E3A5F),
+      SchemeRoles.navy.cardOutline,
+    );
+    expect(
+      await edge(TeamScheme.dark, 0xFF000000),
+      SchemeRoles.dark.cardOutline,
+    );
+    // A bright color reads on its own.
+    expect(await edge(TeamScheme.navy, 0xFFF45B5B), isNull);
+    // Light blue rings every badge already.
+    expect(
+      await edge(TeamScheme.skyblue, 0xFFFFFFFF),
+      SchemeRoles.skyblue.avatarRing,
+    );
   });
 
   testWidgets('dialogs and sheets are in the card context', (tester) async {

@@ -15,6 +15,7 @@ import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
+import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
@@ -191,6 +192,18 @@ void main() {
       ),
       findsNothing,
     );
+    // The bar's top rule is drawn under the tabs, so the current tab's
+    // coral bar covers it rather than a dark line crossing it.
+    final bar = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(OpenFieldTabBar),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(bar.shape, isA<Border>());
+    expect(bar.borderOnForeground, isFalse);
   });
 
   testWidgets('a long team name steps down and fits a 360 px phone', (
@@ -658,6 +671,86 @@ void main() {
           .descendant(of: tile, matching: find.byType(Container))
           .first;
       expect(left(tester, lead), 20);
+    });
+
+    testWidgets('a plain app bar keeps its title just after the chevron', (
+      tester,
+    ) async {
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      await tester.tap(find.byTooltip('Notifications'));
+      await tester.pumpAndSettle();
+      final chevron = tester.getCenter(find.byType(BackButton));
+      expect(chevron.dx, closeTo(28, 2));
+      expect(left(tester, find.text('Notifications')), lessThanOrEqualTo(60));
+    });
+
+    test('with nothing under it, a screen goes back up to its team, '
+        'Profile, Messages or Teams', () {
+      for (final (from, to) in [
+        ('/g/a/info', '/g/a/chat'),
+        ('/g/a/dues/d1', '/g/a/chat'),
+        ('/g/new', '/teams'),
+        ('/settings/blocked', '/profile'),
+        ('/profile/icon', '/profile'),
+        ('/messages/dm1', '/messages'),
+        ('/messages/dm1/m/x', '/messages'),
+        ('/messages', '/teams'),
+        ('/notifications', '/teams'),
+        ('/people/sam', '/teams'),
+      ]) {
+        expect(upFrom(Uri.parse(from)), to, reason: from);
+      }
+    });
+
+    testWidgets('a screen opened with nothing under it still has a back', (
+      tester,
+    ) async {
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      // A pushed-screen bar: Team info, as from a link.
+      await scenes.goTo(tester, '/g/a/info');
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(find.byType(OpenFieldTabBar), findsOneWidget);
+      expect(find.text('TEAM CHAT'), findsOneWidget);
+      // A plain app bar: the notification center, then Messages.
+      for (final (route, back) in [
+        ('/notifications', 'Teams'),
+        ('/messages', 'Teams'),
+      ]) {
+        await scenes.goTo(tester, route);
+        await tester.tap(find.byTooltip('Back'));
+        await tester.pumpAndSettle();
+        expect(find.text(back), findsWidgets, reason: route);
+        expect(find.byType(TopLevelBar), findsOneWidget, reason: route);
+      }
+    });
+
+    testWidgets("a player card and a person's page name the screen they "
+        'came from', (tester) async {
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      await scenes.goTo(tester, '/g/a/roster');
+      await tester.tap(find.text('Mia Kim'));
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Back, Roster'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Back, Roster'));
+      await tester.pumpAndSettle();
+      // A member's card, then their page.
+      await tester.ensureVisible(find.text('Sam Rivera').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sam Rivera').last);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(MemberCard),
+          matching: find.text('Profile'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel('Back, Roster'), findsOneWidget);
+      // Opened from a link, the chevron alone.
+      await scenes.goTo(tester, '/g/a/roster/players/mia');
+      expect(find.bySemanticsLabel('Back'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('^Back, ')), findsNothing);
     });
 
     testWidgets("Team admin's switches sit under a page heading, one rule "

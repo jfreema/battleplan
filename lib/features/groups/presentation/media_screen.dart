@@ -13,6 +13,7 @@ import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/storage_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,7 +67,7 @@ class MediaScreen extends ConsumerWidget {
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     if (membership != null && !membership.isAdmin && !superAdmin) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.mediaMenu)),
+        appBar: AppBar(leading: upButton(context), title: Text(l10n.mediaMenu)),
         body: EmptyState(icon: AppIcons.media, message: l10n.notAllowed),
       );
     }
@@ -102,7 +103,7 @@ class MediaScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.mediaMenu)),
+      appBar: AppBar(leading: upButton(context), title: Text(l10n.mediaMenu)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),

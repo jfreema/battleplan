@@ -113,6 +113,8 @@ class PlayerCardScreen extends ConsumerWidget {
       appBar: gumdropAppBar(
         context,
         title: player.displayName,
+        // From the roster, or the chevron alone from a link.
+        backLabel: openerLabel(context),
         actions: [
           if (canEdit)
             IconButton(

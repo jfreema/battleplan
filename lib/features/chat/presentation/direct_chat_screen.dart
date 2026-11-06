@@ -13,6 +13,7 @@ import 'package:battleplan/features/chat/presentation/chat_screen.dart';
 import 'package:battleplan/features/chat/presentation/chat_search_screen.dart';
 import 'package:battleplan/features/chat/presentation/direct_actions.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -50,7 +51,7 @@ class DirectChatScreen extends ConsumerWidget {
     // One I'm not in, or that's gone, reads as null.
     if (group.hasValue && (g == null || !g.isDirect)) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: AppBar(leading: upButton(context)),
         body: EmptyState(icon: AppIcons.error, message: l10n.notFoundTitle),
       );
     }
@@ -94,6 +95,9 @@ class DirectChatScreen extends ConsumerWidget {
 
     final scaffold = Scaffold(
       appBar: AppBar(
+        // Back to Messages, even with nothing under the conversation, so
+        // the avatar never sits on the edge.
+        leading: upButton(context),
         titleSpacing: 0,
         title: Semantics(
           button: otherUid != null && !closed,
@@ -103,7 +107,7 @@ class DirectChatScreen extends ConsumerWidget {
             borderRadius: BorderRadius.circular(Space.sm),
             onTap: otherUid == null || closed
                 ? null
-                : () => openPersonPage(context, UserId(otherUid)),
+                : () => openPersonPage(context, UserId(otherUid), from: name),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: Space.xs),
               child: Row(
@@ -149,7 +153,11 @@ class DirectChatScreen extends ConsumerWidget {
               tooltip: l10n.directMenuTooltip,
               icon: const Icon(AppIcons.menu),
               onSelected: (action) => switch (action) {
-                'profile' => openPersonPage(context, UserId(otherUid)),
+                'profile' => openPersonPage(
+                  context,
+                  UserId(otherUid),
+                  from: name,
+                ),
                 'mute' => unawaited(setMuted(on: true)),
                 'unmute' => unawaited(setMuted(on: false)),
                 'block' => unawaited(

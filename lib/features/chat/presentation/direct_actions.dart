@@ -7,6 +7,7 @@ import 'package:battleplan/core/widgets/button_spinner.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -103,9 +104,16 @@ class _MessageButtonState extends ConsumerState<MessageButton> {
 
 /// A person's profile (TEAM-15), from a chat or the roster. [teamId] is the
 /// team it was opened from, which the page lists even when that team keeps
-/// its people to its admins: they were already seen there.
-void openPersonPage(BuildContext context, UserId uid, {GroupId? teamId}) =>
-    unawaited(context.push(personPageLocation(uid, teamId: teamId)));
+/// its people to its admins: they were already seen there. [from] is what
+/// its back says: the screen it was opened from.
+void openPersonPage(
+  BuildContext context,
+  UserId uid, {
+  GroupId? teamId,
+  String? from,
+}) => unawaited(
+  context.push(personPageLocation(uid, teamId: teamId), extra: BackLabel(from)),
+);
 
 /// Where a person's page is ([openPersonPage]).
 String personPageLocation(UserId uid, {GroupId? teamId}) => Uri(

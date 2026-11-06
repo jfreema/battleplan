@@ -402,6 +402,7 @@ class _PlayerRow extends StatelessWidget {
       subtitle: details.isEmpty ? null : Text(details.join(' · ')),
       onTap: () => context.push(
         '/g/${player.groupId.value}/roster/players/${player.id.value}',
+        extra: BackLabel(AppLocalizations.of(context).rosterMenu),
       ),
     );
   }
@@ -652,10 +653,20 @@ class _MemberRow extends StatelessWidget {
 /// Report and Block included. On my own card I share or stop sharing my
 /// phone and email.
 class MemberCard extends ConsumerWidget {
-  const new({required this.member, required this.me, this.who, super.key});
+  const new({
+    required this.member,
+    required this.me,
+    this.who,
+    this.openedFrom,
+    super.key,
+  });
 
   final Membership member;
   final Membership? me;
+
+  /// The screen the card is over, which their page's back names; the
+  /// roster when null.
+  final String? openedFrom;
 
   /// "Player #12", "Parent of Emma #7" ([whoLabel]), or null.
   final String? who;
@@ -664,6 +675,11 @@ class MemberCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final repo = ref.read(memberRepositoryProvider);
+    // The roster's name: People on a basic group (TEAM-14).
+    final rosterLabel =
+        ref.watch(groupProvider(this.member.groupId)).value?.hasPlayers ?? true
+        ? l10n.rosterMenu
+        : l10n.groupPeople;
     // Kept live, so sharing my contact info shows on the card at once.
     final member =
         ref
@@ -761,6 +777,7 @@ class MemberCard extends ConsumerWidget {
                             member.uid,
                             teamId: member.groupId,
                           ),
+                          extra: BackLabel(openedFrom ?? rosterLabel),
                         ),
                       );
                     },
