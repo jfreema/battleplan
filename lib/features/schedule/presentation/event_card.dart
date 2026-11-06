@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
@@ -16,6 +17,7 @@ import 'package:battleplan/features/schedule/presentation/event_details_screen.d
 import 'package:battleplan/features/schedule/presentation/event_row.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_format.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
+import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -62,7 +64,7 @@ class EventCard extends ConsumerWidget {
     final outline = c.surfaceBorderWidth == 0
         ? BorderSide.none
         : BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth);
-    final frame = style.cardDecoration(c.surface, Corners.panel, side: outline);
+    final frame = style.cardDecoration(c.surface, 18, side: outline);
     // The card's event is gone, but its series goes on.
     var seriesLeft = false;
     if (seriesId case final s? when async.hasValue && async.value == null) {
@@ -100,65 +102,41 @@ class EventCard extends ConsumerWidget {
       );
     }
     final accent = typeAccent(context, event.type);
-    return GumdropSurface(
-      child: Material(
-        color: c.surface,
-        shape: style.cardShape(Corners.panel, side: outline),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => openEvent(
-            context,
-            event,
-            from: AppLocalizations.of(context).tabChat,
-          ),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 420),
-            padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
-            child: Builder(
-              builder: (context) {
-                final theme = Theme.of(context);
-                final card = GumdropColors.of(context);
-                final muted = theme.textTheme.bodyMedium?.copyWith(
-                  color: card.textMuted,
-                );
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Wrap(
+    final type = typeLabel(l10n, event.type);
+    // The schedule's card (SPEC §7.3): the type's edge, the title and its
+    // type word, the time and place, then the answers and counts.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
+      child: TapCard(
+        edge: accent.face,
+        padding: const EdgeInsets.fromLTRB(15, 10, 12, 10),
+        onTap: () => openEvent(
+          context,
+          event,
+          from: AppLocalizations.of(context).tabChat,
+        ),
+        child: Builder(
+          builder: (context) {
+            final card = GumdropColors.of(context);
+            final muted = TextStyle(
+              fontFamily: AppFonts.body,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              height: 19 / 15,
+              letterSpacing: -0.2,
+              color: card.textMuted,
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (reminder || event.isCanceled)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Wrap(
                       spacing: Space.sm,
-                      runSpacing: Space.xs,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        // The type as a tag chip in its candy (design §3.6).
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: accent.face,
-                            borderRadius: BorderRadius.circular(11),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                typeIcon(event.type),
-                                size: 14,
-                                color: card.ink,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                typeLabel(l10n, event.type),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: card.ink,
-                                  letterSpacing: 0.7,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                         if (reminder)
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -171,46 +149,70 @@ class EventCard extends ConsumerWidget {
                               const SizedBox(width: Space.xs),
                               Text(
                                 l10n.eventCardReminder,
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: card.textPrimary,
-                                ),
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(color: card.textPrimary),
                               ),
                             ],
                           ),
                         if (event.isCanceled) const CanceledBadge(),
                       ],
                     ),
-                    const SizedBox(height: Space.sm),
-                    Text(
-                      event.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontSize: 19,
-                        height: 1.2,
-                        color: card.textPrimary,
-                        decoration: event.isCanceled
-                            ? TextDecoration.lineThrough
-                            : null,
+                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        event.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: AppFonts.body,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                          height: 22 / 18,
+                          color: card.textPrimary,
+                          decoration: event.isCanceled
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
                       ),
                     ),
-                    Text(
-                      timeRange(l10n, event, zone, withDay: true),
-                      style: muted,
-                    ),
-                    if (otherZoneLine(l10n, event, zone) case final z?)
-                      Text(z, style: muted),
-                    if (event.location case final loc?)
-                      Text(loc.label, style: muted),
-                    _CardRsvps(
-                      event: event,
-                      groupId: groupId,
-                      zone: zone,
-                      reminder: reminder,
-                    ),
+                    if (event.title.trim().toLowerCase() != type.toLowerCase())
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10),
+                        child: Text(
+                          type.toUpperCase(),
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                          style: GumdropStyle.of(context).label(
+                            TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              height: 16 / 13,
+                              letterSpacing: 13 * 0.1,
+                              color: typeAccent(context, event.type).text,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
-                );
-              },
-            ),
-          ),
+                ),
+                const SizedBox(height: 1),
+                Text(timeRange(l10n, event, zone, withDay: true), style: muted),
+                if (otherZoneLine(l10n, event, zone) case final z?)
+                  Text(z, style: muted),
+                if (event.location case final loc?)
+                  Text(loc.label, style: muted),
+                _CardRsvps(
+                  event: event,
+                  groupId: groupId,
+                  zone: zone,
+                  reminder: reminder,
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

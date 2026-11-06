@@ -26,15 +26,15 @@ abstract final class Space {
 /// 1.35 line, bold in others' bubbles and extra bold in mine.
 abstract final class ChatText {
   static const double size = 17;
-  static const double height = 1.35;
+  static const double height = 23 / 17;
 
   /// [base] as message text: the face, size, line height, and weight.
   /// [mine] for my own bubbles.
-  static TextStyle of(TextStyle? base, {bool mine = false}) =>
-      face(base).copyWith(
+  static TextStyle of(TextStyle? base, {bool mine = false}) => face(base)
+      .copyWith(
         fontSize: size,
         height: height,
-        fontWeight: mine ? FontWeight.w800 : FontWeight.w700,
+        fontWeight: FontWeight.w500,
         letterSpacing: 0,
       );
 
@@ -57,7 +57,7 @@ abstract final class Corners {
   static const double card = 20;
 
   /// Chat bubbles; the tail corner is [bubbleTail].
-  static const double bubble = 20;
+  static const double bubble = 22;
   static const double bubbleTail = 6;
 
   /// Large cards: the poll card, dialogs.

@@ -372,12 +372,12 @@ void main() {
     // The day line gains the year once the message is from an earlier one.
     await open(null);
     expect(shows('1:00 PM'), isTrue);
-    expect(find.textContaining('Wed, Jul 1'), findsOneWidget);
+    expect(find.textContaining('WED, JUL 1'), findsOneWidget);
     // In Tokyo it's the next morning: the time and the day both move.
     await open('Asia/Tokyo');
     expect(shows('3:00 AM'), isTrue);
     expect(shows('1:00 PM'), isFalse);
-    expect(find.textContaining('Thu, Jul 2'), findsOneWidget);
+    expect(find.textContaining('THU, JUL 2'), findsOneWidget);
   });
 
   testWidgets("the event page's Today and Tomorrow count days in the picked "

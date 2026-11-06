@@ -297,24 +297,21 @@ Sign in
 ┌────────────────────────────────────┐
 │ (TU) Thunder U14 v [M] (!) ...(JF) │
 ├────────────────────────────────────┤
-│              ( Today )             │
-│ (AK) ┌─────────────────────────┐   │
-│      │ Alex Kim  5:58 PM       │   │
-│      │ Field 3 is open. See    │   │
-│      │ you at 6!               │   │
-│      └─────────────────────────┘   │
-│       (Like 4) (Love 1)            │
+│ ─────────── TUE, OCT 14 ────────── │
+│ (AK) Alex Kim #3  5:58 PM          │
+│      Field 3 is open. See you      │
+│      at 6!                         │
+│      👍 4  ❤️ 1                     │
 │               ┌──────────────────┐ │
-│               │ 6:02 PM          │ │
 │               │ On my way!       │ │
 │               └──────────────────┘ │
-│                                    │
-│ ┌────────────────────────────────┐ │
-│ │ PRACTICE  Tue Oct 14, 6:00 PM  │ │
-│ │ Riverside Park, Field 3        │ │
-│ │ [Going] [Maybe] [Not going]    │ │
-│ │ 12 going · 3 maybe · 2 no      │ │
-│ └────────────────────────────────┘ │
+│                              Sent  │
+│ (AK) ┌───────────────────────────┐ │
+│      ┃ vs. Eagles            GAME│ │
+│      ┃ Sat 9:00 AM · Riverside   │ │
+│      ┃ Emma (Going)(Maybe)(No)   │ │
+│      ┃ ▬▬▬▭▭  2/4 going          │ │
+│      └───────────────────────────┘ │
 ├────────────────────────────────────┤
 │ (+)  Message Thunder U14...    (>) │
 ├────────────────────────────────────┤
@@ -633,17 +630,18 @@ Players that others answer for never get accounts, and every account belongs to 
   - One chat per team, newest messages at the bottom.
   - **Paging.** The chat loads the newest 50 messages and keeps them live. Scrolling up loads 50 older messages at a time, so a chat with years of history opens as fast as a new one.
   - With unread messages, the chat opens at the first unread message and loads newer ones as you scroll down.
-  - Date separators, as small pills: Today, Yesterday, Mon Oct 6.
-  - Each message is its own bubble, compact as GroupMe's (the owner's request, 2026-10-16). A person's run of messages (within 5 minutes) has their photo beside the first bubble, and their name and time inside it at the top; my own bubbles show just the time there. Photos sit inside the bubble, above the caption, and "edited" and "Pinned" go inside too. Polls and event cards keep the name and time above them. A member's name shows their players ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8).
-  - Laid out as iMessage lays them out (the owner's request, 2026-10-16): others' messages sit on the left on a neutral background, mine on the right in coral, every scheme's "you" color, or the one the chat look picks (CHAT-18). Each bubble fits its text, its longest line setting its width, and grows to about four fifths of the chat's width (at most 520 px) before the text wraps, so the two sides stay apart. In a direct conversation (CHAT-19) the other person's messages have no photo or name beside them.
-  - Message text is Nunito, 16 points, bold on others' messages and extra bold on mine, the same on every platform (§7.3; 1.1 replaced iMessage's type, San Francisco on Apple's platforms and Inter elsewhere).
+  - Day lines: small spaced capitals between hairlines (TODAY, YESTERDAY, SAT, MAR 8, 2025).
+  - **Others' messages have no bubble** (Open Field, 1.1): their 36 px icon (SET-8), then a head line with the name in Nunito extra bold, their players or number muted ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8) and the time, and the text straight on the page. Photos sit on the page with no frame. A person's run of messages (within 5 minutes) shows the icon and head line on the first. In a direct conversation (CHAT-19) the other person's messages have no icon beside them.
+  - **My messages are bubbles** on the right in coral, every scheme's "you" color, or the one the chat look picks (CHAT-18), with dark text: corners 22, 6 at the bottom right, fitting their text up to 75% of the column (at most 520 px). "Sent" shows under my newest. "edited" and "Pinned" go beside the time.
+  - Message text is Nunito 500, 17 points on 23, the same on every platform (§7.3).
   - Times appear on tap (phones), on hover (web), and at the start of each group.
 - **CHAT-2 · MVP · Composer.**
   - Multi-line text up to 4,000 characters, with a counter near the limit, and a Send button.
+  - A 46 px rounded field with the **+** inside its left edge and the hint "Message Thunder U14…", beside a round coral Send button on a lip.
   - The **+** menu: Photo library, Camera (phones), Create poll.
   - On web, Enter sends, Shift+Enter adds a line, and images can be pasted or dragged in.
 - **CHAT-3 · MVP · Photos.**
-  - Up to 10 per message, resized before upload, with progress shown in the bubble.
+  - Up to 10 per message, resized before upload, with progress shown on each photo.
   - Shown as a grid. Tap for a full-screen viewer with pinch-zoom, swipe between photos, save/download, and share.
 - **CHAT-4 · MVP · Delivery states.**
   - Each message shows sending, sent, or failed (tap to retry or delete).
@@ -653,7 +651,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **CHAT-6 · MVP · Reactions: 👍 Like · ❤️ Love · 👎 Dislike · 😂 LOL, plus 🔥 👏 🎉 💯 🙏 😮 😢 😡 ⚾ 🏀 ⚽ 🏆.**
   - Open the picker with a long-press (phones), the hover button, or a right-click (web). Double-tap a message to ❤️ it (phones).
   - **One reaction per person per message.** Picking another replaces yours; picking the same one removes it.
-  - Chips under the bubble show each reaction with its count, and yours is highlighted. Tap a chip to add that reaction, or to take yours back if it's yours. Long-press or right-click a chip, or choose See who reacted in the message menu, to see who reacted.
+  - Under the message, each reaction is a plain emoji with its count, in a 48 px tap area, and the count of yours is underlined in the accent color. Tap one to add that reaction, or to take yours back if it's yours. Long-press or right-click one, or choose See who reacted in the message menu, to see who reacted.
   - ❤️ is always red, on fonts that only have a plain heart too.
 - **CHAT-7 · MVP · Message menu** (long-press or right-click).
   - React, Reply, Edit (your own, CHAT-15), Copy text, Pin and Unpin (admins, CHAT-15), Delete (your own; admins can delete any), Report (other people's).
@@ -673,7 +671,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **CHAT-10 · MVP · System messages.** Small, centered lines for: joined, left, removed, made admin, team renamed.
 - **CHAT-11 · MVP · Cards in chat.**
   - New polls appear as interactive poll cards (POLL-2).
-  - New events appear as event cards when "Post to chat" is on. They show date, time, location, Going / Maybe / Not going buttons, and live counts. Members linked to players answer for each of their players right on the card (PLAYER-6).
+  - New events appear as event cards when "Post to chat" is on: the schedule's card (SCHED-1) beside the author's icon, with its type's edge, the title and type, the time and place, an RSVP row per person you answer for, and the attendance ("2/4 going"). Members linked to players answer for each of their players right on the card (PLAYER-6).
 - **CHAT-12 · MVP · Blocked people.** Their messages are collapsed ("Message from someone you blocked · Show"), and they don't notify you.
 - **CHAT-13 · MVP · Reply to a message.**
   - Reply from the message menu, or swipe right on a message (phones).
@@ -691,7 +689,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **CHAT-15 · Edit (MVP), pin and announce (v1.1).** All built: editing in the MVP, pins and announcements in task 135.
   - **Edit** your own messages; edited messages are marked "edited", and quotes in replies follow.
   - Admins can **pin** up to 3 messages to a bar at the top of the chat, from the message menu (Pin, Unpin). The bar shows the newest pin first, "Pinned 1 of 3" when there are several; tapping it opens that message, loading older messages if needed, and moves on to the next pin. Pinned messages say "Pinned" beside their time. A fourth pin is refused with "Unpin one first." Deleting a pinned message takes it off the bar. Not on an archived team.
-  - Admins can send **announcements**: + → Announcement, then the next text message is one ("Announcement: notifies everyone on the team, even at Important only", with ✕ to cancel). It shows with a megaphone and "Announcement" in the chat, and notifies everyone who hasn't turned the team off or muted it, even at "Important only", with a notification-center item ("Announcement from Coach: …"). It stands in for the reply and mention notifications. There's no switch to turn announcements off; muting the team or setting it to Off does.
+  - Admins can send **announcements**: + → Announcement, then the next text message is one ("Announcement: notifies everyone on the team, even at Important only", with ✕ to cancel). It shows as a lemon card with a lip, a megaphone and "Announcement" at its head, in the chat, and notifies everyone who hasn't turned the team off or muted it, even at "Important only", with a notification-center item ("Announcement from Coach: …"). It stands in for the reply and mention notifications. There's no switch to turn announcements off; muting the team or setting it to Off does.
 - **CHAT-16 · v1.1 · Files in chat.** Attach any document type; it's also saved to the Documents tab.
 - **CHAT-17 · Later.**
   - Searching all of a person's chats at once, or for part of a word, which needs a search service or SQL (ARCH §12). Searching one chat by whole words is built (CHAT-20).
@@ -734,6 +732,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - The poll posts to chat as a card.
 - **POLL-2 · MVP · Poll card.**
   - **Shows:** the question; each option with a live result bar, count, and percentage; checkmarks on your choices; the number of voters; and the status ("Closes Fri 5:00 PM" or "Closed").
+  - **Look** (Open Field, 1.1): my own poll is drawn inside my coral bubble in dark text: a POLL head with the time, the question in Nunito extra bold, each option a row with a ring (filled, with a check, when chosen), its votes and share ("8 votes · 73%") and a 6 px bar, and a footer rule with "11 people voted" and underlined See votes and Close poll links. Others' polls are Open Field cards (rim, lip, corner 18) beside the author's icon.
   - **Voting:** tap an option to vote and tap again to remove the vote. You can change your vote until the poll closes.
   - Results are always visible.
 - **POLL-3 · MVP · Who voted.**
@@ -1282,8 +1281,8 @@ Build these once in `core/` and reuse them everywhere:
 - Team header with switcher
 - Navigation bar and rail
 - Avatar (photo, or initials on a consistent color)
-- Message bubble
-- Reaction chips and picker
+- Message tile (others' on the page, mine in a bubble)
+- Reactions row and picker
 - Poll card
 - Event card and event row
 - RSVP button group

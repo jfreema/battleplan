@@ -244,7 +244,7 @@ void main() {
       await tester.tap(find.text('Sunday'));
       await tester.pumpAndSettle();
       expect(polls.votes['p1']?['coach'], {'1'});
-      expect(find.text('1 · 100%'), findsOneWidget);
+      expect(find.text('1 vote · 100%'), findsOneWidget);
       expect(find.text('1 person voted'), findsOneWidget);
       expect(chosenOptions(), findsOneWidget);
 
@@ -288,7 +288,7 @@ void main() {
       final polls = await openChat(tester, existing: poll());
       await polls.setVote(poll(), const UserId('sam'), {'0'});
       await tester.pumpAndSettle();
-      await tester.tap(find.text('1 · 100%'));
+      await tester.tap(find.text('1 vote · 100%'));
       await tester.pumpAndSettle();
       expect(find.text('Saturday · 1 vote'), findsOneWidget);
       expect(find.text('Sunday · 0 votes'), findsNothing);
@@ -311,7 +311,7 @@ void main() {
       await polls.setVote(poll(anonymous: true), const UserId('sam'), {'0'});
       await tester.pumpAndSettle();
       expect(find.textContaining('Anonymous'), findsOneWidget);
-      expect(find.text('1 · 100%'), findsOneWidget);
+      expect(find.text('1 vote · 100%'), findsOneWidget);
       expect(find.text('See votes'), findsNothing);
       await tester.longPress(find.text('Saturday'));
       await tester.pumpAndSettle();

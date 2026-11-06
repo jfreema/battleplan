@@ -1300,7 +1300,7 @@ class _NewMessagesDivider extends StatelessWidget {
   }
 }
 
-/// [child] centered between two 2 px rules in the divider color.
+/// [child] centered between two 1 px hairlines.
 class _RuledLabel extends StatelessWidget {
   const new({required this.child});
 
@@ -1309,34 +1309,23 @@ class _RuledLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    Widget rule() => Expanded(
-      child: Container(
-        height: 2,
-        decoration: BoxDecoration(
-          color: c.divider,
-          borderRadius: BorderRadius.circular(1),
-        ),
-      ),
-    );
+    Widget rule() => Expanded(child: Container(height: 1, color: c.divider));
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Space.lg,
-        vertical: Space.sm,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       // The label leaves room for a bit of each rule, and wraps in large
       // text.
       child: LayoutBuilder(
         builder: (context, constraints) => Row(
           children: [
             rule(),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: math.max(0, constraints.maxWidth - 2 * (10 + 16)),
+                maxWidth: math.max(0, constraints.maxWidth - 2 * (12 + 16)),
               ),
               child: child,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             rule(),
           ],
         ),
@@ -1355,19 +1344,23 @@ class _DateSeparator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
+    final label = dayLabel(
+      AppLocalizations.of(context),
+      ViewerZone.wallClock(context, day),
+      ViewerZone.wallClock(context, DateTime.now()),
+    );
+    // Small spaced capitals between hairlines (SPEC §7.3).
     return _RuledLabel(
       child: Text(
-        dayLabel(
-          AppLocalizations.of(context),
-          ViewerZone.wallClock(context, day),
-          ViewerZone.wallClock(context, DateTime.now()),
-        ),
+        label.toUpperCase(),
+        semanticsLabel: label,
         textAlign: TextAlign.center,
         style: GumdropStyle.of(context).label(
           TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,
-            height: 1.2,
+            height: 16 / 13,
+            letterSpacing: 13 * 0.12,
             color: c.textMutedOnPage,
           ),
         ),

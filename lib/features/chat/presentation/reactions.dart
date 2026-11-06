@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
-import 'package:battleplan/core/design/gumdrop_buttons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -178,36 +178,16 @@ class ReactionChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
-    final buttons = GumdropButtons.of(context);
     final counts = <Reaction, int>{};
     for (final r in message.reactions.values) {
       counts[r] = (counts[r] ?? 0) + 1;
     }
     final mine = me == null ? null : message.reactions[me];
     final l10n = AppLocalizations.of(context);
-    final label = GumdropStyle.of(context).label(
-      const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, height: 1),
-    );
-    // A 30 px face on a 3 px lip, padded out to a 48-point target (SPEC
-    // §7.6) without drawing any bigger.
-    ButtonStyle style({required bool reacted}) =>
-        (reacted
-                ? buttons.accent(
-                    c.bubblegum,
-                    height: 33,
-                    padding: const EdgeInsets.symmetric(horizontal: 11),
-                    textStyle: label,
-                    minimumSize: const Size(0, 33),
-                  )
-                : buttons.secondary(
-                    height: 33,
-                    padding: const EdgeInsets.symmetric(horizontal: 11),
-                    textStyle: label,
-                    minimumSize: const Size(0, 33),
-                  ))
-            .copyWith(tapTargetSize: MaterialTapTargetSize.padded);
+    // Plain emoji with counts (SPEC §7.3), each in a 48 tall tap area that
+    // doesn't move the layout; my reaction's count is underlined.
     return Wrap(
-      spacing: Space.sm,
+      spacing: 10,
       alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
       children: [
         for (final r in reactionOrder)
@@ -231,29 +211,51 @@ class ReactionChips extends StatelessWidget {
               },
               child: GestureDetector(
                 onSecondaryTap: onShowWho,
-                child: TextButton(
-                  style: style(reacted: r == mine),
-                  onPressed: onReact == null ? onShowWho : () => onReact!(r),
-                  onLongPress: onShowWho,
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          children: [
-                            reactionSpan(
-                              r,
-                              heart: r == mine ? null : c.cherry.face,
-                            ),
-                          ],
-                          style: const TextStyle(fontSize: 15),
+                onLongPress: onShowWho,
+                child: FocusRingInk(
+                  onTap: onReact == null ? onShowWho : () => onReact!(r),
+                  radius: BorderRadius.circular(12),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: 48,
+                      minWidth: 48,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Center(
+                        widthFactor: 1,
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                children: [
+                                  reactionSpan(r, heart: c.cherry.face),
+                                ],
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              const TextSpan(text: ' '),
+                              // My reaction's count is underlined.
+                              TextSpan(
+                                text: '$n',
+                                style: r == mine
+                                    ? TextStyle(
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: c.accentMark,
+                                        decorationThickness: 2,
+                                      )
+                                    : null,
+                              ),
+                            ],
+                          ),
+                          style: TextStyle(
+                            fontFamily: AppFonts.body,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            height: 20 / 15,
+                            color: c.textOnPage,
+                          ),
                         ),
-                        // The design's 7 px gap.
-                        const TextSpan(
-                          text: ' ',
-                          style: TextStyle(letterSpacing: 3),
-                        ),
-                        TextSpan(text: '$n'),
-                      ],
+                      ),
                     ),
                   ),
                 ),

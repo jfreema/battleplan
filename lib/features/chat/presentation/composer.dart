@@ -234,9 +234,14 @@ class _ComposerState extends State<Composer> {
     // The 46 px + and Send gumdrops (§3.13): + secondary, Send in the
     // "you" color. With nothing to send it stays candy-colored, its arrow
     // faded, as the design draws the empty composer.
-    final addStyle = buttons
-        .icon(size: 46)
-        .copyWith(iconSize: const WidgetStatePropertyAll(26));
+    // The + sits inside the field, at its left edge: 24 px in 48 × 48.
+    final addStyle = IconButton.styleFrom(
+      fixedSize: const Size(48, 46),
+      minimumSize: const Size(48, 46),
+      padding: EdgeInsets.zero,
+      iconSize: 24,
+      foregroundColor: c.textOnPage,
+    );
     final sendLip = GumdropShape.lipFor(46);
     final sendStyle = buttons
         .icon(size: 46, accent: c.you)
@@ -263,127 +268,131 @@ class _ComposerState extends State<Composer> {
         );
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(23),
-      borderSide: BorderSide(color: c.inputBorder, width: 2),
+      borderSide: c.fieldRim.a == 0
+          ? BorderSide.none
+          : BorderSide(color: c.fieldRim),
     );
+    final plus =
+        (widget.onAttachBlocked != null &&
+            widget.onCreatePoll == null &&
+            widget.onAnnounce == null)
+        ? IconButton(
+            tooltip: addTooltip,
+            style: addStyle,
+            onPressed: widget.onAttachBlocked,
+            icon: Icon(AppIcons.add, weight: 700, color: c.textMuted),
+          )
+        : widget.onPickPhotos != null
+        ? PopupMenuButton<VoidCallback>(
+            tooltip: addTooltip,
+            style: addStyle,
+            icon: const Icon(AppIcons.add, weight: 700),
+            onSelected: (action) => action(),
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: widget.onAttachBlocked ?? widget.onPickPhotos,
+                child: ListTile(
+                  leading: const Icon(AppIcons.photo),
+                  title: Text(l10n.photoLibrary),
+                ),
+              ),
+              if (widget.onTakePhoto case final take?)
+                PopupMenuItem(
+                  value: widget.onAttachBlocked ?? take,
+                  child: ListTile(
+                    leading: const Icon(AppIcons.camera),
+                    title: Text(l10n.camera),
+                  ),
+                ),
+              if (widget.onCreatePoll case final poll?)
+                PopupMenuItem(
+                  value: poll,
+                  child: ListTile(
+                    leading: const Icon(AppIcons.poll),
+                    title: Text(l10n.createPoll),
+                  ),
+                ),
+              // Admins (CHAT-15). Full storage doesn't stop it.
+              if (widget.onAnnounce case final announce?)
+                PopupMenuItem(
+                  value: () {
+                    announce();
+                    _focus.requestFocus();
+                  },
+                  child: ListTile(
+                    leading: const Icon(AppIcons.announcement),
+                    title: Text(l10n.announceAction),
+                  ),
+                ),
+            ],
+          )
+        : null;
     final box = SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(Space.lg, 6, Space.lg, Space.sm),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
         child: Row(
           // The buttons carry a 4 px lip below their faces; the box lines
           // up with the faces.
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            if (widget.onAttachBlocked case final blocked?
-                when widget.onCreatePoll == null && widget.onAnnounce == null)
-              IconButton(
-                tooltip: addTooltip,
-                style: addStyle,
-                onPressed: blocked,
-                icon: Icon(AppIcons.add, weight: 700, color: c.textMuted),
-              )
-            else if (widget.onPickPhotos != null)
-              PopupMenuButton<VoidCallback>(
-                tooltip: addTooltip,
-                style: addStyle,
-                icon: const Icon(AppIcons.add, weight: 700),
-                onSelected: (action) => action(),
-                itemBuilder: (_) => [
-                  PopupMenuItem(
-                    value: widget.onAttachBlocked ?? widget.onPickPhotos,
-                    child: ListTile(
-                      leading: const Icon(AppIcons.photo),
-                      title: Text(l10n.photoLibrary),
-                    ),
-                  ),
-                  if (widget.onTakePhoto case final take?)
-                    PopupMenuItem(
-                      value: widget.onAttachBlocked ?? take,
-                      child: ListTile(
-                        leading: const Icon(AppIcons.camera),
-                        title: Text(l10n.camera),
-                      ),
-                    ),
-                  if (widget.onCreatePoll case final poll?)
-                    PopupMenuItem(
-                      value: poll,
-                      child: ListTile(
-                        leading: const Icon(AppIcons.poll),
-                        title: Text(l10n.createPoll),
-                      ),
-                    ),
-                  // Admins (CHAT-15). Full storage doesn't stop it.
-                  if (widget.onAnnounce case final announce?)
-                    PopupMenuItem(
-                      value: () {
-                        announce();
-                        _focus.requestFocus();
-                      },
-                      child: ListTile(
-                        leading: const Icon(AppIcons.announcement),
-                        title: Text(l10n.announceAction),
-                      ),
-                    ),
-                ],
-              ),
-            const SizedBox(width: Space.xs),
             Expanded(
               child: Padding(
                 padding: EdgeInsets.only(bottom: sendLip),
-                // The box is in the card's colors.
-                child: GumdropSurface(
-                  child: Builder(
-                    builder: (context) => TextField(
-                      controller: _text,
-                      focusNode: _focus,
-                      minLines: 1,
-                      maxLines: 6,
-                      textCapitalization: TextCapitalization.sentences,
-                      keyboardType: TextInputType.multiline,
-                      // What's typed looks as it will once sent, but in
-                      // the box's weight (ChatText).
-                      style: ChatText.of(
-                        Theme.of(context).textTheme.bodyLarge,
-                      ).copyWith(color: GumdropColors.of(context).textPrimary),
-                      cursorColor: GumdropColors.of(context).textPrimary,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        hintText: hint,
-                        hintStyle: TextStyle(
-                          fontFamily: AppFonts.body,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: GumdropColors.of(context).textMuted,
-                        ),
-                        isDense: true,
-                        filled: true,
-                        fillColor: c.inputFill,
-                        // 48 px tall, the smallest tap target (the
-                        // design's 46 is just under it).
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 13,
-                        ),
-                        border: inputBorder,
-                        enabledBorder: inputBorder,
-                        focusedBorder: inputBorder.copyWith(
-                          borderSide: BorderSide(
-                            color: GumdropColors.of(context).textPrimary,
-                            width: 2,
-                          ),
-                        ),
-                        // The counter appears only near the limit, on the
-                        // page under the box.
-                        counterStyle: TextStyle(
-                          fontFamily: AppFonts.body,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                          color: c.textMutedOnPage,
-                        ),
-                        counterText: length > Limits.messageTextMax - 500
-                            ? '$length / ${Limits.messageTextMax}'
-                            : null,
+                child: Builder(
+                  builder: (context) => TextField(
+                    controller: _text,
+                    focusNode: _focus,
+                    minLines: 1,
+                    maxLines: 6,
+                    textCapitalization: TextCapitalization.sentences,
+                    keyboardType: TextInputType.multiline,
+                    // What's typed looks as it will once sent, but in
+                    // the box's weight (ChatText).
+                    style: ChatText.of(Theme.of(context).textTheme.bodyLarge)
+                        .copyWith(color: c.textOnPage),
+                    cursorColor: c.textOnPage,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: hint,
+                      hintStyle: TextStyle(
+                        fontFamily: AppFonts.body,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 17,
+                        color: c.textMutedOnPage,
                       ),
+                      prefixIcon: plus,
+                      prefixIconConstraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 46,
+                      ),
+                      isDense: true,
+                      filled: true,
+                      fillColor: c.inputFill,
+                      // 48 px tall, the smallest tap target (the
+                      // design's 46 is just under it).
+                      contentPadding: EdgeInsets.fromLTRB(
+                        plus == null ? 16 : 0,
+                        12,
+                        16,
+                        12,
+                      ),
+                      border: inputBorder,
+                      enabledBorder: inputBorder,
+                      focusedBorder: inputBorder.copyWith(
+                        borderSide: BorderSide(color: c.textOnPage, width: 2),
+                      ),
+                      // The counter appears only near the limit, on the
+                      // page under the box.
+                      counterStyle: TextStyle(
+                        fontFamily: AppFonts.body,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        color: c.textMutedOnPage,
+                      ),
+                      counterText: length > Limits.messageTextMax - 500
+                          ? '$length / ${Limits.messageTextMax}'
+                          : null,
                     ),
                   ),
                 ),

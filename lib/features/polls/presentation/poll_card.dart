@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/color_math.dart';
 import 'package:battleplan/core/design/fonts.dart';
-import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
-import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
@@ -13,6 +12,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
@@ -41,8 +41,16 @@ class PollCard extends ConsumerStatefulWidget {
     required this.groupId,
     this.asked,
     this.time,
+    this.mine = false,
+    this.bubbleColor,
     super.key,
   });
+
+  /// My bubble's color from the chat look, or null for coral.
+  final Color? bubbleColor;
+
+  /// My own poll: drawn inside my coral bubble, in ink (SPEC §7.3).
+  final bool mine;
 
   final PollId pollId;
   final GroupId groupId;
@@ -85,33 +93,67 @@ class _PollCardState extends ConsumerState<PollCard> {
   }
 
   PollId get pollId => widget.pollId;
+
+  /// The text on my bubble: ink on coral, or ink or white, whichever
+  /// reads better, on the chat look's color.
+  Color _inkOn(BuildContext context) {
+    final c = GumdropColors.of(context);
+    final fill = widget.bubbleColor;
+    if (fill == null) return c.ink;
+    return ColorMath.contrast(c.ink, fill) >=
+            ColorMath.contrast(const Color(0xFFFFFFFF), fill)
+        ? c.ink
+        : const Color(0xFFFFFFFF);
+  }
+
   GroupId get groupId => widget.groupId;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final poll = ref.watch(pollProvider(pollId));
+    // Others' polls are cards; mine is my coral bubble.
     Widget frame(Widget child) => ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),
-      child: GumdropCard(
-        radius: Corners.panel,
-        padding: const EdgeInsets.fromLTRB(12, 11, 12, 9),
-        child: child,
-      ),
+      child: widget.mine
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                color: widget.bubbleColor ?? GumdropColors.of(context).you.face,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(Corners.bubble),
+                  topRight: Radius.circular(Corners.bubble),
+                  bottomLeft: Radius.circular(Corners.bubble),
+                  bottomRight: Radius.circular(Corners.bubbleTail),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: child,
+              ),
+            )
+          : GumdropCard(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+              child: child,
+            ),
     );
     final value = poll.value;
     if (value == null) {
       return frame(
-        Builder(
-          builder: (context) => poll.isLoading
-              ? const LinearProgressIndicator()
-              : Text(
-                  l10n.pollRemoved,
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    color: GumdropColors.of(context).textMuted,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Builder(
+            builder: (context) => poll.isLoading
+                ? const LinearProgressIndicator()
+                : Text(
+                    l10n.pollRemoved,
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: widget.mine
+                          ? _inkOn(context)
+                          : GumdropColors.of(context).textMuted,
+                    ),
                   ),
-                ),
+          ),
         ),
       );
     }
@@ -152,72 +194,84 @@ class _PollCardState extends ConsumerState<PollCard> {
       Builder(
         builder: (context) {
           final c = GumdropColors.of(context);
-          final buttons = GumdropButtons.of(context);
-          final muted = TextStyle(
+          final style = GumdropStyle.of(context);
+          final ink = widget.mine ? _inkOn(context) : c.textPrimary;
+          final rule = widget.mine ? ink.withValues(alpha: 0.22) : c.divider;
+          final small = TextStyle(
             fontFamily: AppFonts.body,
             fontWeight: FontWeight.w700,
             fontSize: 13,
-            color: c.textMuted,
+            color: widget.mine ? ink : c.textMuted,
           );
-          // The footer's 32 px secondary gumdrops, padded out to 48-point
-          // targets (SPEC §7.6).
-          final small = buttons
-              .secondary(
-                height: 35,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                minimumSize: const Size(0, 35),
-                textStyle: GumdropStyle.of(context).label(
-                  const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    height: 1,
-                  ),
-                ),
-              )
-              .copyWith(tapTargetSize: MaterialTapTargetSize.padded);
+          final link = style.label(
+            TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: ink,
+              decoration: TextDecoration.underline,
+              decorationThickness: 1.5,
+              decorationColor: ink,
+            ),
+          );
           final time = widget.time ?? '';
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
+              // The head: POLL, who asked and how, and when.
               Row(
                 children: [
-                  _PollTag(label: l10n.pollLabel),
+                  Icon(AppIcons.poll, size: 16, weight: 700, color: ink),
+                  const SizedBox(width: 5),
+                  Text(
+                    l10n.pollLabel.toUpperCase(),
+                    semanticsLabel: l10n.pollLabel,
+                    style: style.label(
+                      TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        height: 16 / 13,
+                        letterSpacing: 13 * 0.08,
+                        color: ink,
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: Space.sm),
                   Expanded(
                     child: Text(
                       tags.join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: muted,
+                      style: small,
                     ),
                   ),
                   if (time.isNotEmpty) ...[
                     const SizedBox(width: Space.sm),
-                    Text(time, style: muted),
+                    Text(time, style: small),
                   ],
                 ],
               ),
-              const SizedBox(height: Space.sm),
+              const SizedBox(height: 6),
               Text(
                 value.question,
-                style: GumdropStyle.of(context).label(
-                  TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 20,
-                    height: 1.15,
-                    color: c.textPrimary,
-                  ),
+                style: TextStyle(
+                  fontFamily: AppFonts.body,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  height: 23 / 18,
+                  color: ink,
                 ),
               ),
-              const SizedBox(height: Space.sm),
-              for (final (i, option) in value.options.indexed) ...[
-                if (i > 0) const SizedBox(height: 6),
+              const SizedBox(height: 4),
+              for (final option in value.options)
                 _OptionRow(
                   poll: value,
                   option: option,
                   chosen: mine.contains(option.id),
                   leading: leaders.contains(option.id),
+                  onCoral: widget.mine,
+                  bubbleInk: widget.mine ? ink : null,
+                  bubbleFill: widget.bubbleColor,
                   onTap: closed || archived || viewing
                       ? null
                       : () => unawaited(
@@ -229,44 +283,59 @@ class _PollCardState extends ConsumerState<PollCard> {
                           _showVoters(context, value, optionId: option.id),
                         ),
                 ),
-              ],
-              // The count, and the buttons beside it while they fit; on
-              // a narrow screen or with large text, the buttons go under.
-              OverflowBar(
-                alignment: MainAxisAlignment.spaceBetween,
-                overflowAlignment: OverflowBarAlignment.end,
-                overflowSpacing: Space.xs,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: Space.sm),
-                    child: Text(
-                      [l10n.pollVoters(value.voterCount), ?status].join(' · '),
-                      style: muted,
+              // The footer, on a rule: how many voted, then the links.
+              const SizedBox(height: 6),
+              Container(height: 1.5, color: rule),
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: Space.sm,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Text(
+                        [
+                          l10n.pollVoters(value.voterCount),
+                          ?status,
+                        ].join(' · '),
+                        style: small.copyWith(fontSize: 14),
+                      ),
                     ),
-                  ),
-                  OverflowBar(
-                    spacing: Space.sm,
-                    overflowAlignment: OverflowBarAlignment.end,
-                    children: [
-                      // Even before anyone votes: it lists who hasn't
-                      // (POLL-3).
-                      if (!value.anonymous)
-                        TextButton(
-                          style: small,
-                          onPressed: () =>
-                              unawaited(_showVoters(context, value)),
-                          child: Text(l10n.pollSeeVotes),
-                        ),
-                      if (canClose)
-                        TextButton(
-                          style: small,
-                          onPressed: () =>
-                              unawaited(_close(context, ref, value)),
-                          child: Text(l10n.pollClose),
-                        ),
-                    ],
-                  ),
-                ],
+                    Wrap(
+                      spacing: 4,
+                      children: [
+                        // Even before anyone votes: it lists who hasn't
+                        // (POLL-3).
+                        if (!value.anonymous)
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(48, 48),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                            onPressed: () =>
+                                unawaited(_showVoters(context, value)),
+                            child: Text(l10n.pollSeeVotes, style: link),
+                          ),
+                        if (canClose)
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(48, 48),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                            onPressed: () =>
+                                unawaited(_close(context, ref, value)),
+                            child: Text(l10n.pollClose, style: link),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           );
@@ -347,49 +416,10 @@ String closesLabel(
   return format.format(local);
 }
 
-/// The POLL tag (§3.6): a small bubblegum chip with the poll icon.
-class _PollTag extends StatelessWidget {
-  const new({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = GumdropColors.of(context);
-    return Container(
-      constraints: const BoxConstraints(minHeight: 23),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: c.bubblegum.face,
-        borderRadius: BorderRadius.circular(11),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(AppIcons.poll, size: 14, weight: 700, color: c.ink),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: GumdropStyle.of(context).label(
-              TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                height: 1,
-                letterSpacing: 0.72,
-                color: c.ink,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One option (§3.10): a 50 px gumdrop row, bubblegum when it's my choice,
-/// with a radio ring or check, the text, the count and percentage (which
-/// shows who chose it), and a thin bar along the bottom filled to its share
-/// of voters.
+/// One option (SPEC §7.3): an 18 px ring (filled, with a check, for my
+/// choice), the text, the votes and share on the right (which show who
+/// chose it), and a 6 px bar under it filled to its share of voters. On my
+/// coral bubble ([onCoral]) it's all in ink.
 class _OptionRow extends StatelessWidget {
   const new({
     required this.poll,
@@ -398,7 +428,14 @@ class _OptionRow extends StatelessWidget {
     required this.leading,
     required this.onTap,
     required this.onShowVoters,
+    this.onCoral = false,
+    this.bubbleInk,
+    this.bubbleFill,
   });
+
+  /// On my bubble: its text color, and its fill (null for coral).
+  final Color? bubbleInk;
+  final Color? bubbleFill;
 
   final Poll poll;
   final PollOption option;
@@ -406,97 +443,51 @@ class _OptionRow extends StatelessWidget {
 
   /// Ahead once the poll has closed.
   final bool leading;
+  final bool onCoral;
   final VoidCallback? onTap;
 
   /// Who chose this option (POLL-3); null on anonymous polls.
   final VoidCallback? onShowVoters;
 
-  static const _height = 50.0;
-  static const _radius = BorderRadius.all(Radius.circular(16));
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = GumdropColors.of(context);
-    final buttons = GumdropButtons.of(context);
     final share = poll.shareOf(option.id);
     final votes = poll.votesFor(option.id);
-    final ink = chosen ? c.ink : c.textPrimary;
-    // The content sits 3 px above the lip, leaving room for the bar.
-    const padding = EdgeInsets.fromLTRB(10, 0, 14, 3);
-    var style = chosen
-        ? buttons.accent(
-            c.bubblegum,
-            height: _height,
-            radius: _radius,
-            padding: padding,
-          )
-        : buttons.secondary(height: _height, radius: _radius, padding: padding);
-    // Closed (or read-only): the results stay in their colors, at rest,
-    // rather than the flat disabled look.
-    if (onTap == null && onShowVoters == null) {
-      final lip = GumdropShape.lipFor(_height - 4);
-      style = style.copyWith(
-        backgroundColor: WidgetStatePropertyAll(
-          chosen ? c.bubblegum.face : c.raisedFace,
-        ),
-        foregroundColor: WidgetStatePropertyAll(ink),
-        shape: WidgetStatePropertyAll(
-          GumdropShape(
-            lip: lip,
-            lipColor: chosen ? c.bubblegum.lip : c.raisedLip,
-            highlight: chosen ? 2 : 1.5,
-            highlightColor: chosen
-                ? GumdropColors.accentHighlight
-                : c.raisedHighlight,
-            radius: _radius,
-          ),
-        ),
-        side: WidgetStatePropertyAll(
-          chosen || c.raisedBorderWidth == 0
-              ? BorderSide.none
-              : BorderSide(color: c.raisedBorder, width: c.raisedBorderWidth),
-        ),
-        padding: WidgetStatePropertyAll(
-          padding.add(EdgeInsets.only(bottom: lip)),
-        ),
-      );
-    }
+    final ink = onCoral ? bubbleInk ?? c.ink : c.textPrimary;
+    final track = onCoral ? ink.withValues(alpha: 0.18) : c.cardTrack;
+    final fill = onCoral ? ink : c.mint.face;
+    final shape = poll.allowMultiple ? BoxShape.rectangle : BoxShape.circle;
+    final radius = poll.allowMultiple ? BorderRadius.circular(5) : null;
+    final marker = Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        color: chosen ? ink : null,
+        border: Border.all(color: ink, width: 2),
+        shape: shape,
+        borderRadius: radius,
+      ),
+      child: chosen
+          ? Icon(
+              AppIcons.check,
+              size: 13,
+              weight: 800,
+              color: onCoral ? bubbleFill ?? c.you.face : c.surface,
+            )
+          : null,
+    );
     final count = Text(
-      '$votes · ${(share * 100).round()}%',
-      style: GumdropStyle.of(context).label(
-        TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
-          height: 1,
-          color: ink,
-        ),
+      l10n.pollOptionVotesShare(votes, (share * 100).round()),
+      style: TextStyle(
+        fontFamily: AppFonts.body,
+        fontWeight: FontWeight.w700,
+        fontSize: 14,
+        height: 22 / 14,
+        color: ink,
       ),
     );
-    final marker = chosen
-        ? Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: GumdropColors.of(context).ink.withValues(alpha: 0.14),
-              shape: poll.allowMultiple ? BoxShape.rectangle : BoxShape.circle,
-              borderRadius: poll.allowMultiple
-                  ? BorderRadius.circular(7)
-                  : null,
-            ),
-            child: Icon(AppIcons.check, size: 17, weight: 800, color: c.ink),
-          )
-        : Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              border: Border.all(color: c.textMuted, width: 2.5),
-              shape: poll.allowMultiple ? BoxShape.rectangle : BoxShape.circle,
-              borderRadius: poll.allowMultiple
-                  ? BorderRadius.circular(7)
-                  : null,
-            ),
-          );
     return Semantics(
       button: onTap != null,
       selected: chosen,
@@ -506,89 +497,87 @@ class _OptionRow extends StatelessWidget {
       excludeSemantics: true,
       onTap: onTap,
       onLongPress: onShowVoters,
-      child: TextButton(
-        style: style,
-        onPressed: onTap,
-        onLongPress: onShowVoters,
-        child: SizedBox(
-          width: double.infinity,
-          height: _height - 7,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Positioned.fill(
-                child: Row(
-                  children: [
-                    marker,
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        option.text,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: AppFonts.body,
-                          fontWeight: leading
-                              ? FontWeight.w900
-                              : FontWeight.w800,
-                          fontSize: 16,
-                          height: 1.2,
-                          color: ink,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: Space.sm),
-                    if (onShowVoters case final show?)
-                      // Its own tap target: the count shows who chose
-                      // it, the rest of the row votes.
-                      Tooltip(
-                        message: l10n.pollSeeWhoChose(option.text),
-                        child: InkWell(
-                          onTap: show,
-                          borderRadius: BorderRadius.circular(Corners.chip),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              minHeight: 40,
-                              minWidth: 48,
-                            ),
-                            child: Center(widthFactor: 1, child: count),
+      child: FocusRingInk(
+        onTap: onTap,
+        radius: BorderRadius.circular(8),
+        child: GestureDetector(
+          onLongPress: onShowVoters,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      marker,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          option.text,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: AppFonts.body,
+                            fontWeight: chosen || leading
+                                ? FontWeight.w800
+                                : FontWeight.w700,
+                            fontSize: 16,
+                            height: 22 / 16,
+                            color: ink,
                           ),
                         ),
-                      )
-                    else
-                      count,
-                  ],
-                ),
-              ),
-              // The vote bar: from under the text to the end, 5 px tall.
-              Positioned(
-                left: 34,
-                right: 0,
-                bottom: 1,
-                height: 5,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: ColoredBox(
-                    color: chosen
-                        ? GumdropColors.of(context).ink.withValues(alpha: 0.18)
-                        : c.well,
-                    child: Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: FractionallySizedBox(
-                        widthFactor: share.clamp(0, 1),
-                        heightFactor: 1,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: chosen ? c.ink : c.bubblegum.face,
-                            borderRadius: BorderRadius.circular(3),
+                      ),
+                      const SizedBox(width: Space.sm),
+                      if (onShowVoters case final show?)
+                        // Its own tap target: the count shows who chose
+                        // it, the rest of the row votes.
+                        Flexible(
+                          child: Tooltip(
+                            message: l10n.pollSeeWhoChose(option.text),
+                            child: InkWell(
+                              onTap: show,
+                              borderRadius: BorderRadius.circular(Corners.chip),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minHeight: 36,
+                                  minWidth: 48,
+                                ),
+                                child: Center(widthFactor: 1, child: count),
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Flexible(child: count),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(start: 26),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: SizedBox(
+                        height: 6,
+                        child: ColoredBox(
+                          color: track,
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: FractionallySizedBox(
+                              widthFactor: share.clamp(0, 1),
+                              heightFactor: 1,
+                              child: ColoredBox(color: fill),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

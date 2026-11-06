@@ -1865,7 +1865,7 @@ void main() {
         ).copyWith(text: 'Sam joined'),
       ]);
       await openChat(tester, repo);
-      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('TODAY'), findsOneWidget);
       expect(find.text('Sam joined'), findsOneWidget);
       expect(find.text('Message 2'), findsOneWidget);
       expect(find.text('Message 3'), findsOneWidget);

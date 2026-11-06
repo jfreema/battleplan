@@ -980,6 +980,17 @@
   "pollVoteFailed": "Couldn't save your vote. Check your connection and try again.",
   "pollVoteClosed": "This poll is closed.",
   "pollRemoved": "This poll was deleted.",
+  "pollOptionVotesShare": "{count, plural, =1{1 vote · {percent}%} other{{count} votes · {percent}%}}",
+  "@pollOptionVotesShare": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "pollOptionVotes": "{count, plural, =1{1 vote} other{{count} votes}}",
   "newPoll": "New poll",
   "pollPost": "Post",

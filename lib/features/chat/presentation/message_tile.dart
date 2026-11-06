@@ -8,7 +8,6 @@ import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
-import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/haptics.dart';
@@ -451,22 +450,20 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     // lemon bubble.
     final announcement = m.announcement && !deleted;
     final custom = mine && !announcement ? widget.bubbleColor : null;
-    // Others' bubbles are cards (Gumdrop Pop §3.14); mine are candy, in the
-    // chat look's color or the theme's "you" color, with ink text, or white
-    // on a dark team color.
+    // Others' messages have no bubble: their text is on the page (SPEC
+    // §7.3). Mine are coral, or the chat look's color, with ink text, or
+    // white on a dark team color. An announcement is a lemon card.
     final background = announcement
         ? c.lemon.face
         : mine
         ? custom ?? c.you.face
-        : c.surface;
+        : null;
     final foreground = announcement
         ? c.ink
         : mine
         ? (custom == null ? c.ink : bubbleTextOn(c, custom))
-        : c.textPrimary;
-    final muted = mine || announcement
-        ? foreground
-        : (deleted ? c.textMutedOnPage : c.textMuted);
+        : c.textOnPage;
+    final muted = mine || announcement ? foreground : c.textMutedOnPage;
     final time = m.createdAt == null
         ? null
         : MaterialLocalizations.of(context).formatTimeOfDay(
@@ -557,21 +554,22 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final named = widget.startsGroup && !mine && !direct;
     final metaStyle = ChatText.face(theme.textTheme.bodySmall).copyWith(
       fontSize: 13,
-      height: 1.2,
-      fontWeight: mine ? FontWeight.w800 : FontWeight.w700,
+      height: 20 / 13,
+      fontWeight: FontWeight.w600,
       color: muted,
       letterSpacing: 0,
     );
     final innerHeader = card || (!named && meta.isEmpty)
         ? null
         : Padding(
-            padding: const EdgeInsets.only(bottom: Space.xs),
+            padding: EdgeInsets.only(bottom: mine ? Space.xs : 1),
             child: Text.rich(
               textWidthBasis: TextWidthBasis.longestLine,
               TextSpan(
                 children: [
                   if (named) ..._nameSpans(m, foreground, muted),
-                  if (meta.isNotEmpty) TextSpan(text: named ? '  $meta' : meta),
+                  if (meta.isNotEmpty)
+                    TextSpan(text: named ? '\u2002$meta' : meta),
                 ],
               ),
               style: mine ? metaStyle.copyWith(fontSize: 12) : metaStyle,
@@ -626,9 +624,11 @@ class _MessageTileState extends ConsumerState<MessageTile> {
           );
     // Around photos the bubble is a thin frame, and what's above and below
     // them is inset to line up with a text bubble's.
-    const photoInset = Space.xs + 2;
-    final side = mine ? 14.0 : 13.0;
-    Widget inset(Widget child) => photos == null
+    // Others' photos have no bubble to sit in, so no frame or inset.
+    final bubbled = mine || announcement;
+    final photoInset = bubbled ? Space.xs + 2.0 : 0.0;
+    final side = bubbled ? 16.0 : 0.0;
+    Widget inset(Widget child) => photos == null || !bubbled
         ? child
         : Padding(
             padding: EdgeInsets.symmetric(horizontal: side - photoInset),
@@ -705,25 +705,24 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     // the last of mine (§3.14). A one-line bubble is still 48 tall, a full
     // tap target (SPEC §7.6), with its text centered.
     final besideAvatar = !mine && !direct;
-    final radius = bubbleRadius(
-      mine: mine,
-      tail: mine ? widget.endsGroup : widget.startsGroup,
-    );
-    final padding = photos != null
+    final radius = announcement
+        ? BorderRadius.circular(18)
+        : bubbleRadius(mine: mine, tail: mine);
+    final padding = photos != null && bubbled
         ? EdgeInsets.fromLTRB(
             photoInset,
             innerHeader == null ? photoInset : 7,
             photoInset,
             hasText ? 9 : photoInset,
           )
-        : mine
-        ? const EdgeInsets.fromLTRB(14, 9, 14, 10)
-        : innerHeader != null
-        ? const EdgeInsets.fromLTRB(13, 7, 13, 9)
-        : const EdgeInsets.fromLTRB(13, 9, 13, 10);
+        : mine || announcement
+        ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
+        // Others' text sits straight on the page.
+        : EdgeInsets.zero;
     final content = ConstrainedBox(
       constraints: BoxConstraints(
         maxWidth: bubbleMaxWidth(context, besideAvatar: besideAvatar),
+        // Each message is a 48 px target for its menu (SPEC §7.6).
         minHeight: kMinInteractiveDimension,
       ),
       child: Padding(
@@ -740,31 +739,32 @@ class _MessageTileState extends ConsumerState<MessageTile> {
         ),
       ),
     );
+    final bg = background;
     final textBubble = DecoratedBox(
       decoration: BoxDecoration(
-        color: deleted ? null : background,
-        border: deleted
+        color: deleted ? null : bg,
+        border: deleted && mine
             ? Border.all(color: c.divider, width: 2)
-            // My bubble on a page of its own hue (lemon on a Yellow team's
-            // page, blue on a Light blue team's) keeps an ink edge.
-            : mine && ColorMath.contrast(background, c.page) < 2
+            : announcement
+            ? Border.all(color: c.lemon.lip, width: 2)
+            // My bubble on a page close to its color keeps an ink edge.
+            : mine && bg != null && ColorMath.contrast(bg, c.page) < 2
             ? Border.all(color: c.ink, width: 2)
-            : !mine && !announcement && c.surfaceBorderWidth > 0
-            ? Border.all(color: c.surfaceBorder, width: c.surfaceBorderWidth)
             : null,
         borderRadius: radius,
+        boxShadow: announcement
+            ? [BoxShadow(color: c.lemon.lip, offset: const Offset(0, 3))]
+            : null,
       ),
-      // Others' bubbles are cards: their text and quotes take the card's
-      // colors.
-      child: !mine && !announcement && !deleted
-          ? GumdropSurface(child: content)
-          : content,
+      child: content,
     );
     final bubble = card
         ? isPoll
               ? PollCard(
                   pollId: PollId(m.pollId ?? m.id),
                   groupId: m.groupId,
+                  mine: mine,
+                  bubbleColor: mine ? widget.bubbleColor : null,
                   asked: mine
                       ? l10n.pollYouAsked
                       : l10n.pollPersonAsked(shortNameOf(m.authorName)),
@@ -912,18 +912,36 @@ class _MessageTileState extends ConsumerState<MessageTile> {
                     if (mine && _hovering && !deleted) _hoverButton(),
                     Flexible(
                       fit: isPoll ? FlexFit.tight : FlexFit.loose,
-                      child: DecoratedBox(
-                        // The visible focus ring (SPEC §7.6).
-                        position: DecorationPosition.foreground,
-                        decoration: BoxDecoration(
-                          border: _focused
-                              ? Border.all(color: c.textOnPage, width: 2)
-                              : null,
-                          borderRadius: card
-                              ? BorderRadius.circular(Corners.panel)
-                              : radius,
-                        ),
-                        child: bubble,
+                      // The visible focus ring (SPEC §7.6): around the
+                      // bubble or card, or a little outside text that's on
+                      // the page, so it doesn't cross the letters.
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          bubble,
+                          if (_focused)
+                            Positioned(
+                              left: card || background != null ? 0 : -6,
+                              right: card || background != null ? 0 : -6,
+                              top: 0,
+                              bottom: 0,
+                              child: IgnorePointer(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: c.textOnPage,
+                                      width: 2,
+                                    ),
+                                    borderRadius: card
+                                        ? BorderRadius.circular(18)
+                                        : background == null
+                                        ? BorderRadius.circular(10)
+                                        : radius,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     if (!mine && _hovering && !deleted) _hoverButton(),
@@ -995,15 +1013,14 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     );
 
     final row = Padding(
-      // The design's spacing (§3.14): 16 from the screen's edges (the
-      // photo's tap target reaches 4 past it), 12 between people, a little
-      // less between one person's messages. Others' messages on the left,
-      // mine on the right.
+      // 20 from the screen's edges, 12 between messages, a little less
+      // within one person's run. Others' messages on the left, mine on the
+      // right.
       padding: EdgeInsets.fromLTRB(
-        besideAvatar && !isPoll ? Space.md : Space.lg,
-        widget.startsGroup ? Space.xs + 2 : 2,
-        Space.lg,
-        widget.endsGroup ? Space.xs + 2 : 2,
+        besideAvatar ? 16 : 20,
+        widget.startsGroup ? 6 : 3,
+        20,
+        widget.endsGroup ? 6 : 3,
       ),
       child: Row(
         mainAxisAlignment: mine
@@ -1011,7 +1028,7 @@ class _MessageTileState extends ConsumerState<MessageTile> {
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (besideAvatar && !isPoll) avatarSlot,
+          if (besideAvatar) avatarSlot,
           Flexible(child: column),
         ],
       ),
@@ -1033,17 +1050,24 @@ class _MessageTileState extends ConsumerState<MessageTile> {
     final short = shortNameOf(m.authorName);
     final split =
         full != m.authorName && full.startsWith(short) && full != short;
-    final nameStyle = GumdropStyle.of(context).label(
-      TextStyle(
-        fontWeight: FontWeight.w600,
-        fontSize: 16,
-        height: 1.2,
-        color: name,
-      ),
+    final nameStyle = TextStyle(
+      fontFamily: AppFonts.body,
+      fontWeight: FontWeight.w800,
+      fontSize: 16,
+      height: 20 / 16,
+      color: name,
+    );
+    final rest = TextStyle(
+      fontFamily: AppFonts.body,
+      fontWeight: FontWeight.w700,
+      fontSize: 14,
+      height: 20 / 14,
+      color: muted,
     );
     return [
       TextSpan(text: split ? short : full, style: nameStyle),
-      if (split) TextSpan(text: ' ${full.substring(short.length).trim()}'),
+      if (split)
+        TextSpan(text: ' ${full.substring(short.length).trim()}', style: rest),
     ];
   }
 }
@@ -1055,8 +1079,9 @@ Color bubbleTextOn(GumdropColors c, Color color) =>
     ? c.ink
     : Colors.white;
 
-/// A bubble's corners (§3.14): 20, with the [tail] corner 6, at the top
-/// left of others' messages and the bottom right of mine.
+/// A bubble's corners (SPEC §7.3): 22, with the [tail] corner 6, at the
+/// bottom right of mine (and the top left of others', where they have a
+/// bubble).
 BorderRadius bubbleRadius({required bool mine, bool tail = true}) {
   const round = Radius.circular(Corners.bubble);
   const point = Radius.circular(Corners.bubbleTail);
@@ -1081,7 +1106,7 @@ double bubbleMaxWidth(BuildContext context, {bool besideAvatar = false}) {
       (besideAvatar ? kMinInteractiveDimension - Space.xs : 0);
   return math.max(
     kMinInteractiveDimension,
-    math.min(520, room * (besideAvatar ? 0.92 : 0.78)),
+    math.min(520, room * (besideAvatar ? 0.92 : 0.75)),
   );
 }
 
