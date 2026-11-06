@@ -23,14 +23,6 @@ abstract interface class RsvpRepository {
   /// out when the connection allows; throws if the rules refuse it.
   Future<void> setRsvp(Event event, RsvpAnswer answer, {required UserId by});
 
-  /// Writes several answers on one event in one batch, so they all save or
-  /// none do: "Same answer for all my players" (PLAYER-11).
-  Future<void> setRsvps(
-    Event event,
-    List<RsvpAnswer> answers, {
-    required UserId by,
-  });
-
   /// Clears [participant]'s answer (SCHED-5), back to "No reply": no
   /// answer is no document. Whoever may give the answer may clear it; it
   /// throws if the rules refuse, as [setRsvp] does.

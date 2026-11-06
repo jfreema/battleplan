@@ -267,20 +267,33 @@ void main() {
       },
     );
 
-    test('writes several answers in one batch (PLAYER-11)', () async {
+    test("each player's answer is its own record (PLAYER-11)", () async {
       final e = event('e1', DateTime.utc(2026, 10, 20, 18));
-      await repo.setRsvps(e, [
+      await repo.setRsvp(
+        e,
         answer('p1', RsvpStatus.going, note: ' late '),
-        answer('p2', RsvpStatus.going),
-      ], by: const UserId('maria'));
+        by: const UserId('maria'),
+      );
+      await repo.setRsvp(
+        e,
+        answer('p2', RsvpStatus.notGoing),
+        by: const UserId('maria'),
+      );
       final p1 = (await db.doc('rsvps/e1_p1').get()).data()!;
       final p2 = (await db.doc('rsvps/e1_p2').get()).data()!;
       expect(p1['status'], 'going');
       expect(p1['note'], 'late');
+      expect(p2['status'], 'not_going');
       expect(p2['respondedBy'], 'maria');
       expect(p2['eventStartAt'], Timestamp.fromDate(e.startAt));
-      // Nothing to write is nothing done.
-      await repo.setRsvps(e, const [], by: const UserId('maria'));
+      // Changing one leaves the other as it was.
+      await repo.setRsvp(
+        e,
+        answer('p2', RsvpStatus.going),
+        by: const UserId('maria'),
+      );
+      expect((await db.doc('rsvps/e1_p1').get()).data()!['note'], 'late');
+      expect((await db.doc('rsvps/e1_p2').get()).data()!['status'], 'going');
       expect((await repo.watchForEvent(g, e.id).first).length, 2);
     });
 

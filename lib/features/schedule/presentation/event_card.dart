@@ -318,22 +318,8 @@ class _CardRsvps extends ConsumerWidget {
             padding: const EdgeInsets.only(top: 2),
             child: Text(l10n.rsvpNotAnswered(unanswered), style: muted),
           ),
-        // One answer for all my players first (PLAYER-11).
-        if (mine.where((p) => p.isPlayer).length > 1)
-          Padding(
-            padding: const EdgeInsets.only(top: Space.sm),
-            child: SameAnswerButtons(
-              event: event,
-              players: [
-                for (final p in mine)
-                  if (p.isPlayer) p,
-              ],
-              answerOf: (id) => answers[id],
-              enabled: true,
-              allowMaybe: allowMaybe,
-              compact: true,
-            ),
-          ),
+        // A row for each player I answer for, with no all-players
+        // shortcut (PLAYER-11).
         for (final p in mine)
           Padding(
             padding: const EdgeInsets.only(top: Space.sm),

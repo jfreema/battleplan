@@ -2836,29 +2836,6 @@ class FakeRsvpRepository implements RsvpRepository {
       ),
     );
   }
-
-  /// Every batch of answers written together (PLAYER-11), as
-  /// "participant:status" lists.
-  final List<List<String>> batches = [];
-
-  @override
-  Future<void> setRsvps(
-    Event event,
-    List<RsvpAnswer> answers, {
-    required UserId by,
-  }) async {
-    final current = events.events[event.id.value];
-    // All or none, as one batch is.
-    if (refuse || current == null || current.isCanceled) {
-      throw const PermissionDenied('closed');
-    }
-    batches.add([
-      for (final a in answers) '${a.participant.id}:${a.status.value}',
-    ]);
-    for (final a in answers) {
-      await setRsvp(event, a, by: by);
-    }
-  }
 }
 
 /// Records what was added to the calendar.

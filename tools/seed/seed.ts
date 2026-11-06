@@ -86,8 +86,8 @@ const memberships: [string, string, string, string?][] = [
   ['possums', 'chandler', 'member', 'Jack #12'],
 ];
 
-// A parent with players on two teams and two on one (for "All my
-// players", PLAYER-11), two guardians for one player, a
+// A parent with players on two teams and two on one (each answered on
+// their own row, PLAYER-11), two guardians for one player, a
 // player whose guardian hasn't joined yet, adults who are players
 // themselves ('self'), an unclaimed player, and a pending player Claire
 // asked to add to Thunder (PLAYER-3, PLAYER-4).

@@ -1218,10 +1218,11 @@ void main() {
       expect(find.text('Emma'), findsOneWidget);
       expect(find.text('Liam'), findsOneWidget);
       await openDetails(tester, 'Practice');
-      // All my players first (PLAYER-11), then one row per player.
-      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(3));
+      // One row per player, and no All my players row (PLAYER-11).
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
+      expect(find.text('All my players'), findsNothing);
       expect(find.text('Emma #7'), findsWidgets);
-      await tester.tap(find.text('Going').at(1));
+      await tester.tap(find.text('Going').first);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p1');
       expect(rsvps.rsvps.single.participantType, ParticipantType.player);
@@ -1231,8 +1232,8 @@ void main() {
       expect(find.text('Answered by Coach L.'), findsOneWidget);
     });
 
-    testWidgets('one tap gives all my players the same answer, keeping their '
-        'notes (PLAYER-11)', (tester) async {
+    testWidgets('a guardian of two players answers each on their own row, '
+        'with no All my players row (PLAYER-11)', (tester) async {
       final players =
           FakePlayerRepository(const [
               Player(
@@ -1279,49 +1280,57 @@ void main() {
         ),
       );
       await openDetails(tester, 'Practice');
-      expect(find.text('All my players'), findsOneWidget);
-      // All my players, then each player.
-      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(3));
-      Finder allButtons() => find.descendant(
-        of: find.ancestor(
-          of: find.text('All my players'),
-          matching: find.byType(SameAnswerButtons),
-        ),
-        matching: find.byType(SegmentedButton<RsvpStatus>),
+      expect(find.text('Are your players going?'), findsOneWidget);
+      // Two rows, each named by first name, and nothing for all of them.
+      expect(find.text('All my players'), findsNothing);
+      expect(find.byType(RsvpButtons), findsNWidgets(2));
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
+      Finder row(String id) => find.byWidgetPredicate(
+        (w) => w is RsvpButtons && w.participant.id == id,
       );
-      Set<RsvpStatus> allSelected() =>
-          tester.widget<SegmentedButton<RsvpStatus>>(allButtons()).selected;
-      // Not all the same yet: nothing selected.
-      expect(allSelected(), isEmpty);
-      await tester.tap(
-        find.descendant(of: allButtons(), matching: find.text('Going')),
-      );
-      await tester.pumpAndSettle();
-      expect(rsvps.batches, [
-        ['p1:going', 'p2:going'],
-      ]);
-      final emma = rsvps.rsvps.firstWhere((r) => r.participantId == 'p1');
-      expect(emma.note, 'Might be late');
-      expect(rsvps.rsvps.any((r) => r.participantId == 'coach'), isFalse);
-      expect(allSelected(), {RsvpStatus.going});
-      expect(find.text('GOING · 2'), findsOneWidget);
-
-      // One player changed alone: the shared answer clears, and the next
-      // tap writes only the player who needs it. Liam's is the third row.
-      await tester.tap(find.text('Not going').at(2));
-      await tester.pumpAndSettle();
-      expect(allSelected(), isEmpty);
-      await tester.tap(
-        find.descendant(of: allButtons(), matching: find.text('Going')),
-      );
-      await tester.pumpAndSettle();
-      // One answer to write: a plain write, not a batch.
-      expect(rsvps.batches, hasLength(1));
       expect(
-        rsvps.rsvps.firstWhere((r) => r.participantId == 'p2').status,
-        RsvpStatus.going,
+        find.descendant(of: row('p1'), matching: find.text('Emma')),
+        findsOneWidget,
       );
-      expect(allSelected(), {RsvpStatus.going});
+      expect(
+        find.descendant(of: row('p2'), matching: find.text('Liam')),
+        findsOneWidget,
+      );
+      Set<RsvpStatus> selected(String id) => tester
+          .widget<SegmentedButton<RsvpStatus>>(
+            find.descendant(
+              of: row(id),
+              matching: find.byType(SegmentedButton<RsvpStatus>),
+            ),
+          )
+          .selected;
+      expect(selected('p1'), {RsvpStatus.maybe});
+      expect(selected('p2'), isEmpty);
+      Rsvp? answerOf(String id) =>
+          rsvps.rsvps.where((r) => r.participantId == id).firstOrNull;
+
+      // Liam's Going answers for Liam alone; Emma keeps her Maybe and note.
+      await tester.tap(
+        find.descendant(of: row('p2'), matching: find.text('Going')),
+      );
+      await tester.pumpAndSettle();
+      expect(answerOf('p2')?.status, RsvpStatus.going);
+      expect(answerOf('p1')?.status, RsvpStatus.maybe);
+      expect(answerOf('p1')?.note, 'Might be late');
+      expect(rsvps.rsvps.any((r) => r.participantId == 'coach'), isFalse);
+      expect(selected('p1'), {RsvpStatus.maybe});
+      expect(selected('p2'), {RsvpStatus.going});
+
+      // Emma's Not going changes only Emma's, and keeps her note.
+      await tester.tap(
+        find.descendant(of: row('p1'), matching: find.text('Not going')),
+      );
+      await tester.pumpAndSettle();
+      expect(answerOf('p1')?.status, RsvpStatus.notGoing);
+      expect(answerOf('p1')?.note, 'Might be late');
+      expect(answerOf('p2')?.status, RsvpStatus.going);
+      expect(rsvps.rsvps, hasLength(2));
+      expect(find.text('GOING · 1'), findsOneWidget);
     });
 
     testWidgets('an admin who is a parent but not a coach answers only for '
@@ -1414,29 +1423,6 @@ void main() {
         find.byType(SegmentedButton<RsvpStatus>),
       );
       expect(buttons.selected, isEmpty);
-    });
-
-    testWidgets('one player gets no "All my players" (PLAYER-11)', (
-      tester,
-    ) async {
-      final players =
-          FakePlayerRepository(const [
-              Player(
-                id: PlayerId('p1'),
-                groupId: GroupId('a'),
-                displayName: 'Emma',
-              ),
-            ])
-            ..links.add(
-              const GuardianLink(
-                playerId: PlayerId('p1'),
-                groupId: GroupId('a'),
-                uid: UserId('coach'),
-              ),
-            );
-      await openSchedule(tester, players: players, events: [event('e1')]);
-      await openDetails(tester, 'Practice');
-      expect(find.text('All my players'), findsNothing);
     });
 
     testWidgets('a member who is a player answers on their own row, with no '
@@ -2141,10 +2127,12 @@ void main() {
         events: [event('e1')],
         messages: FakeMessageRepository([card('e1')]),
       );
-      // All my players first (PLAYER-11), then one row per player, by first
-      // name.
-      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(3));
+      // One row per player, by first name, and no All my players row
+      // (PLAYER-11).
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNWidgets(2));
+      expect(find.text('All my players'), findsNothing);
       expect(find.text('Emma'), findsOneWidget);
+      expect(find.text('Liam'), findsOneWidget);
       await tester.tap(find.text('Going').last);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p2');
@@ -2155,9 +2143,8 @@ void main() {
       );
     });
 
-    testWidgets('one tap answers for all my players on the card (PLAYER-11)', (
-      tester,
-    ) async {
+    testWidgets('a guardian of two players answers each on their own row on '
+        'the card, with no All my players row (PLAYER-11)', (tester) async {
       final players =
           FakePlayerRepository(const [
               Player(
@@ -2190,13 +2177,45 @@ void main() {
         events: [event('e1')],
         messages: FakeMessageRepository([card('e1')]),
       );
-      expect(find.text('All my players'), findsOneWidget);
-      await tester.tap(find.text('Not going').first);
+      expect(find.text('All my players'), findsNothing);
+      Finder row(String id) => find.byWidgetPredicate(
+        (w) => w is RsvpButtons && w.participant.id == id,
+      );
+      expect(find.byType(RsvpButtons), findsNWidgets(2));
+      expect(
+        find.descendant(of: row('p1'), matching: find.text('Emma')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: row('p2'), matching: find.text('Liam')),
+        findsOneWidget,
+      );
+      // Emma's Not going answers for Emma alone.
+      await tester.tap(
+        find.descendant(of: row('p1'), matching: find.text('Not going')),
+      );
       await tester.pumpAndSettle();
-      expect(rsvps.batches, [
-        ['p1:not_going', 'p2:not_going'],
-      ]);
-      expect(find.text('0/2 going'), findsOneWidget);
+      expect(rsvps.rsvps.single.participantId, 'p1');
+      expect(rsvps.rsvps.single.status, RsvpStatus.notGoing);
+      expect(
+        find.text("0/2 going · Liam hasn't answered", findRichText: true),
+        findsOneWidget,
+      );
+      // Then Liam's Going, for Liam alone; Emma's stays.
+      await tester.tap(
+        find.descendant(of: row('p2'), matching: find.text('Going')),
+      );
+      await tester.pumpAndSettle();
+      expect(rsvps.rsvps, hasLength(2));
+      expect(
+        rsvps.rsvps.firstWhere((r) => r.participantId == 'p1').status,
+        RsvpStatus.notGoing,
+      );
+      expect(
+        rsvps.rsvps.firstWhere((r) => r.participantId == 'p2').status,
+        RsvpStatus.going,
+      );
+      expect(find.text('1/2 going', findRichText: true), findsOneWidget);
     });
 
     testWidgets('canceled and RSVP-off cards take no answers', (tester) async {

@@ -1924,7 +1924,6 @@
   "contactStopped": "No longer shared",
   "contactSaveFailed": "Couldn't save. Check your connection and try again.",
   "linkOpenFailed": "Couldn't open that on this device.",
-  "rsvpAllMyPlayers": "All my players",
   "rsvpHistoryTitle": "RSVP history",
   "rsvpHistoryEntry": "RSVP history",
   "rsvpHistoryEntryHelp": "Past events and how this player answered",
