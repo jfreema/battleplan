@@ -2,7 +2,10 @@
 // top of seed.ts in the local Emulator Suite: nine more Thunder players and
 // two more events with everyone's answers, votes on the dinner poll, photo
 // posts in Thunder's chat, more documents, and more Cyclone players with
-// their parents. The relay play is on Thunder's board in seed.ts. Refuses to run
+// their parents. The relay play is on Thunder's board in seed.ts. The chat
+// shot is the seed's group, Saturday Run Club (only messages and one small
+// photo): its chat moves to yesterday evening, after the teams' last
+// messages, so the coach lands in it after signing in. Refuses to run
 // against anything but the emulators.
 //
 //   firebase emulators:start --project demo-battleplan   (in one terminal)
@@ -13,7 +16,7 @@
 // its place) with `-- --ipad`: Thunder's earlier messages move to
 // yesterday, so its wide chat has no date chip in the middle, and the
 // jerseys post loses its caption. The photos in store-shots/ were made
-// for this (no people); their .html files say how.
+// for this and the seed (no people); their .html files say how.
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -352,8 +355,18 @@ async function main() {
     ['ethan-nguyen', 'Ethan Nguyen', 'linh', 'maybe'], ['zoe-patel', 'Zoe Patel', 'raj', 'going'],
   ]);
 
-  // Let the message triggers finish, then set each team's last message and
-  // the coach's read marks: Thunder all read, Cyclone's last line not.
+  // Saturday Run Club's chat at yesterday evening's times, in place of the
+  // seed's times relative to now: all on one day, so the iPhone's and the
+  // iPad's chat have one date chip, at the top.
+  const clubLines: [string, number, number][] = [
+    ['run-club-seed-0', 17, 40], ['run-club-seed-1', 18, 12], ['run-club-seed-2', 18, 20], ['run-club-seed-3', 18, 31],
+    ['run-club-seed-4', 19, 15], ['run-club-seed-5', 19, 48], ['run-club-seed-6', 20, 30], ['run-club-seed-7', 20, 41],
+  ];
+  for (const [id, h, m] of clubLines) await db.doc(`messages/${id}`).update({ createdAt: yesterdayAt(h, m) });
+
+  // Let the message triggers finish, then set each chat's last message and
+  // the coach's read marks: Thunder and the run club all read, Cyclone's
+  // last line not.
   await new Promise((r) => setTimeout(r, 6000));
   await db.doc('groups/thunder').update({
     lastMessageAt: yesterdayAt(17, 2),
@@ -363,7 +376,12 @@ async function main() {
     lastMessageAt: yesterdayAt(18, 30),
     lastMessagePreview: { authorName: 'Phil Dunphy', text: "Luke's cleats are in my car. I'll bring them.", type: 'text' },
   });
+  await db.doc('groups/run-club').update({
+    lastMessageAt: yesterdayAt(20, 41),
+    lastMessagePreview: { authorName: 'Monica Geller', text: 'Always. See you at the boathouse!', type: 'text' },
+  });
   await db.doc('groupMembers/thunder_coach').update({ lastReadAt: minutesAgo(5) });
+  await db.doc('groupMembers/run-club_coach').update({ lastReadAt: minutesAgo(5) });
   await db.doc('groupMembers/cyclone_coach').update({ lastReadAt: yesterdayAt(16, 10) });
   console.log(`Added the store screenshots' sample content${ipad ? ', iPad version' : ''}.`);
 }

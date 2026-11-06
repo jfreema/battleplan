@@ -70,7 +70,7 @@ The badges wait (ROADMAP tasks 179 and 214). They're already in `index.html` (he
 
 ## Screenshots
 
-The screenshots show the app with the seeded sample teams (Thunder, Cyclone, and Rally Possums, in navy, Carolina blue, and purple) and people (common American names and TV characters), the same data `tools/seed/seed.ts` loads into the emulators. Each one is named for its screen and the color scheme it's in, and together they show all five:
+The screenshots show the app with the seeded sample teams (Thunder, Cyclone, and Rally Possums, in navy, Carolina blue, and purple), the seeded group Saturday Run Club (green, at `/g/run-club/chat`: a chat of only messages and one small photo, which the coach is in and has read), and people (common American names and TV characters), the same data `tools/seed/seed.ts` loads into the emulators. Each one is named for its screen and the color scheme it's in, and together they show all five:
 
 | Image | Scheme | Signed in as | Screen |
 |---|---|---|---|

@@ -22,16 +22,16 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
    npm --prefix tools/seed run seed
    ```
 
-   It creates three teams (Thunder, adult softball players; Cyclone, kids' soccer; and Rally Possums, kids' basketball), with common American names and TV characters for people, parents with players on two teams, adults linked to their own players, a pending player to approve, events, RSVPs, polls, documents, two saved plays (Cyclone's relay home from right-center on the diamond, Thunder's pick and roll on the half court, for the landing page's two whiteboard screenshots), messages, and a direct conversation between Andy Bernard and Claire Dunphy (read by both, so Messages shows it with nothing unread). These are also the landing page's screenshots (`website/README.md`). Every password is `password`:
+   It creates three teams (Thunder, adult softball players; Cyclone, kids' soccer; and Rally Possums, kids' basketball) and a group, Saturday Run Club (TEAM-14: no players, events, or plays; its chat is only messages and one small photo, uploaded to the Storage emulator, so start Storage too), with common American names and TV characters for people, parents with players on two teams, adults linked to their own players, a pending player to approve, events, RSVPs, polls, documents, two saved plays on Thunder (the relay home from right-center on the diamond, for the landing page's whiteboard screenshot, and the pick and roll on the half court), messages, and a direct conversation between Andy Bernard and Claire Dunphy (read by both, so Messages shows it with nothing unread). These are also the landing page's screenshots (`website/README.md`). Every password is `password`:
 
    | Email | Who |
    |---|---|
-   | `coach@example.com` | Andy Bernard, owner of Thunder (adult players) and Cyclone (kids) |
+   | `coach@example.com` | Andy Bernard, owner of Thunder (adult players) and Cyclone (kids), in Saturday Run Club |
    | `claire@example.com` | Claire Dunphy, parent on all three teams, with players on two (Luke and Alex on Cyclone, Haley on Rally Possums); asked to join Thunder's roster as a player (pending) |
-   | `rachel@example.com` | Rachel Green, owner of Rally Possums, parent on Cyclone |
+   | `rachel@example.com` | Rachel Green, owner of Rally Possums, parent on Cyclone, admin of Saturday Run Club |
    | `jim@example.com`, `andy@example.com` | Jim Halpert and Andy Dwyer, players on Thunder, linked to their own players (Jim is also an admin) |
-   | `phil@example.com` | Phil Dunphy, parent and assistant coach on Cyclone |
-   | `monica@example.com`, `chandler@example.com` | Monica Geller and Chandler Bing, parents on Rally Possums |
+   | `phil@example.com` | Phil Dunphy, parent and assistant coach on Cyclone, in Saturday Run Club |
+   | `monica@example.com`, `chandler@example.com` | Monica Geller and Chandler Bing, parents on Rally Possums, in Saturday Run Club (Monica owns it) |
    | `admin@example.com` | Super admin |
 
    Against the emulators the sign-in screen also shows **Continue with email** for these. Dev and prod builds offer only Google and Apple there, and email sign-in is at `/emaillogin` (SPEC AUTH-1, AUTH-2).

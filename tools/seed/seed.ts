@@ -1,5 +1,9 @@
-// Loads sample data into the local Emulator Suite (ARCH §5.7). Refuses to
-// run against anything but the emulators.
+// Loads sample data into the local Emulator Suite (ARCH §5.7): three teams
+// (Thunder, Cyclone, Rally Possums) and a group, Saturday Run Club (TEAM-14),
+// whose chat is only messages and one small photo, for the website's group
+// chat screenshot. The photo goes to the Storage emulator, so Auth,
+// Firestore, and Storage must all be running. Refuses to run against
+// anything but the emulators.
 //
 //   firebase emulators:start --project demo-battleplan   (in one terminal)
 //   npm --prefix tools/seed run seed                      (in another)
@@ -8,9 +12,15 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { createHash } from 'node:crypto';
+import { getStorage } from 'firebase-admin/storage';
+import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
-if (!process.env.FIRESTORE_EMULATOR_HOST || !process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+if (
+  !process.env.FIRESTORE_EMULATOR_HOST ||
+  !process.env.FIREBASE_AUTH_EMULATOR_HOST ||
+  !process.env.FIREBASE_STORAGE_EMULATOR_HOST
+) {
   console.error('Refusing to seed: the emulator hosts are not set.');
   process.exit(1);
 }
@@ -19,9 +29,11 @@ if (!process.env.GCLOUD_PROJECT?.startsWith('demo-')) {
   process.exit(1);
 }
 
-initializeApp({ projectId: process.env.GCLOUD_PROJECT });
+// The bucket the app uses against the emulators (firebase_options_emulator.dart).
+initializeApp({ projectId: process.env.GCLOUD_PROJECT, storageBucket: `${process.env.GCLOUD_PROJECT}.appspot.com` });
 const auth = getAuth();
 const db = getFirestore();
+const bucket = getStorage().bucket();
 
 const PASSWORD = 'password';
 const now = Date.now();
@@ -558,6 +570,121 @@ async function main() {
     });
   }
 
+  // A group (TEAM-14), as Create a Group makes one (createGroup in
+  // functions/src/teams/service.ts): kind 'group', sport 'other', the
+  // default settings, its owner not a coach, and no chat look, so each
+  // person's own bubbles are the scheme's coral. No players, events, polls,
+  // dues, documents, or plays. Monica runs it with Rachel as an admin; the coach, Phil, and
+  // Chandler joined with its code. Claire and Jim aren't in it, so their
+  // screenshots stay as they were. Its chat is only messages (the website's
+  // group chat screenshot, as the coach): a reply, a few reactions, and one
+  // photo, 2:1 so the chat draws it small (a lone photo keeps its shape up
+  // to 2:1, at most 280 wide: 280 × 140). Everyone has read it all, so it
+  // opens at its newest message with nothing unread; that message is older
+  // than Thunder's, so the coach still lands on Thunder after signing in.
+  const club = { id: 'run-club', name: 'Saturday Run Club', color: '#0F8A5F', owner: 'monica' };
+  const clubMembers: [string, 'owner' | 'admin' | 'member'][] = [
+    ['monica', 'owner'], ['rachel', 'admin'], ['coach', 'member'], ['phil', 'member'], ['chandler', 'member'],
+  ];
+  const photoId = `${club.id}-seed-4`;
+  const photoPath = `groups/${club.id}/messages/${photoId}/0.jpg`;
+  // Made for this, with no people (store-shots/sunrise.html says how).
+  const photo = readFileSync(new URL('./store-shots/sunrise.jpg', import.meta.url));
+  const clubLines: Line[] = [
+    { uid: 'monica', text: "Saturday's route: 5 miles on the river trail. Meet at the boathouse at 7!", ago: 240, extra: { reactions: { coach: 'like', rachel: 'like', phil: 'like' } } },
+    { uid: 'phil', text: 'Is there a slower group? Asking for a friend. The friend is me.', ago: 205 },
+    { uid: 'chandler', text: 'Could 7 AM BE any earlier?', ago: 190, extra: { reactions: { rachel: 'laugh', phil: 'laugh', coach: 'laugh' } } },
+    {
+      uid: 'monica', text: "Rachel's pacing a 10-minute mile. Nobody gets left behind.", ago: 170,
+      extra: {
+        replyToId: `${club.id}-seed-1`,
+        replyPreview: { authorName: nameOf('phil'), text: 'Is there a slower group? Asking for a friend. The friend is me.', type: 'text', deleted: false },
+        reactions: { phil: 'love' },
+      },
+    },
+    {
+      uid: 'rachel', id: photoId, text: 'Sunrise from the bridge last week. Worth the alarm.', ago: 120,
+      extra: {
+        type: 'image',
+        attachments: [{ path: photoPath, contentType: 'image/jpeg', width: 1600, height: 800, size: photo.length }],
+        reactions: { monica: 'love', coach: 'love', chandler: 'like' },
+      },
+    },
+    { uid: 'coach', text: "That's a great view. Count me in for Saturday!", ago: 60 },
+    { uid: 'chandler', text: "Coffee after? I'll need it.", ago: 25, extra: { reactions: { coach: 'like', rachel: 'like' } } },
+    { uid: 'monica', text: 'Always. See you at the boathouse!', ago: 15 },
+  ];
+  const clubLast = clubLines[clubLines.length - 1];
+  await db.doc(`groups/${club.id}`).set({
+    name: club.name,
+    nameLower: club.name.toLowerCase(),
+    description: '',
+    photoPath: null,
+    color: club.color,
+    sport: 'other',
+    kind: 'group',
+    ownerId: club.owner,
+    createdBy: club.owner,
+    timeZone: 'America/Chicago',
+    // createGroup's DEFAULT_SETTINGS.
+    settings: { ...settings, defaultReminderOffsets: [] },
+    memberCount: clubMembers.length,
+    playerCount: 0,
+    lastMessageAt: minutesAgo(clubLast.ago),
+    lastMessagePreview: { authorName: nameOf(clubLast.uid), text: clubLast.text, type: 'text' },
+    storageBytes: 0,
+    storageQuotaBytes: 200 * 1024 * 1024,
+    storageAlert: 'none',
+    archivedAt: null,
+    suspendedAt: null,
+    status: 'active',
+    createdAt: minutesAgo(60 * 24 * 21),
+    updatedAt: minutesAgo(60 * 24 * 21),
+    schemaVersion: 1,
+  });
+  for (const [uid, role] of clubMembers) {
+    await db.doc(`groupMembers/${club.id}_${uid}`).set({
+      groupId: club.id,
+      uid,
+      role,
+      title: null,
+      // Nobody coaches a group (TEAM-14).
+      ...(role === 'owner' ? { coach: false } : {}),
+      displayName: nameOf(uid),
+      photoPath: null,
+      avatarColor: iconColor(uid),
+      playerSummary: null,
+      notificationLevel: 'all',
+      mutedUntil: null,
+      lastReadAt: minutesAgo(clubLast.ago - 1),
+      lastPostedAt: null,
+      joinedAt: minutesAgo(60 * 24 * (role === 'owner' ? 21 : 14)),
+      addedBy: club.owner,
+    });
+  }
+  // The photo first, so the message never points at a missing file. The
+  // token is what the app's download URL carries.
+  await bucket.file(photoPath).save(photo, {
+    contentType: 'image/jpeg',
+    metadata: { metadata: { firebaseStorageDownloadTokens: randomUUID() } },
+  });
+  for (const [i, line] of clubLines.entries()) {
+    await db.doc(`messages/${line.id ?? `${club.id}-seed-${i}`}`).set({
+      groupId: club.id,
+      authorId: line.uid,
+      authorName: nameOf(line.uid),
+      authorPhotoPath: null,
+      authorAvatarColor: iconColor(line.uid),
+      authorPlayerSummary: null,
+      type: 'text',
+      text: line.text,
+      attachments: [],
+      reactions: {},
+      ...line.extra,
+      createdAt: minutesAgo(line.ago),
+    });
+  }
+
   // Thunder's documents (DOC-1): the lineup and rules pinned, a link, and
   // more files. The rows show without the files themselves.
   const docs: { id: string; name: string; kind: 'file' | 'link'; by: string; days: number; pinned?: true; type?: string; size?: number; url?: string }[] = [
@@ -782,8 +909,8 @@ async function main() {
     supportEmail: 'support@getbattleplan.app',
   });
 
-  console.log(`Seeded ${people.length} people, ${teams.length} teams, ${players.length} players.`);
-  console.log('Sign in as coach@example.com (Thunder and Cyclone) or claire@example.com (all three teams); password "password".');
+  console.log(`Seeded ${people.length} people, ${teams.length} teams and a group, ${players.length} players.`);
+  console.log('Sign in as coach@example.com (Thunder, Cyclone, and Saturday Run Club) or claire@example.com (all three teams); password "password".');
 }
 
 main().catch((e) => {
