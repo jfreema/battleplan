@@ -30,6 +30,8 @@ import 'package:battleplan/features/chat/data/firestore_message_repository.dart'
 import 'package:battleplan/features/chat/data/prefs_chat_queue_store.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/data/firestore_document_repository.dart';
+import 'package:battleplan/features/dues/application/providers.dart';
+import 'package:battleplan/features/dues/data/firestore_dues_repository.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/data/firestore_group_repository.dart';
 import 'package:battleplan/features/groups/data/functions_invite_repository.dart';
@@ -135,6 +137,9 @@ List<Override> buildOverrides({
   rsvpRepositoryProvider.overrideWithValue(FirestoreRsvpRepository(firestore)),
   assignmentRepositoryProvider.overrideWithValue(
     FirestoreAssignmentRepository(firestore),
+  ),
+  duesRepositoryProvider.overrideWithValue(
+    FirestoreDuesRepository(firestore, functions),
   ),
   calendarLinkRepositoryProvider.overrideWithValue(
     FirestoreCalendarLinkRepository(firestore, functions),

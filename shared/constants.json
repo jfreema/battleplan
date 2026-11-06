@@ -29,9 +29,17 @@
     "calendarLinks": "calendarLinks",
     "teamCalendars": "teamCalendars",
     "answerLinks": "answerLinks",
-    "assignments": "assignments"
+    "assignments": "assignments",
+    "dues": "dues",
+    "dueCharges": "dueCharges",
+    "duesPayments": "duesPayments"
   },
   "enums": {
+    "dueStatus": [
+      "owed",
+      "paid",
+      "waived"
+    ],
     "userStatus": [
       "provisioned",
       "active",
@@ -237,6 +245,11 @@
     "rsvpNoteMax": 200,
     "assignmentLabelMax": 40,
     "assignmentsPerEventMax": 20,
+    "dueTitleMax": 60,
+    "dueNoteMax": 280,
+    "dueAmountMaxCents": 1000000,
+    "duePayHandleMax": 60,
+    "duesChargesMax": 100,
     "documentNameMax": 100,
     "documentDescriptionMax": 500,
     "documentUrlMax": 2000,

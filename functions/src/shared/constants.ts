@@ -32,6 +32,9 @@ export const Collections = {
   teamCalendars: 'teamCalendars',
   answerLinks: 'answerLinks',
   assignments: 'assignments',
+  dues: 'dues',
+  dueCharges: 'dueCharges',
+  duesPayments: 'duesPayments',
 } as const;
 
 export const Limits = {
@@ -57,6 +60,11 @@ export const Limits = {
   rsvpNoteMax: 200,
   assignmentLabelMax: 40,
   assignmentsPerEventMax: 20,
+  dueTitleMax: 60,
+  dueNoteMax: 280,
+  dueAmountMaxCents: 1000000,
+  duePayHandleMax: 60,
+  duesChargesMax: 100,
   documentNameMax: 100,
   documentDescriptionMax: 500,
   documentUrlMax: 2000,
@@ -162,6 +170,9 @@ export const RETIRED_TEAM_COLORS = {
 } as const;
 
 export const REMINDER_OFFSETS_MINUTES = [15, 60, 120, 1440, 2880, 10080] as const;
+
+export const dueStatusValues = ['owed', 'paid', 'waived'] as const;
+export type DueStatus = (typeof dueStatusValues)[number];
 
 export const userStatusValues = ['provisioned', 'active', 'disabled'] as const;
 export type UserStatus = (typeof userStatusValues)[number];

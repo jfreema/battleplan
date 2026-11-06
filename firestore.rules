@@ -948,6 +948,110 @@ service cloud.firestore {
             || (before.assigneeUid == uid() && after.assigneeUid == null && after.assignedBy == null));
     }
 
+    // ---- Dues (SPEC DUES-1..DUES-4) -----------------------------------------
+
+    // Dues and fees, such as uniforms or the team fee: what a team's admins
+    // ask its players, or a basic group's members, to pay, and who paid.
+    // No money moves through the app: admins share how to pay
+    // (duesPayments) and mark each charge paid or waived themselves. The
+    // team's admins, and super admins (§3), see every due and charge;
+    // everyone else sees only their own charge, or their player's, so
+    // nobody learns what someone else owes or paid. Dues and their charges
+    // are created, edited, and deleted only by the saveDue and deleteDue
+    // callables, which check the team, its admins, who's charged, and the
+    // cap (Limits.duesChargesMax); admins mark charges paid here, and write
+    // how to pay. Archived teams are read-only (TEAM-9), and a direct
+    // conversation has no dues.
+    function duesReader(g) { return superAdmin() || isAdmin(g); }
+    function duesAdmin(g) { return active(g) && duesReader(g); }
+
+    // A due: its title, amount, date, and note. Members read their charges
+    // instead, which copy what they need.
+    match /dues/{dueId} {
+      allow get: if duesReader(resource.data.groupId);
+      allow list: if boundedQuery() && duesReader(resource.data.groupId);
+      // Created, edited, and deleted with their charges by the saveDue and
+      // deleteDue callables, in one batch, so a due and its charges never
+      // disagree.
+      allow create, update, delete: if false;
+    }
+
+    // A due's terms as its charges copy them: a title of up to 60
+    // characters, not blank (Limits.dueTitleMax), an amount of 1 cent to
+    // $10,000 (dueAmountMaxCents), and a date (a calendar day,
+    // 'YYYY-MM-DD') or none.
+    function dueTermsOk(d) {
+      return d.title is string && d.title.trim().size() > 0 && d.title.size() <= 60
+        && d.amountCents is int && d.amountCents >= 1 && d.amountCents <= 1000000
+        && (d.dueOn == null
+            || (d.dueOn is string && d.dueOn.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])')));
+    }
+
+    // One person's share of a due, whose ID is the due's and the person's
+    // (dueId_participantId): a player on a team, or a member of a basic
+    // group. Its admins mark it owed, paid, or waived.
+    match /dueCharges/{chargeId} {
+      allow get: if dueChargeReader(resource.data);
+      allow list: if boundedQuery() && dueChargeReader(resource.data);
+      // Created, re-termed, and deleted with their due by the callables.
+      allow create, delete: if false;
+      // Admins mark it owed, paid, or waived; everything else stays.
+      allow update: if duesAdmin(resource.data.groupId)
+        && onlyChanges(['status', 'paidAt', 'updatedBy', 'updatedAt'])
+        && validDueCharge(incoming());
+    }
+
+    // Who sees a charge: the team's admins and super admins (archived teams
+    // too), the member it's for, and for a player the member who is the
+    // player or a guardian (a player link). A member's list must name
+    // themselves, or their player, so it can't show anyone else's.
+    function dueChargeReader(c) {
+      return duesReader(c.groupId)
+        || (isMember(c.groupId)
+            && ((c.participantType == 'member' && c.participantId == uid())
+                || (c.participantType == 'player' && isGuardian(c.participantId))));
+    }
+
+    // A charge's own fields, every one always there: the due's terms as
+    // the charge has them, a name of up to 80 characters, a known status,
+    // and when it was paid, set only on a paid charge.
+    function validDueCharge(c) {
+      let fields = ['groupId', 'dueId', 'title', 'amountCents', 'dueOn', 'participantType',
+                    'participantId', 'participantName', 'status', 'paidAt',
+                    'updatedBy', 'updatedAt'];
+      return c.keys().hasAll(fields) && c.keys().hasOnly(fields)
+        && dueTermsOk(c)
+        && c.participantId is string
+        && c.participantName is string && c.participantName.size() <= 80
+        && c.status in ['owed', 'paid', 'waived']
+        && (c.paidAt == null || (c.status == 'paid' && c.paidAt is timestamp))
+        && c.updatedBy == uid()
+        && c.updatedAt == request.time;
+    }
+
+    // How to pay the team, one doc per team named by its ID: Venmo, Cash
+    // App, and Apple Cash handles of up to 60 characters each
+    // (Limits.duePayHandleMax), any of them empty, and a note of up to 280.
+    // Everyone on the team reads it; its admins, and super admins, write it.
+    match /duesPayments/{g} {
+      allow get: if canRead(g);
+      allow list: if boundedQuery() && canRead(resource.data.groupId);
+      allow create, update: if duesAdmin(g) && !isDirect(g) && validDuesPayments(incoming(), g);
+      allow delete: if duesAdmin(g);
+    }
+
+    function validDuesPayments(p, g) {
+      let fields = ['groupId', 'venmo', 'cashApp', 'appleCash', 'note', 'updatedBy', 'updatedAt'];
+      return p.keys().hasAll(fields) && p.keys().hasOnly(fields)
+        && p.groupId == g
+        && p.venmo is string && p.venmo.size() <= 60
+        && p.cashApp is string && p.cashApp.size() <= 60
+        && p.appleCash is string && p.appleCash.size() <= 60
+        && p.note is string && p.note.size() <= 280
+        && p.updatedBy == uid()
+        && p.updatedAt == request.time;
+    }
+
     // ---- Plays (SPEC §6.16, ARCH §6.14) ------------------------------------
 
     // Everyone on the team reads its plays; admins draw, change, and delete

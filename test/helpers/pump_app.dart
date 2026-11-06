@@ -8,6 +8,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/presentation/document_screen.dart';
+import 'package:battleplan/features/dues/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/imports/application/providers.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
@@ -53,6 +54,7 @@ Future<FakeLocalPrefs> pumpApp(
   FakeEventRepository? eventRepo,
   FakeRsvpRepository? rsvpRepo,
   FakeAssignmentRepository? assignmentRepo,
+  FakeDuesRepository? duesRepo,
   FakeCalendarLinkRepository? calendarLinks,
   FakeCalendarAdder? calendar,
   FakeDocumentRepository? documentRepo,
@@ -138,6 +140,9 @@ Future<FakeLocalPrefs> pumpApp(
         ),
         assignmentRepositoryProvider.overrideWithValue(
           assignmentRepo ?? FakeAssignmentRepository(),
+        ),
+        duesRepositoryProvider.overrideWithValue(
+          duesRepo ?? FakeDuesRepository(),
         ),
         calendarAdderProvider.overrideWithValue(
           calendar ?? FakeCalendarAdder(),

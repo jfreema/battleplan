@@ -34,6 +34,9 @@ abstract final class Collections {
   static const String teamCalendars = 'teamCalendars';
   static const String answerLinks = 'answerLinks';
   static const String assignments = 'assignments';
+  static const String dues = 'dues';
+  static const String dueCharges = 'dueCharges';
+  static const String duesPayments = 'duesPayments';
 }
 
 /// Limits shared with the server and security rules.
@@ -60,6 +63,11 @@ abstract final class Limits {
   static const int rsvpNoteMax = 200;
   static const int assignmentLabelMax = 40;
   static const int assignmentsPerEventMax = 20;
+  static const int dueTitleMax = 60;
+  static const int dueNoteMax = 280;
+  static const int dueAmountMaxCents = 1000000;
+  static const int duePayHandleMax = 60;
+  static const int duesChargesMax = 100;
   static const int documentNameMax = 100;
   static const int documentDescriptionMax = 500;
   static const int documentUrlMax = 2000;
@@ -168,6 +176,24 @@ const Map<int, int> retiredTeamColorValues = {
 
 /// The reminder times an event can have, in minutes before (SCHED-3).
 const List<int> reminderOffsetsMinutes = [15, 60, 120, 1440, 2880, 10080];
+
+enum DueStatus {
+  owed('owed'),
+  paid('paid'),
+  waived('waived');
+
+  const DueStatus(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static DueStatus? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
 
 enum UserStatus {
   provisioned('provisioned'),

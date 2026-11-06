@@ -469,6 +469,10 @@ const TEAM_COLLECTIONS = [
   Collections.pollVotes,
   Collections.rsvps,
   Collections.assignments,
+  // Dues and who paid them (DUES-1 to DUES-3).
+  Collections.dueCharges,
+  Collections.dues,
+  Collections.duesPayments,
   Collections.events,
   Collections.eventSeries,
   Collections.groupDocuments,

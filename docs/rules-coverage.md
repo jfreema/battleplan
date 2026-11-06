@@ -2,13 +2,13 @@
 
 The roadmap task 104 review of `firestore.rules` and `storage.rules` against the rules tests in `functions/test/rules/` (run with `npm --prefix functions run emulators:test`). ARCH §9 asks for every collection and role to be tested. The Functions tests in `functions/test/emulator/` run as the Admin SDK, which skips rules, so they don't count here. There's no `test/emulator` in the Flutter app.
 
-Reviewed 2026-10-12, and updated the same day for one team type (pending players, `self` links, and super admins' RSVPs and events) and for player details (`playerDetails`); updated 2026-10-13 for mentions, announcements, and pins (CHAT-14, CHAT-15) and contact sharing (TEAM-10), and for super admins on a team they've joined (§3: @everyone, announcements, polls, and documents whatever the team's switches). Updated 2026-11-06 for color schemes and icon colors (SET-2, SET-8). Update this page whenever a rule or a rules test changes.
+Reviewed 2026-10-12, and updated the same day for one team type (pending players, `self` links, and super admins' RSVPs and events) and for player details (`playerDetails`); updated 2026-10-13 for mentions, announcements, and pins (CHAT-14, CHAT-15) and contact sharing (TEAM-10), and for super admins on a team they've joined (§3: @everyone, announcements, polls, and documents whatever the team's switches). Updated 2026-11-06 for color schemes and icon colors (SET-2, SET-8), and for dues (DUES-1..DUES-4: `dues`, `dueCharges`, `duesPayments`). Update this page whenever a rule or a rules test changes.
 
 **Legend:** ✓ tested and allowed · ✗ tested and refused · ✓\* / ✗\* added in this review (`coverage.test.ts`) · `=` the rule can't tell this role from the column to its left, so that test covers it · `·` doesn't apply · **gap** not tested.
 
 **Roles:** *Signed out* has no auth. *Other team* is an admin or member of another team. *Member* is on the team. *Guardian* is a member linked to the player, as a parent or guardian or as the player themselves (`self`); the rules treat both relations alike (`isGuardian`). A *proposer* is the member who added a pending player. *Admin* has the team's `admin` role. *Owner* has `owner`; the rules treat it like admin everywhere (checked in `coverage.test.ts`). *Super admin* has the `superAdmin` claim and isn't on the team, except where a cell says "on the team".
 
-**Test files:** F `firestore.test.ts`, T `teams.test.ts`, A `admin.test.ts`, P `polls.test.ts`, S `schedule.test.ts`, D `documents.test.ts`, N `notifications.test.ts`, U `users.test.ts`, St `storage.test.ts`, PD `player_details.test.ts`, As `assignments.test.ts`, C `coverage.test.ts`.
+**Test files:** F `firestore.test.ts`, T `teams.test.ts`, A `admin.test.ts`, P `polls.test.ts`, S `schedule.test.ts`, D `documents.test.ts`, N `notifications.test.ts`, U `users.test.ts`, St `storage.test.ts`, PD `player_details.test.ts`, As `assignments.test.ts`, Du `dues.test.ts`, C `coverage.test.ts`.
 
 ## Bugs found and fixed
 
@@ -77,6 +77,14 @@ Only those three tests fail against the old rules; they pass against the new one
 | | create, delete, edit kind and label | ✗ | ✗ | ✗ | = | ✓ | = | ✓ (✗ archived team) | As, C |
 | | assign someone on the team, or nobody | · | · | ✗ | = | ✓ | = | ✓ | As |
 | | volunteer for an open task, give up your own | · | ✗ | ✓ / ✗ (taken, or someone else's) | = | ✓ | = | ✗ not on the team | As, C |
+| `dues` (DUES-1..DUES-4) | get, list (list names the team, limit ≤ 100) | ✗ | ✗ | ✗ | ✗ | ✓ (archived team too) | ✓ | ✓ | Du, C |
+| | create, update, delete (only the `saveDue` and `deleteDue` callables) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Du |
+| `dueCharges` | get, list (admins list by team, limit ≤ 100) | ✗ | ✗ | ✗ | = | ✓ | ✓ | ✓ | Du, C |
+| | get, list own (list names the team, `participantType`, and `participantId`) | · | ✗ | ✓ own (basic group) / ✗ others' | ✓ their player (guardian or `self`) / ✗ others' | · | · | · | Du, C |
+| | create, delete (only the callables, with the due) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | Du |
+| | update (status only; `paidAt` only when paid; terms, name, team, due, and person fixed) | ✗ | ✗ | ✗ (own too) | ✗ (own too) | ✓ | ✓ | ✓ (✗ archived team) | Du, C |
+| `duesPayments` (one per team, ID is the team's) | get, list | ✗ | ✗ | ✓ | = | = | = | ✓ | Du, C |
+| | create, update, delete (handles ≤ 60, note ≤ 280; not in a direct conversation) | ✗ | ✗ | ✗ | = | ✓ | ✓ | ✓ (✗ archived team) | Du, C |
 | `groupDocuments` | get, list | ✗\* | ✗ | ✓ | = | = | = | ✓ | D, A |
 | | create | ✗\* | ✗ | ✓ / ✗ (setting) | = | ✓ | ✓ | ✗ / ✓ on the team (setting off too) | D, A |
 | | update | ✗\* | ✗ | ✓ uploader / ✗ | = | ✓ (pins) | ✓ | ✓ (pins) | D |
@@ -89,6 +97,8 @@ Team states, for every collection above: **archived** teams refuse every member 
 Players and RSVPs under one team type: members list players with `status == 'active'`, and proposers with `proposedBy` equal to themselves; an unfiltered list is refused, because a query can't prove that a missing status means active (T). A get still treats a player with no status as active (T). A member linked as the player (`self`) edits the player and answers on its row, like a guardian, but can't change the link (T, S). Nobody answers for a pending player, admins and super admins included (S). `groupMembers.playerSummary` and `linksUpdatedAt`, and `players.linksUpdatedAt`, are Functions only: neither update rule's field list includes them.
 
 **Player details conditions** (all in PD): a pending player, a missing player, or a player on another team is refused for everyone (a pending player's missing doc reads as not found for admins); an archived team allows reads and refuses writes and deletes; a suspended team refuses everything for its members (also in C), while super admins still read; a wrong or changed `groupId`, a bad `updatedBy` or `updatedAt`, unknown keys, sizes over the limits, and bad contacts are refused; a date of birth with a bad format, an impossible date, or a future date is refused, and past dates and null are allowed; `medicalNotes`, `medicalConsentAt`, and `medicalConsentBy` are unknown keys and refused (no health data, 2026-10-20).
+
+**Dues conditions** (all in Du): nobody but a due's admins and super admins sees what anyone else owes or paid, by get or by list; a list by team alone is refused for members and guardians, and a list naming another person or player is refused. Nobody creates, edits, or deletes a due, or creates or deletes a charge, in the app: the `saveDue` and `deleteDue` callables do, checking the team, its admins, who's charged, the amounts, and the cap (functions/test/emulator/dues.test.ts). On a charge, admins change only the status: `paidAt` on an owed or waived charge, an unknown status, and a changed title, amount, date, name, person, due, or team are refused. A guardian who leaves the team loses their player's charges. A suspended team closes dues to its admins too (also in C), while super admins still read.
 
 ## Personal and platform collections (Firestore)
 

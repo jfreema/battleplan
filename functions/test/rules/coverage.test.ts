@@ -49,6 +49,9 @@ const DOCS: [collection: string, id: string, field: string, value: string][] = [
   ['events', 'e1', 'groupId', 'teamA'],
   ['rsvps', 'e1_alice', 'groupId', 'teamA'],
   ['assignments', 'as1', 'groupId', 'teamA'],
+  ['dues', 'du1', 'groupId', 'teamA'],
+  ['dueCharges', 'du1_emma', 'groupId', 'teamA'],
+  ['duesPayments', 'teamA', 'groupId', 'teamA'],
   ['groupDocuments', 'd1', 'groupId', 'teamA'],
   ['plays', 'pl1', 'groupId', 'teamA'],
   ['notifications', 'n1_alice', 'uid', 'alice'],
@@ -62,7 +65,7 @@ const DOCS: [collection: string, id: string, field: string, value: string][] = [
 /** The team-owned collections a member reads. */
 const TEAM_COLLECTIONS = [
   'groupMembers', 'players', 'playerGuardians', 'messages', 'polls', 'eventSeries', 'events', 'rsvps', 'assignments',
-  'groupDocuments', 'plays',
+  'groupDocuments', 'plays', 'duesPayments',
 ];
 
 /** teamA's files, one in each Storage folder, plus alice's avatar. */
@@ -122,6 +125,19 @@ async function seed(group: object = {}) {
     await db.doc('assignments/as1').set({
       groupId: 'teamA', eventId: 'e1', kind: 'snacks', label: null, assigneeUid: null, assignedBy: null,
       createdBy: 'alice', createdAt: ts('2026-10-01T00:00:00Z'), updatedAt: ts('2026-10-01T00:00:00Z'),
+    });
+    await db.doc('dues/du1').set({
+      groupId: 'teamA', title: 'Uniforms', amountCents: 4500, dueOn: null, note: '',
+      createdBy: 'alice', createdAt: ts('2026-10-01T00:00:00Z'), updatedAt: ts('2026-10-01T00:00:00Z'),
+    });
+    await db.doc('dueCharges/du1_emma').set({
+      groupId: 'teamA', dueId: 'du1', title: 'Uniforms', amountCents: 4500, dueOn: null, participantType: 'player',
+      participantId: 'emma', participantName: 'Emma', status: 'owed', paidAt: null, updatedBy: 'alice',
+      updatedAt: ts('2026-10-01T00:00:00Z'),
+    });
+    await db.doc('duesPayments/teamA').set({
+      groupId: 'teamA', venmo: '@teamA', cashApp: '', appleCash: '', note: '', updatedBy: 'alice',
+      updatedAt: ts('2026-10-01T00:00:00Z'),
     });
     await db.doc('groupDocuments/d1').set({ groupId: 'teamA', kind: 'link', name: 'Site', uploadedBy: 'bob' });
     await db.doc('plays/pl1').set({ groupId: 'teamA', board: 'soccer', variant: 'full', title: 'Corner', note: '', steps: [{ elements: [] }], createdBy: 'alice' });
@@ -211,6 +227,10 @@ describe('a suspended team (ADMIN-3)', () => {
     // Player details (PLAYER-12): closed to the admins and the guardian too.
     await assertFails(as('alice').collection('playerDetails').where('groupId', '==', 'teamA').limit(10).get());
     for (const uid of ['alice', 'carol', 'dan']) await assertFails(as(uid).doc('playerDetails/emma').get());
+    // Dues (DUES-1..DUES-4): closed to the admins, and to the guardian's own charge.
+    await assertFails(as('alice').collection('dues').where('groupId', '==', 'teamA').limit(10).get());
+    await assertFails(as('alice').collection('dueCharges').where('groupId', '==', 'teamA').limit(10).get());
+    await assertFails(as('dan').doc('dueCharges/du1_emma').get());
   });
 
   it('refuses every write a member could make', async () => {
@@ -235,6 +255,14 @@ describe('a suspended team (ADMIN-3)', () => {
         createdBy: 'alice', createdAt: now(), updatedAt: now(),
       }),
     );
+  });
+
+  it('refuses dues changes from its admins', async () => {
+    await assertFails(as('alice').doc('dues/du1').update({ title: 'Jerseys', updatedAt: now() }));
+    await assertFails(
+      as('carol').doc('dueCharges/du1_emma').update({ status: 'waived', updatedBy: 'carol', updatedAt: now() }),
+    );
+    await assertFails(as('alice').doc('duesPayments/teamA').update({ venmo: '@new', updatedBy: 'alice', updatedAt: now() }));
   });
 
   it('still shows people their own membership and notifications', async () => {

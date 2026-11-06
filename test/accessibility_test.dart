@@ -110,6 +110,10 @@ void main() {
           await pumpGroupSchedule(tester, scheme: scheme);
           await clearOfAddButton(tester);
         },
+    'dues': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpTeam(tester, scheme: scheme);
+      await goTo(tester, '/g/a/dues');
+    },
     'your icon': (WidgetTester tester, {required TeamScheme scheme}) async {
       await pumpTeam(tester, scheme: scheme);
       await goTo(tester, '/profile/icon');

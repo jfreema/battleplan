@@ -96,6 +96,9 @@ class TeamInfoScreen extends ConsumerWidget {
                         : l10n.groupPeople,
                   ),
                   row('invite', AppIcons.invite, l10n.inviteMenu),
+                  // Who owes what (DUES-1): everyone's for admins, your own
+                  // for everyone else.
+                  row('dues', AppIcons.payments, l10n.duesMenu),
                   if (!viewing) ...[
                     row(
                       'notifications',

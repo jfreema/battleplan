@@ -36,6 +36,11 @@ abstract final class CompositeIds {
   static String pollVote(PollId pollId, UserId uid) =>
       _join(pollId.value, uid.value);
 
+  /// One person's share of a due (DUES-2): a player ID on a team, a uid in
+  /// a group.
+  static String dueCharge(String dueId, String participantId) =>
+      _join(dueId, participantId);
+
   /// [participantId] is a uid for a member answering for themselves and a
   /// player ID for a player (PLAYER-6).
   static String rsvp(EventId eventId, String participantId) =>

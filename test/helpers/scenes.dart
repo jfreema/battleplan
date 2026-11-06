@@ -10,6 +10,7 @@ import 'package:battleplan/features/admin/domain/admin.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
+import 'package:battleplan/features/dues/domain/due.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/players/domain/player.dart';
@@ -125,6 +126,43 @@ List<Event> get sceneEvents => [
   ),
   sceneEvent('e4', day: 18, title: 'Parents meeting', type: EventType.meeting),
 ];
+
+/// The scene's dues (DUES-1): the uniform fee, two of the four paid, and
+/// how to pay.
+FakeDuesRepository sceneDues() {
+  final repo = FakeDuesRepository()
+    ..payments = const DuesPayments(
+      venmo: '@thunder-u14',
+      appleCash: '(555) 010-0144',
+      note: "Put your player's name in the note.",
+    )
+    ..dues.add(
+      const Due(
+        id: 'd0',
+        groupId: _team,
+        title: 'Uniform fee',
+        amountCents: 4500,
+        dueOn: '2030-10-31',
+      ),
+    );
+  for (final (i, p) in scenePlayers.indexed) {
+    repo.charges.add(
+      DueCharge(
+        id: 'd0_${p.id.value}',
+        groupId: _team,
+        dueId: 'd0',
+        title: 'Uniform fee',
+        amountCents: 4500,
+        dueOn: '2030-10-31',
+        participantType: ParticipantType.player,
+        participantId: p.id.value,
+        participantName: p.label,
+        status: i < 2 ? DueStatus.paid : DueStatus.owed,
+      ),
+    );
+  }
+  return repo;
+}
 
 /// The team's players (made up), each with one of the members as their
 /// guardian; the coach answers for Noah.
@@ -352,6 +390,7 @@ Future<void> pumpTeam(
   Size size = phoneSize,
   FakeMessageRepository? messages,
   FakeAssignmentRepository? assignments,
+  FakeDuesRepository? dues,
 }) async {
   final events = FakeEventRepository(sceneEvents);
   final rsvps = FakeRsvpRepository(events)
@@ -386,6 +425,7 @@ Future<void> pumpTeam(
     rsvpRepo: rsvps,
     playerRepo: FakePlayerRepository(scenePlayers)..links.addAll(sceneLinks),
     assignmentRepo: assignments,
+    duesRepo: dues ?? sceneDues(),
     documentRepo: FakeDocumentRepository(sceneDocuments),
     admin: FakeAdminRepository(
       totalsValue: const AdminTotals(
@@ -574,6 +614,10 @@ goldenScreens = {
     await goTo(tester, '/teams/scheme');
   },
   'group_schedule': pumpGroupSchedule,
+  'dues': (tester, {required scheme}) async {
+    await pumpTeam(tester, scheme: scheme);
+    await goTo(tester, '/g/a/dues');
+  },
   'your_icon': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/profile/icon');

@@ -10,3 +10,4 @@ export function compositeId(a: string, b: string): string {
 
 export const groupMemberId = (groupId: string, uid: string) => compositeId(groupId, uid);
 export const rsvpId = (eventId: string, participantId: string) => compositeId(eventId, participantId);
+export const dueChargeId = (dueId: string, participantId: string) => compositeId(dueId, participantId);

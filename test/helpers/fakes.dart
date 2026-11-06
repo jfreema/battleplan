@@ -23,6 +23,8 @@ import 'package:battleplan/features/chat/domain/message_repository.dart';
 import 'package:battleplan/features/chat/domain/search_words.dart';
 import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/documents/domain/document_repository.dart';
+import 'package:battleplan/features/dues/domain/due.dart';
+import 'package:battleplan/features/dues/domain/dues_repository.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
@@ -3957,5 +3959,179 @@ class FakePlayRepository implements PlayRepository {
     calls.add('delete ${id.value}');
     plays.removeWhere((p) => p.id == id);
     _changes.add(null);
+  }
+}
+
+/// Dues in memory (DUES-1 to DUES-3), live, as Firestore would stream them;
+/// it records each write. watchMine returns only the payers' own charges,
+/// as the rules let a member read.
+class FakeDuesRepository implements DuesRepository {
+  final List<Due> dues = [];
+  final List<DueCharge> charges = [];
+  DuesPayments payments = const DuesPayments();
+  final List<String> calls = [];
+
+  /// Set to refuse writes, as the rules or the callables would.
+  AppFailure? failWrites;
+
+  /// Set to make the reads fail, as when offline or refused.
+  bool failReads = false;
+  final _changes = StreamController<void>.broadcast();
+  int _next = 0;
+
+  void _changed() => _changes.add(null);
+
+  Stream<T> _live<T>(T Function() read) async* {
+    if (failReads) throw const PermissionDenied('reads');
+    yield read();
+    await for (final _ in _changes.stream) {
+      yield read();
+    }
+  }
+
+  @override
+  Stream<List<Due>> watchDues(GroupId groupId) => _live(
+    () => [
+      for (final d in dues.reversed)
+        if (d.groupId == groupId) d,
+    ],
+  );
+
+  @override
+  Stream<List<DueCharge>> watchDueCharges(GroupId groupId, String dueId) =>
+      _live(
+        () => [
+          for (final c in charges)
+            if (c.groupId == groupId && c.dueId == dueId) c,
+        ],
+      );
+
+  @override
+  Stream<List<DueCharge>> watchMine(GroupId groupId, List<DuePayer> payers) =>
+      _live(
+        () => [
+          for (final c in charges)
+            if (c.groupId == groupId &&
+                payers.any(
+                  (p) => p.id == c.participantId && p.type == c.participantType,
+                ))
+              c,
+        ],
+      );
+
+  @override
+  Stream<DuesPayments> watchPayments(GroupId groupId) => _live(() => payments);
+
+  void _check() {
+    final f = failWrites;
+    if (f != null) throw f;
+  }
+
+  @override
+  Future<void> create(
+    GroupId groupId, {
+    required String title,
+    required int amountCents,
+    required String? dueOn,
+    required String note,
+    required List<DuePayer> payers,
+  }) async {
+    _check();
+    final id = 'd${_next++}';
+    calls.add('create $title $amountCents ${payers.length}');
+    dues.add(
+      Due(
+        id: id,
+        groupId: groupId,
+        title: title.trim(),
+        amountCents: amountCents,
+        dueOn: dueOn,
+        note: note.trim(),
+        createdBy: 'coach',
+      ),
+    );
+    for (final p in payers) {
+      charges.add(
+        DueCharge(
+          id: '${id}_${p.id}',
+          groupId: groupId,
+          dueId: id,
+          title: title.trim(),
+          amountCents: amountCents,
+          dueOn: dueOn,
+          participantType: p.type,
+          participantId: p.id,
+          participantName: p.name,
+        ),
+      );
+    }
+    _changed();
+  }
+
+  @override
+  Future<void> edit(
+    Due due, {
+    required String title,
+    required int amountCents,
+    required String? dueOn,
+    required String note,
+  }) async {
+    _check();
+    calls.add('edit ${due.id} $title $amountCents');
+    final i = dues.indexWhere((d) => d.id == due.id);
+    dues[i] = due.copyWith(
+      title: title.trim(),
+      amountCents: amountCents,
+      dueOn: dueOn,
+      note: note.trim(),
+    );
+    for (var j = 0; j < charges.length; j++) {
+      final c = charges[j];
+      if (c.dueId == due.id) {
+        charges[j] = c.copyWith(
+          title: title.trim(),
+          amountCents: amountCents,
+          dueOn: dueOn,
+        );
+      }
+    }
+    _changed();
+  }
+
+  @override
+  Future<void> remove(Due due) async {
+    _check();
+    calls.add('remove ${due.id}');
+    dues.removeWhere((d) => d.id == due.id);
+    charges.removeWhere((c) => c.dueId == due.id);
+    _changed();
+  }
+
+  @override
+  Future<void> setStatus(
+    DueCharge charge,
+    DueStatus status, {
+    required UserId by,
+  }) async {
+    _check();
+    calls.add('status ${charge.id} ${status.value}');
+    final i = charges.indexWhere((c) => c.id == charge.id);
+    charges[i] = charge.copyWith(
+      status: status,
+      paidAt: status == DueStatus.paid ? DateTime(2026, 11, 6) : null,
+    );
+    _changed();
+  }
+
+  @override
+  Future<void> savePayments(
+    GroupId groupId,
+    DuesPayments payments, {
+    required UserId by,
+  }) async {
+    _check();
+    calls.add('payments');
+    this.payments = payments;
+    _changed();
   }
 }

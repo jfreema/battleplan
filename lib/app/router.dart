@@ -30,6 +30,7 @@ import 'package:battleplan/features/chat/presentation/messages_screen.dart';
 import 'package:battleplan/features/chat/presentation/team_photos_screen.dart';
 import 'package:battleplan/features/documents/presentation/document_screen.dart';
 import 'package:battleplan/features/documents/presentation/documents_screen.dart';
+import 'package:battleplan/features/dues/dues.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/presentation/add_members_screen.dart';
 import 'package:battleplan/features/groups/presentation/color_scheme_screen.dart';
@@ -725,6 +726,50 @@ GoRouter router(Ref ref) {
             builder: (_, state) => ImportScreen(
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
+          ),
+          // Dues (DUES-1 to DUES-3): everyone's for admins, my own for
+          // the rest.
+          GoRoute(
+            path: 'dues',
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: DuesScreen(
+                groupId: GroupId(state.pathParameters['groupId']!),
+              ),
+            ),
+            routes: [
+              GoRoute(
+                path: 'new',
+                pageBuilder: (_, state) => PanelPage(
+                  key: state.pageKey,
+                  child: NewDueScreen(
+                    groupId: GroupId(state.pathParameters['groupId']!),
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: ':dueId',
+                pageBuilder: (_, state) => PanelPage(
+                  key: state.pageKey,
+                  child: DueDetailScreen(
+                    groupId: GroupId(state.pathParameters['groupId']!),
+                    dueId: state.pathParameters['dueId']!,
+                  ),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (_, state) => PanelPage(
+                      key: state.pageKey,
+                      child: NewDueScreen(
+                        groupId: GroupId(state.pathParameters['groupId']!),
+                        dueId: state.pathParameters['dueId'],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           // How I see this team (SET-2). A super admin viewing a team
           // they aren't on has no membership to save it on.

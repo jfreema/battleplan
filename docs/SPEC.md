@@ -161,6 +161,8 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 | RSVP for any member or player | — | ✓ | ✓ | ✓ |
 | Volunteer for an open assignment, or drop out of your own (SCHED-15) | ✓ | ✓ | ✓ | in teams they've joined |
 | Add, edit, and remove assignments; assign anyone on the team (SCHED-15) | — | ✓ | ✓ | ✓ |
+| See what you owe, or your players owe, and how to pay (DUES-2, DUES-3) | ✓ | ✓ | ✓ | ✓ any team |
+| Add, edit, and delete dues; mark who paid; see what everyone owes; set how to pay (DUES-1 to DUES-3) | — | ✓ | ✓ | ✓ |
 | Claim a player ("I am this player" or parent/guardian) | needs admin approval | ✓ at once | ✓ at once | at once, in teams they've joined |
 | Add players | pending until an admin approves | ✓ | ✓ | ✓ |
 | Add a guardian to a player | players they're linked to (as the player or a guardian) | ✓ | ✓ | ✓ |
@@ -256,7 +258,7 @@ Sign in
       ├─ Messages:   your direct conversations → one of them (CHAT-19)
       ├─ A person:   their page, from their photo in chat or the roster (TEAM-15)
       ├─ Tabs:       Chat | Schedule | Documents | Plays
-      └─ Team info:  the team · Roster · Invite · Notifications for this team · Color scheme ·
+      └─ Team info:  the team · Roster · Invite · Dues · Notifications for this team · Color scheme ·
                      Calendar link · Team admin* · Media* · Reports* · Import*    (* admins)
                      (Leave team is on your own card in the Roster, TEAM-8)
 ```
@@ -473,7 +475,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - Optional contact sharing: on their own card, members share a phone number and email with that team ("Share my phone and email"; the account's email is offered), and change them or stop sharing at any time. They appear on their card for everyone on the team with call, text, and email buttons. Each team is separate. Sharing needs an open team; stopping works even on an archived or suspended one. Leaving the team or deleting the account removes them.
 - **TEAM-11 · MVP · Players on every team.** Players, guardians, and claims are specified in §6.3 (PLAYER).
 - **TEAM-12 · v1.1 · Announcement-only mode.** Only admins can post in chat. Everyone can still react, vote, and RSVP.
-- **TEAM-14 · v1.1 · Groups beside teams.** (Owner's request 2026-10-29.) Created from **Create a Team** or **Create a Group** (TEAM-1). Its owner (or a super admin) can **Make it a team** in Group admin, picking its sport: it gets players, the parents who answer for them, coaches, and Plays, keeps its people, chat, schedule, answers, and documents, its owner coaches from then on, and the chat says "Pat made this group a team" (owner's request 2026-10-29). A team can't become a group. A group is for extreme simplicity; a team has everything. A group has every feature a team has (chat, schedule and RSVPs, assignments, polls, documents and photos, invites, admins, notifications, imports, calendar links) except what's about players: no roster players, guardians, claims, "Who are you here for?", coaches, player details, or **Plays**, and no sport. Everyone in a group chats and answers RSVPs for themselves, and counts are of its members ("4/8 going"). In a group, as on a team, each person picks the scheme they see (SET-2). Its roster is **People** (admins and members), **Group info** says "Group · 8 members" and **Group admin** has no sport with a group icon in Teams and the switcher, joining one (Join group) goes straight to its chat, and its tabs are Chat, Schedule, and Documents. The TeamSnap import has no Players box for a group. Versions of the app before groups show a group as a team, so the server and rules refuse players, guardians, player answers, coaches, a sport, and plays in a group whatever app asks.
+- **TEAM-14 · v1.1 · Groups beside teams.** (Owner's request 2026-10-29.) Created from **Create a Team** or **Create a Group** (TEAM-1). Its owner (or a super admin) can **Make it a team** in Group admin, picking its sport: it gets players, the parents who answer for them, coaches, and Plays, keeps its people, chat, schedule, answers, and documents, its owner coaches from then on, and the chat says "Pat made this group a team" (owner's request 2026-10-29). A team can't become a group. A group is for extreme simplicity; a team has everything. A group has every feature a team has (chat, schedule and RSVPs, assignments, dues, polls, documents and photos, invites, admins, notifications, imports, calendar links) except what's about players: no roster players, guardians, claims, "Who are you here for?", coaches, player details, or **Plays**, and no sport. Everyone in a group chats and answers RSVPs for themselves, and counts are of its members ("4/8 going"). In a group, as on a team, each person picks the scheme they see (SET-2). Its roster is **People** (admins and members), **Group info** says "Group · 8 members" and **Group admin** has no sport with a group icon in Teams and the switcher, joining one (Join group) goes straight to its chat, and its tabs are Chat, Schedule, and Documents. The TeamSnap import has no Players box for a group. Versions of the app before groups show a group as a team, so the server and rules refuse players, guardians, player answers, coaches, a sport, and plays in a group whatever app asks.
 - **TEAM-13 · Later.**
   - Join requests that need admin approval.
   - Organizations and leagues with club admins.
@@ -1219,6 +1221,26 @@ Requested 2026-10-15; built the same day (ROADMAP tasks 242–248). The coach's 
 - Members view saved plays but can't change them; people not on the team can't read them; archived teams' plays are read-only.
 - Anyone on the team posts a saved play to the chat, where its picture opens the play, and saves it as a GIF that plays its steps, holds the last for 3 seconds, and repeats, or shares that GIF through the share sheet.
 
+---
+
+### 6.17 Dues (DUES) · Built
+
+The owner's request (2026-11-06): team admins assign dues and fees, such as uniforms or the team fee, to players on a team or to people in a group, and track who paid and who still owes. Admins can share how to pay with Venmo, Cash App, or Apple Cash, but Battleplan never takes or sends money: paying is person to person, outside the app. Nobody but the admins sees what anyone else owes or paid.
+
+**Dues** is a row on Team info (Group info in a group), under Invite, for everyone: admins see every due, and everyone else sees only what they owe (route `/g/{groupId}/dues`).
+
+- **DUES-1 · v1.1 · Adding a due.** Team admins (and super admins, §3) tap **New due** (`/g/{groupId}/dues/new`): **What it's for** (up to 60 characters, "Uniform fee"), the **Amount** in US dollars, from 1 cent up to $10,000, an optional **Due date**, an optional **Note** (up to 280), and **Who owes it**: on a team, every active player, and in a group, every member, each checked to start and any unchecked (up to 100 people a due). Admins see each due on the Dues screen with how it's going: "4 of 12 paid · $90 owed". **Edit due** (`/g/{groupId}/dues/{dueId}/edit`) changes what it's for, the amount, the date, and the note, and everyone's share changes with it; **Delete due** asks first ("Everyone's record of it goes too.") and removes the due and every share of it.
+- **DUES-2 · v1.1 · Who paid.** Each person on a due has their own share: a player on a team, or a member in a group. Admins open a due (`/g/{groupId}/dues/{dueId}`) to see everyone on it and mark each one **Paid**, **Not paid**, or **Waived**. Everyone else sees only their own, under **What you owe** with the total still owed ("$45 owed", or "All paid. Thanks!"): in a group, the member's own share; on a team, the shares of the players they answer for, as a parent or guardian or as the player themselves ("For Emma"). Nobody else sees them, not even that they exist.
+- **DUES-3 · v1.1 · How to pay.** Admins **Edit how to pay** on the Dues screen: a Venmo username, a Cash App $cashtag, an Apple Cash phone number or email, and a note ("Put your player's name in the note"), any of them left empty. Everyone on the team sees them, with "Pay the team directly. Battleplan doesn't handle payments." Each has **Copy**; on the web and in the Android app, Venmo and Cash App also have **Open**, which opens the person's Venmo or Cash App page. The iPhone app only copies. Paying never happens in Battleplan, and nothing is marked paid on its own: an admin marks it once the money arrives.
+- **DUES-4 · v1.1 · Privacy.** Enforced by the server's rules, not only the app: a due itself is seen only by the team's admins and super admins; a share by them, the member it's for, or the people linked to its player (a parent or guardian, or the player themselves); how to pay by everyone on the team. Only the team's admins (and super admins) add, change, and delete them: a due and everyone's share of it are added, changed, and deleted together on the server, which checks who's asking and who's charged, while admins mark shares paid in the app. Archived teams are read-only. Dues go with the team when it's deleted (TEAM-9). Direct conversations have no dues.
+
+**Acceptance**
+
+- An admin adds a $45 uniform fee for the whole roster in under a minute, and marks people paid as the money comes in, seeing "4 of 12 paid · $90 owed".
+- A parent sees what their own players owe, the total, and how to pay, and never what anyone else owes or paid; a member of a group sees only their own.
+- Venmo and Cash App copy everywhere and open on the web and Android; no payment is made or recorded by Battleplan itself.
+- Someone not an admin can't read another person's share or any due through the server, whatever app asks.
+
 ## 7. Design system and UI
 
 ### 7.1 Brand
@@ -1604,7 +1626,7 @@ Not in v1; some may come later:
 - Email digests (reminders by email for people who can't get notifications are SCHED-14)
 - Typing indicators and read receipts
 - Attendance tracking, stats, and scores
-- Payments and team dues
+- Taking payments in the app (DUES tracks who paid and shows how to pay the team; the money moves person to person, outside Battleplan)
 - Volunteer and snack sign-ups beyond assignments (SCHED-15 has one person a task, chosen in the app)
 - Carpools
 - Importing chat from TeamSnap, which doesn't export it. GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar imports are built (§6.15; ROADMAP tasks 241, 249, 250, 252, 254).

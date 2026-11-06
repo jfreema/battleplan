@@ -42,6 +42,8 @@ abstract final class AppIcons {
   static const IconData retry = Symbols.refresh_rounded;
   static const IconData addReaction = Symbols.add_reaction_rounded;
   static const IconData copy = Symbols.content_copy_rounded;
+  static const IconData payments = Symbols.payments_rounded;
+  static const IconData openInNew = Symbols.open_in_new_rounded;
   static const IconData reply = Symbols.reply_rounded;
   static const IconData delete = Symbols.delete_rounded;
   static const IconData arrowDown = Symbols.arrow_downward_rounded;

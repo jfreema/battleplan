@@ -63,6 +63,7 @@ export {
 } from './teams/triggers.js';
 export { deleteMessage, openDirectChat, pinMessage } from './chat/handlers.js';
 export { onDocumentCreated, onDocumentDeleted } from './documents/triggers.js';
+export { deleteDue, saveDue } from './dues/handlers.js';
 export { reportContent, resolveReport } from './safety/handlers.js';
 export { onMessageCreated, onMessageUpdated } from './chat/triggers.js';
 export {
