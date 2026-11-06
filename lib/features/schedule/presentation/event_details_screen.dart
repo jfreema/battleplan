@@ -2,32 +2,32 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
-import 'package:battleplan/core/design/gumdrop_buttons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
-import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
+import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
-import 'package:battleplan/core/widgets/info_tag.dart';
+import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_draft.dart';
-import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/event_actions.dart';
@@ -107,8 +107,6 @@ class EventDetailsScreen extends ConsumerWidget {
               context.go('/g/${groupId.value}/schedule');
             }
           }
-        case _Action.setRsvp:
-          await _setRsvpForSomeone(context, ref, event, group);
         case _Action.repost:
           await _repostToChat(context, ref, event);
         case _Action.emailRsvp:
@@ -116,32 +114,50 @@ class EventDetailsScreen extends ConsumerWidget {
       }
     }
 
-    final icon = headerIconStyle(context);
+    final canPop = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
+    IconButton action(String tip, IconData glyph, VoidCallback onTap) =>
+        IconButton(
+          tooltip: tip,
+          constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+          padding: EdgeInsets.zero,
+          iconSize: 24,
+          icon: Icon(glyph),
+          onPressed: onTap,
+        );
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 64,
-        leadingWidth: 62,
-        // The round lemon back button (design §3.2).
-        leading: (ModalRoute.of(context)?.impliesAppBarDismissal ?? false)
-            ? const LemonBackButton()
+        // The back row only: the opener's name, or the chevron alone from
+        // a notification or a link.
+        toolbarHeight: 48,
+        automaticallyImplyLeading: false,
+        excludeHeaderSemantics: true,
+        titleSpacing: 4,
+        title: canPop
+            ? Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: BackChevron(
+                  label: switch (backLabelFrom(context, '')) {
+                    final from? when from.isNotEmpty => from,
+                    _ => null,
+                  },
+                ),
+              )
             : null,
-        actionsPadding: const EdgeInsetsDirectional.only(end: 10),
+        actionsPadding: const EdgeInsetsDirectional.only(end: 4),
         actions: [
-          IconButton(
-            style: icon,
-            tooltip: l10n.eventAddToCalendar,
-            icon: const Icon(AppIcons.addToCalendar),
-            onPressed: () => unawaited(addToCalendar(context, ref, event)),
+          action(
+            l10n.eventAddToCalendar,
+            AppIcons.addToCalendar,
+            () => unawaited(addToCalendar(context, ref, event)),
           ),
-          IconButton(
-            style: icon,
-            tooltip: l10n.share,
-            icon: const Icon(AppIcons.share),
-            onPressed: () => unawaited(shareEvent(context, ref, event)),
+          action(
+            l10n.share,
+            AppIcons.share,
+            () => unawaited(shareEvent(context, ref, event)),
           ),
           if (canManage || canCreate)
             PopupMenuButton<_Action>(
-              style: icon,
+              iconSize: 24,
               icon: const Icon(AppIcons.menu),
               tooltip: l10n.eventMoreActions,
               onSelected: (a) => unawaited(onMenu(a)),
@@ -155,19 +171,6 @@ class EventDetailsScreen extends ConsumerWidget {
                   PopupMenuItem(
                     value: _Action.duplicate,
                     child: Text(l10n.eventDuplicate),
-                  ),
-                // Team admins and super admins answer for a player, or for
-                // anyone in a group (§3, PLAYER-6).
-                if (canManage &&
-                    event.takesRsvps &&
-                    (superAdmin || (me?.isAdmin ?? false)))
-                  PopupMenuItem(
-                    value: _Action.setRsvp,
-                    child: Text(
-                      group.hasPlayers
-                          ? l10n.eventRsvpForPlayer
-                          : l10n.eventSetRsvpFor,
-                    ),
                   ),
                 // A reminder by hand, in the chat (SCHED-8).
                 if (canRepost(event, group, me, superAdmin: superAdmin))
@@ -210,7 +213,7 @@ class EventDetailsScreen extends ConsumerWidget {
   }
 }
 
-enum _Action { edit, duplicate, setRsvp, repost, emailRsvp, cancel, delete }
+enum _Action { edit, duplicate, repost, emailRsvp, cancel, delete }
 
 /// Emails the people linked to players who haven't RSVP'd, after asking
 /// how many it will be (SCHED-14). They answer from the email.
@@ -314,7 +317,7 @@ class _Details extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
+    final c = GumdropColors.of(context);
     final series = event.seriesId == null
         ? null
         : ref.watch(eventSeriesProvider(event.seriesId!)).value;
@@ -323,293 +326,259 @@ class _Details extends ConsumerWidget {
     final reminders = event.allDay
         ? allDayReminders(event.reminderOffsets)
         : event.reminderOffsets;
+    final otherZone = otherZoneLine(l10n, event, zone);
+    final opponent = event.isGame ? event.opponent?.trim() ?? '' : '';
+    final arrive = event.isGame && event.arriveMinutesBefore != null
+        ? l10n.eventArrive(event.arriveMinutesBefore!)
+        : null;
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(gutter, Space.lg, gutter, Space.xxl),
+    // No fade over the end of the scroll: it dimmed the text under it
+    // below 4.5:1.
+    return Stack(
       children: [
-        _GameCard(event: event, zone: zone, series: series),
-        if (event.location != null || reminders.isNotEmpty) ...[
-          const SizedBox(height: Space.md),
-          // Directions, and when the reminders go (design §3.5).
-          Wrap(
-            spacing: 10,
-            runSpacing: Space.sm,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (event.location case final loc?)
-                OutlinedButton.icon(
-                  style: GumdropButtons.of(context).secondary(
-                    height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    textStyle: Theme.of(context).textTheme.labelLarge
-                        ?.copyWith(fontSize: 15),
+        ListView(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+          children: [
+            _Hero(event: event, zone: zone),
+            const SizedBox(height: 8),
+            PageRows(
+              children: [
+                if (otherZone != null || arrive != null)
+                  PageRow(
+                    icon: AppIcons.time,
+                    title: otherZone ?? arrive!,
+                    subtitle: otherZone != null ? arrive : null,
+                    subtitleMaxLines: null,
                   ),
-                  onPressed: () => unawaited(openDirections(ref, loc)),
-                  icon: const Icon(AppIcons.directions, size: 18),
-                  label: Text(l10n.eventDirections),
-                ),
-              if (reminders.isNotEmpty)
-                // Information, not a button: a flat tag.
-                InfoTag(
-                  icon: AppIcons.reminder,
-                  text: event.allDay
-                      ? l10n.eventRemindersAllDayLine(
-                          joinAnd(l10n, [
-                            for (final o in reminders) reminderLabel(l10n, o),
-                          ]),
-                        )
-                      : l10n.eventRemindersLine(
-                          joinAnd(l10n, [
-                            for (final o in reminders) reminderLabel(l10n, o),
-                          ]),
-                        ),
-                ),
-            ],
-          ),
-        ],
-        const SizedBox(height: Space.md),
-        _RsvpSection(event: event, group: group, me: me),
-        // Snacks, drinks, a scorekeeper (SCHED-15): secondary, so last.
-        const SizedBox(height: Space.lg),
-        AssignmentsRow(event: event, group: group, me: me),
+                if (event.location case final loc?)
+                  PageRow(
+                    icon: AppIcons.location,
+                    title: loc.name.isNotEmpty ? loc.name : loc.address,
+                    subtitle: loc.name.isNotEmpty && loc.address.isNotEmpty
+                        ? loc.address
+                        : null,
+                    subtitleMaxLines: null,
+                    trailing: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                      ),
+                      onPressed: () => unawaited(openDirections(ref, loc)),
+                      icon: Icon(
+                        AppIcons.directions,
+                        size: 18,
+                        color: c.accentMark,
+                      ),
+                      label: Text(l10n.eventDirections),
+                    ),
+                  ),
+                if (series != null)
+                  PageRow(
+                    icon: AppIcons.repeat,
+                    title: repeatsLine(l10n, series.recurrence),
+                  ),
+                // The opponent, when the title doesn't already say.
+                if (opponent.isNotEmpty && !event.title.contains(opponent))
+                  PageRow(
+                    icon: AppIcons.game,
+                    title: l10n.eventOpponentLine(opponent),
+                  ),
+                if (reminders.isNotEmpty)
+                  PageRow(
+                    icon: AppIcons.reminder,
+                    title: event.allDay
+                        ? l10n.eventRemindersAllDayLine(
+                            joinAnd(l10n, [
+                              for (final o in reminders) reminderLabel(l10n, o),
+                            ]),
+                          )
+                        : l10n.eventRemindersLine(
+                            joinAnd(l10n, [
+                              for (final o in reminders) reminderLabel(l10n, o),
+                            ]),
+                          ),
+                  ),
+                if (event.description.isNotEmpty)
+                  SelectionArea(
+                    child: PageRow(
+                      icon: AppIcons.notes,
+                      title: event.description,
+                    ),
+                  ),
+              ],
+            ),
+            // Snacks, drinks, a scorekeeper (SCHED-15).
+            AssignmentsRow(event: event, group: group, me: me),
+            const SizedBox(height: 14),
+            _RsvpSection(event: event, group: group, me: me),
+          ],
+        ),
       ],
     );
   }
 }
 
-/// The event's hero card (design §3.5): the type's candy with ink on it,
-/// the type and how soon, the opponent's letter, the title, and every
-/// detail under a dashed line.
-class _GameCard extends StatelessWidget {
-  const new({required this.event, required this.zone, required this.series});
+/// The top of the event (SPEC §7.3): the stencil eyebrow (the type, and
+/// Home or Away) with how soon on the right, the opponent's crest and name
+/// in Lilita 48 for a game (else the title in Lilita 32), and when.
+class _Hero extends StatelessWidget {
+  const new({required this.event, required this.zone});
 
   final Event event;
   final String zone;
-  final EventSeries? series;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final c = GumdropColors.of(context);
+    final style = GumdropStyle.of(context);
     final accent = typeAccent(context, event.type);
-    final ink = c.ink;
-    final detail = theme.textTheme.bodyLarge?.copyWith(
-      color: ink,
-      fontWeight: FontWeight.w800,
-    );
-    final small = theme.textTheme.bodyMedium?.copyWith(
-      color: ink,
-      fontWeight: FontWeight.w700,
-    );
-    final chip = theme.textTheme.labelMedium?.copyWith(
-      fontSize: 13,
-      letterSpacing: 13 * 0.07,
-      height: 1,
-    );
-    final otherZone = otherZoneLine(l10n, event, zone);
-    final start = ZonedTime.wallClock(zone, event.startAt);
+    // The type's color on the page (social is the going color).
+    final eyebrowColor = event.type == EventType.social
+        ? c.successOnPage
+        : accent.text;
     final opponent = event.isGame ? event.opponent?.trim() ?? '' : '';
     final soon = _soonLabel(l10n, event, zone);
-    final subtitle = [
+    final eyebrow = [
+      typeLabel(l10n, event.type),
       if (event.isGame && event.homeAway == HomeAway.home) l10n.eventHome,
       if (event.isGame && event.homeAway == HomeAway.away) l10n.eventAway,
-      if (!event.allDay) dayLabel(l10n, start),
     ].join(' · ');
-
-    Widget line(IconData icon, Widget child) => Row(
+    final strike = event.isCanceled ? TextDecoration.lineThrough : null;
+    // The crest and the big name only for a title that's the opponent
+    // ("vs. Eagles", "@ Eagles"); any other title is shown whole.
+    final match = opponent.isEmpty
+        ? null
+        : RegExp(r'^\s*(vs\.?|@)?\s*' + RegExp.escape(opponent) + r'\s*$')
+              .firstMatch(event.title);
+    final crestName = match == null ? null : opponent;
+    final prefix = match?.group(1);
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 1),
-          child: Icon(icon, size: 19, color: ink, weight: 600),
-        ),
-        const SizedBox(width: 9),
-        Expanded(child: child),
-      ],
-    );
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 15, 18, 16),
-      decoration: GumdropStyle.of(context)
-          .cardDecoration(accent.face, Corners.sheet),
-      child: DefaultTextStyle.merge(
-        style: TextStyle(color: ink),
-        child: IconTheme.merge(
-          data: IconThemeData(color: ink),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 20),
+          child: Row(
             children: [
-              Wrap(
-                spacing: Space.sm,
-                runSpacing: Space.xs,
-                children: [
-                  _HeroChip(
-                    background: ink,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          typeIcon(event.type),
-                          size: 14,
-                          color: accent.face,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          typeLabel(l10n, event.type).toUpperCase(),
-                          style: chip?.copyWith(color: accent.face),
-                        ),
-                      ],
-                    ),
+              Expanded(
+                child: Text(
+                  eyebrow.toUpperCase(),
+                  semanticsLabel: eyebrow,
+                  style: TextStyle(
+                    fontFamily: AppFonts.sticker,
+                    fontSize: 13,
+                    height: 16 / 13,
+                    letterSpacing: 13 * 0.18,
+                    color: eyebrowColor,
                   ),
-                  if (soon != null && !event.isCanceled)
-                    _HeroChip(
-                      background: GumdropColors.of(context).ink
-                          .withValues(alpha: 0.14),
-                      child: Text(
-                        soon.toUpperCase(),
-                        style: chip?.copyWith(color: ink),
-                      ),
-                    ),
-                  if (event.isCanceled) const CanceledBadge(),
-                ],
-              ),
-              const SizedBox(height: Space.md),
-              Row(
-                children: [
-                  if (opponent.isNotEmpty) ...[
-                    ExcludeSemantics(
-                      child: Container(
-                        width: 60,
-                        height: 60,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: ink,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          opponent.characters.first.toUpperCase(),
-                          textScaler: TextScaler.noScaling,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontSize: 29,
-                            height: 1,
-                            color: accent.face,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                  ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          event.title,
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontSize: 38,
-                            height: 1,
-                            color: ink,
-                            shadows: const [],
-                            decoration: event.isCanceled
-                                ? TextDecoration.lineThrough
-                                : null,
-                            decorationColor: ink,
-                          ),
-                        ),
-                        if (subtitle.isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Text(subtitle, style: detail),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: Space.md),
-              CustomPaint(
-                painter: _DashedLine(
-                  color: GumdropColors.of(context).ink.withValues(alpha: 0.3),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 13),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      line(
-                        AppIcons.time,
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              timeRange(
-                                l10n,
-                                event,
-                                zone,
-                                withDay: event.allDay,
-                              ),
-                              style: detail,
-                            ),
-                            if (otherZone != null)
-                              Text(otherZone, style: small),
-                            if (event.isGame &&
-                                event.arriveMinutesBefore != null)
-                              Text(
-                                l10n.eventArrive(event.arriveMinutesBefore!),
-                                style: small,
-                              ),
-                          ],
-                        ),
+              ),
+              if (event.isCanceled)
+                const CanceledBadge()
+              else if (soon != null) ...[
+                Icon(AppIcons.time, size: 16, color: c.tangerine.text),
+                const SizedBox(width: 5),
+                Text(
+                  soon,
+                  style: TextStyle(
+                    fontFamily: AppFonts.body,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    height: 20 / 15,
+                    color: c.textOnPage,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        if (crestName != null)
+          Row(
+            children: [
+              ExcludeSemantics(
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: c.tangerine.face,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: c.tangerine.lip, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: c.tangerine.lip,
+                        offset: const Offset(0, 3),
                       ),
-                      if (series != null) ...[
-                        const SizedBox(height: 6),
-                        line(
-                          AppIcons.repeat,
-                          Text(
-                            repeatsLine(l10n, series!.recurrence),
-                            style: detail,
-                          ),
-                        ),
-                      ],
-                      // The opponent, when the title doesn't already say.
-                      if (opponent.isNotEmpty &&
-                          !event.title.contains(opponent)) ...[
-                        const SizedBox(height: 6),
-                        line(
-                          AppIcons.game,
-                          Text(l10n.eventOpponentLine(opponent), style: detail),
-                        ),
-                      ],
-                      if (event.location case final loc?) ...[
-                        const SizedBox(height: 6),
-                        line(
-                          AppIcons.location,
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (loc.name.isNotEmpty)
-                                Text(loc.name, style: detail),
-                              if (loc.address.isNotEmpty)
-                                Text(loc.address, style: small),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (event.description.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        line(
-                          AppIcons.notes,
-                          SelectableText(event.description, style: small),
-                        ),
-                      ],
                     ],
+                  ),
+                  child: Text(
+                    crestName.characters.first.toUpperCase(),
+                    textScaler: TextScaler.noScaling,
+                    style: style.display(
+                      TextStyle(fontSize: 28, height: 1, color: c.ink),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      if (prefix != null)
+                        TextSpan(
+                          text: '$prefix ',
+                          style: style.label(
+                            TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: c.textMutedOnPage,
+                              shadows: const [],
+                            ),
+                          ),
+                        ),
+                      TextSpan(text: crestName),
+                    ],
+                  ),
+                  semanticsLabel: event.title,
+                  style: theme.textTheme.displayMedium?.copyWith(
+                    fontSize: 48,
+                    height: 50 / 48,
+                    decoration: strike,
                   ),
                 ),
               ),
             ],
+          )
+        else
+          Semantics(
+            header: true,
+            child: Text(
+              event.title,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontSize: 32,
+                height: 36 / 32,
+                decoration: strike,
+              ),
+            ),
+          ),
+        const SizedBox(height: 7),
+        Text(
+          [
+            if (!event.allDay)
+              dayLabel(l10n, ZonedTime.wallClock(zone, event.startAt)),
+            timeRange(l10n, event, zone, withDay: event.allDay),
+          ].join(' · '),
+          style: TextStyle(
+            fontFamily: AppFonts.body,
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+            height: 22 / 17,
+            color: c.textOnPage,
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -622,51 +591,6 @@ class _GameCard extends StatelessWidget {
     if (days < 0 || days > 14) return null;
     return l10n.eventInDays(days);
   }
-}
-
-/// A 25 px chip on the hero card (design §3.5).
-class _HeroChip extends StatelessWidget {
-  const new({required this.background, required this.child});
-
-  final Color background;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    constraints: const BoxConstraints(minHeight: 25),
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(
-      color: background,
-      borderRadius: BorderRadius.circular(13),
-    ),
-    child: child,
-  );
-}
-
-/// The hero card's 2 px dashed rule along the top of its details.
-class _DashedLine extends CustomPainter {
-  const new({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2;
-    const dash = 6.0;
-    const gap = 4.0;
-    for (var x = 0.0; x < size.width; x += dash + gap) {
-      canvas.drawLine(
-        Offset(x, 1),
-        Offset((x + dash).clamp(0, size.width), 1),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedLine old) => old.color != color;
 }
 
 /// My answer buttons, the counts, and who's coming (SCHED-4, SCHED-5).
@@ -748,7 +672,11 @@ class _RsvpSection extends ConsumerWidget {
         !event.isCanceled;
 
     // Admins set anyone's answer (SCHED-4).
-    final canSet = isAdmin && event.takesRsvps && !group.isArchived;
+    final canSet =
+        isAdmin &&
+        event.takesRsvps &&
+        !group.isArchived &&
+        (!isTeam || activePlayers > 0);
     VoidCallback? setFor(Participant p) => canSet
         ? () => unawaited(_setRsvpFor(context, ref, event, group, p))
         : null;
@@ -771,10 +699,16 @@ class _RsvpSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 2, bottom: Space.xs),
-          child: Text(
-            asking ? rsvpHeading(l10n, mine) : l10n.eventRsvpTitle,
-            style: theme.textTheme.headlineSmall,
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Semantics(
+            header: true,
+            child: Text(
+              asking ? rsvpHeading(l10n, mine) : l10n.eventRsvpTitle,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontSize: 25,
+                height: 30 / 25,
+              ),
+            ),
           ),
         ),
         // A team with no players takes no answers yet: admins are told how
@@ -846,36 +780,98 @@ class _RsvpSection extends ConsumerWidget {
                 event: event,
                 participant: p,
                 answer: answerOf(rsvps, p.id),
-                label: rsvpRowLabel(l10n, p, mine.length),
+                // One person is named by the heading ("Is Noah going?").
+                label: mine.length > 1
+                    ? rsvpRowLabel(l10n, p, mine.length)
+                    : null,
                 enabled: open,
                 allowMaybe: allowMaybe,
               ),
             ),
+        // Who's going: the counts, then the people by answer; nothing on a
+        // team with no players yet.
         if (counted.isNotEmpty) ...[
-          const SizedBox(height: Space.sm),
+          const SizedBox(height: 14),
+          Container(height: 1, color: c.divider),
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    header: true,
+                    child: Text(
+                      l10n.eventWhosGoing,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontSize: 25,
+                        height: 30 / 25,
+                      ),
+                    ),
+                  ),
+                ),
+                if (canSet)
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.sizeOf(context).width * 0.5,
+                    ),
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                      ),
+                      onPressed: () => unawaited(
+                        _setRsvpForSomeone(context, ref, event, group),
+                      ),
+                      icon: const Icon(AppIcons.roster, size: 20),
+                      label: Text(
+                        isTeam ? l10n.eventRsvpForPlayer : l10n.eventSetRsvpFor,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final (i, s) in [
+              for (final s in [
                 RsvpStatus.going,
                 if (allowMaybe || (tally[RsvpStatus.maybe] ?? 0) > 0)
                   RsvpStatus.maybe,
                 RsvpStatus.notGoing,
                 null,
-              ].indexed) ...[
-                if (i > 0) const SizedBox(width: Space.sm),
+              ])
                 Expanded(
-                  child: StatTile(
+                  child: _Count(
                     count: tally[s] ?? 0,
-                    label: s == null
-                        ? l10n.rsvpNoResponse
-                        : statusLabel(l10n, s),
-                    color: (card) =>
-                        s == null ? null : statusAccent(card, s).text,
+                    label: s == null ? l10n.rsvpNoReply : statusLabel(l10n, s),
+                    color: switch (s) {
+                      RsvpStatus.going => c.successOnPage,
+                      RsvpStatus.maybe => c.lemon.text,
+                      RsvpStatus.notGoing => c.cherry.text,
+                      null => c.textOnPage,
+                    },
                   ),
                 ),
-              ],
             ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isTeam
+                ? l10n.rsvpPlayersGoing(
+                    tally[RsvpStatus.going] ?? 0,
+                    activePlayers,
+                  )
+                : l10n.rsvpMembersGoing(
+                    tally[RsvpStatus.going] ?? 0,
+                    group.memberCount,
+                  ),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontSize: 14,
+              height: 19 / 14,
+              fontWeight: FontWeight.w600,
+              color: c.textMutedOnPage,
+            ),
           ),
         ],
         // The tiles say the counts; the groups below say who.
@@ -982,60 +978,51 @@ class RsvpButtons extends ConsumerWidget {
                 )
               : null,
         ),
-        if (!compact &&
-            ((answer?.note.isNotEmpty ?? false) ||
-                (enabled && current != null)))
+        if (!compact && (answer?.note.isNotEmpty ?? false))
           Padding(
             padding: const EdgeInsets.only(top: Space.xs),
+            child: Text(
+              '"${answer!.note}"',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: GumdropColors.of(context).textOnPage,
+              ),
+            ),
+          ),
+        // The links row: Add a note on the left, Clear on the right.
+        if (!compact && enabled && current != null)
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: (answer?.note.isNotEmpty ?? false)
-                      ? Text(
-                          answer!.note,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontStyle: FontStyle.italic,
-                            color: GumdropColors.of(context).textMutedOnPage,
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-                // Clear and the note, wrapping under each other when the
-                // text is large (SPEC §7.6).
-                if (enabled && current != null)
-                  Flexible(
-                    flex: 2,
-                    child: Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: Wrap(
-                        alignment: WrapAlignment.end,
-                        spacing: Space.sm,
-                        children: [
-                          TextButton(
-                            onPressed: () => unawaited(
-                              clearRsvpWithFeedback(
-                                context,
-                                ref,
-                                event,
-                                participant,
-                              ),
-                            ),
-                            child: Text(l10n.eventClearAnswer),
-                          ),
-                          TextButton.icon(
-                            onPressed: () =>
-                                unawaited(_editNote(context, ref, current)),
-                            icon: const Icon(AppIcons.edit, size: 16),
-                            label: Text(
-                              answer?.note.isNotEmpty ?? false
-                                  ? l10n.eventEditNote
-                                  : l10n.eventAddNote,
-                            ),
-                          ),
-                        ],
-                      ),
+                Flexible(
+                  child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: () =>
+                        unawaited(_editNote(context, ref, current)),
+                    icon: const Icon(AppIcons.edit, size: 18),
+                    label: Text(
+                      answer?.note.isNotEmpty ?? false
+                          ? l10n.eventEditNote
+                          : l10n.eventAddNote,
                     ),
                   ),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                    foregroundColor: GumdropColors.of(context).textMutedOnPage,
+                  ),
+                  onPressed: () => unawaited(
+                    clearRsvpWithFeedback(context, ref, event, participant),
+                  ),
+                  child: Text(l10n.eventClearAnswer),
+                ),
               ],
             ),
           ),
@@ -1203,7 +1190,50 @@ Future<void> clearRsvpWithFeedback(
 }
 
 /// Going, Maybe, Not going, and No response, each with its people and
-/// notes; players show who answered for them (PLAYER-6).
+/// One count on the event screen (SPEC §7.3): the number in Lilita 40 in
+/// its answer's color, and its label in small capitals under it.
+class _Count extends StatelessWidget {
+  const new({required this.count, required this.label, required this.color});
+
+  final int count;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    final style = GumdropStyle.of(context);
+    return MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$count',
+            style: style.display(
+              TextStyle(fontSize: 40, height: 42 / 40, color: color),
+            ),
+          ),
+          Text(
+            label.toUpperCase(),
+            semanticsLabel: label,
+            style: style.label(
+              TextStyle(
+                fontSize: 13,
+                height: 16 / 13,
+                letterSpacing: 13 * 0.04,
+                fontWeight: FontWeight.w600,
+                color: c.textMutedOnPage,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The people by answer (SPEC §7.3): a small label for each answer with
+/// its dot ("GOING · 10"), then a row per person with a hairline above.
 class _AttendeeGroups extends StatelessWidget {
   const new({
     required this.people,
@@ -1225,7 +1255,6 @@ class _AttendeeGroups extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final c = GumdropColors.of(context);
     final byStatus = <RsvpStatus?, List<(Participant, Rsvp?)>>{};
     for (final p in people) {
@@ -1240,150 +1269,140 @@ class _AttendeeGroups extends StatelessWidget {
       null,
     ];
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final s in groups)
           if (byStatus[s] case final list? when list.isNotEmpty) ...[
             Padding(
-              padding: const EdgeInsets.only(top: Space.lg, bottom: Space.sm),
+              padding: const EdgeInsets.only(top: 16, bottom: 4),
               child: Row(
                 children: [
-                  Icon(
-                    s == null ? AppIcons.rsvp : statusIcon(s),
-                    size: 18,
-                    color: s == null
-                        ? c.textMutedOnPage
-                        : statusColor(context, s),
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: s == null
+                          ? c.textMutedOnPage
+                          : statusAccent(context, s).face,
+                      shape: BoxShape.circle,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Flexible(
-                    child: Text(
+                    child: SectionLabel(
                       '${s == null ? l10n.rsvpNoResponse : statusLabel(l10n, s)}'
                       ' · ${list.length}',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: s == null
-                            ? c.textMutedOnPage
-                            : statusColor(context, s),
-                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            // One card per answer, with a row each, as the roster has.
-            _AttendeeCard(
-              rows: [
-                for (final (p, r) in list)
-                  _AttendeeRow(
-                    participant: p,
-                    subtitle: _subtitle(l10n, p, r),
-                    onTap: onTap?.call(p),
-                  ),
-              ],
-            ),
+            for (final (p, r) in list) ...[
+              Container(height: 1, color: c.divider),
+              _AttendeeRow(
+                participant: p,
+                rsvp: r,
+                answeredBy: _answeredBy(l10n, p, r),
+                onTap: onTap?.call(p),
+              ),
+            ],
           ],
       ],
     );
   }
 
-  String? _subtitle(AppLocalizations l10n, Participant p, Rsvp? r) {
-    if (r == null) return null;
-    final parts = [
-      if (r.note.isNotEmpty) '"${r.note}"',
-      if (p.isPlayer && r.respondedBy.isNotEmpty)
-        l10n.eventAnsweredBy(nameOf(r.respondedBy))
-      else if (!p.isPlayer && r.respondedBy.isNotEmpty && r.respondedBy != p.id)
-        l10n.eventAnsweredBy(nameOf(r.respondedBy)),
-    ];
-    return parts.isEmpty ? null : parts.join(' · ');
+  String? _answeredBy(AppLocalizations l10n, Participant p, Rsvp? r) {
+    if (r == null || r.respondedBy.isEmpty) return null;
+    if (!p.isPlayer && r.respondedBy == p.id) return null;
+    return l10n.eventAnsweredBy(nameOf(r.respondedBy));
   }
 }
 
-/// The people with one answer, on one card, a divider between rows.
-class _AttendeeCard extends StatelessWidget {
-  const new({required this.rows});
-
-  final List<Widget> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = GumdropColors.of(context);
-    return GumdropSurface(
-      child: Material(
-        color: c.surface,
-        shape: GumdropStyle.of(context).cardShape(
-          Corners.card,
-          side: c.surfaceBorderWidth == 0
-              ? BorderSide.none
-              : BorderSide(color: c.surfaceBorder, width: c.surfaceBorderWidth),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (i, row) in rows.indexed) ...[
-              if (i > 0) Container(height: 2, color: c.divider),
-              row,
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// One person on the event (design §3.16): their candy initials, name, and
-/// who answered or their note; the group's heading says the answer. Admins
-/// tap it to set the answer (SCHED-4).
+/// One person on the event (SPEC §7.3): their icon, name and number, a
+/// note in quotes, who answered, and the answer's mark on the right.
+/// Admins tap it to set the answer (SCHED-4).
 class _AttendeeRow extends StatelessWidget {
   const new({
     required this.participant,
-    required this.subtitle,
+    required this.rsvp,
+    required this.answeredBy,
     required this.onTap,
   });
 
   final Participant participant;
-  final String? subtitle;
+  final Rsvp? rsvp;
+  final String? answeredBy;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final c = GumdropColors.of(context);
-    return InkWell(
+    final s = rsvp?.status;
+    final note = rsvp?.note ?? '';
+    final full = participant.shownName;
+    final hash = full.lastIndexOf(' #');
+    final name = hash > 0 ? full.substring(0, hash) : full;
+    final number = hash > 0 ? full.substring(hash) : '';
+    TextStyle body(double size, FontWeight weight, Color color) => TextStyle(
+      fontFamily: AppFonts.body,
+      fontSize: size,
+      height: (size + 5) / size,
+      fontWeight: weight,
+      color: color,
+    );
+    return FocusRingInk(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
+        padding: const EdgeInsets.symmetric(vertical: 11),
         child: Row(
           children: [
-            CandyInitials(
-              name: participant.shownName,
-              colorKey: participant.id,
-            ),
+            CandyInitials(name: full, colorKey: participant.id),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    participant.shownName,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      height: 1.2,
-                      color: c.textPrimary,
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: name),
+                        if (number.isNotEmpty)
+                          TextSpan(
+                            text: number,
+                            style: body(16, FontWeight.w700, c.textMutedOnPage),
+                          ),
+                      ],
                     ),
+                    style: body(16, FontWeight.w800, c.textOnPage),
                   ),
-                  if (subtitle case final text?)
+                  if (note.isNotEmpty)
                     Text(
-                      text,
+                      '"$note"',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: c.textMuted,
-                      ),
+                      style: body(15, FontWeight.w600, c.textOnPage),
+                    ),
+                  if (answeredBy case final by?)
+                    Text(
+                      by,
+                      style: body(14, FontWeight.w600, c.textMutedOnPage),
                     ),
                 ],
               ),
             ),
+            if (s != null) ...[
+              const SizedBox(width: 12),
+              Icon(
+                statusIcon(s),
+                size: 22,
+                weight: 700,
+                color: switch (s) {
+                  RsvpStatus.going => c.successOnPage,
+                  RsvpStatus.maybe => c.lemon.text,
+                  RsvpStatus.notGoing => c.notGoingIcon,
+                },
+              ),
+            ],
           ],
         ),
       ),

@@ -584,6 +584,16 @@ class _UpcomingRsvps extends ConsumerWidget {
         .take(playerCardEventsShown)
         .toList();
     final dates = MaterialLocalizations.of(context);
+    // The event screen goes back to the player, by first name.
+    final first = ref
+        .watch(playersProvider(groupId))
+        .value
+        ?.where((p) => p.id == playerId)
+        .firstOrNull
+        ?.displayName
+        .trim()
+        .split(' ')
+        .first;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -616,8 +626,10 @@ class _UpcomingRsvps extends ConsumerWidget {
               RsvpStatus.notGoing => l10n.rsvpNotGoing,
               null => l10n.rsvpNoAnswer,
             }),
-            onTap: () =>
-                context.push('/g/${groupId.value}/schedule/e/${e.id.value}'),
+            onTap: () => context.push(
+              '/g/${groupId.value}/schedule/e/${e.id.value}',
+              extra: BackLabel(first),
+            ),
           ),
       ],
     );

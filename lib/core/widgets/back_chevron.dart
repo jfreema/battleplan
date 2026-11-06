@@ -70,6 +70,7 @@ class BackChevron extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             height: 1.2,
                             color: c.textOnPage,
+                            shadows: const [],
                           ),
                         ),
                       ),

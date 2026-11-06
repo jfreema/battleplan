@@ -1053,6 +1053,18 @@
   "rsvpCountMaybe": "{count} maybe",
   "rsvpCountNo": "{count} no",
   "rsvpNoAnswers": "No answers yet",
+  "rsvpMembersGoing": "{going} of {total} going",
+  "@rsvpMembersGoing": {
+    "placeholders": {
+      "going": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "rsvpNoReply": "No reply",
   "rsvpPlayersGoing": "{going} of {total} players going",
   "eventNew": "New event",
   "eventEditTitle": "Edit event",
@@ -1177,6 +1189,7 @@
   "calendarLinkOffBody": "Calendars using it stop updating. You can make a new one any time.",
   "calendarLinkFailed": "Couldn't change your calendar link. Try again.",
   "eventDirections": "Directions",
+  "eventWhosGoing": "Who's going",
   "assignmentsTitle": "Assignments",
   "assignmentsRowAdd": "Add snacks, drinks, a scorekeeper, or anything else",
   "assignmentsRowSummary": "{taken} of {total} taken",

@@ -7,6 +7,7 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
@@ -116,7 +117,11 @@ class _PlayerRsvpHistoryScreenState
                     _now,
                   ),
                 )) {
-                  AsyncData(:final value) => _history(context, value),
+                  AsyncData(:final value) => _history(
+                    context,
+                    value,
+                    player?.displayName.trim().split(' ').first,
+                  ),
                   AsyncError() => [
                     Padding(
                       padding: const EdgeInsets.all(Space.lg),
@@ -136,7 +141,11 @@ class _PlayerRsvpHistoryScreenState
   }
 
   /// The totals, then each event with the player's answer.
-  List<Widget> _history(BuildContext context, RsvpHistory history) {
+  List<Widget> _history(
+    BuildContext context,
+    RsvpHistory history,
+    String? first,
+  ) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -210,6 +219,7 @@ class _PlayerRsvpHistoryScreenState
           ),
           onTap: () => context.push(
             '/g/${widget.groupId.value}/schedule/e/${event.id.value}',
+            extra: BackLabel(first),
           ),
         ),
     ];

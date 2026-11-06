@@ -186,9 +186,9 @@ void main() {
         );
         expect(button, findsOneWidget, reason: word);
       }
-      expect(find.text('Going · 2'), findsOneWidget);
-      expect(find.text('Maybe · 1'), findsOneWidget);
-      expect(find.text('Not going · 1'), findsOneWidget);
+      expect(find.text('GOING · 2'), findsOneWidget);
+      expect(find.text('MAYBE · 1'), findsOneWidget);
+      expect(find.text('NOT GOING · 1'), findsOneWidget);
       expect(find.byIcon(AppIcons.going), findsWidgets);
       expect(find.byIcon(AppIcons.maybe), findsWidgets);
       expect(find.byIcon(AppIcons.notGoing), findsWidgets);

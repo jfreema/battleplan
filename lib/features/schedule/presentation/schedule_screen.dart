@@ -314,8 +314,13 @@ class _SegmentsState extends State<_Segments> {
 }
 
 /// Opens an event's details (SCHED-4).
-void openEvent(BuildContext context, Event e) =>
-    unawaited(context.push('/g/${e.groupId.value}/schedule/e/${e.id.value}'));
+/// [from] is the opener's name, for the event screen's back label.
+void openEvent(BuildContext context, Event e, {String? from}) => unawaited(
+  context.push(
+    '/g/${e.groupId.value}/schedule/e/${e.id.value}',
+    extra: BackLabel(from),
+  ),
+);
 
 /// Upcoming or Past (SCHED-1) for this team or all my teams, in day order,
 /// each event a card with its date block.
@@ -486,7 +491,11 @@ class ScheduleEventRow extends ConsumerWidget {
       answers: answers,
       showTeam: showTeam,
       playerCount: players,
-      onTap: () => openEvent(context, event),
+      onTap: () => openEvent(
+        context,
+        event,
+        from: AppLocalizations.of(context).tabSchedule,
+      ),
       answerButtons: upcoming
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

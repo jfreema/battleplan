@@ -82,7 +82,7 @@ void main() {
   ) async {
     await openEvent(tester, user: alex);
     await tester.scrollUntilVisible(
-      find.text('Not going · 1'),
+      find.text('NOT GOING · 1'),
       200,
       scrollable: find.byType(Scrollable).last,
     );

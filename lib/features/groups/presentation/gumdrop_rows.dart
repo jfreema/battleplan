@@ -168,10 +168,14 @@ class PageRow extends StatelessWidget {
     this.trailing,
     this.chevron = true,
     this.destructive = false,
+    this.subtitleMaxLines = 1,
     super.key,
   });
 
   final String title;
+
+  /// Null lets the subtitle wrap (an address).
+  final int? subtitleMaxLines;
   final IconData? icon;
   final Widget? leading;
   final String? subtitle;
@@ -229,8 +233,10 @@ class PageRow extends StatelessWidget {
                         if (sub != null && sub.isNotEmpty)
                           Text(
                             sub,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            maxLines: subtitleMaxLines,
+                            overflow: subtitleMaxLines == null
+                                ? null
+                                : TextOverflow.ellipsis,
                             style: text.bodyMedium?.copyWith(
                               fontSize: 14,
                               height: 19 / 14,
@@ -241,7 +247,17 @@ class PageRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (end != null) ...[const SizedBox(width: 14), end],
+                  if (end != null) ...[
+                    const SizedBox(width: 14),
+                    // Gives way to the title at large text sizes, at most
+                    // under half the row.
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.sizeOf(context).width * 0.45,
+                      ),
+                      child: end,
+                    ),
+                  ],
                 ],
               ),
             ),

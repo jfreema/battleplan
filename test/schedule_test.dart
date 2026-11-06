@@ -15,6 +15,7 @@ import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'helpers/fakes.dart';
@@ -687,6 +688,19 @@ void main() {
   });
 
   group('event details and RSVPs (SCHED-4, SCHED-5)', () {
+    testWidgets('the back label names the opener, and a link has the '
+        'chevron alone', (tester) async {
+      await openSchedule(tester, events: [event('e1')]);
+      final semantics = tester.ensureSemantics();
+      await openDetails(tester, 'Practice');
+      expect(find.bySemanticsLabel('Back, Schedule'), findsOneWidget);
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/a/schedule/e/e1');
+      await tester.pumpAndSettle();
+      expect(find.bySemanticsLabel(RegExp('^Back, ')), findsNothing);
+      semantics.dispose();
+    });
+
     testWidgets('a member answers Going with a note', (tester) async {
       final rsvps = await openSchedule(
         tester,
@@ -701,7 +715,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.status, RsvpStatus.going);
       expect(rsvps.rsvps.single.participantId, 'coach');
-      expect(find.text('Going · 1'), findsOneWidget);
+      expect(find.text('GOING · 1'), findsOneWidget);
 
       await tester.tap(find.text('Add a note'));
       await tester.pumpAndSettle();
@@ -710,7 +724,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.note, 'Leaving early');
       // Sam hasn't answered.
-      expect(find.text('No response · 1'), findsOneWidget);
+      expect(find.text('NO RESPONSE · 1'), findsOneWidget);
     });
 
     testWidgets('Maybe is hidden when the team turns it off', (tester) async {
@@ -813,9 +827,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p1');
       expect(rsvps.rsvps.single.participantType, ParticipantType.player);
-      // The tiles say the counts, the headings who (no summary line).
-      expect(find.text('Going · 1'), findsOneWidget);
-      expect(find.text('1 of 3 players going'), findsNothing);
+      // The counts, the players' line under them, and who by answer.
+      expect(find.text('GOING · 1'), findsOneWidget);
+      expect(find.text('1 of 3 players going'), findsOneWidget);
       expect(find.text('Answered by Coach L.'), findsOneWidget);
     });
 
@@ -892,7 +906,7 @@ void main() {
       expect(emma.note, 'Might be late');
       expect(rsvps.rsvps.any((r) => r.participantId == 'coach'), isFalse);
       expect(allSelected(), {RsvpStatus.going});
-      expect(find.text('Going · 2'), findsOneWidget);
+      expect(find.text('GOING · 2'), findsOneWidget);
 
       // One player changed alone: the shared answer clears, and the next
       // tap writes only the player who needs it. Liam's is the third row.
@@ -1064,14 +1078,13 @@ void main() {
       await openDetails(tester, 'Practice');
       // One set of buttons: their player's. The pending player isn't there.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
-      expect(find.text('You'), findsOneWidget);
       expect(find.text('Are you going?'), findsOneWidget);
       expect(find.textContaining('Noah'), findsNothing);
       await tester.tap(find.text('Going').first);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p1');
       expect(rsvps.rsvps.single.participantType, ParticipantType.player);
-      expect(find.text('Going · 1'), findsOneWidget);
+      expect(find.text('GOING · 1'), findsOneWidget);
     });
 
     testWidgets('an admin who is a player has one answer of their own, on '
@@ -1123,7 +1136,8 @@ void main() {
       expect(find.byType(RsvpChoice), findsOneWidget);
       await openDetails(tester, 'Practice');
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
-      expect(find.text('You'), findsOneWidget);
+      // One row, named by the heading.
+      expect(find.text('Are you going?'), findsOneWidget);
       // Nobody but players is listed on a team.
       expect(find.text('Coach Lee'), findsNothing);
       await tester.tap(find.text('Going').first);
@@ -1171,7 +1185,7 @@ void main() {
       await openDetails(tester, 'Practice');
       // Only the player's row; the old answer isn't shown or counted.
       expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
-      expect(find.text('Going · 1'), findsNothing);
+      expect(find.text('GOING · 1'), findsNothing);
       await tester.tap(
         find.descendant(
           of: find.byType(RsvpButtons),
@@ -1875,7 +1889,7 @@ void main() {
       );
       await openDetails(tester, 'Practice');
       expect(find.text('Pat Kim'), findsNothing);
-      expect(find.text('No response · 1'), findsWidgets);
+      expect(find.text('NO RESPONSE · 1'), findsWidgets);
       // A player's row sets their answer.
       await tester.ensureVisible(find.text('Emma'));
       await tester.tap(find.text('Emma'));
@@ -1883,9 +1897,17 @@ void main() {
       await tester.tap(find.text('Going').last);
       await tester.pumpAndSettle();
       expect(rsvps.rsvps.single.participantId, 'p1');
-      expect(find.text('Going · 1'), findsOneWidget);
-      // "RSVP for a player" lists the players, and no members.
-      await menu(tester, 'RSVP for a player');
+      expect(find.text('GOING · 1'), findsOneWidget);
+      // "RSVP for a player", by Who's going, lists the players and no
+      // members; the menu doesn't have it.
+      await tester.tap(find.byTooltip('More actions'));
+      await tester.pumpAndSettle();
+      expect(find.text('RSVP for a player'), findsOneWidget);
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('RSVP for a player'));
+      await tester.tap(find.text('RSVP for a player'));
+      await tester.pumpAndSettle();
       expect(find.text('Pat Kim'), findsNothing);
       await tester.tap(find.text('Emma').last);
       await tester.pumpAndSettle();

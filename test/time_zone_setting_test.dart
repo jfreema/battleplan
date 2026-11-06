@@ -419,6 +419,6 @@ void main() {
     GoRouter.of(tester.element(find.byType(Scaffold).first))
         .go('/g/a/schedule/e/e1');
     await tester.pumpAndSettle();
-    expect(find.text('TOMORROW'), findsOneWidget);
+    expect(find.text('Tomorrow'), findsOneWidget);
   });
 }

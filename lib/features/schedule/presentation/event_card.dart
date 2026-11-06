@@ -106,7 +106,11 @@ class EventCard extends ConsumerWidget {
         shape: style.cardShape(Corners.panel, side: outline),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => openEvent(context, event),
+          onTap: () => openEvent(
+            context,
+            event,
+            from: AppLocalizations.of(context).tabChat,
+          ),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 420),
             padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
