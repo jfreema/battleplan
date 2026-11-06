@@ -151,6 +151,10 @@ abstract interface class MemberRepository {
     NotificationLevel level,
   );
 
+  /// The color scheme I see this team in (SET-2), only for me. Syncs to
+  /// every device.
+  Future<void> setMyColorScheme(GroupId groupId, UserId uid, TeamScheme scheme);
+
   /// Mutes this team's pushes until [until], or unmutes with null
   /// (NOTIF-3). "Until unmuted" is [Limits.mutedForeverMs].
   Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until);

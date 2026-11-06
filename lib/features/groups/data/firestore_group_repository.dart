@@ -417,6 +417,13 @@ class FirestoreMemberRepository implements MemberRepository {
   ) => _updateMine(groupId, uid, {'notificationLevel': level.value});
 
   @override
+  Future<void> setMyColorScheme(
+    GroupId groupId,
+    UserId uid,
+    TeamScheme scheme,
+  ) => _updateMine(groupId, uid, {'colorScheme': scheme.value});
+
+  @override
   Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until) =>
       _updateMine(groupId, uid, {
         'mutedUntil': until == null ? null : Timestamp.fromDate(until),
