@@ -718,7 +718,7 @@ void main() {
         tester,
         auth: FakeAuthRepository(user: coach),
         groups: {'a': testGroup('a', 'Thunder')},
-        memberships: [testMembership('a', 'coach', role: MemberRole.member)],
+        memberships: [testMembership('a', 'coach')],
       );
       GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/plays');
       await tester.pumpAndSettle();
