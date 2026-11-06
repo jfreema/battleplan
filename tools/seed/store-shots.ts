@@ -1,8 +1,8 @@
 // Sample content for the App Store screenshots (docs/STORE-LISTING.md), on
 // top of seed.ts in the local Emulator Suite: nine more Thunder players and
 // two more events with everyone's answers, votes on the dinner poll, photo
-// posts in Thunder's chat, more documents, the relay play on Thunder's
-// board, and more Cyclone players with their parents. Refuses to run
+// posts in Thunder's chat, more documents, and more Cyclone players with
+// their parents. The relay play is on Thunder's board in seed.ts. Refuses to run
 // against anything but the emulators.
 //
 //   firebase emulators:start --project demo-battleplan   (in one terminal)
@@ -260,11 +260,6 @@ async function main() {
     ['cyclone-seed-0', 10, 15], ['cyclone-seed-1', 15, 20], ['cyclone-seed-2', 15, 41], ['cyclone-seed-3', 16, 5], ['cyclone-seed-4', 18, 30],
   ];
   for (const [id, h, m] of cycloneLines) await db.doc(`messages/${id}`).update({ createdAt: yesterdayAt(h, m) });
-
-  // The relay play on Thunder's board too: softball uses the same diamond
-  // (board_layout.dart, "baseball's for softball too").
-  const relay = (await db.doc('plays/cyclone-relay-home').get()).data()!;
-  await db.doc('plays/thunder-relay-home').set({ ...relay, groupId: 'thunder', createdAt: daysAgo(2), updatedAt: daysAgo(1) });
 
   // More of Thunder's documents, and the lineup named for the game.
   await db.doc('groupDocuments/thunder-lineup').update({ name: 'Lineup vs. Eagles.pdf', nameLower: 'lineup vs. eagles.pdf' });

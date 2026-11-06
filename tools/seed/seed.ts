@@ -586,9 +586,10 @@ async function main() {
     });
   }
 
-  // Saved plays (BOARD-4), one on each of the coach's teams for the landing
-  // page's two whiteboard screenshots; a team's whiteboard draws any board.
-  // Cyclone's relay home from right-center, as the owner drew it: a ball in
+  // Saved plays (BOARD-4), on Thunder, the coach's softball team; a team's
+  // whiteboard draws any board. The landing page's whiteboard screenshot is
+  // Thunder's relay home from right-center, as the owner drew it, on the
+  // diamond softball shares with baseball (board_layout.dart): a ball in
   // the right-center gap with a runner on second. Step 1, everyone heads for
   // their spot; step 2, the throws: RF to 2B, the relay, to 1B, the cutoff
   // on the line to the plate, who lets it go home or cuts it and throws to
@@ -627,11 +628,12 @@ async function main() {
   const batter: [number, number] = [0.465, 0.9];
   const fielders = (spots: Record<string, [number, number]>) =>
     Object.entries(spots).map(([l, spot]) => on(l.toLowerCase(), spot, 'team', l));
-  await db.doc('plays/cyclone-relay-home').set({
-    groupId: 'cyclone',
+  // A short title, so the whiteboard's bar shows all of it on a phone.
+  await db.doc('plays/thunder-relay-home').set({
+    groupId: 'thunder',
     board: 'baseball',
     variant: 'full',
-    title: 'Relay home from right-center',
+    title: 'Relay home',
     note: 'Ball in the right-center gap, runner on second. RF gets it with CF backing him up; 2B goes out as the relay. 1B is the cutoff: let it go home, or cut it and throw to second if the batter tries for it. SS covers second, 3B covers third with LF behind him, and P backs up home.',
     steps: [
       {
