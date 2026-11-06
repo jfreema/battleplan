@@ -2,7 +2,7 @@
 
 What has to happen before Apple's App Store and Google Play will approve Battleplan, in five phases. Phases 1 to 4 are requirements, grouped by what each needs first. Phase 5 isn't required but lowers the odds of a rejection. After launch, fixes and features go out as ordinary updates.
 
-✅ is done, ⬜ is still to do. 👤 marks your steps: accounts, consoles, and forms only you can fill in. Task numbers are from [ROADMAP.md](ROADMAP.md). Checked against both stores' rules as of October 2026.
+✅ is done, ⬜ is still to do. 👤 marks your steps: accounts, consoles, and forms only you can fill in. Task numbers are from [ROADMAP.md](ROADMAP.md). Checked against both stores' rules as of October 2026, and their payment rules again on 2026-11-06 ([Store payment rules](#store-payment-rules)).
 
 ## Phase 1 · Before the store accounts and Sign in with Apple
 
@@ -102,4 +102,33 @@ Setting it up (the key and Services ID, task 107) happens in your Apple Develope
 - ⬜ 5.6 **Aim the listings at coaches and parents:** no kid-focused art or wording, so neither store treats Battleplan as a kids' app.
 - ✅ 5.7 **Take "position" out of the Privacy Policy and the delete-account page.** Players no longer have one, and the policy should match the app exactly. They, and the Terms, now say a player's name, jersey number, and walk-up song.
 - ✅ 5.8 **Buy Jared a coffee links out to Venmo.** In the United States both stores now let apps link to other ways to pay, so list the apps in the US only (App Store Connect's availability, the Play Console's countries) while it's there, and say in the App Review notes (1.17) that it's a voluntary tip to the developer that unlocks nothing. Elsewhere, Apple and Google generally want their own in-app purchase for tips, so it would have to go before listing outside the US. Venmo's own terms also expect a business profile for money taken in through an app. *Done 2026-10-20 the other way: the iPhone and iPad app leaves the coffee link out (it stays on the web), so the App Store listing can include Canada. The Android app leaves it out too since 2026-10-25, so the Play listing needs no billing review and can include Canada.*
-- ✅ 5.9 **Dues link out to Venmo and Cash App on Android and the web** (DUES-3, `dues_screen.dart`). These are payments between members for things outside the app, like uniforms and team fees, not purchases from the developer or in the app, so neither store's billing applies, and Battleplan takes, sends, and holds no money. The iPhone and iPad app only copies the handles and never opens a payment app, which keeps App Review's payment rules out of it. The App Review notes (STORE-LISTING.md) say so; the Play listing's financial features answer is none (STORE-LISTING-PLAY.md). The amounts owed and paid are declared as other financial info in both stores' privacy answers (STORE-PRIVACY.md).
+- ✅ 5.9 **Dues link out to Venmo and Cash App on Android and the web** (DUES-3, `dues_screen.dart`). These are payments between members, to the team, for real-world things like uniforms and team fees, not purchases from the developer or in the app, so neither store's billing applies and neither takes a cut; Battleplan takes, sends, and holds no money ([Store payment rules](#store-payment-rules), below). The iPhone and iPad app only copies the handles and never opens a payment app: extra caution, since Apple's guideline 3.1.3(e) allows Open too. The App Review notes (STORE-LISTING.md) say so; the Play listing's financial features answer is none, and its App access notes explain Dues (STORE-LISTING-PLAY.md). The amounts owed and paid are declared as other financial info in both stores' privacy answers (STORE-PRIVACY.md).
+
+## Store payment rules
+
+What the stores' rules say about Dues (DUES-1 to DUES-4), read on 2026-11-06 from their own pages. Read them again before any release that changes how people pay.
+
+**Neither store takes a cut of team fees.** Dues are a record of what members owe their team for real-world things (uniforms, league and tournament fees), and members pay the team person to person, in their own payment apps. Battleplan sells nothing, unlocks nothing, charges teams nothing, and never takes, holds, or sends money, so there's nothing to bill through either store.
+
+**Apple**, [App Store Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) (last updated 2026-10-16):
+
+- **3.1.1:** in-app purchase is for unlocking features or content in the app. Paying dues unlocks nothing.
+- **3.1.3(e):** physical goods and services used outside the app must be paid for some other way than in-app purchase. Uniforms and team fees are exactly that, and they aren't even bought from us.
+- **3.1.1(a) and 3.1.3:** on the US storefront, apps may have buttons and links to other ways to pay. Elsewhere, the limit on pointing people away from in-app purchase is about things in-app purchase could sell, and 3.1.3(e) rules that out for dues. So the iPhone app could have **Open** too, in the US and Canada, which would match Android and the web and end a parity exception (SPEC §4.2). If it does, the App Review notes should say so and cite 3.1.3(e).
+- **3.2.2(iv):** a team can use a due for a fundraiser, since the money is collected outside the app.
+- **3.2.1(viii) and 5.1.1(ix):** banking, money management, and other financial services must come from a licensed institution or a company. Dues is a record, not a financial service, so the individual developer account is fine as long as Battleplan never moves money.
+- **App Privacy** ([data types](https://developer.apple.com/app-store/app-privacy-details/)): what people owe is Other Financial Info. The payment usernames aren't Payment Info, which means cards and bank accounts ([STORE-PRIVACY.md](STORE-PRIVACY.md)).
+
+**Google Play**, [Payments policy](https://support.google.com/googleplay/android-developer/answer/9858738):
+
+- **Section 3:** Play billing must *not* be used for physical goods (3.1(a)), physical services (3.1(b)), or peer-to-peer payments (3.2). Dues are payments between members for real-world things, so no Play billing and no service fee.
+- **Section 4:** apps may not lead people to other ways to pay, except in section 3's cases, so the Android app's **Open** buttons are allowed in every country.
+- **US programs** ([Play's US changes](https://support.google.com/googleplay/android-developer/answer/15582165)): the external links and alternative billing programs, with service fees since 2026-10-01, are other ways to sell what would otherwise need Play billing: digital goods and services. Battleplan sells none and doesn't enroll, and the Android app leaves out Buy Jared a coffee (5.8).
+- **Financial features declaration** ([help](https://support.google.com/googleplay/android-developer/answer/13849271)): every app files one. Battleplan's answer is "My app doesn't provide any financial features", since Dues isn't a payment app, a wallet, a money transfer service, or any other category on the form ([STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md) says what to do if review disagrees).
+- **Data safety** ([data types](https://support.google.com/googleplay/android-developer/answer/10787469)): Other financial info (debts), optional, for App functionality, not shared. Not User payment info or Purchase history.
+
+**What would change this:**
+
+- Charging teams for Dues or anything else, or Buy Jared a coffee in a native app: those are digital, so in-app purchase and Play billing (or, in the US only, a link out under each store's terms and fees then).
+- Taking payments in the app, with card entry or a payment service: still no store cut for real-world fees (3.1.3(e), Payments policy 3.1(a) and 3.1(b)), but it becomes a financial feature on Play, brings payment processor and money transmission rules, and Apple could ask for a company account (5.1.1(ix)).
+- Anything in the app that paying dues unlocks.

@@ -13,7 +13,7 @@ Keep it true to the app: change this page when a feature it names changes. Don't
 | Default language | English (United States), en-US |
 | App or game | App |
 | Free or paid | Free |
-| Countries | United States and Canada, as on the App Store. The Android app leaves out Buy Jared a coffee (it's only on the web), so there's nothing to pay for and no Play billing question. Dues' **Open** buttons open the team's Venmo or Cash App page, for payments between members for things outside the app (uniforms, team fees), not purchases from us or in the app (store checklist 5.9) |
+| Countries | United States and Canada, as on the App Store. The Android app leaves out Buy Jared a coffee (it's only on the web), so there's nothing to pay for and no Play billing question. Dues' **Open** buttons open the team's Venmo or Cash App page, for payments between members for real-world things (uniforms, team fees), not purchases from us or in the app. Play's Payments policy keeps those out of Play billing (section 3), so they're allowed in every country and Play takes no fee (store checklist 5.9 and Store payment rules) |
 
 ## Main store listing
 
@@ -116,6 +116,7 @@ Where things are:
 • Block: press and hold their message and choose Block, or tap their photo to open their page and use the menu at the top (Block, Report).
 • Delete account: Profile (at the bottom of the Teams screen), then Settings, then Delete account, or getbattleplan.app/delete-account.
 • A language filter is on for every team.
+• Dues (Team info, then Dues): team admins record what players owe the team for real-world things like uniforms and league fees, and mark who has paid. Battleplan takes no payments, sells nothing, takes no share, and holds no money, and paying unlocks nothing in the app. Under How to pay, admins and coaches list the team's own payment usernames: Copy copies one, and Open opens it in that payment service, where members pay the team directly. These are peer-to-peer payments for physical goods and services, outside Google Play billing (Payments policy, section 3).
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.
 ```
@@ -145,11 +146,11 @@ Expect a rating with an "Users interact" notice. Don't pick anything aimed at ch
 - Encrypted in transit: yes. People can ask for their data to be deleted: yes.
 - Account deletion URL: `https://getbattleplan.app/delete-account` (also in the app: Profile, then Settings, then Delete account).
 - Data types and purposes: the table in STORE-PRIVACY.md, row for row (name, email, user IDs, phone number, other financial info, photos, files and docs, other in-app messages, app interactions, other user-generated content, approximate location, crash logs, diagnostics, device or other IDs). Nothing is processed ephemerally, and nothing is used for advertising.
-- **Financial info → Other financial info** is for Dues (2026-11-06): what each player or member owes and whether they paid. Check it: collected, not shared, optional, for App functionality (STORE-PRIVACY.md, "Dues: what to change in the consoles").
+- **Financial info → Other financial info** is for Dues (2026-11-06): what each player or member owes and whether they paid, and the team's payment usernames under How to pay. Check it: collected, not shared, optional, for App functionality. Leave **User payment info** and **Purchase history** unchecked: Battleplan never sees a card, bank, or account number, and nobody buys anything in the app (STORE-PRIVACY.md, "Dues: what to change in the consoles").
 
 **Government apps:** No, it isn't developed by or for a government.
 
-**Financial features:** "My app doesn't provide any financial features." Dues only record what members owe and whether they've paid; Battleplan never takes, sends, or holds money, and the **Open** buttons just open the team's Venmo or Cash App page, where people pay each other.
+**Financial features:** "My app doesn't provide any financial features." Dues only record what members owe and whether they've paid; Battleplan never takes, sends, or holds money, and the **Open** buttons just open the team's Venmo or Cash App page, where people pay each other. It isn't a payment app, a wallet, or a money transfer service, so none of the form's categories fits. If review calls the answer inaccurate, reply with the Dues line in the App access notes; if it still objects, make the Android app copy only, like the iPhone app, rather than declare a payments feature (store checklist, Store payment rules).
 
 **Health:** Not a health app (the Health apps declaration: none of the listed features). It stores no health data.
 

@@ -412,7 +412,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.text(
-        'A due can charge at most ${Limits.duesChargesMax} people. '
+        'A due can have at most ${Limits.duesChargesMax} people on it. '
         'Uncheck some to continue.',
       ),
       findsOneWidget,
