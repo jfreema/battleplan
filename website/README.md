@@ -84,21 +84,21 @@ The screenshots show the app with the seeded sample teams (Thunder, Cyclone, and
 | Image | Scheme | Signed in as | Screen |
 |---|---|---|---|
 | `schedule-army`, `-light`, `-dark`, `-navy`, `-skyblue` (hero) | all five | `jim@example.com` | Thunder's schedule as a player: their own Going, Maybe, and Not going on the cards and a practice still to answer, the same screen in each scheme |
-| `group-chat-navy` | Navy | a member of the group | A group's chat: messages from several people and a small photo only, with no event cards or polls in view |
-| `event-skyblue` | Light blue | `coach@example.com` | Thunder's game against the Eagles, with the RSVPs |
-| `poll-dark` | Dark | `rachel@example.com` | Rally Possums' tournament poll |
+| `group-chat-navy` | Navy | `coach@example.com` | Saturday Run Club's group chat: messages from several people and Rachel's small photo only, with no event cards or polls in view |
+| `event-skyblue` | Light blue | `coach@example.com` | Thunder's game against the Eagles, with the RSVPs: 2 of 3 players going |
+| `poll-dark` | Dark | `rachel@example.com` | Rally Possums' chat at Rachel's tournament poll, with the replies under it |
 | `documents-navy` | Navy | `coach@example.com` | Thunder's documents |
 | `allteams-skyblue` | Light blue | `claire@example.com` | Cyclone's schedule with **All my teams** on |
-| `youth-light` | Light | `claire@example.com` | Cyclone's practice, answering for Luke and Alex |
+| `youth-light` | Light | `claire@example.com` | Cyclone's practice as a guardian: Luke and Alex each on their own RSVP row, Luke going and Alex still to answer |
 | `dues-army` | Army green | `coach@example.com` | Team info → **Dues**, an admin's view: who's paid and what's owed |
 | `dues-mine-light` | Light | `claire@example.com` | **What you owe** and **How to pay** |
-| `whiteboard-army` | Army green | `coach@example.com` | Plays, the coach's whiteboard |
+| `whiteboard-army` | Army green | `coach@example.com` | Plays: Thunder's Relay home on the coach's whiteboard, at step 2 of 2 |
 
 The current set (Open Field, all five schemes, 2026-11-06, the owner's request) are captures of the real web app against the emulators. To retake them: start the emulators fresh (restart rather than clearing over REST), seed them (DEVELOPMENT.md), and build from a scratch copy with `bannerLabel` in `lib/core/env.dart` returning null (never commit that), with `flutter build web -t lib/main_dev.dart --dart-define=USE_EMULATORS=true --no-web-resources-cdn --base-href /app/` (CanvasKit: headless Chrome doesn't paint the wasm build), plus `tools/fetch_fallback_fonts.dart` into its `fonts/fallback/` for the emoji. Seed and browse in one time zone where it's currently daytime (seed with `TZ=` set and the seed's `America/Chicago` swapped to match in a scratch copy, and `page.emulateTimezone` in Chrome), so message times look normal and cards skip the "your time" line. Serve the build under `/app/` and drive headless Chrome at 390 × 844 with a device scale of 600 / 390: hide `.firebase-emulator-warning`, sign in with the keyboard alone (Tab to Email and to Password, typing in each, then Sign in through the semantics tree: Flutter keeps a mouse's hover where it last clicked, which lights up whatever later sits there), open each screen by its route (`history.pushState` and a `popstate` event, since a reload signs out), and press buttons through the semantics tree (clicking a `flt-semantics[role=button]` element), since synthetic mouse clicks don't reach some of them.
 
 - **Schemes:** after signing in, PATCH `users/<uid>` with `colorScheme` (`army`, `light`, `dark`, `navy`, or `skyblue`) through the emulator's REST API (`Authorization: Bearer owner`, `updateMask.fieldPaths=colorScheme`). The app recolors live, so the five `schedule-*` shots come from one sign-in. Per-team picks (`groupMembers/<groupId>_<uid>.colorScheme`) aren't seeded, so the default applies everywhere.
 - **Schedule:** Jim's account is linked to the player Jim Halpert on Thunder, so every card on that schedule has an answer row; the seed answers Going, Maybe, and Not going and leaves the third practice unanswered. The coach has no player, so the coach's cards only count who's going. Open `/g/thunder/schedule` (Upcoming).
-- **Group chat:** open the seeded group's chat (`/g/<groupId>/chat`) and check that only messages and the small photo are in view: no event cards or polls. Chat opens at the first unread message, so take it first after seeding, or as someone who has read it.
+- **Group chat:** as the coach, open Saturday Run Club's chat (`/g/run-club/chat`) and check that only messages and the small photo are in view: no event cards or polls. Chat opens at the first unread message; the seed has everyone read it all, so it opens at the newest. Then scroll it up about 100 px, with synthetic `wheel` events at the left edge rather than the mouse, so the top edge falls between two messages and the photo shows in full: at 390 wide, Monica's reply comes first, then Rachel's photo, the coach's own message, and Chandler's.
 - **Dues:** open `/g/<team>/info`, then press **Dues** (going there directly leaves the app bar without its back button). The seed's dues are on Thunder and Cyclone.
 - **All my teams:** press **Filter**, the **All my teams** switch, then **Dismiss**.
 - **Whiteboard:** open `/g/thunder/plays/thunder-relay-home`, press **Next step**, and wait about 4 seconds.

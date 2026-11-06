@@ -41,7 +41,7 @@ Required, and doable now.
   - device tokens, crash reports, and usage analytics.
 
   The rest: no tracking, no ads, nothing sold.
-- ⬜ 1.16 **The listing, ready to paste in:** *App Store text and iPhone and iPad screenshots done 2026-10-17 ([STORE-LISTING.md](STORE-LISTING.md), `store/app-store/`). Google Play text, the 512 px icon, and the 1024 × 500 feature graphic done 2026-10-25 ([STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md), `store/google-play/`), and the six Android phone screenshots on 2026-10-25 too (`store/google-play/phone/`).*
+- ⬜ 1.16 **The listing, ready to paste in:** *App Store text and iPhone and iPad screenshots done 2026-10-17 ([STORE-LISTING.md](STORE-LISTING.md), `store/app-store/`). Google Play text, the 512 px icon, and the 1024 × 500 feature graphic done 2026-10-25 ([STORE-LISTING-PLAY.md](STORE-LISTING-PLAY.md), `store/google-play/`), and the six Android phone screenshots on 2026-10-25 too (`store/google-play/phone/`), retaken in Open Field's Army green on 2026-11-06 with the group chat as Saturday Run Club's.*
   - name, subtitle or short description, and description;
   - screenshots of the app in use, not the sign-in screen: 6.9-inch iPhone, 13-inch iPad, and Android phone;
   - a 1024 × 500 feature graphic for Google (`store/google-play/feature-graphic.png`); the 512 px icon is `store/google-play/icon-512.png`.

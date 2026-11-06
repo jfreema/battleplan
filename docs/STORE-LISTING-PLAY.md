@@ -77,7 +77,7 @@ Check the counts after any edit: the short description must stay at 80 character
 |---|---|---|
 | App icon | `store/google-play/icon-512.png` (from `assets/brand/icon.png`) | 512 × 512 PNG, no transparency |
 | Feature graphic | `store/google-play/feature-graphic.png` (source: `feature-graphic.html` beside it, rendered with headless Chrome; the command is at its top) | 1024 × 500 PNG, no transparency |
-| Phone screenshots | `store/google-play/phone/01-chat.jpg` to `06-roster.jpg`: chat, schedule, an event's RSVPs, a play, documents, and roster in Gumdrop Pop Dark, the same screens as the App Store set; they predate Open Field and need retaking in it. Rendered from the app's widgets on sample data at 360 × 640 logical pixels × 3 (as website/README.md describes for the site's screenshots), with no device frame or status bar | 1080 × 1920 JPEG, 9:16 |
+| Phone screenshots | `store/google-play/phone/01-chat.jpg` to `06-roster.jpg`, in Open Field's Army green (the default), retaken 2026-11-06: the group Saturday Run Club's chat (only messages and a small photo, no events), Thunder's schedule, its game against the Eagles with the RSVPs, its relay play on the whiteboard, its documents, and Cyclone's roster, the same screens as the App Store set. Captures of the web app against the emulators with the seed and `store-shots.ts` (the coach lands in the run club's chat), signed in as `coach@example.com`, as website/README.md describes for the site's screenshots, at 396 × 704 logical pixels with a device scale of 30 / 11 (at 360 wide the header cuts the group's name short), saved as JPEG at quality 90, with no device frame or status bar | 1080 × 1920 JPEG, 9:16 |
 | Tablet screenshots | Optional (7-inch and 10-inch) | |
 
 ## Store settings
