@@ -210,9 +210,10 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
           final mine = isAdmin
               ? const <Player>[]
               : pending.where(matches).toList();
-          // Each group of rows on its own card (design §3.5).
+          // Each group of rows between hairlines, level with the title
+          // (SPEC §7.3).
           Widget card(List<Widget> rows) => Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            padding: const EdgeInsets.symmetric(horizontal: Space.page),
             child: SettingsCard(children: rows),
           );
           final memberRows = [
@@ -224,7 +225,12 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
             padding: const EdgeInsets.only(bottom: Space.xl),
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+                padding: const EdgeInsets.fromLTRB(
+                  Space.page,
+                  14,
+                  Space.page,
+                  4,
+                ),
                 child: TextField(
                   style: gumdropFieldText(context),
                   decoration: gumdropField(hint: l10n.searchByName)
@@ -255,7 +261,7 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                   !waiting) ...[
                 const SizedBox(height: 12),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: Space.page),
                   child: SettingsCard(
                     children: [
                       SettingsRow(
@@ -277,7 +283,7 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               else if (players.isEmpty && mine.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: Space.lg,
+                    horizontal: Space.page,
                     vertical: Space.sm,
                   ),
                   child: Text(
@@ -326,7 +332,10 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                 ],
               if (!seePeople)
                 Padding(
-                  padding: const EdgeInsets.all(Space.lg),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Space.page,
+                    vertical: Space.lg,
+                  ),
                   child: Text(
                     l10n.rosterPeopleHidden,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -569,7 +578,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
+    padding: const EdgeInsets.fromLTRB(Space.page, 18, Space.page, 10),
     child: PageHeading(title),
   );
 }

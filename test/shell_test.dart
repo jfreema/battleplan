@@ -14,6 +14,7 @@ import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
@@ -29,6 +30,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'helpers/fakes.dart';
 import 'helpers/pump_app.dart';
+import 'helpers/scenes.dart' as scenes;
 
 /// A team whose logo has a download URL.
 class _LogoGroups extends FakeGroupRepository {
@@ -608,6 +610,124 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
       await tester.pumpAndSettle();
       expect(find.text('Copy text'), findsOneWidget);
+    });
+  });
+
+  group('page gutter and ruled lists (SPEC §7.3)', () {
+    double left(WidgetTester tester, Finder f) => tester.getTopLeft(f).dx;
+
+    testWidgets('pushed screens start their content level with the title', (
+      tester,
+    ) async {
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      // Each screen's title, and what starts its body.
+      for (final (route, title, first) in [
+        ('/settings', 'Settings', find.text('Account')),
+        ('/g/a/info', 'Team info', find.byType(SettingsPanel).first),
+        (
+          '/g/a/scheme',
+          'Color scheme',
+          find.textContaining('How Thunder U14 looks for you.'),
+        ),
+        (
+          '/teams/scheme',
+          'Default color scheme',
+          find.textContaining('How Teams and Profile look for you.'),
+        ),
+        ('/g/a/roster', 'Roster', find.text('Players')),
+        ('/g/a/settings', 'Team admin', find.text('Member permissions')),
+      ]) {
+        await scenes.goTo(tester, route);
+        expect(left(tester, find.text(title).last), 20, reason: route);
+        expect(left(tester, first), 20, reason: '$route body');
+      }
+      // The roster's rows sit on the hairlines' edge, not 16 px inside.
+      await scenes.goTo(tester, '/g/a/roster');
+      final rule = find.descendant(
+        of: find.byType(PageRows).first,
+        matching: find.byType(Container),
+      );
+      expect(left(tester, rule.first), 20);
+      final tile = find
+          .descendant(
+            of: find.byType(PageRows).first,
+            matching: find.byType(ListTile),
+          )
+          .first;
+      final lead = find
+          .descendant(of: tile, matching: find.byType(Container))
+          .first;
+      expect(left(tester, lead), 20);
+    });
+
+    testWidgets("Team admin's switches sit under a page heading, one rule "
+        'between rows', (tester) async {
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      await scenes.goTo(tester, '/g/a/settings');
+      expect(
+        find.widgetWithText(PageHeading, 'Member permissions'),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(PageHeading, 'Language'), findsOneWidget);
+      expect(find.byType(Divider), findsNothing);
+      final rows = find.ancestor(
+        of: find.text('Members can create events'),
+        matching: find.byType(PageRows),
+      );
+      expect(rows, findsOneWidget);
+      expect(left(tester, rows), 20);
+    });
+
+    testWidgets('Settings ends in one ruled list, with no double rule', (
+      tester,
+    ) async {
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      await scenes.goTo(tester, '/settings');
+      PageRows rowsOf(String text) => tester.widget<PageRows>(
+        find.ancestor(of: find.text(text), matching: find.byType(PageRows)),
+      );
+      expect(rowsOf('Sign out'), same(rowsOf('Contact support')));
+    });
+
+    testWidgets("Teams' Archived row lines up with Join and Create", (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder'),
+          'b': testGroup('b', 'Old team').copyWith(archivedAt: DateTime(2025)),
+        },
+        memberships: [
+          testMembership('a', 'coach'),
+          testMembership('b', 'coach'),
+        ],
+      );
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/teams');
+      await tester.pumpAndSettle();
+      expect(
+        left(tester, find.text('Archived')),
+        left(tester, find.text('Join a Team or Group')),
+      );
+    });
+
+    testWidgets('documents are plain rows between hairlines, not cards', (
+      tester,
+    ) async {
+      await scenes.pumpDocuments(tester, scheme: TeamScheme.army);
+      final name = find.text('Fall schedule.pdf');
+      expect(
+        find.ancestor(of: name, matching: find.byType(SettingsPanel)),
+        findsNothing,
+      );
+      expect(
+        find.ancestor(of: name, matching: find.byType(PageListRow)),
+        findsOneWidget,
+      );
+      // Its text is the page's, not a card's.
+      final c = GumdropColors.of(tester.element(name));
+      expect(c.onCard, isFalse);
     });
   });
 

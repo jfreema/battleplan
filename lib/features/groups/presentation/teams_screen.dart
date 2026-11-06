@@ -170,16 +170,21 @@ class _ArchivedState extends State<_Archived> {
       children: [
         Semantics(
           expanded: _open,
-          child: PageRow(
-            icon: AppIcons.archive,
-            title: l10n.archivedTeams,
-            subtitle: '${widget.count}',
-            onTap: () => setState(() => _open = !_open),
-            trailing: Icon(
-              _open ? AppIcons.expandLess : AppIcons.expand,
-              size: 20,
-              weight: 700,
-              color: c.textMutedOnPage,
+          // On the rows' 20 px gutter, like Join and Create below; the cards
+          // reach 4 px past it.
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: PageRow(
+              icon: AppIcons.archive,
+              title: l10n.archivedTeams,
+              subtitle: '${widget.count}',
+              onTap: () => setState(() => _open = !_open),
+              trailing: Icon(
+                _open ? AppIcons.expandLess : AppIcons.expand,
+                size: 20,
+                weight: 700,
+                color: c.textMutedOnPage,
+              ),
             ),
           ),
         ),

@@ -120,7 +120,7 @@ class _InviteBody extends ConsumerWidget {
 
     final c = GumdropColors.of(context);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+      padding: const EdgeInsets.fromLTRB(Space.page, 14, Space.page, Space.xl),
       children: [
         Center(
           // The code stays black on white in every theme, so any camera
@@ -422,7 +422,7 @@ class _LinkOff extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+      padding: const EdgeInsets.fromLTRB(Space.page, 14, Space.page, Space.xl),
       children: [
         EmptyState(icon: AppIcons.invite, message: l10n.linkIsOff),
         if (isAdmin)

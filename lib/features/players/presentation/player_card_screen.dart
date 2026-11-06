@@ -133,7 +133,11 @@ class PlayerCardScreen extends ConsumerWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(Space.xl),
+        // Level with the title.
+        padding: const EdgeInsets.symmetric(
+          horizontal: Space.page,
+          vertical: Space.xl,
+        ),
         children: [
           ListTile(
             contentPadding: EdgeInsets.zero,

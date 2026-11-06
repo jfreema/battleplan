@@ -93,10 +93,11 @@ class ColorSchemeScreen extends ConsumerWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: ListView(
-            padding: EdgeInsets.fromLTRB(
-              Space.gutter(MediaQuery.sizeOf(context).width),
+            // Level with the title.
+            padding: const EdgeInsets.fromLTRB(
+              Space.page,
               6,
-              Space.gutter(MediaQuery.sizeOf(context).width),
+              Space.page,
               Space.xl,
             ),
             children: [

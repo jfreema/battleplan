@@ -116,8 +116,11 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
       final more = !state.reachedEnd;
       // Rows are built as they scroll into view, so image thumbnails below
       // the fold don't all look up their files at once (SPEC §8.1).
+      // Under Photos, whose hairline is the first row's top rule; alone
+      // while filtering, the first row draws its own.
+      final photosAbove = view.filter.trim().isEmpty;
       body = ListView.builder(
-        padding: const EdgeInsets.only(top: 5, bottom: Space.xxxl * 2),
+        padding: const EdgeInsets.only(bottom: Space.xxxl * 2),
         itemCount: (noMatches ? 1 : shown.length) + (more ? 1 : 0),
         itemBuilder: (context, i) {
           if (noMatches && i == 0) {
@@ -144,12 +147,19 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
             );
           }
           final d = shown[i];
-          return DocumentRow(
+          // Plain rows on the page between hairlines (SPEC §7.3).
+          return Padding(
             key: ValueKey(d.id.value),
-            doc: d,
-            group: group,
-            me: me,
-            onTap: () => unawaited(openDocument(context, ref, d)),
+            padding: EdgeInsets.symmetric(horizontal: gutter),
+            child: PageListRow(
+              index: photosAbove ? i + 1 : i,
+              child: DocumentRow(
+                doc: d,
+                group: group,
+                me: me,
+                onTap: () => unawaited(openDocument(context, ref, d)),
+              ),
+            ),
           );
         },
       );
@@ -225,7 +235,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           // Hidden while a filter looks through the documents.
           if (view.filter.trim().isEmpty)
             Padding(
-              padding: EdgeInsets.fromLTRB(gutter, Space.xs, gutter, Space.xs),
+              padding: EdgeInsets.fromLTRB(gutter, Space.xs, gutter, 0),
               child: SettingsCard(
                 children: [
                   SettingsRow(

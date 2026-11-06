@@ -1274,7 +1274,7 @@ The content still carries the visual weight: messages, photos, and event cards.
 | **Color** | Five color schemes (§7.4), each with the same 32 color roles: page, cards and their rims, the tab bar, fields, lines, text, headings' drop, and the candies' lips and text shades. Seven candy accents (§7.2), each with a face, a darker lip, and a shade for text on cards; text on a candy face is the scheme's candy ink. Every text color is contrast-checked in all five schemes. |
 | **Type** | Bundled with the app, the same on every platform: **Lilita One** for headings, **Fredoka** (500 to 700) for buttons, labels, and names, and **Nunito** (400, and 600 to 900) for body text and messages, in Latin letters (Cyrillic, like Greek and other scripts, draws in the platform's fallback font). **Black Ops One**, a stencil, is for eyebrows only, like the one over the team's name, and the website's coral sticker: capitals only, never under 12 px. Sizes 32 / 27 / 25 / 18 / 17 / 16 / 14 / 13 (screen title, team name, section, card title, chat message, row title, secondary, label); the team name steps down to 23, 21, then 19 to fit. Headings carry one hard drop (none in Light and Dark). Layouts survive system text scaling up to 200%. |
 | **Buttons** | The main action is the coral gumdrop: the face sits on a hard lip, 3 px under faces up to 38 px tall and 4 px above; pressed, it sinks onto the lip; disabled, it's flat and muted. The rest are outlined pills with no lip, or plain text. A selected chip or segment is coral; the others are outlined. |
-| **Spacing** | 4-point grid: 4, 8, 12, 16, 24, 32, 48. Side padding is 16 on phones and 24 on wide screens. |
+| **Spacing** | 4-point grid: 4, 8, 12, 16, 24, 32, 48. Teams, Profile, and pushed screens keep their rows and text 20 from the edge, level with their titles; elsewhere side padding is 16 on phones and 24 on wide screens. |
 | **Corners** | 14 for inputs, menus, and badges, 18 for cards, 22 for dialogs and chat bubbles (6 at a bubble's tail), 26 for sheets, fully round for avatars, pills, and buttons. |
 | **Elevation** | No soft shadows. Depth comes from the hard lips under cards and buttons and the hard drop under headings. |
 | **Icons** | Material Symbols Rounded, the same set on every platform |
@@ -1310,7 +1310,7 @@ Build these once in `core/` and reuse them everywhere:
 - Poll card
 - Event card and event row
 - RSVP button group
-- Document row
+- Document row (a plain row between hairlines, like the settings rows)
 - Member row
 - Settings rows: plain rows on the page between 1 px hairlines, each a 22 px icon, a title and muted subtitle, and a chevron, with no panel and no icon disc; a destructive row is in the accent text. A true card (the Team info header, a player card) is a card with a rim and a lip.
 - Headings: page headings in Lilita 25 with the scheme's drop, card headings in Lilita 20 with none, small capitals labels in the section label style

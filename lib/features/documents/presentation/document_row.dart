@@ -15,7 +15,8 @@ import 'package:material_ui/material_ui.dart';
 
 /// One document in the list (DOC-1): its type icon or a thumbnail, the
 /// name, then size (or the link's site), who added it, and when. Tapping
-/// opens it (DOC-4); ⋯ has the rest.
+/// opens it (DOC-4); ⋯ has the rest. A plain row on the page: the list
+/// rules it (SPEC §7.3).
 class DocumentRow extends ConsumerWidget {
   const new({
     required this.doc,
@@ -38,59 +39,49 @@ class DocumentRow extends ConsumerWidget {
         ? (Uri.tryParse(doc.url ?? '')?.host ?? l10n.documentKindLink)
         : formatBytes(doc.size ?? 0);
     final c = GumdropColors.of(context);
-    final gutter = Space.gutter(MediaQuery.sizeOf(context).width);
-    // Each document on its own card (design §3.5), 10 apart.
-    return Padding(
-      padding: EdgeInsets.fromLTRB(gutter, 5, gutter, 5),
-      child: SettingsPanel(
-        padding: EdgeInsets.zero,
-        child: ListTile(
-          onTap: onTap,
-          minTileHeight: 60,
-          contentPadding: const EdgeInsets.only(left: 10, right: 2),
-          horizontalTitleGap: 12,
-          leading: DocumentThumbnail(doc: doc),
-          title: Row(
-            children: [
-              if (doc.pinned) ...[
-                Icon(
-                  AppIcons.pin,
-                  size: 16,
-                  fill: 1,
-                  color: c.card.lemon.text,
-                  semanticLabel: l10n.documentPinnedLabel,
-                ),
-                const SizedBox(width: Space.xs),
-              ],
-              Flexible(
-                child: Text(
-                  doc.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: c.card.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          subtitle: Text(
-            l10n.documentRowLine(
-              what,
-              doc.uploaderName,
-              documentDate(
-                doc.createdAt,
-                DateTime.now(),
-                zone: ViewerZone.of(context),
-              ),
+    return ListTile(
+      onTap: onTap,
+      minTileHeight: 60,
+      contentPadding: EdgeInsets.zero,
+      horizontalTitleGap: 12,
+      leading: DocumentThumbnail(doc: doc),
+      title: Row(
+        children: [
+          if (doc.pinned) ...[
+            Icon(
+              AppIcons.pin,
+              size: 16,
+              fill: 1,
+              color: c.lemon.text,
+              semanticLabel: l10n.documentPinnedLabel,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(color: c.card.textMuted),
+            const SizedBox(width: Space.xs),
+          ],
+          Flexible(
+            child: Text(
+              doc.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleMedium?.copyWith(color: c.textOnPage),
+            ),
           ),
-          trailing: DocumentMenu(doc: doc, group: group, me: me),
-        ),
+        ],
       ),
+      subtitle: Text(
+        l10n.documentRowLine(
+          what,
+          doc.uploaderName,
+          documentDate(
+            doc.createdAt,
+            DateTime.now(),
+            zone: ViewerZone.of(context),
+          ),
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.bodySmall?.copyWith(color: c.textMutedOnPage),
+      ),
+      trailing: DocumentMenu(doc: doc, group: group, me: me),
     );
   }
 }

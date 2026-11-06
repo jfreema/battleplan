@@ -381,7 +381,8 @@ class SettingsPanel extends StatelessWidget {
 
 /// A group of rows straight on the page (SPEC §7.3): a 1 px hairline above
 /// the first row and under each. [padding] insets the rows; [divided] is
-/// kept for callers and always on.
+/// kept for callers and always on. A [ListTile] among the rows has no inset
+/// of its own, so it lines up with the hairlines and the rows around it.
 class SettingsCard extends StatelessWidget {
   const new({
     required this.children,
@@ -399,7 +400,10 @@ class SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: padding,
-    child: PageRows(children: children),
+    child: ListTileTheme.merge(
+      contentPadding: EdgeInsets.zero,
+      child: PageRows(children: children),
+    ),
   );
 }
 

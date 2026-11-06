@@ -52,7 +52,12 @@ class TeamInfoScreen extends ConsumerWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+            padding: const EdgeInsets.fromLTRB(
+              Space.page,
+              14,
+              Space.page,
+              Space.xl,
+            ),
             children: [
               if (group != null) ...[
                 SettingsPanel(

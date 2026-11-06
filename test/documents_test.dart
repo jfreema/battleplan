@@ -398,6 +398,9 @@ void main() {
 
     /// Opens [name]'s ⋯ menu and picks [item].
     Future<void> menu(WidgetTester tester, String name, String item) async {
+      // All of its row on screen, not just the name.
+      await tester.ensureVisible(rowOf(name));
+      await tester.pumpAndSettle();
       await tester.tap(
         find.descendant(
           of: rowOf(name),

@@ -246,14 +246,22 @@ class PersonScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: Space.xl),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  padding: const EdgeInsets.fromLTRB(
+                    Space.page,
+                    0,
+                    Space.page,
+                    10,
+                  ),
                   child: PageHeading(
                     isMe ? l10n.personMyTeams : l10n.personTeamsInCommon,
                   ),
                 ),
                 if (rows.isEmpty && !teams.isLoading)
                   Padding(
-                    padding: const EdgeInsets.all(Space.lg),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Space.page,
+                      vertical: Space.lg,
+                    ),
                     child: Text(
                       l10n.personNoTeams,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -263,7 +271,7 @@ class PersonScreen extends ConsumerWidget {
                   )
                 else if (rows.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: Space.page),
                     child: SettingsCard(
                       children: [
                         for (final row in rows)

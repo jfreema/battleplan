@@ -50,7 +50,12 @@ class SettingsScreen extends ConsumerWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+            padding: const EdgeInsets.fromLTRB(
+              Space.page,
+              14,
+              Space.page,
+              Space.xl,
+            ),
             children: [
               PageHeading(l10n.account),
               headingGap,
@@ -124,11 +129,8 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () =>
                         links.open(Uri(scheme: 'mailto', path: support)),
                   ),
-                ],
-              ),
-              gap,
-              SettingsCard(
-                children: [
+                  // Last, in the same ruled list, as on Profile: a second
+                  // list right under it would draw a double rule.
                   SettingsRow(
                     icon: AppIcons.signOut,
                     title: l10n.signOut,

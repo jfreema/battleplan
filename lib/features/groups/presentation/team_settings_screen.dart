@@ -324,22 +324,20 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
           ? null
           : Text(
               subtitle,
-              style: text.bodySmall?.copyWith(color: c.card.textMuted),
+              style: text.bodySmall?.copyWith(color: c.textMutedOnPage),
             ),
       value: value,
       onChanged: onChanged,
     );
 
-    // A card with a heading and switch rows (design §3.5 "permissions").
-    Widget switchCard(String heading, List<Widget> rows) => SettingsCard(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
-      divided: false,
+    // A heading over its switch rows, ruled like every list on the page
+    // (SPEC §7.3).
+    Widget switchCard(String heading, List<Widget> rows) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CardHeading(heading),
-        for (final (i, row) in rows.indexed) ...[
-          if (i > 0) Divider(height: 2, color: c.card.divider),
-          row,
-        ],
+        PageHeading(heading),
+        headingGap,
+        SettingsCard(children: rows),
       ],
     );
 
@@ -358,7 +356,12 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
           // Built whole, not lazily: a settings page, short enough, and
           // every row is there to scroll to (the Chat look row).
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+            padding: const EdgeInsets.fromLTRB(
+              Space.page,
+              14,
+              Space.page,
+              Space.xl,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -555,8 +558,8 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                   ),
                 ),
                 gap,
-                // The team color, which tints every screen in the team
-                // (TEAM-1, design §3.18).
+                // The team color, on its badge and in the switcher (TEAM-1,
+                // design §3.18).
                 PageHeading(l10n.teamColorLabel),
                 headingGap,
                 TeamColorGrid(

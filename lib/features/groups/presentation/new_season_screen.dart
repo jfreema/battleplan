@@ -171,7 +171,12 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
           child: Form(
             key: _form,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, Space.xl),
+              padding: const EdgeInsets.fromLTRB(
+                Space.page,
+                14,
+                Space.page,
+                Space.xl,
+              ),
               children: [
                 SettingsPanel(
                   radius: Corners.panel,
