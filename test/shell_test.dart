@@ -428,6 +428,23 @@ void main() {
       expect(schemeOf(tester, find.byType(TeamSwitcherList)), TeamScheme.light);
     });
 
+    testWidgets("the status bar's icons follow the scheme on Teams, a team's "
+        'tabs, and Profile', (tester) async {
+      await pumpLightTeam(tester);
+      // Thunder is in Light: dark icons.
+      expect(SystemChrome.latestStyle, SystemUiOverlayStyle.dark);
+      // Teams and Profile are in my default, Army green: light icons.
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/teams');
+      await tester.pumpAndSettle();
+      expect(SystemChrome.latestStyle, SystemUiOverlayStyle.light);
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/chat');
+      await tester.pumpAndSettle();
+      expect(SystemChrome.latestStyle, SystemUiOverlayStyle.dark);
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/profile');
+      await tester.pumpAndSettle();
+      expect(SystemChrome.latestStyle, SystemUiOverlayStyle.light);
+    });
+
     testWidgets("the Chat tab's count and the notification prompt are in the "
         'team scheme', (tester) async {
       await pumpLightTeam(

@@ -5,6 +5,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
@@ -310,10 +311,13 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     }
     // The router puts the whole shell, header and tabs, in the scheme I see
     // the team in (SET-2, TeamSchemeTheme), around this widget, so the
-    // switcher and the prompt below open in it too.
+    // switcher and the prompt below open in it too, and the status bar's
+    // icons follow it.
     // Asks for notification permission once the person is in a team
     // (NOTIF-1); viewing someone else's team doesn't count.
-    return viewing ? shell : NotificationPrePrompt(child: shell);
+    return SchemeStatusBar(
+      child: viewing ? shell : NotificationPrePrompt(child: shell),
+    );
   }
 }
 

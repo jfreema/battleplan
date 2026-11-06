@@ -1,4 +1,5 @@
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -37,22 +38,28 @@ class HomeShell extends StatelessWidget {
         ),
     ];
     void select(int i) => context.go(paths[i]);
+    // No app bar here, so the status bar's icons are set for the scheme
+    // here.
     if (MediaQuery.sizeOf(context).width >= Breakpoints.wide) {
-      return Scaffold(
-        body: Row(
-          children: [
-            OpenFieldRail(tabs: tabs, selectedIndex: tab, onSelect: select),
-            Expanded(child: child),
-          ],
+      return SchemeStatusBar(
+        child: Scaffold(
+          body: Row(
+            children: [
+              OpenFieldRail(tabs: tabs, selectedIndex: tab, onSelect: select),
+              Expanded(child: child),
+            ],
+          ),
         ),
       );
     }
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: OpenFieldTabBar(
-        tabs: tabs,
-        selectedIndex: tab,
-        onSelect: select,
+    return SchemeStatusBar(
+      child: Scaffold(
+        body: child,
+        bottomNavigationBar: OpenFieldTabBar(
+          tabs: tabs,
+          selectedIndex: tab,
+          onSelect: select,
+        ),
       ),
     );
   }

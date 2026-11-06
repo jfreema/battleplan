@@ -2,6 +2,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// [child] in [scheme] (SET-2): a team's screens in the scheme you see it
@@ -19,6 +20,26 @@ class SchemeTheme extends StatelessWidget {
     final colors = GumdropColors.of(context);
     return _Themed(AppTheme.of(scheme, onCard: colors.onCard), child);
   }
+}
+
+/// [child] with the status bar's icons set for the scheme it's drawn in:
+/// light on a dark page, dark on a light one, as the app bars set them
+/// (SPEC §7.4). For a screen with no app bar at its top, like Teams,
+/// Profile and a team's tabs, so the icons don't keep the last screen's.
+class SchemeStatusBar extends StatelessWidget {
+  const new({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => AnnotatedRegion<SystemUiOverlayStyle>(
+    value:
+        Theme.of(context).appBarTheme.systemOverlayStyle ??
+        (GumdropColors.of(context).brightness == Brightness.dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark),
+    child: child,
+  );
 }
 
 /// [child] on a card: the theme's card context, for what sits on a
