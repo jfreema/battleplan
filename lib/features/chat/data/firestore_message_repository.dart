@@ -158,6 +158,9 @@ class FirestoreMessageRepository implements MessageRepository {
       authorId: x['authorId'] as String? ?? '',
       authorName: x['authorName'] as String? ?? '',
       authorPhotoPath: x['authorPhotoPath'] as String?,
+      authorAvatarColor: AvatarColor.tryParse(
+        x['authorAvatarColor'] as String?,
+      ),
       authorPlayerSummary: x['authorPlayerSummary'] as String?,
       type: MessageType.tryParse(x['type'] as String?) ?? MessageType.text,
       text: x['text'] as String? ?? '',

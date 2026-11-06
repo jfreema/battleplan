@@ -19,6 +19,10 @@ abstract class Message with _$Message {
     @Default('') String text,
     String? authorPhotoPath,
 
+    /// The author's icon color when sent (SET-8), or null for the hashed
+    /// one.
+    AvatarColor? authorAvatarColor,
+
     /// "Emma #7, Liam #23" for a guardian, "#12" for a member who is a
     /// player (PLAYER-8).
     String? authorPlayerSummary,
