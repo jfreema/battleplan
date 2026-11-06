@@ -50,10 +50,25 @@ Group get sceneTeam => testGroup('a', 'Thunder U14').copyWith(
   storageQuotaBytes: 500 * bytesPerMb,
 );
 
+/// The scene's icon colors (SET-8): Alex and Sam picked theirs; the coach
+/// and Jo show the hashed ones.
+const Map<String, AvatarColor> sceneAvatarColors = {
+  'alex': AvatarColor.tangerine,
+  'sam': AvatarColor.mint,
+};
+
 List<Membership> get sceneMembers => [
   testMembership('a', 'coach', role: MemberRole.owner, name: 'Coach Lee'),
-  testMembership('a', 'alex', name: 'Alex Kim'),
-  testMembership('a', 'sam', name: 'Sam Rivera'),
+  testMembership(
+    'a',
+    'alex',
+    name: 'Alex Kim',
+  ).copyWith(avatarColor: sceneAvatarColors['alex']),
+  testMembership(
+    'a',
+    'sam',
+    name: 'Sam Rivera',
+  ).copyWith(avatarColor: sceneAvatarColors['sam']),
   testMembership('a', 'jo', name: 'Jo Park'),
 ];
 
@@ -180,6 +195,7 @@ Message _msg(
   groupId: _team,
   authorId: author,
   authorName: name,
+  authorAvatarColor: sceneAvatarColors[author],
   type: type,
   text: text,
   attachments: attachments,

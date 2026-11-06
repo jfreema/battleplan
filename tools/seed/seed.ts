@@ -117,6 +117,10 @@ const players: {
 ];
 
 async function main() {
+  // A few people picked their icon color (SET-8); the rest show the hashed
+  // one. The color is on the profile, each membership, and each message.
+  const iconColor = (uid: string): string | null =>
+    ({ jim: 'mint', claire: 'grape', rachel: 'tangerine' } as Record<string, string>)[uid] ?? null;
   for (const p of people) {
     await auth.deleteUser(p.uid).catch(() => undefined);
     await auth.createUser({
@@ -133,6 +137,7 @@ async function main() {
       email: p.email,
       emailLower: p.email.toLowerCase(),
       photoPath: null,
+      ...(iconColor(p.uid) ? { avatarColor: iconColor(p.uid) } : {}),
       status: 'active',
       signInMethods: ['password'],
       themeMode: 'system',
@@ -190,6 +195,7 @@ async function main() {
       ...(groupId === 'cyclone' && uid === 'phil' ? { coach: true } : {}),
       displayName: nameOf(uid),
       photoPath: null,
+      avatarColor: iconColor(uid),
       playerSummary: playerSummary ?? null,
       notificationLevel: 'all',
       mutedUntil: null,
@@ -444,6 +450,7 @@ async function main() {
         authorId: line.uid,
         authorName: nameOf(line.uid),
         authorPhotoPath: null,
+        authorAvatarColor: iconColor(line.uid),
         authorPlayerSummary: m[3] ?? null,
         type: 'text',
         text: line.text,

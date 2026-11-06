@@ -149,6 +149,16 @@ describe('deleting an account takes the name off copies of it (AUTH-10)', () => 
     expect(await preview(G)).toMatchObject({ authorName: 'Pat Lee' });
   });
 
+  it('clears the name, photo, and icon color (SET-8) on their messages', async () => {
+    await messages().doc('m1').update({ authorPhotoPath: 'users/sam/avatar/1.jpg', authorAvatarColor: 'grape' });
+    await deleteAccount('sam');
+    expect((await messages().doc('m1').get()).data()).toMatchObject({
+      authorName: DELETED_USER_NAME,
+      authorPhotoPath: null,
+      authorAvatarColor: null,
+    });
+  });
+
   it("removes other people's notification-center items about them, with their own", async () => {
     await deleteAccount('sam');
     expect(await centerItems()).toEqual(['n_pat_from_lee', 'n_pat_system']);

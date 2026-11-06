@@ -13,6 +13,8 @@ import 'package:battleplan/core/widgets/time_zone_picker.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/application/session_service.dart';
 import 'package:battleplan/features/auth/domain/user_profile.dart';
+import 'package:battleplan/features/auth/presentation/your_icon_screen.dart'
+    show candyName;
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/schedule/application/providers.dart'
     show deviceTimeZoneProvider;
@@ -105,12 +107,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               leading: Avatar(
                                 name: profile.displayName,
                                 colorKey: profile.uid,
+                                color: profile.avatarColor,
                                 imageUrl: photoUrl,
                               ),
                               title: l10n.yourIcon,
-                              subtitle: profile.photoPath == null
-                                  ? null
-                                  : l10n.iconSubtitlePhoto,
+                              subtitle: profile.photoPath != null
+                                  ? l10n.iconSubtitlePhoto
+                                  : switch (profile.avatarColor) {
+                                      final color? => candyName(l10n, color),
+                                      null => null,
+                                    },
                               onTap: () =>
                                   unawaited(context.push('/profile/icon')),
                             ),

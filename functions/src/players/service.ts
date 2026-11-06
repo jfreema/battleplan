@@ -19,6 +19,7 @@ import {
   type PlayerInput,
   type Relation,
 } from './roster.js';
+import { memberSnapshotOf } from '../teams/service.js';
 
 /** A player's details (PLAYER-12): same ID as the player. */
 const detailsRef = (playerId: string) => db().collection(Collections.playerDetails).doc(playerId);
@@ -247,7 +248,13 @@ export interface LinkOptions {
 export async function linkGuardian(
   groupId: string,
   playerId: string,
-  user: { uid: string; displayName: string; photoPath: string | null; provisioned?: boolean },
+  user: {
+    uid: string;
+    displayName: string;
+    photoPath: string | null;
+    avatarColor?: string | null;
+    provisioned?: boolean;
+  },
   addedBy: string,
   via: LinkVia,
   relation: Relation = 'guardian',
@@ -303,8 +310,7 @@ export async function linkGuardian(
         uid: user.uid,
         role: 'member',
         title: null,
-        displayName: user.displayName,
-        photoPath: user.photoPath,
+        ...memberSnapshotOf(user),
         playerSummary: null,
         notificationLevel: 'all',
         mutedUntil: null,
@@ -484,12 +490,16 @@ export async function requireLinkAllowed(
   }
 }
 
-async function profileOf(uid: string, fallback: string): Promise<{ uid: string; displayName: string; photoPath: string | null }> {
+async function profileOf(
+  uid: string,
+  fallback: string,
+): Promise<{ uid: string; displayName: string; photoPath: string | null; avatarColor: string | null }> {
   const profile = await db().collection(Collections.users).doc(uid).get();
   return {
     uid,
     displayName: (profile.get('displayName') as string | undefined) ?? fallback,
     photoPath: (profile.get('photoPath') as string | null | undefined) ?? null,
+    avatarColor: (profile.get('avatarColor') as string | null | undefined) ?? null,
   };
 }
 

@@ -56,6 +56,7 @@ MORE FOR COACHES
 MAKE IT YOURS
 • Five color schemes: Army green, Light, Dark, Navy, and Light blue
 • Pick the scheme you see for each team, and a default
+• Pick your icon: a photo, or your initials on a color
 • Coaches pick the chat's message color and background
 
 SAFE AND PRIVATE

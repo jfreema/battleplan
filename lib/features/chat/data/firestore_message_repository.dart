@@ -460,6 +460,8 @@ class FirestoreMessageRepository implements MessageRepository {
           'authorId': uid.value,
           'authorName': m['displayName'],
           'authorPhotoPath': m['photoPath'],
+          // The icon color they picked (SET-8), as their member doc has it.
+          'authorAvatarColor': m['avatarColor'],
           'authorPlayerSummary': m['playerSummary'],
           'type': type.value,
           'text': text,

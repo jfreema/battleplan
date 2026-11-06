@@ -40,6 +40,7 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 A whole new look, Open Field, with five color schemes: Army green, the default, plus Light, Dark, Navy, and Light blue. Everyone picks the scheme they see for each team, and a default for the rest.
 
 Also new:
+• Your icon: a photo, or your initials on a color you pick, beside your messages in chat
 • Teams and Profile at the top: all your teams in one list, a back arrow from each team, and Team info for its roster, invites, and Team admin
 • Assignments on events: snacks, drinks, scorekeeper, or anything else, that families volunteer for or coaches assign
 • Photos: every photo shared in the team's chat, in one place under Documents
@@ -98,6 +99,7 @@ MORE FOR COACHES
 MAKE IT YOURS
 • Five color schemes: Army green, Light, Dark, Navy, and Light blue
 • Pick the scheme you see for each team, and a default
+• Pick your icon: a photo, or your initials on a color
 • Coaches pick the chat's message color and background
 • Your own time zone, which stays put when you travel
 

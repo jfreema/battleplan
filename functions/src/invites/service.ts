@@ -4,6 +4,7 @@ import { db, storage } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { joinUrl } from '../links/service.js';
 import { groupMemberId } from '../shared/ids.js';
+import { memberSnapshotOf } from '../teams/service.js';
 import { formatCode, newInviteCode } from './codes.js';
 
 export interface LinkOptions {
@@ -217,7 +218,7 @@ export async function redeem(
   code: string,
   uid: string,
   email: string | null,
-  member: { displayName: string; photoPath: string | null },
+  member: { displayName: string; photoPath: string | null; avatarColor?: string | null },
 ): Promise<{ groupId: string; alreadyMember: boolean } | InviteProblem> {
   const inviteRef = db().collection(Collections.invites).doc(code);
   return db().runTransaction(async (tx) => {
@@ -241,8 +242,7 @@ export async function redeem(
       uid,
       role: data?.role ?? 'member',
       title: null,
-      displayName: member.displayName,
-      photoPath: member.photoPath,
+      ...memberSnapshotOf(member),
       playerSummary: null,
       notificationLevel: 'all',
       mutedUntil: null,

@@ -51,7 +51,12 @@ export async function anonymizeAuthor(uid: string): Promise<void> {
     }
     const batch = db().batch();
     snap.docs.forEach((d) =>
-      batch.update(d.ref, { authorName: DELETED_USER_NAME, authorPhotoPath: null, authorPlayerSummary: null }),
+      batch.update(d.ref, {
+        authorName: DELETED_USER_NAME,
+        authorPhotoPath: null,
+        authorAvatarColor: null,
+        authorPlayerSummary: null,
+      }),
     );
     await batch.commit();
     if (snap.size < 400) break;
@@ -78,6 +83,7 @@ export async function postSystemMessage(
     authorId: 'system',
     authorName: '',
     authorPhotoPath: null,
+    authorAvatarColor: null,
     authorPlayerSummary: null,
     type: 'system',
     text,

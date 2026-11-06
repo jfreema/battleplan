@@ -154,6 +154,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                         Avatar(
                           name: _name.text,
                           colorKey: profile?.uid,
+                          color: profile?.avatarColor,
                           imageUrl: photoUrl,
                           size: 72,
                         ),

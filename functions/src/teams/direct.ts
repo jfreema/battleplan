@@ -13,6 +13,7 @@ import { forEachPage } from '../shared/batch.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
 import { TEAM_ROLES } from '../shared/roles.js';
+import { memberSnapshotOf } from './service.js';
 
 /** A direct conversation's people: never a team's owner, admin, or member. */
 export const PARTICIPANT = 'participant';
@@ -51,12 +52,15 @@ export const DIRECT_SETTINGS = {
 export interface DirectPerson {
   name: string;
   photoPath: string | null;
+  /** Their icon color (SET-8); null shows the hashed one. */
+  avatarColor: string | null;
 }
 
 function personOf(profile: FirebaseFirestore.DocumentSnapshot): DirectPerson {
   return {
     name: String(profile.get('displayName') ?? '').trim(),
     photoPath: (profile.get('photoPath') as string | null | undefined) ?? null,
+    avatarColor: (profile.get('avatarColor') as string | null | undefined) ?? null,
   };
 }
 
@@ -191,8 +195,7 @@ function participantDoc(
     role: PARTICIPANT,
     title: null,
     // The author snapshot each message must match (ARCH §6.3).
-    displayName: person.name,
-    photoPath: person.photoPath,
+    ...memberSnapshotOf({ ...person, displayName: person.name }),
     playerSummary: null,
     notificationLevel: 'all',
     mutedUntil: null,
@@ -289,7 +292,7 @@ export async function leaveDirectChats(
       .collection(Collections.groups)
       .doc(groupId)
       .update({
-        [`people.${uid}`]: { name: DELETED_USER_NAME, photoPath: null },
+        [`people.${uid}`]: { name: DELETED_USER_NAME, photoPath: null, avatarColor: null },
         memberCount: left.data().count,
         archivedAt: FieldValue.serverTimestamp(),
         status: 'archived',

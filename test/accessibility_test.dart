@@ -2,6 +2,7 @@
 // Flutter's guideline checks for tap targets, labels, and text contrast.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/widgets/avatar.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -144,6 +145,17 @@ void main() {
   }
 
   group('screen reader labels (SPEC §7.6)', () {
+    testWidgets("a message's icon is in the color its author picked (SET-8)", (
+      tester,
+    ) async {
+      await pumpChat(tester, scheme: TeamScheme.army);
+      final avatars = tester
+          .widgetList<Avatar>(find.byType(Avatar))
+          .where((a) => a.name == 'Sam Rivera');
+      expect(avatars, isNotEmpty);
+      expect(avatars.first.color, AvatarColor.mint);
+    });
+
     testWidgets('photos, reactions, and the team switcher', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpChat(tester, scheme: TeamScheme.navy);

@@ -101,20 +101,35 @@ export async function removeAccountFromTeams(uid: string, newOwners: Record<stri
 
 
 /**
- * Copies a person's name and photo onto their memberships, the cache the
- * roster and message author snapshots read (ARCH §6.2 `groupMembers`),
- * and onto their direct conversations, for the other person (CHAT-19).
- * Every membership, teams and conversations alike, a page at a time.
+ * The profile fields a new membership copies (ARCH §6.2 `groupMembers`):
+ * name, photo, and icon color (SET-8). Takes a profile or a FoundUser; no
+ * color means the app's hashed one.
+ */
+export function memberSnapshotOf(p: {
+  displayName: string;
+  photoPath: string | null;
+  avatarColor?: string | null;
+}): { displayName: string; photoPath: string | null; avatarColor: string | null } {
+  return { displayName: p.displayName, photoPath: p.photoPath, avatarColor: p.avatarColor ?? null };
+}
+
+/**
+ * Copies a person's name, photo, and icon color onto their memberships, the
+ * cache the roster and message author snapshots read (ARCH §6.2
+ * `groupMembers`), and onto their direct conversations, for the other
+ * person (CHAT-19). Every membership, teams and conversations alike, a
+ * page at a time.
  */
 export async function updateMemberSnapshots(
   uid: string,
   displayName: string,
   photoPath: string | null,
+  avatarColor: string | null,
 ): Promise<void> {
   await forEachPage(db().collection(Collections.groupMembers).where('uid', '==', uid), (batch, d) =>
-    batch.update(d.ref, { displayName, photoPath }),
+    batch.update(d.ref, { displayName, photoPath, avatarColor }),
   );
-  await updateDirectPeople(uid, { name: displayName.trim(), photoPath });
+  await updateDirectPeople(uid, { name: displayName.trim(), photoPath, avatarColor });
 }
 
 export interface NewGroup {
@@ -156,7 +171,7 @@ export function teamIdFor(uid: string, requestId: string): string {
  */
 export async function createGroup(
   uid: string,
-  owner: { displayName: string; photoPath: string | null },
+  owner: { displayName: string; photoPath: string | null; avatarColor?: string | null },
   input: NewGroup,
   quotaMb: number,
   id?: string,
@@ -207,8 +222,7 @@ export async function createGroup(
       // Nobody coaches a basic group (TEAM-14); a team's owner does unless
       // it says otherwise.
       ...(input.kind === 'group' ? { coach: false } : {}),
-      displayName: owner.displayName,
-      photoPath: owner.photoPath,
+      ...memberSnapshotOf(owner),
       playerSummary: null,
       notificationLevel: 'all',
       mutedUntil: null,
@@ -627,8 +641,7 @@ export async function addMembersByEmail(
         uid: user.uid,
         role: 'member',
         title: null,
-        displayName: user.displayName,
-        photoPath: user.photoPath,
+        ...memberSnapshotOf(user),
         playerSummary: null,
         notificationLevel: 'all',
         mutedUntil: null,

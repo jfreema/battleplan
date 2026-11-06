@@ -1183,6 +1183,8 @@ class _AuthorAvatar extends ConsumerWidget {
       child: Avatar(
         name: message.authorName,
         colorKey: message.authorId,
+        // As it was when they sent it (SET-8).
+        color: message.authorAvatarColor,
         imageUrl: url,
         size: 36,
       ),

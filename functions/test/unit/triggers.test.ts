@@ -34,11 +34,15 @@ describe('groups trigger early exit and system lines (CHAT-10)', () => {
 });
 
 describe('users trigger early exit', () => {
-  it('runs only when the name or photo changed', () => {
+  it('runs only when the name, photo, or icon color changed', () => {
     const base = { displayName: 'Sam', photoPath: null, themeMode: 'system' };
     expect(snapshotChanged(base, { ...base, themeMode: 'dark' })).toBe(false);
     expect(snapshotChanged(base, { ...base, displayName: 'Sam R' })).toBe(true);
     expect(snapshotChanged(base, { ...base, photoPath: 'users/u/avatar/1.jpg' })).toBe(true);
+    // The icon color (SET-8), set and cleared.
+    expect(snapshotChanged(base, { ...base, avatarColor: 'blueRaspberry' })).toBe(true);
+    expect(snapshotChanged({ ...base, avatarColor: 'blueRaspberry' }, { ...base, avatarColor: 'blueRaspberry' })).toBe(false);
+    expect(snapshotChanged({ ...base, avatarColor: 'blueRaspberry' }, { ...base, avatarColor: null })).toBe(true);
     expect(snapshotChanged(undefined, base)).toBe(false);
   });
 });

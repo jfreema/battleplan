@@ -414,6 +414,7 @@ class _MemberAvatar extends ConsumerWidget {
     return Avatar(
       name: member.displayName,
       colorKey: member.uid.value,
+      color: member.avatarColor,
       imageUrl: url,
       size: size,
     );

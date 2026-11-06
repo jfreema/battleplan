@@ -9,18 +9,26 @@ export function snapshotChanged(
   after: Record<string, unknown> | undefined,
 ): boolean {
   if (!before || !after) return false;
-  return before.displayName !== after.displayName || before.photoPath !== after.photoPath;
+  return (
+    before.displayName !== after.displayName ||
+    before.photoPath !== after.photoPath ||
+    before.avatarColor !== after.avatarColor
+  );
 }
 
-/** users updated → displayName and photoPath on the person's groupMembers. */
+/**
+ * users updated → name, photo, and icon color (SET-8) on the person's
+ * groupMembers and direct conversations.
+ */
 export const onUserUpdated = onDocumentUpdated('users/{uid}', async (event) => {
   const before = event.data?.before.data();
   const after = event.data?.after.data();
-  // Exits early unless the name or photo changed.
+  // Exits early unless the name, photo, or icon color changed.
   if (!snapshotChanged(before, after) || !after) return;
   await updateMemberSnapshots(
     event.params.uid,
     String(after.displayName ?? ''),
     (after.photoPath as string | null) ?? null,
+    (after.avatarColor as string | null) ?? null,
   );
 });

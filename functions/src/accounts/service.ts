@@ -374,6 +374,8 @@ export interface FoundUser {
   uid: string;
   displayName: string;
   photoPath: string | null;
+  /** Their icon color (SET-8); null shows the hashed one. */
+  avatarColor: string | null;
   /** True if the account was just created and the person hasn't signed in. */
   provisioned: boolean;
 }
@@ -393,6 +395,7 @@ export async function findOrProvisionUser(email: string, name: string | null): P
       uid: existing.uid,
       displayName: (profile.get('displayName') as string | undefined) ?? existing.displayName ?? address,
       photoPath: (profile.get('photoPath') as string | null | undefined) ?? null,
+      avatarColor: (profile.get('avatarColor') as string | null | undefined) ?? null,
       provisioned: profile.get('status') === 'provisioned',
     };
   } catch (e) {
@@ -420,7 +423,7 @@ export async function findOrProvisionUser(email: string, name: string | null): P
     updatedAt: now,
     schemaVersion: 1,
   });
-  return { uid: user.uid, displayName, photoPath: null, provisioned: true };
+  return { uid: user.uid, displayName, photoPath: null, avatarColor: null, provisioned: true };
 }
 
 /**
@@ -502,7 +505,12 @@ export async function setDisplayName(uid: string, displayName: string): Promise<
   });
   // A callable does its own follow-up (ARCH §6.4 rule 3); the users trigger
   // writes the same values again, which changes nothing.
-  await updateMemberSnapshots(uid, name, (profile.get('photoPath') as string | null | undefined) ?? null);
+  await updateMemberSnapshots(
+    uid,
+    name,
+    (profile.get('photoPath') as string | null | undefined) ?? null,
+    (profile.get('avatarColor') as string | null | undefined) ?? null,
+  );
   return (profile.get('displayName') as string | undefined) ?? '';
 }
 

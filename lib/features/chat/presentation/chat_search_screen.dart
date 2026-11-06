@@ -301,6 +301,7 @@ class _ResultTile extends ConsumerWidget {
               Avatar(
                 name: message.authorName,
                 colorKey: message.authorId,
+                color: message.authorAvatarColor,
                 imageUrl: url,
                 size: 36,
               ),

@@ -135,6 +135,9 @@ class PersonScreen extends ConsumerWidget {
     final photoPath = isMe
         ? profile?.photoPath
         : anyMembership?.photoPath ?? person?.photoPath;
+    final avatarColor = isMe
+        ? profile?.avatarColor
+        : anyMembership?.avatarColor ?? person?.avatarColor;
     final photoUrl = isMe
         ? ref.watch(myPhotoUrlProvider).value
         : photoPath == null
@@ -200,6 +203,7 @@ class PersonScreen extends ConsumerWidget {
                   child: Avatar(
                     name: name,
                     colorKey: uid.value,
+                    color: avatarColor,
                     imageUrl: photoUrl,
                     size: 96,
                   ),

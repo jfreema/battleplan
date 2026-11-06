@@ -1,3 +1,4 @@
+import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/domain/direct_chat.dart';
@@ -56,6 +57,7 @@ typedef MessageablePerson = ({
   UserId uid,
   String name,
   String? photoPath,
+  AvatarColor? avatarColor,
   List<String> teams,
 });
 
@@ -83,6 +85,7 @@ List<MessageablePerson> messageablePeople(Ref ref) {
         uid: m.uid,
         name: known?.name ?? m.displayName,
         photoPath: known?.photoPath ?? m.photoPath,
+        avatarColor: known?.avatarColor ?? m.avatarColor,
         teams: [...?known?.teams, t.group.name],
       );
     }

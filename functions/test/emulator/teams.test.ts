@@ -10,6 +10,7 @@
 //   npm --prefix functions run emulators:test
 import { Timestamp } from 'firebase-admin/firestore';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { onUserUpdated } from '../../src/accounts/triggers.js';
 import { deleteMessage } from '../../src/chat/handlers.js';
 import type { Email } from '../../src/email/service.js';
 import * as invites from '../../src/invites/handlers.js';
@@ -1082,5 +1083,67 @@ describe("the team's link (INV-2, §3)", () => {
     expect(revoked.body).not.toContain('Thunder');
     expect((await open('/join/', 'Twitterbot/1.0')).body).toContain('images/og.png');
     expect((await open('/join/', 'Mozilla/5.0')).location).toBe('/app/join');
+  });
+});
+
+describe('the icon color on memberships (SET-8)', () => {
+  const colorOf = async (g: string, uid: string) => (await members().doc(`${g}_${uid}`).get()).get('avatarColor');
+  beforeEach(async () => {
+    await db().collection(Collections.users).doc('lee').update({ avatarColor: 'grape' });
+  });
+
+  it('a change reaches every membership', async () => {
+    await members().doc('open_lee').set({ groupId: 'open', uid: 'lee', role: 'member', displayName: 'Lee Kim', photoPath: null });
+    await members().doc('archived_lee').set({ groupId: 'archived', uid: 'lee', role: 'member', displayName: 'Lee Kim', photoPath: null });
+    const profile = { displayName: 'Lee Kim', photoPath: null };
+    const change = (before: object, after: object) => ({
+      data: { before: { data: () => before }, after: { data: () => after } },
+      params: { uid: 'lee' },
+    });
+    await (onUserUpdated as unknown as { run: (e: object) => Promise<void> }).run(
+      change({ ...profile, avatarColor: 'grape' }, { ...profile, avatarColor: 'mint' }),
+    );
+    expect(await colorOf('open', 'lee')).toBe('mint');
+    expect(await colorOf('archived', 'lee')).toBe('mint');
+  });
+
+  it('joining with the team link copies it', async () => {
+    const link = await run<{ code: string }>(invites.getTeamInvite, 'ada', { groupId: 'open' });
+    await run(invites.redeemInvite, 'lee', { code: link.code });
+    expect(await colorOf('open', 'lee')).toBe('grape');
+  });
+
+  it('adding by email copies it, and a new account has none', async () => {
+    await run(teams.addMemberByEmail, 'pat', {
+      groupId: 'open',
+      entries: [{ email: 'lee@example.com' }, { name: 'Nia Park', email: 'nia@example.com' }],
+    });
+    expect(await colorOf('open', 'lee')).toBe('grape');
+    const nia = (await members().where('groupId', '==', 'open').where('displayName', '==', 'Nia Park').get()).docs[0];
+    expect(nia.get('avatarColor')).toBeNull();
+  });
+
+  it('a guardian added with a player copies it', async () => {
+    await run(players.addPlayers, 'pat', {
+      groupId: 'open',
+      players: [{ name: 'Leo', guardians: [{ email: 'lee@example.com' }] }],
+    });
+    expect(await colorOf('open', 'lee')).toBe('grape');
+  });
+
+  it('a guardian invited by email copies it', async () => {
+    await run(players.inviteGuardian, 'pat', { groupId: 'open', playerId: 'open-p1', email: 'lee@example.com' });
+    expect(await colorOf('open', 'lee')).toBe('grape');
+  });
+
+  it("a link that adds the membership copies the person's color", async () => {
+    await service.linkGuardian(
+      'open',
+      'open-p1',
+      { uid: 'lee', displayName: 'Lee Kim', photoPath: null, avatarColor: 'grape' },
+      'pat',
+      'guardian',
+    );
+    expect(await colorOf('open', 'lee')).toBe('grape');
   });
 });

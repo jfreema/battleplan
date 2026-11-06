@@ -111,6 +111,7 @@ class DirectChatScreen extends ConsumerWidget {
                   Avatar(
                     name: name,
                     colorKey: otherUid,
+                    color: person?.avatarColor,
                     imageUrl: photoUrl,
                     size: 36,
                   ),

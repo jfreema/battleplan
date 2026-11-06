@@ -571,15 +571,21 @@ export async function notifyEventAudience(input: {
 
 // ---- Event cards in chat (CHAT-11) ----------------------------------------
 
-/** A member's name and photo as messages carry them. */
+/** A member's name, photo, and icon color (SET-8) as messages carry them. */
 export async function authorSnapshot(
   groupId: string,
   uid: string,
-): Promise<{ authorName: string; authorPhotoPath: string | null; authorPlayerSummary: string | null }> {
+): Promise<{
+  authorName: string;
+  authorPhotoPath: string | null;
+  authorAvatarColor: string | null;
+  authorPlayerSummary: string | null;
+}> {
   const m = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, uid)).get();
   return {
     authorName: m.exists ? String(m.get('displayName') ?? '') : '',
     authorPhotoPath: m.exists ? ((m.get('photoPath') as string | null | undefined) ?? null) : null,
+    authorAvatarColor: m.exists ? ((m.get('avatarColor') as string | null | undefined) ?? null) : null,
     authorPlayerSummary: m.exists ? ((m.get('playerSummary') as string | null | undefined) ?? null) : null,
   };
 }

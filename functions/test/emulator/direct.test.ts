@@ -98,6 +98,8 @@ beforeEach(async () => {
 
 describe('opening a conversation (CHAT-19)', () => {
   it('makes one for two people who share a team, the same whoever opens it', async () => {
+    // The icon color (SET-8) comes from each profile; none is null.
+    await db().collection(Collections.users).doc('coach').update({ avatarColor: 'mint' });
     const { groupId } = await open('mom', 'coach');
     expect(groupId).toBe(directChatId('coach', 'mom'));
     expect(groupId).not.toContain('_');
@@ -105,13 +107,21 @@ describe('opening a conversation (CHAT-19)', () => {
     expect(await group(groupId)).toMatchObject({
       kind: 'direct',
       uids: ['coach', 'mom'],
-      people: { coach: { name: 'Andy Bernard', photoPath: null }, mom: { name: 'Claire Dunphy', photoPath: null } },
+      people: {
+        coach: { name: 'Andy Bernard', photoPath: null, avatarColor: 'mint' },
+        mom: { name: 'Claire Dunphy', photoPath: null, avatarColor: null },
+      },
       storageQuotaBytes: Limits.directChatStorageQuotaMb * 1024 * 1024,
       storageQuotaCustom: true,
       settings: { membersCanCreatePolls: false, membersCanUploadDocs: false, filterLanguage: true },
     });
-    expect(await membership(groupId, 'mom')).toMatchObject({ role: 'participant', otherUid: 'coach', displayName: 'Claire Dunphy' });
-    expect(await membership(groupId, 'coach')).toMatchObject({ role: 'participant', otherUid: 'mom' });
+    expect(await membership(groupId, 'mom')).toMatchObject({
+      role: 'participant',
+      otherUid: 'coach',
+      displayName: 'Claire Dunphy',
+      avatarColor: null,
+    });
+    expect(await membership(groupId, 'coach')).toMatchObject({ role: 'participant', otherUid: 'mom', avatarColor: 'mint' });
   });
 
   it('refuses someone with no team in common, oneself, and an account that never joined', async () => {
@@ -247,18 +257,26 @@ describe('a renamed or deleted account (CHAT-19, AUTH-10)', () => {
     await sendAndTrigger('d1', dm, 'coach', 'Andy Bernard', { text: 'Bring the bats' });
   });
 
-  it("puts a new name and photo on the conversation and the person's membership", async () => {
-    await updateMemberSnapshots('coach', 'Andy B.', 'users/coach/avatar/new.jpg');
-    expect((await group(dm))?.people.coach).toEqual({ name: 'Andy B.', photoPath: 'users/coach/avatar/new.jpg' });
-    expect(await membership(dm, 'coach')).toMatchObject({ displayName: 'Andy B.', photoPath: 'users/coach/avatar/new.jpg' });
-    expect(await membership(T, 'coach')).toMatchObject({ displayName: 'Andy B.' });
+  it("puts a new name, photo, and icon color on the conversation and the person's memberships", async () => {
+    await updateMemberSnapshots('coach', 'Andy B.', 'users/coach/avatar/new.jpg', 'blueRaspberry');
+    expect((await group(dm))?.people.coach).toEqual({
+      name: 'Andy B.',
+      photoPath: 'users/coach/avatar/new.jpg',
+      avatarColor: 'blueRaspberry',
+    });
+    expect(await membership(dm, 'coach')).toMatchObject({
+      displayName: 'Andy B.',
+      photoPath: 'users/coach/avatar/new.jpg',
+      avatarColor: 'blueRaspberry',
+    });
+    expect(await membership(T, 'coach')).toMatchObject({ displayName: 'Andy B.', avatarColor: 'blueRaspberry' });
   });
 
   it('leaves the other person the conversation, read-only, from "Deleted user"', async () => {
     await deleteAccount('coach');
     expect(await membership(dm, 'coach')).toBeUndefined();
     expect(await group(dm)).toMatchObject({
-      people: { coach: { name: 'Deleted user', photoPath: null }, mom: { name: 'Claire Dunphy' } },
+      people: { coach: { name: 'Deleted user', photoPath: null, avatarColor: null }, mom: { name: 'Claire Dunphy' } },
       status: 'archived',
       memberCount: 1,
       lastMessagePreview: { authorName: 'Deleted user', text: 'Bring the bats', type: 'text', authorId: 'coach' },

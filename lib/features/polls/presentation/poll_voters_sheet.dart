@@ -44,7 +44,15 @@ class PollVotersSheet extends ConsumerWidget {
     );
     Widget person(String uid) => ListTile(
       dense: true,
-      leading: Avatar(name: nameOf(uid), colorKey: uid, size: 32),
+      leading: Avatar(
+        name: nameOf(uid),
+        colorKey: uid,
+        color: roster
+            .where((m) => m.uid == UserId(uid))
+            .firstOrNull
+            ?.avatarColor,
+        size: 32,
+      ),
       title: Text(nameOf(uid)),
     );
 

@@ -185,6 +185,7 @@ export const redeemInvite = onCall(async (request) => {
   const result = await redeem(normalizeCode(code), uid, request.auth?.token.email ?? null, {
     displayName: (profile?.displayName as string | undefined) ?? 'New member',
     photoPath: (profile?.photoPath as string | null | undefined) ?? null,
+    avatarColor: (profile?.avatarColor as string | null | undefined) ?? null,
   });
   if (typeof result === 'string') throw new HttpsError('not-found', result);
   if (!result.alreadyMember) {

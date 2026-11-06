@@ -92,6 +92,7 @@ class _ChatRow extends ConsumerWidget {
       leading: Avatar(
         name: name,
         colorKey: chat.otherUid,
+        color: other?.avatarColor,
         imageUrl: photoUrl,
         size: 48,
       ),
@@ -288,6 +289,7 @@ class _PersonRow extends ConsumerWidget {
       leading: Avatar(
         name: person.name,
         colorKey: person.uid.value,
+        color: person.avatarColor,
         imageUrl: url,
       ),
       title: Text(person.name),

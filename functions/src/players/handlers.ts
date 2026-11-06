@@ -531,6 +531,7 @@ async function linkTeamMemberAsGuardian(
     uid,
     displayName: String(member.get('displayName') ?? ''),
     photoPath: (member.get('photoPath') as string | null | undefined) ?? null,
+    avatarColor: (member.get('avatarColor') as string | null | undefined) ?? null,
   };
   await linkGuardian(groupId, playerId, user, actor, 'guardian', 'guardian', { requireMember: true });
   await refreshPlayerSummary(groupId, uid);

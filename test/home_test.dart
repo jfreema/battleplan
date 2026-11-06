@@ -222,6 +222,56 @@ void main() {
     expect(auth.currentUser, isNull);
   });
 
+  testWidgets('Your icon saves a color, and shows the hashed one as picked '
+      'until then (SET-8)', (tester) async {
+    final users = FakeUserRepository();
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groups: teams,
+      memberships: memberships,
+      users: users,
+    );
+    await openProfile(tester);
+    await tester.tap(find.text('Your icon'));
+    await tester.pumpAndSettle();
+    final semantics = tester.ensureSemantics();
+    // Exactly one color shows as picked: the hashed one.
+    const colors = [
+      'Blue raspberry',
+      'Lemon',
+      'Mint',
+      'Grape',
+      'Bubblegum',
+      'Tangerine',
+      'Cherry',
+    ];
+    final picked = [
+      for (final name in colors)
+        if (tester
+                .getSemantics(find.bySemanticsLabel(name))
+                .flagsCollection
+                .isSelected
+                .toBoolOrNull() ==
+            true)
+          name,
+    ];
+    expect(picked, hasLength(1));
+    await tester.tap(find.bySemanticsLabel('Grape'));
+    await tester.pumpAndSettle();
+    expect(users.avatarColor, AvatarColor.grape);
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Grape')),
+      isSemantics(isSelected: true, isButton: true),
+    );
+    // The preview in chat, and Profile's row, say so too.
+    expect(find.text('See everyone Saturday!'), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    expect(find.text('Grape'), findsOneWidget);
+    semantics.dispose();
+  });
+
   testWidgets('Your icon adds a photo, then changes or removes it (SET-1)', (
     tester,
   ) async {

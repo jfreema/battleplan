@@ -287,7 +287,15 @@ class ReactionsSheet extends ConsumerWidget {
           for (final e in message.reactions.entries)
             if (e.value == r)
               ListTile(
-                leading: Avatar(name: nameOf(e.key), colorKey: e.key, size: 32),
+                leading: Avatar(
+                  name: nameOf(e.key),
+                  colorKey: e.key,
+                  color: roster
+                      .where((m) => m.uid == UserId(e.key))
+                      .firstOrNull
+                      ?.avatarColor,
+                  size: 32,
+                ),
                 title: Text(nameOf(e.key)),
                 trailing: Text.rich(
                   reactionSpan(r, heart: GumdropColors.of(context).cherry.face),

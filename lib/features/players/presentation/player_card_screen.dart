@@ -171,7 +171,11 @@ class PlayerCardScreen extends ConsumerWidget {
             if (roster.where((m) => m.uid == l.uid).firstOrNull case final m?)
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: Avatar(name: m.displayName, colorKey: m.uid.value),
+                leading: Avatar(
+                  name: m.displayName,
+                  colorKey: m.uid.value,
+                  color: m.avatarColor,
+                ),
                 title: Text(m.displayName),
                 subtitle: Text(
                   [

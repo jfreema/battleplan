@@ -98,6 +98,7 @@ export const createGroup = onCall({ secrets: [resendApiKey] }, async (request) =
       {
         displayName: (profile?.displayName as string | undefined) ?? user.displayName ?? 'Team owner',
         photoPath: (profile?.photoPath as string | null | undefined) ?? null,
+        avatarColor: (profile?.avatarColor as string | null | undefined) ?? null,
       },
       input,
       // New teams start at the platform's default limit (STORE-1, ADMIN-7).

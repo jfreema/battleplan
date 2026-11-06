@@ -118,6 +118,7 @@ class _GuardianPickerDialogState extends State<_GuardianPickerDialog> {
                             leading: Avatar(
                               name: m.displayName,
                               colorKey: m.uid.value,
+                              color: m.avatarColor,
                             ),
                             title: Text(m.displayName),
                             subtitle: m.pending

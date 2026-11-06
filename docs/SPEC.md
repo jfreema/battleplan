@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft v0.3 |
 | **Owner** | Jared Freeman |
-| **Last updated** | 2026-10-16 |
+| **Last updated** | 2026-11-06 |
 | **Companion doc** | [ARCHITECTURE.md](ARCHITECTURE.md): how it's built ("ARCH §n" below) |
 
 ---
@@ -631,7 +631,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - **Paging.** The chat loads the newest 50 messages and keeps them live. Scrolling up loads 50 older messages at a time, so a chat with years of history opens as fast as a new one.
   - With unread messages, the chat opens at the first unread message and loads newer ones as you scroll down.
   - Day lines: small spaced capitals between hairlines (TODAY, YESTERDAY, SAT, MAR 8, 2025).
-  - **Others' messages have no bubble** (Open Field, 1.1): their 36 px icon (SET-8), then a head line with the name in Nunito extra bold, their players or number muted ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8) and the time, and the text straight on the page. Photos sit on the page with no frame. A person's run of messages (within 5 minutes) shows the icon and head line on the first. In a direct conversation (CHAT-19) the other person's messages have no icon beside them.
+  - **Others' messages have no bubble** (Open Field, 1.1): their 36 px icon in their color (SET-8), then a head line with the name in Nunito extra bold, their players or number muted ("Maria R. · Emma #7", or "Jared F. #12" for a member who is a player, PLAYER-8) and the time, and the text straight on the page. Photos sit on the page with no frame. A person's run of messages (within 5 minutes) shows the icon and head line on the first. In a direct conversation (CHAT-19) the other person's messages have no icon beside them.
   - **My messages are bubbles** on the right in coral, every scheme's "you" color, or the one the chat look picks (CHAT-18), with dark text: corners 22, 6 at the bottom right, fitting their text up to 75% of the column (at most 520 px). "Sent" shows under my newest. "edited" and "Pinned" go beside the time.
   - Message text is Nunito 500, 17 points on 23, the same on every platform (§7.3).
   - Times appear on tap (phones), on hover (web), and at the start of each group.
@@ -955,7 +955,7 @@ Players that others answer for never get accounts, and every account belongs to 
 
 ### 6.10 Profile and settings (SET)
 
-- **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. The photo is on **Profile → Your icon**, at 96 px with Add a photo, or Change photo and Remove photo; the name changes in **Name**'s dialog on Profile (§5.1). The email shows on Sign out ("Signed in as …"); it changes in Sign-in methods.
+- **SET-1 · MVP · Profile.** Photo (cropped to a circle) and display name, used on every team. The photo is on **Profile → Your icon** (SET-8), at 96 px with Add a photo, or Change photo and Remove photo; the name changes in **Name**'s dialog on Profile (§5.1). The email shows on Sign out ("Signed in as …"); it changes in Sign-in methods.
 - **SET-2 · MVP · Color schemes.** The app has one look, **Open Field**, in five color schemes: **Army green** (the default), **Light**, **Dark**, **Navy**, and **Light blue** (§7.4). Each person picks their own for each team or group in **Team info → Color scheme**, a list of the five with a short line under each; it changes only how that team looks for them, and everyone else keeps theirs. A **Default color scheme** on Teams themes Teams, Profile, Messages, and settings, and every team or group they haven't picked one for, including ones they join later. A super admin looking at a team they aren't on has no Color scheme row there and sees it in their default. Accounts from before 1.1 start from their old theme: Gumdrop Army (or System, or nothing set) becomes Army green, Gumdrop Pop Dark becomes Navy, Gumdrop Pop Light and Gumdrop Candy become Light, and Gumdrop Arena becomes Dark; new accounts start on Army green. A change applies instantly, is remembered on the device so the app opens in it, and syncs to the account. Signed-out screens (sign-in and setup) are Army green.
 - **SET-3 · MVP · Notifications.** Global switches (NOTIF-4) and each team's level (NOTIF-3). Later, **Email reminders when I can't get notifications** (SCHED-14). Calendar links are in each team's menu (SCHED-11).
 - **SET-4 · MVP · Sign-in methods** (AUTH-8).
@@ -965,6 +965,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Contact support.
   - Sign out; Delete account (AUTH-10).
 - **SET-7 · v1.1 · Time zone.** (The owner's request, 2026-11-01: "i want the user to be able to select their timezone and it always adhere to that instead of adjusting automatically as they travel".) On Profile: **Automatic: Central Time (Chicago)**, following the device as it does today, or a zone picked from the same list as Create team's, which stays put wherever the person is. It's saved to the account, so it follows them to every device. Every time the app shows uses it: the schedule and events (with the event's own time beside it when that differs, SCHED-9), message times and the chat's day lines, poll close times, mute and notification times, document, media, play, report, and invite dates, a player's events, import previews, and the admin panel. Times picked in the app (a poll's close time, an announcement's end, the audit log's days) are in it too. A new team starts in it. New events still start in their team's zone, and push notifications still give the event's time in its own zone.
+- **SET-8 · v1.1 · Your icon.** (The owner's request, 2026-11-06: "Let each user pick a color they want their icon to be if they don't choose an image. Show the icon in the bubble next to their messages in chat.") Everyone's icon is their photo, or their initials on one of seven candy colors they pick: **Blue raspberry**, **Lemon**, **Mint**, **Grape**, **Bubblegum**, **Tangerine**, or **Cherry**. **Profile → Your icon** says "A photo, or your initials on a color you pick. People see it next to your messages in chat.", then the photo controls (SET-1), the seven swatches ("Or pick a color", or "Color when there's no photo" with a photo), and an **In chat** preview of a message as others see it. Each tap saves. Until someone picks, their icon keeps the color it always had, shown as picked. Profile's Your icon row says **Photo** or the color's name. The icon shows beside their messages (CHAT-1), on the roster, person pages, reactions, poll voters, and Messages; each message keeps the color it was sent with, so changing it doesn't recolor older messages. The admin console, @mention suggestions, and Blocked people keep the default color. In Light blue, every icon has a thin ring.
 
 ### 6.11 God admin panel (ADMIN)
 
@@ -1280,7 +1281,7 @@ Build these once in `core/` and reuse them everywhere:
 
 - Team header with switcher
 - Navigation bar and rail
-- Avatar (photo, or initials on a consistent color)
+- Avatar (photo, or initials on the color the person picked, SET-8, else a consistent one)
 - Message tile (others' on the page, mine in a bubble)
 - Reactions row and picker
 - Poll card
