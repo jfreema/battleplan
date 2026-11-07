@@ -11,7 +11,9 @@ import 'package:cloud_functions/cloud_functions.dart';
 /// Dues in Firestore (DUES-1 to DUES-3, ARCH §6.2): `dues` for the admins,
 /// `dueCharges` (one per person, id `<dueId>_<participantId>`) that each
 /// person reads their own of, and `duesPayments/<groupId>`. Dues and
-/// their charges change through the `saveDue` and `deleteDue` callables.
+/// their charges change through the `saveDue` and `deleteDue` callables;
+/// payments and waivers are written to a charge in a transaction, which
+/// the rules check is one payment added or taken back.
 class FirestoreDuesRepository implements DuesRepository {
   new(this._db, this._functions);
 
@@ -125,6 +127,9 @@ class FirestoreDuesRepository implements DuesRepository {
     } on FirebaseFunctionsException catch (e) {
       final message = serverMessage(e.message);
       throw switch (e.code) {
+        // An amount below what someone already paid (DUES-1).
+        'failed-precondition' when message == 'due-amount-below-paid' =>
+          InvalidInput(message),
         'permission-denied' => PermissionDenied(message),
         'not-found' => NotFound(message),
         'invalid-argument' => InvalidInput(message),
@@ -136,18 +141,118 @@ class FirestoreDuesRepository implements DuesRepository {
   }
 
   @override
+  Future<void> recordPayment(
+    DueCharge charge, {
+    required String id,
+    required String paidOn,
+    required UserId by,
+    int? amountCents,
+    String note = '',
+  }) => _change(charge, by, (now, raw) {
+    // A retry of one already recorded.
+    if (now.payments.any((p) => p.id == id)) return null;
+    final payment = DuePayment(
+      id: id,
+      amountCents: amountCents ?? now.owedCents,
+      paidOn: paidOn,
+      by: by.value,
+      note: _clip(note, Limits.duePaymentNoteMax),
+    );
+    return {
+      ..._totals(addDuePayment(now, payment), now),
+      'payments': [...raw, _paymentMap(payment)],
+    };
+  });
+
+  @override
+  Future<void> undoPayment(
+    DueCharge charge,
+    String paymentId, {
+    required UserId by,
+  }) => _change(charge, by, (now, raw) {
+    if (!now.payments.any((p) => p.id == paymentId)) return null;
+    return {
+      ..._totals(removeDuePayment(now, paymentId), now),
+      // As stored, but for the one taken back.
+      'payments': [
+        for (final p in raw)
+          if (p is! Map || p['id'] != paymentId) p,
+      ],
+    };
+  });
+
+  @override
   Future<void> setStatus(
     DueCharge charge,
     DueStatus status, {
     required UserId by,
-  }) => _write(
-    () => _charges.doc(charge.id).update({
-      'status': status.value,
-      'paidAt': status == DueStatus.paid ? FieldValue.serverTimestamp() : null,
-      'updatedBy': by.value,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }),
-  );
+  }) => _change(charge, by, (now, _) {
+    // Paid comes from payments recorded (recordPayment).
+    if (status == DueStatus.paid) throw const InvalidInput('due-status');
+    if (status == now.status) return null;
+    final next = switch (status) {
+      DueStatus.waived => DueStatus.waived,
+      DueStatus.owed when now.status == DueStatus.waived => unwaivedStatus(now),
+      // Marked paid before payments were recorded: owes all of it again.
+      DueStatus.owed when !now.recordsPayments => DueStatus.owed,
+      _ => throw const InvalidInput('due-status'),
+    };
+    return {
+      'status': next.value,
+      'paidAt': next == DueStatus.paid ? FieldValue.serverTimestamp() : null,
+    };
+  });
+
+  /// Changes [charge] in a transaction: [change] gets the charge as it is
+  /// now, and its payments as stored, and returns the fields to write, or
+  /// null for nothing to do. A refusal becomes [InvalidInput]; a charge
+  /// that's gone, [NotFound].
+  Future<void> _change(
+    DueCharge charge,
+    UserId by,
+    Map<String, Object?>? Function(DueCharge now, List<Object?> raw) change,
+  ) => _write(() async {
+    try {
+      await _db.runTransaction<void>((tx) async {
+        final ref = _charges.doc(charge.id);
+        final snap = await tx.get(ref);
+        final data = snap.data();
+        if (data == null) throw const NotFound();
+        final fields = change(
+          dueChargeFromFirestore(snap.id, data),
+          List<Object?>.of(data['payments'] as List? ?? const []),
+        );
+        if (fields == null) return;
+        tx.update(ref, {
+          ...fields,
+          'updatedBy': by.value,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } on DuePaymentRefusal catch (e) {
+      throw InvalidInput(e.name);
+    }
+  });
+
+  /// A share's total, status, and when it was paid, after [next].
+  static Map<String, Object?> _totals(DueChargePayments next, DueCharge now) =>
+      {
+        'paidCents': next.paidCents,
+        'status': next.status.value,
+        // When it was paid in full; kept while it stays paid.
+        if (next.status != DueStatus.paid)
+          'paidAt': null
+        else if (!now.paid)
+          'paidAt': FieldValue.serverTimestamp(),
+      };
+
+  static Map<String, Object?> _paymentMap(DuePayment p) => {
+    'id': p.id,
+    'amountCents': p.amountCents,
+    'paidOn': p.paidOn,
+    'by': p.by,
+    'note': p.note,
+  };
 
   @override
   Future<void> savePayments(
@@ -265,7 +370,21 @@ DueCharge dueChargeFromFirestore(String id, Map<String, dynamic> x) =>
       status: DueStatus.tryParse(x['status'] as String?) ?? DueStatus.owed,
       paidAt: _time(x['paidAt']),
       updatedAt: _time(x['updatedAt']),
+      payments: [
+        for (final p in x['payments'] as List? ?? const [])
+          if (p is Map) duePaymentFromFirestore(p),
+      ],
+      recordedCents: (x['paidCents'] as num?)?.toInt(),
     );
+
+/// Reads one payment on a charge (ARCH §6.2).
+DuePayment duePaymentFromFirestore(Map<Object?, Object?> x) => DuePayment(
+  id: x['id'] as String? ?? '',
+  amountCents: (x['amountCents'] as num?)?.toInt() ?? 0,
+  paidOn: x['paidOn'] as String? ?? '',
+  by: x['by'] as String? ?? '',
+  note: x['note'] as String? ?? '',
+);
 
 /// Reads a `duesPayments` document, or empty when there's none.
 DuesPayments duesPaymentsFromFirestore(Map<String, dynamic>? x) => DuesPayments(

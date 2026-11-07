@@ -747,6 +747,16 @@ GoRouter router(Ref ref) {
                   ),
                 ),
               ),
+              // Who owes what (DUES-5): everyone's dues, person by person.
+              GoRoute(
+                path: 'people',
+                pageBuilder: (_, state) => PanelPage(
+                  key: state.pageKey,
+                  child: DuesPeopleScreen(
+                    groupId: GroupId(state.pathParameters['groupId']!),
+                  ),
+                ),
+              ),
               GoRoute(
                 path: ':dueId',
                 pageBuilder: (_, state) => PanelPage(

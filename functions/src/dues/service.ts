@@ -1,10 +1,12 @@
 // Dues domain service: creates, edits, and deletes dues with their charges
 // (SPEC DUES-1, DUES-2, ARCH §6.2). A due and its charges change together,
-// in one batch, so nobody sees a due without its charges, or charges with
-// another due's terms. Marking a charge paid, and how to pay the team, stay
-// in the app under the rules. The names on charges follow renames, and a
-// deleted account's own charges read "Deleted user" (AUTH-10).
-import { FieldValue } from 'firebase-admin/firestore';
+// in one batch or transaction, so nobody sees a due without its charges, or
+// charges with another due's terms. Recording what each person paid, a part
+// at a time or all at once, and how to pay the team, stay in the app under
+// the rules; an edit keeps every payment, and refuses an amount below what
+// someone already paid. The names on charges follow renames, and a deleted
+// account's own charges read "Deleted user" (AUTH-10).
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
@@ -197,13 +199,70 @@ function chargesOf(groupId: string, dueId: string): FirebaseFirestore.Query {
   return db().collection(Collections.dueCharges).where('groupId', '==', groupId).where('dueId', '==', dueId);
 }
 
+/** One payment on a charge, as the app records it (DUES-2, ARCH §6.2). */
+export interface DuePayment {
+  id: string;
+  amountCents: number;
+  paidOn: string;
+  by: string;
+  note: string;
+}
+
+/** A charge's status and payments, as stored. */
+export interface ShareState {
+  status: string;
+  amountCents: number;
+  payments?: DuePayment[];
+  paidCents?: number;
+  paidAt?: unknown;
+}
+
+/** The ID of the payment a share marked paid before payments were recorded becomes. */
+export const MARKED_PAID_ID = 'marked-paid';
+
+/** [at] (a Timestamp or Date) as a UTC day, 'YYYY-MM-DD', or [fallback]. */
+function dayOf(at: unknown, fallback: string): string {
+  const d = at instanceof Timestamp ? at.toDate() : at instanceof Date ? at : null;
+  return d ? d.toISOString().slice(0, 10) : fallback;
+}
+
+/**
+ * What a share becomes when its due's amount changes to [amountCents]
+ * (DUES-1, DUES-2): its payments stay, and it's paid when they cover the new
+ * amount, or owed (partly paid) when they don't; a waived one stays waived.
+ * A share marked paid before payments were recorded paid its amount in
+ * full, so it becomes one payment of that amount, on the day it was marked
+ * paid, by nobody named. A share with no payments is left as it is (null).
+ * Paid more than the new amount is `failed-precondition`: someone's payment
+ * would be more than they owe, so the admin takes a payment back first.
+ */
+export function reamountShare(
+  share: ShareState,
+  amountCents: number,
+  today: string,
+): { payments: DuePayment[]; paidCents: number; status: string; paidAt: unknown } | null {
+  let payments = share.payments;
+  if (!payments) {
+    if (share.status !== 'paid') return null;
+    payments = [{ id: MARKED_PAID_ID, amountCents: share.amountCents, paidOn: dayOf(share.paidAt, today), by: '', note: '' }];
+  }
+  const paidCents = payments.reduce((sum, p) => sum + p.amountCents, 0);
+  if (paidCents > amountCents) throw new HttpsError('failed-precondition', 'due-amount-below-paid');
+  const status = share.status === 'waived' ? 'waived' : paidCents === amountCents ? 'paid' : 'owed';
+  const paidAt = status !== 'paid' ? null : share.status === 'paid' ? (share.paidAt ?? FieldValue.serverTimestamp()) : FieldValue.serverTimestamp();
+  return { payments, paidCents, status, paidAt };
+}
+
 /**
  * Changes a due's terms and copies its title, amount, date, and note to
- * every one of its charges, in one batch. Whether each is paid stays.
- * [addIds] are people to add to it (a player who joined after it was made),
- * each with a new owed charge, checked as a new due's are; anyone already
- * on it is skipped, nobody is taken off, and the due still charges at most
- * duesChargesMax people.
+ * every one of its charges, in one transaction, so a payment recorded at
+ * the same moment is never lost or left over the amount. Every payment
+ * stays: on a new amount, a share is paid when what was paid covers it, or
+ * owed the rest (reamountShare), and an amount below what someone already
+ * paid is `failed-precondition`. [addIds] are people to add to it (a player
+ * who joined after it was made), each with a new owed charge, checked as a
+ * new due's are; anyone already on it is skipped, nobody is taken off, and
+ * the due still charges at most duesChargesMax people.
  */
 export async function editDue(
   groupId: string,
@@ -213,35 +272,44 @@ export async function editDue(
   addIds: string[] = [],
 ): Promise<void> {
   await requireTeamAdmin(groupId, actor.uid, actor.superAdmin);
-  const due = await dueOn(groupId, dueId);
-  const charges = await chargesOf(groupId, dueId).get();
-  const onIt = new Set(charges.docs.map((c) => String(c.get('participantId'))));
-  const newIds = [...new Set(addIds)].filter((id) => !onIt.has(id));
-  let added: Payer[] = [];
-  if (newIds.length) {
-    if (onIt.size + newIds.length > Limits.duesChargesMax) {
-      throw new HttpsError('invalid-argument', 'due-payers');
+  const group = await db().collection(Collections.groups).doc(groupId).get();
+  const isGroup = group.get('kind') === 'group';
+  const today = new Date().toISOString().slice(0, 10);
+  await db().runTransaction(async (tx) => {
+    const due = await tx.get(db().collection(Collections.dues).doc(dueId));
+    if (!due.exists || due.get('groupId') !== groupId) throw new HttpsError('not-found', 'due-not-found');
+    const charges = await tx.get(chargesOf(groupId, dueId));
+    const onIt = new Set(charges.docs.map((c) => String(c.get('participantId'))));
+    const newIds = [...new Set(addIds)].filter((id) => !onIt.has(id));
+    let added: Payer[] = [];
+    if (newIds.length) {
+      if (onIt.size + newIds.length > Limits.duesChargesMax) {
+        throw new HttpsError('invalid-argument', 'due-payers');
+      }
+      added = await payersOf(groupId, isGroup, newIds);
     }
-    const group = await db().collection(Collections.groups).doc(groupId).get();
-    added = await payersOf(groupId, group.get('kind') === 'group', newIds);
-  }
-  const now = FieldValue.serverTimestamp();
-  const batch = db().batch();
-  batch.update(due.ref, { ...terms, updatedAt: now });
-  for (const c of charges.docs) {
-    batch.update(c.ref, {
-      title: terms.title,
-      amountCents: terms.amountCents,
-      dueOn: terms.dueOn,
-      note: terms.note,
-      updatedBy: actor.uid,
-      updatedAt: now,
-    });
-  }
-  for (const p of added) {
-    batch.create(db().collection(Collections.dueCharges).doc(dueChargeId(dueId, p.id)), newCharge(groupId, dueId, terms, p, actor.uid));
-  }
-  await batch.commit();
+    const now = FieldValue.serverTimestamp();
+    const reamounted = new Map<string, ReturnType<typeof reamountShare>>();
+    for (const c of charges.docs) {
+      if (c.get('amountCents') === terms.amountCents) continue;
+      reamounted.set(c.id, reamountShare(c.data() as ShareState, terms.amountCents, today));
+    }
+    tx.update(due.ref, { ...terms, updatedAt: now });
+    for (const c of charges.docs) {
+      tx.update(c.ref, {
+        title: terms.title,
+        amountCents: terms.amountCents,
+        dueOn: terms.dueOn,
+        note: terms.note,
+        ...(reamounted.get(c.id) ?? {}),
+        updatedBy: actor.uid,
+        updatedAt: now,
+      });
+    }
+    for (const p of added) {
+      tx.create(db().collection(Collections.dueCharges).doc(dueChargeId(dueId, p.id)), newCharge(groupId, dueId, terms, p, actor.uid));
+    }
+  });
 }
 
 /**

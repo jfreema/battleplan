@@ -6,7 +6,8 @@ import { createDue, DeleteDueInput, deleteDueAndCharges, dueTerms, editDue, Save
 
 /**
  * Adds a due with a charge for each person on it, or, with a dueId, edits
- * one, copies its terms to every charge, and adds a charge for each of
+ * one, copies its terms to every charge, keeping what each person paid
+ * (an amount below that is refused), and adds a charge for each of
  * participantIds not on it yet (DUES-1, DUES-2): team admins and super
  * admins, on a team that isn't archived. With a requestId, a retried add
  * gets back the due it made (TEAM-1's pattern). Returns the due's ID.

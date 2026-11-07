@@ -48,6 +48,7 @@ const teamRoutes = [
   '/g/a/scheme',
   '/g/a/dues',
   '/g/a/dues/new',
+  '/g/a/dues/people',
   '/g/a/dues/d0',
   '/g/a/media',
   '/g/a/reports',

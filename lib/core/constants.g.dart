@@ -68,6 +68,8 @@ abstract final class Limits {
   static const int dueAmountMaxCents = 1000000;
   static const int duePayHandleMax = 60;
   static const int duesChargesMax = 100;
+  static const int duePaymentsMax = 50;
+  static const int duePaymentNoteMax = 60;
   static const int documentNameMax = 100;
   static const int documentDescriptionMax = 500;
   static const int documentUrlMax = 2000;

@@ -145,8 +145,10 @@ List<Event> get sceneEvents => [
   sceneEvent('e4', day: 18, title: 'Parents meeting', type: EventType.meeting),
 ];
 
-/// The scene's dues (DUES-1): the uniform fee, two of the four paid, and
-/// how to pay.
+/// The scene's dues (DUES-1, DUES-2): the uniform fee, Noah's paid in one
+/// payment, Mia's marked paid before payments were recorded, Leo's $20 of
+/// $45, and Ava's owed; and a tournament fee with a note for everyone who
+/// owes it, Mia's paid, Ava's $10 of $30, and Leo's owed. And how to pay.
 FakeDuesRepository sceneDues() {
   final repo = FakeDuesRepository()
     ..payments = const DuesPayments(
@@ -155,71 +157,85 @@ FakeDuesRepository sceneDues() {
       note: "Put your player's name in the note.",
       updatedBy: 'coach',
     )
-    ..dues.add(
-      const Due(
+    ..dues.addAll(const [
+      Due(
         id: 'd0',
         groupId: _team,
         title: 'Uniform fee',
         amountCents: 4500,
         dueOn: '2030-10-31',
       ),
-    );
-  for (final (i, p) in scenePlayers.indexed) {
-    repo.charges.add(
-      DueCharge(
-        id: 'd0_${p.id.value}',
+      Due(
+        id: 'd1',
         groupId: _team,
-        dueId: 'd0',
-        title: 'Uniform fee',
-        amountCents: 4500,
-        dueOn: '2030-10-31',
-        participantType: ParticipantType.player,
-        participantId: p.id.value,
-        participantName: p.label,
-        status: i < 2 ? DueStatus.paid : DueStatus.owed,
-      ),
-    );
-  }
-  return repo;
-}
-
-/// What the parents see (DUES-2): the uniform fee, and a tournament fee
-/// with a note for everyone who owes it, Mia's paid and Ava's owed.
-FakeDuesRepository sceneFamilyDues() {
-  final repo = sceneDues();
-  repo.dues.add(
-    const Due(
-      id: 'd1',
-      groupId: _team,
-      title: 'Tournament fee',
-      amountCents: 3000,
-      dueOn: '2030-10-20',
-      note: 'Fall classic entry.',
-    ),
-  );
-  for (final (id, name, status) in [
-    ('mia', 'Mia #7', DueStatus.paid),
-    ('leo', 'Leo #9', DueStatus.owed),
-    ('ava', 'Ava #12', DueStatus.owed),
-  ]) {
-    repo.charges.add(
-      DueCharge(
-        id: 'd1_$id',
-        groupId: _team,
-        dueId: 'd1',
         title: 'Tournament fee',
         amountCents: 3000,
         dueOn: '2030-10-20',
         note: 'Fall classic entry.',
-        participantType: ParticipantType.player,
-        participantId: id,
-        participantName: name,
-        status: status,
       ),
-    );
+    ]);
+  DuePayment pay(int cents, {String note = ''}) => DuePayment(
+    id: 'pay-$cents-${note.length}',
+    amountCents: cents,
+    paidOn: '2026-11-02',
+    by: 'coach',
+    note: note,
+  );
+  final labels = {for (final p in scenePlayers) p.id.value: p.label};
+  for (final (dueId, title, amount, dueOn, note, shares) in [
+    (
+      'd0',
+      'Uniform fee',
+      4500,
+      '2030-10-31',
+      '',
+      [
+        ('noah', DueStatus.paid, [pay(4500)]),
+        // Marked paid before payments were recorded.
+        ('mia', DueStatus.paid, null),
+        ('leo', DueStatus.owed, [pay(2000, note: 'Venmo')]),
+        ('ava', DueStatus.owed, null),
+      ],
+    ),
+    (
+      'd1',
+      'Tournament fee',
+      3000,
+      '2030-10-20',
+      'Fall classic entry.',
+      [
+        ('mia', DueStatus.paid, [pay(3000)]),
+        ('leo', DueStatus.owed, null),
+        ('ava', DueStatus.owed, [pay(1000, note: 'Cash')]),
+      ],
+    ),
+  ]) {
+    for (final (id, status, payments) in shares) {
+      repo.charges.add(
+        DueCharge(
+          id: '${dueId}_$id',
+          groupId: _team,
+          dueId: dueId,
+          title: title,
+          amountCents: amount,
+          dueOn: dueOn,
+          note: note,
+          participantType: ParticipantType.player,
+          participantId: id,
+          participantName: labels[id]!,
+          status: status,
+          payments: payments ?? const [],
+          recordedCents: payments?.fold<int>(0, (a, p) => a + p.amountCents),
+        ),
+      );
+    }
   }
   return repo;
 }
+
+/// What the parents see (DUES-2): the same dues; each family sees only
+/// their own player's.
+FakeDuesRepository sceneFamilyDues() => sceneDues();
 
 /// The team's players (made up), each with one of the members as their
 /// guardian; the coach answers for Noah.
@@ -658,7 +674,8 @@ const wideSize = Size(1280, 800);
 /// Every key screen with a golden in every color scheme (SPEC §7.4): the main
 /// screens, and welcome, Teams, Profile, Team info, the team switcher,
 /// roster, settings, invite, both Color scheme screens, a group's schedule,
-/// Dues, Your icon, and the wide rail layout.
+/// Dues (an admin's, a due, Who owes what, and a member's and a guardian's
+/// own), Your icon, and the wide rail layout.
 final Map<
   String,
   Future<void> Function(WidgetTester, {required TeamScheme scheme})
@@ -713,6 +730,17 @@ goldenScreens = {
   'group_schedule': pumpGroupSchedule,
   'dues': (tester, {required scheme}) =>
       pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues'),
+  // One due's breakdown (DUES-2): who owes most first, each with what
+  // they've paid and what's left.
+  'dues_due': (tester, {required scheme}) async {
+    await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+    await pushTo(tester, '/g/a/dues/d0');
+  },
+  // Who owes what (DUES-5): everyone across every due, by person.
+  'dues_people': (tester, {required scheme}) async {
+    await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+    await pushTo(tester, '/g/a/dues/people');
+  },
   // What a parent sees (DUES-2, DUES-3): Leo's dues, and how to pay.
   'dues_member': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme, user: sam, dues: sceneFamilyDues());

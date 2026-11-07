@@ -1,7 +1,8 @@
 // Security rules for dues (SPEC DUES-1..DUES-4): what a team's admins ask
 // its players, or a basic group's members, to pay, and who paid. Admins, and
-// super admins (§3), see every due and charge and mark charges paid;
-// everyone else sees only their own charge, or their player's. Dues and
+// super admins (§3), see every due and charge and record what each person
+// paid, all at once or a part at a time, or waive it; everyone else sees
+// only their own charge, or their player's. Dues and
 // charges are created, edited, and deleted only by the saveDue and deleteDue
 // callables (test/emulator/dues.test.ts). Everyone on the team reads how
 // to pay (duesPayments); admins and the team's coaches write it. Archived
@@ -16,7 +17,7 @@ import {
 import firebase from 'firebase/compat/app';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Limits } from '../../src/shared/constants.js';
 
 type Db = firebase.firestore.Firestore;
@@ -283,6 +284,208 @@ describe('charges', () => {
   });
 });
 
+/** A payment as the app records it. */
+const pay = (by: string, amountCents: number, extra: object = {}) => ({
+  id: `pay-${by}-${amountCents}-${Math.random().toString(36).slice(2, 8)}`,
+  amountCents,
+  paidOn: '2026-11-05',
+  by,
+  note: '',
+  ...extra,
+});
+
+/** Sets a charge's payments as stored, for seeding. */
+const storedPayments = (id: string, payments: object[], extra: object = {}) =>
+  env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc(`dueCharges/${id}`).update({
+    payments,
+    paidCents: payments.reduce((sum, p) => sum + (p as { amountCents: number }).amountCents, 0),
+    ...extra,
+  }));
+
+/** The charge's payments and total now, as the app reads them before writing. */
+const current = async (id: string) => {
+  let data: firebase.firestore.DocumentData = {};
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    data = (await ctx.firestore().doc(`dueCharges/${id}`).get()).data()!;
+  });
+  return { payments: (data.payments ?? []) as Record<string, unknown>[], paidCents: (data.paidCents ?? 0) as number, amountCents: data.amountCents as number };
+};
+
+/** Records [p] on charge [id] as the app does: added at the end, the total and status with it. */
+const record = async (db: Db, uid: string, id: string, p: { amountCents: number }, extra: object = {}) => {
+  const c = await current(id);
+  const paidCents = c.paidCents + p.amountCents;
+  const full = paidCents === c.amountCents;
+  return editCharge(db, uid, id, {
+    payments: [...c.payments, p],
+    paidCents,
+    status: full ? 'paid' : 'owed',
+    paidAt: full ? now() : null,
+    ...extra,
+  });
+};
+
+/** Takes payment [i] back, as the app does. */
+const undo = async (db: Db, uid: string, id: string, i: number, extra: object = {}) => {
+  const c = await current(id);
+  const gone = c.payments[i] as { amountCents: number };
+  return editCharge(db, uid, id, {
+    payments: c.payments.filter((_, j) => j !== i),
+    paidCents: c.paidCents - gone.amountCents,
+    status: 'owed',
+    paidAt: null,
+    ...extra,
+  });
+};
+
+describe('payments: a part at a time, or all of it (DUES-2)', () => {
+  it('admins and super admins record parts until it is paid in full, then nothing more', async () => {
+    await assertSucceeds(record(as('carol'), 'carol', 'd1_emma', pay('carol', 2000, { note: 'Cash at practice' })));
+    await assertSucceeds(record(root(), 'root', 'd1_emma', pay('root', 500)));
+    await assertSucceeds(record(as('alice'), 'alice', 'd1_emma', pay('alice', 2000)));
+    const c = await current('d1_emma');
+    expect(c.paidCents).toBe(4500);
+    expect(c.payments.map((p) => p.amountCents)).toEqual([2000, 500, 2000]);
+    // Paid in full: there's nothing left to record.
+    await assertFails(record(as('carol'), 'carol', 'd1_emma', pay('carol', 1)));
+    await assertSucceeds(record(as('hana'), 'hana', 'dC_ivan', pay('hana', 4500)));
+  });
+
+  it('never more than what is left, nothing, or a part of a cent', async () => {
+    await storedPayments('d1_emma', [pay('alice', 2000)]);
+    for (const amountCents of [2501, 0, -100, 12.5]) {
+      await assertFails(record(as('carol'), 'carol', 'd1_emma', pay('carol', amountCents)));
+    }
+    await assertFails(record(as('carol'), 'carol', 'd1_emma', { ...pay('carol', 100), amountCents: '100' } as never));
+    await assertSucceeds(record(as('carol'), 'carol', 'd1_emma', pay('carol', 2500)));
+  });
+
+  it('keeps the total and the status in step with the payments', async () => {
+    const p = pay('carol', 2000);
+    // A total that doesn't add up.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { payments: [p], paidCents: 2500, status: 'owed', paidAt: null }));
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { payments: [p], paidCents: 1500, status: 'owed', paidAt: null }));
+    // Paid while some is left, or owed with none left.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { payments: [p], paidCents: 2000, status: 'paid', paidAt: now() }));
+    const all = pay('carol', 4500);
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { payments: [all], paidCents: 4500, status: 'owed', paidAt: null }));
+    // One without the other.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { payments: [p] }));
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { paidCents: 2000 }));
+    // Paid with nothing paid on a charge that records payments.
+    await storedPayments('d1_emma', []);
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { status: 'paid', paidAt: now() }));
+    await assertSucceeds(editCharge(as('carol'), 'carol', 'd1_emma', { payments: [p], paidCents: 2000, status: 'owed', paidAt: null }));
+  });
+
+  it('refuses a payment in someone else\'s name, a bad day, a long note, or extra fields', async () => {
+    for (const p of [
+      pay('alice', 1000),
+      pay('carol', 1000, { paidOn: '11/05/2026' }),
+      pay('carol', 1000, { paidOn: '2026-13-01' }),
+      pay('carol', 1000, { note: 'n'.repeat(Limits.duePaymentNoteMax + 1) }),
+      pay('carol', 1000, { note: null }),
+      pay('carol', 1000, { id: 'short' }),
+      pay('carol', 1000, { method: 'venmo' }),
+      { amountCents: 1000, paidOn: '2026-11-05', by: 'carol', note: '' },
+    ]) {
+      await assertFails(record(as('carol'), 'carol', 'd1_emma', p));
+    }
+    await assertSucceeds(record(as('carol'), 'carol', 'd1_emma', pay('carol', 1000, { note: 'n'.repeat(Limits.duePaymentNoteMax) })));
+  });
+
+  it('adds one payment at a time, at the end, and never changes one already there', async () => {
+    const first = pay('alice', 1000);
+    await storedPayments('d1_emma', [first]);
+    // Two at once.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', {
+      payments: [first, pay('carol', 500), pay('carol', 500)], paidCents: 2000, status: 'owed', paidAt: null,
+    }));
+    // In front of the earlier one.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', {
+      payments: [pay('carol', 500), first], paidCents: 1500, status: 'owed', paidAt: null,
+    }));
+    // Changing the earlier one.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', {
+      payments: [{ ...first, amountCents: 1500 }], paidCents: 1500, status: 'owed', paidAt: null,
+    }));
+    // The same one again.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', {
+      payments: [first, first], paidCents: 2000, status: 'owed', paidAt: null,
+    }));
+  });
+
+  it('two admins recording at once: a write from an older list is refused, never lost over the other', async () => {
+    // Carol and Alice both read the charge with nothing paid.
+    const before = await current('d1_emma');
+    await assertSucceeds(record(as('alice'), 'alice', 'd1_emma', pay('alice', 2000)));
+    // Carol's write was made from the older list.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', {
+      payments: [...before.payments, pay('carol', 1000)], paidCents: before.paidCents + 1000, status: 'owed', paidAt: null,
+    }));
+    // Read again, it goes on after Alice's.
+    await assertSucceeds(record(as('carol'), 'carol', 'd1_emma', pay('carol', 1000)));
+    expect((await current('d1_emma')).paidCents).toBe(3000);
+  });
+
+  it(`holds at most ${Limits.duePaymentsMax} payments`, async () => {
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('dueCharges/d1_emma').update({ amountCents: 100000 }));
+    await storedPayments('d1_emma', Array.from({ length: Limits.duePaymentsMax - 1 }, (_, i) => pay('alice', 100, { id: `seeded-${i}` })));
+    await assertSucceeds(record(as('carol'), 'carol', 'd1_emma', pay('carol', 100)));
+    await assertFails(record(as('carol'), 'carol', 'd1_emma', pay('carol', 100)));
+  });
+
+  it('a mistaken payment is taken back, from anywhere in the list, and nothing else with it', async () => {
+    const [a, b, c] = [pay('alice', 1000), pay('carol', 2000), pay('alice', 1500)];
+    await storedPayments('d1_emma', [a, b, c], { status: 'paid', paidAt: OLD });
+    // Two at once, or the total wrong.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { payments: [a], paidCents: 1000, status: 'owed', paidAt: null }));
+    await assertFails(undo(as('carol'), 'carol', 'd1_emma', 1, { paidCents: 3000 }));
+    // Still paid with some taken back.
+    await assertFails(undo(as('carol'), 'carol', 'd1_emma', 1, { status: 'paid', paidAt: OLD }));
+    await assertSucceeds(undo(as('carol'), 'carol', 'd1_emma', 1));
+    expect((await current('d1_emma')).payments).toEqual([a, c]);
+    expect((await current('d1_emma')).paidCents).toBe(2500);
+    await assertSucceeds(undo(root(), 'root', 'd1_emma', 0));
+    await assertSucceeds(undo(as('alice'), 'alice', 'd1_emma', 0));
+    expect(await current('d1_emma')).toMatchObject({ payments: [], paidCents: 0 });
+  });
+
+  it('a waived share takes no payment, keeps what was paid, and goes back to paid or owed when waived no more', async () => {
+    await storedPayments('d1_emma', [pay('alice', 2000)]);
+    await assertSucceeds(editCharge(as('carol'), 'carol', 'd1_emma', { status: 'waived' }));
+    await assertFails(record(as('carol'), 'carol', 'd1_emma', pay('carol', 500), { status: 'waived' }));
+    // Back to owed, with what was paid.
+    await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { status: 'paid', paidAt: now() }));
+    await assertSucceeds(editCharge(as('carol'), 'carol', 'd1_emma', { status: 'owed' }));
+    // A mistaken payment on a waived share can be taken back.
+    await assertSucceeds(editCharge(as('carol'), 'carol', 'd1_emma', { status: 'waived' }));
+    await assertSucceeds(undo(as('carol'), 'carol', 'd1_emma', 0, { status: 'waived' }));
+  });
+
+  it('a share marked paid before payments were recorded stays paid, takes no payment, and can be marked not paid', async () => {
+    // d1_finn: paid, with no payments recorded.
+    await assertFails(record(as('carol'), 'carol', 'd1_finn', pay('carol', 4500)));
+    await assertSucceeds(editCharge(as('carol'), 'carol', 'd1_finn', { status: 'owed', paidAt: null }));
+    await assertSucceeds(record(as('carol'), 'carol', 'd1_finn', pay('carol', 4500)));
+  });
+
+  it('members, guardians, coaches, and other teams record none, their own included', async () => {
+    for (const [uid, id] of [['dan', 'd1_emma'], ['erin', 'd1_finn'], ['bob', 'd1_emma'], ['kim', 'd1_emma'], ['gina', 'd1_emma'], ['ivan', 'dC_ivan'], ['bob', 'dO_bob']]) {
+      await assertFails(record(as(uid), uid, id, pay(uid, 1000)));
+    }
+    await storedPayments('d1_emma', [pay('alice', 1000)]);
+    await assertFails(undo(as('dan'), 'dan', 'd1_emma', 0));
+  });
+
+  it('a member reads their own share with what has been paid, and nobody else\'s', async () => {
+    await storedPayments('d1_emma', [pay('alice', 1000)]);
+    await assertSucceeds(as('dan').doc('dueCharges/d1_emma').get());
+    await assertFails(as('erin').doc('dueCharges/d1_emma').get());
+    await assertFails(as('bob').doc('dueCharges/d1_emma').get());
+  });
+});
+
 describe('reading charges: nobody sees what someone else owes', () => {
   it('admins and super admins read and list them all', async () => {
     for (const uid of ['alice', 'carol']) {
@@ -423,6 +626,8 @@ describe('an archived team (TEAM-9)', () => {
 
   it('takes no dues changes from anyone, super admins included, and still shows them', async () => {
     await assertFails(editCharge(as('carol'), 'carol', 'd1_emma', { status: 'paid', paidAt: now() }));
+    await assertFails(record(as('carol'), 'carol', 'd1_emma', pay('carol', 1000)));
+    await assertFails(record(root(), 'root', 'd1_emma', pay('root', 1000)));
     await assertFails(editCharge(root(), 'root', 'd1_emma', { status: 'waived' }));
     await assertFails(as('alice').doc('duesPayments/teamA').set(payments('alice')));
     await assertFails(as('alice').doc('duesPayments/teamA').delete());
@@ -434,7 +639,8 @@ describe('an archived team (TEAM-9)', () => {
 
   it('takes them again once restored', async () => {
     await setGroup('teamA', { archivedAt: null });
-    await assertSucceeds(editCharge(as('carol'), 'carol', 'd1_emma', { status: 'paid', paidAt: now() }));
+    await assertSucceeds(record(as('carol'), 'carol', 'd1_emma', pay('carol', 1000)));
+    await assertSucceeds(editCharge(as('carol'), 'carol', 'd1_finn', { status: 'owed', paidAt: null }));
     await assertSucceeds(as('alice').doc('duesPayments/teamA').set(payments('alice')));
   });
 });

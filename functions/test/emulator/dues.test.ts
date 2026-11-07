@@ -1,9 +1,12 @@
 // Dues on the server (SPEC DUES-1 to DUES-3): the saveDue and deleteDue
 // callables create, edit, and delete a due with all its charges in one
-// batch, for team admins and super admins only, and add people to a due;
-// the names on charges follow renames; and Functions delete dues with
-// their team (TEAM-9). Runs against the Firestore and Storage emulators:
+// batch or transaction, for team admins and super admins only, and add
+// people to a due; an edit keeps every payment recorded, and refuses an
+// amount below what someone paid; the names on charges follow renames; and
+// Functions delete dues with their team (TEAM-9). Runs against the
+// Firestore and Storage emulators:
 //   npm --prefix functions run emulators:test
+import { Timestamp } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { deleteDue, saveDue } from '../../src/dues/handlers.js';
@@ -203,7 +206,9 @@ describe('saveDue edits a due and every charge (DUES-1)', () => {
     const list = await charges(dueId);
     expect(list).toHaveLength(40);
     expect(list.every((d) => d.get('title') === 'Jerseys' && d.get('amountCents') === 5000 && d.get('dueOn') === null && d.get('note') === '')).toBe(true);
-    expect(list.find((d) => d.id === `${dueId}_${ids[5]}`)!.get('status')).toBe('paid');
+    // Paid in full at $45 keeps that payment, and owes the other $5.
+    expect(list.find((d) => d.id === `${dueId}_${ids[5]}`)!.data()).toMatchObject({ status: 'owed', paidCents: 4500 });
+    expect(list.filter((d) => d.get('status') === 'owed' && d.get('payments') === undefined)).toHaveLength(39);
     expect((await charges(other)).every((d) => d.get('title') === 'Other')).toBe(true);
   });
 
@@ -214,6 +219,72 @@ describe('saveDue edits a due and every charge (DUES-1)', () => {
     expect(await refusal(save('gina', { ...edit, groupId: 'teamB' }))).toBe('not-found');
     expect(await refusal(save('carol', { ...edit, dueId: 'nope' }))).toBe('not-found');
     expect((await charges(dueId)).every((d) => d.get('title') === 'Uniform fee')).toBe(true);
+  });
+});
+
+describe('saveDue keeps every payment when the amount changes (DUES-2)', () => {
+  const pay = (amountCents: number, id = `pay-${amountCents}`) => ({ id, amountCents, paidOn: '2026-11-05', by: 'carol', note: '' });
+  const share = async (dueId: string, id: string) => (await db().collection(Collections.dueCharges).doc(`${dueId}_${id}`).get()).data()!;
+  const setShare = (dueId: string, id: string, fields: object) =>
+    db().collection(Collections.dueCharges).doc(`${dueId}_${id}`).update(fields);
+
+  it('a share partly paid owes the rest of a new amount, and one whose payments cover it is paid', async () => {
+    const [a, b, c] = players(3).map((p) => p.id);
+    const { dueId } = await save('carol', { ...terms, participantIds: [a, b, c] });
+    await setShare(dueId, a, { payments: [pay(2000)], paidCents: 2000 });
+    await setShare(dueId, b, { payments: [pay(1000, 'pay-one'), pay(3000, 'pay-two')], paidCents: 4000 });
+    await save('alice', { groupId: G, dueId, title: 'Uniforms', amountCents: 4000, dueOn: null, note: '' });
+    expect(await share(dueId, a)).toMatchObject({ amountCents: 4000, status: 'owed', paidCents: 2000, payments: [pay(2000)], paidAt: null });
+    const full = await share(dueId, b);
+    expect(full).toMatchObject({ amountCents: 4000, status: 'paid', paidCents: 4000 });
+    expect(full.paidAt).toBeInstanceOf(Timestamp);
+    expect(full.payments.map((p: { id: string }) => p.id)).toEqual(['pay-one', 'pay-two']);
+    // Nothing paid: just the new amount.
+    expect(await share(dueId, c)).toMatchObject({ amountCents: 4000, status: 'owed', paidAt: null });
+    expect((await share(dueId, c)).payments).toBeUndefined();
+    // Up again: $10 of $50 left.
+    await save('alice', { groupId: G, dueId, title: 'Uniforms', amountCents: 5000, dueOn: null, note: '' });
+    expect(await share(dueId, b)).toMatchObject({ status: 'owed', paidCents: 4000, paidAt: null });
+  });
+
+  it('refuses an amount below what someone already paid, and changes nothing', async () => {
+    const [a, b] = players(2).map((p) => p.id);
+    const { dueId } = await save('carol', { ...terms, participantIds: [a, b] });
+    await setShare(dueId, a, { payments: [pay(3000)], paidCents: 3000 });
+    expect(await refusal(save('alice', { groupId: G, dueId, title: 'Cheaper', amountCents: 2500, dueOn: null, note: '' }))).toBe('failed-precondition');
+    expect((await db().collection(Collections.dues).doc(dueId).get()).data()).toMatchObject({ title: 'Uniform fee', amountCents: 4500 });
+    expect(await share(dueId, a)).toMatchObject({ title: 'Uniform fee', amountCents: 4500, paidCents: 3000 });
+    expect(await share(dueId, b)).toMatchObject({ title: 'Uniform fee', amountCents: 4500 });
+    // Exactly what they paid is fine: paid in full.
+    await save('alice', { groupId: G, dueId, title: 'Cheaper', amountCents: 3000, dueOn: null, note: '' });
+    expect(await share(dueId, a)).toMatchObject({ amountCents: 3000, status: 'paid', paidCents: 3000 });
+  });
+
+  it('a share marked paid before payments were recorded paid its amount in full', async () => {
+    const [a] = players(1).map((p) => p.id);
+    const { dueId } = await save('carol', { ...terms, participantIds: [a] });
+    await setShare(dueId, a, { status: 'paid', paidAt: Timestamp.fromDate(new Date('2026-11-03T18:00:00Z')) });
+    // A new title alone leaves it as it was.
+    await save('alice', { groupId: G, dueId, title: 'Jerseys', amountCents: 4500, dueOn: null, note: '' });
+    expect((await share(dueId, a)).payments).toBeUndefined();
+    // Lower than the $45 it was paid in full at: refused.
+    expect(await refusal(save('alice', { groupId: G, dueId, title: 'Jerseys', amountCents: 4000, dueOn: null, note: '' }))).toBe('failed-precondition');
+    await save('alice', { groupId: G, dueId, title: 'Jerseys', amountCents: 5000, dueOn: null, note: '' });
+    expect(await share(dueId, a)).toMatchObject({
+      status: 'owed',
+      paidAt: null,
+      paidCents: 4500,
+      payments: [{ id: 'marked-paid', amountCents: 4500, paidOn: '2026-11-03', by: '', note: '' }],
+    });
+  });
+
+  it('a waived share keeps what was paid, and stays waived', async () => {
+    const [a] = players(1).map((p) => p.id);
+    const { dueId } = await save('carol', { ...terms, participantIds: [a] });
+    await setShare(dueId, a, { status: 'waived', payments: [pay(1000)], paidCents: 1000 });
+    await save('alice', { groupId: G, dueId, title: 'Uniforms', amountCents: 6000, dueOn: null, note: '' });
+    expect(await share(dueId, a)).toMatchObject({ status: 'waived', paidCents: 1000, amountCents: 6000 });
+    expect(await refusal(save('alice', { groupId: G, dueId, title: 'Uniforms', amountCents: 500, dueOn: null, note: '' }))).toBe('failed-precondition');
   });
 });
 
@@ -234,7 +305,8 @@ describe('saveDue adds people to a due (DUES-1)', () => {
       participantType: 'player', participantName: 'Kid #7', status: 'owed', paidAt: null,
       title: 'Uniforms', amountCents: 5000, dueOn: null, note: 'Hat too', updatedBy: 'alice',
     });
-    expect(list.find((d) => d.id === `${dueId}_${ids[0]}`)!.get('status')).toBe('paid');
+    // Paid in full at $45, so $5 of the new $50 is left.
+    expect(list.find((d) => d.id === `${dueId}_${ids[0]}`)!.data()).toMatchObject({ status: 'owed', paidCents: 4500, paidAt: null });
     // Editing without anyone to add leaves who's on it alone.
     await save('alice', { groupId: G, dueId, title: 'Uniforms', amountCents: 5000, dueOn: null, note: '' });
     expect(await charges(dueId)).toHaveLength(5);

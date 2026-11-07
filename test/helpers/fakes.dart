@@ -4130,6 +4130,72 @@ class FakeDuesRepository implements DuesRepository {
     _changed();
   }
 
+  /// Changes the charge [charge] names, as it is now, the way the app's
+  /// transaction does: a refusal throws [InvalidInput] naming it.
+  void _change(DueCharge charge, DueCharge Function(DueCharge now) change) {
+    final i = charges.indexWhere((c) => c.id == charge.id);
+    if (i < 0) throw const NotFound();
+    try {
+      charges[i] = change(charges[i]);
+    } on DuePaymentRefusal catch (e) {
+      throw InvalidInput(e.name);
+    }
+    _changed();
+  }
+
+  static DueCharge _applied(DueCharge now, DueChargePayments next) =>
+      now.copyWith(
+        payments: next.payments,
+        recordedCents: next.paidCents,
+        status: next.status,
+        paidAt: next.status == DueStatus.paid
+            ? (now.paidAt ?? DateTime(2026, 11, 6))
+            : null,
+      );
+
+  @override
+  Future<void> recordPayment(
+    DueCharge charge, {
+    required String id,
+    required String paidOn,
+    required UserId by,
+    int? amountCents,
+    String note = '',
+  }) async {
+    _check();
+    calls.add(
+      'pay ${charge.id} ${amountCents ?? 'rest'}'
+      '${note.isEmpty ? '' : ' $note'}',
+    );
+    _change(
+      charge,
+      (now) => _applied(
+        now,
+        addDuePayment(
+          now,
+          DuePayment(
+            id: id,
+            amountCents: amountCents ?? now.owedCents,
+            paidOn: paidOn,
+            by: by.value,
+            note: note.trim(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> undoPayment(
+    DueCharge charge,
+    String paymentId, {
+    required UserId by,
+  }) async {
+    _check();
+    calls.add('undo ${charge.id} $paymentId');
+    _change(charge, (now) => _applied(now, removeDuePayment(now, paymentId)));
+  }
+
   @override
   Future<void> setStatus(
     DueCharge charge,
@@ -4138,12 +4204,15 @@ class FakeDuesRepository implements DuesRepository {
   }) async {
     _check();
     calls.add('status ${charge.id} ${status.value}');
-    final i = charges.indexWhere((c) => c.id == charge.id);
-    charges[i] = charge.copyWith(
-      status: status,
-      paidAt: status == DueStatus.paid ? DateTime(2026, 11, 6) : null,
-    );
-    _changed();
+    _change(charge, (now) {
+      final next = status == DueStatus.owed && now.status == DueStatus.waived
+          ? unwaivedStatus(now)
+          : status;
+      return now.copyWith(
+        status: next,
+        paidAt: next == DueStatus.paid ? DateTime(2026, 11, 6) : null,
+      );
+    });
   }
 
   @override

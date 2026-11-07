@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -25,6 +27,36 @@ abstract class Due with _$Due {
   }) = _Due;
 }
 
+/// One payment on a share (DUES-2), as an admin records it once the money
+/// arrives, outside Battleplan: part of what's owed, or all of what's left.
+@freezed
+abstract class DuePayment with _$DuePayment {
+  const factory({
+    /// The app's ID for it, the same on every try, so a retry never
+    /// records it twice ([newRequestId]).
+    required String id,
+
+    /// In cents, from 1 up to what was left.
+    required int amountCents,
+
+    /// The day it was paid, "2026-11-05".
+    required String paidOn,
+
+    /// Who recorded it (a uid), or empty for a share marked paid before
+    /// payments were recorded, which became one payment when its amount
+    /// changed.
+    @Default('') String by,
+
+    /// A short note, like "Venmo" or "Cash at practice" (up to
+    /// [Limits.duePaymentNoteMax]).
+    @Default('') String note,
+  }) = _DuePayment;
+}
+
+/// Where a share stands (DUES-2), as everyone sees it: owes all of it,
+/// partly paid, paid in full, or waived.
+enum DueShareState { owes, partlyPaid, paid, waived }
+
 /// One person's share of a [Due] (DUES-2): a player on a team, or a member
 /// of a basic group. Admins see everyone's; a member sees their own, and a
 /// parent or guardian their players'.
@@ -46,15 +78,126 @@ abstract class DueCharge with _$DueCharge {
     @Default(DueStatus.owed) DueStatus status,
     DateTime? paidAt,
     DateTime? updatedAt,
+
+    /// What's been recorded as paid, oldest first (DUES-2).
+    @Default(<DuePayment>[]) List<DuePayment> payments,
+
+    /// Their total, in cents, as stored; null on a share from before
+    /// payments were recorded, where Paid means paid in full.
+    int? recordedCents,
   }) = _DueCharge;
 
   const new _();
 
+  /// Paid in full.
   bool get paid => status == DueStatus.paid;
 
-  /// What's still owed, in cents: nothing once paid or waived.
-  int get owedCents => status == DueStatus.owed ? amountCents : 0;
+  /// Whether payments are recorded on it (or it's never been paid): not a
+  /// share marked paid before payments were recorded.
+  bool get recordsPayments => recordedCents != null || status != DueStatus.paid;
+
+  /// What's been paid, in cents: the payments recorded, or all of it on a
+  /// share marked paid before payments were recorded.
+  int get paidCents => status == DueStatus.paid && recordedCents == null
+      ? amountCents
+      : min(recordedCents ?? 0, amountCents);
+
+  /// What's still owed, in cents: nothing once paid in full or waived.
+  int get owedCents =>
+      status == DueStatus.owed ? max(0, amountCents - paidCents) : 0;
+
+  /// What counts toward what's owed in all: the amount, or on a waived
+  /// share only what was paid before the rest was let go.
+  int get chargedCents => status == DueStatus.waived ? paidCents : amountCents;
+
+  /// Owed, with some of it paid.
+  bool get partlyPaid => status == DueStatus.owed && paidCents > 0;
+
+  DueShareState get state => switch (status) {
+    DueStatus.paid => DueShareState.paid,
+    DueStatus.waived => DueShareState.waived,
+    DueStatus.owed =>
+      paidCents > 0 ? DueShareState.partlyPaid : DueShareState.owes,
+  };
+
+  /// Who it's for: one person or player across every due.
+  String get personKey => '${participantType.value}/$participantId';
 }
+
+/// A share's payments, total, and status after a change (DUES-2), as the
+/// app writes them.
+typedef DueChargePayments = ({
+  List<DuePayment> payments,
+  int paidCents,
+  DueStatus status,
+});
+
+/// Why a payment can't be recorded.
+enum DuePaymentRefusal implements Exception {
+  /// Paid in full, or waived: nothing left to record.
+  nothingLeft,
+
+  /// More than what's left, or no amount at all.
+  tooMuch,
+
+  /// [Limits.duePaymentsMax] payments already.
+  full,
+}
+
+/// [charge] with [payment] added at the end (DUES-2): Paid once it covers
+/// the amount. A payment already on it (a retry) leaves it as it is.
+/// Refused with a [DuePaymentRefusal] otherwise.
+DueChargePayments addDuePayment(DueCharge charge, DuePayment payment) {
+  final now = (
+    payments: charge.payments,
+    paidCents: charge.recordedCents ?? 0,
+    status: charge.status,
+  );
+  if (charge.payments.any((p) => p.id == payment.id)) return now;
+  if (charge.status != DueStatus.owed || charge.owedCents == 0) {
+    throw DuePaymentRefusal.nothingLeft;
+  }
+  if (payment.amountCents < 1 || payment.amountCents > charge.owedCents) {
+    throw DuePaymentRefusal.tooMuch;
+  }
+  if (charge.payments.length >= Limits.duePaymentsMax) {
+    throw DuePaymentRefusal.full;
+  }
+  final paid = now.paidCents + payment.amountCents;
+  return (
+    payments: [...charge.payments, payment],
+    paidCents: paid,
+    status: paid == charge.amountCents ? DueStatus.paid : DueStatus.owed,
+  );
+}
+
+/// [charge] without the payment [paymentId] (DUES-2), a mistake taken
+/// back: owed again for its amount, unless waived. One that isn't there
+/// (already taken back) leaves it as it is.
+DueChargePayments removeDuePayment(DueCharge charge, String paymentId) {
+  final gone = charge.payments.where((p) => p.id == paymentId).firstOrNull;
+  final paid = charge.recordedCents ?? 0;
+  if (gone == null) {
+    return (payments: charge.payments, paidCents: paid, status: charge.status);
+  }
+  return (
+    payments: [
+      for (final p in charge.payments)
+        if (p.id != paymentId) p,
+    ],
+    paidCents: paid - gone.amountCents,
+    status: charge.status == DueStatus.waived
+        ? DueStatus.waived
+        : DueStatus.owed,
+  );
+}
+
+/// The status a share goes back to when it's no longer waived: Paid when
+/// its payments cover it, else owed.
+DueStatus unwaivedStatus(DueCharge charge) =>
+    charge.recordedCents != null && charge.recordedCents! >= charge.amountCents
+    ? DueStatus.paid
+    : DueStatus.owed;
 
 /// Who a new due is for (DUES-1): a player, or a member of a group.
 typedef DuePayer = ({ParticipantType type, String id, String name});
@@ -79,23 +222,109 @@ abstract class DuesPayments with _$DuesPayments {
       venmo.isEmpty && cashApp.isEmpty && appleCash.isEmpty && note.isEmpty;
 }
 
-/// A due's totals for the admins' list: how many paid, of how many, and
-/// what's still owed.
-typedef DueTotals = ({int paid, int count, int owedCents});
+/// Totals across shares (DUES-2): how many are paid in full and partly
+/// paid, of how many not waived, and in cents what's owed in all, what's
+/// been paid, and what's still owed. A waived share counts only what was
+/// paid before the rest was let go.
+typedef DueTotals = ({
+  int paid,
+  int partly,
+  int count,
+  int chargedCents,
+  int paidCents,
+  int owedCents,
+});
 
 /// The totals of [charges].
 DueTotals dueTotals(Iterable<DueCharge> charges) {
   var paid = 0;
+  var partly = 0;
   var count = 0;
+  var charged = 0;
+  var paidCents = 0;
   var owed = 0;
   for (final c in charges) {
+    charged += c.chargedCents;
+    paidCents += c.paidCents;
+    owed += c.owedCents;
     if (c.status == DueStatus.waived) continue;
     count++;
     if (c.paid) paid++;
-    owed += c.owedCents;
+    if (c.partlyPaid) partly++;
   }
-  return (paid: paid, count: count, owedCents: owed);
+  return (
+    paid: paid,
+    partly: partly,
+    count: count,
+    chargedCents: charged,
+    paidCents: paidCents,
+    owedCents: owed,
+  );
 }
+
+/// One person (or player) across every due (DUES-5): their shares, with
+/// the due's title on each, and their totals.
+typedef DuePerson = ({
+  String key,
+  String name,
+  List<DueCharge> shares,
+  DueTotals totals,
+});
+
+/// Everyone on [charges], who owes most first, then by name; each one's
+/// shares with what's still owed first, then by title. Named as on their
+/// newest share.
+List<DuePerson> duePeople(Iterable<DueCharge> charges) {
+  final byKey = <String, List<DueCharge>>{};
+  for (final c in charges) {
+    (byKey[c.personKey] ??= []).add(c);
+  }
+  int byName(String a, String b) => a.toLowerCase().compareTo(b.toLowerCase());
+  final people = [
+    for (final MapEntry(:key, value: shares) in byKey.entries)
+      (
+        key: key,
+        name: _newest(shares).participantName,
+        shares: [...shares]..sort(compareShares),
+        totals: dueTotals(shares),
+      ),
+  ];
+  return people..sort((a, b) {
+    final most = b.totals.owedCents.compareTo(a.totals.owedCents);
+    return most != 0 ? most : byName(a.name, b.name);
+  });
+}
+
+DueCharge _newest(List<DueCharge> shares) => shares.reduce(
+  (a, b) =>
+      (b.updatedAt ?? DateTime(0)).isAfter(a.updatedAt ?? DateTime(0)) ? b : a,
+);
+
+/// Who owes most first (what's left, largest first), then partly paid
+/// before paid, paid, then waived; then by name, then by title (DUES-2).
+int compareShares(DueCharge a, DueCharge b) {
+  int rank(DueCharge x) => switch (x.state) {
+    DueShareState.owes || DueShareState.partlyPaid => 0,
+    DueShareState.paid => 1,
+    DueShareState.waived => 2,
+  };
+  final byRank = rank(a).compareTo(rank(b));
+  if (byRank != 0) return byRank;
+  final most = b.owedCents.compareTo(a.owedCents);
+  if (most != 0) return most;
+  final name = a.participantName.toLowerCase().compareTo(
+    b.participantName.toLowerCase(),
+  );
+  return name != 0
+      ? name
+      : a.title.toLowerCase().compareTo(b.title.toLowerCase());
+}
+
+/// [d] as a day, "2026-11-05".
+String dayKey(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-'
+    '${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
 
 /// [s] without "https://", "www." or anything after "?" or "#", for a
 /// pasted profile link.

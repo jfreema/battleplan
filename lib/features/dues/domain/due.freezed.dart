@@ -302,10 +302,307 @@ as DateTime?,
 }
 
 /// @nodoc
+mixin _$DuePayment {
+
+/// The app's ID for it, the same on every try, so a retry never
+/// records it twice ([newRequestId]).
+ String get id;/// In cents, from 1 up to what was left.
+ int get amountCents;/// The day it was paid, "2026-11-05".
+ String get paidOn;/// Who recorded it (a uid), or empty for a share marked paid before
+/// payments were recorded, which became one payment when its amount
+/// changed.
+ String get by;/// A short note, like "Venmo" or "Cash at practice" (up to
+/// [Limits.duePaymentNoteMax]).
+ String get note;
+/// Create a copy of DuePayment
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DuePaymentCopyWith<DuePayment> get copyWith => _$DuePaymentCopyWithImpl<DuePayment>(this as DuePayment, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as DuePayment;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DuePayment&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.amountCents, _this.amountCents) || other.amountCents == _this.amountCents)&&(identical(other.paidOn, _this.paidOn) || other.paidOn == _this.paidOn)&&(identical(other.by, _this.by) || other.by == _this.by)&&(identical(other.note, _this.note) || other.note == _this.note));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as DuePayment;
+  return Object.hash(runtimeType,_this.id,_this.amountCents,_this.paidOn,_this.by,_this.note);
+}
+
+@override
+String toString() {
+  final _this = this as DuePayment;
+  return 'DuePayment(id: ${_this.id}, amountCents: ${_this.amountCents}, paidOn: ${_this.paidOn}, by: ${_this.by}, note: ${_this.note})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DuePaymentCopyWith<$Res>  {
+  factory $DuePaymentCopyWith(DuePayment value, $Res Function(DuePayment) _then) = _$DuePaymentCopyWithImpl;
+@useResult
+$Res call({
+ String id, int amountCents, String paidOn, String by, String note
+});
+
+
+
+
+}
+/// @nodoc
+class _$DuePaymentCopyWithImpl<$Res>
+    implements $DuePaymentCopyWith<$Res> {
+  _$DuePaymentCopyWithImpl(this._self, this._then);
+
+  final DuePayment _self;
+  final $Res Function(DuePayment) _then;
+
+/// Create a copy of DuePayment
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amountCents = null,Object? paidOn = null,Object? by = null,Object? note = null,}) {
+  return _then(DuePayment(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,amountCents: null == amountCents ? _self.amountCents : amountCents // ignore: cast_nullable_to_non_nullable
+as int,paidOn: null == paidOn ? _self.paidOn : paidOn // ignore: cast_nullable_to_non_nullable
+as String,by: null == by ? _self.by : by // ignore: cast_nullable_to_non_nullable
+as String,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DuePayment].
+extension DuePaymentPatterns on DuePayment {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DuePayment value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DuePayment() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DuePayment value)  $default,){
+final _that = this;
+switch (_that) {
+case _DuePayment():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DuePayment value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DuePayment() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int amountCents,  String paidOn,  String by,  String note)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DuePayment() when $default != null:
+return $default(_that.id,_that.amountCents,_that.paidOn,_that.by,_that.note);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int amountCents,  String paidOn,  String by,  String note)  $default,) {final _that = this;
+switch (_that) {
+case _DuePayment():
+return $default(_that.id,_that.amountCents,_that.paidOn,_that.by,_that.note);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int amountCents,  String paidOn,  String by,  String note)?  $default,) {final _that = this;
+switch (_that) {
+case _DuePayment() when $default != null:
+return $default(_that.id,_that.amountCents,_that.paidOn,_that.by,_that.note);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _DuePayment implements DuePayment {
+  const _DuePayment({required this.id, required this.amountCents, required this.paidOn, this.by = '', this.note = ''});
+  
+
+/// The app's ID for it, the same on every try, so a retry never
+/// records it twice ([newRequestId]).
+@override final  String id;
+/// In cents, from 1 up to what was left.
+@override final  int amountCents;
+/// The day it was paid, "2026-11-05".
+@override final  String paidOn;
+/// Who recorded it (a uid), or empty for a share marked paid before
+/// payments were recorded, which became one payment when its amount
+/// changed.
+@override@JsonKey() final  String by;
+/// A short note, like "Venmo" or "Cash at practice" (up to
+/// [Limits.duePaymentNoteMax]).
+@override@JsonKey() final  String note;
+
+/// Create a copy of DuePayment
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DuePaymentCopyWith<_DuePayment> get copyWith => __$DuePaymentCopyWithImpl<_DuePayment>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DuePayment&&(identical(other.id, id) || other.id == id)&&(identical(other.amountCents, amountCents) || other.amountCents == amountCents)&&(identical(other.paidOn, paidOn) || other.paidOn == paidOn)&&(identical(other.by, by) || other.by == by)&&(identical(other.note, note) || other.note == note));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,id,amountCents,paidOn,by,note);
+}
+
+@override
+String toString() {
+    return 'DuePayment(id: $id, amountCents: $amountCents, paidOn: $paidOn, by: $by, note: $note)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DuePaymentCopyWith<$Res> implements $DuePaymentCopyWith<$Res> {
+  factory _$DuePaymentCopyWith(_DuePayment value, $Res Function(_DuePayment) _then) = __$DuePaymentCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, int amountCents, String paidOn, String by, String note
+});
+
+
+
+
+}
+/// @nodoc
+class __$DuePaymentCopyWithImpl<$Res>
+    implements _$DuePaymentCopyWith<$Res> {
+  __$DuePaymentCopyWithImpl(this._self, this._then);
+
+  final _DuePayment _self;
+  final $Res Function(_DuePayment) _then;
+
+/// Create a copy of DuePayment
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amountCents = null,Object? paidOn = null,Object? by = null,Object? note = null,}) {
+  return _then(_DuePayment(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,amountCents: null == amountCents ? _self.amountCents : amountCents // ignore: cast_nullable_to_non_nullable
+as int,paidOn: null == paidOn ? _self.paidOn : paidOn // ignore: cast_nullable_to_non_nullable
+as String,by: null == by ? _self.by : by // ignore: cast_nullable_to_non_nullable
+as String,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$DueCharge {
 
  String get id; GroupId get groupId; String get dueId; String get title; int get amountCents; ParticipantType get participantType; String get participantId; String get participantName; String? get dueOn;/// The due's note, for everyone who owes it (DUES-2).
- String get note; DueStatus get status; DateTime? get paidAt; DateTime? get updatedAt;
+ String get note; DueStatus get status; DateTime? get paidAt; DateTime? get updatedAt;/// What's been recorded as paid, oldest first (DUES-2).
+ List<DuePayment> get payments;/// Their total, in cents, as stored; null on a share from before
+/// payments were recorded, where Paid means paid in full.
+ int? get recordedCents;
 /// Create a copy of DueCharge
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -317,20 +614,20 @@ $DueChargeCopyWith<DueCharge> get copyWith => _$DueChargeCopyWithImpl<DueCharge>
 @override
 bool operator ==(Object other) {
   final _this = this as DueCharge;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DueCharge&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.dueId, _this.dueId) || other.dueId == _this.dueId)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.amountCents, _this.amountCents) || other.amountCents == _this.amountCents)&&(identical(other.participantType, _this.participantType) || other.participantType == _this.participantType)&&(identical(other.participantId, _this.participantId) || other.participantId == _this.participantId)&&(identical(other.participantName, _this.participantName) || other.participantName == _this.participantName)&&(identical(other.dueOn, _this.dueOn) || other.dueOn == _this.dueOn)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.paidAt, _this.paidAt) || other.paidAt == _this.paidAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DueCharge&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.dueId, _this.dueId) || other.dueId == _this.dueId)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.amountCents, _this.amountCents) || other.amountCents == _this.amountCents)&&(identical(other.participantType, _this.participantType) || other.participantType == _this.participantType)&&(identical(other.participantId, _this.participantId) || other.participantId == _this.participantId)&&(identical(other.participantName, _this.participantName) || other.participantName == _this.participantName)&&(identical(other.dueOn, _this.dueOn) || other.dueOn == _this.dueOn)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.paidAt, _this.paidAt) || other.paidAt == _this.paidAt)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt)&&const DeepCollectionEquality().equals(other.payments, _this.payments)&&(identical(other.recordedCents, _this.recordedCents) || other.recordedCents == _this.recordedCents));
 }
 
 
 @override
 int get hashCode {
   final _this = this as DueCharge;
-  return Object.hash(runtimeType,_this.id,_this.groupId,_this.dueId,_this.title,_this.amountCents,_this.participantType,_this.participantId,_this.participantName,_this.dueOn,_this.note,_this.status,_this.paidAt,_this.updatedAt);
+  return Object.hash(runtimeType,_this.id,_this.groupId,_this.dueId,_this.title,_this.amountCents,_this.participantType,_this.participantId,_this.participantName,_this.dueOn,_this.note,_this.status,_this.paidAt,_this.updatedAt,const DeepCollectionEquality().hash(_this.payments),_this.recordedCents);
 }
 
 @override
 String toString() {
   final _this = this as DueCharge;
-  return 'DueCharge(id: ${_this.id}, groupId: ${_this.groupId}, dueId: ${_this.dueId}, title: ${_this.title}, amountCents: ${_this.amountCents}, participantType: ${_this.participantType}, participantId: ${_this.participantId}, participantName: ${_this.participantName}, dueOn: ${_this.dueOn}, note: ${_this.note}, status: ${_this.status}, paidAt: ${_this.paidAt}, updatedAt: ${_this.updatedAt})';
+  return 'DueCharge(id: ${_this.id}, groupId: ${_this.groupId}, dueId: ${_this.dueId}, title: ${_this.title}, amountCents: ${_this.amountCents}, participantType: ${_this.participantType}, participantId: ${_this.participantId}, participantName: ${_this.participantName}, dueOn: ${_this.dueOn}, note: ${_this.note}, status: ${_this.status}, paidAt: ${_this.paidAt}, updatedAt: ${_this.updatedAt}, payments: ${_this.payments}, recordedCents: ${_this.recordedCents})';
 }
 
 
@@ -341,7 +638,7 @@ abstract mixin class $DueChargeCopyWith<$Res>  {
   factory $DueChargeCopyWith(DueCharge value, $Res Function(DueCharge) _then) = _$DueChargeCopyWithImpl;
 @useResult
 $Res call({
- String id, GroupId groupId, String dueId, String title, int amountCents, ParticipantType participantType, String participantId, String participantName, String? dueOn, String note, DueStatus status, DateTime? paidAt, DateTime? updatedAt
+ String id, GroupId groupId, String dueId, String title, int amountCents, ParticipantType participantType, String participantId, String participantName, String? dueOn, String note, DueStatus status, DateTime? paidAt, DateTime? updatedAt, List<DuePayment> payments, int? recordedCents
 });
 
 
@@ -358,7 +655,7 @@ class _$DueChargeCopyWithImpl<$Res>
 
 /// Create a copy of DueCharge
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? dueId = null,Object? title = null,Object? amountCents = null,Object? participantType = null,Object? participantId = null,Object? participantName = null,Object? dueOn = freezed,Object? note = null,Object? status = null,Object? paidAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? groupId = null,Object? dueId = null,Object? title = null,Object? amountCents = null,Object? participantType = null,Object? participantId = null,Object? participantName = null,Object? dueOn = freezed,Object? note = null,Object? status = null,Object? paidAt = freezed,Object? updatedAt = freezed,Object? payments = null,Object? recordedCents = freezed,}) {
   return _then(DueCharge(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -373,7 +670,9 @@ as String?,note: null == note ? _self.note : note // ignore: cast_nullable_to_no
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as DueStatus,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,payments: null == payments ? _self.payments : payments // ignore: cast_nullable_to_non_nullable
+as List<DuePayment>,recordedCents: freezed == recordedCents ? _self.recordedCents : recordedCents // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -458,10 +757,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  String note,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  String note,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt,  List<DuePayment> payments,  int? recordedCents)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DueCharge() when $default != null:
-return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.note,_that.status,_that.paidAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.note,_that.status,_that.paidAt,_that.updatedAt,_that.payments,_that.recordedCents);case _:
   return orElse();
 
 }
@@ -479,10 +778,10 @@ return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  String note,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  String note,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt,  List<DuePayment> payments,  int? recordedCents)  $default,) {final _that = this;
 switch (_that) {
 case _DueCharge():
-return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.note,_that.status,_that.paidAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.note,_that.status,_that.paidAt,_that.updatedAt,_that.payments,_that.recordedCents);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -499,10 +798,10 @@ return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  String note,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  GroupId groupId,  String dueId,  String title,  int amountCents,  ParticipantType participantType,  String participantId,  String participantName,  String? dueOn,  String note,  DueStatus status,  DateTime? paidAt,  DateTime? updatedAt,  List<DuePayment> payments,  int? recordedCents)?  $default,) {final _that = this;
 switch (_that) {
 case _DueCharge() when $default != null:
-return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.note,_that.status,_that.paidAt,_that.updatedAt);case _:
+return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents,_that.participantType,_that.participantId,_that.participantName,_that.dueOn,_that.note,_that.status,_that.paidAt,_that.updatedAt,_that.payments,_that.recordedCents);case _:
   return null;
 
 }
@@ -514,7 +813,7 @@ return $default(_that.id,_that.groupId,_that.dueId,_that.title,_that.amountCents
 
 
 class _DueCharge extends DueCharge {
-  const _DueCharge({required this.id, required this.groupId, required this.dueId, required this.title, required this.amountCents, required this.participantType, required this.participantId, required this.participantName, this.dueOn, this.note = '', this.status = DueStatus.owed, this.paidAt, this.updatedAt}): super._();
+  const _DueCharge({required this.id, required this.groupId, required this.dueId, required this.title, required this.amountCents, required this.participantType, required this.participantId, required this.participantName, this.dueOn, this.note = '', this.status = DueStatus.owed, this.paidAt, this.updatedAt,  List<DuePayment> payments = const <DuePayment>[], this.recordedCents}): _payments = payments,super._();
   
 
 @override final  String id;
@@ -531,6 +830,18 @@ class _DueCharge extends DueCharge {
 @override@JsonKey() final  DueStatus status;
 @override final  DateTime? paidAt;
 @override final  DateTime? updatedAt;
+/// What's been recorded as paid, oldest first (DUES-2).
+ final  List<DuePayment> _payments;
+/// What's been recorded as paid, oldest first (DUES-2).
+@override@JsonKey() List<DuePayment> get payments {
+  if (_payments is EqualUnmodifiableListView) return _payments;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_payments);
+}
+
+/// Their total, in cents, as stored; null on a share from before
+/// payments were recorded, where Paid means paid in full.
+@override final  int? recordedCents;
 
 /// Create a copy of DueCharge
 /// with the given fields replaced by the non-null parameter values.
@@ -542,18 +853,18 @@ _$DueChargeCopyWith<_DueCharge> get copyWith => __$DueChargeCopyWithImpl<_DueCha
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DueCharge&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.dueId, dueId) || other.dueId == dueId)&&(identical(other.title, title) || other.title == title)&&(identical(other.amountCents, amountCents) || other.amountCents == amountCents)&&(identical(other.participantType, participantType) || other.participantType == participantType)&&(identical(other.participantId, participantId) || other.participantId == participantId)&&(identical(other.participantName, participantName) || other.participantName == participantName)&&(identical(other.dueOn, dueOn) || other.dueOn == dueOn)&&(identical(other.note, note) || other.note == note)&&(identical(other.status, status) || other.status == status)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _DueCharge&&(identical(other.id, id) || other.id == id)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.dueId, dueId) || other.dueId == dueId)&&(identical(other.title, title) || other.title == title)&&(identical(other.amountCents, amountCents) || other.amountCents == amountCents)&&(identical(other.participantType, participantType) || other.participantType == participantType)&&(identical(other.participantId, participantId) || other.participantId == participantId)&&(identical(other.participantName, participantName) || other.participantName == participantName)&&(identical(other.dueOn, dueOn) || other.dueOn == dueOn)&&(identical(other.note, note) || other.note == note)&&(identical(other.status, status) || other.status == status)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other.payments, _payments)&&(identical(other.recordedCents, recordedCents) || other.recordedCents == recordedCents));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,groupId,dueId,title,amountCents,participantType,participantId,participantName,dueOn,note,status,paidAt,updatedAt);
+    return Object.hash(runtimeType,id,groupId,dueId,title,amountCents,participantType,participantId,participantName,dueOn,note,status,paidAt,updatedAt,const DeepCollectionEquality().hash(_payments),recordedCents);
 }
 
 @override
 String toString() {
-    return 'DueCharge(id: $id, groupId: $groupId, dueId: $dueId, title: $title, amountCents: $amountCents, participantType: $participantType, participantId: $participantId, participantName: $participantName, dueOn: $dueOn, note: $note, status: $status, paidAt: $paidAt, updatedAt: $updatedAt)';
+    return 'DueCharge(id: $id, groupId: $groupId, dueId: $dueId, title: $title, amountCents: $amountCents, participantType: $participantType, participantId: $participantId, participantName: $participantName, dueOn: $dueOn, note: $note, status: $status, paidAt: $paidAt, updatedAt: $updatedAt, payments: $payments, recordedCents: $recordedCents)';
 }
 
 
@@ -564,7 +875,7 @@ abstract mixin class _$DueChargeCopyWith<$Res> implements $DueChargeCopyWith<$Re
   factory _$DueChargeCopyWith(_DueCharge value, $Res Function(_DueCharge) _then) = __$DueChargeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, GroupId groupId, String dueId, String title, int amountCents, ParticipantType participantType, String participantId, String participantName, String? dueOn, String note, DueStatus status, DateTime? paidAt, DateTime? updatedAt
+ String id, GroupId groupId, String dueId, String title, int amountCents, ParticipantType participantType, String participantId, String participantName, String? dueOn, String note, DueStatus status, DateTime? paidAt, DateTime? updatedAt, List<DuePayment> payments, int? recordedCents
 });
 
 
@@ -581,7 +892,7 @@ class __$DueChargeCopyWithImpl<$Res>
 
 /// Create a copy of DueCharge
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? dueId = null,Object? title = null,Object? amountCents = null,Object? participantType = null,Object? participantId = null,Object? participantName = null,Object? dueOn = freezed,Object? note = null,Object? status = null,Object? paidAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? groupId = null,Object? dueId = null,Object? title = null,Object? amountCents = null,Object? participantType = null,Object? participantId = null,Object? participantName = null,Object? dueOn = freezed,Object? note = null,Object? status = null,Object? paidAt = freezed,Object? updatedAt = freezed,Object? payments = null,Object? recordedCents = freezed,}) {
   return _then(_DueCharge(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,groupId: null == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
@@ -596,7 +907,9 @@ as String?,note: null == note ? _self.note : note // ignore: cast_nullable_to_no
 as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as DueStatus,paidAt: freezed == paidAt ? _self.paidAt : paidAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,payments: null == payments ? _self._payments : payments // ignore: cast_nullable_to_non_nullable
+as List<DuePayment>,recordedCents: freezed == recordedCents ? _self.recordedCents : recordedCents // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

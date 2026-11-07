@@ -160,8 +160,9 @@ void main() {
           await pumpGroupSchedule(tester, scheme: scheme);
           await clearOfAddButton(tester);
         },
-    // Dues (DUES-1 to DUES-3): an admin's list, a due and its status
-    // sheet, the forms, and what a guardian owes.
+    // Dues (DUES-1 to DUES-3): an admin's list with its totals, a due and
+    // a share's sheet with its payments, Record a payment, Who owes what,
+    // the forms, and what a guardian owes.
     'dues': (WidgetTester tester, {required TeamScheme scheme}) =>
         pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues'),
     'due': (WidgetTester tester, {required TeamScheme scheme}) async {
@@ -172,10 +173,37 @@ void main() {
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
           await pushTo(tester, '/g/a/dues/d0');
+          await tester.ensureVisible(find.text('Leo #9'));
+          await tester.pumpAndSettle();
           await tester.tap(find.text('Leo #9'));
           await tester.pumpAndSettle();
-          expect(find.text('Mark paid'), findsOneWidget, reason: 'sheet');
+          expect(
+            find.text('Mark paid in full'),
+            findsOneWidget,
+            reason: 'sheet',
+          );
+          expect(find.byTooltip(r'Undo the $20 payment'), findsOneWidget);
         },
+    'record a payment':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+          await pushTo(tester, '/g/a/dues/d0');
+          await tester.ensureVisible(find.text('Leo #9'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Leo #9'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Record a payment'));
+          await tester.pumpAndSettle();
+          expect(find.text('Date paid'), findsOneWidget, reason: 'dialog');
+        },
+    'who owes what': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+      await tester.ensureVisible(find.text('Who owes what'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Who owes what'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ava #12'), findsOneWidget);
+    },
     'new due': (WidgetTester tester, {required TeamScheme scheme}) async {
       await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
       await pushTo(tester, '/g/a/dues/new');
@@ -353,9 +381,8 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('headings are their own nodes, and a due is a button', (
-      tester,
-    ) async {
+    testWidgets('headings are their own nodes, a due is a button, and dues '
+        'rows read as sentences', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpFromTeamInfo(
         tester,
@@ -377,6 +404,36 @@ void main() {
       expect(due, isSemantics(isButton: true, hasTapAction: true));
       expect(due.label, startsWith('Uniform fee'));
       expect(due.label, isNot(contains('New due')));
+      // What's owed in all reads as one sentence, and Who owes what is a
+      // button of its own (DUES-2).
+      expect(
+        find.bySemanticsLabel(r'$270 owed in all, $150 paid, $120 left'),
+        findsOneWidget,
+      );
+      expect(
+        tester.getSemantics(find.text('Who owes what')),
+        isSemantics(isButton: true, hasTapAction: true),
+      );
+      // A share on a due reads as one sentence, and still taps.
+      await pushTo(tester, '/g/a/dues/d0');
+      expect(
+        tester.getSemantics(find.text('Leo #9')),
+        isSemantics(
+          label: r'Leo #9, $25 left of $45, Due Oct 31',
+          isButton: true,
+          hasTapAction: true,
+        ),
+      );
+      // And on Who owes what, with the due's name.
+      await goTo(tester, '/g/a/dues/people');
+      expect(
+        find.bySemanticsLabel(r'Ava #12, Tournament fee, $20 left of $30'),
+        findsOneWidget,
+      );
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(r'Ava #12, $65 left of $75')),
+        isSemantics(isHeader: true),
+      );
 
       // On Teams: the section label isn't the row's button, and a card
       // says its team's name once.

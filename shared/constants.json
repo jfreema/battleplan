@@ -250,6 +250,8 @@
     "dueAmountMaxCents": 1000000,
     "duePayHandleMax": 60,
     "duesChargesMax": 100,
+    "duePaymentsMax": 50,
+    "duePaymentNoteMax": 60,
     "documentNameMax": 100,
     "documentDescriptionMax": 500,
     "documentUrlMax": 2000,

@@ -59,6 +59,20 @@ void main() {
       await pushTo(tester, '/g/a/dues');
       await pushTo(tester, '/g/a/dues/new');
     },
+    'who owes what': (WidgetTester tester, Size size) async {
+      await top(tester, size, '/g/a/info');
+      await pushTo(tester, '/g/a/dues');
+      await pushTo(tester, '/g/a/dues/people');
+    },
+    'a share': (WidgetTester tester, Size size) async {
+      await top(tester, size, '/g/a/info');
+      await pushTo(tester, '/g/a/dues');
+      await pushTo(tester, '/g/a/dues/d0');
+      await tester.ensureVisible(find.text('Leo #9'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Leo #9'));
+      await tester.pumpAndSettle();
+    },
   };
 
   for (final size in [phoneSize, const Size(360, 780)]) {

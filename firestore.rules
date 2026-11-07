@@ -953,15 +953,16 @@ service cloud.firestore {
     // Dues and fees, such as uniforms or the team fee: what a team's admins
     // ask its players, or a basic group's members, to pay, and who paid.
     // No money moves through the app: admins, and coaches, share how to
-    // pay (duesPayments); admins mark each charge paid or waived. The
-    // team's admins, and super admins (§3), see every due and charge;
-    // everyone else sees only their own charge, or their player's, so
-    // nobody learns what someone else owes or paid. Dues and their charges
-    // are created, edited, and deleted only by the saveDue and deleteDue
-    // callables, which check the team, its admins, who's charged, and the
-    // cap (Limits.duesChargesMax); admins mark charges paid here, and they
-    // and coaches write how to pay. Archived teams are read-only (TEAM-9),
-    // and a direct conversation has no dues.
+    // pay (duesPayments); admins record what each person paid, all at once
+    // or a part at a time, or waive it. The team's admins, and super admins
+    // (§3), see every due and charge; everyone else sees only their own
+    // charge, or their player's, so nobody learns what someone else owes or
+    // paid. Dues and their charges are created, edited, and deleted only by
+    // the saveDue and deleteDue callables, which check the team, its
+    // admins, who's charged, and the cap (Limits.duesChargesMax); admins
+    // record payments here, and they and coaches write how to pay.
+    // Archived teams are read-only (TEAM-9), and a direct conversation has
+    // no dues.
     function duesReader(g) { return superAdmin() || isAdmin(g); }
     function duesAdmin(g) { return active(g) && duesReader(g); }
     // Who edits how to pay (DUES-3): admins, and on a team a member its
@@ -997,16 +998,19 @@ service cloud.firestore {
 
     // One person's share of a due, whose ID is the due's and the person's
     // (dueId_participantId): a player on a team, or a member of a basic
-    // group. Its admins mark it owed, paid, or waived.
+    // group. Its admins record what was paid, mark it owed again, or waive
+    // it.
     match /dueCharges/{chargeId} {
       allow get: if dueChargeReader(resource.data);
       allow list: if boundedQuery() && dueChargeReader(resource.data);
       // Created, re-termed, and deleted with their due by the callables.
       allow create, delete: if false;
-      // Admins mark it owed, paid, or waived; everything else stays.
+      // Admins record a payment, take one back, or change the status;
+      // everything else stays.
       allow update: if duesAdmin(resource.data.groupId)
-        && onlyChanges(['status', 'paidAt', 'updatedBy', 'updatedAt'])
-        && validDueCharge(incoming());
+        && onlyChanges(['status', 'paidAt', 'payments', 'paidCents', 'updatedBy', 'updatedAt'])
+        && validDueCharge(incoming())
+        && duePaymentsChangeOk(resource.data, incoming());
     }
 
     // Who sees a charge: the team's admins and super admins (archived teams
@@ -1024,20 +1028,70 @@ service cloud.firestore {
     // the charge has them, a name of up to 80 characters, a known status,
     // and when it was paid, set only on a paid charge. The due's note
     // (up to 280, Limits.dueNoteMax) is there on charges made since it was
-    // copied to them.
+    // copied to them. Once a payment is recorded (DUES-2), the charge has
+    // its payments, at most 50 (Limits.duePaymentsMax), and paidCents,
+    // their total, from 0 up to the charge's amount: Paid when that's all
+    // of it, owed (partly paid) when it's less, or waived, the rest let go.
+    // A charge without them is from before payments were recorded, where
+    // Paid means paid in full.
     function validDueCharge(c) {
       let fields = ['groupId', 'dueId', 'title', 'amountCents', 'dueOn', 'participantType',
                     'participantId', 'participantName', 'status', 'paidAt',
                     'updatedBy', 'updatedAt'];
-      return c.keys().hasAll(fields) && c.keys().hasOnly(fields.concat(['note']))
+      return c.keys().hasAll(fields) && c.keys().hasOnly(fields.concat(['note', 'payments', 'paidCents']))
         && (!('note' in c) || (c.note is string && c.note.size() <= 280))
         && dueTermsOk(c)
         && c.participantId is string
         && c.participantName is string && c.participantName.size() <= 80
         && c.status in ['owed', 'paid', 'waived']
         && (c.paidAt == null || (c.status == 'paid' && c.paidAt is timestamp))
+        && (('payments' in c) == ('paidCents' in c))
+        && (!('payments' in c)
+            || (c.payments is list && c.payments.size() <= 50
+                && c.paidCents is int && c.paidCents >= 0 && c.paidCents <= c.amountCents
+                && (c.status == 'waived' || ((c.status == 'paid') == (c.paidCents == c.amountCents)))))
         && c.updatedBy == uid()
         && c.updatedAt == request.time;
+    }
+
+    // One payment as an admin records it: an ID (the app's, 8 to 40
+    // characters), a whole number of cents from 1 up, the day it was paid
+    // ('YYYY-MM-DD'), who recorded it (them), and a note of up to 60
+    // characters (Limits.duePaymentNoteMax), maybe empty.
+    function duePaymentOk(p) {
+      return p is map
+        && p.keys().hasAll(['id', 'amountCents', 'paidOn', 'by', 'note'])
+        && p.keys().hasOnly(['id', 'amountCents', 'paidOn', 'by', 'note'])
+        && p.id is string && p.id.size() >= 8 && p.id.size() <= 40
+        && p.amountCents is int && p.amountCents >= 1
+        && p.paidOn is string && p.paidOn.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])')
+        && p.by == uid()
+        && p.note is string && p.note.size() <= 60;
+    }
+
+    // What a write does to a charge's payments (DUES-2): nothing, or one
+    // payment added at the end of an owed charge's list (paidCents up by
+    // its amount), or one taken out (paidCents down by its amount), the
+    // others kept as they were, in order. validDueCharge keeps the total
+    // within the charge's amount and the status in step. A write made from
+    // an older copy of the list is refused, so two admins recording at once
+    // never lose one: the app writes in a transaction, which tries again
+    // on the newer list.
+    function duePaymentsChangeOk(b, a) {
+      let was = b.get('payments', []);
+      let now = a.get('payments', []);
+      let paidWas = b.get('paidCents', 0);
+      let paidNow = a.get('paidCents', 0);
+      let gone = was.removeAll(now);
+      return (now == was && paidNow == paidWas)
+        || (b.status == 'owed' && now.size() == was.size() + 1
+            && (was.size() == 0 || now[0:was.size()] == was)
+            && duePaymentOk(now[was.size()])
+            && !(now[was.size()] in was)
+            && paidNow == paidWas + now[was.size()].amountCents)
+        || (now.size() == was.size() - 1 && gone.size() == 1
+            && was.removeAll(gone) == now
+            && paidNow == paidWas - gone[0].amountCents);
     }
 
     // How to pay the team, one doc per team named by its ID: Venmo, Cash

@@ -2,5 +2,6 @@
 /// import this file, never dues' presentation/ files.
 library;
 
+export 'presentation/dues_people_screen.dart' show DuesPeopleScreen;
 export 'presentation/dues_screen.dart'
     show DueDetailScreen, DuesScreen, NewDueScreen;

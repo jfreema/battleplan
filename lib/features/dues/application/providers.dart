@@ -26,6 +26,26 @@ Stream<List<Due>> teamDues(Ref ref, GroupId groupId) =>
 Stream<List<DueCharge>> dueCharges(Ref ref, GroupId groupId, String dueId) =>
     ref.watch(duesRepositoryProvider).watchDueCharges(groupId, dueId);
 
+/// Every share of every due on [groupId] (admins, DUES-5), for the totals
+/// on Dues and Who owes what: each due's own shares ([dueCharges], the
+/// same reads the due cards make), together. Loading until the dues and
+/// every one's shares have loaded, and failing when any of them fails, so
+/// a total is never shown short.
+@riverpod
+AsyncValue<List<DueCharge>> teamCharges(Ref ref, GroupId groupId) {
+  final dues = ref.watch(teamDuesProvider(groupId));
+  if (!dues.hasValue) return _pending(dues);
+  final each = [
+    for (final d in dues.requireValue)
+      ref.watch(dueChargesProvider(groupId, d.id)),
+  ];
+  for (final c in each) {
+    if (c.hasError && !c.hasValue) return _pending(c);
+  }
+  if (each.any((c) => !c.hasValue)) return const AsyncLoading();
+  return AsyncData([for (final c in each) ...c.requireValue]);
+}
+
 /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
 /// group, the same people I answer RSVPs for ([participantsFor]). On a team
 /// I'm also there myself, last, for any shares of mine from before it was
@@ -63,10 +83,11 @@ AsyncValue<List<DuePayer>> myPayers(Ref ref, GroupId groupId) {
   ]);
 }
 
-/// A read that has no value yet, as [myPayers]': its error, or loading.
-AsyncValue<List<DuePayer>> _pending(AsyncValue<Object?> v) => v.hasError
+/// A read that has no value yet, as [myPayers]' or [teamCharges]': its
+/// error, or loading.
+AsyncValue<T> _pending<T>(AsyncValue<Object?> v) => v.hasError
     ? AsyncError(v.error!, v.stackTrace ?? StackTrace.current)
-    : const AsyncLoading();
+    : AsyncLoading<T>();
 
 /// What I owe on [groupId] (DUES-2): my own share, or my players'. Loading
 /// until [myPayers] knows whom I pay for, and failing when it fails.
@@ -85,8 +106,3 @@ Stream<List<DueCharge>> myCharges(Ref ref, GroupId groupId) {
 @riverpod
 Stream<DuesPayments> duesPayments(Ref ref, GroupId groupId) =>
     ref.watch(duesRepositoryProvider).watchPayments(groupId);
-
-/// The status a tap on a charge moves to: owed to paid, paid back to owed,
-/// waived back to owed.
-DueStatus nextStatus(DueStatus s) =>
-    s == DueStatus.owed ? DueStatus.paid : DueStatus.owed;

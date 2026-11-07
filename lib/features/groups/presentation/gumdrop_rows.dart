@@ -231,8 +231,9 @@ class PageListRow extends StatelessWidget {
 /// [leading]) in the text color, the title in Nunito 700 16/21, the
 /// subtitle in Nunito 600 14/19 muted, and a 20 px chevron when it opens
 /// something. [destructive] puts the icon and title in the accent text.
-/// Screen readers hear the row as one item; with [trailingActions], the
-/// buttons in [trailing] stay items of their own.
+/// Screen readers hear the row as one item, or as [semanticsLabel] when
+/// it's given (a sentence: "Luke #7, Uniforms, $25 left of $45"); with
+/// [trailingActions], the buttons in [trailing] stay items of their own.
 /// At large text sizes a [trailing] widget other than an icon goes under
 /// the text, which keeps the row's width.
 class PageRow extends StatelessWidget {
@@ -250,10 +251,15 @@ class PageRow extends StatelessWidget {
     this.subtitleSpan,
     this.bold = false,
     this.titleColor,
+    this.semanticsLabel,
     super.key,
   });
 
   final String title;
+
+  /// What screen readers hear in place of the row's text, which still
+  /// taps the row.
+  final String? semanticsLabel;
 
   /// The title at 800 (a highlighted row), and in [titleColor].
   final bool bold;
@@ -314,56 +320,59 @@ class PageRow extends StatelessWidget {
         button: onTap != null,
         child: FocusRingInk(
           onTap: onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 50),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  if (lead != null) ...[lead, const SizedBox(width: 14)],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: text.bodyLarge?.copyWith(
-                            fontSize: 16,
-                            height: 21 / 16,
-                            fontWeight: bold
-                                ? FontWeight.w800
-                                : FontWeight.w700,
-                            color: color,
-                          ),
-                        ),
-                        if (sub != null && sub.isNotEmpty)
-                          Text.rich(
-                            subtitleSpan ?? TextSpan(text: sub),
-                            maxLines: subtitleMaxLines,
-                            overflow: subtitleMaxLines == null
-                                ? null
-                                : TextOverflow.ellipsis,
-                            style: text.bodyMedium?.copyWith(
-                              fontSize: 14,
-                              height: 19 / 14,
-                              fontWeight: FontWeight.w600,
-                              color: c.textMutedOnPage,
+          child: _Spoken(
+            label: semanticsLabel,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 50),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    if (lead != null) ...[lead, const SizedBox(width: 14)],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            title,
+                            style: text.bodyLarge?.copyWith(
+                              fontSize: 16,
+                              height: 21 / 16,
+                              fontWeight: bold
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              color: color,
                             ),
                           ),
-                        if (below)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: end,
-                          ),
-                      ],
+                          if (sub != null && sub.isNotEmpty)
+                            Text.rich(
+                              subtitleSpan ?? TextSpan(text: sub),
+                              maxLines: subtitleMaxLines,
+                              overflow: subtitleMaxLines == null
+                                  ? null
+                                  : TextOverflow.ellipsis,
+                              style: text.bodyMedium?.copyWith(
+                                fontSize: 14,
+                                height: 19 / 14,
+                                fontWeight: FontWeight.w600,
+                                color: c.textMutedOnPage,
+                              ),
+                            ),
+                          if (below)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: end,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  if (end != null && !apart && !below) ...[
-                    const SizedBox(width: 14),
-                    ConstrainedBox(constraints: endBox, child: end),
+                    if (end != null && !apart && !below) ...[
+                      const SizedBox(width: 14),
+                      ConstrainedBox(constraints: endBox, child: end),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -379,6 +388,23 @@ class PageRow extends StatelessWidget {
       ],
     );
   }
+}
+
+/// [child], heard by screen readers as [label] when there is one. The tap
+/// of the ink around it stays.
+class _Spoken extends StatelessWidget {
+  const new({required this.label, required this.child});
+
+  final String? label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => label == null
+      ? child
+      : Semantics(
+          label: label,
+          child: ExcludeSemantics(child: child),
+        );
 }
 
 /// A section label on the page (SPEC §7.3): Fredoka 600 13/16, spaced

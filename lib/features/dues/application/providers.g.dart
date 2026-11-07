@@ -217,6 +217,118 @@ final class DueChargesFamily extends $Family
   String toString() => r'dueChargesProvider';
 }
 
+/// Every share of every due on [groupId] (admins, DUES-5), for the totals
+/// on Dues and Who owes what: each due's own shares ([dueCharges], the
+/// same reads the due cards make), together. Loading until the dues and
+/// every one's shares have loaded, and failing when any of them fails, so
+/// a total is never shown short.
+
+@ProviderFor(teamCharges)
+final teamChargesProvider = TeamChargesFamily._();
+
+/// Every share of every due on [groupId] (admins, DUES-5), for the totals
+/// on Dues and Who owes what: each due's own shares ([dueCharges], the
+/// same reads the due cards make), together. Loading until the dues and
+/// every one's shares have loaded, and failing when any of them fails, so
+/// a total is never shown short.
+
+final class TeamChargesProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<DueCharge>>,
+          AsyncValue<List<DueCharge>>,
+          AsyncValue<List<DueCharge>>
+        >
+    with $Provider<AsyncValue<List<DueCharge>>> {
+  /// Every share of every due on [groupId] (admins, DUES-5), for the totals
+  /// on Dues and Who owes what: each due's own shares ([dueCharges], the
+  /// same reads the due cards make), together. Loading until the dues and
+  /// every one's shares have loaded, and failing when any of them fails, so
+  /// a total is never shown short.
+  TeamChargesProvider._({
+    required TeamChargesFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamChargesProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamChargesHash();
+
+  @override
+  String toString() {
+    return r'teamChargesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<AsyncValue<List<DueCharge>>> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AsyncValue<List<DueCharge>> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return teamCharges(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AsyncValue<List<DueCharge>> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AsyncValue<List<DueCharge>>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamChargesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamChargesHash() => r'71e58e03d4be74ab60f401ce9e910509476f2374';
+
+/// Every share of every due on [groupId] (admins, DUES-5), for the totals
+/// on Dues and Who owes what: each due's own shares ([dueCharges], the
+/// same reads the due cards make), together. Loading until the dues and
+/// every one's shares have loaded, and failing when any of them fails, so
+/// a total is never shown short.
+
+final class TeamChargesFamily extends $Family
+    with $FunctionalFamilyOverride<AsyncValue<List<DueCharge>>, GroupId> {
+  TeamChargesFamily._()
+    : super(
+        retry: null,
+        name: r'teamChargesProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Every share of every due on [groupId] (admins, DUES-5), for the totals
+  /// on Dues and Who owes what: each due's own shares ([dueCharges], the
+  /// same reads the due cards make), together. Loading until the dues and
+  /// every one's shares have loaded, and failing when any of them fails, so
+  /// a total is never shown short.
+
+  TeamChargesProvider call(GroupId groupId) =>
+      TeamChargesProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'teamChargesProvider';
+}
+
 /// Who I pay for on [groupId] (DUES-2): my players on a team, myself in a
 /// group, the same people I answer RSVPs for ([participantsFor]). On a team
 /// I'm also there myself, last, for any shares of mine from before it was

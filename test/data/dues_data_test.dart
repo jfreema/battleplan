@@ -1,6 +1,7 @@
 // The Firestore dues repository (DUES-1 to DUES-3, ARCH §6.2): what it
-// sends the saveDue and deleteDue callables, what it writes, and how it
-// reads dues, charges, and how to pay.
+// sends the saveDue and deleteDue callables, what it writes (payments on a
+// charge, in a transaction on the charge as it is now), and how it reads
+// dues, charges, their payments, and how to pay.
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
@@ -137,11 +138,278 @@ void main() {
     expect(mine.map((c) => c.id).toSet(), {'d1_emma', 'd2_emma'});
     expect(await repo.watchMine(g, const []).first, isEmpty);
 
-    await repo.setStatus(mine.first, DueStatus.paid, by: by);
+    await repo.recordPayment(
+      mine.first,
+      id: 'pay-12345678',
+      paidOn: '2026-11-05',
+      by: by,
+    );
     final paid = (await repo.watchDueCharges(g, mine.first.dueId).first)
         .firstWhere((c) => c.id == mine.first.id);
     expect(paid.status, DueStatus.paid);
     expect(paid.paidAt, isNotNull);
+    expect(paid.paidCents, 4500);
+  });
+
+  group('payments (DUES-2)', () {
+    Future<Map<String, dynamic>> doc(
+      FakeFirebaseFirestore db,
+      String id,
+    ) async => (await db.doc('dueCharges/$id').get()).data()!;
+
+    test('a part at a time, the rest in one go, and a mistake taken back, '
+        'each from the charge as it is now', () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreDuesRepository(db, FakeFunctions());
+      await db.doc('dueCharges/d1_emma').set(charge('d1', 'emma'));
+      // What the app had loaded before anything was paid.
+      final stale = (await repo.watchDueCharges(g, 'd1').first).single;
+      expect(stale.state, DueShareState.owes);
+
+      await repo.recordPayment(
+        stale,
+        id: 'pay-aaaaaaaa',
+        amountCents: 2000,
+        paidOn: '2026-11-05',
+        note: '  Venmo  ',
+        by: by,
+      );
+      var x = await doc(db, 'd1_emma');
+      expect(x['payments'], [
+        {
+          'id': 'pay-aaaaaaaa',
+          'amountCents': 2000,
+          'paidOn': '2026-11-05',
+          'by': 'coach',
+          'note': 'Venmo',
+        },
+      ]);
+      expect(x['paidCents'], 2000);
+      expect(x['status'], 'owed');
+      expect(x['paidAt'], isNull);
+      expect(x['updatedBy'], 'coach');
+
+      // A retry of the same payment records nothing more.
+      await repo.recordPayment(
+        stale,
+        id: 'pay-aaaaaaaa',
+        amountCents: 2000,
+        paidOn: '2026-11-05',
+        by: by,
+      );
+      expect((await doc(db, 'd1_emma'))['paidCents'], 2000);
+
+      // More than the $25 left now, though the stale copy shows $45.
+      await expectLater(
+        repo.recordPayment(
+          stale,
+          id: 'pay-bbbbbbbb',
+          amountCents: 3000,
+          paidOn: '2026-11-05',
+          by: by,
+        ),
+        throwsA(
+          isA<InvalidInput>().having((e) => e.message, 'message', 'tooMuch'),
+        ),
+      );
+
+      // All that's left, from the stale copy: $25, not $45.
+      await repo.recordPayment(
+        stale,
+        id: 'pay-cccccccc',
+        paidOn: '2026-11-06',
+        by: by,
+      );
+      x = await doc(db, 'd1_emma');
+      expect(x['paidCents'], 4500);
+      expect(x['status'], 'paid');
+      expect(x['paidAt'], isA<Timestamp>());
+      expect(
+        [
+          for (final p in x['payments'] as List<Object?>)
+            (p! as Map)['amountCents'],
+        ],
+        [2000, 2500],
+      );
+      final read = (await repo.watchDueCharges(g, 'd1').first).single;
+      expect(read.payments.map((p) => p.id), ['pay-aaaaaaaa', 'pay-cccccccc']);
+      expect(read.payments.first.note, 'Venmo');
+      expect(read.recordedCents, 4500);
+      expect(read.state, DueShareState.paid);
+
+      // Nothing left to pay.
+      await expectLater(
+        repo.recordPayment(
+          stale,
+          id: 'pay-dddddddd',
+          paidOn: '2026-11-06',
+          by: by,
+        ),
+        throwsA(
+          isA<InvalidInput>().having(
+            (e) => e.message,
+            'message',
+            'nothingLeft',
+          ),
+        ),
+      );
+
+      // The first was a mistake.
+      await repo.undoPayment(stale, 'pay-aaaaaaaa', by: by);
+      x = await doc(db, 'd1_emma');
+      expect(
+        [for (final p in x['payments'] as List<Object?>) (p! as Map)['id']],
+        ['pay-cccccccc'],
+      );
+      expect(x['paidCents'], 2500);
+      expect(x['status'], 'owed');
+      expect(x['paidAt'], isNull);
+      // Already taken back: nothing changes.
+      await repo.undoPayment(stale, 'pay-aaaaaaaa', by: by);
+      expect((await doc(db, 'd1_emma'))['paidCents'], 2500);
+
+      // Waived: nothing more is recorded, and back to owed it owes the rest.
+      await repo.setStatus(stale, DueStatus.waived, by: by);
+      expect((await doc(db, 'd1_emma'))['status'], 'waived');
+      await expectLater(
+        repo.recordPayment(
+          stale,
+          id: 'pay-eeeeeeee',
+          amountCents: 100,
+          paidOn: '2026-11-06',
+          by: by,
+        ),
+        throwsA(isA<InvalidInput>()),
+      );
+      await repo.setStatus(stale, DueStatus.owed, by: by);
+      x = await doc(db, 'd1_emma');
+      expect(x['status'], 'owed');
+      expect(x['paidCents'], 2500);
+    });
+
+    test('waived no more, a share its payments cover is paid again', () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreDuesRepository(db, FakeFunctions());
+      await db.doc('dueCharges/d1_emma').set({
+        ...charge('d1', 'emma'),
+        'status': 'waived',
+        'payments': [
+          {
+            'id': 'pay-aaaaaaaa',
+            'amountCents': 4500,
+            'paidOn': '2026-11-05',
+            'by': 'coach',
+            'note': '',
+          },
+        ],
+        'paidCents': 4500,
+      });
+      final c = (await repo.watchDueCharges(g, 'd1').first).single;
+      await repo.setStatus(c, DueStatus.owed, by: by);
+      final x = await doc(db, 'd1_emma');
+      expect(x['status'], 'paid');
+      expect(x['paidAt'], isA<Timestamp>());
+    });
+
+    test('a share marked paid before payments were recorded reads as paid in '
+        'full, and is marked not paid without any', () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreDuesRepository(db, FakeFunctions());
+      await db.doc('dueCharges/d1_emma').set({
+        ...charge('d1', 'emma'),
+        'status': 'paid',
+        'paidAt': Timestamp.fromDate(DateTime.utc(2026, 11, 3)),
+      });
+      final c = (await repo.watchDueCharges(g, 'd1').first).single;
+      expect(c.paidCents, 4500);
+      expect(c.owedCents, 0);
+      expect(c.recordsPayments, isFalse);
+      expect(c.state, DueShareState.paid);
+      // Paid in full: there's nothing to record, and no status of Paid
+      // without a payment.
+      await expectLater(
+        repo.recordPayment(c, id: 'pay-aaaaaaaa', paidOn: '2026-11-06', by: by),
+        throwsA(isA<InvalidInput>()),
+      );
+      await expectLater(
+        repo.setStatus(c, DueStatus.paid, by: by),
+        throwsA(isA<InvalidInput>()),
+      );
+      await repo.setStatus(c, DueStatus.owed, by: by);
+      final x = await doc(db, 'd1_emma');
+      expect(x['status'], 'owed');
+      expect(x['paidAt'], isNull);
+      expect(x.containsKey('payments'), isFalse);
+      expect(x.containsKey('paidCents'), isFalse);
+    });
+
+    test('a share that is gone is not found; the cap is kept', () async {
+      final db = FakeFirebaseFirestore();
+      final repo = FirestoreDuesRepository(db, FakeFunctions());
+      final gone = dueChargeFromFirestore('d9_x', charge('d9', 'x'));
+      await expectLater(
+        repo.recordPayment(
+          gone,
+          id: 'pay-aaaaaaaa',
+          paidOn: '2026-11-06',
+          by: by,
+        ),
+        throwsA(isA<NotFound>()),
+      );
+      await db.doc('dueCharges/d1_emma').set({
+        ...charge('d1', 'emma'),
+        'payments': [
+          for (var i = 0; i < Limits.duePaymentsMax; i++)
+            {
+              'id': 'pay-$i-aaaaaa',
+              'amountCents': 1,
+              'paidOn': '2026-11-05',
+              'by': 'coach',
+              'note': '',
+            },
+        ],
+        'paidCents': Limits.duePaymentsMax,
+      });
+      final full = (await repo.watchDueCharges(g, 'd1').first).single;
+      await expectLater(
+        repo.recordPayment(
+          full,
+          id: 'pay-bbbbbbbb',
+          amountCents: 1,
+          paidOn: '2026-11-06',
+          by: by,
+        ),
+        throwsA(
+          isA<InvalidInput>().having((e) => e.message, 'message', 'full'),
+        ),
+      );
+    });
+
+    test(
+      'an amount below what someone paid comes back as InvalidInput',
+      () async {
+        final fns = FakeFunctions()
+          ..fail('saveDue', 'failed-precondition', 'due-amount-below-paid');
+        final repo = FirestoreDuesRepository(FakeFirebaseFirestore(), fns);
+        const due = Due(id: 'd1', groupId: g, title: 'Fee', amountCents: 4500);
+        await expectLater(
+          repo.edit(due, title: 'Fee', amountCents: 100, dueOn: null, note: ''),
+          throwsA(
+            isA<InvalidInput>().having(
+              (e) => e.message,
+              'message',
+              'due-amount-below-paid',
+            ),
+          ),
+        );
+        // Any other refusal of the kind stays unknown.
+        fns.fail('saveDue', 'failed-precondition', 'team-archived');
+        await expectLater(
+          repo.edit(due, title: 'Fee', amountCents: 100, dueOn: null, note: ''),
+          throwsA(isA<UnknownFailure>()),
+        );
+      },
+    );
   });
 
   test('past the limit, the newest dues show, newest first', () async {
@@ -238,6 +506,18 @@ void main() {
 
   test('reads unknown values safely', () {
     final c = dueChargeFromFirestore('x', const {'status': 'nope'});
+    expect(c.payments, isEmpty);
+    expect(c.recordedCents, isNull);
+    final odd = dueChargeFromFirestore('x', const {
+      'payments': [
+        'not a payment',
+        <String, Object?>{'id': 'p1'},
+      ],
+      'paidCents': 12.0,
+    });
+    expect(odd.payments.single.amountCents, 0);
+    expect(odd.payments.single.paidOn, '');
+    expect(odd.recordedCents, 12);
     expect(c.status, DueStatus.owed);
     expect(c.participantType, ParticipantType.member);
     expect(dueFromFirestore('d', const {}).title, '');
