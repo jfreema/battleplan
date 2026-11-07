@@ -918,9 +918,12 @@ async function main() {
 
   // Dues (DUES-1 to DUES-3), as the saveDue callable writes them: a due,
   // and a charge for each player it's for (`<dueId>_<playerId>`), named
-  // as the app labels players ("Jim #3"). Thunder's admins see two dues
-  // with who's paid; on Cyclone, Claire sees what Luke and Alex owe. Each
-  // team shares how to pay (duesPayments).
+  // as the app labels players ("Jim #3"), with the payments admins
+  // recorded on it (DUES-2): some paid in full, some a part at a time, some
+  // still owed. Thunder's admins see two dues with who's paid and what's
+  // left; on Cyclone, Claire sees what Luke and Alex owe ($55: Luke's $25
+  // left on the league fee and his and Alex's photos). Each team shares how
+  // to pay (duesPayments).
   const day = (d: number) => {
     const date = new Date(now);
     date.setDate(date.getDate() + d);
@@ -930,33 +933,52 @@ async function main() {
     const p = players.find((x) => x.id === id)!;
     return p.number ? `${p.name.split(' ')[0]} #${p.number}` : p.name.split(' ')[0];
   };
-  const dues: { id: string; groupId: string; title: string; amountCents: number; dueOn: string | null; note: string; days: number; charges: [string, 'owed' | 'paid' | 'waived'][] }[] = [
+  /** A payment: [cents], [daysAgo], and a note. */
+  type Paid = [number, number, string?];
+  const dues: {
+    id: string; groupId: string; title: string; amountCents: number; dueOn: string | null; note: string; days: number;
+    charges: [string, 'owed' | 'paid' | 'waived', Paid[]?][];
+  }[] = [
     {
       id: 'thunder-uniforms', groupId: 'thunder', title: 'Uniforms', amountCents: 4500, dueOn: day(10), days: 6,
       note: 'Jersey and hat. Sizes are in the chat.',
-      charges: [['jim-halpert', 'paid'], ['andy-dwyer', 'owed'], ['pam-beesly', 'paid']],
+      charges: [
+        ['jim-halpert', 'paid', [[4500, 5, 'Venmo']]],
+        ['andy-dwyer', 'owed', [[2000, 3, 'Cash at practice']]],
+        ['pam-beesly', 'paid', [[2500, 5, 'Venmo'], [2000, 1, 'Venmo']]],
+      ],
     },
     {
       id: 'thunder-tournament', groupId: 'thunder', title: 'Tournament fee', amountCents: 3000, dueOn: day(4), days: 2,
       note: 'Fall classic entry, split three ways.',
-      charges: [['jim-halpert', 'paid'], ['andy-dwyer', 'owed'], ['pam-beesly', 'waived']],
+      charges: [['jim-halpert', 'paid', [[3000, 1, 'Cash App']]], ['andy-dwyer', 'owed'], ['pam-beesly', 'waived']],
     },
     {
       id: 'cyclone-league-fee', groupId: 'cyclone', title: 'Fall league fee', amountCents: 6000, dueOn: day(7), days: 8,
       note: 'Covers referees and field time.',
-      charges: [['luke-dunphy', 'owed'], ['alex-dunphy', 'paid'], ['emma-green', 'paid'], ['noah-bennett', 'owed']],
+      charges: [
+        ['luke-dunphy', 'owed', [[3500, 4, 'Venmo']]],
+        ['alex-dunphy', 'paid', [[6000, 7, 'Venmo']]],
+        ['emma-green', 'paid', [[3000, 7, 'Cash'], [3000, 2, 'Cash']]],
+        ['noah-bennett', 'owed'],
+      ],
     },
     {
       id: 'cyclone-photos', groupId: 'cyclone', title: 'Team photos', amountCents: 1500, dueOn: day(12), days: 3,
       note: '',
-      charges: [['luke-dunphy', 'owed'], ['alex-dunphy', 'owed'], ['emma-green', 'owed'], ['noah-bennett', 'owed']],
+      charges: [['luke-dunphy', 'owed'], ['alex-dunphy', 'owed'], ['emma-green', 'paid', [[1500, 1, 'Venmo']]], ['noah-bennett', 'owed']],
     },
   ];
   for (const d of dues) {
     const createdAt = minutesAgo(d.days * 60 * 24);
     const terms = { title: d.title, amountCents: d.amountCents, dueOn: d.dueOn };
     await db.doc(`dues/${d.id}`).set({ groupId: d.groupId, ...terms, note: d.note, createdBy: 'coach', createdAt, updatedAt: createdAt });
-    for (const [participantId, status] of d.charges) {
+    for (const [participantId, status, paid = []] of d.charges) {
+      const payments = paid.map(([amountCents, daysAgo, note = ''], i) => ({
+        id: `${d.id}-${participantId}-${i}`, amountCents, paidOn: day(-daysAgo), by: 'coach', note,
+      }));
+      const paidCents = payments.reduce((sum, p) => sum + p.amountCents, 0);
+      const lastPaid = paid.length ? Math.min(...paid.map(([, daysAgo]) => daysAgo)) : d.days;
       await db.doc(`dueCharges/${d.id}_${participantId}`).set({
         groupId: d.groupId,
         dueId: d.id,
@@ -967,10 +989,15 @@ async function main() {
         participantId,
         participantName: label(participantId),
         status,
-        paidAt: status === 'paid' ? minutesAgo((d.days - 1) * 60 * 24) : null,
+        // Paid in full only when the payments cover it.
+        ...(payments.length ? { payments, paidCents } : {}),
+        paidAt: status === 'paid' ? minutesAgo(lastPaid * 60 * 24) : null,
         updatedBy: 'coach',
-        updatedAt: status === 'owed' ? createdAt : minutesAgo((d.days - 1) * 60 * 24),
+        updatedAt: status === 'owed' && !payments.length ? createdAt : minutesAgo(lastPaid * 60 * 24),
       });
+      if ((status === 'paid') !== (paidCents === d.amountCents) && status !== 'waived') {
+        throw new Error(`Seed due ${d.id} for ${participantId}: status ${status} with ${paidCents} of ${d.amountCents} paid`);
+      }
     }
   }
   const payments = {
