@@ -97,7 +97,7 @@ Check the counts after any edit: the short description must stay at 80 character
 
 **Ads:** No, the app doesn't contain ads.
 
-**App access:** All or some functionality is restricted. Add one set of instructions:
+**App access** (now **Sign in details**): All or some functionality is restricted. Add one set of instructions. Play's "Any other information" box holds only 500 characters, so the console has a shortened version of the notes below (what the app is, joining with Google and the team code, the demo account at getbattleplan.app/emaillogin, Report and Block, Delete account, and that Dues only record what members owe); set up 2026-11-07, with the password and team code typed in by the owner:
 
 - Name: `Demo team`
 - Username: `appreview@getbattleplan.app`
