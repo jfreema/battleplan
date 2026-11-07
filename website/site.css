@@ -4,7 +4,8 @@
    buttons. Army green is the default. The landing page's scheme picker (five
    radio buttons) switches the whole page to Light, Dark, Navy, or Light blue
    with :has(), using the app's own role colors (lib/core/design/schemes.dart),
-   and marks the picked chip with plain sibling selectors, so it works without
+   marks the picked chip with plain sibling selectors, and brings the picked
+   scheme's phone to the front of the hero's fan, so it works without
    JavaScript. The other pages stay Army green. Fonts are bundled in
    fonts/ (SIL OFL), so the site makes no third-party requests. */
 
@@ -271,12 +272,12 @@ p, ul, ol { margin: 0 0 1em; }
 h1, .hero-copy .lead, .section-head p { text-wrap: balance; }
 
 /* The fan of five phones from the Facebook cover: the coach's whiteboard in
-   front, Thunder's schedule in Navy and Light blue beside it, and Saturday Run
-   Club's chat (Light) and Rally Possums' poll (Dark) at the ends. Every length
-   (phones, padding, corners, offsets) is a share of the stage's width, so the
-   fan keeps the cover's shape at any size and only the stage's width, --fan,
-   changes per screen. Real screenshots rather than one picture, so it's sharp
-   at every pixel density and reuses the page's own images. */
+   front (Army green), Thunder's schedule in Navy and Light blue beside it, and
+   Saturday Run Club's chat (Light) and Rally Possums' poll (Dark) at the ends. Every length (phones, padding, corners, offsets)
+   is a share of the stage's width, so the fan keeps the cover's shape at any
+   size and only the stage's width, --fan, changes per screen. Real
+   screenshots rather than one picture, so it's sharp at every pixel density
+   and reuses the page's own images. */
 .hero-media { min-width: 0; }
 .stage {
   --fan: min(100% + 24px, 720px);
@@ -292,12 +293,28 @@ h1, .hero-copy .lead, .section-head p { text-wrap: balance; }
   transform:
     translateX(-50%) translateX(calc(var(--d) * 43.88%)) translateY(calc(var(--a) * 4.46%))
     rotate(calc(var(--d) * 6deg)) scale(calc(1 - var(--a) * 0.085));
+  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .stage .phone img { border-radius: 11.07% / 5.12%; }
-.stage .f-chat { --d: -2; --a: 2; }
-.stage .f-navy { --d: -1; --a: 1; }
-.stage .f-skyblue { --d: 1; --a: 1; }
-.stage .f-poll { --d: 2; --a: 2; }
+/* The picked scheme's phone comes to the front and the others turn around it
+   like a ring, in the cover's order going right: Army green, Light blue,
+   Dark, Light, Navy. Army green, the default, is the cover itself. The radios
+   are in the picker's fieldset, after the fan, so :has() on .hero-media
+   reaches it; a browser without :has() keeps the cover. */
+.stage .p-skyblue { --d: 1; --a: 1; }
+.stage .p-dark { --d: 2; --a: 2; }
+.stage .p-light { --d: -2; --a: 2; }
+.stage .p-navy { --d: -1; --a: 1; }
+.hero-media:has(#s-light:checked) .p-light, .hero-media:has(#s-dark:checked) .p-dark,
+.hero-media:has(#s-navy:checked) .p-navy, .hero-media:has(#s-skyblue:checked) .p-skyblue { --d: 0; --a: 0; }
+.hero-media:has(#s-light:checked) .p-navy, .hero-media:has(#s-dark:checked) .p-light,
+.hero-media:has(#s-navy:checked) .p-army, .hero-media:has(#s-skyblue:checked) .p-dark { --d: 1; --a: 1; }
+.hero-media:has(#s-light:checked) .p-army, .hero-media:has(#s-dark:checked) .p-navy,
+.hero-media:has(#s-navy:checked) .p-skyblue, .hero-media:has(#s-skyblue:checked) .p-light { --d: 2; --a: 2; }
+.hero-media:has(#s-light:checked) .p-skyblue, .hero-media:has(#s-dark:checked) .p-army,
+.hero-media:has(#s-navy:checked) .p-dark, .hero-media:has(#s-skyblue:checked) .p-navy { --d: -2; --a: 2; }
+.hero-media:has(#s-light:checked) .p-dark, .hero-media:has(#s-dark:checked) .p-skyblue,
+.hero-media:has(#s-navy:checked) .p-light, .hero-media:has(#s-skyblue:checked) .p-army { --d: -1; --a: 1; }
 /* Phones: a little wider than the screen, so the outer phones' far edges
    are just off it and the front phone is as big as it can be. */
 @media (max-width: 599px) {
