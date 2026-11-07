@@ -4,8 +4,8 @@
    buttons. Army green is the default. The landing page's scheme picker (five
    radio buttons) switches the whole page to Light, Dark, Navy, or Light blue
    with :has(), using the app's own role colors (lib/core/design/schemes.dart),
-   and turns the hero's fan of phones with plain sibling selectors, so it works
-   without JavaScript. The other pages stay Army green. Fonts are bundled in
+   and marks the picked chip with plain sibling selectors, so it works without
+   JavaScript. The other pages stay Army green. Fonts are bundled in
    fonts/ (SIL OFL), so the site makes no third-party requests. */
 
 @font-face {
@@ -270,44 +270,48 @@ p, ul, ol { margin: 0 0 1em; }
 /* Even lines, so no word sits alone on the last one (browsers without it ignore it). */
 h1, .hero-copy .lead, .section-head p { text-wrap: balance; }
 
-/* The scheme picker: five radio buttons (visually hidden), a fan of phones,
-   and a chip for each scheme. The checked scheme's phone comes to the front
-   and the middle; the others fan out around it in the app's order. */
+/* The fan of five phones from the Facebook cover: the coach's whiteboard in
+   front, Thunder's schedule in Navy and Light blue beside it, and Saturday Run
+   Club's chat (Light) and Rally Possums' poll (Dark) at the ends. Every length
+   (phones, padding, corners, offsets) is a share of the stage's width, so the
+   fan keeps the cover's shape at any size and only the stage's width, --fan,
+   changes per screen. Real screenshots rather than one picture, so it's sharp
+   at every pixel density and reuses the page's own images. */
+.hero-media { min-width: 0; }
+.stage {
+  --fan: min(100% + 24px, 720px);
+  position: relative; isolation: isolate;
+  width: var(--fan); margin: 0 0 4px calc(50% - var(--fan) / 2);
+  aspect-ratio: 814 / 610;
+}
+.stage .phone {
+  --d: 0; --a: 0;
+  position: absolute; top: 0; left: 50%;
+  width: 34.14%; padding: 0.98%; border-radius: 12.95% / 6.18%;
+  z-index: calc(10 - var(--a));
+  transform:
+    translateX(-50%) translateX(calc(var(--d) * 43.88%)) translateY(calc(var(--a) * 4.46%))
+    rotate(calc(var(--d) * 6deg)) scale(calc(1 - var(--a) * 0.085));
+}
+.stage .phone img { border-radius: 11.07% / 5.12%; }
+.stage .f-chat { --d: -2; --a: 2; }
+.stage .f-navy { --d: -1; --a: 1; }
+.stage .f-skyblue { --d: 1; --a: 1; }
+.stage .f-poll { --d: 2; --a: 2; }
+/* Phones: a little wider than the screen, so the outer phones' far edges
+   are just off it and the front phone is as big as it can be. */
+@media (max-width: 599px) {
+  .stage { --fan: 108vw; }
+}
+
+/* The scheme picker: five radio buttons (visually hidden) and a chip for
+   each scheme. */
 .schemes { border: 0; margin: 0; padding: 0; min-width: 0; }
 .scheme-input {
   /* Fixed, so focusing a radio when its chip is tapped never scrolls the page.
      Keep transform, filter, and contain off the fieldset's ancestors, which
      would pin the inputs to them instead. */
   position: fixed; top: 50%; left: 50%; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none;
-}
-.stage {
-  --pw: min(232px, 56vw);
-  --step: calc(var(--pw) * 0.44);
-  position: relative; isolation: isolate; height: calc(var(--pw) * 2.163 + 28px); margin: 0 auto;
-}
-.stage .phone {
-  --d: 0; --ad: 0;
-  position: absolute; top: 0; left: 50%; width: var(--pw); padding: 7px; border-radius: 30px;
-  z-index: calc(10 - var(--ad));
-  transform:
-    translateX(-50%) translateX(calc(var(--d) * var(--step)))
-    translateY(calc(var(--ad) * 22px)) rotate(calc(var(--d) * 5deg)) scale(calc(1 - var(--ad) * 0.09));
-  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s;
-}
-.stage .phone img { border-radius: 24px; }
-/* Where each phone sits for each checked scheme (d = -2 … 2). */
-#s-army:checked ~ .stage .p-light, #s-light:checked ~ .stage .p-dark, #s-dark:checked ~ .stage .p-navy,
-#s-navy:checked ~ .stage .p-skyblue, #s-skyblue:checked ~ .stage .p-army { --d: 1; --ad: 1; }
-#s-army:checked ~ .stage .p-dark, #s-light:checked ~ .stage .p-navy, #s-dark:checked ~ .stage .p-skyblue,
-#s-navy:checked ~ .stage .p-army, #s-skyblue:checked ~ .stage .p-light { --d: 2; --ad: 2; }
-#s-army:checked ~ .stage .p-navy, #s-light:checked ~ .stage .p-skyblue, #s-dark:checked ~ .stage .p-army,
-#s-navy:checked ~ .stage .p-light, #s-skyblue:checked ~ .stage .p-dark { --d: -2; --ad: 2; }
-#s-army:checked ~ .stage .p-skyblue, #s-light:checked ~ .stage .p-army, #s-dark:checked ~ .stage .p-light,
-#s-navy:checked ~ .stage .p-dark, #s-skyblue:checked ~ .stage .p-navy { --d: -1; --ad: 1; }
-@media (max-width: 599px) {
-  #s-army:checked ~ .stage :is(.p-dark, .p-navy), #s-light:checked ~ .stage :is(.p-navy, .p-skyblue),
-  #s-dark:checked ~ .stage :is(.p-skyblue, .p-army), #s-navy:checked ~ .stage :is(.p-army, .p-light),
-  #s-skyblue:checked ~ .stage :is(.p-light, .p-dark) { opacity: 0; }
 }
 
 .swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
@@ -341,22 +345,18 @@ label[for="s-skyblue"] { --sw-page: #bcd9f5; --sw-card: #ffffff; --sw-text: #0b1
 #s-army:focus-visible ~ .swatches label[for="s-army"], #s-light:focus-visible ~ .swatches label[for="s-light"],
 #s-dark:focus-visible ~ .swatches label[for="s-dark"], #s-navy:focus-visible ~ .swatches label[for="s-navy"],
 #s-skyblue:focus-visible ~ .swatches label[for="s-skyblue"] { outline: 3px solid var(--text); outline-offset: 3px; }
-.schemes-note { margin: 14px 0 0; text-align: center; color: var(--muted); font-size: 0.98rem; }
+.schemes-note { margin: 14px 0 0; text-align: center; color: var(--muted); font-size: 0.98rem; text-wrap: balance; }
 
-@media (min-width: 600px) {
-  .stage { --pw: 220px; --step: calc(var(--pw) * 0.5); }
-}
 @media (min-width: 1024px) {
   .hero { padding: 64px 0 80px; }
-  .hero-grid { grid-template-columns: 0.95fr 1.05fr; gap: 24px; }
+  .hero-grid { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 24px; }
   .hero-copy { text-align: left; }
   .hero-copy .lead { margin-left: 0; }
   .hero-copy .actions, .hero-copy .store-badges { justify-content: flex-start; }
-  /* Close enough that the outer phones stay on a 1024 px screen (13-inch iPad). */
-  .stage { --pw: 226px; --step: calc(var(--pw) * 0.32); }
-}
-@media (min-width: 1280px) {
-  .stage { --pw: 240px; --step: calc(var(--pw) * 0.42); }
+  /* The fan reaches past the column into the page's right margin, up to
+     140 px and never closer than 12 px to the screen's edge. */
+  .hero-media { margin-right: calc(-1 * min(8px + max(0px, 50vw - 580px), 140px)); }
+  .stage { --fan: 100%; }
 }
 
 /* ---------- Sections ---------- */
