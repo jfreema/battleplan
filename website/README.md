@@ -30,9 +30,9 @@ Short on words: a headline, one line under it, and feature tiles with a two-to-f
 
 1. **Hero:** "For Groups and Sports Teams" over "Every team needs a Battleplan.", **Get Started** and **Login**, the App Store badge, and the color scheme picker: Thunder's schedule on five phones, one per scheme, in a fan. Picking a scheme's chip (Army green, Light, Dark, Navy, Light blue, the app's names) brings its phone to the front and re-colors the whole page in that scheme. Phones narrower than 600 px show the front phone and its two neighbors.
 2. **Features** (`#features`), "Built for game day.": tiles for Group chat, Games and RSVPs, Polls, Documents, and All my teams, each with a phone rising out of it, and an And more tile of chips.
-3. **Dues** (`#dues`), "Dues, sorted.": the admin's view and What you owe, side by side, with chips for Partial payments, the three ways to pay, and who sees what.
+3. **The coach's whiteboard** (`#whiteboard`).
 4. **Players and guardians** (`#players`), "Players first."
-5. **The coach's whiteboard** (`#whiteboard`).
+5. **Dues** (`#dues`), "Dues, sorted.": the admin's view and What you owe, side by side, with chips for Partial payments, the three ways to pay, and who sees what. Below Plays and Players first (owner's request 2026-11-07).
 6. **Switching** (`#switch`), "Switching is easy.": the five apps, linking to `/switch`.
 7. **Free** (`#free`), "Free. No ads. No catch.": a scoreboard of three big numbers.
 8. **FAQ** (`#faq`): eight short questions. The `FAQPage` in the page's JSON-LD repeats each question and answer word for word: change both together.
