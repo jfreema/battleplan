@@ -79,7 +79,7 @@ Google Play's badge waits (ROADMAP task 214) in a `<template data-store-badges>`
 
 ## Screenshots
 
-The screenshots show the app with the seeded sample teams (Thunder, Cyclone, and Rally Possums, in navy, Carolina blue, and purple, and Riverside Sluggers, a youth baseball team in red, at `/g/sluggers/chat`: a chat of only messages and one small photo, which the coach owns and has read), and people (common American names and TV characters), the same data `tools/seed/seed.ts` loads into the emulators. The seeded group Saturday Run Club (green, at `/g/run-club/chat`), whose chat is like the Sluggers', is for the App Store and Google Play chat screenshots. Each one is named for its screen and the color scheme it's in, and together they show all five:
+The screenshots show the app with the seeded sample teams (Thunder, Cyclone, and Rally Possums, in navy, Carolina blue, and purple, and Riverside Sluggers, a youth baseball team in red that the coach owns, whose chat at `/g/sluggers/chat` is only messages and one small photo, all of it read) and people (common American names and TV characters), the same data `tools/seed/seed.ts` loads into the emulators. The seeded group Saturday Run Club (green, at `/g/run-club/chat`), whose chat is like the Sluggers', is for the App Store and Google Play chat screenshots. Each one is named for its screen and the color scheme it's in, and together they show all five:
 
 | Image | Scheme | Signed in as | Screen |
 |---|---|---|---|

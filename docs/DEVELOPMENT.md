@@ -27,7 +27,7 @@ Everything runs against the Firebase Emulator Suite under the project ID `demo-b
    | Email | Who |
    |---|---|
    | `coach@example.com` | Andy Bernard, owner of Thunder (adult players), Cyclone, and Riverside Sluggers (kids), in Saturday Run Club |
-   | `claire@example.com` | Claire Dunphy, parent on all three teams, with players on two (Luke and Alex on Cyclone, Haley on Rally Possums); asked to join Thunder's roster as a player (pending) |
+   | `claire@example.com` | Claire Dunphy, parent on Thunder, Cyclone, and Rally Possums, with players on two (Luke and Alex on Cyclone, Haley on Rally Possums); asked to join Thunder's roster as a player (pending) |
    | `rachel@example.com` | Rachel Green, owner of Rally Possums, parent on Cyclone, admin of Saturday Run Club |
    | `jim@example.com`, `andy@example.com` | Jim Halpert and Andy Dwyer, players on Thunder, linked to their own players (Jim is also an admin) |
    | `phil@example.com` | Phil Dunphy, parent and assistant coach on Cyclone, in Saturday Run Club |
