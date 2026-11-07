@@ -53,24 +53,33 @@ DueCharge _after(DueCharge charge, DueChargePayments next) => charge.copyWith(
   status: next.status,
 );
 
-/// One person's share of a due, for its admins (DUES-2): where it stands,
-/// then, with [canEdit], Record a payment, Mark paid in full (what's left,
-/// in one tap), and Waive the rest, or Undo waive, or, on a share marked
-/// paid before payments were recorded, Mark not paid; and its payments,
-/// each with who recorded it, its note, and Undo. Screen readers hear each
-/// change.
+/// One person's share of a due (DUES-2): where it stands, then, with
+/// [canEdit] (its admins), Record a payment, Mark paid in full (what's
+/// left, in one tap), and Waive the rest, or Undo waive, or, on a share
+/// marked paid before payments were recorded, Mark not paid; and its
+/// payments, each with who recorded it, its note, and, with [canEdit],
+/// Undo. Screen readers hear each change. With [mine], it's opened from
+/// What you owe, to see the payments on your own share or your player's:
+/// headed by what it's for, and, with [showName], whose it is.
 Future<void> openShareSheet(
   BuildContext context,
   WidgetRef ref,
   DueCharge charge, {
   required bool canEdit,
+  bool mine = false,
+  bool showName = true,
 }) async {
   final l10n = AppLocalizations.of(context);
   final picked = await showCardSheet<_ShareAction>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (_) => _ShareSheet(charge: charge, canEdit: canEdit),
+    builder: (_) => _ShareSheet(
+      charge: charge,
+      canEdit: canEdit,
+      mine: mine,
+      showName: showName,
+    ),
   );
   if (picked == null || !context.mounted) return;
   final uid = ref.read(authUserProvider).value?.uid;
@@ -138,19 +147,35 @@ Future<void> openShareSheet(
         await repo.undoPayment(charge, payment.id, by: by);
         announce(_after(charge, removeDuePayment(charge, payment.id)));
     }
-  } on InvalidInput {
-    // Changed since the sheet opened: another admin just recorded one.
-    if (context.mounted) showAppSnackBar(context, l10n.duesPaymentChanged);
+  } on InvalidInput catch (e) {
+    if (!context.mounted) return;
+    showAppSnackBar(
+      context,
+      // At the cap, Mark paid in full is a payment too many.
+      e.message == DuePaymentRefusal.full.name
+          ? l10n.duesPaymentsFull(Limits.duePaymentsMax)
+          // Changed since the sheet opened: another admin just recorded one.
+          : l10n.duesPaymentChanged,
+    );
   } on AppFailure {
     if (context.mounted) showAppSnackBar(context, l10n.duesSaveFailed);
   }
 }
 
 class _ShareSheet extends ConsumerWidget {
-  const new({required this.charge, required this.canEdit});
+  const new({
+    required this.charge,
+    required this.canEdit,
+    required this.mine,
+    required this.showName,
+  });
 
   final DueCharge charge;
   final bool canEdit;
+
+  /// Opened from What you owe: headed by what it's for.
+  final bool mine;
+  final bool showName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -194,7 +219,7 @@ class _ShareSheet extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      charge.participantName,
+                      mine ? charge.title : charge.participantName,
                       style: TextStyle(
                         fontFamily: AppFonts.body,
                         fontWeight: FontWeight.w800,
@@ -205,6 +230,8 @@ class _ShareSheet extends ConsumerWidget {
                     ),
                     Text(
                       [
+                        if (mine && showName)
+                          l10n.duesFor(charge.participantName),
                         shareLine(l10n, charge),
                         shareStateName(l10n, charge.state),
                       ].join(' · '),

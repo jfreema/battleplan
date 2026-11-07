@@ -1451,7 +1451,8 @@ void main() {
       expect(
         find.text(
           'This share has ${Limits.duePaymentsMax} payments, the most it '
-          'can hold. Mark it paid in full or waive the rest.',
+          'can hold. Undo one and record it again with this one added, or '
+          'waive the rest.',
         ),
         findsOneWidget,
       );
@@ -1560,6 +1561,58 @@ void main() {
       expect(dues.calls, ['edit d0 Uniform fee 6000']);
     });
 
+    testWidgets('a share marked paid before payments were recorded is marked '
+        'not paid before the amount goes below it', (tester) async {
+      final dues = FakeDuesRepository()
+        ..dues.add(uniforms)
+        ..charges.add(
+          share('emma', 'Emma #7').copyWith(status: DueStatus.paid),
+        );
+      await pumpCoach(tester, dues);
+      await go(tester, '/g/a/dues/d0/edit');
+      await tester.enterText(find.byType(TextField).at(1), '40');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      // It has no payment to undo.
+      expect(
+        find.text(
+          r'Emma #7 is marked paid at $45. Mark their share not paid first, '
+          'or keep the amount at least that.',
+        ),
+        findsOneWidget,
+      );
+      expect(dues.calls, isEmpty);
+    });
+
+    testWidgets('at the most payments a share holds, Mark paid in full says '
+        'so', (tester) async {
+      final dues = FakeDuesRepository()
+        ..dues.add(uniforms)
+        ..charges.add(
+          partly(
+            share('emma', 'Emma #7'),
+            List.filled(Limits.duePaymentsMax, 10),
+          ),
+        );
+      await pumpCoach(tester, dues);
+      await go(tester, '/g/a/dues/d0');
+      await tester.tap(find.text('Emma #7'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Mark paid in full'));
+      await tester.pumpAndSettle();
+      // Not "This share just changed": paying the rest is one too many.
+      expect(
+        find.text(
+          'This share has ${Limits.duePaymentsMax} payments, the most it '
+          'can hold. Undo one and record it again with this one added, or '
+          'waive the rest.',
+        ),
+        findsOneWidget,
+      );
+      expect(dues.charges.single.payments, hasLength(Limits.duePaymentsMax));
+      expect(dues.charges.single.status, DueStatus.owed);
+    });
+
     testWidgets('a payment recorded since the edit opened is refused by the '
         'server, and said so', (tester) async {
       final dues = FakeDuesRepository()
@@ -1603,6 +1656,70 @@ void main() {
       // No totals or Who owes what: that's the admins'.
       expect(find.text('Who owes what'), findsNothing);
       expect(find.text('Owed in all'.toUpperCase()), findsNothing);
+    });
+    testWidgets('a guardian opens a share to see its payments, and changes '
+        'nothing', (tester) async {
+      final dues = FakeDuesRepository()
+        ..charges.addAll([
+          partly(share('emma', 'Emma #7'), [2000]),
+          share('emma', 'Emma #7', due: 'd1').copyWith(title: 'Photos'),
+        ]);
+      await pumpDues(tester, dues, playerRepo: linkedToEmma());
+      await go(tester, '/g/a/dues');
+      // With payments, a share is a button that opens them; without, it
+      // isn't.
+      expect(
+        tester.getSemantics(find.text('Uniform fee')),
+        isSemantics(isButton: true, hasTapAction: true),
+      );
+      expect(
+        tester.getSemantics(find.text('Photos')),
+        isNot(isSemantics(isButton: true)),
+      );
+      await tester.tap(find.text('Uniform fee'));
+      await tester.pumpAndSettle();
+      // Headed by what it's for, with each payment: its amount, day, who
+      // recorded it, and its note.
+      expect(find.text('Uniform fee'), findsNWidgets(2));
+      expect(
+        find.text(r'$20 of $45 paid · $25 left · Partly paid'),
+        findsOneWidget,
+      );
+      expect(find.text('PAYMENTS'), findsOneWidget);
+      expect(find.text(r'$20 · Nov 1'), findsOneWidget);
+      expect(find.text('Recorded by Coach Lee\nVenmo'), findsOneWidget);
+      expect(find.text('Record a payment'), findsNothing);
+      expect(find.text('Mark paid in full'), findsNothing);
+      expect(find.text('Waive the rest'), findsNothing);
+      expect(find.byTooltip(r'Undo the $20 payment'), findsNothing);
+      expect(dues.calls, isEmpty);
+    });
+
+    testWidgets('with shares for more than one player, the sheet says whose', (
+      tester,
+    ) async {
+      final both = FakePlayerRepository(players.players)
+        ..links.addAll([
+          emmaLink,
+          const GuardianLink(
+            playerId: PlayerId('liam'),
+            groupId: GroupId('a'),
+            uid: UserId('coach'),
+          ),
+        ]);
+      final dues = FakeDuesRepository()
+        ..charges.addAll([
+          partly(share('emma', 'Emma #7'), [2000]),
+          share('liam', 'Liam #9'),
+        ]);
+      await pumpDues(tester, dues, playerRepo: both);
+      await go(tester, '/g/a/dues');
+      await tester.tap(find.textContaining('For Emma #7'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(r'For Emma #7 · $20 of $45 paid · $25 left · Partly paid'),
+        findsOneWidget,
+      );
     });
   });
 

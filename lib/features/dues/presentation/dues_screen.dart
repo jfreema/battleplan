@@ -350,9 +350,10 @@ class _TitleLine extends StatelessWidget {
 }
 
 /// What I owe (DUES-2): my own share, or each of my players', with what's
-/// still owed in all. On a team, someone not linked to a player yet is
-/// pointed to "Who are you here for?" (PLAYER-3), or told their claim
-/// waits, rather than told they owe nothing.
+/// still owed in all; a share with payments opens to show them. On a
+/// team, someone not linked to a player yet is pointed to "Who are you
+/// here for?" (PLAYER-3), or told their claim waits, rather than told they
+/// owe nothing.
 class _MyDues extends ConsumerWidget {
   const new({required this.groupId});
 
@@ -451,7 +452,25 @@ class _MyDues extends ConsumerWidget {
         if (list.isNotEmpty) ...[
           PageRows(
             children: [
-              for (final x in sorted) _ChargeRow(charge: x, showName: several),
+              for (final x in sorted)
+                _ChargeRow(
+                  charge: x,
+                  showName: several,
+                  // Its payments, to see: each one's amount, day, who
+                  // recorded it, and note (DUES-2).
+                  onTap: x.payments.isEmpty
+                      ? null
+                      : () => unawaited(
+                          openShareSheet(
+                            context,
+                            ref,
+                            x,
+                            canEdit: false,
+                            mine: true,
+                            showName: several,
+                          ),
+                        ),
+                ),
             ],
           ),
           ?pointer,
@@ -465,7 +484,7 @@ class _MyDues extends ConsumerWidget {
 /// stands ("$20 of $45 paid · $25 left"), when it's due, the due's note,
 /// and a pill saying Owes, Partly paid, Paid, or Waived. Screen readers
 /// hear one sentence: "Uniform fee, for Luke #7, $25 left of $45". Admins
-/// tap it to record a payment.
+/// tap it to record a payment; whoever owes it, to see its payments.
 class _ChargeRow extends StatelessWidget {
   const new({
     required this.charge,
@@ -1166,11 +1185,14 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
           ? null
           : charges.reduce((a, b) => b.paidCents > a.paidCents ? b : a);
       if (most != null && most.paidCents > cents) {
+        final name = most.participantName;
+        final paid = formatDues(l10n, most.paidCents);
         setState(
-          () => _error = l10n.duesAmountBelowPaid(
-            most.participantName,
-            formatDues(l10n, most.paidCents),
-          ),
+          () => _error = most.recordsPayments
+              ? l10n.duesAmountBelowPaid(name, paid)
+              // Marked paid before payments were recorded: no payment to
+              // undo, so it's marked not paid.
+              : l10n.duesAmountBelowMarkedPaid(name, paid),
         );
         return;
       }
