@@ -15,7 +15,7 @@ The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id682388
 - Groups: for anything that isn't a team, with the same chat, schedule, RSVPs, documents, and dues, and everyone answers for themselves. A group's owner can make it a team later.
 - New seasons: a team's owner starts next season as a new team with the people they choose; the old season is archived with its chat, photos, and schedule.
 - Polls: one choice or several, named or anonymous, with an optional closing time.
-- Dues: admins track who has paid for uniforms, fees, and tournaments, for every player on a team or every member of a group. Battleplan never processes payments: people pay the team directly with Venmo, Cash App, or Apple Cash. Only admins see what others owe.
+- Dues: admins track who has paid for uniforms, fees, and tournaments, for every player on a team or every member of a group, in full or a part at a time, and see who owes what by due and by person. Battleplan never processes payments: people pay the team directly with Venmo, Cash App, or Apple Cash. Only admins see what others owe.
 - Documents: files and links, like the lineup, league rules, and waivers, with pinning.
 - Coach's whiteboard: draw plays on a baseball diamond, basketball court, soccer pitch, football field, or blank board, add steps, and play them back.
 - Sports: baseball, softball, soccer, basketball, football, hockey, lacrosse, volleyball, and others.

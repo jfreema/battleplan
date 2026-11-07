@@ -116,7 +116,7 @@ Where things are:
 • Block: press and hold their message and choose Block, or tap their photo to open their page and use the menu at the top (Block, Report).
 • Delete account: Profile (at the bottom of the Teams screen), then Settings, then Delete account, or getbattleplan.app/delete-account.
 • A language filter is on for every team.
-• Dues (Team info, then Dues): team admins record what players owe the team for real-world things like uniforms and league fees, and mark who has paid. Battleplan takes no payments, sells nothing, takes no share, and holds no money, and paying unlocks nothing in the app. Under How to pay, admins and coaches list the team's own payment usernames: Copy copies one, and Open opens it in that payment service, where members pay the team directly. These are peer-to-peer payments for physical goods and services, outside Google Play billing (Payments policy, section 3).
+• Dues (Team info, then Dues): team admins record what players owe the team for real-world things like uniforms and league fees, and what each one has paid, all at once or a part at a time. Battleplan takes no payments, sells nothing, takes no share, and holds no money, and paying unlocks nothing in the app. Under How to pay, admins and coaches list the team's own payment usernames: Copy copies one, and Open opens it in that payment service, where members pay the team directly. These are peer-to-peer payments for physical goods and services, outside Google Play billing (Payments policy, section 3).
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.
 ```
@@ -146,7 +146,7 @@ Expect a rating with an "Users interact" notice. Don't pick anything aimed at ch
 - Encrypted in transit: yes. People can ask for their data to be deleted: yes.
 - Account deletion URL: `https://getbattleplan.app/delete-account` (also in the app: Profile, then Settings, then Delete account).
 - Data types and purposes: the table in STORE-PRIVACY.md, row for row (name, email, user IDs, phone number, other financial info, photos, files and docs, other in-app messages, app interactions, other user-generated content, approximate location, crash logs, diagnostics, device or other IDs). Nothing is processed ephemerally, and nothing is used for advertising.
-- **Financial info → Other financial info** is for Dues (2026-11-06): what each player or member owes and whether they paid, and the team's payment usernames under How to pay. Check it: collected, not shared, optional, for App functionality. Leave **User payment info** and **Purchase history** unchecked: Battleplan never sees a card, bank, or account number, nobody buys anything in or through the app, and a share marked paid is a debt settled outside it (STORE-PRIVACY.md, "Dues: what to change in the consoles").
+- **Financial info → Other financial info** is for Dues (2026-11-06): what each player or member owes and what they paid (since 2026-11-07, each payment's amount and day as an admin records it), and the team's payment usernames under How to pay. Check it: collected, not shared, optional, for App functionality. Leave **User payment info** and **Purchase history** unchecked: Battleplan never sees a card, bank, or account number, nobody buys anything in or through the app, and a share marked paid is a debt settled outside it (STORE-PRIVACY.md, "Dues: what to change in the consoles").
 
 **Government apps:** No, it isn't developed by or for a government.
 

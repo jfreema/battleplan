@@ -97,8 +97,9 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Dues (DUES-1 to DUES-4): what each player or member owes and
-		     whether they paid. Battleplan takes no payments. -->
+		<!-- Dues (DUES-1 to DUES-5): what each player or member owes and
+		     what they paid, all at once or a part at a time (the amounts
+		     and days admins record). Battleplan takes no payments. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeOtherFinancialInfo</string>
