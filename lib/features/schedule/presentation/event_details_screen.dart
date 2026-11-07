@@ -722,24 +722,34 @@ class _RsvpSection extends ConsumerWidget {
       tally[s] = (tally[s] ?? 0) + 1;
     }
     final asking = !event.isCanceled && mine.isNotEmpty;
+    // Nothing would sit under the heading, like for an admin who answers
+    // for nobody (spec 6.3): no section, and Who's going comes first.
+    final bare =
+        mine.isEmpty &&
+        !addPlayers &&
+        !waiting &&
+        !pointToWho &&
+        !event.isCanceled &&
+        event.rsvpDeadline == null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          // 14 above the heading (SPEC §7.3), only when there's a section.
-          padding: const EdgeInsets.only(top: 14, bottom: 10),
-          child: Semantics(
-            header: true,
-            child: Text(
-              asking ? rsvpHeading(l10n, mine) : l10n.eventRsvpTitle,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontSize: 25,
-                height: 30 / 25,
+        if (!bare)
+          Padding(
+            // 14 above the heading (SPEC §7.3), only when there's a section.
+            padding: const EdgeInsets.only(top: 14, bottom: 10),
+            child: Semantics(
+              header: true,
+              child: Text(
+                asking ? rsvpHeading(l10n, mine) : l10n.eventRsvpTitle,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontSize: 25,
+                  height: 30 / 25,
+                ),
               ),
             ),
           ),
-        ),
         if (addPlayers)
           padded(
             Wrap(
@@ -805,10 +815,16 @@ class _RsvpSection extends ConsumerWidget {
         // Who's going: the counts, then the people by answer; nothing on a
         // team with no players yet.
         if (counted.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          Container(height: 1, color: c.divider),
+          // With no section, the details' last hairline is the line above,
+          // as this one is after a section: RSVP for a player's 48 px row
+          // centers the heading 9 lower, about a section's 14 (SPEC §7.3),
+          // and without it the heading is 14 down.
+          if (!bare) ...[
+            const SizedBox(height: 14),
+            Container(height: 1, color: c.divider),
+          ],
           Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: EdgeInsets.only(top: bare && !canSet ? 14 : 6),
             child: Row(
               children: [
                 Expanded(

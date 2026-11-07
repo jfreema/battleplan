@@ -12,6 +12,7 @@ import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
@@ -1044,8 +1045,13 @@ void main() {
       );
     });
 
-    testWidgets('an admin with nobody to answer for sees only the heading, '
-        'and RSVP for a player (spec 6.3)', (tester) async {
+    // From the details' last hairline down to [what].
+    double below(WidgetTester tester, Finder what) =>
+        tester.getTopLeft(what).dy -
+        tester.getBottomLeft(find.byType(PageRows).first).dy;
+
+    testWidgets('an admin with nobody to answer for sees no RSVP section, '
+        "and Who's going with RSVP for a player (spec 6.3)", (tester) async {
       await openSchedule(
         tester,
         role: MemberRole.admin,
@@ -1053,10 +1059,61 @@ void main() {
         events: [event('e1')],
       );
       await openDetails(tester, 'Practice');
-      expect(find.text('RSVPs'), findsOneWidget);
+      expect(find.text('RSVPs'), findsNothing);
       expect(find.text('On a team, only players have RSVPs.'), findsNothing);
       expect(find.text('Add players to take RSVPs'), findsNothing);
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsNothing);
+      expect(find.text("Who's going"), findsOneWidget);
       expect(find.text('RSVP for a player'), findsOneWidget);
+      expect(find.text('0 of 1 players going'), findsOneWidget);
+      // Straight under the details, with no second line or gap: its row
+      // sits under their line as it does under its own after a section.
+      final whosGoingRow = find
+          .ancestor(of: find.text("Who's going"), matching: find.byType(Row))
+          .first;
+      expect(below(tester, whosGoingRow), 6);
+
+      // On an archived team there's no RSVP for a player to set it.
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        archived: true,
+        players: emma(),
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('RSVPs'), findsNothing);
+      expect(find.text('RSVP for a player'), findsNothing);
+      expect(below(tester, find.text("Who's going")), 14);
+    });
+
+    testWidgets('the section stays for an admin with a deadline and for a '
+        'guardian (spec 6.3)', (tester) async {
+      final soon = DateTime.now().add(const Duration(hours: 6));
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        players: emma(),
+        events: [event('e1', rsvpDeadline: soon)],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('RSVPs'), findsOneWidget);
+      expect(find.textContaining('RSVP by'), findsOneWidget);
+      expect(below(tester, find.text('RSVPs')), 14);
+      expect(find.text("Who's going"), findsOneWidget);
+      expect(find.text('RSVP for a player'), findsOneWidget);
+
+      await openSchedule(
+        tester,
+        players: emma(linkedTo: 'coach'),
+        events: [event('e1')],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('Is Emma going?'), findsOneWidget);
+      expect(below(tester, find.text('Is Emma going?')), 14);
+      expect(find.byType(SegmentedButton<RsvpStatus>), findsOneWidget);
+      expect(find.text("Who's going"), findsOneWidget);
+      expect(find.text('RSVP for a player'), findsNothing);
     });
 
     testWidgets('nothing shows under RSVPs until the players and links are '
@@ -1078,7 +1135,7 @@ void main() {
       expect(find.text('Add players to take RSVPs'), findsOneWidget);
     });
 
-    testWidgets('the section still shows when the links fail to load', (
+    testWidgets("Who's going still shows when the links fail to load", (
       tester,
     ) async {
       await openSchedule(
@@ -1089,7 +1146,8 @@ void main() {
         events: [event('e1')],
       );
       await openDetails(tester, 'Practice');
-      expect(find.text('RSVPs'), findsOneWidget);
+      // An admin who answers for nobody has no section above it.
+      expect(find.text('RSVPs'), findsNothing);
       expect(find.text("Who's going"), findsOneWidget);
       expect(find.text('RSVP for a player'), findsOneWidget);
     });
