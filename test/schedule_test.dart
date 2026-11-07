@@ -1087,8 +1087,8 @@ void main() {
       expect(below(tester, find.text("Who's going")), 14);
     });
 
-    testWidgets('the section stays for an admin with a deadline and for a '
-        'guardian (spec 6.3)', (tester) async {
+    testWidgets('the section stays for an admin with a deadline or a '
+        'canceled event, and for a guardian (spec 6.3)', (tester) async {
       final soon = DateTime.now().add(const Duration(hours: 6));
       await openSchedule(
         tester,
@@ -1102,6 +1102,20 @@ void main() {
       expect(below(tester, find.text('RSVPs')), 14);
       expect(find.text("Who's going"), findsOneWidget);
       expect(find.text('RSVP for a player'), findsOneWidget);
+
+      // To say RSVPs are closed; nobody sets answers on a canceled event.
+      await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        players: emma(),
+        events: [event('e1', canceledAt: DateTime.now())],
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.text('RSVPs'), findsOneWidget);
+      expect(find.text('RSVPs are closed.'), findsOneWidget);
+      expect(below(tester, find.text('RSVPs')), 14);
+      expect(find.text("Who's going"), findsOneWidget);
+      expect(find.text('RSVP for a player'), findsNothing);
 
       await openSchedule(
         tester,
