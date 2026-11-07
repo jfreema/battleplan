@@ -24,7 +24,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 | **Production** | [getbattleplan.app](https://getbattleplan.app) | [getbattleplan.app/app](https://getbattleplan.app/app) |
 | **Dev** | [battleplan-dev-ecce4.web.app](https://battleplan-dev-ecce4.web.app) | [battleplan-dev-ecce4.web.app/app](https://battleplan-dev-ecce4.web.app/app) |
 
-Every push to `main` updates dev's web app once CI passes; **Release to dev** in GitHub Actions deploys everything there, server functions included. Production changes only when someone runs **Release to prod**. **Release iOS** uploads the iPhone and iPad app to TestFlight. **Release Android** uploads the Android app to a Google Play testing track, or to production as a draft.
+Every push to `main` deploys everything to dev once CI passes, server functions included; **Release to dev** in GitHub Actions does the same by hand, for any branch. Production changes only when someone runs **Release to prod**. **Release iOS** uploads the iPhone and iPad app to TestFlight. **Release Android** uploads the Android app to a Google Play testing track, or to production as a draft.
 
 ## Built with
 

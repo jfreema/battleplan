@@ -173,7 +173,12 @@ void main() {
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
           await pushTo(tester, '/g/a/dues/d0');
-          await tester.ensureVisible(find.text('Leo #9'));
+          // At large text Leo's row can start past what the list has built.
+          await tester.scrollUntilVisible(
+            find.text('Leo #9'),
+            200,
+            scrollable: find.byType(Scrollable).last,
+          );
           await tester.pumpAndSettle();
           await tester.tap(find.text('Leo #9'));
           await tester.pumpAndSettle();
@@ -188,7 +193,12 @@ void main() {
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
           await pushTo(tester, '/g/a/dues/d0');
-          await tester.ensureVisible(find.text('Leo #9'));
+          // At large text Leo's row can start past what the list has built.
+          await tester.scrollUntilVisible(
+            find.text('Leo #9'),
+            200,
+            scrollable: find.byType(Scrollable).last,
+          );
           await tester.pumpAndSettle();
           await tester.tap(find.text('Leo #9'));
           await tester.pumpAndSettle();

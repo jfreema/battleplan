@@ -5,6 +5,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
@@ -15,6 +16,7 @@ import 'package:battleplan/features/dues/presentation/dues_screen.dart';
 import 'package:battleplan/features/dues/presentation/dues_widgets.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/presentation/who_are_you_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations_en.dart';
@@ -1328,6 +1330,37 @@ void main() {
     );
     Finder inDialog(Finder f) =>
         find.descendant(of: find.byType(AlertDialog), matching: f);
+
+    testWidgets("an admin's due says how to record a payment, and each "
+        'row has a chevron', (tester) async {
+      final dues = FakeDuesRepository()
+        ..dues.add(uniforms)
+        ..charges.addAll([share('emma', 'Emma #7'), share('liam', 'Liam #9')]);
+      await pumpCoach(tester, dues);
+      await go(tester, '/g/a/dues/d0');
+      expect(
+        find.text(
+          'Tap someone to record a payment, mark them paid, or waive the rest.',
+        ),
+        findsOneWidget,
+      );
+      for (final name in ['Emma #7', 'Liam #9']) {
+        final row = find.ancestor(
+          of: find.text(name),
+          matching: find.byType(PageRow),
+        );
+        expect(
+          find.descendant(
+            of: row,
+            matching: find.byIcon(AppIcons.chevronRight),
+          ),
+          findsOneWidget,
+        );
+      }
+      await tester.tap(find.text('Liam #9'));
+      await tester.pumpAndSettle();
+      expect(find.text('Record a payment'), findsOneWidget);
+    });
 
     testWidgets('an admin records part of a share, then the rest in one tap, '
         'and takes back a mistake', (tester) async {

@@ -1,7 +1,7 @@
 # Release to dev: everything (Firestore rules and indexes, Storage rules,
 # Functions, and the Hosting site) to battleplan-dev-ecce4. Start it from
 # the Actions tab, on main or another branch. CI's deploy on every push to
-# main covers only rules, indexes, and Hosting.
+# main does the same for main.
 name: Release to dev
 
 on:

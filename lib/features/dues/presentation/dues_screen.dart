@@ -534,7 +534,24 @@ class _ChargeRow extends StatelessWidget {
       subtitleMaxLines: null,
       onTap: onTap,
       semanticsLabel: spoken,
-      trailing: DueStatePill(state: charge.state),
+      // An admin's row opens its share (record a payment, mark paid, waive):
+      // the chevron says so, beside the state.
+      trailing: admin && onTap != null
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Gives way first at large text, so the chevron stays.
+                Flexible(child: DueStatePill(state: charge.state)),
+                const SizedBox(width: 6),
+                Icon(
+                  AppIcons.chevronRight,
+                  size: 20,
+                  weight: 700,
+                  color: c.textMutedOnPage,
+                ),
+              ],
+            )
+          : DueStatePill(state: charge.state),
       leading: Icon(
         charge.paid ? AppIcons.going : AppIcons.payments,
         size: 22,
@@ -902,6 +919,9 @@ class DueDetailScreen extends ConsumerWidget {
                       const SizedBox(height: 6),
                       DuesTotalsPanel(totals: totals),
                       DuesQuiet(_summary(l10n, totals)),
+                      // How to record a payment, which lives behind each row.
+                      if (canEdit && charges.isNotEmpty)
+                        DuesQuiet(l10n.duesTapToRecord),
                       PageRows(
                         children: [
                           for (final x in charges)

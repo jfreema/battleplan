@@ -144,9 +144,11 @@ jobs:
           gh pr comment ${{ github.event.number }} --edit-last --create-if-none \
             --body "Web preview: website ${{ steps.deploy.outputs.url }}/ · app ${{ steps.deploy.outputs.url }}/app/"
 
-  # Every push to main deploys Firestore rules, indexes, and the web app to
-  # the dev project. Release to dev (release-dev.yml) deploys everything,
-  # Functions and Storage rules included, when started by hand.
+  # Every push to main deploys everything to the dev project: Firestore rules
+  # and indexes, Storage rules, Functions, and the web app, in that order, so
+  # dev's web app never calls a function that isn't there yet (a new Dues
+  # build once met three-week-old Functions: "Couldn't save"). Release to dev
+  # (release-dev.yml) does the same by hand, for any branch.
   deploy-dev:
     name: Deploy to dev
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && vars.FIREBASE_DEPLOYS == 'true'
@@ -165,9 +167,38 @@ jobs:
         with:
           name: hosting-build
           path: build/hosting
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # From the lockfile; Functions need no package's install scripts.
+      - name: Functions dependencies
+        run: npm ci --prefix functions --ignore-scripts
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
-      - name: Deploy rules and hosting
-        run: npx --yes firebase-tools@15 deploy --only firestore:rules,firestore:indexes,hosting --project battleplan-dev-ecce4 --non-interactive
+      - name: Deploy rules
+        run: npx --yes firebase-tools@15 deploy --only firestore:rules,firestore:indexes,storage --project battleplan-dev-ecce4 --non-interactive
+      - name: Deploy Functions
+        run: |
+          # As in release.yml: Google's quota can stop a big deploy for a
+          # minute; then try again (unchanged functions are skipped). Any
+          # other failure stops at once.
+          set -o pipefail
+          log=$(mktemp)
+          for attempt in 1 2 3; do
+            if npx --yes firebase-tools@15 deploy --only functions --project battleplan-dev-ecce4 --non-interactive \
+              --message "CI ${GITHUB_SHA:0:7}" 2>&1 | tee "$log"; then
+              exit 0
+            fi
+            if ! grep -qiE 'quota|429|RESOURCE_EXHAUSTED|rate limit' "$log"; then
+              exit 1
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Google's quota stopped the deploy (try $attempt of 3); trying again in 90 seconds."
+              sleep 90
+            fi
+          done
+          exit 1
+      - name: Deploy hosting
+        run: npx --yes firebase-tools@15 deploy --only hosting --project battleplan-dev-ecce4 --non-interactive

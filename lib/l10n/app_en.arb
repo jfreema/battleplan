@@ -93,6 +93,7 @@
   "duesWaiveRest": "Waive the rest",
   "duesUnwaive": "Undo waive",
   "duesRecordPayment": "Record a payment",
+  "duesTapToRecord": "Tap someone to record a payment, mark them paid, or waive the rest.",
   "duesPaidInFull": "Mark paid in full",
   "duesPaidInFullSub": "Records the {amount} left",
   "@duesPaidInFullSub": {"placeholders": {"amount": {"type": "String"}}},

@@ -88,7 +88,7 @@ gcloud storage buckets update gs://battleplan-dev-ecce4.firebasestorage.app --co
 
 ## Deploying to dev
 
-Every push to `main` deploys Firestore rules, indexes, and the web app to `battleplan-dev-ecce4` through GitHub Actions. For everything, Functions and Storage rules included, run **Release to dev** from the Actions tab (`.github/workflows/release-dev.yml`). It waits for CI to pass on the commit (or skips that with `skip_ci_check`), builds the site and the app for dev, and deploys rules, indexes, Storage rules, Functions, and Hosting, in that order. It can run on a branch too.
+Every push to `main` deploys everything to `battleplan-dev-ecce4` through GitHub Actions once CI passes: Firestore rules and indexes, Storage rules, Functions, then the web app, so dev's app and server always match (2026-11-07: a new Dues build once met three-week-old Functions on dev). For another branch, or to redeploy by hand, run **Release to dev** from the Actions tab (`.github/workflows/release-dev.yml`). It waits for CI to pass on the commit (or skips that with `skip_ci_check`), builds the site and the app for dev, and deploys rules, indexes, Storage rules, Functions, and Hosting, in that order. It can run on a branch too.
 
 From your Mac instead:
 
