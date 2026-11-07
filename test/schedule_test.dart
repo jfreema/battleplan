@@ -2475,7 +2475,13 @@ void main() {
           .widgetList<RsvpChoice>(find.byType(RsvpChoice))
           .toList();
       expect(choices.where((c) => c.onChanged != null), hasLength(1));
-      expect(choices.where((c) => c.current == RsvpStatus.going), isNotEmpty);
+      // Between midnight in New York and midnight in Chicago, the Jamboree
+      // is over where it is, so it shows no answer row (its day is still
+      // today here, so it stays in Upcoming).
+      final nyOver = DateTime.now().isAfter(rsvps.events.events['ny']!.endAt);
+      if (!nyOver) {
+        expect(choices.where((c) => c.current == RsvpStatus.going), isNotEmpty);
+      }
       // By day: the tournament began two days ago, then today, then
       // tomorrow.
       final y = [
