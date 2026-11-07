@@ -401,7 +401,11 @@ class _RecordPaymentDialogState extends ConsumerState<_RecordPaymentDialog> {
               [charge.participantName, charge.title].join(' · '),
               style: duesMuted(c),
             ),
-            Text(shareLine(l10n, charge), style: duesMuted(c)),
+            // "$20 of $45 paid · $25 left", or "$45 left".
+            Text(
+              charge.partlyPaid ? shareLine(l10n, charge) : l10n.duesLeft(left),
+              style: duesMuted(c),
+            ),
             const SizedBox(height: 12),
             LabeledField(
               label: l10n.duesFieldAmount,
