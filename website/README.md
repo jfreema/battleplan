@@ -79,12 +79,12 @@ Google Play's badge waits (ROADMAP task 214) in a `<template data-store-badges>`
 
 ## Screenshots
 
-The screenshots show the app with the seeded sample teams (Thunder, Cyclone, and Rally Possums, in navy, Carolina blue, and purple), the seeded group Saturday Run Club (green, at `/g/run-club/chat`: a chat of only messages and one small photo, which the coach is in and has read), and people (common American names and TV characters), the same data `tools/seed/seed.ts` loads into the emulators. Each one is named for its screen and the color scheme it's in, and together they show all five:
+The screenshots show the app with the seeded sample teams (Thunder, Cyclone, and Rally Possums, in navy, Carolina blue, and purple, and Riverside Sluggers, a youth baseball team in red, at `/g/sluggers/chat`: a chat of only messages and one small photo, which the coach owns and has read), and people (common American names and TV characters), the same data `tools/seed/seed.ts` loads into the emulators. The seeded group Saturday Run Club (green, at `/g/run-club/chat`), whose chat is like the Sluggers', is for the App Store and Google Play chat screenshots. Each one is named for its screen and the color scheme it's in, and together they show all five:
 
 | Image | Scheme | Signed in as | Screen |
 |---|---|---|---|
 | `schedule-army`, `-light`, `-dark`, `-navy`, `-skyblue` (hero) | all five | `jim@example.com` | Thunder's schedule as a player: their own Going, Maybe, and Not going on the cards and a practice still to answer, the same screen in each scheme |
-| `group-chat-navy` | Navy | `coach@example.com` | Saturday Run Club's group chat: messages from several people and Rachel's small photo only, with no event cards or polls in view |
+| `team-chat-navy` | Navy | `coach@example.com` | Riverside Sluggers' team chat (the Group chat tile, at the owner's request of 2026-11-07): messages from the coaches and guardians and Kelly's small photo of the scoreboard only, with no event cards or polls in view. Until it's retaken (ROADMAP task 360), the file is still Saturday Run Club's chat |
 | `event-skyblue` | Light blue | `coach@example.com` | Thunder's game against the Eagles, with the RSVPs: 2 of 3 players going |
 | `poll-dark` | Dark | `rachel@example.com` | Rally Possums' chat at Rachel's tournament poll, with the replies under it |
 | `documents-navy` | Navy | `coach@example.com` | Thunder's documents |
@@ -98,7 +98,7 @@ The current set (Open Field, all five schemes, 2026-11-06, the owner's request) 
 
 - **Schemes:** after signing in, PATCH `users/<uid>` with `colorScheme` (`army`, `light`, `dark`, `navy`, or `skyblue`) through the emulator's REST API (`Authorization: Bearer owner`, `updateMask.fieldPaths=colorScheme`). The app recolors live, so the five `schedule-*` shots come from one sign-in. Per-team picks (`groupMembers/<groupId>_<uid>.colorScheme`) aren't seeded, so the default applies everywhere.
 - **Schedule:** Jim's account is linked to the player Jim Halpert on Thunder, so every card on that schedule has an answer row; the seed answers Going, Maybe, and Not going and leaves the third practice unanswered. The coach has no player, so the coach's cards only count who's going. Open `/g/thunder/schedule` (Upcoming).
-- **Group chat:** as the coach, open Saturday Run Club's chat (`/g/run-club/chat`) and check that only messages and the small photo are in view: no event cards or polls. Chat opens at the first unread message; the seed has everyone read it all, so it opens at the newest. Then scroll it up about 100 px, with synthetic `wheel` events at the left edge rather than the mouse, so the top edge falls between two messages and the photo shows in full: at 390 wide, Monica's reply comes first, then Rachel's photo, the coach's own message, and Chandler's.
+- **Group chat:** as the coach, open Riverside Sluggers' chat (`/g/sluggers/chat`) and check that only messages and the small photo are in view: no event cards or polls (the team has none). Chat opens at the first unread message; the seed has everyone read it all, so it opens at the newest. At 390 wide that shows Kelly's photo of the scoreboard in full at the top, then the coach's own message in the team's red, Dave's sunflower seeds, and Jen's batting gloves. If the top edge cuts a message, scroll with synthetic `wheel` events at the left edge rather than the mouse until it falls between two.
 - **Dues:** open `/g/<team>/info`, then press **Dues** (going there directly leaves the app bar without its back button). The seed's dues are on Thunder and Cyclone.
 - **All my teams:** press **Filter**, the **All my teams** switch, then **Dismiss**.
 - **Whiteboard:** open `/g/thunder/plays/thunder-relay-home`, press **Next step**, and wait about 4 seconds.

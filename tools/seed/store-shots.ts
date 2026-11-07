@@ -5,8 +5,9 @@
 // their parents. The relay play is on Thunder's board in seed.ts. The chat
 // shot is the seed's group, Saturday Run Club (only messages and one small
 // photo): its chat moves to yesterday evening, after the teams' last
-// messages, so the coach lands in it after signing in. Refuses to run
-// against anything but the emulators.
+// messages (Riverside Sluggers', the landing page's chat, moves to
+// yesterday afternoon), so the coach lands in it after signing in. Refuses
+// to run against anything but the emulators.
 //
 //   firebase emulators:start --project demo-battleplan   (in one terminal)
 //   npm --prefix tools/seed run seed                      (in another)
@@ -366,9 +367,19 @@ async function main() {
   ];
   for (const [id, h, m] of clubLines) await db.doc(`messages/${id}`).update({ createdAt: yesterdayAt(h, m) });
 
+  // Riverside Sluggers' chat, yesterday from morning to afternoon, before
+  // the other chats' last messages, so it doesn't come first in the coach's
+  // Teams.
+  const sluggersLines: [string, number, number][] = [
+    ['sluggers-seed-0', 9, 5], ['sluggers-seed-1', 9, 20], ['sluggers-seed-2', 10, 40], ['sluggers-seed-3', 12, 15],
+    ['sluggers-seed-4', 12, 38], ['sluggers-scoreboard', 13, 50], ['sluggers-seed-6', 15, 5], ['sluggers-seed-7', 15, 40],
+    ['sluggers-seed-8', 16, 0],
+  ];
+  for (const [id, h, m] of sluggersLines) await db.doc(`messages/${id}`).update({ createdAt: yesterdayAt(h, m) });
+
   // Let the message triggers finish, then set each chat's last message and
-  // the coach's read marks: Thunder and the run club all read, Cyclone's
-  // last line not.
+  // the coach's read marks: Thunder, the Sluggers, and the run club all
+  // read, Cyclone's last line not.
   await new Promise((r) => setTimeout(r, 6000));
   await db.doc('groups/thunder').update({
     lastMessageAt: yesterdayAt(17, 2),
@@ -378,12 +389,17 @@ async function main() {
     lastMessageAt: yesterdayAt(18, 30),
     lastMessagePreview: { authorName: 'Phil Dunphy', text: "Luke's cleats are in my car. I'll bring them.", type: 'text' },
   });
+  await db.doc('groups/sluggers').update({
+    lastMessageAt: yesterdayAt(16, 0),
+    lastMessagePreview: { authorName: 'Jen Hayes', text: 'Leo found his batting gloves. Crisis averted. 😂', type: 'text' },
+  });
   await db.doc('groups/run-club').update({
     lastMessageAt: yesterdayAt(20, 41),
     lastMessagePreview: { authorName: 'Monica Geller', text: 'Always. See you at the boathouse!', type: 'text' },
   });
   await db.doc('groupMembers/thunder_coach').update({ lastReadAt: minutesAgo(5) });
   await db.doc('groupMembers/run-club_coach').update({ lastReadAt: minutesAgo(5) });
+  await db.doc('groupMembers/sluggers_coach').update({ lastReadAt: minutesAgo(5) });
   await db.doc('groupMembers/cyclone_coach').update({ lastReadAt: yesterdayAt(16, 10) });
   console.log(`Added the store screenshots' sample content${ipad ? ', iPad version' : ''}.`);
 }

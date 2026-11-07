@@ -1,0 +1,238 @@
+<!doctype html>
+<!-- The scoreboard after a night game at Riverside Park, the photo in the
+     seeded baseball team's chat (seed.ts), no people: home wins 5 to 4 with
+     two in the bottom of the sixth. 2:1, so the chat draws it small: a lone
+     photo is drawn at its own shape, at most 280 wide, and 2:1 is the widest
+     shape it keeps. Rendered to scoreboard.jpg with headless Chrome at
+     1600x800 (--headless=new --window-size=1600,800 --virtual-time-budget=3000
+     --screenshot), then saved as a JPEG at quality 86. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; width: 1600px; height: 800px; overflow: hidden; background: #0b1226; }
+  svg { position: absolute; inset: 0; }
+  #board { transform: perspective(2200px) rotateY(-9deg); transform-origin: 800px 400px; }
+  text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 800; }
+</style>
+</head>
+<body>
+<!-- The sky after dark, the light towers, and the trees behind the board. -->
+<svg width="1600" height="800" viewBox="0 0 1600 800">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#070d22"/>
+      <stop offset="0.45" stop-color="#13224a"/>
+      <stop offset="0.72" stop-color="#2c3a6e"/>
+      <stop offset="0.86" stop-color="#5b4a7c"/>
+      <stop offset="1" stop-color="#8a5d77"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="0.2" stop-color="#fff6dc" stop-opacity="0.9"/>
+      <stop offset="0.55" stop-color="#ffe3a8" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ffd38a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur8"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="blur2"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="haze" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.002 0.01" numOctaves="4" seed="12" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.6  0 0 0 0 0.85  0 0 0 2.2 -1.1"/>
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="800" fill="url(#sky)"/>
+  <rect width="1600" height="520" filter="url(#haze)" opacity="0.35"/>
+  <g id="stars"></g>
+  <!-- The towers' light, washing the sky. -->
+  <ellipse cx="120" cy="110" rx="420" ry="300" fill="url(#lamp)" opacity="0.35"/>
+  <ellipse cx="1500" cy="90" rx="420" ry="300" fill="url(#lamp)" opacity="0.35"/>
+  <g id="trees" fill="#0a1424"></g>
+  <g id="towers"></g>
+</svg>
+
+<!-- The scoreboard, a little off square, as seen from the stands. -->
+<svg id="board" width="1600" height="800" viewBox="0 0 1600 800">
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#174a32"/>
+      <stop offset="1" stop-color="#0d3322"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1b2433"/>
+      <stop offset="0.5" stop-color="#3b4658"/>
+      <stop offset="1" stop-color="#1b2433"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="redglow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="paint"><feGaussianBlur stdDeviation="0.6"/></filter>
+  </defs>
+  <!-- Posts. -->
+  <rect x="470" y="560" width="34" height="260" fill="url(#steel)"/>
+  <rect x="1096" y="560" width="34" height="260" fill="url(#steel)"/>
+  <!-- The board: a cream rim, the green face, and the header. -->
+  <rect x="286" y="92" width="1028" height="512" rx="10" fill="#e9e2cf"/>
+  <rect x="300" y="106" width="1000" height="484" rx="6" fill="url(#panel)"/>
+  <rect x="300" y="106" width="1000" height="74" rx="6" fill="#0a2a1b"/>
+  <text x="800" y="160" text-anchor="middle" font-size="48" letter-spacing="10" fill="#f4efe0" filter="url(#paint)">RIVERSIDE PARK</text>
+  <g id="grid" filter="url(#paint)" fill="#f4efe0"></g>
+  <g id="cells" fill="#082318"></g>
+  <g id="bulbs"></g>
+  <!-- The board's own light, catching the rim. -->
+  <rect x="286" y="92" width="1028" height="512" rx="10" fill="none" stroke="#fff5d6" stroke-opacity="0.18" stroke-width="3"/>
+</svg>
+
+<!-- The outfield fence and the grass, lit from the towers. -->
+<svg width="1600" height="800" viewBox="0 0 1600 800">
+  <defs>
+    <linearGradient id="fence" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f4a30"/>
+      <stop offset="1" stop-color="#0a3522"/>
+    </linearGradient>
+    <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f7a3a"/>
+      <stop offset="1" stop-color="#1d5a28"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.45" r="0.75">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.5"/>
+    </radialGradient>
+    <filter id="mow" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.6 0.05" numOctaves="2" seed="4" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.1  0 0 0 0 0.25  0 0 0 0 0.08  0 0 0 1.3 -0.45"/>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0.14 0"/>
+    </filter>
+  </defs>
+  <rect x="0" y="664" width="1600" height="86" fill="url(#fence)"/>
+  <rect x="0" y="656" width="1600" height="12" rx="6" fill="#e8c341"/>
+  <g id="seams" stroke="#08291a" stroke-width="2" opacity="0.7"></g>
+  <text x="1380" y="726" text-anchor="middle" font-size="40" font-weight="800" fill="#f4efe0" opacity="0.9" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">225</text>
+  <rect x="0" y="748" width="1600" height="52" fill="url(#grass)"/>
+  <rect x="0" y="748" width="1600" height="52" filter="url(#mow)"/>
+  <g id="stripes" fill="#ffffff" opacity="0.05"></g>
+  <rect width="1600" height="800" fill="url(#vignette)"/>
+  <rect width="1600" height="800" filter="url(#grain)"/>
+</svg>
+<script>
+  // A fixed seed, so every render is the same picture.
+  let s = 11;
+  const rand = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const ns = 'http://www.w3.org/2000/svg';
+  const add = (parent, tag, attrs, text) => {
+    const e = document.createElementNS(ns, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    if (text) e.textContent = text;
+    document.getElementById(parent).appendChild(e);
+    return e;
+  };
+
+  // A few faint stars above the glow.
+  for (let i = 0; i < 70; i++) {
+    const x = rand() * 1600, y = rand() * 300;
+    if (x < 420 || x > 1180) continue;
+    add('stars', 'circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: (0.6 + rand() * 1.1).toFixed(1), fill: '#dfe6ff', opacity: (0.25 + rand() * 0.5).toFixed(2) });
+  }
+
+  // Trees behind the outfield: round crowns along the fence, darker at the edges.
+  for (let x = -20; x <= 1620; x += 9) {
+    const r = 16 + 18 * rand() + 10 * Math.abs(Math.sin(x / 71));
+    add('trees', 'circle', { cx: x.toFixed(1), cy: (640 - r * 0.7 - 30 * Math.abs(Math.sin(x / 233))).toFixed(1), r: r.toFixed(1) });
+  }
+  add('trees', 'rect', { x: -20, y: 600, width: 1640, height: 70 });
+
+  // The light towers: a pole each, a bank of lamps on top, and their bloom.
+  const tower = (x, top, lean) => {
+    add('towers', 'rect', { x: x - 9, y: top + 60, width: 18, height: 800 - top, fill: '#121a2a' });
+    add('towers', 'rect', { x: x - 92 + lean, y: top - 6, width: 184, height: 92, rx: 6, fill: '#151d2e' });
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 6; col++) {
+        const cx = x - 72 + lean + col * 29, cy = top + 12 + row * 28;
+        add('towers', 'circle', { cx, cy, r: 30, fill: 'url(#lamp)', opacity: 0.5 });
+        add('towers', 'circle', { cx, cy, r: 11, fill: '#fffaf0' });
+      }
+    }
+    add('towers', 'ellipse', { cx: x + lean, cy: top + 40, rx: 200, ry: 120, fill: 'url(#lamp)', opacity: 0.55, filter: 'url(#blur8)' });
+  };
+  tower(118, 36, 0);
+  tower(1490, 20, 0);
+
+  // The board's painted grid: innings 1 to 6, then R H E, and the two rows.
+  const cols = [];
+  for (let i = 0; i < 6; i++) cols.push(560 + i * 82);
+  const rhe = [1078, 1160, 1242];
+  const label = (x, y, t, size = 30, anchor = 'middle') =>
+    add('grid', 'text', { x, y, 'text-anchor': anchor, 'font-size': size, 'letter-spacing': 2 }, t);
+  cols.forEach((x, i) => label(x, 220, String(i + 1)));
+  ['R', 'H', 'E'].forEach((t, i) => label(rhe[i], 220, t));
+  label(330, 312, 'GUEST', 42, 'start');
+  label(330, 432, 'HOME', 42, 'start');
+  add('grid', 'rect', { x: 1030, y: 194, width: 4, height: 300, opacity: 0.6 });
+  add('grid', 'rect', { x: 320, y: 236, width: 960, height: 3, opacity: 0.35 });
+
+  // Bulbs: each digit a 5 by 7 grid, lit ones warm yellow with a glow, the
+  // rest dark.
+  const font = {
+    0: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
+    1: ['00100', '01100', '00100', '00100', '00100', '00100', '01110'],
+    2: ['01110', '10001', '00001', '00010', '00100', '01000', '11111'],
+    4: ['00010', '00110', '01010', '10010', '11111', '00010', '00010'],
+    5: ['11111', '10000', '11110', '00001', '00001', '10001', '01110'],
+    6: ['00110', '01000', '10000', '11110', '10001', '10001', '01110'],
+    8: ['01110', '10001', '10001', '01110', '10001', '10001', '01110'],
+  };
+  const lit = document.createElementNS(ns, 'g');
+  lit.setAttribute('filter', 'url(#glow)');
+  document.getElementById('bulbs').appendChild(lit);
+  const digit = (cx, top, d) => {
+    const step = 12.5;
+    // Each digit in its own dark cell.
+    add('cells', 'rect', { x: cx - 36, y: top - 16, width: 72, height: 107, rx: 5 });
+    font[d].forEach((row, r) => {
+      [...row].forEach((on, c) => {
+        const x = cx - 2 * step + c * step, y = top + r * step;
+        if (on === '1') {
+          const b = document.createElementNS(ns, 'circle');
+          b.setAttribute('cx', x); b.setAttribute('cy', y); b.setAttribute('r', 5.2);
+          b.setAttribute('fill', '#ffd766');
+          lit.appendChild(b);
+        } else {
+          add('bulbs', 'circle', { cx: x, cy: y, r: 4.2, fill: '#0b2a1c', stroke: '#2a5a40', 'stroke-width': 1 });
+        }
+      });
+    });
+  };
+  // Home wins 5 to 4 with two in the bottom of the sixth.
+  const guest = [1, 0, 2, 0, 1, 0], home = [0, 2, 0, 1, 0, 2];
+  guest.forEach((d, i) => digit(cols[i], 262, d));
+  home.forEach((d, i) => digit(cols[i], 382, d));
+  [4, 6, 2].forEach((d, i) => digit(rhe[i], 262, d));
+  [5, 8, 1].forEach((d, i) => digit(rhe[i], 382, d));
+
+  // Ball, strike, and out lamps, as the last pitch left them.
+  const lamps = (x, word, n, total, color) => {
+    label(x, 552, word, 28, 'end');
+    for (let i = 0; i < total; i++) {
+      const cx = x + 30 + i * 34;
+      if (i < n) add('bulbs', 'circle', { cx, cy: 542, r: 12, fill: color, filter: 'url(#redglow)' });
+      else add('bulbs', 'circle', { cx, cy: 542, r: 11, fill: '#0b2a1c', stroke: '#2a5a40', 'stroke-width': 1.5 });
+    }
+  };
+  lamps(470, 'BALL', 1, 3, '#7cf08a');
+  lamps(790, 'STRIKE', 2, 2, '#ff5a4e');
+  lamps(1100, 'OUT', 2, 2, '#ff5a4e');
+
+  // The fence's panel seams and the mower's stripes.
+  for (let x = 0; x < 1600; x += 160) add('seams', 'line', { x1: x, y1: 668, x2: x, y2: 748 });
+  for (let x = -100; x < 1700; x += 220) add('stripes', 'polygon', { points: `${x},748 ${x + 110},748 ${x + 150},800 ${x + 40},800` });
+</script>
+</body>
+</html>

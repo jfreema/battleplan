@@ -1,9 +1,10 @@
-// Loads sample data into the local Emulator Suite (ARCH §5.7): three teams
-// (Thunder, Cyclone, Rally Possums) and a group, Saturday Run Club (TEAM-14),
-// whose chat is only messages and one small photo, for the website's group
-// chat screenshot. The photo goes to the Storage emulator, so Auth,
-// Firestore, and Storage must all be running. Refuses to run against
-// anything but the emulators.
+// Loads sample data into the local Emulator Suite (ARCH §5.7): four teams
+// (Thunder, Cyclone, Rally Possums, and Riverside Sluggers) and a group,
+// Saturday Run Club (TEAM-14). The Sluggers' chat (the website's chat
+// screenshot) and the run club's (the stores' chat screenshots) are only
+// messages and one small photo each. The photos go to the Storage emulator,
+// so Auth, Firestore, and Storage must all be running. Refuses to run
+// against anything but the emulators.
 //
 //   firebase emulators:start --project demo-battleplan   (in one terminal)
 //   npm --prefix tools/seed run seed                      (in another)
@@ -47,6 +48,22 @@ const daysFromNow = (d: number, hour: number) => {
 
 interface Person { uid: string; name: string; email: string; superAdmin?: boolean }
 
+/** A photo in store-shots/, made for the seed with no people (its .html says how). */
+const photoFile = (name: string) => readFileSync(new URL(`./store-shots/${name}`, import.meta.url));
+
+/**
+ * Saves a chat photo to [path] in the Storage emulator, with the token the
+ * app's download URL carries. Each goes up after its team and before its
+ * message, so the storage trigger counts it and the message never points
+ * at a missing file.
+ */
+async function upload(path: string, photo: Buffer): Promise<void> {
+  await bucket.file(path).save(photo, {
+    contentType: 'image/jpeg',
+    metadata: { metadata: { firebaseStorageDownloadTokens: randomUUID() } },
+  });
+}
+
 // The sample people are common American names and TV characters (they're
 // on the website's screenshots too).
 const people: Person[] = [
@@ -58,6 +75,10 @@ const people: Person[] = [
   { uid: 'rachel', name: 'Rachel Green', email: 'rachel@example.com' },
   { uid: 'monica', name: 'Monica Geller', email: 'monica@example.com' },
   { uid: 'chandler', name: 'Chandler Bing', email: 'chandler@example.com' },
+  { uid: 'tony', name: 'Tony Russo', email: 'tony@example.com' },
+  { uid: 'kelly', name: 'Kelly Ortiz', email: 'kelly@example.com' },
+  { uid: 'dave', name: 'Dave Morgan', email: 'dave@example.com' },
+  { uid: 'jen', name: 'Jen Hayes', email: 'jen@example.com' },
   { uid: 'admin', name: 'Platform Admin', email: 'admin@example.com', superAdmin: true },
 ];
 
@@ -74,15 +95,19 @@ const settings = {
 
 // One team type (TEAM-1): every team has players.
 // Each team's color and its chat bubbles' (CHAT-18): navy and orange,
-// Carolina blue and gray, purple and gold.
+// Carolina blue and gray, purple and gold, and red with the team color for
+// its bubbles.
 const teams = [
   { id: 'thunder', name: 'Thunder', sport: 'softball', color: '#1E3A5F', bubbleColor: '#C2410C' },
   { id: 'cyclone', name: 'Cyclone', sport: 'soccer', color: '#7BAFD4', bubbleColor: '#334155' },
   { id: 'possums', name: 'Rally Possums', sport: 'basketball', color: '#7C3AED', bubbleColor: '#D4A017' },
+  { id: 'sluggers', name: 'Riverside Sluggers', sport: 'baseball', color: '#B91C1C', bubbleColor: '#B91C1C' },
 ] as const;
 
 // [team, uid, role, playerSummary?]. Coach, Claire, and Rachel are on more
-// than one team.
+// than one team. The Sluggers are a youth baseball team the coach owns,
+// with an assistant coach and guardians who aren't on the other teams, so
+// Claire's, Jim's, and Rachel's screenshots don't change.
 const memberships: [string, string, string, string?][] = [
   ['thunder', 'coach', 'owner'],
   ['thunder', 'jim', 'admin', '#3'],
@@ -96,7 +121,16 @@ const memberships: [string, string, string, string?][] = [
   ['possums', 'claire', 'member', 'Haley #23'],
   ['possums', 'monica', 'member', 'Erica #4'],
   ['possums', 'chandler', 'member', 'Jack #12'],
+  ['sluggers', 'coach', 'owner'],
+  ['sluggers', 'tony', 'admin', 'Nick #2'],
+  ['sluggers', 'kelly', 'member', 'Mateo #8'],
+  ['sluggers', 'dave', 'member', 'Ben #14'],
+  ['sluggers', 'jen', 'member', 'Leo #21'],
 ];
+
+// A parent who coaches too (TEAM-3) on each team that has one; owners
+// coach unless set.
+const assistantCoaches: Record<string, string> = { cyclone: 'phil', sluggers: 'tony' };
 
 // A parent with players on two teams and two on one (each answered on
 // their own row, PLAYER-11), two guardians for one player, a
@@ -126,6 +160,15 @@ const players: {
   { id: 'andy-dwyer', groupId: 'thunder', name: 'Andy Dwyer', number: '12', position: 'Shortstop', guardians: [], self: 'andy', walkUpSong: 'Eye of the Tiger, Survivor' },
   { id: 'pam-beesly', groupId: 'thunder', name: 'Pam Beesly', number: '5', position: 'Outfield', guardians: [], walkUpSong: 'Walking on Sunshine, Katrina and the Waves' },
   { id: 'claire-dunphy', groupId: 'thunder', name: 'Claire Dunphy', number: null, position: null, guardians: [], pendingBy: 'claire' },
+  { id: 'nick-russo', groupId: 'sluggers', name: 'Nick Russo', number: '2', position: 'Shortstop', guardians: ['tony'] },
+  { id: 'eli-foster', groupId: 'sluggers', name: 'Eli Foster', number: '3', position: 'Right field', guardians: [] },
+  { id: 'sam-whitfield', groupId: 'sluggers', name: 'Sam Whitfield', number: '5', position: 'Center field', guardians: [] },
+  { id: 'caleb-price', groupId: 'sluggers', name: 'Caleb Price', number: '7', position: 'Third base', guardians: [] },
+  { id: 'mateo-ortiz', groupId: 'sluggers', name: 'Mateo Ortiz', number: '8', position: 'Catcher', guardians: ['kelly'] },
+  { id: 'owen-kowalski', groupId: 'sluggers', name: 'Owen Kowalski', number: '11', position: 'Second base', guardians: [] },
+  { id: 'ben-morgan', groupId: 'sluggers', name: 'Ben Morgan', number: '14', position: 'Pitcher', guardians: ['dave'] },
+  { id: 'jayden-ellis', groupId: 'sluggers', name: 'Jayden Ellis', number: '17', position: 'Left field', guardians: [] },
+  { id: 'leo-hayes', groupId: 'sluggers', name: 'Leo Hayes', number: '21', position: 'First base', guardians: ['jen'] },
 ];
 
 async function main() {
@@ -192,6 +235,9 @@ async function main() {
       storageBytes: 0,
       storageQuotaBytes: 200 * 1024 * 1024,
       storageAlert: 'none',
+      archivedAt: null,
+      suspendedAt: null,
+      status: 'active',
       createdAt: minutesAgo(60 * 24 * 30),
       updatedAt: minutesAgo(60 * 24 * 30),
       schemaVersion: 1,
@@ -202,9 +248,8 @@ async function main() {
       groupId,
       uid,
       role,
-      title: role === 'owner' ? 'Coach' : groupId === 'cyclone' && uid === 'phil' ? 'Assistant coach' : null,
-      // A parent who coaches too (TEAM-3); owners coach unless set.
-      ...(groupId === 'cyclone' && uid === 'phil' ? { coach: true } : {}),
+      title: role === 'owner' ? 'Coach' : assistantCoaches[groupId] === uid ? 'Assistant coach' : null,
+      ...(assistantCoaches[groupId] === uid ? { coach: true } : {}),
       displayName: nameOf(uid),
       photoPath: null,
       avatarColor: iconColor(uid),
@@ -213,7 +258,9 @@ async function main() {
       mutedUntil: null,
       // The coach last read Thunder before Jim's message, so its chat
       // opens there: the mention, the game's card, and the dinner poll.
-      lastReadAt: minutesAgo(groupId === 'thunder' && uid === 'coach' ? 270 : 90),
+      // Everyone has read all of the Sluggers' chat, so it opens at its
+      // newest message with nothing unread.
+      lastReadAt: minutesAgo(groupId === 'thunder' && uid === 'coach' ? 270 : groupId === 'sluggers' ? 0 : 90),
       lastPostedAt: null,
       joinedAt: minutesAgo(60 * 24 * 20),
       addedBy: 'coach',
@@ -424,7 +471,21 @@ async function main() {
   // Thunder's first is the coach's announcement, pinned to the top; Jim
   // mentions the coach; the game's card and the dinner poll sit between
   // (CHAT-11, CHAT-14, CHAT-15). Cyclone's has a reply and a mention.
+  //
+  // Riverside Sluggers' is only messages (the website's chat screenshot, as
+  // the coach): no events, polls, or cards, and the team has no events or
+  // polls to post any. The day after a walk-off win, the assistant coach's
+  // pitch counts, the coach's mention of him, a rally cap, a question about
+  // the field with a reply, the scoreboard as one photo, 2:1 so the chat
+  // draws it small (a lone photo keeps its shape up to 2:1, at most 280
+  // wide: 280 × 140), the coach's gear reminder in the team color, and
+  // sunflower seeds. Nobody replies to or mentions the coach, so the
+  // coach's bell count doesn't change, and its newest message is older than
+  // Thunder's, so the coach still lands on Thunder after signing in.
   type Line = { uid: string; text: string; ago: number; extra?: Record<string, unknown>; id?: string };
+  const scoreboardPath = 'groups/sluggers/messages/sluggers-scoreboard/0.jpg';
+  const scoreboard = photoFile('scoreboard.jpg');
+  await upload(scoreboardPath, scoreboard);
   const when = (e: (typeof events)[number]) =>
     new Intl.DateTimeFormat('en-US', {
       timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -459,6 +520,31 @@ async function main() {
       { uid: 'monica', text: 'Either weekend works for us!', ago: 60 },
       { uid: 'chandler', text: "Jack's in for both. 🏀", ago: 20 },
       { uid: 'rachel', text: "Nov 7–8 it is! I'll send the bracket.", ago: 8 },
+    ],
+    sluggers: [
+      { uid: 'tony', text: 'Pitch counts from last night: Ben 58, Leo 31. Both are rested for Saturday.', ago: 330, extra: { reactions: { coach: 'like', dave: 'like' } } },
+      { uid: 'coach', text: `@${nameOf('tony')} thanks! Ben starts Saturday, and Leo's ready in relief.`, ago: 310, extra: { mentions: ['tony'], mentionNames: { tony: nameOf('tony') } } },
+      { uid: 'dave', text: 'Ben slept in his rally cap. 🧢', ago: 260, extra: { reactions: { kelly: 'laugh', jen: 'laugh', tony: 'laugh', coach: 'laugh' } } },
+      { uid: 'jen', text: 'Is the field OK for Saturday? It poured overnight.', ago: 200 },
+      {
+        uid: 'tony', text: 'Just drove by. The tarp was on, and the infield looks great.', ago: 185,
+        extra: {
+          replyToId: 'sluggers-seed-3',
+          replyPreview: { authorName: nameOf('jen'), text: 'Is the field OK for Saturday? It poured overnight.', type: 'text', deleted: false },
+          reactions: { jen: 'like', kelly: 'like' },
+        },
+      },
+      {
+        uid: 'kelly', id: 'sluggers-scoreboard', text: "Still smiling about this one. Mateo's walk-off double!", ago: 140,
+        extra: {
+          type: 'image',
+          attachments: [{ path: scoreboardPath, contentType: 'image/jpeg', width: 1600, height: 800, size: scoreboard.length }],
+          reactions: { coach: 'love', tony: 'fire', dave: 'fire', jen: 'love' },
+        },
+      },
+      { uid: 'coach', text: 'What a finish! For Saturday: gloves, bats, and helmets. Catchers, bring your gear.', ago: 70 },
+      { uid: 'dave', text: 'Sunflower seeds and the water cooler are on us.', ago: 35, extra: { reactions: { coach: 'like', kelly: 'love' } } },
+      { uid: 'jen', text: 'Leo found his batting gloves. Crisis averted. 😂', ago: 18 },
     ],
   };
   for (const [groupId, list] of Object.entries(chats)) {
@@ -577,20 +663,19 @@ async function main() {
   // dues, documents, or plays. Monica runs it with Rachel as an admin; the
   // coach, Phil, and Chandler joined with its code. Claire and Jim aren't in
   // it, so their screenshots stay as they were. Its chat is only messages
-  // (the website's group chat screenshot, as the coach): a reply, a few
-  // reactions, and one photo, 2:1 so the chat draws it small (a lone photo
-  // keeps its shape up to 2:1, at most 280 wide: 280 × 140). Everyone has
-  // read it all, so it opens at its newest message with nothing unread;
-  // that message is older than Thunder's, so the coach still lands on
-  // Thunder after signing in.
+  // (the App Store and Google Play chat screenshots, as the coach, after
+  // store-shots.ts): a reply, a few reactions, and one photo, 2:1 so the
+  // chat draws it small, like the Sluggers'. Everyone has read it all, so
+  // it opens at its newest message with nothing unread; that message is
+  // older than Thunder's, so the coach still lands on Thunder after signing
+  // in.
   const club = { id: 'run-club', name: 'Saturday Run Club', color: '#0F8A5F', owner: 'monica' };
   const clubMembers: [string, 'owner' | 'admin' | 'member'][] = [
     ['monica', 'owner'], ['rachel', 'admin'], ['coach', 'member'], ['phil', 'member'], ['chandler', 'member'],
   ];
   const photoId = `${club.id}-seed-4`;
   const photoPath = `groups/${club.id}/messages/${photoId}/0.jpg`;
-  // Made for this, with no people (store-shots/sunrise.html says how).
-  const photo = readFileSync(new URL('./store-shots/sunrise.jpg', import.meta.url));
+  const photo = photoFile('sunrise.jpg');
   const clubLines: Line[] = [
     { uid: 'monica', text: "Saturday's route: 5 miles on the river trail. Meet at the boathouse at 7!", ago: 240, extra: { reactions: { coach: 'like', rachel: 'like', phil: 'like' } } },
     { uid: 'phil', text: 'Is there a slower group? Asking for a friend. The friend is me.', ago: 205 },
@@ -663,12 +748,7 @@ async function main() {
       addedBy: club.owner,
     });
   }
-  // The photo first, so the message never points at a missing file. The
-  // token is what the app's download URL carries.
-  await bucket.file(photoPath).save(photo, {
-    contentType: 'image/jpeg',
-    metadata: { metadata: { firebaseStorageDownloadTokens: randomUUID() } },
-  });
+  await upload(photoPath, photo);
   for (const [i, line] of clubLines.entries()) {
     await db.doc(`messages/${line.id ?? `${club.id}-seed-${i}`}`).set({
       groupId: club.id,
@@ -911,7 +991,7 @@ async function main() {
   });
 
   console.log(`Seeded ${people.length} people, ${teams.length} teams and a group, ${players.length} players.`);
-  console.log('Sign in as coach@example.com (Thunder, Cyclone, and Saturday Run Club) or claire@example.com (all three teams); password "password".');
+  console.log('Sign in as coach@example.com (Thunder, Cyclone, Riverside Sluggers, and Saturday Run Club) or claire@example.com (Thunder, Cyclone, and Rally Possums); password "password".');
 }
 
 main().catch((e) => {

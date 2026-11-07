@@ -342,7 +342,7 @@ go_router routes. The same paths are used for web URLs, Universal/App Links, and
 - `flutterfire configure` generates `lib/app/firebase_options_dev.dart` and `firebase_options_prod.dart`.
 - `--dart-define=USE_EMULATORS=true` points a dev build at the Emulator Suite under the project ID `demo-battleplan` (D31). Prod builds refuse it.
 - **Never test against prod.**
-- Local development runs on the **Emulator Suite** ([DEVELOPMENT.md](DEVELOPMENT.md)). `tools/seed/seed.ts` loads sample teams of adult players and of kids, a group (TEAM-14) whose chat has a photo in the Storage emulator, people on several teams, parents with several players, and messages, polls, events, and documents.
+- Local development runs on the **Emulator Suite** ([DEVELOPMENT.md](DEVELOPMENT.md)). `tools/seed/seed.ts` loads sample teams of adult players and of kids, a baseball team and a group (TEAM-14) whose chats have a photo in the Storage emulator, people on several teams, parents with several players, and messages, polls, events, and documents.
 
 ---
 
@@ -1795,8 +1795,8 @@ What exists in the code today, and where. This section is updated with every cha
 | Calendar links | `functions/src/calendar/` | `setCalendarLink` (make, reset, or turn off a person's link for a team or for all their teams) and `calendarFeed`, the `/cal/<token>.ics` feed behind Hosting's rewrite, from the `teamCalendars` copy per team that the `events` trigger, `saveEventSeries`, and `importEvents` mark changed (SCHED-11, §6.15) |
 | Answering from an email | `functions/src/answers/` | `emailRsvpReminder` (an admin's "Email people who haven't RSVP'd": one email per person with an answer link for each answer for each of their players) and `answerPage`, the `/a/<token>` page behind Hosting's rewrite where Send saves the RSVP (SCHED-14, §6.15) |
 | Super-admin bootstrap | `tools/seed/set-super-admin.ts` | Grants or revokes the `superAdmin` claim with your gcloud sign-in, and sets `users.superAdmin` to match |
-| Seed data | `tools/seed/seed.ts` | Sample people, teams of adult players and of kids, a group with only messages and one photo (`store-shots/sunrise.jpg`) in its chat, players (two with sample details: fake 555-01xx phone numbers), messages, events, RSVPs for the emulators |
-| Store screenshot data | `tools/seed/store-shots.ts`, `store-shots/` | On top of the seed, for the App Store screenshots (docs/STORE-LISTING.md): more players and parents, events and answers, poll votes, documents, photo posts in Thunder's chat made for it (no people), and the group's chat moved to yesterday evening for the chat shot (the relay play on Thunder's board is the seed's); emulators only |
+| Seed data | `tools/seed/seed.ts` | Sample people, teams of adult players and of kids, a kids' baseball team with only messages and one photo (`store-shots/scoreboard.jpg`) in its chat for the landing page, a group with only messages and one photo (`store-shots/sunrise.jpg`) in its chat for the stores, players (two with sample details: fake 555-01xx phone numbers), messages, events, RSVPs for the emulators |
+| Store screenshot data | `tools/seed/store-shots.ts`, `store-shots/` | On top of the seed, for the App Store screenshots (docs/STORE-LISTING.md): more players and parents, events and answers, poll votes, documents, photo posts in Thunder's chat made for it (no people), and the group's chat moved to yesterday evening for the chat shot, after the baseball team's (the relay play on Thunder's board is the seed's); emulators only |
 | App Review demo | `tools/seed/demo.ts`, `demo-data.ts`, `demo-target.ts` | The demo account (password from `DEMO_PASSWORD`) owning a team of adult players (one linked to its own member as the player, and a pending player to approve) and guardian of a player on a kids' team, with messages, events, RSVPs, and a pinned link; only on dev behind `--write-to-dev`, or the emulators; never prod (D54). Tests: `npm --prefix tools/seed test` |
 
 ### Tooling
