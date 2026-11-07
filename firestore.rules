@@ -1075,8 +1075,8 @@ service cloud.firestore {
     // others kept as they were, in order. validDueCharge keeps the total
     // within the charge's amount and the status in step. A write made from
     // an older copy of the list is refused, so two admins recording at once
-    // never lose one: the app writes in a transaction, which tries again
-    // on the newer list.
+    // never lose one: the app, refused, reads the share again and makes its
+    // change on the newer list.
     function duePaymentsChangeOk(b, a) {
       let was = b.get('payments', []);
       let now = a.get('payments', []);

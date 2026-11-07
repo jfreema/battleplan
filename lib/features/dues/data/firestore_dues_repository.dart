@@ -205,30 +205,33 @@ class FirestoreDuesRepository implements DuesRepository {
 
   /// Changes [charge] in a transaction: [change] gets the charge as it is
   /// now, and its payments as stored, and returns the fields to write, or
-  /// null for nothing to do. A refusal becomes [InvalidInput]; a charge
-  /// that's gone, [NotFound].
+  /// null for nothing to do. One refused because another admin changed the
+  /// share after it was read is read and made again ([retryRefused]). A
+  /// refusal becomes [InvalidInput]; a charge that's gone, [NotFound].
   Future<void> _change(
     DueCharge charge,
     UserId by,
     Map<String, Object?>? Function(DueCharge now, List<Object?> raw) change,
   ) => _write(() async {
     try {
-      await _db.runTransaction<void>((tx) async {
-        final ref = _charges.doc(charge.id);
-        final snap = await tx.get(ref);
-        final data = snap.data();
-        if (data == null) throw const NotFound();
-        final fields = change(
-          dueChargeFromFirestore(snap.id, data),
-          List<Object?>.of(data['payments'] as List? ?? const []),
-        );
-        if (fields == null) return;
-        tx.update(ref, {
-          ...fields,
-          'updatedBy': by.value,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      });
+      await retryRefused(
+        () => _db.runTransaction<void>((tx) async {
+          final ref = _charges.doc(charge.id);
+          final snap = await tx.get(ref);
+          final data = snap.data();
+          if (data == null) throw const NotFound();
+          final fields = change(
+            dueChargeFromFirestore(snap.id, data),
+            List<Object?>.of(data['payments'] as List? ?? const []),
+          );
+          if (fields == null) return;
+          tx.update(ref, {
+            ...fields,
+            'updatedBy': by.value,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }),
+      );
     } on DuePaymentRefusal catch (e) {
       throw InvalidInput(e.name);
     }
@@ -287,6 +290,24 @@ class FirestoreDuesRepository implements DuesRepository {
         'not-found' => const NotFound(),
         _ => UnknownFailure(e.code),
       };
+    }
+  }
+}
+
+/// Runs [attempt], and again while it's refused with `permission-denied`,
+/// up to [tries] times in all (DUES-2). The rules check a change to a share
+/// against the share as it is, so a change made from a copy another admin
+/// changed a moment later is refused rather than retried by the
+/// transaction: each new attempt reads the share again, so two admins
+/// recording at once both count. A refusal for any other reason (no longer
+/// an admin, an archived team) is the same each time, and the last one is
+/// thrown.
+Future<T> retryRefused<T>(Future<T> Function() attempt, {int tries = 3}) async {
+  for (var i = 1; ; i++) {
+    try {
+      return await attempt();
+    } on FirebaseException catch (e) {
+      if (e.code != 'permission-denied' || i >= tries) rethrow;
     }
   }
 }

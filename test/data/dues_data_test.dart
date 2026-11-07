@@ -434,6 +434,43 @@ void main() {
     expect(dues.any((d) => d.id == 'd0'), isFalse);
   });
 
+  test('a change refused because another admin changed the share is made '
+      'again on the share as it is, a few times at most', () async {
+    FirebaseException refused(String code) =>
+        FirebaseException(plugin: 'cloud_firestore', code: code);
+    var calls = 0;
+    // Refused once (made from a copy another admin just changed), then
+    // made on the share as it is.
+    expect(
+      await retryRefused(() async {
+        if (++calls == 1) throw refused('permission-denied');
+        return 'ok';
+      }),
+      'ok',
+    );
+    expect(calls, 2);
+    // Refused every time (no longer an admin): the last refusal.
+    calls = 0;
+    await expectLater(
+      retryRefused<void>(() async {
+        calls++;
+        throw refused('permission-denied');
+      }),
+      throwsA(isA<FirebaseException>()),
+    );
+    expect(calls, 3);
+    // Anything else isn't tried again.
+    calls = 0;
+    await expectLater(
+      retryRefused<void>(() async {
+        calls++;
+        throw refused('unavailable');
+      }),
+      throwsA(isA<FirebaseException>()),
+    );
+    expect(calls, 1);
+  });
+
   group('mergePayerCharges', () {
     DueCharge c(String id) => dueChargeFromFirestore(id, charge('d', id));
 
