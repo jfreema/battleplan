@@ -256,7 +256,7 @@ Sign in
  │                 Admin panel** · Sign out              (** super admins)
  └─ Team view (the app opens where you left it: the last team and tab, or Teams)
       ├─ Header:     ‹ back to Teams · team switcher ▾ · Admin panel** · Messages · notification bell · Team info ⓘ
-                     (wide screens: Admin panel** at the foot of the rail instead)
+      │              (wide screens: Admin panel** at the foot of the rail instead)
       ├─ Messages:   your direct conversations → one of them (CHAT-19)
       ├─ A person:   their page, from their photo in chat or the roster (TEAM-15)
       ├─ Tabs:       Chat | Schedule | Documents | Plays
@@ -979,7 +979,7 @@ This is for platform operators (super admins) to manage every team and user.
 
 **Access and layout**
 
-- Only super admins see it, at `/admin`, one tap from where they usually are (owner's request 2026-11-07: "make admin panel easier to get to with fewer steps to get there"; §5.1): the **Admin panel** button in the Teams header and a team's header on phones, **Admin panel** at the foot of the rail on wide screens, and the Admin panel row on Profile. It opens over the page they were on: Back returns there, and **Leave the admin panel** goes to their teams.
+- Only super admins see it, at `/admin`, one tap from where they usually are (owner's request 2026-11-07: "make admin panel easier to get to with fewer steps to get there"; §5.1): the **Admin panel** button in the Teams header and a team's header on phones, **Admin panel** at the foot of the rail on wide screens, and the Admin panel row on Profile. Viewing a team they aren't on (ADMIN-3), the phone header has no button, since the banner has **Back to admin panel**. It opens over the page they were on, so Back (the phone's, or the panel's on wide screens) returns there; **Leave the admin panel** goes to the team and tab they were last on, or Teams.
 - It's designed for a desktop browser but works on phones, where tables become lists.
 - **Its sections** (Dashboard, Teams, Users, Reports, Audit log, Platform settings) are a rail on wide screens and a menu (☰) on phones. Every section has the menu, also when the panel opened over another page, so any section is two taps from any other; a team's or a person's page in the panel, and a person's or a team's audit entries opened from it, have Back instead. On the dashboard, the Users, Teams, and Open reports totals open their lists.
 - It's loaded separately, so regular users never download it. The buttons that lead to it are part of the app, not the panel.
