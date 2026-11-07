@@ -54,6 +54,11 @@ typedef OpenFieldTab = ({
   String? badge,
 });
 
+/// A link at the foot of `OpenFieldRail`, under its tabs: the Admin panel
+/// for super admins (SPEC §5.5). It isn't a tab, so it's never the current
+/// one, and screen readers hear a plain button.
+typedef OpenFieldRailLink = ({IconData icon, String label, VoidCallback onTap});
+
 /// The docked tab bar (SPEC §7.3): full width, 48 px plus the bottom safe
 /// area, in the scheme's tab bar color with a 1 px rule on top. The tabs
 /// share the width; the current one has a coral icon, a text-colored label
@@ -108,22 +113,39 @@ class OpenFieldTabBar extends StatelessWidget {
 
 /// The wide layout's rail (840 px and up), as [OpenFieldTabBar]: a 1 px
 /// rule along its inner edge, and the current tab marked by a 3 × 40 coral
-/// bar on the outer edge.
+/// bar on the outer edge. [links] sit at its foot, drawn as the tabs are.
 class OpenFieldRail extends StatelessWidget {
   const new({
     required this.tabs,
     required this.selectedIndex,
     required this.onSelect,
+    this.links = const [],
     super.key,
   });
 
   final List<OpenFieldTab> tabs;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
+  final List<OpenFieldRailLink> links;
 
   @override
   Widget build(BuildContext context) {
     final c = GumdropColors.of(context);
+    final items = [
+      const SizedBox(height: 12),
+      for (final (i, tab) in tabs.indexed)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: _Tab(
+            tab: tab,
+            index: i,
+            count: tabs.length,
+            selected: i == selectedIndex,
+            onTap: () => onSelect(i),
+            marker: Alignment.centerLeft,
+          ),
+        ),
+    ];
     return Material(
       color: c.tabBar,
       shape: Border(right: BorderSide(color: c.tabBarLine)),
@@ -131,23 +153,46 @@ class OpenFieldRail extends StatelessWidget {
         right: false,
         child: SizedBox(
           width: 88,
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              for (final (i, tab) in tabs.indexed)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: _Tab(
-                    tab: tab,
-                    index: i,
-                    count: tabs.length,
-                    selected: i == selectedIndex,
-                    onTap: () => onSelect(i),
-                    marker: Alignment.centerLeft,
+          child: links.isEmpty
+              ? Column(children: items)
+              // The links at the foot; on a window too short for them all,
+              // the rail scrolls rather than overflows.
+              : ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(context)
+                      .copyWith(scrollbars: false),
+                  child: CustomScrollView(
+                    primary: false,
+                    slivers: [
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Column(
+                          children: [
+                            ...items,
+                            const Spacer(),
+                            for (final link in links)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                child: _Tab(
+                                  tab: (
+                                    icon: Icon(link.icon),
+                                    selectedIcon: Icon(link.icon),
+                                    label: link.label,
+                                    badge: null,
+                                  ),
+                                  selected: false,
+                                  onTap: link.onTap,
+                                  marker: Alignment.centerLeft,
+                                ),
+                              ),
+                            const SizedBox(height: 12),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
         ),
       ),
     );
@@ -157,16 +202,19 @@ class OpenFieldRail extends StatelessWidget {
 class _Tab extends StatelessWidget {
   const new({
     required this.tab,
-    required this.index,
-    required this.count,
     required this.selected,
     required this.onTap,
     required this.marker,
+    this.index,
+    this.count,
   });
 
   final OpenFieldTab tab;
-  final int index;
-  final int count;
+
+  /// Which tab this is, of [count]; both null for a rail link, which isn't
+  /// a tab.
+  final int? index;
+  final int? count;
   final bool selected;
   final VoidCallback onTap;
 
@@ -179,16 +227,20 @@ class _Tab extends StatelessWidget {
     final color = selected ? c.textOnPage : c.textMutedOnPage;
     final top = marker == Alignment.topCenter;
     // As a NavigationBar destination reads: the label, its count, and
-    // "Tab 1 of 4".
+    // "Tab 1 of 4". A rail link is a plain button: no place among the
+    // tabs, and no selected state.
+    final (i, n) = (index, count);
+    final isTab = i != null && n != null;
     final label = [
       tab.label,
       ?tab.badge,
-      MaterialLocalizations.of(context)
-          .tabLabel(tabIndex: index + 1, tabCount: count),
+      if (isTab)
+        MaterialLocalizations.of(context)
+            .tabLabel(tabIndex: i + 1, tabCount: n),
     ].join(', ');
     return Semantics(
       button: true,
-      selected: selected,
+      selected: isTab ? selected : null,
       label: label,
       excludeSemantics: true,
       onTap: onTap,

@@ -91,6 +91,24 @@ void main() {
     },
     'wide chat': (WidgetTester tester, {required TeamScheme scheme}) =>
         pumpTeam(tester, scheme: scheme, size: wideSize),
+    // A super admin's Admin panel (SPEC §6.11 Access): in the team's and
+    // Teams' headers on a phone, at the rail's foot on a wide screen.
+    'super admin chat':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpTeam(tester, scheme: scheme, user: boss);
+          expect(find.byTooltip('Admin panel'), findsOneWidget);
+        },
+    'super admin teams':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpTeam(tester, scheme: scheme, user: boss);
+          await goTo(tester, '/teams');
+          expect(find.byTooltip('Admin panel'), findsOneWidget);
+        },
+    'super admin wide chat':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpTeam(tester, scheme: scheme, user: boss, size: wideSize);
+          expect(find.text('Admin panel'), findsOneWidget);
+        },
     // Pushed screens open as the app opens them, so the back row is
     // checked too (SPEC §5.4.1).
     'roster': (WidgetTester tester, {required TeamScheme scheme}) =>
@@ -301,6 +319,37 @@ void main() {
           node = node.parent!;
         }
       }
+      handle.dispose();
+    });
+
+    testWidgets("the Admin panel reads as a button: the header's on a "
+        "phone, and the rail's on a wide screen, which isn't a tab", (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpTeam(tester, scheme: TeamScheme.army, user: boss);
+      expect(
+        tester.getSemantics(find.byTooltip('Admin panel')),
+        isSemantics(
+          tooltip: 'Admin panel',
+          isButton: true,
+          hasTapAction: true,
+          isEnabled: true,
+          hasEnabledState: true,
+          isFocusable: true,
+        ),
+      );
+      await pumpTeam(
+        tester,
+        scheme: TeamScheme.army,
+        user: boss,
+        size: wideSize,
+      );
+      final link = tester.getSemantics(find.bySemanticsLabel('Admin panel'));
+      expect(link, isSemantics(isButton: true, hasTapAction: true));
+      expect(link.flagsCollection.isSelected.toBoolOrNull(), isNull);
+      // The tabs still count four.
+      expect(find.bySemanticsLabel('Plays, Tab 4 of 4'), findsOneWidget);
       handle.dispose();
     });
 
@@ -605,6 +654,32 @@ void main() {
           'Documents',
         ]),
       );
+    });
+
+    testWidgets("Tab reaches a super admin's Admin panel, in the header on "
+        'a phone and on the rail on a wide screen, with the ring', (
+      tester,
+    ) async {
+      for (final size in [phoneSize, wideSize]) {
+        await pumpTeam(tester, scheme: TeamScheme.navy, user: boss, size: size);
+        var reached = false;
+        for (var i = 0; i < 40 && !reached; i++) {
+          await press(tester, LogicalKeyboardKey.tab);
+          final context = FocusManager.instance.primaryFocus?.context;
+          if (context == null) continue;
+          final label =
+              context.findAncestorWidgetOfExactType<Tooltip>()?.message ??
+              context
+                  .findAncestorWidgetOfExactType<Semantics>()
+                  ?.properties
+                  .label;
+          if (label == 'Admin panel') {
+            reached = true;
+            expectFocusRing(tester, '$label ($size)');
+          }
+        }
+        expect(reached, isTrue, reason: 'Admin panel ($size)');
+      }
     });
 
     testWidgets('Tab reaches the Teams cards, rows, the default scheme row '

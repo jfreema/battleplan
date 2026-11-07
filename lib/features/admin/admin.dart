@@ -4,6 +4,8 @@
 /// only what everyone needs is here.
 library;
 
+export 'presentation/admin_panel_button.dart'
+    show AdminPanelButton, openAdminPanel, watchSuperAdmin;
 export 'presentation/announcement_banner.dart' show AnnouncementBanner;
 export 'presentation/upload_limit.dart' show fitsUploadLimit;
 export 'presentation/view_team_banner.dart' show ViewingAsSuperAdminBanner;

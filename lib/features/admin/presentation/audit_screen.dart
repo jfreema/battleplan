@@ -141,6 +141,9 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
     return AdminScaffold(
       section: AdminSection.audit,
       title: l10n.adminAuditLog,
+      // A person's or a team's entries, opened from their page, go back
+      // there.
+      detail: widget.actorId != null || widget.groupId != null,
       body: AdminBody(
         children: [
           filters,

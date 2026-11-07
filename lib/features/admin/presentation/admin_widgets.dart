@@ -33,7 +33,9 @@ enum AdminSection {
 
 /// The admin panel's frame (ADMIN, "designed for a desktop browser but
 /// works on phones"): a left rail of sections on wide screens, a drawer on
-/// phones. A pushed detail page shows Back instead of the drawer.
+/// phones. On phones every section has the drawer's menu, even when the
+/// panel opened over another page (the Admin panel button, Profile), so
+/// any section is two taps away; a [detail] page shows Back instead.
 class AdminScaffold extends StatelessWidget {
   const new({
     required this.section,
@@ -41,6 +43,7 @@ class AdminScaffold extends StatelessWidget {
     required this.body,
     this.actions = const [],
     this.floatingActionButton,
+    this.detail = false,
     super.key,
   });
 
@@ -49,6 +52,10 @@ class AdminScaffold extends StatelessWidget {
   final Widget body;
   final List<Widget> actions;
   final Widget? floatingActionButton;
+
+  /// A page opened from a section, like a team's or a person's page: Back
+  /// goes to where it was opened from, in place of the menu on phones.
+  final bool detail;
 
   static IconData _icon(AdminSection s) => switch (s) {
     AdminSection.dashboard => AppIcons.dashboard,
@@ -108,7 +115,7 @@ class AdminScaffold extends StatelessWidget {
     return Scaffold(
       appBar: appBar,
       floatingActionButton: floatingActionButton,
-      drawer: canPop
+      drawer: detail && canPop
           ? null
           : NavigationDrawer(
               selectedIndex: section.index,
@@ -133,7 +140,17 @@ class AdminScaffold extends StatelessWidget {
                   NavigationDrawerDestination(
                     icon: Icon(_icon(s)),
                     selectedIcon: Icon(_icon(s), fill: 1),
-                    label: Text(adminSectionLabel(l10n, s)),
+                    // The drawer's row doesn't shrink its label, so a long
+                    // one at a large text size ends in an ellipsis rather
+                    // than overflowing.
+                    label: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 220),
+                      child: Text(
+                        adminSectionLabel(l10n, s),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ),
               ],
             ),

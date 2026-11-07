@@ -126,6 +126,57 @@ void main() {
       await open(tester, '/admin/teams', user: coach);
       expect(find.text('Search teams by name'), findsNothing);
     });
+
+    testWidgets('on a phone every section has the menu, also when the panel '
+        "opened over a team, and a team's page has Back", (tester) async {
+      await open(
+        tester,
+        '/g/a/chat',
+        admin: FakeAdminRepository(teams: teamRows()),
+        size: const Size(400, 900),
+      );
+      String path() =>
+          GoRouter.of(tester.element(find.byType(Scaffold).first))
+              .state
+              .uri
+              .path;
+      const menu = 'Open navigation menu';
+      // One tap from the team's header (SPEC §6.11 Access).
+      await tester.tap(find.byTooltip('Admin panel'));
+      await tester.pumpAndSettle();
+      expect(path(), '/admin');
+      expect(find.byTooltip(menu), findsOneWidget);
+      // Any section in two more: the menu, then the section.
+      for (final (label, at) in [
+        ('Audit log', '/admin/audit'),
+        ('Platform settings', '/admin/settings'),
+        ('Teams', '/admin/teams'),
+      ]) {
+        await tester.tap(find.byTooltip(menu));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationDrawer),
+            matching: find.text(label),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(path(), at);
+        expect(find.byTooltip(menu), findsOneWidget, reason: label);
+      }
+      // A team's page goes back to the list.
+      await tester.tap(find.text('Thunder'));
+      await tester.pumpAndSettle();
+      expect(path(), '/admin/teams/t1');
+      expect(find.byTooltip(menu), findsNothing);
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(path(), '/admin/teams');
+      // Out of the panel, back to the team.
+      await tester.tap(find.byTooltip('Leave the admin panel'));
+      await tester.pumpAndSettle();
+      expect(path(), '/g/a/chat');
+    });
   });
 
   testWidgets('the dashboard shows every total and opens reports (ADMIN-1)', (

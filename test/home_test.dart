@@ -2,6 +2,7 @@
 // Teams and Profile with their tabs, the back arrow on a team's page, and
 // Team info in place of the team and account menus.
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
@@ -369,15 +370,137 @@ void main() {
     expect(find.text('Add a photo'), findsOneWidget);
   });
 
-  testWidgets('super admins find the Admin panel on Profile', (tester) async {
-    await pumpApp(
+  // The God admin panel one tap from where a super admin is (SPEC §6.11
+  // Access, owner's request 2026-11-07), and nothing new for anyone else.
+  group('the Admin panel', () {
+    final boss = coach.copyWith(isSuperAdmin: true);
+    const wide = Size(1280, 800);
+    String path(WidgetTester tester) =>
+        GoRouter.of(tester.element(find.byType(Scaffold).first)).state.uri.path;
+    Future<void> pump(WidgetTester tester, AuthUser user, {Size? size}) =>
+        pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: user),
+          groups: teams,
+          memberships: memberships,
+          size: size ?? const Size(400, 1600),
+        );
+
+    testWidgets("on a phone it's in a team's header on every tab, before "
+        'Messages, and opens over the team', (tester) async {
+      await pump(tester, boss);
+      for (final tab in ['Chat', 'Schedule', 'Documents', 'Plays']) {
+        await tester.tap(find.text(tab).last);
+        await tester.pumpAndSettle();
+        final button = find.byTooltip('Admin panel');
+        expect(button, findsOneWidget, reason: tab);
+        expect(
+          tester.getCenter(button).dx,
+          lessThan(tester.getCenter(find.byTooltip('Messages')).dx),
+          reason: tab,
+        );
+        // A 48 px tap target, as the header's other icons.
+        expect(tester.getSize(button), const Size(48, 48), reason: tab);
+      }
+      await tester.tap(find.text('Chat').last);
+      await tester.pumpAndSettle();
+
+      // One tap: the dashboard, over the team.
+      await tester.tap(find.byTooltip('Admin panel'));
+      await tester.pumpAndSettle();
+      expect(path(tester), '/admin');
+      expect(find.text('Dashboard'), findsWidgets);
+      // Back (the system's) comes back to the team.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(path(tester), '/g/a/chat');
+    });
+
+    testWidgets("on a phone it's in the Teams header, and still on Profile", (
       tester,
-      auth: FakeAuthRepository(user: coach.copyWith(isSuperAdmin: true)),
-      groups: teams,
-      memberships: memberships,
-    );
-    await openProfile(tester);
-    expect(find.text('Admin panel'), findsOneWidget);
+    ) async {
+      await pump(tester, boss);
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+      expect(path(tester), '/teams');
+      final button = find.byTooltip('Admin panel');
+      expect(button, findsOneWidget);
+      expect(
+        tester.getCenter(button).dx,
+        lessThan(tester.getCenter(find.byTooltip('Messages')).dx),
+      );
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(path(tester), '/admin');
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(path(tester), '/teams');
+
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
+      expect(find.text('Admin panel'), findsOneWidget);
+      await tester.tap(find.text('Admin panel'));
+      await tester.pumpAndSettle();
+      expect(path(tester), '/admin');
+    });
+
+    testWidgets("on a wide screen it's at the rail's foot instead, on a "
+        "team's tabs, Teams, and Profile", (tester) async {
+      await pump(tester, boss, size: wide);
+      // Not in the header: the rail has it.
+      expect(find.byTooltip('Admin panel'), findsNothing);
+      final rail = find.byType(OpenFieldRail);
+      final link = find.descendant(
+        of: rail,
+        matching: find.text('Admin panel'),
+      );
+      expect(link, findsOneWidget);
+      // Below the tabs.
+      expect(
+        tester.getCenter(link).dy,
+        greaterThan(
+          tester
+              .getCenter(
+                find.descendant(of: rail, matching: find.text('Plays')),
+              )
+              .dy,
+        ),
+      );
+      await tester.tap(link);
+      await tester.pumpAndSettle();
+      expect(path(tester), '/admin');
+      expect(find.text('Dashboard'), findsWidgets);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(path(tester), '/g/a/chat');
+
+      for (final top in ['/teams', '/profile']) {
+        await go(tester, top);
+        expect(find.byTooltip('Admin panel'), findsNothing, reason: top);
+        final link = find.descendant(
+          of: find.byType(OpenFieldRail),
+          matching: find.text('Admin panel'),
+        );
+        expect(link, findsOneWidget, reason: top);
+        await tester.tap(link);
+        await tester.pumpAndSettle();
+        expect(path(tester), '/admin', reason: top);
+      }
+    });
+
+    testWidgets('everyone else sees none of it, on a phone or a wide screen', (
+      tester,
+    ) async {
+      for (final size in [const Size(400, 1600), wide]) {
+        await pump(tester, coach, size: size);
+        for (final at in ['/g/a/chat', '/g/a/schedule', '/teams', '/profile']) {
+          await go(tester, at);
+          expect(find.byTooltip('Admin panel'), findsNothing, reason: at);
+          expect(find.text('Admin panel'), findsNothing, reason: at);
+          expect(find.byIcon(AppIcons.admin), findsNothing, reason: at);
+        }
+      }
+    });
   });
 
   testWidgets("Settings' old profile page is Profile now", (tester) async {

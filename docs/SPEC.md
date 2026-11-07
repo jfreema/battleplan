@@ -247,15 +247,16 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 ```
 Sign in
  ├─ First time → Profile setup (name, photo, 18+ confirmation, terms)
- ├─ The top: tabs Teams | Profile
+ ├─ The top: tabs Teams | Profile (rail on wide screens: Admin panel** at its foot)
  │    ├─ Teams:    your teams (each opens where you left it) · Join a Team or
  │    │            Group · Create a Team · Create a Group · Default color
- │    │            scheme · Messages · bell
+ │    │            scheme · Admin panel** · Messages · bell
  │    │            (no team yet: a welcome with Join and Create)
  │    └─ Profile:  Your icon · Name · Time zone · Settings ·
  │                 Admin panel** · Sign out              (** super admins)
  └─ Team view (the app opens where you left it: the last team and tab, or Teams)
-      ├─ Header:     ‹ back to Teams · team switcher ▾ · Messages · notification bell · Team info ⓘ
+      ├─ Header:     ‹ back to Teams · team switcher ▾ · Admin panel** · Messages · notification bell · Team info ⓘ
+                     (wide screens: Admin panel** at the foot of the rail instead)
       ├─ Messages:   your direct conversations → one of them (CHAT-19)
       ├─ A person:   their page, from their photo in chat or the roster (TEAM-15)
       ├─ Tabs:       Chat | Schedule | Documents | Plays
@@ -265,6 +266,7 @@ Sign in
 ```
 
 - **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name with Team or Group, last message, unread count), with archived teams under an **Archived** row that expands, then Join a team and Create a team as plain rows, then **Default color scheme** under a Color scheme label (SET-2); someone with no team yet sees a welcome with the same. Profile is plain rows: **Your icon** (your photo: add, change, or remove it), **Name** (the name your teams see, changed in a dialog), **Time zone** (SET-7), **Settings**, the **Admin panel** for super admins, and **Sign out**.
+- **The Admin panel, one tap away** (owner's request 2026-11-07: "make admin panel easier to get to with fewer steps to get there"). A super admin has an **Admin panel** button, a shield, in the Teams header and in a team's header on every tab, before Messages; on wide screens it's at the foot of the rail instead, on Teams, Profile, and a team's tabs. Profile keeps its row. It opens the panel over the page they were on, so Back comes back there. From a team it took three taps (back to Teams, Profile, Admin panel); now it's one. Nobody else sees any of it: their headers and rail are as they were (§6.11).
 - **A team's back arrow** (‹ at the top left of the header) goes to Teams. Inside a tab, on a page with its own back button (Saved plays, a play), the header leaves its arrow out, so only one back shows. Every back is a plain chevron; on a pushed page it's followed by the name of the page it returns to ("‹ Team info", "‹ Roster" on a player card or a person's page opened from the roster) when that's known, with the page's title on its own line below. A page opened with nothing under it (a link, a web reload, a notification on a cold start) still has the chevron, alone: it goes up to the team's chat, Profile for Settings and Profile's pages, Messages for a conversation, or else Teams.
 - **Tabs** are a bar docked along the bottom, full width under a thin rule, the current tab's icon in coral with a coral bar above it; from 840 px wide they're a rail down the side.
 - **Team info** (ⓘ in the header) is a page: the team's logo, name, sport, and member count, then what the team menu had, and **Color scheme**, the scheme you see this team in (SET-2). **Team admin** was called Team settings.
@@ -324,7 +326,7 @@ Sign in
 
 ### 5.5 Wide screens (web and tablets, 840 px and up)
 
-- **Navigation.** The tabs move to a **left rail**: Chat, Schedule, Documents, and Plays, with your avatar at the bottom. The team switcher stays in the header beside the rail. The order, icons, and labels match phones.
+- **Navigation.** The tabs move to a **left rail**: Chat, Schedule, Documents, and Plays, and for super admins the **Admin panel** at the bottom, in place of the header's button (§5.1); it's a button, not a tab. The team switcher stays in the header beside the rail. The order, icons, and labels match phones.
 - **Chat** is centered at a readable width (about 840 px).
 - **Panels.** Event details, member cards, and settings open as side panels or dialogs instead of full screens.
 - **v1.1.** On very wide screens (1200 px and up), a persistent team list column, like Slack's.
@@ -977,9 +979,10 @@ This is for platform operators (super admins) to manage every team and user.
 
 **Access and layout**
 
-- Only super admins see it: it's on their Profile, at `/admin`.
+- Only super admins see it, at `/admin`, one tap from where they usually are (owner's request 2026-11-07: "make admin panel easier to get to with fewer steps to get there"; §5.1): the **Admin panel** button in the Teams header and a team's header on phones, **Admin panel** at the foot of the rail on wide screens, and the Admin panel row on Profile. It opens over the page they were on: Back returns there, and **Leave the admin panel** goes to their teams.
 - It's designed for a desktop browser but works on phones, where tables become lists.
-- It's loaded separately, so regular users never download it.
+- **Its sections** (Dashboard, Teams, Users, Reports, Audit log, Platform settings) are a rail on wide screens and a menu (☰) on phones. Every section has the menu, also when the panel opened over another page, so any section is two taps from any other; a team's or a person's page in the panel, and a person's or a team's audit entries opened from it, have Back instead. On the dashboard, the Users, Teams, and Open reports totals open their lists.
+- It's loaded separately, so regular users never download it. The buttons that lead to it are part of the app, not the panel.
 
 **Requirements**
 

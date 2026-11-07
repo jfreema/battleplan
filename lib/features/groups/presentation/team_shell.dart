@@ -160,6 +160,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     final otherUnread =
         teams.value?.any((t) => t.group.id != groupId && t.hasUnread) ?? false;
     final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
+    final superAdmin = watchSuperAdmin(ref);
 
     // Each tab's icon, outlined on every tab: the coral color and bar mark
     // the one that's showing.
@@ -255,6 +256,16 @@ class _TeamShellState extends ConsumerState<TeamShell> {
                 tabs: tabs,
                 selectedIndex: selected,
                 onSelect: navigationShell.goBranch,
+                // The header's Admin panel button, for super admins, is
+                // here on wide screens (SPEC §5.5).
+                links: [
+                  if (superAdmin)
+                    (
+                      icon: AppIcons.admin,
+                      label: l10n.adminPanel,
+                      onTap: () => openAdminPanel(context),
+                    ),
+                ],
               ),
               // Below the status bar on an iPad, as the narrow layout is;
               // the rail keeps the left edge, and screens their own bottom.
@@ -323,7 +334,8 @@ class _TeamShellState extends ConsumerState<TeamShell> {
 
 /// The team header (SPEC §7.3): one 52 px row with the chevron back to
 /// Teams, the tab's stencil eyebrow over the team name (the switcher), and
-/// Messages, notifications and Team info.
+/// the Admin panel for super admins on phones, Messages, notifications and
+/// Team info.
 class _TeamHeader extends StatelessWidget {
   const new({
     required this.team,
@@ -390,6 +402,8 @@ class _TeamHeader extends StatelessWidget {
                 ),
               ),
             ),
+            // The God admin panel in one tap, for super admins (ADMIN).
+            const _Low(child: AdminPanelButton()),
             // Direct conversations, with how many are unread (CHAT-19).
             const _Low(child: MessagesButton()),
             // Unread notification-center items across all teams (NOTIF-11).

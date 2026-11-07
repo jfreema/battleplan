@@ -11,6 +11,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/core/widgets/skeleton.dart';
+import 'package:battleplan/features/admin/admin.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -126,10 +127,15 @@ class TeamsScreen extends ConsumerWidget {
         child: Column(
           children: [
             // The page's name where a team's is, and the inbox and
-            // notifications, which cover every team.
+            // notifications, which cover every team; before them, the
+            // Admin panel for super admins.
             TopLevelBar(
               title: l10n.tabTeams,
-              actions: const [MessagesButton(), NotificationBell()],
+              actions: const [
+                AdminPanelButton(),
+                MessagesButton(),
+                NotificationBell(),
+              ],
             ),
             Expanded(
               child: Align(

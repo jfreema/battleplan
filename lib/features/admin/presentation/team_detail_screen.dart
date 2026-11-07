@@ -48,6 +48,7 @@ class AdminTeamScreen extends ConsumerWidget {
     final g = group.value;
     return AdminScaffold(
       section: AdminSection.teams,
+      detail: true,
       title: g?.name ?? l10n.adminTeams,
       actions: [
         IconButton(
