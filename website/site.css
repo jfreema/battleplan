@@ -272,8 +272,9 @@ p, ul, ol { margin: 0 0 1em; }
 h1, .hero-copy .lead, .section-head p { text-wrap: balance; }
 
 /* The fan of five phones from the Facebook cover: the coach's whiteboard in
-   front (Army green), Thunder's schedule in Navy and Light blue beside it, and
-   Saturday Run Club's chat (Light) and Rally Possums' poll (Dark) at the ends. Every length (phones, padding, corners, offsets)
+   front (Army green), Thunder's schedule (Navy) and Cyclone's team chat (Light
+   blue) beside it, and Saturday Run Club's chat (Light) and Rally Possums'
+   poll (Dark) at the ends. Every length (phones, padding, corners, offsets)
    is a share of the stage's width, so the fan keeps the cover's shape at any
    size and only the stage's width, --fan, changes per screen. Real
    screenshots rather than one picture, so it's sharp at every pixel density
