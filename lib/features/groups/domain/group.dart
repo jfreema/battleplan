@@ -1,5 +1,6 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/features/groups/domain/chat_colors.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'group.freezed.dart';
@@ -148,6 +149,13 @@ abstract class Group with _$Group {
   /// A basic group (TEAM-14): everyone is here for themselves, with no
   /// players, guardians, or Plays.
   bool get isGroup => kind == GroupKind.group;
+
+  /// My bubbles' stored color (CHAT-18): what the admins picked, or, with
+  /// nothing picked, light blue (Blue raspberry) in a group (owner's
+  /// request 2026-11-08) and the theme's coral (null) elsewhere.
+  int? get bubbleColorOrDefault =>
+      chatTheme?.bubbleColor ??
+      (isGroup ? ChatCandy.blueRaspberry.stored : null);
 
   /// It has a roster of players, with guardians and Plays: a team.
   bool get hasPlayers => kind == GroupKind.team;

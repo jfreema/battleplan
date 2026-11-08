@@ -299,9 +299,9 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     const gap = SizedBox(height: 12);
     const headingGap = SizedBox(height: 10);
     final look = group.chatTheme ?? const ChatTheme();
-    final candy = look.bubbleColor == null
+    final candy = group.bubbleColorOrDefault == null
         ? chatCandyOrder.first
-        : ChatCandy.fromStored(look.bubbleColor);
+        : ChatCandy.fromStored(group.bubbleColorOrDefault);
     final lookColor = candy == null
         ? l10n.teamColorOption
         : chatCandyName(l10n, candy);

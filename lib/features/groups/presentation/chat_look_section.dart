@@ -91,11 +91,11 @@ class ChatLookSection extends ConsumerWidget {
         ? showStorageFull(context)
         : unawaited(_pickPhoto(context, ref, theme));
     void save(ChatTheme next) => unawaited(_save(context, ref, next));
-    final mine = chatBubbleColor(c, theme.bubbleColor) ?? c.you.face;
+    final mine = chatBubbleColor(c, group.bubbleColorOrDefault) ?? c.you.face;
     const order = chatCandyOrder;
     // Nothing picked is the theme's "you" color, which is the first candy
     // (CHAT-18); a palette color is the team's.
-    final stored = theme.bubbleColor;
+    final stored = group.bubbleColorOrDefault;
     final picked = stored == null ? order.first : ChatCandy.fromStored(stored);
     final muted = text.bodyMedium?.copyWith(
       fontSize: 15,

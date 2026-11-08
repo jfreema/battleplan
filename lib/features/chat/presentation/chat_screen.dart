@@ -520,6 +520,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           otherUid: other,
           otherName: other == null ? '' : g?.people[other]?.name ?? '',
           look: g?.chatTheme,
+          bubble: g?.bubbleColorOrDefault,
           storageFull: g?.storageFull ?? false,
           membersCanCreatePolls: g?.settings.membersCanCreatePolls ?? false,
           nextSeasonId: g?.nextSeasonId,
@@ -545,7 +546,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // A candy color (Chat look) is drawn in this theme's shade of it.
     final bubbleColor = chatBubbleColor(
       GumdropColors.of(context),
-      look?.bubbleColor,
+      group.bubble,
     );
     // Full storage stops photos, not text (STORE-4).
     final storageFull = group.storageFull;
