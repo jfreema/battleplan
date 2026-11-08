@@ -614,6 +614,31 @@ void main() {
     expect(groupRepo.groups['a']!.settings.filterLanguage, isFalse);
   });
 
+  testWidgets('team settings: default reminders offer No reminders, which '
+      'clears the times', (tester) async {
+    final groupRepo = FakeGroupRepository({
+      'a': testGroup('a', 'Thunder').copyWith(
+        settings: const GroupSettings(defaultReminderOffsets: [60, 1440]),
+      ),
+    });
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groupRepo: groupRepo,
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+    );
+    await tester.tap(find.byTooltip('Team info'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Team admin'));
+    await tester.pumpAndSettle();
+    final none = find.widgetWithText(FilterChip, 'No reminders');
+    await tester.ensureVisible(none);
+    expect(tester.widget<FilterChip>(none).selected, isFalse);
+    await tester.tap(none);
+    await tester.pumpAndSettle();
+    expect(groupRepo.groups['a']!.settings.defaultReminderOffsets, isEmpty);
+  });
+
   for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
     testWidgets('the ${platform.name} app leaves out Buy Jared a coffee', (
       tester,

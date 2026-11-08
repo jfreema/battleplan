@@ -534,6 +534,7 @@
   "filterLanguageHelp": "Swear words and slurs in new chat messages and polls show as f***.",
   "rosterPeopleHidden": "Your team's admins keep the list of people on the team to themselves.",
   "defaultReminders": "Default event reminders",
+  "reminderNone": "No reminders",
   "reminder15m": "15 min before",
   "reminder1h": "1 hour before",
   "reminder2h": "2 hours before",

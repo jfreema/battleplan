@@ -679,6 +679,15 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
+                    // None is a choice of its own (owner's request
+                    // 2026-11-08), picked while no time is.
+                    FilterChip(
+                      label: Text(l10n.reminderNone),
+                      selected: s.defaultReminderOffsets.isEmpty,
+                      onSelected: (_) => setSettings(
+                        s.copyWith(defaultReminderOffsets: const []),
+                      ),
+                    ),
                     for (final m in reminderChoices)
                       FilterChip(
                         label: Text(_reminderLabel(l10n, m)),

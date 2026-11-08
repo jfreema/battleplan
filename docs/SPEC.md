@@ -774,7 +774,7 @@ Players that others answer for never get accounts, and every account belongs to 
     - Notes.
   - **Game fields:** opponent, home or away, arrival time ("Arrive 30 min early").
   - **RSVP:** on or off (default on), with an optional deadline.
-  - **Reminders:** defaults from Team admin. Choose any of 15 min, 1 h, 2 h, 1 day, 2 days, or 1 week before.
+  - **Reminders:** defaults from Team admin. **No reminders** (picked while no time is, and the default for new teams) or any of 15 min, 1 h, 2 h, 1 day, 2 days, or 1 week before; tapping No reminders clears the times picked. Team admin's Default event reminders offers the same No reminders choice (owner's request 2026-11-08: "make sure it's possible to set events to have no reminders and to have it set to no reminders as a default").
   - **Notify team** (default on) and **Post to chat** (default on).
   - **Repeat:** doesn't repeat (default), or:
     - **Daily**, every N days, for tournaments and camps.

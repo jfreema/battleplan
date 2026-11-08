@@ -695,6 +695,14 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                   spacing: Space.sm,
                   runSpacing: Space.xs,
                   children: [
+                    // None is a choice of its own (owner's request
+                    // 2026-11-08), picked while no time is.
+                    FilterChip(
+                      label: Text(l10n.reminderNone),
+                      selected: d.reminderOffsets.isEmpty,
+                      onSelected: (_) =>
+                          _set((d) => d.copyWith(reminderOffsets: const [])),
+                    ),
                     for (final m in reminderChoicesFor(allDay: d.allDay))
                       FilterChip(
                         label: Text(reminderLabel(l10n, m)),

@@ -652,15 +652,16 @@ void main() {
         'Tournament',
       );
       Finder chip(String label) => find.widgetWithText(FilterChip, label);
-      // A timed event: every choice, none on.
+      // A timed event: every choice, and No reminders on (the default).
       await tester.ensureVisible(chip('15 min'));
       expect(chip('15 min'), findsOneWidget);
       expect(chip('2 h'), findsOneWidget);
       expect(
         tester
             .widgetList<FilterChip>(find.byType(FilterChip))
-            .where((c) => c.selected),
-        isEmpty,
+            .where((c) => c.selected)
+            .map((c) => (c.label as Text).data),
+        ['No reminders'],
       );
       await tester.tap(chip('1 h'));
       await tester.pumpAndSettle();
@@ -682,6 +683,34 @@ void main() {
       expect(saved.allDay, isTrue);
       // The hour picked before it was all day is dropped.
       expect(saved.reminderOffsets, [1440]);
+    });
+
+    testWidgets('No reminders is a choice, the default, and clears the '
+        'times picked', (tester) async {
+      final rsvps = await openSchedule(tester, role: MemberRole.admin);
+      await tester.tap(find.byTooltip('New event'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Title'),
+        'Practice',
+      );
+      Finder chip(String label) => find.widgetWithText(FilterChip, label);
+      bool on(String label) => tester.widget<FilterChip>(chip(label)).selected;
+      await tester.ensureVisible(chip('No reminders'));
+      expect(on('No reminders'), isTrue);
+      await tester.tap(chip('1 h'));
+      await tester.pumpAndSettle();
+      await tester.tap(chip('1 day'));
+      await tester.pumpAndSettle();
+      expect(on('No reminders'), isFalse);
+      await tester.tap(chip('No reminders'));
+      await tester.pumpAndSettle();
+      expect(on('No reminders'), isTrue);
+      expect(on('1 h'), isFalse);
+      expect(on('1 day'), isFalse);
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(rsvps.events.events.values.single.reminderOffsets, isEmpty);
     });
 
     testWidgets("an older all-day event's hour reminder shows, and edits, "
