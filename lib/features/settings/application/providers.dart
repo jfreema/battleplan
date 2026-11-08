@@ -125,7 +125,9 @@ TeamScheme teamScheme(Ref ref, GroupId groupId) {
 
 /// Keeps this device's copy of how I see my teams current (for
 /// [teamScheme] on a cold start): my pick, else the team's default, for
-/// each team that has one. Watched at the app root.
+/// each team that has one. A team whose own read hasn't come back yet
+/// keeps its last copy, so a cold start into it doesn't flash my default
+/// before its default arrives. Watched at the app root.
 @Riverpod(keepAlive: true)
 void teamSchemeCache(Ref ref) {
   // Written only when it changes: my teams change with every new message.
@@ -133,15 +135,20 @@ void teamSchemeCache(Ref ref) {
   ref.listen(myTeamsProvider, (_, next) {
     final uid = ref.read(authUserProvider).value?.uid;
     final list = next.value;
-    if (uid == null || list == null) return;
+    final memberships = ref.read(myMembershipsProvider).value;
+    if (uid == null || list == null || memberships == null) return;
+    final loaded = {for (final t in list) t.group.id: t.group};
+    final prefs = ref.read(localPrefsRepositoryProvider);
     final schemes = {
-      for (final t in list)
-        t.group.id.value: ?(t.membership.colorScheme ?? t.group.colorScheme),
+      for (final m in memberships)
+        m.groupId.value:
+            ?(m.colorScheme ??
+            (loaded.containsKey(m.groupId)
+                ? loaded[m.groupId]?.colorScheme
+                : prefs.teamScheme(m.groupId.value, uid: uid))),
     };
     if (last != null && mapEquals(last, schemes)) return;
     last = schemes;
-    unawaited(
-      ref.read(localPrefsRepositoryProvider).setTeamSchemes(uid, schemes),
-    );
+    unawaited(prefs.setTeamSchemes(uid, schemes));
   }, fireImmediately: true);
 }

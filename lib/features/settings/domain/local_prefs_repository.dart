@@ -9,8 +9,9 @@ typedef DeviceRegistration = ({String uid, String token, DateTime at});
 typedef PendingLink = ({String providerId, String email});
 
 /// Preferences kept on this device (SPEC SET-2, §5.2 "Memory"). The color
-/// schemes are a start-up copy of the account's (users.colorScheme and each
-/// membership's pick), so the first frame paints in the right scheme.
+/// schemes are a start-up copy of the account's (users.colorScheme, and for
+/// each team the member's pick, else the team's default), so the first frame
+/// paints in the right scheme.
 abstract interface class LocalPrefsRepository {
   /// Account [uid]'s default color scheme on this device, or this device's
   /// last one while [uid] is null (auth still restoring). Otherwise the old
@@ -19,10 +20,11 @@ abstract interface class LocalPrefsRepository {
 
   Future<void> setDefaultScheme(String uid, TeamScheme scheme);
 
-  /// Account [uid]'s pick for [groupId] on this device, or null.
+  /// How account [uid] last saw [groupId] on this device (their pick, else
+  /// the team's default), or null.
   TeamScheme? teamScheme(String groupId, {String? uid});
 
-  /// Replaces account [uid]'s picks on this device.
+  /// Replaces account [uid]'s copy on this device.
   Future<void> setTeamSchemes(String uid, Map<String, TeamScheme> schemes);
 
   /// The last team and tab used on this device, as a route like

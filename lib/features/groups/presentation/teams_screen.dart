@@ -73,8 +73,8 @@ class TeamsScreen extends ConsumerWidget {
       ],
     );
 
-    // My default color scheme (SET-2): Teams, Profile, and every team I
-    // haven't picked for.
+    // My default color scheme (SET-2): Teams, Profile, and every team with
+    // neither my pick nor a team default.
     final defaultScheme = ref.watch(defaultSchemeControllerProvider);
     final schemeSection = _SchemeSection(
       child: SchemeRow(

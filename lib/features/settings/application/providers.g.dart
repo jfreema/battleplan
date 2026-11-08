@@ -291,21 +291,27 @@ final class TeamSchemeFamily extends $Family
 
 /// Keeps this device's copy of how I see my teams current (for
 /// [teamScheme] on a cold start): my pick, else the team's default, for
-/// each team that has one. Watched at the app root.
+/// each team that has one. A team whose own read hasn't come back yet
+/// keeps its last copy, so a cold start into it doesn't flash my default
+/// before its default arrives. Watched at the app root.
 
 @ProviderFor(teamSchemeCache)
 final teamSchemeCacheProvider = TeamSchemeCacheProvider._();
 
 /// Keeps this device's copy of how I see my teams current (for
 /// [teamScheme] on a cold start): my pick, else the team's default, for
-/// each team that has one. Watched at the app root.
+/// each team that has one. A team whose own read hasn't come back yet
+/// keeps its last copy, so a cold start into it doesn't flash my default
+/// before its default arrives. Watched at the app root.
 
 final class TeamSchemeCacheProvider
     extends $FunctionalProvider<void, void, void>
     with $Provider<void> {
   /// Keeps this device's copy of how I see my teams current (for
   /// [teamScheme] on a cold start): my pick, else the team's default, for
-  /// each team that has one. Watched at the app root.
+  /// each team that has one. A team whose own read hasn't come back yet
+  /// keeps its last copy, so a cold start into it doesn't flash my default
+  /// before its default arrives. Watched at the app root.
   TeamSchemeCacheProvider._()
     : super(
         from: null,
@@ -339,4 +345,4 @@ final class TeamSchemeCacheProvider
   }
 }
 
-String _$teamSchemeCacheHash() => r'6329499e6e27d83be3f493b97f05fa0261500144';
+String _$teamSchemeCacheHash() => r'4cd7ba2587453f54f68b075bc416568d7a99b20b';

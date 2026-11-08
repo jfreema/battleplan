@@ -171,6 +171,27 @@ void main() {
       expect(prefs.teamSchemes, {'a': TeamScheme.navy, 'b': TeamScheme.dark});
     });
 
+    test(
+      "keeps the device's copy for a team whose read hasn't come back",
+      () async {
+        // Team c is in my memberships but its own read has nothing yet.
+        final prefs = FakeLocalPrefs()
+          ..teamSchemes = {'c': TeamScheme.navy, 'gone': TeamScheme.dark}
+          ..teamSchemesUid = 'coach';
+        final c = await container(
+          prefs: prefs,
+          groups: navyThunder(),
+          memberships: [
+            testMembership('a', 'coach'),
+            testMembership('c', 'coach'),
+          ],
+        );
+        c.listen(teamSchemeCacheProvider, (_, _) {});
+        await _settle();
+        expect(prefs.teamSchemes, {'a': TeamScheme.navy, 'c': TeamScheme.navy});
+      },
+    );
+
     test('is my pick for the team, else my default', () async {
       final c = await container(
         users: FakeUserRepository()..colorScheme = TeamScheme.light,

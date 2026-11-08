@@ -714,9 +714,13 @@ describe("a team's default color scheme (SET-2)", () => {
     await assertFails(set('bob', 'teamA', 'navy'));
     await assertFails(set('dan', 'teamB', 'navy'));
     await assertFails(set('alice', 'teamB', 'navy'));
-    for (const bad of ['olive', '', 'Navy', 1, true]) {
+    for (const bad of ['olive', '', 'Navy', 1, true, { scheme: 'navy' }]) {
       await assertFails(set('alice', 'teamA', bad));
     }
+    // Nor may a member take it away.
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groups/teamA').update({ colorScheme: 'navy' }));
+    await assertFails(set('bob', 'teamA', null));
+    await assertFails(as('bob').doc('groups/teamA').update({ colorScheme: firebase.firestore.FieldValue.delete() }));
   });
 
   it('leaves a super admin who is not an admin to adminUpdateGroup', async () => {
@@ -758,6 +762,11 @@ describe('a member picks how a team looks to them (SET-2)', () => {
       await assertFails(as('bob').doc('groupMembers/teamA_bob').update({ colorScheme: bad }));
     }
     await assertFails(as('alice').doc('groupMembers/teamA_bob').update({ colorScheme: 'dark' }));
+    // An admin can't take a member's pick back for them either.
+    await env.withSecurityRulesDisabled((ctx) => ctx.firestore().doc('groupMembers/teamA_bob').update({ colorScheme: 'dark' }));
+    await assertFails(
+      as('alice').doc('groupMembers/teamA_bob').update({ colorScheme: firebase.firestore.FieldValue.delete() }),
+    );
   });
 
   it('leaves the icon color to Functions (SET-8)', async () => {
