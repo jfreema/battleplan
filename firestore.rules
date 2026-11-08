@@ -173,10 +173,15 @@ service cloud.firestore {
       // group has no sport.
       allow update: if isAdmin(g) && active(g)
         && onlyChanges(['name', 'nameLower', 'description', 'photoPath', 'color',
-                        'sport', 'timeZone', 'settings', 'chatTheme', 'updatedAt'])
+                        'sport', 'timeZone', 'settings', 'chatTheme', 'colorScheme',
+                        'updatedAt'])
         && validGroup(incoming(), g)
         && (resource.data.get('kind', 'team') != 'group' || incoming().sport == resource.data.sport)
-        && (!('chatTheme' in changed()) || validChatTheme(incoming().chatTheme, g));
+        && (!('chatTheme' in changed()) || validChatTheme(incoming().chatTheme, g))
+        // The team's default color scheme (SET-2): one of the five, or
+        // null for none (members then see their own default).
+        && (!('colorScheme' in changed()) || incoming().get('colorScheme', null) == null
+            || incoming().colorScheme in ['army', 'light', 'dark', 'navy', 'skyblue']);
       // Created and deleted by Functions (createGroup, deleteGroup).
     }
 

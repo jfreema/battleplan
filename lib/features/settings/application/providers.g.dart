@@ -178,26 +178,32 @@ final class AppSchemeProvider
 
 String _$appSchemeHash() => r'bb3997be2386881a2761105ca5cdd3cd836b6eec';
 
-/// The scheme I see [groupId] in: my pick on my membership, else my default.
-/// Read from my memberships alone, never the team itself, so this provider
-/// (kept for the session) keeps no reads of a team I've left or only
-/// viewed.
+/// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
+/// membership, else the team's default, else my default. The team is read
+/// only while I'm on it, through the read my teams already keep
+/// (myTeams), so this provider (kept for the session) keeps no reads of a
+/// team I've left or only viewed: a super admin viewing a team they
+/// aren't on sees it in their default.
 
 @ProviderFor(teamScheme)
 final teamSchemeProvider = TeamSchemeFamily._();
 
-/// The scheme I see [groupId] in: my pick on my membership, else my default.
-/// Read from my memberships alone, never the team itself, so this provider
-/// (kept for the session) keeps no reads of a team I've left or only
-/// viewed.
+/// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
+/// membership, else the team's default, else my default. The team is read
+/// only while I'm on it, through the read my teams already keep
+/// (myTeams), so this provider (kept for the session) keeps no reads of a
+/// team I've left or only viewed: a super admin viewing a team they
+/// aren't on sees it in their default.
 
 final class TeamSchemeProvider
     extends $FunctionalProvider<TeamScheme, TeamScheme, TeamScheme>
     with $Provider<TeamScheme> {
-  /// The scheme I see [groupId] in: my pick on my membership, else my default.
-  /// Read from my memberships alone, never the team itself, so this provider
-  /// (kept for the session) keeps no reads of a team I've left or only
-  /// viewed.
+  /// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
+  /// membership, else the team's default, else my default. The team is read
+  /// only while I'm on it, through the read my teams already keep
+  /// (myTeams), so this provider (kept for the session) keeps no reads of a
+  /// team I've left or only viewed: a super admin viewing a team they
+  /// aren't on sees it in their default.
   TeamSchemeProvider._({
     required TeamSchemeFamily super.from,
     required GroupId super.argument,
@@ -249,12 +255,14 @@ final class TeamSchemeProvider
   }
 }
 
-String _$teamSchemeHash() => r'452e1eb843c84170b38b65b654e833edcc2c780e';
+String _$teamSchemeHash() => r'18e8a52990116634c64725575d581c635ca2db3b';
 
-/// The scheme I see [groupId] in: my pick on my membership, else my default.
-/// Read from my memberships alone, never the team itself, so this provider
-/// (kept for the session) keeps no reads of a team I've left or only
-/// viewed.
+/// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
+/// membership, else the team's default, else my default. The team is read
+/// only while I'm on it, through the read my teams already keep
+/// (myTeams), so this provider (kept for the session) keeps no reads of a
+/// team I've left or only viewed: a super admin viewing a team they
+/// aren't on sees it in their default.
 
 final class TeamSchemeFamily extends $Family
     with $FunctionalFamilyOverride<TeamScheme, GroupId> {
@@ -267,10 +275,12 @@ final class TeamSchemeFamily extends $Family
         isAutoDispose: false,
       );
 
-  /// The scheme I see [groupId] in: my pick on my membership, else my default.
-  /// Read from my memberships alone, never the team itself, so this provider
-  /// (kept for the session) keeps no reads of a team I've left or only
-  /// viewed.
+  /// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
+  /// membership, else the team's default, else my default. The team is read
+  /// only while I'm on it, through the read my teams already keep
+  /// (myTeams), so this provider (kept for the session) keeps no reads of a
+  /// team I've left or only viewed: a super admin viewing a team they
+  /// aren't on sees it in their default.
 
   TeamSchemeProvider call(GroupId groupId) =>
       TeamSchemeProvider._(argument: groupId, from: this);
@@ -279,20 +289,23 @@ final class TeamSchemeFamily extends $Family
   String toString() => r'teamSchemeProvider';
 }
 
-/// Keeps this device's copy of my team picks current (for [teamScheme] on
-/// a cold start): watched at the app root.
+/// Keeps this device's copy of how I see my teams current (for
+/// [teamScheme] on a cold start): my pick, else the team's default, for
+/// each team that has one. Watched at the app root.
 
 @ProviderFor(teamSchemeCache)
 final teamSchemeCacheProvider = TeamSchemeCacheProvider._();
 
-/// Keeps this device's copy of my team picks current (for [teamScheme] on
-/// a cold start): watched at the app root.
+/// Keeps this device's copy of how I see my teams current (for
+/// [teamScheme] on a cold start): my pick, else the team's default, for
+/// each team that has one. Watched at the app root.
 
 final class TeamSchemeCacheProvider
     extends $FunctionalProvider<void, void, void>
     with $Provider<void> {
-  /// Keeps this device's copy of my team picks current (for [teamScheme] on
-  /// a cold start): watched at the app root.
+  /// Keeps this device's copy of how I see my teams current (for
+  /// [teamScheme] on a cold start): my pick, else the team's default, for
+  /// each team that has one. Watched at the app root.
   TeamSchemeCacheProvider._()
     : super(
         from: null,
@@ -326,4 +339,4 @@ final class TeamSchemeCacheProvider
   }
 }
 
-String _$teamSchemeCacheHash() => r'06e823181a687824339386e0dd41df32e7d7fe4e';
+String _$teamSchemeCacheHash() => r'6329499e6e27d83be3f493b97f05fa0261500144';

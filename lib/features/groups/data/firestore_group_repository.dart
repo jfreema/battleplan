@@ -181,6 +181,21 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> updateColorScheme(GroupId id, TeamScheme scheme) async {
+    try {
+      await _db.collection(Collections.groups).doc(id.value).update({
+        'colorScheme': scheme.value,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
   Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes) async {
     final path =
         'groups/${id.value}/theme/${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -424,6 +439,10 @@ class FirestoreMemberRepository implements MemberRepository {
   ) => _updateMine(groupId, uid, {'colorScheme': scheme.value});
 
   @override
+  Future<void> clearMyColorScheme(GroupId groupId, UserId uid) =>
+      _updateMine(groupId, uid, {'colorScheme': FieldValue.delete()});
+
+  @override
   Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until) =>
       _updateMine(groupId, uid, {
         'mutedUntil': until == null ? null : Timestamp.fromDate(until),
@@ -613,6 +632,7 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
       ),
       _ => null,
     },
+    colorScheme: TeamScheme.tryParse(d['colorScheme'] as String?),
     pinnedMessageIds: [
       for (final id in (d['pinnedMessageIds'] as List?) ?? const [])
         if (id is String) id,

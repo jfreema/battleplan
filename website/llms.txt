@@ -19,7 +19,7 @@ The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id682388
 - Documents: files and links, like the lineup, league rules, and waivers, with pinning.
 - Coach's whiteboard: draw plays on a baseball diamond, basketball court, soccer pitch, football field, or blank board, add steps, and play them back.
 - Sports: baseball, softball, soccer, basketball, football, hockey, lacrosse, volleyball, and others.
-- Five color schemes: Army green (the default), Light, Dark, Navy, and Light blue. Each person picks their own for each team, plus a default.
+- Five color schemes: Army green (the default), Light, Dark, Navy, and Light blue. A team's admins set its default, and each person can pick their own for each team, plus a default of their own.
 - Importing: bring a team over from GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar.
 - Joining: invite link, QR code, invite code, or add people by email.
 

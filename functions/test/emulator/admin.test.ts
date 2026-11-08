@@ -468,6 +468,12 @@ describe('editing a team the super admin is not on (ADMIN-3)', () => {
     });
   });
 
+  it("sets the team's default color scheme (SET-2), audited", async () => {
+    await asRoot(admin.adminUpdateGroup, { groupId: 'thunder', colorScheme: 'navy' });
+    expect((await groups().doc('thunder').get()).get('colorScheme')).toBe('navy');
+    expect((await audits('updateGroup'))[0]).toMatchObject({ before: { colorScheme: null }, after: { colorScheme: 'navy' } });
+  });
+
   it("keeps a basic group without a sport (TEAM-14)", async () => {
     await groups().doc('thunder').update({ kind: 'group', sport: 'other' });
     await expect(asRoot(admin.adminUpdateGroup, { groupId: 'thunder', sport: 'soccer' })).rejects.toMatchObject({
@@ -496,7 +502,8 @@ describe('editing a team the super admin is not on (ADMIN-3)', () => {
     const bad = [
       { color: '#123456' }, { sport: 'cricket' }, { name: '' }, { name: 'x'.repeat(51) }, { description: 'x'.repeat(501) },
       { settings: { secret: true } }, { settings: { defaultReminderOffsets: [7] } },
-      { chatTheme: { background: 'video' } }, { photoPath: 'groups/hawks/avatar/1.jpg' },
+      { chatTheme: { background: 'video' } }, { colorScheme: 'olive' }, { colorScheme: 'Navy' },
+      { photoPath: 'groups/hawks/avatar/1.jpg' },
       { photoPath: 'groups/thunder/avatar/a/b.jpg' }, { backgroundPath: 'groups/thunder/avatar/1.jpg' }, {},
     ];
     for (const edit of bad) {
@@ -934,6 +941,8 @@ describe('platform settings (ADMIN-7) and createGroup', () => {
     const team = (await groups().doc(groupId).get()).data()!;
     expect(team.kind).toBe('team');
     expect(team).not.toHaveProperty('teamType');
+    // No default color scheme until its admins set one (SET-2).
+    expect(team).not.toHaveProperty('colorScheme');
     const old = await run<{ groupId: string }>(createGroup, 'sam', {
       name: 'Old App', sport: 'soccer', teamType: 'youth', timeZone: 'America/Chicago',
     });

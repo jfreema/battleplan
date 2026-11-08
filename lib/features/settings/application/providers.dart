@@ -6,6 +6,7 @@ import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -73,24 +74,48 @@ TeamScheme appScheme(Ref ref) {
   return auth.hasValue && auth.value == null ? TeamScheme.army : mine;
 }
 
-/// The scheme I see [groupId] in: my pick on my membership, else my default.
-/// Read from my memberships alone, never the team itself, so this provider
-/// (kept for the session) keeps no reads of a team I've left or only
-/// viewed.
+/// The scheme a member sees a team in (SET-2, owner's request 2026-11-08):
+/// their own explicit [pick], else the team's [teamDefault] its admins set,
+/// else their own default [mine].
+TeamScheme resolveTeamScheme({
+  required TeamScheme? pick,
+  required TeamScheme? teamDefault,
+  required TeamScheme mine,
+}) => pick ?? teamDefault ?? mine;
+
+/// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
+/// membership, else the team's default, else my default. The team is read
+/// only while I'm on it, through the read my teams already keep
+/// (myTeams), so this provider (kept for the session) keeps no reads of a
+/// team I've left or only viewed: a super admin viewing a team they
+/// aren't on sees it in their default.
 @Riverpod(keepAlive: true)
 TeamScheme teamScheme(Ref ref, GroupId groupId) {
-  final (loaded, pick) = ref.watch(
+  final (loaded, member, pick) = ref.watch(
     myMembershipsProvider.select((a) {
       final list = a.value;
-      if (list == null) return (false, null);
+      if (list == null) return (false, false, null);
       final mine = list.where((m) => m.groupId == groupId).firstOrNull;
-      return (true, mine?.colorScheme);
+      return (true, mine != null, mine?.colorScheme);
     }),
   );
   final fallback = ref.watch(defaultSchemeControllerProvider);
-  if (loaded) return pick ?? fallback;
-  // Memberships still loading: this device's last copy, so a cold start into
-  // a team paints in the right scheme on its first frame.
+  if (loaded && !member) return fallback;
+  if (loaded && pick != null) return pick;
+  if (loaded) {
+    final (teamLoaded, teamDefault) = ref.watch(
+      groupProvider(groupId).select((a) => (a.hasValue, a.value?.colorScheme)),
+    );
+    if (teamLoaded) {
+      return resolveTeamScheme(
+        pick: null,
+        teamDefault: teamDefault,
+        mine: fallback,
+      );
+    }
+  }
+  // Still loading: this device's last copy, so a cold start into a team
+  // paints in the right scheme on its first frame.
   final uid = ref.watch(authUserProvider.select((a) => a.value?.uid));
   return ref
           .watch(localPrefsRepositoryProvider)
@@ -98,18 +123,25 @@ TeamScheme teamScheme(Ref ref, GroupId groupId) {
       fallback;
 }
 
-/// Keeps this device's copy of my team picks current (for [teamScheme] on
-/// a cold start): watched at the app root.
+/// Keeps this device's copy of how I see my teams current (for
+/// [teamScheme] on a cold start): my pick, else the team's default, for
+/// each team that has one. Watched at the app root.
 @Riverpod(keepAlive: true)
 void teamSchemeCache(Ref ref) {
-  ref.listen(myMembershipsProvider, (_, next) {
+  // Written only when it changes: my teams change with every new message.
+  Map<String, TeamScheme>? last;
+  ref.listen(myTeamsProvider, (_, next) {
     final uid = ref.read(authUserProvider).value?.uid;
     final list = next.value;
     if (uid == null || list == null) return;
+    final schemes = {
+      for (final t in list)
+        t.group.id.value: ?(t.membership.colorScheme ?? t.group.colorScheme),
+    };
+    if (last != null && mapEquals(last, schemes)) return;
+    last = schemes;
     unawaited(
-      ref.read(localPrefsRepositoryProvider).setTeamSchemes(uid, {
-        for (final m in list) m.groupId.value: ?m.colorScheme,
-      }),
+      ref.read(localPrefsRepositoryProvider).setTeamSchemes(uid, schemes),
     );
   }, fireImmediately: true);
 }

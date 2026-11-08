@@ -155,6 +155,19 @@ void main() {
         },
     'color scheme': (WidgetTester tester, {required TeamScheme scheme}) =>
         pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/scheme'),
+    // Team admin's team default color scheme (SET-2), its five rows.
+    'team color scheme':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/settings');
+          final last = find.text('Light blue');
+          await tester.scrollUntilVisible(
+            last,
+            200,
+            scrollable: find.byType(Scrollable).last,
+          );
+          await tester.pumpAndSettle();
+          expect(find.text('Team color scheme'), findsOneWidget);
+        },
     'group schedule':
         (WidgetTester tester, {required TeamScheme scheme}) async {
           await pumpGroupSchedule(tester, scheme: scheme);
@@ -827,6 +840,14 @@ void main() {
       testWidgets('Tab reaches each color scheme row for $name, with the '
           'ring', (tester) async {
         await open(tester);
+        // A team's first row is its default (owner's request 2026-11-08).
+        if (name == 'a team') {
+          await tabTo(
+            tester,
+            'the default',
+            (c) => labelOf(c)?.startsWith('Your default (') ?? false,
+          );
+        }
         for (final scheme in TeamScheme.values) {
           final title = scheme.label(l10n);
           await tabTo(

@@ -179,6 +179,13 @@ void main() {
         'backgroundPath': null,
       });
       expect(sent.containsKey('description'), isFalse);
+      expect(sent.containsKey('colorScheme'), isFalse);
+      // The team's default color scheme (SET-2).
+      await repo.updateGroup(_g, colorScheme: TeamScheme.navy);
+      expect(
+        (functions.lastData('adminUpdateGroup')! as Map)['colorScheme'],
+        'navy',
+      );
       await repo.updateGroup(_g, chatTheme: const ChatTheme());
       expect(
         ((functions.lastData('adminUpdateGroup')! as Map)['chatTheme']

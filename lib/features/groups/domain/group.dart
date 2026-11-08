@@ -122,6 +122,10 @@ abstract class Group with _$Group {
     @Default(false) bool storageQuotaCustom,
     ChatTheme? chatTheme,
 
+    /// The team's default color scheme (SET-2), set by its admins: what
+    /// members who haven't picked their own see. Null until one is set.
+    TeamScheme? colorScheme,
+
     /// The chat's pinned messages, oldest pin first, at most
     /// [Limits.pinnedMessagesMax] (CHAT-15). Only the server changes them.
     @Default(<String>[]) List<String> pinnedMessageIds,

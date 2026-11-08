@@ -29,6 +29,7 @@ import 'package:battleplan/features/groups/presentation/chat_look_section.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/storage_widgets.dart';
+import 'package:battleplan/features/groups/presentation/team_scheme_section.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -709,6 +710,22 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                 PageHeading(key: _chatLookKey, l10n.chatLook),
                 headingGap,
                 ChatLookSection(group: group),
+                const SizedBox(height: 18),
+                // The team's default color scheme (SET-2, owner's request
+                // 2026-11-08): what members who haven't picked see.
+                PageHeading(
+                  group.isGroup
+                      ? l10n.groupDefaultScheme
+                      : l10n.teamDefaultScheme,
+                ),
+                headingGap,
+                TeamSchemeSection(
+                  group: group,
+                  onPick: (scheme) => _save(
+                    () => repo.updateColorScheme(group.id, scheme),
+                    announce: false,
+                  ),
+                ),
                 const SizedBox(height: 18),
                 // Storage used against the team's limit (STORE-2), with Media
                 // to free space (STORE-5).

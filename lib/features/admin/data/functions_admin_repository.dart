@@ -208,6 +208,7 @@ class FunctionsAdminRepository implements AdminRepository {
     String? timeZone,
     GroupSettings? settings,
     ChatTheme? chatTheme,
+    TeamScheme? colorScheme,
     String? photoPath,
   }) => _call('adminUpdateGroup', {
     'groupId': id.value,
@@ -231,6 +232,7 @@ class FunctionsAdminRepository implements AdminRepository {
         'background': chatTheme.background.name,
         'backgroundPath': chatTheme.backgroundPath,
       },
+    'colorScheme': ?colorScheme?.value,
     'photoPath': ?photoPath,
   });
 

@@ -358,7 +358,7 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       // A new account starts on Army green.
-      expect(find.text('Army green · new teams start here'), findsOneWidget);
+      expect(find.text('Army green · when a team has none'), findsOneWidget);
       await tester.tap(find.text('Default color scheme'));
       await tester.pumpAndSettle();
       expect(page(tester), SchemeRoles.army.page);
@@ -378,7 +378,7 @@ void main() {
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
       expect(page(tester), SchemeRoles.navy.page);
-      expect(find.text('Navy · new teams start here'), findsOneWidget);
+      expect(find.text('Navy · when a team has none'), findsOneWidget);
     });
 
     testWidgets('Team info → Color scheme saves my pick for the team', (
@@ -398,7 +398,14 @@ void main() {
       await tester.tap(find.text('Color scheme'));
       await tester.pumpAndSettle();
       expect(find.textContaining('How Thunder looks for you.'), findsOneWidget);
-      await tester.tap(find.text('Army green'));
+      // No team default: the first row is my own default, checked.
+      expect(
+        tester.getSemantics(
+          find.bySemanticsLabel(RegExp(r'^Your default \(Army green\), ')),
+        ),
+        isSemantics(isSelected: true, isButton: true, hasTapAction: true),
+      );
+      await tester.tap(find.text('Your default (Army green)'));
       await tester.pumpAndSettle();
       expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
       await tester.tap(find.text('Light blue'));
@@ -406,6 +413,136 @@ void main() {
       expect(members.calls, contains('scheme a skyblue'));
       // The team's screens re-theme at once.
       expect(page(tester), SchemeRoles.skyblue.page);
+    });
+
+    testWidgets(
+      "Color scheme starts on the team's default, and picking it again "
+      "takes my pick back (owner's request 2026-11-08)",
+      (tester) async {
+        final members = FakeMemberRepository([
+          testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.dark),
+        ]);
+        final teams = FakeGroupRepository({
+          'a': testGroup('a', 'Thunder').copyWith(colorScheme: TeamScheme.navy),
+        });
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groupRepo: teams,
+          memberRepo: members,
+        );
+        await tester.pumpAndSettle();
+        GoRouter.of(tester.element(find.byType(Scaffold).first))
+            .go('/g/a/info');
+        await tester.pumpAndSettle();
+        // My explicit pick wins over the team's default.
+        expect(page(tester), SchemeRoles.dark.page);
+        expect(find.text('Dark'), findsOneWidget);
+        await tester.tap(find.text('Color scheme'));
+        await tester.pumpAndSettle();
+        expect(find.text('Team default (Navy)'), findsOneWidget);
+        expect(
+          tester.getSemantics(find.bySemanticsLabel(RegExp('^Dark, '))),
+          isSemantics(isSelected: true, isButton: true, hasTapAction: true),
+        );
+        // Team default deletes my pick, and the team's Navy reaches me.
+        await tester.tap(find.text('Team default (Navy)'));
+        await tester.pumpAndSettle();
+        expect(members.calls, contains('scheme a cleared'));
+        expect(members.memberships.single.colorScheme, isNull);
+        expect(page(tester), SchemeRoles.navy.page);
+        expect(
+          tester.getSemantics(
+            find.bySemanticsLabel(RegExp(r'^Team default \(Navy\), ')),
+          ),
+          isSemantics(isSelected: true, isButton: true, hasTapAction: true),
+        );
+        // An admin's change reaches me live, with no pick of my own.
+        teams.setGroup(
+          teams.groups['a']!.copyWith(colorScheme: TeamScheme.light),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Team default (Light)'), findsOneWidget);
+        expect(page(tester), SchemeRoles.light.page);
+        // Picking Navy, even the old default, is a pick of my own: a later
+        // change to the team's default leaves it.
+        await tester.tap(find.text('Navy'));
+        await tester.pumpAndSettle();
+        expect(members.calls, contains('scheme a navy'));
+        teams.setGroup(
+          teams.groups['a']!.copyWith(colorScheme: TeamScheme.skyblue),
+        );
+        await tester.pumpAndSettle();
+        expect(page(tester), SchemeRoles.navy.page);
+        // Opening the screen or going back never writes one.
+        final writes = members.calls.where((c) => c.startsWith('scheme'));
+        expect(writes.length, 2);
+        await tester.tap(find.byTooltip('Back'));
+        await tester.pumpAndSettle();
+        expect(find.text('Navy'), findsOneWidget);
+        expect(members.calls.where((c) => c.startsWith('scheme')).length, 2);
+      },
+    );
+
+    testWidgets("a group's Color scheme says Group default", (tester) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup(
+            'a',
+            'Book club',
+          ).copyWith(kind: GroupKind.group, colorScheme: TeamScheme.skyblue),
+        },
+        memberships: [testMembership('a', 'coach')],
+      );
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/a/scheme');
+      await tester.pumpAndSettle();
+      expect(find.text('Group default (Light blue)'), findsOneWidget);
+      expect(page(tester), SchemeRoles.skyblue.page);
+    });
+
+    testWidgets("Team admin sets the team's default for everyone", (
+      tester,
+    ) async {
+      final teams = FakeGroupRepository({'a': testGroup('a', 'Thunder')});
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groupRepo: teams,
+        memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+        size: const Size(400, 4000),
+      );
+      await tester.pumpAndSettle();
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/a/settings');
+      await tester.pumpAndSettle();
+      expect(find.text('Team color scheme'), findsOneWidget);
+      expect(
+        find.text('None set yet: everyone sees their own default.'),
+        findsOneWidget,
+      );
+      // None is checked until one is set.
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Navy, '))),
+        isSemantics(isSelected: false, isButton: true, hasTapAction: true),
+      );
+      await tester.tap(find.text('Navy'));
+      await tester.pumpAndSettle();
+      expect(teams.updates, contains('colorScheme navy'));
+      expect(teams.groups['a']!.colorScheme, TeamScheme.navy);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(RegExp('^Navy, '))),
+        isSemantics(isSelected: true, isButton: true, hasTapAction: true),
+      );
+      // The owner has no pick of their own, so the team re-themes for them.
+      expect(page(tester), SchemeRoles.navy.page);
+      // The checked one writes nothing.
+      await tester.tap(find.text('Navy'));
+      await tester.pumpAndSettle();
+      expect(teams.updates.where((u) => u.startsWith('colorScheme')).length, 1);
     });
 
     /// Thunder in Light while my default is Army green, on its Chat tab.

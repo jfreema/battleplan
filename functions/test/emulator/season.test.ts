@@ -5,7 +5,7 @@
 // that stopped partway. Runs against the Auth, Firestore, and Storage
 // emulators with email and FCM faked:
 //   npm --prefix functions run emulators:test
-import { Timestamp } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { auth, db, storage } from '../../src/shared/admin.js';
 import { Collections, Limits } from '../../src/shared/constants.js';
@@ -63,6 +63,7 @@ async function fall(extra: object = {}): Promise<void> {
     color: '#1E88E5', photoPath: 'groups/fall/avatar/1.jpg', timeZone: 'America/Denver', ownerId: 'pat',
     settings: { membersCanInvite: false, allowMaybe: false, defaultReminderOffsets: [60, 1440] },
     chatTheme: { bubbleColor: '#E53935', background: 'photo', backgroundPath: 'groups/fall/theme/2.jpg' },
+    colorScheme: 'navy',
     memberCount: 8, playerCount: 2, storageBytes: 100, storageQuotaBytes: 500 * 1024 * 1024, storageQuotaCustom: true,
     lastMessageAt: Timestamp.now(), archivedAt: null, suspendedAt: null, status: 'active', createdAt: Timestamp.now(),
     ...extra,
@@ -158,6 +159,8 @@ describe('starting a new season (TEAM-16)', () => {
       archivedAt: null, status: 'active',
       photoPath: `groups/${groupId}/avatar/1.jpg`,
       chatTheme: { bubbleColor: '#E53935', background: 'photo', backgroundPath: `groups/${groupId}/theme/2.jpg` },
+      // The team's default color scheme (SET-2).
+      colorScheme: 'navy',
     });
     // The team's own settings, the default reminders among them; the rest default.
     expect(team.settings).toMatchObject({ membersCanInvite: false, allowMaybe: false, defaultReminderOffsets: [60, 1440], filterLanguage: true });
@@ -263,9 +266,12 @@ describe('starting a new season (TEAM-16)', () => {
   });
 
   it('a group brings no players or plays, even when asked (TEAM-14)', async () => {
-    await groups().doc('fall').update({ kind: 'group', sport: 'other' });
+    await groups().doc('fall').update({ kind: 'group', sport: 'other', colorScheme: FieldValue.delete() });
     const { groupId } = await start();
-    expect((await groups().doc(groupId).get()).data()).toMatchObject({ kind: 'group', sport: 'other', playerCount: 0 });
+    const made = (await groups().doc(groupId).get()).data()!;
+    expect(made).toMatchObject({ kind: 'group', sport: 'other', playerCount: 0 });
+    // With no default color scheme set, none is made up (SET-2).
+    expect(made).not.toHaveProperty('colorScheme');
     expect(await byTeam(Collections.players, groupId)).toHaveLength(0);
     expect(await byTeam(Collections.plays, groupId)).toHaveLength(0);
     // Its parents are just members.

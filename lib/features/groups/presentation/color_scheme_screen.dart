@@ -17,14 +17,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// The first row of a team's Color scheme (SET-2): "Team default (Navy)"
+/// when its admins set one, else "Your default (Army green)", my own.
+String schemeDefaultLabel(
+  AppLocalizations l10n, {
+  required bool isGroup,
+  required TeamScheme? teamDefault,
+  required TeamScheme mine,
+}) => teamDefault == null
+    ? l10n.colorSchemeYourDefault(mine.label(l10n))
+    : isGroup
+    ? l10n.colorSchemeGroupDefault(teamDefault.label(l10n))
+    : l10n.colorSchemeTeamDefault(teamDefault.label(l10n));
+
 /// Picks a color scheme (SET-2): my default at `/teams/scheme`, or how I see
 /// one team at `/g/:groupId/scheme`. A tap applies it at once; the checked
 /// row does nothing.
+///
+/// For a team, the first row is its default (owner's request 2026-11-08):
+/// the team's, set by its admins, or mine when they haven't set one. It's
+/// checked while I have no pick of my own; tapping it takes my pick back,
+/// so later changes to the default reach me. Only tapping one of the five
+/// saves a pick.
 class ColorSchemeScreen extends ConsumerWidget {
   /// My default: Teams, Profile, and every team I haven't picked for.
   const new defaultScheme({super.key}) : groupId = null;
 
-  /// How I see [groupId]. Everyone on the team picks their own.
+  /// How I see [groupId]: the team's default, or my own pick.
   const new team(GroupId this.groupId, {super.key});
 
   final GroupId? groupId;
@@ -45,31 +64,40 @@ class ColorSchemeScreen extends ConsumerWidget {
       return const Scaffold();
     }
     final group = id == null ? null : ref.watch(groupProvider(id)).value;
-    final current = id == null
-        ? ref.watch(defaultSchemeControllerProvider)
-        : ref.watch(teamSchemeProvider(id));
+    final isGroup = group?.isGroup ?? false;
+    final mine = ref.watch(defaultSchemeControllerProvider);
+    final teamDefault = group?.colorScheme;
+    // My explicit pick for this team, or null when I follow the default.
+    final pick = id == null
+        ? mine
+        : ref.watch(myMembershipProvider(id))?.colorScheme;
     final title = id == null ? l10n.defaultColorScheme : l10n.colorScheme;
     final lede = id == null
         ? l10n.defaultColorSchemeLede
-        : group?.isGroup ?? false
+        : isGroup
         ? l10n.colorSchemeGroupLede(group?.name ?? '')
         : l10n.colorSchemeTeamLede(group?.name ?? '');
     final note = id == null
         ? l10n.defaultColorSchemeNote
+        : teamDefault == null
+        ? l10n.colorSchemeNoteNoTeamDefault
         : l10n.colorSchemeNote;
 
-    Future<void> pick(TeamScheme scheme) async {
-      if (scheme == current) return;
+    // [scheme] null takes my pick back (a team only).
+    Future<void> choose(TeamScheme? scheme) async {
+      if (scheme == pick) return;
       final messenger = ScaffoldMessenger.of(context);
       try {
         if (id == null) {
+          if (scheme == null) return;
           await ref.read(defaultSchemeControllerProvider.notifier).set(scheme);
         } else {
           final uid = ref.read(authUserProvider).value?.uid;
           if (uid == null) return;
-          await ref
-              .read(memberRepositoryProvider)
-              .setMyColorScheme(id, UserId(uid), scheme);
+          final members = ref.read(memberRepositoryProvider);
+          await (scheme == null
+              ? members.clearMyColorScheme(id, UserId(uid))
+              : members.setMyColorScheme(id, UserId(uid), scheme));
         }
       } on Object catch (e) {
         Log.warn('Color scheme save failed', e);
@@ -85,7 +113,7 @@ class ColorSchemeScreen extends ConsumerWidget {
         title: title,
         backLabel: id == null
             ? l10n.tabTeams
-            : group?.isGroup ?? false
+            : isGroup
             ? l10n.groupInfo
             : l10n.teamInfo,
       ),
@@ -112,13 +140,30 @@ class ColorSchemeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 18),
               Container(height: 1, color: c.divider),
+              if (id != null) ...[
+                SchemeRow(
+                  scheme: teamDefault ?? mine,
+                  title: schemeDefaultLabel(
+                    l10n,
+                    isGroup: isGroup,
+                    teamDefault: teamDefault,
+                    mine: mine,
+                  ),
+                  subtitle: teamDefault == null
+                      ? l10n.colorSchemeYourDefaultSubtitle
+                      : l10n.colorSchemeTeamDefaultSubtitle,
+                  selected: pick == null,
+                  onTap: () => unawaited(choose(null)),
+                ),
+                Container(height: 1, color: c.divider),
+              ],
               for (final scheme in TeamScheme.values) ...[
                 SchemeRow(
                   scheme: scheme,
                   title: scheme.label(l10n),
                   subtitle: scheme.shortLabel(l10n),
-                  selected: scheme == current,
-                  onTap: () => unawaited(pick(scheme)),
+                  selected: scheme == pick,
+                  onTap: () => unawaited(choose(scheme)),
                 ),
                 Container(height: 1, color: c.divider),
               ],

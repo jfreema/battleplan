@@ -1,11 +1,12 @@
 // Starting a new season from a team (TEAM-16): a new team with the old
-// one's logo, color, sport, settings, chat look, and default reminders, the
-// people its owner brings along already on it (players with their links, so
-// parents keep answering for their kids), and, when asked, its documents and
-// saved plays. The caller then archives the old team (TEAM-9), keeping its
-// chat, photos, schedule, and results. Every document the copy writes is
-// named from the new team's ID, so a retry of an attempt that stopped partway
-// writes the same documents again and finishes it.
+// one's logo, color, sport, settings, chat look, default color scheme, and
+// default reminders, the people its owner brings along already on it
+// (players with their links, so parents keep answering for their kids),
+// and, when asked, its documents and saved plays. The caller then archives
+// the old team (TEAM-9), keeping its chat, photos, schedule, and results.
+// Every document the copy writes is named from the new team's ID, so a retry
+// of an attempt that stopped partway writes the same documents again and
+// finishes it.
 import { createHash } from 'node:crypto';
 import { FieldValue, type DocumentData, type DocumentReference, type WriteBatch } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
@@ -230,6 +231,8 @@ export async function copyTeamForSeason(
         Object.entries(DEFAULT_SETTINGS).map(([key, value]) => [key, (old.settings as DocumentData | undefined)?.[key] ?? value]),
       ),
       ...(theme ? { chatTheme: { ...theme, backgroundPath: null } } : {}),
+      // The team's default color scheme (SET-2), if its admins set one.
+      ...(typeof old.colorScheme === 'string' ? { colorScheme: old.colorScheme } : {}),
       memberCount: uids.size,
       playerCount: comingPlayers.length,
       lastMessageAt: null,

@@ -706,6 +706,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(admin.calls.last, 'team t1 settings');
 
+      // The team's default color scheme (SET-2).
+      final navy = find.text('Navy');
+      await tester.ensureVisible(navy);
+      await tester.tap(navy);
+      await tester.pumpAndSettle();
+      expect(admin.calls.last, 'team t1 colorScheme=navy');
+
       // Nothing was written to the team directly, which the rules refuse.
       expect(groups.updates, isEmpty);
       expect(groups.savedTheme, isNull);

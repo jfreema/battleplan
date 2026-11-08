@@ -31,6 +31,10 @@ abstract interface class GroupRepository {
   /// Saves the chat look (CHAT-18). Admins only.
   Future<void> updateChatTheme(GroupId id, ChatTheme theme);
 
+  /// Sets the team's default color scheme (SET-2): what members who haven't
+  /// picked their own see. Admins only.
+  Future<void> updateColorScheme(GroupId id, TeamScheme scheme);
+
   /// Uploads a chat background photo and returns its path (CHAT-18).
   Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes);
 
@@ -151,9 +155,14 @@ abstract interface class MemberRepository {
     NotificationLevel level,
   );
 
-  /// The color scheme I see this team in (SET-2), only for me. Syncs to
-  /// every device.
+  /// The color scheme I see this team in (SET-2), only for me: my own
+  /// explicit pick, over the team's default. Syncs to every device. Only
+  /// ever written when I pick one in Team info → Color scheme.
   Future<void> setMyColorScheme(GroupId groupId, UserId uid, TeamScheme scheme);
+
+  /// Takes back my pick for this team (SET-2), deleting it, so I see the
+  /// team's default (and any later change to it), else my own default.
+  Future<void> clearMyColorScheme(GroupId groupId, UserId uid);
 
   /// Mutes this team's pushes until [until], or unmutes with null
   /// (NOTIF-3). "Until unmuted" is [Limits.mutedForeverMs].

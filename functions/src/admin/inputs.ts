@@ -9,6 +9,7 @@ import {
   REMINDER_OFFSETS_MINUTES,
   reportStatusValues,
   sportValues,
+  teamSchemeValues,
 } from '../shared/constants.js';
 import { teamColor } from '../shared/team_color.js';
 import { teamStatusValues } from '../teams/status.js';
@@ -90,7 +91,8 @@ const StoragePath = z.string().min(1).max(PATH_MAX).nullable().optional();
 /**
  * A super admin's edit to a team they aren't on (ADMIN-3): the profile and
  * settings fields its admins may write, validated as the rules' validGroup
- * and validChatTheme do (TEAM-5, CHAT-18). The logo and background are
+ * and validChatTheme do (TEAM-5, CHAT-18), and the default color scheme
+ * (SET-2). The logo and background are
  * uploaded first (storage.rules let super admins) and named here by path.
  * `backgroundPath` changes only the chat look's photo.
  */
@@ -122,6 +124,8 @@ export const UpdateGroupInput = z
         backgroundPath: StoragePath,
       })
       .optional(),
+    // The team's default color scheme (SET-2), as the rules check it.
+    colorScheme: z.enum(teamSchemeValues).nullable().optional(),
     photoPath: StoragePath,
     backgroundPath: StoragePath,
   })

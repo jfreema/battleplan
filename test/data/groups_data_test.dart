@@ -243,6 +243,15 @@ void main() {
             as Map)['bubbleColor'],
         isNull,
       );
+      // The team's default color scheme (SET-2), read back on the team.
+      expect((await repo.watchGroup(_g).first)!.colorScheme, isNull);
+      await repo.updateColorScheme(_g, TeamScheme.navy);
+      expect((await db.doc('groups/g1').get()).data()!['colorScheme'], 'navy');
+      expect((await repo.watchGroup(_g).first)!.colorScheme, TeamScheme.navy);
+      expect(
+        groupFromFirestore('x', const {'colorScheme': 'olive'}).colorScheme,
+        isNull,
+      );
     });
 
     test('maps write refusals to failures', () async {
@@ -260,6 +269,10 @@ void main() {
         if (code != 'unavailable') {
           await expectLater(
             repo.updateChatTheme(_g, const ChatTheme()),
+            throwsA(type),
+          );
+          await expectLater(
+            repo.updateColorScheme(_g, TeamScheme.dark),
             throwsA(type),
           );
           await expectLater(repo.uploadLogo(_g, Uint8List(1)), throwsA(type));
@@ -460,6 +473,13 @@ void main() {
       await repo.setMyColorScheme(_g, _me, TeamScheme.navy);
       final d = (await db.doc('groupMembers/g1_alex').get()).data()!;
       expect(d['colorScheme'], 'navy');
+      // Taking it back deletes the field, so the team default reaches me.
+      await repo.clearMyColorScheme(_g, _me);
+      expect(
+        (await db.doc('groupMembers/g1_alex').get()).data(),
+        isNot(contains('colorScheme')),
+      );
+      await repo.setMyColorScheme(_g, _me, TeamScheme.navy);
       await db.doc('groupMembers/g1_alex').update({'avatarColor': 'mint'});
       final alex = (await repo.watchRoster(_g).first).firstWhere(
         (m) => m.uid == _me,

@@ -206,7 +206,8 @@ describe('users: the rules keep up with constants.json', () => {
         [...m[1].matchAll(/'([^']+)'/g)].map((q) => q[1]),
       );
     const schemeLists = lists('colorScheme');
-    expect(schemeLists).toHaveLength(2);
+    // The account default, a member's pick, and the team default (SET-2).
+    expect(schemeLists).toHaveLength(3);
     for (const list of schemeLists) expect(list).toEqual([...teamSchemeValues]);
     const colorLists = lists('avatarColor');
     expect(colorLists).toHaveLength(1);

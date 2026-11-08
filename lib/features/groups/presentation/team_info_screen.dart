@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/presentation/color_scheme_screen.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
@@ -110,13 +111,22 @@ class TeamInfoScreen extends ConsumerWidget {
                       AppIcons.notifications,
                       l10n.teamNotificationsMenu,
                     ),
-                    // How I see this team: everyone picks their own (SET-2).
+                    // How I see this team (SET-2): my own pick, else the
+                    // team's default.
                     SettingsRow(
                       icon: AppIcons.colorScheme,
                       title: l10n.colorScheme,
-                      subtitle: ref
-                          .watch(teamSchemeProvider(groupId))
-                          .label(l10n),
+                      subtitle:
+                          ref
+                              .watch(myMembershipProvider(groupId))
+                              ?.colorScheme
+                              ?.label(l10n) ??
+                          schemeDefaultLabel(
+                            l10n,
+                            isGroup: group?.isGroup ?? false,
+                            teamDefault: group?.colorScheme,
+                            mine: ref.watch(defaultSchemeControllerProvider),
+                          ),
                       onTap: () =>
                           unawaited(context.push('/g/${groupId.value}/scheme')),
                     ),

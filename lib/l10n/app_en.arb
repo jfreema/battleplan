@@ -2,7 +2,7 @@
   "@@locale": "en",
   "colorScheme": "Color scheme",
   "colorSchemeSection": "Color scheme",
-  "colorSchemeTeamLede": "How {team} looks for you.\nEveryone on the team picks their own.",
+  "colorSchemeTeamLede": "How {team} looks for you.\nIts admins set the team default; you can pick your own.",
   "@colorSchemeTeamLede": {
     "placeholders": {
       "team": {
@@ -10,7 +10,7 @@
       }
     }
   },
-  "colorSchemeGroupLede": "How {group} looks for you.\nEveryone in the group picks their own.",
+  "colorSchemeGroupLede": "How {group} looks for you.\nIts admins set the group default; you can pick your own.",
   "@colorSchemeGroupLede": {
     "placeholders": {
       "group": {
@@ -18,9 +18,25 @@
       }
     }
   },
-  "colorSchemeNote": "New teams start with your default, set on the Teams screen.",
+  "colorSchemeNote": "The default follows the admins' pick, even when they change it.",
+  "colorSchemeNoteNoTeamDefault": "Your default is the Default color scheme on Teams, until the admins set one here.",
+  "colorSchemeTeamDefault": "Team default ({scheme})",
+  "@colorSchemeTeamDefault": {"placeholders": {"scheme": {"type": "String"}}},
+  "colorSchemeGroupDefault": "Group default ({scheme})",
+  "@colorSchemeGroupDefault": {"placeholders": {"scheme": {"type": "String"}}},
+  "colorSchemeYourDefault": "Your default ({scheme})",
+  "@colorSchemeYourDefault": {"placeholders": {"scheme": {"type": "String"}}},
+  "colorSchemeTeamDefaultSubtitle": "Set by the admins",
+  "colorSchemeYourDefaultSubtitle": "No team default set yet",
+  "teamDefaultScheme": "Team color scheme",
+  "groupDefaultScheme": "Group color scheme",
+  "teamDefaultSchemeIntro": "What everyone on {team} sees, unless they pick their own in Team info → Color scheme.",
+  "@teamDefaultSchemeIntro": {"placeholders": {"team": {"type": "String"}}},
+  "groupDefaultSchemeIntro": "What everyone in {group} sees, unless they pick their own in Group info → Color scheme.",
+  "@groupDefaultSchemeIntro": {"placeholders": {"group": {"type": "String"}}},
+  "teamDefaultSchemeNone": "None set yet: everyone sees their own default.",
   "defaultColorScheme": "Default color scheme",
-  "defaultColorSchemeSubtitle": "{scheme} · new teams start here",
+  "defaultColorSchemeSubtitle": "{scheme} · when a team has none",
   "@defaultColorSchemeSubtitle": {
     "placeholders": {
       "scheme": {
@@ -28,7 +44,7 @@
       }
     }
   },
-  "defaultColorSchemeLede": "How Teams and Profile look for you.\nEvery team or group starts with it.",
+  "defaultColorSchemeLede": "How Teams and Profile look for you.\nAlso any team or group whose admins haven't set a default.",
   "defaultColorSchemeNote": "To change one team, use Color scheme in its Team info.",
   "colorSchemeSaveFailed": "Couldn't save your color scheme. Try again.",
   "schemeArmy": "Army green",

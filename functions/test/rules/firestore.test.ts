@@ -695,7 +695,52 @@ describe("kids' privacy (PLAYER-10)", () => {
   });
 });
 
+describe("a team's default color scheme (SET-2)", () => {
+  const set = (uid: string, g: string, colorScheme: unknown) =>
+    as(uid).doc(`groups/${g}`).update({ colorScheme, updatedAt: now() });
+
+  it("lets every team's admins set it to one of the five, or none", async () => {
+    for (const scheme of ['army', 'light', 'dark', 'navy', 'skyblue']) {
+      await assertSucceeds(set('alice', 'teamA', scheme));
+    }
+    await assertSucceeds(set('carol', 'teamB', 'navy'));
+    await assertSucceeds(set('alice', 'teamA', null));
+    await assertSucceeds(
+      as('alice').doc('groups/teamA').update({ colorScheme: firebase.firestore.FieldValue.delete() }),
+    );
+  });
+
+  it('refuses members, other teams, and bad values', async () => {
+    await assertFails(set('bob', 'teamA', 'navy'));
+    await assertFails(set('dan', 'teamB', 'navy'));
+    await assertFails(set('alice', 'teamB', 'navy'));
+    for (const bad of ['olive', '', 'Navy', 1, true]) {
+      await assertFails(set('alice', 'teamA', bad));
+    }
+  });
+
+  it('leaves a super admin who is not an admin to adminUpdateGroup', async () => {
+    const root = env.authenticatedContext('zed', { superAdmin: true }).firestore();
+    await assertFails(root.doc('groups/teamA').update({ colorScheme: 'navy', updatedAt: now() }));
+  });
+
+  it('is read-only on an archived team', async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('groups/teamA').update({ archivedAt: ts('2026-05-01T00:00:00Z') }),
+    );
+    await assertFails(set('alice', 'teamA', 'navy'));
+  });
+});
+
 describe('a member picks how a team looks to them (SET-2)', () => {
+  it('takes their pick back by deleting it, so the team default reaches them', async () => {
+    const db = as('bob');
+    await assertSucceeds(db.doc('groupMembers/teamA_bob').update({ colorScheme: 'dark' }));
+    await assertSucceeds(
+      db.doc('groupMembers/teamA_bob').update({ colorScheme: firebase.firestore.FieldValue.delete() }),
+    );
+  });
+
   it('sets and clears their own color scheme, even on an archived team', async () => {
     const db = as('bob');
     for (const scheme of ['army', 'light', 'dark', 'navy', 'skyblue']) {

@@ -6,9 +6,9 @@ import 'package:battleplan/features/admin/domain/admin_repository.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
 
-/// Saves edits to a team's profile, settings, logo, and chat look (TEAM-5,
-/// CHAT-18). Its admins write the team directly. The rules let only them,
-/// so a super admin who isn't one goes through `adminUpdateGroup` instead,
+/// Saves edits to a team's profile, settings, logo, chat look, and default
+/// color scheme (TEAM-5, CHAT-18, SET-2). Its admins write the team
+/// directly. The rules let only them, so a super admin who isn't one goes through `adminUpdateGroup` instead,
 /// which checks the claim, applies the same limits, and audits the change
 /// (ADMIN-3, ADMIN-8). Logo and background files upload the same way for
 /// both; only where the path is saved differs.
@@ -64,6 +64,11 @@ class TeamEditor {
   Future<void> updateChatTheme(GroupId id, ChatTheme theme) => asSuperAdmin
       ? _admin.updateGroup(id, chatTheme: theme)
       : _groups.updateChatTheme(id, theme);
+
+  /// Sets the team's default color scheme (SET-2).
+  Future<void> updateColorScheme(GroupId id, TeamScheme scheme) => asSuperAdmin
+      ? _admin.updateGroup(id, colorScheme: scheme)
+      : _groups.updateColorScheme(id, scheme);
 
   /// Uploads a chat background photo and returns its path, for
   /// [updateChatTheme] to save (CHAT-18).

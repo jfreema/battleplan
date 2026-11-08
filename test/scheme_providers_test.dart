@@ -34,12 +34,15 @@ Future<void> _settle() async {
 }
 
 void main() {
+  // The team read listens for the app coming back (groupProvider).
+  TestWidgetsFlutterBinding.ensureInitialized();
   Future<ProviderContainer> container({
     AuthUser? user = _coach,
     FakeUserRepository? users,
     FakeLocalPrefs? prefs,
     List<dynamic> memberships = const [],
     FakeAuthRepository? auth,
+    FakeGroupRepository? groups,
   }) async {
     final c = ProviderContainer(
       overrides: [
@@ -54,22 +57,120 @@ void main() {
           FakeMemberRepository(memberships.cast()),
         ),
         groupRepositoryProvider.overrideWithValue(
-          FakeGroupRepository({
-            'a': testGroup('a', 'Thunder'),
-            'b': testGroup('b', 'Comets'),
-          }),
+          groups ??
+              FakeGroupRepository({
+                'a': testGroup('a', 'Thunder'),
+                'b': testGroup('b', 'Comets'),
+              }),
         ),
       ],
     );
     addTearDown(c.dispose);
     c
       ..listen(myProfileProvider, (_, _) {})
-      ..listen(myMembershipsProvider, (_, _) {});
+      ..listen(myMembershipsProvider, (_, _) {})
+      // My teams' reads, as the app keeps them.
+      ..listen(myTeamsProvider, (_, _) {});
     await _settle();
     return c;
   }
 
+  group("resolveTeamScheme (owner's request 2026-11-08)", () {
+    test('my explicit pick, else the team default, else my default', () {
+      expect(
+        resolveTeamScheme(
+          pick: TeamScheme.dark,
+          teamDefault: TeamScheme.navy,
+          mine: TeamScheme.light,
+        ),
+        TeamScheme.dark,
+      );
+      expect(
+        resolveTeamScheme(
+          pick: null,
+          teamDefault: TeamScheme.navy,
+          mine: TeamScheme.light,
+        ),
+        TeamScheme.navy,
+      );
+      expect(
+        resolveTeamScheme(pick: null, teamDefault: null, mine: TeamScheme.army),
+        TeamScheme.army,
+      );
+    });
+  });
+
   group('teamScheme', () {
+    FakeGroupRepository navyThunder() => FakeGroupRepository({
+      'a': testGroup('a', 'Thunder').copyWith(colorScheme: TeamScheme.navy),
+      'b': testGroup('b', 'Comets'),
+    });
+
+    test("is the team's default when I haven't picked, live", () async {
+      final groups = navyThunder();
+      final c = await container(
+        users: FakeUserRepository()..colorScheme = TeamScheme.light,
+        groups: groups,
+        memberships: [
+          testMembership('a', 'coach'),
+          testMembership('b', 'coach'),
+        ],
+      );
+      c.listen(teamSchemeProvider(_a), (_, _) {});
+      await _settle();
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.navy);
+      // No team default: my own.
+      expect(c.read(teamSchemeProvider(_b)), TeamScheme.light);
+      // An admin changes it: it reaches me.
+      groups.setGroup(
+        groups.groups['a']!.copyWith(colorScheme: TeamScheme.skyblue),
+      );
+      await _settle();
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.skyblue);
+    });
+
+    test("my explicit pick wins over the team's default", () async {
+      final groups = navyThunder();
+      final c = await container(
+        groups: groups,
+        memberships: [
+          testMembership('a', 'coach').copyWith(colorScheme: TeamScheme.dark),
+        ],
+      );
+      c.listen(teamSchemeProvider(_a), (_, _) {});
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.dark);
+      groups.setGroup(
+        groups.groups['a']!.copyWith(colorScheme: TeamScheme.light),
+      );
+      await _settle();
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.dark);
+    });
+
+    test("a super admin viewing a team isn't given its default", () async {
+      final c = await container(
+        user: _boss,
+        groups: navyThunder(),
+        users: FakeUserRepository()..colorScheme = TeamScheme.light,
+        memberships: [testMembership('b', 'boss')],
+      );
+      expect(c.read(teamSchemeProvider(_a)), TeamScheme.light);
+    });
+
+    test("the device keeps the team's default for a cold start", () async {
+      final prefs = FakeLocalPrefs();
+      final c = await container(
+        prefs: prefs,
+        groups: navyThunder(),
+        memberships: [
+          testMembership('a', 'coach'),
+          testMembership('b', 'coach').copyWith(colorScheme: TeamScheme.dark),
+        ],
+      );
+      c.listen(teamSchemeCacheProvider, (_, _) {});
+      await _settle();
+      expect(prefs.teamSchemes, {'a': TeamScheme.navy, 'b': TeamScheme.dark});
+    });
+
     test('is my pick for the team, else my default', () async {
       final c = await container(
         users: FakeUserRepository()..colorScheme = TeamScheme.light,

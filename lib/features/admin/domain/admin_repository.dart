@@ -39,8 +39,9 @@ abstract interface class AdminRepository {
   /// Permanently deletes the team; [confirmName] must match its name.
   Future<void> deleteGroup(GroupId id, String confirmName);
 
-  /// Edits the profile, settings, or chat look of a team the super admin
-  /// isn't an admin of (ADMIN-3, TEAM-5, CHAT-18), with the limits its own
+  /// Edits the profile, settings, chat look, or default color scheme of a
+  /// team the super admin isn't an admin of (ADMIN-3, TEAM-5, CHAT-18,
+  /// SET-2), with the limits its own
   /// admins have, and audited. [photoPath] names a logo already uploaded to
   /// the team's `avatar/` folder; a chat background photo is in
   /// [chatTheme], uploaded to its `theme/` folder.
@@ -53,6 +54,7 @@ abstract interface class AdminRepository {
     String? timeZone,
     GroupSettings? settings,
     ChatTheme? chatTheme,
+    TeamScheme? colorScheme,
     String? photoPath,
   });
 

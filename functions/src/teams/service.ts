@@ -359,7 +359,7 @@ export async function setGroupArchived(
   });
 }
 
-/** What a super admin may change on a team's profile and settings (ADMIN-3); the same fields team admins write (TEAM-5, CHAT-18). */
+/** What a super admin may change on a team's profile and settings (ADMIN-3); the same fields team admins write (TEAM-5, CHAT-18, SET-2). */
 export interface GroupEdit {
   name?: string;
   description?: string;
@@ -368,6 +368,8 @@ export interface GroupEdit {
   timeZone?: string;
   settings?: Record<string, unknown>;
   chatTheme?: { bubbleColor?: string | null; background?: string; backgroundPath?: string | null };
+  /** The team's default color scheme (SET-2), or null for none. */
+  colorScheme?: string | null;
   photoPath?: string | null;
   backgroundPath?: string | null;
 }
@@ -390,7 +392,7 @@ export async function updateGroupProfile(
     if (!group.exists) throw new HttpsError('not-found', 'No such team.');
     if (group.get('archivedAt') != null) throw new HttpsError('failed-precondition', 'archived');
     const after: Record<string, unknown> = {};
-    for (const key of ['name', 'description', 'color', 'sport', 'timeZone', 'photoPath'] as const) {
+    for (const key of ['name', 'description', 'color', 'sport', 'timeZone', 'photoPath', 'colorScheme'] as const) {
       if (edit[key] !== undefined) after[key] = edit[key];
     }
     // A basic group has no sport (TEAM-14).

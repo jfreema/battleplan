@@ -361,6 +361,15 @@ class FakeGroupRepository implements GroupRepository {
     updates.add('chatTheme');
   }
 
+  /// Sets the team's default scheme as the server would, telling anyone
+  /// watching (SET-2).
+  @override
+  Future<void> updateColorScheme(GroupId id, TeamScheme scheme) async {
+    updates.add('colorScheme ${scheme.value}');
+    final g = groups[id.value];
+    if (g != null) setGroup(g.copyWith(colorScheme: scheme));
+  }
+
   @override
   Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes) async =>
       'groups/${id.value}/theme/bg.jpg';
@@ -581,6 +590,12 @@ class FakeMemberRepository implements MemberRepository {
   ) async {
     calls.add('scheme ${groupId.value} ${scheme.value}');
     _updateMine(groupId, uid, (m) => m.copyWith(colorScheme: scheme));
+  }
+
+  @override
+  Future<void> clearMyColorScheme(GroupId groupId, UserId uid) async {
+    calls.add('scheme ${groupId.value} cleared');
+    _updateMine(groupId, uid, (m) => m.copyWith(colorScheme: null));
   }
 
   DateTime? mutedUntil;
@@ -3367,6 +3382,7 @@ class FakeAdminRepository implements AdminRepository {
     String? timeZone,
     GroupSettings? settings,
     ChatTheme? chatTheme,
+    TeamScheme? colorScheme,
     String? photoPath,
   }) => _act(
     [
@@ -3378,6 +3394,7 @@ class FakeAdminRepository implements AdminRepository {
       if (timeZone != null) 'timeZone=$timeZone',
       if (settings != null) 'settings',
       if (chatTheme != null) 'chatTheme=${_theme(chatTheme)}',
+      if (colorScheme != null) 'colorScheme=${colorScheme.value}',
       if (photoPath != null) 'photoPath=$photoPath',
     ].join(' '),
   );
