@@ -90,6 +90,8 @@ gcloud storage buckets update gs://battleplan-dev-ecce4.firebasestorage.app --co
 
 Every push to `main` deploys everything to `battleplan-dev-ecce4` through GitHub Actions once CI passes: Firestore rules and indexes, Storage rules, Functions, then the web app, so dev's app and server always match (2026-11-07: a new Dues build once met three-week-old Functions on dev). For another branch, or to redeploy by hand, run **Release to dev** from the Actions tab (`.github/workflows/release-dev.yml`). It waits for CI to pass on the commit (or skips that with `skip_ci_check`), builds the site and the app for dev, and deploys rules, indexes, Storage rules, Functions, and Hosting, in that order. It can run on a branch too.
 
+PDFium in CI: pdfrx's `pdfium_dart` build hook downloads PDFium from GitHub's release downloads during every build, and those sometimes answer 504 for many minutes (2026-11-09). So CI, Android build, and the releases cache `.dart_tool/hooks_runner/shared/pdfium_dart` and first run `tools/fill_pdfium.sh`, which fetches the same archive through the GitHub API into the folder the hook skips its download for; a release's web build also tries again twice, 90 seconds apart, when only that download fails. When `pdfium_dart` is upgraded, update `release` in that script to its new `_pdfiumRelease`.
+
 From your Mac instead:
 
 ```sh

@@ -96,6 +96,10 @@ jobs:
           path: .dart_tool/hooks_runner/shared/pdfium_dart
           key: pdfium-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: pdfium-${{ runner.os }}-
+      - name: PDFium for the build, ahead of pdfium_dart's own download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/fill_pdfium.sh linux-x64 || echo "::warning::Couldn't fetch PDFium ahead; the build tries itself."
       - name: Hosting build (website + web app under /app)
         env:
           # Not secrets: the reCAPTCHA site key for App Check once there is

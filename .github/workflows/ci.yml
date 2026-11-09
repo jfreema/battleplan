@@ -33,6 +33,10 @@ jobs:
           path: .dart_tool/hooks_runner/shared/pdfium_dart
           key: pdfium-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: pdfium-${{ runner.os }}-
+      - name: PDFium for the build, ahead of pdfium_dart's own download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/fill_pdfium.sh linux-x64 || echo "::warning::Couldn't fetch PDFium ahead; the build tries itself."
       - run: flutter pub get
       - name: Shared constants are up to date
         run: dart run tools/gen_constants.dart --check
@@ -75,6 +79,10 @@ jobs:
           path: .dart_tool/hooks_runner/shared/pdfium_dart
           key: pdfium-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: pdfium-${{ runner.os }}-
+      - name: PDFium for the build, ahead of pdfium_dart's own download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: tools/fill_pdfium.sh linux-x64 || echo "::warning::Couldn't fetch PDFium ahead; the build tries itself."
       - name: Hosting build (website + web app under /app)
         run: tools/build_hosting.sh dev
         env:
