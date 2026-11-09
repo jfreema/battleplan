@@ -549,8 +549,75 @@ kbd, .ui {
 .app-jump a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font: 600 1rem var(--label); }
 .app-jump .app-badge { width: 30px; height: 30px; border-radius: 9px; font-size: 1rem; }
 .switch-app { padding: 8px 0 12px; }
-.switch-app h2 { display: flex; align-items: center; gap: 14px; }
+/* The app's badge sits beside its heading, outside it, so the heading reads
+   "From GroupMe" to search engines, not "GFrom GroupMe". */
+.switch-head { display: flex; align-items: center; gap: 14px; margin: 1.6em 0 0.45em; }
+.page .switch-head h2 { margin: 0; }
 .switch-app .lead { margin-bottom: 0.6em; }
+.page .cta { margin-top: 48px; }
+.page .cta h2 { margin-top: 0; font-size: clamp(1.8rem, 5.5vw, 2.6rem); }
+.popular h2 { margin-bottom: 14px; }
+
+/* ---------- Feature pages (team chat, schedule, dues, the whiteboard,
+   groups, and the two alternatives): a hero with a phone, spotlights, cards,
+   the FAQ, links to the other pages, and the closing call to action. ---------- */
+.feature-hero { padding: 24px 0 56px; }
+.feature-hero h1 { font-size: clamp(2.4rem, 8vw, 3.9rem); }
+.feature-hero .actions { margin-top: 22px; }
+@media (min-width: 900px) { .feature-hero { padding: 40px 0 80px; } }
+/* Breadcrumbs: Home / this page, matching the BreadcrumbList in the JSON-LD. */
+.crumbs ol {
+  list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; align-items: center;
+  font: 600 0.95rem/1.3 var(--label); color: var(--muted);
+}
+.crumbs li + li::before { content: "/"; content: "/" / ""; margin: 0 10px; color: var(--muted); }
+.crumbs a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; color: var(--text); text-decoration-color: var(--mark); }
+.spot-copy p a, .section-head p a, .points a { text-decoration-color: var(--mark); }
+.spot-copy .more-link { font-size: 1.1rem; }
+/* The candy disc behind a spotlight's phones. */
+.disc-mint { --disc: var(--mint); }
+.disc-grape { --disc: var(--grape); }
+.disc-lemon { --disc: var(--lemon); }
+.disc-tangerine { --disc: var(--tangerine); }
+.disc-blue { --disc: var(--blue); }
+.disc-gum { --disc: var(--gum); }
+/* Cards: the feature tiles without a phone. */
+/* Four columns for four cards on a wide screen, two on a tablet; six go three by two. */
+.points { grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); }
+.points:has(> li:nth-child(5)) { grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+.points .tile { padding-bottom: 22px; }
+.nw { white-space: nowrap; }
+.points .tile p { margin: 0; }
+.points .tile p + p { margin-top: 8px; }
+.points-after { margin: 28px 0 0; color: var(--muted); max-width: 46em; }
+.steps-wrap { max-width: 720px; }
+/* Two short sections side by side from 900 px, each with its own heading. */
+.duo { display: grid; gap: 56px; }
+.duo .spot-copy p { max-width: none; }
+@media (min-width: 900px) { .duo { grid-template-columns: 1fr 1fr; gap: 64px; } }
+.steps-wrap .steps li { margin-bottom: 0.5em; }
+/* Links to the other pages: cards with a title and one line. */
+.related { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+.related a {
+  display: block; height: 100%; padding: 16px 18px 18px;
+  background: var(--card); color: var(--text); text-decoration: none;
+  border: 2px solid var(--rim); border-radius: 18px; box-shadow: 0 4px 0 var(--rim);
+  transition: transform 0.12s;
+}
+.related a:hover { transform: translateY(-2px); }
+.related b { display: block; font: 600 1.15rem/1.25 var(--label); text-decoration: underline 2px var(--mark); text-underline-offset: 0.2em; }
+.related span { display: block; margin-top: 6px; color: var(--card-muted); font-size: 0.98rem; line-height: 1.4; }
+/* The landing page's links to the feature pages, under the tiles. */
+.closer { margin-top: 32px; }
+.closer-title { margin: 0 0 10px; font: 600 1.1rem var(--label); color: var(--text); }
+.link-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.link-chips a {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 6px 16px; border-radius: 999px;
+  background: var(--card); color: var(--text); border: 2px solid var(--rim); box-shadow: 0 3px 0 var(--rim);
+  font: 600 1rem/1.2 var(--label); text-decoration: none; transition: transform 0.12s;
+}
+.link-chips a:hover { transform: translateY(-2px); }
+.popular { margin-top: 12px; }
 
 /* ---------- Footer ---------- */
 .site-footer {
@@ -563,8 +630,11 @@ kbd, .ui {
   display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 48px;
   color: var(--text); font: 600 1rem var(--label); text-decoration: none;
 }
-.footer-links a:hover { text-decoration: underline 2px var(--mark); }
+.footer-links a:hover, .footer-links a[aria-current="page"] { text-decoration: underline 2px var(--mark); }
 .site-footer p { margin: 0; }
+/* The feature pages and switching, on every page's footer. */
+.footer-nav { display: grid; gap: 12px 48px; padding-bottom: 14px; margin-bottom: 4px; border-bottom: 1px solid var(--hairline); }
+.site-footer .footer-head { margin: 4px 0 0; font: 0.8rem/1.3 var(--stencil); letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
 /* Who made it, with the Battle Baseball wordmark (owner's request 2026-11-06). */
 .made-by {
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
@@ -576,11 +646,12 @@ kbd, .ui {
 .site-footer .credit { font-size: 0.85rem; }
 @media (min-width: 760px) {
   .site-footer .wrap { grid-template-columns: 1fr auto; align-items: center; }
-  .site-footer :is(.made-by, .credit) { grid-column: 1 / -1; }
+  .site-footer :is(.made-by, .credit, .footer-nav) { grid-column: 1 / -1; }
+  .footer-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
-  .btn:active, .swatches label:hover, .apps a:hover { transform: none; }
+  .btn:active, .swatches label:hover, .apps a:hover, .related a:hover, .link-chips a:hover { transform: none; }
 }

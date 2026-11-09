@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Baseball &amp; softball whiteboard app: draw and animate plays</title>
+  <meta name="description" content="Draw baseball and softball plays on a real diamond, add steps, and watch them move. Post plays to your team chat or save them as GIFs. Free, no ads. Try it.">
+  <link rel="canonical" href="https://getbattleplan.app/baseball-whiteboard">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#474c2b">
+  <link rel="icon" href="/favicon-small.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Battleplan">
+  <meta property="og:title" content="Baseball &amp; softball whiteboard app: draw and animate plays">
+  <meta property="og:description" content="Draw baseball and softball plays on a real diamond, add steps, and watch them move. Post plays to your team chat or save them as GIFs. Free, no ads. Try it.">
+  <meta property="og:url" content="https://getbattleplan.app/baseball-whiteboard">
+  <meta property="og:image" content="https://getbattleplan.app/images/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Every team needs a Battleplan: Thunder's schedule on five phones, one in each color scheme.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Baseball &amp; softball whiteboard app: draw and animate plays">
+  <meta name="twitter:description" content="Draw baseball and softball plays on a real diamond, add steps, and watch them move. Post plays to your team chat or save them as GIFs. Free, no ads. Try it.">
+  <meta name="twitter:image" content="https://getbattleplan.app/images/og.jpg">
+  <meta name="twitter:image:alt" content="Every team needs a Battleplan: Thunder's schedule on five phones, one in each color scheme.">
+  <link rel="preload" href="/fonts/lilita-one.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/site.css">
+  <!-- WebPage and BreadcrumbList, and an FAQPage that repeats the page's
+       visible FAQ word for word: change both together (website/README.md). -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": "https://getbattleplan.app/baseball-whiteboard#webpage",
+        "url": "https://getbattleplan.app/baseball-whiteboard",
+        "name": "Baseball & softball whiteboard app: draw and animate plays",
+        "description": "Draw baseball and softball plays on a real diamond, add steps, and watch them move. Post plays to your team chat or save them as GIFs. Free, no ads. Try it.",
+        "inLanguage": "en",
+        "dateModified": "2026-11-09",
+        "isPartOf": {
+          "@id": "https://getbattleplan.app/#website"
+        },
+        "about": {
+          "@id": "https://getbattleplan.app/#app"
+        },
+        "publisher": {
+          "@id": "https://getbattleplan.app/#organization"
+        },
+        "primaryImageOfPage": {
+          "@type": "ImageObject",
+          "url": "https://getbattleplan.app/images/whiteboard-army.webp",
+          "width": 600,
+          "height": 1298
+        },
+        "breadcrumb": {
+          "@id": "https://getbattleplan.app/baseball-whiteboard#breadcrumb"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://getbattleplan.app/baseball-whiteboard#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://getbattleplan.app/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Baseball whiteboard",
+            "item": "https://getbattleplan.app/baseball-whiteboard"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://getbattleplan.app/baseball-whiteboard#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is the baseball whiteboard free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Plays and every other feature are free for every team, with no ads and no paid tier."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does it work on an iPad and a computer?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Plays is made for an iPad's touch and works with a mouse in any modern browser. On an iPhone the board runs the screen's width, with the tools below it. An Android app is on the way."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I save a play as a GIF?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Save as GIF makes an animated GIF of a saved play: each step glides into the next, and the last one holds for 3 seconds before it starts over. On a phone it goes to your photos; in a browser it downloads, or opens the share sheet."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does it work for softball?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Softball teams draw on the same diamond as baseball teams, with the same players, steps, and sharing."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Who can see our plays?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Only your team. Team admins draw and save plays, and everyone on the team can open them and play them back. Nobody outside the team can see them."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I need the rest of Battleplan to use it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Plays is part of every team on Battleplan. Create a free team, and Plays is beside its chat, schedule, and documents."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="Battleplan home"><img src="/favicon.svg" alt="" width="32" height="32"><span>Battleplan</span></a>
+      <nav class="site-nav" aria-label="Main">
+        <a class="hide-sm" href="/#features">Features</a>
+        <a class="hide-xs" href="/support">Support</a>
+        <a class="btn btn-primary btn-sm" href="/app/">Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="feature-hero spot-section" aria-labelledby="page-title">
+      <div class="wrap spot">
+        <div class="spot-copy">
+          <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><span aria-current="page">Baseball whiteboard</span></li></ol></nav>
+          <span class="eyebrow">Coach's whiteboard</span>
+          <h1 id="page-title">Baseball and softball whiteboard</h1>
+          <p class="lead">Draw baseball and softball plays on the diamond, add steps, and press play. Post a play to the team chat or save it as a GIF. Free, with no ads.</p>
+          <div class="actions">
+            <a class="btn btn-primary btn-lg" href="/app/sign-up">Get Started</a>
+            <a class="btn btn-secondary btn-lg" href="/app/">Login</a>
+          </div>
+          <!-- Apple's official badge, unmodified, at least 40 px tall with a
+               quarter of its height clear around it, and the only one on this
+               page; its credit line is in the footer (website/README.md). -->
+          <div class="store-badges">
+            <a href="https://apps.apple.com/app/id6823884728"><img src="/images/app-store-badge.svg" alt="Download on the App Store" width="144" height="48"></a>
+          </div>
+        </div>
+        <div class="spot-media disc-grape">
+          <div class="phone"><img src="/images/whiteboard-army.webp" width="600" height="1298" fetchpriority="high" alt="Thunder's baseball play Relay home on the coach's whiteboard in the Army green color scheme: the throws drawn in on the diamond, from right field to the second baseman as the relay, to the first baseman as the cutoff, and from him home or to second, at step 2 of 2, with a play button, Post to chat, and Save as GIF."><span class="tag" data-s="army" aria-hidden="true">Army green</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="draw" class="band" aria-labelledby="draw-title">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Plays</span>
+          <h2 id="draw-title">Draw a play in seconds.</h2>
+          <p>Plays opens on a real baseball field, drawn to scale: the outfield grass, the warning track and fence, the infield, the bases, the mound, and room behind home plate for the pitcher backing up.</p>
+        </div>
+        <ul class="tiles points">
+          <li class="tile">
+            <h3>The nine, in place</h3>
+            <p>Your players start at P, C, 1B, 2B, 3B, SS, LF, CF, and RF, and the ball starts in the pitcher's hand. The other side can start with a batter or with the bases loaded.</p>
+          </li>
+          <li class="tile">
+            <h3>Drag and draw</h3>
+            <p>Drag players and the ball with a finger, a stylus, or a mouse. Draw solid arrows for runs, dashed ones for throws, freehand lines, and text.</p>
+          </li>
+          <li class="tile">
+            <h3>Label anyone</h3>
+            <p>Label a player with a number, a position, or a name from your roster. Undo and redo as you go.</p>
+          </li>
+          <li class="tile">
+            <h3>Nothing lost</h3>
+            <p>The board keeps your drawing on that device until you clear it, so leaving never loses it. <span class="ui">New board</span> starts over.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+    <section id="steps" aria-labelledby="steps-title">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Steps</span>
+          <h2 id="steps-title">Add steps, press play.</h2>
+          <p>Show how a play unfolds, one step at a time, then watch it run.</p>
+        </div>
+        <ul class="tiles points">
+          <li class="tile">
+            <h3>Up to 10 steps</h3>
+            <p>Each new step starts where everyone stands, so you move only who moves.</p>
+          </li>
+          <li class="tile">
+            <h3>Press play</h3>
+            <p>The players and the ball glide from one step to the next. Stop it anytime, or step through by hand.</p>
+          </li>
+          <li class="tile">
+            <h3>iPad, iPhone, and web</h3>
+            <p>Made for an iPad's touch at practice, and just as good with a mouse on a laptop. On an iPhone the board runs the screen's width.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+    <section id="share" class="band" aria-labelledby="share-title">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Share it</span>
+          <h2 id="share-title">Show the whole team.</h2>
+          <p>Save the plays worth keeping. Everyone on the team can open them in <span class="ui">Plays</span> and play the steps.</p>
+        </div>
+        <ul class="tiles points">
+          <li class="tile">
+            <h3>Save to plays</h3>
+            <p>Keep a play for the team, named. Admins can edit it, duplicate it, or put it back on the whiteboard.</p>
+          </li>
+          <li class="tile">
+            <h3>Post to chat</h3>
+            <p>Post a picture of the play to the team chat. A tap on it opens the play, step by step.</p>
+          </li>
+          <li class="tile">
+            <h3>Save as GIF</h3>
+            <p>Make an animated GIF that plays every step, holds the last one, and starts over, for a text, an email, or a post.</p>
+          </li>
+          <li class="tile">
+            <h3>Share</h3>
+            <p>Send the same GIF straight from your phone's share sheet.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+    <section>
+      <div class="wrap">
+        <div class="duo">
+          <div class="spot-copy" id="plays">
+            <span class="eyebrow">Your playbook</span>
+            <h2 id="plays-title">The plays coaches draw.</h2>
+            <p>Battleplan doesn't come with canned plays: you draw your own, the way your team runs them. Coaches use it for the plays that are hard to explain out loud:</p>
+            <ul class="chips">
+            <li>Relay home</li>
+            <li>Cutoff to third</li>
+            <li>Bunt coverage</li>
+            <li>First-and-third defense</li>
+            <li>Backing up bases</li>
+            <li>Pickoffs</li>
+            <li>Rundowns</li>
+          </ul>
+          </div>
+          <div class="spot-copy" id="softball">
+            <span class="eyebrow">Softball</span>
+            <h2 id="softball-title">Softball too.</h2>
+            <p>A softball team's Plays opens on the same diamond, with the same nine, steps, and sharing, so softball coaches draw their bunt defenses and first-and-thirds the same way.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="other-sports" class="band" aria-labelledby="other-sports-title">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Every sport</span>
+          <h2 id="other-sports-title">Other sports, other boards.</h2>
+          <p>Every board is drawn from a real field's measurements, with its own starting positions. Any board can be picked.</p>
+        </div>
+        <ul class="tiles points">
+          <li class="tile">
+            <h3>Basketball</h3>
+            <p>A half or full court with the lane and the three-point line. Your five at PG, SG, SF, PF, and C, and the other side in man-to-man or a <span class="nw">2-3</span> zone.</p>
+          </li>
+          <li class="tile">
+            <h3>Soccer</h3>
+            <p>A full or half pitch with its boxes and goals, in <span class="nw">4-4-2</span>, <span class="nw">4-3-3</span>, <span class="nw">3-5-2</span>, 9v9, or 7v7.</p>
+          </li>
+          <li class="tile">
+            <h3>Football</h3>
+            <p>X's and O's on yard lines and hash marks: the offense in the I formation or shotgun, the defense in a <span class="nw">4-3</span> or <span class="nw">3-4</span>.</p>
+          </li>
+          <li class="tile">
+            <h3>Blank board</h3>
+            <p>For every other sport: a clean board to draw on.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+    <section id="more" aria-labelledby="more-title">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">More than a whiteboard</span>
+          <h2 id="more-title">The rest of your team's day.</h2>
+          <p>Plays is part of every team on Battleplan, next to the chat, the schedule, and the documents.</p>
+        </div>
+        <ul class="tiles points">
+          <li class="tile">
+            <h3>Team chat</h3>
+            <p>Messages, photos, polls, and announcements in one place. <a href="/team-chat">See team chat</a>.</p>
+          </li>
+          <li class="tile">
+            <h3>Schedule and RSVPs</h3>
+            <p>Games and practices with Going, Maybe, or Not going for every player. <a href="/team-schedule">See the schedule</a>.</p>
+          </li>
+          <li class="tile">
+            <h3>Team dues</h3>
+            <p>Who's paid for uniforms and fees, and who owes what. <a href="/team-dues">See dues</a>.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="faq" class="band" aria-labelledby="faq-title">
+      <div class="wrap narrow">
+        <div class="section-head">
+          <span class="eyebrow">FAQ</span>
+          <h2 id="faq-title">Questions</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Is the baseball whiteboard free?</summary>
+            <p>Yes. Plays and every other feature are free for every team, with no ads and no paid tier.</p>
+          </details>
+          <details>
+            <summary>Does it work on an iPad and a computer?</summary>
+            <p>Yes. Plays is made for an iPad's touch and works with a mouse in any modern browser. On an iPhone the board runs the screen's width, with the tools below it. An Android app is on the way.</p>
+          </details>
+          <details>
+            <summary>Can I save a play as a GIF?</summary>
+            <p>Yes. <span class="ui">Save as GIF</span> makes an animated GIF of a saved play: each step glides into the next, and the last one holds for 3 seconds before it starts over. On a phone it goes to your photos; in a browser it downloads, or opens the share sheet.</p>
+          </details>
+          <details>
+            <summary>Does it work for softball?</summary>
+            <p>Yes. Softball teams draw on the same diamond as baseball teams, with the same players, steps, and sharing.</p>
+          </details>
+          <details>
+            <summary>Who can see our plays?</summary>
+            <p>Only your team. Team admins draw and save plays, and everyone on the team can open them and play them back. Nobody outside the team can see them.</p>
+          </details>
+          <details>
+            <summary>Do I need the rest of Battleplan to use it?</summary>
+            <p>Plays is part of every team on Battleplan. Create a free team, and <span class="ui">Plays</span> is beside its chat, schedule, and documents.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="related-title">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">More from Battleplan</span>
+          <h2 id="related-title">Take a closer look.</h2>
+        </div>
+        <ul class="related">
+          <li><a href="/team-chat"><b>Team chat</b><span>Photos, replies, reactions, @mentions, announcements, and direct messages.</span></a></li>
+          <li><a href="/team-schedule"><b>Schedule and RSVPs</b><span>Games and practices, Going or Not going for every player, and calendar sync.</span></a></li>
+          <li><a href="/team-dues"><b>Team dues tracker</b><span>Who's paid, who owes what, and partial payments, with no fees.</span></a></li>
+          <li><a href="/switch"><b>Switch from GroupMe or TeamSnap</b><span>Bring your chat history, schedule, players, and files.</span></a></li>
+          <li><a href="/"><b>Everything in Battleplan</b><span>The whole app on one page: chat, schedule, polls, dues, and plays.</span></a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section aria-labelledby="cta-title">
+      <div class="wrap">
+        <div class="cta">
+          <span class="eyebrow">Game on</span>
+          <h2 id="cta-title">Get your team on Battleplan.</h2>
+          <p>Free, with no ads. Set up in two minutes.</p>
+          <div class="actions">
+            <a class="btn btn-lg" href="/app/sign-up">Get Started</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <nav class="footer-nav" aria-label="Features and switching">
+        <div>
+          <p class="footer-head" id="footer-features">Features</p>
+          <ul class="footer-links" aria-labelledby="footer-features">
+            <li><a href="/team-chat">Team chat</a></li>
+            <li><a href="/team-schedule">Schedule and RSVPs</a></li>
+            <li><a href="/team-dues">Team dues</a></li>
+            <li><a href="/baseball-whiteboard" aria-current="page">Baseball whiteboard</a></li>
+            <li><a href="/groups">Groups</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-head" id="footer-switch">Switching</p>
+          <ul class="footer-links" aria-labelledby="footer-switch">
+            <li><a href="/switch">Switch from GroupMe or TeamSnap</a></li>
+            <li><a href="/teamsnap-alternative">TeamSnap alternative</a></li>
+            <li><a href="/groupme-alternative">GroupMe alternative</a></li>
+          </ul>
+        </div>
+      </nav>
+      <ul class="footer-links">
+        <li><a href="/app/">Login</a></li>
+        <li><a href="/support">Support</a></li>
+        <li><a href="/privacy">Privacy</a></li>
+        <li><a href="/terms">Terms</a></li>
+        <li><a href="/delete-account">Delete your account</a></li>
+      </ul>
+      <p>© 2026 Battleplan · <a href="mailto:support@getbattleplan.app">support@getbattleplan.app</a></p>
+      <p class="credit">Apple, the Apple logo, iPhone, and iPad are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc.</p>
+    </div>
+  </footer>
+</body>
+</html>

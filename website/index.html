@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Battleplan: free team chat, schedules, and RSVPs for sports teams</title>
-  <meta name="description" content="Free app for groups and sports teams: chat, schedule and RSVPs, polls, dues, documents, and a coach's whiteboard. Guardians answer for their players. No ads.">
+  <title>Free team chat &amp; scheduling for sports teams · Battleplan</title>
+  <meta name="description" content="Free team chat app for sports teams and groups: group messaging, schedules and RSVPs, dues, polls, and a coach's play whiteboard. No ads. Get started free.">
   <link rel="canonical" href="https://getbattleplan.app/">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#474c2b">
@@ -13,16 +13,16 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Battleplan">
-  <meta property="og:title" content="Battleplan: free team chat, schedules, and RSVPs for sports teams">
-  <meta property="og:description" content="Chat, schedule and RSVPs, polls, dues, documents, and plays for groups and sports teams. Free, with no ads.">
+  <meta property="og:title" content="Free team chat &amp; scheduling for sports teams · Battleplan">
+  <meta property="og:description" content="Team chat and group messaging, schedules and RSVPs, polls, dues, and a coach's play whiteboard for sports teams and groups. Free, with no ads.">
   <meta property="og:url" content="https://getbattleplan.app/">
   <meta property="og:image" content="https://getbattleplan.app/images/og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Every team needs a Battleplan: Thunder's schedule on five phones, one in each color scheme.">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Battleplan: free team chat, schedules, and RSVPs for sports teams">
-  <meta name="twitter:description" content="Chat, schedule and RSVPs, polls, dues, documents, and plays for groups and sports teams. Free, with no ads.">
+  <meta name="twitter:title" content="Free team chat &amp; scheduling for sports teams · Battleplan">
+  <meta name="twitter:description" content="Team chat and group messaging, schedules and RSVPs, polls, dues, and a coach's play whiteboard for sports teams and groups. Free, with no ads.">
   <meta name="twitter:image" content="https://getbattleplan.app/images/og.jpg">
   <meta name="twitter:image:alt" content="Every team needs a Battleplan: Thunder's schedule on five phones, one in each color scheme.">
   <link rel="preload" href="/fonts/lilita-one.woff2" as="font" type="font/woff2" crossorigin>
@@ -51,6 +51,7 @@
         "@type": "WebSite",
         "@id": "https://getbattleplan.app/#website",
         "name": "Battleplan",
+        "alternateName": ["Battleplan Team Chat", "Battleplan team app"],
         "url": "https://getbattleplan.app/",
         "inLanguage": "en",
         "publisher": { "@id": "https://getbattleplan.app/#organization" }
@@ -59,7 +60,8 @@
         "@type": "SoftwareApplication",
         "@id": "https://getbattleplan.app/#app",
         "name": "Battleplan",
-        "description": "Team chat and scheduling for groups and sports teams: chat, schedule and RSVPs, polls, dues tracking, documents, and a coach's whiteboard. Guardians answer RSVPs for their players. Free, with no ads.",
+        "alternateName": ["Battleplan Team Chat", "Battleplan team app"],
+        "description": "Team chat and scheduling for groups and sports teams: group messaging, schedule and RSVPs, polls, dues tracking, documents, and a coach's whiteboard for baseball, softball, basketball, soccer, and football plays. Guardians answer RSVPs for their players. Free, with no ads.",
         "url": "https://getbattleplan.app/",
         "applicationCategory": "SportsApplication",
         "operatingSystem": "iOS, iPadOS, Web",
@@ -71,10 +73,12 @@
           "https://getbattleplan.app/images/schedule-army.webp",
           "https://getbattleplan.app/images/team-chat-navy.webp",
           "https://getbattleplan.app/images/event-skyblue.webp",
+          "https://getbattleplan.app/images/whiteboard-army.webp",
           "https://getbattleplan.app/images/dues-army.webp"
         ],
         "featureList": [
           "Group chat with photos, replies, reactions, mentions, and pinned announcements",
+          "Direct messages and chat search",
           "Schedule of games and practices with Going, Maybe, and Not going RSVPs",
           "Private calendar link that keeps Google Calendar, Apple Calendar, or Outlook in sync",
           "Assignments like snacks, drinks, and scorekeeper",
@@ -82,11 +86,11 @@
           "Polls",
           "Dues: track who has paid for uniforms and fees, in full or in part",
           "Team documents and links",
-          "Coach's whiteboard for drawing plays",
+          "Coach's whiteboard: draw baseball, softball, basketball, soccer, and football plays, play the steps back, post them to the team chat, or save them as animated GIFs",
           "All my teams in one schedule",
           "New seasons that bring the roster along and archive the old season",
           "Groups for anything that isn't a team",
-          "Five color schemes: Army green, Light, Dark, Navy, and Light blue",
+          "Five color schemes: Army green, Light, Dark, Navy, and Light blue, with a default for each team that its admins set",
           "Import from GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar"
         ],
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -103,6 +107,11 @@
           },
           {
             "@type": "Question",
+            "name": "Is Battleplan a team chat app?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes, and more. Every team and group gets a group chat with photos, replies, reactions, @mentions, pinned announcements, and direct messages, beside its schedule, polls, documents, and dues. Team chat has the details." }
+          },
+          {
+            "@type": "Question",
             "name": "Does every player need an account?",
             "acceptedAnswer": { "@type": "Answer", "text": "No. Accounts are for adults 18 and older. Coaches add the players, and guardians answer for them. Adult players answer for themselves." }
           },
@@ -113,8 +122,18 @@
           },
           {
             "@type": "Question",
+            "name": "Does it sync with Google Calendar?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. A private calendar link keeps Google Calendar, Apple Calendar, or Outlook up to date with your team's games and practices, including new times and cancellations. Team schedule and RSVPs has more." }
+          },
+          {
+            "@type": "Question",
             "name": "Does Battleplan handle payments for dues?",
             "acceptedAnswer": { "@type": "Answer", "text": "No. Admins record who has paid, in full or a part at a time, and people pay the team directly with Venmo, Cash App, or Apple Cash. Only admins see what others owe." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can we draw plays?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Team admins draw plays on a baseball and softball diamond, a basketball court, a soccer pitch, a football field, or a blank board, add steps, and press play. Anyone on the team can post a saved play to the chat or save it as a GIF. See the baseball and softball whiteboard." }
           },
           {
             "@type": "Question",
@@ -129,7 +148,7 @@
           {
             "@type": "Question",
             "name": "Can I change how my team looks?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes, for you. Pick Army green, Light, Dark, Navy, or Light blue for each team in Team info, and set your default on the Teams screen. Everyone picks their own." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. A team's admins set its color scheme in Team admin: Army green, Light, Dark, Navy, or Light blue. You can pick your own for each team in Team info, and set your default on the Teams screen." }
           },
           {
             "@type": "Question",
@@ -160,9 +179,9 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <span class="eyebrow">For Groups and Sports Teams</span>
+          <span class="eyebrow">Team chat for groups and sports teams</span>
           <h1 id="hero-title">Every team needs a Battleplan.</h1>
-          <p class="lead">Team chat, schedules, RSVPs, polls, dues, and plays for sports teams. Free, with no ads.</p>
+          <p class="lead">Team chat, schedules, RSVPs, polls, dues, and plays for sports teams and groups. Free, with no ads.</p>
           <div class="actions">
             <a class="btn btn-primary btn-lg" href="/app/sign-up">Get Started</a>
             <a class="btn btn-secondary btn-lg" href="/app/">Login</a>
@@ -199,7 +218,7 @@
                its box is a little bigger than the front phone's, so browsers
                count it as the page's largest image (LCP). -->
           <div class="stage">
-            <div class="phone p-army"><img src="/images/whiteboard-army.webp" width="600" height="1298" fetchpriority="high" alt="Battleplan on five phones, one in each color scheme, with the scheme picked below in front, Army green to start. Thunder's play Relay home on the coach's whiteboard in Army green: the throws drawn on the diamond, at step 2 of 2, with Post to chat and Save as GIF. Thunder's fall schedule with each card's Going, Maybe, or Not going in Navy. Cyclone's team chat in Light blue: Phil's &quot;Tournament champions!&quot;, then Rachel, Emma's guardian, posting two team photos side by side, the champions with their banner and a huddle of hands showing their rings, with &quot;Champions! So proud of this group.&quot;, and your own message, marked Sent: proud of every one of them, and no practice Tuesday. Saturday Run Club's group chat in Light, and Rachel's tournament poll in Rally Possums' chat in Dark."></div>
+            <div class="phone p-army"><img src="/images/whiteboard-army.webp" width="600" height="1298" fetchpriority="high" alt="Battleplan on five phones, one in each color scheme, with the scheme picked below in front, Army green to start. Thunder's baseball play Relay home on the coach's whiteboard in Army green: the throws drawn on the diamond, at step 2 of 2, with Post to chat and Save as GIF. Thunder's fall schedule with each card's Going, Maybe, or Not going in Navy. Cyclone's team chat in Light blue: Phil's &quot;Tournament champions!&quot;, then Rachel, Emma's guardian, posting two team photos side by side, the champions with their banner and a huddle of hands showing their rings, with &quot;Champions! So proud of this group.&quot;, and your own message, marked Sent: proud of every one of them, and no practice Tuesday. Saturday Run Club's group chat in Light, and Rachel's tournament poll in Rally Possums' chat in Dark."></div>
             <div class="phone p-navy"><img src="/images/schedule-navy.webp" width="600" height="1298" fetchpriority="high" decoding="async" alt=""></div>
             <div class="phone p-skyblue"><img src="/images/team-chat-skyblue.webp" width="600" height="1298" decoding="async" alt=""></div>
             <div class="phone p-light"><img src="/images/group-chat-light.webp" width="600" height="1298" decoding="async" alt=""></div>
@@ -240,7 +259,7 @@
           <li class="tile">
             <h3>Group chat</h3>
             <p>Photos, replies, mentions, and pinned announcements.</p>
-            <div class="shot"><div class="phone"><img src="/images/team-chat-navy.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Riverside Sluggers' team chat in the Navy color scheme: Tony, the assistant coach, replies to Jen's question about the field after the rain, saying the tarp was on and the infield looks great, with 2 Likes; Kelly, Mateo's guardian, posts two team photos side by side, the championship team with its banner and a huddle of hands showing their rings, with &quot;Champions! So proud of this group.&quot; and 2 Love and 2 Fire reactions; your own message in a red bubble, marked Sent: what a finish, and for Saturday, gloves, bats, and helmets, with catchers bringing their gear; and Dave, Ben's guardian, says sunflower seeds and the water cooler are on them, with a Like and a Love."><span class="tag" data-s="navy" aria-hidden="true">Navy</span></div></div>
+            <div class="shot"><div class="phone"><img src="/images/team-chat-navy.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Riverside Sluggers' baseball team chat in the Navy color scheme: Tony, the assistant coach, replies to Jen's question about the field after the rain, saying the tarp was on and the infield looks great, with 2 Likes; Kelly, Mateo's guardian, posts two team photos side by side, the championship team with its banner and a huddle of hands showing their rings, with &quot;Champions! So proud of this group.&quot; and 2 Love and 2 Fire reactions; your own message in a red bubble, marked Sent: what a finish, and for Saturday, gloves, bats, and helmets, with catchers bringing their gear; and Dave, Ben's guardian, says sunflower seeds and the water cooler are on them, with a Like and a Love."><span class="tag" data-s="navy" aria-hidden="true">Navy</span></div></div>
           </li>
           <li class="tile">
             <h3>Games and RSVPs</h3>
@@ -278,6 +297,16 @@
             </ul>
           </li>
         </ul>
+        <nav class="closer" aria-labelledby="closer-title">
+          <p class="closer-title" id="closer-title">Take a closer look</p>
+          <ul class="link-chips">
+            <li><a href="/team-chat">Team chat</a></li>
+            <li><a href="/team-schedule">Schedule and RSVPs</a></li>
+            <li><a href="/team-dues">Team dues</a></li>
+            <li><a href="/baseball-whiteboard">Baseball whiteboard</a></li>
+            <li><a href="/groups">Groups</a></li>
+          </ul>
+        </nav>
       </div>
     </section>
 
@@ -286,17 +315,20 @@
         <div class="spot-copy">
           <span class="eyebrow">Playbook</span>
           <h2 id="whiteboard-title">The coach's whiteboard.</h2>
-          <p>Draw a play, add steps, and press play. Made for an iPad at practice.</p>
+          <p>Draw baseball and softball plays on the diamond, add steps, and press play. Post a play to the team chat or save it as a GIF. Made for an iPad at practice.</p>
           <ul class="chips">
             <li>Baseball</li>
+            <li>Softball</li>
             <li>Basketball</li>
             <li>Soccer</li>
             <li>Football</li>
             <li>Blank board</li>
+            <li>Save as GIF</li>
           </ul>
+          <p class="more-link"><a href="/baseball-whiteboard">See the baseball and softball whiteboard</a></p>
         </div>
         <div class="spot-media">
-          <div class="phone"><img src="/images/whiteboard-army.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's play Relay home on the coach's whiteboard in the Army green color scheme: the throws drawn in on the diamond, from right field to the second baseman as the relay, to the first baseman as the cutoff, and from him home or to second, at step 2 of 2, with a play button, Post to chat, and Save as GIF."><span class="tag" data-s="army" aria-hidden="true">Army green</span></div>
+          <div class="phone"><img src="/images/whiteboard-army.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's baseball play Relay home on the coach's whiteboard in the Army green color scheme: the throws drawn in on the diamond, from right field to the second baseman as the relay, to the first baseman as the cutoff, and from him home or to second, at step 2 of 2, with a play button, Post to chat, and Save as GIF."><span class="tag" data-s="army" aria-hidden="true">Army green</span></div>
         </div>
       </div>
     </section>
@@ -312,6 +344,7 @@
             <li>Counts are players only</li>
             <li>Accounts are for adults</li>
           </ul>
+          <p class="more-link"><a href="/team-schedule">See schedules and RSVPs</a></p>
         </div>
         <div class="spot-media">
           <div class="phone"><img src="/images/youth-light.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Cyclone's practice in the Light color scheme, answered by a guardian: Luke and Alex each on their own row of Going, Maybe, and Not going, with Luke going and Alex still to answer, then who's going: 1 going, 0 maybe, 1 not going, and 2 with no reply, 1 of 4 players going."><span class="tag" data-s="light" aria-hidden="true">Light</span></div>
@@ -332,6 +365,7 @@
             <li>Apple Cash</li>
             <li>Only admins see who owes</li>
           </ul>
+          <p class="more-link"><a href="/team-dues">See the team dues tracker</a></p>
         </div>
         <div class="spot-media pair">
           <div class="phone"><img src="/images/dues-army.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's Dues screen as a team admin sees it, in the Army green color scheme: $195 owed in all, $140 paid, and $55 left, with Who owes what under it; a $30 tournament fee due Nov 10, 1 of 2 paid with $30 left; $45 uniforms due Nov 16, 2 of 3 paid and 1 partly paid with $25 left; then How to pay with the team's Venmo and Cash App."><span class="tag" data-s="army" aria-hidden="true">Army green</span></div>
@@ -354,7 +388,7 @@
           <li><a href="/switch#gamechanger"><span class="app-badge" aria-hidden="true">G</span>GameChanger</a></li>
           <li><a href="/switch#google-calendar"><span class="app-badge" aria-hidden="true">G</span>Google Calendar</a></li>
         </ul>
-        <p class="more-link"><a href="/switch">See the steps for each app</a></p>
+        <p class="more-link"><a href="/switch">See the steps for each app</a> · <a href="/groupme-alternative">GroupMe alternative</a> · <a href="/teamsnap-alternative">TeamSnap alternative</a></p>
         <p class="fineprint">GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar are trademarks of their owners; Battleplan isn't affiliated with them.</p>
       </div>
     </section>
@@ -385,6 +419,10 @@
             <p>Yes. Every team gets every feature, with no ads. Each team has room for 200&nbsp;MB of photos and files.</p>
           </details>
           <details>
+            <summary>Is Battleplan a team chat app?</summary>
+            <p>Yes, and more. Every team and group gets a group chat with photos, replies, reactions, @mentions, pinned announcements, and direct messages, beside its schedule, polls, documents, and dues. <a href="/team-chat">Team chat</a> has the details.</p>
+          </details>
+          <details>
             <summary>Does every player need an account?</summary>
             <p>No. Accounts are for adults 18 and older. Coaches add the players, and guardians answer for them. Adult players answer for themselves.</p>
           </details>
@@ -393,8 +431,16 @@
             <p>Share the team's invite link or QR code, or add people by email. People can also type in the team's invite code.</p>
           </details>
           <details>
+            <summary>Does it sync with Google Calendar?</summary>
+            <p>Yes. A private calendar link keeps Google Calendar, Apple Calendar, or Outlook up to date with your team's games and practices, including new times and cancellations. <a href="/team-schedule">Team schedule and RSVPs</a> has more.</p>
+          </details>
+          <details>
             <summary>Does Battleplan handle payments for dues?</summary>
             <p>No. Admins record who has paid, in full or a part at a time, and people pay the team directly with Venmo, Cash App, or Apple Cash. Only admins see what others owe.</p>
+          </details>
+          <details>
+            <summary>Can we draw plays?</summary>
+            <p>Yes. Team admins draw plays on a baseball and softball diamond, a basketball court, a soccer pitch, a football field, or a blank board, add steps, and press play. Anyone on the team can post a saved play to the chat or save it as a GIF. See the <a href="/baseball-whiteboard">baseball and softball whiteboard</a>.</p>
           </details>
           <details id="faq-import">
             <summary>How do I move my team from another app?</summary>
@@ -406,7 +452,7 @@
           </details>
           <details>
             <summary>Can I change how my team looks?</summary>
-            <p>Yes, for you. Pick Army green, Light, Dark, Navy, or Light blue for each team in <span class="ui">Team info</span>, and set your default on the <span class="ui">Teams</span> screen. Everyone picks their own.</p>
+            <p>Yes. A team's admins set its color scheme in <span class="ui">Team admin</span>: Army green, Light, Dark, Navy, or Light blue. You can pick your own for each team in <span class="ui">Team info</span>, and set your default on the <span class="ui">Teams</span> screen.</p>
           </details>
           <details>
             <summary>How do I delete my account?</summary>
@@ -451,6 +497,26 @@
         </svg>
         <p>The Battleplan app was created by <strong>Battle Sports</strong> and <strong>Battle Baseball</strong>.</p>
       </div>
+      <nav class="footer-nav" aria-label="Features and switching">
+        <div>
+          <p class="footer-head" id="footer-features">Features</p>
+          <ul class="footer-links" aria-labelledby="footer-features">
+            <li><a href="/team-chat">Team chat</a></li>
+            <li><a href="/team-schedule">Schedule and RSVPs</a></li>
+            <li><a href="/team-dues">Team dues</a></li>
+            <li><a href="/baseball-whiteboard">Baseball whiteboard</a></li>
+            <li><a href="/groups">Groups</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-head" id="footer-switch">Switching</p>
+          <ul class="footer-links" aria-labelledby="footer-switch">
+            <li><a href="/switch">Switch from GroupMe or TeamSnap</a></li>
+            <li><a href="/teamsnap-alternative">TeamSnap alternative</a></li>
+            <li><a href="/groupme-alternative">GroupMe alternative</a></li>
+          </ul>
+        </div>
+      </nav>
       <ul class="footer-links">
         <li><a href="/app/">Login</a></li>
         <li><a href="/support">Support</a></li>

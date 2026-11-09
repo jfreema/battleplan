@@ -1,6 +1,6 @@
 # Battleplan
 
-> Battleplan is a free team chat and scheduling app for groups and sports teams. Teams and groups chat, plan games and practices, take RSVPs, run polls, track dues, keep documents, and draw plays in one place. Every feature is free for every team, with no ads.
+> Battleplan is a free team chat and scheduling app for groups and sports teams. Teams and groups chat (group messaging), plan games and practices, take RSVPs, run polls, track dues, keep documents, and draw plays on a coach's whiteboard in one place. Every feature is free for every team, with no ads.
 
 The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id6823884728), and Battleplan runs in any modern browser at https://getbattleplan.app/app/ (phone or computer). Dues and the new color schemes come to the iPhone app in its next update; they're in the web app now. An Android app is on the way. People sign in with Google or Apple. Accounts are for adults 18 and older; players who don't use the app are roster entries that their guardians answer for.
 
@@ -17,7 +17,7 @@ The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id682388
 - Polls: one choice or several, named or anonymous, with an optional closing time.
 - Dues: admins track who has paid for uniforms, fees, and tournaments, for every player on a team or every member of a group, in full or a part at a time, and see who owes what by due and by person. Battleplan never processes payments: people pay the team directly with Venmo, Cash App, or Apple Cash. Only admins see what others owe.
 - Documents: files and links, like the lineup, league rules, and waivers, with pinning.
-- Coach's whiteboard: draw plays on a baseball diamond, basketball court, soccer pitch, football field, or blank board, add steps, and play them back.
+- Coach's whiteboard (Plays): draw plays on a baseball and softball diamond, basketball court, soccer pitch, football field, or blank board, add up to 10 steps, and play them back. Anyone on the team can post a saved play to the team chat or save it as an animated GIF.
 - Sports: baseball, softball, soccer, basketball, football, hockey, lacrosse, volleyball, and others.
 - Five color schemes: Army green (the default), Light, Dark, Navy, and Light blue. A team's admins set its default, and each person can pick their own for each team, plus a default of their own.
 - Importing: bring a team over from GroupMe, TeamSnap, TeamReach, GameChanger, or Google Calendar.
@@ -37,6 +37,13 @@ No ads, no selling data, and no tracking across other companies' apps and websit
 - [Get started](https://getbattleplan.app/app/sign-up): create a free account in the web app
 - [Log in](https://getbattleplan.app/app/): the web app
 - [iPhone and iPad app](https://apps.apple.com/app/id6823884728): Battleplan on the App Store
+- [Team chat](https://getbattleplan.app/team-chat): team chat and group messaging for sports teams and groups
+- [Baseball and softball whiteboard](https://getbattleplan.app/baseball-whiteboard): drawing and animating plays, posting them to the chat, and saving them as GIFs
+- [Team schedule and RSVPs](https://getbattleplan.app/team-schedule): games, practices, RSVPs for every player, reminders, assignments, and calendar sync
+- [Team dues tracker](https://getbattleplan.app/team-dues): who's paid, who owes what, and partial payments; money goes person to person
+- [Groups](https://getbattleplan.app/groups): group chat and events for clubs and anything that isn't a team
+- [A free TeamSnap alternative](https://getbattleplan.app/teamsnap-alternative): what every team gets, importing from TeamSnap, and what Battleplan doesn't do
+- [A GroupMe alternative built for teams](https://getbattleplan.app/groupme-alternative): keeping GroupMe chat history and adding a schedule, dues, and plays
 - [Switch to Battleplan](https://getbattleplan.app/switch): step-by-step imports from GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar
 - [Support](https://getbattleplan.app/support): common questions and the support email, support@getbattleplan.app
 - [Privacy Policy](https://getbattleplan.app/privacy)

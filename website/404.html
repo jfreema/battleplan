@@ -23,6 +23,7 @@
   <meta name="twitter:title" content="Page not found · Battleplan">
   <meta name="twitter:description" content="This page doesn't exist.">
   <meta name="twitter:image" content="https://getbattleplan.app/images/og.jpg">
+  <meta name="twitter:image:alt" content="Every team needs a Battleplan: Thunder's schedule on five phones, one in each color scheme.">
   <link rel="preload" href="/fonts/lilita-one.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/nunito.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/site.css">
@@ -49,11 +50,43 @@
         <a class="btn btn-secondary" href="/">Go to the home page</a>
       </div>
       <p style="margin-top:28px">Looking for an invite? Ask a team admin for a new link, or enter the team's invite code in the app under <span class="ui">Join a Team or Group</span>.</p>
+      <nav class="popular" aria-labelledby="popular-title">
+        <h2 id="popular-title">Popular pages</h2>
+        <ul class="link-chips">
+          <li><a href="/team-chat">Team chat</a></li>
+          <li><a href="/team-schedule">Schedule and RSVPs</a></li>
+          <li><a href="/team-dues">Team dues</a></li>
+          <li><a href="/baseball-whiteboard">Baseball whiteboard</a></li>
+          <li><a href="/groups">Groups</a></li>
+          <li><a href="/switch">Switch from GroupMe or TeamSnap</a></li>
+          <li><a href="/support">Support</a></li>
+        </ul>
+      </nav>
     </div>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
+      <nav class="footer-nav" aria-label="Features and switching">
+        <div>
+          <p class="footer-head" id="footer-features">Features</p>
+          <ul class="footer-links" aria-labelledby="footer-features">
+            <li><a href="/team-chat">Team chat</a></li>
+            <li><a href="/team-schedule">Schedule and RSVPs</a></li>
+            <li><a href="/team-dues">Team dues</a></li>
+            <li><a href="/baseball-whiteboard">Baseball whiteboard</a></li>
+            <li><a href="/groups">Groups</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-head" id="footer-switch">Switching</p>
+          <ul class="footer-links" aria-labelledby="footer-switch">
+            <li><a href="/switch">Switch from GroupMe or TeamSnap</a></li>
+            <li><a href="/teamsnap-alternative">TeamSnap alternative</a></li>
+            <li><a href="/groupme-alternative">GroupMe alternative</a></li>
+          </ul>
+        </div>
+      </nav>
       <ul class="footer-links">
         <li><a href="/app/">Login</a></li>
         <li><a href="/support">Support</a></li>
