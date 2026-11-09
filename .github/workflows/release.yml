@@ -87,13 +87,39 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      # pdfium_dart's build hook downloads PDFium from GitHub's release
+      # downloads, which sometimes answer 504 for minutes at a time
+      # (2026-11-09). The hook skips the download when its file is already
+      # there, so keep it between runs.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .dart_tool/hooks_runner/shared/pdfium_dart
+          key: pdfium-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pdfium-${{ runner.os }}-
       - name: Hosting build (website + web app under /app)
         env:
           # Not secrets: the reCAPTCHA site key for App Check once there is
           # one, and the Apple team for apple-app-site-association.
           APP_CHECK_WEB_KEY: ${{ inputs.flavor == 'prod' && vars.APP_CHECK_WEB_KEY_PROD || vars.APP_CHECK_WEB_KEY_DEV }}
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
-        run: tools/build_hosting.sh "${{ inputs.flavor }}" ${APP_CHECK_WEB_KEY:+--dart-define=APP_CHECK_WEB_KEY=$APP_CHECK_WEB_KEY}
+        run: |
+          # A PDFium download that GitHub refuses (5xx) is tried again after
+          # a pause, up to three builds in all; any other failure stops.
+          set -o pipefail
+          log=$(mktemp)
+          for attempt in 1 2 3; do
+            if tools/build_hosting.sh "${{ inputs.flavor }}" ${APP_CHECK_WEB_KEY:+--dart-define=APP_CHECK_WEB_KEY=$APP_CHECK_WEB_KEY} 2>&1 | tee "$log"; then
+              exit 0
+            fi
+            if ! grep -q 'Failed to download PDFium' "$log"; then
+              exit 1
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "GitHub refused the PDFium download (try $attempt of 3); trying again in 90 seconds."
+              sleep 90
+            fi
+          done
+          exit 1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: hosting-${{ inputs.flavor }}

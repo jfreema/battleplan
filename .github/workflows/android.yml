@@ -69,6 +69,13 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      # Keeps pdfium_dart's PDFium download between runs: GitHub's release
+      # downloads sometimes answer 504 for minutes (2026-11-09).
+      - uses: actions/cache@v4
+        with:
+          path: .dart_tool/hooks_runner/shared/pdfium_dart
+          key: pdfium-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pdfium-${{ runner.os }}-
       - run: flutter pub get
 
       - name: Upload key
