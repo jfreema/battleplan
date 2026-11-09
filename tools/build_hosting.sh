@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Builds the one Hosting site (ARCH §6.6, D40) into build/hosting/:
 #
-#   build/hosting/              the website (website/, copied as is)
+#   build/hosting/              the website (website/, copied as is; on dev,
+#                               every page gets a robots noindex meta tag)
 #   build/hosting/app/          the Flutter web app, built with --base-href /app/
 #   build/hosting/.well-known/  apple-app-site-association and assetlinks.json
 #                               for the flavor (hosting/well-known/<flavor>/)
@@ -41,6 +42,24 @@ if [ -d website ]; then
   cp -R website/. "$out/"
   # The editing notes are for the repo, not the public site.
   rm -f "$out/README.md"
+  # The dev site serves the same pages as getbattleplan.app: keep search
+  # engines from listing it. Its canonical links still point to
+  # getbattleplan.app, and robots.txt still lets crawlers in, so they see this.
+  if [ "$flavor" = dev ]; then
+    for page in "$out"/*.html; do
+      python3 - "$page" <<'PY'
+import sys
+path = sys.argv[1]
+text = open(path).read()
+if '<meta name="robots"' not in text:
+    head = '<meta charset="utf-8">'
+    if head not in text:
+        sys.exit(f"{path} has no {head} to put the noindex after")
+    text = text.replace(head, head + '\n  <meta name="robots" content="noindex">', 1)
+    open(path, "w").write(text)
+PY
+    done
+  fi
 fi
 if [ ! -f "$out/index.html" ]; then
   echo "No website/index.html yet: writing a placeholder root page." >&2
