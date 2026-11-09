@@ -8,9 +8,14 @@
 #   - the upload key (ANDROID_UPLOAD_KEYSTORE_BASE64,
 #     ANDROID_UPLOAD_KEYSTORE_PASSWORD, ANDROID_UPLOAD_KEY_ALIAS), which the
 #     Android build signs with;
-#   - PLAY_SERVICE_ACCOUNT_JSON: the JSON key of a Google Cloud service
-#     account that the Play Console has invited as a user with permission to
-#     release to testing tracks and production (docs/DEVELOPMENT.md).
+# and no key for Google Play: it signs in to Google keylessly, as Release to
+# prod does: GitHub's OIDC token through battleplan-prod's workload identity
+# pool (provider github-android, which accepts only this workflow on main), as
+# play-release@battleplan-prod.iam.gserviceaccount.com, an account with no
+# Google Cloud roles. That account is invited in the Play Console (Users and
+# permissions) with release permissions for Battleplan, and battleplan-prod
+# has the Google Play Android Developer API turned on (docs/DEVELOPMENT.md,
+# Android builds).
 # Google Play takes uploads only after the app exists in the Play Console
 # and its first App Bundle was uploaded there by hand, which also turns on
 # Play App Signing.
@@ -41,7 +46,7 @@ permissions:
   contents: read
 
 jobs:
-  # Before paying for a build: on main, the Play secret is there, and CI
+  # Before paying for a build: on main, the upload key is there, and CI
   # passed on this commit.
   checks:
     name: Ready to release
@@ -56,21 +61,14 @@ jobs:
           echo "::error::Android releases come from main (this is ${GITHUB_REF_NAME})."
           exit 1
 
-      - name: Google Play access
+      - name: Upload key
         env:
-          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
         run: |
-          missing=0
-          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
-            echo "::error::No PLAY_SERVICE_ACCOUNT_JSON secret. Make a service account in Google Cloud, invite its email in the Play Console (Users and permissions) with release permissions for Battleplan, and save its JSON key as the repository secret PLAY_SERVICE_ACCOUNT_JSON (docs/DEVELOPMENT.md, Android builds)."
-            missing=1
-          fi
           if [ -z "$KEYSTORE_BASE64" ]; then
             echo "::error::No ANDROID_UPLOAD_KEYSTORE_BASE64 secret: Google Play takes only bundles signed with the upload key (docs/DEVELOPMENT.md, Android builds)."
-            missing=1
+            exit 1
           fi
-          exit "$missing"
 
       - name: Skipping the CI check, as asked
         if: ${{ inputs.skip_ci_check }}
@@ -110,6 +108,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
     # One upload at a time; a second waits for the first.
     concurrency:
       group: release-android
@@ -139,9 +140,16 @@ jobs:
           echo "PLAY_TRACK=$play_track" >> "$GITHUB_ENV"
           echo "PLAY_STATUS=$status" >> "$GITHUB_ENV"
 
+      # Keyless sign-in to Google, as the releases do (no JSON key to keep).
+      - id: auth
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
+        with:
+          workload_identity_provider: projects/628123687470/locations/global/workloadIdentityPools/github/providers/github-android
+          service_account: play-release@battleplan-prod.iam.gserviceaccount.com
+
       - uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: app.getbattleplan
           releaseFiles: out/battleplan-prod-${{ needs.build.outputs.build_number }}.aab
           releaseName: Build ${{ needs.build.outputs.build_number }}
