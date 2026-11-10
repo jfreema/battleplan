@@ -357,13 +357,14 @@ void main() {
         200,
         scrollable: find.byType(Scrollable).first,
       );
-      // A new account starts on Army green.
-      expect(find.text('Army green · when a team has none'), findsOneWidget);
+      // A new account starts on the default, Dark (owner's request
+      // 2026-11-10).
+      expect(find.text('Dark · when a team has none'), findsOneWidget);
       await tester.tap(find.text('Default color scheme'));
       await tester.pumpAndSettle();
-      expect(page(tester), SchemeRoles.army.page);
+      expect(page(tester), SchemeRoles.dark.page);
       // The checked row writes nothing.
-      await tester.tap(find.text('Army green'));
+      await tester.tap(find.text('Dark'));
       await tester.pumpAndSettle();
       expect(users.colorScheme, isNull);
       await tester.tap(find.text('Navy'));
@@ -401,11 +402,11 @@ void main() {
       // No team default: the first row is my own default, checked.
       expect(
         tester.getSemantics(
-          find.bySemanticsLabel(RegExp(r'^Your default \(Army green\), ')),
+          find.bySemanticsLabel(RegExp(r'^Your default \(Dark\), ')),
         ),
         isSemantics(isSelected: true, isButton: true, hasTapAction: true),
       );
-      await tester.tap(find.text('Your default (Army green)'));
+      await tester.tap(find.text('Your default (Dark)'));
       await tester.pumpAndSettle();
       expect(members.calls.where((c) => c.startsWith('scheme')), isEmpty);
       await tester.tap(find.text('Light blue'));

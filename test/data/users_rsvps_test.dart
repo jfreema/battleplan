@@ -62,8 +62,10 @@ void main() {
       expect(notificationPrefsFromFirestore(null), isEmpty);
       final sparse = userProfileFromFirestore('x', const {});
       expect(sparse.status, UserStatus.active);
-      // A profile with no theme yet starts on Army green (schemeForThemeMode).
+      // A profile with no theme yet starts on the default, Dark
+      // (schemeForThemeMode).
       expect(sparse.themeMode, ThemePreference.system);
+      expect(sparse.defaultScheme, TeamScheme.dark);
       expect(
         userProfileFromFirestore('z', const {'themeMode': 'olive'}).themeMode,
         ThemePreference.olive,

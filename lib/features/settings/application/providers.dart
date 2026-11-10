@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/logging.dart';
+import 'package:battleplan/core/scheme_defaults.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/settings/domain/local_prefs_repository.dart';
@@ -63,15 +64,16 @@ class DefaultSchemeController extends _$DefaultSchemeController {
   }
 }
 
-/// The scheme outside a team: Army green signed out, else my default.
+/// The scheme outside a team: the default ([defaultTeamScheme], Dark)
+/// signed out, else my default.
 @Riverpod(keepAlive: true)
 TeamScheme appScheme(Ref ref) {
   // Watched always and first, so the controller exists from the first frame.
   final mine = ref.watch(defaultSchemeControllerProvider);
   final auth = ref.watch(authUserProvider);
-  // Army green only once auth has loaded with nobody signed in. While it
+  // The default only once auth has loaded with nobody signed in. While it
   // restores, `mine` is the cached default, so a cold start doesn't flash.
-  return auth.hasValue && auth.value == null ? TeamScheme.army : mine;
+  return auth.hasValue && auth.value == null ? defaultTeamScheme : mine;
 }
 
 /// The scheme a member sees a team in (SET-2, owner's request 2026-11-08):

@@ -265,12 +265,13 @@ void main() {
   });
 
   group('appScheme', () {
-    test('is Army green once auth has loaded with nobody signed in', () async {
+    test('is the default, Dark, once auth has loaded with nobody signed in '
+        "(owner's request 2026-11-10)", () async {
       final c = await container(
         user: null,
         prefs: FakeLocalPrefs()..defaultSchemeValue = TeamScheme.navy,
       );
-      expect(c.read(appSchemeProvider), TeamScheme.army);
+      expect(c.read(appSchemeProvider), TeamScheme.dark);
     });
 
     test("is this device's default while auth loads", () {
@@ -314,7 +315,8 @@ void main() {
       final prefs = FakeLocalPrefs();
       final c = await container(users: users, prefs: prefs);
       c.listen(defaultSchemeControllerProvider, (_, _) {});
-      expect(c.read(defaultSchemeControllerProvider), TeamScheme.army);
+      // An account that never picked one starts on the default, Dark.
+      expect(c.read(defaultSchemeControllerProvider), TeamScheme.dark);
       final saving = c
           .read(defaultSchemeControllerProvider.notifier)
           .set(TeamScheme.skyblue);

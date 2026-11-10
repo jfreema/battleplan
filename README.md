@@ -14,7 +14,7 @@ Team chat and scheduling for sports teams, free for every team and with no ads. 
 - **Groups:** besides teams, plain groups for anything else, as simple as they can be: the same chat, schedule, RSVPs, and documents, but no players or Plays, and everyone answers for themselves. A group's owner can make it a team later.
 - **New seasons:** a team's owner starts the next season as a new team, bringing the players, parents, coaches, and anyone else they choose, who are on it at once with nothing to accept; the old season is archived with its chat, photos, and schedule.
 - **Sign-in:** Continue with Google or Apple; an email and password, or an emailed link, for whoever needs one.
-- **Color schemes:** one look, Open Field, in five schemes: Army green (the default), Light, Dark, Navy, and Light blue. A team's admins set its default; each person can pick their own for a team or group, and a default for the rest.
+- **Color schemes:** one look, Open Field, in five schemes: Dark (the default), Army green, Light, Navy, and Light blue. A team's admins set its default; each person can pick their own for a team or group, and a default for the rest.
 - **Import:** bring a team over from GroupMe (messages, photos, files, and events) or TeamSnap (schedule, players, and files), and schedules from TeamReach, GameChanger, or Google Calendar.
 
 ## Sites

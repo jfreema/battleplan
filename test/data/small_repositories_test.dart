@@ -717,14 +717,14 @@ void main() {
 
     test('keeps the color schemes per account (SET-2)', () async {
       final repo = await open();
-      // Nothing yet: Army green.
-      expect(repo.defaultScheme(uid: 'u1'), TeamScheme.army);
+      // Nothing yet: the default, Dark.
+      expect(repo.defaultScheme(uid: 'u1'), TeamScheme.dark);
       await repo.setDefaultScheme('u1', TeamScheme.navy);
       expect(repo.defaultScheme(uid: 'u1'), TeamScheme.navy);
       // While auth restores, this device's last default.
       expect(repo.defaultScheme(), TeamScheme.navy);
       // Another account doesn't use it.
-      expect(repo.defaultScheme(uid: 'u2'), TeamScheme.army);
+      expect(repo.defaultScheme(uid: 'u2'), TeamScheme.dark);
       await repo.setTeamSchemes('u1', {'g1': TeamScheme.skyblue});
       expect(repo.teamScheme('g1', uid: 'u1'), TeamScheme.skyblue);
       expect(repo.teamScheme('g1', uid: 'u2'), isNull);
@@ -741,6 +741,9 @@ void main() {
 
       expect(await seeded({'themePreference': 'dark'}), TeamScheme.navy);
       expect(await seeded({'themePreference': 'arena'}), TeamScheme.dark);
+      // Gumdrop Army was a pick; System wasn't, so it gets the default.
+      expect(await seeded({'themePreference': 'olive'}), TeamScheme.army);
+      expect(await seeded({'themePreference': 'system'}), TeamScheme.dark);
       expect(
         await seeded({
           'themePreference': 'dark',

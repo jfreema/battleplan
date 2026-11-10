@@ -132,17 +132,20 @@ abstract class _$DefaultSchemeController extends $Notifier<TeamScheme> {
   }
 }
 
-/// The scheme outside a team: Army green signed out, else my default.
+/// The scheme outside a team: the default ([defaultTeamScheme], Dark)
+/// signed out, else my default.
 
 @ProviderFor(appScheme)
 final appSchemeProvider = AppSchemeProvider._();
 
-/// The scheme outside a team: Army green signed out, else my default.
+/// The scheme outside a team: the default ([defaultTeamScheme], Dark)
+/// signed out, else my default.
 
 final class AppSchemeProvider
     extends $FunctionalProvider<TeamScheme, TeamScheme, TeamScheme>
     with $Provider<TeamScheme> {
-  /// The scheme outside a team: Army green signed out, else my default.
+  /// The scheme outside a team: the default ([defaultTeamScheme], Dark)
+  /// signed out, else my default.
   AppSchemeProvider._()
     : super(
         from: null,
@@ -176,7 +179,7 @@ final class AppSchemeProvider
   }
 }
 
-String _$appSchemeHash() => r'bb3997be2386881a2761105ca5cdd3cd836b6eec';
+String _$appSchemeHash() => r'0a577e4fd5a68f8fe55d824d81cea003dc7ae297';
 
 /// The scheme I see [groupId] in ([resolveTeamScheme]): my pick on my
 /// membership, else the team's default, else my default. The team is read

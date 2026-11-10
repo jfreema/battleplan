@@ -18,7 +18,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The first row of a team's Color scheme (SET-2): "Team default (Navy)"
-/// when its admins set one, else "Your default (Army green)", my own.
+/// when its admins set one, else "Your default (Dark)", my own.
 String schemeDefaultLabel(
   AppLocalizations l10n, {
   required bool isGroup,

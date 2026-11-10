@@ -207,7 +207,7 @@ It creates or updates `appreview@getbattleplan.app` (or `DEMO_EMAIL`), which own
 
 ## App icons and splash screens
 
-The icons and splash screens come from the brand mark (SPEC §7.1) in `assets/brand/*.svg` `website/favicon.svg` and `website/favicon-small.svg` (the Stencil Crest on Army green; the small one is the browser-tab icon, also copied to `web/`); the sign-in screen draws the same shapes in `lib/core/widgets/brand_mark.dart`, and `web/index.html`'s loading screen inlines the favicon. After changing the mark, change all of them, run `tools/brand_icons.sh` (it needs Google Chrome to render the SVGs, and macOS's `sips` to size the web icons) and commit what it writes under `assets/brand/`, `android/`, `ios/`, `web/`, and `website/`.
+The icons and splash screens come from the brand mark (SPEC §7.1) in `assets/brand/*.svg` `website/favicon.svg` and `website/favicon-small.svg` (the Stencil Crest on Army green; the small one is the browser-tab icon, also copied to `web/`); the sign-in screen draws the same shapes in `lib/core/widgets/brand_mark.dart`, and `web/index.html`'s loading screen inlines the favicon. After changing the mark, change all of them, run `tools/brand_icons.sh` (it needs Google Chrome to render the SVGs, and macOS's `sips` to size the web icons) and commit what it writes under `assets/brand/`, `android/`, `ios/`, `web/`, and `website/`. The splash screens put the mark on Dark's page, `#0E0E0D`, the default color scheme's (ARCH D73): the colors are `flutter_native_splash`'s in `pubspec.yaml` and the loading screen's `--bg` in `web/index.html`.
 
 ## Everyday commands
 

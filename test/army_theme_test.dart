@@ -1,5 +1,6 @@
-// Army green (SPEC §7.4, SET-2), the scheme a new account starts on: an
-// army green page, cream type, and olive cards with cream type.
+// Army green (SPEC §7.4, SET-2), the default until 2026-11-10 and still
+// where Gumdrop Army accounts start: an army green page, cream type, and
+// olive cards with cream type.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_theme.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
@@ -10,10 +11,10 @@ import 'package:material_ui/material_ui.dart';
 void main() {
   final a = GumdropColors.forScheme(TeamScheme.army);
 
-  test('is where a new account and an unset theme start', () {
-    expect(schemeForThemeMode(null), TeamScheme.army);
-    expect(schemeForThemeMode(ThemePreference.system), TeamScheme.army);
+  test('is where Gumdrop Army accounts start, and no longer the default', () {
     expect(schemeForThemeMode(ThemePreference.olive), TeamScheme.army);
+    expect(schemeForThemeMode(null), isNot(TeamScheme.army));
+    expect(schemeForThemeMode(ThemePreference.system), isNot(TeamScheme.army));
   });
 
   test('army green page, cream type, olive cards', () {

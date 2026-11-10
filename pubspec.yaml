@@ -132,12 +132,14 @@ flutter_launcher_icons:
     theme_color: "#474C2B"
 
 # Army green, so launch runs straight into the default color scheme.
+# On Dark's page, the default color scheme (SET-2), so the app's first frame
+# follows without a change of color; the mark keeps its own colors.
 flutter_native_splash:
-  color: "#474C2B"
+  color: "#0E0E0D"
   image: assets/brand/mark.png
   android_12:
-    color: "#474C2B"
+    color: "#0E0E0D"
     image: assets/brand/mark.png
-    icon_background_color: "#474C2B"
+    icon_background_color: "#0E0E0D"
   # The web app keeps its own loading screen in web/index.html (ARCH §5.6).
   web: false

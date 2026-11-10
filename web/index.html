@@ -8,7 +8,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="Messaging and scheduling for sports teams.">
-  <meta name="theme-color" content="#474C2B">
+  <meta name="theme-color" content="#0E0E0D">
   <!-- The website is indexed; the web app isn't (WEB-5). -->
   <meta name="robots" content="noindex">
   <!-- Link previews in messaging apps: the website's card. An invite link
@@ -35,8 +35,9 @@
 
   <!-- Branded loading screen until Flutter's first frame (ARCH §5.6). -->
   <style>
-    /* Open Field's Army green page, the default color scheme. */
-    :root { color-scheme: dark; --bg: #474C2B; --fg: #F4EAD0; }
+    /* Open Field's Dark page, the default color scheme (SET-2), so the
+       first frame follows without a change of color. */
+    :root { color-scheme: dark; --bg: #0E0E0D; --fg: #F4EAD0; }
     html, body { margin: 0; height: 100%; background: var(--bg); }
     #splash {
       position: fixed; inset: 0; display: flex; flex-direction: column;
