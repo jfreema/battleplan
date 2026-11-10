@@ -350,9 +350,15 @@ void main() {
         rsvpDeadline: DateTime.utc(2026, 10, 12),
         seriesId: 's1',
         canceledAt: DateTime.utc(2026, 10, 2),
+        postToChat: true,
       );
       final copy = EventDraft.fromEvent(e, duplicate: true);
       expect(copy.date, isNull);
+      // Notify team is copied; Post to chat starts off, as on a new event,
+      // even from one that went in the chat (owner's request 2026-11-10).
+      expect(copy.notifyTeam, isTrue);
+      expect(copy.postToChat, isFalse);
+      expect(copy.template.postToChat, isFalse);
       expect(copy.startMinutes, 18 * 60);
       expect(copy.endMinutes, 19 * 60 + 30);
       expect(copy.opponent, 'Eagles');
@@ -379,6 +385,8 @@ void main() {
       );
       final edit = EventDraft.fromEvent(e);
       expect(edit.date, DateTime.utc(2026, 10, 13));
+      // An edit keeps what the event was made with.
+      expect(edit.postToChat, isTrue);
       expect(edit.deadline, DateTime.utc(2026, 10, 12));
       expect(edit.effectiveTitle, 'vs. Eagles');
       // A title typed by hand stays as typed.

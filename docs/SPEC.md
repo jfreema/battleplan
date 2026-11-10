@@ -678,7 +678,7 @@ Players that others answer for never get accounts, and every account belongs to 
 - **CHAT-10 · MVP · System messages.** Small, centered lines for: joined, left, removed, made admin, team renamed.
 - **CHAT-11 · MVP · Cards in chat.**
   - New polls appear as interactive poll cards (POLL-2).
-  - New events appear as event cards when "Post to chat" is on: the schedule's card (SCHED-1) beside the author's icon, with its type's edge, the title and type, the time and place, the schedule's attendance line (the mini bar, "2/4 going", and "Luke hasn't answered" for someone you answer for), and an RSVP row per person you answer for. Polls are as wide as the column allows, up to 420 px; yours sit on the right in your bubble. Members linked to players answer for each of their players right on the card (PLAYER-6).
+  - New events appear as event cards when their creator checks "Post to chat" (off by default, SCHED-3): the schedule's card (SCHED-1) beside the author's icon, with its type's edge, the title and type, the time and place, the schedule's attendance line (the mini bar, "2/4 going", and "Luke hasn't answered" for someone you answer for), and an RSVP row per person you answer for. Polls are as wide as the column allows, up to 420 px; yours sit on the right in your bubble. Members linked to players answer for each of their players right on the card (PLAYER-6).
 - **CHAT-12 · MVP · Blocked people.** Their messages are collapsed ("Message from someone you blocked · Show"), and they don't notify you.
 - **CHAT-13 · MVP · Reply to a message.**
   - Reply from the message menu, or swipe right on a message (phones).
@@ -776,16 +776,16 @@ Players that others answer for never get accounts, and every account belongs to 
   - **Game fields:** opponent, home or away, arrival time ("Arrive 30 min early").
   - **RSVP:** on or off (default on), with an optional deadline.
   - **Reminders:** defaults from Team admin. **No reminders** (picked while no time is, and the default for new teams) or any of 15 min, 1 h, 2 h, 1 day, 2 days, or 1 week before; tapping No reminders clears the times picked. Team admin's Default event reminders offers the same No reminders choice (owner's request 2026-11-08: "make sure it's possible to set events to have no reminders and to have it set to no reminders as a default").
-  - **Notify team** (default on) and **Post to chat** (default on).
+  - **Notify team** (default on) and **Post to chat** (default off). An event goes in the chat only when its creator checks Post to chat, since the schedule and Notify team already cover it (owner's request 2026-11-10: "events dont need to go to the chat by default. that makes it too cluttered and redundant. only put event info in the chat when the user explicitly checks the “notify team in chat” option, or something similar to that."). Builds of the app from before then still start it checked.
   - **Repeat:** doesn't repeat (default), or:
     - **Daily**, every N days, for tournaments and camps.
     - **Weekly** on selected days, every N weeks, for practices.
     - **Ends** on a date or after a number of events, no more than 12 months out.
     - **Skip dates** for holidays and breaks: the form lists the dates it will create ("24 practices · Tue and Thu · Oct 13 – Dec 17"), and tapping one removes it.
     - Times stay the same in the event's time zone across daylight-saving changes.
-    - Creating a series posts **one** event card to chat and sends **one** notification for the whole series ("New: Practice, Tue and Thu at 6:00 PM, Oct 13 – Dec 17").
+    - Creating a series sends **one** notification for the whole series ("New: Practice, Tue and Thu at 6:00 PM, Oct 13 – Dec 17") and, with Post to chat checked, posts **one** event card to chat.
   - **Duplicate:** from an event's details, anyone who can create events can tap **Duplicate**. It opens this form filled in from that event.
-    - Everything is copied except the date: type, title, times, time zone, location, notes, game fields, RSVP settings, reminders, Notify team, and Post to chat.
+    - Everything is copied except the date: type, title, times, time zone, location, notes, game fields, RSVP settings, reminders, and Notify team. Post to chat starts off, as on a new event, even when the original went in the chat.
     - The date is empty and gets focus, so it can't be saved as an accidental copy on the same day.
     - Nothing else carries over: no RSVPs, no Canceled state, and no link to the original's series. The copy is a new one-off event, unless Repeat is set on it.
     - Works on past and canceled events too, which covers "same game as last season".
@@ -819,7 +819,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - For repeating events, both ask "This event" or "This and following events". Canceling or deleting the rest of a series notifies the team once.
 - **SCHED-8 · MVP · Reminders.** A push at each reminder time to people who said Going or Maybe or haven't answered, but not Not going: "Reminder: Practice today at 6:00 PM · Riverside Park". On a team, reminders go to each player's member and guardians, and always to coaches and members not linked to a player; in a group, to members by their own answer (PLAYER-7).
   - **All-day events** start at midnight, so their reminders go out at **6 PM** in the event's time zone instead: 1 day before is 6 PM the evening before, and 2 days or a week before, 6 PM that day. The form offers them only 1 day, 2 days, and 1 week. A minute or hour reminder an all-day event carries anyway (from the 1.0 app, an import, or an older event) goes out at 6 PM the evening before too, once, and its page says "Reminders 1 day before, at 6 PM" (owner's request 2026-11-01).
-  - **A reminder by hand:** the event's menu has **Post a reminder in chat** for team admins and the event's creator, after asking. It posts the event in the chat again, marked Reminder, with its live RSVPs, the answer buttons, and how many players haven't answered, and the same people get the reminder push. Not on a canceled or finished event; once an hour per event.
+  - **A reminder by hand:** the event's menu has **Post a reminder in chat** for team admins and the event's creator, after asking. It posts the event in the chat, marked Reminder, with its live RSVPs, the answer buttons, and how many players haven't answered, and the same people get the reminder push. Not on a canceled or finished event; once an hour per event.
 - **SCHED-9 · MVP · Time zones.**
   - Times show in the viewer's time zone: the one they picked under **Profile → Time zone** (SET-7), or, on Automatic (the default), the device's.
   - If the event's time zone is different, both appear: "6:00 PM CDT · 7:00 PM your time".

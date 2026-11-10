@@ -189,6 +189,18 @@ describe('creating a series (SCHED-3)', () => {
     expect((await eventsOf(res.seriesId))[0].get('messageId')).toBeNull();
   });
 
+  it("posts no card unless Post to chat is sent checked, and still tells the team (owner's request 2026-11-10)", async () => {
+    // An app that leaves postToChat out gets the default: no card.
+    const sent: Record<string, unknown> = template();
+    delete sent.postToChat;
+    const res = await save('alex', { action: 'create', groupId: G, recurrence: daily(3, 2), template: sent });
+    expect(await eventCards()).toHaveLength(0);
+    expect(await sends('eventCreated')).toEqual([`${res.seriesId}_created`]);
+    for (const e of await eventsOf(res.seriesId)) {
+      expect(e.data()).toMatchObject({ postToChat: false, messageId: null });
+    }
+  });
+
   it('needs an admin unless members may create events (Q12)', async () => {
     const data = { action: 'create', groupId: G, recurrence: daily(3, 2), template: template() };
     await expect(save('pat', data)).rejects.toMatchObject({ code: 'permission-denied' });
@@ -576,6 +588,19 @@ describe('the events trigger (ARCH §6.4)', () => {
     // A retried trigger posts no second card.
     await followUpEventWrite('e1', undefined, data);
     expect(await eventCards()).toHaveLength(1);
+  });
+
+  it("posts no card unless Post to chat was checked, and still tells the team (owner's request 2026-11-10)", async () => {
+    await writeEvent('e1', oneOff(3 * DAY, { postToChat: false }));
+    // A doc without postToChat (only Functions could write one) posts none either.
+    const bare = oneOff(3 * DAY);
+    delete bare.postToChat;
+    await writeEvent('e2', bare);
+    expect(await eventCards()).toHaveLength(0);
+    expect((await eventData('e1'))?.messageId).toBeUndefined();
+    expect((await eventData('e2'))?.messageId).toBeUndefined();
+    expect((await sends('eventCreated')).sort()).toEqual(['e1_created', 'e2_created']);
+    expect(await centerFor('e1_created')).toEqual(['lee', 'pat', 'sam']);
   });
 
   it("tells everyone about a move, a member's own old Not going on a team included, and moves the RSVPs", async () => {

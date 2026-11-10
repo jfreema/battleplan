@@ -40,7 +40,10 @@ abstract class Event with _$Event {
     /// Minutes before the start, from [reminderOffsetsMinutes] (SCHED-8).
     @Default(<int>[]) List<int> reminderOffsets,
     @Default(true) bool notifyTeam,
-    @Default(true) bool postToChat,
+
+    /// Whether its card went in the chat when it was made (SCHED-3). Off
+    /// unless set, as the server reads it.
+    @Default(false) bool postToChat,
 
     /// Set by Functions on events of a repeating series (SCHED-6).
     String? seriesId,

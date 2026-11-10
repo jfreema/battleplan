@@ -84,7 +84,9 @@ const TemplateShape = z.object({
     .refine((a) => new Set(a).size === a.length)
     .default([]),
   notifyTeam: z.boolean().default(true),
-  postToChat: z.boolean().default(true),
+  // Opt-in, as the app's Post to chat (owner's request 2026-11-10): a
+  // series sent without it posts no card.
+  postToChat: z.boolean().default(false),
 });
 
 const timedOk = (t: { allDay: boolean; startTime: string | null; endTime: string | null }) =>
@@ -394,8 +396,8 @@ function newSeriesEvent(
 }
 
 /**
- * Creates a series and its events (SCHED-3), with one chat card and one
- * eventCreated for the whole series.
+ * Creates a series and its events (SCHED-3), with one eventCreated for the
+ * whole series, and one chat card when postToChat is checked.
  */
 async function createSeries(
   input: Extract<SaveSeriesInput, { action: 'create' }>,

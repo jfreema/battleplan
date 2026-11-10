@@ -739,6 +739,8 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                     onChanged: (v) =>
                         _set((d) => d.copyWith(notifyTeam: v ?? false)),
                   ),
+                  // Starts unchecked: the event goes in the chat only when
+                  // asked (owner's request 2026-11-10, EventDraft).
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,

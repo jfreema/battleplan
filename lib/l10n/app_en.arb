@@ -1423,7 +1423,7 @@
   "eventDeadlineOn": "RSVP by {time}",
   "eventRepost": "Post a reminder in chat",
   "eventRepostTitle": "Post a reminder in chat?",
-  "eventRepostBody": "This event goes in the team chat again with its RSVPs, and everyone who hasn't said Not going gets a reminder.",
+  "eventRepostBody": "This event goes in the team chat with its RSVPs, and everyone who hasn't said Not going gets a reminder.",
   "eventRepostConfirm": "Post reminder",
   "eventReposted": "Reminder posted in chat",
   "eventRepostTooSoon": "A reminder for this event went out in the last hour. Try again later.",

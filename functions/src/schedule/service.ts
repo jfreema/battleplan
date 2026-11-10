@@ -753,11 +753,12 @@ export async function refreshRsvpStartTimes(startAtById: Map<string, Timestamp>)
 
 /**
  * events written → the follow-up for one-off events (ARCH §6.4): on
- * create, the chat card (postToChat) and eventCreated (notifyTeam); on a
- * time or place change or a cancel, eventChanged to everyone but Not
- * going; on any change, nextReminderAt; on delete, the RSVPs and the
- * assignments (SCHED-15). The card stays when an event is deleted; the app
- * shows it as deleted.
+ * create, the chat card only when postToChat is true (the app's Post to
+ * chat, off unless checked: owner's request 2026-11-10) and eventCreated
+ * unless notifyTeam is false; on a time or place change or a cancel,
+ * eventChanged to everyone but Not going; on any change, nextReminderAt;
+ * on delete, the RSVPs and the assignments (SCHED-15). The card stays when
+ * an event is deleted; the app shows it as deleted.
  */
 export async function followUpEventWrite(
   eventId: string,
@@ -776,7 +777,8 @@ export async function followUpEventWrite(
   const updates: Record<string, unknown> = {};
   if (!before) {
     const author = String(after.createdBy ?? '');
-    if (after.postToChat !== false && !after.messageId && author) {
+    // Opt-in: a missing postToChat posts nothing, as an unchecked box.
+    if (after.postToChat === true && !after.messageId && author) {
       await postEventCard({ messageId: eventId, groupId, authorId: author, text: eventCardText(view), eventId, seriesId: null });
       updates.messageId = eventId;
     }

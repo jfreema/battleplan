@@ -22,7 +22,10 @@ mixin _$EventDraft {
  DateTime? get rsvpDeadline;/// On a duplicate, the original's deadline as days before the start
 /// at a time of day in [timeZone]: it lands as far before the copy's
 /// date once one is picked (SCHED-3 copies the RSVP settings).
- int? get deadlineDaysBefore; int? get deadlineMinutes; List<int> get reminderOffsets; bool get notifyTeam; bool get postToChat;/// Null: doesn't repeat (the default).
+ int? get deadlineDaysBefore; int? get deadlineMinutes; List<int> get reminderOffsets; bool get notifyTeam;/// Off until the person checks Post to chat: a new event stays out of
+/// the chat unless asked, since the schedule and Notify team already
+/// cover it (owner's request 2026-11-10, SCHED-3).
+ bool get postToChat;/// Null: doesn't repeat (the default).
  RepeatRule? get repeat;/// On a "This and following" edit, the edited event's series date: the
 /// new rule starts there, as the server starts it, even when the event
 /// was moved to another day (SCHED-6).
@@ -261,7 +264,7 @@ return $default(_that.timeZone,_that.type,_that.title,_that.description,_that.lo
 
 
 class _EventDraft extends EventDraft {
-  const _EventDraft({required this.timeZone, this.type = EventType.practice, this.title = '', this.description = '', this.locationName = '', this.locationAddress = '', this.allDay = false, this.date, this.endDate, this.startMinutes = 18 * 60, this.endMinutes = 19 * 60 + 30, this.opponent = '', this.homeAway, this.arriveMinutesBefore, this.rsvpEnabled = true, this.rsvpDeadline, this.deadlineDaysBefore, this.deadlineMinutes,  List<int> reminderOffsets = const <int>[], this.notifyTeam = true, this.postToChat = true, this.repeat, this.seriesFrom, this.countBefore = 0}): _reminderOffsets = reminderOffsets,super._();
+  const _EventDraft({required this.timeZone, this.type = EventType.practice, this.title = '', this.description = '', this.locationName = '', this.locationAddress = '', this.allDay = false, this.date, this.endDate, this.startMinutes = 18 * 60, this.endMinutes = 19 * 60 + 30, this.opponent = '', this.homeAway, this.arriveMinutesBefore, this.rsvpEnabled = true, this.rsvpDeadline, this.deadlineDaysBefore, this.deadlineMinutes,  List<int> reminderOffsets = const <int>[], this.notifyTeam = true, this.postToChat = false, this.repeat, this.seriesFrom, this.countBefore = 0}): _reminderOffsets = reminderOffsets,super._();
   
 
 @override final  String timeZone;
@@ -297,6 +300,9 @@ class _EventDraft extends EventDraft {
 }
 
 @override@JsonKey() final  bool notifyTeam;
+/// Off until the person checks Post to chat: a new event stays out of
+/// the chat unless asked, since the schedule and Notify team already
+/// cover it (owner's request 2026-11-10, SCHED-3).
 @override@JsonKey() final  bool postToChat;
 /// Null: doesn't repeat (the default).
 @override final  RepeatRule? repeat;

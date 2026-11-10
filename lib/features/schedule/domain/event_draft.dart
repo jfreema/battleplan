@@ -46,7 +46,11 @@ abstract class EventDraft with _$EventDraft {
     int? deadlineMinutes,
     @Default(<int>[]) List<int> reminderOffsets,
     @Default(true) bool notifyTeam,
-    @Default(true) bool postToChat,
+
+    /// Off until the person checks Post to chat: a new event stays out of
+    /// the chat unless asked, since the schedule and Notify team already
+    /// cover it (owner's request 2026-11-10, SCHED-3).
+    @Default(false) bool postToChat,
 
     /// Null: doesn't repeat (the default).
     RepeatRule? repeat,
@@ -66,7 +70,9 @@ abstract class EventDraft with _$EventDraft {
 
   /// A copy of [event] for editing it, or for Duplicate ([duplicate]):
   /// everything but the date, which stays empty, and nothing of its RSVPs,
-  /// canceled state, or series (SCHED-3).
+  /// canceled state, or series (SCHED-3). A duplicate starts with Post to
+  /// chat off, as a new event does, so it goes in the chat only when
+  /// checked again.
   factory fromEvent(Event event, {bool duplicate = false}) {
     final start = ZonedTime.wallClock(event.timeZone, event.startAt);
     final end = ZonedTime.wallClock(event.timeZone, event.endAt);
@@ -117,7 +123,9 @@ abstract class EventDraft with _$EventDraft {
           ? allDayReminders(event.reminderOffsets)
           : event.reminderOffsets,
       notifyTeam: event.notifyTeam,
-      postToChat: event.postToChat,
+      // Most events made before 2026-11-10 were posted only because the
+      // box started checked, so a copy doesn't take it from the original.
+      postToChat: !duplicate && event.postToChat,
     );
   }
 

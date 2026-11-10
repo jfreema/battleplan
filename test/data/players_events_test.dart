@@ -583,6 +583,9 @@ void main() {
       expect(d['rsvpCounts'], {'going': 0, 'maybe': 0, 'notGoing': 0});
       expect(d['startDate'], isNull);
       expect(d['location'], {'name': 'Field 3', 'address': '1 Main St'});
+      // No chat card unless asked; the team still hears (2026-11-10).
+      expect(d['notifyTeam'], isTrue);
+      expect(d['postToChat'], isFalse);
 
       final e = (await repo.watchEvent(id).first)!;
       expect(e.type, EventType.game);
@@ -620,6 +623,9 @@ void main() {
       final upcoming = await repo.watchUpcoming(_g, now, limit: 2).first;
       expect(upcoming.events.map((e) => e.id.value), ['e3', 'e4']);
       expect(upcoming.events.first.rsvpCounts.going, 3);
+      // A doc without postToChat reads as no card, as the server reads it.
+      expect(upcoming.events.first.postToChat, isFalse);
+      expect(upcoming.events.first.notifyTeam, isTrue);
       final more = await repo.loadMore(
         _g,
         upcoming.next!,

@@ -455,7 +455,8 @@ Event eventFromFirestore(String id, Map<String, dynamic> x) {
         if (o is num) o.toInt(),
     ],
     notifyTeam: x['notifyTeam'] != false,
-    postToChat: x['postToChat'] != false,
+    // Only a true posts a card, as onEventWritten reads it.
+    postToChat: x['postToChat'] == true,
     seriesId: x['seriesId'] as String?,
     seriesDate: x['seriesDate'] as String?,
     seriesOverrides: [

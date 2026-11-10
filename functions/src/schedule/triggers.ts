@@ -4,9 +4,10 @@ import { calendarChanged, markTeamCalendarChanged } from '../calendar/service.js
 import { followUpEventWrite, recountEventRsvps, rsvpCountChanged } from './service.js';
 
 /**
- * events written → for one-off events: the chat card and eventCreated on
- * create, eventChanged on a time or place change or a cancel, and
- * nextReminderAt on any change; the RSVPs and assignments on delete.
+ * events written → for one-off events: the chat card (only when
+ * postToChat is true) and eventCreated on create, eventChanged on a time
+ * or place change or a cancel, and nextReminderAt on any change; the RSVPs
+ * and assignments on delete.
  * Exits early for changes only Functions make and for series events
  * (saveEventSeries follows those up itself). A change calendar links print
  * marks the team's cached calendar (SCHED-11).

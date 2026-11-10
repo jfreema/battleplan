@@ -556,9 +556,9 @@ describe('saveEventSeries input', () => {
   const recurrence = { freq: 'weekly', interval: 1, byWeekday: [2, 4], startDate: '2026-10-13', untilDate: '2026-12-17' };
   const ok = (data: unknown) => SaveSeriesInput.safeParse(data).success;
 
-  it('takes a create with defaults filled in', () => {
+  it("takes a create with defaults filled in: no chat card unless asked (owner's request 2026-11-10)", () => {
     const parsed = SaveSeriesInput.parse({ action: 'create', groupId: 'g', recurrence, template });
-    expect(parsed).toMatchObject({ dryRun: false, template: { notifyTeam: true, postToChat: true, description: '' } });
+    expect(parsed).toMatchObject({ dryRun: false, template: { notifyTeam: true, postToChat: false, description: '' } });
   });
 
   it('refuses bad rules and templates', () => {

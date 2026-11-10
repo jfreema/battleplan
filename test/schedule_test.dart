@@ -612,26 +612,32 @@ void main() {
       expect(saved.seriesId, isNull);
       expect(saved.rsvpEnabled, isTrue);
       expect(saved.notifyTeam, isTrue);
-      expect(saved.postToChat, isTrue);
+      // It stays out of the chat unless asked (owner's request 2026-11-10).
+      expect(saved.postToChat, isFalse);
       // The event's page.
       expect(find.text('@ Eagles'), findsOneWidget);
       expect(find.text('Directions'), findsOneWidget);
     });
 
-    testWidgets('RSVPs, Notify team, and Post to chat are checkboxes', (
-      tester,
-    ) async {
+    testWidgets('RSVPs, Notify team, and Post to chat are checkboxes, and '
+        'only Post to chat starts off', (tester) async {
       final rsvps = await openSchedule(tester, role: MemberRole.admin);
       await tester.tap(find.byTooltip('New event'));
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Title'), 'Dinner');
-      for (final label in ['Ask for RSVPs', 'Notify team', 'Post to chat']) {
+      // An event goes in the chat only when its creator checks Post to
+      // chat (owner's request 2026-11-10).
+      for (final (label, on) in [
+        ('Ask for RSVPs', true),
+        ('Notify team', true),
+        ('Post to chat', false),
+      ]) {
         final box = find.widgetWithText(CheckboxListTile, label);
         await tester.ensureVisible(box);
-        expect(tester.widget<CheckboxListTile>(box).value, isTrue);
+        expect(tester.widget<CheckboxListTile>(box).value, on);
         await tester.tap(box);
         await tester.pumpAndSettle();
-        expect(tester.widget<CheckboxListTile>(box).value, isFalse);
+        expect(tester.widget<CheckboxListTile>(box).value, !on);
       }
       expect(find.byType(SwitchListTile), findsOneWidget); // All day
       await tester.tap(find.text('Save'));
@@ -639,7 +645,7 @@ void main() {
       final saved = rsvps.events.events.values.single;
       expect(saved.rsvpEnabled, isFalse);
       expect(saved.notifyTeam, isFalse);
-      expect(saved.postToChat, isFalse);
+      expect(saved.postToChat, isTrue);
     });
 
     testWidgets('an all-day event offers only whole-day reminders, sent at '
@@ -777,6 +783,10 @@ void main() {
       expect(repo.calls, ['createSeries 7']);
       expect(repo.lastTemplate?.title, 'Practice');
       expect(repo.lastTemplate?.startTime, '18:00');
+      // No card in the chat unless Post to chat is checked; the team still
+      // hears (owner's request 2026-11-10).
+      expect(repo.lastTemplate?.postToChat, isFalse);
+      expect(repo.lastTemplate?.notifyTeam, isTrue);
       expect(repo.series.values.single.recurrence.skipDates, [
         dateKey(addDays(today(), 7)),
       ]);
@@ -871,6 +881,41 @@ void main() {
         saved.rsvpDeadline,
         ZonedTime.instantOf(zone, addDays(picked, -1), 20 * 60),
       );
+    });
+
+    testWidgets('a copy starts with Post to chat off, even of an event that '
+        "went in the chat (owner's request 2026-11-10)", (tester) async {
+      final rsvps = await openSchedule(
+        tester,
+        role: MemberRole.admin,
+        events: [event('e1', title: 'Team dinner').copyWith(postToChat: true)],
+      );
+      await openDetails(tester, 'Team dinner');
+      await menu(tester, 'Duplicate');
+      Finder box(String label) => find.widgetWithText(CheckboxListTile, label);
+      bool checked(String label) =>
+          tester.widget<CheckboxListTile>(box(label)).value!;
+      await tester.ensureVisible(box('Post to chat'));
+      expect(checked('Post to chat'), isFalse);
+      // Notify team is copied as it was.
+      expect(checked('Notify team'), isTrue);
+      await tester.scrollUntilVisible(
+        find.text('Pick a date'),
+        -200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Pick a date'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      final copy = rsvps.events.events.values.firstWhere(
+        (e) => e.id.value != 'e1',
+      );
+      expect(copy.title, 'Team dinner');
+      expect(copy.postToChat, isFalse);
+      expect(copy.notifyTeam, isTrue);
     });
   });
 

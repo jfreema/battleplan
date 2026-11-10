@@ -19,7 +19,9 @@ mixin _$Event {
  String get description; EventLocation? get location; bool get allDay;/// 'YYYY-MM-DD', set only on all-day events. [endDate] is the last day.
  String? get startDate; String? get endDate;/// Games only (SCHED-3): "Arrive 30 min early".
  int? get arriveMinutesBefore; String? get opponent; HomeAway? get homeAway; bool get rsvpEnabled; DateTime? get rsvpDeadline;/// Minutes before the start, from [reminderOffsetsMinutes] (SCHED-8).
- List<int> get reminderOffsets; bool get notifyTeam; bool get postToChat;/// Set by Functions on events of a repeating series (SCHED-6).
+ List<int> get reminderOffsets; bool get notifyTeam;/// Whether its card went in the chat when it was made (SCHED-3). Off
+/// unless set, as the server reads it.
+ bool get postToChat;/// Set by Functions on events of a repeating series (SCHED-6).
  String? get seriesId;/// The occurrence's date in [timeZone], 'YYYY-MM-DD'.
  String? get seriesDate;/// Fields edited with "This event"; later series edits leave them be.
  List<String> get seriesOverrides;/// Kept by the server from the RSVPs: [rsvpCounts] counts players, and
@@ -283,7 +285,7 @@ return $default(_that.id,_that.groupId,_that.type,_that.title,_that.startAt,_tha
 
 
 class _Event extends Event {
-  const _Event({required this.id, required this.groupId, required this.type, required this.title, required this.startAt, required this.endAt, required this.timeZone, required this.createdBy, this.description = '', this.location, this.allDay = false, this.startDate, this.endDate, this.arriveMinutesBefore, this.opponent, this.homeAway, this.rsvpEnabled = true, this.rsvpDeadline,  List<int> reminderOffsets = const <int>[], this.notifyTeam = true, this.postToChat = true, this.seriesId, this.seriesDate,  List<String> seriesOverrides = const <String>[], this.rsvpCounts = const RsvpCounts(), this.staffCounts = const RsvpCounts(), this.canceledAt, this.canceledBy, this.createdAt, this.updatedAt}): _reminderOffsets = reminderOffsets,_seriesOverrides = seriesOverrides,super._();
+  const _Event({required this.id, required this.groupId, required this.type, required this.title, required this.startAt, required this.endAt, required this.timeZone, required this.createdBy, this.description = '', this.location, this.allDay = false, this.startDate, this.endDate, this.arriveMinutesBefore, this.opponent, this.homeAway, this.rsvpEnabled = true, this.rsvpDeadline,  List<int> reminderOffsets = const <int>[], this.notifyTeam = true, this.postToChat = false, this.seriesId, this.seriesDate,  List<String> seriesOverrides = const <String>[], this.rsvpCounts = const RsvpCounts(), this.staffCounts = const RsvpCounts(), this.canceledAt, this.canceledBy, this.createdAt, this.updatedAt}): _reminderOffsets = reminderOffsets,_seriesOverrides = seriesOverrides,super._();
   
 
 @override final  EventId id;
@@ -317,6 +319,8 @@ class _Event extends Event {
 }
 
 @override@JsonKey() final  bool notifyTeam;
+/// Whether its card went in the chat when it was made (SCHED-3). Off
+/// unless set, as the server reads it.
 @override@JsonKey() final  bool postToChat;
 /// Set by Functions on events of a repeating series (SCHED-6).
 @override final  String? seriesId;
