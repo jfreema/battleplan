@@ -1,0 +1,15 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.getbattleplan",
+      "sha256_cert_fingerprints": [
+        "6A:09:65:D1:18:CF:B0:13:69:26:A8:3C:43:04:B6:D0:E2:2A:78:AF:7E:EF:92:E3:B0:5E:40:43:52:F5:8D:62",
+        "FA:0B:52:95:AF:94:EB:59:55:79:0D:D0:D2:37:F7:66:E6:2C:2C:01:69:D2:76:78:C3:48:B5:E9:57:9D:E7:C5",
+        "5A:6B:33:E4:73:70:B7:F4:B1:1B:9D:CE:7B:2B:B1:D4:6D:2E:58:A9:A2:8F:B8:19:C9:E7:95:11:C7:2E:28:4E",
+        "63:05:ED:79:9C:C7:57:36:00:85:14:B4:31:AC:CB:19:D9:DA:D3:72:1D:8E:AC:37:DC:F2:D0:28:8E:05:E0:AC"
+      ]
+    }
+  }
+]

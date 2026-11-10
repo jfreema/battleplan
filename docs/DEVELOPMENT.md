@@ -130,12 +130,12 @@ The upload key lives in the repository's secrets: `ANDROID_UPLOAD_KEYSTORE_BASE6
 
 Google Play takes uploads from the workflow only after the app exists in the Play Console and its first App Bundle was uploaded there by hand (any Android build artifact for prod), which also turns on Play App Signing.
 
-**App Links** need `hosting/well-known/<flavor>/assetlinks.json` with the SHA-256 of every key that signs that app, or Android won't open `getbattleplan.app` links in it. There's none for prod yet, and dev's has an old key, because the real ones don't exist until the upload key is made and the first bundle is in Google Play. They come from:
+**App Links** need `hosting/well-known/<flavor>/assetlinks.json` with the SHA-256 of every key that signs that app, or Android won't open `getbattleplan.app` links in it. Since 2026-11-10 dev's file lists the upload key's, and prod's lists the upload key's and Play App Signing's: the four SHA-256s on the prod Android app in Firebase, which were read from Play Console that day. They come from:
 
 - the upload key: the `SHA256:` line in an Android build run's summary (it signs both dev and prod);
-- Play App Signing's key (prod only, what Play-installed apps are signed with): Play Console, Test and release, App integrity, App signing, "App signing key certificate", SHA-256.
+- Play App Signing's keys (prod only, what Play-installed apps are signed with): Play Console, Test and release, App integrity, App signing, "App signing key certificate", SHA-256, and any earlier signing key the page lists.
 
-Write prod's file like dev's, with package `app.getbattleplan` and both fingerprints, replace dev's fingerprint with the upload key's, and add the same SHA-1 and SHA-256s to each Android app in Firebase (Project settings) for Google sign-in. Never guess a fingerprint. `tools/build_hosting.sh` warns while a flavor has no `assetlinks.json`. Play Console's Deep links page checks the file once it's live.
+When a key is added or changes, add its SHA-256 to the flavor's file and its SHA-1 and SHA-256 to that flavor's Android app in Firebase (Project settings), which Google sign-in needs. Never guess a fingerprint. Dev's Android app in Firebase still has only the old debug key's fingerprints (2026-11-10), so Google sign-in in dev Android builds, which the upload key signs, waits for the upload key's to be added there. `tools/build_hosting.sh` warns while a flavor has no `assetlinks.json`. Play Console's Deep links page checks the file once it's live.
 
 ## End-to-end test
 
