@@ -535,11 +535,11 @@ Players that others answer for never get accounts, and every account belongs to 
   - A claim needs a team admin's approval (Q15). Until then, the member can chat but can't answer RSVPs for that player.
   - When an admin claims a player, it's approved at once, and so is a claim by a super admin who's on the team. A super admin who isn't on the team can't claim a player.
   - A player has at most one `self` link, and a member is `self` for at most one player per team. A player can have up to 4 guardians; the `self` link doesn't count toward the 4.
-  - **Who are you here for?** After joining any team, a member sees three choices:
+  - **Who are you here for?** Joining a team goes straight into its chat, with no questions first (owner's request 2026-11-10: "When people get invited to and join a team, let them go directly into the team without having to answer the questions about if they are claiming a player or need to add a player. They can claim a player once they're into the team."). A member who isn't linked to a player yet finds **Who are you here for?** on the Team tab (above the roster), on an event's RSVPs, and in Dues, and it has three choices:
     - **I'm a player.** Pick yourself from the roster (a claim as yourself), or add yourself if you're not listed (a pending player linked to you as yourself, PLAYER-4).
     - **I'm here for a player.** Pick your player from the roster, or several (a claim as guardian), or add a player who isn't listed (a pending player with you as guardian).
-    - **I'm a coach or another adult.** Skips this step.
-  - People whose email an admin already entered for a player (PLAYER-1) are linked automatically and never see this step.
+    - **I'm a coach or another adult.** Back to the team, with nothing claimed.
+  - People whose email an admin already entered for a player (PLAYER-1) are linked automatically and never see it.
 - **PLAYER-4 · MVP · Add a player (members), and admin approval.**
   - Any member can add a player: name, jersey number, date of birth (optional, PLAYER-12), and how they're linked (the player or a guardian).
   - A member's new player is **pending** until a team admin approves or declines it. A player an admin adds is active at once (PLAYER-1).
@@ -613,7 +613,7 @@ Players that others answer for never get accounts, and every account belongs to 
   1. Open a link. It opens the app if installed, otherwise the web app (WEB-4).
   2. Sign in or create an account if needed; the app continues automatically afterward.
   3. See the team preview: logo, name, sport, member count, "Invited by Alex".
-  4. Tap **Join team**, then answer "Who are you here for?" (PLAYER-3): I'm a player, I'm here for a player, or I'm a coach or another adult. People an admin already linked to a player skip it.
+  4. Tap **Join team**: they're in the team's chat. Claiming or adding a player waits until they want to, through **Who are you here for?** on the Team tab (PLAYER-3).
   5. Land in the team's chat, where "Sam joined" appears.
 
   People who are already members just go to the team.

@@ -995,9 +995,12 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Join team'));
     await tester.pumpAndSettle();
     expect(invites.redeemed, ['K7XPM2QR']);
-    // Every team asks next (PLAYER-3).
-    expect(find.text('Who are you here for?'), findsOneWidget);
-    expect(find.text("I'm a player"), findsOneWidget);
+    // Straight into the team's chat, with no "Who are you here for?" first
+    // (owner's request 2026-11-10); the Team tab offers it later
+    // (PLAYER-3).
+    expect(location(tester), '/g/a/chat');
+    expect(find.text("I'm a player"), findsNothing);
+    expect(find.text("I'm here for a player"), findsNothing);
   });
 
   testWidgets('someone already on the team skips "Who are you here for?"', (

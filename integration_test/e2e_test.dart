@@ -186,12 +186,12 @@ void main() {
     await tap(tester, find.textContaining('I agree to the Terms'));
     await tap(tester, find.widgetWithText(FilledButton, 'Continue'));
 
-    // Joins with the code (INV-6), as a coach or another adult (PLAYER-3).
+    // Joins with the code (INV-6), straight into the team's chat: who
+    // they're here for waits for the Team tab (PLAYER-3).
     await tap(tester, find.text('Join a Team or Group'));
     await type(tester, find.byType(TextField), code);
     await tap(tester, find.widgetWithText(FilledButton, 'Join team'));
     await tap(tester, find.widgetWithText(FilledButton, 'Join team'));
-    await tap(tester, find.text("I'm a coach or another adult"));
 
     // Chats (CHAT-2).
     final message = 'Hello from the end-to-end test $stamp';

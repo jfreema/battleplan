@@ -162,17 +162,11 @@ class _JoinScreenState extends ConsumerState<JoinScreen> {
       final result = await ref
           .read(inviteRepositoryProvider)
           .redeem(widget.code);
-      // Every team asks "Who are you here for?" next (PLAYER-3); people an
-      // admin already linked to a player skip it there. A basic group has
-      // no players (TEAM-14): its chat.
-      final group = _preview?.kind == GroupKind.group;
-      if (mounted) {
-        context.go(
-          !result.alreadyMember && !group
-              ? '/g/${result.groupId}/who'
-              : '/g/${result.groupId}/chat',
-        );
-      }
+      // Straight into the team's chat (owner's request 2026-11-10). Claiming
+      // or adding a player waits until they want to: the Team tab, an
+      // event, and Dues offer "Who are you here for?" to anyone on a team
+      // who isn't linked to a player yet (PLAYER-3).
+      if (mounted) context.go('/g/${result.groupId}/chat');
     } on AppFailure catch (e) {
       if (mounted) setState(() => _error = e);
     } finally {

@@ -16,7 +16,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// PLAYER-3 at `/g/:groupId/who`, shown after joining any team:
+/// PLAYER-3 at `/g/:groupId/who`, opened from the Team tab, an event, or
+/// Dues by someone on a team who isn't linked to a player yet. Joining goes
+/// straight into the team instead (owner's request 2026-11-10):
 ///
 /// - **I'm a player**: pick yourself from the roster (a claim as yourself),
 ///   or add yourself (a pending player linked to you, PLAYER-4).
