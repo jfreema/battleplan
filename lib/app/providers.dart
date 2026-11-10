@@ -158,6 +158,10 @@ List<Override> buildOverrides({
       auth,
       functions,
       links: LinkService.forEnv(isProd: env.isProd),
+      // A non-fatal error, so a sign-in that only says "Something went
+      // wrong" still leaves a trace (SPEC AUTH-1, ARCH §9).
+      onSignInError: (e, stack) =>
+          unawaited(crashReporter.recordError(e, stack)),
     ),
   ),
   userRepositoryProvider.overrideWithValue(

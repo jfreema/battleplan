@@ -5,6 +5,7 @@ import 'package:battleplan/features/auth/data/firebase_auth_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mock_exceptions/mock_exceptions.dart';
 
@@ -318,6 +319,127 @@ void main() {
       #signInWithProvider,
       (r) => r.signInWithGoogle(),
     );
+  });
+
+  test('reports each Google or Apple failure shown as "Something went wrong", '
+      'and nothing it explains (AUTH-1, ARCH §9)', () async {
+    final reports = <ProviderSignInException>[];
+    FirebaseAuthRepository reporting(MockFirebaseAuth auth) =>
+        FirebaseAuthRepository(
+          auth,
+          functions,
+          links: _links,
+          onSignInError: (e, _) => reports.add(e),
+        );
+
+    // A check the app can't explain, such as Firebase not knowing the key
+    // a Play install is signed with: reported with Firebase's code and
+    // message, and still shown as "Something went wrong".
+    final refused = MockFirebaseAuth();
+    whenCalling(Invocation.method(#signInWithProvider, null))
+        .on(refused)
+        .thenThrow(
+          FirebaseAuthException(
+            code: 'internal-error',
+            message: 'Invalid certificate hash',
+          ),
+        );
+    await expectLater(
+      reporting(refused).signInWithGoogle(),
+      throwsA(isA<UnknownFailure>()),
+    );
+    final report = reports.single;
+    expect(report.providerId, 'google.com');
+    expect(report.action, 'sign in');
+    expect(report.code, 'internal-error');
+    expect(report.detail, 'Invalid certificate hash');
+    expect(
+      '$report',
+      "Couldn't sign in with google.com: internal-error "
+          '(Invalid certificate hash)',
+    );
+
+    // Closing the sheet, and the failures the screens explain, aren't.
+    final closed = MockFirebaseAuth();
+    whenCalling(Invocation.method(#signInWithProvider, null))
+        .on(closed)
+        .thenThrow(_e('canceled'));
+    await reporting(closed).signInWithApple();
+    for (final code in [
+      'popup-blocked',
+      'user-disabled',
+      'network-request-failed',
+      'account-exists-with-different-credential',
+    ]) {
+      final auth = MockFirebaseAuth();
+      whenCalling(Invocation.method(#signInWithProvider, null))
+          .on(auth)
+          .thenThrow(_e(code));
+      await expectLater(
+        reporting(auth).signInWithApple(),
+        throwsA(isA<AppFailure>()),
+        reason: code,
+      );
+    }
+    expect(reports, hasLength(1));
+
+    // The plugin failing on its own is reported too, and passed on.
+    final broken = MockFirebaseAuth();
+    whenCalling(Invocation.method(#signInWithProvider, null))
+        .on(broken)
+        .thenThrow(
+          PlatformException(code: 'channel-error', message: 'No channel'),
+        );
+    await expectLater(
+      reporting(broken).signInWithApple(),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(reports.last.providerId, 'apple.com');
+    expect(reports.last.code, 'unexpected');
+    expect(reports.last.detail, contains('No channel'));
+
+    // Linking Google from Sign-in methods: reported the same way, but not
+    // a method already on another account, which the screen explains.
+    final linking = _user();
+    whenCalling(Invocation.method(#linkWithProvider, null))
+        .on(linking)
+        .thenThrow(_e('internal-error'));
+    await expectLater(
+      reporting(MockFirebaseAuth(signedIn: true, mockUser: linking))
+          .linkGoogle(),
+      throwsA(isA<UnknownFailure>()),
+    );
+    expect(reports.last.action, 'link');
+    expect(reports.last.providerId, 'google.com');
+    final taken = _user();
+    whenCalling(Invocation.method(#linkWithProvider, null))
+        .on(taken)
+        .thenThrow(_e('credential-already-in-use'));
+    await expectLater(
+      reporting(MockFirebaseAuth(signedIn: true, mockUser: taken)).linkGoogle(),
+      throwsA(isA<CredentialInUse>()),
+    );
+    expect(reports, hasLength(3));
+
+    // Confirming it's you with Apple before a change.
+    await expectLater(
+      reporting(
+        MockFirebaseAuth(
+          signedIn: true,
+          mockUser: _AppleUser(reauthError: _e('internal-error')),
+        ),
+      ).reauthenticateWithProvider('apple.com'),
+      throwsA(isA<UnknownFailure>()),
+    );
+    expect(reports.last.action, 'confirm');
+    expect(reports.last.providerId, 'apple.com');
+
+    // With nobody listening, the failure is the same.
+    await expectLater(
+      repoFor(refused).signInWithGoogle(),
+      throwsA(isA<UnknownFailure>()),
+    );
+    expect(reports, hasLength(4));
   });
 
   test('emails a sign-in link instead of merging accounts (AUTH-7)', () async {

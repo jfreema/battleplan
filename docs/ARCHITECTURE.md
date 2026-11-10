@@ -1383,6 +1383,7 @@ Repo conventions:
 **Observability**
 
 - **Crashlytics** on iOS and Android.
+- **Failed sign-ins.** A Google or Apple sign-in, link, or confirmation that fails with "Something went wrong" is recorded as a non-fatal error: `FirebaseAuthRepository.onSignInError` gets a `ProviderSignInException` (the provider, what was tried, and Firebase's code and message, never an email), and `lib/app/providers.dart` hands it to the crash reporter, so it reaches Crashlytics on iOS and Android and `logClientError` on web. Cancels and the failures the screens explain aren't reported (SPEC AUTH-1).
 - **Web errors.** Crashlytics doesn't support web. Catch `FlutterError.onError` and `PlatformDispatcher.onError` and send a sampled report to the `logClientError` callable, which writes to Cloud Logging. If richer tooling becomes worth it, adopt Sentry on all platforms.
 - **Analytics** events, never including message content:
   - `sign_in`, `team_created`, `invite_redeemed`

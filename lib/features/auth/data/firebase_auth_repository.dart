@@ -12,13 +12,22 @@ import 'package:flutter/foundation.dart';
 /// Firebase Authentication behind [AuthRepository]. Firebase types and
 /// exceptions stay in this file; callers get [AuthUser] and [AppFailure]s.
 class FirebaseAuthRepository implements AuthRepository {
-  new(this._auth, this._functions, {required this.links});
+  new(this._auth, this._functions, {required this.links, this.onSignInError});
 
   final FirebaseFunctions _functions;
 
   /// Builds the email links, on our Hosting domain (never a Dynamic Links
   /// domain). They open the web app under `/app` (D40).
   final LinkService links;
+
+  /// Hears about each Google or Apple sign-in, link, or confirmation that
+  /// failed for a reason the app can't explain, the ones shown as
+  /// "Something went wrong", as a [ProviderSignInException] with the stack.
+  /// The app records it as a non-fatal error: Crashlytics on iOS and
+  /// Android, `logClientError` on web (SPEC AUTH-1, ARCH §9). Closing the
+  /// sheet and the failures the app explains aren't reported.
+  final void Function(ProviderSignInException error, StackTrace stack)?
+  onSignInError;
 
   final FirebaseAuth _auth;
   AuthUser? _current;
@@ -181,7 +190,7 @@ class FirebaseAuthRepository implements AuthRepository {
       } else {
         await _auth.signInWithProvider(provider);
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e, stack) {
       if (_cancelCodes.contains(e.code)) return;
       // AUTH-7: never merge on matching emails. Prove the email instead:
       // send a sign-in link; once it's opened, the app offers to link this
@@ -192,7 +201,7 @@ class FirebaseAuthRepository implements AuthRepository {
         await sendSignInLink(email);
         throw AccountExistsWithOtherMethod(email);
       }
-      throw switch (e.code) {
+      final failure = switch (e.code) {
         'popup-blocked' => PopupBlocked(e.code),
         // No email to send a link to: nothing was sent.
         'account-exists-with-different-credential' =>
@@ -201,7 +210,39 @@ class FirebaseAuthRepository implements AuthRepository {
         'network-request-failed' => Offline(e.code),
         _ => UnknownFailure(e.code),
       };
+      // Only "Something went wrong" is reported: a Firebase project that
+      // doesn't know the key a Play install is signed with failed this way
+      // on Android with nothing logged (2026-11-10).
+      if (failure is UnknownFailure) _report(provider, 'sign in', e, stack);
+      throw failure;
+    } on Object catch (e, stack) {
+      // Not Firebase's own error, so the plugin itself failed.
+      _report(provider, 'sign in', e, stack);
+      rethrow;
     }
+  }
+
+  /// Hands a provider failure the app can't explain to [onSignInError],
+  /// with Firebase's code and message (or the other error as text), and
+  /// logs it for local runs.
+  void _report(
+    AuthProvider provider,
+    String action,
+    Object error,
+    StackTrace stack,
+  ) {
+    final report = switch (error) {
+      FirebaseAuthException(:final code, :final message) =>
+        ProviderSignInException(provider.providerId, action, code, message),
+      _ => ProviderSignInException(
+        provider.providerId,
+        action,
+        'unexpected',
+        error.toString(),
+      ),
+    };
+    Log.warn(report.toString(), error, stack);
+    onSignInError?.call(report, stack);
   }
 
   /// Codes Firebase uses when the person closes the sign-in sheet or popup.
@@ -277,7 +318,9 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   /// Maps errors shared by the sign-in method actions.
-  Never _throwMethodError(FirebaseAuthException e) => throw switch (e.code) {
+  Never _throwMethodError(FirebaseAuthException e) => throw _methodFailure(e);
+
+  static AppFailure _methodFailure(FirebaseAuthException e) => switch (e.code) {
     'requires-recent-login' ||
     'user-token-expired' => RequiresRecentLogin(e.code),
     'credential-already-in-use' ||
@@ -291,6 +334,19 @@ class FirebaseAuthRepository implements AuthRepository {
     'too-many-requests' => RateLimited(e.code),
     _ => UnknownFailure(e.code),
   };
+
+  /// Like [_throwMethodError] for linking or confirming with Google or
+  /// Apple, reporting the failures shown as "Something went wrong".
+  Never _throwProviderError(
+    AuthProvider provider,
+    String action,
+    FirebaseAuthException e,
+    StackTrace stack,
+  ) {
+    final failure = _methodFailure(e);
+    if (failure is UnknownFailure) _report(provider, action, e, stack);
+    throw failure;
+  }
 
   /// How recent the sign-in must be to change sign-in methods, the email,
   /// or the password (AUTH-7). The server asks the same for deleting.
@@ -339,15 +395,19 @@ class FirebaseAuthRepository implements AuthRepository {
 
   Future<bool> _link(AuthProvider provider, {required bool checkRecent}) async {
     if (checkRecent) await _requireRecentSignIn();
+    final user = _user;
     try {
       if (kIsWeb) {
-        await _user.linkWithPopup(provider);
+        await user.linkWithPopup(provider);
       } else {
-        await _user.linkWithProvider(provider);
+        await user.linkWithProvider(provider);
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e, stack) {
       if (_cancelCodes.contains(e.code)) return false;
-      _throwMethodError(e);
+      _throwProviderError(provider, 'link', e, stack);
+    } on Object catch (e, stack) {
+      _report(provider, 'link', e, stack);
+      rethrow;
     }
     await _recordMethodChange();
     return true;
@@ -430,15 +490,19 @@ class FirebaseAuthRepository implements AuthRepository {
       'apple.com' => _apple(),
       _ => GoogleAuthProvider(),
     };
+    final user = _user;
     try {
       if (kIsWeb) {
-        await _user.reauthenticateWithPopup(provider);
+        await user.reauthenticateWithPopup(provider);
       } else {
-        await _user.reauthenticateWithProvider(provider);
+        await user.reauthenticateWithProvider(provider);
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e, stack) {
       if (_cancelCodes.contains(e.code)) throw const RequiresRecentLogin();
-      _throwMethodError(e);
+      _throwProviderError(provider, 'confirm', e, stack);
+    } on Object catch (e, stack) {
+      _report(provider, 'confirm', e, stack);
+      rethrow;
     }
   }
 
@@ -523,3 +587,30 @@ bool isRecentSignIn(DateTime? authTime, DateTime? issuedAt) =>
     authTime != null &&
     issuedAt != null &&
     issuedAt.difference(authTime) <= FirebaseAuthRepository._recentSignIn;
+
+/// A Google or Apple sign-in, link, or confirmation that failed for a
+/// reason the app can't explain, for [FirebaseAuthRepository.onSignInError]
+/// (SPEC AUTH-1, ARCH §9). Firebase's code and message say which check
+/// failed, such as an app signing key the Firebase project doesn't know. It
+/// never holds the person's email or name.
+final class ProviderSignInException implements Exception {
+  const new(this.providerId, this.action, this.code, [this.detail]);
+
+  /// `google.com` or `apple.com`.
+  final String providerId;
+
+  /// What was tried: sign in, link, or confirm.
+  final String action;
+
+  /// Firebase's error code, or `unexpected` for an error that isn't
+  /// Firebase's.
+  final String code;
+
+  /// Firebase's message, or the other error as text.
+  final String? detail;
+
+  @override
+  String toString() =>
+      "Couldn't $action with $providerId: $code"
+      '${detail == null ? '' : ' ($detail)'}';
+}
