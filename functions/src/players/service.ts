@@ -225,6 +225,41 @@ export interface LinkOptions {
    * admin's roster and an added guardian make them a member.
    */
   requireMember?: boolean;
+  /**
+   * The claim this link approves (PLAYER-4). It's read in the transaction
+   * that writes the link and marked approved by `addedBy` in it, so the
+   * link and the decision land together and a claim is approved once: when
+   * it isn't pending any more (an earlier tap, or another admin, decided
+   * it), nothing is written and this throws `already-decided`.
+   */
+  claim?: FirebaseFirestore.DocumentReference;
+}
+
+/** What a claim records when an admin decides it (PLAYER-4). */
+function claimDecision(approve: boolean, actorUid: string) {
+  return {
+    status: approve ? 'approved' : 'declined',
+    decidedBy: actorUid,
+    decidedAt: FieldValue.serverTimestamp(),
+  };
+}
+
+/**
+ * Marks a pending claim approved or declined by [actorUid], in a
+ * transaction, so it's decided once (PLAYER-4). Returns false, changing
+ * nothing, when it isn't pending any more: an earlier tap, or another
+ * admin, decided it first.
+ */
+async function decideClaim(
+  ref: FirebaseFirestore.DocumentReference,
+  approve: boolean,
+  actorUid: string,
+): Promise<boolean> {
+  return db().runTransaction(async (tx) => {
+    if ((await tx.get(ref)).get('status') !== 'pending') return false;
+    tx.update(ref, claimDecision(approve, actorUid));
+    return true;
+  });
 }
 
 /**
@@ -240,7 +275,8 @@ export interface LinkOptions {
  * such transactions always conflict and one retries and sees the other's
  * link. Throws `no-player` for a player that's gone or pending,
  * `already-linked` when they're linked another way, and the limit's code.
- * Linking someone the same way again changes nothing.
+ * Linking someone the same way again changes nothing (but still closes
+ * [LinkOptions.claim], when one is given).
  *
  * A member (admins too) who becomes the player answers on the player's
  * row from then on, so their own upcoming answers move to it
@@ -267,7 +303,7 @@ export async function linkGuardian(
   const memberRef = db().collection(Collections.groupMembers).doc(groupMemberId(groupId, user.uid));
   const linkRef = links.doc(compositeId(playerId, user.uid));
   const outcome = await db().runTransaction(async (tx) => {
-    const [player, member, existing, playerLinks, selfLinks] = await Promise.all([
+    const [player, member, existing, playerLinks, selfLinks, claim] = await Promise.all([
       tx.get(playerRef),
       tx.get(memberRef),
       tx.get(linkRef),
@@ -275,12 +311,21 @@ export async function linkGuardian(
       relation === 'self'
         ? tx.get(links.where('groupId', '==', groupId).where('uid', '==', user.uid).where('relation', '==', 'self').limit(5))
         : null,
+      options.claim ? tx.get(options.claim) : null,
     ]);
+    // Decided since the caller read it (PLAYER-4): an earlier tap or
+    // another admin got there first, so neither the link nor the claim
+    // changes. Checked first, so a second approval never links again.
+    if (claim && claim.get('status') !== 'pending') throw new HttpsError('failed-precondition', 'already-decided');
     if (!player.exists || player.get('groupId') !== groupId || playerStatusOf(player.data()) !== 'active') {
       throw new HttpsError('not-found', 'no-player');
     }
     if (existing.exists) {
-      if (relationOf(existing.data()) === relation) return { linked: false, created: false, role: null, playerName: '' };
+      if (relationOf(existing.data()) === relation) {
+        // Already linked this way: the claim being approved still closes.
+        if (claim) tx.update(claim.ref, claimDecision(true, addedBy));
+        return { linked: false, created: false, role: null, playerName: '' };
+      }
       throw new HttpsError('failed-precondition', 'already-linked');
     }
     const problem = linkLimitProblem(
@@ -303,6 +348,8 @@ export async function linkGuardian(
       createdAt: now,
     });
     tx.update(playerRef, { linksUpdatedAt: now });
+    // The claim's approval commits with its link, or not at all.
+    if (claim) tx.update(claim.ref, claimDecision(true, addedBy));
     if (member.exists) {
       if (relation === 'self') tx.update(memberRef, { linksUpdatedAt: now });
     } else {
@@ -552,12 +599,23 @@ export async function claimPlayer(
   return { status: 'requested', playerName };
 }
 
+/** A claim an admin just decided (PLAYER-4). */
+export interface ClaimDecision {
+  relation: Relation;
+  /** The player's name, for the member's notification. */
+  playerName: string;
+}
+
 /**
  * An admin approves or declines a claim (PLAYER-4). Approving links the
  * member as the claim says, if the limits still allow it (else it throws
  * and the claim stays for a decline); either way the claim records who
- * decided. Returns the claim's relation, or null when there was nothing to
- * decide.
+ * decided. A claim is decided once: an approval is marked in the
+ * transaction that writes its link (linkGuardian's `claim`), a decline in
+ * one of its own (decideClaim), so a second tap, or another admin deciding
+ * at the same moment, finds it decided and changes nothing. Returns the
+ * claim's relation and the player's name when this call decided it, or
+ * null when there was nothing to decide.
  */
 export async function resolvePlayerClaim(
   groupId: string,
@@ -565,44 +623,49 @@ export async function resolvePlayerClaim(
   uid: string,
   approve: boolean,
   actorUid: string,
-): Promise<Relation | null> {
+): Promise<ClaimDecision | null> {
   const ref = db().collection(Collections.guardianRequests).doc(compositeId(playerId, uid));
-  const request = await ref.get();
+  // Read together rather than one after another: the admin waits on each
+  // round trip.
+  const [request, member, player] = await Promise.all([
+    ref.get(),
+    db().collection(Collections.groupMembers).doc(groupMemberId(groupId, uid)).get(),
+    db().collection(Collections.players).doc(playerId).get(),
+  ]);
   if (!request.exists || request.get('groupId') !== groupId || request.get('status') !== 'pending') return null;
   const relation = relationOf(request.data());
+  const playerName = (player.get('displayName') as string | undefined) || 'a player';
   // Someone who has left the team since asking isn't put back on it (TEAM-8).
-  const member = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, uid)).get();
   if (!member.exists) {
     await ref.delete();
     return null;
   }
-  if (approve) {
-    const player = await db().collection(Collections.players).doc(playerId).get();
-    if (!player.exists || playerStatusOf(player.data()) !== 'active') {
+  if (!approve) return (await decideClaim(ref, false, actorUid)) ? { relation, playerName } : null;
+  if (!player.exists || playerStatusOf(player.data()) !== 'active') {
+    await ref.delete();
+    return null;
+  }
+  const [link, profile] = await Promise.all([linkOf(playerId, uid), profileOf(uid, 'Member')]);
+  if (link) {
+    // Linked some other way meanwhile: the claim only needs closing.
+    if (!(await decideClaim(ref, true, actorUid))) return null;
+  } else {
+    try {
+      // The PLAYER-3 limits are checked, and the claim marked approved, in
+      // the transaction that writes the link.
+      await linkGuardian(groupId, playerId, profile, actorUid, 'request', relation, { requireMember: true, claim: ref });
+    } catch (e) {
+      if (!(e instanceof HttpsError)) throw e;
+      // An earlier tap, or another admin, decided it first.
+      if (e.message === 'already-decided') return null;
+      // They left, or the player went, while this ran: nothing to decide.
+      if (e.message !== 'left-team' && e.message !== 'no-player') throw e;
       await ref.delete();
       return null;
     }
-    if (!(await linkOf(playerId, uid))) {
-      await requireLinkAllowed(groupId, playerId, uid, relation);
-      try {
-        await linkGuardian(groupId, playerId, await profileOf(uid, 'Member'), actorUid, 'request', relation, {
-          requireMember: true,
-        });
-      } catch (e) {
-        // They left, or the player went, while this ran: nothing to decide.
-        if (!(e instanceof HttpsError) || !['left-team', 'no-player'].includes(e.message)) throw e;
-        await ref.delete();
-        return null;
-      }
-    }
-    await refreshPlayerSummary(groupId, uid);
   }
-  await ref.update({
-    status: approve ? 'approved' : 'declined',
-    decidedBy: actorUid,
-    decidedAt: FieldValue.serverTimestamp(),
-  });
-  return relation;
+  await refreshPlayerSummary(groupId, uid);
+  return { relation, playerName };
 }
 
 export interface NewPlayerInput {
@@ -713,8 +776,11 @@ export interface PendingDecision {
  * An admin approves or declines a pending player (PLAYER-4). Approving
  * makes it active and links its proposer as they said, if they're still on
  * the team and the limits allow it; declining deletes it (and any details,
- * though a pending player can't have them). Returns null when there's no
- * pending player to decide.
+ * though a pending player can't have them). The decision is made in a
+ * transaction that finds the player still pending, so it's made once: a
+ * second tap, or another admin deciding at the same moment, gets null and
+ * changes and announces nothing. Returns null when there's no pending
+ * player to decide.
  */
 export async function resolvePendingPlayer(
   groupId: string,
@@ -723,28 +789,42 @@ export async function resolvePendingPlayer(
   actorUid: string,
 ): Promise<PendingDecision | null> {
   const ref = db().collection(Collections.players).doc(playerId);
-  const player = await ref.get();
-  if (!player.exists || player.get('groupId') !== groupId || playerStatusOf(player.data()) !== 'pending') return null;
+  const player = await db().runTransaction(async (tx) => {
+    const pending = await tx.get(ref);
+    if (!pending.exists || pending.get('groupId') !== groupId || playerStatusOf(pending.data()) !== 'pending') {
+      return null;
+    }
+    if (approve) {
+      tx.update(ref, { status: 'active', decidedBy: actorUid, decidedAt: FieldValue.serverTimestamp() });
+    } else {
+      // With its details, as deletePlayerDoc does.
+      tx.delete(detailsRef(playerId));
+      tx.delete(ref);
+    }
+    return pending;
+  });
+  if (!player) return null;
   const proposedBy = (player.get('proposedBy') as string | null | undefined) ?? null;
   const relation = relationOf({ relation: player.get('proposedRelation') });
   const playerName = (player.get('displayName') as string | undefined) || 'a player';
   if (!approve) {
+    // Anything left pointing at it goes too, though a pending player can't
+    // be linked or claimed.
     for (const collection of [Collections.playerGuardians, Collections.guardianRequests]) {
       await forEachPage(db().collection(collection).where('playerId', '==', playerId), (b, d) => b.delete(d.ref));
     }
-    await deletePlayerDoc(playerId);
     return { playerName, proposedBy, relation, linked: false };
   }
-  await ref.update({ status: 'active', decidedBy: actorUid, decidedAt: FieldValue.serverTimestamp() });
   let linked = false;
   if (proposedBy) {
-    const member = await db().collection(Collections.groupMembers).doc(groupMemberId(groupId, proposedBy)).get();
+    const [member, profile] = await Promise.all([
+      db().collection(Collections.groupMembers).doc(groupMemberId(groupId, proposedBy)).get(),
+      profileOf(proposedBy, 'Member'),
+    ]);
     if (member.exists) {
       try {
-        await requireLinkAllowed(groupId, playerId, proposedBy, relation);
-        await linkGuardian(groupId, playerId, await profileOf(proposedBy, 'Member'), actorUid, 'proposal', relation, {
-          requireMember: true,
-        });
+        // The PLAYER-3 limits are checked in the transaction that writes the link.
+        await linkGuardian(groupId, playerId, profile, actorUid, 'proposal', relation, { requireMember: true });
         linked = true;
       } catch (e) {
         if (!(e instanceof HttpsError)) throw e;

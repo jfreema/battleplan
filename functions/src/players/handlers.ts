@@ -301,7 +301,10 @@ export const claimPlayer = onCall(async (request) => {
 
 /**
  * Admins approve or decline a claim (PLAYER-4). Input { playerId, uid,
- * approve, groupId? }; returns { ok }.
+ * approve, groupId? }; returns { ok }, false when there was nothing to
+ * decide. A claim is decided once (resolveClaim), so a second tap, or a
+ * second admin at the same moment, gets { ok: false } and no second audit
+ * entry or notification.
  */
 export const resolvePlayerClaim = onCall(async (request) => {
   const actor = requireAuth(request);
@@ -316,30 +319,32 @@ export const resolvePlayerClaim = onCall(async (request) => {
   );
   const groupId = await teamOfPlayer(input.playerId, input.groupId);
   await requireTeamAdmin(groupId, actor, request.auth?.token.superAdmin === true);
-  const relation = await resolveClaim(groupId, input.playerId, input.uid, input.approve, actor);
-  if (relation) {
-    await audit({
+  const decision = await resolveClaim(groupId, input.playerId, input.uid, input.approve, actor);
+  if (!decision) return { ok: false };
+  // The audit entry and the member's notification side by side, so the
+  // admin's answer doesn't wait for one and then the other.
+  await Promise.all([
+    audit({
       actorId: actor,
       action: input.approve ? 'approveClaim' : 'declineClaim',
       groupId,
       targetType: 'player',
       targetId: input.playerId,
-      after: { uid: input.uid, relation },
-    });
-  }
-  if (relation && input.approve) {
-    const player = await db().collection(Collections.players).doc(input.playerId).get();
-    await tellApproved({
-      groupId,
-      uid: input.uid,
-      actor,
-      playerId: input.playerId,
-      playerName: (player.get('displayName') as string | undefined) || 'a player',
-      relation,
-      proposal: false,
-    });
-  }
-  return { ok: relation != null };
+      after: { uid: input.uid, relation: decision.relation },
+    }),
+    input.approve
+      ? tellApproved({
+          groupId,
+          uid: input.uid,
+          actor,
+          playerId: input.playerId,
+          playerName: decision.playerName,
+          relation: decision.relation,
+          proposal: false,
+        })
+      : undefined,
+  ]);
+  return { ok: true };
 });
 
 /**
@@ -393,7 +398,10 @@ export const proposePlayer = onCall(async (request) => {
 
 /**
  * Admins approve or decline a pending player (PLAYER-4). Declining deletes
- * it. Input { playerId, approve, groupId? }; returns { ok, linked }.
+ * it. Input { playerId, approve, groupId? }; returns { ok, linked }. It's
+ * decided once (resolvePending), so a second tap, or a second admin at the
+ * same moment, gets { ok: false } and no second audit entry or
+ * notification.
  */
 export const resolvePendingPlayer = onCall(async (request) => {
   const actor = requireAuth(request);
@@ -405,25 +413,28 @@ export const resolvePendingPlayer = onCall(async (request) => {
   await requireTeamAdmin(groupId, actor, request.auth?.token.superAdmin === true);
   const decision = await resolvePending(groupId, input.playerId, input.approve, actor);
   if (!decision) return { ok: false, linked: false };
-  await audit({
-    actorId: actor,
-    action: input.approve ? 'approvePlayer' : 'declinePlayer',
-    groupId,
-    targetType: 'player',
-    targetId: input.playerId,
-    after: { name: decision.playerName, proposedBy: decision.proposedBy, relation: decision.relation },
-  });
-  if (input.approve && decision.proposedBy && decision.linked) {
-    await tellApproved({
+  // Side by side, as for claims: the admin waits on both.
+  await Promise.all([
+    audit({
+      actorId: actor,
+      action: input.approve ? 'approvePlayer' : 'declinePlayer',
       groupId,
-      uid: decision.proposedBy,
-      actor,
-      playerId: input.playerId,
-      playerName: decision.playerName,
-      relation: decision.relation,
-      proposal: true,
-    });
-  }
+      targetType: 'player',
+      targetId: input.playerId,
+      after: { name: decision.playerName, proposedBy: decision.proposedBy, relation: decision.relation },
+    }),
+    input.approve && decision.proposedBy && decision.linked
+      ? tellApproved({
+          groupId,
+          uid: decision.proposedBy,
+          actor,
+          playerId: input.playerId,
+          playerName: decision.playerName,
+          relation: decision.relation,
+          proposal: true,
+        })
+      : undefined,
+  ]);
   return { ok: true, linked: decision.linked };
 });
 

@@ -7,6 +7,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/core/widgets/about_battleplan.dart';
+import 'package:battleplan/core/widgets/button_spinner.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/presentation/sign_in_screen.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
@@ -1272,6 +1273,82 @@ void main() {
         'decline emma pat',
         'approve emma emma1',
       ]);
+    });
+
+    testWidgets('a decision spins with both buttons off until the server '
+        'answers, so more taps send nothing more (PLAYER-4)', (tester) async {
+      final playerRepo =
+          HeldPlayerRepository([
+              const Player(
+                id: PlayerId('emma'),
+                groupId: GroupId('y'),
+                displayName: 'Emma Rodriguez',
+                jerseyNumber: '7',
+              ),
+              const Player(
+                id: PlayerId('noah'),
+                groupId: GroupId('y'),
+                displayName: 'Noah Park',
+                status: PlayerStatus.pending,
+                proposedBy: 'pat',
+                proposedRelation: PlayerRelation.guardian,
+              ),
+            ])
+            ..requests.add(
+              const GuardianRequest(
+                playerId: PlayerId('emma'),
+                groupId: GroupId('y'),
+                uid: UserId('pat'),
+                status: GuardianRequestStatus.pending,
+              ),
+            );
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: team,
+        memberships: [
+          testMembership('y', 'coach', role: MemberRole.owner),
+          testMembership('y', 'pat', name: 'Pat Lee'),
+        ],
+        playerRepo: playerRepo,
+      );
+      await openRoster(tester);
+      final claimRow = find.ancestor(
+        of: find.text('Pat Lee: parent or guardian of Emma #7'),
+        matching: find.byType(ListTile),
+      );
+      Finder inClaim(Finder f) => find.descendant(of: claimRow, matching: f);
+      await tester.tap(inClaim(find.widgetWithText(FilledButton, 'Approve')));
+      await tester.pump();
+      // The tapped button spins, and neither can be tapped again.
+      final spinning = find.ancestor(
+        of: inClaim(find.byType(ButtonSpinner)),
+        matching: find.byType(FilledButton),
+      );
+      expect(spinning, findsOneWidget);
+      expect(tester.widget<FilledButton>(spinning).onPressed, isNull);
+      final decline = inClaim(find.widgetWithText(TextButton, 'Decline'));
+      expect(tester.widget<TextButton>(decline).onPressed, isNull);
+      await tester.tap(spinning, warnIfMissed: false);
+      await tester.tap(decline, warnIfMissed: false);
+      await tester.pump();
+      // The pending player's row is its own: still there to decide.
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Approve'))
+            .onPressed,
+        isNotNull,
+      );
+      expect(playerRepo.calls, ['approve emma pat']);
+      playerRepo.release();
+      await tester.pumpAndSettle();
+      // Answered: the spinner goes, and a row still listed can be decided.
+      expect(find.byType(ButtonSpinner), findsNothing);
+      expect(
+        inClaim(find.widgetWithText(FilledButton, 'Approve')),
+        findsOneWidget,
+      );
+      expect(playerRepo.calls, ['approve emma pat']);
     });
 
     testWidgets('an approval refused with already-a-player says why', (

@@ -539,6 +539,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - A member's new player is **pending** until a team admin approves or declines it. A player an admin adds is active at once (PLAYER-1).
   - Pending players are shown only to admins and to the person who added them. They're not on the roster for everyone else, and can't get RSVPs or be claimed.
   - Claims and pending players appear at the top of the roster's Players section with **Approve** and **Decline**, and admins get a notification for each one (NOTIF-2). The person is notified when it's approved.
+  - Once an admin taps Approve or Decline, both buttons turn off and the tapped one spins until the server answers. Each claim and pending player is decided once: tapping again, or a second admin deciding at the same moment, changes nothing, so the person is notified once (owner's report 2026-11-10).
   - Admins can correct a pending player's name and number before deciding.
   - Approving a pending player makes it active with its link. Declining deletes the pending player and its link. A declined member can ask again.
   - Approving checks the PLAYER-3 limits again when the link is made. If they no longer allow it (say the member became a player meanwhile, or someone else is already this player), a claim isn't approved and the app says why, so the admin can decline it. A pending player is still added, without the link, and the app says so.

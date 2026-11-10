@@ -9,6 +9,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/avatar.dart';
+import 'package:battleplan/core/widgets/button_spinner.dart';
 import 'package:battleplan/core/widgets/card_dialog.dart';
 import 'package:battleplan/core/widgets/confirm_dialog.dart';
 import 'package:battleplan/core/widgets/info_tag.dart';
@@ -241,10 +242,17 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               if (toDecide.isNotEmpty || claims.isNotEmpty) ...[
                 _Section(title: l10n.playerRequestsTitle),
                 card([
+                  // Keyed, so a row's spinner stays with its request when
+                  // a decided one above it leaves the list.
                   for (final p in toDecide)
-                    _PendingPlayerRow(player: p, who: nameOf(p.proposedBy)),
+                    _PendingPlayerRow(
+                      key: ValueKey('player ${p.id.value}'),
+                      player: p,
+                      who: nameOf(p.proposedBy),
+                    ),
                   for (final r in claims)
                     _RequestRow(
+                      key: ValueKey('claim ${r.playerId.value} ${r.uid.value}'),
                       request: r,
                       who: nameOf(r.uid.value),
                       player: players
@@ -431,24 +439,52 @@ class _MemberAvatar extends ConsumerWidget {
   }
 }
 
-/// Approve and Decline, with what went wrong said in a snackbar.
-class _Decision extends StatelessWidget {
+/// Approve and Decline, with what went wrong said in a snackbar. Once one
+/// is tapped, both are off and the tapped one spins until the server
+/// answers (PLAYER-4): a cold start can take several seconds, and taps
+/// meanwhile used to send the decision again.
+class _Decision extends StatefulWidget {
   const new({required this.decide});
 
   final Future<void> Function({required bool approve}) decide;
 
   @override
+  State<_Decision> createState() => _DecisionState();
+}
+
+class _DecisionState extends State<_Decision> {
+  /// The decision on its way: true for Approve, false for Decline, null
+  /// when there's none.
+  bool? _deciding;
+
+  Future<void> _send({required bool approve}) async {
+    // Checked as well as the buttons being off, for two taps in one frame.
+    if (_deciding != null) return;
+    setState(() => _deciding = approve);
+    try {
+      await widget.decide(approve: approve);
+    } finally {
+      // A decided row usually goes from the list first; one that failed
+      // stays, with both buttons back.
+      if (mounted) setState(() => _deciding = null);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final busy = _deciding != null;
     return Wrap(
       children: [
         TextButton(
-          onPressed: () => unawaited(decide(approve: false)),
-          child: Text(l10n.decline),
+          onPressed: busy ? null : () => unawaited(_send(approve: false)),
+          child: _deciding == false
+              ? const ButtonSpinner()
+              : Text(l10n.decline),
         ),
         FilledButton(
-          onPressed: () => unawaited(decide(approve: true)),
-          child: Text(l10n.approve),
+          onPressed: busy ? null : () => unawaited(_send(approve: true)),
+          child: _deciding == true ? const ButtonSpinner() : Text(l10n.approve),
         ),
       ],
     );
@@ -497,7 +533,7 @@ String decisionFailure(
 /// by Maria Rodriguez as their parent or guardian", with Approve and
 /// Decline (PLAYER-4). Declining deletes it.
 class _PendingPlayerRow extends ConsumerWidget {
-  const new({required this.player, this.who});
+  const new({required this.player, this.who, super.key});
 
   final Player player;
   final String? who;
@@ -540,7 +576,7 @@ class _PendingPlayerRow extends ConsumerWidget {
 /// A claim: "Maria Rodriguez: parent or guardian of Emma #7", or "Jared
 /// Freeman says they're Jared #12", with Approve and Decline (PLAYER-4).
 class _RequestRow extends ConsumerWidget {
-  const new({required this.request, this.who, this.player});
+  const new({required this.request, this.who, this.player, super.key});
 
   final GuardianRequest request;
   final String? who;

@@ -746,6 +746,87 @@ describe('more claims and player emails (PLAYER-1, PLAYER-3, PLAYER-4, PLAYER-6,
     });
   });
 
+  // Approve tapped again while a slow first tap was still on its way used
+  // to approve once per tap, and the member got a notification for each
+  // (owner's report, 2026-11-10). The same emulator note applies: the
+  // contended transactions take a few seconds here.
+  describe('decides each claim and pending player once, however many taps (PLAYER-4)', { timeout: 45_000 }, () => {
+    const approvals = async () =>
+      (await db().collection(Collections.notifications).where('type', '==', 'guardianApproved').get()).docs.map(
+        (d) => `${d.get('uid')}: ${d.get('body')}`,
+      );
+    const audits = async (action: string) => (await db().collection(Collections.auditLogs).where('action', '==', action).get()).size;
+    const claimStatus = async () => (await db().collection(Collections.guardianRequests).doc('open-p1_sam').get()).get('status');
+    const proposeLeo = async () =>
+      (await run<{ playerId: string }>(players.proposePlayer, 'sam', { groupId: 'open', displayName: 'Leo Rivera', relation: 'guardian' }))
+        .playerId;
+
+    it('three taps of Approve on a claim: one link, one audit entry, one notification', async () => {
+      await claim('open-p1', 'sam', 'guardian');
+      const approve = () =>
+        run<{ ok: boolean }>(players.resolvePlayerClaim, 'pat', { groupId: 'open', playerId: 'open-p1', uid: 'sam', approve: true });
+      const taps = await Promise.all([approve(), approve(), approve()]);
+      expect(taps.filter((t) => t.ok)).toHaveLength(1);
+      expect(await linksOf('open-p1')).toEqual(['sam:guardian']);
+      expect(await claimStatus()).toBe('approved');
+      expect(await summary('sam')).toBe('Emma');
+      expect(await audits('approveClaim')).toBe(1);
+      expect(await approvals()).toEqual(["sam: You're now Emma's guardian"]);
+      // A tap after it's decided changes nothing either.
+      expect(await approve()).toEqual({ ok: false });
+      expect(await approvals()).toHaveLength(1);
+    });
+
+    it('Approve and Decline on a claim at the same moment: one decision, and the link matches it', async () => {
+      await claim('open-p1', 'sam', 'guardian');
+      const decide = (uid: string, approve: boolean) =>
+        run<{ ok: boolean }>(players.resolvePlayerClaim, uid, { groupId: 'open', playerId: 'open-p1', uid: 'sam', approve });
+      const [approved, declined] = await Promise.all([decide('pat', true), decide('ada', false)]);
+      expect([approved.ok, declined.ok].filter(Boolean)).toHaveLength(1);
+      if (approved.ok) {
+        expect(await claimStatus()).toBe('approved');
+        expect(await linksOf('open-p1')).toEqual(['sam:guardian']);
+        expect(await approvals()).toHaveLength(1);
+      } else {
+        expect(await claimStatus()).toBe('declined');
+        expect(await linksOf('open-p1')).toEqual([]);
+        expect(await approvals()).toEqual([]);
+      }
+    });
+
+    it("three taps of Approve on a member's new player: one link, one audit entry, one notification", async () => {
+      const playerId = await proposeLeo();
+      const approve = () =>
+        run<{ ok: boolean; linked: boolean }>(players.resolvePendingPlayer, 'pat', { groupId: 'open', playerId, approve: true });
+      const taps = await Promise.all([approve(), approve(), approve()]);
+      expect(taps.filter((t) => t.ok)).toEqual([{ ok: true, linked: true }]);
+      expect(await linksOf(playerId)).toEqual(['sam:guardian']);
+      expect((await db().collection(Collections.players).doc(playerId).get()).get('status')).toBe('active');
+      expect((await groups().doc('open').get()).get('playerCount')).toBe(2);
+      expect(await audits('approvePlayer')).toBe(1);
+      expect(await approvals()).toEqual(['sam: Leo Rivera was added to the roster']);
+      expect(await approve()).toEqual({ ok: false, linked: false });
+    });
+
+    it("Approve and Decline on a new player at the same moment: it's added or deleted, never both", async () => {
+      const playerId = await proposeLeo();
+      const decide = (uid: string, approve: boolean) =>
+        run<{ ok: boolean }>(players.resolvePendingPlayer, uid, { groupId: 'open', playerId, approve });
+      const [approved, declined] = await Promise.all([decide('pat', true), decide('ada', false)]);
+      expect([approved.ok, declined.ok].filter(Boolean)).toHaveLength(1);
+      const player = (await db().collection(Collections.players).doc(playerId).get()).data();
+      if (approved.ok) {
+        expect(player).toMatchObject({ status: 'active', decidedBy: 'pat' });
+        expect(await approvals()).toHaveLength(1);
+      } else {
+        expect(player).toBeUndefined();
+        expect(await linksOf(playerId)).toEqual([]);
+        expect(await approvals()).toEqual([]);
+      }
+      expect((await audits('approvePlayer')) + (await audits('declinePlayer'))).toBe(1);
+    });
+  });
+
   describe("adding players with the player's own email (PLAYER-1)", () => {
     it('links an existing account as the player, and gives a new email an added account linked as the player', async () => {
       const result = await run(players.addPlayers, 'pat', {

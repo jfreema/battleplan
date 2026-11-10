@@ -3690,6 +3690,44 @@ class RefusingPlayerRepository extends FakePlayerRepository {
   }) async => throw failure;
 }
 
+/// Records each claim and pending-player decision at once, as the fake
+/// does, but holds its answer until [release], the way a server's cold
+/// start does (PLAYER-4).
+class HeldPlayerRepository extends FakePlayerRepository {
+  new([super.players]);
+
+  final _held = Completer<void>();
+
+  /// Answers the decisions held so far, and every one after.
+  void release() => _held.complete();
+
+  @override
+  Future<void> resolvePlayerClaim(
+    GroupId groupId,
+    PlayerId playerId,
+    UserId uid, {
+    required bool approve,
+  }) async {
+    await super.resolvePlayerClaim(groupId, playerId, uid, approve: approve);
+    await _held.future;
+  }
+
+  @override
+  Future<bool> resolvePendingPlayer(
+    GroupId groupId,
+    PlayerId playerId, {
+    required bool approve,
+  }) async {
+    final linked = await super.resolvePendingPlayer(
+      groupId,
+      playerId,
+      approve: approve,
+    );
+    await _held.future;
+    return linked;
+  }
+}
+
 /// Photos pasted or dropped onto the page (CHAT-2, SPEC §4.2), sent by the
 /// test.
 class FakePhotoDrops implements PhotoDrops {
