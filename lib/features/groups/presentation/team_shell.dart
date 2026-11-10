@@ -8,6 +8,7 @@ import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/open_sheets.dart';
 import 'package:battleplan/core/widgets/adaptive_sheet.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/chat_icon.dart';
@@ -31,16 +32,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The tab names in route order: `/g/:groupId/<tab>` (ARCH §5.4).
-const teamTabs = ['chat', 'schedule', 'documents', 'plays'];
+/// The tab names in route order: `/g/:groupId/<tab>` (ARCH §5.4). Plays
+/// keeps its place for links and the branch it's built in, though a group
+/// shows no Plays tab (TEAM-14): the Team tab comes after it either way.
+const teamTabs = ['chat', 'schedule', 'documents', 'plays', 'team'];
 
 /// The team view: header with the back arrow to Teams, the switcher, and
-/// Team info, then Chat · Schedule · Documents · Plays as a bottom bar on
-/// phones or a left rail at 840 px and up (SPEC §5).
+/// the Team settings gear, then Chat · Schedule · Documents · Plays · Team
+/// as a bottom bar on phones or a left rail at 840 px and up (SPEC §5).
 ///
 /// A super admin who isn't on the team sees it read-only instead, under
 /// "Viewing as super admin" (ADMIN-3 View team): no switcher or composer,
-/// but Team info and the moderation the tabs offer them.
+/// but Team settings and the moderation the tabs offer them.
 class TeamShell extends ConsumerStatefulWidget {
   const new({
     required this.groupId,
@@ -68,6 +71,43 @@ class _TeamShellState extends ConsumerState<TeamShell> {
 
   GroupId get groupId => widget.groupId;
   StatefulNavigationShell get navigationShell => widget.navigationShell;
+
+  /// The team each branch last showed, by branch. A tab keeps its place
+  /// (Saved plays, say) while I go from tab to tab, but that place is on
+  /// the team it was opened on.
+  final Map<int, GroupId> _branchTeams = {};
+
+  /// Opens [branch]'s tab where it was left when that was on this team;
+  /// otherwise (another team's place, or not opened yet) at its start on
+  /// this team, never back on the team I switched away from. [restart]
+  /// starts it over anyway, as tapping the tab that's showing does on
+  /// phones.
+  void _openBranch(int branch, {bool restart = false}) =>
+      navigationShell.goBranch(
+        branch,
+        initialLocation: restart || _branchTeams[branch] != groupId,
+      );
+
+  @override
+  void didUpdateWidget(TeamShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.groupId == widget.groupId) return;
+    // A sheet or dialog left open (a person's card, a message's menu) is
+    // about the team it was opened on, and neither the tab's page nor the
+    // shell's own page under it is replaced when the team changes, from
+    // the switcher, a notification or link, or leaving for another team:
+    // close every one, in the tabs' navigators and the app's, even one a
+    // notification's page now covers, so it can't act on the team I left
+    // (OpenSheets). Only routes without a page are closed, never the
+    // router's pages, and the switcher's own sheet has closed by now.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      GoRouter.of(context).observers
+          ?.whereType<OpenSheets>()
+          .firstOrNull
+          ?.closeAll();
+    });
+  }
 
   void _switchTo(BuildContext context, GroupId id) {
     final tab = teamTabs[navigationShell.currentIndex];
@@ -166,14 +206,21 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     // the one that's showing.
     Widget Function({required bool selected}) glyph(IconData icon) =>
         ({required selected}) => Icon(icon);
-    // A basic group has no Plays (TEAM-14); it's the last tab, so the
-    // others keep their places. A link to a group's Plays goes to its chat.
-    final plays = (viewing ? viewed : team?.group)?.hasPlayers ?? true;
+    // A basic group has no Plays (TEAM-14): its tabs skip that branch, and
+    // a link to a group's Plays goes to its chat.
+    final shownGroup = viewing ? viewed : team?.group;
+    final plays = shownGroup?.hasPlayers ?? true;
     if (!plays && navigationShell.currentIndex == teamTabs.indexOf('plays')) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) context.go('/g/${groupId.value}/chat');
       });
     }
+    // The branch each shown tab opens, in the order they show: every tab
+    // but Plays in a group.
+    final branches = [
+      for (final (i, tab) in teamTabs.indexed)
+        if (plays || tab != 'plays') i,
+    ];
     final destinations = <(Widget Function({required bool selected}), String)>[
       (({required selected}) => const ChatIcon(), l10n.tabChat),
       (glyph(AppIcons.schedule), l10n.tabSchedule),
@@ -181,6 +228,11 @@ class _TeamShellState extends ConsumerState<TeamShell> {
       // Drawn: no icon font has a coach's play, an O, its route, and an X
       // (BOARD-1).
       if (plays) (({required selected}) => const PlaysIcon(), l10n.tabPlays),
+      // The roster, Invite, and Dues (SPEC §5.3); a group's is People.
+      (
+        glyph(AppIcons.group),
+        (shownGroup?.isGroup ?? false) ? l10n.groupPeople : l10n.tabTeam,
+      ),
     ];
     // The Chat tab shows this team's unread count (CHAT-9).
     final unread = viewing
@@ -240,10 +292,14 @@ class _TeamShellState extends ConsumerState<TeamShell> {
           badge: i == 0 && unread > 0 ? l10n.unreadCount(unread) : null,
         ),
     ];
-    final selected = math.min(
-      navigationShell.currentIndex,
-      destinations.length - 1,
+    // The shown tab for the branch that's open; Plays in a group shows as
+    // Chat for the frame before it goes there.
+    final selected = math.max(
+      branches.indexOf(navigationShell.currentIndex),
+      0,
     );
+    // The branch showing is on this team now.
+    _branchTeams[navigationShell.currentIndex] = groupId;
 
     final Widget shell;
     if (wide) {
@@ -255,7 +311,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
               OpenFieldRail(
                 tabs: tabs,
                 selectedIndex: selected,
-                onSelect: navigationShell.goBranch,
+                onSelect: (i) => _openBranch(branches[i]),
                 // The header's Admin panel button, for super admins, is
                 // here on wide screens (SPEC §5.5).
                 links: [
@@ -312,9 +368,9 @@ class _TeamShellState extends ConsumerState<TeamShell> {
           bottomNavigationBar: OpenFieldTabBar(
             tabs: tabs,
             selectedIndex: selected,
-            onSelect: (i) => navigationShell.goBranch(
-              i,
-              initialLocation: i == navigationShell.currentIndex,
+            onSelect: (i) => _openBranch(
+              branches[i],
+              restart: branches[i] == navigationShell.currentIndex,
             ),
           ),
         ),
@@ -335,7 +391,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
 /// The team header (SPEC §7.3): one 52 px row with the chevron back to
 /// Teams, the tab's stencil eyebrow over the team name (the switcher), and
 /// the Admin panel for super admins on phones, Messages, notifications and
-/// Team info.
+/// the Team settings gear.
 class _TeamHeader extends StatelessWidget {
   const new({
     required this.team,
@@ -408,7 +464,7 @@ class _TeamHeader extends StatelessWidget {
             const _Low(child: MessagesButton()),
             // Unread notification-center items across all teams (NOTIF-11).
             const _Low(child: NotificationBell()),
-            _Low(child: _TeamInfoButton(groupId: group?.id)),
+            _Low(child: _TeamSettingsButton(group: group)),
           ],
         ),
       ),
@@ -428,7 +484,7 @@ class _Low extends StatelessWidget {
 }
 
 /// The header while viewing as a super admin (ADMIN-3): the eyebrow and
-/// the team's name, without the switcher, and Team info to manage it.
+/// the team's name, without the switcher, and Team settings to manage it.
 class _ViewingHeader extends StatelessWidget {
   const new({required this.group, required this.tabIndex});
 
@@ -466,7 +522,7 @@ class _ViewingHeader extends StatelessWidget {
                 ],
               ),
             ),
-            _Low(child: _TeamInfoButton(groupId: group?.id)),
+            _Low(child: _TeamSettingsButton(group: group)),
           ],
         ),
       ),
@@ -543,21 +599,28 @@ class _StorageBanner extends ConsumerWidget {
   }
 }
 
-/// Team info (SPEC §5.2): a 48 px header icon button that opens the
-/// team's page of Roster, Invite, Notifications, Calendar link, and the
-/// admin rows.
-class _TeamInfoButton extends StatelessWidget {
-  const new({required this.groupId});
+/// Team settings (SPEC §5.1): a 48 px gear in the header that opens the
+/// team's settings page at `/g/:groupId/info`: Notifications for this
+/// team, Color scheme, and Calendar link, then the admins' rows. It was an
+/// ⓘ for Team info, which read as information rather than settings
+/// (owner's request 2026-11-10).
+class _TeamSettingsButton extends StatelessWidget {
+  const new({required this.group});
 
-  final GroupId? groupId;
+  final Group? group;
 
   @override
-  Widget build(BuildContext context) => GumdropIconButton(
-    tooltip: AppLocalizations.of(context).teamInfo,
-    icon: AppIcons.info,
-    onPressed: () {
-      final id = groupId;
-      if (id != null) unawaited(context.push('/g/${id.value}/info'));
-    },
-  );
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return GumdropIconButton(
+      tooltip: (group?.isGroup ?? false)
+          ? l10n.groupSettings
+          : l10n.teamSettings,
+      icon: AppIcons.settings,
+      onPressed: () {
+        final id = group?.id;
+        if (id != null) unawaited(context.push('/g/${id.value}/info'));
+      },
+    );
+  }
 }

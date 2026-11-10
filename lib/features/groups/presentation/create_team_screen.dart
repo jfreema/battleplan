@@ -24,7 +24,7 @@ import 'package:material_ui/material_ui.dart';
 /// color, time zone, and an optional description; or, at
 /// `/g/new?kind=group` (TEAM-14), a basic group's name and color only, kept
 /// as simple as it can be: the time zone is the device's, and the rest can
-/// be added in Group admin. The creator becomes the owner and goes on to
+/// be added in Admin settings. The creator becomes the owner and goes on to
 /// "Invite your team". A team has players, guardians, and Plays (§6.3); a
 /// group is everyone answering for themselves.
 class CreateTeamScreen extends ConsumerStatefulWidget {

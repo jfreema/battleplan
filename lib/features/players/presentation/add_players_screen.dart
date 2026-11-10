@@ -61,14 +61,14 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
   ];
 
   /// Back to where Add players was opened from. Opened from a link or a
-  /// reload there's nothing to go back to, so the roster, where the new
-  /// players are, instead of go_router's "There is nothing to pop" (found
-  /// 2026-11-10 adding players on a reloaded page).
+  /// reload there's nothing to go back to, so the Team tab's roster, where
+  /// the new players are, instead of go_router's "There is nothing to pop"
+  /// (found 2026-11-10 adding players on a reloaded page).
   void _leave() {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/g/${widget.groupId.value}/roster');
+      context.go('/g/${widget.groupId.value}/team');
     }
   }
 

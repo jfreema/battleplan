@@ -22,9 +22,13 @@ Future<void> leaveTeam(BuildContext context, WidgetRef ref, Group group) async {
     destructive: true,
   );
   if (!ok || !context.mounted) return;
+  // Held now, so home still follows if the card that asked is closed
+  // before the server answers: the server takes the membership away
+  // first, and the team behind the card says "not a member" meanwhile.
+  final router = GoRouter.of(context);
   try {
     await ref.read(groupRepositoryProvider).leave(group.id);
-    if (context.mounted) context.go('/');
+    router.go('/');
   } on OwnerMustTransfer {
     if (context.mounted) showAppSnackBar(context, l10n.ownerMustTransfer);
   } on AppFailure {

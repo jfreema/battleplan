@@ -464,10 +464,18 @@ class FakeGroupRepository implements GroupRepository {
   /// Set to make leave() behave as if the caller owns the team.
   bool callerIsOwner = false;
 
+  /// How long leaveGroup takes to answer once the membership has gone.
+  Duration leaveTakes = const Duration(milliseconds: 300);
+
   @override
   Future<void> leave(GroupId id) async {
     if (callerIsOwner) throw const OwnerMustTransfer();
     updates.add('leave ${id.value}');
+    // As leaveGroup does it: the caller's membership goes first, and the
+    // app hears of that before the callable answers.
+    final uid = me?.call();
+    if (uid != null) members?.drop(id, UserId(uid));
+    await Future<void>.delayed(leaveTakes);
   }
 
   @override
@@ -751,6 +759,12 @@ class FakeMemberRepository implements MemberRepository {
   /// Someone is on a team now, as the server writes it.
   void join(Membership membership) {
     memberships.add(membership);
+    _changes.add(null);
+  }
+
+  /// Someone is off a team now, as leaveGroup deletes their membership.
+  void drop(GroupId groupId, UserId uid) {
+    memberships.removeWhere((m) => m.groupId == groupId && m.uid == uid);
     _changes.add(null);
   }
 

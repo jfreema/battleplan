@@ -150,7 +150,7 @@ void main() {
         rsvpRepo: rsvps,
       );
       GoRouter.of(tester.element(find.byType(Scaffold).first))
-          .go('/g/y/roster/players/emma');
+          .go('/g/y/team/players/emma');
       await tester.pumpAndSettle();
       return rsvps;
     }
@@ -187,7 +187,7 @@ void main() {
       await open(tester, user: sam);
       expect(find.text('RSVP history'), findsNothing);
       GoRouter.of(tester.element(find.byType(Scaffold).first))
-          .go('/g/y/roster/players/emma/history');
+          .go('/g/y/team/players/emma/history');
       await tester.pumpAndSettle();
       expect(find.textContaining('Only this player'), findsOneWidget);
       expect(find.text('Practice A'), findsNothing);

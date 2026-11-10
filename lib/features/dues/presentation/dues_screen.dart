@@ -100,9 +100,10 @@ class DuesScreen extends ConsumerWidget {
       appBar: gumdropAppBar(
         context,
         title: l10n.duesTitle,
+        // Opened from the Team tab's card (SPEC §5.3).
         backLabel: backLabelFrom(
           context,
-          isGroup ? l10n.groupInfo : l10n.teamInfo,
+          isGroup ? l10n.groupPeople : l10n.tabTeam,
         ),
       ),
       body: Align(

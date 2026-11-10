@@ -44,8 +44,7 @@ void main() {
       calendarLinks: repo,
       linkOpener: opener,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
+    await openTeamSettings(tester);
     await tester.tap(find.text('Calendar link'));
     await tester.pumpAndSettle();
     return (links: repo, opener: opener);

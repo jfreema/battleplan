@@ -542,8 +542,8 @@ Future<void> goTo(WidgetTester tester, String path) async {
 }
 
 /// Pushes [path] over what's showing, as the app opens a pushed screen,
-/// so its bar has the back row ("‹ Team info", SPEC §5.4.1). [goTo] alone
-/// leaves nothing to go back to, so no back row.
+/// so its bar has the back row ("‹ Team settings", SPEC §5.4.1). [goTo]
+/// alone leaves nothing to go back to, so no back row.
 Future<void> pushTo(WidgetTester tester, String path) async {
   unawaited(
     GoRouter.of(tester.element(find.byType(Scaffold).first)).push(path),
@@ -551,14 +551,35 @@ Future<void> pushTo(WidgetTester tester, String path) async {
   await tester.pumpAndSettle();
 }
 
-/// A team screen opened from Team info, as its row there opens it.
-Future<void> pumpFromTeamInfo(
+/// A team screen opened from Team settings, as its row there opens it.
+Future<void> pumpFromTeamSettings(
   WidgetTester tester, {
   required TeamScheme scheme,
   required String path,
 }) async {
   await pumpTeam(tester, scheme: scheme);
   await goTo(tester, '/g/a/info');
+  await pushTo(tester, path);
+}
+
+/// The Team tab (SPEC §5.3): the team's card with Invite and Dues, then
+/// the roster.
+Future<void> pumpTeamTab(
+  WidgetTester tester, {
+  required TeamScheme scheme,
+}) async {
+  await pumpTeam(tester, scheme: scheme);
+  await openTeamTab(tester);
+}
+
+/// A team screen opened from the Team tab, as the card's Invite and Dues
+/// open theirs.
+Future<void> pumpFromTeamTab(
+  WidgetTester tester, {
+  required TeamScheme scheme,
+  required String path,
+}) async {
+  await pumpTeamTab(tester, scheme: scheme);
   await pushTo(tester, path);
 }
 
@@ -672,8 +693,8 @@ mainScreens = {
 const wideSize = Size(1280, 800);
 
 /// Every key screen with a golden in every color scheme (SPEC §7.4): the main
-/// screens, and welcome, Teams, Profile, Team info, the team switcher,
-/// roster, settings, invite, both Color scheme screens, a group's schedule,
+/// screens, and welcome, Teams, Profile, Team settings, the team switcher,
+/// the Team tab, settings, invite, both Color scheme screens, a group's schedule,
 /// Dues (an admin's, a due, Who owes what, and a member's and a guardian's
 /// own), Your icon, and the wide rail layout.
 final Map<
@@ -689,7 +710,7 @@ goldenScreens = {
     users: FakeUserRepository()..colorScheme = scheme,
     size: phoneSize,
   ),
-  // The top (SPEC §5.1), and a team's info (§5.2).
+  // The top (SPEC §5.1), and a team's settings (§5.2).
   'teams': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/teams');
@@ -698,8 +719,8 @@ goldenScreens = {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/profile');
   },
-  // From the chat's ⓘ, with the chevron alone.
-  'team_info': (tester, {required scheme}) async {
+  // From the chat's gear, with the chevron alone.
+  'team_settings': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
     await pushTo(tester, '/g/a/info');
   },
@@ -708,8 +729,7 @@ goldenScreens = {
     await tester.tap(find.bySemanticsLabel(RegExp('Switch team: Thunder U14')));
     await tester.pumpAndSettle();
   },
-  'roster': (tester, {required scheme}) =>
-      pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/roster'),
+  'team_tab': pumpTeamTab,
   // From Profile.
   'settings': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
@@ -717,28 +737,28 @@ goldenScreens = {
     await pushTo(tester, '/settings');
   },
   'invite': (tester, {required scheme}) =>
-      pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/invite'),
+      pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/invite'),
   'chat_wide': (tester, {required scheme}) =>
       pumpTeam(tester, scheme: scheme, size: wideSize),
   // Color scheme: how I see a team, and my default (SET-2).
   'color_scheme': (tester, {required scheme}) =>
-      pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/scheme'),
+      pumpFromTeamSettings(tester, scheme: scheme, path: '/g/a/scheme'),
   'color_scheme_default': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/teams/scheme');
   },
   'group_schedule': pumpGroupSchedule,
   'dues': (tester, {required scheme}) =>
-      pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues'),
+      pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues'),
   // One due's breakdown (DUES-2): who owes most first, each with what
   // they've paid and what's left.
   'dues_due': (tester, {required scheme}) async {
-    await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+    await pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues');
     await pushTo(tester, '/g/a/dues/d0');
   },
   // Who owes what (DUES-5): everyone across every due, by person.
   'dues_people': (tester, {required scheme}) async {
-    await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+    await pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues');
     await pushTo(tester, '/g/a/dues/people');
   },
   // What a parent sees (DUES-2, DUES-3): Leo's dues, and how to pay.

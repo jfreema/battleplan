@@ -357,7 +357,7 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
         title: group.isGroup ? l10n.groupAdmin : l10n.teamAdmin,
         backLabel: backLabelFrom(
           context,
-          group.isGroup ? l10n.groupInfo : l10n.teamInfo,
+          group.isGroup ? l10n.groupSettings : l10n.teamSettings,
         ),
       ),
       body: Center(

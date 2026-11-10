@@ -90,10 +90,12 @@ bool isTeamChatPath(String path, String groupId) {
 }
 
 /// Team tabs replace the stack when opened (switching teams, like the
-/// switcher); other screens are pushed so Back returns (ARCH §5.4).
+/// switcher); other screens are pushed so Back returns (ARCH §5.4). The
+/// roster is the Team tab now, where older notifications' `roster` routes
+/// go too (SPEC §5.3).
 bool isTeamTabRoute(String route) {
   final s = Uri.tryParse(route)?.pathSegments ?? const [];
   return s.length >= 3 &&
       s[0] == 'g' &&
-      const {'chat', 'schedule', 'documents'}.contains(s[2]);
+      const {'chat', 'schedule', 'documents', 'team', 'roster'}.contains(s[2]);
 }

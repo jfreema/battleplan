@@ -65,7 +65,7 @@ void main() {
   String path(WidgetTester tester) =>
       GoRouter.of(tester.element(find.byType(Scaffold).first)).state.uri.path;
 
-  Future<void> openFromTeamAdmin(WidgetTester tester) async {
+  Future<void> openFromAdminSettings(WidgetTester tester) async {
     await go(tester, '/g/fall/settings');
     final row = find.text('Start a new season');
     await tester.ensureVisible(row);
@@ -99,7 +99,7 @@ void main() {
     );
   });
 
-  testWidgets('the owner starts one from Team admin and lands in its chat', (
+  testWidgets('the owner starts one in Admin settings and lands in its chat', (
     tester,
   ) async {
     final groupRepo = FakeGroupRepository({'fall': fall});
@@ -111,7 +111,7 @@ void main() {
       playerRepo: players(),
       size: const Size(1024, 1366),
     );
-    await openFromTeamAdmin(tester);
+    await openFromAdminSettings(tester);
     expect(find.widgetWithText(AppBar, 'Start a new season'), findsOneWidget);
     // Everyone comes to start, counted; the copies are the owner's to add.
     expect(
@@ -202,7 +202,7 @@ void main() {
       memberships: people(),
       size: const Size(1024, 1366),
     );
-    await openFromTeamAdmin(tester);
+    await openFromAdminSettings(tester);
     expect(find.text('Players and their parents'), findsNothing);
     expect(find.text('Saved plays'), findsNothing);
     expect(find.text('Admins'), findsOneWidget);
@@ -229,7 +229,7 @@ void main() {
       playerRepo: players(),
       size: const Size(1024, 1366),
     );
-    await openFromTeamAdmin(tester);
+    await openFromAdminSettings(tester);
     await tester.enterText(find.byType(TextFormField), 'Thunder Spring');
     await start(tester);
     await tester.tap(find.text('Start season'));

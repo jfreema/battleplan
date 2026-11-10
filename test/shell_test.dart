@@ -137,6 +137,195 @@ void main() {
       expect(find.bySemanticsLabel(RegExp('Muted')), findsOneWidget);
     });
 
+    // Thunder and Lightning, with me and someone else on each.
+    Future<void> pumpTwoTeams(
+      WidgetTester tester, {
+      Size size = const Size(400, 1600),
+    }) async {
+      await pumpApp(
+        tester,
+        size: size,
+        auth: FakeAuthRepository(user: coach),
+        groups: {
+          'a': testGroup('a', 'Thunder', lastMessageAt: DateTime(2026, 10)),
+          'b': testGroup('b', 'Lightning', lastMessageAt: DateTime(2026, 9)),
+        },
+        memberships: [
+          testMembership(
+            'a',
+            'coach',
+            role: MemberRole.owner,
+            name: 'Coach Lee',
+          ),
+          testMembership('a', 'sam', name: 'Sam Rivera'),
+          testMembership('b', 'coach', name: 'Coach Lee'),
+          testMembership('b', 'zed', name: 'Zed Adams'),
+        ],
+      );
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/chat');
+      await tester.pumpAndSettle();
+    }
+
+    String location(WidgetTester tester) =>
+        GoRouter.of(tester.element(find.byType(Scaffold).first))
+            .routerDelegate
+            .currentConfiguration
+            .uri
+            .toString();
+
+    Future<void> switchTo(WidgetTester tester, String name) async {
+      await tester.tap(find.byType(TeamSwitcherButton));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(TeamSwitcherList),
+          matching: find.text(name),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    // A sheet on phones, a dialog on wide screens: both over the whole
+    // app, header included.
+    for (final (screen, size) in [
+      ('a phone', const Size(390, 844)),
+      ('a wide screen', wide),
+    ]) {
+      testWidgets("on $screen, a person's card left open closes when the "
+          "team changes, and the other team's roster starts unsearched", (
+        tester,
+      ) async {
+        await pumpTwoTeams(tester, size: size);
+        await openTeamTab(tester);
+        await tester.enterText(find.byType(TextField), 'Sam');
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Sam Rivera'));
+        await tester.pumpAndSettle();
+        expect(find.byType(MemberCard), findsOneWidget);
+        // The card covers the header's switcher, so the team changes the
+        // way a notification or a link changes it.
+        GoRouter.of(tester.element(find.byType(Scaffold).first))
+            .go('/g/b/team');
+        await tester.pumpAndSettle();
+        expect(location(tester), '/g/b/team');
+        // Thunder's card can't act on Lightning.
+        expect(find.byType(MemberCard), findsNothing);
+        expect(find.text('Sam Rivera'), findsNothing);
+        // Nothing filters Lightning's roster, and the box says so.
+        expect(find.text('Zed Adams'), findsOneWidget);
+        expect(
+          tester.widget<TextField>(find.byType(TextField)).controller?.text,
+          '',
+        );
+      });
+    }
+
+    testWidgets('a menu left open in a tab closes when the team changes', (
+      tester,
+    ) async {
+      await pumpTwoTeams(tester, size: const Size(390, 844));
+      await openTeamTab(tester);
+      // The roster's sort menu, in the Team tab's own navigator.
+      await tester.tap(find.byTooltip('Sort players'));
+      await tester.pumpAndSettle();
+      expect(find.text('By name'), findsOneWidget);
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/b/team');
+      await tester.pumpAndSettle();
+      expect(location(tester), '/g/b/team');
+      expect(find.text('By name'), findsNothing);
+      expect(find.text('Zed Adams'), findsOneWidget);
+    });
+
+    testWidgets('a menu left open in a tab I moved away from closes too, '
+        "and doesn't slide away over the other team's tab later", (
+      tester,
+    ) async {
+      await pumpTwoTeams(tester, size: const Size(390, 844));
+      await openTeamTab(tester);
+      await tester.tap(find.byTooltip('Sort players'));
+      await tester.pumpAndSettle();
+      // The menu covers only the tab, so the tab bar still answers, and
+      // the Team tab is hidden with the menu open in it.
+      await openTeamTab(tester, label: 'Chat');
+      expect(find.text('By name', skipOffstage: false), findsOneWidget);
+      await switchTo(tester, 'Lightning');
+      expect(location(tester), '/g/b/chat');
+      // Gone from the hidden tab, not waiting there half-closed.
+      expect(find.text('By name', skipOffstage: false), findsNothing);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(OpenFieldTabBar),
+          matching: find.text('Team'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(location(tester), '/g/b/team');
+      expect(find.text('By name'), findsNothing);
+      await tester.pumpAndSettle();
+      expect(find.text('Zed Adams'), findsOneWidget);
+    });
+
+    testWidgets("a person's card left open closes when a notification opens "
+        "another team's page over the tabs, and isn't back on Back", (
+      tester,
+    ) async {
+      await pumpTwoTeams(tester, size: const Size(390, 844));
+      await openTeamTab(tester);
+      await tester.tap(find.text('Sam Rivera'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MemberCard), findsOneWidget);
+      GoRouter router() =>
+          GoRouter.of(tester.element(find.byType(Scaffold).first));
+      // A player card on Lightning, a page over the tabs, where a player
+      // request's notification goes (its old roster address included).
+      router().go('/g/b/roster/players/nobody');
+      await tester.pumpAndSettle();
+      expect(location(tester), '/g/b/team/players/nobody');
+      router().pop();
+      await tester.pumpAndSettle();
+      expect(location(tester), '/g/b/team');
+      // Thunder's card isn't waiting under it.
+      expect(find.byType(MemberCard), findsNothing);
+      expect(find.text('Zed Adams'), findsOneWidget);
+    });
+
+    testWidgets("on a phone, a person's card covers the header too, so the "
+        "switcher can't change the team under it", (tester) async {
+      await pumpTwoTeams(tester, size: const Size(390, 844));
+      await openTeamTab(tester);
+      await tester.tap(find.text('Sam Rivera'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(tester.getCenter(find.byType(TeamSwitcherButton)));
+      await tester.pumpAndSettle();
+      // The tap closes the card instead of opening the switcher.
+      expect(find.byType(TeamSwitcherList), findsNothing);
+      expect(find.byType(MemberCard), findsNothing);
+      expect(location(tester), '/g/a/team');
+    });
+
+    testWidgets('after a switch each tab opens on the team I switched to, '
+        'and within a team a tab keeps its place', (tester) async {
+      await pumpTwoTeams(tester);
+      await openTeamTab(tester);
+      expect(find.text('Sam Rivera'), findsOneWidget);
+      await openTeamTab(tester, label: 'Chat');
+      await switchTo(tester, 'Lightning');
+      expect(location(tester), '/g/b/chat');
+      // Lightning's Team tab, not the Thunder one it was left on.
+      await openTeamTab(tester);
+      expect(location(tester), '/g/b/team');
+      expect(find.text('Zed Adams'), findsOneWidget);
+      expect(find.text('Sam Rivera'), findsNothing);
+      // Saved plays, then Chat, then Plays again: still Saved plays.
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/b/plays/saved');
+      await tester.pumpAndSettle();
+      await openTeamTab(tester, label: 'Chat');
+      await openTeamTab(tester, label: 'Plays');
+      expect(location(tester), '/g/b/plays/saved');
+    });
+
     testWidgets('wide screens get a dropdown panel under the switcher, '
         'for a click and for Ctrl+K', (tester) async {
       await pumpApp(
@@ -253,7 +442,7 @@ void main() {
     expect(name.style!.fontSize, greaterThanOrEqualTo(19));
     // One row: the back, the eyebrow over the name, and the three icons.
     final back = tester.getCenter(find.byTooltip('Back'));
-    final info = tester.getCenter(find.byTooltip('Team info'));
+    final info = tester.getCenter(find.byTooltip('Team settings'));
     expect((back.dy - info.dy).abs(), lessThan(2));
   });
 
@@ -271,6 +460,7 @@ void main() {
       final rail = tester.widget<OpenFieldRail>(find.byType(OpenFieldRail));
       expect(rail.tabs[2].label, 'Documents');
       expect(rail.tabs[3].label, 'Plays');
+      expect(rail.tabs[4].label, 'Team');
       await tester.tap(find.text('Plays'));
       await tester.pumpAndSettle();
       expect(find.byType(OpenFieldRail), findsOneWidget);
@@ -382,7 +572,7 @@ void main() {
       expect(find.text('Navy · when a team has none'), findsOneWidget);
     });
 
-    testWidgets('Team info → Color scheme saves my pick for the team', (
+    testWidgets('Team settings → Color scheme saves my pick for the team', (
       tester,
     ) async {
       final members = FakeMemberRepository([testMembership('a', 'coach')]);
@@ -505,7 +695,7 @@ void main() {
       expect(page(tester), SchemeRoles.skyblue.page);
     });
 
-    testWidgets("Team admin sets the team's default for everyone", (
+    testWidgets("Admin settings sets the team's default for everyone", (
       tester,
     ) async {
       final teams = FakeGroupRepository({'a': testGroup('a', 'Thunder')});
@@ -805,7 +995,7 @@ void main() {
       // Each screen's title, and what starts its body.
       for (final (route, title, first) in [
         ('/settings', 'Settings', find.text('Account')),
-        ('/g/a/info', 'Team info', find.byType(SettingsPanel).first),
+        ('/g/a/info', 'Team settings', find.byType(SettingsPanel).first),
         (
           '/g/a/scheme',
           'Color scheme',
@@ -816,15 +1006,16 @@ void main() {
           'Default color scheme',
           find.textContaining('How Teams and Profile look for you.'),
         ),
-        ('/g/a/roster', 'Roster', find.text('Players')),
-        ('/g/a/settings', 'Team admin', find.text('Member permissions')),
+        ('/g/a/settings', 'Admin settings', find.text('Member permissions')),
       ]) {
         await scenes.goTo(tester, route);
         expect(left(tester, find.text(title).last), 20, reason: route);
         expect(left(tester, first), 20, reason: '$route body');
       }
-      // The roster's rows sit on the hairlines' edge, not 16 px inside.
-      await scenes.goTo(tester, '/g/a/roster');
+      // The Team tab, under the team's header: its card on the gutter, and
+      // the roster's rows on the hairlines' edge, not 16 px inside.
+      await scenes.goTo(tester, '/g/a/team');
+      expect(left(tester, find.byType(SettingsPanel).first), 20);
       final rule = find.descendant(
         of: find.byType(PageRows).first,
         matching: find.byType(Container),
@@ -875,7 +1066,7 @@ void main() {
       tester,
     ) async {
       await scenes.pumpTeam(tester, scheme: TeamScheme.army);
-      // A pushed-screen bar: Team info, as from a link.
+      // A pushed-screen bar: Team settings, as from a link.
       await scenes.goTo(tester, '/g/a/info');
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
@@ -909,11 +1100,11 @@ void main() {
     testWidgets("a player card and a person's page name the screen they "
         'came from', (tester) async {
       await scenes.pumpTeam(tester, scheme: TeamScheme.army);
-      await scenes.goTo(tester, '/g/a/roster');
+      await scenes.goTo(tester, '/g/a/team');
       await tester.tap(find.text('Mia Kim'));
       await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel('Back, Roster'), findsOneWidget);
-      await tester.tap(find.bySemanticsLabel('Back, Roster'));
+      expect(find.bySemanticsLabel('Back, Team'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Back, Team'));
       await tester.pumpAndSettle();
       // A member's card, then their page.
       await tester.ensureVisible(find.text('Sam Rivera').last);
@@ -927,14 +1118,14 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel('Back, Roster'), findsOneWidget);
+      expect(find.bySemanticsLabel('Back, Team'), findsOneWidget);
       // Opened from a link, the chevron alone.
-      await scenes.goTo(tester, '/g/a/roster/players/mia');
+      await scenes.goTo(tester, '/g/a/team/players/mia');
       expect(find.bySemanticsLabel('Back'), findsOneWidget);
       expect(find.bySemanticsLabel(RegExp('^Back, ')), findsNothing);
     });
 
-    testWidgets("Team admin's switches sit under a page heading, one rule "
+    testWidgets("Admin settings' switches sit under a page heading, one rule "
         'between rows', (tester) async {
       await scenes.pumpTeam(tester, scheme: TeamScheme.army);
       await scenes.goTo(tester, '/g/a/settings');
@@ -1064,7 +1255,7 @@ void main() {
       final labels = [
         // The header's, on teams and groups (SPEC §5.4.2).
         for (final group in [false, true])
-          for (var tab = 0; tab < 4; tab++)
+          for (var tab = 0; tab < 5; tab++)
             for (var month = 1; month <= 12; month++)
               HeaderEyebrow.labelFor(
                 l10n,

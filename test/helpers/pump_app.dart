@@ -10,6 +10,7 @@ import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/documents/presentation/document_screen.dart';
 import 'package:battleplan/features/dues/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/imports/application/providers.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/players/application/providers.dart';
@@ -194,5 +195,29 @@ Future<void> openAppSettings(WidgetTester tester) async {
   await tester.tap(find.text('Profile'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Settings'));
+  await tester.pumpAndSettle();
+}
+
+/// From a team's page to its Team tab (SPEC §5.3): the team's card with
+/// Invite and Dues, then the roster. A group calls it People.
+Future<void> openTeamTab(WidgetTester tester, {String label = 'Team'}) async {
+  await tester.tap(
+    find.descendant(
+      of: find.byWidgetPredicate(
+        (w) => w is OpenFieldTabBar || w is OpenFieldRail,
+      ),
+      matching: find.text(label),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// From a team's page to Team settings (SPEC §5.1): the gear in its header.
+/// A group's is Group settings.
+Future<void> openTeamSettings(
+  WidgetTester tester, {
+  String tooltip = 'Team settings',
+}) async {
+  await tester.tap(find.byTooltip(tooltip));
   await tester.pumpAndSettle();
 }

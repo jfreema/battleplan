@@ -526,8 +526,7 @@ void main() {
         groups: teams,
         memberRepo: members,
       );
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
+      await openTeamSettings(tester);
       await tester.tap(find.text('Notifications for this team'));
       await tester.pumpAndSettle();
       expect(find.text('Not muted'), findsOneWidget);
@@ -1013,6 +1012,32 @@ void main() {
       expect(notifications.markedRead, isEmpty);
     });
 
+    testWidgets("an older push for a team's roster opens its Team tab "
+        '(SPEC §5.3)', (tester) async {
+      final pushes = FakePushRepository();
+      final prefs = await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        push: pushes,
+      );
+      pushes.opened.add(
+        const PushMessage(
+          data: {
+            'groupId': 'b',
+            'route': '/g/b/roster',
+            'kind': 'guardianRequest',
+          },
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(find.text('TEAM ROSTER'), findsOneWidget);
+      expect(find.text('Lightning'), findsWidgets);
+      expect(prefs.lastTeamRoute, '/g/b/team');
+    });
+
     testWidgets('routes outside the app are ignored', (tester) async {
       final pushes = FakePushRepository();
       final prefs = await pumpApp(
@@ -1035,12 +1060,30 @@ void main() {
     test('only team and center routes are allowed', () {
       expect(isAllowedNotificationRoute('/g/a/chat/m/m1'), isTrue);
       expect(isAllowedNotificationRoute('/g/a/roster'), isTrue);
+      expect(isAllowedNotificationRoute('/g/a/team'), isTrue);
       expect(isAllowedNotificationRoute('/notifications'), isTrue);
       expect(isAllowedNotificationRoute('/settings'), isFalse);
       expect(isAllowedNotificationRoute('/g'), isFalse);
       expect(isAllowedNotificationRoute('//evil.example/g/a'), isFalse);
       expect(isAllowedNotificationRoute('https://evil.example/g/a'), isFalse);
       expect(isAllowedNotificationRoute(null), isFalse);
+    });
+
+    test('team tabs replace the stack, the Team tab from its old roster '
+        'route too (SPEC §5.3); other screens are pushed', () {
+      for (final route in [
+        '/g/a/chat/m/m1',
+        '/g/a/schedule',
+        '/g/a/documents',
+        '/g/a/team',
+        '/g/a/roster',
+        '/g/a/team/players/p1',
+      ]) {
+        expect(isTeamTabRoute(route), isTrue, reason: route);
+      }
+      for (final route in ['/g/a/info', '/g/a/dues/d1', '/g/a', '/teams']) {
+        expect(isTeamTabRoute(route), isFalse, reason: route);
+      }
     });
 
     test("a team's chat path, and nothing else", () {

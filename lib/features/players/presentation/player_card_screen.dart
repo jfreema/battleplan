@@ -30,7 +30,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// PLAYER-2 at `/g/:groupId/roster/players/:playerId`: name, number, walk-up
+/// PLAYER-2 at `/g/:groupId/team/players/:playerId`: name, number, walk-up
 /// song, date of birth (for those who see the Details), and who's linked, each marked
 /// Player or Guardian. Linked
 /// members (the player themselves included) and admins edit the details
@@ -77,7 +77,7 @@ class PlayerCardScreen extends ConsumerWidget {
                 icon: AppIcons.roster,
                 message: l10n.playerNotFound,
                 actionLabel: l10n.backToRoster,
-                onAction: () => context.go('/g/${groupId.value}/roster'),
+                onAction: () => context.go('/g/${groupId.value}/team'),
               ),
       );
     }
@@ -268,7 +268,7 @@ class PlayerCardScreen extends ConsumerWidget {
               subtitle: Text(l10n.rsvpHistoryEntryHelp),
               trailing: const Icon(AppIcons.chevronRight),
               onTap: () => context.push(
-                '/g/${groupId.value}/roster/players/${playerId.value}/history',
+                '/g/${groupId.value}/team/players/${playerId.value}/history',
               ),
             ),
           if (isAdmin) ...[

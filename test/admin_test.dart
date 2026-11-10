@@ -517,7 +517,7 @@ void main() {
       ),
     ]);
 
-    testWidgets('Team info has no Color scheme, and its route goes back', (
+    testWidgets('Team settings has no Color scheme, and its route goes back', (
       tester,
     ) async {
       await open(
@@ -537,12 +537,12 @@ void main() {
       final members = thunderPeople();
       await open(
         tester,
-        '/g/t1/roster',
+        '/g/t1/team',
         groupRepo: youthTeam(),
         memberRepo: members,
         playerRepo: emma(),
       );
-      expect(find.text('Add players'), findsOneWidget);
+      expect(find.byTooltip('Add players'), findsOneWidget);
       await tester.tap(find.text('Sam Rivera'));
       await tester.pumpAndSettle();
       expect(find.text('Remove from team'), findsOneWidget);
@@ -551,7 +551,7 @@ void main() {
       expect(members.calls, ['update sam admin']);
     });
 
-    testWidgets('Event: RSVP for a player; Team settings: owner actions', (
+    testWidgets('Event: RSVP for a player; Admin settings: owner actions', (
       tester,
     ) async {
       final start = now.add(const Duration(days: 1));
@@ -616,7 +616,7 @@ void main() {
       final players = emma();
       await open(
         tester,
-        '/g/t1/roster/players/emma',
+        '/g/t1/team/players/emma',
         admin: admin,
         groupRepo: youthTeam(),
         memberRepo: thunderPeople(),
@@ -641,7 +641,7 @@ void main() {
       final own = FakeAdminRepository();
       await open(
         tester,
-        '/g/t1/roster/players/emma',
+        '/g/t1/team/players/emma',
         admin: own,
         groupRepo: youthTeam(),
         memberRepo: FakeMemberRepository([
@@ -658,7 +658,7 @@ void main() {
       expect(own.calls, isEmpty);
     });
 
-    testWidgets('Team settings: edits go through the audited callable', (
+    testWidgets('Admin settings: edits go through the audited callable', (
       tester,
     ) async {
       final admin = FakeAdminRepository();
@@ -1306,17 +1306,21 @@ void main() {
         ),
         findsOneWidget,
       );
-      // Team info manages it, without Notifications or Leave: this isn't
-      // one of their teams.
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
-      for (final item in ['Roster', 'Invite', 'Team admin', 'Media']) {
+      // Team settings manages it, without Just for you or Leave: this
+      // isn't one of their teams.
+      await openTeamSettings(tester);
+      for (final item in ['Admin settings', 'Media', 'Reports', 'Import']) {
         expect(find.text(item), findsOneWidget, reason: item);
       }
+      expect(find.text('Just for you'), findsNothing);
       expect(find.text('Notifications for this team'), findsNothing);
       expect(find.text('Leave team'), findsNothing);
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
+      // The roster and Invite are on the Team tab, as for its admins.
+      await openTeamTab(tester);
+      expect(find.text('Invite'), findsOneWidget);
+      await openTeamTab(tester, label: 'Chat');
 
       // The menu offers moderation only.
       await tester.longPress(find.text('Buy cheap pills'));

@@ -19,7 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// PLAYER-11 at `/g/:groupId/roster/players/:playerId/history`: a player's
+/// PLAYER-11 at `/g/:groupId/team/players/:playerId/history`: a player's
 /// answers on the team's past events over the last 3, 6, or 12 months,
 /// newest first, with totals out of the events that took RSVPs since the
 /// player was added (canceled ones are listed but not counted). Each opens

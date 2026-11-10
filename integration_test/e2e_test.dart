@@ -141,9 +141,9 @@ void main() {
       await FirebaseAuth.instance.signOut();
     }
 
-    // The seeded coach opens their team's invite code.
+    // The seeded coach opens their team's invite code, from the Team tab.
     await signInWithEmail(tester, _coach, 'password');
-    await tap(tester, find.byTooltip('Team info'));
+    await tap(tester, find.text('Team').last);
     await tap(tester, find.text('Invite'));
     final codeText = find.byWidgetPredicate(
       (w) =>
@@ -227,7 +227,7 @@ void main() {
     // layouts at every orientation and in Split View are checked by
     // test/ipad_layout_test.dart.
     go(tester, '/');
-    await until(tester, find.byTooltip('Team info'));
+    await until(tester, find.byTooltip('Team settings'));
     final width = tester.view.physicalSize.width / tester.view.devicePixelRatio;
     await until(
       tester,

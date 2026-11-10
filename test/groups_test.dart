@@ -58,7 +58,7 @@ void main() {
     expect(find.text('Create a Group'), findsNWidgets(2));
     expect(find.text('GROUP NAME'), findsOneWidget);
     expect(find.text('Color'), findsOneWidget);
-    // The rest waits for Group admin; the time zone is the device's.
+    // The rest waits for Admin settings; the time zone is the device's.
     for (final field in ['SPORT', 'TIME ZONE', 'DESCRIPTION (OPTIONAL)']) {
       expect(find.text(field), findsNothing, reason: field);
     }
@@ -105,18 +105,20 @@ void main() {
         Player(id: PlayerId('p1'), groupId: GroupId('c'), displayName: 'Emma'),
       ]),
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Group info'), findsOneWidget);
-    expect(find.text('Group admin'), findsOneWidget);
+    await openTeamSettings(tester, tooltip: 'Group settings');
+    expect(find.widgetWithText(AppBar, 'Group settings'), findsOneWidget);
+    expect(find.text('Admin settings'), findsOneWidget);
     expect(find.text('Group · 3 members'), findsOneWidget);
-    await tester.tap(find.text('People'));
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'People'), findsOneWidget);
+    // Its people are the People tab (TEAM-14).
+    await openTeamTab(tester, label: 'People');
+    expect(find.text('GROUP MEMBERS'), findsOneWidget);
     expect(find.text('Players'), findsNothing);
     expect(find.text('Emma'), findsNothing);
     expect(find.text('Coaches'), findsNothing);
-    expect(find.text('Add players'), findsNothing);
+    expect(find.byTooltip('Add players'), findsNothing);
+    expect(find.byTooltip('Add player'), findsNothing);
     expect(find.text('Who are you here for?'), findsNothing);
     expect(find.text('Admins'), findsOneWidget);
     expect(find.text('Members'), findsOneWidget);
@@ -245,8 +247,10 @@ void main() {
       size: const Size(1024, 1366),
     );
     expect(find.text('Plays'), findsNothing);
+    // Its people are People until it's a team.
+    expect(find.text('People'), findsOneWidget);
     await go(tester, '/g/c/settings');
-    expect(find.widgetWithText(AppBar, 'Group admin'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'Admin settings'), findsOneWidget);
     final make = find.text('Make it a team');
     await tester.ensureVisible(make);
     await tester.tap(make);
@@ -266,12 +270,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(groupRepo.updates, ['convert soccer']);
     expect(find.text('Book club is a team now.'), findsOneWidget);
-    // Team admin now, with its sport, and no way back.
-    expect(find.widgetWithText(AppBar, 'Team admin'), findsOneWidget);
+    // A team's Admin settings now, with its sport, and no way back.
+    expect(find.widgetWithText(AppBar, 'Admin settings'), findsOneWidget);
     expect(find.text('SPORT'), findsOneWidget);
     expect(find.text('Make it a team'), findsNothing);
     await go(tester, '/g/c/chat');
     expect(find.text('Plays'), findsOneWidget);
+    expect(find.text('Team'), findsOneWidget);
+    expect(find.text('People'), findsNothing);
   });
 
   testWidgets("a group's admin who isn't its owner can't make it a team", (

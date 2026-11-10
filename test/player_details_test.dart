@@ -107,7 +107,7 @@ void main() {
       playerRepo: repo,
       linkOpener: linkOpener,
     );
-    await go(tester, '/g/y/roster/players/emma');
+    await go(tester, '/g/y/team/players/emma');
   }
 
   Future<void> edit(WidgetTester tester) async {
@@ -134,9 +134,9 @@ void main() {
       expect(find.text('Wears glasses'), findsNothing);
       expect(find.text('Edit details'), findsNothing);
       // Not on the roster either, nor by going to the form.
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       expect(find.textContaining('Age 12'), findsNothing);
-      await go(tester, '/g/y/roster/players/emma/details');
+      await go(tester, '/g/y/team/players/emma/details');
       expect(find.text("You can't do that on this team."), findsOneWidget);
       expect(repo.detailsReads, isEmpty);
     });
@@ -155,15 +155,15 @@ void main() {
         ],
         playerRepo: repo,
       );
-      await go(tester, '/g/y/roster/players/emma');
+      await go(tester, '/g/y/team/players/emma');
       expect(find.text('Remove player'), findsOneWidget);
       // For support (§3): shown, but never changed.
       expect(find.text('Details'), findsOneWidget);
       expect(find.text('Wears glasses'), findsOneWidget);
       expect(find.text('Edit details'), findsNothing);
-      await go(tester, '/g/y/roster/players/emma/details');
+      await go(tester, '/g/y/team/players/emma/details');
       expect(find.text("You can't do that on this team."), findsOneWidget);
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       expect(find.textContaining('Age 12'), findsOneWidget);
       expect(repo.detailsReads, unorderedEquals(['player emma', 'team y']));
     });
@@ -450,7 +450,7 @@ void main() {
     expect(find.text('Details'), findsOneWidget);
     expect(find.text('Wears glasses'), findsOneWidget);
     expect(find.text('Edit details'), findsNothing);
-    await go(tester, '/g/y/roster/players/emma/details');
+    await go(tester, '/g/y/team/players/emma/details');
     expect(find.text("You can't do that on this team."), findsOneWidget);
   });
 
@@ -466,7 +466,7 @@ void main() {
         memberships: people,
         playerRepo: repo,
       );
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       expect(
         find.text('Age 12 · Maria Rodriguez, Emma R (player)'),
         findsOneWidget,
@@ -483,7 +483,7 @@ void main() {
         memberships: people,
         playerRepo: repo,
       );
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       expect(find.text('Maria Rodriguez, Emma R (player)'), findsOneWidget);
       expect(find.textContaining('Age 12'), findsNothing);
       expect(repo.detailsReads, isEmpty);
@@ -494,7 +494,7 @@ void main() {
   testWidgets('the form for a player who is gone says so', (tester) async {
     final repo = emmaTeam();
     await openCard(tester, 'coach', repo);
-    await go(tester, '/g/y/roster/players/gone/details');
+    await go(tester, '/g/y/team/players/gone/details');
     expect(find.text("This player isn't on the team anymore."), findsOneWidget);
   });
 }

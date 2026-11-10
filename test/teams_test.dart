@@ -186,8 +186,7 @@ void main() {
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
         invites: invites,
       );
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
+      await openTeamTab(tester);
       await tester.tap(find.text('Invite'));
       await tester.pumpAndSettle();
       return invites;
@@ -391,7 +390,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(playerRepo.added.single, const [NewPlayer(name: 'Leo Park')]);
-      expect(router.state.uri.path, '/g/y/roster');
+      // The Team tab, where the roster is (SPEC §5.3).
+      expect(router.state.uri.path, '/g/y/team');
     });
 
     /// Picks the 15th of this month in 2015 from the date-of-birth picker.
@@ -524,7 +524,7 @@ void main() {
         memberships: people,
         playerRepo: withEmma(),
       );
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       expect(find.text('Maria Rodriguez'), findsWidgets);
       // Who's who on the row, from the player links (PLAYER-8).
       expect(find.text('Parent of Emma #7'), findsOneWidget);
@@ -572,7 +572,7 @@ void main() {
         memberships: people,
         playerRepo: repo,
       );
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       expect(find.text('Player #12 · Parent of Emma #7'), findsOneWidget);
       // Maria is the player Lee, who has no number.
       expect(find.text('Player'), findsOneWidget);
@@ -624,7 +624,7 @@ void main() {
         eventRepo: events,
         rsvpRepo: rsvps,
       );
-      await go(tester, '/g/y/roster/players/emma');
+      await go(tester, '/g/y/team/players/emma');
       expect(find.text('Upcoming RSVPs'), findsOneWidget);
       expect(find.text('vs. Eagles'), findsOneWidget);
       expect(find.text('Going'), findsOneWidget);
@@ -639,6 +639,46 @@ void main() {
       );
     });
 
+    testWidgets('links to the old Roster page open the Team tab, and its '
+        'player cards (SPEC §5.3)', (tester) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberships: people,
+        playerRepo: withEmma(),
+      );
+      // Where the router is, even on "Page not found".
+      String location() =>
+          GoRouter.of(tester.element(find.byType(Scaffold).last))
+              .routerDelegate
+              .currentConfiguration
+              .uri
+              .toString();
+      await go(tester, '/g/y/roster');
+      expect(location(), '/g/y/team');
+      expect(find.text('TEAM ROSTER'), findsOneWidget);
+      await go(tester, '/g/y/roster/players/emma');
+      expect(location(), '/g/y/team/players/emma');
+      expect(find.byTooltip('Edit player'), findsOneWidget);
+      // With the web app's /app prefix too, as a Universal Link or an App
+      // Link brings them to the phone app, and as the way back after
+      // sign-in: one redirect hands the next a roster location.
+      for (final (link, lands) in [
+        ('/app/g/y/roster', '/g/y/team'),
+        ('/app/g/y/roster/players/emma', '/g/y/team/players/emma'),
+        (
+          '/app/g/y/roster/players/emma/history',
+          '/g/y/team/players/emma/history',
+        ),
+        ('/sign-in?from=%2Fg%2Fy%2Froster', '/g/y/team'),
+      ]) {
+        await go(tester, link);
+        expect(location(), lands, reason: link);
+        expect(find.text('Page not found'), findsNothing, reason: link);
+      }
+    });
+
     testWidgets('Edit player sets the date of birth in the details '
         '(PLAYER-12)', (tester) async {
       final repo = withEmma();
@@ -649,7 +689,7 @@ void main() {
         memberships: people,
         playerRepo: repo,
       );
-      await go(tester, '/g/y/roster/players/emma');
+      await go(tester, '/g/y/team/players/emma');
       await tester.tap(find.byTooltip('Edit player'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Date of birth').last);
@@ -685,7 +725,7 @@ void main() {
         memberships: people,
         playerRepo: repo,
       );
-      await go(tester, '/g/y/roster/players/emma');
+      await go(tester, '/g/y/team/players/emma');
       // An admin sees the row before there's a song.
       expect(find.text('Walk-up song'), findsOneWidget);
       await tester.tap(find.byTooltip('Edit player'));
@@ -710,7 +750,7 @@ void main() {
           memberships: [...people, testMembership('y', 'sam')],
           playerRepo: FakePlayerRepository([player]),
         );
-        await go(tester, '/g/y/roster/players/emma');
+        await go(tester, '/g/y/team/players/emma');
       }
 
       await asSam(emma.copyWith(walkUpSong: 'Eye of the Tiger, Survivor'));
@@ -727,7 +767,7 @@ void main() {
         memberships: people,
         playerRepo: withEmma(),
       );
-      await go(tester, '/g/y/roster/players/gone');
+      await go(tester, '/g/y/team/players/gone');
       expect(
         find.text("This player isn't on the team anymore."),
         findsOneWidget,
@@ -777,7 +817,7 @@ void main() {
         memberships: people,
         playerRepo: threePlayers(),
       );
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       // By number, players without one last.
       expect(playerOrder(tester), ['Zed Adams', 'Emma Rodriguez', 'Amy Zhou']);
       final owner = tester.getTopLeft(find.text('Jordan')).dy;
@@ -801,7 +841,7 @@ void main() {
         memberRepo: members,
         linkOpener: links,
       );
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       await tester.tap(find.text('Jordan'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Share my phone and email'));
@@ -847,7 +887,7 @@ void main() {
           people[1].copyWith(contactEmail: 'maria@example.com'),
         ],
       );
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       await tester.tap(find.text('Maria Rodriguez'));
       await tester.pumpAndSettle();
       expect(find.text('maria@example.com'), findsOneWidget);
@@ -865,7 +905,7 @@ void main() {
         groups: youth,
         memberRepo: members,
       );
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       await tester.tap(find.text('Jordan'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Share my phone and email'));
@@ -901,7 +941,7 @@ void main() {
         },
         memberRepo: members,
       );
-      await go(tester, '/g/y/roster');
+      await go(tester, '/g/y/team');
       await tester.tap(find.text('Jordan'));
       await tester.pumpAndSettle();
       expect(find.text('Edit my phone and email'), findsNothing);

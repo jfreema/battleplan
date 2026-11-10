@@ -116,7 +116,7 @@ Where things are:
 • Block: press and hold their message and choose Block, or tap their photo to open their page and use the menu at the top (Block, Report).
 • Delete account: Profile (at the bottom of the Teams screen), then Settings, then Delete account, or getbattleplan.app/delete-account.
 • A language filter is on for every team.
-• Dues (Team info, then Dues): team admins record what players owe the team for real-world things like uniforms and league fees, and what each one has paid, all at once or a part at a time. Battleplan takes no payments, sells nothing, takes no share, and holds no money, and paying unlocks nothing in the app. Under How to pay, admins and coaches list the team's own payment usernames: Copy copies one, and Open opens it in that payment service, where members pay the team directly. These are peer-to-peer payments for physical goods and services, outside Google Play billing (Payments policy, section 3).
+• Dues (in a team, the Team tab at the bottom, then Dues): team admins record what players owe the team for real-world things like uniforms and league fees, and what each one has paid, all at once or a part at a time. Battleplan takes no payments, sells nothing, takes no share, and holds no money, and paying unlocks nothing in the app. Under How to pay, admins and coaches list the team's own payment usernames: Copy copies one, and Open opens it in that payment service, where members pay the team directly. These are peer-to-peer payments for physical goods and services, outside Google Play billing (Payments policy, section 3).
 
 Accounts are for adults 18 and older. Kids don't have accounts: parents and guardians answer for them.
 ```

@@ -48,9 +48,10 @@ class InviteScreen extends ConsumerWidget {
       appBar: gumdropAppBar(
         context,
         title: l10n.inviteMenu,
+        // Opened from the Team tab's card (SPEC §5.3), or Admin settings.
         backLabel: backLabelFrom(
           context,
-          group?.isGroup ?? false ? l10n.groupInfo : l10n.teamInfo,
+          group?.isGroup ?? false ? l10n.groupPeople : l10n.tabTeam,
         ),
       ),
       bottomNavigationBar: dead

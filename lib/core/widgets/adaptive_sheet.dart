@@ -6,11 +6,14 @@ import 'package:material_ui/material_ui.dart';
 /// A bottom sheet on phones and a dialog on wide screens (SPEC §7.5). With
 /// an [anchor] (the button that opened it), wide screens get a dropdown
 /// panel under that button instead of a dialog, as the team switcher does
-/// (SPEC §5.2).
+/// (SPEC §5.2). On phones the sheet opens in the nearest navigator (a
+/// tab's own, under a team's header), or with [useRootNavigator] over the
+/// whole app, header and tabs included; the dialog always does.
 Future<T?> showAdaptiveSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   BuildContext? anchor,
+  bool useRootNavigator = false,
 }) {
   final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
   if (wide) {
@@ -32,6 +35,7 @@ Future<T?> showAdaptiveSheet<T>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
+    useRootNavigator: useRootNavigator,
     builder: builder,
   );
 }

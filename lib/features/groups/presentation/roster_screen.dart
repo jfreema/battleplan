@@ -22,6 +22,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/leave_team.dart';
+import 'package:battleplan/features/groups/presentation/team_card.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
@@ -32,8 +33,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// TEAM-3 at `/g/:groupId/roster`: Players, then Admins and Members,
-/// searchable by name, each person with their photo or initials. Every team
+/// TEAM-3, the Team tab at `/g/:groupId/team` (SPEC §5.3): the team's card
+/// with Invite and Dues, then Players, Coaches, Admins and Members,
+/// searchable by name, each person with their photo or initials. A group's
+/// is People: its admins and members. `/g/:groupId/roster`, where it was a
+/// page of Team info's, goes here. Every team
 /// has players, each with who's linked: the member who is the player and
 /// their guardians. Admins see pending players and claims at the top with
 /// Approve and Decline (PLAYER-4); anyone can add a player (pending until
@@ -54,6 +58,17 @@ class RosterScreen extends ConsumerStatefulWidget {
 
 class _RosterScreenState extends ConsumerState<RosterScreen> {
   String _query = '';
+
+  /// The search box's text, kept here with [_query], so the box still shows
+  /// what filters the roster after the list reloads and the box is built
+  /// again.
+  final _search = TextEditingController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,54 +124,21 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
         : const <PlayerId, PlayerDetails>{};
     final today = DateTime.now();
     final order = ref.watch(rosterViewProvider);
+    final id = widget.groupId.value;
+    // A tab, under the team's header (SPEC §5.3): no bar of its own. Its
+    // coral + adds players, as Schedule's adds an event: anyone can add a
+    // player, and a member's waits for an admin (PLAYER-4).
     return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: hasPlayers ? l10n.rosterMenu : l10n.groupPeople,
-        backLabel: backLabelFrom(
-          context,
-          group?.isGroup ?? false ? l10n.groupInfo : l10n.teamInfo,
-        ),
-        actions: [
-          // By number or by name (TEAM-10).
-          if (hasPlayers)
-            PopupMenuButton<RosterOrder>(
-              tooltip: l10n.sortRoster,
-              icon: const Icon(AppIcons.sort),
-              initialValue: order,
-              onSelected: (o) =>
-                  ref.read(rosterViewProvider.notifier).order = o,
-              itemBuilder: (_) => [
-                CheckedPopupMenuItem(
-                  value: RosterOrder.number,
-                  checked: order == RosterOrder.number,
-                  child: Text(l10n.sortByNumber),
-                ),
-                CheckedPopupMenuItem(
-                  value: RosterOrder.name,
-                  checked: order == RosterOrder.name,
-                  child: Text(l10n.sortByName),
-                ),
-              ],
-            ),
-          // Anyone can add a player; a member's waits for an admin (PLAYER-4).
-          // With large text, a plus with its name as a tooltip, so the
-          // title still fits beside it.
-          if (canAdd && MediaQuery.textScalerOf(context).scale(10) > 15)
-            IconButton(
+      floatingActionButton: canAdd
+          ? FloatingActionButton(
+              // The team's tabs stay built side by side, and Schedule and
+              // Documents have one too: no shared hero tag between them.
+              heroTag: null,
               tooltip: isAdmin ? l10n.addPlayers : l10n.addPlayer,
-              onPressed: () =>
-                  context.push('/g/${widget.groupId.value}/players/add'),
-              icon: const Icon(AppIcons.add),
+              onPressed: () => unawaited(context.push('/g/$id/players/add')),
+              child: const Icon(AppIcons.add, size: 28, weight: 700),
             )
-          else if (canAdd)
-            TextButton(
-              onPressed: () =>
-                  context.push('/g/${widget.groupId.value}/players/add'),
-              child: Text(isAdmin ? l10n.addPlayers : l10n.addPlayer),
-            ),
-        ],
-      ),
+          : null,
       body: roster.when(
         loading: () => const SkeletonList(),
         error: (_, _) => Center(child: Text(l10n.loadError)),
@@ -223,20 +205,77 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
             (l10n.rosterMembers, others),
           ];
           return ListView(
-            padding: const EdgeInsets.only(bottom: Space.xl),
+            // Clear of the coral + at the end.
+            padding: EdgeInsets.only(bottom: Space.xl + (canAdd ? 72 : 0)),
             children: [
+              // The team, with Invite and Dues (SPEC §5.3): who owes what
+              // for admins, my own for everyone else (DUES-1).
+              if (group != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    Space.page,
+                    14,
+                    Space.page,
+                    6,
+                  ),
+                  child: TeamCard(
+                    group: group,
+                    actions: [
+                      (
+                        icon: AppIcons.invite,
+                        label: l10n.inviteMenu,
+                        onTap: () => unawaited(context.push('/g/$id/invite')),
+                      ),
+                      (
+                        icon: AppIcons.payments,
+                        label: l10n.duesMenu,
+                        onTap: () => unawaited(context.push('/g/$id/dues')),
+                      ),
+                    ],
+                  ),
+                ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   Space.page,
-                  14,
-                  Space.page,
+                  10,
+                  Space.page - 8,
                   4,
                 ),
-                child: TextField(
-                  style: gumdropFieldText(context),
-                  decoration: gumdropField(hint: l10n.searchByName)
-                      .copyWith(prefixIcon: const Icon(AppIcons.search)),
-                  onChanged: (v) => setState(() => _query = v),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _search,
+                        style: gumdropFieldText(context),
+                        decoration: gumdropField(hint: l10n.searchByName)
+                            .copyWith(prefixIcon: const Icon(AppIcons.search)),
+                        onChanged: (v) => setState(() => _query = v),
+                      ),
+                    ),
+                    // By number or by name (TEAM-10).
+                    if (hasPlayers)
+                      PopupMenuButton<RosterOrder>(
+                        tooltip: l10n.sortRoster,
+                        icon: const Icon(AppIcons.sort),
+                        initialValue: order,
+                        onSelected: (o) =>
+                            ref.read(rosterViewProvider.notifier).order = o,
+                        itemBuilder: (_) => [
+                          CheckedPopupMenuItem(
+                            value: RosterOrder.number,
+                            checked: order == RosterOrder.number,
+                            child: Text(l10n.sortByNumber),
+                          ),
+                          CheckedPopupMenuItem(
+                            value: RosterOrder.name,
+                            checked: order == RosterOrder.name,
+                            child: Text(l10n.sortByName),
+                          ),
+                        ],
+                      )
+                    else
+                      const SizedBox(width: 8),
+                  ],
                 ),
               ),
               if (toDecide.isNotEmpty || claims.isNotEmpty) ...[
@@ -409,8 +448,8 @@ class _PlayerRow extends StatelessWidget {
       title: Text(player.displayName),
       subtitle: details.isEmpty ? null : Text(details.join(' · ')),
       onTap: () => context.push(
-        '/g/${player.groupId.value}/roster/players/${player.id.value}',
-        extra: BackLabel(AppLocalizations.of(context).rosterMenu),
+        '/g/${player.groupId.value}/team/players/${player.id.value}',
+        extra: BackLabel(AppLocalizations.of(context).tabTeam),
       ),
     );
   }
@@ -675,8 +714,12 @@ class _MemberRow extends StatelessWidget {
       title: Text(member.displayName),
       subtitle: details.isEmpty ? null : Text(details.join(' · ')),
       trailing: badge == null ? null : InfoTag(text: badge),
+      // Over the whole app, header and tabs included, as it was when the
+      // roster was a page of its own: the card has room for every row,
+      // and the header's switcher can't change the team under it.
       onTap: () => showAdaptiveSheet<void>(
         context,
+        useRootNavigator: true,
         builder: (_) => MemberCard(member: member, me: me, who: who),
       ),
     );
@@ -711,10 +754,10 @@ class MemberCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final repo = ref.read(memberRepositoryProvider);
-    // The roster's name: People on a basic group (TEAM-14).
+    // The Team tab's name: People on a basic group (TEAM-14).
     final rosterLabel =
         ref.watch(groupProvider(this.member.groupId)).value?.hasPlayers ?? true
-        ? l10n.rosterMenu
+        ? l10n.tabTeam
         : l10n.groupPeople;
     // Kept live, so sharing my contact info shows on the card at once.
     final member =
@@ -763,8 +806,12 @@ class MemberCard extends ConsumerWidget {
     final hasPlayers =
         ref.watch(groupProvider(member.groupId)).value?.hasPlayers ?? true;
     final coach = hasPlayers && member.isCoach;
+    // It scrolls when it's taller than its sheet or dialog (an admin's
+    // card, with the phone and email someone shares, on a small phone or
+    // with large text), so its last rows, Leave team, Remove from team,
+    // Report, and Block, can always be reached.
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(Space.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -938,7 +985,9 @@ class MemberCard extends ConsumerWidget {
                   l10n.leaveTeamMenu,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-                // Asked over the card; leaving goes home, which closes it.
+                // Asked over the card. Leaving goes home, and the card
+                // closes with the team's screen, or, when home is another
+                // team, as every team change closes it (TeamShell).
                 onTap: () async {
                   final group = ref.read(groupProvider(member.groupId)).value;
                   if (group != null) await leaveTeam(context, ref, group);

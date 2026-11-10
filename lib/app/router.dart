@@ -7,6 +7,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/links.dart';
+import 'package:battleplan/core/open_sheets.dart';
 import 'package:battleplan/core/version.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/panel_page.dart';
@@ -168,6 +169,9 @@ GoRouter router(Ref ref) {
 
   final router = GoRouter(
     navigatorKey: rootKey,
+    // Every sheet and dialog open, here and in a team's tabs, so a change
+    // of team can close them wherever they are (TeamShell, SPEC §5.2).
+    observers: [OpenSheets()],
     initialLocation: '/',
     refreshListenable: refresh,
     redirect: (context, state) {
@@ -175,6 +179,11 @@ GoRouter router(Ref ref) {
       // web app's base href removes in browsers (D40).
       final unprefixed = stripAppPrefix(state.uri);
       if (unprefixed != null) return unprefixed.toString();
+      // The roster was a page of Team info's at /g/:groupId/roster; it's
+      // the Team tab now (SPEC §5.3). Older notifications and links still
+      // say roster.
+      final team = rosterToTeam(state.uri);
+      if (team != null) return team.toString();
       final path = state.uri.path;
       // Email sign-in's old address, from links already sent (AUTH-2).
       if (path == '/sign-in/email') return _emailLogin(state.uri);
@@ -604,7 +613,10 @@ GoRouter router(Ref ref) {
           // for" (TEAM-14): its chat instead.
           final group = ref.read(groupProvider(GroupId(id))).value;
           final playersOnly = switch (s.sublist(2)) {
-            ['plays', ...] || ['who', ...] || ['players', 'add', ...] => true,
+            ['plays', ...] ||
+            ['who', ...] ||
+            ['players', 'add', ...] ||
+            ['team', 'players', ...] => true,
             _ => false,
           };
           return (group?.isGroup ?? false) && playersOnly
@@ -618,6 +630,30 @@ GoRouter router(Ref ref) {
             path: 'docs',
             redirect: (_, state) =>
                 '/g/${state.pathParameters['groupId']}/documents',
+          ),
+          // The roster was a page of Team info's here until 2026-11-10; it's
+          // the Team tab now (SPEC §5.3). The top-level redirect sends these
+          // to `team` (rosterToTeam). They stay routes, as `docs` does, so a
+          // roster location that another redirect makes (an /app/ link, or
+          // sign-in's `from`) still matches and goes on to the Team tab
+          // rather than to "Page not found".
+          GoRoute(
+            path: 'roster',
+            redirect: (_, state) => rosterToTeam(state.uri)?.toString(),
+            routes: [
+              GoRoute(
+                path: 'players/:playerId',
+                redirect: (_, state) => rosterToTeam(state.uri)?.toString(),
+                routes: [
+                  for (final page in ['history', 'details'])
+                    GoRoute(
+                      path: page,
+                      redirect: (_, state) =>
+                          rosterToTeam(state.uri)?.toString(),
+                    ),
+                ],
+              ),
+            ],
           ),
           GoRoute(
             path: 'invite',
@@ -633,7 +669,8 @@ GoRouter router(Ref ref) {
               ),
             ],
           ),
-          // Team info, from the ⓘ in the team's header (SPEC §5.2).
+          // Team settings, from the gear in the team's header (SPEC §5.1).
+          // Its path is still `info`, from when it was Team info.
           GoRoute(
             path: 'info',
             pageBuilder: (_, state) => PanelPage(
@@ -643,7 +680,8 @@ GoRouter router(Ref ref) {
               ),
             ),
           ),
-          // Team admin (TEAM-5); its path is still `settings`.
+          // Admin settings (TEAM-5), once Team admin and before that Team
+          // settings; its path is still `settings`.
           GoRoute(
             path: 'settings',
             pageBuilder: (_, state) => PanelPage(
@@ -659,54 +697,12 @@ GoRouter router(Ref ref) {
             builder: (_, state) =>
                 MediaScreen(groupId: GroupId(state.pathParameters['groupId']!)),
           ),
-          // Start a new season (TEAM-16), from Team admin's owner actions.
+          // Start a new season (TEAM-16), from Admin settings' owner actions.
           GoRoute(
             path: 'season',
             builder: (_, state) => NewSeasonScreen(
               groupId: GroupId(state.pathParameters['groupId']!),
             ),
-          ),
-          GoRoute(
-            path: 'roster',
-            builder: (_, state) => RosterScreen(
-              groupId: GroupId(state.pathParameters['groupId']!),
-            ),
-            routes: [
-              GoRoute(
-                path: 'players/:playerId',
-                pageBuilder: (_, state) => PanelPage(
-                  key: state.pageKey,
-                  child: PlayerCardScreen(
-                    groupId: GroupId(state.pathParameters['groupId']!),
-                    playerId: PlayerId(state.pathParameters['playerId']!),
-                  ),
-                ),
-                routes: [
-                  // The player's RSVP history (PLAYER-11).
-                  GoRoute(
-                    path: 'history',
-                    pageBuilder: (_, state) => PanelPage(
-                      key: state.pageKey,
-                      child: PlayerRsvpHistoryScreen(
-                        groupId: GroupId(state.pathParameters['groupId']!),
-                        playerId: PlayerId(state.pathParameters['playerId']!),
-                      ),
-                    ),
-                  ),
-                  // The player's details form (PLAYER-12).
-                  GoRoute(
-                    path: 'details',
-                    pageBuilder: (_, state) => PanelPage(
-                      key: state.pageKey,
-                      child: PlayerDetailsRoute(
-                        groupId: GroupId(state.pathParameters['groupId']!),
-                        playerId: PlayerId(state.pathParameters['playerId']!),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
           GoRoute(
             path: 'members/add',
@@ -864,7 +860,14 @@ GoRouter router(Ref ref) {
                           ),
                           'schedule' => ScheduleScreen(groupId: id),
                           'documents' => DocumentsScreen(groupId: id),
-                          _ => PlaysRoute(groupId: id),
+                          'plays' => PlaysRoute(groupId: id),
+                          // The roster, with Invite and Dues (SPEC §5.3).
+                          // Keyed by team too, so another team's roster
+                          // starts with an empty search.
+                          _ => RosterScreen(
+                            key: ValueKey('team-${id.value}'),
+                            groupId: id,
+                          ),
                         };
                       },
                       // New event (`?from=<id>` duplicates, SCHED-3), an
@@ -993,6 +996,57 @@ GoRouter router(Ref ref) {
                             ],
                           ),
                         ],
+                        // A player's card (PLAYER-2), their RSVP history
+                        // (PLAYER-11), and their details (PLAYER-12),
+                        // covering the tabs.
+                        if (tab == 'team')
+                          GoRoute(
+                            path: 'players/:playerId',
+                            parentNavigatorKey: rootKey,
+                            pageBuilder: (_, state) => PanelPage(
+                              key: state.pageKey,
+                              child: PlayerCardScreen(
+                                groupId: GroupId(
+                                  state.pathParameters['groupId']!,
+                                ),
+                                playerId: PlayerId(
+                                  state.pathParameters['playerId']!,
+                                ),
+                              ),
+                            ),
+                            routes: [
+                              GoRoute(
+                                path: 'history',
+                                parentNavigatorKey: rootKey,
+                                pageBuilder: (_, state) => PanelPage(
+                                  key: state.pageKey,
+                                  child: PlayerRsvpHistoryScreen(
+                                    groupId: GroupId(
+                                      state.pathParameters['groupId']!,
+                                    ),
+                                    playerId: PlayerId(
+                                      state.pathParameters['playerId']!,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              GoRoute(
+                                path: 'details',
+                                parentNavigatorKey: rootKey,
+                                pageBuilder: (_, state) => PanelPage(
+                                  key: state.pageKey,
+                                  child: PlayerDetailsRoute(
+                                    groupId: GroupId(
+                                      state.pathParameters['groupId']!,
+                                    ),
+                                    playerId: PlayerId(
+                                      state.pathParameters['playerId']!,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         // A document (DOC-4; notification taps land
                         // here), and Photos, every photo from the chat
                         // (DOC-7), covering the tabs.
@@ -1076,6 +1130,16 @@ GoRouter router(Ref ref) {
   ref.onDispose(router.dispose);
   return router;
 }
+
+/// Where an old roster location goes now (SPEC §5.3): `/g/:groupId/roster`
+/// to the Team tab, and a player under it to the same player under the
+/// tab, with any query kept. Null for anything else.
+Uri? rosterToTeam(Uri uri) => switch (uri.pathSegments) {
+  ['g', final id, 'roster', ...final rest] => uri.replace(
+    pathSegments: ['g', id, 'team', ...rest],
+  ),
+  _ => null,
+};
 
 /// When a message a link opens at was sent (`?at=`, milliseconds), which
 /// a search result gives (CHAT-20) so one from long ago opens in a page.

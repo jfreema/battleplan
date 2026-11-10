@@ -85,8 +85,7 @@ void main() {
           groups: team,
           memberships: [testMembership('a', 'coach', role: role)],
         );
-        await tester.tap(find.byTooltip('Team info'));
-        await tester.pumpAndSettle();
+        await openTeamSettings(tester);
         expect(find.text('Import'), shown ? findsOneWidget : findsNothing);
         if (!shown) return;
         await tester.tap(find.text('Import'));
@@ -894,7 +893,7 @@ void main() {
       expect(find.text('1 document added.'), findsOneWidget);
       expect(find.text('3 events added to the schedule.'), findsOneWidget);
       await tapText(tester, 'Open the chat');
-      expect(find.byTooltip('Team info'), findsOneWidget);
+      expect(find.byTooltip('Team settings'), findsOneWidget);
     });
 
     testWidgets("says when a file isn't an export", (tester) async {

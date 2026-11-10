@@ -1,6 +1,6 @@
 // The top of the app and a team's way back to it (SPEC §5.1, §5.2):
 // Teams and Profile with their tabs, the back arrow on a team's page, and
-// Team info in place of the team and account menus.
+// Team settings and the Team tab in place of the team and account menus.
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -173,7 +173,7 @@ void main() {
     expect(find.byType(CreateTeamScreen), findsOneWidget);
   });
 
-  testWidgets("Team info takes the team menu's place, and the account "
+  testWidgets("Team settings takes the team menu's place, and the account "
       'button is gone: Profile has what it held', (tester) async {
     await pumpApp(
       tester,
@@ -183,34 +183,49 @@ void main() {
     );
     expect(find.byTooltip('Team menu'), findsNothing);
     expect(find.byTooltip('Account'), findsNothing);
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    expect(find.text('Team info'), findsOneWidget);
+    // The header's gear, not an ⓘ.
+    expect(
+      find.descendant(
+        of: find.byTooltip('Team settings'),
+        matching: find.byIcon(AppIcons.settings),
+      ),
+      findsOneWidget,
+    );
+    await openTeamSettings(tester);
+    expect(find.text('Team settings'), findsOneWidget);
     expect(find.text('Soccer · 3 members'), findsOneWidget);
     for (final row in [
-      'Roster',
-      'Invite',
+      'Just for you',
       'Notifications for this team',
+      'Color scheme',
       'Calendar link',
-      'Team admin',
+      'For admins',
+      'Admin settings',
       'Media',
       'Reports',
       'Import',
     ]) {
       expect(find.text(row), findsOneWidget, reason: row);
     }
-    // Team settings is Team admin now, its page too.
-    await tester.tap(find.text('Team admin'));
+    // Only settings: the roster, Invite and Dues are on the Team tab.
+    for (final row in ['Roster', 'Invite', 'Dues']) {
+      expect(find.text(row), findsNothing, reason: row);
+    }
+    // The team's own settings, behind Admin settings.
+    await tester.tap(find.text('Admin settings'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Team admin'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'Admin settings'), findsOneWidget);
     await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Roster'));
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Roster'), findsOneWidget);
+    await openTeamTab(tester);
+    expect(find.text('TEAM ROSTER'), findsOneWidget);
+    expect(find.text('Invite'), findsOneWidget);
+    expect(find.text('Dues'), findsOneWidget);
   });
 
-  testWidgets("a member's Team info has no admin rows", (tester) async {
+  testWidgets("a member's Team settings has no admin rows", (tester) async {
     await pumpApp(
       tester,
       auth: FakeAuthRepository(user: coach),
@@ -218,11 +233,11 @@ void main() {
       memberships: memberships,
       prefs: FakeLocalPrefs()..lastTeamRoute = '/g/b/chat',
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    expect(find.text('Roster'), findsOneWidget);
+    await openTeamSettings(tester);
+    expect(find.text('Just for you'), findsOneWidget);
+    expect(find.text('Notifications for this team'), findsOneWidget);
     expect(find.text('For admins'), findsNothing);
-    expect(find.text('Team admin'), findsNothing);
+    expect(find.text('Admin settings'), findsNothing);
     expect(find.text('Media'), findsNothing);
   });
 

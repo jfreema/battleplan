@@ -315,7 +315,7 @@ class _TeamSnapImportState extends ConsumerState<TeamSnapImportForm> {
         lines.add(l10n.importPlayersDone(added));
         actions.add((
           label: l10n.importOpenRoster,
-          route: '/g/${g.value}/roster',
+          route: '/g/${g.value}/team',
         ));
       }
       if (_documents && _newFiles.isNotEmpty) {

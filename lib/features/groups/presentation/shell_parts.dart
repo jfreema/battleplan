@@ -9,9 +9,9 @@ import 'package:material_ui/material_ui.dart';
 /// ("Team chat", "Fall schedule"), in Black Ops One capitals. Screen
 /// readers hear it in plain case.
 abstract final class HeaderEyebrow {
-  /// The eyebrow for tab [index] (Chat, Schedule, Documents, Plays) of a
-  /// team, or of a group ([group]); a team's schedule names the season it's
-  /// in on [now].
+  /// The eyebrow for tab [index] (Chat, Schedule, Documents, Plays, Team)
+  /// of a team, or of a group ([group]); a team's schedule names the
+  /// season it's in on [now].
   static String labelFor(
     AppLocalizations l10n,
     int index,
@@ -27,7 +27,9 @@ abstract final class HeaderEyebrow {
       _ => l10n.stickerScheduleFall,
     },
     2 => group ? l10n.stickerGroupDocuments : l10n.stickerDocuments,
-    _ => l10n.stickerPlays,
+    3 => l10n.stickerPlays,
+    // The Team tab: a team's roster, a group's people (SPEC §5.3).
+    _ => group ? l10n.stickerGroupPeople : l10n.stickerTeam,
   };
 
   /// The eyebrow's text style: Black Ops One 12/14, spaced 0.18 em, in the
@@ -153,46 +155,43 @@ class OpenFieldRail extends StatelessWidget {
         right: false,
         child: SizedBox(
           width: 88,
-          child: links.isEmpty
-              ? Column(children: items)
-              // The links at the foot; on a window too short for them all,
-              // the rail scrolls rather than overflows.
-              : ScrollConfiguration(
-                  behavior: ScrollConfiguration.of(context)
-                      .copyWith(scrollbars: false),
-                  child: CustomScrollView(
-                    primary: false,
-                    slivers: [
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Column(
-                          children: [
-                            ...items,
-                            const Spacer(),
-                            for (final link in links)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                                child: _Tab(
-                                  tab: (
-                                    icon: Icon(link.icon),
-                                    selectedIcon: Icon(link.icon),
-                                    label: link.label,
-                                    badge: null,
-                                  ),
-                                  selected: false,
-                                  onTap: link.onTap,
-                                  marker: Alignment.centerLeft,
-                                ),
-                              ),
-                            const SizedBox(height: 12),
-                          ],
+          // The links at the foot. On a window too short for every tab and
+          // link, such as a phone on its side with large text, the rail
+          // scrolls rather than overflows.
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context)
+                .copyWith(scrollbars: false),
+            child: CustomScrollView(
+              primary: false,
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Column(
+                    children: [
+                      ...items,
+                      const Spacer(),
+                      for (final link in links)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: _Tab(
+                            tab: (
+                              icon: Icon(link.icon),
+                              selectedIcon: Icon(link.icon),
+                              label: link.label,
+                              badge: null,
+                            ),
+                            selected: false,
+                            onTap: link.onTap,
+                            marker: Alignment.centerLeft,
+                          ),
                         ),
-                      ),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -268,17 +267,23 @@ class _Tab extends StatelessWidget {
                       child: selected ? tab.selectedIcon : tab.icon,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      tab.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: GumdropStyle.of(context).label(
-                        TextStyle(
-                          fontSize: 13,
-                          height: 1.1,
-                          fontWeight: FontWeight.w600,
-                          color: color,
+                    // Whole, and as big as the text size makes it until the
+                    // tab is full; then it shrinks to fit rather than being
+                    // cut off ("Docume…"), as five tabs on a 360-point
+                    // phone would be with larger text.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        tab.label,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        style: GumdropStyle.of(context).label(
+                          TextStyle(
+                            fontSize: 13,
+                            height: 1.1,
+                            fontWeight: FontWeight.w600,
+                            color: color,
+                          ),
                         ),
                       ),
                     ),

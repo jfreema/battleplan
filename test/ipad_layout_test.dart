@@ -39,7 +39,7 @@ const teamRoutes = [
   '/g/a/documents',
   '/g/a/plays',
   '/g/a/plays/saved',
-  '/g/a/roster',
+  '/g/a/team',
   '/g/a/invite',
   '/g/a/invite/email',
   '/g/a/notifications',
@@ -97,7 +97,7 @@ void main() {
       size: ipadSizes['iPad Pro 13-inch, portrait']!,
     );
     expect(
-      tester.getTopLeft(find.byTooltip('Team info')).dy,
+      tester.getTopLeft(find.byTooltip('Team settings')).dy,
       greaterThanOrEqualTo(24),
     );
   });

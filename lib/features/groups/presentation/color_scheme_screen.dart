@@ -55,7 +55,7 @@ class ColorSchemeScreen extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final id = groupId;
     // A super admin viewing a team they aren't on has no membership to save
-    // a pick on: back to Team info (the router does this too, once their
+    // a pick on: back to Team settings (the router does this too, once their
     // teams have loaded).
     if (id != null && ref.watch(viewingAsSuperAdminProvider(id))) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -114,8 +114,8 @@ class ColorSchemeScreen extends ConsumerWidget {
         backLabel: id == null
             ? l10n.tabTeams
             : isGroup
-            ? l10n.groupInfo
-            : l10n.teamInfo,
+            ? l10n.groupSettings
+            : l10n.teamSettings,
       ),
       body: Center(
         child: ConstrainedBox(

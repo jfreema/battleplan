@@ -164,7 +164,7 @@ abstract interface class MemberRepository {
 
   /// The color scheme I see this team in (SET-2), only for me: my own
   /// explicit pick, over the team's default. Syncs to every device. Only
-  /// ever written when I pick one in Team info → Color scheme.
+  /// ever written when I pick one in Team settings → Color scheme.
   Future<void> setMyColorScheme(GroupId groupId, UserId uid, TeamScheme scheme);
 
   /// Takes back my pick for this team (SET-2), deleting it, so I see the

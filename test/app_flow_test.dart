@@ -16,6 +16,7 @@ import 'package:battleplan/features/chat/presentation/reactions.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
 import 'package:battleplan/features/groups/domain/media.dart';
+import 'package:battleplan/features/groups/presentation/roster_screen.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
@@ -408,10 +409,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byTooltip('Add photos or a poll'), findsOneWidget);
 
-    // Opened from the team menu, the screen has Back instead.
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Invite').last);
+    // Opened from the Team tab, the screen has Back instead.
+    await openTeamTab(tester);
+    await tester.tap(find.text('Invite'));
     await tester.pumpAndSettle();
     expect(find.text('Continue to Thunder'), findsNothing);
   });
@@ -450,10 +450,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       memberRepo: members,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Roster'));
-    await tester.pumpAndSettle();
+    await openTeamTab(tester);
     // The owner coaches unless the team says otherwise (TEAM-3).
     expect(find.text('Coaches'), findsOneWidget);
     expect(find.text('Members'), findsOneWidget);
@@ -462,6 +459,44 @@ void main() {
     await tester.tap(find.text('Make admin'));
     await tester.pumpAndSettle();
     expect(members.calls, ['update sam admin']);
+  });
+
+  testWidgets("roster: on a small phone with large text, a member's card "
+      'scrolls to its last row', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await pumpApp(
+      tester,
+      size: const Size(360, 640),
+      auth: FakeAuthRepository(user: coach),
+      groups: {'a': testGroup('a', 'Thunder')},
+      memberRepo: FakeMemberRepository([
+        testMembership('a', 'coach', role: MemberRole.owner, name: 'Jordan'),
+        testMembership('a', 'sam', name: 'Sam Rivera'),
+      ]),
+    );
+    await openTeamTab(tester);
+    // Under the team's card, at this size.
+    await tester.scrollUntilVisible(
+      find.text('Sam Rivera'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(RosterScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(find.text('Sam Rivera'));
+    await tester.pumpAndSettle();
+    // The owner's card for a member has the most rows, more than the
+    // sheet's height here: Block, the last, scrolls into view.
+    final block = find.text('Block Sam Rivera');
+    await tester.ensureVisible(block);
+    await tester.pumpAndSettle();
+    await tester.tap(block);
+    await tester.pumpAndSettle();
+    expect(find.text('Block Sam Rivera?'), findsOneWidget);
   });
 
   testWidgets('roster: an admin makes a parent a coach, and they join the '
@@ -476,10 +511,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       memberRepo: members,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Roster'));
-    await tester.pumpAndSettle();
+    await openTeamTab(tester);
     expect(find.text('Members'), findsOneWidget);
     await tester.tap(find.text('Maria Rodriguez'));
     await tester.pumpAndSettle();
@@ -491,7 +523,7 @@ void main() {
     expect(members.calls, ['coach maria true']);
     expect(tester.widget<SwitchListTile>(coachSwitch).value, isTrue);
     // Closed, the roster lists her with the coaches.
-    await tester.tapAt(const Offset(20, 20));
+    Navigator.of(tester.element(find.byType(MemberCard))).pop();
     await tester.pumpAndSettle();
     expect(find.text('Members'), findsNothing);
     expect(find.text('Coaches'), findsOneWidget);
@@ -518,10 +550,7 @@ void main() {
           testMembership('a', 'coach', role: role, name: 'Jordan'),
         ]),
       );
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Roster'));
-      await tester.pumpAndSettle();
+      await openTeamTab(tester);
     }
 
     // A member: the coaches and their own card, not the other parents.
@@ -551,10 +580,7 @@ void main() {
         testMembership('a', 'maria', name: 'Maria Rodriguez'),
       ]),
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Roster'));
-    await tester.pumpAndSettle();
+    await openTeamTab(tester);
     await tester.tap(find.text('Maria Rodriguez'));
     await tester.pumpAndSettle();
     expect(find.byType(SwitchListTile), findsNothing);
@@ -572,10 +598,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       memberRepo: members,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Roster'));
-    await tester.pumpAndSettle();
+    await openTeamTab(tester);
     await tester.tap(find.text('Alex Kim'));
     await tester.pumpAndSettle();
     expect(find.text('Remove admin'), findsNothing);
@@ -593,9 +616,8 @@ void main() {
       groupRepo: groupRepo,
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Team admin'));
+    await openTeamSettings(tester);
+    await tester.tap(find.text('Admin settings'));
     await tester.pumpAndSettle();
     final perm = find.text('Members can create events');
     await tester.ensureVisible(perm);
@@ -628,9 +650,8 @@ void main() {
       groupRepo: groupRepo,
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Team admin'));
+    await openTeamSettings(tester);
+    await tester.tap(find.text('Admin settings'));
     await tester.pumpAndSettle();
     final none = find.widgetWithText(FilterChip, 'No reminders');
     await tester.ensureVisible(none);
@@ -649,9 +670,8 @@ void main() {
       groupRepo: groupRepo,
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Team admin'));
+    await openTeamSettings(tester);
+    await tester.tap(find.text('Admin settings'));
     await tester.pumpAndSettle();
     bool picked(String label) => tester
         .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label))
@@ -662,8 +682,8 @@ void main() {
     expect(
       find.text(
         'Where team notifications start for people who join. They can '
-        'change theirs in Team info, and people already on the team keep '
-        'theirs.',
+        'change theirs in Team settings, and people already on the team '
+        'keep theirs.',
       ),
       findsOneWidget,
     );
@@ -693,9 +713,8 @@ void main() {
         groups: {'a': testGroup('a', 'Thunder')},
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
       );
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Team admin'));
+      await openTeamSettings(tester);
+      await tester.tap(find.text('Admin settings'));
       await tester.pumpAndSettle();
       await tester.dragUntilVisible(
         find.textContaining('builds it as a volunteer'),
@@ -707,7 +726,7 @@ void main() {
     });
   }
 
-  testWidgets('Team settings ends with About: the version, who made it, '
+  testWidgets('Admin settings ends with About: the version, who made it, '
       "that it's free, and Buy Jared a coffee (TEAM-5)", (tester) async {
     // The web app, the only one that offers it.
     debugShowsBuyCoffee = true;
@@ -720,9 +739,8 @@ void main() {
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
       linkOpener: links,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Team admin'));
+    await openTeamSettings(tester);
+    await tester.tap(find.text('Admin settings'));
     await tester.pumpAndSettle();
     final coffee = find.text('Buy Jared a coffee');
     await tester.dragUntilVisible(
@@ -751,22 +769,33 @@ void main() {
     expect(find.text('Open Venmo'), findsNothing);
   });
 
-  /// Opens my own card on the roster, where Leave team is (TEAM-8).
+  /// Opens my own card on the Team tab, where Leave team is (TEAM-8).
   Future<void> openMyCard(WidgetTester tester) async {
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    // Not in the team menu, where a stray tap could leave the team.
+    await openTeamSettings(tester);
+    // Not in Team settings, where a stray tap could leave the team.
     expect(find.text('Leave team'), findsNothing);
-    await tester.tap(find.text('Roster'));
+    await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
+    await openTeamTab(tester);
     await tester.tap(find.textContaining('Jordan Coach').first);
     await tester.pumpAndSettle();
   }
 
-  testWidgets('a member leaves from their own card on the roster', (
+  /// Where the app is.
+  String location(WidgetTester tester) =>
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .path;
+
+  testWidgets('a member leaves from their own card on the Team tab, and '
+      'goes home, even with the card closed before the server answers', (
     tester,
   ) async {
-    final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')});
+    final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')})
+      // Long enough to close the card first.
+      ..leaveTakes = const Duration(seconds: 2);
     await pumpApp(
       tester,
       auth: FakeAuthRepository(user: coach),
@@ -777,9 +806,68 @@ void main() {
     await tester.tap(find.text('Leave team'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Leave team'));
+    // The membership goes before the server answers, and the team behind
+    // the card gives way to "not a member" meanwhile.
+    for (var frame = 0; frame < 10; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(find.text("You're not a member of this team."), findsOneWidget);
+    expect(find.byType(MemberCard), findsOneWidget);
+    // A tap above the card closes it while the server is still answering.
+    await tester.tapAt(const Offset(200, 8));
+    for (var frame = 0; frame < 30; frame++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(find.byType(MemberCard), findsNothing);
+    await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
     expect(groupRepo.updates, ['leave a']);
+    // Home, which for someone on no team now is Teams' welcome.
+    expect(location(tester), '/welcome');
+    expect(find.text("You're not a member of this team."), findsNothing);
   });
+
+  // The card is a sheet on phones and a dialog on wide screens, over the
+  // team's whole screen either way.
+  for (final (screen, size) in [
+    ('a phone', const Size(390, 844)),
+    ('a wide screen', const Size(1200, 900)),
+  ]) {
+    testWidgets('on $screen, leaving one of two teams from my card lands on '
+        'the other, with the card closed', (tester) async {
+      final groupRepo = FakeGroupRepository({
+        'a': testGroup('a', 'Thunder', lastMessageAt: DateTime(2026, 10)),
+        'b': testGroup('b', 'Lightning', lastMessageAt: DateTime(2026, 9)),
+      });
+      await pumpApp(
+        tester,
+        size: size,
+        auth: FakeAuthRepository(user: coach),
+        groupRepo: groupRepo,
+        memberships: [
+          testMembership('a', 'coach', name: 'Jordan Coach'),
+          testMembership('b', 'coach', name: 'Jordan Coach'),
+        ],
+      );
+      GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/chat');
+      await tester.pumpAndSettle();
+      await openTeamTab(tester);
+      await tester.tap(find.textContaining('Jordan Coach').first);
+      await tester.pumpAndSettle();
+      final leave = find.text('Leave team');
+      await tester.ensureVisible(leave);
+      await tester.tap(leave);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Leave team'));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(groupRepo.updates, ['leave a']);
+      // Home is Lightning's chat, in the same team view as before: the
+      // card, about Thunder, closes with the change of team.
+      expect(location(tester), '/g/b/chat');
+      expect(find.byType(MemberCard), findsNothing);
+    });
+  }
 
   testWidgets('the owner is told to transfer before leaving', (tester) async {
     final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')})
@@ -813,9 +901,8 @@ void main() {
       groupRepo: groupRepo,
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Team admin'));
+    await openTeamSettings(tester);
+    await tester.tap(find.text('Admin settings'));
     await tester.pumpAndSettle();
     final delete = find.text('Delete team');
     await tester.scrollUntilVisible(
@@ -842,8 +929,7 @@ void main() {
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
       invites: invites,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
+    await openTeamTab(tester);
     await tester.tap(find.text('Invite'));
     await tester.pumpAndSettle();
     expect(find.text('K7XP-M2QR'), findsOneWidget);
@@ -866,8 +952,7 @@ void main() {
       memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
       invites: invites,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
+    await openTeamTab(tester);
     await tester.tap(find.text('Invite'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Email invites'));
@@ -997,13 +1082,10 @@ void main() {
       memberships: [testMembership('y', 'coach', role: MemberRole.owner)],
       playerRepo: playerRepo,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Roster'));
-    await tester.pumpAndSettle();
+    await openTeamTab(tester);
     expect(find.text('Players'), findsOneWidget);
     expect(find.text('Emma Rodriguez'), findsOneWidget);
-    await tester.tap(find.text('Add players'));
+    await tester.tap(find.byTooltip('Add players'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Paste a list'));
     await tester.pumpAndSettle();
@@ -1040,7 +1122,7 @@ void main() {
       ]),
     );
     GoRouter.of(tester.element(find.byType(Scaffold).first))
-        .go('/g/y/roster/players/emma');
+        .go('/g/y/team/players/emma');
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add a guardian'));
     await tester.pumpAndSettle();
@@ -1068,10 +1150,7 @@ void main() {
     ]);
 
     Future<void> openRoster(WidgetTester tester) async {
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Roster'));
-      await tester.pumpAndSettle();
+      await openTeamTab(tester);
     }
 
     Future<void> go(WidgetTester tester, String path) async {
@@ -1303,7 +1382,7 @@ void main() {
       );
       expect(find.text("Emma Rodriguez says they're Emma #7"), findsOneWidget);
       // Admins add players and pasted lists.
-      expect(find.text('Add players'), findsOneWidget);
+      expect(find.byTooltip('Add players'), findsOneWidget);
       await tester.tap(find.widgetWithText(FilledButton, 'Approve').first);
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(TextButton, 'Decline').at(1));
@@ -1496,7 +1575,7 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Approve'), findsNothing);
       // With something waiting, the "Who are you here for?" hint is gone.
       expect(find.text('Who are you here for?'), findsNothing);
-      await tester.tap(find.text('Add player'));
+      await tester.tap(find.byTooltip('Add player'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'Mia Rodriguez');
       await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
@@ -1575,7 +1654,7 @@ void main() {
         ],
         playerRepo: playerRepo,
       );
-      await go(tester, '/g/y/roster/players/emma');
+      await go(tester, '/g/y/team/players/emma');
       expect(find.text('Player'), findsOneWidget);
       await tester.tap(find.text('Claim this player'));
       await tester.pumpAndSettle();
@@ -1638,7 +1717,7 @@ void main() {
             memberships: [testMembership('y', 'coach')],
             playerRepo: twoJareds(claimed: claimed),
           );
-          await go(tester, '/g/y/roster/players/jared');
+          await go(tester, '/g/y/team/players/jared');
           await tester.tap(find.text('Claim this player'));
           await tester.pumpAndSettle();
           expect(find.text('I am this player'), findsNothing);
@@ -1713,7 +1792,7 @@ void main() {
         memberships: [testMembership('y', 'coach')],
         playerRepo: playerRepo,
       );
-      await go(tester, '/g/y/roster/players/emma');
+      await go(tester, '/g/y/team/players/emma');
       expect(
         find.text('Your claim is waiting for a team admin.'),
         findsOneWidget,
@@ -1794,7 +1873,7 @@ void main() {
         ],
         playerRepo: playerRepo,
       );
-      await go(tester, '/g/y/roster/players/emma');
+      await go(tester, '/g/y/team/players/emma');
       await tester.tap(find.text('Add a guardian'));
       await tester.pumpAndSettle();
       final picker = find.byType(AlertDialog);
@@ -1837,7 +1916,7 @@ void main() {
         memberships: [testMembership('y', 'coach', name: 'Emma Rodriguez')],
         playerRepo: playerRepo,
       );
-      await go(tester, '/g/y/roster/players/emma');
+      await go(tester, '/g/y/team/players/emma');
       expect(find.byTooltip('Edit player'), findsOneWidget);
       // Any linked member vouches for a guardian, the player included.
       await tester.tap(find.text('Add a guardian'));
@@ -1887,7 +1966,7 @@ void main() {
         ],
         playerRepo: playerRepo,
       );
-      await go(tester, '/g/y/roster/players/emma');
+      await go(tester, '/g/y/team/players/emma');
       await tester.tap(find.text('Add a guardian'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'emma@example.com');
@@ -1914,10 +1993,7 @@ void main() {
       groups: {'a': testGroup('a', 'Thunder')},
       memberRepo: members,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Roster'));
-    await tester.pumpAndSettle();
+    await openTeamTab(tester);
     expect(find.text('Not joined yet'), findsOneWidget);
     await tester.tap(find.text('Ann Lee'));
     await tester.pumpAndSettle();
@@ -2876,8 +2952,7 @@ void main() {
       messageRepo: messages,
       safety: safety,
     );
-    await tester.tap(find.byTooltip('Team info'));
-    await tester.pumpAndSettle();
+    await openTeamSettings(tester);
     await tester.tap(find.text('Reports'));
     await tester.pumpAndSettle();
     expect(find.text('Something mean'), findsOneWidget);
@@ -2922,9 +2997,8 @@ void main() {
         );
 
     Future<void> openSettings(WidgetTester tester, {Finder? until}) async {
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Team admin'));
+      await openTeamSettings(tester);
+      await tester.tap(find.text('Admin settings'));
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         until ?? find.textContaining('MB used'),
@@ -2983,8 +3057,7 @@ void main() {
       );
       expect(find.text(warning), findsNothing);
       // Media isn't in a member's team menu either.
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
+      await openTeamSettings(tester);
       expect(find.text('Media'), findsNothing);
     });
 
@@ -3028,9 +3101,8 @@ void main() {
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
         photoPicker: picker,
       );
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Team admin'));
+      await openTeamSettings(tester);
+      await tester.tap(find.text('Admin settings'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Change logo'));
       await tester.pumpAndSettle();
@@ -3102,8 +3174,7 @@ void main() {
         memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
         media: media,
       );
-      await tester.tap(find.byTooltip('Team info'));
-      await tester.pumpAndSettle();
+      await openTeamSettings(tester);
       await tester.tap(find.text('Media'));
       await tester.pumpAndSettle();
       expect(find.text('7.0 MB of 500 MB used'), findsOneWidget);

@@ -13,7 +13,7 @@ import 'package:material_ui/material_ui.dart';
 
 /// The player card's Details (PLAYER-12): emergency contacts with
 /// tap-to-call, and notes, and Edit, which
-/// opens the form at `/g/:groupId/roster/players/:playerId/details`. The
+/// opens the form at `/g/:groupId/team/players/:playerId/details`. The
 /// card shows it only to the team's admins and the members linked to the
 /// player ([seesPlayerDetails]), so nobody else's app asks for the details;
 /// [canEdit] is false on an archived team, where they're read-only.
@@ -51,7 +51,7 @@ class PlayerDetailsSection extends ConsumerWidget {
               TextButton.icon(
                 onPressed: details.hasValue
                     ? () => context.push(
-                        '/g/${groupId.value}/roster/players/'
+                        '/g/${groupId.value}/team/players/'
                         '${playerId.value}/details',
                       )
                     : null,

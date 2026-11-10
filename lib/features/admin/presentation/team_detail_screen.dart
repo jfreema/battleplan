@@ -442,7 +442,7 @@ class _People extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () => unawaited(
                 context.push(
-                  '/g/${group.id.value}/roster',
+                  '/g/${group.id.value}/team',
                   extra: const BackLabel(null),
                 ),
               ),

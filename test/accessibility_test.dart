@@ -111,11 +111,12 @@ void main() {
         },
     // Pushed screens open as the app opens them, so the back row is
     // checked too (SPEC §5.4.1).
-    'roster': (WidgetTester tester, {required TeamScheme scheme}) =>
-        pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/roster'),
-    // Start a new season (TEAM-16), from Team admin.
+    // The Team tab (SPEC §5.3): the team's card with Invite and Dues, the
+    // search, and the roster.
+    'team tab': pumpTeamTab,
+    // Start a new season (TEAM-16), from Admin settings.
     'new season': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/settings');
+      await pumpFromTeamSettings(tester, scheme: scheme, path: '/g/a/settings');
       await pushTo(tester, '/g/a/season');
     },
     'settings': (WidgetTester tester, {required TeamScheme scheme}) async {
@@ -154,11 +155,15 @@ void main() {
           await goTo(tester, '/teams/scheme');
         },
     'color scheme': (WidgetTester tester, {required TeamScheme scheme}) =>
-        pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/scheme'),
-    // Team admin's team default color scheme (SET-2), its five rows.
+        pumpFromTeamSettings(tester, scheme: scheme, path: '/g/a/scheme'),
+    // Admin settings' team default color scheme (SET-2), its five rows.
     'team color scheme':
         (WidgetTester tester, {required TeamScheme scheme}) async {
-          await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/settings');
+          await pumpFromTeamSettings(
+            tester,
+            scheme: scheme,
+            path: '/g/a/settings',
+          );
           final last = find.text('Light blue');
           await tester.scrollUntilVisible(
             last,
@@ -177,14 +182,14 @@ void main() {
     // a share's sheet with its payments, Record a payment, Who owes what,
     // the forms, and what a guardian owes.
     'dues': (WidgetTester tester, {required TeamScheme scheme}) =>
-        pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues'),
+        pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues'),
     'due': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+      await pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues');
       await pushTo(tester, '/g/a/dues/d0');
     },
     'due status sheet':
         (WidgetTester tester, {required TeamScheme scheme}) async {
-          await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+          await pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues');
           await pushTo(tester, '/g/a/dues/d0');
           // At large text Leo's row can start past what the list has built.
           await tester.scrollUntilVisible(
@@ -204,7 +209,7 @@ void main() {
         },
     'record a payment':
         (WidgetTester tester, {required TeamScheme scheme}) async {
-          await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+          await pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues');
           await pushTo(tester, '/g/a/dues/d0');
           // At large text Leo's row can start past what the list has built.
           await tester.scrollUntilVisible(
@@ -220,7 +225,7 @@ void main() {
           expect(find.text('Date paid'), findsOneWidget, reason: 'dialog');
         },
     'who owes what': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+      await pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues');
       await tester.ensureVisible(find.text('Who owes what'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Who owes what'));
@@ -228,11 +233,11 @@ void main() {
       expect(find.text('Ava #12'), findsOneWidget);
     },
     'new due': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+      await pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues');
       await pushTo(tester, '/g/a/dues/new');
     },
     'edit due': (WidgetTester tester, {required TeamScheme scheme}) async {
-      await pumpFromTeamInfo(tester, scheme: scheme, path: '/g/a/dues');
+      await pumpFromTeamTab(tester, scheme: scheme, path: '/g/a/dues');
       await pushTo(tester, '/g/a/dues/d0');
       await pushTo(tester, '/g/a/dues/d0/edit');
     },
@@ -399,19 +404,15 @@ void main() {
       final link = tester.getSemantics(find.bySemanticsLabel('Admin panel'));
       expect(link, isSemantics(isButton: true, hasTapAction: true));
       expect(link.flagsCollection.isSelected.toBoolOrNull(), isNull);
-      // The tabs still count four.
-      expect(find.bySemanticsLabel('Plays, Tab 4 of 4'), findsOneWidget);
+      // The tabs still count five.
+      expect(find.bySemanticsLabel('Plays, Tab 4 of 5'), findsOneWidget);
       handle.dispose();
     });
 
     testWidgets('headings are their own nodes, a due is a button, and dues '
         'rows read as sentences', (tester) async {
       final handle = tester.ensureSemantics();
-      await pumpFromTeamInfo(
-        tester,
-        scheme: TeamScheme.army,
-        path: '/g/a/dues',
-      );
+      await pumpFromTeamTab(tester, scheme: TeamScheme.army, path: '/g/a/dues');
       // The heading, without the note under it.
       await tester.scrollUntilVisible(
         find.text('How to pay'),
@@ -677,12 +678,13 @@ void main() {
         'Switch team: Thunder U14',
         'Messages',
         'Notifications',
-        'Team info',
+        'Team settings',
         'Add photos or a poll',
         'Chat',
         'Schedule',
         'Documents',
         'Plays',
+        'Team',
       ];
       final reached = <String>[];
       for (var i = 0; i < 40; i++) {
@@ -702,7 +704,7 @@ void main() {
                 .findAncestorWidgetOfExactType<Semantics>()
                 ?.properties
                 .label;
-        // A tab reads "Chat, Tab 1 of 4".
+        // A tab reads "Chat, Tab 1 of 5".
         final name = label?.split(', Tab ').first;
         if (name != null && !reached.contains(name)) {
           reached.add(name);
@@ -726,12 +728,13 @@ void main() {
         containsAllInOrder([
           'Team chat. Switch team: Thunder U14',
           'Notifications',
-          'Team info',
+          'Team settings',
           'Add photos or a poll',
           'message box',
           'Chat',
           'Schedule',
           'Documents',
+          'Team',
         ]),
       );
     });
@@ -822,7 +825,7 @@ void main() {
     for (final (name, open) in [
       (
         'a team',
-        (WidgetTester tester) => pumpFromTeamInfo(
+        (WidgetTester tester) => pumpFromTeamSettings(
           tester,
           scheme: TeamScheme.navy,
           path: '/g/a/scheme',

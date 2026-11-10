@@ -432,7 +432,7 @@ class SectionLabel extends StatelessWidget {
   );
 }
 
-/// A true card (SPEC §7.3): the Team info header, a player card, drawn as
+/// A true card (SPEC §7.3): the team card, a player card, drawn as
 /// the event card without its edge: the card color, a 2 px rim on a 4 px
 /// lip, corner 18, and its [child] in the card context. A [Material], so
 /// list tiles, switches, and ink inside draw on it.

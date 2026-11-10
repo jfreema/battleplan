@@ -8,9 +8,9 @@ import 'package:battleplan/features/groups/presentation/color_scheme_screen.dart
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Team admin → Team color scheme (SET-2, owner's request 2026-11-08): the
+/// Admin settings → Team color scheme (SET-2, owner's request 2026-11-08): the
 /// team's default color scheme, set by its admins (and super admins), which
-/// everyone who hasn't picked their own in Team info → Color scheme sees.
+/// everyone who hasn't picked their own in Team settings → Color scheme sees.
 /// None is checked until one is set.
 class TeamSchemeSection extends StatelessWidget {
   const new({required this.group, required this.onPick, super.key});

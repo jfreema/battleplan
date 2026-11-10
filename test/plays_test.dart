@@ -414,6 +414,7 @@ void main() {
         'Schedule',
         'Documents',
         'Plays',
+        'Team',
       ]);
       // The drawn chalkboard, outlined, also while its tab is showing: the
       // coral color and bar mark the tab.

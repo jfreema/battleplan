@@ -502,7 +502,8 @@ void main() {
       playerRepo: players,
       duesRepo: dues,
     );
-    await go(tester, '/g/a/info');
+    // Dues is on the Team tab's card (SPEC §5.3).
+    await go(tester, '/g/a/team');
     await tester.tap(find.text('Dues'));
     await tester.pumpAndSettle();
     expect(

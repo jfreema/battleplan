@@ -8,6 +8,8 @@
 // its word, and "Past" is narrower than 44 px. The schedule's own fix
 // widens those tabs and adds the schedule to this list.
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/features/groups/presentation/shell_parts.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -37,7 +39,11 @@ void main() {
       await top(tester, size, '/profile');
       await pushTo(tester, '/profile/icon');
     },
-    'team info': (WidgetTester tester, Size size) async {
+    // The Team tab: the team's card with Invite and Dues side by side,
+    // the search and sort, the roster, and the + (SPEC §5.3).
+    'team tab': (WidgetTester tester, Size size) =>
+        top(tester, size, '/g/a/team'),
+    'team settings': (WidgetTester tester, Size size) async {
       await pumpTeam(tester, scheme: TeamScheme.army, size: size);
       await pushTo(tester, '/g/a/info');
     },
@@ -46,26 +52,26 @@ void main() {
       await pushTo(tester, '/g/a/scheme');
     },
     'dues': (WidgetTester tester, Size size) async {
-      await top(tester, size, '/g/a/info');
+      await top(tester, size, '/g/a/team');
       await pushTo(tester, '/g/a/dues');
     },
     'due': (WidgetTester tester, Size size) async {
-      await top(tester, size, '/g/a/info');
+      await top(tester, size, '/g/a/team');
       await pushTo(tester, '/g/a/dues');
       await pushTo(tester, '/g/a/dues/d0');
     },
     'new due': (WidgetTester tester, Size size) async {
-      await top(tester, size, '/g/a/info');
+      await top(tester, size, '/g/a/team');
       await pushTo(tester, '/g/a/dues');
       await pushTo(tester, '/g/a/dues/new');
     },
     'who owes what': (WidgetTester tester, Size size) async {
-      await top(tester, size, '/g/a/info');
+      await top(tester, size, '/g/a/team');
       await pushTo(tester, '/g/a/dues');
       await pushTo(tester, '/g/a/dues/people');
     },
     'a share': (WidgetTester tester, Size size) async {
-      await top(tester, size, '/g/a/info');
+      await top(tester, size, '/g/a/team');
       await pushTo(tester, '/g/a/dues');
       await pushTo(tester, '/g/a/dues/d0');
       await tester.ensureVisible(find.text('Leo #9'));
@@ -92,4 +98,52 @@ void main() {
       });
     }
   }
+
+  // Five tabs share a 360-point phone (SPEC §5.3). "Documents" fills its
+  // tab at the default text size; with larger text, a label too long for
+  // its tab shrinks to fit rather than ending in "…".
+  for (final scale in [1.0, 1.3, 2.0]) {
+    testWidgets('every tab label is whole and inside its tab at 360 px, '
+        'with text at ${(scale * 100).round()}%', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await top(tester, const Size(360, 780), '/g/a/chat');
+      for (final label in ['Chat', 'Schedule', 'Documents', 'Plays', 'Team']) {
+        final text = find.descendant(
+          of: find.byType(OpenFieldTabBar),
+          matching: find.text(label),
+        );
+        final tab = find
+            .ancestor(of: text, matching: find.byType(Expanded))
+            .first;
+        expect(
+          tester.renderObject<RenderParagraph>(text).didExceedMaxLines,
+          isFalse,
+          reason: label,
+        );
+        final (drawn, room) = (tester.getRect(text), tester.getRect(tab));
+        expect(drawn.left, greaterThanOrEqualTo(room.left), reason: label);
+        expect(drawn.right, lessThanOrEqualTo(room.right), reason: label);
+      }
+    });
+  }
+
+  // A phone on its side is wide enough for the rail (840 px and up) but
+  // short: with large text, five tabs are taller than the screen, and the
+  // rail scrolls rather than overflows.
+  testWidgets('the rail scrolls down to the Team tab on a phone on its side '
+      'with text at 200%', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await top(tester, const Size(852, 393), '/g/a/chat');
+    final team = find.descendant(
+      of: find.byType(OpenFieldRail),
+      matching: find.text('Team'),
+    );
+    await tester.ensureVisible(team);
+    await tester.pumpAndSettle();
+    await tester.tap(team);
+    await tester.pumpAndSettle();
+    expect(find.text('TEAM ROSTER'), findsOneWidget);
+  });
 }

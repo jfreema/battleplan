@@ -20,7 +20,7 @@ import 'package:material_ui/material_ui.dart';
 /// Waits for who may edit (the team, the player, my membership, and the
 /// player's links), then for the stored details, and shows
 /// [PlayerDetailsScreen] (PLAYER-12) at
-/// `/g/:groupId/roster/players/:playerId/details`. Only the team's admins
+/// `/g/:groupId/team/players/:playerId/details`. Only the team's admins
 /// and the members linked to the player edit, and not on an archived or
 /// suspended team; anyone else is told so, and their app never asks for
 /// the details.

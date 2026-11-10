@@ -675,7 +675,7 @@ void main() {
       memberRepo: FakeMemberRepository(people()),
       size: phoneSize,
     );
-    unawaited(router(tester).push('/g/a/roster'));
+    unawaited(router(tester).push('/g/a/team'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Alex Kim'));
     await tester.pumpAndSettle();
