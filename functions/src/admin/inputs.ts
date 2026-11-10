@@ -6,6 +6,7 @@ import { z } from 'zod';
 import {
   Limits,
   memberRoleValues,
+  notificationLevelValues,
   REMINDER_OFFSETS_MINUTES,
   reportStatusValues,
   sportValues,
@@ -126,6 +127,9 @@ export const UpdateGroupInput = z
       .optional(),
     // The team's default color scheme (SET-2), as the rules check it.
     colorScheme: z.enum(teamSchemeValues).nullable().optional(),
+    // Where team notifications start for people who join (TEAM-5,
+    // NOTIF-3), as the rules check it.
+    newMemberNotificationLevel: z.enum(notificationLevelValues).optional(),
     photoPath: StoragePath,
     backgroundPath: StoragePath,
   })

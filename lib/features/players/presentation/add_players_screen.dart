@@ -60,6 +60,18 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
     ),
   ];
 
+  /// Back to where Add players was opened from. Opened from a link or a
+  /// reload there's nothing to go back to, so the roster, where the new
+  /// players are, instead of go_router's "There is nothing to pop" (found
+  /// 2026-11-10 adding players on a reloaded page).
+  void _leave() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/g/${widget.groupId.value}/roster');
+    }
+  }
+
   /// Adds [players]; [skipped] are pasted lines that couldn't be read,
   /// listed with how many were added (PLAYER-1).
   Future<void> _add(
@@ -92,7 +104,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
           ],
         );
       }
-      if (mounted) context.pop();
+      if (mounted) _leave();
     } on AppFailure catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -136,7 +148,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
         context,
         status == PlayerStatus.pending ? l10n.playerProposed : l10n.playerAdded,
       );
-      context.pop();
+      _leave();
     } on AppFailure catch (e) {
       if (mounted) showAppSnackBar(context, playerRequestFailure(l10n, e));
     } finally {

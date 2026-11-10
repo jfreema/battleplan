@@ -1,11 +1,12 @@
 // Starting a new season from a team (TEAM-16): a new team with the old
-// one's logo, color, sport, settings, chat look, default color scheme, and
-// default reminders, the people its owner brings along already on it
-// (players with their links, so parents keep answering for their kids),
-// and, when asked, its documents and saved plays. The caller then archives
-// the old team (TEAM-9), keeping its chat, photos, schedule, and results.
-// Every document the copy writes is named from the new team's ID, so a retry
-// of an attempt that stopped partway writes the same documents again and
+// one's logo, color, sport, settings, chat look, default color scheme,
+// default reminders, and where new members' notifications start, the
+// people its owner brings along already on it (players with their links,
+// so parents keep answering for their kids), and, when asked, its
+// documents and saved plays. The caller then archives the old team
+// (TEAM-9), keeping its chat, photos, schedule, and results. Every
+// document the copy writes is named from the new team's ID, so a retry of
+// an attempt that stopped partway writes the same documents again and
 // finishes it.
 import { createHash } from 'node:crypto';
 import { FieldValue, type DocumentData, type DocumentReference, type WriteBatch } from 'firebase-admin/firestore';
@@ -17,7 +18,7 @@ import { db, storage } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { compositeId, groupMemberId } from '../shared/ids.js';
 import { teamCountOf } from '../shared/roles.js';
-import { DEFAULT_SETTINGS, refreshMemberCount } from './service.js';
+import { DEFAULT_SETTINGS, newMemberLevelOf, refreshMemberCount } from './service.js';
 import { maxUploadBytes } from './storage.js';
 
 /** Who and what the owner brings to the new season (TEAM-16). */
@@ -233,6 +234,9 @@ export async function copyTeamForSeason(
       ...(theme ? { chatTheme: { ...theme, backgroundPath: null } } : {}),
       // The team's default color scheme (SET-2), if its admins set one.
       ...(typeof old.colorScheme === 'string' ? { colorScheme: old.colorScheme } : {}),
+      // Where new members' notifications start (TEAM-5, NOTIF-3), if its
+      // admins picked.
+      ...(old.newMemberNotificationLevel === undefined ? {} : { newMemberNotificationLevel: newMemberLevelOf(old) }),
       memberCount: uids.size,
       playerCount: comingPlayers.length,
       lastMessageAt: null,

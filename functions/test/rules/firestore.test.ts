@@ -736,6 +736,46 @@ describe("a team's default color scheme (SET-2)", () => {
   });
 });
 
+describe("where new members' team notifications start (TEAM-5, NOTIF-3)", () => {
+  const set = (uid: string, g: string, level: unknown) =>
+    as(uid).doc(`groups/${g}`).update({ newMemberNotificationLevel: level, updatedAt: now() });
+
+  it("lets every team's admins pick one of the three levels", async () => {
+    for (const level of ['all', 'important', 'none']) {
+      await assertSucceeds(set('alice', 'teamA', level));
+    }
+    await assertSucceeds(set('carol', 'teamB', 'none'));
+    // Taking it away leaves All activity.
+    await assertSucceeds(
+      as('alice').doc('groups/teamA').update({ newMemberNotificationLevel: firebase.firestore.FieldValue.delete() }),
+    );
+    // Other edits still save with one picked.
+    await assertSucceeds(set('alice', 'teamA', 'important'));
+    await assertSucceeds(as('alice').doc('groups/teamA').update({ description: 'Spring', updatedAt: now() }));
+  });
+
+  it('refuses members, other teams, and bad values', async () => {
+    await assertFails(set('bob', 'teamA', 'none'));
+    await assertFails(set('dan', 'teamB', 'none'));
+    await assertFails(set('alice', 'teamB', 'none'));
+    for (const bad of ['off', '', 'None', null, 1, true, ['none'], { level: 'none' }]) {
+      await assertFails(set('alice', 'teamA', bad));
+    }
+  });
+
+  it('leaves a super admin who is not an admin to adminUpdateGroup', async () => {
+    const root = env.authenticatedContext('zed', { superAdmin: true }).firestore();
+    await assertFails(root.doc('groups/teamA').update({ newMemberNotificationLevel: 'none', updatedAt: now() }));
+  });
+
+  it('is read-only on an archived team', async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('groups/teamA').update({ archivedAt: ts('2026-05-01T00:00:00Z') }),
+    );
+    await assertFails(set('alice', 'teamA', 'none'));
+  });
+});
+
 describe('a member picks how a team looks to them (SET-2)', () => {
   it('takes their pick back by deleting it, so the team default reaches them', async () => {
     const db = as('bob');

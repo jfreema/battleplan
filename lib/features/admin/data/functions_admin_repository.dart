@@ -209,6 +209,7 @@ class FunctionsAdminRepository implements AdminRepository {
     GroupSettings? settings,
     ChatTheme? chatTheme,
     TeamScheme? colorScheme,
+    NotificationLevel? newMemberNotificationLevel,
     String? photoPath,
   }) => _call('adminUpdateGroup', {
     'groupId': id.value,
@@ -233,6 +234,7 @@ class FunctionsAdminRepository implements AdminRepository {
         'backgroundPath': chatTheme.backgroundPath,
       },
     'colorScheme': ?colorScheme?.value,
+    'newMemberNotificationLevel': ?newMemberNotificationLevel?.value,
     'photoPath': ?photoPath,
   });
 

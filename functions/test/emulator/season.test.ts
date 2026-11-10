@@ -63,7 +63,7 @@ async function fall(extra: object = {}): Promise<void> {
     color: '#1E88E5', photoPath: 'groups/fall/avatar/1.jpg', timeZone: 'America/Denver', ownerId: 'pat',
     settings: { membersCanInvite: false, allowMaybe: false, defaultReminderOffsets: [60, 1440] },
     chatTheme: { bubbleColor: '#E53935', background: 'photo', backgroundPath: 'groups/fall/theme/2.jpg' },
-    colorScheme: 'navy',
+    colorScheme: 'navy', newMemberNotificationLevel: 'none',
     memberCount: 8, playerCount: 2, storageBytes: 100, storageQuotaBytes: 500 * 1024 * 1024, storageQuotaCustom: true,
     lastMessageAt: Timestamp.now(), archivedAt: null, suspendedAt: null, status: 'active', createdAt: Timestamp.now(),
     ...extra,
@@ -161,6 +161,8 @@ describe('starting a new season (TEAM-16)', () => {
       chatTheme: { bubbleColor: '#E53935', background: 'photo', backgroundPath: `groups/${groupId}/theme/2.jpg` },
       // The team's default color scheme (SET-2).
       colorScheme: 'navy',
+      // Where new members' notifications start (TEAM-5, NOTIF-3).
+      newMemberNotificationLevel: 'none',
     });
     // The team's own settings, the default reminders among them; the rest default.
     expect(team.settings).toMatchObject({ membersCanInvite: false, allowMaybe: false, defaultReminderOffsets: [60, 1440], filterLanguage: true });
@@ -266,12 +268,16 @@ describe('starting a new season (TEAM-16)', () => {
   });
 
   it('a group brings no players or plays, even when asked (TEAM-14)', async () => {
-    await groups().doc('fall').update({ kind: 'group', sport: 'other', colorScheme: FieldValue.delete() });
+    await groups().doc('fall').update({
+      kind: 'group', sport: 'other', colorScheme: FieldValue.delete(), newMemberNotificationLevel: FieldValue.delete(),
+    });
     const { groupId } = await start();
     const made = (await groups().doc(groupId).get()).data()!;
     expect(made).toMatchObject({ kind: 'group', sport: 'other', playerCount: 0 });
-    // With no default color scheme set, none is made up (SET-2).
+    // With no default color scheme set, none is made up (SET-2), nor a
+    // level for new members (TEAM-5).
     expect(made).not.toHaveProperty('colorScheme');
+    expect(made).not.toHaveProperty('newMemberNotificationLevel');
     expect(await byTeam(Collections.players, groupId)).toHaveLength(0);
     expect(await byTeam(Collections.plays, groupId)).toHaveLength(0);
     // Its parents are just members.

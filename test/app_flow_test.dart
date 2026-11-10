@@ -640,6 +640,48 @@ void main() {
     expect(groupRepo.groups['a']!.settings.defaultReminderOffsets, isEmpty);
   });
 
+  testWidgets("team settings: new members' notifications start where the "
+      'admins pick (TEAM-5, NOTIF-3)', (tester) async {
+    final groupRepo = FakeGroupRepository({'a': testGroup('a', 'Thunder')});
+    await pumpApp(
+      tester,
+      auth: FakeAuthRepository(user: coach),
+      groupRepo: groupRepo,
+      memberships: [testMembership('a', 'coach', role: MemberRole.owner)],
+    );
+    await tester.tap(find.byTooltip('Team info'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Team admin'));
+    await tester.pumpAndSettle();
+    bool picked(String label) => tester
+        .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label))
+        .selected;
+    final off = find.widgetWithText(ChoiceChip, 'Off');
+    await tester.ensureVisible(off);
+    expect(find.text('Notifications for new members'), findsOneWidget);
+    expect(
+      find.text(
+        'Where team notifications start for people who join. They can '
+        'change theirs in Team info, and people already on the team keep '
+        'theirs.',
+      ),
+      findsOneWidget,
+    );
+    // All activity until the admins pick another.
+    expect(picked('All activity'), isTrue);
+    expect(picked('Important only'), isFalse);
+    expect(picked('Off'), isFalse);
+    await tester.tap(off);
+    await tester.pumpAndSettle();
+    expect(groupRepo.updates, ['newMemberNotificationLevel none']);
+    expect(
+      groupRepo.groups['a']!.newMemberNotificationLevel,
+      NotificationLevel.none,
+    );
+    expect(picked('Off'), isTrue);
+    expect(picked('All activity'), isFalse);
+  });
+
   for (final platform in [TargetPlatform.iOS, TargetPlatform.android]) {
     testWidgets('the ${platform.name} app leaves out Buy Jared a coffee', (
       tester,

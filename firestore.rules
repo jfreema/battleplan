@@ -174,14 +174,20 @@ service cloud.firestore {
       allow update: if isAdmin(g) && active(g)
         && onlyChanges(['name', 'nameLower', 'description', 'photoPath', 'color',
                         'sport', 'timeZone', 'settings', 'chatTheme', 'colorScheme',
-                        'updatedAt'])
+                        'newMemberNotificationLevel', 'updatedAt'])
         && validGroup(incoming(), g)
         && (resource.data.get('kind', 'team') != 'group' || incoming().sport == resource.data.sport)
         && (!('chatTheme' in changed()) || validChatTheme(incoming().chatTheme, g))
         // The team's default color scheme (SET-2): one of the five, or
         // null for none (members then see their own default).
         && (!('colorScheme' in changed()) || incoming().get('colorScheme', null) == null
-            || incoming().colorScheme in ['army', 'light', 'dark', 'navy', 'skyblue']);
+            || incoming().colorScheme in ['army', 'light', 'dark', 'navy', 'skyblue'])
+        // Where team notifications start for people who join (TEAM-5,
+        // NOTIF-3): one of the three levels. Top-level, not in settings,
+        // which older builds write whole (like colorScheme); absent is All
+        // activity.
+        && (!('newMemberNotificationLevel' in changed())
+            || incoming().get('newMemberNotificationLevel', 'all') in ['all', 'important', 'none']);
       // Created and deleted by Functions (createGroup, deleteGroup).
     }
 

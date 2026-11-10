@@ -55,6 +55,7 @@ abstract interface class AdminRepository {
     GroupSettings? settings,
     ChatTheme? chatTheme,
     TeamScheme? colorScheme,
+    NotificationLevel? newMemberNotificationLevel,
     String? photoPath,
   });
 

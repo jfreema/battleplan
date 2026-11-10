@@ -252,6 +252,31 @@ void main() {
         groupFromFirestore('x', const {'colorScheme': 'olive'}).colorScheme,
         isNull,
       );
+      // Where new members' notifications start (TEAM-5, NOTIF-3): All
+      // activity until the admins pick another, written outside settings.
+      expect(
+        (await repo.watchGroup(_g).first)!.newMemberNotificationLevel,
+        NotificationLevel.all,
+      );
+      await repo.updateNewMemberNotificationLevel(_g, NotificationLevel.none);
+      d = (await db.doc('groups/g1').get()).data()!;
+      expect(d['newMemberNotificationLevel'], 'none');
+      expect(
+        (d['settings'] as Map?)?.containsKey('newMemberNotificationLevel'),
+        isNot(isTrue),
+      );
+      expect(
+        (await repo.watchGroup(_g).first)!.newMemberNotificationLevel,
+        NotificationLevel.none,
+      );
+      // A value the app doesn't know reads as All activity, as the server
+      // reads it.
+      expect(
+        groupFromFirestore('x', const {
+          'newMemberNotificationLevel': 'quiet',
+        }).newMemberNotificationLevel,
+        NotificationLevel.all,
+      );
     });
 
     test('maps write refusals to failures', () async {
@@ -273,6 +298,10 @@ void main() {
           );
           await expectLater(
             repo.updateColorScheme(_g, TeamScheme.dark),
+            throwsA(type),
+          );
+          await expectLater(
+            repo.updateNewMemberNotificationLevel(_g, NotificationLevel.none),
             throwsA(type),
           );
           await expectLater(repo.uploadLogo(_g, Uint8List(1)), throwsA(type));

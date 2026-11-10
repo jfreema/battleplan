@@ -35,6 +35,13 @@ abstract interface class GroupRepository {
   /// picked their own see. Admins only.
   Future<void> updateColorScheme(GroupId id, TeamScheme scheme);
 
+  /// Sets where team notifications start for people who join (TEAM-5,
+  /// NOTIF-3). Admins only.
+  Future<void> updateNewMemberNotificationLevel(
+    GroupId id,
+    NotificationLevel level,
+  );
+
   /// Uploads a chat background photo and returns its path (CHAT-18).
   Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes);
 

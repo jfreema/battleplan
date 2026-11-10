@@ -40,8 +40,8 @@ const reminderChoices = [15, 60, 120, 1440, 2880, 10080];
 
 /// TEAM-5 at `/g/:groupId/settings` (admins): name, sport, logo, color,
 /// description, time zone, member permissions, default
-/// reminders, the invite link (managed on the invite screen), the chat look,
-/// and storage used with Media.
+/// reminders, new members' notifications, the invite link (managed on the
+/// invite screen), the chat look, and storage used with Media.
 class TeamSettingsScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, required this.appBuild, super.key});
 
@@ -254,6 +254,15 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
   Future<void> _changeQuota(Group group) async {
     await changeStorageQuota(context, ref, group);
   }
+
+  /// A notification level's name, as Notifications for this team shows it
+  /// (NOTIF-3).
+  String _levelLabel(AppLocalizations l10n, NotificationLevel level) =>
+      switch (level) {
+        NotificationLevel.all => l10n.levelAll,
+        NotificationLevel.important => l10n.levelImportant,
+        NotificationLevel.none => l10n.levelOff,
+      };
 
   String _reminderLabel(AppLocalizations l10n, int minutes) =>
       switch (minutes) {
@@ -704,6 +713,40 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                         },
                       ),
                   ],
+                ),
+                const SizedBox(height: 18),
+                // Where team notifications start for people who join
+                // (TEAM-5, NOTIF-3; owner's request 2026-11-10). Each person
+                // can still change their own, and nobody already on the team
+                // changes.
+                PageHeading(l10n.newMemberNotifications),
+                headingGap,
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final level in NotificationLevel.values)
+                      ChoiceChip(
+                        label: Text(_levelLabel(l10n, level)),
+                        selected: group.newMemberNotificationLevel == level,
+                        onSelected: (_) => unawaited(
+                          _save(
+                            () => repo.updateNewMemberNotificationLevel(
+                              group.id,
+                              level,
+                            ),
+                            announce: false,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  group.isGroup
+                      ? l10n.newMemberNotificationsHelpGroup
+                      : l10n.newMemberNotificationsHelp,
+                  style: text.bodySmall?.copyWith(color: c.textMutedOnPage),
                 ),
                 const SizedBox(height: 18),
                 // The chat's look for everyone on the team (CHAT-18).

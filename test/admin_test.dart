@@ -713,6 +713,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(admin.calls.last, 'team t1 colorScheme=navy');
 
+      // Where new members' notifications start (TEAM-5, NOTIF-3).
+      final important = find.widgetWithText(ChoiceChip, 'Important only');
+      await tester.ensureVisible(important);
+      await tester.tap(important);
+      await tester.pumpAndSettle();
+      expect(admin.calls.last, 'team t1 newMemberNotificationLevel=important');
+
       // Nothing was written to the team directly, which the rules refuse.
       expect(groups.updates, isEmpty);
       expect(groups.savedTheme, isNull);

@@ -196,6 +196,26 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> updateNewMemberNotificationLevel(
+    GroupId id,
+    NotificationLevel level,
+  ) async {
+    try {
+      // Top-level, not in settings, which older builds write whole and
+      // would drop (like colorScheme, ARCH D71).
+      await _db.collection(Collections.groups).doc(id.value).update({
+        'newMemberNotificationLevel': level.value,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException catch (e) {
+      throw switch (e.code) {
+        'permission-denied' => PermissionDenied(e.code),
+        _ => UnknownFailure(e.code),
+      };
+    }
+  }
+
+  @override
   Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes) async {
     final path =
         'groups/${id.value}/theme/${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -633,6 +653,13 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
       _ => null,
     },
     colorScheme: TeamScheme.tryParse(d['colorScheme'] as String?),
+    // Missing, or not one of the three: All activity, as the server reads
+    // it (TEAM-5).
+    newMemberNotificationLevel:
+        NotificationLevel.tryParse(
+          d['newMemberNotificationLevel'] as String?,
+        ) ??
+        NotificationLevel.all,
     pinnedMessageIds: [
       for (final id in (d['pinnedMessageIds'] as List?) ?? const [])
         if (id is String) id,

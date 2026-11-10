@@ -16,7 +16,7 @@ import { hideReportsAbout } from '../safety/service.js';
 import { tryClearAssignmentsOf } from '../schedule/assignments.js';
 import { db, storage } from '../shared/admin.js';
 import { forEachPage } from '../shared/batch.js';
-import { Collections, Limits } from '../shared/constants.js';
+import { Collections, Limits, notificationLevelValues, type NotificationLevel } from '../shared/constants.js';
 import { groupMemberId } from '../shared/ids.js';
 import { teamCountOf, teamMembershipsOf, type Role } from '../shared/roles.js';
 import { leaveDirectChats, updateDirectPeople } from './direct.js';
@@ -112,6 +112,21 @@ export function memberSnapshotOf(p: {
   avatarColor?: string | null;
 }): { displayName: string; photoPath: string | null; avatarColor: string | null } {
   return { displayName: p.displayName, photoPath: p.photoPath, avatarColor: p.avatarColor ?? null };
+}
+
+/**
+ * Where team notifications start for someone joining a team (TEAM-5,
+ * NOTIF-3): the level its admins picked for new members
+ * (`groups.newMemberNotificationLevel`), or All activity when they haven't
+ * picked one or the stored value isn't one of the three. [group] is the
+ * team document's data. Every way in uses it: the team link and email
+ * invites, being added by email, and being linked to a player. The owner
+ * who creates a team starts on All activity, and a new season keeps each
+ * member's own level.
+ */
+export function newMemberLevelOf(group: FirebaseFirestore.DocumentData | undefined): NotificationLevel {
+  const level: unknown = group?.newMemberNotificationLevel;
+  return (notificationLevelValues as readonly unknown[]).includes(level) ? (level as NotificationLevel) : 'all';
 }
 
 /**
@@ -370,6 +385,8 @@ export interface GroupEdit {
   chatTheme?: { bubbleColor?: string | null; background?: string; backgroundPath?: string | null };
   /** The team's default color scheme (SET-2), or null for none. */
   colorScheme?: string | null;
+  /** Where team notifications start for people who join (TEAM-5, NOTIF-3). */
+  newMemberNotificationLevel?: NotificationLevel;
   photoPath?: string | null;
   backgroundPath?: string | null;
 }
@@ -392,7 +409,7 @@ export async function updateGroupProfile(
     if (!group.exists) throw new HttpsError('not-found', 'No such team.');
     if (group.get('archivedAt') != null) throw new HttpsError('failed-precondition', 'archived');
     const after: Record<string, unknown> = {};
-    for (const key of ['name', 'description', 'color', 'sport', 'timeZone', 'photoPath', 'colorScheme'] as const) {
+    for (const key of ['name', 'description', 'color', 'sport', 'timeZone', 'photoPath', 'colorScheme', 'newMemberNotificationLevel'] as const) {
       if (edit[key] !== undefined) after[key] = edit[key];
     }
     // A basic group has no sport (TEAM-14).
@@ -630,6 +647,8 @@ export async function addMembersByEmail(
   };
   const group = await db().collection(Collections.groups).doc(groupId).get();
   const teamName = group.get('name') as string;
+  // Everyone added starts where the team's admins picked (TEAM-5, NOTIF-3).
+  const level = newMemberLevelOf(group.data());
   const addedUids: string[] = [];
   for (const entry of entries) {
     try {
@@ -652,7 +671,7 @@ export async function addMembersByEmail(
         title: null,
         ...memberSnapshotOf(user),
         playerSummary: null,
-        notificationLevel: 'all',
+        notificationLevel: level,
         mutedUntil: null,
         lastReadAt: now,
         lastPostedAt: null,

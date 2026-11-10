@@ -557,6 +557,9 @@
   "reminder1d": "1 day before",
   "reminder2d": "2 days before",
   "reminder1w": "1 week before",
+  "newMemberNotifications": "Notifications for new members",
+  "newMemberNotificationsHelp": "Where team notifications start for people who join. They can change theirs in Team info, and people already on the team keep theirs.",
+  "newMemberNotificationsHelpGroup": "Where notifications start for people who join. They can change theirs in Group info, and people already in the group keep theirs.",
   "storageUsed": "{used} of {total} used",
   "@storageUsed": {
     "placeholders": {

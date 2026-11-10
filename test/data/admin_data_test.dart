@@ -180,12 +180,22 @@ void main() {
       });
       expect(sent.containsKey('description'), isFalse);
       expect(sent.containsKey('colorScheme'), isFalse);
+      expect(sent.containsKey('newMemberNotificationLevel'), isFalse);
       // The team's default color scheme (SET-2).
       await repo.updateGroup(_g, colorScheme: TeamScheme.navy);
       expect(
         (functions.lastData('adminUpdateGroup')! as Map)['colorScheme'],
         'navy',
       );
+      // Where new members' notifications start (TEAM-5, NOTIF-3).
+      await repo.updateGroup(
+        _g,
+        newMemberNotificationLevel: NotificationLevel.important,
+      );
+      expect(functions.lastData('adminUpdateGroup'), {
+        'groupId': 'g1',
+        'newMemberNotificationLevel': 'important',
+      });
       await repo.updateGroup(_g, chatTheme: const ChatTheme());
       expect(
         ((functions.lastData('adminUpdateGroup')! as Map)['chatTheme']

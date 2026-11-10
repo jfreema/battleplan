@@ -20,7 +20,7 @@ import {
   type PlayerInput,
   type Relation,
 } from './roster.js';
-import { memberSnapshotOf } from '../teams/service.js';
+import { memberSnapshotOf, newMemberLevelOf } from '../teams/service.js';
 
 /** A player's details (PLAYER-12): same ID as the player. */
 const detailsRef = (playerId: string) => db().collection(Collections.playerDetails).doc(playerId);
@@ -353,6 +353,11 @@ export async function linkGuardian(
     if (member.exists) {
       if (relation === 'self') tx.update(memberRef, { linksUpdatedAt: now });
     } else {
+      // Their team notifications start where the team's admins picked for
+      // new members (TEAM-5, NOTIF-3). A plain read, not the
+      // transaction's, so the team (written with every chat message) isn't
+      // held while this runs.
+      const team = await db().collection(Collections.groups).doc(groupId).get();
       tx.set(memberRef, {
         groupId,
         uid: user.uid,
@@ -360,7 +365,7 @@ export async function linkGuardian(
         title: null,
         ...memberSnapshotOf(user),
         playerSummary: null,
-        notificationLevel: 'all',
+        notificationLevel: newMemberLevelOf(team.data()),
         mutedUntil: null,
         lastReadAt: now,
         lastPostedAt: null,

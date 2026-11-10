@@ -14,7 +14,7 @@ import { onUserUpdated } from '../../src/accounts/triggers.js';
 import { deleteMessage } from '../../src/chat/handlers.js';
 import type { Email } from '../../src/email/service.js';
 import * as invites from '../../src/invites/handlers.js';
-import { previewInvite } from '../../src/invites/service.js';
+import { createEmailInvite, previewInvite } from '../../src/invites/service.js';
 import * as players from '../../src/players/handlers.js';
 import * as service from '../../src/players/service.js';
 import { resolveReport } from '../../src/safety/handlers.js';
@@ -1242,5 +1242,70 @@ describe('the icon color on memberships (SET-8)', () => {
       'guardian',
     );
     expect(await colorOf('open', 'lee')).toBe('grape');
+  });
+});
+
+describe("where team notifications start for people who join (TEAM-5, NOTIF-3)", () => {
+  const levelOf = async (g: string, uid: string) => (await members().doc(`${g}_${uid}`).get()).get('notificationLevel');
+  const nia = async () =>
+    (await members().where('groupId', '==', 'open').where('displayName', '==', 'Nia Park').get()).docs[0];
+  /** The level the team's admins picked for new members, as Team admin saves it. */
+  const pick = (level: unknown) => groups().doc('open').update({ newMemberNotificationLevel: level });
+  const joinWithLink = async (uid: string) => {
+    const link = await run<{ code: string }>(invites.getTeamInvite, 'ada', { groupId: 'open' });
+    await run(invites.redeemInvite, uid, { code: link.code });
+  };
+
+  it('starts at All activity on a team that picked nothing, or a level it does not know', async () => {
+    await joinWithLink('lee');
+    expect(await levelOf('open', 'lee')).toBe('all');
+    await pick('quiet');
+    await run(teams.addMemberByEmail, 'pat', { groupId: 'open', entries: [{ name: 'Nia Park', email: 'nia@example.com' }] });
+    expect((await nia()).get('notificationLevel')).toBe('all');
+  });
+
+  it('joining with the team link or an email invite starts at the level the admins picked', async () => {
+    await pick('none');
+    await joinWithLink('lee');
+    expect(await levelOf('open', 'lee')).toBe('none');
+    await person('kai', 'Kai Lane');
+    const code = await createEmailInvite('open', 'kai@example.com', 'ada');
+    await run(invites.redeemInvite, 'kai', { code }, { ...VERIFIED, email: 'kai@example.com' });
+    expect(await levelOf('open', 'kai')).toBe('none');
+    // Nobody already on the team changes, and joining again changes nothing.
+    expect(await levelOf('open', 'sam')).toBeUndefined();
+    await members().doc('open_lee').update({ notificationLevel: 'all' });
+    await joinWithLink('lee');
+    expect(await levelOf('open', 'lee')).toBe('all');
+  });
+
+  it('adding by email starts there, for accounts and new emails alike', async () => {
+    await pick('important');
+    await run(teams.addMemberByEmail, 'pat', {
+      groupId: 'open',
+      entries: [{ email: 'lee@example.com' }, { name: 'Nia Park', email: 'nia@example.com' }],
+    });
+    expect(await levelOf('open', 'lee')).toBe('important');
+    expect((await nia()).get('notificationLevel')).toBe('important');
+  });
+
+  it('a guardian added with a player, or invited by email, starts there', async () => {
+    await pick('none');
+    await run(players.addPlayers, 'pat', {
+      groupId: 'open',
+      players: [{ name: 'Leo', guardians: [{ email: 'lee@example.com' }] }],
+    });
+    expect(await levelOf('open', 'lee')).toBe('none');
+    await run(players.inviteGuardian, 'pat', { groupId: 'open', playerId: 'open-p1', email: 'root@example.com' });
+    expect(await levelOf('open', 'root')).toBe('none');
+  });
+
+  it('a link that adds the membership starts there; one for a member leaves theirs', async () => {
+    await pick('important');
+    await service.linkGuardian('open', 'open-p1', { uid: 'lee', displayName: 'Lee Kim', photoPath: null }, 'pat', 'guardian');
+    expect(await levelOf('open', 'lee')).toBe('important');
+    await members().doc('open_sam').update({ notificationLevel: 'all' });
+    await service.linkGuardian('open', 'open-p1', { uid: 'sam', displayName: 'sam', photoPath: null }, 'pat', 'guardian');
+    expect(await levelOf('open', 'sam')).toBe('all');
   });
 });

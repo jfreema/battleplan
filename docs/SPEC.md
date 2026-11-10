@@ -459,6 +459,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - everyone can see who's on the team [on]: off, only admins see all the people on the roster (TEAM-3)
   - **Language:** filter strong language [on] (SAFE-7).
   - Default event reminders: none, so reminders are off until a team or an event turns them on (owner's request 2026-11-01).
+  - **Notifications for new members:** All activity [default], Important only, or Off: where the team notification level (NOTIF-3) starts for people who join from then on, whether by the team link, an email invite, being added by email, or being linked to a player. Each person can still change their own, people already on the team keep theirs, and the owner who creates a team starts on All activity (owner's request 2026-11-10: "Turn off notifications on the tester teams. Allow them to opt in if they want.").
   - Manage the invite link.
   - See storage used, e.g. "112 MB of 200 MB", and open Media to free space (STORE-2, STORE-5).
   - **About**, at the end, at the owner's request: the version and build, "Developed by Jared Freeman", that Battleplan is free and Jared builds it as a volunteer, and **Buy Jared a coffee**, which shows his Venmo card (a QR code to scan) and **Open Venmo** for paying from the same phone. A tip is voluntary and unlocks nothing.
@@ -924,7 +925,7 @@ Players that others answer for never get accounts, and every account belongs to 
   Admins can email the people who haven't RSVP'd, who answer from the email (SCHED-14). Answer buttons on pushes, and reminder emails sent on their own, come later.
 - **NOTIF-3 · MVP · Notification settings for each team.**
   - Set them from Team info ("Notifications for this team") or from Settings → Notifications. They sync across your devices.
-  - **Level:** All activity (default), Important only, or Off.
+  - **Level:** All activity, Important only, or Off. It starts where the team's admins set Notifications for new members (TEAM-5), All activity unless they picked another, and the person can change it any time.
   - **Mute** for 1 hour, 8 hours, 1 week, or until unmuted. Muted teams show a muted icon, and their unread counts turn gray.
   - These settings control pushes only. Notification-center items and unread counts still appear, so nothing is lost.
 - **NOTIF-4 · MVP · Global switches.** Settings → Notifications has switches for Messages, Direct messages (CHAT-19), Replies, Mentions (v1.1, CHAT-14), Polls, New events, Event changes, Reminders, and Documents. They apply to every team. Announcements have no switch (CHAT-15).

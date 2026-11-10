@@ -4,7 +4,7 @@ import { db, storage } from '../shared/admin.js';
 import { Collections, Limits } from '../shared/constants.js';
 import { joinUrl } from '../links/service.js';
 import { groupMemberId } from '../shared/ids.js';
-import { memberSnapshotOf } from '../teams/service.js';
+import { memberSnapshotOf, newMemberLevelOf } from '../teams/service.js';
 import { formatCode, newInviteCode } from './codes.js';
 
 export interface LinkOptions {
@@ -244,7 +244,8 @@ export async function redeem(
       title: null,
       ...memberSnapshotOf(member),
       playerSummary: null,
-      notificationLevel: 'all',
+      // Where the team's admins picked for new members (TEAM-5, NOTIF-3).
+      notificationLevel: newMemberLevelOf(group.data()),
       mutedUntil: null,
       lastReadAt: now,
       lastPostedAt: null,

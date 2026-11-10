@@ -370,6 +370,30 @@ void main() {
       expect(find.text('Add players'), findsNothing);
     });
 
+    testWidgets('opened from a link or a reload, it lands on the roster '
+        'after adding, with nothing to go back to', (tester) async {
+      final playerRepo = FakePlayerRepository();
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: youth,
+        memberships: [testMembership('y', 'coach', role: MemberRole.owner)],
+        playerRepo: playerRepo,
+      );
+      // go, not push: the only screen, as after a reload.
+      GoRouter.of(tester.element(find.byType(Scaffold).first))
+          .go('/g/y/players/add');
+      await tester.pumpAndSettle();
+      final router = GoRouter.of(tester.element(find.byType(Navigator).first));
+      expect(router.canPop(), isFalse);
+      await tester.enterText(find.byType(TextField).at(0), 'Leo Park');
+      await tester.tap(find.widgetWithText(FilledButton, 'Add player'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(playerRepo.added.single, const [NewPlayer(name: 'Leo Park')]);
+      expect(router.state.uri.path, '/g/y/roster');
+    });
+
     /// Picks the 15th of this month in 2015 from the date-of-birth picker.
     Future<void> pickBirthday(WidgetTester tester) async {
       await tester.tap(find.text('Date of birth').last);

@@ -371,6 +371,16 @@ class FakeGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> updateNewMemberNotificationLevel(
+    GroupId id,
+    NotificationLevel level,
+  ) async {
+    updates.add('newMemberNotificationLevel ${level.value}');
+    final g = groups[id.value];
+    if (g != null) setGroup(g.copyWith(newMemberNotificationLevel: level));
+  }
+
+  @override
   Future<String> uploadChatBackground(GroupId id, Uint8List jpegBytes) async =>
       'groups/${id.value}/theme/bg.jpg';
 
@@ -3383,6 +3393,7 @@ class FakeAdminRepository implements AdminRepository {
     GroupSettings? settings,
     ChatTheme? chatTheme,
     TeamScheme? colorScheme,
+    NotificationLevel? newMemberNotificationLevel,
     String? photoPath,
   }) => _act(
     [
@@ -3395,6 +3406,8 @@ class FakeAdminRepository implements AdminRepository {
       if (settings != null) 'settings',
       if (chatTheme != null) 'chatTheme=${_theme(chatTheme)}',
       if (colorScheme != null) 'colorScheme=${colorScheme.value}',
+      if (newMemberNotificationLevel != null)
+        'newMemberNotificationLevel=${newMemberNotificationLevel.value}',
       if (photoPath != null) 'photoPath=$photoPath',
     ].join(' '),
   );

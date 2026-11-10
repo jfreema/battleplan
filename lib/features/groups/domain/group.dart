@@ -126,6 +126,13 @@ abstract class Group with _$Group {
     /// members who haven't picked their own see. Null until one is set.
     TeamScheme? colorScheme,
 
+    /// Where team notifications start for people who join (TEAM-5,
+    /// NOTIF-3), set by its admins: All activity until they pick another.
+    /// Each person can still change their own, and people already on the
+    /// team keep theirs.
+    @Default(NotificationLevel.all)
+    NotificationLevel newMemberNotificationLevel,
+
     /// The chat's pinned messages, oldest pin first, at most
     /// [Limits.pinnedMessagesMax] (CHAT-15). Only the server changes them.
     @Default(<String>[]) List<String> pinnedMessageIds,

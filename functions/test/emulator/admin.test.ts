@@ -474,6 +474,18 @@ describe('editing a team the super admin is not on (ADMIN-3)', () => {
     expect((await audits('updateGroup'))[0]).toMatchObject({ before: { colorScheme: null }, after: { colorScheme: 'navy' } });
   });
 
+  it("sets where new members' notifications start (TEAM-5, NOTIF-3), audited", async () => {
+    await asRoot(admin.adminUpdateGroup, { groupId: 'thunder', newMemberNotificationLevel: 'none' });
+    const t = (await groups().doc('thunder').get()).data()!;
+    expect(t.newMemberNotificationLevel).toBe('none');
+    // Outside settings, which older builds write whole.
+    expect(t.settings).not.toHaveProperty('newMemberNotificationLevel');
+    expect((await audits('updateGroup'))[0]).toMatchObject({
+      before: { newMemberNotificationLevel: null },
+      after: { newMemberNotificationLevel: 'none' },
+    });
+  });
+
   it("keeps a basic group without a sport (TEAM-14)", async () => {
     await groups().doc('thunder').update({ kind: 'group', sport: 'other' });
     await expect(asRoot(admin.adminUpdateGroup, { groupId: 'thunder', sport: 'soccer' })).rejects.toMatchObject({
@@ -503,6 +515,8 @@ describe('editing a team the super admin is not on (ADMIN-3)', () => {
       { color: '#123456' }, { sport: 'cricket' }, { name: '' }, { name: 'x'.repeat(51) }, { description: 'x'.repeat(501) },
       { settings: { secret: true } }, { settings: { defaultReminderOffsets: [7] } },
       { chatTheme: { background: 'video' } }, { colorScheme: 'olive' }, { colorScheme: 'Navy' },
+      { newMemberNotificationLevel: 'off' }, { newMemberNotificationLevel: null },
+      { settings: { newMemberNotificationLevel: 'none' } },
       { photoPath: 'groups/hawks/avatar/1.jpg' },
       { photoPath: 'groups/thunder/avatar/a/b.jpg' }, { backgroundPath: 'groups/thunder/avatar/1.jpg' }, {},
     ];
