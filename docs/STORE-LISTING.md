@@ -34,7 +34,7 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 
 ## Version information
 
-**What's New in This Version** (1.2, the next version, ROADMAP task 352; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
+**What's New in This Version** (1.2, approved by Apple by 2026-11-10; the next version is 1.3, ROADMAP task 375, whose What's New is under 1.3 below; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
 
 ```
 A whole new look, Open Field, with five color schemes: Army green, the default, plus Light, Dark, Navy, and Light blue. Everyone picks the scheme they see for each team, and a default for the rest.
@@ -43,6 +43,21 @@ Also new:
 • Dues: track who owes and who's paid for uniforms and team fees, partial payments included, and show everyone how to pay the team. Coaches see who owes what, person by person. People pay each other directly, outside the app
 • Your icon: a photo, or your initials on a color you pick, beside your messages in chat
 • On a team, RSVPs are for players, each on their own row: parents answer for each of their kids, and adult players answer for themselves
+```
+
+**What's New in 1.3** (ROADMAP task 375; paste it when adding version 1.3 in App Store Connect). Everything made since the 1.2 build (435, `00a098c`): the settings gear and Team tab (task 374), Dark as the default (373), where new members' notifications start (371), events in the chat only when asked (370), Approve and Decline answering once (369), and the team default color scheme, No reminders, and light blue group messages (365 to 367). The description, keywords, promotional text, and review notes stay as 1.2's; the screenshots still show Army green and four tabs until they're retaken.
+
+```
+Settings and your team's roster are easier to find.
+
+• Team settings: the gear at the top of a team opens your own notification, color scheme, and calendar choices, and Admin settings for team admins
+• A new Team tab: the team's roster, with Invite and Dues one tap away (People, in a group)
+• Dark is now the default look. Anyone who picked a color scheme keeps it, and team admins can set their team's default
+• New events go in the team chat only when you check Post to chat
+• Team admins choose where new members' notifications start: All activity, Important only, or Off
+• Events and team defaults can have No reminders
+• Approve and Decline on a player request show they're working, and answer once
+• A group's messages are light blue until you pick a color
 ```
 
 **Promotional text** (170 characters; can change without a new version):
