@@ -1212,6 +1212,9 @@ class FakeNotificationRepository implements NotificationRepository {
   final List<NotificationItem> items;
   final List<String> markedRead = [];
   int markAllCalls = 0;
+
+  /// The team each "Mark all as read" was for; null for every team.
+  final List<GroupId?> markAllGroups = [];
   int loadOlderCalls = 0;
   final _changes = StreamController<void>.broadcast();
 
@@ -1225,13 +1228,20 @@ class FakeNotificationRepository implements NotificationRepository {
   /// Firestore does with persistence on.
   List<NotificationItem>? cachedFirst;
 
+  /// Every item, or only [groupId]'s, as the queries filter.
+  List<NotificationItem> _of(GroupId? groupId) => [
+    for (final n in items)
+      if (groupId == null || n.groupId == groupId) n,
+  ];
+
   @override
   Stream<NotificationPage> watchNewest(
     UserId uid, {
+    GroupId? groupId,
     int limit = Limits.notificationPageSize,
   }) async* {
     NotificationPage page() {
-      final all = items;
+      final all = _of(groupId);
       return NotificationPage(
         items: all.take(limit).toList(),
         next: all.length > limit ? NotificationCursor(limit) : null,
@@ -1251,11 +1261,12 @@ class FakeNotificationRepository implements NotificationRepository {
   Future<NotificationPage> loadOlder(
     UserId uid,
     NotificationCursor after, {
+    GroupId? groupId,
     int limit = Limits.notificationPageSize,
   }) async {
     loadOlderCalls++;
     if (failLoadOlder) throw const Offline('test');
-    final all = items;
+    final all = _of(groupId);
     final start = after.handle as int;
     final end = (start + limit).clamp(0, all.length);
     return NotificationPage(
@@ -1267,8 +1278,9 @@ class FakeNotificationRepository implements NotificationRepository {
   @override
   Future<int> countUnread(
     UserId uid, {
+    GroupId? groupId,
     int cap = Limits.unreadCountCap,
-  }) async => items.where((n) => !n.read).take(cap).length;
+  }) async => _of(groupId).where((n) => !n.read).take(cap).length;
 
   @override
   Future<void> markRead(String id) async {
@@ -1281,10 +1293,13 @@ class FakeNotificationRepository implements NotificationRepository {
   }
 
   @override
-  Future<void> markAllRead(UserId uid) async {
+  Future<void> markAllRead(UserId uid, {GroupId? groupId}) async {
     markAllCalls++;
+    markAllGroups.add(groupId);
     for (var i = 0; i < items.length; i++) {
-      items[i] = items[i].copyWith(read: true);
+      if (groupId == null || items[i].groupId == groupId) {
+        items[i] = items[i].copyWith(read: true);
+      }
     }
     _changes.add(null);
   }

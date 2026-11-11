@@ -38,16 +38,32 @@ String deviceAppVersion(Ref ref) =>
 Future<PushPermission> pushPermission(Ref ref) =>
     ref.watch(pushRepositoryProvider).permissionStatus();
 
-/// Unread notification-center items for the bell, up to 100 (NOTIF-11).
-/// A one-time count, not a listener (ARCH §10.2): refreshed on resume, on
-/// every foreground push, and after marking read.
+/// Unread notification-center items for the bell, up to 100 (NOTIF-11):
+/// every team's on Teams, or only [groupId]'s on that team's bell. A
+/// one-time count, not a listener (ARCH §10.2): refreshed on resume, on
+/// every foreground push, and after marking read, which invalidate the
+/// whole family.
 @riverpod
-Future<int> unreadNotificationCount(Ref ref) async {
+Future<int> unreadNotificationCount(Ref ref, {GroupId? groupId}) async {
   final uid = ref.watch(authUserProvider.select((a) => a.value?.uid));
   if (uid == null) return 0;
   return await ref
       .watch(notificationRepositoryProvider)
-      .countUnread(UserId(uid));
+      .countUnread(UserId(uid), groupId: groupId);
+}
+
+/// Whether the bell on Teams has unread items that [groupId]'s bell
+/// doesn't, for the dot on the team header's back arrow (NOTIF-11): every
+/// unread item, counted, against that team's. Both counts stop at 100, so
+/// with 100 or more unread on this team it says no.
+@riverpod
+Future<bool> unreadNotificationsElsewhere(Ref ref, GroupId groupId) async {
+  final all = await ref.watch(unreadNotificationCountProvider().future);
+  if (all == 0) return false;
+  final here = await ref.watch(
+    unreadNotificationCountProvider(groupId: groupId).future,
+  );
+  return all > here;
 }
 
 /// The in-app banner for a push that arrives while the app is open

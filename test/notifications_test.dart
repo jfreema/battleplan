@@ -10,6 +10,7 @@ import 'package:battleplan/features/notifications/domain/notification_item.dart'
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'helpers/fakes.dart';
@@ -44,6 +45,7 @@ void main() {
 
   NotificationItem item(
     String id, {
+    String groupId = 'a',
     NotifyKind kind = NotifyKind.reply,
     String title = 'Thunder',
     String body = 'Sam replied to you: Sounds good',
@@ -54,7 +56,7 @@ void main() {
     DateTime? expiresAt,
   }) => NotificationItem(
     id: id,
-    groupId: const GroupId('a'),
+    groupId: GroupId(groupId),
     kind: kind,
     title: title,
     body: body,
@@ -68,6 +70,17 @@ void main() {
   Finder bellBadge(String label) => find.descendant(
     of: find.byTooltip('Notifications'),
     matching: find.text(label),
+  );
+
+  /// Back to Teams, whose bell has every team's notifications.
+  Future<void> goToTeams(WidgetTester tester) async {
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/teams');
+    await tester.pumpAndSettle();
+  }
+
+  /// The team header's arrow back to Teams, with the dot read out.
+  Finder backWithDot() => find.bySemanticsLabel(
+    RegExp(r'^Back, new notifications in your other teams$'),
   );
 
   /// The app goes to the background and comes back.
@@ -580,6 +593,108 @@ void main() {
       expect(bellBadge('2'), findsOneWidget);
     });
 
+    testWidgets(
+      "a team's bell counts and lists only its own; the bell on Teams has "
+      "every team's, each under its team (owner's request 2026-11-10)",
+      (tester) async {
+        await pumpApp(
+          tester,
+          auth: FakeAuthRepository(user: coach),
+          groups: teams,
+          memberships: mine(),
+          notifications: FakeNotificationRepository([
+            item('a1'),
+            item(
+              'b1',
+              groupId: 'b',
+              kind: NotifyKind.addedToTeam,
+              title: 'Lightning',
+              body: 'Alex added you to Lightning',
+              route: '/g/b/chat',
+            ),
+          ]),
+        );
+        // In Thunder: only Thunder's.
+        expect(bellBadge('1'), findsOneWidget);
+        await tester.tap(find.byTooltip('Notifications'));
+        await tester.pumpAndSettle();
+        expect(
+          GoRouter.of(tester.element(find.byType(Scaffold).last))
+              .state
+              .uri
+              .path,
+          '/g/a/activity',
+        );
+        expect(find.text('Sam replied to you: Sounds good'), findsOneWidget);
+        expect(find.text('Alex added you to Lightning'), findsNothing);
+        // The team is the same on every row, so the body is the row's title.
+        final tile = tester.widget<ListTile>(find.byType(ListTile));
+        expect((tile.title! as Text).data, 'Sam replied to you: Sounds good');
+        expect(tile.subtitle, isNull);
+
+        // On Teams: both, each under its team.
+        await goToTeams(tester);
+        expect(bellBadge('2'), findsOneWidget);
+        await tester.tap(find.byTooltip('Notifications'));
+        await tester.pumpAndSettle();
+        expect(find.text('Sam replied to you: Sounds good'), findsOneWidget);
+        expect(find.text('Alex added you to Lightning'), findsOneWidget);
+        expect(find.text('Thunder'), findsOneWidget);
+        expect(find.text('Lightning'), findsOneWidget);
+      },
+    );
+
+    testWidgets("a team's Mark all as read marks only that team's", (
+      tester,
+    ) async {
+      final notifications = FakeNotificationRepository([
+        item('a1'),
+        item('b1', groupId: 'b', title: 'Lightning', body: 'Lightning news'),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        notifications: notifications,
+      );
+      await tester.tap(find.byTooltip('Notifications'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Mark all as read'));
+      await tester.pumpAndSettle();
+      expect(notifications.markAllGroups, [const GroupId('a')]);
+      expect(notifications.items.map((n) => (n.id, n.read)), [
+        ('a1', true),
+        ('b1', false),
+      ]);
+      await goToTeams(tester);
+      expect(bellBadge('1'), findsOneWidget);
+    });
+
+    testWidgets("the arrow back to Teams has a dot while another team's "
+        'notifications are unread', (tester) async {
+      final notifications = FakeNotificationRepository([
+        item('a1'),
+        item('b1', groupId: 'b', title: 'Lightning', body: 'Lightning news'),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberships: mine(),
+        notifications: notifications,
+      );
+      // Lightning's is unread, and Thunder's bell doesn't count it.
+      expect(backWithDot(), findsOneWidget);
+
+      // Thunder's own unread items don't light it.
+      notifications.items[1] = notifications.items[1].copyWith(read: true);
+      await leaveAndReturn(tester);
+      expect(backWithDot(), findsNothing);
+      expect(find.bySemanticsLabel(RegExp(r'^Back$')), findsOneWidget);
+      expect(bellBadge('1'), findsOneWidget);
+    });
+
     testWidgets('lists items; a tap marks it read and opens it', (
       tester,
     ) async {
@@ -653,6 +768,8 @@ void main() {
           ),
         ]),
       );
+      // Every team's list, where each row is under its team's name.
+      await goToTeams(tester);
       await tester.tap(find.byTooltip('Notifications'));
       await tester.pumpAndSettle();
       FontWeight? weight(String text) => tester

@@ -158,9 +158,10 @@ void main() {
       bool read = false,
       int minute = 0,
       String uid = 'u1',
+      String groupId = 'g1',
     }) => db.doc('notifications/$id').set({
       'uid': uid,
-      'groupId': 'g1',
+      'groupId': groupId,
       'type': 'message',
       'title': 'Thunder',
       'body': 'Alex: hi',
@@ -198,6 +199,34 @@ void main() {
       expect(await repo.countUnread(const UserId('u2')), 1);
       // Nothing left: one empty round.
       await repo.markAllRead(_me);
+    });
+
+    test("reads, counts, and marks read one team's alone (NOTIF-11)", () async {
+      final repo = FirestoreNotificationRepository(db);
+      const g2 = GroupId('g2');
+      for (var i = 0; i < 4; i++) {
+        await add('a$i', minute: i);
+        await add('b$i', minute: i, groupId: 'g2', read: i == 0);
+      }
+      await add('theirs', uid: 'u2', groupId: 'g2');
+
+      final first = await repo.watchNewest(_me, groupId: g2, limit: 2).first;
+      expect(first.items.map((n) => n.id), ['b3', 'b2']);
+      final older = await repo.loadOlder(
+        _me,
+        first.next!,
+        groupId: g2,
+        limit: 2,
+      );
+      expect(older.items.map((n) => n.id), ['b1', 'b0']);
+
+      expect(await repo.countUnread(_me, groupId: g2), 3);
+      expect(await repo.countUnread(_me), 7);
+      await repo.markAllRead(_me, groupId: g2);
+      expect(await repo.countUnread(_me, groupId: g2), 0);
+      // The other team's, and someone else's, stay unread.
+      expect(await repo.countUnread(_me), 4);
+      expect(await repo.countUnread(const UserId('u2'), groupId: g2), 1);
     });
 
     test('marks more than one batch as read', () async {

@@ -296,6 +296,18 @@
   "photosSubtitle": "Every photo shared in the chat",
   "photosEmpty": "Photos shared in the chat will show up here.",
   "notificationsPlaceholder": "Activity from all your teams will appear here.",
+  "teamNotificationsPlaceholder": "Activity from this team will appear here.",
+  "@teamNotificationsPlaceholder": {
+    "description": "The empty state of a team's own notifications, opened from the bell in that team's header."
+  },
+  "groupNotificationsPlaceholder": "Activity from this group will appear here.",
+  "@groupNotificationsPlaceholder": {
+    "description": "The empty state of a group's own notifications, opened from the bell in that group's header."
+  },
+  "notificationsElsewhere": "new notifications in your other teams",
+  "@notificationsElsewhere": {
+    "description": "Read by screen readers after Back on a team's header when the coral dot on the back arrow shows that the bell on Teams has unread notifications this team's bell doesn't."
+  },
   "notAMember": "You're not a member of this team.",
   "goToMyTeams": "Go to my teams",
   "about": "About",

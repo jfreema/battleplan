@@ -29,9 +29,10 @@ abstract class NotificationCenterState with _$NotificationCenterState {
   }) = _NotificationCenterState;
 }
 
-/// The center across all my teams: the live newest 30 plus older pages
-/// loaded by scrolling, merged by ID (ARCH §5.3). The listener runs only
-/// while the screen is open (ARCH §10.2).
+/// The center across all my teams, or only [groupId]'s from that team's
+/// bell: the live newest 30 plus older pages loaded by scrolling, merged
+/// by ID (ARCH §5.3). The listener runs only while the screen is open
+/// (ARCH §10.2).
 @riverpod
 class NotificationCenter extends _$NotificationCenter {
   final Map<String, NotificationItem> _known = {};
@@ -41,14 +42,14 @@ class NotificationCenter extends _$NotificationCenter {
   bool _loadedOlder = false;
 
   @override
-  NotificationCenterState build() {
+  NotificationCenterState build({GroupId? groupId}) {
     final uid = ref.watch(authUserProvider.select((a) => a.value?.uid));
     if (uid == null) {
       return const NotificationCenterState(loading: false, reachedEnd: true);
     }
     final sub = ref
         .watch(notificationRepositoryProvider)
-        .watchNewest(UserId(uid))
+        .watchNewest(UserId(uid), groupId: groupId)
         .listen(
           _onLivePage,
           // A failed page mustn't leave the center loading for good.
@@ -114,7 +115,7 @@ class NotificationCenter extends _$NotificationCenter {
     try {
       final page = await ref
           .read(notificationRepositoryProvider)
-          .loadOlder(UserId(uid), cursor);
+          .loadOlder(UserId(uid), cursor, groupId: groupId);
       if (!ref.mounted) return;
       for (final n in page.items) {
         _known.putIfAbsent(n.id, () => n);
@@ -159,7 +160,7 @@ class NotificationCenter extends _$NotificationCenter {
     _recount(container);
   }
 
-  /// "Mark all as read" (NOTIF-11).
+  /// "Mark all as read" (NOTIF-11): every team's, or only [groupId]'s.
   Future<void> markAllRead() async {
     final uid = ref.read(authUserProvider).value?.uid;
     if (uid == null) return;
@@ -168,7 +169,9 @@ class NotificationCenter extends _$NotificationCenter {
     }
     _publish();
     final container = ref.container;
-    await ref.read(notificationRepositoryProvider).markAllRead(UserId(uid));
+    await ref
+        .read(notificationRepositoryProvider)
+        .markAllRead(UserId(uid), groupId: groupId);
     _recount(container);
   }
 

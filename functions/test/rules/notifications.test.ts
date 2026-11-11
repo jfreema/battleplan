@@ -82,6 +82,18 @@ describe('notification center (NOTIF-11)', () => {
     await assertFails(as('bob').doc('notifications/n1_alice').get());
   });
 
+  it("lists one team's items for a team's bell, still only one's own (owner's request 2026-11-10)", async () => {
+    const team = (uid: string) =>
+      as(uid).collection('notifications').where('uid', '==', uid).where('groupId', '==', 'teamA');
+    await assertSucceeds(team('alice').orderBy('createdAt', 'desc').limit(30).get());
+    // The unread ones, as the count and Mark all as read ask.
+    await assertSucceeds(team('alice').where('read', '==', false).limit(100).get());
+    await assertFails(team('alice').orderBy('createdAt', 'desc').get());
+    await assertFails(
+      as('bob').collection('notifications').where('uid', '==', 'alice').where('groupId', '==', 'teamA').limit(30).get(),
+    );
+  });
+
   it('lets people only mark their items read', async () => {
     await assertSucceeds(as('alice').doc('notifications/n1_alice').update({ read: true }));
     await assertFails(as('alice').doc('notifications/n1_alice').update({ read: false }));

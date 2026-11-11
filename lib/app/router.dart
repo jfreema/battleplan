@@ -794,6 +794,15 @@ GoRouter router(Ref ref) {
               ),
             ),
           ),
+          // The bell in the team's header: only this team's notifications
+          // (NOTIF-11, owner's request 2026-11-10), in its scheme. Teams'
+          // bell opens every team's, at /notifications.
+          GoRoute(
+            path: 'activity',
+            builder: (_, state) => NotificationsScreen(
+              groupId: GroupId(state.pathParameters['groupId']!),
+            ),
+          ),
           GoRoute(
             path: 'notifications',
             pageBuilder: (_, state) => PanelPage(

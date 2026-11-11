@@ -254,36 +254,49 @@ final class PushPermissionProvider
 
 String _$pushPermissionHash() => r'6734d58a922b053724d8b3b03266066bba1a79ec';
 
-/// Unread notification-center items for the bell, up to 100 (NOTIF-11).
-/// A one-time count, not a listener (ARCH §10.2): refreshed on resume, on
-/// every foreground push, and after marking read.
+/// Unread notification-center items for the bell, up to 100 (NOTIF-11):
+/// every team's on Teams, or only [groupId]'s on that team's bell. A
+/// one-time count, not a listener (ARCH §10.2): refreshed on resume, on
+/// every foreground push, and after marking read, which invalidate the
+/// whole family.
 
 @ProviderFor(unreadNotificationCount)
-final unreadNotificationCountProvider = UnreadNotificationCountProvider._();
+final unreadNotificationCountProvider = UnreadNotificationCountFamily._();
 
-/// Unread notification-center items for the bell, up to 100 (NOTIF-11).
-/// A one-time count, not a listener (ARCH §10.2): refreshed on resume, on
-/// every foreground push, and after marking read.
+/// Unread notification-center items for the bell, up to 100 (NOTIF-11):
+/// every team's on Teams, or only [groupId]'s on that team's bell. A
+/// one-time count, not a listener (ARCH §10.2): refreshed on resume, on
+/// every foreground push, and after marking read, which invalidate the
+/// whole family.
 
 final class UnreadNotificationCountProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  /// Unread notification-center items for the bell, up to 100 (NOTIF-11).
-  /// A one-time count, not a listener (ARCH §10.2): refreshed on resume, on
-  /// every foreground push, and after marking read.
-  UnreadNotificationCountProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'unreadNotificationCountProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+  /// Unread notification-center items for the bell, up to 100 (NOTIF-11):
+  /// every team's on Teams, or only [groupId]'s on that team's bell. A
+  /// one-time count, not a listener (ARCH §10.2): refreshed on resume, on
+  /// every foreground push, and after marking read, which invalidate the
+  /// whole family.
+  UnreadNotificationCountProvider._({
+    required UnreadNotificationCountFamily super.from,
+    required GroupId? super.argument,
+  }) : super(
+         retry: null,
+         name: r'unreadNotificationCountProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$unreadNotificationCountHash();
+
+  @override
+  String toString() {
+    return r'unreadNotificationCountProvider'
+        ''
+        '($argument)';
+  }
 
   @$internal
   @override
@@ -292,12 +305,150 @@ final class UnreadNotificationCountProvider
 
   @override
   FutureOr<int> create(Ref ref) {
-    return unreadNotificationCount(ref);
+    final argument = this.argument as GroupId?;
+    return unreadNotificationCount(ref, groupId: argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is UnreadNotificationCountProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
   }
 }
 
 String _$unreadNotificationCountHash() =>
-    r'f0282af204ba910219fb69a98d94469d15bf8031';
+    r'63570aeb2757ba2a57fdb21ade2cddf952e52bd8';
+
+/// Unread notification-center items for the bell, up to 100 (NOTIF-11):
+/// every team's on Teams, or only [groupId]'s on that team's bell. A
+/// one-time count, not a listener (ARCH §10.2): refreshed on resume, on
+/// every foreground push, and after marking read, which invalidate the
+/// whole family.
+
+final class UnreadNotificationCountFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<int>, GroupId?> {
+  UnreadNotificationCountFamily._()
+    : super(
+        retry: null,
+        name: r'unreadNotificationCountProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Unread notification-center items for the bell, up to 100 (NOTIF-11):
+  /// every team's on Teams, or only [groupId]'s on that team's bell. A
+  /// one-time count, not a listener (ARCH §10.2): refreshed on resume, on
+  /// every foreground push, and after marking read, which invalidate the
+  /// whole family.
+
+  UnreadNotificationCountProvider call({GroupId? groupId}) =>
+      UnreadNotificationCountProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'unreadNotificationCountProvider';
+}
+
+/// Whether the bell on Teams has unread items that [groupId]'s bell
+/// doesn't, for the dot on the team header's back arrow (NOTIF-11): every
+/// unread item, counted, against that team's. Both counts stop at 100, so
+/// with 100 or more unread on this team it says no.
+
+@ProviderFor(unreadNotificationsElsewhere)
+final unreadNotificationsElsewhereProvider =
+    UnreadNotificationsElsewhereFamily._();
+
+/// Whether the bell on Teams has unread items that [groupId]'s bell
+/// doesn't, for the dot on the team header's back arrow (NOTIF-11): every
+/// unread item, counted, against that team's. Both counts stop at 100, so
+/// with 100 or more unread on this team it says no.
+
+final class UnreadNotificationsElsewhereProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Whether the bell on Teams has unread items that [groupId]'s bell
+  /// doesn't, for the dot on the team header's back arrow (NOTIF-11): every
+  /// unread item, counted, against that team's. Both counts stop at 100, so
+  /// with 100 or more unread on this team it says no.
+  UnreadNotificationsElsewhereProvider._({
+    required UnreadNotificationsElsewhereFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'unreadNotificationsElsewhereProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$unreadNotificationsElsewhereHash();
+
+  @override
+  String toString() {
+    return r'unreadNotificationsElsewhereProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return unreadNotificationsElsewhere(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is UnreadNotificationsElsewhereProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$unreadNotificationsElsewhereHash() =>
+    r'01426fd652fb3189ac9af2d6c0b66bd55162fe86';
+
+/// Whether the bell on Teams has unread items that [groupId]'s bell
+/// doesn't, for the dot on the team header's back arrow (NOTIF-11): every
+/// unread item, counted, against that team's. Both counts stop at 100, so
+/// with 100 or more unread on this team it says no.
+
+final class UnreadNotificationsElsewhereFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, GroupId> {
+  UnreadNotificationsElsewhereFamily._()
+    : super(
+        retry: null,
+        name: r'unreadNotificationsElsewhereProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether the bell on Teams has unread items that [groupId]'s bell
+  /// doesn't, for the dot on the team header's back arrow (NOTIF-11): every
+  /// unread item, counted, against that team's. Both counts stop at 100, so
+  /// with 100 or more unread on this team it says no.
+
+  UnreadNotificationsElsewhereProvider call(GroupId groupId) =>
+      UnreadNotificationsElsewhereProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'unreadNotificationsElsewhereProvider';
+}
 
 /// The in-app banner for a push that arrives while the app is open
 /// (NOTIF-7): the message, or null when nothing is showing.

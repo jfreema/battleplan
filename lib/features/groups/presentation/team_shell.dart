@@ -25,6 +25,7 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
+import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/services.dart';
@@ -199,6 +200,13 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     final viewed = viewing ? group.value : null;
     final otherUnread =
         teams.value?.any((t) => t.group.id != groupId && t.hasUnread) ?? false;
+    // This team's bell counts only its own notifications, so the arrow back
+    // to Teams, whose bell has every team's, shows when that one has more
+    // (NOTIF-11).
+    final elsewhere =
+        !viewing &&
+        (ref.watch(unreadNotificationsElsewhereProvider(groupId)).value ??
+            false);
     final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
     final superAdmin = watchSuperAdmin(ref);
 
@@ -254,9 +262,11 @@ class _TeamShellState extends ConsumerState<TeamShell> {
     final Widget header = viewing
         ? _ViewingHeader(group: viewed, tabIndex: navigationShell.currentIndex)
         : _TeamHeader(
+            groupId: groupId,
             team: team,
             switcherKey: _switcherKey,
             showOtherUnreadDot: otherUnread,
+            showBackDot: elsewhere,
             tabIndex: navigationShell.currentIndex,
             isGroup: team?.group.isGroup ?? false,
             showBack: !widget.inTab,
@@ -390,22 +400,29 @@ class _TeamShellState extends ConsumerState<TeamShell> {
 
 /// The team header (SPEC §7.3): one 52 px row with the chevron back to
 /// Teams, the tab's stencil eyebrow over the team name (the switcher), and
-/// the Admin panel for super admins on phones, Messages, notifications and
-/// the Team settings gear.
+/// the Admin panel for super admins on phones, Messages, this team's
+/// notifications and the Team settings gear.
 class _TeamHeader extends StatelessWidget {
   const new({
+    required this.groupId,
     required this.team,
     required this.switcherKey,
     required this.showOtherUnreadDot,
+    required this.showBackDot,
     required this.tabIndex,
     required this.isGroup,
     required this.showBack,
     required this.onOpenSwitcher,
   });
 
+  final GroupId groupId;
   final MyTeam? team;
   final GlobalKey switcherKey;
   final bool showOtherUnreadDot;
+
+  /// The dot on the arrow back to Teams: its bell has unread items this
+  /// team's doesn't.
+  final bool showBackDot;
 
   /// The arrow back to Teams.
   final bool showBack;
@@ -434,7 +451,11 @@ class _TeamHeader extends StatelessWidget {
               Padding(
                 // On the optical center of the two-line name.
                 padding: const EdgeInsets.only(top: 3),
-                child: BackChevron(onPressed: () => context.go('/teams')),
+                child: BackChevron(
+                  onPressed: () => context.go('/teams'),
+                  showDot: showBackDot,
+                  dotLabel: l10n.notificationsElsewhere,
+                ),
               ),
               const SizedBox(width: 2),
             ],
@@ -462,8 +483,8 @@ class _TeamHeader extends StatelessWidget {
             const _Low(child: AdminPanelButton()),
             // Direct conversations, with how many are unread (CHAT-19).
             const _Low(child: MessagesButton()),
-            // Unread notification-center items across all teams (NOTIF-11).
-            const _Low(child: NotificationBell()),
+            // This team's unread notification-center items (NOTIF-11).
+            _Low(child: NotificationBell(groupId: groupId)),
             _Low(child: _TeamSettingsButton(group: group)),
           ],
         ),

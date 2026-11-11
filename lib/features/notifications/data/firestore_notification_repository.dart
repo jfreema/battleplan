@@ -6,7 +6,9 @@ import 'package:battleplan/features/notifications/domain/notification_repository
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// The flat `notifications` collection, queried by uid and createdAt (the
-/// (uid, createdAt desc) and (uid, read) indexes).
+/// (uid, createdAt desc) and (uid, read) indexes), and for one team by uid,
+/// groupId, and createdAt (the (uid, groupId, createdAt desc) and (uid,
+/// groupId, read) indexes).
 class FirestoreNotificationRepository implements NotificationRepository {
   new(this._db);
 
@@ -22,41 +24,54 @@ class FirestoreNotificationRepository implements NotificationRepository {
   CollectionReference<Map<String, dynamic>> get _all =>
       _db.collection(Collections.notifications);
 
-  Query<Map<String, dynamic>> _mine(UserId uid) => _all
-      .where('uid', isEqualTo: uid.value)
-      .orderBy('createdAt', descending: true);
+  /// My items, or only [groupId]'s.
+  Query<Map<String, dynamic>> _for(UserId uid, GroupId? groupId) {
+    final mine = _all.where('uid', isEqualTo: uid.value);
+    return groupId == null
+        ? mine
+        : mine.where('groupId', isEqualTo: groupId.value);
+  }
+
+  Query<Map<String, dynamic>> _newestFirst(UserId uid, GroupId? groupId) =>
+      _for(uid, groupId).orderBy('createdAt', descending: true);
+
+  Query<Map<String, dynamic>> _unread(UserId uid, GroupId? groupId) =>
+      _for(uid, groupId).where('read', isEqualTo: false);
 
   @override
   Stream<NotificationPage> watchNewest(
     UserId uid, {
+    GroupId? groupId,
     int limit = Limits.notificationPageSize,
-  }) => _mine(uid).limit(limit).snapshots().map((q) => _page(q, limit));
+  }) => _newestFirst(
+    uid,
+    groupId,
+  ).limit(limit).snapshots().map((q) => _page(q, limit));
 
   @override
   Future<NotificationPage> loadOlder(
     UserId uid,
     NotificationCursor after, {
+    GroupId? groupId,
     int limit = Limits.notificationPageSize,
   }) async {
     final q = await _guard(
-      () =>
-          _mine(uid)
-              .startAfterDocument(after.handle as DocumentSnapshot<Object?>)
-              .limit(limit)
-              .get(),
+      () => _newestFirst(uid, groupId)
+          .startAfterDocument(after.handle as DocumentSnapshot<Object?>)
+          .limit(limit)
+          .get(),
     );
     return _page(q, limit);
   }
 
   @override
-  Future<int> countUnread(UserId uid, {int cap = Limits.unreadCountCap}) async {
+  Future<int> countUnread(
+    UserId uid, {
+    GroupId? groupId,
+    int cap = Limits.unreadCountCap,
+  }) async {
     final q = await _guard(
-      () => _all
-          .where('uid', isEqualTo: uid.value)
-          .where('read', isEqualTo: false)
-          .limit(cap)
-          .count()
-          .get(),
+      () => _unread(uid, groupId).limit(cap).count().get(),
     );
     return q.count ?? 0;
   }
@@ -66,14 +81,10 @@ class FirestoreNotificationRepository implements NotificationRepository {
       _guard(() => _all.doc(id).update({'read': true}));
 
   @override
-  Future<void> markAllRead(UserId uid) async {
+  Future<void> markAllRead(UserId uid, {GroupId? groupId}) async {
     for (var round = 0; round < _markAllRounds; round++) {
       final q = await _guard(
-        () => _all
-            .where('uid', isEqualTo: uid.value)
-            .where('read', isEqualTo: false)
-            .limit(_markAllBatch)
-            .get(),
+        () => _unread(uid, groupId).limit(_markAllBatch).get(),
       );
       if (q.docs.isEmpty) return;
       final batch = _db.batch();

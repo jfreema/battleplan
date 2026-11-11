@@ -10,13 +10,27 @@ import 'package:material_ui/material_ui.dart';
 /// 3 px focus ring for the keyboard. It keeps Material's "Back" tooltip,
 /// and is a "Back" button node of its own for screen readers.
 class BackChevron extends StatelessWidget {
-  const new({this.label, this.onPressed, super.key});
+  const new({
+    this.label,
+    this.onPressed,
+    this.showDot = false,
+    this.dotLabel,
+    super.key,
+  });
 
   /// The screen it goes back to, or null for the chevron alone.
   final String? label;
 
   /// What a tap does; pops the route when null, as [BackButton] does.
   final VoidCallback? onPressed;
+
+  /// A coral dot at the chevron's top right, as on the team switcher: the
+  /// screen it goes back to has something unread (a team's back to Teams,
+  /// NOTIF-11).
+  final bool showDot;
+
+  /// What screen readers hear after "Back" while the dot shows.
+  final String? dotLabel;
 
   /// The chevron as the theme's automatic back button icon
   /// ([ActionIconThemeData.backButtonIconBuilder]).
@@ -36,12 +50,19 @@ class BackChevron extends StatelessWidget {
       }
     }
 
+    final dot = showDot ? dotLabel : null;
+    final icon = Icon(
+      AppIcons.chevronLeft,
+      size: 28,
+      weight: 700,
+      color: c.textOnPage,
+    );
     return Semantics(
       // Its own node: in the team header nothing above starts one, so
       // without it the whole screen became one "Back" button.
       container: true,
       button: true,
-      label: text == null ? back : '$back, $text',
+      label: [back, ?text, ?dot].join(', '),
       excludeSemantics: true,
       onTap: press,
       child: Tooltip(
@@ -56,12 +77,38 @@ class BackChevron extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    AppIcons.chevronLeft,
-                    size: 28,
-                    weight: 700,
-                    color: c.textOnPage,
-                  ),
+                  if (showDot)
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        icon,
+                        // The team switcher's dot: 9 px of cherry in a
+                        // 2 px ring of the page.
+                        Positioned(
+                          top: 2,
+                          right: -1,
+                          child: Container(
+                            width: 13,
+                            height: 13,
+                            decoration: BoxDecoration(
+                              color: c.badgeRing,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Container(
+                              width: 9,
+                              height: 9,
+                              decoration: BoxDecoration(
+                                color: c.cherry.face,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    icon,
                   if (text != null) ...[
                     const SizedBox(width: 6),
                     Flexible(

@@ -255,7 +255,7 @@ Sign in
  │    └─ Profile:  Your icon · Name · Time zone · Settings ·
  │                 Admin panel** · Sign out              (** super admins)
  └─ Team view (the app opens where you left it: the last team and tab, or Teams)
-      ├─ Header:     ‹ back to Teams · team switcher ▾ · Admin panel** · Messages · notification bell · Team settings ⚙
+      ├─ Header:     ‹ back to Teams (a dot while other teams have unread notifications) · team switcher ▾ · Admin panel** · Messages · this team's notification bell · Team settings ⚙
       │              (wide screens: Admin panel** at the foot of the rail instead)
       ├─ Messages:   your direct conversations → one of them (CHAT-19)
       ├─ A person:   their page, from their photo in chat or the Team tab (TEAM-15)
@@ -952,8 +952,12 @@ Players that others answer for never get accounts, and every account belongs to 
 - **NOTIF-10 · MVP · Multiple devices.** Every signed-in device gets notifications. Signing out stops them on that device.
 - **NOTIF-11 · MVP · Notification center.**
   - A **bell** in the header, on every platform, with a count of unread items (up to 99+).
-  - It opens a list of activity **across all your teams**, newest first, loading 30 at a time. Each item shows the team, an icon, a one-line summary, and the time, as plain rows between hairlines. Unread items have a coral icon disc, a bolder title, and the time in the accent text.
-  - Tapping an item opens the exact place, switching teams if needed, and marks it read. "Mark all as read" clears the rest.
+  - **Where you are decides what it covers** (owner's request 2026-11-10: "when the user is in the team or group, would it be a good idea to have the notifications bell only show notifications related to the group, but when the user backs out to the higher level view it shows all notifications?", then "go"):
+    - **On Teams**, the bell counts and opens activity **across all your teams**, newest first, loading 30 at a time. Each item shows the team, an icon, a one-line summary, and the time, as plain rows between hairlines.
+    - **In a team or group**, its header's bell counts and opens **only that team's** activity, in the team's color scheme. The team is the same on every row, so each row shows the summary (up to two lines) in the team name's place.
+    - While another team has unread items (anything the bell on Teams counts that this team's bell doesn't), the **arrow back to Teams** has a small coral dot, like the team switcher's, and screen readers hear "Back, new notifications in your other teams".
+  - Unread items have a coral icon disc, a bolder title, and the time in the accent text.
+  - Tapping an item opens the exact place, switching teams if needed, and marks it read. "Mark all as read" clears the rest of the list it's on: every team's on Teams, or only that team's.
   - It lists everything marked "In notification center" in NOTIF-2. Plain chat messages aren't listed.
   - Items appear even when pushes are muted or off for that team. Activity from people you blocked never appears.
   - Read state syncs across devices. Items older than 90 days are removed automatically.
