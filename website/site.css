@@ -238,6 +238,11 @@ h1 .eyebrow { text-shadow: none; text-wrap: wrap; }
    Google Play's waits in a <template> for its listing. */
 .store-badges { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0 12px; }
 .store-badges img { height: 48px; width: auto; }
+/* The Android tester badge: Apple's badge's black, rim, and size, our own words. */
+.tester-badge { display: inline-flex; align-items: center; gap: 8px; height: 48px; box-sizing: border-box; padding: 0 14px 0 10px; border: 1px solid #a6a6a6; border-radius: 8px; background: #000; color: #fff; text-decoration: none; font-weight: 700; font-size: 17px; line-height: 1.05; }
+.tester-badge span { display: flex; flex-direction: column; }
+.tester-badge small { font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }
+.tester-badge:hover, .tester-badge:focus-visible { background: #1a1a1a; color: #fff; }
 .hero-copy .store-badges { justify-content: center; }
 
 /* ---------- Phones ---------- */
