@@ -7,6 +7,10 @@
 # Signing is automatic: Xcode signs in to App Store Connect with the API key
 # in the APP_STORE_CONNECT_* secrets and makes or reuses the distribution
 # certificate and profile, so no certificate or profile is kept anywhere.
+# The archive is signed with an Apple Development certificate that Xcode
+# makes on each run ("Created via API"), since the machine starts empty;
+# Apple allows only so many, so the run revokes those before the archive and
+# after the upload (tools/revoke_ci_certificates.py, ROADMAP task 382).
 # It runs on GitHub's macOS machines, whose minutes count 10 times against
 # the repo's Actions minutes (it's private), so it runs only when started.
 name: Release iOS
@@ -115,6 +119,17 @@ jobs:
           flutter build ios --release --flavor prod -t lib/main_prod.dart --no-codesign \
             --build-number="$build_number" --dart-define=APP_COMMIT="$commit"
 
+      # Earlier runs' "Created via API" development certificates, whose
+      # machines are gone; until 2026-11-12 every run left one, and they
+      # filled the account. Only those: never a distribution or Developer ID
+      # certificate, or one made in Xcode on a Mac. A failure only warns.
+      - name: Revoke earlier runs' development certificates
+        env:
+          ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: python3 tools/revoke_ci_certificates.py
+
       - name: Archive, signed for the App Store
         env:
           KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -142,6 +157,16 @@ jobs:
             -allowProvisioningUpdates \
             -authenticationKeyPath "$RUNNER_TEMP/asc_key.p8" \
             -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID"
+
+      # The one the archive made, whose private key goes with this machine.
+      # The uploaded build is signed for distribution, so it isn't affected.
+      - name: Revoke this run's development certificate
+        if: always()
+        env:
+          ASC_KEY_PATH: ${{ runner.temp }}/asc_key.p8
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: python3 tools/revoke_ci_certificates.py
 
       - name: Remove the key
         if: always()

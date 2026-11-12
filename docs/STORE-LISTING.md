@@ -34,7 +34,7 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 
 ## Version information
 
-**What's New in This Version** (1.2, approved by Apple by 2026-11-10; the next version is 1.3, ROADMAP task 375, whose What's New is under 1.3 below; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
+**What's New in This Version** (1.2, approved by Apple by 2026-11-10; then 1.3, live since 2026-11-11, and 1.4 next, ROADMAP tasks 375 and 382, each with its What's New below; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
 
 ```
 A whole new look, Open Field, with five color schemes: Army green, the default, plus Light, Dark, Navy, and Light blue. Everyone picks the scheme they see for each team, and a default for the rest.
@@ -45,20 +45,30 @@ Also new:
 • On a team, RSVPs are for players, each on their own row: parents answer for each of their kids, and adult players answer for themselves
 ```
 
-**What's New in 1.3** (ROADMAP task 375; paste it when adding version 1.3 in App Store Connect). Everything made since the 1.2 build (435, `00a098c`): Your schedule on Teams (task 380), the settings gear and Team tab (task 374), Dark as the default (373), where new members' notifications start (371), events in the chat only when asked (370), Approve and Decline answering once (369), and the team default color scheme, No reminders, and light blue group messages (365 to 367). The description, keywords, promotional text, and review notes stay as 1.2's; the screenshots still show Army green and four tabs until they're retaken.
+**What's New in 1.3** (ROADMAP task 375; live in the App Store since 2026-11-11, build 459, `64b53eb`, with this text). Everything made since the 1.2 build (435, `00a098c`): the settings gear and Team tab (task 374), Dark as the default (373), where new members' notifications start (371), events in the chat only when asked (370), Approve and Decline answering once (369), and the team default color scheme, No reminders, and light blue group messages (365 to 367). The description, keywords, promotional text, and review notes stay as 1.2's; the screenshots still show Army green and four tabs until they're retaken.
 
 ```
 Settings and your team's roster are easier to find.
 
 • Team settings: the gear at the top of a team opens your own notification, color scheme, and calendar choices, and Admin settings for team admins
 • A new Team tab: the team's roster, with Invite and Dues one tap away (People, in a group)
-• Your schedule on Teams: what's next across all your teams and groups, with Going, Maybe, and Not going right there. It takes the place of All my teams, so a team's schedule shows only that team's events
 • Dark is now the default look. Anyone who picked a color scheme keeps it, and team admins can set their team's default
 • New events go in the team chat only when you check Post to chat
 • Team admins choose where new members' notifications start: All activity, Important only, or Off
 • Events and team defaults can have No reminders
 • Approve and Decline on a player request show they're working, and answer once
 • A group's messages are light blue until you pick a color
+```
+
+**What's New in 1.4** (ROADMAP task 382; paste it when adding version 1.4 in App Store Connect). Everything made since the 1.3 build (459, `64b53eb`): Your schedule on Teams, with a team's schedule showing only its own events (task 380), each team's own bell (377), and joining straight into a team's chat (376). The description, keywords, promotional text, and review notes stay as 1.3's.
+
+```
+Your schedule: what's next on every team, on the Teams screen.
+
+• Your schedule: under your teams, the next events across every team and group you're on, each naming its team, with Going, Maybe, and Not going right there. See all opens the whole list, past events, and the calendar
+• A team's schedule shows only that team's events. All my teams is gone from its filter, since Your schedule covers it
+• Each team's bell shows only that team's notifications. The bell on Teams still has every team's, and a team's back arrow shows a dot when another team has something new
+• Joining a team takes you straight into its chat. Claim or add your player later, from the Team tab
 ```
 
 **Promotional text** (170 characters; can change without a new version):
