@@ -28,6 +28,10 @@ env:
   FLUTTER_VERSION: 3.47.9
   # The Apple Developer team (individual membership).
   TEAM_ID: 885XHF7XLL
+  # Analytics without the advertising ID (Info.plist, store checklist 3.3).
+  # firebase_analytics' Package.swift reads it when Xcode resolves packages,
+  # which the archive does, so it's set for the whole run.
+  FIREBASE_ANALYTICS_WITHOUT_ADID: 'true'
 
 jobs:
   # On Linux, where minutes are cheap: wait for CI before paying for macOS.
@@ -104,19 +108,18 @@ jobs:
           umask 077
           printf '%s\n' "$PRIVATE_KEY" > "$RUNNER_TEMP/asc_key.p8"
 
-      # Compiles the Dart code and the plugins and writes the flavor, entry
-      # point, build number, and commit into ios/Flutter/Generated.xcconfig,
-      # which the archive below builds with.
-      - name: Build for prod
-        env:
-          # Analytics without the advertising ID (Info.plist, store checklist 3.3).
-          FIREBASE_ANALYTICS_WITHOUT_ADID: 'true'
+      # Writes the flavor, entry point, build number, and commit into
+      # ios/Flutter/Generated.xcconfig and installs the pods, without
+      # compiling: the archive below compiles everything once, the Dart code
+      # included. (Until 2026-11-12 this was a full build that the archive
+      # then redid, about 10 of the run's 25 minutes.)
+      - name: Configure for prod
         run: |
           build_number=$(git rev-list --count HEAD)
           commit=$(git rev-parse --short=7 HEAD)
           echo "BUILD_NUMBER=$build_number" >> "$GITHUB_ENV"
-          echo "Building prod build $build_number ($commit)."
-          flutter build ios --release --flavor prod -t lib/main_prod.dart --no-codesign \
+          echo "Configuring prod build $build_number ($commit)."
+          flutter build ios --config-only --release --flavor prod -t lib/main_prod.dart \
             --build-number="$build_number" --dart-define=APP_COMMIT="$commit"
 
       # Earlier runs' "Created via API" development certificates, whose
@@ -130,12 +133,15 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: python3 tools/revoke_ci_certificates.py
 
+      # Compiles the app and its plugins (Firebase's C++ is most of it) and
+      # signs it. -quiet keeps the log to warnings and errors; without it,
+      # every compile prints its full command and settings, 20,000 lines.
       - name: Archive, signed for the App Store
         env:
           KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          xcodebuild archive \
+          xcodebuild archive -quiet \
             -workspace ios/Runner.xcworkspace -scheme prod -configuration Release-prod \
             -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Battleplan.xcarchive" \
             -allowProvisioningUpdates \
