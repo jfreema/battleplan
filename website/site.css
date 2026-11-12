@@ -338,19 +338,13 @@ h1, .hero-copy .lead, .section-head p, .lp-head p { text-wrap: balance; }
   position: fixed; top: 50%; left: 50%; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none;
 }
 
-/* A dot for each scheme; the picked one opens into a coral pill with its
-   name. The other names stay for screen readers, and as tooltips. */
-.swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 10px; }
+.swatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
 .swatches label {
-  display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 7px;
+  display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 6px 13px 6px 7px;
   border-radius: 999px; cursor: pointer; user-select: none;
   background: var(--card); color: var(--text); border: 2px solid var(--rim);
   font: 600 0.95rem/1 var(--label);
-  transition: transform 0.15s, box-shadow 0.15s, background-color 0.2s;
-}
-.sw-name {
-  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
-  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 .swatches label:hover { transform: translateY(-2px); }
 /* A dot in the scheme's page color, with its card and coral inside. */
@@ -371,12 +365,6 @@ label[for="s-skyblue"] { --sw-page: #bcd9f5; --sw-card: #ffffff; --sw-text: #0b1
 #s-dark:checked ~ .swatches label[for="s-dark"], #s-navy:checked ~ .swatches label[for="s-navy"],
 #s-skyblue:checked ~ .swatches label[for="s-skyblue"] {
   background: var(--coral); color: var(--ink); border-color: var(--lip); box-shadow: 0 3px 0 var(--lip);
-  padding-right: 15px;
-}
-#s-army:checked ~ .swatches label[for="s-army"] .sw-name, #s-light:checked ~ .swatches label[for="s-light"] .sw-name,
-#s-dark:checked ~ .swatches label[for="s-dark"] .sw-name, #s-navy:checked ~ .swatches label[for="s-navy"] .sw-name,
-#s-skyblue:checked ~ .swatches label[for="s-skyblue"] .sw-name {
-  position: static; width: auto; height: auto; margin: 0 0 0 9px; overflow: visible; clip: auto;
 }
 #s-army:focus-visible ~ .swatches label[for="s-army"], #s-light:focus-visible ~ .swatches label[for="s-light"],
 #s-dark:focus-visible ~ .swatches label[for="s-dark"], #s-navy:focus-visible ~ .swatches label[for="s-navy"],

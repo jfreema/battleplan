@@ -206,11 +206,11 @@
             <div class="phone p-dark"><img src="/images/poll-dark.webp" width="600" height="1298" decoding="async" alt=""></div>
           </div>
 
-          <!-- The scheme picker: a dot for each scheme, the picked one opening
-               into a pill with its name. Radio buttons first, so plain sibling
-               selectors can mark the dots (site.css); :has() on the root
-               re-colors the page, and on .hero-media turns the fan. No
-               JavaScript needed. -->
+          <!-- The scheme picker: a named chip for each scheme (the owner
+               asked for the list back, 2026-11-12, so it's plain what the
+               buttons do). Radio buttons first, so plain sibling selectors
+               can mark the chips (site.css); :has() on the root re-colors the
+               page, and on .hero-media turns the fan. No JavaScript needed. -->
           <fieldset class="schemes">
             <legend class="visually-hidden">Color scheme for this page</legend>
             <input class="scheme-input" type="radio" name="scheme" id="s-army" value="army" checked>
@@ -219,13 +219,13 @@
             <input class="scheme-input" type="radio" name="scheme" id="s-navy" value="navy">
             <input class="scheme-input" type="radio" name="scheme" id="s-skyblue" value="skyblue">
             <div class="swatches">
-              <label for="s-army" title="Army green"><span class="dot" aria-hidden="true"></span><span class="sw-name">Army green</span></label>
-              <label for="s-light" title="Light"><span class="dot" aria-hidden="true"></span><span class="sw-name">Light</span></label>
-              <label for="s-dark" title="Dark"><span class="dot" aria-hidden="true"></span><span class="sw-name">Dark</span></label>
-              <label for="s-navy" title="Navy"><span class="dot" aria-hidden="true"></span><span class="sw-name">Navy</span></label>
-              <label for="s-skyblue" title="Light blue"><span class="dot" aria-hidden="true"></span><span class="sw-name">Light blue</span></label>
+              <label for="s-army"><span class="dot" aria-hidden="true"></span>Army green</label>
+              <label for="s-light"><span class="dot" aria-hidden="true"></span>Light</label>
+              <label for="s-dark"><span class="dot" aria-hidden="true"></span>Dark</label>
+              <label for="s-navy"><span class="dot" aria-hidden="true"></span>Navy</label>
+              <label for="s-skyblue"><span class="dot" aria-hidden="true"></span>Light blue</label>
             </div>
-            <p class="schemes-note">Five color schemes. Try one.</p>
+            <p class="schemes-note">Five color schemes. Pick yours for each team.</p>
           </fieldset>
         </div>
       </div>
