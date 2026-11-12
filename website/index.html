@@ -87,7 +87,7 @@
           "Dues: track who has paid for uniforms and fees, in full or in part",
           "Team documents and links",
           "Coach's whiteboard: draw baseball, softball, basketball, soccer, and football plays, play the steps back, post them to the team chat, or save them as animated GIFs",
-          "All my teams in one schedule",
+          "Your schedule: what's next across every team and group, on the Teams screen",
           "New seasons that bring the roster along and archive the old season",
           "Groups for anything that isn't a team",
           "Five color schemes: Army green, Light, Dark, Navy, and Light blue, with a default for each team that its admins set",
@@ -198,6 +198,13 @@
                all five. The Navy phone loads at high priority too: tilted,
                its box is a little bigger than the front phone's, so browsers
                count it as the page's largest image (LCP). -->
+          <!-- Marks from the coach's board around the fan: decoration. -->
+          <svg class="lp-marks" aria-hidden="true" focusable="false" viewBox="0 0 814 610">
+            <path class="lp-arc" d="M738 40C640-58 184-64 92 30"/>
+            <path class="lp-arc-end" d="M84 40l26-4-14-19z"/>
+            <path class="lp-ex" d="M40 38l30 30M70 38 40 68"/>
+            <circle class="lp-oh" cx="762" cy="52" r="17"/>
+          </svg>
           <div class="stage">
             <div class="phone p-army"><img src="/images/whiteboard-army.webp" width="600" height="1298" fetchpriority="high" alt="Battleplan on five phones, one in each color scheme: a baseball play on the coach's whiteboard in Army green, Thunder's schedule with RSVPs in Navy, Cyclone's team chat with two team photos in Light blue, a group chat in Light, and a poll in Dark. The scheme picked below comes to the front."></div>
             <div class="phone p-navy"><img src="/images/schedule-navy.webp" width="600" height="1298" fetchpriority="high" decoding="async" alt=""></div>
@@ -208,7 +215,8 @@
 
           <!-- The scheme picker: a named chip for each scheme (the owner
                asked for the list back, 2026-11-12, so it's plain what the
-               buttons do). Radio buttons first, so plain sibling selectors
+               buttons do), under a line that says what they're for, with an
+               arrow to them. Radio buttons first, so plain sibling selectors
                can mark the chips (site.css); :has() on the root re-colors the
                page, and on .hero-media turns the fan. No JavaScript needed. -->
           <fieldset class="schemes">
@@ -218,6 +226,7 @@
             <input class="scheme-input" type="radio" name="scheme" id="s-dark" value="dark">
             <input class="scheme-input" type="radio" name="scheme" id="s-navy" value="navy">
             <input class="scheme-input" type="radio" name="scheme" id="s-skyblue" value="skyblue">
+            <p class="schemes-note">Five color schemes. Pick yours for each team.<svg aria-hidden="true" focusable="false" viewBox="0 0 34 30" width="34" height="30"><path d="M3 4c14-2 23 5 24 20"/><path d="M19 17l8 8 6-10"/></svg></p>
             <div class="swatches">
               <label for="s-army"><span class="dot" aria-hidden="true"></span>Army green</label>
               <label for="s-light"><span class="dot" aria-hidden="true"></span>Light</label>
@@ -225,151 +234,213 @@
               <label for="s-navy"><span class="dot" aria-hidden="true"></span>Navy</label>
               <label for="s-skyblue"><span class="dot" aria-hidden="true"></span>Light blue</label>
             </div>
-            <p class="schemes-note">Five color schemes. Pick yours for each team.</p>
           </fieldset>
         </div>
       </div>
     </section>
 
-    <section id="features" class="band" aria-labelledby="features-title">
+    <!-- The playbook (2026-11-12): the page is one play. A numbered token
+         opens each step, and a dashed route (site.css, .lp-route) runs from
+         the screens of one step to the token of the next, from the hero to
+         Get Started. The routes and marks are decoration: aria-hidden, and
+         drawn in the scheme's own colors. -->
+    <section id="features" class="lp-step lp-chat" aria-labelledby="chat-title">
       <div class="wrap">
-        <div class="lp-head">
-          <h2 id="features-title">One app for the whole season.</h2>
-          <p>Chat, schedule, and everything in between.</p>
-        </div>
-      </div>
-      <!-- Five real screens: a row on a wide screen, a strip to swipe on a
-           phone (it scrolls by itself, never the page). -->
-      <div class="screens-wrap" role="region" aria-label="Screens from the app" tabindex="0">
-        <ul class="screens">
-          <li>
+        <div class="lp-in">
+          <div class="lp-route lp-r0" aria-hidden="true">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><path d="M100 0C100 64 0 34 0 100"/></svg>
+            <svg class="lp-x" viewBox="0 0 24 24" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg>
+          </div>
+          <div class="lp-copy">
+            <p class="lp-no"><span class="lp-token">1</span> Team chat</p>
+            <h2 id="chat-title">Tell the whole team once.</h2>
+            <p>Photos, replies, and pinned announcements that don't get buried. Polls settle it without forty replies. Lineups, rules, and waivers stay in Documents.</p>
+            <p class="lp-more"><a href="/team-chat"><span>See team chat</span>&nbsp;<svg aria-hidden="true" focusable="false" viewBox="0 0 11 14" width="11" height="14"><path d="M0 0l11 7-11 7z"/></svg></a></p>
+          </div>
+          <div class="lp-scene lp-scene-chat">
             <div class="phone"><img src="/images/team-chat-navy.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Riverside Sluggers' baseball team chat in the Navy color scheme: Tony, the assistant coach, replies to Jen's question about the field after the rain, saying the tarp was on and the infield looks great, with 2 Likes; Kelly, Mateo's guardian, posts two team photos side by side, the championship team with its banner and a huddle of hands showing their rings, with &quot;Champions! So proud of this group.&quot; and 2 Love and 2 Fire reactions; your own message in a red bubble, marked Sent: what a finish, and for Saturday, gloves, bats, and helmets, with catchers bringing their gear; and Dave, Ben's guardian, says sunflower seeds and the water cooler are on them, with a Like and a Love."></div>
-            <h3><a href="/team-chat">Team chat</a></h3>
-            <p>Photos, replies, and announcements that don't get buried.</p>
-          </li>
-          <li>
-            <div class="phone"><img src="/images/event-skyblue.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's home game against the Eagles in the Light blue color scheme: the time, the field with directions, reminders, assignments, and who's going: 2 going, 1 maybe, 0 not going, and 0 with no reply, 2 of 3 players going, with Jim and Andy going and Pam a maybe answered by the coach."></div>
-            <h3><a href="/team-schedule">Schedule and RSVPs</a></h3>
-            <p>Going, Maybe, or Not going in one tap.</p>
-          </li>
-          <li>
-            <div class="phone"><img src="/images/poll-dark.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Rachel's poll in Rally Possums' chat in the Dark color scheme: which tournament weekend works for your family, where 4 people voted, 3 for Nov 7–8, 2 for Nov 14–15, and none for Dec 5–6, then replies from Monica and Chandler and Rachel's own message settling on Nov 7–8."></div>
-            <h3>Polls</h3>
-            <p>Settle it without forty replies.</p>
-          </li>
-          <li>
-            <div class="phone"><img src="/images/documents-navy.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's documents in the Navy color scheme: every photo shared in the chat, then a pinned Saturday lineup and league rules, a practice plan, a link to field directions, and a player waiver, each with its size or link, who added it, and when."></div>
-            <h3>Documents</h3>
-            <p>Lineups, rules, and waivers in one place.</p>
-          </li>
-          <li>
-            <div class="phone"><img src="/images/allteams-skyblue.webp" width="600" height="1298" loading="lazy" decoding="async" alt="All my teams in the Light blue color scheme: practices and games from Cyclone, Thunder, and Rally Possums in one schedule, each card naming its team. Cards for your players name them and have a row for each: Luke going to Cyclone's practice, where Alex hasn't answered yet, Haley going to Rally Possums' game at the Bulls, and no answers yet from Luke or Alex for Cyclone's game against the Comets. Thunder's practice shows only how many are going."></div>
-            <h3>All my teams</h3>
-            <p>Every team you're on, in one schedule.</p>
-          </li>
-        </ul>
+            <div class="lp-clip lp-clip-poll"><img src="/images/poll-dark.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Rachel's poll in Rally Possums' chat in the Dark color scheme: which tournament weekend works for your family, where 4 people voted, 3 for Nov 7–8, 2 for Nov 14–15, and none for Dec 5–6."></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="schedule" class="lp-step lp-sched" aria-labelledby="schedule-title">
+      <div class="wrap">
+        <div class="lp-in">
+          <div class="lp-route lp-r1" aria-hidden="true">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><path d="M100 0V24L0 72V100"/></svg>
+            <svg class="lp-x" viewBox="0 0 24 24" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg>
+          </div>
+          <div class="lp-copy lp-lede">
+            <p class="lp-no"><span class="lp-token">2</span> Schedule</p>
+            <h2 id="schedule-title">Know who's coming.</h2>
+          </div>
+          <div class="lp-copy lp-body">
+            <p>Going, Maybe, or Not going in one tap. Guardians answer for their players, and adult players answer for themselves. Counts are players only.</p>
+            <p class="lp-more"><a href="/team-schedule"><span>See schedules and RSVPs</span>&nbsp;<svg aria-hidden="true" focusable="false" viewBox="0 0 11 14" width="11" height="14"><path d="M0 0l11 7-11 7z"/></svg></a></p>
+          </div>
+          <div class="lp-formation">
+            <figure class="lp-f-rows">
+              <div class="lp-clip"><img src="/images/youth-light.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Cyclone's practice in the Light color scheme, answered by a guardian: Luke and Alex each on their own row of Going, Maybe, and Not going, with Luke going and Alex still to answer."></div>
+              <figcaption><b>A row for every player.</b></figcaption>
+            </figure>
+            <figure class="lp-f-event">
+              <div class="phone"><img src="/images/event-skyblue.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's home game against the Eagles in the Light blue color scheme: the time, the field with directions, reminders, assignments, and who's going: 2 going, 1 maybe, 0 not going, and 0 with no reply, 2 of 3 players going, with Jim and Andy going and Pam a maybe answered by the coach."></div>
+            </figure>
+            <figure class="lp-f-yours">
+              <div class="lp-clip"><img src="/images/yours-skyblue.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Your schedule on the Teams screen in the Light blue color scheme, under Rally Possums, Thunder, and Cyclone: what's next across every team, soonest first, each card naming its team. Cyclone's practice on Friday for Luke and Alex, Luke going and Alex still to answer, with a row for each; Thunder's practice on Saturday, 1 of 3 going; and Rally Possums' game at the Bulls on Sunday, for Haley, 2 of 3 going."></div>
+              <figcaption><b>Your schedule.</b> What's next across every team you're on.</figcaption>
+            </figure>
+          </div>
+          <p class="lp-aside">Not a team? <a href="/groups">Groups</a> get the same chat, schedule, and RSVPs.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="whiteboard" class="lp-step lp-board" aria-labelledby="whiteboard-title">
+      <div class="lp-chalk" aria-hidden="true">
+        <svg viewBox="0 0 600 600" focusable="false">
+          <path d="M300 520 80 300 300 80 520 300Z"/>
+          <circle cx="300" cy="300" r="34"/>
+          <path d="M288 508h24v24h-24zM68 288h24v24H68zM288 68h24v24h-24zM508 288h24v24h-24z"/>
+        </svg>
       </div>
       <div class="wrap">
-        <p class="lp-aside">Not a team? <a href="/groups">Groups</a> get the same chat, schedule, and RSVPs.</p>
-      </div>
-    </section>
-
-    <section id="whiteboard" aria-labelledby="whiteboard-title">
-      <div class="wrap row">
-        <div class="row-copy">
-          <h2 id="whiteboard-title">Draw up the play.</h2>
-          <p>Draw baseball and softball plays on the diamond, add steps, and press play. Post a play to the team chat or save it as a GIF. Made for an iPad at practice.</p>
-          <p class="row-note">Basketball, soccer, and football boards too.</p>
-          <p class="more-link"><a href="/baseball-whiteboard">See the baseball and softball whiteboard</a></p>
-        </div>
-        <div class="row-media panel-grape">
-          <div class="phone"><img src="/images/whiteboard-army.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's baseball play Relay home on the coach's whiteboard in the Army green color scheme: the throws drawn in on the diamond, from right field to the second baseman as the relay, to the first baseman as the cutoff, and from him home or to second, at step 2 of 2, with a play button, Post to chat, and Save as GIF."></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="players" aria-labelledby="players-title">
-      <div class="wrap row flip">
-        <div class="row-copy">
-          <h2 id="players-title">A row for every player.</h2>
-          <p>Guardians answer for their players, and adult players answer for themselves. Counts are players only, so the coach knows who's coming.</p>
-          <p class="more-link"><a href="/team-schedule">See schedules and RSVPs</a></p>
-        </div>
-        <div class="row-media panel-mint">
-          <div class="phone"><img src="/images/youth-light.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Cyclone's practice in the Light color scheme, answered by a guardian: Luke and Alex each on their own row of Going, Maybe, and Not going, with Luke going and Alex still to answer, then who's going: 1 going, 0 maybe, 1 not going, and 2 with no reply, 1 of 4 players going."></div>
+        <div class="lp-in">
+          <div class="lp-route lp-r2" aria-hidden="true">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><path d="M100 0V36L0 64V100"/></svg>
+          </div>
+          <div class="lp-copy">
+            <p class="lp-no"><span class="lp-token">3</span> Playbook</p>
+            <h2 id="whiteboard-title">Draw up the play.</h2>
+            <p>Draw baseball and softball plays on the diamond, add steps, and press play. Post a play to the team chat or save it as a GIF. Made for an iPad at practice.</p>
+            <p class="lp-note">Basketball, soccer, and football boards too.</p>
+            <p class="lp-more"><a href="/baseball-whiteboard"><span>See the baseball and softball whiteboard</span>&nbsp;<svg aria-hidden="true" focusable="false" viewBox="0 0 11 14" width="11" height="14"><path d="M0 0l11 7-11 7z"/></svg></a></p>
+          </div>
+          <div class="lp-scene lp-scene-board">
+            <div class="lp-clip lp-clip-field"><img src="/images/whiteboard-army.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's baseball play Relay home on the coach's whiteboard in the Army green color scheme: the throws drawn in on the diamond, from right field to the second baseman as the relay, to the first baseman as the cutoff, and from him home or to second."></div>
+            <div class="lp-clip lp-clip-controls"><img src="/images/whiteboard-army.webp" width="600" height="1298" loading="lazy" decoding="async" alt="The whiteboard's controls at step 2 of 2: a play button, Post to chat, and Save as GIF."></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="dues" aria-labelledby="dues-title">
-      <div class="wrap row">
-        <div class="row-copy">
-          <h2 id="dues-title">Know who's paid.</h2>
-          <p>Track uniforms, fees, and tournaments, paid in full or a part at a time. Money goes person to person with Venmo, Cash App, or Apple Cash, never through Battleplan.</p>
-          <p class="row-note">Only admins see who owes what.</p>
-          <p class="more-link"><a href="/team-dues">See the team dues tracker</a></p>
-        </div>
-        <div class="row-media pair panel-lemon">
-          <div class="phone"><img src="/images/dues-army.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's Dues screen as a team admin sees it, in the Army green color scheme: $195 owed in all, $140 paid, and $55 left, with Who owes what under it; a $30 tournament fee due Nov 10, 1 of 2 paid with $30 left; $45 uniforms due Nov 16, 2 of 3 paid and 1 partly paid with $25 left; then How to pay with the team's Venmo and Cash App."></div>
-          <div class="phone"><img src="/images/dues-mine-light.webp" width="600" height="1298" loading="lazy" decoding="async" alt="What you owe on Cyclone in the Light color scheme, a guardian's dues for Luke and Alex: $55 owed. Luke's $60 fall league fee is Partly paid, $35 paid with $25 left, due Nov 13; Luke's and Alex's $15 team photos, due Nov 18, are marked Owes; and Alex's fall league fee is Paid, $60. Then How to pay with the team's Venmo and Cash App."></div>
+    <section id="dues" class="lp-step lp-dues" aria-labelledby="dues-title">
+      <div class="wrap">
+        <div class="lp-in">
+          <div class="lp-route lp-r3" aria-hidden="true">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><path d="M100 0C100 60 0 40 0 100"/></svg>
+            <svg class="lp-x" viewBox="0 0 24 24" focusable="false"><path d="M5 5l14 14M19 5 5 19"/></svg>
+          </div>
+          <div class="lp-copy">
+            <p class="lp-no"><span class="lp-token">4</span> Dues</p>
+            <h2 id="dues-title">Know who's paid.</h2>
+            <p>Track uniforms, fees, and tournaments, paid in full or a part at a time. Money goes person to person with Venmo, Cash App, or Apple Cash, never through Battleplan.</p>
+            <p class="lp-note">Only admins see who owes what.</p>
+            <p class="lp-more"><a href="/team-dues"><span>See the team dues tracker</span>&nbsp;<svg aria-hidden="true" focusable="false" viewBox="0 0 11 14" width="11" height="14"><path d="M0 0l11 7-11 7z"/></svg></a></p>
+          </div>
+          <div class="lp-scene lp-scene-dues">
+            <div class="lp-clip lp-clip-mine"><img src="/images/dues-mine-light.webp" width="600" height="1298" loading="lazy" decoding="async" alt="What you owe on Cyclone in the Light color scheme, a guardian's dues for Luke and Alex: $55 owed. Luke's $60 fall league fee is Partly paid, $35 paid with $25 left, due Nov 13; Luke's and Alex's $15 team photos, due Nov 18, are marked Owes; and Alex's fall league fee is Paid, $60."></div>
+            <div class="lp-clip lp-clip-admin"><img src="/images/dues-army.webp" width="600" height="1298" loading="lazy" decoding="async" alt="Thunder's Dues screen as a team admin sees it, in the Army green color scheme: $195 owed in all, $140 paid, and $55 left, with Who owes what under it; a $30 tournament fee due Nov 10, 1 of 2 paid with $30 left; $45 uniforms due Nov 16, 2 of 3 paid and 1 partly paid with $25 left."></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="switch" class="band lp-switch" aria-labelledby="switch-title">
-      <div class="wrap narrow">
-        <h2 id="switch-title">Bring your team's history.</h2>
-        <p>Import from <a href="/switch#groupme">GroupMe</a>, <a href="/switch#teamsnap">TeamSnap</a>, <a href="/switch#teamreach">TeamReach</a>, <a href="/switch#gamechanger">GameChanger</a>, or <a href="/switch#google-calendar">Google Calendar</a> in a few taps. Nobody starts over.</p>
-        <ul class="lp-links">
-          <li><a href="/switch">Switch from GroupMe or TeamSnap</a></li>
-          <li><a href="/groupme-alternative">GroupMe alternative</a></li>
-          <li><a href="/teamsnap-alternative">TeamSnap alternative</a></li>
-        </ul>
-        <p class="fineprint">GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar are trademarks of their owners; Battleplan isn't affiliated with them.</p>
+    <section id="switch" class="lp-step lp-switch" aria-labelledby="switch-title">
+      <div class="wrap">
+        <div class="lp-in">
+          <div class="lp-route lp-r4" aria-hidden="true">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><path d="M100 0V50H0V100"/></svg>
+          </div>
+          <div class="lp-copy">
+            <p class="lp-no"><span class="lp-token">5</span> Switching</p>
+            <h2 id="switch-title">Bring your team's history.</h2>
+            <p>Import in a few taps. Nobody starts over.</p>
+          </div>
+          <!-- Five apps run to one: each a plain ring, never a logo. -->
+          <div class="lp-merge">
+            <ul class="lp-apps">
+              <li><a href="/switch#groupme">GroupMe</a></li>
+              <li><a href="/switch#teamsnap">TeamSnap</a></li>
+              <li><a href="/switch#teamreach">TeamReach</a></li>
+              <li><a href="/switch#gamechanger">GameChanger</a></li>
+              <li><a href="/switch#google-calendar">Google Calendar</a></li>
+            </ul>
+            <svg class="lp-merge-lines" viewBox="0 0 100 280" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              <path d="M0 28C52 28 66 96 100 136"/>
+              <path d="M0 84C46 84 64 118 100 138"/>
+              <path d="M0 140H100"/>
+              <path d="M0 196C46 196 64 162 100 142"/>
+              <path d="M0 252C52 252 66 184 100 144"/>
+            </svg>
+            <span class="lp-merge-end" aria-hidden="true"><img src="/favicon.svg" alt="" width="72" height="72" loading="lazy"></span>
+          </div>
+          <div class="lp-switch-more">
+            <ul class="lp-links">
+              <li><a href="/switch">Switch from GroupMe or TeamSnap</a></li>
+              <li><a href="/groupme-alternative">GroupMe alternative</a></li>
+              <li><a href="/teamsnap-alternative">TeamSnap alternative</a></li>
+            </ul>
+            <p class="fineprint">GroupMe, TeamSnap, TeamReach, GameChanger, and Google Calendar are trademarks of their owners; Battleplan isn't affiliated with them.</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="faq" aria-labelledby="faq-title">
-      <div class="wrap narrow">
-        <h2 id="faq-title">Questions</h2>
-        <div class="faq lean">
-          <details>
-            <summary>Is Battleplan really free?</summary>
-            <p>Yes. Every team gets every feature, with no ads. Each team has room for 200&nbsp;MB of photos and files.</p>
-          </details>
-          <details>
-            <summary>Is Battleplan a team chat app?</summary>
-            <p>Yes, and more. Every team and group gets a group chat with photos, replies, reactions, @mentions, pinned announcements, and direct messages, beside its schedule, polls, documents, and dues. <a href="/team-chat">Team chat</a> has the details.</p>
-          </details>
-          <details>
-            <summary>Does every player need an account?</summary>
-            <p>No. Accounts are for adults 18 and older. Coaches add the players, and guardians answer for them. Adult players answer for themselves.</p>
-          </details>
-          <details>
-            <summary>How do people join my team?</summary>
-            <p>Share the team's invite link or QR code, or add people by email. People can also type in the team's invite code.</p>
-          </details>
-          <details>
-            <summary>Does it sync with Google Calendar?</summary>
-            <p>Yes. A private calendar link keeps Google Calendar, Apple Calendar, or Outlook up to date with your team's games and practices, including new times and cancellations. <a href="/team-schedule">Team schedule and RSVPs</a> has more.</p>
-          </details>
-          <details>
-            <summary>Can we draw plays?</summary>
-            <p>Yes. Team admins draw plays on a baseball and softball diamond, a basketball court, a soccer pitch, a football field, or a blank board, add steps, and press play. Anyone on the team can post a saved play to the chat or save it as a GIF. See the <a href="/baseball-whiteboard">baseball and softball whiteboard</a>.</p>
-          </details>
-          <details>
-            <summary>Does it work on iPhone, Android, and computers?</summary>
-            <p>Yes. The iPhone and iPad app is <a href="https://apps.apple.com/app/id6823884728">on the App Store</a>, and Battleplan works in any modern browser on a phone or a computer. You sign in with Google or Apple. The Android app is in testing: <a href="/android-testers">help test it</a>.</p>
-          </details>
+    <section id="faq" class="lp-faq" aria-labelledby="faq-title">
+      <div class="wrap">
+        <div class="lp-in">
+          <div class="lp-copy lp-faq-head">
+            <p class="lp-no"><span class="lp-token" aria-hidden="true">?</span> Timeout</p>
+            <h2 id="faq-title">Questions</h2>
+          </div>
+          <div class="lp-route lp-r5" aria-hidden="true">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><path d="M100 0V38L0 52V100"/></svg>
+          </div>
+          <div class="faq lean">
+            <details>
+              <summary>Is Battleplan really free?</summary>
+              <p>Yes. Every team gets every feature, with no ads. Each team has room for 200&nbsp;MB of photos and files.</p>
+            </details>
+            <details>
+              <summary>Is Battleplan a team chat app?</summary>
+              <p>Yes, and more. Every team and group gets a group chat with photos, replies, reactions, @mentions, pinned announcements, and direct messages, beside its schedule, polls, documents, and dues. <a href="/team-chat">Team chat</a> has the details.</p>
+            </details>
+            <details>
+              <summary>Does every player need an account?</summary>
+              <p>No. Accounts are for adults 18 and older. Coaches add the players, and guardians answer for them. Adult players answer for themselves.</p>
+            </details>
+            <details>
+              <summary>How do people join my team?</summary>
+              <p>Share the team's invite link or QR code, or add people by email. People can also type in the team's invite code.</p>
+            </details>
+            <details>
+              <summary>Does it sync with Google Calendar?</summary>
+              <p>Yes. A private calendar link keeps Google Calendar, Apple Calendar, or Outlook up to date with your team's games and practices, including new times and cancellations. <a href="/team-schedule">Team schedule and RSVPs</a> has more.</p>
+            </details>
+            <details>
+              <summary>Can we draw plays?</summary>
+              <p>Yes. Team admins draw plays on a baseball and softball diamond, a basketball court, a soccer pitch, a football field, or a blank board, add steps, and press play. Anyone on the team can post a saved play to the chat or save it as a GIF. See the <a href="/baseball-whiteboard">baseball and softball whiteboard</a>.</p>
+            </details>
+            <details>
+              <summary>Does it work on iPhone, Android, and computers?</summary>
+              <p>Yes. The iPhone and iPad app is <a href="https://apps.apple.com/app/id6823884728">on the App Store</a>, and Battleplan works in any modern browser on a phone or a computer. You sign in with Google or Apple. The Android app is in testing: <a href="/android-testers">help test it</a>.</p>
+            </details>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="lp-close" aria-labelledby="cta-title">
       <div class="wrap">
-        <div class="cta">
-          <h2 id="cta-title">Free for every team.</h2>
-          <p>No ads, no paid tier, and we never sell your data.</p>
+        <div class="cta lp-end">
+          <div class="lp-end-copy">
+            <h2 id="cta-title">Free for every team.</h2>
+            <p>No ads, no paid tier, and we never sell your data.</p>
+          </div>
+          <span class="lp-run" aria-hidden="true"></span>
           <div class="actions">
             <a class="btn btn-lg" href="/app/sign-up">Get Started</a>
           </div>

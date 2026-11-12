@@ -334,7 +334,7 @@ Every new page should follow `website/README.md`. Plain HTML in `website/<slug>.
   4. H2 **Reminders:** per event and the team's defaults
   5. H2 **Snacks, drinks, scorekeeper:** assignments people volunteer for
   6. H2 **Sync to your calendar:** one private link for Google, Apple, or Outlook
-  7. H2 **All my teams:** every team in one schedule (`allteams-skyblue`)
+  7. H2 **What's next, on every team.** (eyebrow Your schedule): the Teams screen's Your schedule (`yours-skyblue`; All my teams until 2026-11-12)
   8. H2 **Bring your schedule:** TeamSnap, TeamReach, GameChanger, Google Calendar (links to `/switch`)
   9. H2 **Questions:** Is it free? Does it sync with Google Calendar? Can a guardian answer for two players? Can I import from TeamSnap or GameChanger? Can people answer from an email?
   10. Closing call to action

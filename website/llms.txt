@@ -11,7 +11,7 @@ The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id682388
 - Calendar link: one private link keeps Google Calendar, Apple Calendar, or Outlook up to date with every team's schedule, including new times, new places, and cancellations.
 - Assignments: snacks, drinks, a scorekeeper, or anything else for an event. Members volunteer for open ones, and admins can assign anyone.
 - Players and guardians: on a team, RSVPs are for players. Guardians answer for each of their players, and adult players answer for themselves. Groups (not teams) have no players: everyone answers for themselves.
-- All my teams: every team someone is on in one schedule.
+- Your schedule: on the Teams screen, what's coming up across every team and group someone is on, in one list.
 - Groups: for anything that isn't a team, with the same chat, schedule, RSVPs, documents, and dues, and everyone answers for themselves. A group's owner can make it a team later.
 - New seasons: a team's owner starts next season as a new team with the people they choose; the old season is archived with its chat, photos, and schedule.
 - Polls: one choice or several, named or anonymous, with an optional closing time.
