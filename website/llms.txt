@@ -2,7 +2,7 @@
 
 > Battleplan is a free team chat and scheduling app for groups and sports teams. Teams and groups chat (group messaging), plan games and practices, take RSVPs, run polls, track dues, keep documents, and draw plays on a coach's whiteboard in one place. Every feature is free for every team, with no ads.
 
-The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id6823884728), and Battleplan runs in any modern browser at https://getbattleplan.app/app/ (phone or computer). Dues and the new color schemes come to the iPhone app in its next update; they're in the web app now. An Android app is on the way. People sign in with Google or Apple. Accounts are for adults 18 and older; players who don't use the app are roster entries that their guardians answer for.
+The iPhone and iPad app is on the App Store (https://apps.apple.com/app/id6823884728), and Battleplan runs in any modern browser at https://getbattleplan.app/app/ (phone or computer). An Android app is in testing (https://getbattleplan.app/android-testers). People sign in with Google or Apple. Accounts are for adults 18 and older; players who don't use the app are roster entries that their guardians answer for.
 
 ## Features
 
