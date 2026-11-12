@@ -15,6 +15,7 @@ import 'package:battleplan/features/documents/domain/document.dart';
 import 'package:battleplan/features/dues/domain/due.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/presentation/teams_screen.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/polls/domain/poll.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
@@ -541,6 +542,25 @@ Future<void> goTo(WidgetTester tester, String path) async {
   await tester.pumpAndSettle();
 }
 
+/// On Teams, scrolls down to its rows under Your schedule (SCHED-2): See
+/// all, Join, Create, and the default color scheme, which the cards push
+/// below a phone's fold, so a test that looks only at what's on screen
+/// still sees them.
+Future<void> scrollToTeamsRows(WidgetTester tester) async {
+  await tester.scrollUntilVisible(
+    find.text('Default color scheme'),
+    200,
+    // Teams' own list: a wide screen's rail scrolls too.
+    scrollable: find
+        .descendant(
+          of: find.byType(TeamsScreen),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
+  await tester.pumpAndSettle();
+}
+
 /// Pushes [path] over what's showing, as the app opens a pushed screen,
 /// so its bar has the back row ("‹ Team settings", SPEC §5.4.1). [goTo]
 /// alone leaves nothing to go back to, so no back row.
@@ -693,10 +713,11 @@ mainScreens = {
 const wideSize = Size(1280, 800);
 
 /// Every key screen with a golden in every color scheme (SPEC §7.4): the main
-/// screens, and welcome, Teams, Profile, Team settings, the team switcher,
-/// the Team tab, settings, invite, both Color scheme screens, a group's schedule,
-/// Dues (an admin's, a due, Who owes what, and a member's and a guardian's
-/// own), Your icon, and the wide rail layout.
+/// screens, and welcome, Teams (and its rows under Your schedule), Your
+/// schedule, Profile, Team settings, the team switcher, the Team tab,
+/// settings, invite, both Color scheme screens, a group's schedule, Dues (an
+/// admin's, a due, Who owes what, and a member's and a guardian's own), Your
+/// icon, and the wide rail layout.
 final Map<
   String,
   Future<void> Function(WidgetTester, {required TeamScheme scheme})
@@ -714,6 +735,19 @@ goldenScreens = {
   'teams': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/teams');
+  },
+  // Teams scrolled to its rows, which Your schedule's cards (SCHED-2) push
+  // below the fold: See all, Join, Create, and the default color scheme.
+  'teams_rows': (tester, {required scheme}) async {
+    await pumpTeam(tester, scheme: scheme);
+    await goTo(tester, '/teams');
+    await scrollToTeamsRows(tester);
+  },
+  // Your schedule's page, from See all on Teams (SCHED-2).
+  'your_schedule': (tester, {required scheme}) async {
+    await pumpTeam(tester, scheme: scheme);
+    await goTo(tester, '/teams');
+    await pushTo(tester, '/teams/schedule');
   },
   'profile': (tester, {required scheme}) async {
     await pumpTeam(tester, scheme: scheme);

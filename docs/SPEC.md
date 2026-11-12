@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Draft v0.3 |
 | **Owner** | Jared Freeman |
-| **Last updated** | 2026-11-07 |
+| **Last updated** | 2026-11-12 |
 | **Companion doc** | [ARCHITECTURE.md](ARCHITECTURE.md): how it's built ("ARCH §n" below) |
 
 ---
@@ -110,7 +110,7 @@ Battleplan is a messaging and scheduling app for sports teams, doing in one app 
 |---|---|
 | Photos in chat (CHAT-3) | Core to GroupMe; teams share game photos constantly |
 | "Maybe" RSVP, reminders, repeating events, time zones, add to calendar, game details (SCHED) | What makes TeamReach useful for weekly practices and away games |
-| "All my teams" schedule (SCHED-2) | Parents and players on several teams need one calendar |
+| "Your schedule" on Teams (SCHED-2) | Parents and players on several teams need one calendar |
 | Unread indicators and offline support (CHAT-4, CHAT-9) | Expected in any chat app |
 | Report, block, and Terms acceptance (SAFE) | **Required** by the App Store for apps with user content |
 | In-app account deletion (AUTH-10) | **Required** by the App Store and Google Play |
@@ -248,7 +248,8 @@ These rules are enforced on the server (Firestore rules and Functions), never on
 Sign in
  ├─ First time → Profile setup (name, photo, 18+ confirmation, terms)
  ├─ The top: tabs Teams | Profile (rail on wide screens: Admin panel** at its foot)
- │    ├─ Teams:    your teams (each opens where you left it) · Join a Team or
+ │    ├─ Teams:    your teams (each opens where you left it) · Your schedule
+ │    │            (what's next across them, and See all) · Join a Team or
  │    │            Group · Create a Team · Create a Group · Default color
  │    │            scheme · Admin panel** · Messages · bell
  │    │            (no team yet: a welcome with Join and Create)
@@ -266,7 +267,7 @@ Sign in
                      Calendar link · For admins*: Admin settings · Media · Reports · Import    (* admins)
 ```
 
-- **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name with Team or Group, last message, unread count), with archived teams under an **Archived** row that expands, then Join a team and Create a team as plain rows, then **Default color scheme** under a Color scheme label (SET-2); someone with no team yet sees a welcome with the same. Profile is plain rows: **Your icon** (your photo: add, change, or remove it), **Name** (the name your teams see, changed in a dialog), **Time zone** (SET-7), **Settings**, the **Admin panel** for super admins, and **Sign out**.
+- **The top** (owner's request 2026-10-27). **Teams** and **Profile**, with tabs at the bottom on phones and a rail on wide screens. Teams lists your teams as cards (logo, name with Team or Group, last message, unread count), with archived teams under an **Archived** row that expands, then **Your schedule** (SCHED-2): the next five events across your teams and groups as the schedule's cards, and **See all**. Then Join a team and Create a team as plain rows, then **Default color scheme** under a Color scheme label (SET-2); someone with no team yet sees a welcome with Join, Create, and the color scheme, and no schedule. Profile is plain rows: **Your icon** (your photo: add, change, or remove it), **Name** (the name your teams see, changed in a dialog), **Time zone** (SET-7), **Settings**, the **Admin panel** for super admins, and **Sign out**.
 - **The Admin panel, one tap away** (owner's request 2026-11-07: "make admin panel easier to get to with fewer steps to get there"). A super admin has an **Admin panel** button, a shield, in the Teams header and in a team's header on every tab, before Messages; on wide screens it's at the foot of the rail instead, on Teams, Profile, and a team's tabs. Profile keeps its row. It opens the panel over the page they were on, so Back comes back there. From a team it took three taps (back to Teams, Profile, Admin panel); now it's one. Nobody else sees any of it: their headers and rail are as they were (§6.11).
 - **A team's back arrow** (‹ at the top left of the header) goes to Teams. Inside a tab, on a page with its own back button (Saved plays, a play), the header leaves its arrow out, so only one back shows. Every back is a plain chevron; on a pushed page it's followed by the name of the page it returns to ("‹ Team settings", "‹ Team" on a player card or a person's page opened from the Team tab) when that's known, with the page's title on its own line below. A page opened with nothing under it (a link, a web reload, a notification on a cold start) still has the chevron, alone: it goes up to the team's chat, Profile for Settings and Profile's pages, Messages for a conversation, or else Teams.
 - **Tabs** are a bar docked along the bottom, full width under a thin rule, the current tab's icon in coral with a coral bar above it; from 840 px wide they're a rail down the side.
@@ -426,7 +427,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
     - Name (required, ≤ 50 characters).
     - Sport: Baseball, Basketball, Football, Hockey, Lacrosse, Soccer, Softball, Volleyball, or Other.
     - Logo or photo (optional).
-    - Team color (optional). Chosen from 15 colors, navy and gold among them. It's on the team's badge, in the team switcher, and as its dot in All my teams, and doesn't tint the pages (§7.4); badges show white or black text on it, whichever reads better.
+    - Team color (optional). Chosen from 15 colors, navy and gold among them. It's on the team's badge, in the team switcher, and as its dot in Your schedule, and doesn't tint the pages (§7.4); badges show white or black text on it, whichever reads better.
     - Time zone (defaults to the device's).
     - Description (optional).
   - The creator becomes the **owner**, and the next screen is "Invite your team" (INV-1).
@@ -560,7 +561,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Members' own answers from before (2026-11-06) are hidden on teams, not deleted, and don't count or decide who hears (PLAYER-7). Old builds may still write them until task 349.
 - **PLAYER-7 · MVP · Reminders and changes.** Event reminders and event changes go to the member who is the player and to the guardians of the affected players, as one notification per person naming their players: "Emma, Liam: Practice today at 6:00 PM". For a member's own player, there's no name prefix. On a team, coaches and members not linked to any player have no answer, so they hear every change and reminder; in a group, members go by their own answer.
 - **PLAYER-8 · MVP · Who's who.** In chat and on the roster, each member's name shows their players. A guardian shows "Maria R. · Emma #7". A member who is a player shows their number when it's set: "Jared F. #12".
-- **PLAYER-9 · MVP · Players on several teams.** A person on two teams is a separate player on each team. In "All my teams" (SCHED-2), each event shows which of a member's players it's for.
+- **PLAYER-9 · MVP · Players on several teams.** A person on two teams is a separate player on each team. In Your schedule (SCHED-2), each event shows which of a member's players it's for.
 - **PLAYER-10 · MVP · Players' privacy.** This applies to every player record.
   - The roster record everyone on the team sees holds only a name, jersey number, and walk-up song: no photos, birthdates, or contact details. (Players added before positions left the roster may still carry one, which the app no longer shows.)
   - **Walk-up song:** the song played as the player comes up, "Thunderstruck, AC/DC", up to 100 characters, set in Edit player by the player's linked members and the team's admins (and super admins, ADMIN-3). The whole team sees it on the player card, and the people who edit the player see the row before there's one.
@@ -576,7 +577,7 @@ Players that others answer for never get accounts, and every account belongs to 
   - Details are deleted with the player or the team. Removing a guardian or deleting a linked account doesn't delete them, since they belong to the player. They never appear in notifications, chat, search, logs, or analytics.
   - Archived teams are read-only.
 - **PLAYER-11 · v1.1 · Answering for several players, and RSVP history.** Built (task 137); the all-players shortcut was taken out on 2026-11-06 (task 358).
-  - **Each player on their own row.** The owner's request (2026-11-06): "Remove the “all my players” option. Each player should be individually listed and addressed in the RSVP section." A member who answers for two or more players gets a row for each of them, named by first name ("Emma", or "You" for an adult player's own row), with that player's own Going / Maybe / Not going, wherever RSVPs are answered: the event's page, its chat card, the schedule list, and an RSVP email and its answer page (SCHED-14). A tap answers for that player alone, and each keeps their own note. Nothing answers for all of them at once: the "All my players" row from task 137 is gone, and the RSVP email no longer asks "Are Emma and Liam going?" with one answer for both.
+  - **Each player on their own row.** The owner's request (2026-11-06): "Remove the “all my players” option. Each player should be individually listed and addressed in the RSVP section." A member who answers for two or more players gets a row for each of them, named by first name ("Emma", or "You" for an adult player's own row), with that player's own Going / Maybe / Not going, wherever RSVPs are answered: the event's page, its chat card, the schedule list (a team's and Your schedule, SCHED-2), and an RSVP email and its answer page (SCHED-14). A tap answers for that player alone, and each keeps their own note. Nothing answers for all of them at once: the "All my players" row from task 137 is gone, and the RSVP email no longer asks "Are Emma and Liam going?" with one answer for both.
   - **RSVP history.** From the player card, the player's linked members (the player and their parents or guardians), the team's admins, and super admins open the player's RSVP history: the team's past events that took RSVPs in the last 3 months (or 6, or 12), newest first, each with the player's answer (Going, Maybe, Not going, or No answer) and opening its event, under totals for those events ("12 past events: Going · 9, Not going · 2, No answer · 1"). Canceled events are listed but not counted, and events from before the player was added to the roster aren't shown. Other members don't see it.
 
 **Acceptance (MVP)**
@@ -768,10 +769,15 @@ Players that others answer for never get accounts, and every account belongs to 
   - **Upcoming** (default): a list of event cards. Each card has an edge in its type's color (game tangerine, practice grape, meeting blue raspberry, social mint, other bubblegum), a date column (weekday, day, month), the title ("vs. Eagles") with the type on the right (left out when the title is the type's name), the time and place on one line, and the attendance: a small bar and how many are going, out of the players on a team or the members of a group ("7/12 going", none on a team with no players), plus anyone you answer for who hasn't answered ("· Luke hasn't answered"). Under it, an RSVP row per person you answer for (SCHED-4, PLAYER-6).
   - **Past**: the same list, newest first.
   - **Calendar**: a month grid with a dot for each event; tap a day to see its events.
-- **SCHED-2 · MVP · All my teams.**
-  - A switch that merges every team's events into one schedule, each card naming its team beside its color dot. For members linked to players on several teams, each event also names their player (PLAYER-9).
+- **SCHED-2 · MVP · Your schedule.** Every team's events in one place, at the top of the app and not inside a team (the owner's request, 2026-11-12: "Im not real fond of the "All my teams Every team you're on, in one schedule." feature. not sure people want that because it can be confusing if you have another team's event on the team's schedule. rethink that and the screenshots. maybe add an overall consolidated schedule at the top level where you choose teams, below the teams it could be like "your schedule" that shows the consolidated schedule and events of all teams and groups you are a member of.").
+  - **On Teams**, below your teams and above Join and Create (§5.1): the heading **Your schedule** and what's next across every team and group you're on, soonest first, as the schedule's cards (SCHED-1). Each card names its team beside its color dot and, for members linked to players on several teams, their player ("Lightning U10 · For Emma", PLAYER-9), and you answer right on it, a row per person you answer for, exactly as on a team's schedule (SCHED-4). Tapping a card opens the event in its own team, in that team's color scheme; Back returns to Teams.
+  - **The next five**, so Join and Create stay within reach, then a **See all** row. Next means not over yet: an event that has ended today is left off here (See all still has it, under Upcoming, which runs from the start of today like a team's). The five always show every type, whatever the type filter is set to.
+  - **Archived teams are left out**; their events stay on their own Schedule tab. A person on one team still gets Your schedule: it's their what's next. Someone with no team (the welcome), or only archived ones, doesn't see it.
+  - **With nothing coming up** it says "No upcoming events." in one quiet line, and still offers See all, for the past.
+  - **See all** opens Your schedule as a page of its own (`/teams/schedule`) in your default color scheme, with "‹ Teams": **Upcoming**, **Past** (Load more), and **Calendar** across the same teams, with the type filter, each event naming its team and opening in it (Back returns to the page). There's no **+**: events are made in a team.
+  - **A team's own schedule shows only that team's events.** Until 2026-11-12 an All my teams switch in its filter sheet merged every team's into it, which put another team's events on a team's schedule. The calendar link's All my teams (SCHED-11) is a different thing and stays.
   - Built for parents with kids on several teams, and for players on several teams.
-  - Filter by type: Games, Practices, Other. One filter icon at the right of the Upcoming / Past / Calendar row opens a sheet with the type filters and, with more than one team, All my teams; changes apply at once, and the icon shows a coral dot while any is on.
+  - **Filter by type:** Games, Practices, Other. One filter icon at the right of the Upcoming / Past / Calendar row opens a sheet with the type filters; changes apply at once, and the icon shows a coral dot while one is on. The filter is one setting, shared by every team's schedule and Your schedule's page, so a filter left on in a team can make the page show fewer events than Teams' five; the dot says why.
 - **SCHED-3 · MVP · Create an event.** The **+** button, if you're allowed.
   - **Type:** Game, Practice, Meeting, Social, or Other.
   - **Basics:**
@@ -797,9 +803,9 @@ Players that others answer for never get accounts, and every account belongs to 
     - Works on past and canceled events too, which covers "same game as last season".
 - **SCHED-4 · MVP · Event details.**
   - Every field from creation.
-  - **The layout** (Open Field, 2026-11-06): a back row with the chevron and the screen it came from ("Schedule" from the Schedule tab, "Chat" from a chat card, the player's first name from a player card or RSVP history; the chevron alone from a notification, a link or a reload), with Add to calendar, Share and More on the right, and no title row. Then a stencil eyebrow in the type's color ("GAME · HOME") with "In 5 days" on the right; for a game against an opponent, a tangerine crest with the opponent's initial and "vs. Eagles" in big type, otherwise the title; when ("Sat, Oct 31 · 10:00–11:30 AM"); and plain detail rows between hairlines (the other zone's time and arrival, the place with **Directions**, repeats, opponent, reminders, notes, and Assignments, where an open slot's "open" is underlined).
+  - **The layout** (Open Field, 2026-11-06): a back row with the chevron and the screen it came from ("Schedule" from the Schedule tab, "Chat" from a chat card, "Teams" from Your schedule on Teams and "Your schedule" from its page (SCHED-2), the player's first name from a player card or RSVP history; the chevron alone from a notification, a link or a reload), with Add to calendar, Share and More on the right, and no title row. Then a stencil eyebrow in the type's color ("GAME · HOME") with "In 5 days" on the right; for a game against an opponent, a tangerine crest with the opponent's initial and "vs. Eagles" in big type, otherwise the title; when ("Sat, Oct 31 · 10:00–11:30 AM"); and plain detail rows between hairlines (the other zone's time and arrival, the place with **Directions**, repeats, opponent, reminders, notes, and Assignments, where an open slot's "open" is underlined).
   - Large **Going / Maybe / Not going** buttons, three outlined across the width with the picked one in its candy color, and under them **Add a note** ("Leaving at halftime") and **Clear**. On a team, one set per player you answer for, under "Is Luke going?", "Are you going?" for your own player, or "Are your players going?"; in a group, your own (PLAYER-6). Someone with nobody to answer for gets the PLAYER-6 empty states instead.
-  - The same buttons without opening the event (the owner's request, 2026-10-26; on the card since 2026-10-28): on the schedule list, an upcoming event I can still answer has **Going**, **Maybe** (where the team allows it), and **Not going** across the bottom of its card, under the counts, a row per person I answer for, named ("Emma", or "You" for my own player and in a group), with a coral dot while it's unanswered. The buttons are pills: the chosen answer is filled in its color; with no answer all three are outlined; tapping the chosen one again clears it, back to No response. Closed or ongoing events show the answer but it can't be changed there; canceled and past events have no row. Notes are on the event's page. The rest of the card opens the event.
+  - The same buttons without opening the event (the owner's request, 2026-10-26; on the card since 2026-10-28): on the schedule list, and on Your schedule (SCHED-2), an upcoming event I can still answer has **Going**, **Maybe** (where the team allows it), and **Not going** across the bottom of its card, under the counts, a row per person I answer for, named ("Emma", or "You" for my own player and in a group), with a coral dot while it's unanswered. The buttons are pills: the chosen answer is filled in its color; with no answer all three are outlined; tapping the chosen one again clears it, back to No response. Closed or ongoing events show the answer but it can't be changed there; canceled and past events have no row. Notes are on the event's page. The rest of the card opens the event.
   - **Who's going:** four big counts (Going, Maybe, Not going, No reply; three with Maybe off), then "10 of 12 players going" on a team (none with no players) or "6 of 9 going" in a group, then the people grouped by answer ("GOING · 10"), a row each with their icon, name and number, their note in quotes, "Answered by Tasha R.", and the answer's mark. On a team, the lists show players only; in a group, everyone.
   - Actions for everyone: Add to calendar, Share, Directions.
   - Admin actions: Edit, Cancel event, Delete in the More menu, and, for team admins and super admins, **RSVP for a player** (on a team) or **Set RSVP for someone** (in a group) beside the Who's going heading.
@@ -1269,7 +1275,7 @@ Store payment rules: dues are paid person to person, outside the app, for real-w
 - **Name:** Battleplan.
 - **Logo:** the Stencil Crest (owner's pick, 2026-11-06: "I like the Stencil crest. Let's use that."): an upright team-patch shield with a flat top, cut corners and a long point, with an ink edge, a thick cream rim, a card-olive field, a big cream Black Ops One stencil B and a coral hem at the point, on an ink hard shadow, on an Army green tile, plus the wordmark. The same mark is the website's header mark, the web app's loading screen, the app icons (Android's themed icon is the shield's outline, rim, hem and B as one shape), and the splash screens on Army green's page. The browser tab draws a simpler copy on the 16 px grid (`favicon-small.svg`: no shadows, a 1 px rim, a solid B), and the 32 px favicon draws the crest 10% bigger with no stencil cut. From 2026-10-26 to 2026-11-06 the mark was the Sticker Crest, a tilted lemon shield with a B in a chat bubble on blue raspberry (iOS 1.1 keeps it); before that, a white flag on a pole with an angular B cut out of it (2026-10-14), which the 1.0 build keeps.
 - **Primary color:** Army green `#474C2B`, the app icon's background (a radial gradient from `#50552F` to `#3D4124`). The splash screens are on Dark's page, `#0E0E0D`, since Dark became the default color scheme (2026-11-10, SET-2); they were Army green before. Blue raspberry `#4D9BFF` was the 1.1 icon's background and is still a candy; deep blue `#2F5BEA` (Q9) was the 1.0 mark's color and is still the first team color.
-- **Team colors** mark which team is which: the color is on the team's logo or initials badge, in the switcher, and as its dot in All my teams. It doesn't tint the pages, which follow the color scheme each person sees (SET-2, §7.4). My chat bubbles keep the scheme's coral unless the chat look picks the team color (CHAT-18).
+- **Team colors** mark which team is which: the color is on the team's logo or initials badge, in the switcher, and as its dot in Your schedule. It doesn't tint the pages, which follow the color scheme each person sees (SET-2, §7.4). My chat bubbles keep the scheme's coral unless the chat look picks the team color (CHAT-18).
 
 ### 7.2 Look and feel
 
@@ -1312,7 +1318,7 @@ From 1.1 the app has one theme, **Open Field**, in five color schemes (owner's r
 
 **Who picks.** A team's admins set its default scheme in Admin settings; each person can pick their own for a team or group in Team settings → Color scheme, which wins over the team's default, plus a default on Teams for the top level and every team with neither (SET-2).
 
-**Team colors** no longer tint the pages: a team's color is on its badge, in the switcher, and as its dot in All my teams (TEAM-1, §7.1). Open Field replaced the five Gumdrop themes (Gumdrop Army, Pop Dark, Pop Light, Candy, and Arena), the Themes screen, and their team-color backgrounds.
+**Team colors** no longer tint the pages: a team's color is on its badge, in the switcher, and as its dot in Your schedule (TEAM-1, §7.1). Open Field replaced the five Gumdrop themes (Gumdrop Army, Pop Dark, Pop Light, Candy, and Arena), the Themes screen, and their team-color backgrounds.
 
 - A team still on a retired color (Royal blue or Violet) shows as its replacement (Blue or Purple) everywhere (TEAM-5).
 
@@ -1496,7 +1502,7 @@ From here on, each feature ships with its own notifications.
 
 - [ ] Events with types and game fields.
 - [ ] RSVPs, including Maybe and admins answering for members; per-player RSVPs, and notifications to players and guardians (PLAYER-6, PLAYER-7, PLAYER-9).
-- [ ] Upcoming, Past, and Calendar views; All my teams.
+- [ ] Upcoming, Past, and Calendar views; Your schedule.
 - [ ] Repeating events (daily and weekly, skip dates, this-and-following edits, cancel, and delete) and Duplicate.
 - [ ] Reminders; event cards in chat.
 - [ ] Add to calendar; time zones.

@@ -33,6 +33,19 @@ void main() {
     'chat': (WidgetTester tester, Size size) =>
         pumpTeam(tester, scheme: TeamScheme.army, size: size),
     'teams': (WidgetTester tester, Size size) => top(tester, size, '/teams'),
+    // Teams' rows under Your schedule (SCHED-2): Join, Create, and the
+    // default color scheme, below the fold once the cards show.
+    'teams, its rows': (WidgetTester tester, Size size) async {
+      await top(tester, size, '/teams');
+      await scrollToTeamsRows(tester);
+      expect(find.text('Join a Team or Group'), findsOneWidget);
+    },
+    // Your schedule's page, from See all on Teams.
+    'your schedule': (WidgetTester tester, Size size) async {
+      await top(tester, size, '/teams');
+      await pushTo(tester, '/teams/schedule');
+      expect(find.text('vs. Eagles'), findsOneWidget);
+    },
     'profile': (WidgetTester tester, Size size) =>
         top(tester, size, '/profile'),
     'your icon': (WidgetTester tester, Size size) async {

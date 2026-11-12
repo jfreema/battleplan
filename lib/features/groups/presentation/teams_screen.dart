@@ -20,6 +20,7 @@ import 'package:battleplan/features/groups/presentation/color_scheme_screen.dart
 import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/notifications.dart';
+import 'package:battleplan/features/schedule/schedule.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,9 +28,10 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Teams at `/teams`, the top of the app (SPEC §5.1): every team I'm on as
-/// a card, with its last message and unread count, then Join a team and
-/// Create a team. With no team yet, it welcomes me and offers those two.
-/// A team's back arrow comes here.
+/// a card, with its last message and unread count, then Your schedule
+/// (what's next across them, SCHED-2), then Join a team and Create a team.
+/// With no team yet, it welcomes me and offers those two. A team's back
+/// arrow comes here.
 class TeamsScreen extends ConsumerWidget {
   const new({super.key});
 
@@ -108,6 +110,9 @@ class TeamsScreen extends ConsumerWidget {
                 ],
               ],
             ),
+          // What's next across my active teams (SCHED-2); with only
+          // archived ones there's nothing to come.
+          if (active.isNotEmpty) const YourScheduleSection(),
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),

@@ -2115,43 +2115,36 @@ void main() {
     });
   });
 
-  testWidgets('All my teams merges every team and names my players '
-      '(SCHED-2, PLAYER-9)', (tester) async {
-    final players =
-        FakePlayerRepository(const [
-            Player(
-              id: PlayerId('p1'),
-              groupId: GroupId('b'),
-              displayName: 'Emma Rivera',
-            ),
-          ])
-          ..links.add(
-            const GuardianLink(
-              playerId: PlayerId('p1'),
-              groupId: GroupId('b'),
-              uid: UserId('coach'),
-            ),
-          );
+  testWidgets("a team's schedule shows only its own events, and its filter "
+      'has no All my teams (SCHED-2)', (tester) async {
+    // Both start now: today on the calendar, whatever the date.
+    final now = DateTime.now();
+    Event starting(Event e) =>
+        e.copyWith(startAt: now, endAt: now.add(const Duration(minutes: 90)));
     await openSchedule(
       tester,
-      players: players,
       extraGroups: {'b': testGroup('b', 'Lightning U10')},
       events: [
-        event('a1', title: 'Thunder practice'),
-        event('b1', days: 2, title: 'Lightning game', groupId: 'b'),
+        starting(event('a1', title: 'Thunder practice')),
+        starting(event('b1', title: 'Lightning game', groupId: 'b')),
       ],
     );
+    expect(find.text('Thunder practice'), findsOneWidget);
     expect(find.text('Lightning game'), findsNothing);
+    // The sheet keeps the type chips; every team's events are Your
+    // schedule's, on Teams (test/your_schedule_test.dart).
     await tester.tap(find.byTooltip('Filter'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('All my teams'));
-    await tester.pumpAndSettle();
+    expect(find.byType(FilterChip), findsNWidgets(EventFilter.values.length));
+    expect(find.text('All my teams'), findsNothing);
+    expect(find.byType(Switch), findsNothing);
     await tester.tap(find.byType(ModalBarrier).last);
     await tester.pumpAndSettle();
-    expect(find.text('Thunder practice'), findsOneWidget);
-    expect(find.text('Lightning game'), findsOneWidget);
-    expect(find.text('Lightning U10 · For Emma'), findsOneWidget);
-    expect(find.text('Thunder'), findsWidgets);
+    await tester.tap(find.text('Calendar'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('dot-a1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('dot-b1')), findsNothing);
+    expect(find.text('Lightning game'), findsNothing);
   });
 
   group('event cards in chat (CHAT-11)', () {

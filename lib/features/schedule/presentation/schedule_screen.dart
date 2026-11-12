@@ -27,10 +27,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The Schedule tab (SCHED-1, SCHED-2): Upcoming (default), Past, and
-/// Calendar; the All my teams toggle and the type filter; and + for
-/// people allowed to make events (Q12), which says why when storage is
-/// full (STORE-4).
+/// A team's Schedule tab (SCHED-1, SCHED-2): its own events as
+/// [ScheduleTabs], and + for people allowed to make events (Q12), which
+/// says why when storage is full (STORE-4).
 class ScheduleScreen extends ConsumerWidget {
   const new({required this.groupId, super.key});
 
@@ -41,135 +40,145 @@ class ScheduleScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final group = ref.watch(groupProvider(groupId)).value;
     final me = ref.watch(myMembershipProvider(groupId));
-    final options = ref.watch(scheduleViewProvider);
-    final teamCount = ref.watch(scheduleTeamsProvider).length;
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
     final canCreate =
         group != null && canCreateEvents(group, me, superAdmin: superAdmin);
     final full = group?.storageFull ?? false;
 
     final c = GumdropColors.of(context);
-    final filtered = options.filters.isNotEmpty || options.allTeams;
 
+    return Scaffold(
+      floatingActionButton: canCreate
+          ? FloatingActionButton(
+              // The team's tabs stay built side by side, and Documents
+              // has one too: no shared hero tag between them.
+              heroTag: null,
+              tooltip: l10n.eventNew,
+              // Full storage stops new events (STORE-4); the button
+              // stays, flat in the well's color, to say why.
+              backgroundColor: full ? c.well : null,
+              foregroundColor: full ? c.textMuted : null,
+              shape: full ? const GumdropShape() : null,
+              onPressed: () => full
+                  ? showStorageFull(context)
+                  : unawaited(context.push('/g/${groupId.value}/schedule/new')),
+              child: const Icon(AppIcons.add, size: 28, weight: 700),
+            )
+          : null,
+      body: ScheduleTabs(groupId: groupId),
+    );
+  }
+}
+
+/// Upcoming (default), Past, and Calendar with the type filter beside them
+/// (SCHED-1, SCHED-2): one team's events, or with no [groupId] those of
+/// every team and group in Your schedule, each naming its team.
+class ScheduleTabs extends ConsumerWidget {
+  const new({this.groupId, super.key});
+
+  /// Null is Your schedule (SCHED-2).
+  final GroupId? groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = GumdropColors.of(context);
+    final filtered = ref.watch(
+      scheduleViewProvider.select((o) => o.filters.isNotEmpty),
+    );
     return DefaultTabController(
       length: 3,
-      child: Scaffold(
-        floatingActionButton: canCreate
-            ? FloatingActionButton(
-                // The team's tabs stay built side by side, and Documents
-                // has one too: no shared hero tag between them.
-                heroTag: null,
-                tooltip: l10n.eventNew,
-                // Full storage stops new events (STORE-4); the button
-                // stays, flat in the well's color, to say why.
-                backgroundColor: full ? c.well : null,
-                foregroundColor: full ? c.textMuted : null,
-                shape: full ? const GumdropShape() : null,
-                onPressed: () => full
-                    ? showStorageFull(context)
-                    : unawaited(
-                        context.push('/g/${groupId.value}/schedule/new'),
-                      ),
-                child: const Icon(AppIcons.add, size: 28, weight: 700),
-              )
-            : null,
-        body: Column(
-          children: [
-            // Upcoming, Past, Calendar, and the filter, on a hairline.
-            DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: c.divider)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(left: 20, right: 10),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _Segments(
-                        labels: [
-                          l10n.scheduleUpcoming,
-                          l10n.schedulePast,
-                          l10n.scheduleCalendar,
-                        ],
-                      ),
+      child: Column(
+        children: [
+          // Upcoming, Past, Calendar, and the filter, on a hairline.
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: c.divider)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20, right: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _Segments(
+                      labels: [
+                        l10n.scheduleUpcoming,
+                        l10n.schedulePast,
+                        l10n.scheduleCalendar,
+                      ],
                     ),
-                    MergeSemantics(
-                      child: Semantics(
-                        value: filtered ? l10n.scheduleFilterOn : null,
-                        child: IconButton(
-                          tooltip: l10n.scheduleFilter,
-                          constraints: const BoxConstraints.tightFor(
-                            width: 48,
-                            height: 48,
-                          ),
-                          padding: EdgeInsets.zero,
-                          color: c.textOnPage,
-                          onPressed: () =>
-                              unawaited(_openFilters(context, teamCount)),
-                          icon: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              const Icon(AppIcons.filter, size: 24),
-                              if (filtered)
-                                Positioned(
-                                  top: -2,
-                                  right: -3,
+                  ),
+                  MergeSemantics(
+                    child: Semantics(
+                      value: filtered ? l10n.scheduleFilterOn : null,
+                      child: IconButton(
+                        tooltip: l10n.scheduleFilter,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 48,
+                          height: 48,
+                        ),
+                        padding: EdgeInsets.zero,
+                        color: c.textOnPage,
+                        onPressed: () => unawaited(_openFilters(context)),
+                        icon: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(AppIcons.filter, size: 24),
+                            if (filtered)
+                              Positioned(
+                                top: -2,
+                                right: -3,
+                                child: Container(
+                                  width: 13,
+                                  height: 13,
+                                  decoration: BoxDecoration(
+                                    color: c.page,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: Alignment.center,
                                   child: Container(
-                                    width: 13,
-                                    height: 13,
+                                    width: 9,
+                                    height: 9,
                                     decoration: BoxDecoration(
-                                      color: c.page,
+                                      color: c.cherry.face,
                                       shape: BoxShape.circle,
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Container(
-                                      width: 9,
-                                      height: 9,
-                                      decoration: BoxDecoration(
-                                        color: c.cherry.face,
-                                        shape: BoxShape.circle,
-                                      ),
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  EventList(groupId: groupId, past: false),
-                  EventList(groupId: groupId, past: true),
-                  CalendarView(groupId: groupId),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                EventList(groupId: groupId, past: false),
+                EventList(groupId: groupId, past: true),
+                CalendarView(groupId: groupId),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  /// The filter sheet (SCHED-2): the type chips and, with more than one
-  /// team, All my teams. Changes apply at once.
-  Future<void> _openFilters(BuildContext context, int teamCount) =>
-      showCardSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        builder: (context) => _FilterSheet(teamCount: teamCount),
-      );
+  /// The filter sheet (SCHED-2): the type chips. Changes apply at once.
+  Future<void> _openFilters(BuildContext context) => showCardSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (context) => const _FilterSheet(),
+  );
 }
 
 class _FilterSheet extends ConsumerWidget {
-  const new({required this.teamCount});
-
-  final int teamCount;
+  const new();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -198,15 +207,6 @@ class _FilterSheet extends ConsumerWidget {
                   ),
               ],
             ),
-            if (teamCount > 1) ...[
-              const SizedBox(height: 12),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.scheduleAllTeams),
-                value: options.allTeams,
-                onChanged: (on) => notifier.setAllTeams(on: on),
-              ),
-            ],
           ],
         ),
       ),
@@ -345,12 +345,13 @@ void openEvent(BuildContext context, Event e, {String? from}) => unawaited(
   ),
 );
 
-/// Upcoming or Past (SCHED-1) for this team or all my teams, in day order,
-/// each event a card with its date block.
+/// Upcoming or Past (SCHED-1) for one team, or with no [groupId] for Your
+/// schedule (SCHED-2), in day order, each event a card with its date block.
 class EventList extends ConsumerWidget {
-  const new({required this.groupId, required this.past, super.key});
+  const new({required this.past, this.groupId, super.key});
 
-  final GroupId groupId;
+  /// Null is Your schedule: every active team's, each card naming its team.
+  final GroupId? groupId;
   final bool past;
 
   @override
@@ -358,9 +359,10 @@ class EventList extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final options = ref.watch(scheduleViewProvider);
     final zone = ref.watch(viewerTimeZoneProvider).value;
-    final state = options.allTeams
-        ? ref.watch(allTeamsEventsProvider(past: past))
-        : ref.watch(teamEventsProvider(groupId, past: past));
+    final team = groupId;
+    final state = team == null
+        ? ref.watch(yourScheduleEventsProvider(past: past))
+        : ref.watch(teamEventsProvider(team, past: past));
     if (zone == null || (state.loading && state.events.isEmpty)) {
       return const SkeletonList();
     }
@@ -381,8 +383,8 @@ class EventList extends ConsumerWidget {
     // pages loaded) doesn't build every row and its RSVP lookups at once
     // (SPEC §8.1).
     return ListView.builder(
-      // Clear of the + button and the tab bar.
-      padding: const EdgeInsets.only(top: 8, bottom: 96),
+      // Clear of the + button and the tab bar; Your schedule has neither.
+      padding: EdgeInsets.only(top: 8, bottom: team == null ? Space.xl : 96),
       itemCount: events.length + (more ? 1 : 0),
       itemBuilder: (context, i) {
         if (i == events.length) {
@@ -393,7 +395,7 @@ class EventList extends ConsumerWidget {
                   ? const CircularProgressIndicator()
                   : TextButton(
                       style: GumdropButtons.of(context).link(),
-                      onPressed: () => unawaited(_loadMore(ref, options)),
+                      onPressed: () => unawaited(_loadMore(ref)),
                       child: Text(l10n.scheduleLoadMore),
                     ),
             ),
@@ -406,7 +408,8 @@ class EventList extends ConsumerWidget {
           viewerZone: zone,
           // Every card has its date block (SCHED-1, design §3.15).
           day: days[i],
-          showTeam: options.allTeams,
+          showTeam: team == null,
+          openedFrom: team == null ? l10n.yourSchedule : null,
           rsvpRange: range,
         );
       },
@@ -439,17 +442,20 @@ class EventList extends ConsumerWidget {
     );
   }
 
-  Future<void> _loadMore(WidgetRef ref, ScheduleOptions options) async {
-    final teams = options.allTeams
-        ? [for (final g in ref.read(scheduleTeamsProvider)) g.id]
-        : [groupId];
+  Future<void> _loadMore(WidgetRef ref) async {
+    final teams = switch (groupId) {
+      final team? => [team],
+      null => [for (final g in ref.read(yourScheduleTeamsProvider)) g.id],
+    };
     for (final id in teams) {
       await ref.read(teamEventsProvider(id, past: past).notifier).loadMore();
     }
   }
 }
 
-/// An [EventRow] with its team, my players, and my answers looked up.
+/// An [EventRow] with its team, my players, and my answers looked up, by
+/// the event's own team, so it works in a team's schedule and in Your
+/// schedule alike (SCHED-2).
 class ScheduleEventRow extends ConsumerWidget {
   const new({
     required this.event,
@@ -457,6 +463,8 @@ class ScheduleEventRow extends ConsumerWidget {
     required this.rsvpRange,
     this.day,
     this.showTeam = false,
+    this.openedFrom,
+    this.padding = EventRow.listPadding,
     super.key,
   });
 
@@ -464,6 +472,13 @@ class ScheduleEventRow extends ConsumerWidget {
   final String viewerZone;
   final DateTime? day;
   final bool showTeam;
+
+  /// What the event's back row says: where the card is, when that isn't a
+  /// team's Schedule tab ("Teams", "Your schedule").
+  final String? openedFrom;
+
+  /// Around the card (see [EventRow.padding]).
+  final EdgeInsetsGeometry padding;
 
   /// Which "My RSVPs" window holds this event's answers.
   final ({DateTime? from, DateTime? until}) rsvpRange;
@@ -514,10 +529,11 @@ class ScheduleEventRow extends ConsumerWidget {
       answers: answers,
       showTeam: showTeam,
       playerCount: players,
+      padding: padding,
       onTap: () => openEvent(
         context,
         event,
-        from: AppLocalizations.of(context).tabSchedule,
+        from: openedFrom ?? AppLocalizations.of(context).tabSchedule,
       ),
       answerButtons: upcoming
           ? Column(

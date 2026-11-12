@@ -1208,6 +1208,21 @@
   "schedulePast": "Past",
   "scheduleCalendar": "Calendar",
   "scheduleAllTeams": "All my teams",
+  "@scheduleAllTeams": {
+    "description": "The calendar link's choice for every team at once (SCHED-11), beside This team."
+  },
+  "yourSchedule": "Your schedule",
+  "@yourSchedule": {
+    "description": "The heading on Teams over what's next across every team and group you're on, and the title of the page See all opens (SCHED-2)."
+  },
+  "yourScheduleSeeAll": "See all",
+  "@yourScheduleSeeAll": {
+    "description": "The row under Your schedule on Teams: it opens the whole schedule across your teams, with Upcoming, Past, and Calendar (SCHED-2)."
+  },
+  "yourScheduleSeeAllLabel": "See all of your schedule",
+  "@yourScheduleSeeAllLabel": {
+    "description": "What screen readers hear for the See all row under Your schedule on Teams."
+  },
   "scheduleFilter": "Filter",
   "scheduleFilterOn": "On",
   "rsvpGoingShort": "{going}/{total} going",

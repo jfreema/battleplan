@@ -15,11 +15,13 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The Calendar view (SCHED-1): a month grid with a dot for each event
-/// (in its type's color), and the chosen day's events below it.
+/// (in its type's color), and the chosen day's events below it. One
+/// team's, or with no [groupId] Your schedule's (SCHED-2).
 class CalendarView extends ConsumerStatefulWidget {
-  const new({required this.groupId, super.key});
+  const new({this.groupId, super.key});
 
-  final GroupId groupId;
+  /// Null is Your schedule: every active team's, each card naming its team.
+  final GroupId? groupId;
 
   @override
   ConsumerState<CalendarView> createState() => _CalendarViewState();
@@ -42,9 +44,10 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
     final month = _month ?? DateTime.utc(today.year, today.month);
     final selected = _selected ?? today;
     final options = ref.watch(scheduleViewProvider);
-    final async = options.allTeams
-        ? ref.watch(allTeamsMonthEventsProvider(month))
-        : ref.watch(monthEventsProvider(widget.groupId, month));
+    final team = widget.groupId;
+    final async = team == null
+        ? ref.watch(yourScheduleMonthEventsProvider(month))
+        : ref.watch(monthEventsProvider(team, month));
     final events = [
       for (final e in async.value ?? const <Event>[])
         if (options.shows(e)) e,
@@ -184,7 +187,8 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
             ScheduleEventRow(
               event: e,
               viewerZone: zone,
-              showTeam: options.allTeams,
+              showTeam: team == null,
+              openedFrom: team == null ? l10n.yourSchedule : null,
               rsvpRange: rsvpRange,
             ),
       ],

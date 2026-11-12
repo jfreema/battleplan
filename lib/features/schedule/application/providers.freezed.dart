@@ -299,7 +299,7 @@ as bool,
 /// @nodoc
 mixin _$ScheduleOptions {
 
- bool get allTeams;/// Empty shows everything.
+/// Empty shows everything.
  Set<EventFilter> get filters;
 /// Create a copy of ScheduleOptions
 /// with the given fields replaced by the non-null parameter values.
@@ -312,20 +312,20 @@ $ScheduleOptionsCopyWith<ScheduleOptions> get copyWith => _$ScheduleOptionsCopyW
 @override
 bool operator ==(Object other) {
   final _this = this as ScheduleOptions;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ScheduleOptions&&(identical(other.allTeams, _this.allTeams) || other.allTeams == _this.allTeams)&&const DeepCollectionEquality().equals(other.filters, _this.filters));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ScheduleOptions&&const DeepCollectionEquality().equals(other.filters, _this.filters));
 }
 
 
 @override
 int get hashCode {
   final _this = this as ScheduleOptions;
-  return Object.hash(runtimeType,_this.allTeams,const DeepCollectionEquality().hash(_this.filters));
+  return Object.hash(runtimeType,const DeepCollectionEquality().hash(_this.filters));
 }
 
 @override
 String toString() {
   final _this = this as ScheduleOptions;
-  return 'ScheduleOptions(allTeams: ${_this.allTeams}, filters: ${_this.filters})';
+  return 'ScheduleOptions(filters: ${_this.filters})';
 }
 
 
@@ -336,7 +336,7 @@ abstract mixin class $ScheduleOptionsCopyWith<$Res>  {
   factory $ScheduleOptionsCopyWith(ScheduleOptions value, $Res Function(ScheduleOptions) _then) = _$ScheduleOptionsCopyWithImpl;
 @useResult
 $Res call({
- bool allTeams, Set<EventFilter> filters
+ Set<EventFilter> filters
 });
 
 
@@ -353,10 +353,9 @@ class _$ScheduleOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ScheduleOptions
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? allTeams = null,Object? filters = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? filters = null,}) {
   return _then(ScheduleOptions(
-allTeams: null == allTeams ? _self.allTeams : allTeams // ignore: cast_nullable_to_non_nullable
-as bool,filters: null == filters ? _self.filters : filters // ignore: cast_nullable_to_non_nullable
+filters: null == filters ? _self.filters : filters // ignore: cast_nullable_to_non_nullable
 as Set<EventFilter>,
   ));
 }
@@ -442,10 +441,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool allTeams,  Set<EventFilter> filters)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Set<EventFilter> filters)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ScheduleOptions() when $default != null:
-return $default(_that.allTeams,_that.filters);case _:
+return $default(_that.filters);case _:
   return orElse();
 
 }
@@ -463,10 +462,10 @@ return $default(_that.allTeams,_that.filters);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool allTeams,  Set<EventFilter> filters)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Set<EventFilter> filters)  $default,) {final _that = this;
 switch (_that) {
 case _ScheduleOptions():
-return $default(_that.allTeams,_that.filters);case _:
+return $default(_that.filters);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -483,10 +482,10 @@ return $default(_that.allTeams,_that.filters);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool allTeams,  Set<EventFilter> filters)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Set<EventFilter> filters)?  $default,) {final _that = this;
 switch (_that) {
 case _ScheduleOptions() when $default != null:
-return $default(_that.allTeams,_that.filters);case _:
+return $default(_that.filters);case _:
   return null;
 
 }
@@ -498,10 +497,9 @@ return $default(_that.allTeams,_that.filters);case _:
 
 
 class _ScheduleOptions extends ScheduleOptions {
-  const _ScheduleOptions({this.allTeams = false,  Set<EventFilter> filters = const <EventFilter>{}}): _filters = filters,super._();
+  const _ScheduleOptions({ Set<EventFilter> filters = const <EventFilter>{}}): _filters = filters,super._();
   
 
-@override@JsonKey() final  bool allTeams;
 /// Empty shows everything.
  final  Set<EventFilter> _filters;
 /// Empty shows everything.
@@ -522,18 +520,18 @@ _$ScheduleOptionsCopyWith<_ScheduleOptions> get copyWith => __$ScheduleOptionsCo
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ScheduleOptions&&(identical(other.allTeams, allTeams) || other.allTeams == allTeams)&&const DeepCollectionEquality().equals(other.filters, _filters));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ScheduleOptions&&const DeepCollectionEquality().equals(other.filters, _filters));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,allTeams,const DeepCollectionEquality().hash(_filters));
+    return Object.hash(runtimeType,const DeepCollectionEquality().hash(_filters));
 }
 
 @override
 String toString() {
-    return 'ScheduleOptions(allTeams: $allTeams, filters: $filters)';
+    return 'ScheduleOptions(filters: $filters)';
 }
 
 
@@ -544,7 +542,7 @@ abstract mixin class _$ScheduleOptionsCopyWith<$Res> implements $ScheduleOptions
   factory _$ScheduleOptionsCopyWith(_ScheduleOptions value, $Res Function(_ScheduleOptions) _then) = __$ScheduleOptionsCopyWithImpl;
 @override @useResult
 $Res call({
- bool allTeams, Set<EventFilter> filters
+ Set<EventFilter> filters
 });
 
 
@@ -561,10 +559,9 @@ class __$ScheduleOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ScheduleOptions
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? allTeams = null,Object? filters = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? filters = null,}) {
   return _then(_ScheduleOptions(
-allTeams: null == allTeams ? _self.allTeams : allTeams // ignore: cast_nullable_to_non_nullable
-as bool,filters: null == filters ? _self._filters : filters // ignore: cast_nullable_to_non_nullable
+filters: null == filters ? _self._filters : filters // ignore: cast_nullable_to_non_nullable
 as Set<EventFilter>,
   ));
 }

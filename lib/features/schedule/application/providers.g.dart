@@ -429,6 +429,107 @@ final class ViewerTimeZoneProvider
 
 String _$viewerTimeZoneHash() => r'73dafcca1d587286929c257f5e5bc245c64ec726';
 
+/// The time now, for what goes by the time of day (when today began, which
+/// events are over): read again each minute and on each return to the app,
+/// so a screen left open, like Teams overnight, catches up.
+
+@ProviderFor(minuteClock)
+final minuteClockProvider = MinuteClockProvider._();
+
+/// The time now, for what goes by the time of day (when today began, which
+/// events are over): read again each minute and on each return to the app,
+/// so a screen left open, like Teams overnight, catches up.
+
+final class MinuteClockProvider
+    extends $FunctionalProvider<DateTime, DateTime, DateTime>
+    with $Provider<DateTime> {
+  /// The time now, for what goes by the time of day (when today began, which
+  /// events are over): read again each minute and on each return to the app,
+  /// so a screen left open, like Teams overnight, catches up.
+  MinuteClockProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'minuteClockProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$minuteClockHash();
+
+  @$internal
+  @override
+  $ProviderElement<DateTime> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DateTime create(Ref ref) {
+    return minuteClock(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DateTime value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DateTime>(value),
+    );
+  }
+}
+
+String _$minuteClockHash() => r'1122dc2b46167ff19165bc5e14977f88f8bd3470';
+
+/// The instant today began for the viewer ([startOfDay]), which moves at
+/// midnight; null until their time zone is known.
+
+@ProviderFor(viewerToday)
+final viewerTodayProvider = ViewerTodayProvider._();
+
+/// The instant today began for the viewer ([startOfDay]), which moves at
+/// midnight; null until their time zone is known.
+
+final class ViewerTodayProvider
+    extends $FunctionalProvider<DateTime?, DateTime?, DateTime?>
+    with $Provider<DateTime?> {
+  /// The instant today began for the viewer ([startOfDay]), which moves at
+  /// midnight; null until their time zone is known.
+  ViewerTodayProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'viewerTodayProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$viewerTodayHash();
+
+  @$internal
+  @override
+  $ProviderElement<DateTime?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DateTime? create(Ref ref) {
+    return viewerToday(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DateTime? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DateTime?>(value),
+    );
+  }
+}
+
+String _$viewerTodayHash() => r'50cec6417405682099e761f4d6df39d3e6185c6c';
+
 /// One event, live (SCHED-4). Null once it's deleted.
 
 @ProviderFor(event)
@@ -858,6 +959,103 @@ final class MyParticipantsFamily extends $Family
   String toString() => r'myParticipantsProvider';
 }
 
+/// Whether [myParticipants] is final for [groupId]: the team's players
+/// and my links to them have arrived (or failed). A basic group needs
+/// neither. Lets a card wait for its RSVP rows rather than grow them.
+
+@ProviderFor(myParticipantsReady)
+final myParticipantsReadyProvider = MyParticipantsReadyFamily._();
+
+/// Whether [myParticipants] is final for [groupId]: the team's players
+/// and my links to them have arrived (or failed). A basic group needs
+/// neither. Lets a card wait for its RSVP rows rather than grow them.
+
+final class MyParticipantsReadyProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Whether [myParticipants] is final for [groupId]: the team's players
+  /// and my links to them have arrived (or failed). A basic group needs
+  /// neither. Lets a card wait for its RSVP rows rather than grow them.
+  MyParticipantsReadyProvider._({
+    required MyParticipantsReadyFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'myParticipantsReadyProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myParticipantsReadyHash();
+
+  @override
+  String toString() {
+    return r'myParticipantsReadyProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return myParticipantsReady(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyParticipantsReadyProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myParticipantsReadyHash() =>
+    r'497baea27338a7d8f2e4323b37f898440640e7be';
+
+/// Whether [myParticipants] is final for [groupId]: the team's players
+/// and my links to them have arrived (or failed). A basic group needs
+/// neither. Lets a card wait for its RSVP rows rather than grow them.
+
+final class MyParticipantsReadyFamily extends $Family
+    with $FunctionalFamilyOverride<bool, GroupId> {
+  MyParticipantsReadyFamily._()
+    : super(
+        retry: null,
+        name: r'myParticipantsReadyProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether [myParticipants] is final for [groupId]: the team's players
+  /// and my links to them have arrived (or failed). A basic group needs
+  /// neither. Lets a card wait for its RSVP rows rather than grow them.
+
+  MyParticipantsReadyProvider call(GroupId groupId) =>
+      MyParticipantsReadyProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'myParticipantsReadyProvider';
+}
+
 /// My answers (and my players') on a team's events starting in
 /// [from, until), by event ID then participant ID (ARCH §6.2 "My RSVPs").
 
@@ -963,23 +1161,29 @@ final class MyRsvpsFamily extends $Family
 }
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
-/// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
-/// go by their dates instead (see [isUpcoming]).
+/// first): the first [limit] live (50, or fewer for Your schedule on Teams,
+/// [yourScheduleLive]), then pages of 50 (ARCH §5.3). All-day events go by
+/// their dates instead (see [isUpcoming]). It starts over when the day
+/// changes ([viewerToday]).
 
 @ProviderFor(TeamEvents)
 final teamEventsProvider = TeamEventsFamily._();
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
-/// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
-/// go by their dates instead (see [isUpcoming]).
+/// first): the first [limit] live (50, or fewer for Your schedule on Teams,
+/// [yourScheduleLive]), then pages of 50 (ARCH §5.3). All-day events go by
+/// their dates instead (see [isUpcoming]). It starts over when the day
+/// changes ([viewerToday]).
 final class TeamEventsProvider
     extends $NotifierProvider<TeamEvents, EventListState> {
   /// One team's Upcoming (from the start of today) or Past (before it, newest
-  /// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
-  /// go by their dates instead (see [isUpcoming]).
+  /// first): the first [limit] live (50, or fewer for Your schedule on Teams,
+  /// [yourScheduleLive]), then pages of 50 (ARCH §5.3). All-day events go by
+  /// their dates instead (see [isUpcoming]). It starts over when the day
+  /// changes ([viewerToday]).
   TeamEventsProvider._({
     required TeamEventsFamily super.from,
-    required (GroupId, {bool past}) super.argument,
+    required (GroupId, {bool past, int limit}) super.argument,
   }) : super(
          retry: null,
          name: r'teamEventsProvider',
@@ -1021,11 +1225,13 @@ final class TeamEventsProvider
   }
 }
 
-String _$teamEventsHash() => r'60c36ad65b4e5908d4c7617db006e9a0ae809027';
+String _$teamEventsHash() => r'8e5740c3002d6e002e9d137ff78e3ec83a082bc3';
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
-/// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
-/// go by their dates instead (see [isUpcoming]).
+/// first): the first [limit] live (50, or fewer for Your schedule on Teams,
+/// [yourScheduleLive]), then pages of 50 (ARCH §5.3). All-day events go by
+/// their dates instead (see [isUpcoming]). It starts over when the day
+/// changes ([viewerToday]).
 
 final class TeamEventsFamily extends $Family
     with
@@ -1034,7 +1240,7 @@ final class TeamEventsFamily extends $Family
           EventListState,
           EventListState,
           EventListState,
-          (GroupId, {bool past})
+          (GroupId, {bool past, int limit})
         > {
   TeamEventsFamily._()
     : super(
@@ -1046,26 +1252,37 @@ final class TeamEventsFamily extends $Family
       );
 
   /// One team's Upcoming (from the start of today) or Past (before it, newest
-  /// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
-  /// go by their dates instead (see [isUpcoming]).
+  /// first): the first [limit] live (50, or fewer for Your schedule on Teams,
+  /// [yourScheduleLive]), then pages of 50 (ARCH §5.3). All-day events go by
+  /// their dates instead (see [isUpcoming]). It starts over when the day
+  /// changes ([viewerToday]).
 
-  TeamEventsProvider call(GroupId groupId, {required bool past}) =>
-      TeamEventsProvider._(argument: (groupId, past: past), from: this);
+  TeamEventsProvider call(
+    GroupId groupId, {
+    required bool past,
+    int limit = 50,
+  }) => TeamEventsProvider._(
+    argument: (groupId, past: past, limit: limit),
+    from: this,
+  );
 
   @override
   String toString() => r'teamEventsProvider';
 }
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
-/// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
-/// go by their dates instead (see [isUpcoming]).
+/// first): the first [limit] live (50, or fewer for Your schedule on Teams,
+/// [yourScheduleLive]), then pages of 50 (ARCH §5.3). All-day events go by
+/// their dates instead (see [isUpcoming]). It starts over when the day
+/// changes ([viewerToday]).
 
 abstract class _$TeamEvents extends $Notifier<EventListState> {
-  late final _$args = ref.$arg as (GroupId, {bool past});
+  late final _$args = ref.$arg as (GroupId, {bool past, int limit});
   GroupId get groupId => _$args.$1;
   bool get past => _$args.past;
+  int get limit => _$args.limit;
 
-  EventListState build(GroupId groupId, {required bool past});
+  EventListState build(GroupId groupId, {required bool past, int limit = 50});
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
@@ -1078,21 +1295,27 @@ abstract class _$TeamEvents extends $Notifier<EventListState> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, () => build(_$args.$1, past: _$args.past));
+    return element.handleCreate(
+      ref,
+      () => build(_$args.$1, past: _$args.past, limit: _$args.limit),
+    );
   }
 }
 
-/// The teams "All my teams" merges (SCHED-2): every team I'm on.
+/// Every team I'm on, archived ones too: a calendar link's All my teams
+/// is offered with more than one (SCHED-11).
 
 @ProviderFor(scheduleTeams)
 final scheduleTeamsProvider = ScheduleTeamsProvider._();
 
-/// The teams "All my teams" merges (SCHED-2): every team I'm on.
+/// Every team I'm on, archived ones too: a calendar link's All my teams
+/// is offered with more than one (SCHED-11).
 
 final class ScheduleTeamsProvider
     extends $FunctionalProvider<List<Group>, List<Group>, List<Group>>
     with $Provider<List<Group>> {
-  /// The teams "All my teams" merges (SCHED-2): every team I'm on.
+  /// Every team I'm on, archived ones too: a calendar link's All my teams
+  /// is offered with more than one (SCHED-11).
   ScheduleTeamsProvider._()
     : super(
         from: null,
@@ -1128,42 +1351,97 @@ final class ScheduleTeamsProvider
 
 String _$scheduleTeamsHash() => r'0bb0a08e239db28bf8248af64272e19c78d42ed1';
 
-/// Every team's Upcoming or Past merged (SCHED-2), one query per team.
-/// The merged list stops where the team with the least loaded runs out,
-/// so loading more never fills in a gap above what's shown.
+/// The teams and groups Your schedule covers (SCHED-2): the active ones
+/// I'm on. An archived team's events stay on its own schedule.
 
-@ProviderFor(allTeamsEvents)
-final allTeamsEventsProvider = AllTeamsEventsFamily._();
+@ProviderFor(yourScheduleTeams)
+final yourScheduleTeamsProvider = YourScheduleTeamsProvider._();
 
-/// Every team's Upcoming or Past merged (SCHED-2), one query per team.
-/// The merged list stops where the team with the least loaded runs out,
-/// so loading more never fills in a gap above what's shown.
+/// The teams and groups Your schedule covers (SCHED-2): the active ones
+/// I'm on. An archived team's events stay on its own schedule.
 
-final class AllTeamsEventsProvider
+final class YourScheduleTeamsProvider
+    extends $FunctionalProvider<List<Group>, List<Group>, List<Group>>
+    with $Provider<List<Group>> {
+  /// The teams and groups Your schedule covers (SCHED-2): the active ones
+  /// I'm on. An archived team's events stay on its own schedule.
+  YourScheduleTeamsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'yourScheduleTeamsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$yourScheduleTeamsHash();
+
+  @$internal
+  @override
+  $ProviderElement<List<Group>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Group> create(Ref ref) {
+    return yourScheduleTeams(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Group> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Group>>(value),
+    );
+  }
+}
+
+String _$yourScheduleTeamsHash() => r'd9e2c99a8233a8113080eb6511a798568f93e3ce';
+
+/// Your schedule (SCHED-2): the Upcoming or Past of every team in
+/// [yourScheduleTeams] merged, one query per team, each listening to its
+/// first [limit]. The merged list stops where the team with the least
+/// loaded runs out, so loading more never fills in a gap above what's
+/// shown.
+
+@ProviderFor(yourScheduleEvents)
+final yourScheduleEventsProvider = YourScheduleEventsFamily._();
+
+/// Your schedule (SCHED-2): the Upcoming or Past of every team in
+/// [yourScheduleTeams] merged, one query per team, each listening to its
+/// first [limit]. The merged list stops where the team with the least
+/// loaded runs out, so loading more never fills in a gap above what's
+/// shown.
+
+final class YourScheduleEventsProvider
     extends $FunctionalProvider<EventListState, EventListState, EventListState>
     with $Provider<EventListState> {
-  /// Every team's Upcoming or Past merged (SCHED-2), one query per team.
-  /// The merged list stops where the team with the least loaded runs out,
-  /// so loading more never fills in a gap above what's shown.
-  AllTeamsEventsProvider._({
-    required AllTeamsEventsFamily super.from,
-    required bool super.argument,
+  /// Your schedule (SCHED-2): the Upcoming or Past of every team in
+  /// [yourScheduleTeams] merged, one query per team, each listening to its
+  /// first [limit]. The merged list stops where the team with the least
+  /// loaded runs out, so loading more never fills in a gap above what's
+  /// shown.
+  YourScheduleEventsProvider._({
+    required YourScheduleEventsFamily super.from,
+    required ({bool past, int limit}) super.argument,
   }) : super(
          retry: null,
-         name: r'allTeamsEventsProvider',
+         name: r'yourScheduleEventsProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$allTeamsEventsHash();
+  String debugGetCreateSourceHash() => _$yourScheduleEventsHash();
 
   @override
   String toString() {
-    return r'allTeamsEventsProvider'
+    return r'yourScheduleEventsProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -1173,8 +1451,8 @@ final class AllTeamsEventsProvider
 
   @override
   EventListState create(Ref ref) {
-    final argument = this.argument as bool;
-    return allTeamsEvents(ref, past: argument);
+    final argument = this.argument as ({bool past, int limit});
+    return yourScheduleEvents(ref, past: argument.past, limit: argument.limit);
   }
 
   /// {@macro riverpod.override_with_value}
@@ -1187,7 +1465,7 @@ final class AllTeamsEventsProvider
 
   @override
   bool operator ==(Object other) {
-    return other is AllTeamsEventsProvider && other.argument == argument;
+    return other is YourScheduleEventsProvider && other.argument == argument;
   }
 
   @override
@@ -1196,32 +1474,40 @@ final class AllTeamsEventsProvider
   }
 }
 
-String _$allTeamsEventsHash() => r'0b59f13460a46b361f7c0ed88d1e226c0a58eba1';
+String _$yourScheduleEventsHash() =>
+    r'a64cfdd49435bc2d1be4d77d974d5c69e8a8456e';
 
-/// Every team's Upcoming or Past merged (SCHED-2), one query per team.
-/// The merged list stops where the team with the least loaded runs out,
-/// so loading more never fills in a gap above what's shown.
+/// Your schedule (SCHED-2): the Upcoming or Past of every team in
+/// [yourScheduleTeams] merged, one query per team, each listening to its
+/// first [limit]. The merged list stops where the team with the least
+/// loaded runs out, so loading more never fills in a gap above what's
+/// shown.
 
-final class AllTeamsEventsFamily extends $Family
-    with $FunctionalFamilyOverride<EventListState, bool> {
-  AllTeamsEventsFamily._()
+final class YourScheduleEventsFamily extends $Family
+    with $FunctionalFamilyOverride<EventListState, ({bool past, int limit})> {
+  YourScheduleEventsFamily._()
     : super(
         retry: null,
-        name: r'allTeamsEventsProvider',
+        name: r'yourScheduleEventsProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  /// Every team's Upcoming or Past merged (SCHED-2), one query per team.
-  /// The merged list stops where the team with the least loaded runs out,
-  /// so loading more never fills in a gap above what's shown.
+  /// Your schedule (SCHED-2): the Upcoming or Past of every team in
+  /// [yourScheduleTeams] merged, one query per team, each listening to its
+  /// first [limit]. The merged list stops where the team with the least
+  /// loaded runs out, so loading more never fills in a gap above what's
+  /// shown.
 
-  AllTeamsEventsProvider call({required bool past}) =>
-      AllTeamsEventsProvider._(argument: past, from: this);
+  YourScheduleEventsProvider call({required bool past, int limit = 50}) =>
+      YourScheduleEventsProvider._(
+        argument: (past: past, limit: limit),
+        from: this,
+      );
 
   @override
-  String toString() => r'allTeamsEventsProvider';
+  String toString() => r'yourScheduleEventsProvider';
 }
 
 /// A team's events starting in [from, until), live.
@@ -1595,14 +1881,16 @@ final class MonthEventsFamily extends $Family
   String toString() => r'monthEventsProvider';
 }
 
-/// A month of every team's events (SCHED-2 with the calendar).
+/// A month of Your schedule for its calendar (SCHED-2): every team's in
+/// [yourScheduleTeams].
 
-@ProviderFor(allTeamsMonthEvents)
-final allTeamsMonthEventsProvider = AllTeamsMonthEventsFamily._();
+@ProviderFor(yourScheduleMonthEvents)
+final yourScheduleMonthEventsProvider = YourScheduleMonthEventsFamily._();
 
-/// A month of every team's events (SCHED-2 with the calendar).
+/// A month of Your schedule for its calendar (SCHED-2): every team's in
+/// [yourScheduleTeams].
 
-final class AllTeamsMonthEventsProvider
+final class YourScheduleMonthEventsProvider
     extends
         $FunctionalProvider<
           AsyncValue<List<Event>>,
@@ -1610,24 +1898,25 @@ final class AllTeamsMonthEventsProvider
           AsyncValue<List<Event>>
         >
     with $Provider<AsyncValue<List<Event>>> {
-  /// A month of every team's events (SCHED-2 with the calendar).
-  AllTeamsMonthEventsProvider._({
-    required AllTeamsMonthEventsFamily super.from,
+  /// A month of Your schedule for its calendar (SCHED-2): every team's in
+  /// [yourScheduleTeams].
+  YourScheduleMonthEventsProvider._({
+    required YourScheduleMonthEventsFamily super.from,
     required DateTime super.argument,
   }) : super(
          retry: null,
-         name: r'allTeamsMonthEventsProvider',
+         name: r'yourScheduleMonthEventsProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$allTeamsMonthEventsHash();
+  String debugGetCreateSourceHash() => _$yourScheduleMonthEventsHash();
 
   @override
   String toString() {
-    return r'allTeamsMonthEventsProvider'
+    return r'yourScheduleMonthEventsProvider'
         ''
         '($argument)';
   }
@@ -1641,7 +1930,7 @@ final class AllTeamsMonthEventsProvider
   @override
   AsyncValue<List<Event>> create(Ref ref) {
     final argument = this.argument as DateTime;
-    return allTeamsMonthEvents(ref, argument);
+    return yourScheduleMonthEvents(ref, argument);
   }
 
   /// {@macro riverpod.override_with_value}
@@ -1654,7 +1943,8 @@ final class AllTeamsMonthEventsProvider
 
   @override
   bool operator ==(Object other) {
-    return other is AllTeamsMonthEventsProvider && other.argument == argument;
+    return other is YourScheduleMonthEventsProvider &&
+        other.argument == argument;
   }
 
   @override
@@ -1663,40 +1953,42 @@ final class AllTeamsMonthEventsProvider
   }
 }
 
-String _$allTeamsMonthEventsHash() =>
-    r'0f76f70fb6e6f533611c62e1666d27b9619b11b3';
+String _$yourScheduleMonthEventsHash() =>
+    r'b5e909429c8bd983599352615d8b35d6c8940b38';
 
-/// A month of every team's events (SCHED-2 with the calendar).
+/// A month of Your schedule for its calendar (SCHED-2): every team's in
+/// [yourScheduleTeams].
 
-final class AllTeamsMonthEventsFamily extends $Family
+final class YourScheduleMonthEventsFamily extends $Family
     with $FunctionalFamilyOverride<AsyncValue<List<Event>>, DateTime> {
-  AllTeamsMonthEventsFamily._()
+  YourScheduleMonthEventsFamily._()
     : super(
         retry: null,
-        name: r'allTeamsMonthEventsProvider',
+        name: r'yourScheduleMonthEventsProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  /// A month of every team's events (SCHED-2 with the calendar).
+  /// A month of Your schedule for its calendar (SCHED-2): every team's in
+  /// [yourScheduleTeams].
 
-  AllTeamsMonthEventsProvider call(DateTime month) =>
-      AllTeamsMonthEventsProvider._(argument: month, from: this);
+  YourScheduleMonthEventsProvider call(DateTime month) =>
+      YourScheduleMonthEventsProvider._(argument: month, from: this);
 
   @override
-  String toString() => r'allTeamsMonthEventsProvider';
+  String toString() => r'yourScheduleMonthEventsProvider';
 }
 
-/// The schedule's toggle and filter (SCHED-2).
+/// The schedule's type filter (SCHED-2), set from the filter sheet.
 
 @ProviderFor(ScheduleView)
 final scheduleViewProvider = ScheduleViewProvider._();
 
-/// The schedule's toggle and filter (SCHED-2).
+/// The schedule's type filter (SCHED-2), set from the filter sheet.
 final class ScheduleViewProvider
     extends $NotifierProvider<ScheduleView, ScheduleOptions> {
-  /// The schedule's toggle and filter (SCHED-2).
+  /// The schedule's type filter (SCHED-2), set from the filter sheet.
   ScheduleViewProvider._()
     : super(
         from: null,
@@ -1724,9 +2016,9 @@ final class ScheduleViewProvider
   }
 }
 
-String _$scheduleViewHash() => r'6af0da7f98c8add3bf2258e004fd403975f1c079';
+String _$scheduleViewHash() => r'42b07c23811247995d2290c013242338ca9fc3d6';
 
-/// The schedule's toggle and filter (SCHED-2).
+/// The schedule's type filter (SCHED-2), set from the filter sheet.
 
 abstract class _$ScheduleView extends $Notifier<ScheduleOptions> {
   ScheduleOptions build();

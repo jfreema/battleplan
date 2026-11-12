@@ -85,6 +85,23 @@ void main() {
         await pumpChat(tester, scheme: scheme);
         await goTo(tester, route);
       },
+    // Teams' own rows, which Your schedule's cards (SCHED-2) push below
+    // a phone's fold: Join, Create, and the default color scheme, scrolled
+    // to as a person would.
+    'teams, its rows':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpChat(tester, scheme: scheme);
+          await goTo(tester, '/teams');
+          await scrollToTeamsRows(tester);
+          expect(find.text('Join a Team or Group'), findsOneWidget);
+        },
+    // Your schedule's page, from See all on Teams (SCHED-2).
+    'your schedule': (WidgetTester tester, {required TeamScheme scheme}) async {
+      await pumpChat(tester, scheme: scheme);
+      await goTo(tester, '/teams');
+      await pushTo(tester, '/teams/schedule');
+      expect(find.text('vs. Eagles'), findsOneWidget, reason: 'the page');
+    },
     'team info': (WidgetTester tester, {required TeamScheme scheme}) async {
       await pumpChat(tester, scheme: scheme);
       await pushTo(tester, '/g/a/info');
@@ -103,6 +120,12 @@ void main() {
           await pumpTeam(tester, scheme: scheme, user: boss);
           await goTo(tester, '/teams');
           expect(find.byTooltip('Admin panel'), findsOneWidget);
+        },
+    'super admin teams, its rows':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpTeam(tester, scheme: scheme, user: boss);
+          await goTo(tester, '/teams');
+          await scrollToTeamsRows(tester);
         },
     'super admin wide chat':
         (WidgetTester tester, {required TeamScheme scheme}) async {
@@ -459,17 +482,23 @@ void main() {
         isSemantics(isHeader: true),
       );
 
-      // On Teams: the section label isn't the row's button, and a card
-      // says its team's name once.
+      // On Teams: a card says its team's name once, Your schedule is a
+      // heading over its cards (SCHED-2), and, under them, the section
+      // label isn't the row's button.
       await goTo(tester, '/teams');
-      expect(
-        tester.getSemantics(find.text('COLOR SCHEME')),
-        isSemantics(label: 'Color scheme', isHeader: true, isButton: false),
-      );
       final card = tester.getSemantics(find.text('Thunder U14'));
       expect(card, isSemantics(isButton: true));
       expect(card.flagsCollection.isImage, isFalse);
       expect('Thunder U14'.allMatches(card.label), hasLength(1));
+      expect(
+        tester.getSemantics(find.text('Your schedule')),
+        isSemantics(label: 'Your schedule', isHeader: true, isButton: false),
+      );
+      await scrollToTeamsRows(tester);
+      expect(
+        tester.getSemantics(find.text('COLOR SCHEME')),
+        isSemantics(label: 'Color scheme', isHeader: true, isButton: false),
+      );
       handle.dispose();
     });
   });
@@ -765,12 +794,15 @@ void main() {
       }
     });
 
-    testWidgets('Tab reaches the Teams cards, rows, the default scheme row '
-        'and the tab bar', (tester) async {
+    testWidgets("Tab reaches the Teams cards, Your schedule's cards and "
+        'See all, the rows, the default scheme row and the tab bar', (
+      tester,
+    ) async {
       await pumpTeam(tester, scheme: TeamScheme.navy);
       await goTo(tester, '/teams');
       final reached = <String>[];
-      for (var i = 0; i < 30; i++) {
+      // Your schedule's four cards and their answers come before the rows.
+      for (var i = 0; i < 70; i++) {
         await press(tester, LogicalKeyboardKey.tab);
         final context = FocusManager.instance.primaryFocus?.context;
         if (context == null) continue;
@@ -788,6 +820,7 @@ void main() {
       }
       for (final want in [
         'Thunder U14',
+        'See all',
         'Join a Team or Group',
         'Default color scheme',
         'Profile',

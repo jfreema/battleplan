@@ -70,6 +70,7 @@ import 'package:battleplan/features/schedule/presentation/event_assignments.dart
 import 'package:battleplan/features/schedule/presentation/event_details_screen.dart';
 import 'package:battleplan/features/schedule/presentation/event_form_screen.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
+import 'package:battleplan/features/schedule/presentation/your_schedule.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:battleplan/features/settings/presentation/settings_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -421,6 +422,15 @@ GoRouter router(Ref ref) {
             pageBuilder: (_, state) => PanelPage(
               key: state.pageKey,
               child: const ColorSchemeScreen.defaultScheme(),
+            ),
+          ),
+          // Your schedule (SCHED-2), from See all on Teams: every active
+          // team's events, in my default scheme.
+          GoRoute(
+            path: 'schedule',
+            pageBuilder: (_, state) => PanelPage(
+              key: state.pageKey,
+              child: const YourScheduleScreen(),
             ),
           ),
         ],

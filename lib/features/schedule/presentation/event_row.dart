@@ -15,8 +15,8 @@ import 'package:material_ui/material_ui.dart';
 /// edge in the type's candy, the date column, the title with the type word
 /// (left out when the title is the type's own name), the time and place,
 /// the attendance ("7/12 going" with a mini bar, and who I answer for that
-/// hasn't answered), and an RSVP row for each person I answer for. In "All
-/// my teams" it names the team beside its color (SCHED-2, PLAYER-9).
+/// hasn't answered), and an RSVP row for each person I answer for. In Your
+/// schedule it names the team beside its color (SCHED-2, PLAYER-9).
 /// Canceled events are struck through with a badge (SCHED-7).
 class EventRow extends StatelessWidget {
   const new({
@@ -30,8 +30,13 @@ class EventRow extends StatelessWidget {
     this.answers = const {},
     this.showTeam = false,
     this.playerCount = 0,
+    this.padding = listPadding,
     super.key,
   });
+
+  /// Around a card in a schedule list: its 16 px gutter, and 12 between
+  /// cards.
+  static const listPadding = EdgeInsets.symmetric(horizontal: 16, vertical: 6);
 
   final Event event;
 
@@ -56,6 +61,10 @@ class EventRow extends StatelessWidget {
   /// The team's active players, for "7/12 going" (PLAYER-6).
   final int playerCount;
 
+  /// Around the card: [listPadding], or no gutter on Teams, whose own
+  /// lines the cards up with the team cards (SCHED-2).
+  final EdgeInsetsGeometry padding;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -78,7 +87,7 @@ class EventRow extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: padding,
       child: TapCard(
         onTap: onTap,
         edge: accent.face,

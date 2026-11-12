@@ -7,3 +7,5 @@ export 'presentation/event_card.dart' show EventCard;
 // (PLAYER-11) and an import's preview (IMPORT-3).
 export 'presentation/schedule_format.dart'
     show statusColor, statusIcon, statusLabel, timeRange, typeColor, typeIcon;
+// Your schedule under my teams on Teams (SCHED-2).
+export 'presentation/your_schedule.dart' show YourScheduleSection;

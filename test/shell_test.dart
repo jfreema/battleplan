@@ -1006,6 +1006,8 @@ void main() {
           'Default color scheme',
           find.textContaining('How Teams and Profile look for you.'),
         ),
+        // Your schedule (SCHED-2): its tabs start on the gutter.
+        ('/teams/schedule', 'Your schedule', find.text('Upcoming')),
         ('/g/a/settings', 'Admin settings', find.text('Member permissions')),
       ]) {
         await scenes.goTo(tester, route);
@@ -1056,6 +1058,7 @@ void main() {
         ('/messages/dm1/m/x', '/messages'),
         ('/messages', '/teams'),
         ('/notifications', '/teams'),
+        ('/teams/schedule', '/teams'),
         ('/people/sam', '/teams'),
       ]) {
         expect(upFrom(Uri.parse(from)), to, reason: from);

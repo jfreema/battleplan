@@ -122,6 +122,29 @@ DateTime startOfDay(String zone, DateTime now) {
   return ZonedTime.instantOf(zone, wall, 0);
 }
 
+/// The time now, for what goes by the time of day (when today began, which
+/// events are over): read again each minute and on each return to the app,
+/// so a screen left open, like Teams overnight, catches up.
+@riverpod
+DateTime minuteClock(Ref ref) {
+  final lifecycle = AppLifecycleListener(onResume: ref.invalidateSelf);
+  final timer = Timer(const Duration(minutes: 1), ref.invalidateSelf);
+  ref.onDispose(() {
+    lifecycle.dispose();
+    timer.cancel();
+  });
+  return DateTime.now();
+}
+
+/// The instant today began for the viewer ([startOfDay]), which moves at
+/// midnight; null until their time zone is known.
+@riverpod
+DateTime? viewerToday(Ref ref) {
+  final zone = ref.watch(viewerTimeZoneProvider).value;
+  if (zone == null) return null;
+  return startOfDay(zone, ref.watch(minuteClockProvider));
+}
+
 /// The day [e] starts on in [zone], as a date-only value; all-day
 /// events use their own date, which never shifts (SCHED-9).
 DateTime dayOf(Event e, String zone) {
@@ -168,6 +191,18 @@ List<Participant> myParticipants(Ref ref, GroupId groupId) {
     players: ref.watch(playersProvider(groupId)).value ?? const [],
     links: ref.watch(guardianLinksProvider(groupId)).value ?? const [],
   );
+}
+
+/// Whether [myParticipants] is final for [groupId]: the team's players
+/// and my links to them have arrived (or failed). A basic group needs
+/// neither. Lets a card wait for its RSVP rows rather than grow them.
+@riverpod
+bool myParticipantsReady(Ref ref, GroupId groupId) {
+  final group = ref.watch(groupProvider(groupId)).value;
+  if (group == null) return false;
+  if (group.isGroup) return true;
+  return !ref.watch(playersProvider(groupId)).isLoading &&
+      !ref.watch(guardianLinksProvider(groupId)).isLoading;
 }
 
 /// My answers (and my players') on a team's events starting in
@@ -230,8 +265,10 @@ abstract class EventListState with _$EventListState {
 }
 
 /// One team's Upcoming (from the start of today) or Past (before it, newest
-/// first): the first 50 live, then pages of 50 (ARCH §5.3). All-day events
-/// go by their dates instead (see [isUpcoming]).
+/// first): the first [limit] live (50, or fewer for Your schedule on Teams,
+/// [yourScheduleLive]), then pages of 50 (ARCH §5.3). All-day events go by
+/// their dates instead (see [isUpcoming]). It starts over when the day
+/// changes ([viewerToday]).
 @riverpod
 class TeamEvents extends _$TeamEvents {
   final Map<String, Event> _known = {};
@@ -249,46 +286,60 @@ class TeamEvents extends _$TeamEvents {
 
   /// The last event of the latest page loaded.
   Event? _tail;
+
+  /// True once the live page has answered. Until then the list is still
+  /// loading, whatever the edge found: a cached edge ahead of the page
+  /// would otherwise show an empty Upcoming for a moment.
+  bool _loaded = false;
   String _zone = 'UTC';
   DateTime _now = DateTime.now();
 
   @override
-  EventListState build(GroupId groupId, {required bool past}) {
+  EventListState build(GroupId groupId, {required bool past, int limit = 50}) {
     final zone = ref.watch(viewerTimeZoneProvider).value;
-    if (zone == null) return const EventListState();
+    final today = ref.watch(viewerTodayProvider);
+    if (zone == null || today == null) return const EventListState();
     _zone = zone;
-    _now = DateTime.now();
-    final today = startOfDay(zone, _now);
+    // The day the queries start from, so the two never disagree.
+    _now = today;
+    _loaded = false;
     final repo = ref.watch(eventRepositoryProvider);
     final stream = past
-        ? repo.watchPast(groupId, today)
-        : repo.watchUpcoming(groupId, today);
+        ? repo.watchPast(groupId, today, limit: limit)
+        : repo.watchUpcoming(groupId, today, limit: limit);
     final edge = past
         // Zones are at most 26 hours apart.
         ? repo.watchRange(groupId, today, today.add(const Duration(days: 2)))
-        : repo.watchPast(groupId, today).map((p) => p.events);
-    final sub = stream.listen((page) {
-      final ids = {for (final e in page.events) e.id.value};
-      final gone = _liveIds.difference(ids);
-      _liveIds = ids;
-      for (final e in page.events) {
-        _known[e.id.value] = e;
-      }
-      _liveCursor = page.next;
-      if (_loadedMore) {
-        // Deleted and moved events leave the live page, but so do ones
-        // that slid past its end as others arrived; ask which.
-        if (gone.isNotEmpty) unawaited(_recheck(gone));
-      } else {
-        gone.forEach(_known.remove);
-      }
-      _publish(
-        reachedEnd: _loadedMore ? _moreCursor == null : page.next == null,
-      );
-    }, onError: (Object _) => state = state.copyWith(loading: false));
+        : repo.watchPast(groupId, today, limit: limit).map((p) => p.events);
+    final sub = stream.listen(
+      (page) {
+        _loaded = true;
+        final ids = {for (final e in page.events) e.id.value};
+        final gone = _liveIds.difference(ids);
+        _liveIds = ids;
+        for (final e in page.events) {
+          _known[e.id.value] = e;
+        }
+        _liveCursor = page.next;
+        if (_loadedMore) {
+          // Deleted and moved events leave the live page, but so do ones
+          // that slid past its end as others arrived; ask which.
+          if (gone.isNotEmpty) unawaited(_recheck(gone));
+        } else {
+          gone.forEach(_known.remove);
+        }
+        _publish(
+          reachedEnd: _loadedMore ? _moreCursor == null : page.next == null,
+        );
+      },
+      onError: (Object _) {
+        _loaded = true;
+        _publish();
+      },
+    );
     final edgeSub = edge.listen((events) {
       _edge = {for (final e in events) e.id.value: e};
-      _publish();
+      if (_loaded) _publish();
     }, onError: (Object _) {});
     ref.onDispose(() {
       unawaited(sub.cancel());
@@ -370,23 +421,51 @@ class TeamEvents extends _$TeamEvents {
   }
 }
 
-/// The teams "All my teams" merges (SCHED-2): every team I'm on.
+/// Every team I'm on, archived ones too: a calendar link's All my teams
+/// is offered with more than one (SCHED-11).
 @riverpod
 List<Group> scheduleTeams(Ref ref) => [
   for (final t in ref.watch(myTeamsProvider).value ?? const <MyTeam>[]) t.group,
 ];
 
-/// Every team's Upcoming or Past merged (SCHED-2), one query per team.
-/// The merged list stops where the team with the least loaded runs out,
-/// so loading more never fills in a gap above what's shown.
+/// How many events Your schedule shows on Teams (SCHED-2), so Join and
+/// Create stay within reach under them.
+const yourScheduleShown = 5;
+
+/// How many events of each team Teams listens to for them, each way (ARCH
+/// §10.2): enough for the next [yourScheduleShown] with some already over
+/// today, and for an all-day tournament still running after a few of its
+/// games. Teams is the app's home, so not a schedule's 50.
+const yourScheduleLive = 10;
+
+/// The teams and groups Your schedule covers (SCHED-2): the active ones
+/// I'm on. An archived team's events stay on its own schedule.
 @riverpod
-EventListState allTeamsEvents(Ref ref, {required bool past}) {
-  final teams = ref.watch(scheduleTeamsProvider);
+List<Group> yourScheduleTeams(Ref ref) => [
+  for (final g in ref.watch(scheduleTeamsProvider))
+    if (!g.isArchived) g,
+];
+
+/// Your schedule (SCHED-2): the Upcoming or Past of every team in
+/// [yourScheduleTeams] merged, one query per team, each listening to its
+/// first [limit]. The merged list stops where the team with the least
+/// loaded runs out, so loading more never fills in a gap above what's
+/// shown.
+@riverpod
+EventListState yourScheduleEvents(
+  Ref ref, {
+  required bool past,
+  int limit = 50,
+}) {
+  final teams = ref.watch(yourScheduleTeamsProvider);
   final lists = [
-    for (final g in teams) ref.watch(teamEventsProvider(g.id, past: past)),
+    for (final g in teams)
+      ref.watch(teamEventsProvider(g.id, past: past, limit: limit)),
   ];
   if (lists.isEmpty) {
-    return EventListState(loading: ref.watch(myTeamsProvider).isLoading);
+    // No team: nothing to load, and nothing more to.
+    final loading = ref.watch(myTeamsProvider).isLoading;
+    return EventListState(loading: loading, reachedEnd: !loading);
   }
   final zone = ref.watch(viewerTimeZoneProvider).value;
   if (zone == null) return const EventListState();
@@ -482,10 +561,11 @@ AsyncValue<List<Event>> monthEvents(Ref ref, GroupId groupId, DateTime month) {
   );
 }
 
-/// A month of every team's events (SCHED-2 with the calendar).
+/// A month of Your schedule for its calendar (SCHED-2): every team's in
+/// [yourScheduleTeams].
 @riverpod
-AsyncValue<List<Event>> allTeamsMonthEvents(Ref ref, DateTime month) {
-  final teams = ref.watch(scheduleTeamsProvider);
+AsyncValue<List<Event>> yourScheduleMonthEvents(Ref ref, DateTime month) {
+  final teams = ref.watch(yourScheduleTeamsProvider);
   final months = [
     for (final g in teams) ref.watch(monthEventsProvider(g.id, month)),
   ];
@@ -496,13 +576,11 @@ AsyncValue<List<Event>> allTeamsMonthEvents(Ref ref, DateTime month) {
   );
 }
 
-/// Which views and filters the schedule shows (SCHED-1, SCHED-2), kept
-/// while the app runs.
+/// The schedule's type filter (SCHED-2), kept while the app runs and
+/// shared by every team's schedule and Your schedule's page.
 @freezed
 abstract class ScheduleOptions with _$ScheduleOptions {
   const factory({
-    @Default(false) bool allTeams,
-
     /// Empty shows everything.
     @Default(<EventFilter>{}) Set<EventFilter> filters,
   }) = _ScheduleOptions;
@@ -513,7 +591,7 @@ abstract class ScheduleOptions with _$ScheduleOptions {
       filters.isEmpty || filters.contains(EventFilter.of(e.type));
 }
 
-/// The schedule's toggle and filter (SCHED-2).
+/// The schedule's type filter (SCHED-2), set from the filter sheet.
 @Riverpod(keepAlive: true)
 class ScheduleView extends _$ScheduleView {
   @override
@@ -521,8 +599,6 @@ class ScheduleView extends _$ScheduleView {
     ref.watch(authUserProvider.select((a) => a.value?.uid));
     return const ScheduleOptions();
   }
-
-  void setAllTeams({required bool on}) => state = state.copyWith(allTeams: on);
 
   void toggleFilter(EventFilter f) => state = state.copyWith(
     filters: state.filters.contains(f)

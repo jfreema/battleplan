@@ -60,6 +60,7 @@ const teamRoutes = [
   '/profile',
   '/profile/icon',
   '/teams/scheme',
+  '/teams/schedule',
   '/notifications',
   '/settings',
   '/settings/sign-in-methods',
@@ -122,6 +123,12 @@ void main() {
         expect(tester.takeException(), isNull);
         for (final route in teamRoutes) {
           await visit(tester, route, name);
+          // Teams' rows are under Your schedule's cards (SCHED-2), past
+          // what a short screen builds: lay them out too.
+          if (route == '/teams') {
+            await scrollToTeamsRows(tester);
+            expect(tester.takeException(), isNull, reason: "Teams' rows");
+          }
         }
       });
 
