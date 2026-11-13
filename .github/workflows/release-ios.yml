@@ -25,7 +25,7 @@ on:
 
 env:
   # The same Flutter as ci.yml and release.yml.
-  FLUTTER_VERSION: 3.47.9
+  FLUTTER_VERSION: 3.50.0
   # The Apple Developer team (individual membership).
   TEAM_ID: 885XHF7XLL
   # Analytics without the advertising ID (Info.plist, store checklist 3.3).
