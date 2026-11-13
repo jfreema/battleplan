@@ -34,7 +34,7 @@ Don't pick the Kids category or "made for kids": accounts are for adults, and pl
 
 ## Version information
 
-**What's New in This Version** (1.2, approved by Apple by 2026-11-10; then 1.3, live since 2026-11-11, and 1.4.1 next, ROADMAP tasks 375 and 382, each with its What's New below; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
+**What's New in This Version** (1.2, approved by Apple by 2026-11-10; then 1.3, live since 2026-11-11, and 1.4.1, live since 2026-11-13, ROADMAP tasks 375 and 382, each with its What's New below; the next is 1.4.2; 4,000 characters). Version 1.1 went out on 2026-11-05, built on 2026-11-04 from `3d84c33` in Gumdrop Army; its What's New and description are in `git show 85053f7:docs/STORE-LISTING.md`.
 
 ```
 A whole new look, Open Field, with five color schemes: Army green, the default, plus Light, Dark, Navy, and Light blue. Everyone picks the scheme they see for each team, and a default for the rest.
@@ -60,7 +60,7 @@ Settings and your team's roster are easier to find.
 • A group's messages are light blue until you pick a color
 ```
 
-**What's New in 1.4.1** (ROADMAP task 382; paste it when adding version 1.4.1 in App Store Connect). Everything made since the 1.3 build (459, `64b53eb`): Your schedule on Teams, with a team's schedule showing only its own events (task 380), each team's own bell (377), and joining straight into a team's chat (376). The description, keywords, promotional text, and review notes stay as 1.3's.
+**What's New in 1.4.1** (ROADMAP task 382; live in the App Store since 2026-11-13, build 469, `d1ed4ac`, with this text). Everything made since the 1.3 build (459, `64b53eb`): Your schedule on Teams, with a team's schedule showing only its own events (task 380), each team's own bell (377), and joining straight into a team's chat (376). The description, keywords, promotional text, and review notes stay as 1.3's.
 
 ```
 Your schedule: what's next on every team, on the Teams screen.
