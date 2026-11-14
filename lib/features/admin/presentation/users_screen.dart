@@ -124,39 +124,13 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               ),
           ],
         ),
-        // Its own Wrap, so the direction button drops to the next line on
-        // a narrow phone instead of overflowing.
         if (!wide)
-          Wrap(
-            spacing: Space.sm,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(l10n.adminSortUsersBy),
-              DropdownButton<AdminUserSort>(
-                value: _query.sort,
-                onChanged: (s) {
-                  if (s != null && s != _query.sort) _sortBy(s);
-                },
-                items: [
-                  for (final s in AdminUserSort.values)
-                    DropdownMenuItem(
-                      value: s,
-                      child: Text(_sortLabel(l10n, s)),
-                    ),
-                ],
-              ),
-              TextButton.icon(
-                onPressed: () => _sortBy(_query.sort),
-                icon: Icon(
-                  _query.ascending ? AppIcons.arrowUp : AppIcons.arrowDown,
-                ),
-                label: Text(
-                  _query.ascending
-                      ? l10n.adminSortAscending
-                      : l10n.adminSortDescending,
-                ),
-              ),
-            ],
+          AdminSortMenu<AdminUserSort>(
+            value: _query.sort,
+            values: AdminUserSort.values,
+            label: (s) => _sortLabel(l10n, s),
+            ascending: _query.ascending,
+            onSort: _sortBy,
           ),
       ],
     );

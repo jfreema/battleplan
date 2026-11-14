@@ -44,6 +44,7 @@ import {
   CreateUserInput,
   DeleteGroupInput,
   GroupInput,
+  ListAuditInput,
   ListReportsInput,
   ListTeamsInput,
   ListUsersInput,
@@ -64,6 +65,7 @@ import {
   dashboard,
   getTeam,
   getUser,
+  listAudit,
   listReports,
   listTeams,
   listUsers,
@@ -266,6 +268,17 @@ export const adminDeleteGroup = onCall({ secrets: [resendApiKey], timeoutSeconds
     await alertTeamDeleted({ groupId: input.groupId, ...deleted.before, actorUid: actor, bySuperAdmin: true });
   }
   return { ok: true };
+});
+
+// ---- Audit log (ADMIN-6) -----------------------------------------------------
+
+/**
+ * The audit log sorted by any column either way (ADMIN-6): { rows,
+ * nextCursor }. Newest first, the app reads auditLogs itself.
+ */
+export const adminListAudit = onCall(async (request) => {
+  requireSuperAdmin(request);
+  return listAudit(parse(ListAuditInput, request.data ?? {}));
 });
 
 // ---- Users (ADMIN-4) ---------------------------------------------------------

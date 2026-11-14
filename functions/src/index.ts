@@ -19,6 +19,7 @@ export {
   adminDeleteUser,
   adminGetTeam,
   adminGetUser,
+  adminListAudit,
   adminListReports,
   adminListTeams,
   adminListUsers,

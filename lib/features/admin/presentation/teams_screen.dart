@@ -17,9 +17,10 @@ import 'package:material_ui/material_ui.dart';
 /// How long typing pauses before a search goes to the server.
 const searchDelay = Duration(milliseconds: 400);
 
-/// ADMIN-2 at `/admin/teams`: every team, searchable by name, sorted by
-/// created date, last activity, members, or storage, and filtered by
-/// status. A table on wide screens, a list on phones.
+/// ADMIN-2 at `/admin/teams`: every team, searchable by name, filtered by
+/// status, and sorted by any column either way (owner's request
+/// 2026-11-14; newest first by default). A table on wide screens, whose
+/// column headings sort it; a list on phones, with a Sort by menu.
 class AdminTeamsScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -36,6 +37,15 @@ class _AdminTeamsScreenState extends ConsumerState<AdminTeamsScreen> {
     _debounce?.cancel();
     super.dispose();
   }
+
+  /// Sorts by [sort]: the same column again flips the direction; a new one
+  /// starts A to Z for text, or newest or largest first.
+  void _sortBy(AdminTeamSort sort) => setState(
+    () => _query = _query.copyWith(
+      sort: sort,
+      ascending: sort == _query.sort ? !_query.ascending : sort.ascendingFirst,
+    ),
+  );
 
   void _search(String text) {
     _debounce?.cancel();
@@ -72,16 +82,6 @@ class _AdminTeamsScreenState extends ConsumerState<AdminTeamsScreen> {
             },
           ),
         ),
-        DropdownButton<AdminTeamSort>(
-          value: _query.sort,
-          onChanged: (s) => s == null
-              ? null
-              : setState(() => _query = _query.copyWith(sort: s)),
-          items: [
-            for (final s in AdminTeamSort.values)
-              DropdownMenuItem(value: s, child: Text(_sortLabel(l10n, s))),
-          ],
-        ),
         Wrap(
           spacing: Space.xs,
           children: [
@@ -98,6 +98,14 @@ class _AdminTeamsScreenState extends ConsumerState<AdminTeamsScreen> {
               ),
           ],
         ),
+        if (!wide)
+          AdminSortMenu<AdminTeamSort>(
+            value: _query.sort,
+            values: AdminTeamSort.values,
+            label: (s) => _sortLabel(l10n, s),
+            ascending: _query.ascending,
+            onSort: _sortBy,
+          ),
       ],
     );
 
@@ -119,7 +127,13 @@ class _AdminTeamsScreenState extends ConsumerState<AdminTeamsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (wide && value.items.isNotEmpty)
-                  _TeamsTable(rows: value.items, onOpen: open)
+                  _TeamsTable(
+                    rows: value.items,
+                    sort: _query.sort,
+                    ascending: _query.ascending,
+                    onSort: _sortBy,
+                    onOpen: open,
+                  )
                 else
                   for (final t in value.items)
                     _TeamTile(team: t, onTap: () => open(t)),
@@ -141,19 +155,34 @@ class _AdminTeamsScreenState extends ConsumerState<AdminTeamsScreen> {
   }
 }
 
+/// A sort's name: its column's heading.
 String _sortLabel(AppLocalizations l10n, AdminTeamSort s) => switch (s) {
-  AdminTeamSort.created => l10n.adminSortCreated,
-  AdminTeamSort.activity => l10n.adminSortActivity,
-  AdminTeamSort.members => l10n.adminSortMembers,
-  AdminTeamSort.storage => l10n.adminSortStorage,
+  AdminTeamSort.name => l10n.adminColName,
+  AdminTeamSort.sport => l10n.sportLabel,
+  AdminTeamSort.owner => l10n.adminColOwner,
+  AdminTeamSort.members => l10n.rosterMembers,
+  AdminTeamSort.activity => l10n.adminColLastActivity,
+  AdminTeamSort.storage => l10n.storageSection,
+  AdminTeamSort.status => l10n.adminColStatus,
+  AdminTeamSort.created => l10n.adminColCreated,
 };
 
 /// Wide screens: name, sport, owner, members, last activity, storage,
-/// status (ADMIN-2).
+/// status, and created (ADMIN-2). Tapping a heading sorts by it, and
+/// tapping it again flips the direction.
 class _TeamsTable extends StatelessWidget {
-  const new({required this.rows, required this.onOpen});
+  const new({
+    required this.rows,
+    required this.sort,
+    required this.ascending,
+    required this.onSort,
+    required this.onOpen,
+  });
 
   final List<AdminTeamRow> rows;
+  final AdminTeamSort sort;
+  final bool ascending;
+  final ValueChanged<AdminTeamSort> onSort;
   final ValueChanged<AdminTeamRow> onOpen;
 
   @override
@@ -163,14 +192,16 @@ class _TeamsTable extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: DataTable(
         showCheckboxColumn: false,
+        // The columns are in AdminTeamSort's order.
+        sortColumnIndex: sort.index,
+        sortAscending: ascending,
         columns: [
-          DataColumn(label: Text(l10n.adminColName)),
-          DataColumn(label: Text(l10n.sportLabel)),
-          DataColumn(label: Text(l10n.adminColOwner)),
-          DataColumn(label: Text(l10n.rosterMembers), numeric: true),
-          DataColumn(label: Text(l10n.adminColLastActivity)),
-          DataColumn(label: Text(l10n.storageSection), numeric: true),
-          DataColumn(label: Text(l10n.adminColStatus)),
+          for (final s in AdminTeamSort.values)
+            DataColumn(
+              label: Text(_sortLabel(l10n, s)),
+              numeric: s == AdminTeamSort.members || s == AdminTeamSort.storage,
+              onSort: (_, _) => onSort(s),
+            ),
         ],
         rows: [
           for (final t in rows)
@@ -192,6 +223,11 @@ class _TeamsTable extends StatelessWidget {
                 ),
                 DataCell(Text(formatBytes(t.storageBytes))),
                 DataCell(TeamStatusChip(status: t.status)),
+                DataCell(
+                  Text(
+                    adminDate(l10n, t.createdAt, zone: ViewerZone.of(context)),
+                  ),
+                ),
               ],
             ),
         ],

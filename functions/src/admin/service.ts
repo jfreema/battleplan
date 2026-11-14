@@ -19,10 +19,11 @@ import {
   iso,
   plain,
   prefixEnd,
-  TEAM_SORT_FIELD,
+  TEAM_SORTS_DESC_FIRST,
   teamStatus,
   USER_FILTER,
   type AppConfigInput,
+  type AuditSort,
   type TeamSort,
   type TeamStatus,
   type UserFilter,
@@ -135,35 +136,91 @@ export interface TeamRow {
  */
 export const TEAM_SEARCH_MAX = 500;
 
-/** [a] before [b] when its sort field is larger (newest, most active, largest); missing values last. */
-function bySortField(field: string) {
-  const value = (d: FirebaseFirestore.QueryDocumentSnapshot) => {
-    const v = d.get(field) as unknown;
-    if (v instanceof Timestamp) return v.toMillis();
-    return typeof v === 'number' ? v : -Infinity;
+/** A sortable value: text lowercased, dates as ISO 8601, null when missing. */
+type SortValue = string | number | null;
+
+/**
+ * [rows] ordered by [key] in [direction], rows missing it last either
+ * way, then by [tie] (always the same way), so a page never shuffles. The
+ * admin lists sort this way when Firestore can't (ADMIN-2, ADMIN-4,
+ * ADMIN-6): by a name it would have to look up, or by a field some
+ * documents lack, which its orderBy leaves out.
+ */
+export function sortByKey<T>(
+  rows: T[],
+  key: (row: T) => SortValue,
+  direction: 'asc' | 'desc',
+  tie: (a: T, b: T) => number,
+): T[] {
+  const sign = direction === 'asc' ? 1 : -1;
+  const compare = (a: SortValue, b: SortValue) => {
+    if (a === b) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))) * sign;
   };
-  return (a: FirebaseFirestore.QueryDocumentSnapshot, b: FirebaseFirestore.QueryDocumentSnapshot) =>
-    value(b) - value(a) || a.id.localeCompare(b.id);
+  return [...rows].sort((a, b) => compare(key(a), key(b)) || tie(a, b));
+}
+
+/** Text as it sorts: trimmed, lowercased, and null when blank. */
+const textKey = (text: string | null | undefined) => text?.trim().toLowerCase() || null;
+
+/**
+ * The most teams a list sorted by anything but created reads (ADMIN-2):
+ * they're sorted here, past this many the newest.
+ */
+export const TEAM_SORT_MAX = 2000;
+
+/** Where a status falls when sorting by it: Active, Archived, then Suspended, as they read. */
+const TEAM_STATUS_ORDER: Record<string, number> = { active: 0, archived: 1, suspended: 2 };
+
+/** Orders [rows] by [sort] (see sortByKey); ties by name, then id. */
+export function sortTeamRows(rows: TeamRow[], sort: TeamSort, direction: 'asc' | 'desc'): TeamRow[] {
+  const key = (t: TeamRow): SortValue => {
+    switch (sort) {
+      case 'created':
+        return t.createdAt;
+      case 'name':
+        return textKey(t.name);
+      case 'sport':
+        return textKey(t.sport);
+      case 'owner':
+        return textKey(t.ownerName);
+      case 'members':
+        return t.memberCount;
+      case 'activity':
+        return t.lastMessageAt;
+      case 'storage':
+        return t.storageBytes;
+      case 'status':
+        return TEAM_STATUS_ORDER[t.status] ?? 3;
+    }
+  };
+  return sortByKey(rows, key, direction, (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()) || a.id.localeCompare(b.id));
 }
 
 /**
- * A page of teams (ADMIN-2), newest, most active, largest, or using the
- * most storage first, optionally only Active, Archived, or Suspended ones
- * (groups.status, one indexed query per sort and status). A search matches
- * the start of the name and returns the best [limit] matches in the chosen
- * sort and status, without paging.
+ * A page of teams (ADMIN-2), optionally only Active, Archived, or
+ * Suspended ones, sorted by any column either way (newest first by
+ * default; owner's request 2026-11-14). Newest first pages straight from
+ * Firestore (groups.status and createdAt are indexed); any other order
+ * reads every team the filter matches (up to TEAM_SORT_MAX, the newest),
+ * sorts them here, and pages by position, the cursor being the next row's.
+ * A search matches the start of the name and returns the best [limit]
+ * matches in the chosen sort and status, without paging.
  */
 export async function listTeams(input: {
   query?: string;
   sort: TeamSort;
+  direction?: 'asc' | 'desc';
   status?: TeamStatus;
   cursor?: string;
   limit: number;
 }): Promise<Page<TeamRow>> {
   const groups = db().collection(Collections.groups);
-  const sortField = TEAM_SORT_FIELD[input.sort];
-  let found: FirebaseFirestore.QueryDocumentSnapshot[];
-  let nextCursor: string | null = null;
+  const direction = input.direction ?? (TEAM_SORTS_DESC_FIRST.has(input.sort) ? 'desc' : 'asc');
+  // Direct conversations (CHAT-19) aren't teams.
+  const teamsOf = (docs: FirebaseFirestore.QueryDocumentSnapshot[]) => docs.filter((d) => d.get('kind') !== 'direct');
   if (input.query) {
     const snap = await groups
       .where('nameLower', '>=', input.query)
@@ -172,28 +229,47 @@ export async function listTeams(input: {
       .limit(TEAM_SEARCH_MAX)
       .get();
     // Teams made before groups.status existed are read by their dates.
-    found = snap.docs
-      .filter((d) => d.get('kind') !== 'direct')
-      .filter((d) => !input.status || teamStatus(d.data()) === input.status)
-      .sort(bySortField(sortField))
-      .slice(0, input.limit);
-  } else {
-    let query: Query = input.status ? groups.where('status', '==', input.status) : groups;
-    query = query.orderBy(sortField, 'desc').limit(input.limit);
+    const found = teamsOf(snap.docs).filter((d) => !input.status || teamStatus(d.data()) === input.status);
+    const rows = sortTeamRows(await teamRows(found), input.sort, direction);
+    return { rows: rows.slice(0, input.limit), nextCursor: null };
+  }
+  const filtered: Query = input.status ? groups.where('status', '==', input.status) : groups;
+  if (input.sort === 'created' && direction === 'desc') {
+    let query = filtered.orderBy('createdAt', 'desc').limit(input.limit);
     if (input.cursor) query = query.startAfter(await cursorDoc(Collections.groups, input.cursor));
     const snap = await query.get();
-    // Direct conversations (CHAT-19) aren't teams; a page may come back
-    // short, and the cursor still goes on from the last one read.
-    found = snap.docs.filter((d) => d.get('kind') !== 'direct');
-    if (snap.size === input.limit) nextCursor = snap.docs[snap.size - 1].id;
+    // A page may come back short of direct conversations, and the cursor
+    // still goes on from the last one read.
+    const nextCursor = snap.size === input.limit ? snap.docs[snap.size - 1].id : null;
+    return { rows: await teamRows(teamsOf(snap.docs)), nextCursor };
   }
+  const start = positionOf(input.cursor);
+  const every = await filtered.orderBy('createdAt', 'desc').limit(TEAM_SORT_MAX).get();
+  const rows = sortTeamRows(await teamRows(teamsOf(every.docs)), input.sort, direction);
+  return pageAt(rows, start, input.limit);
+}
 
+/** A sorted list's cursor: the position of its next row; none is the start. */
+function positionOf(cursor: string | undefined): number {
+  const start = cursor === undefined ? 0 : Number(cursor);
+  if (!Number.isSafeInteger(start) || start < 0) throw new HttpsError('invalid-argument', 'bad-cursor');
+  return start;
+}
+
+/** The [limit] rows from [start], with the next page's position while there's more. */
+function pageAt<T>(rows: T[], start: number, limit: number): Page<T> {
+  const end = start + limit;
+  return { rows: rows.slice(start, end), nextCursor: end < rows.length ? String(end) : null };
+}
+
+/** Each team's row, with its owner's name from their membership. */
+async function teamRows(found: FirebaseFirestore.QueryDocumentSnapshot[]): Promise<TeamRow[]> {
   const owners = await fieldsOf(
     Collections.groupMembers,
     found.filter((d) => d.get('ownerId')).map((d) => `${d.id}_${d.get('ownerId')}`),
     ['displayName'],
   );
-  const rows = found.map((d): TeamRow => {
+  return found.map((d): TeamRow => {
     const t = d.data();
     const ownerId = String(t.ownerId ?? '');
     return {
@@ -210,7 +286,6 @@ export async function listTeams(input: {
       createdAt: iso(t.createdAt),
     };
   });
-  return { rows, nextCursor };
 }
 
 /** How many of a team's latest messages its detail page reads for review (ADMIN-3 Content). */
@@ -360,39 +435,27 @@ export const USER_SORT_MAX = 2000;
 /** Where a status falls when sorting by it: Active, Added, then Disabled, as they read. */
 const STATUS_ORDER: Record<string, number> = { active: 0, provisioned: 1, disabled: 2 };
 
-/** The value [sort] compares, lowercased for text; null sorts last either way. */
-function sortKey(row: UserRow, sort: UserSort): string | number | null {
-  switch (sort) {
-    case 'name':
-      return row.displayName.trim().toLowerCase() || null;
-    case 'email':
-      return row.email?.toLowerCase() || null;
-    case 'status':
-      return STATUS_ORDER[row.status] ?? 3;
-    case 'joined':
-      return row.createdAt;
-    case 'lastActive':
-      return row.lastActiveAt;
-  }
-}
-
-/**
- * Orders [rows] by [sort] in [direction], people missing that value last,
- * and ties by name, then uid, so pages don't shuffle.
- */
+/** Orders [rows] by [sort] (see sortByKey); ties by name, then uid. */
 export function sortUserRows(rows: UserRow[], sort: UserSort, direction: 'asc' | 'desc'): UserRow[] {
-  const sign = direction === 'asc' ? 1 : -1;
-  const compare = (a: string | number | null, b: string | number | null) => {
-    if (a === b) return 0;
-    if (a === null) return 1;
-    if (b === null) return -1;
-    return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))) * sign;
+  const key = (row: UserRow): SortValue => {
+    switch (sort) {
+      case 'name':
+        return textKey(row.displayName);
+      case 'email':
+        return textKey(row.email);
+      case 'status':
+        return STATUS_ORDER[row.status] ?? 3;
+      case 'joined':
+        return row.createdAt;
+      case 'lastActive':
+        return row.lastActiveAt;
+    }
   };
-  return [...rows].sort(
-    (a, b) =>
-      compare(sortKey(a, sort), sortKey(b, sort)) ||
-      a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase()) ||
-      a.uid.localeCompare(b.uid),
+  return sortByKey(
+    rows,
+    key,
+    direction,
+    (a, b) => a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase()) || a.uid.localeCompare(b.uid),
   );
 }
 
@@ -439,12 +502,9 @@ export async function listUsers(input: {
     const nextCursor = snap.size === input.limit ? snap.docs[snap.size - 1].id : null;
     return { rows: await rowsOf(snap.docs), nextCursor };
   }
-  const start = input.cursor === undefined ? 0 : Number(input.cursor);
-  if (!Number.isSafeInteger(start) || start < 0) throw new HttpsError('invalid-argument', 'bad-cursor');
+  const start = positionOf(input.cursor);
   const everyone = await base.orderBy('createdAt', 'desc').limit(USER_SORT_MAX).get();
-  const rows = sortUserRows(await rowsOf(everyone.docs), sort, direction);
-  const end = start + input.limit;
-  return { rows: rows.slice(start, end), nextCursor: end < rows.length ? String(end) : null };
+  return pageAt(sortUserRows(await rowsOf(everyone.docs), sort, direction), start, input.limit);
 }
 
 /**
@@ -489,6 +549,99 @@ export async function getUser(uid: string) {
       };
     }),
   };
+}
+
+// ---- Audit log (ADMIN-6) -----------------------------------------------------
+
+/** One audit log entry as the sorted list sends it. Dates are ISO 8601. */
+export interface AuditRow {
+  id: string;
+  actorId: string;
+  /** Who did it, from their profile, for sorting by Who; blank once they're gone. */
+  actorName: string;
+  action: string;
+  groupId: string | null;
+  targetType: string;
+  targetId: string;
+  before: unknown;
+  after: unknown;
+  createdAt: string | null;
+}
+
+/**
+ * The most entries a sorted audit log reads (ADMIN-6): the newest the
+ * filters match. Newest first, the app reads auditLogs itself and pages
+ * through all of them.
+ */
+export const AUDIT_SORT_MAX = 2000;
+
+/**
+ * Orders [rows] by [sort] (see sortByKey): Who by the person's name, else
+ * their uid, as the log shows them; ties newest first, then by id.
+ */
+export function sortAuditRows(rows: AuditRow[], sort: AuditSort, direction: 'asc' | 'desc'): AuditRow[] {
+  const key = (e: AuditRow): SortValue => {
+    switch (sort) {
+      case 'when':
+        return e.createdAt;
+      case 'who':
+        return textKey(e.actorName) ?? textKey(e.actorId);
+      case 'action':
+        return textKey(e.action);
+      case 'team':
+        return textKey(e.groupId);
+      case 'target':
+        return textKey(`${e.targetType} ${e.targetId}`);
+    }
+  };
+  return sortByKey(rows, key, direction, (a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '') || a.id.localeCompare(b.id));
+}
+
+/**
+ * A page of the audit log sorted by any column either way (ADMIN-6, owner's
+ * request 2026-11-14): the newest AUDIT_SORT_MAX entries matching the same
+ * filters as the app's own read (each combination indexed, newest first),
+ * sorted here and paged by position, the cursor being the next row's.
+ */
+export async function listAudit(input: {
+  actorId?: string;
+  action?: string;
+  groupId?: string;
+  from?: string;
+  until?: string;
+  sort: AuditSort;
+  direction?: 'asc' | 'desc';
+  cursor?: string;
+  limit: number;
+}): Promise<Page<AuditRow>> {
+  const direction = input.direction ?? (input.sort === 'when' ? 'desc' : 'asc');
+  const start = positionOf(input.cursor);
+  let query: Query = db().collection(Collections.auditLogs);
+  if (input.actorId) query = query.where('actorId', '==', input.actorId);
+  if (input.action) query = query.where('action', '==', input.action);
+  if (input.groupId) query = query.where('groupId', '==', input.groupId);
+  if (input.from) query = query.where('createdAt', '>=', Timestamp.fromDate(new Date(input.from)));
+  if (input.until) query = query.where('createdAt', '<', Timestamp.fromDate(new Date(input.until)));
+  const snap = await query.orderBy('createdAt', 'desc').limit(AUDIT_SORT_MAX).get();
+  const actors = [...new Set(snap.docs.map((d) => String(d.get('actorId') ?? '')).filter(Boolean))];
+  const names = await fieldsOf(Collections.users, actors, ['displayName']);
+  const rows = snap.docs.map((d): AuditRow => {
+    const e = d.data();
+    const actorId = String(e.actorId ?? '');
+    return {
+      id: d.id,
+      actorId,
+      actorName: String(names.get(actorId)?.displayName ?? ''),
+      action: String(e.action ?? ''),
+      groupId: typeof e.groupId === 'string' ? e.groupId : null,
+      targetType: String(e.targetType ?? ''),
+      targetId: String(e.targetId ?? ''),
+      before: plain(e.before ?? null),
+      after: plain(e.after ?? null),
+      createdAt: iso(e.createdAt),
+    };
+  });
+  return pageAt(sortAuditRows(rows, input.sort, direction), start, input.limit);
 }
 
 /** How long one super-admin change may hold the lock before it's treated as abandoned. */

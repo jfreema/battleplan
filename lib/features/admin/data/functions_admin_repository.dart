@@ -102,6 +102,7 @@ class FunctionsAdminRepository implements AdminRepository {
     {
       if (query.query.trim().isNotEmpty) 'query': query.query.trim(),
       'sort': query.sort.name,
+      'direction': query.ascending ? 'asc' : 'desc',
       'status': ?query.status?.name,
       'limit': limit,
     },
@@ -367,6 +368,25 @@ class FunctionsAdminRepository implements AdminRepository {
     PageCursor? after,
     int limit = adminPageSize,
   }) async {
+    // Any other sort comes sorted from the server, which reads the same
+    // filters' newest entries and sorts them (ADMIN-6).
+    if (!filter.newestFirst) {
+      return await _page(
+        'adminListAudit',
+        {
+          'actorId': ?filter.actorId,
+          'action': ?filter.action,
+          'groupId': ?filter.groupId?.value,
+          'from': ?filter.from?.toUtc().toIso8601String(),
+          'until': ?filter.until?.toUtc().toIso8601String(),
+          'sort': filter.sort.name,
+          'direction': filter.ascending ? 'asc' : 'desc',
+          'limit': limit,
+        },
+        (row) => _audit(_str(row['id']), row),
+        after: after,
+      );
+    }
     // Each filter is an equality or a range on createdAt, newest first;
     // each combination has its index (firestore.indexes.json).
     Query<Map<String, dynamic>> q = _db.collection(Collections.auditLogs);

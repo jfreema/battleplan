@@ -160,6 +160,7 @@ describe('only super admins (ADMIN-8)', () => {
     ['adminDeleteUser', admin.adminDeleteUser, { uid: 'sam' }],
     ['adminSetSuperAdmin', admin.adminSetSuperAdmin, { uid: 'pat', superAdmin: true }],
     ['adminListReports', admin.adminListReports, {}],
+    ['adminListAudit', admin.adminListAudit, { sort: 'who' }],
     ['adminResolveReport', admin.adminResolveReport, { reportId: 'r1', action: 'dismiss', note: 'ok' }],
     ['adminUpdateConfig', admin.adminUpdateConfig, {}],
     ['adminUpdateGroup', admin.adminUpdateGroup, { groupId: 'thunder', name: 'Renamed' }],
@@ -222,6 +223,32 @@ describe('teams (ADMIN-2)', () => {
     expect(ids(await list({ sort: 'activity' })).slice(0, 2)).toEqual(['thunder', 'bears']);
     expect(ids(await list({ sort: 'members' }))).toEqual(['bears', 'thunder', 'banned', 'hawks']);
     expect(ids(await list({ sort: 'storage' }))).toEqual(['thunder', 'hawks', 'bears', 'banned']);
+  });
+
+  it('sorts by any column either way, over every team, a page at a time (owner, 2026-11-14)', async () => {
+    const order = async (data: object) => ids(await list(data));
+    await groups().doc('hawks').update({ sport: 'baseball' });
+    expect(await order({ sort: 'name' })).toEqual(['banned', 'bears', 'hawks', 'thunder']);
+    expect(await order({ sort: 'name', direction: 'desc' })).toEqual(['thunder', 'hawks', 'bears', 'banned']);
+    expect(await order({ sort: 'sport' })).toEqual(['hawks', 'banned', 'bears', 'thunder']);
+    // Bandits has no owner, so it comes last either way; ties go by name.
+    expect(await order({ sort: 'owner' })).toEqual(['bears', 'thunder', 'hawks', 'banned']);
+    expect(await order({ sort: 'owner', direction: 'desc' })).toEqual(['hawks', 'bears', 'thunder', 'banned']);
+    expect(await order({ sort: 'members', direction: 'asc' })).toEqual(['hawks', 'banned', 'thunder', 'bears']);
+    // Teams that never had a message are in it now, last.
+    expect(await order({ sort: 'activity' })).toEqual(['thunder', 'bears', 'banned', 'hawks']);
+    expect(await order({ sort: 'activity', direction: 'asc' })).toEqual(['bears', 'thunder', 'banned', 'hawks']);
+    expect(await order({ sort: 'storage', direction: 'asc' })).toEqual(['banned', 'bears', 'hawks', 'thunder']);
+    expect(await order({ sort: 'status' })).toEqual(['bears', 'thunder', 'hawks', 'banned']);
+    expect(await order({ sort: 'status', direction: 'desc' })).toEqual(['banned', 'hawks', 'bears', 'thunder']);
+    expect(await order({ sort: 'created', direction: 'asc' })).toEqual(['hawks', 'bears', 'thunder', 'banned']);
+    expect(await order({ sort: 'name', status: 'active' })).toEqual(['bears', 'thunder']);
+
+    const first = await list({ sort: 'name', limit: 3 });
+    expect([ids(first), first.nextCursor]).toEqual([['banned', 'bears', 'hawks'], '3']);
+    const second = await list({ sort: 'name', limit: 3, cursor: first.nextCursor });
+    expect([ids(second), second.nextCursor]).toEqual([['thunder'], null]);
+    await expect(list({ sort: 'name', cursor: 'bears' })).rejects.toMatchObject({ message: 'bad-cursor' });
   });
 
   it('returns the table columns, with the owner by name', async () => {
@@ -552,6 +579,55 @@ describe('editing a team the super admin is not on (ADMIN-3)', () => {
     }
     await expect(asRoot(admin.adminUpdatePlayer, { playerId: 'nope', displayName: 'X' })).rejects.toMatchObject({ code: 'not-found' });
     expect(await audits('updatePlayer')).toHaveLength(0);
+  });
+});
+
+describe('audit log, sorted (ADMIN-6)', () => {
+  type AuditPage = { rows: { id: string; actorName: string; before: unknown; createdAt: string }[]; nextCursor: string | null };
+  const list = (data: object) => asRoot<AuditPage>(admin.adminListAudit, data);
+  const order = async (data: object) => (await list(data)).rows.map((r) => r.id);
+
+  beforeEach(async () => {
+    const log = (id: string, entry: object) => db().collection(Collections.auditLogs).doc(id).set(entry);
+    await log('a1', {
+      actorId: 'sam', action: 'updateGroup', groupId: 'thunder', targetType: 'group', targetId: 'thunder',
+      before: { name: 'T', lastMessageAt: Timestamp.fromMillis(Date.UTC(2026, 10, 1)) }, after: { name: 'Thunder' }, createdAt: ago(3),
+    });
+    await log('a2', { actorId: 'root', action: 'deleteUser', targetType: 'user', targetId: 'lee', createdAt: ago(1) });
+    await log('a3', { actorId: 'pat', action: 'archiveGroup', groupId: 'hawks', targetType: 'group', targetId: 'hawks', createdAt: ago(2) });
+    await log('a4', { actorId: 'gone', action: 'createUser', targetType: 'user', targetId: 'zed', createdAt: ago(4) });
+  });
+
+  it('sorts by any column either way (owner, 2026-11-14)', async () => {
+    expect(await order({})).toEqual(['a2', 'a3', 'a1', 'a4']);
+    expect(await order({ sort: 'when', direction: 'asc' })).toEqual(['a4', 'a1', 'a3', 'a2']);
+    // By name, and by uid for someone with no profile left ('gone').
+    expect(await order({ sort: 'who' })).toEqual(['a4', 'a3', 'a2', 'a1']);
+    expect(await order({ sort: 'who', direction: 'desc' })).toEqual(['a1', 'a2', 'a3', 'a4']);
+    expect(await order({ sort: 'action' })).toEqual(['a3', 'a4', 'a2', 'a1']);
+    // Entries for no team last either way, newest first among them.
+    expect(await order({ sort: 'team' })).toEqual(['a3', 'a1', 'a2', 'a4']);
+    expect(await order({ sort: 'team', direction: 'desc' })).toEqual(['a1', 'a3', 'a2', 'a4']);
+    expect(await order({ sort: 'target' })).toEqual(['a3', 'a1', 'a2', 'a4']);
+  });
+
+  it('takes the same filters as the app, and pages by position', async () => {
+    expect(await order({ sort: 'who', actorId: 'sam' })).toEqual(['a1']);
+    expect(await order({ sort: 'who', action: 'deleteUser' })).toEqual(['a2']);
+    expect(await order({ sort: 'action', groupId: 'thunder' })).toEqual(['a1']);
+    const from = new Date(Date.now() - 2.5 * DAY).toISOString();
+    const until = new Date(Date.now() - 0.5 * DAY).toISOString();
+    expect(await order({ sort: 'action', from, until })).toEqual(['a3', 'a2']);
+    const first = await list({ sort: 'who', limit: 3 });
+    expect([first.rows.map((r) => r.id), first.nextCursor]).toEqual([['a4', 'a3', 'a2'], '3']);
+    expect(await order({ sort: 'who', limit: 3, cursor: first.nextCursor })).toEqual(['a1']);
+    const sam = (await list({ actorId: 'sam' })).rows[0];
+    expect(sam).toMatchObject({
+      actorName: 'Sam Rivera', before: { name: 'T', lastMessageAt: '2026-11-01T00:00:00.000Z' },
+    });
+    expect(Date.parse(sam.createdAt)).toBeGreaterThan(0);
+    await expect(list({ sort: 'who', cursor: 'a1' })).rejects.toMatchObject({ message: 'bad-cursor' });
+    await expect(list({ sort: 'size' })).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 });
 

@@ -10,6 +10,7 @@ import {
   CreateUserInput,
   DeleteGroupInput,
   iso,
+  ListAuditInput,
   ListReportsInput,
   ListTeamsInput,
   ListUsersInput,
@@ -25,7 +26,7 @@ import {
   UpdatePlayerInput,
   UpdateUserInput,
 } from '../../src/admin/inputs.js';
-import { sortUserRows, type UserRow } from '../../src/admin/service.js';
+import { sortAuditRows, sortTeamRows, sortUserRows, type AuditRow, type TeamRow, type UserRow } from '../../src/admin/service.js';
 import { accountSetupEmail, passwordResetEmail } from '../../src/email/templates.js';
 import { Limits } from '../../src/shared/constants.js';
 
@@ -63,7 +64,18 @@ describe('list inputs (ADMIN-2, ADMIN-4, ADMIN-5)', () => {
   });
 
   it('refuses unknown sorts, statuses, filters, and cursors that name a path', () => {
-    expect(ok(ListTeamsInput, { sort: 'name' })).toBe(false);
+    expect(ok(ListTeamsInput, { sort: 'createdAt' })).toBe(false);
+    for (const sort of ['created', 'name', 'sport', 'owner', 'members', 'activity', 'storage', 'status']) {
+      expect(ok(ListTeamsInput, { sort, direction: 'desc' })).toBe(true);
+    }
+    expect(ok(ListTeamsInput, { direction: 'sideways' })).toBe(false);
+    for (const sort of ['when', 'who', 'action', 'team', 'target']) {
+      expect(ok(ListAuditInput, { sort, direction: 'asc' })).toBe(true);
+    }
+    expect(ListAuditInput.parse({})).toMatchObject({ sort: 'when', limit: 25 });
+    expect(ok(ListAuditInput, { from: '2026-11-01T06:00:00.000Z', until: '2026-11-02T06:00:00-06:00' })).toBe(true);
+    expect(ok(ListAuditInput, { from: 'yesterday' })).toBe(false);
+    expect(ok(ListAuditInput, { groupId: 'groups/x' })).toBe(false);
     expect(ok(ListTeamsInput, { status: 'deleted' })).toBe(false);
     expect(ok(ListUsersInput, { filter: 'owner' })).toBe(false);
     expect(ok(ListUsersInput, { filter: 'superAdmin' })).toBe(true);
@@ -330,5 +342,52 @@ describe('sorting the users list (ADMIN-4)', () => {
     expect(ids(sortUserRows(rows, 'status', 'asc'))).toEqual(['bob', 'cat', 'al', 'dee']);
     expect(ids(sortUserRows(rows, 'status', 'desc'))).toEqual(['dee', 'al', 'bob', 'cat']);
     expect(ids(rows)).toEqual(['dee', 'al', 'cat', 'bob']);
+  });
+});
+
+describe('sorting the teams and the audit log (ADMIN-2, ADMIN-6)', () => {
+  const team = (id: string, extra: Partial<TeamRow> = {}): TeamRow => ({
+    id,
+    name: id,
+    sport: 'softball',
+    ownerId: '',
+    ownerName: '',
+    memberCount: 0,
+    lastMessageAt: null,
+    storageBytes: 0,
+    storageQuotaBytes: 0,
+    status: 'active',
+    createdAt: null,
+    ...extra,
+  });
+  const entry = (id: string, extra: Partial<AuditRow> = {}): AuditRow => ({
+    id,
+    actorId: id,
+    actorName: '',
+    action: 'updateGroup',
+    groupId: null,
+    targetType: 'group',
+    targetId: 't1',
+    before: null,
+    after: null,
+    createdAt: '2026-11-01T00:00:00.000Z',
+    ...extra,
+  });
+
+  it('sorts numbers as numbers and statuses as they read', () => {
+    const teams = [team('a', { memberCount: 9 }), team('b', { memberCount: 10 }), team('c', { memberCount: 2 })];
+    expect(sortTeamRows(teams, 'members', 'desc').map((t) => t.id)).toEqual(['b', 'a', 'c']);
+    const statuses = [team('s', { status: 'suspended' }), team('r', { status: 'archived' }), team('q')];
+    expect(sortTeamRows(statuses, 'status', 'asc').map((t) => t.id)).toEqual(['q', 'r', 's']);
+  });
+
+  it('sorts Who by name, else uid, and ties newest first', () => {
+    const rows = [
+      entry('e1', { actorId: 'zed', actorName: 'Amy' }),
+      entry('e2', { actorId: 'bob' }),
+      entry('e3', { actorId: 'zed', actorName: 'Amy', createdAt: '2026-11-05T00:00:00.000Z' }),
+    ];
+    expect(sortAuditRows(rows, 'who', 'asc').map((e) => e.id)).toEqual(['e3', 'e1', 'e2']);
+    expect(sortAuditRows(rows, 'who', 'desc').map((e) => e.id)).toEqual(['e2', 'e3', 'e1']);
   });
 });

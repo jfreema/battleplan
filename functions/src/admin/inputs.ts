@@ -47,22 +47,20 @@ export const UidInput = z.object({ uid: Id });
 
 // ---- Teams (ADMIN-2, ADMIN-3) ------------------------------------------------
 
-export const teamSortValues = ['created', 'activity', 'members', 'storage'] as const;
+/** The teams list's columns, and created (its default), each of which it sorts by (ADMIN-2). */
+export const teamSortValues = ['created', 'name', 'sport', 'owner', 'members', 'activity', 'storage', 'status'] as const;
 export type TeamSort = (typeof teamSortValues)[number];
 
-export { teamStatus, teamStatusValues, type TeamStatus } from '../teams/status.js';
+/** The sorts that start newest or largest first; the rest start A to Z. */
+export const TEAM_SORTS_DESC_FIRST: ReadonlySet<TeamSort> = new Set(['created', 'members', 'activity', 'storage']);
 
-/** The groups field each sort orders by, newest or largest first. */
-export const TEAM_SORT_FIELD: Record<TeamSort, string> = {
-  created: 'createdAt',
-  activity: 'lastMessageAt',
-  members: 'memberCount',
-  storage: 'storageBytes',
-};
+export { teamStatus, teamStatusValues, type TeamStatus } from '../teams/status.js';
 
 export const ListTeamsInput = z.object({
   query: Query,
   sort: z.enum(teamSortValues).default('created'),
+  /** Unset: newest or largest first for created, members, activity, and storage; A to Z otherwise. */
+  direction: z.enum(['asc', 'desc']).optional(),
   status: z.enum(teamStatusValues).optional(),
   cursor: Cursor,
   limit: Limit,
@@ -198,6 +196,29 @@ export const UpdateUserInput = z
   .refine((u) => u.displayName !== undefined || u.addToGroup !== undefined, { message: 'Nothing to change.' });
 
 export const SetDisabledInput = z.object({ uid: Id, disabled: z.boolean() });
+
+// ---- Audit log (ADMIN-6) -----------------------------------------------------
+
+/** The audit log's columns, each of which it sorts by (ADMIN-6). */
+export const auditSortValues = ['when', 'who', 'action', 'team', 'target'] as const;
+export type AuditSort = (typeof auditSortValues)[number];
+
+/**
+ * A sorted page of the audit log, with the filters the app's own read
+ * takes: a person, an action, a team, and an instant range on createdAt.
+ */
+export const ListAuditInput = z.object({
+  actorId: Id.optional(),
+  action: z.string().trim().min(1).max(64).optional(),
+  groupId: Id.optional(),
+  from: z.iso.datetime({ offset: true }).optional(),
+  until: z.iso.datetime({ offset: true }).optional(),
+  sort: z.enum(auditSortValues).default('when'),
+  /** Unset: newest first for when, A to Z otherwise. */
+  direction: z.enum(['asc', 'desc']).optional(),
+  cursor: Cursor,
+  limit: Limit,
+});
 export const SetSuperAdminInput = z.object({ uid: Id, superAdmin: z.boolean() });
 
 // ---- Players (ADMIN-3) -------------------------------------------------------

@@ -17,10 +17,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// ADMIN-6 at `/admin/audit`: every admin or destructive action, newest
-/// first, filtered by person, action, team, or dates. Read-only. Each
+/// ADMIN-6 at `/admin/audit`: every admin or destructive action, filtered
+/// by person, action, team, or dates, and sorted by any column either way
+/// (owner's request 2026-11-14; newest first by default). Read-only. Each
 /// entry opens its before and after values. `?actor=` and `?group=` start
-/// it filtered (a person's or a team's admin page links here).
+/// it filtered (a person's or a team's admin page links here). The table's
+/// headings sort it on wide screens; a Sort by menu does on phones.
 class AdminAuditScreen extends ConsumerStatefulWidget {
   const new({this.actorId, this.groupId, super.key});
 
@@ -36,6 +38,8 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
   late final _action = TextEditingController();
   late final _group = TextEditingController(text: widget.groupId);
   DateTimeRange? _dates;
+  AuditSort _sort = AuditSort.when;
+  bool _ascending = false;
   late AuditFilter _filter = _read();
 
   @override
@@ -61,10 +65,23 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
       groupId: group == null ? null : GroupId(group),
       from: range?.from,
       until: range?.until,
+      sort: _sort,
+      ascending: _ascending,
     );
   }
 
   void _apply() => setState(() => _filter = _read());
+
+  /// Sorts by [sort]: the same column again flips the direction; a new one
+  /// starts A to Z, or newest first for When. It keeps the filters as last
+  /// applied, not as half typed.
+  void _sortBy(AuditSort sort) {
+    _ascending = sort == _sort ? !_ascending : sort.ascendingFirst;
+    _sort = sort;
+    setState(
+      () => _filter = _filter.copyWith(sort: _sort, ascending: _ascending),
+    );
+  }
 
   void _clear() {
     _actor.clear();
@@ -135,6 +152,14 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
         FilledButton(onPressed: _apply, child: Text(l10n.adminApplyFilters)),
         if (!_filter.isEmpty)
           TextButton(onPressed: _clear, child: Text(l10n.adminClearFilters)),
+        if (!wide)
+          AdminSortMenu<AuditSort>(
+            value: _sort,
+            values: AuditSort.values,
+            label: (s) => _sortLabel(l10n, s),
+            ascending: _ascending,
+            onSort: _sortBy,
+          ),
       ],
     );
 
@@ -156,7 +181,12 @@ class _AdminAuditScreenState extends ConsumerState<AdminAuditScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (wide)
-                  _AuditTable(entries: value.items)
+                  _AuditTable(
+                    entries: value.items,
+                    sort: _sort,
+                    ascending: _ascending,
+                    onSort: _sortBy,
+                  )
                 else
                   for (final e in value.items) _AuditTile(entry: e),
                 if (!value.reachedEnd)
@@ -212,10 +242,29 @@ Future<void> _showEntry(BuildContext context, AuditEntry e) =>
   );
 }
 
+/// A sort's name: its column's heading.
+String _sortLabel(AppLocalizations l10n, AuditSort s) => switch (s) {
+  AuditSort.when => l10n.adminColWhen,
+  AuditSort.who => l10n.adminColWho,
+  AuditSort.action => l10n.adminColAction,
+  AuditSort.team => l10n.adminColTeam,
+  AuditSort.target => l10n.adminColTarget,
+};
+
+/// The log as a table; tapping a column's heading sorts by it, and tapping
+/// it again flips the direction.
 class _AuditTable extends StatelessWidget {
-  const new({required this.entries});
+  const new({
+    required this.entries,
+    required this.sort,
+    required this.ascending,
+    required this.onSort,
+  });
 
   final List<AuditEntry> entries;
+  final AuditSort sort;
+  final bool ascending;
+  final ValueChanged<AuditSort> onSort;
 
   @override
   Widget build(BuildContext context) {
@@ -224,12 +273,15 @@ class _AuditTable extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: DataTable(
         showCheckboxColumn: false,
+        // The columns are in AuditSort's order.
+        sortColumnIndex: sort.index,
+        sortAscending: ascending,
         columns: [
-          DataColumn(label: Text(l10n.adminColWhen)),
-          DataColumn(label: Text(l10n.adminColWho)),
-          DataColumn(label: Text(l10n.adminColAction)),
-          DataColumn(label: Text(l10n.adminColTeam)),
-          DataColumn(label: Text(l10n.adminColTarget)),
+          for (final s in AuditSort.values)
+            DataColumn(
+              label: Text(_sortLabel(l10n, s)),
+              onSort: (_, _) => onSort(s),
+            ),
         ],
         rows: [
           for (final e in entries)

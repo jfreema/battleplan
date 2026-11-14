@@ -42,8 +42,23 @@ abstract class AdminTotals with _$AdminTotals {
   }) = _AdminTotals;
 }
 
-/// How the teams list is ordered (ADMIN-2), newest or largest first.
-enum AdminTeamSort { created, activity, members, storage }
+/// The teams list's columns, in the table's order, each of which it sorts
+/// by (ADMIN-2). Created is the default: newest first.
+enum AdminTeamSort {
+  name,
+  sport,
+  owner,
+  members,
+  activity,
+  storage,
+  status,
+  created;
+
+  /// Which way a column sorts when first picked: A to Z for text and
+  /// status, newest or largest first otherwise.
+  bool get ascendingFirst =>
+      this == name || this == sport || this == owner || this == status;
+}
 
 /// A team's state in the admin panel (ADMIN-2). Suspended wins over
 /// archived, as the server decides it.
@@ -56,6 +71,7 @@ abstract class AdminTeamQuery with _$AdminTeamQuery {
     /// A name prefix; blank lists every team.
     @Default('') String query,
     @Default(AdminTeamSort.created) AdminTeamSort sort,
+    @Default(false) bool ascending,
 
     /// Null shows every status.
     TeamStatus? status,
@@ -275,7 +291,22 @@ abstract class AuditEntry with _$AuditEntry {
   }) = _AuditEntry;
 }
 
-/// The audit log's filters (ADMIN-6). Each one left empty matches all.
+/// The audit log's columns, in the table's order, each of which it sorts
+/// by (ADMIN-6). When is the default: newest first.
+enum AuditSort {
+  when,
+  who,
+  action,
+  team,
+  target;
+
+  /// Which way a column sorts when first picked: newest first for When, A
+  /// to Z otherwise.
+  bool get ascendingFirst => this != when;
+}
+
+/// The audit log's filters (ADMIN-6), each one left empty matching all,
+/// and its sort.
 @freezed
 abstract class AuditFilter with _$AuditFilter {
   const factory({
@@ -288,10 +319,17 @@ abstract class AuditFilter with _$AuditFilter {
     /// zone (SET-7).
     DateTime? from,
     DateTime? until,
+    @Default(AuditSort.when) AuditSort sort,
+    @Default(false) bool ascending,
   }) = _AuditFilter;
 
   const new _();
 
+  /// Newest first, which the app reads from Firestore itself; any other
+  /// sort comes sorted from adminListAudit.
+  bool get newestFirst => sort == AuditSort.when && !ascending;
+
+  /// No filter is set (the sort doesn't count).
   bool get isEmpty =>
       actorId == null &&
       action == null &&

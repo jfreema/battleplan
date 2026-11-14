@@ -306,7 +306,7 @@ as int,
 mixin _$AdminTeamQuery {
 
 /// A name prefix; blank lists every team.
- String get query; AdminTeamSort get sort;/// Null shows every status.
+ String get query; AdminTeamSort get sort; bool get ascending;/// Null shows every status.
  TeamStatus? get status;
 /// Create a copy of AdminTeamQuery
 /// with the given fields replaced by the non-null parameter values.
@@ -319,20 +319,20 @@ $AdminTeamQueryCopyWith<AdminTeamQuery> get copyWith => _$AdminTeamQueryCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as AdminTeamQuery;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminTeamQuery&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.sort, _this.sort) || other.sort == _this.sort)&&(identical(other.status, _this.status) || other.status == _this.status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminTeamQuery&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.sort, _this.sort) || other.sort == _this.sort)&&(identical(other.ascending, _this.ascending) || other.ascending == _this.ascending)&&(identical(other.status, _this.status) || other.status == _this.status));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AdminTeamQuery;
-  return Object.hash(runtimeType,_this.query,_this.sort,_this.status);
+  return Object.hash(runtimeType,_this.query,_this.sort,_this.ascending,_this.status);
 }
 
 @override
 String toString() {
   final _this = this as AdminTeamQuery;
-  return 'AdminTeamQuery(query: ${_this.query}, sort: ${_this.sort}, status: ${_this.status})';
+  return 'AdminTeamQuery(query: ${_this.query}, sort: ${_this.sort}, ascending: ${_this.ascending}, status: ${_this.status})';
 }
 
 
@@ -343,7 +343,7 @@ abstract mixin class $AdminTeamQueryCopyWith<$Res>  {
   factory $AdminTeamQueryCopyWith(AdminTeamQuery value, $Res Function(AdminTeamQuery) _then) = _$AdminTeamQueryCopyWithImpl;
 @useResult
 $Res call({
- String query, AdminTeamSort sort, TeamStatus? status
+ String query, AdminTeamSort sort, bool ascending, TeamStatus? status
 });
 
 
@@ -360,11 +360,12 @@ class _$AdminTeamQueryCopyWithImpl<$Res>
 
 /// Create a copy of AdminTeamQuery
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? query = null,Object? sort = null,Object? status = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? query = null,Object? sort = null,Object? ascending = null,Object? status = freezed,}) {
   return _then(AdminTeamQuery(
 query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
-as AdminTeamSort,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as AdminTeamSort,ascending: null == ascending ? _self.ascending : ascending // ignore: cast_nullable_to_non_nullable
+as bool,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TeamStatus?,
   ));
 }
@@ -450,10 +451,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String query,  AdminTeamSort sort,  TeamStatus? status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String query,  AdminTeamSort sort,  bool ascending,  TeamStatus? status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AdminTeamQuery() when $default != null:
-return $default(_that.query,_that.sort,_that.status);case _:
+return $default(_that.query,_that.sort,_that.ascending,_that.status);case _:
   return orElse();
 
 }
@@ -471,10 +472,10 @@ return $default(_that.query,_that.sort,_that.status);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String query,  AdminTeamSort sort,  TeamStatus? status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String query,  AdminTeamSort sort,  bool ascending,  TeamStatus? status)  $default,) {final _that = this;
 switch (_that) {
 case _AdminTeamQuery():
-return $default(_that.query,_that.sort,_that.status);case _:
+return $default(_that.query,_that.sort,_that.ascending,_that.status);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -491,10 +492,10 @@ return $default(_that.query,_that.sort,_that.status);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String query,  AdminTeamSort sort,  TeamStatus? status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String query,  AdminTeamSort sort,  bool ascending,  TeamStatus? status)?  $default,) {final _that = this;
 switch (_that) {
 case _AdminTeamQuery() when $default != null:
-return $default(_that.query,_that.sort,_that.status);case _:
+return $default(_that.query,_that.sort,_that.ascending,_that.status);case _:
   return null;
 
 }
@@ -506,12 +507,13 @@ return $default(_that.query,_that.sort,_that.status);case _:
 
 
 class _AdminTeamQuery implements AdminTeamQuery {
-  const _AdminTeamQuery({this.query = '', this.sort = AdminTeamSort.created, this.status});
+  const _AdminTeamQuery({this.query = '', this.sort = AdminTeamSort.created, this.ascending = false, this.status});
   
 
 /// A name prefix; blank lists every team.
 @override@JsonKey() final  String query;
 @override@JsonKey() final  AdminTeamSort sort;
+@override@JsonKey() final  bool ascending;
 /// Null shows every status.
 @override final  TeamStatus? status;
 
@@ -525,18 +527,18 @@ _$AdminTeamQueryCopyWith<_AdminTeamQuery> get copyWith => __$AdminTeamQueryCopyW
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminTeamQuery&&(identical(other.query, query) || other.query == query)&&(identical(other.sort, sort) || other.sort == sort)&&(identical(other.status, status) || other.status == status));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminTeamQuery&&(identical(other.query, query) || other.query == query)&&(identical(other.sort, sort) || other.sort == sort)&&(identical(other.ascending, ascending) || other.ascending == ascending)&&(identical(other.status, status) || other.status == status));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,query,sort,status);
+    return Object.hash(runtimeType,query,sort,ascending,status);
 }
 
 @override
 String toString() {
-    return 'AdminTeamQuery(query: $query, sort: $sort, status: $status)';
+    return 'AdminTeamQuery(query: $query, sort: $sort, ascending: $ascending, status: $status)';
 }
 
 
@@ -547,7 +549,7 @@ abstract mixin class _$AdminTeamQueryCopyWith<$Res> implements $AdminTeamQueryCo
   factory _$AdminTeamQueryCopyWith(_AdminTeamQuery value, $Res Function(_AdminTeamQuery) _then) = __$AdminTeamQueryCopyWithImpl;
 @override @useResult
 $Res call({
- String query, AdminTeamSort sort, TeamStatus? status
+ String query, AdminTeamSort sort, bool ascending, TeamStatus? status
 });
 
 
@@ -564,11 +566,12 @@ class __$AdminTeamQueryCopyWithImpl<$Res>
 
 /// Create a copy of AdminTeamQuery
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? query = null,Object? sort = null,Object? status = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? query = null,Object? sort = null,Object? ascending = null,Object? status = freezed,}) {
   return _then(_AdminTeamQuery(
 query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
-as AdminTeamSort,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as AdminTeamSort,ascending: null == ascending ? _self.ascending : ascending // ignore: cast_nullable_to_non_nullable
+as bool,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TeamStatus?,
   ));
 }
@@ -3529,7 +3532,7 @@ mixin _$AuditFilter {
  String? get actorId; String? get action; GroupId? get groupId;/// From the instant [from] up to [until]: the start of the first day
 /// picked and the start of the day after the last, in the viewer's
 /// zone (SET-7).
- DateTime? get from; DateTime? get until;
+ DateTime? get from; DateTime? get until; AuditSort get sort; bool get ascending;
 /// Create a copy of AuditFilter
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -3541,20 +3544,20 @@ $AuditFilterCopyWith<AuditFilter> get copyWith => _$AuditFilterCopyWithImpl<Audi
 @override
 bool operator ==(Object other) {
   final _this = this as AuditFilter;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuditFilter&&(identical(other.actorId, _this.actorId) || other.actorId == _this.actorId)&&(identical(other.action, _this.action) || other.action == _this.action)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.from, _this.from) || other.from == _this.from)&&(identical(other.until, _this.until) || other.until == _this.until));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuditFilter&&(identical(other.actorId, _this.actorId) || other.actorId == _this.actorId)&&(identical(other.action, _this.action) || other.action == _this.action)&&(identical(other.groupId, _this.groupId) || other.groupId == _this.groupId)&&(identical(other.from, _this.from) || other.from == _this.from)&&(identical(other.until, _this.until) || other.until == _this.until)&&(identical(other.sort, _this.sort) || other.sort == _this.sort)&&(identical(other.ascending, _this.ascending) || other.ascending == _this.ascending));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AuditFilter;
-  return Object.hash(runtimeType,_this.actorId,_this.action,_this.groupId,_this.from,_this.until);
+  return Object.hash(runtimeType,_this.actorId,_this.action,_this.groupId,_this.from,_this.until,_this.sort,_this.ascending);
 }
 
 @override
 String toString() {
   final _this = this as AuditFilter;
-  return 'AuditFilter(actorId: ${_this.actorId}, action: ${_this.action}, groupId: ${_this.groupId}, from: ${_this.from}, until: ${_this.until})';
+  return 'AuditFilter(actorId: ${_this.actorId}, action: ${_this.action}, groupId: ${_this.groupId}, from: ${_this.from}, until: ${_this.until}, sort: ${_this.sort}, ascending: ${_this.ascending})';
 }
 
 
@@ -3565,7 +3568,7 @@ abstract mixin class $AuditFilterCopyWith<$Res>  {
   factory $AuditFilterCopyWith(AuditFilter value, $Res Function(AuditFilter) _then) = _$AuditFilterCopyWithImpl;
 @useResult
 $Res call({
- String? actorId, String? action, GroupId? groupId, DateTime? from, DateTime? until
+ String? actorId, String? action, GroupId? groupId, DateTime? from, DateTime? until, AuditSort sort, bool ascending
 });
 
 
@@ -3582,14 +3585,16 @@ class _$AuditFilterCopyWithImpl<$Res>
 
 /// Create a copy of AuditFilter
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? actorId = freezed,Object? action = freezed,Object? groupId = freezed,Object? from = freezed,Object? until = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? actorId = freezed,Object? action = freezed,Object? groupId = freezed,Object? from = freezed,Object? until = freezed,Object? sort = null,Object? ascending = null,}) {
   return _then(AuditFilter(
 actorId: freezed == actorId ? _self.actorId : actorId // ignore: cast_nullable_to_non_nullable
 as String?,action: freezed == action ? _self.action : action // ignore: cast_nullable_to_non_nullable
 as String?,groupId: freezed == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId?,from: freezed == from ? _self.from : from // ignore: cast_nullable_to_non_nullable
 as DateTime?,until: freezed == until ? _self.until : until // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
+as AuditSort,ascending: null == ascending ? _self.ascending : ascending // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -3674,10 +3679,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? actorId,  String? action,  GroupId? groupId,  DateTime? from,  DateTime? until)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? actorId,  String? action,  GroupId? groupId,  DateTime? from,  DateTime? until,  AuditSort sort,  bool ascending)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AuditFilter() when $default != null:
-return $default(_that.actorId,_that.action,_that.groupId,_that.from,_that.until);case _:
+return $default(_that.actorId,_that.action,_that.groupId,_that.from,_that.until,_that.sort,_that.ascending);case _:
   return orElse();
 
 }
@@ -3695,10 +3700,10 @@ return $default(_that.actorId,_that.action,_that.groupId,_that.from,_that.until)
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? actorId,  String? action,  GroupId? groupId,  DateTime? from,  DateTime? until)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? actorId,  String? action,  GroupId? groupId,  DateTime? from,  DateTime? until,  AuditSort sort,  bool ascending)  $default,) {final _that = this;
 switch (_that) {
 case _AuditFilter():
-return $default(_that.actorId,_that.action,_that.groupId,_that.from,_that.until);case _:
+return $default(_that.actorId,_that.action,_that.groupId,_that.from,_that.until,_that.sort,_that.ascending);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -3715,10 +3720,10 @@ return $default(_that.actorId,_that.action,_that.groupId,_that.from,_that.until)
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? actorId,  String? action,  GroupId? groupId,  DateTime? from,  DateTime? until)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? actorId,  String? action,  GroupId? groupId,  DateTime? from,  DateTime? until,  AuditSort sort,  bool ascending)?  $default,) {final _that = this;
 switch (_that) {
 case _AuditFilter() when $default != null:
-return $default(_that.actorId,_that.action,_that.groupId,_that.from,_that.until);case _:
+return $default(_that.actorId,_that.action,_that.groupId,_that.from,_that.until,_that.sort,_that.ascending);case _:
   return null;
 
 }
@@ -3730,7 +3735,7 @@ return $default(_that.actorId,_that.action,_that.groupId,_that.from,_that.until)
 
 
 class _AuditFilter extends AuditFilter {
-  const _AuditFilter({this.actorId, this.action, this.groupId, this.from, this.until}): super._();
+  const _AuditFilter({this.actorId, this.action, this.groupId, this.from, this.until, this.sort = AuditSort.when, this.ascending = false}): super._();
   
 
 @override final  String? actorId;
@@ -3741,6 +3746,8 @@ class _AuditFilter extends AuditFilter {
 /// zone (SET-7).
 @override final  DateTime? from;
 @override final  DateTime? until;
+@override@JsonKey() final  AuditSort sort;
+@override@JsonKey() final  bool ascending;
 
 /// Create a copy of AuditFilter
 /// with the given fields replaced by the non-null parameter values.
@@ -3752,18 +3759,18 @@ _$AuditFilterCopyWith<_AuditFilter> get copyWith => __$AuditFilterCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AuditFilter&&(identical(other.actorId, actorId) || other.actorId == actorId)&&(identical(other.action, action) || other.action == action)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.from, from) || other.from == from)&&(identical(other.until, until) || other.until == until));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AuditFilter&&(identical(other.actorId, actorId) || other.actorId == actorId)&&(identical(other.action, action) || other.action == action)&&(identical(other.groupId, groupId) || other.groupId == groupId)&&(identical(other.from, from) || other.from == from)&&(identical(other.until, until) || other.until == until)&&(identical(other.sort, sort) || other.sort == sort)&&(identical(other.ascending, ascending) || other.ascending == ascending));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,actorId,action,groupId,from,until);
+    return Object.hash(runtimeType,actorId,action,groupId,from,until,sort,ascending);
 }
 
 @override
 String toString() {
-    return 'AuditFilter(actorId: $actorId, action: $action, groupId: $groupId, from: $from, until: $until)';
+    return 'AuditFilter(actorId: $actorId, action: $action, groupId: $groupId, from: $from, until: $until, sort: $sort, ascending: $ascending)';
 }
 
 
@@ -3774,7 +3781,7 @@ abstract mixin class _$AuditFilterCopyWith<$Res> implements $AuditFilterCopyWith
   factory _$AuditFilterCopyWith(_AuditFilter value, $Res Function(_AuditFilter) _then) = __$AuditFilterCopyWithImpl;
 @override @useResult
 $Res call({
- String? actorId, String? action, GroupId? groupId, DateTime? from, DateTime? until
+ String? actorId, String? action, GroupId? groupId, DateTime? from, DateTime? until, AuditSort sort, bool ascending
 });
 
 
@@ -3791,14 +3798,16 @@ class __$AuditFilterCopyWithImpl<$Res>
 
 /// Create a copy of AuditFilter
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? actorId = freezed,Object? action = freezed,Object? groupId = freezed,Object? from = freezed,Object? until = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? actorId = freezed,Object? action = freezed,Object? groupId = freezed,Object? from = freezed,Object? until = freezed,Object? sort = null,Object? ascending = null,}) {
   return _then(_AuditFilter(
 actorId: freezed == actorId ? _self.actorId : actorId // ignore: cast_nullable_to_non_nullable
 as String?,action: freezed == action ? _self.action : action // ignore: cast_nullable_to_non_nullable
 as String?,groupId: freezed == groupId ? _self.groupId : groupId // ignore: cast_nullable_to_non_nullable
 as GroupId?,from: freezed == from ? _self.from : from // ignore: cast_nullable_to_non_nullable
 as DateTime?,until: freezed == until ? _self.until : until // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
+as AuditSort,ascending: null == ascending ? _self.ascending : ascending // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

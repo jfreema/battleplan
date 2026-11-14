@@ -3361,15 +3361,22 @@ class FakeAdminRepository implements AdminRepository {
             (scan != null || query.status == null || t.status == query.status))
           t,
     ];
-    int newest(DateTime? a, DateTime? b) =>
-        (b ?? DateTime(2000)).compareTo(a ?? DateTime(2000));
+    // Sorted as adminListTeams sorts: missing values last, ties by name.
+    Comparable<Object>? key(AdminTeamRow t) => switch (query.sort) {
+      AdminTeamSort.name => t.name.toLowerCase(),
+      AdminTeamSort.sport => t.sport.name,
+      AdminTeamSort.owner =>
+        t.ownerName.isEmpty ? null : t.ownerName.toLowerCase(),
+      AdminTeamSort.members => t.memberCount,
+      AdminTeamSort.activity => t.lastMessageAt?.millisecondsSinceEpoch,
+      AdminTeamSort.storage => t.storageBytes,
+      AdminTeamSort.status => t.status.index,
+      AdminTeamSort.created => t.createdAt?.millisecondsSinceEpoch,
+    };
     matching.sort(
-      (a, b) => switch (query.sort) {
-        AdminTeamSort.created => newest(a.createdAt, b.createdAt),
-        AdminTeamSort.activity => newest(a.lastMessageAt, b.lastMessageAt),
-        AdminTeamSort.members => b.memberCount.compareTo(a.memberCount),
-        AdminTeamSort.storage => b.storageBytes.compareTo(a.storageBytes),
-      },
+      (a, b) => _byKey(key(a), key(b), ascending: query.ascending) != 0
+          ? _byKey(key(a), key(b), ascending: query.ascending)
+          : a.name.toLowerCase().compareTo(b.name.toLowerCase()),
     );
     if (scan != null && query.status != null) {
       final start = after == null ? 0 : after.handle as int;
@@ -3479,10 +3486,7 @@ class FakeAdminRepository implements AdminRepository {
       AdminUserSort.lastActive => u.lastActiveAt?.millisecondsSinceEpoch,
     };
     int compare(AdminUserRow a, AdminUserRow b) {
-      final (ka, kb) = (key(a), key(b));
-      final byKey = ka == null || kb == null
-          ? (ka == null ? (kb == null ? 0 : 1) : -1)
-          : ka.compareTo(kb) * (query.ascending ? 1 : -1);
+      final byKey = _byKey(key(a), key(b), ascending: query.ascending);
       return byKey != 0
           ? byKey
           : a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
@@ -3610,13 +3614,29 @@ class FakeAdminRepository implements AdminRepository {
     int limit = adminPageSize,
   }) async {
     auditFilters.add(filter);
-    return _page([
-      for (final e in audit)
-        if ((filter.actorId == null || e.actorId == filter.actorId) &&
-            (filter.action == null || e.action == filter.action) &&
-            (filter.groupId == null || e.groupId == filter.groupId))
-          e,
-    ], after);
+    // Sorted as adminListAudit sorts (Who by uid here); ties newest first.
+    Comparable<Object>? key(AuditEntry e) => switch (filter.sort) {
+      AuditSort.when => e.createdAt?.millisecondsSinceEpoch,
+      AuditSort.who => e.actorId.toLowerCase(),
+      AuditSort.action => e.action.toLowerCase(),
+      AuditSort.team => e.groupId?.value.toLowerCase(),
+      AuditSort.target => '${e.targetType} ${e.targetId}'.toLowerCase(),
+    };
+    int newest(AuditEntry a, AuditEntry b) => (b.createdAt ?? DateTime(2000))
+        .compareTo(a.createdAt ?? DateTime(2000));
+    return _page(
+      [
+        for (final e in audit)
+          if ((filter.actorId == null || e.actorId == filter.actorId) &&
+              (filter.action == null || e.action == filter.action) &&
+              (filter.groupId == null || e.groupId == filter.groupId))
+            e,
+      ]..sort((a, b) {
+        final byKey = _byKey(key(a), key(b), ascending: filter.ascending);
+        return byKey != 0 ? byKey : newest(a, b);
+      }),
+      after,
+    );
   }
 
   AppConfig _config;
@@ -4349,3 +4369,13 @@ class FakeDuesRepository implements DuesRepository {
     _changed();
   }
 }
+
+/// How the admin lists compare one column's values, as the server does:
+/// missing values last either way.
+int _byKey(
+  Comparable<Object>? a,
+  Comparable<Object>? b, {
+  required bool ascending,
+}) => a == null || b == null
+    ? (a == null ? (b == null ? 0 : 1) : -1)
+    : a.compareTo(b) * (ascending ? 1 : -1);

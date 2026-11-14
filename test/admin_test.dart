@@ -115,6 +115,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Taps a table's column heading, scrolled into view first: the admin
+  /// tables scroll sideways when their columns outgrow the page.
+  Future<void> tapHeading(WidgetTester tester, String label) async {
+    final heading = find.descendant(
+      of: find.byType(DataTable),
+      matching: find.text(label),
+    );
+    await tester.ensureVisible(heading);
+    await tester.pumpAndSettle();
+    await tester.tap(heading);
+    await tester.pumpAndSettle();
+  }
+
   group('access (ADMIN)', () {
     testWidgets('only super admins get in; others go back to their team', (
       tester,
@@ -234,12 +247,11 @@ void main() {
       expect(find.text('300 MB'), findsOneWidget);
       expect(find.text('Suspended'), findsWidgets);
 
-      await tester.tap(find.text('Newest'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Most storage').last);
-      await tester.pumpAndSettle();
-      expect(shownNames(tester), ['Lightning', 'Thunder', 'Hail']);
+      // Storage starts largest first; Thunder and Hail tie, so by name.
+      await tapHeading(tester, 'Storage');
+      expect(shownNames(tester), ['Lightning', 'Hail', 'Thunder']);
       expect(admin.teamQueries.last.sort, AdminTeamSort.storage);
+      expect(admin.teamQueries.last.ascending, isFalse);
 
       await tester.tap(find.widgetWithText(ChoiceChip, 'Suspended'));
       await tester.pumpAndSettle();
@@ -253,6 +265,135 @@ void main() {
       await tester.pumpAndSettle();
       expect(shownNames(tester), ['Lightning']);
       expect(admin.teamQueries.last.query, 'li');
+    });
+
+    testWidgets('sorts by any column either way (owner, 2026-11-14)', (
+      tester,
+    ) async {
+      final admin = FakeAdminRepository(teams: teamRows());
+      await open(tester, '/admin/teams', admin: admin);
+      DataTable table() => tester.widget<DataTable>(find.byType(DataTable));
+      // Newest first: Created is the last column.
+      expect((table().sortColumnIndex, table().sortAscending), (7, false));
+      await tapHeading(tester, 'Name');
+      expect(shownNames(tester), ['Hail', 'Lightning', 'Thunder']);
+      expect((table().sortColumnIndex, table().sortAscending), (0, true));
+      await tapHeading(tester, 'Name');
+      expect(shownNames(tester), ['Thunder', 'Lightning', 'Hail']);
+      await tapHeading(tester, 'Members');
+      expect(shownNames(tester), ['Thunder', 'Lightning', 'Hail']);
+      await tapHeading(tester, 'Members');
+      expect(shownNames(tester), ['Hail', 'Lightning', 'Thunder']);
+      await tapHeading(tester, 'Status');
+      expect(shownNames(tester), ['Lightning', 'Thunder', 'Hail']);
+      await tapHeading(tester, 'Created');
+      expect(shownNames(tester), ['Thunder', 'Lightning', 'Hail']);
+      await tapHeading(tester, 'Created');
+      expect(shownNames(tester), ['Hail', 'Lightning', 'Thunder']);
+      expect(admin.teamQueries.last.sort, AdminTeamSort.created);
+      expect(admin.teamQueries.last.ascending, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('on a phone, Sort by and the direction button sort it', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        '/admin/teams',
+        admin: FakeAdminRepository(teams: teamRows()),
+        size: const Size(390, 844),
+      );
+      expect(find.text('Descending'), findsOneWidget);
+      await tester.tap(find.byType(DropdownButton<AdminTeamSort>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Name').last);
+      await tester.pumpAndSettle();
+      expect(shownNames(tester), ['Hail', 'Lightning', 'Thunder']);
+      await tester.tap(find.text('Ascending'));
+      await tester.pumpAndSettle();
+      expect(shownNames(tester), ['Thunder', 'Lightning', 'Hail']);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('audit log (ADMIN-6)', () {
+    AuditEntry entry(
+      String id,
+      String actor,
+      String action, {
+      required int hoursAgo,
+      String? team,
+      String target = 'group',
+    }) => AuditEntry(
+      id: id,
+      actorId: actor,
+      action: action,
+      groupId: team == null ? null : GroupId(team),
+      targetType: target,
+      targetId: team ?? 'lee',
+      createdAt: now.subtract(Duration(hours: hoursAgo)),
+    );
+
+    FakeAdminRepository logged() => FakeAdminRepository(
+      audit: [
+        entry('e1', 'sam', 'updateGroup', hoursAgo: 3, team: 't1'),
+        entry('e2', 'ann', 'deleteUser', hoursAgo: 1, target: 'user'),
+        entry('e3', 'bob', 'archiveGroup', hoursAgo: 2, team: 't2'),
+      ],
+    );
+
+    testWidgets('sorts by any column either way (owner, 2026-11-14)', (
+      tester,
+    ) async {
+      final admin = logged();
+      await open(tester, '/admin/audit', admin: admin);
+      List<String> actions() => [
+        for (final row in tester.widget<DataTable>(find.byType(DataTable)).rows)
+          (row.cells[2].child as Text).data!,
+      ];
+      // Newest first.
+      expect(actions(), ['deleteUser', 'archiveGroup', 'updateGroup']);
+      await tapHeading(tester, 'Action');
+      expect(actions(), ['archiveGroup', 'deleteUser', 'updateGroup']);
+      await tapHeading(tester, 'Action');
+      expect(actions(), ['updateGroup', 'deleteUser', 'archiveGroup']);
+      expect(admin.auditFilters.last.sort, AuditSort.action);
+      expect(admin.auditFilters.last.ascending, isFalse);
+      // Entries for no team come last.
+      await tapHeading(tester, 'Team');
+      expect(actions(), ['updateGroup', 'archiveGroup', 'deleteUser']);
+      await tapHeading(tester, 'When');
+      expect(actions(), ['deleteUser', 'archiveGroup', 'updateGroup']);
+      expect(admin.auditFilters.last.newestFirst, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('on a phone, Sort by and the direction button sort it', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        '/admin/audit',
+        admin: logged(),
+        size: const Size(390, 844),
+      );
+      List<String> actions() => [
+        for (final tile in tester.widgetList<ListTile>(find.byType(ListTile)))
+          (tile.title! as Text).data!,
+      ];
+      expect(actions(), ['deleteUser', 'archiveGroup', 'updateGroup']);
+      await tester.ensureVisible(find.byType(DropdownButton<AuditSort>));
+      await tester.tap(find.byType(DropdownButton<AuditSort>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Action').last);
+      await tester.pumpAndSettle();
+      expect(actions(), ['archiveGroup', 'deleteUser', 'updateGroup']);
+      await tester.ensureVisible(find.text('Ascending'));
+      await tester.tap(find.text('Ascending'));
+      await tester.pumpAndSettle();
+      expect(actions(), ['updateGroup', 'deleteUser', 'archiveGroup']);
+      expect(tester.takeException(), isNull);
     });
   });
 
@@ -888,34 +1029,23 @@ void main() {
           ((row.cells.first.child as Row).children.first as Text).data!,
       ];
       DataTable table() => tester.widget<DataTable>(find.byType(DataTable));
-      Future<void> tapHeading(String label) async {
-        final heading = find.descendant(
-          of: find.byType(DataTable),
-          matching: find.text(label),
-        );
-        // The table scrolls sideways when its columns outgrow the page.
-        await tester.ensureVisible(heading);
-        await tester.pumpAndSettle();
-        await tester.tap(heading);
-        await tester.pumpAndSettle();
-      }
 
       // Newest joined first, as before.
       expect(names(), ['Ann Added', 'Sam Rivera', 'Dan Disabled', 'Bea Boss']);
       expect((table().sortColumnIndex, table().sortAscending), (3, false));
-      await tapHeading('Name');
+      await tapHeading(tester, 'Name');
       expect(names(), ['Ann Added', 'Bea Boss', 'Dan Disabled', 'Sam Rivera']);
       expect((table().sortColumnIndex, table().sortAscending), (0, true));
-      await tapHeading('Name');
+      await tapHeading(tester, 'Name');
       expect(names(), ['Sam Rivera', 'Dan Disabled', 'Bea Boss', 'Ann Added']);
-      await tapHeading('Status');
+      await tapHeading(tester, 'Status');
       expect(names(), ['Bea Boss', 'Sam Rivera', 'Ann Added', 'Dan Disabled']);
       // A date column starts newest first; Ann has never been active.
-      await tapHeading('Last active');
+      await tapHeading(tester, 'Last active');
       expect(names(), ['Bea Boss', 'Dan Disabled', 'Sam Rivera', 'Ann Added']);
-      await tapHeading('Last active');
+      await tapHeading(tester, 'Last active');
       expect(names(), ['Sam Rivera', 'Dan Disabled', 'Bea Boss', 'Ann Added']);
-      await tapHeading('Email');
+      await tapHeading(tester, 'Email');
       expect(names(), ['Ann Added', 'Bea Boss', 'Dan Disabled', 'Sam Rivera']);
       expect(tester.takeException(), isNull);
     });

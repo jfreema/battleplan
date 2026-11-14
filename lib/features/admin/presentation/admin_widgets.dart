@@ -366,6 +366,58 @@ class AdminSectionCard extends StatelessWidget {
   );
 }
 
+/// A list's sort on phones (ADMIN-2, ADMIN-4, ADMIN-6): **Sort by** a
+/// column, and a button showing the direction that flips it. Wide screens
+/// sort by tapping the table's headings instead. Its own Wrap, so the
+/// button drops to the next line on a narrow phone instead of overflowing.
+class AdminSortMenu<T extends Object> extends StatelessWidget {
+  const new({
+    required this.value,
+    required this.values,
+    required this.label,
+    required this.ascending,
+    required this.onSort,
+    super.key,
+  });
+
+  final T value;
+  final List<T> values;
+  final String Function(T) label;
+  final bool ascending;
+
+  /// Called with a new column, or with [value] again to flip it.
+  final ValueChanged<T> onSort;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Wrap(
+      spacing: Space.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(l10n.adminSortBy),
+        DropdownButton<T>(
+          value: value,
+          onChanged: (s) {
+            if (s != null && s != value) onSort(s);
+          },
+          items: [
+            for (final s in values)
+              DropdownMenuItem(value: s, child: Text(label(s))),
+          ],
+        ),
+        TextButton.icon(
+          onPressed: () => onSort(value),
+          icon: Icon(ascending ? AppIcons.arrowUp : AppIcons.arrowDown),
+          label: Text(
+            ascending ? l10n.adminSortAscending : l10n.adminSortDescending,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// "Load more" under a paged list, while there's more.
 class LoadMoreButton extends StatelessWidget {
   const new({required this.loading, required this.onPressed, super.key});

@@ -74,7 +74,16 @@ void main() {
     expect(functions.lastData('adminListTeams'), {
       'query': 'thu',
       'sort': 'created',
+      'direction': 'desc',
       'status': 'suspended',
+      'limit': adminPageSize,
+    });
+    await repo.listTeams(
+      const AdminTeamQuery(sort: AdminTeamSort.owner, ascending: true),
+    );
+    expect(functions.lastData('adminListTeams'), {
+      'sort': 'owner',
+      'direction': 'asc',
       'limit': adminPageSize,
     });
     functions.handlers['adminListTeams'] = (_) => {
@@ -415,6 +424,62 @@ void main() {
     expect(filtered.items.map((e) => e.id), ['a0']);
     final byTeam = await repo.auditLog(const AuditFilter(groupId: _g));
     expect(byTeam.items.map((e) => e.id), ['a2']);
+    // Read straight from auditLogs so far; any other sort asks the server.
+    expect(functions.calls.where((c) => c.$1 == 'adminListAudit'), isEmpty);
+  });
+
+  test('gets the audit log sorted another way from adminListAudit', () async {
+    functions.handlers['adminListAudit'] = (_) => {
+      'rows': [
+        {
+          'id': 'a5',
+          'actorId': 'admin',
+          'actorName': 'Ada',
+          'action': 'user.disable',
+          'groupId': 'g1',
+          'targetType': 'user',
+          'targetId': 'sam',
+          'before': {'status': 'active', 'at': '2026-10-01T12:00:00.000Z'},
+          'after': {'status': 'disabled'},
+          'createdAt': '2026-10-01T12:00:00.000Z',
+        },
+      ],
+      'nextCursor': '50',
+    };
+    final page = await repo.auditLog(
+      AuditFilter(
+        actorId: 'admin',
+        groupId: _g,
+        from: DateTime.utc(2026, 10),
+        until: DateTime.utc(2026, 10, 2),
+        sort: AuditSort.who,
+        ascending: true,
+      ),
+    );
+    expect(functions.lastData('adminListAudit'), {
+      'actorId': 'admin',
+      'groupId': _g.value,
+      'from': '2026-10-01T00:00:00.000Z',
+      'until': '2026-10-02T00:00:00.000Z',
+      'sort': 'who',
+      'direction': 'asc',
+      'limit': adminPageSize,
+    });
+    final e = page.items.single;
+    expect(
+      (e.id, e.actorId, e.action, e.groupId),
+      ('a5', 'admin', 'user.disable', const GroupId('g1')),
+    );
+    expect(e.before, {'status': 'active', 'at': '2026-10-01T12:00:00.000Z'});
+    expect(e.createdAt?.toUtc(), DateTime.utc(2026, 10, 1, 12));
+    expect(page.next!.handle, '50');
+    await repo.auditLog(const AuditFilter(ascending: true), after: page.next);
+    expect(functions.lastData('adminListAudit'), {
+      'sort': 'when',
+      'direction': 'asc',
+      'limit': adminPageSize,
+      'cursor': '50',
+    });
   });
 
   test('watches and updates config/app (ADMIN-7)', () async {

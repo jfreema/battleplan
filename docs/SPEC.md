@@ -1012,9 +1012,9 @@ This is for platform operators (super admins) to manage every team and user.
   - open reports.
 - **ADMIN-2 · MVP · Teams.**
   - Search by name.
-  - Sort by created date, last activity, members, or storage.
+  - Sort by any column either way (owner's request 2026-11-14: "similarly, in the admin panel make the teams and audit logs both sortable by each column"), as the users list does (ADMIN-4): tap a heading on a computer, or **Sort by** and the direction button on a phone. Newest first by default. Names, sports, owners, and status start A to Z (Active, Archived, Suspended), members, storage, and the dates largest or newest first; teams with no owner or no messages yet come last.
   - Filter by Active, Archived, or Suspended.
-  - Columns: name, sport, owner, members, last activity, storage, status.
+  - Columns: name, sport, owner, members, last activity, storage, status, created.
 - **ADMIN-3 · MVP · Team detail.**
   - **Edit:** the team's profile and settings.
   - **People:** change roles, remove members, add by email, transfer ownership, manage players and guardians.
@@ -1043,6 +1043,7 @@ This is for platform operators (super admins) to manage every team and user.
 - **ADMIN-6 · MVP · Audit log.**
   - Records every admin or destructive action: who, what, which team, when, and before/after values.
   - Filter by person, action, team, or date.
+  - Sort by any column, When, Who, Action, Team, or Target, either way (owner's request 2026-11-14: "similarly, in the admin panel make the teams and audit logs both sortable by each column"), the same way as the users and teams. Newest first by default; Who sorts by the person's name, or their ID once they're gone; entries for no team come last.
   - Read-only, kept for 1 year.
 - **ADMIN-7 · MVP · Platform settings.**
   - Whether anyone can create teams, and the teams-per-person-per-day limit.
