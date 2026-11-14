@@ -162,9 +162,17 @@ export const USER_FILTER: Record<UserFilter, [field: string, value: string | boo
   superAdmin: ['superAdmin', true],
 };
 
+/** The users list's columns, each of which it can be sorted by (ADMIN-4). */
+export const userSortValues = ['name', 'email', 'status', 'joined', 'lastActive'] as const;
+export type UserSort = (typeof userSortValues)[number];
+
 export const ListUsersInput = z.object({
   query: Query,
   filter: z.enum(userFilterValues).optional(),
+  /** Newest joined first unless asked: the only order Firestore pages by itself. */
+  sort: z.enum(userSortValues).default('joined'),
+  /** Unset: A to Z for text and status, newest first for dates. */
+  direction: z.enum(['asc', 'desc']).optional(),
   cursor: Cursor,
   limit: Limit,
 });

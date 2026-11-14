@@ -3466,13 +3466,38 @@ class FakeAdminRepository implements AdminRepository {
       AdminUserFilter.disabled => u.status == UserStatus.disabled,
       AdminUserFilter.superAdmin => u.superAdmin,
     };
-    return _page([
-      for (final u in users)
-        if ((u.displayName.toLowerCase().startsWith(q) ||
-                (u.email ?? '').toLowerCase().startsWith(q)) &&
-            matches(u))
-          u,
-    ], after);
+    // Sorted as adminListUsers sorts: missing values last, ties by name.
+    Comparable<Object>? key(AdminUserRow u) => switch (query.sort) {
+      AdminUserSort.name => u.displayName.toLowerCase(),
+      AdminUserSort.email => u.email?.toLowerCase(),
+      AdminUserSort.status => switch (u.status) {
+        UserStatus.active => 0,
+        UserStatus.provisioned => 1,
+        UserStatus.disabled => 2,
+      },
+      AdminUserSort.joined => u.createdAt?.millisecondsSinceEpoch,
+      AdminUserSort.lastActive => u.lastActiveAt?.millisecondsSinceEpoch,
+    };
+    int compare(AdminUserRow a, AdminUserRow b) {
+      final (ka, kb) = (key(a), key(b));
+      final byKey = ka == null || kb == null
+          ? (ka == null ? (kb == null ? 0 : 1) : -1)
+          : ka.compareTo(kb) * (query.ascending ? 1 : -1);
+      return byKey != 0
+          ? byKey
+          : a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+    }
+
+    return _page(
+      [
+        for (final u in users)
+          if ((u.displayName.toLowerCase().startsWith(q) ||
+                  (u.email ?? '').toLowerCase().startsWith(q)) &&
+              matches(u))
+            u,
+      ]..sort(compare),
+      after,
+    );
   }
 
   @override

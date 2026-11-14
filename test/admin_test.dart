@@ -862,6 +862,93 @@ void main() {
       expect(find.text('Continue with Google'), findsOneWidget);
     });
 
+    testWidgets('sorts by any column either way (owner, 2026-11-14)', (
+      tester,
+    ) async {
+      final admin = people();
+      admin.users
+        ..[0] = admin.users[0].copyWith(
+          createdAt: now.subtract(const Duration(days: 40)),
+          lastActiveAt: now.subtract(const Duration(days: 1)),
+        )
+        ..[1] = admin.users[1].copyWith(
+          createdAt: now.subtract(const Duration(days: 3)),
+          lastActiveAt: now.subtract(const Duration(days: 5)),
+        )
+        ..[2] = admin.users[2].copyWith(
+          createdAt: now.subtract(const Duration(days: 1)),
+        )
+        ..[3] = admin.users[3].copyWith(
+          createdAt: now.subtract(const Duration(days: 9)),
+          lastActiveAt: now.subtract(const Duration(days: 2)),
+        );
+      await open(tester, '/admin/users', admin: admin);
+      List<String> names() => [
+        for (final row in tester.widget<DataTable>(find.byType(DataTable)).rows)
+          ((row.cells.first.child as Row).children.first as Text).data!,
+      ];
+      DataTable table() => tester.widget<DataTable>(find.byType(DataTable));
+      Future<void> tapHeading(String label) async {
+        final heading = find.descendant(
+          of: find.byType(DataTable),
+          matching: find.text(label),
+        );
+        // The table scrolls sideways when its columns outgrow the page.
+        await tester.ensureVisible(heading);
+        await tester.pumpAndSettle();
+        await tester.tap(heading);
+        await tester.pumpAndSettle();
+      }
+
+      // Newest joined first, as before.
+      expect(names(), ['Ann Added', 'Sam Rivera', 'Dan Disabled', 'Bea Boss']);
+      expect((table().sortColumnIndex, table().sortAscending), (3, false));
+      await tapHeading('Name');
+      expect(names(), ['Ann Added', 'Bea Boss', 'Dan Disabled', 'Sam Rivera']);
+      expect((table().sortColumnIndex, table().sortAscending), (0, true));
+      await tapHeading('Name');
+      expect(names(), ['Sam Rivera', 'Dan Disabled', 'Bea Boss', 'Ann Added']);
+      await tapHeading('Status');
+      expect(names(), ['Bea Boss', 'Sam Rivera', 'Ann Added', 'Dan Disabled']);
+      // A date column starts newest first; Ann has never been active.
+      await tapHeading('Last active');
+      expect(names(), ['Bea Boss', 'Dan Disabled', 'Sam Rivera', 'Ann Added']);
+      await tapHeading('Last active');
+      expect(names(), ['Sam Rivera', 'Dan Disabled', 'Bea Boss', 'Ann Added']);
+      await tapHeading('Email');
+      expect(names(), ['Ann Added', 'Bea Boss', 'Dan Disabled', 'Sam Rivera']);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('on a phone, Sort by and the direction button sort it', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        '/admin/users',
+        admin: people(),
+        size: const Size(390, 844),
+      );
+      List<String> names() => [
+        for (final tile in tester.widgetList<ListTile>(find.byType(ListTile)))
+          (((tile.title! as Row).children.first as Flexible).child as Text)
+              .data!,
+      ];
+      expect(find.text('Sort by'), findsOneWidget);
+      expect(find.text('Descending'), findsOneWidget);
+      await tester.tap(find.byType(DropdownButton<AdminUserSort>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Name').last);
+      await tester.pumpAndSettle();
+      expect(names(), ['Ann Added', 'Bea Boss', 'Dan Disabled', 'Sam Rivera']);
+      expect(find.text('Ascending'), findsOneWidget);
+      await tester.tap(find.text('Ascending'));
+      await tester.pumpAndSettle();
+      expect(names(), ['Sam Rivera', 'Dan Disabled', 'Bea Boss', 'Ann Added']);
+      expect(find.text('Descending'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('create a user with a team and role', (tester) async {
       final admin = people();
       await open(tester, '/admin/users', admin: admin);

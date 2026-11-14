@@ -261,6 +261,8 @@ class FunctionsAdminRepository implements AdminRepository {
     {
       if (query.query.trim().isNotEmpty) 'query': query.query.trim(),
       'filter': ?query.filter?.name,
+      'sort': query.sort.name,
+      'direction': query.ascending ? 'asc' : 'desc',
       'limit': limit,
     },
     _userRow,

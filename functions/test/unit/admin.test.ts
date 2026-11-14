@@ -25,6 +25,7 @@ import {
   UpdatePlayerInput,
   UpdateUserInput,
 } from '../../src/admin/inputs.js';
+import { sortUserRows, type UserRow } from '../../src/admin/service.js';
 import { accountSetupEmail, passwordResetEmail } from '../../src/email/templates.js';
 import { Limits } from '../../src/shared/constants.js';
 
@@ -66,6 +67,13 @@ describe('list inputs (ADMIN-2, ADMIN-4, ADMIN-5)', () => {
     expect(ok(ListTeamsInput, { status: 'deleted' })).toBe(false);
     expect(ok(ListUsersInput, { filter: 'owner' })).toBe(false);
     expect(ok(ListUsersInput, { filter: 'superAdmin' })).toBe(true);
+    for (const sort of ['name', 'email', 'status', 'joined', 'lastActive']) {
+      expect(ok(ListUsersInput, { sort, direction: 'asc' })).toBe(true);
+    }
+    expect(ok(ListUsersInput, { sort: 'createdAt' })).toBe(false);
+    expect(ok(ListUsersInput, { sort: 'name', direction: 'up' })).toBe(false);
+    expect(ListUsersInput.parse({})).toMatchObject({ sort: 'joined' });
+    expect(ListUsersInput.parse({}).direction).toBeUndefined();
     expect(ok(ListTeamsInput, { cursor: 'groups/x' })).toBe(false);
     expect(ListReportsInput.parse({}).status).toBe('open');
     expect(ok(ListReportsInput, { status: 'closed' })).toBe(false);
@@ -287,5 +295,40 @@ describe('admin emails (ADMIN-4, AUTH-6)', () => {
   it('escapes names in the HTML', () => {
     const email = accountSetupEmail('pat@example.com', '<b>Jo</b>', 'https://example.com/link');
     expect(email.html).toContain('&lt;b&gt;Jo&lt;/b&gt;');
+  });
+});
+
+describe('sorting the users list (ADMIN-4)', () => {
+  const row = (uid: string, extra: Partial<UserRow> = {}): UserRow => ({
+    uid,
+    displayName: uid,
+    email: `${uid}@example.com`,
+    photoPath: null,
+    status: 'active',
+    superAdmin: false,
+    disabled: false,
+    createdAt: null,
+    lastActiveAt: null,
+    ...extra,
+  });
+  const ids = (rows: UserRow[]) => rows.map((r) => r.uid);
+
+  it('puts people missing the value last, whichever way', () => {
+    const rows = [
+      row('ann', { lastActiveAt: '2026-11-01T00:00:00.000Z' }),
+      row('bo'),
+      row('cy', { lastActiveAt: '2026-11-03T00:00:00.000Z' }),
+    ];
+    expect(ids(sortUserRows(rows, 'lastActive', 'desc'))).toEqual(['cy', 'ann', 'bo']);
+    expect(ids(sortUserRows(rows, 'lastActive', 'asc'))).toEqual(['ann', 'cy', 'bo']);
+    expect(ids(sortUserRows([row('zed', { email: null }), row('amy')], 'email', 'asc'))).toEqual(['amy', 'zed']);
+  });
+
+  it('ignores case, orders statuses as they read, and breaks ties by name', () => {
+    expect(ids(sortUserRows([row('b', { displayName: 'bea' }), row('a', { displayName: 'Al' })], 'name', 'asc'))).toEqual(['a', 'b']);
+    const rows = [row('dee', { status: 'disabled' }), row('al', { status: 'provisioned' }), row('cat'), row('bob')];
+    expect(ids(sortUserRows(rows, 'status', 'asc'))).toEqual(['bob', 'cat', 'al', 'dee']);
+    expect(ids(sortUserRows(rows, 'status', 'desc'))).toEqual(['dee', 'al', 'bob', 'cat']);
+    expect(ids(rows)).toEqual(['dee', 'al', 'cat', 'bob']);
   });
 });

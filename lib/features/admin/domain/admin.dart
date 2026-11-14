@@ -141,13 +141,29 @@ abstract class AdminTeamDetail with _$AdminTeamDetail {
 /// added by email that hasn't signed in yet.
 enum AdminUserFilter { added, active, disabled, superAdmin }
 
-/// The users list's search and filter (ADMIN-4).
+/// The users list's columns, each of which it sorts by (ADMIN-4).
+enum AdminUserSort {
+  name,
+  email,
+  status,
+  joined,
+  lastActive;
+
+  /// Which way a column sorts when first picked: A to Z for text and
+  /// status, newest first for dates.
+  bool get ascendingFirst => this != joined && this != lastActive;
+}
+
+/// The users list's search, filter, and sort (ADMIN-4). Newest joined
+/// first by default.
 @freezed
 abstract class AdminUserQuery with _$AdminUserQuery {
   const factory({
     /// A name or email prefix; blank lists everyone.
     @Default('') String query,
     AdminUserFilter? filter,
+    @Default(AdminUserSort.joined) AdminUserSort sort,
+    @Default(false) bool ascending,
   }) = _AdminUserQuery;
 }
 

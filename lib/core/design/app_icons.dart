@@ -47,6 +47,7 @@ abstract final class AppIcons {
   static const IconData reply = Symbols.reply_rounded;
   static const IconData delete = Symbols.delete_rounded;
   static const IconData arrowDown = Symbols.arrow_downward_rounded;
+  static const IconData arrowUp = Symbols.arrow_upward_rounded;
   static const IconData report = Symbols.flag_rounded;
   static const IconData block = Symbols.block_rounded;
   static const IconData notificationsOn = Symbols.notifications_active_rounded;

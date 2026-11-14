@@ -18,9 +18,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// ADMIN-4 at `/admin/users`: everyone, searchable by name or email and
-/// filtered by Added, Active, Disabled, or Super admin, with Create user.
-/// A table on wide screens, a list on phones.
+/// ADMIN-4 at `/admin/users`: everyone, searchable by name or email,
+/// filtered by Added, Active, Disabled, or Super admin, and sorted by any
+/// column either way (owner's request 2026-11-14), with Create user. A
+/// table on wide screens, whose column headers sort it; a list on phones,
+/// with a Sort by menu.
 class AdminUsersScreen extends ConsumerStatefulWidget {
   const new({super.key});
 
@@ -37,6 +39,15 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     _debounce?.cancel();
     super.dispose();
   }
+
+  /// Sorts by [sort]: the same column again flips the direction; a new one
+  /// starts A to Z, or newest first for dates.
+  void _sortBy(AdminUserSort sort) => setState(
+    () => _query = _query.copyWith(
+      sort: sort,
+      ascending: sort == _query.sort ? !_query.ascending : sort.ascendingFirst,
+    ),
+  );
 
   void _search(String text) {
     _debounce?.cancel();
@@ -113,6 +124,40 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               ),
           ],
         ),
+        // Its own Wrap, so the direction button drops to the next line on
+        // a narrow phone instead of overflowing.
+        if (!wide)
+          Wrap(
+            spacing: Space.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(l10n.adminSortUsersBy),
+              DropdownButton<AdminUserSort>(
+                value: _query.sort,
+                onChanged: (s) {
+                  if (s != null && s != _query.sort) _sortBy(s);
+                },
+                items: [
+                  for (final s in AdminUserSort.values)
+                    DropdownMenuItem(
+                      value: s,
+                      child: Text(_sortLabel(l10n, s)),
+                    ),
+                ],
+              ),
+              TextButton.icon(
+                onPressed: () => _sortBy(_query.sort),
+                icon: Icon(
+                  _query.ascending ? AppIcons.arrowUp : AppIcons.arrowDown,
+                ),
+                label: Text(
+                  _query.ascending
+                      ? l10n.adminSortAscending
+                      : l10n.adminSortDescending,
+                ),
+              ),
+            ],
+          ),
       ],
     );
 
@@ -146,7 +191,13 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (wide)
-                  _UsersTable(rows: value.items, onOpen: open)
+                  _UsersTable(
+                    rows: value.items,
+                    sort: _query.sort,
+                    ascending: _query.ascending,
+                    onSort: _sortBy,
+                    onOpen: open,
+                  )
                 else
                   for (final u in value.items)
                     _UserTile(user: u, onTap: () => open(u)),
@@ -168,6 +219,15 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   }
 }
 
+/// A sort's name: its column's heading.
+String _sortLabel(AppLocalizations l10n, AdminUserSort s) => switch (s) {
+  AdminUserSort.name => l10n.adminColName,
+  AdminUserSort.email => l10n.emailLabel,
+  AdminUserSort.status => l10n.adminColStatus,
+  AdminUserSort.joined => l10n.adminColJoined,
+  AdminUserSort.lastActive => l10n.adminColLastActive,
+};
+
 String _filterLabel(AppLocalizations l10n, AdminUserFilter? f) => switch (f) {
   null => l10n.adminFilterAll,
   AdminUserFilter.added => l10n.adminStatusAdded,
@@ -176,10 +236,21 @@ String _filterLabel(AppLocalizations l10n, AdminUserFilter? f) => switch (f) {
   AdminUserFilter.superAdmin => l10n.adminSuperAdmin,
 };
 
+/// The users as a table; tapping a column's heading sorts by it, and
+/// tapping it again flips the direction.
 class _UsersTable extends StatelessWidget {
-  const new({required this.rows, required this.onOpen});
+  const new({
+    required this.rows,
+    required this.sort,
+    required this.ascending,
+    required this.onSort,
+    required this.onOpen,
+  });
 
   final List<AdminUserRow> rows;
+  final AdminUserSort sort;
+  final bool ascending;
+  final ValueChanged<AdminUserSort> onSort;
   final ValueChanged<AdminUserRow> onOpen;
 
   @override
@@ -189,12 +260,15 @@ class _UsersTable extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: DataTable(
         showCheckboxColumn: false,
+        // The columns are in AdminUserSort's order.
+        sortColumnIndex: sort.index,
+        sortAscending: ascending,
         columns: [
-          DataColumn(label: Text(l10n.adminColName)),
-          DataColumn(label: Text(l10n.emailLabel)),
-          DataColumn(label: Text(l10n.adminColStatus)),
-          DataColumn(label: Text(l10n.adminColJoined)),
-          DataColumn(label: Text(l10n.adminColLastActive)),
+          for (final s in AdminUserSort.values)
+            DataColumn(
+              label: Text(_sortLabel(l10n, s)),
+              onSort: (_, _) => onSort(s),
+            ),
         ],
         rows: [
           for (final u in rows)

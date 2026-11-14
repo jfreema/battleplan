@@ -26,6 +26,7 @@ import {
   type TeamSort,
   type TeamStatus,
   type UserFilter,
+  type UserSort,
 } from './inputs.js';
 
 const DAY_MS = 86_400_000;
@@ -349,41 +350,101 @@ function userRow(
 }
 
 /**
- * A page of people (ADMIN-4), newest first, optionally filtered by Added,
- * Active, Disabled, or Super admin. A search matches the start of the name
- * or the email and returns up to [limit] matches in name order, without
- * paging (ARCH §6.2 admin search).
+ * The most people a sorted users list reads (ADMIN-4). Sorting by a column
+ * other than Joined happens here, over everyone the filter matches, since
+ * last active comes from Auth and Firestore drops documents missing the
+ * field it orders by; past this many, it sorts the newest who joined.
+ */
+export const USER_SORT_MAX = 2000;
+
+/** Where a status falls when sorting by it: Active, Added, then Disabled, as they read. */
+const STATUS_ORDER: Record<string, number> = { active: 0, provisioned: 1, disabled: 2 };
+
+/** The value [sort] compares, lowercased for text; null sorts last either way. */
+function sortKey(row: UserRow, sort: UserSort): string | number | null {
+  switch (sort) {
+    case 'name':
+      return row.displayName.trim().toLowerCase() || null;
+    case 'email':
+      return row.email?.toLowerCase() || null;
+    case 'status':
+      return STATUS_ORDER[row.status] ?? 3;
+    case 'joined':
+      return row.createdAt;
+    case 'lastActive':
+      return row.lastActiveAt;
+  }
+}
+
+/**
+ * Orders [rows] by [sort] in [direction], people missing that value last,
+ * and ties by name, then uid, so pages don't shuffle.
+ */
+export function sortUserRows(rows: UserRow[], sort: UserSort, direction: 'asc' | 'desc'): UserRow[] {
+  const sign = direction === 'asc' ? 1 : -1;
+  const compare = (a: string | number | null, b: string | number | null) => {
+    if (a === b) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))) * sign;
+  };
+  return [...rows].sort(
+    (a, b) =>
+      compare(sortKey(a, sort), sortKey(b, sort)) ||
+      a.displayName.toLowerCase().localeCompare(b.displayName.toLowerCase()) ||
+      a.uid.localeCompare(b.uid),
+  );
+}
+
+/**
+ * A page of people (ADMIN-4), optionally filtered by Added, Active,
+ * Disabled, or Super admin, and sorted by any column either way (newest
+ * joined first by default). A search matches the start of the name or the
+ * email and returns up to [limit] matches, sorted the same way, without
+ * paging (ARCH §6.2 admin search). Newest joined first pages straight from
+ * Firestore; any other order sorts everyone the filter matches (up to
+ * USER_SORT_MAX) and pages by position, the cursor being the next row's.
  */
 export async function listUsers(input: {
   query?: string;
   filter?: UserFilter;
+  sort?: UserSort;
+  direction?: 'asc' | 'desc';
   cursor?: string;
   limit: number;
 }): Promise<Page<UserRow>> {
+  const sort = input.sort ?? 'joined';
+  const direction = input.direction ?? (sort === 'joined' || sort === 'lastActive' ? 'desc' : 'asc');
   let base: Query = db().collection(Collections.users);
   if (input.filter) {
     const [field, value] = USER_FILTER[input.filter];
     base = base.where(field, '==', value);
   }
-  let docs: FirebaseFirestore.QueryDocumentSnapshot[];
-  let nextCursor: string | null = null;
+  const rowsOf = async (docs: FirebaseFirestore.QueryDocumentSnapshot[]) => {
+    const users = await authUsers(docs.map((d) => d.id));
+    return docs.map((d) => userRow(d.id, d.data(), users.get(d.id)));
+  };
   if (input.query) {
     const prefix = (field: string) =>
       base.where(field, '>=', input.query).where(field, '<', prefixEnd(input.query!)).orderBy(field).limit(input.limit).get();
     const [byName, byEmail] = await Promise.all([prefix('displayNameLower'), prefix('emailLower')]);
     const unique = new Map([...byName.docs, ...byEmail.docs].map((d) => [d.id, d]));
-    docs = [...unique.values()]
-      .sort((a, b) => String(a.get('displayNameLower') ?? '').localeCompare(String(b.get('displayNameLower') ?? '')))
-      .slice(0, input.limit);
-  } else {
+    const rows = sortUserRows(await rowsOf([...unique.values()]), sort, direction);
+    return { rows: rows.slice(0, input.limit), nextCursor: null };
+  }
+  if (sort === 'joined' && direction === 'desc') {
     let query = base.orderBy('createdAt', 'desc').limit(input.limit);
     if (input.cursor) query = query.startAfter(await cursorDoc(Collections.users, input.cursor));
     const snap = await query.get();
-    docs = snap.docs;
-    if (snap.size === input.limit) nextCursor = snap.docs[snap.size - 1].id;
+    const nextCursor = snap.size === input.limit ? snap.docs[snap.size - 1].id : null;
+    return { rows: await rowsOf(snap.docs), nextCursor };
   }
-  const users = await authUsers(docs.map((d) => d.id));
-  return { rows: docs.map((d) => userRow(d.id, d.data(), users.get(d.id))), nextCursor };
+  const start = input.cursor === undefined ? 0 : Number(input.cursor);
+  if (!Number.isSafeInteger(start) || start < 0) throw new HttpsError('invalid-argument', 'bad-cursor');
+  const everyone = await base.orderBy('createdAt', 'desc').limit(USER_SORT_MAX).get();
+  const rows = sortUserRows(await rowsOf(everyone.docs), sort, direction);
+  const end = start + input.limit;
+  return { rows: rows.slice(start, end), nextCursor: end < rows.length ? String(end) : null };
 }
 
 /**

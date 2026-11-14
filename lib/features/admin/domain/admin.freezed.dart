@@ -1773,7 +1773,7 @@ as int,
 mixin _$AdminUserQuery {
 
 /// A name or email prefix; blank lists everyone.
- String get query; AdminUserFilter? get filter;
+ String get query; AdminUserFilter? get filter; AdminUserSort get sort; bool get ascending;
 /// Create a copy of AdminUserQuery
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1785,20 +1785,20 @@ $AdminUserQueryCopyWith<AdminUserQuery> get copyWith => _$AdminUserQueryCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as AdminUserQuery;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminUserQuery&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.filter, _this.filter) || other.filter == _this.filter));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AdminUserQuery&&(identical(other.query, _this.query) || other.query == _this.query)&&(identical(other.filter, _this.filter) || other.filter == _this.filter)&&(identical(other.sort, _this.sort) || other.sort == _this.sort)&&(identical(other.ascending, _this.ascending) || other.ascending == _this.ascending));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AdminUserQuery;
-  return Object.hash(runtimeType,_this.query,_this.filter);
+  return Object.hash(runtimeType,_this.query,_this.filter,_this.sort,_this.ascending);
 }
 
 @override
 String toString() {
   final _this = this as AdminUserQuery;
-  return 'AdminUserQuery(query: ${_this.query}, filter: ${_this.filter})';
+  return 'AdminUserQuery(query: ${_this.query}, filter: ${_this.filter}, sort: ${_this.sort}, ascending: ${_this.ascending})';
 }
 
 
@@ -1809,7 +1809,7 @@ abstract mixin class $AdminUserQueryCopyWith<$Res>  {
   factory $AdminUserQueryCopyWith(AdminUserQuery value, $Res Function(AdminUserQuery) _then) = _$AdminUserQueryCopyWithImpl;
 @useResult
 $Res call({
- String query, AdminUserFilter? filter
+ String query, AdminUserFilter? filter, AdminUserSort sort, bool ascending
 });
 
 
@@ -1826,11 +1826,13 @@ class _$AdminUserQueryCopyWithImpl<$Res>
 
 /// Create a copy of AdminUserQuery
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? query = null,Object? filter = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? query = null,Object? filter = freezed,Object? sort = null,Object? ascending = null,}) {
   return _then(AdminUserQuery(
 query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,filter: freezed == filter ? _self.filter : filter // ignore: cast_nullable_to_non_nullable
-as AdminUserFilter?,
+as AdminUserFilter?,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
+as AdminUserSort,ascending: null == ascending ? _self.ascending : ascending // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -1915,10 +1917,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String query,  AdminUserFilter? filter)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String query,  AdminUserFilter? filter,  AdminUserSort sort,  bool ascending)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AdminUserQuery() when $default != null:
-return $default(_that.query,_that.filter);case _:
+return $default(_that.query,_that.filter,_that.sort,_that.ascending);case _:
   return orElse();
 
 }
@@ -1936,10 +1938,10 @@ return $default(_that.query,_that.filter);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String query,  AdminUserFilter? filter)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String query,  AdminUserFilter? filter,  AdminUserSort sort,  bool ascending)  $default,) {final _that = this;
 switch (_that) {
 case _AdminUserQuery():
-return $default(_that.query,_that.filter);case _:
+return $default(_that.query,_that.filter,_that.sort,_that.ascending);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1956,10 +1958,10 @@ return $default(_that.query,_that.filter);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String query,  AdminUserFilter? filter)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String query,  AdminUserFilter? filter,  AdminUserSort sort,  bool ascending)?  $default,) {final _that = this;
 switch (_that) {
 case _AdminUserQuery() when $default != null:
-return $default(_that.query,_that.filter);case _:
+return $default(_that.query,_that.filter,_that.sort,_that.ascending);case _:
   return null;
 
 }
@@ -1971,12 +1973,14 @@ return $default(_that.query,_that.filter);case _:
 
 
 class _AdminUserQuery implements AdminUserQuery {
-  const _AdminUserQuery({this.query = '', this.filter});
+  const _AdminUserQuery({this.query = '', this.filter, this.sort = AdminUserSort.joined, this.ascending = false});
   
 
 /// A name or email prefix; blank lists everyone.
 @override@JsonKey() final  String query;
 @override final  AdminUserFilter? filter;
+@override@JsonKey() final  AdminUserSort sort;
+@override@JsonKey() final  bool ascending;
 
 /// Create a copy of AdminUserQuery
 /// with the given fields replaced by the non-null parameter values.
@@ -1988,18 +1992,18 @@ _$AdminUserQueryCopyWith<_AdminUserQuery> get copyWith => __$AdminUserQueryCopyW
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminUserQuery&&(identical(other.query, query) || other.query == query)&&(identical(other.filter, filter) || other.filter == filter));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AdminUserQuery&&(identical(other.query, query) || other.query == query)&&(identical(other.filter, filter) || other.filter == filter)&&(identical(other.sort, sort) || other.sort == sort)&&(identical(other.ascending, ascending) || other.ascending == ascending));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,query,filter);
+    return Object.hash(runtimeType,query,filter,sort,ascending);
 }
 
 @override
 String toString() {
-    return 'AdminUserQuery(query: $query, filter: $filter)';
+    return 'AdminUserQuery(query: $query, filter: $filter, sort: $sort, ascending: $ascending)';
 }
 
 
@@ -2010,7 +2014,7 @@ abstract mixin class _$AdminUserQueryCopyWith<$Res> implements $AdminUserQueryCo
   factory _$AdminUserQueryCopyWith(_AdminUserQuery value, $Res Function(_AdminUserQuery) _then) = __$AdminUserQueryCopyWithImpl;
 @override @useResult
 $Res call({
- String query, AdminUserFilter? filter
+ String query, AdminUserFilter? filter, AdminUserSort sort, bool ascending
 });
 
 
@@ -2027,11 +2031,13 @@ class __$AdminUserQueryCopyWithImpl<$Res>
 
 /// Create a copy of AdminUserQuery
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? query = null,Object? filter = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? query = null,Object? filter = freezed,Object? sort = null,Object? ascending = null,}) {
   return _then(_AdminUserQuery(
 query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,filter: freezed == filter ? _self.filter : filter // ignore: cast_nullable_to_non_nullable
-as AdminUserFilter?,
+as AdminUserFilter?,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
+as AdminUserSort,ascending: null == ascending ? _self.ascending : ascending // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

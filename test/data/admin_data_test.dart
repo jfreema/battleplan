@@ -241,6 +241,22 @@ void main() {
       const AdminUserQuery(query: 'al', filter: AdminUserFilter.disabled),
     );
     expect(users.items.single.uid, _u);
+    // Newest joined first unless asked.
+    expect(functions.lastData('adminListUsers'), {
+      'query': 'al',
+      'filter': 'disabled',
+      'sort': 'joined',
+      'direction': 'desc',
+      'limit': adminPageSize,
+    });
+    await repo.listUsers(
+      const AdminUserQuery(sort: AdminUserSort.lastActive, ascending: true),
+    );
+    expect(functions.lastData('adminListUsers'), {
+      'sort': 'lastActive',
+      'direction': 'asc',
+      'limit': adminPageSize,
+    });
     expect(users.items.single.status, UserStatus.disabled);
     expect(users.items.single.superAdmin, isTrue);
     expect(users.next, isNull);

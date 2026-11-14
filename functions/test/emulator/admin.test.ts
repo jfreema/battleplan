@@ -578,6 +578,28 @@ describe('users (ADMIN-4)', () => {
     expect((await list({ filter: 'disabled' })).rows[0]).toMatchObject({ disabled: true, status: 'disabled' });
   });
 
+  it('sorts by any column either way, over everyone, a page at a time', async () => {
+    const order = async (data: object) => uids(await list(data));
+    expect(await order({ sort: 'name' })).toEqual(['lee', 'pat', 'root', 'sam']);
+    expect(await order({ sort: 'name', direction: 'desc' })).toEqual(['sam', 'root', 'pat', 'lee']);
+    expect(await order({ sort: 'email', direction: 'asc' })).toEqual(['lee', 'pat', 'root', 'sam']);
+    // Active, Added, Disabled; ties by name, whichever way.
+    expect(await order({ sort: 'status' })).toEqual(['pat', 'root', 'sam', 'lee']);
+    expect(await order({ sort: 'status', direction: 'desc' })).toEqual(['lee', 'pat', 'root', 'sam']);
+    expect(await order({ sort: 'joined', direction: 'asc' })).toEqual(['root', 'pat', 'sam', 'lee']);
+    // The Auth emulator stamps everyone's last sign-in as they're created,
+    // to the second, so last active's order is checked in the unit tests
+    // (sortUserRows); here, that it lists everyone.
+    expect((await order({ sort: 'lastActive' })).sort()).toEqual(['lee', 'pat', 'root', 'sam']);
+    expect(await order({ sort: 'name', direction: 'desc', filter: 'active' })).toEqual(['sam', 'root', 'pat']);
+
+    const first = await list({ sort: 'name', limit: 3 });
+    expect([uids(first), first.nextCursor]).toEqual([['lee', 'pat', 'root'], '3']);
+    const second = await list({ sort: 'name', limit: 3, cursor: first.nextCursor });
+    expect([uids(second), second.nextCursor]).toEqual([['sam'], null]);
+    await expect(list({ sort: 'name', cursor: 'lee' })).rejects.toMatchObject({ code: 'invalid-argument', message: 'bad-cursor' });
+  });
+
   it('searches the start of the name or the email', async () => {
     expect(uids(await list({ query: 'sam' }))).toEqual(['sam']);
     expect(uids(await list({ query: 'Pat@Ex' }))).toEqual(['pat']);

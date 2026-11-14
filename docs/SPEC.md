@@ -1027,6 +1027,7 @@ This is for platform operators (super admins) to manage every team and user.
     - Delete (type the name to confirm).
 - **ADMIN-4 · MVP · Users.**
   - **Find:** search by name or email; filter by Added (not joined yet), Active, Disabled, or Super admin.
+  - **Sort:** by any column, Name, Email, Status, Joined, or Last active, either way (owner's request 2026-11-14: "In the admin panel, allow me to sort users by any of the fields."). On a computer, tap a column's heading, and tap it again to flip it; on a phone, **Sort by** and the Ascending/Descending button. A column starts A to Z (Status as Active, Added, Disabled), or newest first for the dates; people without a value come last. It covers everyone the filter matches, not just the loaded page, and a search's matches sort the same way. Newest joined first by default.
   - **Details:** profile, status, sign-in methods, teams and roles, joined date, last active.
   - **Actions:**
     - Create a user (with an optional team and role).
