@@ -9,6 +9,7 @@
 // FCM faked:
 //   npm --prefix functions run emulators:test
 import { Timestamp } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/v2';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { onUserUpdated } from '../../src/accounts/triggers.js';
 import { deleteMessage } from '../../src/chat/handlers.js';
@@ -344,6 +345,28 @@ describe("setup emails that don't send (AUTH-6), as past the day's email limit",
       invited: true,
       emailFailed: false,
     });
+  });
+
+  it("logs why when Firebase Auth won't make the link (2026-11-15)", async () => {
+    const warn = vi.spyOn(logger, 'warn');
+    const refused = Object.assign(new Error('Exceeded daily quota for email sign-in.'), { code: 'auth/quota-exceeded' });
+    const link = vi.spyOn(auth(), 'generateSignInWithEmailLink').mockRejectedValueOnce(refused);
+    try {
+      const result = await run<{ invited: number; emailFailed: string[] }>(teams.addMemberByEmail, 'pat', {
+        groupId: 'open',
+        entries: [{ email: 'nia@example.com' }],
+      });
+      expect([result.invited, result.emailFailed]).toEqual([1, ['nia@example.com']]);
+      expect(warn).toHaveBeenCalledWith('setup_link_failed', {
+        code: 'auth/quota-exceeded',
+        message: 'Exceeded daily quota for email sign-in.',
+      });
+      expect(JSON.stringify(warn.mock.calls)).not.toContain('nia@example.com');
+      expect(mail.sent).toEqual([]);
+    } finally {
+      warn.mockRestore();
+      link.mockRestore();
+    }
   });
 
   it('a resend that does not send says so', async () => {

@@ -105,7 +105,10 @@ class _EmailInvitesScreenState extends ConsumerState<EmailInvitesScreen> {
                 controller: _emails,
                 minLines: 3,
                 maxLines: 10,
-                keyboardType: TextInputType.emailAddress,
+                // Multiline, not the email keyboard: with it, Enter ends the field
+                // instead of starting a line, and the web gives it a one-line
+                // input that drops line breaks (2026-11-15).
+                keyboardType: TextInputType.multiline,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   labelText: l10n.emailAddresses,

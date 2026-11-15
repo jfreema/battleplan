@@ -453,8 +453,24 @@ export async function setupLink(email: string): Promise<string> {
  * of sending them; that counts as sent.
  */
 export async function sendSetupEmail(email: string, teamName: string, addedBy: string): Promise<boolean> {
-  const link = await setupLink(email);
+  const link = await setupLinkOrNull(email);
+  if (!link) return false;
   return (await sendEmail(setupEmail(email, teamName, addedBy, link))) || process.env.FUNCTIONS_EMULATOR === 'true';
+}
+
+/**
+ * [email]'s setup link, or null when Firebase Auth won't make one, with
+ * its reason in the log (without the address). Until 2026-11-15 the
+ * reason was lost: 18 testers' setup emails failed with nothing logged.
+ */
+async function setupLinkOrNull(email: string): Promise<string | null> {
+  try {
+    return await setupLink(email);
+  } catch (e) {
+    const error = e as { code?: string; message?: string };
+    logger.warn('setup_link_failed', { code: error.code ?? null, message: String(error.message ?? e).slice(0, 300) });
+    return null;
+  }
 }
 
 /** When an added account signs in, its memberships stop showing "Not joined yet". */
@@ -491,7 +507,8 @@ function isUserNotFound(e: unknown): boolean {
  * (ADMIN-4, AUTH-6): the same one-time sign-in link as an added member gets.
  */
 export async function sendAccountSetupEmail(email: string, addedBy: string): Promise<boolean> {
-  const link = await setupLink(email);
+  const link = await setupLinkOrNull(email);
+  if (!link) return false;
   return sendEmail(accountSetupEmail(email, addedBy, link));
 }
 

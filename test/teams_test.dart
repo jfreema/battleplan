@@ -273,6 +273,11 @@ void main() {
       memberRepo: members,
     );
     await push(tester, '/g/a/members/add');
+    // One person per line: the box takes Enter as a new line (on the web,
+    // the email keyboard made it a one-line input; 2026-11-15).
+    final box = tester.widget<TextField>(find.byType(TextField));
+    expect(box.keyboardType, TextInputType.multiline);
+    expect(box.maxLines, greaterThan(1));
     await tester.enterText(
       find.byType(TextField),
       'Nia Park, nia@example.com\nnot an email',

@@ -133,7 +133,10 @@ class _AddMembersScreenState extends ConsumerState<AddMembersScreen> {
                 controller: _text,
                 minLines: 5,
                 maxLines: 14,
-                keyboardType: TextInputType.emailAddress,
+                // Multiline, not the email keyboard: with it, Enter ends the field
+                // instead of starting a line, and the web gives it a one-line
+                // input, so only one person could be entered there (2026-11-15).
+                keyboardType: TextInputType.multiline,
                 onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
                   hintText: 'Sam Rivera, sam@example.com\nalex@example.com',

@@ -958,6 +958,11 @@ void main() {
     await tester.tap(find.text('Email invites'));
     await tester.pumpAndSettle();
     expect(find.text('No email invites yet.'), findsOneWidget);
+    // Addresses can go one per line too: Enter starts a new line.
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).keyboardType,
+      TextInputType.multiline,
+    );
     await tester.enterText(
       find.byType(TextField).first,
       'Sam@Example.com, alex@example.com sam@example.com',
