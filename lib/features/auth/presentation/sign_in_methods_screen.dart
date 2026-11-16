@@ -7,6 +7,7 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/auth/presentation/email_sign_in_screen.dart';
 import 'package:battleplan/features/auth/presentation/fresh_sign_in.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -142,81 +143,92 @@ class _SignInMethodsScreenState extends ConsumerState<SignInMethodsScreen> {
       child: Text(l10n.removeMethod),
     );
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.signInMethods)),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: Space.sm),
+    // The app's frame and Settings' rows, so the page reads as part of
+    // Settings (#14, 2026-11-16).
+    return GumdropScaffold(
+      title: l10n.signInMethods,
+      backLabel: backLabelFrom(context, l10n.settings),
+      body: PageList(
         children: [
-          ListTile(
-            title: const Text('Google'),
-            subtitle: Text(
-              hasGoogle ? l10n.methodLinked : l10n.methodNotLinked,
-            ),
-            trailing: hasGoogle
-                ? removeButton('google.com', 'Google')
-                : TextButton(
-                    onPressed: _busy
-                        ? null
-                        : () => _linkMethod(auth.linkGoogle, 'Google'),
-                    child: Text(l10n.linkMethod),
-                  ),
-          ),
-          // Apple where Sign in with Apple is on (task 109); elsewhere,
-          // only on an account that already has it.
-          if (widget.appleEnabled || hasApple)
-            ListTile(
-              title: const Text('Apple'),
-              subtitle: Text(
-                hasApple ? l10n.methodLinked : l10n.methodNotLinked,
-              ),
-              trailing: hasApple
-                  ? removeButton('apple.com', 'Apple')
-                  : TextButton(
-                      onPressed: _busy
-                          ? null
-                          : () => _linkMethod(auth.linkApple, 'Apple'),
-                      child: Text(l10n.linkMethod),
-                    ),
-            ),
-          ListTile(
-            title: Text(l10n.passwordLabel),
-            // The sign-in screen offers only Google and Apple (AUTH-1), so
-            // say where the password works.
-            subtitle: Text(
-              hasPassword
-                  ? l10n.methodLinkedPassword(
-                      ref.read(linkServiceProvider).emailLoginText,
-                    )
-                  : l10n.methodNotLinked,
-            ),
-            trailing: Wrap(
-              children: [
-                TextButton(
-                  onPressed: _busy ? null : () => _setPassword(hasPassword),
-                  child: Text(
-                    hasPassword ? l10n.changePassword : l10n.setPassword,
-                  ),
+          SettingsCard(
+            children: [
+              ListTile(
+                title: const Text('Google'),
+                subtitle: Text(
+                  hasGoogle ? l10n.methodLinked : l10n.methodNotLinked,
                 ),
-                if (hasPassword) removeButton('password', l10n.passwordLabel),
-              ],
-            ),
+                trailing: hasGoogle
+                    ? removeButton('google.com', 'Google')
+                    : TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => _linkMethod(auth.linkGoogle, 'Google'),
+                        child: Text(l10n.linkMethod),
+                      ),
+              ),
+              // Apple where Sign in with Apple is on (task 109); elsewhere,
+              // only on an account that already has it.
+              if (widget.appleEnabled || hasApple)
+                ListTile(
+                  title: const Text('Apple'),
+                  subtitle: Text(
+                    hasApple ? l10n.methodLinked : l10n.methodNotLinked,
+                  ),
+                  trailing: hasApple
+                      ? removeButton('apple.com', 'Apple')
+                      : TextButton(
+                          onPressed: _busy
+                              ? null
+                              : () => _linkMethod(auth.linkApple, 'Apple'),
+                          child: Text(l10n.linkMethod),
+                        ),
+                ),
+              ListTile(
+                title: Text(l10n.passwordLabel),
+                // The sign-in screen offers only Google and Apple (AUTH-1),
+                // so say where the password works.
+                subtitle: Text(
+                  hasPassword
+                      ? l10n.methodLinkedPassword(
+                          ref.read(linkServiceProvider).emailLoginText,
+                        )
+                      : l10n.methodNotLinked,
+                ),
+                trailing: Wrap(
+                  children: [
+                    TextButton(
+                      onPressed: _busy ? null : () => _setPassword(hasPassword),
+                      child: Text(
+                        hasPassword ? l10n.changePassword : l10n.setPassword,
+                      ),
+                    ),
+                    if (hasPassword)
+                      removeButton('password', l10n.passwordLabel),
+                  ],
+                ),
+              ),
+            ],
           ),
           if (onlyOne)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Space.lg),
+              padding: const EdgeInsets.only(top: Space.sm),
               child: Text(
                 l10n.lastMethodNote,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
-          const Divider(height: Space.xxl),
-          ListTile(
-            title: Text(l10n.emailLabel),
-            subtitle: Text(user.email ?? ''),
-            trailing: TextButton(
-              onPressed: _busy ? null : _changeEmail,
-              child: Text(l10n.changeEmail),
-            ),
+          const SizedBox(height: Space.xl),
+          SettingsCard(
+            children: [
+              ListTile(
+                title: Text(l10n.emailLabel),
+                subtitle: Text(user.email ?? ''),
+                trailing: TextButton(
+                  onPressed: _busy ? null : _changeEmail,
+                  child: Text(l10n.changeEmail),
+                ),
+              ),
+            ],
           ),
         ],
       ),

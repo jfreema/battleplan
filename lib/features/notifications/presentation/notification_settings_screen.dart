@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
-import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
@@ -10,6 +9,7 @@ import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
 import 'package:battleplan/features/notifications/application/push_registration.dart';
 import 'package:battleplan/features/notifications/domain/push_repository.dart';
@@ -74,63 +74,78 @@ class _NotificationSettingsScreenState
     final teams = ref.watch(myTeamsProvider).value ?? const <MyTeam>[];
     final now = DateTime.now();
 
-    Widget section(String title) => Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Space.lg,
-        Space.lg,
-        Space.lg,
-        Space.sm,
-      ),
-      child: Text(title, style: Theme.of(context).textTheme.titleSmall),
-    );
-
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.notificationSettings)),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: Space.xl),
+    const headingGap = SizedBox(height: 10);
+    const gap = SizedBox(height: 12);
+    // The app's frame and Settings' rows, so the page reads as part of
+    // Settings (#14, 2026-11-16; it had a plain bar and its own margins).
+    return GumdropScaffold(
+      title: l10n.notificationSettings,
+      backLabel: backLabelFrom(context, l10n.settings),
+      body: PageList(
         children: [
-          section(l10n.pushThisDevice),
-          _DeviceStatus(onTurnOn: () => unawaited(_turnOn())),
-          section(l10n.notifyMeAbout),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-            child: Text(
-              l10n.notifyAllTeamsHelp,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+          PageHeading(l10n.pushThisDevice),
+          headingGap,
+          SettingsCard(
+            children: [_DeviceStatus(onTurnOn: () => unawaited(_turnOn()))],
           ),
-          for (final pref in shownNotificationPrefs)
-            SwitchListTile(
-              title: Text(notificationPrefLabel(l10n, pref)),
-              value: profile?.notifies(pref) ?? true,
-              onChanged: profile == null
-                  ? null
-                  : (v) => unawaited(_setPref(pref, enabled: v)),
-            ),
-          if (teams.isNotEmpty) section(l10n.teamSwitcherTitle),
-          for (final t in teams)
-            ListTile(
-              leading: TeamBadge(
-                name: t.group.name,
-                color: t.group.color == null ? null : Color(t.group.color!),
-              ),
-              title: Text(t.group.name),
-              subtitle: Text(
-                [
-                  notificationLevelLabel(l10n, t.membership.notificationLevel),
-                  ?muteLabel(
-                    l10n,
-                    t.membership,
-                    now,
-                    zone: ViewerZone.of(context),
+          gap,
+          PageHeading(l10n.notifyMeAbout),
+          const SizedBox(height: 4),
+          Text(
+            l10n.notifyAllTeamsHelp,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          headingGap,
+          SettingsCard(
+            children: [
+              for (final pref in shownNotificationPrefs)
+                SwitchListTile(
+                  title: Text(notificationPrefLabel(l10n, pref)),
+                  value: profile?.notifies(pref) ?? true,
+                  onChanged: profile == null
+                      ? null
+                      : (v) => unawaited(_setPref(pref, enabled: v)),
+                ),
+            ],
+          ),
+          if (teams.isNotEmpty) ...[
+            gap,
+            PageHeading(l10n.teamSwitcherTitle),
+            headingGap,
+            SettingsCard(
+              children: [
+                for (final t in teams)
+                  ListTile(
+                    leading: TeamBadge(
+                      name: t.group.name,
+                      color: t.group.color == null
+                          ? null
+                          : Color(t.group.color!),
+                    ),
+                    title: Text(t.group.name),
+                    subtitle: Text(
+                      [
+                        notificationLevelLabel(
+                          l10n,
+                          t.membership.notificationLevel,
+                        ),
+                        ?muteLabel(
+                          l10n,
+                          t.membership,
+                          now,
+                          zone: ViewerZone.of(context),
+                        ),
+                      ].join(' · '),
+                    ),
+                    trailing: t.membership.isMutedAt(now)
+                        ? const Icon(AppIcons.muted, size: 18)
+                        : null,
+                    onTap: () =>
+                        context.push('/g/${t.group.id.value}/notifications'),
                   ),
-                ].join(' · '),
-              ),
-              trailing: t.membership.isMutedAt(now)
-                  ? const Icon(AppIcons.muted, size: 18)
-                  : null,
-              onTap: () => context.push('/g/${t.group.id.value}/notifications'),
+              ],
             ),
+          ],
         ],
       ),
     );

@@ -52,6 +52,28 @@ void main() {
     expect(_small('Settings'), findsNothing);
   });
 
+  // Step 3: they had a plain bar, a smaller title and narrower margins.
+  testWidgets("Settings' three pages are on the frame and go back to "
+      'Settings', (tester) async {
+    final handle = tester.ensureSemantics();
+    for (final (route, title) in [
+      ('/settings/notifications', 'Notifications'),
+      ('/settings/sign-in-methods', 'Sign-in methods'),
+      ('/settings/blocked', 'Blocked people'),
+    ]) {
+      await pumpTeam(tester, scheme: TeamScheme.army);
+      await goTo(tester, '/profile');
+      await pushTo(tester, '/settings');
+      await pushTo(tester, route);
+      expect(find.widgetWithText(PageTitle, title), findsOneWidget);
+      expect(find.bySemanticsLabel('Back, Settings'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Back, Settings'));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(PageTitle, 'Settings'), findsOneWidget);
+    }
+    handle.dispose();
+  });
+
   testWidgets('the small title stays out where it would crowd the back '
       'label: the back label matters more', (tester) async {
     await pumpTeam(tester, scheme: TeamScheme.army, size: const Size(320, 700));

@@ -520,7 +520,12 @@ void main() {
         memberRepo: members,
       );
       await openNotificationSettings(tester);
-      await tester.scrollUntilVisible(find.text('Important only'), 200);
+      await tester.scrollUntilVisible(
+        find.text('Important only'),
+        200,
+        // The page's own list, under the frame's (#14).
+        scrollable: find.byType(Scrollable).last,
+      );
       expect(find.text('All activity'), findsOneWidget);
       expect(find.text('Important only'), findsOneWidget);
       await tester.tap(find.text('Lightning'));

@@ -152,6 +152,33 @@ class _GumdropScaffoldState extends State<GumdropScaffold> {
   }
 }
 
+/// The body of a page opened on top, as Settings has it (SPEC §7.3): a
+/// list whose rows sit 20 px from the edge, level with the title, at most
+/// [maxWidth] wide on a wide screen. Rows go in [SettingsCard]s under
+/// [PageHeading]s.
+class PageList extends StatelessWidget {
+  const new({required this.children, this.maxWidth = 560, super.key});
+
+  final List<Widget> children;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          Space.page,
+          14,
+          Space.page,
+          Space.xl,
+        ),
+        children: children,
+      ),
+    ),
+  );
+}
+
 /// A page's big title (SPEC §7.3): Lilita 32 with the scheme's drop, 20 px
 /// from the left, on one line. The route's heading for screen readers.
 class PageTitle extends StatelessWidget {
