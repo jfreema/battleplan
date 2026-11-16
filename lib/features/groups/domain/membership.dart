@@ -47,6 +47,12 @@ abstract class Membership with _$Membership {
     /// the owner counts as one ([isCoach]).
     bool? coach,
 
+    /// What they said to "Who are you here for?" without picking a player
+    /// (PLAYER-3), so the team stops asking: `later` for Not now on the
+    /// chat's card, `nobody` for "I'm a coach or another adult". Null until
+    /// they say. Theirs to write, and it follows them to every device.
+    HereFor? hereFor,
+
     /// In a direct conversation (CHAT-19, role participant): the other
     /// person, and when it last had a message, which orders Messages.
     String? otherUid,

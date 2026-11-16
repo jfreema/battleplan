@@ -463,6 +463,10 @@ class FirestoreMemberRepository implements MemberRepository {
       _updateMine(groupId, uid, {'colorScheme': FieldValue.delete()});
 
   @override
+  Future<void> setMyHereFor(GroupId groupId, UserId uid, HereFor answer) =>
+      _updateMine(groupId, uid, {'hereFor': answer.value});
+
+  @override
   Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until) =>
       _updateMine(groupId, uid, {
         'mutedUntil': until == null ? null : Timestamp.fromDate(until),
@@ -704,6 +708,7 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   contactPhone: _shared(d['contactPhone']),
   contactEmail: _shared(d['contactEmail']),
   coach: d['coach'] as bool?,
+  hereFor: HereFor.tryParse(d['hereFor'] as String?),
   otherUid: d['otherUid'] as String?,
   lastMessageAt: _date(d['lastMessageAt']),
 );

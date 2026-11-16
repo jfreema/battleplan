@@ -2024,10 +2024,8 @@ void main() {
       ]);
       await pumpDues(tester, FakeDuesRepository(), playerRepo: repo);
       await go(tester, '/g/a/dues');
-      expect(
-        find.text('Your claim is waiting for a team admin.'),
-        findsOneWidget,
-      );
+      // By name, as the chat's card and the Team tab say it (PLAYER-3).
+      expect(find.text('Waiting for the coach to approve Max'), findsOneWidget);
       expect(find.text('Nothing owed.'), findsNothing);
     });
 

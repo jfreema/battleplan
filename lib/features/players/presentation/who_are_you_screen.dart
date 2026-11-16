@@ -5,6 +5,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
@@ -16,18 +17,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// PLAYER-3 at `/g/:groupId/who`, opened from the Team tab, an event, or
-/// Dues by someone on a team who isn't linked to a player yet. Joining goes
-/// straight into the team instead (owner's request 2026-11-10):
+/// PLAYER-3 at `/g/:groupId/who`, opened from the chat's card, a schedule
+/// card, an event, the Team tab, or Dues by someone on a team who isn't
+/// linked to a player yet. Joining goes straight into the team instead
+/// (owner's request 2026-11-10):
 ///
 /// - **I'm a player**: pick yourself from the roster (a claim as yourself),
 ///   or add yourself (a pending player linked to you, PLAYER-4).
 /// - **I'm here for a player**: pick your players (claims as their parent
 ///   or guardian), or add one who isn't listed.
-/// - **I'm a coach or another adult**: skips this step.
+/// - **I'm a coach or another adult**: saved on their membership
+///   ([HereFor.nobody]), so the team's prompts stop asking them.
 ///
-/// Claims and new players wait for a team admin (Q15). People an admin
-/// already linked to a player (PLAYER-1) go straight to the team.
+/// Claims and new players wait for a team admin (Q15). Every way out goes
+/// back to where they came from (owner's go 2026-11-16), which then says
+/// who they're waiting on; opened by its address, with nothing under it,
+/// it goes to the team's chat. People an admin already linked to a player
+/// (PLAYER-1) are sent straight back.
 class WhoAreYouScreen extends ConsumerStatefulWidget {
   const new({required this.groupId, super.key});
 
@@ -46,7 +52,33 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
   bool _saving = false;
   bool _checkedLinks = false;
 
-  String get _teamHome => '/g/${widget.groupId.value}/chat';
+  /// Back to the screen this was opened from: it's pushed, so that's a pop.
+  /// With nothing under it (opened by its address), the team's chat.
+  void _leave() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/g/${widget.groupId.value}/chat');
+    }
+  }
+
+  /// "I'm a coach or another adult": remembered for this team, so its card
+  /// and schedule hints stop asking (PLAYER-3). Not waited for: the save
+  /// reaches the server whenever it can, and leaving shouldn't hang on it.
+  void _notHereForAPlayer() {
+    final uid = ref.read(authUserProvider).value?.uid;
+    if (uid != null) {
+      unawaited(
+        ref
+            .read(memberRepositoryProvider)
+            .setMyHereFor(widget.groupId, UserId(uid), HereFor.nobody)
+            .catchError((Object e) {
+              Log.warn("Saving I'm a coach or another adult failed", e);
+            }),
+      );
+    }
+    _leave();
+  }
 
   Future<void> _run(Future<String> Function() action) async {
     final l10n = AppLocalizations.of(context);
@@ -55,7 +87,7 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
       final done = await action();
       if (!mounted) return;
       showAppSnackBar(context, done);
-      context.go(_teamHome);
+      _leave();
     } on AppFailure catch (e) {
       if (mounted) showAppSnackBar(context, playerRequestFailure(l10n, e));
     } finally {
@@ -121,7 +153,7 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
       _checkedLinks = true;
       if (mine.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) context.go(_teamHome);
+          if (mounted) _leave();
         });
       }
     }
@@ -158,7 +190,7 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
           _Choice(
             icon: AppIcons.group,
             title: l10n.imACoachOrAdult,
-            onTap: () => context.go(_teamHome),
+            onTap: _notHereForAPlayer,
           ),
         ],
       );

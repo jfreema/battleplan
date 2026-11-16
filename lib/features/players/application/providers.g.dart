@@ -577,6 +577,218 @@ final class MyGuardianRequestsFamily extends $Family
   String toString() => r'myGuardianRequestsProvider';
 }
 
+/// Where the signed-in person stands on "Who are you here for?" on
+/// [groupId] (PLAYER-3), for every prompt that leads there, so they agree:
+/// the chat's card, the schedule's cards, the event page, the Team tab,
+/// and Dues. Nothing ([PlayerPickStage.none]) until the team's links,
+/// their own claims, and the roster have loaded, so a prompt never shows
+/// and then goes or changes its words. Their claims and the players they
+/// added are read only while they're not linked to anyone.
+
+@ProviderFor(myPlayerPick)
+final myPlayerPickProvider = MyPlayerPickFamily._();
+
+/// Where the signed-in person stands on "Who are you here for?" on
+/// [groupId] (PLAYER-3), for every prompt that leads there, so they agree:
+/// the chat's card, the schedule's cards, the event page, the Team tab,
+/// and Dues. Nothing ([PlayerPickStage.none]) until the team's links,
+/// their own claims, and the roster have loaded, so a prompt never shows
+/// and then goes or changes its words. Their claims and the players they
+/// added are read only while they're not linked to anyone.
+
+final class MyPlayerPickProvider
+    extends $FunctionalProvider<PlayerPick, PlayerPick, PlayerPick>
+    with $Provider<PlayerPick> {
+  /// Where the signed-in person stands on "Who are you here for?" on
+  /// [groupId] (PLAYER-3), for every prompt that leads there, so they agree:
+  /// the chat's card, the schedule's cards, the event page, the Team tab,
+  /// and Dues. Nothing ([PlayerPickStage.none]) until the team's links,
+  /// their own claims, and the roster have loaded, so a prompt never shows
+  /// and then goes or changes its words. Their claims and the players they
+  /// added are read only while they're not linked to anyone.
+  MyPlayerPickProvider._({
+    required MyPlayerPickFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'myPlayerPickProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myPlayerPickHash();
+
+  @override
+  String toString() {
+    return r'myPlayerPickProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<PlayerPick> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  PlayerPick create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return myPlayerPick(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(PlayerPick value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<PlayerPick>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyPlayerPickProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myPlayerPickHash() => r'7e951bae01a8e55935b4a1b48d4f509d7b525aa5';
+
+/// Where the signed-in person stands on "Who are you here for?" on
+/// [groupId] (PLAYER-3), for every prompt that leads there, so they agree:
+/// the chat's card, the schedule's cards, the event page, the Team tab,
+/// and Dues. Nothing ([PlayerPickStage.none]) until the team's links,
+/// their own claims, and the roster have loaded, so a prompt never shows
+/// and then goes or changes its words. Their claims and the players they
+/// added are read only while they're not linked to anyone.
+
+final class MyPlayerPickFamily extends $Family
+    with $FunctionalFamilyOverride<PlayerPick, GroupId> {
+  MyPlayerPickFamily._()
+    : super(
+        retry: null,
+        name: r'myPlayerPickProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Where the signed-in person stands on "Who are you here for?" on
+  /// [groupId] (PLAYER-3), for every prompt that leads there, so they agree:
+  /// the chat's card, the schedule's cards, the event page, the Team tab,
+  /// and Dues. Nothing ([PlayerPickStage.none]) until the team's links,
+  /// their own claims, and the roster have loaded, so a prompt never shows
+  /// and then goes or changes its words. Their claims and the players they
+  /// added are read only while they're not linked to anyone.
+
+  MyPlayerPickProvider call(GroupId groupId) =>
+      MyPlayerPickProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'myPlayerPickProvider';
+}
+
+/// Whether [myPlayerPick] is final for [groupId]: what it reads has
+/// arrived (or failed). Lets a card wait for its line rather than grow it
+/// a moment later, as with [myParticipantsReadyProvider].
+
+@ProviderFor(myPlayerPickReady)
+final myPlayerPickReadyProvider = MyPlayerPickReadyFamily._();
+
+/// Whether [myPlayerPick] is final for [groupId]: what it reads has
+/// arrived (or failed). Lets a card wait for its line rather than grow it
+/// a moment later, as with [myParticipantsReadyProvider].
+
+final class MyPlayerPickReadyProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// Whether [myPlayerPick] is final for [groupId]: what it reads has
+  /// arrived (or failed). Lets a card wait for its line rather than grow it
+  /// a moment later, as with [myParticipantsReadyProvider].
+  MyPlayerPickReadyProvider._({
+    required MyPlayerPickReadyFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'myPlayerPickReadyProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$myPlayerPickReadyHash();
+
+  @override
+  String toString() {
+    return r'myPlayerPickReadyProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return myPlayerPickReady(ref, argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MyPlayerPickReadyProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$myPlayerPickReadyHash() => r'41f0e274b9c54bf7a8f26dbda3b95cc35175593c';
+
+/// Whether [myPlayerPick] is final for [groupId]: what it reads has
+/// arrived (or failed). Lets a card wait for its line rather than grow it
+/// a moment later, as with [myParticipantsReadyProvider].
+
+final class MyPlayerPickReadyFamily extends $Family
+    with $FunctionalFamilyOverride<bool, GroupId> {
+  MyPlayerPickReadyFamily._()
+    : super(
+        retry: null,
+        name: r'myPlayerPickReadyProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether [myPlayerPick] is final for [groupId]: what it reads has
+  /// arrived (or failed). Lets a card wait for its line rather than grow it
+  /// a moment later, as with [myParticipantsReadyProvider].
+
+  MyPlayerPickReadyProvider call(GroupId groupId) =>
+      MyPlayerPickReadyProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'myPlayerPickReadyProvider';
+}
+
 /// A player's answers on the team's events from yesterday on, by event ID,
 /// for the player card's upcoming RSVPs (PLAYER-2).
 

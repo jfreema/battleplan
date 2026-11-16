@@ -616,6 +616,12 @@ class FakeMemberRepository implements MemberRepository {
     _updateMine(groupId, uid, (m) => m.copyWith(colorScheme: null));
   }
 
+  @override
+  Future<void> setMyHereFor(GroupId groupId, UserId uid, HereFor answer) async {
+    calls.add('hereFor ${groupId.value} ${answer.value}');
+    _updateMine(groupId, uid, (m) => m.copyWith(hereFor: answer));
+  }
+
   DateTime? mutedUntil;
 
   @override
@@ -1517,13 +1523,26 @@ class FakePlayerRepository implements PlayerRepository {
       );
 
   @override
-  Stream<List<GuardianRequest>> watchMyRequests(GroupId groupId, UserId uid) =>
-      Stream.value(
-        requests.where((r) => r.groupId == groupId && r.uid == uid).toList(),
-      );
+  Stream<List<GuardianRequest>> watchMyRequests(
+    GroupId groupId,
+    UserId uid,
+  ) async* {
+    List<GuardianRequest> mine() =>
+        requests.where((r) => r.groupId == groupId && r.uid == uid).toList();
+    yield mine();
+    await for (final _ in _claimed.stream) {
+      yield mine();
+    }
+  }
 
   /// What [claimPlayer] answers: linked at once, as for an admin.
   ClaimOutcome claimOutcome = ClaimOutcome.requested;
+
+  /// Set to the signed-in person's uid to keep their claims: [claimPlayer]
+  /// then adds a pending one, and [watchMyRequests] tells it, as the server
+  /// does. Unset, a claim is only recorded in [calls].
+  String? claimsAs;
+  final _claimed = StreamController<void>.broadcast();
 
   @override
   Future<ClaimOutcome> claimPlayer(
@@ -1532,6 +1551,18 @@ class FakePlayerRepository implements PlayerRepository {
     PlayerRelation relation,
   ) async {
     calls.add('claim ${playerId.value} ${relation.value}');
+    if (claimsAs case final uid? when claimOutcome == ClaimOutcome.requested) {
+      requests.add(
+        GuardianRequest(
+          playerId: playerId,
+          groupId: groupId,
+          uid: UserId(uid),
+          status: GuardianRequestStatus.pending,
+          relation: relation,
+        ),
+      );
+      _claimed.add(null);
+    }
     return claimOutcome;
   }
 

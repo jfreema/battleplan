@@ -218,6 +218,9 @@ export type PlayerStatus = (typeof playerStatusValues)[number];
 export const playerRelationValues = ['self', 'guardian'] as const;
 export type PlayerRelation = (typeof playerRelationValues)[number];
 
+export const hereForValues = ['later', 'nobody'] as const;
+export type HereFor = (typeof hereForValues)[number];
+
 export const participantTypeValues = ['member', 'player'] as const;
 export type ParticipantType = (typeof participantTypeValues)[number];
 

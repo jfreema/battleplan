@@ -526,6 +526,33 @@ void main() {
       expect(odd.avatarColor, isNull);
     });
 
+    test('saves what I said to "Who are you here for?" without picking a '
+        'player (PLAYER-3)', () async {
+      final repo = FirestoreMemberRepository(db, functions);
+      Future<HereFor?> mine() async => (await repo.watchRoster(_g).first)
+          .firstWhere((m) => m.uid == _me)
+          .hereFor;
+      // Nothing said yet.
+      expect(await mine(), isNull);
+      await repo.setMyHereFor(_g, _me, HereFor.later);
+      expect(
+        (await db.doc('groupMembers/g1_alex').get()).data()!['hereFor'],
+        'later',
+      );
+      expect(await mine(), HereFor.later);
+      await repo.setMyHereFor(_g, _me, HereFor.nobody);
+      expect(await mine(), HereFor.nobody);
+      // An unknown value reads as not said, so the team asks again.
+      expect(
+        membershipFromFirestore(const {
+          'groupId': 'g1',
+          'uid': 'x',
+          'hereFor': 'somebody',
+        }).hereFor,
+        isNull,
+      );
+    });
+
     test(
       'maps my-settings refusals to failures, and ignores a missed read marker',
       () async {

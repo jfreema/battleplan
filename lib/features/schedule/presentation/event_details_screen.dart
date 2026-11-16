@@ -25,6 +25,7 @@ import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/players.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/event_draft.dart';
@@ -656,35 +657,15 @@ class _RsvpSection extends ConsumerWidget {
     final allowMaybe = group.settings.allowMaybe;
     final everyone = eventParticipants(roster, players, isTeam: isTeam);
     final activePlayers = everyone.main.length;
-    // Someone on a team with nobody to answer for, as the roster's "Who
-    // are you here for?" row tests it: told their claim waits, or, once
-    // their claims are in and there are players, pointed to "Who are you
-    // here for?" (PLAYER-3, spec 6.3).
-    final myUid = ref.watch(authUserProvider).value?.uid;
-    final linked = links.any((l) => l.uid.value == myUid);
-    final unlinked =
-        isTeam && !isAdmin && me != null && !linked && mine.isEmpty;
-    final myPending = unlinked
-        ? ref.watch(myPendingPlayersProvider(group.id))
-        : null;
-    final myRequests = unlinked
-        ? ref.watch(myGuardianRequestsProvider(group.id))
-        : null;
-    final waiting =
-        unlinked &&
-        ((myPending!.value ?? const <Player>[]).any(
-              (p) => p.proposedBy == myUid,
-            ) ||
-            (myRequests!.value ?? const <GuardianRequest>[]).any(
-              (r) => r.status == GuardianRequestStatus.pending,
-            ));
-    final pointToWho =
-        unlinked &&
-        !waiting &&
-        myPending!.hasValue &&
-        myRequests!.hasValue &&
-        activePlayers > 0 &&
-        !event.isCanceled;
+    // Someone on a team with nobody to answer for, as every "Who are you
+    // here for?" prompt tests it ([myPlayerPickProvider]): told who they're
+    // waiting on, or, on a team with players, given the next step
+    // (PLAYER-3, spec 6.3).
+    final pick = isTeam && !isAdmin && mine.isEmpty
+        ? ref.watch(myPlayerPickProvider(group.id))
+        : const PlayerPick();
+    final waiting = pick.stage == PlayerPickStage.waiting;
+    final pointToWho = pick.unlinked && activePlayers > 0 && !event.isCanceled;
     // A team with no players takes no answers yet: its admins are told how
     // to start (PLAYER-6). Others, and everyone on an archived team, see no
     // section, unless their claim waits (spec 6.3).
@@ -766,8 +747,10 @@ class _RsvpSection extends ConsumerWidget {
             ),
           )
         else if (waiting)
-          padded(Text(l10n.claimWaiting, style: muted))
-        else if (pointToWho)
+          padded(Text(playerPickWaitingText(l10n, pick), style: muted))
+        // A coach, or someone who said they're here for no player: the
+        // rule, and a quiet way to say otherwise.
+        else if (pointToWho && pick.stage == PlayerPickStage.adult)
           padded(
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -775,8 +758,24 @@ class _RsvpSection extends ConsumerWidget {
               children: [
                 Text(l10n.rsvpPlayersOnly, style: muted),
                 TextButton(
-                  onPressed: () => context.push('/g/${group.id.value}/who'),
+                  onPressed: () => openPlayerPick(context, group.id),
                   child: Text(l10n.whoAreYouHereFor),
+                ),
+              ],
+            ),
+          )
+        // Anyone else not linked yet: the next step, as a real button
+        // (owner's go 2026-11-16).
+        else if (pointToWho)
+          padded(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.playerPickToAnswer, style: muted),
+                const SizedBox(height: Space.sm),
+                FilledButton(
+                  onPressed: () => openPlayerPick(context, group.id),
+                  child: Text(l10n.pickMyPlayer),
                 ),
               ],
             ),

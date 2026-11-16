@@ -15,9 +15,11 @@ import 'package:material_ui/material_ui.dart';
 /// edge in the type's candy, the date column, the title with the type word
 /// (left out when the title is the type's own name), the time and place,
 /// the attendance ("7/12 going" with a mini bar, and who I answer for that
-/// hasn't answered), and an RSVP row for each person I answer for. In Your
-/// schedule it names the team beside its color (SCHED-2, PLAYER-9).
-/// Canceled events are struck through with a badge (SCHED-7).
+/// hasn't answered), and an RSVP row for each person I answer for; for
+/// someone not linked to a player yet, a line that says how to get them
+/// (PLAYER-3). In Your schedule it names the team beside its color
+/// (SCHED-2, PLAYER-9). Canceled events are struck through with a badge
+/// (SCHED-7).
 class EventRow extends StatelessWidget {
   const new({
     required this.event,
@@ -25,6 +27,7 @@ class EventRow extends StatelessWidget {
     required this.viewerZone,
     required this.onTap,
     this.answerButtons,
+    this.hint,
     this.day,
     this.participants = const [],
     this.answers = const {},
@@ -48,6 +51,11 @@ class EventRow extends StatelessWidget {
   /// The RSVP rows for each person I answer for, to answer without opening
   /// the event; null where I can't answer now (past, closed, or no RSVPs).
   final Widget? answerButtons;
+
+  /// In place of [answerButtons] where I have none because I'm not linked
+  /// to a player yet (PLAYER-3): "Pick your player to answer", or who I'm
+  /// waiting on. Under the card's text, outside what a tap opens.
+  final Widget? hint;
 
   /// The day on the date column; the event's own day in the viewer's zone
   /// when null.
@@ -79,6 +87,7 @@ class EventRow extends StatelessWidget {
     ];
     final date = day ?? dayOf(event, viewerZone);
     final buttons = event.takesRsvps && !canceled ? answerButtons : null;
+    final footer = buttons ?? (event.takesRsvps && !canceled ? hint : null);
     final accent = typeAccent(context, event.type);
     final type = typeLabel(l10n, event.type);
     final waiting = [
@@ -91,7 +100,7 @@ class EventRow extends StatelessWidget {
       child: TapCard(
         onTap: onTap,
         edge: accent.face,
-        footer: buttons,
+        footer: footer,
         child: Builder(
           builder: (context) {
             final card = GumdropColors.of(context);
@@ -258,7 +267,7 @@ class EventRow extends StatelessWidget {
                           note: note,
                         ),
                       ],
-                      SizedBox(height: buttons == null ? 8 : 2),
+                      SizedBox(height: footer == null ? 8 : 2),
                     ],
                   ),
                 ),

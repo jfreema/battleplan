@@ -23,10 +23,10 @@ Required, and doable now.
   - ✅ The **Release Android** workflow (Actions tab) builds prod the same way and uploads the App Bundle to Google Play: internal testing by default, closed testing, or production as a draft. It waits for CI (2026-10-25). ✅ Google Play access by keyless sign-in (2026-11-09): GitHub's token through battleplan-prod's workload identity pool, provider `github-android` (accepts only `release-android.yml` on main), as `play-release@battleplan-prod.iam.gserviceaccount.com`, which has no Google Cloud roles and is invited in the Play Console with Release apps to testing tracks and Release to production for Battleplan; battleplan-prod has the Google Play Android Developer API on. No JSON key or `PLAY_SERVICE_ACCOUNT_JSON` secret ([DEVELOPMENT.md](DEVELOPMENT.md), Android builds).
   - ⬜ 👤 The upload key itself: a keystore and password, in 1Password and in the repository's secrets (`ANDROID_UPLOAD_KEYSTORE_BASE64`, `ANDROID_UPLOAD_KEYSTORE_PASSWORD`, `ANDROID_UPLOAD_KEY_ALIAS`), then its SHA-1 and SHA-256 added to the Android apps in Firebase so Google sign-in works on these builds.
 - ✅ 1.12 **iPad.** The app is built for iPad too, so every screen has to work there, in both orientations and in Split View (task 210); review runs on iPads. Every screen is tested at iPad mini, Air, and Pro sizes in both orientations and at the Split View and Slide Over widths, and the end-to-end test passes on the iPad simulator.
-- ⬜ 1.13 **It works end to end,** on the iPhone and iPad simulators and on Android with a build from GitHub Actions (`integration_test/e2e_test.dart`, task 271). ✅ iPhone and iPad simulators. ⬜ Android, with the workflow's end-to-end APK. ⬜ 👤 Google sign-up, which needs a real Google account:
+- ⬜ 1.13 **It works end to end,** on the iPhone and iPad simulators and on Android with a build from GitHub Actions (`integration_test/e2e_test.dart`, task 271). ✅ iPhone and iPad simulators (again 2026-11-16, now through picking a player, the coach's approval, and the RSVP; task 388). ⬜ Android, with the workflow's end-to-end APK. ⬜ 👤 Google sign-up, which needs a real Google account:
   - sign up with Google and finish setup (Jade's fix);
   - join a team;
-  - chat, post photos, and RSVP.
+  - chat, post photos, pick your player from the card in the chat, and RSVP once a coach approves.
 
   No crashes, and no "beta," "coming soon," or placeholder text anywhere.
 - ⬜ 1.14 👤 **A way in for the reviewers on prod** (task 132). The sign-in screen offers only Google and Apple, so:

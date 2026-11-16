@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:battleplan/core/design/app_icons.dart';
+import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_shape.dart';
@@ -15,6 +16,8 @@ import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
+import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/players.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/schedule_rules.dart';
@@ -485,6 +488,7 @@ class ScheduleEventRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final g = event.groupId;
     final group = ref.watch(groupProvider(g)).value;
     final participants = ref.watch(myParticipantsProvider(g));
@@ -520,6 +524,24 @@ class ScheduleEventRow extends ConsumerWidget {
         upcoming &&
         !event.startedBefore(now) &&
         canAnswerNow(event, group, me, now);
+    // Not linked to a player yet (PLAYER-3): a card that shows a count and
+    // no buttons says how to get them, or who I'm waiting on (owner's go
+    // 2026-11-16). Only where answers are still to come, on a team with
+    // players to pick from.
+    final pick = ref.watch(myPlayerPickProvider(g));
+    final open =
+        group != null &&
+        participants.isEmpty &&
+        event.takesRsvps &&
+        !event.isCanceled &&
+        event.endAt.isAfter(now);
+    final hint = !open
+        ? null
+        : pick.stage == PlayerPickStage.waiting
+        ? _PlayerPickHint(waiting: playerPickWaitingText(l10n, pick))
+        : pick.stage == PlayerPickStage.ask && players > 0
+        ? _PlayerPickHint(onPick: () => openPlayerPick(context, g))
+        : null;
     return EventRow(
       event: event,
       group: group,
@@ -530,11 +552,9 @@ class ScheduleEventRow extends ConsumerWidget {
       showTeam: showTeam,
       playerCount: players,
       padding: padding,
-      onTap: () => openEvent(
-        context,
-        event,
-        from: openedFrom ?? AppLocalizations.of(context).tabSchedule,
-      ),
+      hint: hint,
+      onTap: () =>
+          openEvent(context, event, from: openedFrom ?? l10n.tabSchedule),
       answerButtons: upcoming
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -544,7 +564,7 @@ class ScheduleEventRow extends ConsumerWidget {
                     event: event,
                     participant: p,
                     answer: answers[p.id],
-                    label: cardRsvpLabel(AppLocalizations.of(context), p),
+                    label: cardRsvpLabel(l10n, p),
                     enabled: canAnswer,
                     allowMaybe: group.settings.allowMaybe,
                     compact: true,
@@ -553,6 +573,48 @@ class ScheduleEventRow extends ConsumerWidget {
               ],
             )
           : null,
+    );
+  }
+}
+
+/// The line on a schedule card for someone not linked to a player yet
+/// (PLAYER-3), where the RSVP buttons would be: the link "Pick your player
+/// to answer" ([onPick]), or, once they've asked, who they're waiting on
+/// ([waiting]).
+class _PlayerPickHint extends StatelessWidget {
+  const new({this.onPick, this.waiting});
+
+  final VoidCallback? onPick;
+  final String? waiting;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GumdropColors.of(context);
+    final style = TextStyle(
+      fontFamily: AppFonts.body,
+      fontWeight: FontWeight.w700,
+      fontSize: 14,
+      height: 18 / 14,
+      color: c.textMuted,
+    );
+    // Under the card's text, past its date column (38 wide, and 12 more).
+    if (waiting case final text?) {
+      return Padding(
+        padding: const EdgeInsetsDirectional.only(start: 50, top: 2, bottom: 8),
+        child: Text(text, style: style),
+      );
+    }
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Padding(
+        // The quiet link, whose own padding is 8, at the text's edge.
+        padding: const EdgeInsetsDirectional.only(start: 42),
+        child: TextButton(
+          style: GumdropButtons.of(context).link(textStyle: style),
+          onPressed: onPick,
+          child: Text(AppLocalizations.of(context).playerPickHint),
+        ),
+      ),
     );
   }
 }

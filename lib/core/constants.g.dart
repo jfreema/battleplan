@@ -479,6 +479,23 @@ enum PlayerRelation {
   }
 }
 
+enum HereFor {
+  later('later'),
+  nobody('nobody');
+
+  const HereFor(this.value);
+
+  /// The string stored in Firestore.
+  final String value;
+
+  static HereFor? tryParse(String? value) {
+    for (final e in values) {
+      if (e.value == value) return e;
+    }
+    return null;
+  }
+}
+
 enum ParticipantType {
   member('member'),
   player('player');

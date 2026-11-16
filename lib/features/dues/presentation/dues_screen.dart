@@ -22,6 +22,7 @@ import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
+import 'package:battleplan/features/players/players.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -389,19 +390,15 @@ class _MyDues extends ConsumerWidget {
       });
 
     // On a team with players, linked to none of them: as on an event
-    // (PLAYER-3, PLAYER-6).
-    final uid = ref.watch(authUserProvider).value?.uid;
+    // (PLAYER-3, PLAYER-6), and waiting is told the same way everywhere
+    // ([myPlayerPickProvider]).
     final unlinked =
         (group?.hasPlayers ?? false) &&
         !payers.any((p) => p.type == ParticipantType.player);
-    final waiting =
-        unlinked &&
-        ((ref.watch(myPendingPlayersProvider(groupId)).value ??
-                    const <Player>[])
-                .any((p) => p.proposedBy == uid) ||
-            (ref.watch(myGuardianRequestsProvider(groupId)).value ??
-                    const <GuardianRequest>[])
-                .any((r) => r.status == GuardianRequestStatus.pending));
+    final pick = unlinked
+        ? ref.watch(myPlayerPickProvider(groupId))
+        : const PlayerPick();
+    final waiting = pick.stage == PlayerPickStage.waiting;
     final pointToWho =
         unlinked &&
         !waiting &&
@@ -415,7 +412,7 @@ class _MyDues extends ConsumerWidget {
       color: c.textMutedOnPage,
     );
     final pointer = waiting
-        ? DuesQuiet(l10n.claimWaiting)
+        ? DuesQuiet(playerPickWaitingText(l10n, pick))
         : pointToWho
         ? Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -426,8 +423,7 @@ class _MyDues extends ConsumerWidget {
                 Text(l10n.duesPlayersOnly, style: muted),
                 if (!(group?.isArchived ?? false))
                   TextButton(
-                    onPressed: () =>
-                        unawaited(context.push('/g/${groupId.value}/who')),
+                    onPressed: () => openPlayerPick(context, groupId),
                     child: Text(l10n.whoAreYouHereFor),
                   ),
               ],

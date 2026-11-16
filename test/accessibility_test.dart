@@ -287,6 +287,48 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.byType(FilterChip), findsWidgets, reason: 'sheet');
         },
+    // A parent who just joined and isn't linked to a player yet (PLAYER-3):
+    // the card at the top of the chat, asking and then waiting, the line on
+    // the schedule's cards, and the event page's button.
+    'chat, pick your player':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpNewParent(tester, scheme: scheme);
+          expect(find.text('Pick my player'), findsOneWidget, reason: 'card');
+        },
+    'chat, waiting on a player':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpNewParent(tester, scheme: scheme, waiting: true);
+          expect(
+            find.text('Waiting for the coach to approve Leo'),
+            findsOneWidget,
+            reason: 'card',
+          );
+          expect(find.byTooltip('Dismiss'), findsOneWidget);
+        },
+    'schedule, pick your player':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpNewParent(tester, scheme: scheme);
+          await tester.tap(find.text('Schedule'));
+          await tester.pumpAndSettle();
+          expect(
+            find.text('Pick your player to answer'),
+            findsWidgets,
+            reason: 'cards',
+          );
+        },
+    'event, pick your player':
+        (WidgetTester tester, {required TeamScheme scheme}) async {
+          await pumpNewParent(tester, scheme: scheme);
+          await tester.tap(find.text('Schedule'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('vs. Eagles').first);
+          await tester.pumpAndSettle();
+          expect(
+            find.widgetWithText(FilledButton, 'Pick my player'),
+            findsOneWidget,
+            reason: 'the button',
+          );
+        },
   };
 
   // Every screen in every color scheme: their colors all differ.

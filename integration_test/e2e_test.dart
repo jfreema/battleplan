@@ -1,7 +1,8 @@
 // End to end on a real device, simulator, or emulator, against the Emulator
 // Suite with the seed loaded (store checklist 1.13): the seeded coach opens
 // a team's invite code; a new parent signs up with email, finishes setup,
-// joins with the code, chats, posts a photo, and answers an RSVP, and the
+// joins with the code, picks their player from the chat's card, chats,
+// posts a photo, is approved by the coach, and answers an RSVP, and the
 // navigation suits the screen (store checklist 1.12). Any error fails it.
 //
 // Run (docs/DEVELOPMENT.md, "End-to-end test"):
@@ -20,6 +21,7 @@ import 'package:battleplan/app/firebase_options_dev.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/services/photo_picker.dart';
 import 'package:battleplan/features/chat/presentation/photo_grid.dart';
+import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -53,11 +55,16 @@ class _OnePhoto implements PhotoPicker {
 /// The seeded owner (tools/seed): every seeded password is `password`.
 const _coach = 'coach@example.com';
 
+/// The seeded team the coach owns, which the parent joins.
+const _team = 'Thunder';
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   /// Pumps until [finder] finds something, for screens that wait on the
   /// emulators (pumpAndSettle never settles with spinners and live data).
+  /// Not for a `.first` or `.last` finder: those throw while there's
+  /// nothing to take the first or last of, instead of finding nothing.
   Future<void> until(
     WidgetTester tester,
     Finder finder, {
@@ -75,22 +82,59 @@ void main() {
     throw TestFailure('Timed out waiting for $finder. On screen: $shown');
   }
 
-  Future<void> tap(WidgetTester tester, Finder finder) async {
+  /// Taps the first thing [finder] finds once it's there, or the [last].
+  Future<void> tap(
+    WidgetTester tester,
+    Finder finder, {
+    bool last = false,
+  }) async {
     await until(tester, finder);
-    await tester.ensureVisible(finder.first);
+    final one = last ? finder.last : finder.first;
+    await tester.ensureVisible(one);
     await tester.pump(const Duration(milliseconds: 250));
-    await tester.tap(finder.first);
+    await tester.tap(one);
     await tester.pump(const Duration(milliseconds: 500));
   }
 
-  Future<void> type(WidgetTester tester, Finder field, String text) async {
+  /// Types into the first field [field] finds once it's there, or the
+  /// [last].
+  Future<void> type(
+    WidgetTester tester,
+    Finder field,
+    String text, {
+    bool last = false,
+  }) async {
     await until(tester, field);
-    await tester.enterText(field.first, text);
+    await tester.enterText(last ? field.last : field.first, text);
     await tester.pump(const Duration(milliseconds: 250));
   }
 
   void go(WidgetTester tester, String route) =>
       GoRouter.of(tester.element(find.byType(Navigator).first)).go(route);
+
+  /// Pumps until [finder] finds nothing more, or fewer than [below].
+  Future<void> gone(WidgetTester tester, Finder finder, {int below = 1}) async {
+    final end = DateTime.now().add(const Duration(seconds: 45));
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 250));
+      if (finder.evaluate().length < below) return;
+    }
+    throw TestFailure('Timed out waiting for $finder to go.');
+  }
+
+  /// Signs out from Settings, back to the sign-in screen.
+  Future<void> signOut(WidgetTester tester) async {
+    go(tester, '/settings');
+    await until(tester, find.byType(ListView));
+    // Below the fold on a phone, so not built until scrolled to.
+    await tester.dragUntilVisible(
+      find.text('Sign out'),
+      find.byType(ListView).first,
+      const Offset(0, -300),
+    );
+    await tap(tester, find.text('Sign out'));
+    await until(tester, find.text('Continue with email'));
+  }
 
   Future<void> signInWithEmail(
     WidgetTester tester,
@@ -105,6 +149,27 @@ void main() {
       password,
     );
     await tap(tester, find.widgetWithText(FilledButton, 'Sign in'));
+  }
+
+  /// Opens [_team] from Teams once signing in has landed somewhere: that's
+  /// the last team open on this device, or the one with the newest
+  /// message, which needn't be this one.
+  Future<void> openTeam(WidgetTester tester) async {
+    final router = GoRouter.of(tester.element(find.byType(Navigator).first));
+    final end = DateTime.now().add(const Duration(seconds: 45));
+    bool landed() {
+      final path = router.routerDelegate.currentConfiguration.uri.path;
+      return path.startsWith('/g/') || path == '/teams';
+    }
+
+    while (!landed()) {
+      if (DateTime.now().isAfter(end)) {
+        throw TestFailure('Timed out waiting to land on a team or Teams.');
+      }
+      await tester.pump(const Duration(milliseconds: 250));
+    }
+    go(tester, '/teams');
+    await tap(tester, find.text(_team));
   }
 
   testWidgets('sign up, set up, join a team, chat, post a photo, and RSVP', (
@@ -143,7 +208,8 @@ void main() {
 
     // The seeded coach opens their team's invite code, from the Team tab.
     await signInWithEmail(tester, _coach, 'password');
-    await tap(tester, find.text('Team').last);
+    await openTeam(tester);
+    await tap(tester, find.text('Team'), last: true);
     await tap(tester, find.text('Invite'));
     final codeText = find.byWidgetPredicate(
       (w) =>
@@ -152,20 +218,12 @@ void main() {
     );
     await until(tester, codeText);
     final code = tester.widget<SelectableText>(codeText.first).data!;
-    go(tester, '/settings');
-    await until(tester, find.byType(ListView));
-    // Below the fold on a phone, so not built until scrolled to.
-    await tester.dragUntilVisible(
-      find.text('Sign out'),
-      find.byType(ListView).first,
-      const Offset(0, -300),
-    );
-    await tap(tester, find.text('Sign out'));
+    await signOut(tester);
 
     // A new parent signs up and finishes setup (AUTH-2, AUTH-5).
     final stamp = DateTime.now().millisecondsSinceEpoch;
     await tap(tester, find.text('Continue with email'));
-    await tap(tester, find.text('Create account').first);
+    await tap(tester, find.text('Create account'));
     await type(
       tester,
       find.widgetWithText(TextFormField, 'Your name'),
@@ -182,20 +240,45 @@ void main() {
       'longenough',
     );
     await tap(tester, find.widgetWithText(FilledButton, 'Create account'));
+    // Setup starts from the name they signed up with (AUTH-12), which the
+    // account gets a moment after it's made; until then the box holds the
+    // first part of their email. The team will know them by this name.
+    await until(tester, find.text("I'm 18 or older"));
+    await until(tester, find.text('Pat Parent'));
     await tap(tester, find.text("I'm 18 or older"));
     await tap(tester, find.textContaining('I agree to the Terms'));
     await tap(tester, find.widgetWithText(FilledButton, 'Continue'));
 
-    // Joins with the code (INV-6), straight into the team's chat: who
-    // they're here for waits for the Team tab (PLAYER-3).
+    // Joins with the code (INV-6), straight into the team's chat, whose
+    // card says how to answer RSVPs (PLAYER-3).
     await tap(tester, find.text('Join a Team or Group'));
     await type(tester, find.byType(TextField), code);
     await tap(tester, find.widgetWithText(FilledButton, 'Join team'));
     await tap(tester, find.widgetWithText(FilledButton, 'Join team'));
 
+    // Picks their player from the card and asks to be linked, which comes
+    // back to the chat to wait for a team admin.
+    await tap(tester, find.widgetWithText(FilledButton, 'Pick my player'));
+    await tap(tester, find.text("I'm here for a player"));
+    final players = find.byType(CheckboxListTile);
+    await until(tester, players);
+    final player =
+        (tester.widget<CheckboxListTile>(players.first).title! as Text).data!;
+    final waiting = find.text(
+      'Waiting for the coach to approve ${player.split(' ').first}',
+    );
+    await tap(tester, players);
+    await tap(tester, find.text('Ask to link 1 player'));
+    final sent = find.text('Request sent to the team admins');
+    await until(tester, sent);
+    await until(tester, waiting);
+    expect(find.byTooltip('Add photos or a poll'), findsOneWidget);
+    // The snackbar sits over the message box until it goes.
+    await gone(tester, sent);
+
     // Chats (CHAT-2).
     final message = 'Hello from the end-to-end test $stamp';
-    await type(tester, find.byType(TextField).last, message);
+    await type(tester, find.byType(TextField), message, last: true);
     await tap(tester, find.byTooltip('Send'));
     await until(tester, find.text(message));
     await until(tester, find.text('Sent'));
@@ -209,8 +292,37 @@ void main() {
       timeout: const Duration(minutes: 1),
     );
 
-    // Answers an RSVP (SCHED-5) on the first upcoming event, found by its
-    // time ("6:00–7:30 PM", with a narrow space before PM).
+    // Until they're approved, the schedule's cards say who they wait on
+    // where the answer buttons will be.
+    await tap(tester, find.text('Schedule'));
+    await until(tester, waiting);
+    await signOut(tester);
+
+    // The coach approves the claim, on the Team tab (PLAYER-4): every Pat
+    // Parent's, since a run that stopped before this left its own behind.
+    await signInWithEmail(tester, _coach, 'password');
+    await openTeam(tester);
+    await tap(tester, find.text('Team'), last: true);
+    final claims = find.ancestor(
+      of: find.textContaining('Pat Parent: parent or guardian of'),
+      matching: find.byType(ListTile),
+    );
+    await until(tester, claims);
+    while (claims.evaluate().isNotEmpty) {
+      final waitingClaims = claims.evaluate().length;
+      await tap(
+        tester,
+        find.descendant(of: claims, matching: find.text('Approve')),
+      );
+      await gone(tester, claims, below: waitingClaims);
+    }
+    await signOut(tester);
+
+    // The parent, linked now, answers an RSVP (SCHED-5) on the first
+    // upcoming event, found by its time ("6:00–7:30 PM", with a narrow
+    // space before PM). Nothing asks them to pick a player any more.
+    await signInWithEmail(tester, 'e2e-$stamp@example.com', 'longenough');
+    await openTeam(tester);
     await tap(tester, find.text('Schedule'));
     final event = find.byWidgetPredicate(
       (w) =>
@@ -220,6 +332,8 @@ void main() {
     await tap(tester, event);
     await tap(tester, find.text('Going'));
     await until(tester, find.text('Clear'));
+    expect(waiting, findsNothing);
+    expect(find.text('Pick my player'), findsNothing);
 
     // The navigation suits the width (SPEC §5.5): the side rail from 840
     // points (an iPad in landscape), the bottom bar below. iPadOS doesn't
@@ -231,7 +345,7 @@ void main() {
     final width = tester.view.physicalSize.width / tester.view.devicePixelRatio;
     await until(
       tester,
-      find.byType(width >= 840 ? NavigationRail : NavigationBar),
+      find.byType(width >= 840 ? OpenFieldRail : OpenFieldTabBar),
     );
 
     expect(uncaught, isEmpty);

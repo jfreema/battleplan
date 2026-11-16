@@ -13,6 +13,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { defaultNotificationPrefs } from '../../src/accounts/service.js';
 import {
   avatarColorValues,
+  hereForValues,
   notificationPrefValues,
   teamSchemeValues,
   themePreferenceValues,
@@ -212,5 +213,7 @@ describe('users: the rules keep up with constants.json', () => {
     const colorLists = lists('avatarColor');
     expect(colorLists).toHaveLength(1);
     for (const list of colorLists) expect(list).toEqual([...avatarColorValues]);
+    // A member's answer to "Who are you here for?" (PLAYER-3).
+    expect(lists('hereFor')).toEqual([[...hereForValues]]);
   });
 });

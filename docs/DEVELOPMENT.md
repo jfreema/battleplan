@@ -141,7 +141,7 @@ When a key is added or changes, add its SHA-256 to the flavor's file and its SHA
 
 ## End-to-end test
 
-`integration_test/e2e_test.dart` runs the real app against the emulators (store checklist 1.13): the seeded coach opens a team's invite code, then a new parent signs up with email, finishes setup, joins with the code, chats, posts a photo, and answers an RSVP. On an iPad it turns to landscape and back. Any error fails it. Google sign-up needs a real Google account and the system photo picker can't be tapped by a test, so those are checked by hand; a stand-in picker hands the app one photo, which uploads and posts like any other.
+`integration_test/e2e_test.dart` runs the real app against the emulators (store checklist 1.13): the seeded coach opens a team's invite code, then a new parent signs up with email, finishes setup (which must start from the name they typed), joins with the code, picks their player from the card at the top of the chat and asks to be linked, chats, posts a photo, and sees who they're waiting on; the coach approves the claim on the Team tab; and the parent answers an RSVP (PLAYER-3, since 2026-11-16; on a team only players have answers, so a parent can't RSVP before they're linked). Last, it checks the navigation suits the screen: the side rail from 840 points wide, the tab bar below (an iPad can't be turned by a test, so its orientations and Split View are in `test/ipad_layout_test.dart`). Any error fails it. Google sign-up needs a real Google account and the system photo picker can't be tapped by a test, so those are checked by hand; a stand-in picker hands the app one photo, which uploads and posts like any other.
 
 With the emulators running and the seed loaded (steps 1 and 2 above):
 

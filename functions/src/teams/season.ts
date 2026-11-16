@@ -15,7 +15,7 @@ import { chunk } from '../notify/service.js';
 import { playerStatusOf, playerSummaryOf, relationOf } from '../players/roster.js';
 import { refreshPlayerCount } from '../players/service.js';
 import { db, storage } from '../shared/admin.js';
-import { Collections, Limits } from '../shared/constants.js';
+import { Collections, Limits, hereForValues } from '../shared/constants.js';
 import { compositeId, groupMemberId } from '../shared/ids.js';
 import { teamCountOf } from '../shared/roles.js';
 import { DEFAULT_SETTINGS, newMemberLevelOf, refreshMemberCount } from './service.js';
@@ -306,6 +306,10 @@ export async function copyTeamForSeason(
       avatarColor: m.avatarColor ?? null,
       ...(m.contactPhone != null ? { contactPhone: m.contactPhone } : {}),
       ...(m.contactEmail != null ? { contactEmail: m.contactEmail } : {}),
+      // And what they said to "Who are you here for?" without picking a
+      // player (PLAYER-3): Not now, or that they're a coach or another
+      // adult. The new season doesn't ask again.
+      ...((hereForValues as readonly unknown[]).includes(m.hereFor) ? { hereFor: m.hereFor } : {}),
       // Someone added by email who hasn't signed in yet (AUTH-6).
       ...(m.pending === true ? { pending: true } : {}),
       lastReadAt: now,

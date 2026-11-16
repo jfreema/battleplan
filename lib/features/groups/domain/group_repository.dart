@@ -171,6 +171,11 @@ abstract interface class MemberRepository {
   /// team's default (and any later change to it), else my own default.
   Future<void> clearMyColorScheme(GroupId groupId, UserId uid);
 
+  /// What I said to "Who are you here for?" on this team without picking a
+  /// player (PLAYER-3): Not now, or that I'm a coach or another adult.
+  /// The team's prompts stop asking. Syncs to every device.
+  Future<void> setMyHereFor(GroupId groupId, UserId uid, HereFor answer);
+
   /// Mutes this team's pushes until [until], or unmutes with null
   /// (NOTIF-3). "Until unmuted" is [Limits.mutedForeverMs].
   Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until);

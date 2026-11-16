@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/features/groups/groups.dart';
+import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_screen.dart';
@@ -43,11 +44,15 @@ class YourScheduleSection extends ConsumerWidget {
       for (final e in state.events)
         if (e.endAt.isAfter(now)) e,
     ].take(yourScheduleShown).toList();
-    // The cards wait for who I answer for on each team shown, so they
-    // arrive whole rather than growing their RSVP rows a moment later.
+    // The cards wait for who I answer for on each team shown (or, with
+    // nobody yet, where my pick stands, PLAYER-3), so they arrive whole
+    // rather than growing their RSVP rows or hint a moment later.
     var ready = !state.loading;
     for (final g in {for (final e in shown) e.groupId}) {
-      if (!ref.watch(myParticipantsReadyProvider(g))) ready = false;
+      if (!ref.watch(myParticipantsReadyProvider(g)) ||
+          !ref.watch(myPlayerPickReadyProvider(g))) {
+        ready = false;
+      }
     }
     final range = _range(shown);
 

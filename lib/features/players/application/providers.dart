@@ -1,11 +1,14 @@
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
+import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
 import 'package:battleplan/features/players/domain/player_repository.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/features/schedule/domain/rsvp_history.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    show ProviderListenableSelect;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
@@ -70,6 +73,87 @@ Stream<List<GuardianRequest>> myGuardianRequests(Ref ref, GroupId groupId) {
   return ref
       .watch(playerRepositoryProvider)
       .watchMyRequests(groupId, UserId(uid));
+}
+
+/// Whether the signed-in person is someone the "Who are you here for?"
+/// prompts could be for on [groupId] (PLAYER-3): a member of a team with
+/// players who doesn't manage it. Null until the team is known. Team
+/// admins link at once and answer for anyone, as super admins do on any
+/// team (SCHED-4), and a group has no players (TEAM-14).
+bool? _mayPickAPlayer(Ref ref, GroupId groupId) {
+  // Only what this needs of the team, whose document changes with every
+  // message.
+  final hasPlayers = ref.watch(
+    groupProvider(groupId).select((g) => g.value?.hasPlayers),
+  );
+  if (hasPlayers == null) return null;
+  final me = ref.watch(myMembershipProvider(groupId));
+  final superAdmin = ref.watch(
+    authUserProvider.select((a) => a.value?.isSuperAdmin ?? false),
+  );
+  return hasPlayers && me != null && !me.isAdmin && !superAdmin;
+}
+
+/// Where the signed-in person stands on "Who are you here for?" on
+/// [groupId] (PLAYER-3), for every prompt that leads there, so they agree:
+/// the chat's card, the schedule's cards, the event page, the Team tab,
+/// and Dues. Nothing ([PlayerPickStage.none]) until the team's links,
+/// their own claims, and the roster have loaded, so a prompt never shows
+/// and then goes or changes its words. Their claims and the players they
+/// added are read only while they're not linked to anyone.
+@riverpod
+PlayerPick myPlayerPick(Ref ref, GroupId groupId) {
+  if (!(_mayPickAPlayer(ref, groupId) ?? false)) return const PlayerPick();
+  final me = ref.watch(myMembershipProvider(groupId));
+  if (me == null) return const PlayerPick();
+  // Without the team's links there's no telling whether they're linked.
+  final links = ref.watch(guardianLinksProvider(groupId));
+  if (!links.hasValue) return const PlayerPick();
+  if (links.requireValue.any((l) => l.uid == me.uid)) {
+    return const PlayerPick();
+  }
+  // Their claims, the players they added, and the roster, which names who
+  // a claim is for. All three first, so the wording never changes under
+  // them; one that fails counts as empty, and the prompts still offer the
+  // screen.
+  final requests = ref.watch(myGuardianRequestsProvider(groupId));
+  final pending = ref.watch(myPendingPlayersProvider(groupId));
+  final players = ref.watch(playersProvider(groupId));
+  if (_firstLoad(requests) || _firstLoad(pending) || _firstLoad(players)) {
+    return const PlayerPick();
+  }
+  return playerPickOf(
+    me: me,
+    archived: ref.watch(
+      groupProvider(groupId).select((g) => g.value?.isArchived ?? false),
+    ),
+    links: links.requireValue,
+    requests: requests.value ?? const [],
+    pendingPlayers: pending.value ?? const [],
+    players: players.value ?? const [],
+  );
+}
+
+/// Whether [value] is still on its first load: nothing to show yet, and
+/// nothing has failed.
+bool _firstLoad(AsyncValue<Object?> value) =>
+    value.isLoading && !value.hasValue;
+
+/// Whether [myPlayerPick] is final for [groupId]: what it reads has
+/// arrived (or failed). Lets a card wait for its line rather than grow it
+/// a moment later, as with [myParticipantsReadyProvider].
+@riverpod
+bool myPlayerPickReady(Ref ref, GroupId groupId) {
+  final may = _mayPickAPlayer(ref, groupId);
+  if (may == null) return false;
+  if (!may) return true;
+  final me = ref.watch(myMembershipProvider(groupId));
+  final links = ref.watch(guardianLinksProvider(groupId));
+  if (links.isLoading) return false;
+  if (links.value?.any((l) => l.uid == me?.uid) ?? true) return true;
+  return !ref.watch(myGuardianRequestsProvider(groupId)).isLoading &&
+      !ref.watch(myPendingPlayersProvider(groupId)).isLoading &&
+      !ref.watch(playersProvider(groupId)).isLoading;
 }
 
 /// A player's answers on the team's events from yesterday on, by event ID,

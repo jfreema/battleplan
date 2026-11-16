@@ -31,6 +31,7 @@ import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/groups.dart';
+import 'package:battleplan/features/players/players.dart';
 import 'package:battleplan/features/polls/polls.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
@@ -821,6 +822,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             search: !direct && !viewing,
             onOpen: (id) => unawaited(_jumpTo(id)),
           ),
+        // A team's new member who isn't linked to a player yet: how to
+        // answer RSVPs (PLAYER-3). Its own widget, so the chat isn't
+        // rebuilt by what it watches; it's nothing for everyone else.
+        if (!direct && !viewing && !archived)
+          PlayerPickCard(groupId: widget.groupId),
         Expanded(
           child: Stack(
             children: [

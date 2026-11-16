@@ -1137,4 +1137,293 @@ as PlayerRelation,
 
 }
 
+/// @nodoc
+mixin _$PlayerPick {
+
+ PlayerPickStage get stage;/// While [PlayerPickStage.waiting]: the first names of the players
+/// waited on, for "Waiting for the coach to approve Max". Empty when
+/// none could be named.
+ List<String> get waitingFor;/// Whether the card at the top of the chat shows: asking, or waiting,
+/// until they close it (closing saves [HereFor.later]).
+ bool get card;
+/// Create a copy of PlayerPick
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PlayerPickCopyWith<PlayerPick> get copyWith => _$PlayerPickCopyWithImpl<PlayerPick>(this as PlayerPick, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as PlayerPick;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlayerPick&&(identical(other.stage, _this.stage) || other.stage == _this.stage)&&const DeepCollectionEquality().equals(other.waitingFor, _this.waitingFor)&&(identical(other.card, _this.card) || other.card == _this.card));
+}
+
+
+@override
+int get hashCode {
+  final _this = this as PlayerPick;
+  return Object.hash(runtimeType,_this.stage,const DeepCollectionEquality().hash(_this.waitingFor),_this.card);
+}
+
+@override
+String toString() {
+  final _this = this as PlayerPick;
+  return 'PlayerPick(stage: ${_this.stage}, waitingFor: ${_this.waitingFor}, card: ${_this.card})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $PlayerPickCopyWith<$Res>  {
+  factory $PlayerPickCopyWith(PlayerPick value, $Res Function(PlayerPick) _then) = _$PlayerPickCopyWithImpl;
+@useResult
+$Res call({
+ PlayerPickStage stage, List<String> waitingFor, bool card
+});
+
+
+
+
+}
+/// @nodoc
+class _$PlayerPickCopyWithImpl<$Res>
+    implements $PlayerPickCopyWith<$Res> {
+  _$PlayerPickCopyWithImpl(this._self, this._then);
+
+  final PlayerPick _self;
+  final $Res Function(PlayerPick) _then;
+
+/// Create a copy of PlayerPick
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? stage = null,Object? waitingFor = null,Object? card = null,}) {
+  return _then(PlayerPick(
+stage: null == stage ? _self.stage : stage // ignore: cast_nullable_to_non_nullable
+as PlayerPickStage,waitingFor: null == waitingFor ? _self.waitingFor : waitingFor // ignore: cast_nullable_to_non_nullable
+as List<String>,card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [PlayerPick].
+extension PlayerPickPatterns on PlayerPick {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _PlayerPick value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _PlayerPick() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _PlayerPick value)  $default,){
+final _that = this;
+switch (_that) {
+case _PlayerPick():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _PlayerPick value)?  $default,){
+final _that = this;
+switch (_that) {
+case _PlayerPick() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( PlayerPickStage stage,  List<String> waitingFor,  bool card)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _PlayerPick() when $default != null:
+return $default(_that.stage,_that.waitingFor,_that.card);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( PlayerPickStage stage,  List<String> waitingFor,  bool card)  $default,) {final _that = this;
+switch (_that) {
+case _PlayerPick():
+return $default(_that.stage,_that.waitingFor,_that.card);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( PlayerPickStage stage,  List<String> waitingFor,  bool card)?  $default,) {final _that = this;
+switch (_that) {
+case _PlayerPick() when $default != null:
+return $default(_that.stage,_that.waitingFor,_that.card);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _PlayerPick extends PlayerPick {
+  const _PlayerPick({this.stage = PlayerPickStage.none,  List<String> waitingFor = const <String>[], this.card = false}): _waitingFor = waitingFor,super._();
+  
+
+@override@JsonKey() final  PlayerPickStage stage;
+/// While [PlayerPickStage.waiting]: the first names of the players
+/// waited on, for "Waiting for the coach to approve Max". Empty when
+/// none could be named.
+ final  List<String> _waitingFor;
+/// While [PlayerPickStage.waiting]: the first names of the players
+/// waited on, for "Waiting for the coach to approve Max". Empty when
+/// none could be named.
+@override@JsonKey() List<String> get waitingFor {
+  if (_waitingFor is EqualUnmodifiableListView) return _waitingFor;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_waitingFor);
+}
+
+/// Whether the card at the top of the chat shows: asking, or waiting,
+/// until they close it (closing saves [HereFor.later]).
+@override@JsonKey() final  bool card;
+
+/// Create a copy of PlayerPick
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$PlayerPickCopyWith<_PlayerPick> get copyWith => __$PlayerPickCopyWithImpl<_PlayerPick>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlayerPick&&(identical(other.stage, stage) || other.stage == stage)&&const DeepCollectionEquality().equals(other.waitingFor, _waitingFor)&&(identical(other.card, card) || other.card == card));
+}
+
+
+@override
+int get hashCode {
+    return Object.hash(runtimeType,stage,const DeepCollectionEquality().hash(_waitingFor),card);
+}
+
+@override
+String toString() {
+    return 'PlayerPick(stage: $stage, waitingFor: $waitingFor, card: $card)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$PlayerPickCopyWith<$Res> implements $PlayerPickCopyWith<$Res> {
+  factory _$PlayerPickCopyWith(_PlayerPick value, $Res Function(_PlayerPick) _then) = __$PlayerPickCopyWithImpl;
+@override @useResult
+$Res call({
+ PlayerPickStage stage, List<String> waitingFor, bool card
+});
+
+
+
+
+}
+/// @nodoc
+class __$PlayerPickCopyWithImpl<$Res>
+    implements _$PlayerPickCopyWith<$Res> {
+  __$PlayerPickCopyWithImpl(this._self, this._then);
+
+  final _PlayerPick _self;
+  final $Res Function(_PlayerPick) _then;
+
+/// Create a copy of PlayerPick
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? stage = null,Object? waitingFor = null,Object? card = null,}) {
+  return _then(_PlayerPick(
+stage: null == stage ? _self.stage : stage // ignore: cast_nullable_to_non_nullable
+as PlayerPickStage,waitingFor: null == waitingFor ? _self._waitingFor : waitingFor // ignore: cast_nullable_to_non_nullable
+as List<String>,card: null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
 // dart format on

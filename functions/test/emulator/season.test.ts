@@ -75,7 +75,7 @@ async function fall(extra: object = {}): Promise<void> {
     ['gia', { role: 'admin', title: 'Treasurer' }],
     ['sam', { role: 'member', notificationLevel: 'important', contactPhone: '555-0100', colorScheme: 'navy', avatarColor: 'grape' }],
     ['lee', { role: 'member' }],
-    ['una', { role: 'member', title: 'Team parent' }],
+    ['una', { role: 'member', title: 'Team parent', hereFor: 'nobody' }],
     ['pen', { role: 'member', pending: true }],
   ];
   for (const [uid, fields] of people) {
@@ -180,7 +180,9 @@ describe('starting a new season (TEAM-16)', () => {
       colorScheme: 'navy', avatarColor: 'grape',
     });
     expect(await member(groupId, 'lee')).toMatchObject({ playerSummary: '#12', colorScheme: null, avatarColor: null });
-    expect(await member(groupId, 'una')).toMatchObject({ role: 'member', title: 'Team parent', playerSummary: null });
+    expect((await member(groupId, 'lee'))!.hereFor).toBeUndefined();
+    // So does saying they're not here for a player (PLAYER-3): nobody asks again.
+    expect(await member(groupId, 'una')).toMatchObject({ role: 'member', title: 'Team parent', playerSummary: null, hereFor: 'nobody' });
     expect(await member(groupId, 'pen')).toMatchObject({ pending: true });
 
     // Active players only, under new IDs, with their links: parents keep answering.

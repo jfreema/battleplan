@@ -483,6 +483,7 @@ Future<void> pumpTeam(
   FakeAssignmentRepository? assignments,
   FakeDuesRepository? dues,
   List<GuardianLink>? links,
+  List<GuardianRequest> requests = const [],
   FakeNotificationRepository? notifications,
 }) async {
   final events = FakeEventRepository(sceneEvents);
@@ -517,7 +518,8 @@ Future<void> pumpTeam(
     eventRepo: events,
     rsvpRepo: rsvps,
     playerRepo: FakePlayerRepository(scenePlayers)
-      ..links.addAll(links ?? sceneLinks),
+      ..links.addAll(links ?? sceneLinks)
+      ..requests.addAll(requests),
     assignmentRepo: assignments,
     duesRepo: dues ?? sceneDues(),
     notifications: notifications,
@@ -717,7 +719,8 @@ const wideSize = Size(1280, 800);
 /// schedule, Profile, Team settings, the team switcher, the Team tab,
 /// settings, invite, both Color scheme screens, a group's schedule, Dues (an
 /// admin's, a due, Who owes what, and a member's and a guardian's own), Your
-/// icon, and the wide rail layout.
+/// icon, the chat and schedule of a parent who hasn't picked their player
+/// yet, and the wide rail layout.
 final Map<
   String,
   Future<void> Function(WidgetTester, {required TeamScheme scheme})
@@ -822,4 +825,39 @@ goldenScreens = {
     await pumpTeam(tester, scheme: scheme);
     await goTo(tester, '/profile/icon');
   },
+  // A new parent, not linked to a player yet (PLAYER-3): the card at the
+  // top of the chat, and the line on the schedule's cards.
+  'chat_pick': pumpNewParent,
+  'schedule_pick': (tester, {required scheme}) async {
+    await pumpNewParent(tester, scheme: scheme);
+    await tester.tap(find.text('Schedule'));
+    await tester.pumpAndSettle();
+  },
 };
+
+/// The team as Sam, a parent who just joined and isn't linked to a player
+/// yet (PLAYER-3), opened on the chat, whose card says how to answer
+/// RSVPs. With [waiting], Sam has asked to be linked to Leo, and a team
+/// admin hasn't approved it yet.
+Future<void> pumpNewParent(
+  WidgetTester tester, {
+  required TeamScheme scheme,
+  bool waiting = false,
+}) => pumpTeam(
+  tester,
+  scheme: scheme,
+  user: sam,
+  links: [
+    for (final l in sceneLinks)
+      if (l.uid.value != 'sam') l,
+  ],
+  requests: [
+    if (waiting)
+      const GuardianRequest(
+        playerId: PlayerId('leo'),
+        groupId: _team,
+        uid: UserId('sam'),
+        status: GuardianRequestStatus.pending,
+      ),
+  ],
+);

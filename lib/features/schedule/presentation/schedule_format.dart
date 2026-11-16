@@ -3,12 +3,16 @@ import 'package:battleplan/core/design/app_colors.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/services/time_zones.dart';
+import 'package:battleplan/core/text_lists.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/domain/recurrence.dart';
 import 'package:battleplan/features/schedule/domain/rsvp.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
+
+// "Tue and Thu", "Mon, Wed, and Fri": the schedule's files get it here.
+export 'package:battleplan/core/text_lists.dart' show joinAnd;
 
 /// How the schedule writes events: type names, colors, and icons, times
 /// in the viewer's zone (SCHED-9), counts, and series lines.
@@ -237,18 +241,6 @@ String? otherZoneLine(AppLocalizations l10n, Event e, String viewerZone) {
       '${timeIn(l10n, e.startAt, e.timeZone)} '
       '${ZonedTime.abbreviation(e.timeZone, e.startAt)}';
   return '$theirs · ${l10n.eventYourTime(timeIn(l10n, e.startAt, viewerZone))}';
-}
-
-/// "Tue and Thu", "Mon, Wed, and Fri".
-String joinAnd(AppLocalizations l10n, List<String> items) {
-  if (items.isEmpty) return '';
-  if (items.length == 1) return items.single;
-  if (items.length == 2) return l10n.listTwo(items[0], items[1]);
-  // gen-l10n orders the arguments by name: last, then rest.
-  return l10n.listMany(
-    items.last,
-    items.sublist(0, items.length - 1).join(', '),
-  );
 }
 
 /// "Tue" for ISO weekday [day] (Monday = 1).

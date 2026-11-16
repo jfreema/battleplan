@@ -26,6 +26,7 @@ import 'package:battleplan/features/groups/presentation/team_card.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/domain/player_details.dart';
+import 'package:battleplan/features/players/players.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/safety.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -99,18 +100,13 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
         ? ref.watch(pendingGuardianRequestsProvider(widget.groupId)).value ??
               const <GuardianRequest>[]
         : const <GuardianRequest>[];
-    final myUid = ref.watch(authUserProvider).value?.uid;
     final links = hasPlayers
         ? ref.watch(guardianLinksProvider(widget.groupId)).value ??
               const <GuardianLink>[]
         : const <GuardianLink>[];
-    final linked = links.any((l) => l.uid.value == myUid);
-    final waiting =
-        pending.any((p) => p.proposedBy == myUid) ||
-        (hasPlayers &&
-            (ref.watch(myGuardianRequestsProvider(widget.groupId)).value ??
-                    const <GuardianRequest>[])
-                .any((r) => r.status == GuardianRequestStatus.pending));
+    // Where I stand on "Who are you here for?" (PLAYER-3), as the chat's
+    // card and the schedule's cards test it.
+    final pick = ref.watch(myPlayerPickProvider(widget.groupId));
     // Not on an archived team, which is read-only for everyone (TEAM-9).
     final canAdd =
         hasPlayers &&
@@ -301,25 +297,33 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
                     ),
                 ]),
               ],
-              if (hasPlayers &&
-                  !isAdmin &&
-                  me != null &&
-                  !linked &&
-                  !waiting) ...[
+              // Not linked to a player yet: the way to "Who are you here
+              // for?", bold until they've answered (Not now, or a coach or
+              // another adult), and it stays so they can link later. Once
+              // they've asked, who they're waiting on, where it used to
+              // vanish (owner's go 2026-11-16); it still opens the screen,
+              // for a second player.
+              if (pick.unlinked || pick.stage == PlayerPickStage.waiting) ...[
                 const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: Space.page),
                   child: SettingsCard(
                     children: [
-                      SettingsRow(
-                        icon: AppIcons.invite,
-                        highlighted: true,
-                        title: l10n.whoAreYouHereFor,
-                        subtitle: l10n.whoAreYouHereForRosterHint,
-                        subtitleLines: 3,
-                        onTap: () =>
-                            context.push('/g/${widget.groupId.value}/who'),
-                      ),
+                      if (pick.stage == PlayerPickStage.waiting)
+                        SettingsRow(
+                          icon: AppIcons.time,
+                          title: playerPickWaitingText(l10n, pick),
+                          onTap: () => openPlayerPick(context, widget.groupId),
+                        )
+                      else
+                        SettingsRow(
+                          icon: AppIcons.invite,
+                          highlighted: pick.stage == PlayerPickStage.ask,
+                          title: l10n.whoAreYouHereFor,
+                          subtitle: l10n.whoAreYouHereForRosterHint,
+                          subtitleLines: 3,
+                          onTap: () => openPlayerPick(context, widget.groupId),
+                        ),
                     ],
                   ),
                 ),

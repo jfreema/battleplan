@@ -1283,12 +1283,14 @@ void main() {
       expect(playerRepo.calls, ['propose Liam Rodriguez #23 guardian']);
     });
 
-    testWidgets('back from a choice, and coaches skip it', (tester) async {
+    testWidgets('back from a choice, and coaches skip it, back where they '
+        'were', (tester) async {
+      final members = FakeMemberRepository([testMembership('y', 'coach')]);
       await pumpApp(
         tester,
         auth: FakeAuthRepository(user: coach),
         groups: team,
-        memberships: [testMembership('y', 'coach')],
+        memberRepo: members,
         playerRepo: emmaTeam(),
       );
       await openWho(tester);
@@ -1303,7 +1305,11 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text("I'm a coach or another adult"));
       await tester.pumpAndSettle();
-      expect(find.byTooltip('Add photos or a poll'), findsOneWidget);
+      // Back on the Team tab they opened it from (owner's go 2026-11-16),
+      // not the chat, and remembered, so the team stops asking (PLAYER-3).
+      expect(location(tester), '/g/y/team');
+      expect(members.calls, ['hereFor y nobody']);
+      expect(find.text('Who are you here for?'), findsOneWidget);
     });
 
     testWidgets('a refused claim says why', (tester) async {

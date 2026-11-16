@@ -318,6 +318,25 @@ describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
     await assertFails(send('bob', 'Bob', 'p11', { type: 'image', attachments: eleven }));
   });
 
+  it("still takes them from someone with every setting of their own saved (the membership's costliest checks)", async () => {
+    // The send batch updates the member's doc, so its rule runs in the same
+    // 1,000 expressions: with a color scheme (SET-2) and a "Who are you
+    // here for?" answer (PLAYER-3) saved, both lists are checked too.
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('groupMembers/teamA_bob').update({ colorScheme: 'skyblue', hereFor: 'nobody' }),
+    );
+    const ten = Array.from({ length: 10 }, (_, i) => ({
+      path: `groups/teamA/messages/p12/${i}.jpg`, contentType: 'image/jpeg', width: 2048, height: 1536, size: 345678,
+    }));
+    const words = Array.from({ length: 100 }, (_, i) => `word${i}`);
+    await assertSucceeds(
+      send('bob', 'Bob', 'p12', {
+        type: 'image', text: 'Game day photos @Alice', attachments: ten, mentions: ['alice'], replyToId: 'm1', words,
+        authorAvatarColor: null,
+      }),
+    );
+  });
+
   it('takes up to 100 search words, as a list (CHAT-20)', async () => {
     await assertSucceeds(send('bob', 'Bob', 'w1', { text: 'Tournament Saturday', words: ['tournament', 'saturday'] }));
     await assertSucceeds(
@@ -812,4 +831,32 @@ describe('a member picks how a team looks to them (SET-2)', () => {
   it('leaves the icon color to Functions (SET-8)', async () => {
     await assertFails(as('bob').doc('groupMembers/teamA_bob').update({ avatarColor: 'mint' }));
   });
+});
+
+describe('a member says who they are here for without picking a player (PLAYER-3)', () => {
+  const mine = () => as('bob').doc('groupMembers/teamA_bob');
+
+  it('saves Not now, or a coach or another adult, and changes their mind', async () => {
+    await assertSucceeds(mine().update({ hereFor: 'later' }));
+    await assertSucceeds(mine().update({ hereFor: 'nobody' }));
+    await assertSucceeds(mine().update({ hereFor: null }));
+    await assertSucceeds(mine().update({ hereFor: firebase.firestore.FieldValue.delete() }));
+  });
+
+  it('on an archived team too, and beside their other settings', async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      ctx.firestore().doc('groups/teamA').update({ archivedAt: ts('2026-05-01T00:00:00Z') }),
+    );
+    await assertSucceeds(mine().update({ hereFor: 'later', notificationLevel: 'important' }));
+  });
+
+  it("checks the value, and nobody sets someone else's", async () => {
+    for (const bad of ['adult', '', 'Later', 1, true]) {
+      await assertFails(mine().update({ hereFor: bad }));
+    }
+    // Not a team admin for a member, and not someone on another team.
+    await assertFails(as('alice').doc('groupMembers/teamA_bob').update({ hereFor: 'nobody' }));
+    await assertFails(as('carol').doc('groupMembers/teamA_bob').update({ hereFor: 'later' }));
+  });
+
 });

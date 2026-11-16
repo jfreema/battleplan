@@ -94,6 +94,10 @@ void main() {
     // team only players have answers (PLAYER-6).
     bool basicGroup = false,
     bool archived = false,
+    // What the member said to "Who are you here for?" without picking a
+    // player, and whether an admin marked them a coach (PLAYER-3).
+    HereFor? hereFor,
+    bool? isCoach,
   }) async {
     final eventRepo = FakeEventRepository(events);
     final rsvps = FakeRsvpRepository(eventRepo);
@@ -112,7 +116,12 @@ void main() {
         ...extraGroups,
       },
       memberships: [
-        testMembership('a', 'coach', role: role, name: 'Coach Lee'),
+        testMembership(
+          'a',
+          'coach',
+          role: role,
+          name: 'Coach Lee',
+        ).copyWith(hereFor: hereFor, coach: isCoach),
         testMembership('a', 'sam', name: 'Sam Rivera'),
         for (final id in extraGroups.keys)
           testMembership(id, 'coach', name: 'Coach Lee'),
@@ -1058,20 +1067,55 @@ void main() {
       expect(find.text('RSVPs are closed.'), findsNothing);
     });
 
-    testWidgets('a member with nobody to answer for is pointed to Who are '
-        'you here for? (PLAYER-3, spec 6.3)', (tester) async {
+    testWidgets('a member with nobody to answer for gets the next step, as a '
+        'real button (PLAYER-3, spec 6.3; owner, 2026-11-16)', (tester) async {
       await openSchedule(tester, players: emma(), events: [event('e1')]);
       await openDetails(tester, 'Practice');
       expect(find.text('RSVPs'), findsOneWidget);
-      expect(find.text('On a team, only players have RSVPs.'), findsOneWidget);
+      expect(find.text('Pick your player to answer RSVPs'), findsOneWidget);
+      // Not the rule it used to state, with a small link.
+      expect(find.text('On a team, only players have RSVPs.'), findsNothing);
       expect(find.byType(SegmentedButton<RsvpStatus>), findsNothing);
       // The counts and the people show as for everyone.
       expect(find.text('0 of 1 players going'), findsOneWidget);
-      await tester.tap(
-        find.widgetWithText(TextButton, 'Who are you here for?'),
-      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Pick my player'));
       await tester.pumpAndSettle();
       expect(location(tester), '/g/a/who');
+    });
+
+    testWidgets('Not now keeps the button there; a coach, or "a coach or '
+        'another adult", gets the rule and a quiet link (PLAYER-3)', (
+      tester,
+    ) async {
+      await openSchedule(
+        tester,
+        players: emma(),
+        events: [event('e1')],
+        hereFor: HereFor.later,
+      );
+      await openDetails(tester, 'Practice');
+      expect(find.widgetWithText(FilledButton, 'Pick my player'), findsOne);
+
+      for (final (hereFor, isCoach) in [(HereFor.nobody, null), (null, true)]) {
+        await openSchedule(
+          tester,
+          players: emma(),
+          events: [event('e1')],
+          hereFor: hereFor,
+          isCoach: isCoach,
+        );
+        await openDetails(tester, 'Practice');
+        expect(find.text('Pick my player'), findsNothing);
+        expect(
+          find.text('On a team, only players have RSVPs.'),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.widgetWithText(TextButton, 'Who are you here for?'),
+        );
+        await tester.pumpAndSettle();
+        expect(location(tester), '/g/a/who');
+      }
     });
 
     testWidgets('a member whose claim waits is told so instead (spec 6.3)', (
@@ -1089,11 +1133,12 @@ void main() {
         );
       await openSchedule(tester, players: claimed, events: [event('e1')]);
       await openDetails(tester, 'Practice');
+      // By name, as the chat's card and the Team tab say it.
       expect(
-        find.text('Your claim is waiting for a team admin.'),
+        find.text('Waiting for the coach to approve Emma'),
         findsOneWidget,
       );
-      expect(find.text('On a team, only players have RSVPs.'), findsNothing);
+      expect(find.text('Pick my player'), findsNothing);
       expect(find.text('Who are you here for?'), findsNothing);
 
       // A player they added, waiting, on a team with no players yet: the
@@ -1114,7 +1159,7 @@ void main() {
       await openDetails(tester, 'Practice');
       expect(find.text('RSVPs'), findsOneWidget);
       expect(
-        find.text('Your claim is waiting for a team admin.'),
+        find.text('Waiting for the coach to approve Noah'),
         findsOneWidget,
       );
     });
