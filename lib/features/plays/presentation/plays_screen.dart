@@ -100,11 +100,8 @@ class SavedPlaysScreen extends ConsumerWidget {
         },
       );
     }
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: canEdit ? l10n.playsSaved : l10n.tabPlays,
-      ),
+    return GumdropScaffold(
+      title: canEdit ? l10n.playsSaved : l10n.tabPlays,
       body: body,
     );
   }

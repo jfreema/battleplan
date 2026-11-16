@@ -166,13 +166,8 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     final theme = Theme.of(context);
     final error = _error;
     final c = GumdropColors.of(context);
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: _kind == GroupKind.group
-            ? l10n.createGroupTitle
-            : l10n.createTeam,
-      ),
+    return GumdropScaffold(
+      title: _kind == GroupKind.group ? l10n.createGroupTitle : l10n.createTeam,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),

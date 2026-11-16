@@ -44,15 +44,12 @@ class InviteScreen extends ConsumerWidget {
     // Right after creating a team there's nothing to go back to, so a clear
     // way into the new team (its chat) sits at the bottom.
     final dead = !context.canPop();
-    return Scaffold(
-      appBar: gumdropAppBar(
+    return GumdropScaffold(
+      title: l10n.inviteMenu,
+      // Opened from the Team tab's card (SPEC §5.3), or Admin settings.
+      backLabel: backLabelFrom(
         context,
-        title: l10n.inviteMenu,
-        // Opened from the Team tab's card (SPEC §5.3), or Admin settings.
-        backLabel: backLabelFrom(
-          context,
-          group?.isGroup ?? false ? l10n.groupPeople : l10n.tabTeam,
-        ),
+        group?.isGroup ?? false ? l10n.groupPeople : l10n.tabTeam,
       ),
       bottomNavigationBar: dead
           ? SafeArea(

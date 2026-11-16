@@ -5,6 +5,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/presentation/composer.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/groups/presentation/create_team_screen.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -217,7 +218,7 @@ void main() {
     // The team's own settings, behind Admin settings.
     await tester.tap(find.text('Admin settings'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Admin settings'), findsOneWidget);
+    expect(find.widgetWithText(PageTitle, 'Admin settings'), findsOneWidget);
     await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Back'));

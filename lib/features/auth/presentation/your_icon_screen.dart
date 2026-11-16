@@ -66,12 +66,9 @@ class _YourIconScreenState extends ConsumerState<YourIconScreen> {
     final photoUrl = ref.watch(myPhotoUrlProvider).value;
     final hasPhoto = profile?.photoPath != null;
 
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: l10n.yourIcon,
-        backLabel: l10n.profile,
-      ),
+    return GumdropScaffold(
+      title: l10n.yourIcon,
+      backLabel: l10n.profile,
       body: profile == null
           ? const SizedBox.shrink()
           : Align(

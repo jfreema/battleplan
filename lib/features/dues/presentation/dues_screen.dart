@@ -97,15 +97,12 @@ class DuesScreen extends ConsumerWidget {
       color: c.textMutedOnPage,
     );
 
-    return Scaffold(
-      appBar: gumdropAppBar(
+    return GumdropScaffold(
+      title: l10n.duesTitle,
+      // Opened from the Team tab's card (SPEC §5.3).
+      backLabel: backLabelFrom(
         context,
-        title: l10n.duesTitle,
-        // Opened from the Team tab's card (SPEC §5.3).
-        backLabel: backLabelFrom(
-          context,
-          isGroup ? l10n.groupPeople : l10n.tabTeam,
-        ),
+        isGroup ? l10n.groupPeople : l10n.tabTeam,
       ),
       body: Align(
         alignment: Alignment.topCenter,
@@ -845,28 +842,25 @@ class DueDetailScreen extends ConsumerWidget {
     final archived = group?.isArchived ?? false;
     final canEdit = isDuesAdmin(ref, groupId) && !archived;
     final totals = dueTotals(charges);
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: due?.title ?? l10n.duesTitle,
-        // Dues, or Who owes what when opened from there.
-        backLabel: backLabelFrom(context, l10n.duesTitle),
-        actions: [
-          if (due != null && canEdit)
-            PopupMenuButton<String>(
-              tooltip: l10n.eventMoreActions,
-              onSelected: (v) => v == 'edit'
-                  ? unawaited(
-                      context.push('/g/${groupId.value}/dues/$dueId/edit'),
-                    )
-                  : unawaited(_delete(context, ref, due)),
-              itemBuilder: (_) => [
-                PopupMenuItem(value: 'edit', child: Text(l10n.duesEdit)),
-                PopupMenuItem(value: 'delete', child: Text(l10n.duesDelete)),
-              ],
-            ),
-        ],
-      ),
+    return GumdropScaffold(
+      title: due?.title ?? l10n.duesTitle,
+      // Dues, or Who owes what when opened from there.
+      backLabel: backLabelFrom(context, l10n.duesTitle),
+      actions: [
+        if (due != null && canEdit)
+          PopupMenuButton<String>(
+            tooltip: l10n.eventMoreActions,
+            onSelected: (v) => v == 'edit'
+                ? unawaited(
+                    context.push('/g/${groupId.value}/dues/$dueId/edit'),
+                  )
+                : unawaited(_delete(context, ref, due)),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'edit', child: Text(l10n.duesEdit)),
+              PopupMenuItem(value: 'delete', child: Text(l10n.duesDelete)),
+            ],
+          ),
+      ],
       body: dues == null
           ? (duesAsync.hasError ? const DuesLoadError() : const SkeletonList())
           : due == null
@@ -1300,24 +1294,18 @@ class _NewDueScreenState extends ConsumerState<NewDueScreen> {
           : group == null
           ? const SkeletonList()
           : Center(child: DuesQuiet(l10n.duesNotFound));
-      return Scaffold(
-        appBar: gumdropAppBar(
-          context,
-          title: _isEdit ? l10n.duesEdit : l10n.duesNew,
-          backLabel: back,
-        ),
+      return GumdropScaffold(
+        title: _isEdit ? l10n.duesEdit : l10n.duesNew,
+        backLabel: back,
         body: body,
       );
     }
     // Who it can be for, on a new due: nothing to save until it's known.
     final everyoneAsync = _isEdit ? null : _everyone(ref, group);
     final everyone = everyoneAsync?.list;
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: _isEdit ? l10n.duesEdit : l10n.duesNew,
-        backLabel: back,
-      ),
+    return GumdropScaffold(
+      title: _isEdit ? l10n.duesEdit : l10n.duesNew,
+      backLabel: back,
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(

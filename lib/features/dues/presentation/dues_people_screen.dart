@@ -75,12 +75,9 @@ class DuesPeopleScreen extends ConsumerWidget {
         ),
       );
     }
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: l10n.duesWhoOwesWhat,
-        backLabel: l10n.duesTitle,
-      ),
+    return GumdropScaffold(
+      title: l10n.duesWhoOwesWhat,
+      backLabel: l10n.duesTitle,
       body: body,
     );
   }

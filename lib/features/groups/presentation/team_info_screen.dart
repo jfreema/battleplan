@@ -44,11 +44,8 @@ class TeamInfoScreen extends ConsumerWidget {
       onTap: () => unawaited(context.push('/g/${groupId.value}/$route')),
     );
 
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: isGroup ? l10n.groupSettings : l10n.teamSettings,
-      ),
+    return GumdropScaffold(
+      title: isGroup ? l10n.groupSettings : l10n.teamSettings,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),

@@ -280,7 +280,10 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
     final theme = Theme.of(context);
     final group = ref.watch(groupProvider(widget.groupId)).value;
     if (group == null) {
-      return Scaffold(appBar: gumdropAppBar(context, title: l10n.teamAdmin));
+      return GumdropScaffold(
+        title: l10n.teamAdmin,
+        body: const SizedBox.shrink(),
+      );
     }
     if (!_loaded) {
       _name.text = group.name;
@@ -351,14 +354,11 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
       ],
     );
 
-    return Scaffold(
-      appBar: gumdropAppBar(
+    return GumdropScaffold(
+      title: group.isGroup ? l10n.groupAdmin : l10n.teamAdmin,
+      backLabel: backLabelFrom(
         context,
-        title: group.isGroup ? l10n.groupAdmin : l10n.teamAdmin,
-        backLabel: backLabelFrom(
-          context,
-          group.isGroup ? l10n.groupSettings : l10n.teamSettings,
-        ),
+        group.isGroup ? l10n.groupSettings : l10n.teamSettings,
       ),
       body: Center(
         child: ConstrainedBox(

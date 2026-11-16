@@ -112,7 +112,10 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
     final theme = Theme.of(context);
     final group = ref.watch(groupProvider(widget.groupId)).value;
     if (group == null) {
-      return Scaffold(appBar: gumdropAppBar(context, title: l10n.newSeason));
+      return GumdropScaffold(
+        title: l10n.newSeason,
+        body: const SizedBox.shrink(),
+      );
     }
     if (!_named) {
       _name.text = group.name;
@@ -159,12 +162,9 @@ class _NewSeasonScreenState extends ConsumerState<NewSeasonScreen> {
       onChanged: _saving ? null : (v) => onChanged(v ?? false),
     );
 
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: l10n.newSeason,
-        backLabel: l10n.teamAdmin,
-      ),
+    return GumdropScaffold(
+      title: l10n.newSeason,
+      backLabel: l10n.teamAdmin,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),

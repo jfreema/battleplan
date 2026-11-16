@@ -6,6 +6,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/services/time_zones.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/schedule/domain/event.dart';
 import 'package:battleplan/features/schedule/presentation/schedule_widgets.dart';
@@ -106,7 +107,7 @@ void main() {
       ]),
     );
     await openTeamSettings(tester, tooltip: 'Group settings');
-    expect(find.widgetWithText(AppBar, 'Group settings'), findsOneWidget);
+    expect(find.widgetWithText(PageTitle, 'Group settings'), findsOneWidget);
     expect(find.text('Admin settings'), findsOneWidget);
     expect(find.text('Group · 3 members'), findsOneWidget);
     await tester.tap(find.byTooltip('Back'));
@@ -250,7 +251,7 @@ void main() {
     // Its people are People until it's a team.
     expect(find.text('People'), findsOneWidget);
     await go(tester, '/g/c/settings');
-    expect(find.widgetWithText(AppBar, 'Admin settings'), findsOneWidget);
+    expect(find.widgetWithText(PageTitle, 'Admin settings'), findsOneWidget);
     final make = find.text('Make it a team');
     await tester.ensureVisible(make);
     await tester.tap(make);
@@ -270,8 +271,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(groupRepo.updates, ['convert soccer']);
     expect(find.text('Book club is a team now.'), findsOneWidget);
-    // A team's Admin settings now, with its sport, and no way back.
-    expect(find.widgetWithText(AppBar, 'Admin settings'), findsOneWidget);
+    // A team's Admin settings now, with its sport, and no way back. (Its
+    // title has scrolled away with the page, #14.)
+    expect(
+      find.widgetWithText(PageTitle, 'Admin settings', skipOffstage: false),
+      findsOneWidget,
+    );
     expect(find.text('SPORT'), findsOneWidget);
     expect(find.text('Make it a team'), findsNothing);
     await go(tester, '/g/c/chat');

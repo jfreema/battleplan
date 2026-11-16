@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/gumdrop_style.dart';
@@ -42,6 +44,34 @@ class BackChevron extends StatelessWidget {
   /// ([ActionIconThemeData.backButtonIconBuilder]).
   static Widget iconBuilder(BuildContext context) =>
       const Icon(AppIcons.chevronLeft, size: 28, weight: 700);
+
+  /// The back label's text style: Fredoka 600 17.
+  static TextStyle labelStyle(BuildContext context) =>
+      GumdropStyle.of(context).label(
+        TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          height: 1.2,
+          color: GumdropColors.of(context).textOnPage,
+          shadows: const [],
+        ),
+      );
+
+  /// How wide the button is with [label] (or the chevron alone), for
+  /// laying things out beside it: the page frame's small title (#14).
+  static double widthOf(BuildContext context, String? label) {
+    if (label == null) return 48;
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: labelStyle(context)),
+      maxLines: 1,
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    // The padding, the 28 px chevron, and the gap before the label.
+    return math.max(48, 10 + 28 + 6 + width + 8);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,15 +155,7 @@ class BackChevron extends StatelessWidget {
                         text,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GumdropStyle.of(context).label(
-                          TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            height: 1.2,
-                            color: c.textOnPage,
-                            shadows: const [],
-                          ),
-                        ),
+                        style: labelStyle(context),
                       ),
                     ),
                   ],

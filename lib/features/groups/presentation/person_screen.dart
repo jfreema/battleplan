@@ -156,46 +156,40 @@ class PersonScreen extends ConsumerWidget {
         .followedBy(rows.map((r) => r.team.group.id))
         .firstOrNull;
 
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: l10n.personTitle,
-        // Its opener (the roster, a chat), or the chevron alone.
-        backLabel: openerLabel(context),
-        actions: [
-          if (!isMe && !unknown)
-            PopupMenuButton<String>(
-              tooltip: l10n.directMenuTooltip,
-              icon: const Icon(AppIcons.menu),
-              onSelected: (action) => unawaited(switch (action) {
-                'block' => confirmBlock(context, ref, uid: uid, name: name),
-                'unblock' => unblock(context, ref, uid),
-                'report' when reportTeam != null => showReportSheet(
-                  context,
-                  ref,
-                  groupId: reportTeam,
-                  targetType: ReportTargetType.user,
-                  targetId: uid.value,
+    return GumdropScaffold(
+      title: l10n.personTitle,
+      // Its opener (the roster, a chat), or the chevron alone.
+      backLabel: openerLabel(context),
+      actions: [
+        if (!isMe && !unknown)
+          PopupMenuButton<String>(
+            tooltip: l10n.directMenuTooltip,
+            icon: const Icon(AppIcons.menu),
+            onSelected: (action) => unawaited(switch (action) {
+              'block' => confirmBlock(context, ref, uid: uid, name: name),
+              'unblock' => unblock(context, ref, uid),
+              'report' when reportTeam != null => showReportSheet(
+                context,
+                ref,
+                groupId: reportTeam,
+                targetType: ReportTargetType.user,
+                targetId: uid.value,
+              ),
+              _ => Future<void>.value(),
+            }),
+            itemBuilder: (_) => [
+              if (blocked)
+                PopupMenuItem(value: 'unblock', child: Text(l10n.unblock))
+              else
+                PopupMenuItem(
+                  value: 'block',
+                  child: Text(l10n.blockPerson(name)),
                 ),
-                _ => Future<void>.value(),
-              }),
-              itemBuilder: (_) => [
-                if (blocked)
-                  PopupMenuItem(value: 'unblock', child: Text(l10n.unblock))
-                else
-                  PopupMenuItem(
-                    value: 'block',
-                    child: Text(l10n.blockPerson(name)),
-                  ),
-                if (reportTeam != null)
-                  PopupMenuItem(
-                    value: 'report',
-                    child: Text(l10n.reportMessage),
-                  ),
-              ],
-            ),
-        ],
-      ),
+              if (reportTeam != null)
+                PopupMenuItem(value: 'report', child: Text(l10n.reportMessage)),
+            ],
+          ),
+      ],
       body: unknown
           ? EmptyState(icon: AppIcons.person, message: l10n.personNotFound)
           : ListView(

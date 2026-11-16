@@ -107,16 +107,13 @@ class ColorSchemeScreen extends ConsumerWidget {
       }
     }
 
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: title,
-        backLabel: id == null
-            ? l10n.tabTeams
-            : isGroup
-            ? l10n.groupSettings
-            : l10n.teamSettings,
-      ),
+    return GumdropScaffold(
+      title: title,
+      backLabel: id == null
+          ? l10n.tabTeams
+          : isGroup
+          ? l10n.groupSettings
+          : l10n.teamSettings,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),

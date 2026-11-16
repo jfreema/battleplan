@@ -4,6 +4,7 @@ import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/team_theme.dart';
+import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -17,69 +18,219 @@ import 'package:material_ui/material_ui.dart';
 /// caps field labels, and the team color grid. Shared by Settings, Team
 /// admin, Create team, Invite, Roster, Dues, Documents, and Plays.
 
-/// The pushed-screen bar (SPEC §7.3): a 48 px back row with the chevron
-/// and [backLabel] (the screen it goes back to), and [actions] on its
-/// right as 48 px icon buttons; then the title in Lilita 32 with the
-/// scheme's drop, 20 px from the left. The title row grows with the text
-/// size. With nothing under the screen (a link, a web reload, a
-/// notification on a cold start), the chevron alone goes [upFrom] it.
-PreferredSizeWidget gumdropAppBar(
-  BuildContext context, {
-  required String title,
-  String? backLabel,
-  List<Widget>? actions,
-  PreferredSizeWidget? bottom,
-}) {
-  final canPop = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
-  final scaler = MediaQuery.textScalerOf(context);
-  final titleStyle = Theme.of(context).textTheme.headlineMedium
-      ?.copyWith(fontSize: 32, height: 36 / 32);
-  final titleHeight = 6 + scaler.scale(36) + 4;
-  final under = bottom?.preferredSize.height ?? 0;
-  return AppBar(
-    toolbarHeight: 48,
-    automaticallyImplyLeading: false,
-    // The back row isn't the heading; the title below it is, and names
-    // the route.
-    excludeHeaderSemantics: true,
-    titleSpacing: 4,
-    title: canPop
-        ? Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: BackChevron(label: backLabel),
-          )
+/// A page opened on top (SPEC §7.3): the app's one frame for them (#14,
+/// owner's go 2026-11-16, after pages that looked like two different apps).
+///
+/// A 48 px back row, pinned: the chevron and [backLabel] (the screen it
+/// goes back to), and [actions] on its right as 48 px icon buttons. Then
+/// the [title] in Lilita 32 with the scheme's drop, 20 px from the left,
+/// which scrolls away with the page's own list, giving back its room
+/// (owner's request 2026-11-05: headers that take less room). Once it's
+/// out of sight the page's name fades into the back row's middle, small,
+/// where it fits beside the back label; never crowding it. With nothing
+/// under the page (a link, a web reload, a notification on a cold start),
+/// the chevron alone goes [upFrom] it, and Android's Back with it.
+///
+/// [body] needs no changes: its list scrolls with the title through the
+/// primary scroll controller, as a ListView takes it by itself. A body
+/// with a controller of its own keeps its title in place.
+class GumdropScaffold extends StatefulWidget {
+  const new({
+    required this.title,
+    required this.body,
+    this.backLabel,
+    this.actions,
+    this.bottomNavigationBar,
+    this.floatingActionButton,
+    super.key,
+  });
+
+  final String title;
+  final Widget body;
+  final String? backLabel;
+  final List<Widget>? actions;
+  final Widget? bottomNavigationBar;
+  final Widget? floatingActionButton;
+
+  @override
+  State<GumdropScaffold> createState() => _GumdropScaffoldState();
+}
+
+class _GumdropScaffoldState extends State<GumdropScaffold> {
+  final _outer = ScrollController();
+
+  /// The title has scrolled out of sight: the small one shows.
+  bool _away = false;
+
+  /// The big title's height, padding included, at this text size.
+  double _titleExtent(BuildContext context) =>
+      6 + MediaQuery.textScalerOf(context).scale(36) + 4;
+
+  @override
+  void initState() {
+    super.initState();
+    _outer.addListener(() {
+      final away =
+          _outer.hasClients && _outer.offset >= _titleExtent(context) - 1;
+      if (away != _away) setState(() => _away = away);
+    });
+  }
+
+  @override
+  void dispose() {
+    _outer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canPop = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
+    final backLabel = canPop ? widget.backLabel : null;
+    final back = canPop
+        ? BackChevron(label: backLabel)
         : switch (_goUp(context)) {
-            final up? => Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: _UpChevron(up: up),
-            ),
+            final up? => _UpChevron(up: up),
             null => null,
-          },
-    actions: actions,
-    actionsPadding: const EdgeInsets.only(right: 4),
-    bottom: PreferredSize(
-      preferredSize: Size.fromHeight(titleHeight + under),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
-            child: Semantics(
-              header: true,
-              namesRoute: true,
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: titleStyle,
-              ),
+          };
+    final actions = widget.actions ?? const <Widget>[];
+    return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 48,
+        automaticallyImplyLeading: false,
+        // The back row isn't the heading; the title is, and names the
+        // route.
+        excludeHeaderSemantics: true,
+        titleSpacing: 4,
+        title: back == null
+            ? null
+            : Align(alignment: AlignmentDirectional.centerStart, child: back),
+        actions: actions,
+        actionsPadding: const EdgeInsets.only(right: 4),
+        // A hairline under the row once the page scrolls under it, so its
+        // edge shows; none at the top, where the title sits below it.
+        shape: _away
+            ? Border(
+                bottom: BorderSide(color: GumdropColors.of(context).divider),
+              )
+            : null,
+        flexibleSpace: SafeArea(
+          bottom: false,
+          child: SizedBox(
+            height: 48,
+            child: _SmallTitle(
+              title: widget.title,
+              shown: _away,
+              // Where the back button and the actions are, so the small
+              // title, centered, never runs into either.
+              left: back == null
+                  ? 4
+                  : 4 + BackChevron.widthOf(context, backLabel),
+              right: 4 + 48.0 * actions.length,
             ),
           ),
-          ?bottom,
+        ),
+      ),
+      bottomNavigationBar: widget.bottomNavigationBar,
+      floatingActionButton: widget.floatingActionButton,
+      body: NestedScrollView(
+        controller: _outer,
+        headerSliverBuilder: (context, _) => [
+          SliverToBoxAdapter(child: PageTitle(widget.title)),
         ],
+        // The page's list scrolls with the title on every platform, the
+        // web and desktop included, which don't take a primary scroll
+        // controller by themselves.
+        body: Builder(
+          builder: (context) => PrimaryScrollController(
+            controller: PrimaryScrollController.of(context),
+            automaticallyInheritForPlatforms: TargetPlatform.values.toSet(),
+            child: widget.body,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A page's big title (SPEC §7.3): Lilita 32 with the scheme's drop, 20 px
+/// from the left, on one line. The route's heading for screen readers.
+class PageTitle extends StatelessWidget {
+  const new(this.title, {super.key});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
+    child: Semantics(
+      header: true,
+      namesRoute: true,
+      child: Text(
+        title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.headlineMedium
+            ?.copyWith(fontSize: 32, height: 36 / 32),
       ),
     ),
   );
+}
+
+/// The page's name in the back row once its big title has scrolled away:
+/// Lilita 19, centered on the row, and only where it fits between what's
+/// [left] and [right] of the middle. The back label matters more.
+class _SmallTitle extends StatelessWidget {
+  const new({
+    required this.title,
+    required this.shown,
+    required this.left,
+    required this.right,
+  });
+
+  final String title;
+  final bool shown;
+  final double left;
+  final double right;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.headlineMedium
+        ?.copyWith(fontSize: 19, height: 1.2, shadows: const []);
+    // It grows with the text size only so far, to stay in the 48 px row;
+    // the big title above the page carries the large size.
+    final scaler = MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.3);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Room centered on the row, clear of both sides by 8.
+        final room = constraints.maxWidth - 2 * (math.max(left, right) + 8);
+        final painter = TextPainter(
+          text: TextSpan(text: title, style: style),
+          maxLines: 1,
+          textDirection: Directionality.of(context),
+          textScaler: scaler,
+        )..layout();
+        final fits = painter.width <= room;
+        painter.dispose();
+        return AnimatedSwitcher(
+          duration: Motion.of(context, Motion.fast),
+          child: shown && fits
+              // The big title is the heading; this is only its echo.
+              ? ExcludeSemantics(
+                  key: const ValueKey('title'),
+                  child: Center(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      textScaler: scaler,
+                      style: style,
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(key: ValueKey('none')),
+        );
+      },
+    );
+  }
 }
 
 /// Where a screen goes back to when nothing is under it (SPEC §7.3), as

@@ -109,31 +109,28 @@ class PlayerCardScreen extends ConsumerWidget {
     final detailsEditable =
         group != null && !group.isArchived && group.suspendedAt == null;
 
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: player.displayName,
-        // From the roster, or the chevron alone from a link.
-        backLabel: openerLabel(context),
-        actions: [
-          if (canEdit)
-            IconButton(
-              tooltip: l10n.editPlayer,
-              icon: const Icon(AppIcons.edit),
-              onPressed: () => unawaited(
-                _edit(
-                  context,
-                  ref,
-                  player,
-                  viaAdmin: viaAdmin,
-                  // Admins and the player's own people, as on Details
-                  // (PLAYER-12); never through the admin callable.
-                  withDateOfBirth: writesDetails && detailsEditable,
-                ),
+    return GumdropScaffold(
+      title: player.displayName,
+      // From the roster, or the chevron alone from a link.
+      backLabel: openerLabel(context),
+      actions: [
+        if (canEdit)
+          IconButton(
+            tooltip: l10n.editPlayer,
+            icon: const Icon(AppIcons.edit),
+            onPressed: () => unawaited(
+              _edit(
+                context,
+                ref,
+                player,
+                viaAdmin: viaAdmin,
+                // Admins and the player's own people, as on Details
+                // (PLAYER-12); never through the admin callable.
+                withDateOfBirth: writesDetails && detailsEditable,
               ),
             ),
-        ],
-      ),
+          ),
+      ],
       body: ListView(
         // Level with the title.
         padding: const EdgeInsets.symmetric(

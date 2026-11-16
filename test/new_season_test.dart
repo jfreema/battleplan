@@ -8,6 +8,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
 import 'package:battleplan/features/groups/domain/season.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -112,7 +113,10 @@ void main() {
       size: const Size(1024, 1366),
     );
     await openFromAdminSettings(tester);
-    expect(find.widgetWithText(AppBar, 'Start a new season'), findsOneWidget);
+    expect(
+      find.widgetWithText(PageTitle, 'Start a new season'),
+      findsOneWidget,
+    );
     // Everyone comes to start, counted; the copies are the owner's to add.
     expect(
       find.text('1 player. Parents keep answering for them.'),

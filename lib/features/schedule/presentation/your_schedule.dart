@@ -130,12 +130,9 @@ class YourScheduleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: gumdropAppBar(
-        context,
-        title: l10n.yourSchedule,
-        backLabel: l10n.tabTeams,
-      ),
+    return GumdropScaffold(
+      title: l10n.yourSchedule,
+      backLabel: l10n.tabTeams,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: Breakpoints.contentMax),
