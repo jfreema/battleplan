@@ -9,10 +9,11 @@
 # It creates the Firestore database in us-central1 (permanent, Q11) with
 # point-in-time recovery and daily backups kept 7 days, the TTL policies,
 # the Storage bucket, the Resend key in Secret Manager (copied from dev),
-# the function-image cleanup policy, the sign-in providers and authorized
-# domains, and the custom domains, then prints the DNS records to add in
-# Cloudflare (DNS only, grey cloud). Safe to re-run: each step checks
-# first. Deploying the code is tools/release_prod.sh.
+# the function-image cleanup policy, the sign-in providers (with email
+# links on) and authorized domains, and the custom domains, then prints
+# the DNS records to add in Cloudflare (DNS only, grey cloud). Safe to
+# re-run: each step checks first. Deploying the code is
+# tools/release_prod.sh.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -96,6 +97,15 @@ firebase functions:artifacts:setpolicy --location "$REGION" --days 1 --force --p
 say "Sign-in providers (firebase.json: email and password, Google)"
 firebase deploy --only auth --project "$PROJECT" --non-interactive ||
   echo "Turn on Email/Password and Google in the console: Authentication → Sign-in method."
+
+say "Email links (setup emails and emailed sign-in links, AUTH-6)"
+# The deploy above turns on Email/Password with a password required, which
+# leaves "Email link (passwordless sign-in)" off. Auth then refuses to make
+# the link a setup email carries (auth/operation-not-allowed), so nobody
+# added by email gets one: prod, until 2026-11-16 (ROADMAP task 386).
+api PATCH "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJECT/config?updateMask=signIn.email.passwordRequired" \
+  '{"signIn":{"email":{"passwordRequired":false}}}' |
+  jq -r '"Email link sign-in: " + (if .signIn.email.passwordRequired == true then "still off" else "on" end)'
 
 say "Authorized domains"
 api PATCH "https://identitytoolkit.googleapis.com/admin/v2/projects/$PROJECT/config?updateMask=authorizedDomains" \
