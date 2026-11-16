@@ -12,6 +12,7 @@ import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
 import 'package:battleplan/features/documents/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/safety/application/providers.dart';
 import 'package:battleplan/features/safety/domain/safety.dart';
 import 'package:battleplan/features/safety/presentation/safety_actions.dart';
@@ -32,7 +33,10 @@ class ReportsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final reports = ref.watch(openReportsProvider(groupId));
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.reportsTitle)),
+      appBar: AppBar(
+        leading: upButton(context),
+        title: Text(l10n.reportsTitle),
+      ),
       body: switch (reports) {
         AsyncData(:final value) when value.isEmpty => EmptyState(
           icon: AppIcons.check,

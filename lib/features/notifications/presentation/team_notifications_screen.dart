@@ -9,6 +9,7 @@ import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group_repository.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/notifications/presentation/notification_labels.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,7 +33,10 @@ class TeamNotificationsScreen extends ConsumerWidget {
 
     if (membership == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.teamNotificationsMenu)),
+        appBar: AppBar(
+          leading: upButton(context),
+          title: Text(l10n.teamNotificationsMenu),
+        ),
         body: EmptyState(icon: AppIcons.group, message: l10n.notAMember),
       );
     }
@@ -92,6 +96,7 @@ class TeamNotificationsScreen extends ConsumerWidget {
     );
     return Scaffold(
       appBar: AppBar(
+        leading: upButton(context),
         title: Text(l10n.teamNotificationsMenu),
         bottom: group == null
             ? null

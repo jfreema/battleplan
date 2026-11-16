@@ -7,6 +7,7 @@ import 'package:battleplan/core/design/team_theme.dart';
 import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/focus_ring_ink.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
+import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -50,7 +51,7 @@ PreferredSizeWidget gumdropAppBar(
         : switch (_goUp(context)) {
             final up? => Align(
               alignment: AlignmentDirectional.centerStart,
-              child: BackChevron(onPressed: up),
+              child: _UpChevron(up: up),
             ),
             null => null,
           },
@@ -115,7 +116,29 @@ Widget? upButton(BuildContext context) {
   if (ModalRoute.of(context)?.impliesAppBarDismissal ?? true) return null;
   final up = _goUp(context);
   if (up == null) return null;
-  return Center(child: BackChevron(onPressed: up));
+  return Center(child: _UpChevron(up: up));
+}
+
+/// The chevron that goes [up] from a screen with nothing under it, and
+/// Android's Back with it while the screen is the one showing: without
+/// this, Back closed the app (#14, 2026-11-16). A dialog or a page over
+/// the screen keeps Back for itself.
+class _UpChevron extends StatelessWidget {
+  const new({required this.up});
+
+  final VoidCallback up;
+
+  @override
+  Widget build(BuildContext context) => BackButtonListener(
+    onBackButtonPressed: () {
+      if (!(ModalRoute.of(context)?.isCurrent ?? false)) {
+        return SynchronousFuture(false);
+      }
+      up();
+      return SynchronousFuture(true);
+    },
+    child: BackChevron(onPressed: up),
+  );
 }
 
 /// What a pushed screen's back label says, passed as GoRouter `extra` by

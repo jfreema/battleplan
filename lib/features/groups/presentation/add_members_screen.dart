@@ -4,6 +4,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/results_screen.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,7 +121,7 @@ class _AddMembersScreenState extends ConsumerState<AddMembersScreen> {
     final l10n = AppLocalizations.of(context);
     final parsed = parsePeople(_text.text);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.addByEmail)),
+      appBar: AppBar(leading: upButton(context), title: Text(l10n.addByEmail)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),

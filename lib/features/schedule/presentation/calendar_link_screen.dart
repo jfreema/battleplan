@@ -10,6 +10,7 @@ import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/core/widgets/viewer_zone.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/schedule/application/providers.dart';
 import 'package:battleplan/features/schedule/domain/calendar_link.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
@@ -86,7 +87,10 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
     final theme = Theme.of(context);
     if (ref.watch(myMembershipProvider(widget.groupId)) == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.calendarLinkTitle)),
+        appBar: AppBar(
+          leading: upButton(context),
+          title: Text(l10n.calendarLinkTitle),
+        ),
         body: EmptyState(icon: AppIcons.group, message: l10n.notAMember),
       );
     }
@@ -172,7 +176,10 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.calendarLinkTitle)),
+      appBar: AppBar(
+        leading: upButton(context),
+        title: Text(l10n.calendarLinkTitle),
+      ),
       body: ListView(
         padding: EdgeInsets.symmetric(
           horizontal: Space.gutter(MediaQuery.sizeOf(context).width),

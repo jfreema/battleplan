@@ -1123,6 +1123,70 @@ void main() {
       }
     });
 
+    // #14 step 1 (owner's go 2026-11-16): these opened with no way back,
+    // as from a "reported" notification with the app closed, and Android's
+    // Back closed the app.
+    testWidgets('the seven pages that were dead ends go up to the team chat', (
+      tester,
+    ) async {
+      for (final (route, title, user) in [
+        ('/g/a/reports', 'Reports', scenes.coach),
+        ('/g/a/notifications', 'Notifications for this team', scenes.coach),
+        ('/g/a/calendar', 'Calendar link', scenes.coach),
+        ('/g/a/import', 'Import', scenes.coach),
+        ('/g/a/members/add', 'Add people by email', scenes.coach),
+        ('/g/a/players/add', 'Add players', scenes.coach),
+        ('/g/a/who', 'Who are you here for?', _newcomer),
+      ]) {
+        await scenes.pumpTeam(tester, scheme: TeamScheme.army, user: user);
+        await scenes.goTo(tester, route);
+        expect(find.text(title), findsWidgets, reason: route);
+        await tester.tap(find.byTooltip('Back'));
+        await tester.pumpAndSettle();
+        expect(
+          GoRouter.of(tester.element(find.byType(Scaffold).first))
+              .state
+              .uri
+              .path,
+          '/g/a/chat',
+          reason: route,
+        );
+        expect(find.byType(OpenFieldTabBar), findsOneWidget, reason: route);
+      }
+    });
+
+    testWidgets("Android's Back goes up too, rather than closing the app, and "
+        'leaves a dialog or a page on top alone', (tester) async {
+      String path() =>
+          GoRouter.of(tester.element(find.byType(Scaffold).first))
+              .state
+              .uri
+              .path;
+      await scenes.pumpTeam(tester, scheme: TeamScheme.army);
+      await scenes.goTo(tester, '/g/a/reports');
+      expect(await tester.binding.handlePopRoute(), isTrue);
+      await tester.pumpAndSettle();
+      expect(path(), '/g/a/chat');
+
+      // Team settings, from a link, with a dialog open over it: Back
+      // closes the dialog and stays.
+      await scenes.goTo(tester, '/g/a/info');
+      showDialog<void>(
+        context: tester.element(find.byType(Scaffold).last),
+        builder: (_) => const AlertDialog(content: Text('Hello')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Hello'), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Hello'), findsNothing);
+      expect(path(), '/g/a/info');
+      // Then up, to the team.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(path(), '/g/a/chat');
+    });
+
     testWidgets("a player card and a person's page name the screen they "
         'came from', (tester) async {
       await scenes.pumpTeam(tester, scheme: TeamScheme.army);
@@ -1384,3 +1448,11 @@ void main() {
 }
 
 bool _never(Uri _) => false;
+
+/// Someone on the scene's team who isn't linked to a player (PLAYER-3).
+const _newcomer = AuthUser(
+  uid: 'newbie',
+  email: 'newbie@example.com',
+  displayName: 'Nia New',
+  emailVerified: true,
+);

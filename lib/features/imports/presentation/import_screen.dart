@@ -4,6 +4,7 @@ import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/core/widgets/empty_state.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/imports/domain/event_import.dart';
 import 'package:battleplan/features/imports/presentation/calendar_import.dart';
 import 'package:battleplan/features/imports/presentation/groupme_import.dart';
@@ -114,7 +115,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       // Leaving in the middle would stop the import partway.
       canPop: !_busy,
       child: Scaffold(
-        appBar: AppBar(title: Text(l10n.importTitle)),
+        appBar: AppBar(
+          leading: upButton(context),
+          title: Text(l10n.importTitle),
+        ),
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),

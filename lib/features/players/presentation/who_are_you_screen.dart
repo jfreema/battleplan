@@ -9,6 +9,7 @@ import 'package:battleplan/core/logging.dart';
 import 'package:battleplan/core/widgets/snackbar.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/application/providers.dart';
 import 'package:battleplan/features/players/domain/player.dart';
 import 'package:battleplan/features/players/presentation/player_dialogs.dart';
@@ -275,8 +276,10 @@ class _WhoAreYouScreenState extends ConsumerState<WhoAreYouScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.whoAreYouHereFor),
+        // Its first step, opened with nothing under it (a link), still
+        // has the way up to the team's chat (#14).
         leading: as == null
-            ? null
+            ? upButton(context)
             : BackButton(
                 onPressed: () => setState(() {
                   if (_adding) {

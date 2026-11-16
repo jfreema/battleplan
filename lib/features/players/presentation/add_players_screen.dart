@@ -181,7 +181,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
                 const [],
           );
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.addPlayer)),
+        appBar: AppBar(leading: upButton(context), title: Text(l10n.addPlayer)),
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
@@ -203,7 +203,7 @@ class _AddPlayersScreenState extends ConsumerState<AddPlayersScreen> {
     // Up to 200 lines (PLAYER-1).
     final tooManyLines = parsed.lines > Limits.pastedRosterLinesMax;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.addPlayers)),
+      appBar: AppBar(leading: upButton(context), title: Text(l10n.addPlayers)),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
