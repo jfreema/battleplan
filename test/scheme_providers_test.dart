@@ -1,12 +1,15 @@
 // Which color scheme each screen uses (SPEC SET-2, ARCH §5.5): my pick for
 // a team, my default, and this device's copies of both for a cold start.
 
+import 'dart:async';
+
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/groups/application/providers.dart'
     hide group;
+import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/settings/application/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,6 +29,30 @@ const _boss = AuthUser(
 );
 const _a = GroupId('a');
 const _b = GroupId('b');
+
+/// Teams read the way the rules let them be: only while someone is signed
+/// in. A read open when they sign out gets "unreadable" and nothing after,
+/// as Firestore's does, and a read begun signed out gets it at once.
+class _SignedInGroups extends FakeGroupRepository {
+  new(super.groups);
+
+  bool signedIn = true;
+  final _signedOut = StreamController<void>.broadcast();
+
+  void signOut() {
+    signedIn = false;
+    _signedOut.add(null);
+  }
+
+  @override
+  Stream<Group?> watchGroup(GroupId id) {
+    if (!signedIn) return Stream.value(null);
+    final out = StreamController<Group?>()..add(groups[id.value]);
+    final refused = _signedOut.stream.listen((_) => out.add(null));
+    out.onCancel = refused.cancel;
+    return out.stream;
+  }
+}
 
 Future<void> _settle() async {
   for (var i = 0; i < 10; i++) {
@@ -246,6 +273,44 @@ void main() {
       // Kept for the session, but not the team's own read.
       expect(c.exists(teamSchemeProvider(_a)), isTrue);
       expect(c.exists(groupProvider(_a)), isFalse);
+    });
+
+    // Found by the end-to-end test, 2026-11-16: this provider, kept for
+    // the session and read by nothing once its team's screens close, still
+    // held the team's read when the coach signed out. The rules ended that
+    // read as unreadable, and a parent who then joined the team on the
+    // same phone waited for the 30-second retry to see it.
+    test('the next person to sign in reads our team at once', () async {
+      final auth = FakeAuthRepository(user: _coach);
+      final groups = _SignedInGroups({'a': testGroup('a', 'Thunder')});
+      final c = await container(
+        auth: auth,
+        groups: groups,
+        memberships: [
+          testMembership('a', 'coach'),
+          testMembership('a', 'new-user'),
+        ],
+      );
+      // The coach has the team open, then leaves it and signs out.
+      final shown = c.listen(teamSchemeProvider(_a), (_, _) {});
+      await _settle();
+      expect(c.read(myTeamsProvider).value!.single.group.name, 'Thunder');
+      shown.close();
+      groups.signOut();
+      await auth.signOut();
+      await _settle();
+      expect(c.read(myTeamsProvider).value, isEmpty);
+
+      // A parent on the same team signs in.
+      groups.signedIn = true;
+      await auth.createAccount(
+        name: 'Pat Parent',
+        email: 'pat@example.com',
+        password: 'longenough',
+      );
+      await _settle();
+      expect(c.read(groupProvider(_a)).value?.name, 'Thunder');
+      expect(c.read(myTeamsProvider).value!.single.group.name, 'Thunder');
     });
 
     test('the device keeps a copy of my picks, and only mine', () async {

@@ -60,10 +60,19 @@ Stream<Membership?> member(Ref ref, GroupId groupId, UserId uid) =>
 /// reads as null, and its read ends there. A suspension can be lifted with
 /// nothing to tell its members, so while it's null the read starts over:
 /// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
-/// app comes back to the foreground (ADMIN-3).
+/// app comes back to the foreground (ADMIN-3). It also starts over when
+/// someone else signs in.
 @riverpod
 Stream<Group?> group(Ref ref, GroupId id) {
   final repo = ref.watch(groupRepositoryProvider);
+  // Whose read this is. Signing out ends it as unreadable (the rules
+  // refuse a signed-out read), and a provider kept for the session can
+  // still hold this one then (teamScheme does, until it's next read), so
+  // the next person to sign in on this device got that answer for a team
+  // they're on until the retry below: a parent who joined on the phone a
+  // coach had just signed out of waited 30 seconds for the team (found by
+  // the end-to-end test, 2026-11-16).
+  ref.watch(authUserProvider.select((a) => a.value?.uid));
   final out = StreamController<Group?>();
   StreamSubscription<Group?>? sub;
   Timer? retry;

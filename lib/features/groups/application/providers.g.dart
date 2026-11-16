@@ -289,7 +289,8 @@ final class MemberFamily extends $Family
 /// reads as null, and its read ends there. A suspension can be lifted with
 /// nothing to tell its members, so while it's null the read starts over:
 /// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
-/// app comes back to the foreground (ADMIN-3).
+/// app comes back to the foreground (ADMIN-3). It also starts over when
+/// someone else signs in.
 
 @ProviderFor(group)
 final groupProvider = GroupFamily._();
@@ -298,7 +299,8 @@ final groupProvider = GroupFamily._();
 /// reads as null, and its read ends there. A suspension can be lifted with
 /// nothing to tell its members, so while it's null the read starts over:
 /// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
-/// app comes back to the foreground (ADMIN-3).
+/// app comes back to the foreground (ADMIN-3). It also starts over when
+/// someone else signs in.
 
 final class GroupProvider
     extends $FunctionalProvider<AsyncValue<Group?>, Group?, Stream<Group?>>
@@ -307,7 +309,8 @@ final class GroupProvider
   /// reads as null, and its read ends there. A suspension can be lifted with
   /// nothing to tell its members, so while it's null the read starts over:
   /// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
-  /// app comes back to the foreground (ADMIN-3).
+  /// app comes back to the foreground (ADMIN-3). It also starts over when
+  /// someone else signs in.
   GroupProvider._({
     required GroupFamily super.from,
     required GroupId super.argument,
@@ -351,13 +354,14 @@ final class GroupProvider
   }
 }
 
-String _$groupHash() => r'e6fc99d8c38a4c2f44b26775508166e9339e9d75';
+String _$groupHash() => r'6ca118636c9cbfdf809751b2b560d655e8e9cf60';
 
 /// A team, live. One you can't read (removed, deleted, or suspended)
 /// reads as null, and its read ends there. A suspension can be lifted with
 /// nothing to tell its members, so while it's null the read starts over:
 /// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
-/// app comes back to the foreground (ADMIN-3).
+/// app comes back to the foreground (ADMIN-3). It also starts over when
+/// someone else signs in.
 
 final class GroupFamily extends $Family
     with $FunctionalFamilyOverride<Stream<Group?>, GroupId> {
@@ -374,7 +378,8 @@ final class GroupFamily extends $Family
   /// reads as null, and its read ends there. A suspension can be lifted with
   /// nothing to tell its members, so while it's null the read starts over:
   /// after [groupRetryFirst], doubling to [groupRetryMax], and whenever the
-  /// app comes back to the foreground (ADMIN-3).
+  /// app comes back to the foreground (ADMIN-3). It also starts over when
+  /// someone else signs in.
 
   GroupProvider call(GroupId id) => GroupProvider._(argument: id, from: this);
 

@@ -370,7 +370,7 @@ Each requirement has an ID, a release tag, and a short description. IDs are stab
   - The link opens the reset page; then the user signs in with the new password at `/emaillogin` (AUTH-2), where "Forgot password?" is. A reset a super admin sends continues there.
   - The screen notes that people who use Google or Apple don't have a Battleplan password.
 - **AUTH-5 · MVP · First-run setup.**
-  - Name and photo, prefilled once from the sign-in provider (AUTH-12), and Terms acceptance.
+  - Name and photo, prefilled once from the sign-in provider (AUTH-12), or with the name typed at an email sign-up (AUTH-2), and Terms acceptance.
   - Confirm "I'm 18 or older". Accounts are for adults only. Adult players use the app themselves, and youth players never sign in: their parents and guardians use the app for them (§6.3).
   - Only the confirmation and its date are stored.
   - It says which account is signed in ("Signed in as …"), with **Use a different account**, which signs out and goes back to the sign-in choices: for a Google account picked by mistake.

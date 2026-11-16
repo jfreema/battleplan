@@ -95,8 +95,14 @@ class FirebaseAuthRepository implements AuthRepository {
       await credential.user?.updateDisplayName(name);
       // AUTH-3: email accounts start unverified; send the link right away.
       await sendEmailVerification();
-      // The token refresh carries the new name to watchUser listeners.
+      // The new name has to reach watchUser's listeners: setup starts from
+      // it (AUTH-12), and the profile, made the moment the account was,
+      // may have taken the email's first part. reload() doesn't emit on
+      // idTokenChanges; a forced token refresh does (as in reloadUser).
+      // Without it the name they typed never arrived, and setup offered
+      // "pat.parent" (found by the end-to-end test, 2026-11-16).
       await credential.user?.reload();
+      await credential.user?.getIdToken(true);
     } on FirebaseAuthException catch (e) {
       throw switch (e.code) {
         'email-already-in-use' => EmailAlreadyInUse(e.code),
