@@ -211,7 +211,12 @@ void main() {
       );
       expect(devices.docs, isNotEmpty);
       await openAppSettings(tester);
-      await tester.scrollUntilVisible(find.text('Sign out'), 100);
+      await tester.scrollUntilVisible(
+        find.text('Sign out'),
+        100,
+        // The page's own list, under the frame's (#14).
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
       expect(find.text('Continue with Google'), findsOneWidget);
@@ -230,7 +235,12 @@ void main() {
       );
       expect(log, ['device register $installId']);
       await openAppSettings(tester);
-      await tester.scrollUntilVisible(find.text('Sign out'), 100);
+      await tester.scrollUntilVisible(
+        find.text('Sign out'),
+        100,
+        // The page's own list, under the frame's (#14).
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
       expect(log, [
@@ -283,7 +293,12 @@ void main() {
         devices: FakeDeviceRepository(),
       );
       await openAppSettings(tester);
-      await tester.scrollUntilVisible(find.text('Sign out'), 100);
+      await tester.scrollUntilVisible(
+        find.text('Sign out'),
+        100,
+        // The page's own list, under the frame's (#14).
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
       expect(find.text('Continue with Google'), findsOneWidget);
@@ -307,7 +322,12 @@ void main() {
       )..needsRecentLogin = true;
       await pumpApp(tester, auth: auth, devices: devices);
       await openAppSettings(tester);
-      await tester.scrollUntilVisible(find.text('Delete account'), 100);
+      await tester.scrollUntilVisible(
+        find.text('Delete account'),
+        100,
+        // The page's own list, under the frame's (#14).
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text('Delete account'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));

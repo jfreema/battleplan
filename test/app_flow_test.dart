@@ -2723,7 +2723,12 @@ void main() {
     final push = FakePushRepository();
     await pumpApp(tester, auth: auth, push: push);
     await openAppSettings(tester);
-    await tester.scrollUntilVisible(find.text('Sign out of all devices'), 100);
+    await tester.scrollUntilVisible(
+      find.text('Sign out of all devices'),
+      100,
+      // The page's own list, under the frame's (#14).
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Sign out of all devices'));
     await tester.pumpAndSettle();
     expect(find.text('Sign out of all devices?'), findsOneWidget);
@@ -2909,7 +2914,12 @@ void main() {
     )..deleteFailsWith = const SignInCanceled();
     await pumpApp(tester, auth: auth);
     await openAppSettings(tester);
-    await tester.scrollUntilVisible(find.text('Delete account'), 100);
+    await tester.scrollUntilVisible(
+      find.text('Delete account'),
+      100,
+      // The page's own list, under the frame's (#14).
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Delete account'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
@@ -2927,7 +2937,12 @@ void main() {
     )..needsRecentLogin = true;
     await pumpApp(tester, auth: auth);
     await openAppSettings(tester);
-    await tester.scrollUntilVisible(find.text('Delete account'), 100);
+    await tester.scrollUntilVisible(
+      find.text('Delete account'),
+      100,
+      // The page's own list, under the frame's (#14).
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Delete account'));
     await tester.pumpAndSettle();
     expect(find.text('Delete your account?'), findsOneWidget);

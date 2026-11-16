@@ -328,7 +328,12 @@ void main() {
       );
       GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/settings');
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.text('Delete account'), 100);
+      await tester.scrollUntilVisible(
+        find.text('Delete account'),
+        100,
+        // The page's own list, under the frame's (#14).
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text('Delete account'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
@@ -361,7 +366,12 @@ void main() {
       );
       GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/settings');
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.text('Delete account'), 100);
+      await tester.scrollUntilVisible(
+        find.text('Delete account'),
+        100,
+        // The page's own list, under the frame's (#14).
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text('Delete account'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'Delete account'));
