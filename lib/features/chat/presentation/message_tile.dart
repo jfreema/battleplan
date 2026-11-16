@@ -1175,7 +1175,7 @@ class ReadReceipt extends StatelessWidget {
               failed ? AppIcons.close : AppIcons.check,
               size: 12,
               weight: 800,
-              color: c.ink,
+              color: failed ? c.inkOn(c.cherry) : c.ink,
             ),
           ),
           const SizedBox(width: 5),

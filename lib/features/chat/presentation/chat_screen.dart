@@ -1246,7 +1246,14 @@ class _PinnedRowState extends ConsumerState<_PinnedRow> {
                     constraints: const BoxConstraints(minHeight: 48),
                     child: Row(
                       children: [
-                        Icon(AppIcons.pin, size: 20, color: c.accentMark),
+                        // Lemon, as pins are (SPEC §7.2), like a pinned
+                        // document's.
+                        Icon(
+                          AppIcons.pin,
+                          size: 20,
+                          fill: 1,
+                          color: c.lemon.text,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text.rich(
@@ -1325,8 +1332,8 @@ class _GapLoaderState extends State<_GapLoader> {
   );
 }
 
-/// The line above the first unread message (CHAT-9): a cherry tag between
-/// two rules (§3.14).
+/// The line above the first unread message (CHAT-9): a coral tag between
+/// two rules (§3.14), coral as unread is (SPEC §7.2).
 class _NewMessagesDivider extends StatelessWidget {
   const new();
 
@@ -1338,7 +1345,7 @@ class _NewMessagesDivider extends StatelessWidget {
         // 23 tall (§3.6), taller with large text.
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5.5),
         decoration: BoxDecoration(
-          color: c.cherry.face,
+          color: c.you.face,
           borderRadius: BorderRadius.circular(11),
         ),
         child: Text(

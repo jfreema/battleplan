@@ -55,9 +55,10 @@ abstract final class AppTheme {
           : ColorMath.onColor(c, dark: const Color(0xFF000000));
     }
 
-    // Where "you" is red (coral, in every scheme), Material's primary is the blue
-    // raspberry, so selection, focus, and "normal" never look like an
-    // error. Your bubbles, the FAB, and buttons keep the "you" color.
+    // Where "you" is red (coral, in every scheme) like the warning red,
+    // Material's primary is the blue raspberry, so selection, focus, and
+    // "normal" never look like an error. Your bubbles, the FAB, and
+    // buttons keep the "you" color.
     final youIsRed =
         ColorMath.hueDistance(
           ColorMath.lch(g.you.face).h,
@@ -89,7 +90,7 @@ abstract final class AppTheme {
       error: error,
       onError: on(error),
       errorContainer: g.cherry.face,
-      onErrorContainer: g.ink,
+      onErrorContainer: g.inkOn(g.cherry),
       surface: background,
       onSurface: text,
       onSurfaceVariant: muted,
@@ -415,8 +416,9 @@ abstract final class AppTheme {
         selectionColor: g.accentMark.withValues(alpha: 0.3),
         selectionHandleColor: g.accentMark,
       ),
+      // Unread counts are coral, "you" (SPEC §7.2), not the warning red.
       badgeTheme: BadgeThemeData(
-        backgroundColor: g.cherry.face,
+        backgroundColor: g.you.face,
         textColor: g.ink,
         // Nothing under 12 px (SPEC §7.3).
         textStyle: label.copyWith(fontSize: 12),

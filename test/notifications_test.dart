@@ -788,7 +788,7 @@ void main() {
       for (final tile in tester.widgetList<ListTile>(find.byType(ListTile))) {
         expect(tile.tileColor, isNull);
       }
-      // The body is muted, and the unread time in the accent text.
+      // The body is muted, and so is every time.
       Color? color(Finder f) => tester
           .widget<RichText>(
             find.descendant(of: f, matching: find.byType(RichText)),
@@ -800,13 +800,30 @@ void main() {
         color(find.text('Sam replied to you: Sounds good').first),
         c.textMutedOnPage,
       );
-      expect(color(find.text('5m')), c.you.text);
+      expect(color(find.text('5m')), c.textMutedOnPage);
       expect(color(find.text('3h')), c.textMutedOnPage);
-      final discs = tester
-          .widgetList<CircleAvatar>(find.byType(CircleAvatar))
-          .toList();
-      expect(discs.first.backgroundColor, c.you.face);
-      expect(discs.last.backgroundColor, c.well);
+      // Plain rows (#12): every icon on a quiet disc, and unread is a small
+      // coral dot by the time, with the bolder title.
+      final discs = tester.widgetList<CircleAvatar>(find.byType(CircleAvatar));
+      expect(discs, hasLength(2));
+      for (final disc in discs) {
+        expect(disc.backgroundColor, c.well);
+      }
+      Finder dotIn(String title) => find.descendant(
+        of: find.ancestor(
+          of: find.text(title),
+          matching: find.byType(ListTile),
+        ),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Container &&
+              w.decoration is BoxDecoration &&
+              (w.decoration! as BoxDecoration).color == c.you.face &&
+              (w.decoration! as BoxDecoration).shape == BoxShape.circle,
+        ),
+      );
+      expect(dotIn('Unread one'), findsOneWidget);
+      expect(dotIn('Read one'), findsNothing);
     });
 
     testWidgets('Mark all as read clears the rest', (tester) async {

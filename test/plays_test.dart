@@ -437,8 +437,9 @@ void main() {
         findsOneWidget,
       );
       // The empty screen's art is the play in color: a lemon O and a
-      // cherry X on their lips (the Play Call app icon); the tab's is one
-      // color, like the icons beside it.
+      // coral X on their lips (the Play Call app icon; coral since the
+      // warning red went deeper, #12); the tab's is one color, like the
+      // icons beside it.
       final art = tester.widget<CustomPaint>(
         find.descendant(
           of: find.byWidgetPredicate((w) => w is PlaysIcon && w.colorful),
@@ -448,7 +449,7 @@ void main() {
       final candies = (art.painter! as PlaysIconPainter).candies!;
       final colors = GumdropColors.of(tester.element(find.byWidget(art)));
       expect(candies.o, colors.lemon);
-      expect(candies.x, colors.cherry);
+      expect(candies.x, colors.you);
       final tab = tester.widget<CustomPaint>(
         find.descendant(
           of: find.descendant(

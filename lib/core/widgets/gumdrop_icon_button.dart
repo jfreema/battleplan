@@ -32,8 +32,9 @@ Widget unreadBadge(
       constraints: const BoxConstraints(minWidth: 19, minHeight: 19),
       padding: const EdgeInsets.symmetric(horizontal: 5),
       alignment: Alignment.center,
+      // Unread is coral, "you" (SPEC §7.2).
       decoration: ShapeDecoration(
-        color: c.cherry.face,
+        color: c.you.face,
         shape: const StadiumBorder(),
       ),
       child: Text(

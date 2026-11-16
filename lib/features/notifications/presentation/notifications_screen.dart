@@ -249,9 +249,12 @@ class _NotificationRow extends StatelessWidget {
       label: unread ? l10n.unread : null,
       child: ListTile(
         contentPadding: EdgeInsets.zero,
+        // A plain row (NOTIF-11): the icon on a quiet disc either way,
+        // and unread shown by a small coral dot by the time and a bolder
+        // title.
         leading: CircleAvatar(
-          backgroundColor: unread ? c.you.face : c.well,
-          foregroundColor: unread ? c.ink : c.textOnPage,
+          backgroundColor: c.well,
+          foregroundColor: c.textOnPage,
           child: Icon(notificationIcon(item.kind), size: 20),
         ),
         title: Text(
@@ -270,13 +273,29 @@ class _NotificationRow extends StatelessWidget {
                 style: TextStyle(color: c.textMutedOnPage),
               )
             : null,
-        trailing: at == null
+        trailing: at == null && !unread
             ? null
-            : Text(
-                relativeTime(l10n, at, now, zone: ViewerZone.of(context)),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: unread ? c.you.text : c.textMutedOnPage,
-                ),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (unread)
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: c.you.face,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  if (unread && at != null) const SizedBox(width: 6),
+                  if (at != null)
+                    Text(
+                      relativeTime(l10n, at, now, zone: ViewerZone.of(context)),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: c.textMutedOnPage,
+                      ),
+                    ),
+                ],
               ),
         onTap: onTap,
       ),

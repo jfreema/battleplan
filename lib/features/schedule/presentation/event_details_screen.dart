@@ -1558,8 +1558,9 @@ class _CardRsvpRow extends StatelessWidget {
               child: Container(
                 width: 8,
                 height: 8,
+                // Coral: yours to answer, not a warning (#12).
                 decoration: BoxDecoration(
-                  color: c.cherry.face,
+                  color: c.you.face,
                   shape: BoxShape.circle,
                 ),
               ),

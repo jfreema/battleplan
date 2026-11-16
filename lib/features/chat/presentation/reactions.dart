@@ -55,7 +55,8 @@ String reactionEmoji(Reaction r) => switch (r) {
   Reaction.trophy => '🏆',
 };
 
-/// [r]'s emoji, with ❤️ drawn in [heart] (the theme's cherry): some
+/// [r]'s emoji, with ❤️ drawn in [heart] (the theme's coral, as it always
+/// looked; the warning red is for warnings only since #12): some
 /// fonts, the web's among them, only have a plain black heart, which the
 /// color tints.
 TextSpan reactionSpan(Reaction r, {Color? heart}) => TextSpan(
@@ -122,7 +123,7 @@ class ReactionPicker extends StatelessWidget {
             widthFactor: 1,
             heightFactor: 1,
             child: Text.rich(
-              reactionSpan(r, heart: c.cherry.face),
+              reactionSpan(r, heart: c.you.face),
               style: const TextStyle(fontSize: 28),
               semanticsLabel: reactionName(l10n, r),
             ),
@@ -239,7 +240,7 @@ class ReactionChips extends StatelessWidget {
                               children: [
                                 TextSpan(
                                   children: [
-                                    reactionSpan(r, heart: c.cherry.face),
+                                    reactionSpan(r, heart: c.you.face),
                                   ],
                                   style: const TextStyle(fontSize: 16),
                                 ),
@@ -409,7 +410,7 @@ class ReactionsSheet extends ConsumerWidget {
                 ),
                 title: Text(nameOf(e.key)),
                 trailing: Text.rich(
-                  reactionSpan(r, heart: GumdropColors.of(context).cherry.face),
+                  reactionSpan(r, heart: GumdropColors.of(context).you.face),
                   style: const TextStyle(fontSize: 20),
                 ),
               ),

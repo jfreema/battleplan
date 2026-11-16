@@ -142,8 +142,10 @@ class ScheduleTabs extends ConsumerWidget {
                                   child: Container(
                                     width: 9,
                                     height: 9,
+                                    // Coral: a setting of mine is on, not
+                                    // a warning (SCHED-2).
                                     decoration: BoxDecoration(
-                                      color: c.cherry.face,
+                                      color: c.you.face,
                                       shape: BoxShape.circle,
                                     ),
                                   ),

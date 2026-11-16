@@ -144,7 +144,7 @@ class DueStatePill extends StatelessWidget {
     final (face, text) = switch (state) {
       DueShareState.paid => (c.mint.face, c.ink),
       DueShareState.partlyPaid => (c.lemon.face, c.ink),
-      DueShareState.owes => (c.cherry.face, c.ink),
+      DueShareState.owes => (c.cherry.face, c.inkOn(c.cherry)),
       DueShareState.waived => (null, c.textMutedOnPage),
     };
     return Container(

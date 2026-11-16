@@ -51,7 +51,9 @@ class PlaysIcon extends StatelessWidget {
             filled: filled,
             candies: g == null
                 ? null
-                : (o: g.lemon, x: g.cherry, routeLip: g.you.lip),
+                // The X in coral, as it always looked: the warning red is
+                // for warnings only since #12.
+                : (o: g.lemon, x: g.you, routeLip: g.you.lip),
           ),
         ),
       ),

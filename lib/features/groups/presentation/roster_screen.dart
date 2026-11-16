@@ -663,7 +663,9 @@ class _Section extends StatelessWidget {
   );
 }
 
-/// A player's jersey number on a 40 px candy disc (design §3.9).
+/// A player's jersey number on a 40 px plain disc (design §3.9): the
+/// field's fill and an outline, not coral, which is "you", or the team's
+/// color, which stays on its badge (SPEC §7.1, §7.2).
 class _JerseyDisc extends StatelessWidget {
   const new({required this.number});
 
@@ -676,10 +678,15 @@ class _JerseyDisc extends StatelessWidget {
       width: 40,
       height: 40,
       alignment: Alignment.center,
-      decoration: BoxDecoration(color: c.you.face, shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: c.well,
+        shape: BoxShape.circle,
+        border: Border.all(color: c.outline, width: 1.5),
+      ),
       child: Text(
         number ?? '',
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: c.ink),
+        style: Theme.of(context).textTheme.labelLarge
+            ?.copyWith(color: c.textOnPage),
       ),
     );
   }

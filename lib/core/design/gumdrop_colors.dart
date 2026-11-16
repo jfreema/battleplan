@@ -7,19 +7,31 @@ import 'package:material_ui/material_ui.dart';
 /// [text], the color for writing in this hue on the theme's cards.
 @immutable
 class GumdropAccent {
-  const new({required this.face, required this.lip, required this.text});
+  const new({
+    required this.face,
+    required this.lip,
+    required this.text,
+    this.ink,
+  });
 
   final Color face;
   final Color lip;
 
-  /// Readable (4.5:1) on `surface`. Text on an accent [face] is always
-  /// [GumdropColors.ink].
+  /// Readable (4.5:1) on `surface`.
   final Color text;
+
+  /// Text and icons on [face] when they aren't the scheme's candy ink
+  /// ([GumdropColors.ink]): the warning red's white. Read it with
+  /// [GumdropColors.inkOn].
+  final Color? ink;
 
   GumdropAccent lerp(GumdropAccent other, double t) => GumdropAccent(
     face: Color.lerp(face, other.face, t)!,
     lip: Color.lerp(lip, other.lip, t)!,
     text: Color.lerp(text, other.text, t)!,
+    ink: ink == null && other.ink == null
+        ? null
+        : Color.lerp(ink ?? other.ink, other.ink ?? ink, t),
   );
 
   @override
@@ -27,10 +39,11 @@ class GumdropAccent {
       other is GumdropAccent &&
       other.face == face &&
       other.lip == lip &&
-      other.text == text;
+      other.text == text &&
+      other.ink == ink;
 
   @override
-  int get hashCode => Object.hash(face, lip, text);
+  int get hashCode => Object.hash(face, lip, text, ink);
 }
 
 /// Every color role of an Open Field color scheme (SPEC SET-2, §7.4), as
@@ -104,9 +117,14 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       Color face,
       Color lip,
       Color pageText,
-      Color cardText,
-    ) =>
-        GumdropAccent(face: face, lip: lip, text: onCard ? cardText : pageText);
+      Color cardText, {
+      Color? ink,
+    }) => GumdropAccent(
+      face: face,
+      lip: lip,
+      text: onCard ? cardText : pageText,
+      ink: ink,
+    );
     final coral = candy(
       CandyFaces.coral,
       r.candyLipCoral,
@@ -155,7 +173,17 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
       accentMark: r.accentMark,
       notGoingIcon: onCard ? r.cardAccentText : r.notGoingIcon,
       you: coral,
-      cherry: coral,
+      // Its own deeper red, so a warning never reads as "you" (#12). The
+      // text shades are coral's: red text has to be this light to read on
+      // the dark schemes, and coral text is now only the picked scheme's
+      // check.
+      cherry: candy(
+        CandyFaces.cherry,
+        r.cherryLip,
+        r.accentText,
+        r.cardAccentText,
+        ink: CandyFaces.cherryInk,
+      ),
       sticker: coral,
       mint: candy(
         CandyFaces.mint,
@@ -321,13 +349,14 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// A thin inset ring on icons and badges, or transparent for none.
   final Color avatarRing;
 
-  /// Coral marks on the page: the pin, underlines, the Directions icon.
+  /// Coral marks on the page: underlines, the Directions icon, focus.
   final Color accentMark;
 
   /// The x on an unpicked Not going button.
   final Color notGoingIcon;
 
-  /// Your messages, send, the + button, the picked tab: coral.
+  /// Your messages, the main button (send, +), the picked tab, and unread
+  /// counts and dots: coral (SPEC §7.2).
   final GumdropAccent you;
 
   /// Meetings.
@@ -339,7 +368,9 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Going; switches on.
   final GumdropAccent mint;
 
-  /// Can't go; unread; errors.
+  /// Warnings only: Not going, Canceled, what's owed, errors, and Delete
+  /// (SPEC §7.2). A deeper red than [you], with white on its face
+  /// ([inkOn]).
   final GumdropAccent cherry;
 
   /// Games.
@@ -351,7 +382,8 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
   /// Other events, your reactions, polls.
   final GumdropAccent bubblegum;
 
-  /// The stencil eyebrow and the back button: coral.
+  /// The Open play sticker on a play's picture in the chat: coral. (The
+  /// stencil eyebrows are muted text since #12.)
   final GumdropAccent sticker;
 
   /// Light, or dark, for Material and the status bar: the page and the
@@ -361,6 +393,10 @@ class GumdropColors extends ThemeExtension<GumdropColors> {
 
   /// What text sits on in this context: the page, or a card.
   Color get background => onCard ? surface : page;
+
+  /// Text and icons on [accent]'s face: the candy [ink], or the accent's
+  /// own (white on the warning red).
+  Color inkOn(GumdropAccent accent) => accent.ink ?? ink;
 
   /// The card context, as `GumdropSurface` applies it.
   GumdropColors get card => onCard ? this : forScheme(scheme, onCard: true);

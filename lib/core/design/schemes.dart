@@ -7,8 +7,19 @@ export 'package:battleplan/core/scheme_defaults.dart';
 
 /// The candy faces, the same in every scheme (SPEC §7.4).
 abstract final class CandyFaces {
+  /// You: your messages, the main button, the current tab, and unread.
+  /// The red of the owner's team shirt.
   static const coral = Color(0xFFF45B5B);
-  static const cherry = Color(0xFFF45B5B);
+
+  /// Warnings only: Not going, Canceled, what's owed, errors, and Delete.
+  /// A deeper red than [coral], so the two never read as one (the
+  /// usability review's #12, owner's go 2026-11-16; until then both were
+  /// coral). Its face takes white ([cherryInk]), not the candy ink, which
+  /// reads only 3.6:1 on it.
+  static const cherry = Color(0xFFD4343C);
+
+  /// Text and icons on a [cherry] face: 4.8:1.
+  static const cherryInk = Color(0xFFFFFFFF);
   static const mint = Color(0xFF58C173);
   static const lemon = Color(0xFFF8D84A);
   static const tangerine = Color(0xFFEE8131);
@@ -18,7 +29,7 @@ abstract final class CandyFaces {
 }
 
 /// The 32 color roles of one Open Field color scheme (SPEC SET-2, §7.4),
-/// from the design's schemes.json, plus the seven values the app derives
+/// from the design's schemes.json, plus the eight values the app derives
 /// for colors the design doesn't draw. [GumdropColors.forScheme] fills the
 /// theme from them.
 @immutable
@@ -63,6 +74,7 @@ class SchemeRoles {
     required this.grapeLip,
     required this.bubblegumLip,
     required this.blueRaspberryLip,
+    required this.cherryLip,
   });
 
   /// Page fill; ring around the unread dot and the badge; the game screen's bottom fade.
@@ -110,7 +122,7 @@ class SchemeRoles {
   /// Text, icons and marks on candy faces: icons, team badges, badge and unread count, your poll bubble, picked RSVP, send, +, crest, picked color's check.
   final Color candyInk;
 
-  /// Outline + lip of coral candy buttons: send, +, picked Not going.
+  /// Outline + lip of coral candy buttons: send, +. (Picked Not going is the warning red's, [cherryLip], since #12.)
   final Color candyLipCoral;
 
   /// Outline + lip of the picked Going button.
@@ -128,10 +140,10 @@ class SchemeRoles {
   /// Thin inset ring on icons (initials or photo), team badges and the icon color swatches (transparent: none).
   final Color avatarRing;
 
-  /// Coral as text on the page: the stencil eyebrow, the Not going count, the picked scheme's check.
+  /// Red as text on the page: the warning red's (Not going, errors, Delete) and coral's (the picked scheme's check). Red text has to be this light to read on the dark schemes, so the two share it; the stencil eyebrow is muted since #12.
   final Color accentText;
 
-  /// Coral marks on the page: pin, underline under your reaction and under "open", Directions icon.
+  /// Coral marks on the page: underline under your reaction and under "open", Directions icon. (The pin is lemon since #12.)
   final Color accentMark;
 
   /// The x on the unpicked Not going button on the page (game screen).
@@ -146,7 +158,7 @@ class SchemeRoles {
   /// The check on a card nobody has answered.
   final Color cardGoingText;
 
-  /// Coral on a card: "Luke hasn’t answered" / "You haven’t answered", the x on a card nobody has answered.
+  /// Red on a card: the x on a card nobody has answered, and the warning red's text. ("Luke hasn’t answered" is the card's muted text since #12.)
   final Color cardAccentText;
 
   /// The game color as text on the page: "Game · Home" eyebrow, the clock by "In 5 days".
@@ -181,6 +193,10 @@ class SchemeRoles {
 
   /// Derived: blueRaspberry.lip.
   final Color blueRaspberryLip;
+
+  /// Derived: cherry.lip, the warning red's: ink where the candies have ink
+  /// lips, otherwise a darker red than [CandyFaces.cherry].
+  final Color cherryLip;
 
   static const army = SchemeRoles(
     page: Color(0xFF474C2B),
@@ -222,6 +238,7 @@ class SchemeRoles {
     grapeLip: Color(0xFF1A1A18),
     bubblegumLip: Color(0xFF1A1A18),
     blueRaspberryLip: Color(0xFF1A1A18),
+    cherryLip: Color(0xFF1A1A18),
   );
 
   static const light = SchemeRoles(
@@ -264,6 +281,7 @@ class SchemeRoles {
     grapeLip: Color(0xFF1A1A18),
     bubblegumLip: Color(0xFF1A1A18),
     blueRaspberryLip: Color(0xFF1A1A18),
+    cherryLip: Color(0xFF1A1A18),
   );
 
   static const dark = SchemeRoles(
@@ -306,6 +324,7 @@ class SchemeRoles {
     grapeLip: Color(0xFF6C46CC),
     bubblegumLip: Color(0xFFAE2770),
     blueRaspberryLip: Color(0xFF2A63C9),
+    cherryLip: Color(0xFF8E1C23),
   );
 
   static const navy = SchemeRoles(
@@ -348,6 +367,7 @@ class SchemeRoles {
     grapeLip: Color(0xFF6C46CC),
     bubblegumLip: Color(0xFFAE2770),
     blueRaspberryLip: Color(0xFF2A63C9),
+    cherryLip: Color(0xFF8E1C23),
   );
 
   static const skyblue = SchemeRoles(
@@ -390,6 +410,7 @@ class SchemeRoles {
     grapeLip: Color(0xFF0B1531),
     bubblegumLip: Color(0xFF0B1531),
     blueRaspberryLip: Color(0xFF0B1531),
+    cherryLip: Color(0xFF0B1531),
   );
 
   /// The roles of [scheme].

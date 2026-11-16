@@ -317,11 +317,9 @@ class EventAttendance extends StatelessWidget {
             TextSpan(
               children: [
                 TextSpan(text: count),
-                if (note != null)
-                  TextSpan(
-                    text: ' · $note',
-                    style: TextStyle(color: c.cherry.text),
-                  ),
+                // "Luke hasn't answered", in the count's own muted text:
+                // the coral dot by his name is the one mark (#12).
+                if (note != null) TextSpan(text: ' · $note'),
               ],
             ),
             semanticsLabel: [spoken, ?note].join(', '),
@@ -345,8 +343,8 @@ String? answerLabel(
   return p.isMe ? l10n.eventYou : p.firstName;
 }
 
-/// The red "Canceled" badge (SCHED-7): a cherry tag chip with ink text
-/// (design §3.6).
+/// The red "Canceled" badge (SCHED-7): a tag chip in the warning red,
+/// with its white text (design §3.6).
 class CanceledBadge extends StatelessWidget {
   const new({super.key});
 
@@ -362,7 +360,7 @@ class CanceledBadge extends StatelessWidget {
       child: Text(
         AppLocalizations.of(context).eventCanceled,
         style: Theme.of(context).textTheme.labelSmall
-            ?.copyWith(color: c.ink, letterSpacing: 0.4),
+            ?.copyWith(color: c.inkOn(c.cherry), letterSpacing: 0.4),
       ),
     );
   }

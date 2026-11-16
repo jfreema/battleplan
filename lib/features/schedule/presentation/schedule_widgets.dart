@@ -394,8 +394,9 @@ class _RsvpGumdrop extends StatelessWidget {
     final Color text;
     final Color icon;
     if (selected) {
-      text = c.ink;
-      icon = c.ink;
+      // Ink on its candy; white on the warning red.
+      text = c.inkOn(accent);
+      icon = text;
     } else if (!enabled) {
       text = c.textMutedOnPage;
       icon = c.textMutedOnPage;
@@ -493,8 +494,9 @@ class _RsvpPill extends StatelessWidget {
     final Color text;
     final Color icon;
     if (selected) {
-      text = c.ink;
-      icon = c.ink;
+      // Ink on its candy; white on the warning red.
+      text = c.inkOn(accent);
+      icon = text;
     } else if (unanswered && enabled) {
       text = c.textPrimary;
       icon = switch (status) {

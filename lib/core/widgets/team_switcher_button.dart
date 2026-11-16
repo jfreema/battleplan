@@ -65,8 +65,9 @@ class TeamSwitcherButton extends StatelessWidget {
                 child: Container(
                   width: 9,
                   height: 9,
+                  // Coral, as unread is (SPEC §7.2).
                   decoration: BoxDecoration(
-                    color: c.cherry.face,
+                    color: c.you.face,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -110,7 +111,8 @@ class TeamSwitcherButton extends StatelessWidget {
                     fontSize: 12,
                     height: 14 / 12,
                     letterSpacing: 12 * 0.18,
-                    color: c.you.text,
+                    // Muted, as the tabs' eyebrows are.
+                    color: c.textMutedOnPage,
                   ),
                 ),
               Row(

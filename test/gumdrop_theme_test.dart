@@ -132,13 +132,45 @@ void main() {
       for (final scheme in TeamScheme.values) {
         final c = GumdropColors.forScheme(scheme);
         expect(c.you.face, CandyFaces.coral);
-        expect(c.cherry.face, CandyFaces.coral);
+        expect(c.cherry.face, CandyFaces.cherry);
         expect(c.mint.face, const Color(0xFF58C173));
         expect(c.lemon.face, const Color(0xFFF8D84A));
         expect(c.tangerine.face, const Color(0xFFEE8131));
         expect(c.grape.face, const Color(0xFFA57CF5));
         expect(c.bubblegum.face, const Color(0xFFEB50A2));
         expect(c.blueRaspberry.face, const Color(0xFF79BBFF));
+      }
+    });
+
+    // The usability review's #12 (owner's go 2026-11-16): coral and the
+    // warning red were one color, so unread, "you", and every warning
+    // looked alike.
+    test('the warning red is its own, clearly deeper than coral', () {
+      expect(CandyFaces.cherry, isNot(CandyFaces.coral));
+      expect(
+        ColorMath.contrast(CandyFaces.coral, CandyFaces.cherry),
+        greaterThanOrEqualTo(1.4),
+      );
+      for (final scheme in TeamScheme.values) {
+        final r = SchemeRoles.of(scheme);
+        final c = GumdropColors.forScheme(scheme);
+        expect(c.cherry.lip, r.cherryLip);
+        // White on its face; the candy ink on every other candy.
+        expect(c.inkOn(c.cherry), CandyFaces.cherryInk);
+        for (final candy in [c.you, c.mint, c.lemon, c.sticker]) {
+          expect(c.inkOn(candy), c.ink);
+        }
+        _reads(
+          c.inkOn(c.cherry),
+          c.cherry.face,
+          '${scheme.value} white on the warning red',
+        );
+        // A mark on its own (a Canceled tag, Owes) where no ink lip
+        // outlines it: everywhere but Army green.
+        if (scheme != TeamScheme.army) {
+          _reads(c.cherry.face, r.page, '${scheme.value} red on page', min: 3);
+          _reads(c.cherry.face, r.card, '${scheme.value} red on card', min: 3);
+        }
       }
     });
 

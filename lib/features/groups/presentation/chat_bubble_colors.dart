@@ -12,7 +12,9 @@ GumdropAccent chatCandyAccent(GumdropColors c, ChatCandy candy) =>
       ChatCandy.mint => c.mint,
       ChatCandy.lemon => c.lemon,
       ChatCandy.tangerine => c.tangerine,
-      ChatCandy.cherry => c.cherry,
+      // Coral, "you", as it looked when it was picked: the warning red
+      // went deeper in #12 (2026-11-16) and isn't a chat color.
+      ChatCandy.cherry => c.you,
     };
 
 /// A candy's name.

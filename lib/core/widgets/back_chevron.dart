@@ -98,8 +98,9 @@ class BackChevron extends StatelessWidget {
                             child: Container(
                               width: 9,
                               height: 9,
+                              // Coral, as unread is (SPEC §7.2).
                               decoration: BoxDecoration(
-                                color: c.cherry.face,
+                                color: c.you.face,
                                 shape: BoxShape.circle,
                               ),
                             ),

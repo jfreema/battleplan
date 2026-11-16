@@ -33,14 +33,15 @@ abstract final class HeaderEyebrow {
   };
 
   /// The eyebrow's text style: Black Ops One 12/14, spaced 0.18 em, in the
-  /// scheme's accent text.
+  /// page's muted text. It was coral until #12 (2026-11-16): a label, not
+  /// "you" or a warning.
   static TextStyle style(GumdropColors c) => TextStyle(
     fontFamily: AppFonts.sticker,
     fontWeight: FontWeight.w400,
     fontSize: 12,
     height: 14 / 12,
     letterSpacing: 12 * 0.18,
-    color: c.you.text,
+    color: c.textMutedOnPage,
   );
 }
 

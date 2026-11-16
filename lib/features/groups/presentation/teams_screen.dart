@@ -238,7 +238,8 @@ class _TeamCard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: muted ? null : c.cherry.face,
+              // Coral, as unread is (SPEC §7.2).
+              color: muted ? null : c.you.face,
               borderRadius: BorderRadius.circular(10.5),
               border: muted
                   ? Border.all(color: c.cardOutline, width: 1.5)
@@ -260,7 +261,7 @@ class _TeamCard extends ConsumerWidget {
             width: 10,
             height: 10,
             decoration: BoxDecoration(
-              color: muted ? c.textMuted : c.cherry.face,
+              color: muted ? c.textMuted : c.you.face,
               shape: BoxShape.circle,
             ),
           );
