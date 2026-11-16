@@ -155,7 +155,16 @@ void main() {
     testWidgets('the stencil eyebrow over the team name is muted', (
       tester,
     ) async {
-      await pumpChat(tester, scheme: TeamScheme.dark);
+      // A name short enough for one line in the test font's wide letters,
+      // so the eyebrow shows (#13).
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        prefs: FakeLocalPrefs()..defaultSchemeValue = TeamScheme.dark,
+        users: FakeUserRepository()..colorScheme = TeamScheme.dark,
+        groups: {'a': testGroup('a', 'Hawks')},
+        memberships: [testMembership('a', 'coach')],
+      );
       final c = GumdropColors.forScheme(TeamScheme.dark);
       expect(HeaderEyebrow.style(c).color, c.textMutedOnPage);
       expect(_textColor(tester, 'TEAM CHAT'), c.textMutedOnPage);

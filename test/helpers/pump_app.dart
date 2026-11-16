@@ -3,6 +3,7 @@ import 'package:battleplan/app/app_services.dart';
 import 'package:battleplan/core/env.dart';
 import 'package:battleplan/core/services/service_providers.dart';
 import 'package:battleplan/core/version.dart';
+import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/admin/application/providers.dart';
 import 'package:battleplan/features/auth/application/providers.dart';
 import 'package:battleplan/features/chat/application/providers.dart';
@@ -181,10 +182,22 @@ Future<void> openEmailSignIn(WidgetTester tester, {String query = ''}) async {
   await tester.pumpAndSettle();
 }
 
+/// The team header's arrow back to Teams, by what it says: "Back to
+/// Teams", and ", news in your other teams" while its dot shows (#13).
+Finder backToTeams() => find.byTooltip(RegExp('^Back to Teams'));
+
+/// The team header's stencil eyebrow, as shown ("TEAM ROSTER"): read from
+/// the switcher, since it steps aside while a long name takes two lines
+/// (#13), which the test font's wide letters make most names do.
+String? headerEyebrow(WidgetTester tester) => tester
+    .widget<TeamSwitcherButton>(find.byType(TeamSwitcherButton))
+    .eyebrow
+    ?.toUpperCase();
+
 /// From a team's page to Profile (SPEC §5.1): the back arrow to Teams, then
 /// the Profile tab.
 Future<void> openProfile(WidgetTester tester) async {
-  await tester.tap(find.byTooltip('Back'));
+  await tester.tap(backToTeams());
   await tester.pumpAndSettle();
   await tester.tap(find.text('Profile'));
   await tester.pumpAndSettle();

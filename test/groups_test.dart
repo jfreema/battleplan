@@ -113,7 +113,7 @@ void main() {
     await tester.pumpAndSettle();
     // Its people are the People tab (TEAM-14).
     await openTeamTab(tester, label: 'People');
-    expect(find.text('GROUP MEMBERS'), findsOneWidget);
+    expect(headerEyebrow(tester), 'GROUP MEMBERS');
     expect(find.text('Players'), findsNothing);
     expect(find.text('Emma'), findsNothing);
     expect(find.text('Coaches'), findsNothing);

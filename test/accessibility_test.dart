@@ -426,7 +426,10 @@ void main() {
       for (final tab in ['Chat', 'Schedule']) {
         await tester.tap(find.text(tab).last);
         await tester.pumpAndSettle();
-        final back = tester.getSemantics(find.bySemanticsLabel('Back'));
+        // It says where it goes (#13).
+        final back = tester.getSemantics(
+          find.bySemanticsLabel('Back to Teams'),
+        );
         expect(back, isSemantics(isButton: true, hasTapAction: true));
         expect(back.rect.height, lessThan(60), reason: tab);
         expect(back.rect.width, lessThan(100), reason: tab);
@@ -745,7 +748,7 @@ void main() {
         'visible focus', (tester) async {
       await pumpChat(tester, scheme: TeamScheme.navy);
       const ringed = [
-        'Back',
+        'Back to Teams',
         'Switch team: Thunder U14',
         'Messages',
         'Notifications',
@@ -793,7 +796,7 @@ void main() {
       final start = reached.indexWhere((l) => l.contains('Switch team'));
       expect(start, isNot(-1), reason: '$reached');
       final lap = [...reached.skip(start), ...reached.take(start)];
-      expect(reached, contains('Back'));
+      expect(reached, contains('Back to Teams'));
       expect(
         lap,
         containsAllInOrder([

@@ -662,7 +662,7 @@ void main() {
               .toString();
       await go(tester, '/g/y/roster');
       expect(location(), '/g/y/team');
-      expect(find.text('TEAM ROSTER'), findsOneWidget);
+      expect(headerEyebrow(tester), 'TEAM ROSTER');
       await go(tester, '/g/y/roster/players/emma');
       expect(location(), '/g/y/team/players/emma');
       expect(find.byTooltip('Edit player'), findsOneWidget);

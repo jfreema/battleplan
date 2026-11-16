@@ -529,7 +529,7 @@ void main() {
       await tester.tap(find.byType(ModalBarrier).last);
       await tester.pumpAndSettle();
       expect(find.text('Practice'), findsNothing);
-      await tester.tap(find.byTooltip('Back'));
+      await tester.tap(backToTeams());
       await tester.pumpAndSettle();
       expect(location(tester), '/teams');
       expect(find.text('vs. Eagles'), findsOneWidget);
@@ -675,7 +675,7 @@ void main() {
     expect(location(tester), '/g/a/chat');
     expect(repo.live, 0);
 
-    await tester.tap(find.byTooltip('Back'));
+    await tester.tap(backToTeams());
     await tester.pumpAndSettle();
     expect(repo.live, 4);
     // See all is a schedule: 50 a page, over Teams' own.

@@ -12,6 +12,7 @@ import 'package:material_ui/material_ui.dart';
 class BackChevron extends StatelessWidget {
   const new({
     this.label,
+    this.semanticLabel,
     this.onPressed,
     this.showDot = false,
     this.dotLabel,
@@ -21,15 +22,20 @@ class BackChevron extends StatelessWidget {
   /// The screen it goes back to, or null for the chevron alone.
   final String? label;
 
+  /// For the chevron alone: what screen readers hear and the tooltip says
+  /// in place of "Back" ("Back to Teams"), so where it goes is said, not
+  /// only shown.
+  final String? semanticLabel;
+
   /// What a tap does; pops the route when null, as [BackButton] does.
   final VoidCallback? onPressed;
 
-  /// A coral dot at the chevron's top right, as on the team switcher: the
-  /// screen it goes back to has something unread (a team's back to Teams,
-  /// NOTIF-11).
+  /// A coral dot at the chevron's top right: the screen it goes back to has
+  /// news (a team's back to Teams: unread notifications or messages in the
+  /// other teams, NOTIF-11, CHAT-9).
   final bool showDot;
 
-  /// What screen readers hear after "Back" while the dot shows.
+  /// What screen readers hear, and the tooltip adds, while the dot shows.
   final String? dotLabel;
 
   /// The chevron as the theme's automatic back button icon
@@ -51,6 +57,9 @@ class BackChevron extends StatelessWidget {
     }
 
     final dot = showDot ? dotLabel : null;
+    // "Back to Teams, news in your other teams": said in full, and shown
+    // on hover and long press, so the dot never has to be guessed at.
+    final said = [semanticLabel ?? back, ?text, ?dot].join(', ');
     final icon = Icon(
       AppIcons.chevronLeft,
       size: 28,
@@ -62,11 +71,11 @@ class BackChevron extends StatelessWidget {
       // without it the whole screen became one "Back" button.
       container: true,
       button: true,
-      label: [back, ?text, ?dot].join(', '),
+      label: said,
       excludeSemantics: true,
       onTap: press,
       child: Tooltip(
-        message: back,
+        message: text == null ? said : back,
         child: FocusRingInk(
           onTap: press,
           radius: BorderRadius.circular(24),
@@ -82,8 +91,7 @@ class BackChevron extends StatelessWidget {
                       clipBehavior: Clip.none,
                       children: [
                         icon,
-                        // The team switcher's dot: 9 px of cherry in a
-                        // 2 px ring of the page.
+                        // 9 px of coral in a 2 px ring of the page.
                         Positioned(
                           top: 2,
                           right: -1,

@@ -362,7 +362,9 @@ void main() {
     });
 
     testWidgets('screen readers hear the eyebrow in plain case, then the '
-        'switcher, then the dot in words (SPEC §5.4.2)', (tester) async {
+        "switcher; another team's news is the back arrow's, in words (#13)", (
+      tester,
+    ) async {
       final handle = tester.ensureSemantics();
       await pumpApp(
         tester,
@@ -381,12 +383,17 @@ void main() {
       expect(switcher, isSemantics(isButton: true, hasTapAction: true));
       expect(
         switcher.label,
-        matches(
-          RegExp(
-            r'^Team chat\. Switch team: (Thunder|Lightning), '
-            r'new messages in another team$',
-          ),
-        ),
+        matches(RegExp(r'^Team chat\. Switch team: (Thunder|Lightning)$')),
+      );
+      // One dot, on the arrow back to Teams, that says what it means.
+      expect(
+        find.bySemanticsLabel('Back to Teams, news in your other teams'),
+        findsOneWidget,
+      );
+      // The tooltip says the same, on hover and long press.
+      expect(
+        find.byTooltip('Back to Teams, news in your other teams'),
+        findsOneWidget,
       );
       handle.dispose();
     });
@@ -426,22 +433,38 @@ void main() {
     expect(bar.borderOnForeground, isFalse);
   });
 
-  testWidgets('a long team name steps down and fits a 360 px phone', (
-    tester,
-  ) async {
-    await pumpApp(
-      tester,
-      auth: FakeAuthRepository(user: coach),
-      groups: {'a': testGroup('a', 'Thunder Parents Association')},
-      memberships: [testMembership('a', 'coach')],
-      size: const Size(360, 780),
-    );
-    expect(tester.takeException(), isNull);
-    final name = tester.widget<Text>(find.text('Thunder Parents Association'));
-    expect(name.style!.fontSize, lessThan(27));
-    expect(name.style!.fontSize, greaterThanOrEqualTo(19));
-    // One row: the back, the eyebrow over the name, and the three icons.
-    final back = tester.getCenter(find.byTooltip('Back'));
+  // The test font draws every letter 1 em square, so its names are far
+  // wider than Lilita's; the steps are the same.
+  testWidgets('a long team name takes two lines in the same one-row header, '
+      'without the eyebrow (#13)', (tester) async {
+    Future<double> rowHeight(String name) async {
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: {'a': testGroup('a', name)},
+        memberships: [testMembership('a', 'coach')],
+        size: const Size(360, 780),
+      );
+      expect(tester.takeException(), isNull);
+      return tester.getSize(find.byType(TeamSwitcherButton)).height;
+    }
+
+    final short = await rowHeight('Hawks');
+    expect(headerEyebrow(tester), 'TEAM CHAT');
+    expect(find.text('TEAM CHAT'), findsOneWidget);
+    expect(tester.widget<Text>(find.text('Hawks')).maxLines, 1);
+
+    final long = await rowHeight('Blue Jays');
+    final name = tester.widget<Text>(find.text('Blue Jays'));
+    // Two lines at 19, the first size that holds it on two.
+    expect(name.maxLines, 2);
+    expect(name.style!.fontSize, 19);
+    // It steps aside, and is still read (TeamSwitcherButton's label).
+    expect(find.text('TEAM CHAT'), findsNothing);
+    expect(headerEyebrow(tester), 'TEAM CHAT');
+    // The row keeps its height: one row, the back, the name and the icons.
+    expect(long, short);
+    final back = tester.getCenter(backToTeams());
     final info = tester.getCenter(find.byTooltip('Team settings'));
     expect((back.dy - info.dy).abs(), lessThan(2));
   });
@@ -1074,7 +1097,7 @@ void main() {
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
       expect(find.byType(OpenFieldTabBar), findsOneWidget);
-      expect(find.text('TEAM CHAT'), findsOneWidget);
+      expect(headerEyebrow(tester), 'TEAM CHAT');
       // A team tab's own page has only the header's back, to Teams: the
       // Plays tab for a member is Saved plays.
       await pumpApp(
@@ -1085,8 +1108,8 @@ void main() {
       );
       GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/g/a/plays');
       await tester.pumpAndSettle();
-      expect(find.text('PLAYBOOK'), findsOneWidget);
-      expect(find.byTooltip('Back'), findsOneWidget);
+      expect(headerEyebrow(tester), 'PLAYBOOK');
+      expect(backToTeams(), findsOneWidget);
       // A plain app bar: the notification center, then Messages.
       for (final (route, back) in [
         ('/notifications', 'Teams'),

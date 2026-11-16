@@ -49,7 +49,7 @@ void main() {
     // In a team: its schedule.
     await tester.tap(find.text('Schedule'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Back'));
+    await tester.tap(backToTeams());
     await tester.pumpAndSettle();
 
     expect(find.text('Teams'), findsWidgets);
@@ -69,7 +69,7 @@ void main() {
       GoRouter.of(tester.element(find.byType(Scaffold).first)).state.uri.path,
       '/g/a/schedule',
     );
-    await tester.tap(find.byTooltip('Back'));
+    await tester.tap(backToTeams());
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cyclone'));
     await tester.pumpAndSettle();
@@ -85,15 +85,18 @@ void main() {
       groups: teams,
       memberships: memberships,
     );
-    expect(find.byTooltip('Back'), findsOneWidget);
+    // The team's, back to Teams, which says so (#13).
+    expect(backToTeams(), findsOneWidget);
+    expect(find.byTooltip('Back'), findsNothing);
     await go(tester, '/g/a/plays/saved');
     expect(find.text('Saved plays'), findsOneWidget);
     // Saved plays' own, back to the whiteboard.
     expect(find.byTooltip('Back'), findsOneWidget);
+    expect(backToTeams(), findsNothing);
     await tester.tap(find.byTooltip('Back'));
     await tester.pumpAndSettle();
     expect(find.text('Saved plays'), findsNothing);
-    expect(find.byTooltip('Back'), findsOneWidget);
+    expect(backToTeams(), findsOneWidget);
   });
 
   testWidgets('the app opens on Teams when I left it there, else in my '
@@ -110,7 +113,7 @@ void main() {
     await tester.tap(find.text('Cyclone'));
     await tester.pumpAndSettle();
     expect(prefs.lastTeamRoute, '/g/b/chat');
-    await tester.tap(find.byTooltip('Back'));
+    await tester.tap(backToTeams());
     await tester.pumpAndSettle();
     // Profile counts as Teams.
     await tester.tap(find.text('Profile'));
@@ -435,7 +438,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, boss);
-      await tester.tap(find.byTooltip('Back'));
+      await tester.tap(backToTeams());
       await tester.pumpAndSettle();
       expect(path(tester), '/teams');
       final button = find.byTooltip('Admin panel');

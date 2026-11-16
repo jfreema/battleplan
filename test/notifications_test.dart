@@ -1,6 +1,7 @@
 import 'package:battleplan/core/constants.g.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/auth/data/firestore_user_repository.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
 import 'package:battleplan/features/chat/domain/message.dart';
@@ -79,9 +80,8 @@ void main() {
   }
 
   /// The team header's arrow back to Teams, with the dot read out.
-  Finder backWithDot() => find.bySemanticsLabel(
-    RegExp(r'^Back, new notifications in your other teams$'),
-  );
+  Finder backWithDot() =>
+      find.bySemanticsLabel('Back to Teams, news in your other teams');
 
   /// The app goes to the background and comes back.
   Future<void> leaveAndReturn(WidgetTester tester) async {
@@ -671,6 +671,12 @@ void main() {
       expect(bellBadge('1'), findsOneWidget);
     });
 
+    /// My memberships with every message read, so only notifications
+    /// can light the dot.
+    List<Membership> allRead() => [
+      for (final m in mine()) m.copyWith(lastReadAt: DateTime(2026, 11)),
+    ];
+
     testWidgets("the arrow back to Teams has a dot while another team's "
         'notifications are unread', (tester) async {
       final notifications = FakeNotificationRepository([
@@ -681,7 +687,7 @@ void main() {
         tester,
         auth: FakeAuthRepository(user: coach),
         groups: teams,
-        memberships: mine(),
+        memberships: allRead(),
         notifications: notifications,
       );
       // Lightning's is unread, and Thunder's bell doesn't count it.
@@ -691,8 +697,52 @@ void main() {
       notifications.items[1] = notifications.items[1].copyWith(read: true);
       await leaveAndReturn(tester);
       expect(backWithDot(), findsNothing);
-      expect(find.bySemanticsLabel(RegExp(r'^Back$')), findsOneWidget);
+      expect(find.bySemanticsLabel('Back to Teams'), findsOneWidget);
       expect(bellBadge('1'), findsOneWidget);
+    });
+
+    // #13 (owner's go 2026-11-16): the one sign of news elsewhere. Until
+    // then another team's messages lit a second dot, by the team name.
+    testWidgets("another team's unread messages light the same dot; a muted "
+        "team's don't, and the team name has none", (tester) async {
+      final members = FakeMemberRepository([
+        testMembership(
+          'a',
+          'coach',
+          role: MemberRole.owner,
+        ).copyWith(lastReadAt: DateTime(2026, 11)),
+        testMembership('b', 'coach'),
+      ]);
+      await pumpApp(
+        tester,
+        auth: FakeAuthRepository(user: coach),
+        groups: teams,
+        memberRepo: members,
+      );
+      expect(find.text('Thunder'), findsOneWidget);
+      expect(backWithDot(), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(TeamSwitcherButton),
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is Container &&
+                w.decoration is BoxDecoration &&
+                (w.decoration! as BoxDecoration).shape == BoxShape.circle,
+          ),
+        ),
+        findsNothing,
+      );
+
+      // Lightning muted: its messages wait gray in the switcher instead.
+      await members.setMutedUntil(
+        const GroupId('b'),
+        const UserId('coach'),
+        DateTime.now().add(const Duration(days: 1)),
+      );
+      await tester.pumpAndSettle();
+      expect(backWithDot(), findsNothing);
+      expect(find.bySemanticsLabel('Back to Teams'), findsOneWidget);
     });
 
     testWidgets('lists items; a tap marks it read and opens it', (
@@ -1167,7 +1217,7 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pumpAndSettle();
-      expect(find.text('TEAM ROSTER'), findsOneWidget);
+      expect(headerEyebrow(tester), 'TEAM ROSTER');
       expect(find.text('Lightning'), findsWidgets);
       expect(prefs.lastTeamRoute, '/g/b/team');
     });

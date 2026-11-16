@@ -198,15 +198,26 @@ class _TeamShellState extends ConsumerState<TeamShell> {
 
     final team = teams.value?.where((t) => t.group.id == groupId).firstOrNull;
     final viewed = viewing ? group.value : null;
+    // The one sign of news in my other teams (#13, 2026-11-16): the dot on
+    // the arrow back to Teams, for their unread messages (a muted team's
+    // don't count, as Teams shows them gray, CHAT-9) and for notifications
+    // the bell on Teams has that this team's doesn't (NOTIF-11). Until then
+    // a second dot by the team name was the messages', and nothing told the
+    // two apart. The switcher's list still has each team's count.
+    final now = DateTime.now();
     final otherUnread =
-        teams.value?.any((t) => t.group.id != groupId && t.hasUnread) ?? false;
-    // This team's bell counts only its own notifications, so the arrow back
-    // to Teams, whose bell has every team's, shows when that one has more
-    // (NOTIF-11).
-    final elsewhere =
+        teams.value?.any(
+          (t) =>
+              t.group.id != groupId &&
+              t.hasUnread &&
+              !t.membership.isMutedAt(now),
+        ) ??
+        false;
+    final newsElsewhere =
         !viewing &&
-        (ref.watch(unreadNotificationsElsewhereProvider(groupId)).value ??
-            false);
+        (otherUnread ||
+            (ref.watch(unreadNotificationsElsewhereProvider(groupId)).value ??
+                false));
     final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
     final superAdmin = watchSuperAdmin(ref);
 
@@ -265,8 +276,7 @@ class _TeamShellState extends ConsumerState<TeamShell> {
             groupId: groupId,
             team: team,
             switcherKey: _switcherKey,
-            showOtherUnreadDot: otherUnread,
-            showBackDot: elsewhere,
+            showBackDot: newsElsewhere,
             tabIndex: navigationShell.currentIndex,
             isGroup: team?.group.isGroup ?? false,
             showBack: !widget.inTab,
@@ -407,7 +417,6 @@ class _TeamHeader extends StatelessWidget {
     required this.groupId,
     required this.team,
     required this.switcherKey,
-    required this.showOtherUnreadDot,
     required this.showBackDot,
     required this.tabIndex,
     required this.isGroup,
@@ -418,10 +427,9 @@ class _TeamHeader extends StatelessWidget {
   final GroupId groupId;
   final MyTeam? team;
   final GlobalKey switcherKey;
-  final bool showOtherUnreadDot;
 
-  /// The dot on the arrow back to Teams: its bell has unread items this
-  /// team's doesn't.
+  /// The dot on the arrow back to Teams: news in my other teams, unread
+  /// messages or notifications this team's bell doesn't have.
   final bool showBackDot;
 
   /// The arrow back to Teams.
@@ -439,7 +447,6 @@ class _TeamHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final wide = MediaQuery.sizeOf(context).width >= Breakpoints.wide;
     final group = team?.group;
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 52),
@@ -453,8 +460,9 @@ class _TeamHeader extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 3),
                 child: BackChevron(
                   onPressed: () => context.go('/teams'),
+                  semanticLabel: l10n.backToTeams,
                   showDot: showBackDot,
-                  dotLabel: l10n.notificationsElsewhere,
+                  dotLabel: l10n.newsInOtherTeams,
                 ),
               ),
               const SizedBox(width: 2),
@@ -471,7 +479,6 @@ class _TeamHeader extends StatelessWidget {
                     DateTime.now(),
                     group: isGroup,
                   ),
-                  showDot: showOtherUnreadDot && !wide,
                   onPressed: () {
                     final anchor = switcherKey.currentContext;
                     if (anchor != null) onOpenSwitcher(anchor);
@@ -528,19 +535,16 @@ class _ViewingHeader extends StatelessWidget {
         padding: const EdgeInsets.only(left: 20, right: 8),
         child: Row(
           children: [
+            // The eyebrow over the name, which wraps as the switcher's
+            // does (#13).
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    eyebrow.toUpperCase(),
-                    semanticsLabel: eyebrow,
-                    maxLines: 1,
-                    style: HeaderEyebrow.style(c),
-                  ),
-                  TeamName(group?.name ?? ''),
-                ],
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TeamTitle(
+                  name: group?.name ?? '',
+                  eyebrow: eyebrow,
+                  eyebrowStyle: HeaderEyebrow.style(c),
+                ),
               ),
             ),
             _Low(child: _TeamSettingsButton(group: group)),

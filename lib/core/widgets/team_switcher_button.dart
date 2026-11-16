@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
@@ -8,16 +10,15 @@ import 'package:material_ui/material_ui.dart';
 
 /// The team switcher in the header (SPEC §5.2, §7.3): the tab's stencil
 /// [eyebrow] over the team's [name] in Lilita One with the scheme's drop,
-/// and a small chevron, with a coral dot when another team has unread
-/// messages. One button, at least 48 tall, with the 3 px focus ring for the
-/// keyboard. Screen readers hear the eyebrow in plain case, then "Switch
-/// team: {name}", then the dot in words.
+/// and a small chevron. One button, at least 48 tall, with the 3 px focus
+/// ring for the keyboard. Screen readers hear the eyebrow in plain case,
+/// then "Switch team: {name}". News in other teams is the back arrow's one
+/// dot (#13, 2026-11-16); the switcher's list has each team's count.
 class TeamSwitcherButton extends StatelessWidget {
   const new({
     required this.name,
     required this.onPressed,
     this.eyebrow,
-    this.showDot = false,
     super.key,
   });
 
@@ -26,66 +27,41 @@ class TeamSwitcherButton extends StatelessWidget {
   /// What the tab is ("Team chat"), or null for the name alone.
   final String? eyebrow;
   final VoidCallback onPressed;
-  final bool showDot;
+
+  /// The stencil eyebrow's style: Black Ops One 12/14, spaced 0.18 em, in
+  /// the page's muted text (#12).
+  static TextStyle eyebrowStyle(GumdropColors c) => TextStyle(
+    fontFamily: AppFonts.sticker,
+    fontWeight: FontWeight.w400,
+    fontSize: 12,
+    height: 14 / 12,
+    letterSpacing: 12 * 0.18,
+    color: c.textMutedOnPage,
+  );
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = GumdropColors.of(context);
     final above = eyebrow;
-    // The chevron, 18 px in a 24 × 30 box, 1 px low, with the dot at its
-    // top right.
+    // The chevron, 18 px in a 20 × 30 box, 1 px low.
     final chevron = SizedBox(
-      width: 24,
+      width: 20,
       height: 30,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            top: 1,
-            child: Icon(
-              AppIcons.expand,
-              size: 18,
-              weight: 700,
-              color: c.textOnPage,
-            ),
-          ),
-          if (showDot)
-            Positioned(
-              top: 3,
-              right: -3,
-              child: Container(
-                width: 13,
-                height: 13,
-                decoration: BoxDecoration(
-                  color: c.badgeRing,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Container(
-                  width: 9,
-                  height: 9,
-                  // Coral, as unread is (SPEC §7.2).
-                  decoration: BoxDecoration(
-                    color: c.you.face,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.only(top: 1),
+        child: Icon(
+          AppIcons.expand,
+          size: 18,
+          weight: 700,
+          color: c.textOnPage,
+        ),
       ),
     );
     return Semantics(
       container: true,
       button: true,
-      label: [
-        ?above,
-        [
-          '${l10n.switchTeamTooltip}: $name',
-          if (showDot) l10n.switchTeamOtherUnread,
-        ].join(', '),
-      ].join('. '),
+      label: [?above, '${l10n.switchTeamTooltip}: $name'].join('. '),
       excludeSemantics: true,
       // The InkWell's own tap is excluded with its semantics.
       onTap: onPressed,
@@ -94,36 +70,14 @@ class TeamSwitcherButton extends StatelessWidget {
         onTap: onPressed,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 48),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (above != null)
-                Text(
-                  above.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
-                  style: TextStyle(
-                    fontFamily: AppFonts.sticker,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 12,
-                    height: 14 / 12,
-                    letterSpacing: 12 * 0.18,
-                    // Muted, as the tabs' eyebrows are.
-                    color: c.textMutedOnPage,
-                  ),
-                ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(child: TeamName(name)),
-                  const SizedBox(width: 3),
-                  chevron,
-                ],
-              ),
-            ],
+          child: TeamTitle(
+            name: name,
+            eyebrow: above,
+            eyebrowStyle: eyebrowStyle(c),
+            trailing: Padding(
+              padding: const EdgeInsets.only(left: 3),
+              child: chevron,
+            ),
           ),
         ),
       ),
@@ -131,50 +85,228 @@ class TeamSwitcherButton extends StatelessWidget {
   }
 }
 
-/// The team's name on one line in Lilita 27 with the scheme's drop: 23, 21
-/// or 19 when it doesn't fit, and cut with "…" only when even 19 doesn't.
+/// How a team's name fits its room ([TeamName.fitIn]): its style, on one
+/// line or two, and how wide two lines may be.
+@immutable
+class TeamNameFit {
+  const new({required this.style, this.lines = 1, this.width});
+
+  final TextStyle style;
+
+  /// 1, or 2 for a name that wraps.
+  final int lines;
+
+  /// For two lines, the width to wrap them in: the longer line of the most
+  /// even break, so the lines come out as even as they can be ("Android /
+  /// App Testers", not a lone last word); null for its whole room.
+  final double? width;
+
+  bool get wraps => lines > 1;
+}
+
+/// The stencil [eyebrow] over a team's [name], as the header shows them,
+/// with [trailing] (the switcher's ▾) beside the name. While the name
+/// takes two lines the eyebrow steps aside, so the header keeps its one
+/// slim row (#13, 2026-11-16); screen readers still hear it.
+class TeamTitle extends StatelessWidget {
+  const new({
+    required this.name,
+    required this.eyebrowStyle,
+    this.eyebrow,
+    this.trailing,
+    super.key,
+  });
+
+  final String name;
+  final String? eyebrow;
+  final TextStyle eyebrowStyle;
+  final Widget? trailing;
+
+  /// The room [trailing] takes: the switcher's 3 px gap and 20 px ▾.
+  static const double trailingWidth = 23;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final room =
+          constraints.maxWidth - (trailing == null ? 0 : trailingWidth);
+      final fit = TeamName.fitIn(context, name, math.max(0, room));
+      final above = eyebrow;
+      // Over a two-line name the eyebrow would stack three lines into the
+      // slim row; it steps aside instead (compared both ways 2026-11-16:
+      // the name stays bigger and the row calmer).
+      final showEyebrow = above != null && !fit.wraps;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (showEyebrow)
+            Text(
+              above.toUpperCase(),
+              semanticsLabel: above,
+              maxLines: 1,
+              overflow: TextOverflow.fade,
+              softWrap: false,
+              style: eyebrowStyle,
+            )
+          else if (above != null)
+            // Stepped aside for a two-line name, but still read.
+            Semantics(label: above, child: const SizedBox.shrink()),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(child: TeamName(name, fit: fit)),
+              ?trailing,
+            ],
+          ),
+        ],
+      );
+    },
+  );
+}
+
+/// A team's name in Lilita One with the scheme's drop (SPEC §7.3).
+///
+/// On one line at 27, stepping down to 23, 21 and 19 to fit. A name that
+/// doesn't fit even at 19 wraps onto two lines at 19, or at 17, breaking
+/// only between words; only a name too long for two lines at 17 ends in
+/// "…" (#13, 2026-11-16: names over about 15 letters, and about 10 beside
+/// a super admin's Admin panel button, used to be cut, as "Android Ap…").
 class TeamName extends StatelessWidget {
-  const new(this.name, {super.key});
+  const new(this.name, {this.fit, super.key});
 
   final String name;
 
-  /// The sizes tried, largest first.
+  /// How it fits, when the caller measured it ([TeamTitle]); measured here
+  /// otherwise.
+  final TeamNameFit? fit;
+
+  /// The sizes tried on one line, largest first.
   static const List<double> sizes = [27, 23, 21, 19];
+
+  /// The sizes tried on two lines, largest first.
+  static const List<double> wrapSizes = [19, 17];
+
+  /// Two lines' height: 21 px lines at 19, a little tighter than one
+  /// line's, so they read as one name.
+  static const double wrapHeight = 21 / 19;
+
+  /// The tallest two lines may make the header, in pixels, at large text
+  /// sizes; above it the name stays on one line and ends in "…".
+  static const double tallestWrap = 96;
+
+  static TextStyle _heading(BuildContext context, double size) =>
+      // From the 32 px style, for its 2 px drop.
+      Theme.of(context).textTheme.headlineMedium!
+          .copyWith(fontSize: size, height: 30 / 27, letterSpacing: 27 * 0.005);
+
+  /// How [name] fits [maxWidth]: the first one-line size that holds it,
+  /// else two lines, else two lines ending in "…" (one line where a single
+  /// word is wider than a line, which two lines would break).
+  static TeamNameFit fitIn(BuildContext context, String name, double maxWidth) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    bool fits(TextStyle style, int lines) {
+      final painter = TextPainter(
+        text: TextSpan(text: name, style: style),
+        maxLines: lines,
+        textDirection: direction,
+        textScaler: scaler,
+      )..layout(maxWidth: maxWidth);
+      final ok = !painter.didExceedMaxLines;
+      painter.dispose();
+      return ok;
+    }
+
+    double widthOf(String text, TextStyle style) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        maxLines: 1,
+        textDirection: direction,
+        textScaler: scaler,
+      )..layout();
+      final width = painter.width;
+      painter.dispose();
+      return width;
+    }
+
+    final words = name.trim().split(RegExp(r'\s+'));
+
+    // The widest single word, which two lines can't break.
+    double widestWord(TextStyle style) =>
+        words.map((w) => widthOf(w, style)).fold(0, math.max);
+
+    // The narrowest width two lines fit in, breaking between words: the
+    // longer line of the most even break. Wrapped in it, the text breaks
+    // there by itself (any break that fits it is as even). Null when no
+    // break fits both lines in [maxWidth].
+    double? balanced(TextStyle style) {
+      double? best;
+      for (var i = 1; i < words.length; i++) {
+        final longer = math.max(
+          widthOf(words.take(i).join(' '), style),
+          widthOf(words.skip(i).join(' '), style),
+        );
+        if (longer <= maxWidth && (best == null || longer < best)) {
+          best = longer;
+        }
+      }
+      return best;
+    }
+
+    for (final size in sizes) {
+      final style = _heading(context, size);
+      if (fits(style, 1)) return TeamNameFit(style: style);
+    }
+    const wrapping = wrapSizes;
+    const height = wrapHeight;
+    // Two lines only while they leave the header a sensible height: at the
+    // largest text sizes the name stays on one line.
+    bool shortEnough(double size) =>
+        2 * scaler.scale(size) * height + 2 <= tallestWrap;
+    for (final size in wrapping) {
+      final style = _heading(context, size).copyWith(height: height);
+      if (!shortEnough(size)) continue;
+      if (balanced(style) case final width?) {
+        return TeamNameFit(style: style, lines: 2, width: width);
+      }
+    }
+    final last = _heading(context, wrapping.last).copyWith(height: height);
+    if (shortEnough(wrapping.last) && widestWord(last) <= maxWidth) {
+      return TeamNameFit(style: last, lines: 2);
+    }
+    return TeamNameFit(style: _heading(context, wrapping.last));
+  }
 
   @override
   Widget build(BuildContext context) {
-    // From the 32 px style, for its 2 px drop.
-    final heading = Theme.of(context).textTheme.headlineMedium!
-        .copyWith(height: 30 / 27, letterSpacing: 27 * 0.005);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        var style = heading.copyWith(fontSize: sizes.last);
-        for (final size in sizes) {
-          final candidate = heading.copyWith(fontSize: size);
-          final painter = TextPainter(
-            text: TextSpan(text: name, style: candidate),
-            maxLines: 1,
-            textDirection: Directionality.of(context),
-            textScaler: MediaQuery.textScalerOf(context),
-          )..layout(maxWidth: constraints.maxWidth);
-          final fits = !painter.didExceedMaxLines;
-          painter.dispose();
-          if (fits) {
-            style = candidate;
-            break;
-          }
-        }
-        return Padding(
-          // Room for the 2 px drop.
-          padding: const EdgeInsets.only(bottom: 2),
-          child: Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: style,
-          ),
+    Widget text(TeamNameFit fit) {
+      Widget name = Text(
+        this.name,
+        maxLines: fit.lines,
+        overflow: TextOverflow.ellipsis,
+        // As wide as its longest line, so the switcher's ▾ sits beside a
+        // two-line name rather than at the far side of its room.
+        textWidthBasis: TextWidthBasis.longestLine,
+        style: fit.style,
+      );
+      if (fit.width case final width?) {
+        // A hair over, so rounding never pushes a word to a third line.
+        name = ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: width + 1),
+          child: name,
         );
-      },
+      }
+      // Room for the 2 px drop.
+      return Padding(padding: const EdgeInsets.only(bottom: 2), child: name);
+    }
+
+    final given = fit;
+    if (given != null) return text(given);
+    return LayoutBuilder(
+      builder: (context, constraints) =>
+          text(fitIn(context, name, constraints.maxWidth)),
     );
   }
 }

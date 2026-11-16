@@ -266,10 +266,6 @@
   "teamSwitcherTitle": "Your teams",
   "archivedTeams": "Archived",
   "switchTeamTooltip": "Switch team",
-  "switchTeamOtherUnread": "new messages in another team",
-  "@switchTeamOtherUnread": {
-    "description": "Read by screen readers after the team switcher's name when the coral dot shows that another team has unread messages."
-  },
   "notificationsTooltip": "Notifications",
   "teamSettings": "Team settings",
   "@teamSettings": {
@@ -280,7 +276,10 @@
   "@justForYouHeading": {
     "description": "Team settings' first heading, over the rows that only change the app for you: Notifications for this team, Color scheme, and Calendar link."
   },
-  "backToTeams": "Back to teams",
+  "backToTeams": "Back to Teams",
+  "@backToTeams": {
+    "description": "The arrow back to Teams on a team's header, as screen readers hear it and its tooltip says. Teams is the screen's name."
+  },
   "tabTeams": "Teams",
   "tabProfile": "Profile",
   "inviteMenu": "Invite",
@@ -304,9 +303,9 @@
   "@groupNotificationsPlaceholder": {
     "description": "The empty state of a group's own notifications, opened from the bell in that group's header."
   },
-  "notificationsElsewhere": "new notifications in your other teams",
-  "@notificationsElsewhere": {
-    "description": "Read by screen readers after Back on a team's header when the coral dot on the back arrow shows that the bell on Teams has unread notifications this team's bell doesn't."
+  "newsInOtherTeams": "news in your other teams",
+  "@newsInOtherTeams": {
+    "description": "Read by screen readers, and added to the tooltip, after \"Back to Teams\" on a team's header while the coral dot on the back arrow shows: another team has unread messages, or the bell on Teams has unread notifications this team's bell doesn't."
   },
   "notAMember": "You're not a member of this team.",
   "goToMyTeams": "Go to my teams",
