@@ -32,10 +32,16 @@ class ReportsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final reports = ref.watch(openReportsProvider(groupId));
-    return Scaffold(
-      appBar: AppBar(
-        leading: upButton(context),
-        title: Text(l10n.reportsTitle),
+    final isGroup = ref.watch(
+      groupProvider(groupId).select((g) => g.value?.isGroup ?? false),
+    );
+    // The app's frame (#14, 2026-11-16; it had a plain bar, and no way
+    // back from a "reported" notification). Opened from Team settings.
+    return GumdropScaffold(
+      title: l10n.reportsTitle,
+      backLabel: backLabelFrom(
+        context,
+        isGroup ? l10n.groupSettings : l10n.teamSettings,
       ),
       body: switch (reports) {
         AsyncData(:final value) when value.isEmpty => EmptyState(
@@ -43,7 +49,12 @@ class ReportsScreen extends ConsumerWidget {
           message: l10n.noReports,
         ),
         AsyncData(:final value) => ListView.separated(
-          padding: const EdgeInsets.all(Space.lg),
+          padding: const EdgeInsets.fromLTRB(
+            Space.page,
+            14,
+            Space.page,
+            Space.xl,
+          ),
           itemCount: value.length,
           separatorBuilder: (_, _) => const Divider(height: Space.xl),
           itemBuilder: (_, i) => _ReportCard(report: value[i]),

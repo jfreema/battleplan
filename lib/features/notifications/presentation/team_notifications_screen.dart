@@ -31,12 +31,16 @@ class TeamNotificationsScreen extends ConsumerWidget {
     final group = ref.watch(groupProvider(groupId)).value;
     final now = DateTime.now();
 
+    // Opened from Team settings, as usual; Settings' Notifications says so
+    // when it's the opener (#14).
+    final back = backLabelFrom(
+      context,
+      (group?.isGroup ?? false) ? l10n.groupSettings : l10n.teamSettings,
+    );
     if (membership == null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: upButton(context),
-          title: Text(l10n.teamNotificationsMenu),
-        ),
+      return GumdropScaffold(
+        title: l10n.teamNotificationsMenu,
+        backLabel: back,
         body: EmptyState(icon: AppIcons.group, message: l10n.notAMember),
       );
     }
@@ -78,44 +82,32 @@ class TeamNotificationsScreen extends ConsumerWidget {
       (null, l10n.muteUntilUnmuted),
     ];
 
-    Widget section(String title) => Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Space.lg,
-        Space.lg,
-        Space.lg,
-        Space.sm,
-      ),
-      child: Text(title, style: Theme.of(context).textTheme.titleSmall),
-    );
-
     final muted = muteLabel(
       l10n,
       membership,
       now,
       zone: ViewerZone.of(context),
     );
-    return Scaffold(
-      appBar: AppBar(
-        leading: upButton(context),
-        title: Text(l10n.teamNotificationsMenu),
-        bottom: group == null
-            ? null
-            : PreferredSize(
-                preferredSize: const Size.fromHeight(Space.xl),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: Space.sm),
-                  child: Text(group.name),
-                ),
-              ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: Space.xl),
+    const headingGap = SizedBox(height: 10);
+    const gap = SizedBox(height: 12);
+    // The app's frame and Team settings' rows (#14, 2026-11-16; it had a
+    // plain bar with the team's name under it).
+    return GumdropScaffold(
+      title: l10n.teamNotificationsMenu,
+      backLabel: back,
+      body: PageList(
         children: [
-          section(l10n.pushLevelSection),
+          // Which team, as the title is the same for every team.
+          if (group != null) ...[
+            Text(group.name, style: Theme.of(context).textTheme.titleMedium),
+            gap,
+          ],
+          PageHeading(l10n.pushLevelSection),
+          headingGap,
           RadioGroup<NotificationLevel>(
             groupValue: membership.notificationLevel,
             onChanged: setLevel,
-            child: Column(
+            child: SettingsCard(
               children: [
                 for (final level in NotificationLevel.values)
                   RadioListTile<NotificationLevel>(
@@ -126,28 +118,34 @@ class TeamNotificationsScreen extends ConsumerWidget {
               ],
             ),
           ),
-          section(l10n.muteSection),
-          ListTile(
-            leading: Icon(
-              muted == null ? AppIcons.notificationsOn : AppIcons.muted,
-            ),
-            title: Text(muted ?? l10n.notMuted),
-            subtitle: Text(l10n.muteHelp),
-          ),
-          if (muted != null)
-            ListTile(
-              leading: const Icon(AppIcons.notifications),
-              title: Text(l10n.unmute),
-              onTap: () => unawaited(
-                save((repo, uid) => repo.setMutedUntil(groupId, uid, null)),
+          gap,
+          PageHeading(l10n.muteSection),
+          headingGap,
+          SettingsCard(
+            children: [
+              ListTile(
+                leading: Icon(
+                  muted == null ? AppIcons.notificationsOn : AppIcons.muted,
+                ),
+                title: Text(muted ?? l10n.notMuted),
+                subtitle: Text(l10n.muteHelp),
               ),
-            ),
-          for (final (length, label) in muteChoices)
-            ListTile(
-              leading: const SizedBox(width: Space.xl),
-              title: Text(label),
-              onTap: () => mute(length),
-            ),
+              if (muted != null)
+                ListTile(
+                  leading: const Icon(AppIcons.notifications),
+                  title: Text(l10n.unmute),
+                  onTap: () => unawaited(
+                    save((repo, uid) => repo.setMutedUntil(groupId, uid, null)),
+                  ),
+                ),
+              for (final (length, label) in muteChoices)
+                ListTile(
+                  leading: const SizedBox(width: Space.xl),
+                  title: Text(label),
+                  onTap: () => mute(length),
+                ),
+            ],
+          ),
         ],
       ),
     );

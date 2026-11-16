@@ -74,6 +74,54 @@ void main() {
     handle.dispose();
   });
 
+  // Step 4: Team settings had the chevron alone, and its pages plain bars.
+  testWidgets('Team settings goes back into the team, by name, and its five '
+      'pages go back to Team settings', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpTeam(tester, scheme: TeamScheme.army);
+    await pushTo(tester, '/g/a/info');
+    expect(find.widgetWithText(PageTitle, 'Team settings'), findsOneWidget);
+    expect(find.bySemanticsLabel('Back, Thunder U14'), findsOneWidget);
+    for (final (route, title) in [
+      ('/g/a/notifications', 'Notifications for this team'),
+      ('/g/a/calendar', 'Calendar link'),
+      ('/g/a/media', 'Media'),
+      ('/g/a/reports', 'Reports'),
+      ('/g/a/import', 'Import'),
+    ]) {
+      await pushTo(tester, route);
+      expect(find.widgetWithText(PageTitle, title), findsOneWidget);
+      expect(find.bySemanticsLabel('Back, Team settings'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Back, Team settings'));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(PageTitle, 'Team settings'), findsOneWidget);
+    }
+    handle.dispose();
+  });
+
+  testWidgets('opened from elsewhere, those pages name where they go back '
+      'to', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpTeam(tester, scheme: TeamScheme.army);
+    // Settings' Notifications lists every team's.
+    await goTo(tester, '/profile');
+    await pushTo(tester, '/settings');
+    await pushTo(tester, '/settings/notifications');
+    await tester.scrollUntilVisible(
+      find.text('Thunder U14'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Thunder U14'));
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(PageTitle, 'Notifications for this team'),
+      findsOneWidget,
+    );
+    expect(find.bySemanticsLabel('Back, Notifications'), findsOneWidget);
+    handle.dispose();
+  });
+
   testWidgets('the small title stays out where it would crowd the back '
       'label: the back label matters more', (tester) async {
     await pumpTeam(tester, scheme: TeamScheme.army, size: const Size(320, 700));

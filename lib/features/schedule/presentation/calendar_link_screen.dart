@@ -85,16 +85,20 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final group = ref.watch(groupProvider(widget.groupId)).value;
+    // Opened from Team settings (#14).
+    final back = backLabelFrom(
+      context,
+      (group?.isGroup ?? false) ? l10n.groupSettings : l10n.teamSettings,
+    );
     if (ref.watch(myMembershipProvider(widget.groupId)) == null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: upButton(context),
-          title: Text(l10n.calendarLinkTitle),
-        ),
+      return GumdropScaffold(
+        title: l10n.calendarLinkTitle,
+        backLabel: back,
         body: EmptyState(icon: AppIcons.group, message: l10n.notAMember),
       );
     }
-    final team = ref.watch(groupProvider(widget.groupId)).value?.name ?? '';
+    final team = group?.name ?? '';
     final teamCount = ref.watch(scheduleTeamsProvider).length;
     final links = ref.watch(myCalendarLinksProvider);
     final link = links.value?.where((l) => l.groupId == _scope).firstOrNull;
@@ -175,16 +179,12 @@ class _CalendarLinkState extends ConsumerState<CalendarLinkScreen> {
       ];
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: upButton(context),
-        title: Text(l10n.calendarLinkTitle),
-      ),
-      body: ListView(
-        padding: EdgeInsets.symmetric(
-          horizontal: Space.gutter(MediaQuery.sizeOf(context).width),
-          vertical: Space.lg,
-        ),
+    // The app's frame and its 20 px margins (#14, 2026-11-16; it had a
+    // plain bar).
+    return GumdropScaffold(
+      title: l10n.calendarLinkTitle,
+      backLabel: back,
+      body: PageList(
         children: [
           if (teamCount > 1) ...[
             SegmentedButton<bool>(

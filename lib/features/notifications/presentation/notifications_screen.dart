@@ -189,29 +189,37 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: upButton(context),
-        title: Text(l10n.notificationsTooltip),
-        actions: [
-          // On a phone or with large text, the icon with its name as a
-          // tooltip, so the title still fits beside it.
-          if (anyUnread &&
-              (MediaQuery.sizeOf(context).width < 600 ||
-                  MediaQuery.textScalerOf(context).scale(10) > 15))
-            IconButton(
-              tooltip: l10n.markAllRead,
-              onPressed: () => unawaited(_markAll()),
-              icon: const Icon(AppIcons.markAllRead),
-            )
-          else if (anyUnread)
-            TextButton.icon(
-              onPressed: () => unawaited(_markAll()),
-              icon: const Icon(AppIcons.markAllRead),
-              label: Text(l10n.markAllRead),
-            ),
-        ],
-      ),
+    // The app's frame (#14, 2026-11-16; it had a plain bar). A team's
+    // bell's page goes back into the team and names it, since its title
+    // is the same for every team; the bell on Teams goes back to Teams.
+    final teamName = groupId == null
+        ? null
+        : ref.watch(groupProvider(groupId)).value?.name;
+    return GumdropScaffold(
+      title: l10n.notificationsTooltip,
+      backLabel: groupId == null
+          ? backLabelFrom(context, l10n.tabTeams)
+          : teamName == null
+          ? null
+          : backLabelFrom(context, teamName),
+      actions: [
+        // On a phone or with large text, the icon with its name as a
+        // tooltip, so the title still fits beside it.
+        if (anyUnread &&
+            (MediaQuery.sizeOf(context).width < 600 ||
+                MediaQuery.textScalerOf(context).scale(10) > 15))
+          IconButton(
+            tooltip: l10n.markAllRead,
+            onPressed: () => unawaited(_markAll()),
+            icon: const Icon(AppIcons.markAllRead),
+          )
+        else if (anyUnread)
+          TextButton.icon(
+            onPressed: () => unawaited(_markAll()),
+            icon: const Icon(AppIcons.markAllRead),
+            label: Text(l10n.markAllRead),
+          ),
+      ],
       body: body,
     );
   }

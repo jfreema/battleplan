@@ -65,13 +65,20 @@ class MediaScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final membership = ref.watch(myMembershipProvider(groupId));
     final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    final group = ref.watch(groupProvider(groupId)).value;
+    // Opened from Team settings, as usual; Admin settings, the storage
+    // warning, and the admin panel say so when they open it (#14).
+    final back = backLabelFrom(
+      context,
+      (group?.isGroup ?? false) ? l10n.groupSettings : l10n.teamSettings,
+    );
     if (membership != null && !membership.isAdmin && !superAdmin) {
-      return Scaffold(
-        appBar: AppBar(leading: upButton(context), title: Text(l10n.mediaMenu)),
+      return GumdropScaffold(
+        title: l10n.mediaMenu,
+        backLabel: back,
         body: EmptyState(icon: AppIcons.media, message: l10n.notAllowed),
       );
     }
-    final group = ref.watch(groupProvider(groupId)).value;
     final media = ref.watch(teamMediaProvider(groupId));
     final items = media.value?.items;
 
@@ -102,8 +109,11 @@ class MediaScreen extends ConsumerWidget {
       content = const SkeletonList();
     }
 
-    return Scaffold(
-      appBar: AppBar(leading: upButton(context), title: Text(l10n.mediaMenu)),
+    // The app's frame, with its 20 px margins (#14, 2026-11-16; it had a
+    // plain bar).
+    return GumdropScaffold(
+      title: l10n.mediaMenu,
+      backLabel: back,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -112,9 +122,9 @@ class MediaScreen extends ConsumerWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  Space.lg,
-                  Space.lg,
-                  Space.lg,
+                  Space.page,
+                  14,
+                  Space.page,
                   Space.sm,
                 ),
                 // The team's live numbers, which drop within seconds of a
@@ -130,13 +140,21 @@ class MediaScreen extends ConsumerWidget {
               ),
               if (media.value?.truncated ?? false)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Space.lg),
+                  padding: const EdgeInsets.symmetric(horizontal: Space.page),
                   child: Text(
                     l10n.mediaTruncated,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
-              Expanded(child: content),
+              // The rows level with the title, 20 px in.
+              Expanded(
+                child: ListTileTheme.merge(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: Space.page,
+                  ),
+                  child: content,
+                ),
+              ),
             ],
           ),
         ),

@@ -46,6 +46,9 @@ class TeamInfoScreen extends ConsumerWidget {
 
     return GumdropScaffold(
       title: isGroup ? l10n.groupSettings : l10n.teamSettings,
+      // "‹ Thunder": the arrow goes back into the team (#14; it was the
+      // chevron alone).
+      backLabel: group == null ? null : backLabelFrom(context, group.name),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),

@@ -23,6 +23,7 @@ import 'package:battleplan/features/chat/chat.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/my_team.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/features/groups/presentation/shell_parts.dart';
 import 'package:battleplan/features/groups/presentation/team_switcher.dart';
 import 'package:battleplan/features/notifications/application/providers.dart';
@@ -606,8 +607,13 @@ class _StorageBanner extends ConsumerWidget {
             ),
             if (isAdmin)
               TextButton(
-                onPressed: () =>
-                    unawaited(context.push('/g/${t.group.id.value}/media')),
+                onPressed: () => unawaited(
+                  context.push(
+                    '/g/${t.group.id.value}/media',
+                    // Back into the team, which it names.
+                    extra: BackLabel(t.group.name),
+                  ),
+                ),
                 child: Text(l10n.mediaMenu),
               ),
             IconButton(

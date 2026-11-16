@@ -792,7 +792,14 @@ class _TeamSettingsScreenState extends ConsumerState<TeamSettingsScreen> {
                             if (isAdmin)
                               OutlinedButton.icon(
                                 onPressed: () => unawaited(
-                                  context.push('/g/${group.id.value}/media'),
+                                  context.push(
+                                    '/g/${group.id.value}/media',
+                                    extra: BackLabel(
+                                      group.isGroup
+                                          ? l10n.groupAdmin
+                                          : l10n.teamAdmin,
+                                    ),
+                                  ),
                                 ),
                                 icon: const Icon(AppIcons.media),
                                 label: Text(l10n.mediaMenu),

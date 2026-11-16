@@ -312,8 +312,13 @@ class _Storage extends ConsumerWidget {
           spacing: Space.sm,
           children: [
             OutlinedButton.icon(
-              onPressed: () =>
-                  unawaited(context.push('/g/${group.id.value}/media')),
+              onPressed: () => unawaited(
+                context.push(
+                  '/g/${group.id.value}/media',
+                  // Back to this page, which is the team's.
+                  extra: BackLabel(group.name),
+                ),
+              ),
               icon: const Icon(AppIcons.media),
               label: Text(l10n.mediaMenu),
             ),

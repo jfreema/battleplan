@@ -2,6 +2,7 @@
 // §5.5, §7.3, §7.5, §7.6, §7.7).
 import 'package:battleplan/app/services/share_plus_sharer.dart';
 import 'package:battleplan/core/constants.g.dart';
+import 'package:battleplan/core/design/app_icons.dart';
 import 'package:battleplan/core/design/fonts.dart';
 import 'package:battleplan/core/design/gumdrop_colors.dart';
 import 'package:battleplan/core/design/schemes.dart';
@@ -9,6 +10,7 @@ import 'package:battleplan/core/design/tokens.dart';
 import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/haptics.dart';
 import 'package:battleplan/core/ids.dart';
+import 'package:battleplan/core/widgets/back_chevron.dart';
 import 'package:battleplan/core/widgets/team_badge.dart';
 import 'package:battleplan/core/widgets/team_switcher_button.dart';
 import 'package:battleplan/features/auth/domain/auth_user.dart';
@@ -1058,15 +1060,31 @@ void main() {
       expect(left(tester, lead), 20);
     });
 
-    testWidgets('a plain app bar keeps its title just after the chevron', (
+    // #14 step 4: its title is "Notifications" for every team, so the back
+    // says whose; it had a plain bar with the chevron alone.
+    testWidgets("a team's bell opens the frame, its back naming the team", (
       tester,
     ) async {
+      final handle = tester.ensureSemantics();
       await scenes.pumpTeam(tester, scheme: TeamScheme.army);
       await tester.tap(find.byTooltip('Notifications'));
       await tester.pumpAndSettle();
-      final chevron = tester.getCenter(find.byType(BackButton));
-      expect(chevron.dx, closeTo(28, 2));
-      expect(left(tester, find.text('Notifications')), lessThanOrEqualTo(60));
+      expect(find.widgetWithText(PageTitle, 'Notifications'), findsOneWidget);
+      expect(find.bySemanticsLabel('Back, Thunder U14'), findsOneWidget);
+      // The chevron where every back's is, the title level with the rows.
+      expect(
+        tester
+            .getCenter(
+              find.descendant(
+                of: find.byType(BackChevron),
+                matching: find.byIcon(AppIcons.chevronLeft),
+              ),
+            )
+            .dx,
+        closeTo(28, 2),
+      );
+      expect(left(tester, find.text('Notifications')), 20);
+      handle.dispose();
     });
 
     test('with nothing under it, a screen goes back up to its team, '

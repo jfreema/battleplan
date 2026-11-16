@@ -54,7 +54,13 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       final source = _source;
       void done(ImportReport r) => setState(() => _done = r);
       body = ListView(
-        padding: const EdgeInsets.all(Space.xl),
+        // 20 px in, level with the title (#14).
+        padding: const EdgeInsets.fromLTRB(
+          Space.page,
+          14,
+          Space.page,
+          Space.xl,
+        ),
         children: [
           Text(l10n.importIntro, style: theme.textTheme.bodyLarge),
           const SizedBox(height: Space.lg),
@@ -114,10 +120,18 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     return PopScope(
       // Leaving in the middle would stop the import partway.
       canPop: !_busy,
-      child: Scaffold(
-        appBar: AppBar(
-          leading: upButton(context),
-          title: Text(l10n.importTitle),
+      // The app's frame (#14, 2026-11-16; it had a plain bar). Opened
+      // from Team settings.
+      child: GumdropScaffold(
+        title: l10n.importTitle,
+        backLabel: backLabelFrom(
+          context,
+          ref.watch(
+                groupProvider(widget.groupId)
+                    .select((g) => g.value?.isGroup ?? false),
+              )
+              ? l10n.groupSettings
+              : l10n.teamSettings,
         ),
         body: Center(
           child: ConstrainedBox(
@@ -140,7 +154,8 @@ class _Done extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ListView(
-      padding: const EdgeInsets.all(Space.xl),
+      // 20 px in, level with the title (#14).
+      padding: const EdgeInsets.fromLTRB(Space.page, 14, Space.page, Space.xl),
       children: [
         const Icon(AppIcons.going, size: 48),
         const SizedBox(height: Space.md),

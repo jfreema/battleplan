@@ -58,12 +58,15 @@ class GumdropScaffold extends StatefulWidget {
 
 class _GumdropScaffoldState extends State<GumdropScaffold> {
   final _outer = ScrollController();
+  final GlobalKey _title = GlobalKey();
 
   /// The title has scrolled out of sight: the small one shows.
   bool _away = false;
 
-  /// The big title's height, padding included, at this text size.
+  /// The big title's height, padding included: as laid out, one line or
+  /// two, else one line at this text size.
   double _titleExtent(BuildContext context) =>
+      _title.currentContext?.size?.height ??
       6 + MediaQuery.textScalerOf(context).scale(36) + 4;
 
   @override
@@ -135,7 +138,7 @@ class _GumdropScaffoldState extends State<GumdropScaffold> {
       body: NestedScrollView(
         controller: _outer,
         headerSliverBuilder: (context, _) => [
-          SliverToBoxAdapter(child: PageTitle(widget.title)),
+          SliverToBoxAdapter(child: PageTitle(widget.title, key: _title)),
         ],
         // The page's list scrolls with the title on every platform, the
         // web and desktop included, which don't take a primary scroll
@@ -180,27 +183,73 @@ class PageList extends StatelessWidget {
 }
 
 /// A page's big title (SPEC §7.3): Lilita 32 with the scheme's drop, 20 px
-/// from the left, on one line. The route's heading for screen readers.
+/// from the left, on up to two lines ("Notifications for this team"), as it
+/// scrolls away rather than holding the top. The route's heading for screen
+/// readers.
 class PageTitle extends StatelessWidget {
   const new(this.title, {super.key});
 
   final String title;
 
+  /// The sizes tried, largest first: each must hold every word whole and
+  /// the title in two lines; with large text a long word steps it down.
+  static const List<double> sizes = [32, 28, 25];
+
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
-    child: Semantics(
-      header: true,
-      namesRoute: true,
-      child: Text(
-        title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.headlineMedium
-            ?.copyWith(fontSize: 32, height: 36 / 32),
+  Widget build(BuildContext context) {
+    final base = Theme.of(context).textTheme.headlineMedium!;
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          bool fits(TextStyle style) {
+            final whole = TextPainter(
+              text: TextSpan(text: title, style: style),
+              maxLines: 2,
+              textDirection: direction,
+              textScaler: scaler,
+            )..layout(maxWidth: constraints.maxWidth);
+            var ok = !whole.didExceedMaxLines;
+            whole.dispose();
+            // No word broken across the lines.
+            for (final word in title.split(RegExp(r'\s+'))) {
+              if (!ok) break;
+              final painter = TextPainter(
+                text: TextSpan(text: word, style: style),
+                maxLines: 1,
+                textDirection: direction,
+                textScaler: scaler,
+              )..layout();
+              ok = painter.width <= constraints.maxWidth;
+              painter.dispose();
+            }
+            return ok;
+          }
+
+          TextStyle styleAt(double size) =>
+              base.copyWith(fontSize: size, height: (size + 4) / size);
+          final size = sizes.firstWhere(
+            (size) => fits(styleAt(size)),
+            orElse: () => -1,
+          );
+          return Semantics(
+            header: true,
+            namesRoute: true,
+            child: Text(
+              title,
+              // Where even the smallest can't hold a word, one line that
+              // ends in "…" rather than a word split in two.
+              maxLines: size < 0 ? 1 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: styleAt(size < 0 ? sizes.last : size),
+            ),
+          );
+        },
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// The page's name in the back row once its big title has scrolled away:

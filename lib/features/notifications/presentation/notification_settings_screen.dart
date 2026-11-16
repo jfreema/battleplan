@@ -140,8 +140,12 @@ class _NotificationSettingsScreenState
                     trailing: t.membership.isMutedAt(now)
                         ? const Icon(AppIcons.muted, size: 18)
                         : null,
-                    onTap: () =>
-                        context.push('/g/${t.group.id.value}/notifications'),
+                    onTap: () => context.push(
+                      '/g/${t.group.id.value}/notifications',
+                      // Its back says where it goes: here, not Team
+                      // settings.
+                      extra: BackLabel(l10n.notificationSettings),
+                    ),
                   ),
               ],
             ),
