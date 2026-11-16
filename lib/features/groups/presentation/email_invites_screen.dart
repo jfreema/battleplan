@@ -5,6 +5,7 @@ import 'package:battleplan/core/failure.dart';
 import 'package:battleplan/core/ids.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
 import 'package:battleplan/features/groups/domain/invite.dart';
+import 'package:battleplan/features/groups/presentation/gumdrop_rows.dart';
 import 'package:battleplan/l10n/gen/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -91,13 +92,21 @@ class _EmailInvitesScreenState extends ConsumerState<EmailInvitesScreen> {
     final l10n = AppLocalizations.of(context);
     final emails = emailsFrom(_emails.text);
     final invites = ref.watch(emailInvitesProvider(widget.groupId));
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.emailInvites)),
+    // The app's frame, back to Invite (#14, 2026-11-16; it had a plain
+    // bar).
+    return GumdropScaffold(
+      title: l10n.emailInvites,
+      backLabel: backLabelFrom(context, l10n.inviteMenu),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: ListView(
-            padding: const EdgeInsets.all(Space.xl),
+            padding: const EdgeInsets.fromLTRB(
+              Space.page,
+              14,
+              Space.page,
+              Space.xl,
+            ),
             children: [
               Text(l10n.emailInvitesHelp),
               const SizedBox(height: Space.md),
@@ -134,10 +143,7 @@ class _EmailInvitesScreenState extends ConsumerState<EmailInvitesScreen> {
                 child: Text(l10n.sendInvitesCount(emails.length)),
               ),
               const Divider(height: Space.xxl),
-              Text(
-                l10n.sentInvites,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+              PageHeading(l10n.sentInvites),
               ...switch (invites) {
                 AsyncData(:final value) when value.isEmpty => [
                   Padding(

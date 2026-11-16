@@ -439,8 +439,12 @@ class _People extends ConsumerWidget {
           runSpacing: Space.sm,
           children: [
             OutlinedButton.icon(
-              onPressed: () =>
-                  unawaited(context.push('/g/${group.id.value}/members/add')),
+              onPressed: () => unawaited(
+                context.push(
+                  '/g/${group.id.value}/members/add',
+                  extra: BackLabel(group.name),
+                ),
+              ),
               icon: const Icon(AppIcons.invite),
               label: Text(l10n.addByEmail),
             ),

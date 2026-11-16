@@ -75,67 +75,88 @@ class _PlayerRsvpHistoryScreenState
             DateTime.utc(today.year, today.month - _months, today.day),
             0,
           );
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.rsvpHistoryTitle)),
+    // The app's frame, back to the player's card by name (#14,
+    // 2026-11-16; it had a plain bar).
+    return GumdropScaffold(
+      title: l10n.rsvpHistoryTitle,
+      backLabel: player == null
+          ? null
+          : backLabelFrom(context, player.firstName),
       body: !allowed
           ? EmptyState(
               icon: AppIcons.history,
               message: l10n.rsvpHistoryNotYours,
             )
-          : ListView(
-              padding: const EdgeInsets.symmetric(vertical: Space.lg),
-              children: [
-                if (player != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-                    child: Text(
-                      player.label,
-                      style: theme.textTheme.titleLarge,
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.all(Space.lg),
-                  child: SegmentedButton<int>(
-                    showSelectedIcon: false,
-                    segments: [
-                      for (final m in rsvpHistoryMonths)
-                        ButtonSegment(
-                          value: m,
-                          label: Text(l10n.rsvpHistoryMonths(m)),
-                        ),
-                    ],
-                    selected: {_months},
-                    onSelectionChanged: (s) =>
-                        setState(() => _months = s.first),
-                  ),
-                ),
-                ...switch (ref.watch(
-                  playerRsvpHistoryProvider(
-                    widget.groupId,
-                    widget.playerId,
-                    from,
-                    _now,
-                  ),
-                )) {
-                  AsyncData(:final value) => _history(
-                    context,
-                    value,
-                    player?.displayName.trim().split(' ').first,
-                  ),
-                  AsyncError() => [
+          // Rows 20 px in, level with the title.
+          : ListTileTheme.merge(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: Space.page,
+              ),
+              child: ListView(
+                padding: const EdgeInsets.only(top: 14, bottom: Space.lg),
+                children: [
+                  if (player != null)
                     Padding(
-                      padding: const EdgeInsets.all(Space.lg),
-                      child: Text(l10n.loadError),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Space.page,
+                      ),
+                      child: Text(
+                        player.label,
+                        style: theme.textTheme.titleLarge,
+                      ),
                     ),
-                  ],
-                  _ => [
-                    const Padding(
-                      padding: EdgeInsets.all(Space.xl),
-                      child: Center(child: CircularProgressIndicator()),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Space.page,
+                      Space.lg,
+                      Space.page,
+                      Space.lg,
                     ),
-                  ],
-                },
-              ],
+                    child: SegmentedButton<int>(
+                      showSelectedIcon: false,
+                      segments: [
+                        for (final m in rsvpHistoryMonths)
+                          ButtonSegment(
+                            value: m,
+                            label: Text(l10n.rsvpHistoryMonths(m)),
+                          ),
+                      ],
+                      selected: {_months},
+                      onSelectionChanged: (s) =>
+                          setState(() => _months = s.first),
+                    ),
+                  ),
+                  ...switch (ref.watch(
+                    playerRsvpHistoryProvider(
+                      widget.groupId,
+                      widget.playerId,
+                      from,
+                      _now,
+                    ),
+                  )) {
+                    AsyncData(:final value) => _history(
+                      context,
+                      value,
+                      player?.displayName.trim().split(' ').first,
+                    ),
+                    AsyncError() => [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Space.page,
+                          vertical: Space.lg,
+                        ),
+                        child: Text(l10n.loadError),
+                      ),
+                    ],
+                    _ => [
+                      const Padding(
+                        padding: EdgeInsets.all(Space.xl),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    ],
+                  },
+                ],
+              ),
             ),
     );
   }
@@ -156,7 +177,10 @@ class _PlayerRsvpHistoryScreenState
     if (history.entries.isEmpty) {
       return [
         Padding(
-          padding: const EdgeInsets.all(Space.lg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Space.page,
+            vertical: Space.lg,
+          ),
           child: Text(l10n.rsvpHistoryEmpty(_months)),
         ),
       ];

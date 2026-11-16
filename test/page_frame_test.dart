@@ -122,6 +122,30 @@ void main() {
     handle.dispose();
   });
 
+  // Step 5: Invite's two email pages and the player card's RSVP history.
+  testWidgets("Invite's email pages go back to Invite, and RSVP history to "
+      'the player, by name', (tester) async {
+    final handle = tester.ensureSemantics();
+    for (final (route, title) in [
+      ('/g/a/invite/email', 'Email invites'),
+      ('/g/a/members/add', 'Add people by email'),
+    ]) {
+      await pumpTeam(tester, scheme: TeamScheme.army);
+      await pushTo(tester, '/g/a/invite');
+      await pushTo(tester, route);
+      expect(find.widgetWithText(PageTitle, title), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Back, Invite'));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(PageTitle, 'Invite'), findsOneWidget);
+    }
+    await pumpTeam(tester, scheme: TeamScheme.army);
+    await pushTo(tester, '/g/a/team/players/mia');
+    await pushTo(tester, '/g/a/team/players/mia/history');
+    expect(find.widgetWithText(PageTitle, 'RSVP history'), findsOneWidget);
+    expect(find.bySemanticsLabel('Back, Mia'), findsOneWidget);
+    handle.dispose();
+  });
+
   testWidgets('the small title stays out where it would crowd the back '
       'label: the back label matters more', (tester) async {
     await pumpTeam(tester, scheme: TeamScheme.army, size: const Size(320, 700));

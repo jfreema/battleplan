@@ -120,13 +120,21 @@ class _AddMembersScreenState extends ConsumerState<AddMembersScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final parsed = parsePeople(_text.text);
-    return Scaffold(
-      appBar: AppBar(leading: upButton(context), title: Text(l10n.addByEmail)),
+    // The app's frame, back to Invite (#14, 2026-11-16; it had a plain
+    // bar). The admin panel opens it too, and says so.
+    return GumdropScaffold(
+      title: l10n.addByEmail,
+      backLabel: backLabelFrom(context, l10n.inviteMenu),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: ListView(
-            padding: const EdgeInsets.all(Space.xl),
+            padding: const EdgeInsets.fromLTRB(
+              Space.page,
+              14,
+              Space.page,
+              Space.xl,
+            ),
             children: [
               Text(l10n.addPeopleHelp),
               const SizedBox(height: Space.md),
