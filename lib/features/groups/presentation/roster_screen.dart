@@ -332,16 +332,37 @@ class _RosterScreenState extends ConsumerState<RosterScreen> {
               if (!hasPlayers)
                 const SizedBox.shrink()
               else if (players.isEmpty && mine.isEmpty)
+                // Inline where the players go, so the team card, Invite and
+                // Dues stay above it (#3): "No players yet", and the way to
+                // add them, Add players for admins, and the player they're
+                // here for for members (PLAYER-4).
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: Space.page,
                     vertical: Space.sm,
                   ),
-                  child: Text(
-                    l10n.adminNoPlayers,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: GumdropColors.of(context).textMutedOnPage,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.adminNoPlayers,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: GumdropColors.of(context).textMutedOnPage,
+                        ),
+                      ),
+                      if (canAdd) ...[
+                        const SizedBox(height: Space.md),
+                        FilledButton(
+                          onPressed: () =>
+                              unawaited(context.push('/g/$id/players/add')),
+                          child: Text(
+                            isAdmin
+                                ? l10n.teamSetupPlayers
+                                : l10n.rosterAddYourPlayer,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 )
               else if (mine.isNotEmpty || shownPlayers.isNotEmpty)

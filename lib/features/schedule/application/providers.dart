@@ -158,6 +158,14 @@ DateTime dayOf(Event e, String zone) {
 Stream<Event?> event(Ref ref, EventId id) =>
     ref.watch(eventRepositoryProvider).watchEvent(id);
 
+/// Whether the team has any event at all, upcoming or past, live: the setup
+/// card's last step (TEAM-1, #3). One event read, the oldest.
+@riverpod
+Stream<bool> teamHasEvents(Ref ref, GroupId groupId) => ref
+    .watch(eventRepositoryProvider)
+    .watchUpcoming(groupId, DateTime.utc(1970), limit: 1)
+    .map((page) => page.events.isNotEmpty);
+
 /// A series' next event from now on, live, for its chat card once the
 /// card's own event is gone (CHAT-11). Null when none is left.
 @riverpod

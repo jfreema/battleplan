@@ -467,6 +467,10 @@ class FirestoreMemberRepository implements MemberRepository {
       _updateMine(groupId, uid, {'hereFor': answer.value});
 
   @override
+  Future<void> closeMySetup(GroupId groupId, UserId uid) =>
+      _updateMine(groupId, uid, {'setupClosed': true});
+
+  @override
   Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until) =>
       _updateMine(groupId, uid, {
         'mutedUntil': until == null ? null : Timestamp.fromDate(until),
@@ -624,6 +628,8 @@ Group groupFromFirestore(String id, Map<String, dynamic> d) {
     sport: Sport.tryParse(d['sport'] as String?) ?? Sport.other,
     kind: GroupKind.tryParse(d['kind'] as String?) ?? GroupKind.team,
     memberCount: (d['memberCount'] as num?)?.toInt() ?? 0,
+    playerCount: (d['playerCount'] as num?)?.toInt() ?? 0,
+    createdAt: _date(d['createdAt']),
     description: d['description'] as String?,
     color: _parseColor(d['color'] as String?),
     lastMessageAt: _date(d['lastMessageAt']),
@@ -709,6 +715,7 @@ Membership membershipFromFirestore(Map<String, dynamic> d) => Membership(
   contactEmail: _shared(d['contactEmail']),
   coach: d['coach'] as bool?,
   hereFor: HereFor.tryParse(d['hereFor'] as String?),
+  setupClosed: d['setupClosed'] == true,
   otherUid: d['otherUid'] as String?,
   lastMessageAt: _date(d['lastMessageAt']),
 );

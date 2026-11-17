@@ -341,6 +341,56 @@ class _SegmentsState extends State<_Segments> {
   }
 }
 
+/// A team's empty Upcoming (SCHED-1, #3): **Add an event** for whoever can
+/// make events, doing what the + does (full storage says why, STORE-4),
+/// and for the team's admins a quiet **Import a schedule** under it. People
+/// who can't make events are told who will: the coaches, or a group's
+/// admins (TEAM-14). An archived team just has nothing coming up.
+class _EmptyUpcoming extends ConsumerWidget {
+  const new({required this.groupId});
+
+  final GroupId groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final group = ref.watch(groupProvider(groupId)).value;
+    final me = ref.watch(myMembershipProvider(groupId));
+    final superAdmin = ref.watch(authUserProvider).value?.isSuperAdmin ?? false;
+    final id = groupId.value;
+    if (group == null || group.isArchived) {
+      return EmptyState(
+        icon: AppIcons.schedule,
+        message: l10n.scheduleEmptyUpcoming,
+      );
+    }
+    if (!canCreateEvents(group, me, superAdmin: superAdmin)) {
+      return EmptyState(
+        icon: AppIcons.schedule,
+        message: group.isGroup
+            ? l10n.scheduleEmptyAdmins
+            : l10n.scheduleEmptyCoaches,
+      );
+    }
+    // Import is the team admins' (Team settings, For admins).
+    final admin = me?.isAdmin ?? false;
+    return EmptyState(
+      icon: AppIcons.schedule,
+      message: l10n.scheduleEmptyUpcoming,
+      actionLabel: l10n.scheduleAddEvent,
+      onAction: () => group.storageFull
+          ? showStorageFull(context)
+          : unawaited(context.push('/g/$id/schedule/new')),
+      linkLabel: admin ? l10n.scheduleImport : null,
+      onLink: admin
+          ? () => unawaited(
+              context.push('/g/$id/import', extra: BackLabel(l10n.tabSchedule)),
+            )
+          : null,
+    );
+  }
+}
+
 /// Opens an event's details (SCHED-4).
 /// [from] is the opener's name, for the event screen's back label.
 void openEvent(BuildContext context, Event e, {String? from}) => unawaited(
@@ -376,6 +426,12 @@ class EventList extends ConsumerWidget {
         if (options.shows(e)) e,
     ];
     if (events.isEmpty && state.reachedEnd) {
+      // A team's Upcoming with nothing coming up and no filter on: its one
+      // next step (#3). Past, a filtered view and Your schedule just say
+      // there's nothing.
+      if (team != null && !past && options.filters.isEmpty) {
+        return _EmptyUpcoming(groupId: team);
+      }
       return EmptyState(
         icon: AppIcons.schedule,
         message: past ? l10n.scheduleEmptyPast : l10n.scheduleEmptyUpcoming,

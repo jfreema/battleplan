@@ -150,6 +150,15 @@ abstract class Group with _$Group {
 
     /// The team this one's next season is (TEAM-16), set as it's archived.
     GroupId? nextSeasonId,
+
+    /// When the team was made, which decides whether its admins get the
+    /// setup card (TEAM-1, [inSetupWindow]). Null for a team read without
+    /// one.
+    DateTime? createdAt,
+
+    /// The roster's active players, kept by the server (ARCH §6.2): the
+    /// setup card's first step (TEAM-1).
+    @Default(0) int playerCount,
   }) = _Group;
 
   const new _();
@@ -184,4 +193,27 @@ abstract class Group with _$Group {
 
   /// At or past the limit (STORE-4). M6's New event checks this too.
   bool get storageFull => storageLevel == StorageLevel.full;
+
+  /// Whether the team is new enough at [now] for its admins' setup card
+  /// (TEAM-1, #3): made on or after [setupCardSince], and less than
+  /// [setupCardDays] ago. Never for a direct conversation, or a team that's
+  /// archived or suspended.
+  bool inSetupWindow(DateTime now) {
+    final made = createdAt;
+    return made != null &&
+        !isDirect &&
+        !isArchived &&
+        suspendedAt == null &&
+        !made.isBefore(setupCardSince) &&
+        now.difference(made) < const Duration(days: setupCardDays);
+  }
 }
+
+/// The day the setup card shipped (TEAM-1, #3; owner's go 2026-11-16):
+/// midnight on 17 Nov 2026 in Chicago. Teams made before it never get one,
+/// so nobody's existing team suddenly asks to be set up.
+final DateTime setupCardSince = DateTime.utc(2026, 11, 17, 6);
+
+/// How long a new team's admins see the setup card (TEAM-1): its first 30
+/// days.
+const int setupCardDays = 30;

@@ -33,3 +33,5 @@ export 'presentation/results_screen.dart'
 export 'presentation/roster_screen.dart' show roleBadge;
 export 'presentation/storage_widgets.dart'
     show StorageMeter, changeStorageQuota, formatBytes, showStorageFull;
+export 'presentation/team_setup_card.dart'
+    show TeamSetupCard, TeamSetupCardSlot, closeTeamSetup;

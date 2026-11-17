@@ -137,11 +137,18 @@ class GumdropButtons {
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: 8),
       ),
+      // The theme's text button type (Fredoka 600 15) unless given: a
+      // button's own text style replaces the theme's whole, so without it
+      // the link fell back to the platform's font (#3).
       textStyle: WidgetStatePropertyAll(
-        (textStyle ?? const TextStyle()).copyWith(
-          decoration: TextDecoration.underline,
-          decorationColor: foreground,
-        ),
+        (textStyle ??
+                style.label(
+                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ))
+            .copyWith(
+              decoration: TextDecoration.underline,
+              decorationColor: foreground,
+            ),
       ),
     );
   }

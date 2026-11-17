@@ -53,6 +53,11 @@ abstract class Membership with _$Membership {
     /// they say. Theirs to write, and it follows them to every device.
     HereFor? hereFor,
 
+    /// An admin put away the team's setup card (TEAM-1, #3): its X, its
+    /// Done, or leaving the chat once it said the team is ready. Theirs to
+    /// write; it follows them to every device.
+    @Default(false) bool setupClosed,
+
     /// In a direct conversation (CHAT-19, role participant): the other
     /// person, and when it last had a message, which orders Messages.
     String? otherUid,

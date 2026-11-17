@@ -241,7 +241,7 @@ service cloud.firestore {
         && onlyChanges(['notificationLevel', 'mutedUntil', 'lastReadAt',
                         'lastPostedAt', 'lastPostedMessageId',
                         'contactPhone', 'contactEmail', 'colorScheme',
-                        'hereFor'])
+                        'hereFor', 'setupClosed'])
         // Contact sharing (TEAM-10): a phone with a digit, up to 30
         // characters, and an email, up to 254. Stopping (null) always
         // works; sharing needs an open team (not suspended or archived).
@@ -268,7 +268,10 @@ service cloud.firestore {
         // ('nobody'), so the team's prompts stop asking them. Theirs alone,
         // on any team, and checked the cheap way the color scheme is.
         && (incoming().get('hereFor', null) == null
-            || incoming().hereFor in ['later', 'nobody']);
+            || incoming().hereFor in ['later', 'nobody'])
+        // An admin put away the team's setup card (TEAM-1): a flag, theirs
+        // alone, checked the cheap way too.
+        && incoming().get('setupClosed', false) is bool;
     }
 
     // A contact field a member shares with their team (TEAM-10), unchanged,

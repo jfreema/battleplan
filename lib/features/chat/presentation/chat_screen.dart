@@ -28,8 +28,10 @@ import 'package:battleplan/features/chat/presentation/message_tile.dart';
 import 'package:battleplan/features/chat/presentation/quote_block.dart';
 import 'package:battleplan/features/chat/presentation/sprinkles.dart';
 import 'package:battleplan/features/groups/application/providers.dart';
+import 'package:battleplan/features/groups/application/team_setup.dart';
 import 'package:battleplan/features/groups/domain/group.dart';
 import 'package:battleplan/features/groups/domain/membership.dart';
+import 'package:battleplan/features/groups/domain/team_setup.dart';
 import 'package:battleplan/features/groups/groups.dart';
 import 'package:battleplan/features/players/players.dart';
 import 'package:battleplan/features/polls/polls.dart';
@@ -106,6 +108,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   /// Set once someone types @: the team's names are read then (CHAT-14).
   bool _mentionsWanted = false;
+
+  /// The setup card once it said the team is ready (TEAM-1, #3). Showing
+  /// "Hornets is ready" puts the card away for good, so it's saved as
+  /// closed at once, and this keeps it on screen until Done or until the
+  /// chat is left.
+  TeamSetup? _readySetup;
+
+  /// The card's X or Done was pressed: it goes at once, before the save
+  /// comes back.
+  bool _setupClosed = false;
 
   /// True once the chat has opened at the first unread message.
   bool _positioned = false;
@@ -524,6 +536,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           storageFull: g?.storageFull ?? false,
           membersCanCreatePolls: g?.settings.membersCanCreatePolls ?? false,
           nextSeasonId: g?.nextSeasonId,
+          // Nobody else on it yet: the empty chat's Invite (#3).
+          alone: (g?.memberCount ?? 0) <= 1,
+          isGroup: g?.isGroup ?? false,
         );
       }),
     );
@@ -573,6 +588,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         !direct &&
         ((membership?.isAdmin ?? false) ||
             (ref.watch(authUserProvider).value?.isSuperAdmin ?? false));
+    // A new team's setup card, for its admins (TEAM-1, #3): at the top of
+    // the history, in the empty chat's place while the chat is empty.
+    final liveSetup = direct || _setupClosed
+        ? null
+        : ref.watch(teamSetupProvider(widget.groupId));
+    if (liveSetup != null && liveSetup.ready && _readySetup == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _readySetup != null) return;
+        setState(() => _readySetup = liveSetup);
+        unawaited(closeTeamSetup(ref, widget.groupId));
+      });
+    }
+    final setup = _setupClosed ? null : liveSetup ?? _readySetup;
+    Widget? setupCard;
+    if (setup != null) {
+      setupCard = TeamSetupCardSlot(
+        child: TeamSetupCard(
+          groupId: widget.groupId,
+          setup: setup,
+          onClose: () {
+            setState(() => _setupClosed = true);
+            unawaited(closeTeamSetup(ref, widget.groupId));
+          },
+        ),
+      );
+    }
     // The bar at the top, newest pin first (CHAT-15).
     final pinnedIds = ref.watch(pinnedMessageIdsProvider(widget.groupId));
     if (!_openedMarkerTaken &&
@@ -743,10 +784,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         onAction: () =>
             ref.read(chatMessagesProvider(widget.groupId).notifier).retry(),
       );
+    } else if (messages.isEmpty && pending.isEmpty && setupCard != null) {
+      // The card in the empty chat's place, right under the header, so
+      // there's one Invite on the screen, not two.
+      list = ListView(children: [setupCard]);
     } else if (messages.isEmpty && pending.isEmpty) {
+      // An admin with nobody else on the team yet is told so, with the
+      // way to change it (#3); everyone else is asked to say hi.
+      final onlyMe =
+          !direct &&
+          !viewing &&
+          !archived &&
+          group.alone &&
+          (membership?.isAdmin ?? false);
       list = EmptyState(
         icon: direct ? AppIcons.directMessage : AppIcons.chat,
-        message: direct ? l10n.directEmpty(otherName) : l10n.chatEmpty,
+        message: direct
+            ? l10n.directEmpty(otherName)
+            : onlyMe
+            ? (group.isGroup ? l10n.chatOnlyYouGroup : l10n.chatOnlyYou)
+            : l10n.chatEmpty,
+        actionLabel: onlyMe ? l10n.inviteMenu : null,
+        onAction: onlyMe
+            ? () => unawaited(
+                context.push(
+                  '/g/${widget.groupId.value}/invite',
+                  extra: BackLabel(l10n.tabChat),
+                ),
+              )
+            : null,
       );
     } else {
       final scrollView = CustomScrollView(
@@ -787,9 +853,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             itemBuilder: (context, index) {
               if (index < upper.length) return row(upper[index]);
               // Coming into view loads more, even without a scroll (say
-              // right after opening at the first unread message).
+              // right after opening at the first unread message). At the
+              // start of the history, a new team's setup card (#3), which
+              // scrolls away with the oldest messages as the chat fills.
               return chat.reachedStart
-                  ? const SizedBox(height: Space.lg)
+                  ? setupCard ?? const SizedBox(height: Space.lg)
                   : _GapLoader(
                       key: ValueKey('older${upper.length}'),
                       onShown: _loadOlder,

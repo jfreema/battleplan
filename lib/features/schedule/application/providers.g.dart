@@ -607,6 +607,89 @@ final class EventFamily extends $Family
   String toString() => r'eventProvider';
 }
 
+/// Whether the team has any event at all, upcoming or past, live: the setup
+/// card's last step (TEAM-1, #3). One event read, the oldest.
+
+@ProviderFor(teamHasEvents)
+final teamHasEventsProvider = TeamHasEventsFamily._();
+
+/// Whether the team has any event at all, upcoming or past, live: the setup
+/// card's last step (TEAM-1, #3). One event read, the oldest.
+
+final class TeamHasEventsProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, Stream<bool>>
+    with $FutureModifier<bool>, $StreamProvider<bool> {
+  /// Whether the team has any event at all, upcoming or past, live: the setup
+  /// card's last step (TEAM-1, #3). One event read, the oldest.
+  TeamHasEventsProvider._({
+    required TeamHasEventsFamily super.from,
+    required GroupId super.argument,
+  }) : super(
+         retry: null,
+         name: r'teamHasEventsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$teamHasEventsHash();
+
+  @override
+  String toString() {
+    return r'teamHasEventsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<bool> create(Ref ref) {
+    final argument = this.argument as GroupId;
+    return teamHasEvents(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TeamHasEventsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$teamHasEventsHash() => r'bf0753948a4a586e09b89aeb9b5832eebf2eca6e';
+
+/// Whether the team has any event at all, upcoming or past, live: the setup
+/// card's last step (TEAM-1, #3). One event read, the oldest.
+
+final class TeamHasEventsFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<bool>, GroupId> {
+  TeamHasEventsFamily._()
+    : super(
+        retry: null,
+        name: r'teamHasEventsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Whether the team has any event at all, upcoming or past, live: the setup
+  /// card's last step (TEAM-1, #3). One event read, the oldest.
+
+  TeamHasEventsProvider call(GroupId groupId) =>
+      TeamHasEventsProvider._(argument: groupId, from: this);
+
+  @override
+  String toString() => r'teamHasEventsProvider';
+}
+
 /// A series' next event from now on, live, for its chat card once the
 /// card's own event is gone (CHAT-11). Null when none is left.
 

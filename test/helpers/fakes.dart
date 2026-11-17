@@ -622,6 +622,12 @@ class FakeMemberRepository implements MemberRepository {
     _updateMine(groupId, uid, (m) => m.copyWith(hereFor: answer));
   }
 
+  @override
+  Future<void> closeMySetup(GroupId groupId, UserId uid) async {
+    calls.add('setupClosed ${groupId.value}');
+    _updateMine(groupId, uid, (m) => m.copyWith(setupClosed: true));
+  }
+
   DateTime? mutedUntil;
 
   @override

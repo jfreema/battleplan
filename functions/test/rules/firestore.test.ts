@@ -320,10 +320,11 @@ describe('mentions, announcements, and pins (CHAT-14, CHAT-15)', () => {
 
   it("still takes them from someone with every setting of their own saved (the membership's costliest checks)", async () => {
     // The send batch updates the member's doc, so its rule runs in the same
-    // 1,000 expressions: with a color scheme (SET-2) and a "Who are you
-    // here for?" answer (PLAYER-3) saved, both lists are checked too.
+    // 1,000 expressions: with a color scheme (SET-2), a "Who are you here
+    // for?" answer (PLAYER-3) and a closed setup card (TEAM-1) saved, each
+    // is checked too.
     await env.withSecurityRulesDisabled((ctx) =>
-      ctx.firestore().doc('groupMembers/teamA_bob').update({ colorScheme: 'skyblue', hereFor: 'nobody' }),
+      ctx.firestore().doc('groupMembers/teamA_bob').update({ colorScheme: 'skyblue', hereFor: 'nobody', setupClosed: true }),
     );
     const ten = Array.from({ length: 10 }, (_, i) => ({
       path: `groups/teamA/messages/p12/${i}.jpg`, contentType: 'image/jpeg', width: 2048, height: 1536, size: 345678,
@@ -830,6 +831,20 @@ describe('a member picks how a team looks to them (SET-2)', () => {
 
   it('leaves the icon color to Functions (SET-8)', async () => {
     await assertFails(as('bob').doc('groupMembers/teamA_bob').update({ avatarColor: 'mint' }));
+  });
+});
+
+describe("an admin puts away their team's setup card (TEAM-1)", () => {
+  it('saves it on their own membership, and only theirs', async () => {
+    await assertSucceeds(as('alice').doc('groupMembers/teamA_alice').update({ setupClosed: true }));
+    // Beside a read marker, as any of their own settings.
+    await assertSucceeds(
+      as('alice').doc('groupMembers/teamA_alice').update({ setupClosed: true, lastReadAt: ts('2026-01-01T00:00:00Z') }),
+    );
+    for (const bad of ['yes', 1, null]) {
+      await assertFails(as('alice').doc('groupMembers/teamA_alice').update({ setupClosed: bad }));
+    }
+    await assertFails(as('bob').doc('groupMembers/teamA_alice').update({ setupClosed: true }));
   });
 });
 

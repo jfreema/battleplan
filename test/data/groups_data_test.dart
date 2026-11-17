@@ -85,6 +85,23 @@ void main() {
       expect(sparse.pinnedMessageIds, isEmpty);
     });
 
+    test('reads when the team was made and its player count, for the setup '
+        'card (TEAM-1)', () {
+      final made = DateTime.utc(2026, 11, 18, 15);
+      final g = groupFromFirestore('x', {
+        'createdAt': Timestamp.fromDate(made),
+        'playerCount': 12,
+        'memberCount': 4,
+      });
+      expect(g.createdAt!.isAtSameMomentAs(made), isTrue);
+      expect(g.playerCount, 12);
+      expect(g.memberCount, 4);
+      // A team read without them: no date, so no card, and no players.
+      final old = groupFromFirestore('y', const {});
+      expect(old.createdAt, isNull);
+      expect(old.playerCount, 0);
+    });
+
     test('reads a retired team color as its replacement (TEAM-5)', () {
       // Royal blue reads as Blue, Violet as Purple, as the team color and
       // as the chat look's message color; the stored value stays.
@@ -550,6 +567,29 @@ void main() {
           'hereFor': 'somebody',
         }).hereFor,
         isNull,
+      );
+    });
+
+    test('puts away the setup card for me (TEAM-1)', () async {
+      final repo = FirestoreMemberRepository(db, functions);
+      Future<bool> closed() async => (await repo.watchRoster(_g).first)
+          .firstWhere((m) => m.uid == _me)
+          .setupClosed;
+      expect(await closed(), isFalse);
+      await repo.closeMySetup(_g, _me);
+      expect(
+        (await db.doc('groupMembers/g1_alex').get()).data()!['setupClosed'],
+        isTrue,
+      );
+      expect(await closed(), isTrue);
+      // Anything but true reads as open.
+      expect(
+        membershipFromFirestore(const {
+          'groupId': 'g1',
+          'uid': 'x',
+          'setupClosed': 'yes',
+        }).setupClosed,
+        isFalse,
       );
     });
 

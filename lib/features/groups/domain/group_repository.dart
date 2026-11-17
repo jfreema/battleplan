@@ -176,6 +176,9 @@ abstract interface class MemberRepository {
   /// The team's prompts stop asking. Syncs to every device.
   Future<void> setMyHereFor(GroupId groupId, UserId uid, HereFor answer);
 
+  /// Puts away this team's setup card for me (TEAM-1, #3), on every device.
+  Future<void> closeMySetup(GroupId groupId, UserId uid);
+
   /// Mutes this team's pushes until [until], or unmutes with null
   /// (NOTIF-3). "Until unmuted" is [Limits.mutedForeverMs].
   Future<void> setMutedUntil(GroupId groupId, UserId uid, DateTime? until);

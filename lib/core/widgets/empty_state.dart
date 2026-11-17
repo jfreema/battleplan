@@ -1,8 +1,11 @@
+import 'package:battleplan/core/design/gumdrop_buttons.dart';
 import 'package:battleplan/core/design/tokens.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Icon, one sentence, and at most one action (SPEC §7.5): a 64 px icon
-/// and Nunito 600 15 text, both muted, and one coral button.
+/// and Nunito 600 15 text, both muted, and one coral button, with at most
+/// one quiet link under it ([linkLabel]; the team's empty Schedule has
+/// Import a schedule, #3).
 class EmptyState extends StatelessWidget {
   const new({
     required this.message,
@@ -10,6 +13,8 @@ class EmptyState extends StatelessWidget {
     this.art,
     this.actionLabel,
     this.onAction,
+    this.linkLabel,
+    this.onLink,
     super.key,
   }) : assert(icon != null || art != null, 'An icon, or art to draw');
 
@@ -21,6 +26,10 @@ class EmptyState extends StatelessWidget {
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
+
+  /// A quiet text link under the button, for a second, lesser way forward.
+  final String? linkLabel;
+  final VoidCallback? onLink;
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +76,14 @@ class EmptyState extends StatelessWidget {
             if (label != null && onAction != null) ...[
               const SizedBox(height: Space.xl),
               FilledButton(onPressed: onAction, child: Text(label)),
+            ],
+            if (linkLabel case final link? when onLink != null) ...[
+              const SizedBox(height: Space.sm),
+              TextButton(
+                style: GumdropButtons.of(context).link(),
+                onPressed: onLink,
+                child: Text(link, textAlign: TextAlign.center),
+              ),
             ],
           ],
         ),

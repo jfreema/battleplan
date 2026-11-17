@@ -2713,7 +2713,11 @@ void main() {
     await tester.tap(find.text('Lightning U10'));
     await tester.pumpAndSettle();
     expect(prefs.lastTeamRoute, '/g/b/schedule');
-    expect(find.text('No upcoming events.'), findsOneWidget);
+    // A member who can't add events is told who will (#3).
+    expect(
+      find.text('No upcoming events. Your coaches will add them here.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('signing out of all devices asks first, then signs out', (
